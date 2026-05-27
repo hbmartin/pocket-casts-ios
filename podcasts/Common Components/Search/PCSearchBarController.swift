@@ -111,7 +111,8 @@ class PCSearchBarController: UIViewController {
         self.heightConstraint = heightConstraint
 
         if let scrollView {
-            setupScrollView(scrollView)
+            scrollView.contentInset.top = Self.defaultHeight
+            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: -Self.defaultHeight), animated: false)
         }
     }
 
