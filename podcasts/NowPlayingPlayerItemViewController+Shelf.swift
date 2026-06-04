@@ -84,6 +84,8 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             let picker = sharedRoutePicker(largeSize: true)
             playerControlsStackView.addArrangedSubview(picker)
             addToShelf(on: picker)
+        case .chromecast:
+            break
         case .shareEpisode:
             if playingEpisode is Episode {
                 let shareBtn = UIButton(frame: CGRect.zero)

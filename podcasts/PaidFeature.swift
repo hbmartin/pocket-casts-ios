@@ -1,4 +1,3 @@
-import Combine
 import PocketCastsServer
 import PocketCastsUtils
 import SwiftUI
@@ -25,7 +24,7 @@ extension PaidFeature {
 class PaidFeature: ObservableObject {
     /// Whether the feature is unlocked for the active subscription tier
     var isUnlocked: Bool {
-        SubscriptionHelper.featuresUnlocked || subscriptionHelper.activeTier >= tier
+        true
     }
 
     /// The minimum subscription level required to unlock this feature
@@ -35,11 +34,6 @@ class PaidFeature: ObservableObject {
     ///
     /// Internally this doesn't change anything with the feature, but allows the app to check its state and display different UI if needed.
     let inEarlyAccess: Bool
-
-    /// The static class to use to check for the active subscription.
-    private let subscriptionHelper: SubscriptionHelper
-
-    private var cancellables = Set<AnyCancellable>()
 
     /// Creates a new paid feature with a minimum tier
     /// - Parameters:
@@ -51,29 +45,9 @@ class PaidFeature: ObservableObject {
          inEarlyAccess: Bool = false,
          subscriptionHelper: SubscriptionHelper = .shared,
          buildEnvironment: BuildEnvironment = .current) {
-        if let betaTier, buildEnvironment == .testFlight {
-            self.tier = betaTier
-        } else {
-            self.tier = tier
-        }
-
+        self.tier = betaTier != nil && buildEnvironment == .testFlight ? betaTier ?? tier : tier
         self.inEarlyAccess = inEarlyAccess
-        self.subscriptionHelper = subscriptionHelper
-
-        addListeners()
-    }
-
-    /// Listen for changes and update the internal state
-    private func addListeners() {
-        Publishers.Merge(
-            ServerNotifications.iapPurchaseCompleted.publisher(),
-            ServerNotifications.subscriptionStatusChanged.publisher()
-        )
-        .receive(on: DispatchQueue.main)
-        .sink { [weak self] _ in
-            self?.objectWillChange.send()
-        }
-        .store(in: &cancellables)
+        _ = subscriptionHelper
     }
 }
 

@@ -8,6 +8,7 @@ SWIFTLINT_FROM_BUILDTOOLS=swiftlint lint --working-directory .. --config .swiftl
 SIMULATOR_NAME = $(shell xcrun simctl list devices available \
 	| grep "iPhone" \
 	| tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$$//')
+SIMULATOR_OS ?= 18.5
 
 .PHONY: help build clean test lint lint_lenient format install_dependencies
 
@@ -58,7 +59,7 @@ test: ## Build and run the PocketCastsTests target with Unit Tests using Xcode
 	xcodebuild test -project podcasts.xcodeproj \
 	    -scheme pocketcasts \
         -only-testing:$(ONLY_TESTING) \
-        -destination 'platform=iOS Simulator,name=$(SIMULATOR_NAME),OS=latest'
+        -destination 'platform=iOS Simulator,name=$(SIMULATOR_NAME),OS=$(SIMULATOR_OS)'
 
 build_staging: ## Builds using the StagingDebug configuration
 	xcodebuild -project podcasts.xcodeproj \
@@ -71,7 +72,7 @@ test_staging: ## Build and run Unit Tests using the StagingDebug configuration
 	xcodebuild test -project podcasts.xcodeproj \
 	    -scheme "Pocket Casts Staging" \
         -only-testing:$(ONLY_TESTING) \
-        -destination 'platform=iOS Simulator,name=$(SIMULATOR_NAME),OS=latest'
+        -destination 'platform=iOS Simulator,name=$(SIMULATOR_NAME),OS=$(SIMULATOR_OS)'
 
 format: ## Lint and autocorrect linter errors
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --autocorrect)

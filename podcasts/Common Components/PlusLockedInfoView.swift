@@ -22,6 +22,7 @@ class PlusLockedInfoView: ThemeableView {
     @IBOutlet var logoImageView: ThemeableImageView! {
         didSet {
             logoImageView.imageNameFunc = AppTheme.pcPlusLogoHorizontalImageName
+            logoImageView.isHidden = true
         }
     }
 
@@ -44,7 +45,7 @@ class PlusLockedInfoView: ThemeableView {
     @IBOutlet var learnMoreButton: ThemeableUIButton! {
         didSet {
             learnMoreButton.style = .primaryInteractive01
-            learnMoreButton.setTitle(L10n.plusMarketingLearnMoreButton, for: .normal)
+            learnMoreButton.setTitle(nil, for: .normal)
             learnMoreButton.titleLabel?.font = UIFont.font(with: .subheadline, maxSizeCategory: .accessibilityMedium)
             learnMoreButton.titleLabel?.adjustsFontForContentSizeCategory = true
             learnMoreButton.titleLabel?.numberOfLines = 0
@@ -111,11 +112,6 @@ class PlusLockedInfoView: ThemeableView {
     }
 
     private func setInfoLabelText() {
-        switch delegate?.displaySource {
-        case .profile:
-            infoLabel.text = L10n.profileHelpSupport
-        default:
-            infoLabel.text = L10n.plusPromoParagraph
-        }
+        infoLabel.text = nil
     }
 }

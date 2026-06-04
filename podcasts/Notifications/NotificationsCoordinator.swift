@@ -11,7 +11,6 @@ enum NotificationType: String {
     case onboardingStaffPicks
     case onboardingUpNext
     case onboardingFilters
-    case onboardingUpsell
 
     case reengagementWeekly
     case reengagementDownloads
@@ -19,7 +18,6 @@ enum NotificationType: String {
     case recommendationsTrending
     case recommendationsYouMightLike
 
-    case upsell
     case newFeatureSuggestedFolders
 
     var title: String {
@@ -34,8 +32,6 @@ enum NotificationType: String {
             return L10n.notificationsOnboardingUpnextTitle
         case .onboardingFilters:
             return L10n.notificationsOnboardingFiltersTitle
-        case .onboardingUpsell:
-            return L10n.notificationsOnboardingUpsellTitle
         case .onboardingStaffPicks:
             return L10n.notificationsOnboardingStaffPicksTitle
         case .reengagementWeekly:
@@ -46,8 +42,6 @@ enum NotificationType: String {
             return L10n.notificationsRecommendationsTrendingTitle
         case .recommendationsYouMightLike:
             return L10n.notificationsRecommendationsYouMightLikeTitle
-        case .upsell:
-            return L10n.notificationsOffersUpsellTitle
         case .newFeatureSuggestedFolders:
             return L10n.notificationsNewFeatureSuggestedFoldersTitle
         }
@@ -65,8 +59,6 @@ enum NotificationType: String {
             return L10n.notificationsOnboardingUpnextBody
         case .onboardingFilters:
             return L10n.notificationsOnboardingFiltersBody
-        case .onboardingUpsell:
-            return L10n.notificationsOnboardingUpsellBody
         case .onboardingStaffPicks:
             return L10n.notificationsOnboardingStaffPicksBody
         case .reengagementWeekly:
@@ -77,8 +69,6 @@ enum NotificationType: String {
             return L10n.notificationsRecommendationsTrendingBody
         case .recommendationsYouMightLike:
             return L10n.notificationsRecommendationsYouMightLikeBody
-        case .upsell:
-            return L10n.notificationsOffersUpsellBody
         case .newFeatureSuggestedFolders:
             return L10n.notificationsNewFeatureSuggestedFoldersBody
         }
@@ -100,8 +90,6 @@ enum NotificationType: String {
             return "pktc://upnext/?location=tab"
         case .onboardingFilters:
             return "pktc://filters"
-        case .onboardingUpsell:
-            return "pktc://upsell"
         case .onboardingStaffPicks:
             return "pktc://discover/staff-picks"
         case .reengagementWeekly:
@@ -112,8 +100,6 @@ enum NotificationType: String {
             return "pktc://discover/trending"
         case .recommendationsYouMightLike:
             return "pktc://discover/recommendations_user"
-        case .upsell:
-            return "pktc://upsell"
         case .newFeatureSuggestedFolders:
             return "pktc://features/suggestedFolders"
         }
@@ -126,8 +112,6 @@ enum NotificationType: String {
         switch self {
             case .onboardingSignUp:
                 return !SyncManager.isUserLoggedIn()
-            case .onboardingUpsell, .upsell:
-                return !SubscriptionHelper.hasActiveSubscription()
             case .recommendationsYouMightLike:
                 return SyncManager.isUserLoggedIn()
             case .newFeatureSuggestedFolders:
@@ -144,8 +128,7 @@ enum NotificationType: String {
             case .reengagementWeekly,
                  .reengagementDownloads,
                  .recommendationsTrending,
-                 .recommendationsYouMightLike,
-                 .upsell:
+                 .recommendationsYouMightLike:
                 return true
             default:
                 return false
@@ -166,13 +149,13 @@ enum NotificationsGroup: CaseIterable {
             case .newEpisodes:
                 return [] // New Episodes are notifications sent by the server, so they don't need a local implementation
             case .dailyReminders:
-                return [.onboardingSignUp, .onboardingImport, .onboardingUpNext, .onboardingFilters, .onboardingThemes, .onboardingStaffPicks, .onboardingUpsell]
+                return [.onboardingSignUp, .onboardingImport, .onboardingUpNext, .onboardingFilters, .onboardingThemes, .onboardingStaffPicks]
             case .recommendations:
                 return [.recommendationsTrending, .recommendationsYouMightLike]
             case .newFeaturesAndTips:
                 return [.newFeatureSuggestedFolders, .reengagementWeekly, .reengagementDownloads]
             case .offers:
-                return [.upsell]
+                return []
         }
     }
 

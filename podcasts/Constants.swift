@@ -466,24 +466,7 @@ enum PlusUpgradeViewSource: String {
     }
 
     func paywallHeadline() -> String {
-        switch self {
-        case .folders:
-            return L10n.paywallDynamicHeadlineFolder
-        case .upNextShuffle:
-            return L10n.paywallDynamicHeadlineUpNextShuffle
-        case .themes:
-            return L10n.paywallDynamicHeadlineThemes
-        case .watch:
-            return L10n.paywallDynamicHeadlineWatch
-        case .icons:
-            return L10n.paywallDynamicHeadlineIcons
-        case .files:
-            return L10n.paywallDynamicHeadlineFiles
-        case .bannerAd:
-            return L10n.paywallDynamicHeadlineBannerAd
-        default:
-            return L10n.plusMarketingTitle
-        }
+        L10n.pocketCasts
     }
 
     static func from(string: String?) -> PlusUpgradeViewSource {

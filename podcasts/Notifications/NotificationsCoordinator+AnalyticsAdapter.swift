@@ -72,14 +72,10 @@ extension NotificationType {
             possibleConditions = [.episodeAddedToUpNext, .episodeBulkAddToUpNext]
         case .onboardingFilters:
             possibleConditions = [.filterCreated]
-        case .onboardingUpsell:
-            possibleConditions  = [.purchaseSuccessful]
         case .onboardingStaffPicks:
             possibleConditions = [.discoverListShowAllTapped]
         case .recommendationsTrending, .recommendationsYouMightLike:
             possibleConditions = [.discoverListShowAllTapped]
-        case .upsell:
-            possibleConditions = [.purchaseSuccessful]
         case .newFeatureSuggestedFolders:
             possibleConditions = [.suggestedFoldersPageShown]
         case .reengagementDownloads:

@@ -1,4 +1,3 @@
-import PocketCastsServer
 import PocketCastsUtils
 import SwiftUI
 
@@ -24,31 +23,12 @@ struct ProfileHeaderView: View {
 
     // MARK: - Private: Views
 
-    /// Shows the profile image with subscription information
+    /// Shows the profile image
     @ViewBuilder
     private func profileImage(_ proxy: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             SubscriptionProfileImage(viewModel: viewModel)
                 .frame(width: Constants.imageSize, height: Constants.imageSize)
-
-            // Show the patron badge
-            if let subscription = viewModel.subscription {
-                if subscription.tier == .patron {
-                    SubscriptionBadge(tier: subscription.tier)
-                        .padding(.top, -10)
-                }
-
-                // Display the expiration date if needed
-                if subscription.expirationProgress < 1, let expirationDate = subscription.expirationDate {
-                    let time = TimeFormatter.shared.appleStyleTillString(date: expirationDate) ?? L10n.timeFormatNever
-                    let message = L10n.subscriptionExpiresIn(time)
-
-                    Text(message.localizedUppercase)
-                        .font(style: .caption, weight: .semibold)
-                        .foregroundColor(theme.red)
-                        .padding(.top, Constants.spacing)
-                }
-            }
         }
     }
 
@@ -109,18 +89,6 @@ struct ProfileHeaderView: View {
                 .buttonStyle(ProfileStrokeButtonStyle())
             }
         }
-        // The top spacing appears too high when showing the badge or exp date for some reason so we'll offset it a bit to balance it out
-        .padding(.top, {
-            guard
-                let subscription = viewModel.subscription,
-                subscription.tier == .patron,
-                subscription.expirationDate != nil
-            else {
-                return 0
-            }
-
-            return -5
-        }())
     }
 
     /// Renders the podcast, listening, and saved time stats

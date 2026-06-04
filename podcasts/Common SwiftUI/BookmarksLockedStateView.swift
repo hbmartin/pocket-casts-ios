@@ -31,7 +31,7 @@ class BookmarksUpgradeViewModel: ObservableObject {
     }
 
     var upgradeLabel: String {
-        L10n.upgradeToPlan(feature.tier == .patron ? L10n.patron : L10n.pocketCastsPlusShort)
+        L10n.enableItNow
     }
 
     func upgradeTapped() {

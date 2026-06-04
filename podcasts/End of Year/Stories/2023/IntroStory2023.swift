@@ -98,6 +98,30 @@ struct IntroStory2023: ShareableStory {
     }
 }
 
+private struct IconParallaxModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @StateObject var manager: MotionManager = .init()
+
+    func body(content: Content) -> some View {
+        let roll = manager.roll * 10
+        let pitch = manager.pitch
+        content
+            .offset(x: roll, y: pitch * 10)
+            .rotation3DEffect(.degrees(roll), axis: (0, 1, 0), perspective: 1)
+            .rotation3DEffect(.degrees(pitch * 3), axis: (1, 0, 0), perspective: 1)
+            .onAppear() {
+                if !reduceMotion {
+                    manager.start()
+                }
+            }
+            .onDisappear() {
+                if !reduceMotion {
+                    manager.stop()
+                }
+            }
+    }
+}
+
 private struct TwentyThreeParallaxModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject var manager: MotionManager = .init(relativeToWhenStarting: true)

@@ -5,15 +5,7 @@ open class SubscriptionHelper: NSObject {
     public static let shared = SubscriptionHelper()
 
     public static var hasCancelledSubscription: Bool {
-        let renewing = SubscriptionHelper.hasRenewingSubscription()
-        let giftDays = SubscriptionHelper.subscriptionGiftDays()
-
-        if let expiryDate = SubscriptionHelper.subscriptionRenewalDate(), expiryDate > Date(), giftDays == 0 {
-            return !renewing
-        }
-
-        let timeToSubscriptionExpiry = SubscriptionHelper.timeToSubscriptionExpiry() ?? 0
-        return !renewing && timeToSubscriptionExpiry < 0 && giftDays == 0
+        false
     }
 
     /// Returns the users active subscription tier or .none if they don't currently have one
@@ -24,7 +16,7 @@ open class SubscriptionHelper: NSObject {
 
     /// Returns the users active subscription type or .none if they don't currently have one
     public static var activeSubscriptionType: SubscriptionType {
-        hasActiveSubscription() ? subscriptionType() : .none
+        .plus
     }
 
     /// Whether paid feature gates should be opened independently of billing state.
@@ -32,23 +24,7 @@ open class SubscriptionHelper: NSObject {
 
     /// Returns the users active subscription tier or .none if they don't currently have one
     public static var activeTier: SubscriptionTier {
-        guard hasActiveSubscription() else {
-            return .none
-        }
-
-        let tier = subscriptionTier
-
-        // Fallback handling
-        // If the server isn't returning the subscription tier yet then the tier will be none
-        // If the user has an active subscription, and the tier is none, and their subscription type is plus
-        // Then fallback to returning plus as the tier
-        //
-        // This should be removed after the Patron server changes have been pushed to production
-        guard tier == .none, subscriptionType() == .plus else {
-            return tier
-        }
-
-        return .plus
+        .patron
     }
 
     /// The users subscription tier, or .none if there isn't one available
@@ -65,8 +41,7 @@ open class SubscriptionHelper: NSObject {
     }
 
     public class func hasActiveSubscription() -> Bool {
-        let status = UserDefaults.standard.bool(forKey: ServerConstants.UserDefaults.subscriptionPaid)
-        return status
+        true
     }
 
     public class func hasRenewingSubscription() -> Bool {

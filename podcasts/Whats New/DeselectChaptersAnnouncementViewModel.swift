@@ -1,30 +1,24 @@
 import Foundation
-import PocketCastsServer
-import PocketCastsUtils
 
 class DeselectChaptersAnnouncementViewModel {
     var isPatronAnnouncementEnabled: Bool {
-        PaidFeature.deselectChapters.isUnlocked
+        false
     }
 
-    // Only for TestFlight early access
     var isPlusAnnouncementEnabled: Bool {
-        PaidFeature.deselectChapters.tier == .plus
-        && SubscriptionHelper.activeTier == .plus
+        false
     }
 
     var isPlusFreeAnnouncementEnabled: Bool {
-        PaidFeature.deselectChapters.tier == .plus
-        && SubscriptionHelper.activeTier < .patron
-        && BuildEnvironment.current == .appStore
+        false
     }
 
     var plusFreeMessage: String {
-        SubscriptionHelper.hasActiveSubscription() ? L10n.announcementDeselectChaptersPlus : L10n.announcementDeselectChaptersFree
+        ""
     }
 
     var plusFreeButtonTitle: String {
-        SubscriptionHelper.hasActiveSubscription() ? L10n.gotIt : L10n.upgradeToPlus
+        L10n.gotIt
     }
 
     func buttonAction() {

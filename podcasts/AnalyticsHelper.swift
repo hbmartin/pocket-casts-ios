@@ -274,7 +274,6 @@ class AnalyticsHelper {
                 logEvent("profile_tab_opened", parameters: nil)
             case .upNext:
                 logEvent("upnext_tab_opened", parameters: nil)
-            case .discover: break // we don't log this case, since it's handled in did load
             }
         }
     #endif

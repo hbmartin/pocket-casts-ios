@@ -169,7 +169,7 @@ struct InterestsView: View {
                         Spacer().frame(height: 40)
                         WrappingHStack(alignment: .center, horizontalSpacing: 8, verticalSpacing: 8, fitContentWidth: false) {
                             ForEach(viewModel.categories, id: \.self) { category in
-                                categoryButton(for: category, index: viewModel.positionOfCategory(category) ?? 0).transition(.fade)
+                                categoryButton(for: category, index: viewModel.positionOfCategory(category) ?? 0).transition(.opacity)
                             }
                         }
                         if !showMore {
