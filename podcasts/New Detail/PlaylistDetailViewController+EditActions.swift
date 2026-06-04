@@ -14,9 +14,6 @@ extension PlaylistDetailViewController {
 
         let optionsPicker = OptionsPicker(title: nil)
 
-        let chromecastAction = chromecastAction()
-        optionsPicker.addAction(action: chromecastAction)
-
         let multiSelectAction = multiSelectAction()
         optionsPicker.addAction(action: multiSelectAction)
 
@@ -48,15 +45,6 @@ extension PlaylistDetailViewController {
         OptionAction(label: L10n.selectEpisodes, icon: "option-multiselect") { [weak self] in
             self?.track(.filterSelectEpisodesTapped)
             self?.isMultiSelectEnabled = true
-        }
-    }
-
-    // MARK: - Chromecast
-
-    private func chromecastAction() -> OptionAction {
-        OptionAction(label: "Chromecast", icon: "nav_cast_off") { [weak self] in
-            self?.track(.filterChromeCastTapped)
-            self?.castButtonTapped()
         }
     }
 

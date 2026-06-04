@@ -2966,7 +2966,6 @@
 		3F584DED2F56811B005A3593 /* End of Year */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "End of Year"; sourceTree = "<group>"; };
 		3F584E3E2F568131005A3593 /* Whats New */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Whats New"; sourceTree = "<group>"; };
 		3F584E492F568154005A3593 /* Theme */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Theme; sourceTree = "<group>"; };
-		3F584E4D2F5682BA005A3593 /* Google Cast */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Google Cast"; sourceTree = "<group>"; };
 		3F584E4F2F568314005A3593 /* CarPlay */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = CarPlay; sourceTree = "<group>"; };
 		3F584E7B2F5683A8005A3593 /* Sharing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Sharing; sourceTree = "<group>"; };
 		3F584E952F5683B2005A3593 /* Up Next History */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Up Next History"; sourceTree = "<group>"; };
@@ -2975,7 +2974,6 @@
 		3F584F3E2F568437005A3593 /* Ratings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Ratings; sourceTree = "<group>"; };
 		3F584FA42F568449005A3593 /* Onboarding */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Onboarding; sourceTree = "<group>"; };
 		3F584FEF2F5685CE005A3593 /* Episode Cells */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Episode Cells"; sourceTree = "<group>"; };
-		3F584FF02F5685EB005A3593 /* Sonos */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Sonos; sourceTree = "<group>"; };
 		3F584FF12F568604005A3593 /* Main */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Main; sourceTree = "<group>"; };
 		3F584FF22F568621005A3593 /* Syncing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Syncing; sourceTree = "<group>"; };
 		3F584FF32F56869B005A3593 /* Folders */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FF3248CC2FACCDB300226E58 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Folders; sourceTree = "<group>"; };
@@ -3910,7 +3908,6 @@
 				3F584FF32F56869B005A3593 /* Folders */,
 				3F584FF22F568621005A3593 /* Syncing */,
 				3F584FF12F568604005A3593 /* Main */,
-				3F584FF02F5685EB005A3593 /* Sonos */,
 				3F584FEF2F5685CE005A3593 /* Episode Cells */,
 				3F584E7B2F5683A8005A3593 /* Sharing */,
 				3F584E952F5683B2005A3593 /* Up Next History */,
@@ -4679,7 +4676,6 @@
 			children = (
 				3F584E4F2F568314005A3593 /* CarPlay */,
 				371E0318452B7C751D0C5611 /* Fingerprint */,
-				3F584E4D2F5682BA005A3593 /* Google Cast */,
 				3F584E492F568154005A3593 /* Theme */,
 				3F747A542F5598A2004C7FF6 /* Playback */,
 				3F747A532F5553A1004C7FF6 /* Extensions */,
@@ -5779,7 +5775,6 @@
 				3F584DED2F56811B005A3593 /* End of Year */,
 				3F584E3E2F568131005A3593 /* Whats New */,
 				3F584E492F568154005A3593 /* Theme */,
-				3F584E4D2F5682BA005A3593 /* Google Cast */,
 				3F584E4F2F568314005A3593 /* CarPlay */,
 				3F584E7B2F5683A8005A3593 /* Sharing */,
 				3F584E952F5683B2005A3593 /* Up Next History */,
@@ -5788,7 +5783,6 @@
 				3F584F3E2F568437005A3593 /* Ratings */,
 				3F584FA42F568449005A3593 /* Onboarding */,
 				3F584FEF2F5685CE005A3593 /* Episode Cells */,
-				3F584FF02F5685EB005A3593 /* Sonos */,
 				3F584FF12F568604005A3593 /* Main */,
 				3F584FF22F568621005A3593 /* Syncing */,
 				3F584FF32F56869B005A3593 /* Folders */,

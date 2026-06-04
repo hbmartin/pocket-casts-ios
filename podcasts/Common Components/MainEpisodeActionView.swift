@@ -114,11 +114,8 @@ class MainEpisodeActionView: UIView {
 
         // update button state
         let isPlaying = (isCurrent && PlaybackManager.shared.playing())
-        let googleCastConnected = GoogleCastManager.sharedManager.connected()
         let primaryRowActionIsDownload = Settings.primaryRowAction() == .download
-        if googleCastConnected {
-            state = isPlaying ? .pause : .play
-        } else if episode.played() {
+        if episode.played() {
             state = episode.downloaded(pathFinder: DownloadManager.shared) ? .playedPlay : .playedDownload
         } else if episode.playbackError() || episode.downloadFailed() {
             state = .error

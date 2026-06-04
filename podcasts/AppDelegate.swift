@@ -77,8 +77,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             defaults.synchronize()
         }
 
-        GoogleCastManager.sharedManager.setup()
-
         setupRoutes()
 
         if Settings.shouldResultEndOfYearSyncStatus {
@@ -198,7 +196,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
-        GoogleCastManager.sharedManager.teardown()
         RefreshManager.shared.cancelAllRefreshes()
 
         badgeHelper.teardown()

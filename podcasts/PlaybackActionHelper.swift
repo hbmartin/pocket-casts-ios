@@ -9,13 +9,6 @@ class PlaybackActionHelper {
 
         AutoplayHelper.shared.playedFrom(playlist: playlist)
 
-        #if !os(tvOS)
-        if GoogleCastManager.sharedManager.connectedOrConnectingToDevice() {
-            PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
-            return
-        }
-        #endif
-
         if !episode.downloaded(pathFinder: DownloadManager.shared) {
             NetworkUtils.shared.streamEpisodeRequested({
                 performPlay(episode: episode, playlistUuid: playlistUuid, podcastUuid: podcastUuid)

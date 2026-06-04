@@ -149,11 +149,6 @@ struct OnboardingFlow: AnalyticsSourceProvider {
         /// This is the same as the onboarding flow
         case loggedOut = "logged_out"
 
-        /// When the user is brought into the onboarding flow from the Sonos connect view
-        /// After the user logs in or creates an account, the flow is dismissed so they can
-        /// continue with the Sonos connection process
-        case sonosLink = "sonos_link"
-
         /// When the user was logged out due to a server or token issue, not as a result of user interaction and is
         /// asked to sign in again. See the `BackgroundSignOutListener`
         case forcedLoggedOut = "forced_logged_out"
@@ -178,7 +173,7 @@ struct OnboardingFlow: AnalyticsSourceProvider {
         /// should be dismissed right away
         var shouldDismiss: Bool {
             switch self {
-            case .sonosLink, .forcedLoggedOut, .promoCode, .referralCode:
+            case .forcedLoggedOut, .promoCode, .referralCode:
                 return true
             default:
                 return false

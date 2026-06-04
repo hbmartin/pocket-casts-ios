@@ -215,9 +215,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     var errorAutoDismissWork: DispatchWorkItem?
 
-    #if !APPCLIP
-    let chromecastBtn = PCAlwaysVisibleCastBtn()
-    #endif
     let routePicker = PCRoutePickerView(frame: CGRect.zero)
 
     #if !APPCLIP
@@ -247,10 +244,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         let upNextPan = UIPanGestureRecognizer(target: self, action: #selector(panGestureRecognizerHandler(_:)))
         upNextPan.delegate = self
         view.addGestureRecognizer(upNextPan)
-
-        chromecastBtn.inactiveTintColor = ThemeColor.playerContrast02()
-        chromecastBtn.addTarget(self, action: #selector(googleCastTapped), for: .touchUpInside)
-        chromecastBtn.isPointerInteractionEnabled = true
 
         routePicker.delegate = self
 
@@ -516,18 +509,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         }
 
         options.present(from: self)
-    }
-
-    #if !APPCLIP
-    @objc func googleCastTapped() {
-        shelfButtonTapped(.chromecast)
-
-        let themeOverride = Theme.sharedTheme.activeTheme.isDark ? Theme.sharedTheme.activeTheme : .dark
-        let castController = CastToViewController(themeOverride: themeOverride)
-        let navController = SJUIUtils.navController(for: castController, themeOverride: themeOverride)
-        navController.modalPresentationStyle = .fullScreen
-
-        present(navController, animated: true, completion: nil)
     }
 
     private func toggleTranscript() {

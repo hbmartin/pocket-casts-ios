@@ -43,7 +43,7 @@ final class FakeNavBarButton: UIButton, FakeNavBarStylable {
     }
 
     /// Applies the standard size, corner radius, and initial transparent chrome to any UIButton.
-    /// Used for buttons that can't subclass `NavBarButton` (e.g. `PCGoogleCastButton`).
+    /// Used for buttons that can't subclass `NavBarButton`.
     static func applyStyle(to button: UIButton) {
         let buttonSize: CGFloat = 32
         let imageSize: CGFloat = 20

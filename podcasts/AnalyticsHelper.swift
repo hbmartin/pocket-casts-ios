@@ -202,10 +202,6 @@ class AnalyticsHelper {
         logEvent("discover_force_touch", parameters: nil)
     }
 
-    class func didConnectToChromecast() {
-        logEvent("connected_to_chromecast", parameters: nil)
-    }
-
     class func didChooseIcon(iconName: String?) {
         if let name = iconName {
             // Firebase doesn't like dashes (Event name must contain only letters, numbers, or underscores)

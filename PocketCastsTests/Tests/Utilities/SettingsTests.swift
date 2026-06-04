@@ -22,7 +22,6 @@ final class SettingsTests: XCTestCase {
             .transcript,
             .goToPodcast,
             .starEpisode,
-            .chromecast,
             .archive
         ]
         return actions

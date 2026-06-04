@@ -264,25 +264,6 @@ extension AppDelegate {
             return true
         }
 
-        // Sonos App Link
-        JLRoutes.global().addRoute("/applink/sonos/*") { [weak self] parameters -> Bool in
-            guard let strongSelf = self, let originalUrl = parameters[JLRouteURLKey] as? URL else { return false }
-
-            let redirectUri = originalUrl.absoluteString.replacingOccurrences(of: "pktc://applink/sonos/", with: "")
-
-            if let modalController = strongSelf.modalController {
-                modalController.dismiss(animated: false, completion: nil)
-            }
-
-            let sonosController = SonosLinkController()
-            sonosController.callbackUri = redirectUri
-            let navController = SJUIUtils.navController(for: sonosController)
-            strongSelf.modalController = navController
-            SceneHelper.rootViewController()?.present(navController, animated: true, completion: nil)
-
-            return true
-        }
-
         JLRoutes.global().addRoute("social/share/:showOrPrivate/:sharingId") { [weak self] parameters -> Bool in
             guard let strongSelf = self, let folder = parameters["showOrPrivate"] as? String, let sharingId = parameters["sharingId"] as? String, let controller = SceneHelper.rootViewController() else { return false }
             var sharePath = "social/share/\(folder)/\(sharingId)"

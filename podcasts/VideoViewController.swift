@@ -91,11 +91,7 @@ class VideoViewController: SimpleNotificationsViewController, AVPictureInPicture
 
     @IBOutlet var airplayButton: UIButton!
 
-    #if APPCLIP
     @IBOutlet var castButton: UIButton!
-    #else
-    @IBOutlet var castButton: PCGoogleCastButton!
-    #endif
 
     private var pipController: AVPictureInPictureController?
     @IBOutlet var controlsOverlay: UIView! {
@@ -267,7 +263,6 @@ class VideoViewController: SimpleNotificationsViewController, AVPictureInPicture
         addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(update))
         addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(playbackFinished))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(trackChanged))
-        addCustomObserver(Constants.Notifications.googleCastStatusChanged, selector: #selector(update))
     }
 
     private func removeUiNotificationObservers() {

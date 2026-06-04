@@ -13,7 +13,6 @@ extension NowPlayingPlayerItemViewController {
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackTrackChanged))
         addCustomObserver(Constants.Notifications.videoPlaybackEngineSwitched, selector: #selector(videoPlaybackEngineSwitched))
         addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update(notification:)))
-        addCustomObserver(Constants.Notifications.googleCastStatusChanged, selector: #selector(update(notification:)))
         addCustomObserver(Constants.Notifications.playbackEffectsChanged, selector: #selector(update(notification:)))
         addCustomObserver(.episodeEmbeddedArtworkLoaded, selector: #selector(update(notification:)))
         addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(updateChapterInfo))
@@ -92,10 +91,6 @@ extension NowPlayingPlayerItemViewController {
         timeSlider.rightColor = ThemeColor.playerContrast06()
         timeSlider.popupColor = ThemeColor.playerContrast06()
         timeSlider.popupTextColor = ThemeColor.playerContrast01()
-
-        #if !APPCLIP
-        chromecastBtn.activeTintColor = highlightColor
-        #endif
     }
 
     func updatePlayPauseButton(isPlaying: Bool) {

@@ -20,8 +20,6 @@ struct Constants {
         static let playbackFailed = NSNotification.Name(rawValue: "playbackFailed")
         static let playbackPositionSaved = NSNotification.Name(rawValue: "SJPlayPosSaved")
         static let viewWillTransitionToSize = NSNotification.Name(rawValue: "SJViewSizeChange")
-        static let googleCastStatusChanged = NSNotification.Name(rawValue: "SJGCStatusChanged")
-        static let googleCastMultiZoneStatusChanged = NSNotification.Name(rawValue: "SJGCMultiStatusChanged")
         static let dimmingViewTapped = NSNotification.Name(rawValue: "SJDimViewTapped")
         static let downloadProgress = NSNotification.Name(rawValue: "SJDwnProg")
         static let podcastImageReCacheRequired = NSNotification.Name(rawValue: "PCPodcastImageReCacheRequired")
@@ -437,7 +435,6 @@ enum PlusUpgradeViewSource: String {
     case headphoneSettings =  "headphone_settings"
     case bookmarksShelfAction = "bookmarks_shelf_action"
     case whatsNew
-    case sonosLink = "sonos_link"
     case deepLink
 
     /// Converts the enum into a Firebase promotionId, this matches the values set on Android
