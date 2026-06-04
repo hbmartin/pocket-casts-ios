@@ -9,7 +9,7 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, discover, profile, upNext }
+    enum Tab: Int { case podcasts, filter, upNext, profile }
 
     var pcTabs = [Tab]()
 
@@ -907,8 +907,6 @@ private extension MainTabBarController {
             event = .podcastsTabOpened
         case .filter:
             event = .filtersTabOpened
-        case .discover:
-            event = .discoverTabOpened
         case .profile:
             event = .profileTabOpened
         case .upNext:

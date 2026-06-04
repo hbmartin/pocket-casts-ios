@@ -967,7 +967,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func categoryTapped(_ category: String) {
-        NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey, data: [NavigationManager.discoverCategoryKey: category])
+        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
         Analytics.track(.podcastScreenCategoryTapped, properties: ["category": category])
     }
 

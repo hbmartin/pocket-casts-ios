@@ -17,9 +17,6 @@ class NavigationManager {
 
     private static let homePageKey = "homePage"
     static let podcastListPageKey = "podcastList"
-    static let discoverPageKey = "discoverPage"
-    static let discoverCategoryKey = "discoverCategory"
-    static let discoverListKey = "discoverList"
 
     static let filterPageKey = "filterPage"
     static let filterUuidKey = "filterUuid"
@@ -139,8 +136,6 @@ class NavigationManager {
             mainController?.navigateToEpisode(uuid, podcastUuid: data[NavigationManager.podcastKey] as? String, timestamp: data[NavigationManager.episodeTimestamp] as? TimeInterval)
         } else if place == NavigationManager.podcastListPageKey {
             mainController?.navigateToPodcastList(animated)
-        } else if place == NavigationManager.discoverPageKey {
-            navigateToDiscover(data: data, animated: animated)
         } else if place == NavigationManager.filterPageKey {
             if let data, let filterUuid = data[NavigationManager.filterUuidKey] as? String, let filter = DataManager.sharedManager.findPlaylist(uuid: filterUuid) {
                 mainController?.navigateToFilter(filter, animated: animated)
@@ -201,23 +196,6 @@ class NavigationManager {
                 let source = data?[NavigationManager.manualPlaylistsChooserSourceKey] as? String ?? "swipe"
                 mainController?.presentManualPlaylistsChooser(for: episode, rootViewController: root, source: source)
             }
-        }
-    }
-
-    func navigateToDiscover(data: NSDictionary?, animated: Bool) {
-        guard let data else {
-            mainController?.navigateToDiscover(animated)
-            return
-        }
-
-        if let category = data[NavigationManager.discoverCategoryKey] as? String {
-            mainController?.navigateToDiscover(category: category, animated: animated)
-            return
-        }
-
-        if let listId = data[NavigationManager.discoverListKey] as? String {
-            mainController?.navigateToDiscover(listID: listId, animated: animated)
-            return
         }
     }
 

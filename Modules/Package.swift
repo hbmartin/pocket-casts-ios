@@ -173,36 +173,14 @@ let package = Package(
 
 // MARK: - XcodeSupport (Xcode Targets)
 
-// Below are dependencies for the respective Xcode targets.
-//
-// You can add internal or third-party dependencies to these targets or even
-// source files and resources.
-//
-// - note: SwiftPM automatically detects which modules are shared between
-//   multiple targets and decides when to use dynamic frameworks.
-
 enum XcodeTargetNames {
-    static let appClip = "Pocket Casts App Clip"
-    static let notificationExtension = "NotificationExtension"
     static let podcasts = "podcasts"
-    static let pocketCastsWatchApp = "Pocket Casts Watch App"
-    static let podcastsIntents = "PodcastsIntents"
-    static let podcastsIntentsUI = "PodcastsIntentsUI"
-    static let widgetExtension = "WidgetExtension"
-    static let pocketCastsTvApp = "Pocket Casts TV App"
 }
 
 enum XcodeSupport {
     static var products: [Product] {
         [
-            XcodeTargetNames.appClip,
-            XcodeTargetNames.notificationExtension,
             XcodeTargetNames.podcasts,
-            XcodeTargetNames.pocketCastsWatchApp,
-            XcodeTargetNames.podcastsIntents,
-            XcodeTargetNames.podcastsIntentsUI,
-            XcodeTargetNames.widgetExtension,
-            XcodeTargetNames.pocketCastsTvApp,
         ].map { .supportingProduct(forXcodeTarget: $0) }
     }
 
@@ -233,72 +211,6 @@ enum XcodeSupport {
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
                     .product(name: "Fingerprint", package: "pocket-casts-ios-fingerprint"),
                     "EndOfYear",
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.appClip,
-                dependencies: [
-                    "PocketCastsDataModel",
-                    "PocketCastsServer",
-                    "PocketCastsUtils",
-                    "PocketCastsDependencyInjection",
-                    "EventHorizonSDK",
-                    .product(name: "AutomatticTracks", package: "Automattic-Tracks-iOS"),
-                    .product(name: "FirebaseAnalyticsWithoutAdIdSupport", package: "firebase-ios-sdk"),
-                    .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
-                    .product(name: "Kingfisher", package: "Kingfisher"),
-                    .product(name: "Lottie", package: "lottie-ios"),
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.pocketCastsWatchApp,
-                dependencies: [
-                    "PocketCastsDataModel",
-                    "PocketCastsServer",
-                    "PocketCastsUtils",
-                    "PocketCastsDependencyInjection",
-                    "EventHorizonSDK",
-                    .product(name: "AutomatticTracks", package: "Automattic-Tracks-iOS"),
-                    .product(name: "Kingfisher", package: "Kingfisher"),
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.notificationExtension,
-                dependencies: [
-                    "PocketCastsServer",
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.podcastsIntents,
-                dependencies: [
-                    .product(name: "Fuse", package: "fuse-swift"),
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.podcastsIntentsUI,
-                dependencies: [
-                    .product(name: "Fuse", package: "fuse-swift"),
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.widgetExtension,
-                dependencies: [
-                    "PocketCastsUtils",
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.pocketCastsTvApp,
-                dependencies: [
-                    "PocketCastsUtils",
-                    "PocketCastsDataModel",
-                    "PocketCastsServer",
-                    "PocketCastsDependencyInjection",
-                    "EventHorizonSDK",
-                    .product(name: "AutomatticTracks", package: "Automattic-Tracks-iOS"),
-                    .product(name: "Kingfisher", package: "Kingfisher"),
-                    .product(name: "SwiftSubtitles", package: "SwiftSubtitles"),
-                    .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
-                    .product(name: "DifferenceKit", package: "DifferenceKit"),
                 ]
             ),
         ]

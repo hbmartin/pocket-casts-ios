@@ -240,7 +240,7 @@ class ListeningHistoryViewController: PCViewController {
                 config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("options-history").renderingMode(.template) }, actions: [
                     .init(title: L10n.goToDiscover, action: {
                         Analytics.track(.listeningHistoryDiscoverButtonTapped)
-                        NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey)
+                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
                     })
                 ])
 

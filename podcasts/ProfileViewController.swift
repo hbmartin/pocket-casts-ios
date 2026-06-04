@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     @IBOutlet var plusInfoView: PlusLockedInfoView! {
         didSet {
-            plusInfoView.isHidden = Settings.plusInfoDismissedOnProfile() || SubscriptionHelper.hasActiveSubscription()
+            plusInfoView.isHidden = true
             plusInfoView.delegate = self
         }
     }
