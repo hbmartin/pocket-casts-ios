@@ -89,7 +89,7 @@ extension AppDelegate {
                     AnalyticsHelper.forceTouchMarkPlayed()
                 }
             } else if shortcut == "discover" {
-                NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey, data: nil)
+                NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, data: nil)
                 AnalyticsHelper.forceTouchDiscover()
             }
 
@@ -152,11 +152,7 @@ extension AppDelegate {
                 Analytics.track(.widgetInteraction, properties: ["action": "discover"])
             }
 
-            var data: NSDictionary?
-            if let pathComponents = paramDict[JLRouteWildcardComponentsKey] as? [String], let itemID = pathComponents.first {
-                data = [NavigationManager.discoverListKey: itemID]
-            }
-            NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey, data: data)
+            NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, data: nil)
 
             return true
         }

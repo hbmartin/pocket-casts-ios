@@ -72,7 +72,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
                 actions: [
                     .init(title: L10n.goToDiscover) {
                         Analytics.track(.upNextDiscoverButtonTapped)
-                        NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey)
+                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
                     }
                 ])
             return emptyCell

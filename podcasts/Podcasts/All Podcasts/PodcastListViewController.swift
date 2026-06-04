@@ -19,10 +19,9 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     @IBOutlet var addPodcastBtn: ThemeableButton! {
         didSet {
-            addPodcastBtn.buttonTitle = L10n.podcastGridDiscoverPodcasts
+            addPodcastBtn.buttonTitle = L10n.podcastGridNoPodcastsTitle
             addPodcastBtn.buttonTapped = {
-                Analytics.track(.podcastsListDiscoverButtonTapped)
-                NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey, data: nil)
+                self.presentAddPodcastFlow()
             }
         }
     }

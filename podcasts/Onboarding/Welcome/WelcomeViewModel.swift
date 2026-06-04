@@ -38,7 +38,7 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
             trackNewsletterOptIn()
             track(.welcomeDiscoverTapped)
             navigationController?.dismiss(animated: true)
-            NavigationManager.sharedManager.navigateTo(NavigationManager.discoverPageKey, data: nil)
+            NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, data: nil)
         }
     }
 
