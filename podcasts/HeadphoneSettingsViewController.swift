@@ -139,6 +139,11 @@ class HeadphoneSettingsViewController: PCTableViewController {
             self?.reloadData()
         }
 
+        guard selection.isUnlocked else {
+            reloadData()
+            return
+        }
+
         action()
     }
 

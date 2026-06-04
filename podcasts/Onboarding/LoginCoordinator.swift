@@ -226,9 +226,13 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
     }
 
     private func handleDismiss() {
-        navigationController?.dismiss(animated: true) {
-            DispatchQueue.main.async {
-                OnboardingFlow.shared.reset()
+        if OnboardingFlow.shared.source == .promoCode {
+            navigationController?.popToRootViewController(animated: true)
+        } else {
+            navigationController?.dismiss(animated: true) {
+                DispatchQueue.main.async {
+                    OnboardingFlow.shared.reset()
+                }
             }
         }
     }
@@ -241,7 +245,6 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
         Analytics.track(.userSignInFailed, properties: ["source": socialAuthProvider ?? "password", "error_code": (error as NSError).code])
         SJUIUtils.showAlert(title: L10n.accountSsoFailed, message: nil, from: navigationController)
     }
-
 }
 
 // MARK: - Helpers

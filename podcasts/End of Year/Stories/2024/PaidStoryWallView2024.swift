@@ -42,13 +42,6 @@ struct PaidStoryWallView2024: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     StoryFooter2024(title: L10n.playback2024PlusUpsellTitle, description: L10n.playback2024PlusUpsellDescription, subscriptionTier: .plus)
-                    Button(L10n.playback2024PlusUpsellButtonTitle) {
-                        // Every feature is free now, so there is no upsell to present.
-                    }
-                    .allowsHitTesting(true)
-                    .buttonStyle(BasicButtonStyle(textColor: .black, backgroundColor: Color.clear, borderColor: .black))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 6)
                 }
             }
         }

@@ -1956,6 +1956,21 @@
 /* Title of the message on the podcast grid when you have no podcasts */
 "podcast_grid_no_podcasts_title" = "Time to add some Podcasts!";
 
+/* Title for the alert that lets a user add a podcast by feed URL or import OPML. */
+"podcast_add_alert_title" = "Add Podcast";
+
+/* Placeholder shown in the add podcast feed URL text field. */
+"podcast_add_feed_url_placeholder" = "https://example.com/feed.xml";
+
+/* Button title that submits a feed URL in the add podcast alert. */
+"podcast_add_feed_url_action" = "Add Feed URL";
+
+/* Button title that opens the add podcast flow. */
+"podcast_add_button_title" = "Add Podcast";
+
+/* Button title that opens the Podcasts tab from another empty state. */
+"podcast_list_go_to_podcasts_action" = "Go to Podcasts";
+
 /* Title for the options box that allows the user to pick from the various grouping options. */
 "podcast_group_options_title" = "GROUP BY";
 
@@ -6252,5 +6267,3 @@
 
 /* tv home Video section title */
 "tv_home_video_section_title" = "Made for TV";
-
-

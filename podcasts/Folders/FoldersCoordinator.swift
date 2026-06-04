@@ -65,6 +65,7 @@ class FoldersCoordinator: NSObject {
     func showUpsellIfNeeded(from vc: UIViewController) {
         guard FeatureFlag.suggestedFolders.enabled,
               vc.presentedViewController == nil,
+              !SubscriptionHelper.featuresUnlocked,
               !SubscriptionHelper.hasActiveSubscription(),
               DateUtil.hasEnoughTimePassed(since: startingTime, time: Constants.intervalAfterStartup),
               Settings.suggestedFoldersUpsellCount < Constants.maxUpsellDisplays,
@@ -131,9 +132,17 @@ class FoldersCoordinator: NSObject {
                     Settings.suggestedFoldersUpsellCount += 1
                 }
                 return
-            case .applySuggestedFolders, .createdManualFolder:
-                //Show upsell flow
-                startUpsellFlow(from: vc, source: source, upgradeSource: .suggestedFolders)
+            case .applySuggestedFolders(let folders):
+                vc.dismiss(animated: true, completion: nil)
+                applySuggestedFolders(folders)
+            case .createdManualFolder(let folderUuid):
+                guard let folder = dataManager.findFolder(uuid: folderUuid) else {
+                    vc.dismiss(animated: true, completion: nil)
+                    return
+                }
+                vc.dismiss(animated: true, completion: { [weak self] in
+                    self?.navigationManager.navigateTo(NavigationManager.folderPageKey, data: [NavigationManager.folderKey: folder])
+                })
                 return
             }
         }
@@ -178,11 +187,6 @@ class FoldersCoordinator: NSObject {
         folder.sortType = Int32(Settings.homeFolderSortOrder().old.rawValue)
         dataManager.save(folder: folder)
         return folder
-    }
-
-    private func startUpsellFlow(from vc: UIViewController, source: AnalyticsSource, upgradeSource: PlusUpgradeViewSource) {
-        // Folders are free for everyone now, so there is no upsell to present.
-        vc.dismiss(animated: false)
     }
 
     private var cancellables = Set<AnyCancellable>()

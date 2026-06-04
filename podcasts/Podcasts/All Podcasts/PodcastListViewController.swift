@@ -19,9 +19,9 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     @IBOutlet var addPodcastBtn: ThemeableButton! {
         didSet {
-            addPodcastBtn.buttonTitle = L10n.podcastGridNoPodcastsTitle
-            addPodcastBtn.buttonTapped = {
-                self.presentAddPodcastFlow()
+            addPodcastBtn.buttonTitle = L10n.podcastAddButtonTitle
+            addPodcastBtn.buttonTapped = { [weak self] in
+                self?.presentAddPodcastFlow()
             }
         }
     }
