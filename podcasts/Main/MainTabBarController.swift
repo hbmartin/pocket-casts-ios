@@ -94,7 +94,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTarBarTraitCollectionOnIpadForiOS18()
 
-        pcTabs = [.podcasts, .filter, .discover, .upNext, .profile]
+        pcTabs = [.podcasts, .filter, .upNext, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -104,21 +104,17 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let filtersViewController = PlaylistsViewController()
         filtersViewController.tabBarItem = UITabBarItem(title: L10n.playlists, image: UIImage(named: "playlists_tab"), tag: pcTabs.firstIndex(of: .filter)!)
 
-        let discoverViewController = DiscoverCollectionViewController(coordinator: DiscoverCoordinator())
-
-        discoverViewController.tabBarItem = UITabBarItem(title: L10n.discover, image: UIImage(named: "discover_tab"), tag: pcTabs.firstIndex(of: .discover)!)
-
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
         let upNextViewController = UpNextViewController(source: .tabBar, showingInTab: true)
         upNextViewController.tabBarItem = upNextTabBarItem
-        vcsInTab = [podcastsController, filtersViewController, discoverViewController, upNextViewController, profileViewController]
+        vcsInTab = [podcastsController, filtersViewController, upNextViewController, profileViewController]
 
         displayEndOfYearBadgeIfNeeded()
 
         viewControllers = vcsInTab.map { SJUIUtils.navController(for: $0) }
-        selectedIndex = UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened)
+        selectedIndex = min(UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened), pcTabs.count - 1)
 
         // Track the initial tab opened event
         trackTabOpened(pcTabs[selectedIndex], isInitial: true)
@@ -172,9 +168,9 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             viewDidAppearBefore = true
         }
 
-        // if this key was never set lets default to Discovery or Podcast depending of podcasts followed
+        // if this key was never set lets default to the Podcasts tab
         if UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) == nil {
-            selectedIndex = DataManager.sharedManager.podcastCount() > 0 ? Tab.podcasts.rawValue: Tab.discover.rawValue
+            selectedIndex = pcTabs.firstIndex(of: .podcasts) ?? 0
         }
 
         showInitialOnboardingIfNeeded()
@@ -424,30 +420,17 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
+    // Discover has been removed; route any lingering Discover navigation to the Podcasts tab.
     func navigateToDiscover(_ animated: Bool) {
-        switchToTab(.discover)
+        switchToTab(.podcasts)
     }
 
     func navigateToDiscover(category: String, animated: Bool) {
-        switchToTab(.discover)
-        if let index = pcTabs.firstIndex(of: .discover),
-           let navController = viewControllers?[safe: index] as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-            if let discoverDelegate = navController.topViewController as? DiscoverDelegate {
-                discoverDelegate.navigateTo(category: category)
-            }
-        }
+        switchToTab(.podcasts)
     }
 
     func navigateToDiscover(listID: String, animated: Bool) {
-        switchToTab(.discover)
-        if let index = pcTabs.firstIndex(of: .discover),
-           let navController = viewControllers?[safe: index] as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-            if let discoverDelegate = navController.topViewController as? DiscoverDelegate {
-                discoverDelegate.navigateTo(listID: listID)
-            }
-        }
+        switchToTab(.podcasts)
     }
 
     func navigateToUpNext(_ animated: Bool) {
