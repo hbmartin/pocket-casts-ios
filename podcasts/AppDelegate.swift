@@ -118,8 +118,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         setupBackgroundRefresh()
 
-        IAPHelper.shared.setup(hasSubscription: SubscriptionHelper.hasActiveSubscription())
-
         setupSignOutListener()
 
         if FeatureFlag.earlyReloadSubscriptionStatus.enabled,
@@ -201,7 +199,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         badgeHelper.teardown()
         shortcutManager.stopListeningForShortcutChanges()
 
-        IAPHelper.shared.tearDown()
         UIApplication.shared.endReceivingRemoteControlEvents()
     }
 

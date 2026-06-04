@@ -944,10 +944,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
     func folderTapped() {
         Analytics.track(.podcastScreenFolderTapped)
-        if !SubscriptionHelper.hasActiveSubscription() {
-            NavigationManager.sharedManager.showUpsellView(from: self, source: .folders)
-            return
-        }
 
         guard let podcast else { return }
 

@@ -5,7 +5,6 @@ import UIKit
 protocol UserEpisodeDetailProtocol: AnyObject {
     func showEdit(userEpisode: UserEpisode)
     func showDeleteConfirmation(userEpisode: UserEpisode)
-    func showUpgradeRequired()
     func userEpisodeDetailClosed()
     func showBookmarks(userEpisode: UserEpisode)
 }

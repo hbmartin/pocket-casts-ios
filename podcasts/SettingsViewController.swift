@@ -8,7 +8,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
         case customFiles, importSteps, opml
-        case about, pocketCastsPlus, privacy
+        case about, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
         case developer, beta
@@ -16,9 +16,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         /// Whether the section should be displayed or not
         var visible: Bool {
             switch self {
-            case .pocketCastsPlus:
-                return !SubscriptionHelper.hasActiveSubscription()
-
             default:
                 return true
             }
@@ -50,8 +47,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsSiriShortcuts, UIImage(named: "settings_shortcuts"))
             case .customFiles:
                 return (L10n.files, UIImage(named: "profile_files"))
-            case .pocketCastsPlus:
-                return (L10n.pocketCastsPlus, UIImage(named: "plusGold24"))
             case .privacy:
                 return (L10n.settingsPrivacy, UIImage(named: "privacy"))
             case .developer:
@@ -80,7 +75,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
 
         return [
             developerSection,
-            [.pocketCastsPlus],
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.storageAndDataUse, .siriShortcuts, .headphoneControls, .customFiles],
@@ -186,8 +180,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             navigationController?.pushViewController(SiriSettingsViewController(), animated: true)
         case .customFiles:
             navigationController?.pushViewController(UploadedSettingsViewController(), animated: true)
-        case .pocketCastsPlus:
-                navigationController?.present(OnboardingFlow.shared.begin(flow: .plusUpsell, source: .settings), animated: true)
         case .privacy:
             navigationController?.pushViewController(PrivacySettingsViewController(), animated: true)
         case .developer:

@@ -162,8 +162,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         registerSceneAppearanceObserverIfNeeded()
         fireSystemThemeMayHaveChanged()
-        checkSubscriptionStatusChanged()
-        checkPromotionFinishedAcknowledged()
         checkWhatsNewAcknowledged()
 
         // Show any app launch announcements/prompts only once
@@ -534,42 +532,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
-    func showSubscriptionCancelledAcknowledge() {
-        let cancelledVC = CancelledAcknowledgeViewController()
-        let controller = view.window?.rootViewController
-        controller?.present(SJUIUtils.popupNavController(for: cancelledVC), animated: true, completion: nil)
-    }
-
-    func showSubscriptionRequired(_ upgradeRootViewController: UIViewController, source: PlusUpgradeViewSource, context: OnboardingFlow.Context? = nil, flow: OnboardingFlow.Flow = .plusUpsell) {
-        // If we're already presenting a view, then present from that view if possible
-        let presentingController = presentedViewController ?? view.window?.rootViewController
-
-        let controller = OnboardingFlow.shared.begin(flow: flow, source: source, context: context)
-        presentingController?.present(controller, animated: true, completion: nil)
-    }
-
-    func showPlusMarketingPage() {
-        showInSafariViewController(urlString: ServerConstants.Urls.plusInfo)
-    }
-
-    func showPromotionPage(promoCode: String?) {
-        switchToTab(.profile)
-        if let navController = selectedViewController as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-
-            if let profileVC = navController.topViewController as? ProfileViewController {
-                profileVC.presentedViewController?.dismiss(animated: true, completion: nil)
-                profileVC.promoCode = promoCode
-            }
-        }
-    }
-
-    func showPromotionFinishedAcknowledge() {
-        let promoFinishedVC = PromotionFinishedViewController()
-        let controller = view.window?.rootViewController
-        controller?.present(SJUIUtils.popupNavController(for: promoFinishedVC), animated: true, completion: nil)
-    }
-
     func showPrivacyPolicy() {
         showInSafariViewController(urlString: ServerConstants.Urls.privacyPolicy)
     }
@@ -638,19 +600,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
-    func showRedeemGuestPass(url: URL) {
-        switchToTab(.profile)
-
-        guard let navController = selectedViewController as? UINavigationController else {
-            return
-        }
-
-        navController.popToRootViewController(animated: false)
-        navController.dismiss(animated: true)
-
-        ReferralsCoordinator.shared.startClaimFlow(from: navController, referralURL: url)
-    }
-
     func showHeadphoneSettings() {
         let state = NavigationManager.sharedManager.miniPlayer?.playerOpenState
 
@@ -688,31 +637,9 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     func showSignUp() {
         switchToTab(.podcasts)
         selectedViewController?.dismiss(animated: false)
-        if let controller = view.window?.rootViewController {
-            showSubscriptionRequired(controller, source: .unknown, context: nil, flow: .none)
-        }
-    }
-
-    func showSupporterSignIn(podcastInfo: PodcastInfo) {
-        let supporterVC = SupporterGratitudeViewController(podcastInfo: podcastInfo)
-        let controller = view.window?.rootViewController
-        controller?.present(SJUIUtils.popupNavController(for: supporterVC), animated: true, completion: nil)
-    }
-
-    func showSupporterSignIn(bundleUuid: String) {
-        let supporterVC = SupporterGratitudeViewController(bundleUuid: bundleUuid)
-        let controller = view.window?.rootViewController
-        controller?.present(SJUIUtils.popupNavController(for: supporterVC), animated: true, completion: nil)
-    }
-
-    func showSupporterBundleDetails(bundleUuid: String?) {
-        switchToTab(.profile)
-        if let navController = selectedViewController as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-            let supporterVC = SupporterContributionsViewController()
-            supporterVC.bundleUuidToOpen = bundleUuid
-            navController.pushViewController(AccountViewController(), animated: false)
-            navController.pushViewController(supporterVC, animated: true)
+        if let rootController = view.window?.rootViewController {
+            let controller = OnboardingFlow.shared.begin(flow: .loggedOut, source: .unknown)
+            rootController.present(controller, animated: true, completion: nil)
         }
     }
 
@@ -856,7 +783,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     @objc private func willEnterForeground() {
         fireSystemThemeMayHaveChanged()
-        checkSubscriptionStatusChanged()
     }
 
     // The window's `overrideUserInterfaceStyle` masks system appearance changes
@@ -892,21 +818,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         fireSystemThemeMayHaveChanged()
     }
 
-    private func checkSubscriptionStatusChanged() {
-        checkSubscriptionCancelledAcknowledgement()
-    }
-
-    private func checkSubscriptionCancelledAcknowledgement() {
-        let renewing = SubscriptionHelper.hasRenewingSubscription()
-        let cancelAcknowledged = Settings.subscriptionCancelledAcknowledged()
-        let giftDays = SubscriptionHelper.subscriptionGiftDays()
-        let timeToSubscriptionExpiry = SubscriptionHelper.timeToSubscriptionExpiry() ?? 0
-
-        if !renewing, !cancelAcknowledged, giftDays == 0, timeToSubscriptionExpiry < 0 {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.subscriptionCancelledAcknowledgePageKey, data: nil)
-        }
-    }
-
     private func checkWhatsNewAcknowledged() {
         guard let whatsNewInfo = WhatsNewHelper.extractWhatsNewInfo(), whatsNewInfo.versionCode > Settings.whatsNewLastAcknowledged() else { return }
 
@@ -914,14 +825,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             NavigationManager.sharedManager.navigateTo(NavigationManager.showWhatsNewPageKey, data: [NavigationManager.whatsNewInfoKey: whatsNewInfo])
         } else {
             Settings.setWhatsNewLastAcknowledged(whatsNewInfo.versionCode)
-        }
-    }
-
-    private func checkPromotionFinishedAcknowledged() {
-        let promoFinishedAcknowledged = Settings.promotionFinishedAcknowledged()
-        let giftDays = SubscriptionHelper.subscriptionGiftDays()
-        let timeToSubscriptionExpiry = SubscriptionHelper.timeToSubscriptionExpiry() ?? 0
-        if giftDays > 0, !promoFinishedAcknowledged, timeToSubscriptionExpiry < 0 { NavigationManager.sharedManager.navigateTo(NavigationManager.showPromotionFinishedPageKey, data: nil)
         }
     }
 

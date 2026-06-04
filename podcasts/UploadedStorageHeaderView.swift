@@ -71,9 +71,7 @@ class UploadedStorageHeaderView: UIView {
     }
 
     @objc private func headerTapped() {
-        if let controllerForPresenting {
-            NavigationManager.sharedManager.showUpsellView(from: controllerForPresenting, source: .files)
-        }
+        // Custom file storage is free now, so there is no upsell to present.
     }
 
     @objc func update() {

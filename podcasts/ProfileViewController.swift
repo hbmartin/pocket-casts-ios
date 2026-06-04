@@ -87,7 +87,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     private let settingsCellId = "SettingsCell"
     private let endOfYearPromptCell = "EndOfYearPromptCell"
 
-    enum TableRow { case informationalBanner, referralsClaim, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, endOfYearPrompt, bookmarks }
+    enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, endOfYearPrompt, bookmarks }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -98,7 +98,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         didSet {
             profileTable.register(UINib(nibName: "TopLevelSettingsCell", bundle: nil), forCellReuseIdentifier: settingsCellId)
             profileTable.register(EndOfYearPromptCell.self, forCellReuseIdentifier: endOfYearPromptCell)
-            profileTable.register(ReferralsClaimBannerTableCell.self, forCellReuseIdentifier: ReferralsClaimBannerTableCell.identifier)
             profileTable.register(InformationalProfileBannerCell.self, forCellReuseIdentifier: InformationalProfileBannerCell.identifier)
         }
     }
@@ -167,8 +166,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
         addCustomObserver(.whatsNewDismissed, selector: #selector(whatsNewDismissed))
         addCustomObserver(EndOfYear.eoyEligibilityDidChange, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(ServerNotifications.iapProductsUpdated, selector: #selector(refreshReferrals))
-        addCustomObserver(.referralURLChanged, selector: #selector(refreshReferrals))
 
         addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
         if promoRedeemedMessage != nil {
@@ -182,26 +179,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
 
         whatsNewDismissed()
-
-        if FeatureFlag.cancelSubscriptionSurvey.enabled,
-           SyncManager.isUserLoggedIn(),
-           SubscriptionHelper.hasCancelledSubscription,
-           !Settings.subscriptionCancelledSurveyShown {
-            let controller = CancelSubscriptionSurveyViewModel.make()
-            present(controller, animated: true)
-        } else {
-            showReferralsHintIfNeeded()
-        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         removeAllCustomObservers()
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        hideReferralsHint(dontShowAgain: false)
     }
 
     override func handleThemeChanged() {
@@ -270,12 +252,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     }
 
     private func updateLastRefreshDetails() {
-        if ReferralsCoordinator.shared.areReferralsAvailableToSend {
-            navigationItem.leftBarButtonItem = referralsButton
-        } else {
-            navigationItem.leftBarButtonItem = nil
-        }
-
         if !ServerSettings.lastRefreshSucceeded() || !ServerSettings.lastSyncSucceeded() {
             lastRefreshTime.text = !ServerSettings.lastRefreshSucceeded() ? L10n.refreshFailed : L10n.syncFailed
             refreshButtonTitle = L10n.tryAgain
@@ -324,11 +300,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             return cell
         }
 
-        if row == .referralsClaim {
-            let cell = tableView.dequeueReusableCell(withIdentifier: ReferralsClaimBannerTableCell.identifier, for: indexPath) as! ReferralsClaimBannerTableCell
-            return cell
-        }
-
         let cell = tableView.dequeueReusableCell(withIdentifier: settingsCellId, for: indexPath) as! TopLevelSettingsCell
 
         cell.settingsImage.tintColor = ThemeColor.primaryIcon01()
@@ -338,8 +309,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         switch row {
         case .informationalBanner:
             return InformationalProfileBannerCell()
-        case .referralsClaim:
-            return ReferralsClaimBannerTableCell()
         case .allStats:
             cell.settingsImage.image = UIImage(named: "profile-stats")
             cell.settingsLabel.text = L10n.settingsStats
@@ -375,9 +344,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let row = tableData[indexPath.section][indexPath.row]
-        if row == .referralsClaim {
-            Analytics.track(.referralPassBannerShown)
-        }
         if row == .endOfYearPrompt {
             Analytics.track(.endOfYearProfileCardShown, properties: ["current_year": EndOfYear.currentYear.literalValue])
         }
@@ -408,11 +374,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         switch row {
         case .informationalBanner:
             break
-        case .referralsClaim:
-            dismiss(animated: true)
-            ReferralsCoordinator.shared.startClaimFlow(from: self) { [weak self] in
-                self?.profileTable.reloadData()
-            }
         case .allStats:
             let statsViewController = StatsViewController()
             navigationController?.pushViewController(statsViewController, animated: true)
@@ -470,10 +431,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             data[0].insert(.endOfYearPrompt, at: 0)
         }
 
-        if ReferralsCoordinator.shared.isReferralAvailableToClaim {
-            data[0].insert(.referralsClaim, at: 0)
-        }
-
         if informationalBannerCoordinator.shouldShowBanner() {
             data[0].insert(.informationalBanner, at: 0)
         }
@@ -524,88 +481,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         AnnouncementFlow.current = .none
     }
 
-    // MARK: - Referrals
-    @objc func refreshReferrals() {
-        showReferralsHintIfNeeded()
-        updateDisplayedData()
-    }
-
-    private lazy var referralsButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(image: UIImage(named: ReferralsConstants.giftIcon), style: .plain, target: self, action: #selector(referralsTapped))
-        return button
-    }()
-
-    @objc private func referralsTapped() {
-        guard let referralsOfferInfo = ReferralsCoordinator.shared.referralsOfferInfo else {
-            return
-        }
-        hideReferralsHint(dontShowAgain: true)
-        let viewModel = ReferralSendPassModel(offerInfo: referralsOfferInfo,
-                                              onShareGuestPassTap: { [weak self] in
-            self?.dismiss(animated: true)
-        }, onCloseTap: { [weak self] in
-            self?.dismiss(animated: true)
-        })
-        let vc = ReferralSendPassVC(viewModel: viewModel)
-        present(vc, animated: true)
-    }
-
-    private enum ReferralsConstants {
-        static let giftIcon = "gift"
-        static let giftSize = CGFloat(24)
-        static let giftBadgeSize = CGFloat(16)
-        static let defaultTipSize = CGSizeMake(300, 50)
-    }
-
-    private var referralsTipVC: UIViewController?
-
-    private func showReferralsHintIfNeeded() {
-        guard ReferralsCoordinator.shared.areReferralsAvailableToSend,
-              Settings.shouldShowReferralsTip,
-              let vc = makeReferralsHint()
-        else {
-            return
-        }
-
-        Analytics.track(.referralTooltipShow)
-        present(vc, animated: true, completion: nil)
-        self.referralsTipVC = vc
-    }
-
-    private func hideReferralsHint(dontShowAgain: Bool) {
-        if dontShowAgain {
-            Settings.shouldShowReferralsTip = false
-        }
-        self.referralsTipVC?.dismiss(animated: true)
-    }
-
-    private func makeReferralsHint() -> UIViewController? {
-        guard let referralOfferInfo = ReferralsCoordinator.shared.referralsOfferInfo else {
-            return nil
-        }
-        let vc = UIHostingController(rootView: AnyView (EmptyView()) )
-        let tipView = TipView(title: L10n.referralsTipMessage(referralOfferInfo.localizedOfferDurationNoun.lowercased()),
-                              message: nil,
-                              sizeChanged: { size in
-            vc.preferredContentSize = size
-        }, onTap: { [weak self] in
-            Analytics.track(.referralTooltipTapped)
-            self?.hideReferralsHint(dontShowAgain: true)
-        }).setupDefaultEnvironment()
-        vc.rootView = AnyView(tipView)
-        vc.view.backgroundColor = .clear
-        vc.view.clipsToBounds = false
-        vc.modalPresentationStyle = .popover
-        vc.preferredContentSize = ReferralsConstants.defaultTipSize
-        if let popoverPresentationController = vc.popoverPresentationController {
-            popoverPresentationController.delegate = self
-            popoverPresentationController.permittedArrowDirections = .up
-            popoverPresentationController.sourceItem = referralsButton
-            popoverPresentationController.backgroundColor = ThemeColor.primaryUi01()
-            popoverPresentationController.passthroughViews = [NavigationManager.sharedManager.miniPlayer?.view, navigationController?.navigationBar, tabBarController?.tabBar, view].compactMap({$0})
-        }
-        return vc
-    }
 }
 
 extension ProfileViewController: UIPopoverPresentationControllerDelegate {

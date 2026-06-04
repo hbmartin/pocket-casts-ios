@@ -318,10 +318,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         }
     }
 
-    func showUpgradeRequired() {
-        NavigationManager.sharedManager.showUpsellView(from: self, source: .files)
-    }
-
     func userEpisodeDetailClosed() {
         userEpisodeDetailVC = nil
     }

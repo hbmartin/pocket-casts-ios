@@ -3,8 +3,6 @@ import PocketCastsServer
 import PocketCastsUtils
 
 struct PaidStoryWallView: View {
-    @StateObject private var model = PlusPricingInfoModel()
-
     var body: some View {
         GeometryReader { geometry in
             PodcastCoverContainer(geometry: geometry) {
@@ -16,11 +14,7 @@ struct PaidStoryWallView: View {
                 .padding(.bottom, geometry.size.height * 0.06)
 
                 Button(L10n.upgradeToPlan(L10n.pocketCastsPlusShort)) {
-                    guard let storiesViewController = SceneHelper.rootViewController() else {
-                        return
-                    }
-
-                    NavigationManager.sharedManager.showUpsellView(from: storiesViewController, source: .endOfYear, flow: SyncManager.isUserLoggedIn() ? .endOfYearUpsell : .endOfYear)
+                    // Every feature is free now, so there is no upsell to present.
                 }
                 .buttonStyle(StoriesButtonStyle(color: .black, icon: nil))
             }

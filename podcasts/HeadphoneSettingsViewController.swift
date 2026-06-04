@@ -139,22 +139,7 @@ class HeadphoneSettingsViewController: PCTableViewController {
             self?.reloadData()
         }
 
-        // Show the upsell if needed
-        selection.isUnlocked ? action() : showUpsell(for: selection, unlocked: action)
-    }
-
-    private func showUpsell(for selection: HeadphoneControlAction, unlocked: @escaping () -> Void) {
-        guard let feature = selection.paidFeature else { return }
-
-        // If the feature is unlocked, then finish updating the setting they were trying to change to
-        // This will only fire once, and only if the feature is unlocked.
-        feature.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .first(where: { feature.isUnlocked })
-            .sink { unlocked() }
-            .store(in: &cancellables)
-
-        feature.presentUpgradeController(from: self, source: .headphoneSettings)
+        action()
     }
 
     // MARK: - Data Struct

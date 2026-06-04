@@ -329,20 +329,6 @@ struct DeveloperMenu: View {
             }
 
             Section {
-                Button("Present Cancel Subscription Survey") {
-                    showSurvey = true
-                }
-                .sheet(isPresented: $showSurvey) {
-                    CancelSubscriptionSurveyView(viewModel: CancelSubscriptionSurveyViewModel(navigationController: nil))
-                }
-                Button("Reset Cancel Subscription Survey visibility") {
-                    Settings.subscriptionCancelledSurveyShown = false
-                }
-            } header: {
-                Text("Cancel Subscription Survey")
-            }
-
-            Section {
                 NavigationLink("Debug Info") {
                     SurveyDebugInfoView()
                         .navigationTitle("Survey Debug Info")

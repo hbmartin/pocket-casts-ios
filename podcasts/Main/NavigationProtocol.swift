@@ -30,22 +30,13 @@ protocol NavigationProtocol: AnyObject {
     func navigateToFiles()
     func navigateToAddCustom(_ fileURL: URL)
 
-    func showSubscriptionCancelledAcknowledge()
-    func showSubscriptionRequired(_ upgradeRootViewController: UIViewController, source: PlusUpgradeViewSource, context: OnboardingFlow.Context?, flow: OnboardingFlow.Flow)
-    func showPlusMarketingPage()
     func showSettings(row: SettingsViewController.TableRow?)
     func showSettingsAppearance(showThemeSelection: Bool)
-    func showPromotionPage(promoCode: String?)
-    func showPromotionFinishedAcknowledge()
     func showProfilePage()
     func showHeadphoneSettings()
     func showGeneralSettings(row: GeneralSettingsViewController.TableRow?)
-    func showRedeemGuestPass(url: URL)
 
     func showSignUp()
-    func showSupporterSignIn(podcastInfo: PodcastInfo)
-    func showSupporterSignIn(bundleUuid: String)
-    func showSupporterBundleDetails(bundleUuid: String?)
     func showTermsOfUse()
     func showPrivacyPolicy()
 

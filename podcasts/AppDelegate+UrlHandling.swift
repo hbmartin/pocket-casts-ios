@@ -275,60 +275,6 @@ extension AppDelegate {
             return true
         }
 
-        // Promotion Codes:
-        JLRoutes.global().addRoute("/redeem/promo/*") { [weak self] parameters -> Bool in
-            guard self != nil else { return false }
-            var promoCode: String?
-            if let pathComponents = parameters[JLRouteWildcardComponentsKey] as? [String], !pathComponents.isEmpty {
-                promoCode = pathComponents[0]
-            }
-
-            NavigationManager.sharedManager.navigateTo(NavigationManager.showPromotionPageKey, data: [NavigationManager.promotionInfoKey: promoCode as Any])
-            return true
-        }
-
-        // Supporter Podcasts
-        JLRoutes.global().addRoute("/premium/podcast/*") { [weak self] parameters -> Bool in
-            guard self != nil else { return false }
-
-            if let pathComponents = parameters[JLRouteWildcardComponentsKey] as? [String], !pathComponents.isEmpty, let podcastTitle = parameters["title"] as? String {
-                let uuid = pathComponents[0]
-
-                if SyncManager.isUserLoggedIn() {
-                    RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-                    ApiServerHandler.shared.retrieveSubscriptionStatus()
-                    var bundleUuid: String?
-                    if let bundle = SubscriptionHelper.bundleSubscriptionForPodcast(podcastUuid: uuid) {
-                        bundleUuid = bundle.bundleUuid
-                    }
-                    NavigationManager.sharedManager.navigateTo(NavigationManager.supporterBundlePageKey, data: [NavigationManager.supporterBundleUuid: bundleUuid as Any])
-                } else {
-                    var podcastInfo = PodcastInfo()
-                    podcastInfo.uuid = uuid
-                    podcastInfo.title = podcastTitle
-
-                    NavigationManager.sharedManager.navigateTo(NavigationManager.supporterSignInKey, data: [NavigationManager.supporterPodcastInfo: podcastInfo])
-                }
-            }
-            return true
-        }
-
-        JLRoutes.global().addRoute("/premium/supporter-contributions/*") { [weak self] parameters -> Bool in
-            guard self != nil else { return false }
-            if let pathComponents = parameters[JLRouteWildcardComponentsKey] as? [String], !pathComponents.isEmpty {
-                let uuid = pathComponents[0]
-
-                if SyncManager.isUserLoggedIn() {
-                    RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-                    ApiServerHandler.shared.retrieveSubscriptionStatus()
-                    NavigationManager.sharedManager.navigateTo(NavigationManager.supporterBundlePageKey, data: [NavigationManager.supporterBundleUuid: uuid])
-                } else {
-                    NavigationManager.sharedManager.navigateTo(NavigationManager.supporterSignInKey, data: [NavigationManager.supporterBundleUuid: uuid])
-                }
-            }
-            return true
-        }
-
         JLRoutes.global().addRoute("/upnext/*") { [weak self] paramDict -> Bool in
             var source: UpNextViewSource = .unknown
             var showFromMiniPlayer: Bool = true
@@ -411,13 +357,6 @@ extension AppDelegate {
         JLRoutes.global().addRoute("/filters") {[weak self] _ -> Bool in
             guard self != nil else { return false }
             NavigationManager.sharedManager.navigateTo(NavigationManager.filterPageKey)
-            return true
-        }
-
-        JLRoutes.global().addRoute("/upsell") { _ -> Bool in
-            guard let viewController = SceneHelper.rootViewController() else { return false }
-            let source = PlusUpgradeViewSource(rawValue: ["source"] as? String ?? PlusUpgradeViewSource.deepLink.rawValue) ?? .unknown
-            NavigationManager.sharedManager.navigateTo(NavigationManager.subscriptionRequiredPageKey, data: ["source": source, NavigationManager.subscriptionUpgradeVCKey: viewController])
             return true
         }
     }

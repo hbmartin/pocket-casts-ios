@@ -7,7 +7,6 @@ import PocketCastsUtils
 class LoginCoordinator: NSObject, OnboardingModel {
     weak var navigationController: UINavigationController? = nil
     let headerImages: [LoginHeaderImage]
-    var continuePurchasing: ProductInfo? = nil
     var isOnboarding: Bool = false
 
     private var socialLogin: SocialLogin?
@@ -216,35 +215,20 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
             return
         }
 
-        let shouldDismiss = OnboardingFlow.shared.currentFlow.shouldDismiss || (SubscriptionHelper.hasActiveSubscription() && continuePurchasing == nil)
-
-        if shouldDismiss {
-            handleDismiss()
-            return
-        }
-
-        goToPlus(from: .login)
+        // Every feature is free, so there's no upgrade flow to show after signing in.
+        handleDismiss()
     }
 
     func handleAccountCreated() {
         Analytics.track(.userAccountCreated, properties: ["source": socialAuthProvider ?? "password"])
         OnboardingFlow.shared.accountCreated?(true)
-        if OnboardingFlow.shared.currentFlow.shouldDismiss {
-            handleDismiss()
-            return
-        }
-
-        goToPlus(from: .accountCreated)
+        handleDismiss()
     }
 
     private func handleDismiss() {
-        if OnboardingFlow.shared.currentFlow == .promoCode {
-            navigationController?.popToRootViewController(animated: true)
-        } else {
-            navigationController?.dismiss(animated: true) {
-                DispatchQueue.main.async {
-                    OnboardingFlow.shared.reset()
-                }
+        navigationController?.dismiss(animated: true) {
+            DispatchQueue.main.async {
+                OnboardingFlow.shared.reset()
             }
         }
     }
@@ -258,34 +242,13 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
         SJUIUtils.showAlert(title: L10n.accountSsoFailed, message: nil, from: navigationController)
     }
 
-    private func goToPlus(from source: PlusLandingViewModel.Source) {
-        // Update the flow to make sure the correct analytics source is passed on
-        OnboardingFlow.shared.updateAnalyticsSource(source == .login ? .login: .accountCreated)
-        if FeatureFlag.newOnboardingUpgrade.enabled {
-            let controller = UpgradeAccountViewModel.make(in: navigationController,
-                                                          flowSource: source,
-                                                          viewSource: .onboarding,
-                                                          plan: .plus,
-                                                          frequency: .yearly,
-                                                          )
-            controller.modalPresentationStyle = .fullScreen
-            navigationController?.setViewControllers([controller], animated: true)
-        } else {
-            let controller = PlusLandingViewModel.make(in: navigationController,
-                                                       from: source,
-                                                       viewSource: .onboarding,
-                                                       config: .init(continuePurchasing: continuePurchasing))
-            navigationController?.setViewControllers([controller], animated: true)
-        }
-    }
 }
 
 // MARK: - Helpers
 
 extension LoginCoordinator {
-    static func make(in navigationController: UINavigationController? = nil, continuePurchasing: ProductInfo? = nil, isOnboarding: Bool = false) -> UIViewController {
+    static func make(in navigationController: UINavigationController? = nil, isOnboarding: Bool = false) -> UIViewController {
         let coordinator = LoginCoordinator()
-        coordinator.continuePurchasing = continuePurchasing
         coordinator.isOnboarding = isOnboarding
 
         let controller: UIViewController

@@ -25,7 +25,7 @@ extension PaidFeature {
 class PaidFeature: ObservableObject {
     /// Whether the feature is unlocked for the active subscription tier
     var isUnlocked: Bool {
-        subscriptionHelper.activeTier >= tier
+        true
     }
 
     /// The minimum subscription level required to unlock this feature
@@ -76,32 +76,6 @@ class PaidFeature: ObservableObject {
         .store(in: &cancellables)
     }
 }
-
-// MARK: - Helpers
-
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-extension PaidFeature {
-    /// Returns the correct upgrade view controller for the feature
-    func upgradeController(source: PlusUpgradeViewSource, customTitle: String? = nil) -> UIViewController {
-        OnboardingFlow.shared.begin(flow: upgradeFlow, source: source, customTitle: customTitle)
-    }
-
-    /// Presents the `upgradeController` from the given view controller
-    func presentUpgradeController(from controller: UIViewController, source: PlusUpgradeViewSource, customTitle: String? = nil) {
-        controller.presentFromRootController(upgradeController(source: source, customTitle: customTitle))
-    }
-
-    private var upgradeFlow: OnboardingFlow.Flow {
-        switch tier {
-        case .patron:
-            return .patronAccountUpgrade
-        default:
-            return .plusUpsell
-        }
-    }
-}
-#endif
-
 
 // MARK: - Private: Feature State Helpers
 

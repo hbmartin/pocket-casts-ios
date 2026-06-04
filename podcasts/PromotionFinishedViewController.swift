@@ -43,10 +43,8 @@ class PromotionFinishedViewController: UIViewController {
     }
 
     @IBAction func upgradeTapped(_ sender: Any) {
-        dismiss(animated: true) {
-            guard let controller = SceneHelper.rootViewController() else { return }
-            NavigationManager.sharedManager.showUpsellView(from: controller, source: .promotionFinished)
-        }
+        // Every feature is free now, so there is no upsell to present.
+        dismiss(animated: true)
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {

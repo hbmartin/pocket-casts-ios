@@ -11,10 +11,6 @@ extension UpNextViewController: UserEpisodeDetailProtocol {
         UserEpisodeManager.presentDeleteOptions(episode: userEpisode, from: self)
     }
 
-    func showUpgradeRequired() {
-        NavigationManager.sharedManager.showUpsellView(from: self, source: .unknown)
-    }
-
     func userEpisodeDetailClosed() {
         userEpisodeDetailVC = nil
     }
