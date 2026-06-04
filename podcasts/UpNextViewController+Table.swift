@@ -70,8 +70,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
                                 message: L10n.upNextEmptyDescription,
                                 icon: { Image("upnext") },
                 actions: [
-                    .init(title: L10n.goToDiscover) {
-                        Analytics.track(.upNextDiscoverButtonTapped)
+                    .init(title: L10n.podcastListGoToPodcastsAction) {
                         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
                     }
                 ])

@@ -294,7 +294,7 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
-            if SubscriptionHelper.hasActiveSubscription() {
+            if SubscriptionHelper.featuresUnlocked || SubscriptionHelper.hasActiveSubscription() {
                 self.addCustomlock.isHidden = true
                 self.lockView.isHidden = true
                 self.addCustomImageButton.alpha = 1
@@ -369,7 +369,7 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     }
 
     @IBAction func addCustomImageClicked(_ sender: Any) {
-        guard SubscriptionHelper.hasActiveSubscription() else {
+        guard SubscriptionHelper.featuresUnlocked || SubscriptionHelper.hasActiveSubscription() else {
             showSubscriptionRequired()
             return
         }

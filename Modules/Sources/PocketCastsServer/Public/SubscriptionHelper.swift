@@ -27,12 +27,28 @@ open class SubscriptionHelper: NSObject {
         hasActiveSubscription() ? subscriptionType() : .none
     }
 
+    /// Whether paid feature gates should be opened independently of billing state.
+    public static var featuresUnlocked = true
+
     /// Returns the users active subscription tier or .none if they don't currently have one
     public static var activeTier: SubscriptionTier {
-        // Simplified build: in-app purchases have been removed and every
-        // previously paid feature is unlocked for free, so treat all users as
-        // the top (Patron) tier.
-        .patron
+        guard hasActiveSubscription() else {
+            return .none
+        }
+
+        let tier = subscriptionTier
+
+        // Fallback handling
+        // If the server isn't returning the subscription tier yet then the tier will be none
+        // If the user has an active subscription, and the tier is none, and their subscription type is plus
+        // Then fallback to returning plus as the tier
+        //
+        // This should be removed after the Patron server changes have been pushed to production
+        guard tier == .none, subscriptionType() == .plus else {
+            return tier
+        }
+
+        return .plus
     }
 
     /// The users subscription tier, or .none if there isn't one available
@@ -49,8 +65,8 @@ open class SubscriptionHelper: NSObject {
     }
 
     public class func hasActiveSubscription() -> Bool {
-        // Simplified build: all subscription-gated features are free.
-        true
+        let status = UserDefaults.standard.bool(forKey: ServerConstants.UserDefaults.subscriptionPaid)
+        return status
     }
 
     public class func hasRenewingSubscription() -> Bool {

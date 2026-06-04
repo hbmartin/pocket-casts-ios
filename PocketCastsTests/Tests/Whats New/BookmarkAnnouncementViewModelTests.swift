@@ -10,7 +10,14 @@ final class BookmarkAnnouncementViewModelTests: XCTestCase {
     private var userDefaults: UserDefaults!
 
     override func setUp() {
+        super.setUp()
         userDefaults = UserDefaults(suiteName: UUID().uuidString)!
+        SubscriptionHelper.featuresUnlocked = false
+    }
+
+    override func tearDown() {
+        SubscriptionHelper.featuresUnlocked = true
+        super.tearDown()
     }
 
     // MARK: - Full Release

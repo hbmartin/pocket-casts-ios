@@ -10,6 +10,8 @@ import SwiftUI
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
     enum Tab: Int { case podcasts, filter, upNext, profile }
+    private enum LegacyTab: Int { case podcasts, discover, filter, upNext, profile }
+    private static let removedDiscoverTabMigrationKey = "SJLastTabOpenedRemovedDiscoverMigrated"
 
     var pcTabs = [Tab]()
 
@@ -114,7 +116,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         displayEndOfYearBadgeIfNeeded()
 
         viewControllers = vcsInTab.map { SJUIUtils.navController(for: $0) }
-        selectedIndex = min(UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened), pcTabs.count - 1)
+        selectedIndex = restoredLastTabIndex()
 
         // Track the initial tab opened event
         trackTabOpened(pcTabs[selectedIndex], isInitial: true)
@@ -300,6 +302,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     override func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
         let tabIndex = item.tag
+        guard pcTabs.indices.contains(tabIndex) else { return }
+
         if tabIndex == selectedIndex, let navController = selectedViewController as? UINavigationController, navController.visibleViewController == navController.viewControllers.first {
             // the user has tapped on a tab they are already at the root of, so trigger an action so we can handle this
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.tappedOnSelectedTab, object: tabIndex)
@@ -312,6 +316,46 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
 
         UserDefaults.standard.set(tabIndex, forKey: Constants.UserDefaults.lastTabOpened)
+    }
+
+    private func restoredLastTabIndex() -> Int {
+        guard UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) != nil else {
+            UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+            return pcTabs.firstIndex(of: .podcasts) ?? 0
+        }
+
+        let savedIndex = UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened)
+
+        guard !UserDefaults.standard.bool(forKey: Self.removedDiscoverTabMigrationKey) else {
+            return clampedTabIndex(savedIndex)
+        }
+
+        guard let legacyTab = LegacyTab(rawValue: savedIndex) else {
+            let migratedIndex = clampedTabIndex(savedIndex)
+            UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
+            UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+            return migratedIndex
+        }
+
+        let migratedIndex: Int
+        switch legacyTab {
+        case .podcasts, .discover:
+            migratedIndex = pcTabs.firstIndex(of: .podcasts) ?? 0
+        case .filter:
+            migratedIndex = pcTabs.firstIndex(of: .filter) ?? 0
+        case .upNext:
+            migratedIndex = pcTabs.firstIndex(of: .upNext) ?? 0
+        case .profile:
+            migratedIndex = pcTabs.firstIndex(of: .profile) ?? 0
+        }
+
+        UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
+        UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+        return migratedIndex
+    }
+
+    private func clampedTabIndex(_ index: Int) -> Int {
+        min(max(index, 0), max(pcTabs.count - 1, 0))
     }
 
     // MARK: - NavigationProtocol

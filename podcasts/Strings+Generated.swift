@@ -2813,6 +2813,14 @@ internal enum L10n {
   internal static func podcastAccessEnds(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_access_ends", String(describing: p1), fallback: "Access ends: %1$@")
   }
+  /// Title for the alert that lets a user add a podcast by feed URL or import OPML.
+  internal static var podcastAddAlertTitle: String { return L10n.tr("Localizable", "podcast_add_alert_title", fallback: "Add Podcast") }
+  /// Button title that opens the add podcast flow.
+  internal static var podcastAddButtonTitle: String { return L10n.tr("Localizable", "podcast_add_button_title", fallback: "Add Podcast") }
+  /// Button title that submits a feed URL in the add podcast alert.
+  internal static var podcastAddFeedUrlAction: String { return L10n.tr("Localizable", "podcast_add_feed_url_action", fallback: "Add Feed URL") }
+  /// Placeholder shown in the add podcast feed URL text field.
+  internal static var podcastAddFeedUrlPlaceholder: String { return L10n.tr("Localizable", "podcast_add_feed_url_placeholder", fallback: "https://example.com/feed.xml") }
   /// Sort option for bookmarks that uses Podcast name and Episodes dates
   internal static var podcastAndEpisode: String { return L10n.tr("Localizable", "podcast_and_episode", fallback: "Podcast & Episode") }
   /// Prompt to archive all of the selected items.
@@ -2913,6 +2921,8 @@ internal enum L10n {
   }
   /// Longer form informational label informing users that this podcast is limited to one episode. Singular version of an accompanying plural format.
   internal static var podcastLimitSingular: String { return L10n.tr("Localizable", "podcast_limit_singular", fallback: "Limited to 1 most recent episode") }
+  /// Button title that opens the Podcasts tab from another empty state.
+  internal static var podcastListGoToPodcastsAction: String { return L10n.tr("Localizable", "podcast_list_go_to_podcasts_action", fallback: "Go to Podcasts") }
   /// Progress indicator informing the user that the podcasts that have been shared or imported are currently loading.
   internal static var podcastLoading: String { return L10n.tr("Localizable", "podcast_loading", fallback: "Loading Podcast...") }
   /// Used to indicate no date was provided.

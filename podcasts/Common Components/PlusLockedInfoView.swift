@@ -49,6 +49,8 @@ class PlusLockedInfoView: ThemeableView {
             learnMoreButton.titleLabel?.adjustsFontForContentSizeCategory = true
             learnMoreButton.titleLabel?.numberOfLines = 0
             learnMoreButton.titleLabel?.textAlignment = .center
+            learnMoreButton.isHidden = true
+            learnMoreButton.isEnabled = false
         }
     }
 
@@ -105,7 +107,7 @@ class PlusLockedInfoView: ThemeableView {
     }
 
     @IBAction func learnMoreTapped(_ sender: Any) {
-        // Every feature is free now, so there is no upsell to present.
+        closeTapped()
     }
 
     private func setInfoLabelText() {

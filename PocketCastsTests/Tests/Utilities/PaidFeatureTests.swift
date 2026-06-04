@@ -7,7 +7,14 @@ final class PaidFeatureTests: XCTestCase {
     private var subscriptionHelper: MockActiveTierSubscriptionHelper! = .init()
 
     override func setUp() {
+        super.setUp()
         subscriptionHelper = .init()
+        SubscriptionHelper.featuresUnlocked = false
+    }
+
+    override func tearDown() {
+        SubscriptionHelper.featuresUnlocked = true
+        super.tearDown()
     }
 
     // MARK: - Free Features
@@ -32,6 +39,15 @@ final class PaidFeatureTests: XCTestCase {
         let feature = freeFeature()
 
         subscriptionHelper.userHasPatronSubscription()
+
+        XCTAssertTrue(feature.isUnlocked)
+    }
+
+    func testPaidFeatureIsUnlockedWhenFeatureGatesAreOpened() {
+        let feature = patronFeature()
+        subscriptionHelper.userHasNoSubscription()
+
+        SubscriptionHelper.featuresUnlocked = true
 
         XCTAssertTrue(feature.isUnlocked)
     }

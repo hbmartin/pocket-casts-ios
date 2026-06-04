@@ -197,7 +197,7 @@ enum IconType: Int, CaseIterable, AnalyticsDescribable {
 
     /// Whether the icon is unlocked for the users active subscription
     var isUnlocked: Bool {
-        SubscriptionHelper.activeTier >= subscription
+        SubscriptionHelper.featuresUnlocked || SubscriptionHelper.activeTier >= subscription
     }
 
     /// The minimum subscription level required to unlock the icon
@@ -307,7 +307,7 @@ class IconSelectorCell: ThemeableCell, UICollectionViewDataSource, UICollectionV
     // MARK: - CollectionView Delegate
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let icon = IconType(rawValue: indexPath.item) else {
+        guard let icon = IconType(rawValue: indexPath.item), icon.isUnlocked else {
             collectionView.deselectItem(at: indexPath, animated: true)
             return
         }
