@@ -205,7 +205,7 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
     }
 
     @objc func showSubscriptionRequired() {
-        NavigationManager.sharedManager.showUpsellView(from: self, source: .files)
+        // Custom file storage is free now, so there is no upsell to present.
     }
 
     // MARK: - Switch Actions

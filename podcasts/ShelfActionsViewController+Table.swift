@@ -88,11 +88,6 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
         Analytics.track(.playerShelfActionTapped, properties: ["action": action.analyticsDescription, "from": "overflow_menu"])
 
         dismiss(animated: true) {
-            guard action.isUnlocked else {
-                action.paidFeature?.presentUpgradeController(from: self, source: action == .addBookmark ? .bookmarksShelfAction : .overflowMenu)
-                return
-            }
-
             switch action {
             case .starEpisode:
                 self.playerActionsDelegate?.starEpisodeTapped()
@@ -106,8 +101,6 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
                 self.playerActionsDelegate?.shareTapped()
             case .goToPodcast:
                 self.playerActionsDelegate?.goToTapped()
-            case .chromecast:
-                self.playerActionsDelegate?.chromecastTapped()
             case .markPlayed:
                 self.playerActionsDelegate?.markPlayedTapped()
             case .archive:

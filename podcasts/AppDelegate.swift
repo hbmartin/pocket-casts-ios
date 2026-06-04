@@ -77,8 +77,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             defaults.synchronize()
         }
 
-        GoogleCastManager.sharedManager.setup()
-
         setupRoutes()
 
         if Settings.shouldResultEndOfYearSyncStatus {
@@ -116,12 +114,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         badgeHelper.setup()
-        WatchManager.shared.setup()
         shortcutManager.listenForShortcutChanges()
 
         setupBackgroundRefresh()
-
-        IAPHelper.shared.setup(hasSubscription: SubscriptionHelper.hasActiveSubscription())
 
         setupSignOutListener()
 
@@ -199,13 +194,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
-        GoogleCastManager.sharedManager.teardown()
         RefreshManager.shared.cancelAllRefreshes()
 
         badgeHelper.teardown()
         shortcutManager.stopListeningForShortcutChanges()
 
-        IAPHelper.shared.tearDown()
         UIApplication.shared.endReceivingRemoteControlEvents()
     }
 

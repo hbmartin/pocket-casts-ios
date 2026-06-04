@@ -30,7 +30,6 @@ struct DebugInfo {
         OS: \(DeviceUtil.systemVersion ?? "Unknown")
         Local Time: \(localTime)
         UTC Time: \(gmtTime)
-        Watch App Installed: \(WatchManager.shared.isWatchAppInstalled ? "yes" : "no")
         Free Disk Space: \(formattedFreeDiskSpace())\n
         """
 

@@ -910,7 +910,7 @@ class PlaybackManager: ServerPlaybackDelegate {
         }
         #elseif !os(watchOS) && !os(tvOS)
             if let episode = currentEpisode() {
-                return !episode.videoPodcast() && !GoogleCastManager.sharedManager.connectedOrConnectingToDevice()
+                return !episode.videoPodcast()
             }
         #endif
 
@@ -918,12 +918,10 @@ class PlaybackManager: ServerPlaybackDelegate {
     }
 
     func volumeBoostAvailable() -> Bool {
-        #if APPCLIP || os(tvOS)
-            return true
-        #elseif os(watchOS)
+        #if os(watchOS)
             return false
         #else
-            return !GoogleCastManager.sharedManager.connectedOrConnectingToDevice()
+            return true
         #endif
     }
 
@@ -974,7 +972,6 @@ class PlaybackManager: ServerPlaybackDelegate {
         case internetConnection(logMessage: String?)
         case episodeNotAvailable(errorCode: Int, logMessage: String?)
         case fileCorrupted(logMessage: String?)
-        case chromecastError(logMessage: String?)
         case playbackError(logMessage: String?, isLocalFile: Bool)
 
         var userMessage: String {
@@ -985,8 +982,6 @@ class PlaybackManager: ServerPlaybackDelegate {
                 return L10n.downloadErrorContactAuthorVersion2
             case .fileCorrupted:
                 return L10n.playerErrorCorruptedFile
-            case .chromecastError:
-                return L10n.chromecastError
             case .playbackError(_, let isLocalFile):
                 return isLocalFile ? L10n.playerErrorCorruptedFile : L10n.playerErrorInternetConnection
             }
@@ -1000,8 +995,6 @@ class PlaybackManager: ServerPlaybackDelegate {
                 return L10n.playerErrorEpisodeNotAvailable
             case .fileCorrupted:
                 return L10n.playerErrorCorruptedFile
-            case .chromecastError:
-                return L10n.chromecastError
             case .playbackError:
                 return L10n.playerErrorShortPlaybackError
             }
@@ -1043,8 +1036,6 @@ class PlaybackManager: ServerPlaybackDelegate {
             case .episodeNotAvailable(_, let logMessage):
                 return logMessage
             case .fileCorrupted(let logMessage):
-                return logMessage
-            case .chromecastError(let logMessage):
                 return logMessage
             case .playbackError(let logMessage, _):
                 return logMessage
@@ -1306,10 +1297,7 @@ class PlaybackManager: ServerPlaybackDelegate {
                 player = DefaultPlayer()
             }
         #else
-            if playersSupported.first == GoogleCastPlayer.self {
-                FileLog.shared.addMessage("Using GoogleCastPlayer")
-                player = GoogleCastPlayer()
-            } else if playersSupported.first == EffectsPlayer.self {
+            if playersSupported.first == EffectsPlayer.self {
                 FileLog.shared.addMessage("Using EffectsPlayer")
                 player = EffectsPlayer()
             } else {
@@ -1327,12 +1315,6 @@ class PlaybackManager: ServerPlaybackDelegate {
         #if !os(watchOS) && !APPCLIP && !os(tvOS)
             if let fallbackToPlayer {
                 return [fallbackToPlayer]
-            }
-
-            if GoogleCastManager.sharedManager.connectedOrConnectingToDevice() {
-                possiblePlayers.append(GoogleCastPlayer.self)
-
-                return possiblePlayers // for Google Cast, only the Google Cast player is allowed
             }
         #endif
 
@@ -1384,13 +1366,6 @@ class PlaybackManager: ServerPlaybackDelegate {
     }
 
     func activateAudioSession(completion: ((Bool) -> Void)?) {
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
-            if GoogleCastManager.sharedManager.connectedOrConnectingToDevice() {
-                completion?(true)
-                return
-            }
-        #endif
-
         shouldDeactivateSession.value = false
 
         #if os(watchOS)
@@ -1617,14 +1592,7 @@ class PlaybackManager: ServerPlaybackDelegate {
     // MARK: - Now Playing Info
 
     @objc private func updateNowPlayingInfo() {
-        #if os(watchOS) || APPCLIP || os(tvOS)
-            let connectedToExternalDevice = false
-        #else
-            let connectedToExternalDevice = GoogleCastManager.sharedManager.connectedOrConnectingToDevice()
-        #endif
-
-        // When Google Casting in the background, control over the casting device is not available, so remove the controls
-        guard let episode = currentEpisode(), !connectedToExternalDevice else {
+        guard let episode = currentEpisode() else {
             #if os(watchOS)
                 WatchNowPlayingHelper.clearNowPlayingInfo()
             #else
@@ -2000,10 +1968,6 @@ class PlaybackManager: ServerPlaybackDelegate {
     // MARK: - AVAudioSession Notifications
 
     @objc private func handleRouteChanged(_ notification: Notification) {
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
-            if GoogleCastManager.sharedManager.connectedOrConnectingToDevice() { return } // while google casting we don't care about interruptions
-        #endif
-
         guard let userInfo = notification.userInfo, let changeReason = userInfo[AVAudioSessionRouteChangeReasonKey] as? NSNumber else { return }
 
         logRouteChange(userInfo: userInfo)
@@ -2046,10 +2010,6 @@ class PlaybackManager: ServerPlaybackDelegate {
     }
 
     @objc private func handleAudioInterruption(_ notification: Notification) {
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
-            if GoogleCastManager.sharedManager.connectedOrConnectingToDevice() { return } // while google casting we don't care about interruptions
-        #endif
-
         guard let userInfo = notification.userInfo else { return }
 
         let interruptionType = userInfo[AVAudioSessionInterruptionTypeKey] as! NSNumber
@@ -2100,57 +2060,9 @@ class PlaybackManager: ServerPlaybackDelegate {
     }
 
     @objc private func handleSystemAudioReset(_ notification: Notification) {
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
-            if GoogleCastManager.sharedManager.connected() { return } // while google casting we don't care about system audio events
-        #endif
-
         if currentEpisode() != nil {
             cleanupCurrentPlayer(permanent: false)
         }
-    }
-
-    func remoteDeviceConnected() {
-        AnalyticsHelper.didConnectToChromecast()
-        if let episode = currentEpisode() {
-            if playerSwitchRequired() {
-                AnalyticsPlaybackHelper.shared.currentSource = .chromecast
-                pause()
-
-                AnalyticsPlaybackHelper.shared.currentSource = .chromecast
-                load(episode: episode, autoPlay: true, overrideUpNext: false)
-            }
-        }
-    }
-
-    func remoteDeviceWillDisconnect() {
-        recordPlaybackPosition(sendToServerImmediately: true, fireNotifications: false)
-    }
-
-    func remoteDeviceDisconnected() {
-        guard let episode = currentEpisode() else { return }
-
-        if playerSwitchRequired() {
-            load(episode: episode, autoPlay: false, overrideUpNext: false)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
-        }
-    }
-
-    func remoteDeviceAutoConnected(_ episodeUuid: String) {
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
-            if let _ = player as? GoogleCastPlayer {
-                return // we already have a Google Cast player, probably just a background resume rather than a restart
-            }
-
-            if let playingEpisode = currentEpisode(), playingEpisode.uuid != episodeUuid {
-                return // if we connected back up and a different episode is playing to what we are playing, don't switch
-            }
-
-            // if we get here then we're either not playing anything, or we're meant to be playing this episode anyway, so connect back up with it
-            if let episodePlaying = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid) {
-                let shouldPlay = GoogleCastManager.sharedManager.playing()
-                load(episode: episodePlaying, autoPlay: shouldPlay, overrideUpNext: false)
-            }
-        #endif
     }
 
     // MARK: - Background Handling

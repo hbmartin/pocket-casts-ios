@@ -276,7 +276,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     override func viewDidLoad() {
-        supportsGoogleCast = true
         useTransparentNavigationBarAppearance = true
 
         super.viewDidLoad()
@@ -828,7 +827,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
     func updateMultiSelectNavBar() {
         if isMultiSelectEnabled {
-            supportsGoogleCast = false
             let cancel = UIBarButtonItem(title: L10n.cancel, style: .plain, target: self, action: #selector(cancelTapped))
             cancel.accessibilityLabel = L10n.accessibilityCancelMultiselect
             multiSelectCancelBarButton = cancel
@@ -851,7 +849,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
             } else {
                 navigationItem.setLeftBarButton(defaultBackBarButton, animated: false)
             }
-            supportsGoogleCast = true
             refreshRightButtons()
         }
         updateNavBarBlur()
@@ -947,10 +944,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
     func folderTapped() {
         Analytics.track(.podcastScreenFolderTapped)
-        if !SubscriptionHelper.hasActiveSubscription() {
-            NavigationManager.sharedManager.showUpsellView(from: self, source: .folders)
-            return
-        }
 
         guard let podcast else { return }
 

@@ -33,11 +33,6 @@ extension AppDelegate {
                 return
             }
 
-            if path.startsWith(string: "/redeem") {
-                handleReferralsDeepLink(url: incomingURL)
-                return
-            }
-
             if path == "/discover" || path.startsWith(string: "/discover/") {
                 if let url = URL(string: "pktc:/\(path)") {
                     NavigationManager.sharedManager.dismissPresentedViewController()
@@ -218,9 +213,5 @@ extension AppDelegate {
 
             NavigationManager.sharedManager.navigateTo(NavigationManager.filterPageKey, data: [NavigationManager.filterUuidKey: filter.uuid])
         }
-    }
-
-    func handleReferralsDeepLink(url: URL) {
-        NavigationManager.sharedManager.navigateTo(NavigationManager.settingsRedeemGuestPassKey, data: [NavigationManager.redeemGuestPassURLKey: url])
     }
 }

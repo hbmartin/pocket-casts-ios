@@ -307,16 +307,8 @@ class IconSelectorCell: ThemeableCell, UICollectionViewDataSource, UICollectionV
     // MARK: - CollectionView Delegate
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let icon = IconType(rawValue: indexPath.item), icon.isUnlocked else {
+        guard let icon = IconType(rawValue: indexPath.item) else {
             collectionView.deselectItem(at: indexPath, animated: true)
-
-            if let delegate {
-                let context: OnboardingFlow.Context? = IconType(rawValue: indexPath.item).flatMap {
-                    ["product": ProductInfo(plan: $0.subscription == .patron ? .patron : .plus, frequency: .yearly)]
-                }
-
-                NavigationManager.sharedManager.showUpsellView(from: delegate.iconSelectorPresentingVC(), source: .icons, context: context)
-            }
             return
         }
 

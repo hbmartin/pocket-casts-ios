@@ -79,11 +79,6 @@ class FoldersCoordinator: NSObject {
     }
 
     private func manualFolderCreationFlow(from vc: UIViewController) {
-        if !SubscriptionHelper.hasActiveSubscription() {
-            navigationManager.showUpsellView(from: vc, source: .folders)
-            return
-        }
-
         let creatFolderView = CreateFolderView { [weak vc, weak self] folderUuid in
             guard let self else { return }
             if let folderUuid, let folder = dataManager.findFolder(uuid: folderUuid) {
@@ -100,11 +95,6 @@ class FoldersCoordinator: NSObject {
     }
 
     private func suggestedFolderCreationFlow(from vc: UIViewController, source: AnalyticsSource) {
-        if !SubscriptionHelper.hasActiveSubscription() {
-            currentUpsellFlow = .userInitiated
-            showUpsellSuggestedFolder(from: vc, source: source)
-            return
-        }
         let suggestedFoldersView = SuggestedFoldersView(model: suggestedFoldersModel, source: source) { [weak vc, weak self] result in
             guard let self, let vc else { return }
 
@@ -191,12 +181,8 @@ class FoldersCoordinator: NSObject {
     }
 
     private func startUpsellFlow(from vc: UIViewController, source: AnalyticsSource, upgradeSource: PlusUpgradeViewSource) {
-        currentVC = vc
-        currentSource = source
-        addObservers()
-        vc.dismiss(animated: false) {
-            self.navigationManager.showUpsellView(from: vc, source: upgradeSource, flow: .suggestedFolderUpsell)
-        }
+        // Folders are free for everyone now, so there is no upsell to present.
+        vc.dismiss(animated: false)
     }
 
     private var cancellables = Set<AnyCancellable>()

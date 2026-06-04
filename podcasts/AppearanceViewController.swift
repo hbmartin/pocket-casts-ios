@@ -178,14 +178,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         let themeSelector = ThemeSelectorView(title: L10n.appearanceThemeSelect, onThemeSelected: { [weak self] theme in
             guard let self else { return }
 
-            if theme.isPlusOnly, !SubscriptionHelper.hasActiveSubscription() {
-                self.dismiss(animated: true) {
-                    NavigationManager.sharedManager.showUpsellView(from: self, source: .themes)
-                }
-
-                return
-            }
-
             persistThemeChange(theme)
             self.updateTableAndData()
             self.dismiss(animated: true, completion: nil)

@@ -103,7 +103,7 @@ class SlumberAnnouncementViewModel: ObservableObject {
     }
 }
 
-class SlumberUpgradeRedeemViewModel: PlusAccountPromptViewModel {
+class SlumberUpgradeRedeemViewModel: ObservableObject {
     let feature: PaidFeature = .slumber
     let upgradeSource: PlusUpgradeViewSource = .slumber
 
@@ -112,7 +112,8 @@ class SlumberUpgradeRedeemViewModel: PlusAccountPromptViewModel {
     }
 
     func showRedeemOrUpgrade() {
-        isEligible() ? showRedeem() : upgradeTapped()
+        // Slumber is free for everyone now, so always open the redeem page.
+        showRedeem()
     }
 
     func isEligible() -> Bool {
@@ -125,12 +126,6 @@ class SlumberUpgradeRedeemViewModel: PlusAccountPromptViewModel {
         let safariController = SFSafariViewController(with: url)
         safariController.modalPresentationStyle = .formSheet
         parentController.present(safariController, animated: true)
-    }
-
-    override func showModal(for product: PlusPricingInfoModel.PlusProductPricingInfo? = nil) {
-        guard let parentController = SceneHelper.rootViewController() else { return }
-
-        feature.presentUpgradeController(from: parentController, source: upgradeSource)
     }
 }
 

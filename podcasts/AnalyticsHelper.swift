@@ -202,10 +202,6 @@ class AnalyticsHelper {
         logEvent("discover_force_touch", parameters: nil)
     }
 
-    class func didConnectToChromecast() {
-        logEvent("connected_to_chromecast", parameters: nil)
-    }
-
     class func didChooseIcon(iconName: String?) {
         if let name = iconName {
             // Firebase doesn't like dashes (Event name must contain only letters, numbers, or underscores)
@@ -343,42 +339,6 @@ class AnalyticsHelper {
                               promotionId: source.promotionId(),
                               promotionName: source.promotionName())
         }
-
-        #if !APPCLIP
-        static func plusAddToCart(identifier: IAPProductID) {
-            guard let product = IAPHelper.shared.getProduct(for: identifier) else {
-                return
-            }
-
-            let price = product.price
-            let currency = product.priceLocale.currency?.identifier ?? ""
-            let name = product.localizedTitle
-
-            let item: [String: Any] = [
-                AnalyticsParameterItemID: identifier,
-                AnalyticsParameterItemName: name,
-                AnalyticsParameterPrice: price,
-                AnalyticsParameterQuantity: 1
-            ]
-
-            var parameters: [String: Any] = [
-                AnalyticsParameterCurrency: currency,
-                AnalyticsParameterValue: price,
-                AnalyticsParameterItems: [item]
-            ]
-
-            // Log that a free trial was used
-            if IAPHelper.shared.isEligibleForOffer, let offerType = product.introductoryPrice?.paymentMode {
-                if offerType == .freeTrial {
-                    parameters[AnalyticsParameterCoupon] = "FREE_TRIAL"
-                } else if offerType == .payAsYouGo {
-                    parameters[AnalyticsParameterCoupon] = "INTRO_OFFER"
-                }
-            }
-
-            logEvent(AnalyticsEventAddToCart, parameters: parameters)
-        }
-        #endif
 
         static func plusPlanPurchased() {
             logEvent(AnalyticsEventPurchase)

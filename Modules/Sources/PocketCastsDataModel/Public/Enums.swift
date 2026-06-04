@@ -299,7 +299,6 @@ public enum PlayerAction: String, Codable, Equatable {
     case starEpisode = "star"
     case shareEpisode = "share"
     case goToPodcast = "podcast"
-    case chromecast = "case"
     case markPlayed = "played"
     case archive = "archive"
     case addBookmark = "bookmark"

@@ -22,56 +22,17 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let row = tableData[indexPath.section][indexPath.row]
-        switch row {
-        case .upgradeView:
-            return upgradePromptViewSize?.height ?? UITableView.automaticDimension
-
-        default:
-            return UITableView.automaticDimension
-        }
+        return UITableView.automaticDimension
     }
 
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        let row = tableData[indexPath.section][indexPath.row]
-        switch row {
-        case .upgradeView:
-            return 350
-        default:
-            return 70
-        }
+        return 70
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let row = tableData[indexPath.section][indexPath.row]
 
         switch row {
-        case .upgradeView:
-            let cell: PlusAccountPromptTableCell
-            if let dequeuedCell = tableView.dequeueReusableCell(withIdentifier: PlusAccountPromptTableCell.reuseIdentifier) as? PlusAccountPromptTableCell {
-                cell = dequeuedCell
-            } else {
-                cell = PlusAccountPromptTableCell(reuseIdentifier: PlusAccountPromptTableCell.reuseIdentifier, model: model)
-            }
-            cell.updateParent(self)
-            cell.contentSizeUpdated = { [weak self] size in
-                self?.upgradePromptViewSize = size
-            }
-
-            return cell
-
-        case .upgradeAccount:
-            let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
-            cell.cellLabel.text = L10n.upgradeAccount
-            cell.cellImage.image = UIImage(named: "patron-heart")?.withRenderingMode(.alwaysTemplate)
-            cell.counterView.isHidden = true
-            cell.showsDisclosureIndicator = false
-
-            cell.imageAndTextColor = AppTheme.patronTextColor
-
-            return cell
-
-
         case .supporterContributions:
             let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
             cell.cellLabel.text = L10n.supporterContributions
@@ -135,14 +96,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
             cell.showsDisclosureIndicator = false
 
             return cell
-        case .cancelSubscription:
-            let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
-            cell.cellLabel.text = L10n.cancelSubscription
-            cell.cellImage.image = UIImage(named: "cancelsubscription")
-            cell.iconStyle = .primaryInteractive01
-            cell.counterView.isHidden = true
-            cell.showsDisclosureIndicator = false
-            return cell
         case .privacyPolicy:
             let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
             cell.cellLabel.text = L10n.accountPrivacyPolicy
@@ -175,11 +128,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
         let row = tableData[indexPath.section][indexPath.row]
 
         switch row {
-        case .upgradeView:
-            break
-        case .upgradeAccount:
-                let controller = OnboardingFlow.shared.begin(flow: .patronAccountUpgrade, in: self, source: .account)
-            navigationController?.present(controller, animated: true)
         case .supporterContributions:
             let supporterVC = SupporterContributionsViewController()
             navigationController?.pushViewController(supporterVC, animated: true)
@@ -202,15 +150,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
             showSignOutWarning()
         case .deleteAccount:
             deleteAccountTapped()
-        case .cancelSubscription:
-            let controller: UIViewController
-            if FeatureFlag.winback.enabled, SubscriptionHelper.subscriptionPlatform() == .iOS {
-                controller = CancelSubscriptionViewModel.make()
-            } else {
-                controller = CancelConfirmationViewModel.make()
-            }
-            present(controller, animated: true, completion: nil)
-            Analytics.track(.accountDetailsCancelTapped)
         case .privacyPolicy:
             NavigationManager.sharedManager.navigateTo(NavigationManager.showPrivacyPolicyPageKey, data: nil)
             Analytics.track(.accountDetailsShowPrivacyPolicy)

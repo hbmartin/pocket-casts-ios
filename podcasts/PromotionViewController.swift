@@ -277,25 +277,23 @@ class PromotionViewController: UIViewController, SyncSigninDelegate, AccountUpda
     }
 
     @IBAction func createAccountTapped(_ sender: Any) {
-        let controller = OnboardingFlow.shared.begin(flow: .promoCode, in: navigationController, source: .promoCode)
+        let controller = OnboardingFlow.shared.begin(flow: .loggedOut, in: navigationController, source: .promoCode)
         navigationController?.pushViewController(controller, animated: true)
     }
 
     @IBAction func signInWithValidPromoTapped(_ sender: Any) {
-        let controller = OnboardingFlow.shared.begin(flow: .promoCode, in: navigationController, source: .promoCode)
+        let controller = OnboardingFlow.shared.begin(flow: .loggedOut, in: navigationController, source: .promoCode)
         navigationController?.pushViewController(controller, animated: true)
     }
 
     @IBAction func upgradeToPlusTapped(_ sender: Any) {
-        dismiss(animated: true) {
-            guard let controller = SceneHelper.rootViewController() else { return }
-            NavigationManager.sharedManager.showUpsellView(from: controller, source: .promoCode)
-        }
+        // Every feature is free now, so there is no upsell to present.
+        dismiss(animated: true)
     }
 
     @IBAction func signUpNoPromoTapped(_ sender: Any) {
         dismiss(animated: true) {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.promoCode])
+            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.loggedOut])
         }
     }
 

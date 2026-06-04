@@ -257,15 +257,16 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     @objc private func shuffleButtonTapped() {
         FileLog.shared.addMessage("UpNext shuffleButtonTapped: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
 
-        if !SubscriptionHelper.hasActiveSubscription() || !SyncManager.isUserLoggedIn() {
-            // Edge case where the UpNext is presented by the player container with a free user.
-            // In this case we need to dismiss the UpNext to present the paywall
+        if !SyncManager.isUserLoggedIn() {
+            // Shuffle still requires an account so the order can sync. Send the
+            // user to the login/onboarding flow instead of a paywall.
+            let onboardingController = OnboardingFlow.shared.begin(flow: .loggedOut, source: .upNextShuffle)
             if let mainTabBar = presentingViewController?.presentingViewController, presentingViewController is PlayerContainerViewController {
                 dismiss(animated: true) {
-                    NavigationManager.sharedManager.showUpsellView(from: mainTabBar, source: .upNextShuffle)
+                    mainTabBar.present(onboardingController, animated: true)
                 }
             } else {
-                NavigationManager.sharedManager.showUpsellView(from: self, source: .upNextShuffle)
+                present(onboardingController, animated: true)
             }
             return
         }

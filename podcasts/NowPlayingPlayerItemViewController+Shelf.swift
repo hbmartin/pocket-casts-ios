@@ -11,7 +11,6 @@ protocol NowPlayingActionsDelegate: AnyObject {
     func routePickerTapped()
     func shareTapped()
     func goToTapped()
-    func chromecastTapped()
     func markPlayedTapped()
     func archiveTapped()
     func bookmarkTapped()
@@ -105,11 +104,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             gotoPodcastBtn.accessibilityLabel = L10n.goToPodcast
 
             addToShelf(on: gotoPodcastBtn)
-        case .chromecast:
-            #if !APPCLIP
-            playerControlsStackView.addArrangedSubview(chromecastBtn)
-            addToShelf(on: chromecastBtn)
-            #endif
         case .starEpisode:
             if playingEpisode is Episode {
                 let starBtn = UIButton(frame: CGRect.zero)
@@ -230,12 +224,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         } else if PlaybackManager.shared.currentEpisode() is UserEpisode {
             goToFiles()
         }
-        #endif
-    }
-
-    func chromecastTapped() {
-        #if !APPCLIP
-        googleCastTapped()
         #endif
     }
 
@@ -386,11 +374,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         #if !APPCLIP
         let action = PlayerAction.addBookmark
         shelfButtonTapped(action)
-
-        guard action.isUnlocked else {
-            action.paidFeature?.presentUpgradeController(from: self, source: .bookmarksShelfAction)
-            return
-        }
 
         bookmarkTapped()
         #endif

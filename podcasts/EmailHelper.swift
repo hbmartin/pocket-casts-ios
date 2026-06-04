@@ -1,22 +1,15 @@
-import PocketCastsDataModel
 import PocketCastsServer
-import PocketCastsUtils
-import SwiftUI
+import SafariServices
 import UIKit
 
 class EmailHelper: NSObject {
-    func presentSupportDialog(_ source: UIViewController, type: ZDType) {
+    /// Opens the Pocket Casts support site. (Previously routed to the in-app Zendesk
+    /// messaging flow, which has been removed.)
+    func presentSupportDialog(_ source: UIViewController) {
         DispatchQueue.main.async {
-            let config = SupportConfig(type: type)
-            let viewModel = PCMessageSupportViewModel(config: config)
-            let supportView = MessageSupportView(viewModel: viewModel) {
-                source.dismiss(animated: true, completion: nil)
-            }
-            .environmentObject(Theme.sharedTheme)
-
-            let hostingController = PCHostingController(rootView: supportView)
-            hostingController.isModalInPresentation = true
-            source.present(hostingController, animated: true, completion: nil)
+            guard let url = URL(string: ServerConstants.Urls.support) else { return }
+            let safari = SFSafariViewController(url: url)
+            source.present(safari, animated: true, completion: nil)
         }
     }
 }

@@ -259,7 +259,7 @@ extension PlayerAction: AnalyticsDescribable {
         [
             .effects, .sleepTimer, .routePicker, .shareEpisode, .addToPlaylist, .download,
             .transcript, .goToPodcast, .addBookmark, .markPlayed,
-            .starEpisode, .chromecast, .archive
+            .starEpisode, .archive
         ]
     }
 
@@ -277,8 +277,6 @@ extension PlayerAction: AnalyticsDescribable {
             self = .shareEpisode
         case 6:
             self = .goToPodcast
-        case 7:
-            self = .chromecast
         case 8:
             self = .markPlayed
         case 9:
@@ -310,8 +308,6 @@ extension PlayerAction: AnalyticsDescribable {
             return 5
         case .goToPodcast:
             return 6
-        case .chromecast:
-            return 7
         case .markPlayed:
             return 8
         case .archive:
@@ -349,9 +345,6 @@ extension PlayerAction: AnalyticsDescribable {
             } else {
                 return L10n.goToPodcast
             }
-        case .chromecast:
-            // Note: Chromecast is a Propernoun and thus should not be translated.
-            return "Chromecast"
         case .markPlayed:
             return L10n.markPlayed
         case .archive:
@@ -400,8 +393,6 @@ extension PlayerAction: AnalyticsDescribable {
             return "podcast-share"
         case .goToPodcast:
             return "gotoarrow"
-        case .chromecast:
-            return "nav_cast_off"
         case .markPlayed:
             return "episode-markasplayed"
         case .archive:
@@ -434,8 +425,6 @@ extension PlayerAction: AnalyticsDescribable {
             return "shelf_share"
         case .goToPodcast:
             return "shelf_gotoarrow"
-        case .chromecast:
-            return "shelf_nav_cast_off"
         case .markPlayed:
             return "shelf_played"
         case .archive:
@@ -483,8 +472,6 @@ extension PlayerAction: AnalyticsDescribable {
             return "share_episode"
         case .goToPodcast:
             return "go_to_podcast"
-        case .chromecast:
-            return "chromecast"
         case .markPlayed:
             return "mark_as_played"
         case .archive:

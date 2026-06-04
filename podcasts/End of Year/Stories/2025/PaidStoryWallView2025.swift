@@ -32,8 +32,6 @@ struct PaidStoryWallView2025: StoryView {
     @Environment(\.pauseState) var pauseState: PauseState
     @EnvironmentObject var storyModel: StoriesModel
 
-    @StateObject private var model = PlusPricingInfoModel()
-
     @StateObject private var subscriptionModel =  SubscriptionModel()
     private let subscriptionTier: SubscriptionTier
 
@@ -78,16 +76,9 @@ struct PaidStoryWallView2025: StoryView {
                                 description: tier == .none ?  L10n.playback2025PlusUpsellDescription : L10n.playback2025PlusThanksDescription(tier.displayNameShort),
                                 subscriptionTier: tier == .none ? .plus : tier)
                 Button(tier == .none ?  L10n.playback2025PlusUpsellButtonTitle : L10n.continue) {
-                    if tier == .none {
-                        guard let storiesViewController = SceneHelper.rootViewController() else {
-                            return
-                        }
-                        Analytics.track(.endOfYearUpsellShown, properties: ["current_year": EndOfYear.currentYear.literalValue])
-                        NavigationManager.sharedManager.showUpsellView(from: storiesViewController, source: .endOfYear, flow: SyncManager.isUserLoggedIn() ? .endOfYearUpsell : .endOfYear)
-                    } else {
-                        Analytics.track(.endOfYearPlusContinued, properties: ["current_year": EndOfYear.currentYear.literalValue])
-                        advanceToNextStory()
-                    }
+                    // Every feature is free now, so there is no upsell to present.
+                    Analytics.track(.endOfYearPlusContinued, properties: ["current_year": EndOfYear.currentYear.literalValue])
+                    advanceToNextStory()
                 }
                 .buttonStyle(BasicButtonStyle(textColor: .white, backgroundColor: .black, borderColor: .black))
                 .padding(.horizontal, 24)

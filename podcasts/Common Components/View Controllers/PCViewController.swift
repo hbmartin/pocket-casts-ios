@@ -1,10 +1,7 @@
 import UIKit
 
 class PCViewController: SimpleNotificationsViewController {
-    var supportsGoogleCast = false
     var largeTitleFont = UIFont.systemFont(ofSize: 31, weight: .bold)
-
-    var googleCastBtn: UIBarButtonItem?
 
     private var _customRightBtn: UIBarButtonItem?
 
@@ -58,34 +55,12 @@ class PCViewController: SimpleNotificationsViewController {
 
         navigationItem.backButtonDisplayMode = .minimal
 
-        if supportsGoogleCast {
-            let castButton = PCGoogleCastButton(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
-            castButton.addTarget(self, action: #selector(castButtonTapped), for: .touchUpInside)
-            if useTransparentNavigationBarAppearance {
-                if !LiquidGlass.isEnabled {
-                    FakeNavBarButton.applyStyle(to: castButton)
-                }
-                // On Liquid Glass, the bar's default tint already gives the cast button proper contrast.
-            } else {
-                castButton.tintColor = navIconsColor ?? AppTheme.navBarIconsColor()
-            }
-            googleCastBtn = UIBarButtonItem(customView: castButton)
-
-            refreshRightButtons()
-        } else if customRightBtn != nil || !extraRightButtons.isEmpty {
+        if customRightBtn != nil || !extraRightButtons.isEmpty {
             refreshRightButtons()
         }
         setupNavBar(animated: false)
 
         NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-    }
-
-    @objc func castButtonTapped() {
-        let castController = CastToViewController()
-        let navController = SJUIUtils.navController(for: castController)
-        navController.modalPresentationStyle = .fullScreen
-
-        present(navController, animated: true, completion: nil)
     }
 
     deinit {
@@ -110,9 +85,6 @@ class PCViewController: SimpleNotificationsViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        if supportsGoogleCast {
-            NotificationCenter.default.addObserver(self, selector: #selector(_refreshRightButtons), name: Constants.Notifications.googleCastStatusChanged, object: nil)
-        }
         NotificationCenter.default.addObserver(self, selector: #selector(appWasBackgrounded), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(appWillBecomeActive), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
@@ -120,7 +92,7 @@ class PCViewController: SimpleNotificationsViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        if customRightBtn != nil || supportsGoogleCast {
+        if customRightBtn != nil {
             navigationItem.rightBarButtonItems = nil
             navigationItem.rightBarButtonItem = nil
         }
@@ -131,26 +103,15 @@ class PCViewController: SimpleNotificationsViewController {
 
         navigationController?.delegate = nil
 
-        if supportsGoogleCast {
-            NotificationCenter.default.removeObserver(self, name: Constants.Notifications.googleCastStatusChanged, object: nil)
-        }
-
         NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
-    @objc private func _refreshRightButtons() {
-        refreshRightButtons(animated: false)
-    }
-
     func refreshRightButtons(animated: Bool = false) {
-        if supportsGoogleCast || !extraRightButtons.isEmpty {
+        if !extraRightButtons.isEmpty {
             var buttons = [UIBarButtonItem]()
             if let customRightBtn {
                 buttons.append(customRightBtn)
-            }
-            if let googleCastBtn, supportsGoogleCast {
-                buttons.append(googleCastBtn)
             }
             buttons.append(contentsOf: extraRightButtons)
             navigationItem.setRightBarButtonItems(buttons, animated: animated)
@@ -195,7 +156,6 @@ class PCViewController: SimpleNotificationsViewController {
 
         navigationBar.backIndicatorImage = UIImage(named: "nav-back")?.tintedImage(iconsColor)
         navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "nav-back")?.tintedImage(iconsColor)
-        googleCastBtn?.customView?.tintColor = iconsColor
 
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
@@ -249,7 +209,7 @@ class PCViewController: SimpleNotificationsViewController {
         navigationBar.standardAppearance = appearance
         navigationBar.scrollEdgeAppearance = appearance
 
-        let allItems = ([navigationItem.leftBarButtonItem, customRightBtn, googleCastBtn].compactMap { $0 }) + extraRightButtons
+        let allItems = ([navigationItem.leftBarButtonItem, customRightBtn].compactMap { $0 }) + extraRightButtons
         for item in allItems {
             (item.customView as? FakeNavBarStylable)?.setNavBarScrolled(scrolled, animated: true)
         }

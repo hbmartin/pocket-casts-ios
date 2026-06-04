@@ -64,14 +64,7 @@ extension AddCustomViewController: UICollectionViewDelegate, UICollectionViewDat
     }
 
     func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        if SubscriptionHelper.hasActiveSubscription() {
-            return true
-        }
-
-        if artwork != nil, indexPath.item < 2 {
-            return true
-        }
-        showSubscriptionRequired()
-        return false
+        // Custom artwork colors are free for everyone now.
+        return true
     }
 }

@@ -180,7 +180,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     func setupNavBar() {
-        supportsGoogleCast = isMultiSelectEnabled ? false : true
         let rightButton = isMultiSelectEnabled ? UIBarButtonItem(title: L10n.cancel, style: .plain, target: self, action: #selector(cancelTapped)) : UIBarButtonItem(image: UIImage(named: "more"), style: .plain, target: self, action: #selector(menuTapped))
         rightButton.accessibilityLabel = isMultiSelectEnabled ? L10n.accessibilityCancelMultiselect : L10n.accessibilitySortAndOptions
         super.setCustomRightBtn(rightButton, animated: true)
@@ -317,10 +316,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
                 self.reloadLocalFiles()
             }
         }
-    }
-
-    func showUpgradeRequired() {
-        NavigationManager.sharedManager.showUpsellView(from: self, source: .files)
     }
 
     func userEpisodeDetailClosed() {

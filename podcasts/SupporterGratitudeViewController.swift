@@ -67,13 +67,7 @@ class SupporterGratitudeViewController: PCViewController, SyncSigninDelegate {
     // MARK: - SyncSigninDelegate
 
     func signingProcessCompleted() {
-        dismiss(animated: true, completion: {
-            var uuid: String? = self.bundleUuid
-            if self.bundleUuid == nil, let podcastUuid = self.podcastInfo?.uuid, let containerBundle = SubscriptionHelper.bundleSubscriptionForPodcast(podcastUuid: podcastUuid) {
-                uuid = containerBundle.bundleUuid
-            }
-            NavigationManager.sharedManager.navigateTo(NavigationManager.supporterBundlePageKey, data: [NavigationManager.supporterBundleUuid: uuid as Any])
-        })
+        dismiss(animated: true, completion: nil)
     }
 
     private func updatePodcastHeartColors(uuid: String) {

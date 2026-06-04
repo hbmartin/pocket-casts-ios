@@ -95,15 +95,9 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             PlaybackActionHelper.stopDownload(episodeUuid: episode.uuid)
             animateOut()
         case .upload:
-            if SubscriptionHelper.hasActiveSubscription() {
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "upload"])
-                PlaybackActionHelper.upload(episodeUuid: episode.uuid)
-                animateOut()
-            } else {
-                animateOut()
-                delegate?.showUpgradeRequired()
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "upload_upgrade_required"])
-            }
+            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "upload"])
+            PlaybackActionHelper.upload(episodeUuid: episode.uuid)
+            animateOut()
         case .cancelUpload:
             PlaybackActionHelper.stopUpload(episodeUuid: episode.uuid)
             Analytics.track(.userFileDetailOptionTapped, properties: ["option": "cancel_upload"])

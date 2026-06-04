@@ -66,8 +66,8 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private var bannerLabelTrailingConstraint: NSLayoutConstraint?
 
     private var shouldShowPremiumView: Bool {
-        return FeatureFlag.generatedTranscripts.enabled &&
-        (!SubscriptionHelper.hasActiveSubscription() || !SyncManager.isUserLoggedIn())
+        // Generated transcripts are free for everyone now, so there is no premium overlay.
+        return false
     }
 
     var showGeneratedTranscriptsPremiumOverlay: (() -> Void)?
@@ -662,10 +662,6 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
                 await show(error: error)
             }
         }
-    }
-
-    @objc private func showUpsellView() {
-        NavigationManager.sharedManager.showUpsellView(from: self, source: .generatedTranscripts)
     }
 
     @objc private func subscriptionStatusDidChange() {

@@ -31,21 +31,6 @@ class NavigationManager {
 
     static let filesPageKey = "filesPage"
 
-    static let subscriptionCancelledAcknowledgePageKey = "subscrptionCancelledAcknowledgePage"
-
-    static let subscriptionUpgradeVCKey = "subscrptionUpgradeVC"
-    static let subscriptionRequiredPageKey = "subscrptionRequiredPage"
-
-    static let showPlusMarketingPageKey = "showPlusMarketingPage"
-    static let showPromotionPageKey = "showPromotionPage"
-    static let promotionInfoKey = "promotionInfoKey"
-    static let showPromotionFinishedPageKey = "showPromotionFinishedPage"
-
-    static let supporterSignInKey = "supporterSignInKey"
-    static let supporterPodcastInfo = "supporterPodcastInfo"
-    static let supporterBundlePageKey = "suppoerterBundlePage"
-    static let supporterBundleUuid = "supporterBundleUuid"
-
     static let showPrivacyPolicyPageKey = "showPrivacyPage"
     static let showTermsOfUsePageKey = "showTermsOfUsePage"
 
@@ -64,8 +49,6 @@ class NavigationManager {
     static let profileRowDownloadsKey = "downloads"
     static let profileRowEndOfYearKey = "playback"
     static let settingsHeadphoneKey = "headphoneSettings"
-    static let settingsRedeemGuestPassKey = "redeemGuestPassPage"
-    static let redeemGuestPassURLKey = "redeemGuestPassURLKey"
 
     static let endOfYearStories = "endOfYearStories"
     static let onboardingFlow = "onboardingFlow"
@@ -172,17 +155,6 @@ class NavigationManager {
             }
         } else if place == NavigationManager.filesPageKey {
             mainController?.navigateToFiles()
-        } else if place == NavigationManager.subscriptionCancelledAcknowledgePageKey {
-            mainController?.showSubscriptionCancelledAcknowledge()
-        } else if place == NavigationManager.subscriptionRequiredPageKey {
-            if let data, let rootVC = data[NavigationManager.subscriptionUpgradeVCKey] as? UIViewController {
-                let source = (data["source"] as? PlusUpgradeViewSource) ?? .unknown
-                let context = data["context"] as? OnboardingFlow.Context
-                let flow = data["flow"] as? OnboardingFlow.Flow
-                mainController?.showSubscriptionRequired(rootVC, source: source, context: context, flow: flow ?? .plusUpsell)
-            }
-        } else if place == NavigationManager.showPlusMarketingPageKey {
-            mainController?.showPlusMarketingPage()
         } else if place == NavigationManager.showPrivacyPolicyPageKey {
             mainController?.showPrivacyPolicy()
         } else if place == NavigationManager.showTermsOfUsePageKey {
@@ -203,35 +175,7 @@ class NavigationManager {
         else if place == NavigationManager.settingsHeadphoneKey {
             mainController?.showHeadphoneSettings()
         }
-        else if place == NavigationManager.settingsRedeemGuestPassKey {
-            guard let data, let url = data[NavigationManager.redeemGuestPassURLKey] as? URL else {
-                return
-            }
-            mainController?.showRedeemGuestPass(url: url)
-        }
-        else if place == NavigationManager.showPromotionPageKey {
-            var promoCode: String?
-            if let data, let promoString = data[NavigationManager.promotionInfoKey] as? String {
-                promoCode = promoString
-            }
-            mainController?.showPromotionPage(promoCode: promoCode)
-        } else if place == NavigationManager.showPromotionFinishedPageKey {
-            mainController?.showPromotionFinishedAcknowledge()
-        } else if place == NavigationManager.supporterSignInKey {
-            if let data {
-                if let podcastInfo = data[NavigationManager.supporterPodcastInfo] as? PodcastInfo {
-                    mainController?.showSupporterSignIn(podcastInfo: podcastInfo)
-                } else if let bundleUuid = data[NavigationManager.supporterBundleUuid] as? String {
-                    mainController?.showSupporterSignIn(bundleUuid: bundleUuid)
-                }
-            }
-        } else if place == NavigationManager.supporterBundlePageKey {
-            var bundleUuid: String?
-            if let data, let uuid = data[NavigationManager.supporterBundleUuid] as? String {
-                bundleUuid = uuid
-            }
-            mainController?.showSupporterBundleDetails(bundleUuid: bundleUuid)
-        } else if place == NavigationManager.openUrlInSafariVCKey {
+        else if place == NavigationManager.openUrlInSafariVCKey {
             if let data, let urlString = data[NavigationManager.safariVCUrlKey] as? String {
                 mainController?.showInSafariViewController(urlString: urlString)
             }
@@ -301,13 +245,5 @@ class NavigationManager {
 
     func showNotificationsPermissionsModal() {
         mainController?.showNotificationsPermissions()
-    }
-}
-
-// MARK: - Helpers
-
-extension NavigationManager {
-    func showUpsellView(from controller: UIViewController, source: PlusUpgradeViewSource, context: OnboardingFlow.Context? = nil, flow: OnboardingFlow.Flow = .plusUpsell) {
-        navigateTo(Self.subscriptionRequiredPageKey, data: [Self.subscriptionUpgradeVCKey: controller, "source": source, "flow": flow, "context": context ?? [:]])
     }
 }

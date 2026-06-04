@@ -28,12 +28,7 @@ class DeselectChaptersAnnouncementViewModel {
     }
 
     func buttonAction() {
-        // If Plus, just dismiss What's New
-        // If free user, show upgrade
-        SceneHelper.rootViewController()?.dismiss(animated: true) {
-            if !SubscriptionHelper.hasActiveSubscription(), let rootViewController = SceneHelper.rootViewController() {
-                PaidFeature.deselectChapters.presentUpgradeController(from: rootViewController, source: .deselectChapterWhatsNew)
-            }
-        }
+        // The feature is free for everyone now, so just dismiss What's New.
+        SceneHelper.rootViewController()?.dismiss(animated: true)
     }
 }
