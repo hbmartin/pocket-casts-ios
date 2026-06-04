@@ -208,10 +208,6 @@ struct Constants {
             static let tabBarMinimizingEnabled = SettingValue("appearance.tabBarMinimizingEnabled", defaultValue: true)
         }
 
-        enum kidsProfile {
-            static let shouldHideBanner = "ShouldHideKidsBannerKey"
-        }
-
         enum referrals {
             static let showTip = "referrals.showtip"
             static let claimURL = "referrals.claimURL"

@@ -2,13 +2,12 @@ import PocketCastsServer
 import PocketCastsUtils
 import SwiftUI
 import UIKit
-import WatchConnectivity
 
 class SettingsViewController: PCViewController, UITableViewDataSource, UITableViewDelegate {
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
-        case watch, customFiles, importSteps, opml
+        case customFiles, importSteps, opml
         case about, pocketCastsPlus, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
@@ -17,9 +16,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         /// Whether the section should be displayed or not
         var visible: Bool {
             switch self {
-            case .watch:
-                return WCSession.isSupported()
-
             case .pocketCastsPlus:
                 return !SubscriptionHelper.hasActiveSubscription()
 
@@ -54,8 +50,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsSiriShortcuts, UIImage(named: "settings_shortcuts"))
             case .customFiles:
                 return (L10n.files, UIImage(named: "profile_files"))
-            case .watch:
-                return (L10n.appleWatch, UIImage(named: "settings_watch"))
             case .pocketCastsPlus:
                 return (L10n.pocketCastsPlus, UIImage(named: "plusGold24"))
             case .privacy:
@@ -89,7 +83,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.pocketCastsPlus],
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
-            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .watch, .customFiles],
+            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .customFiles],
             [.importSteps, .opml],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -142,7 +136,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         cell.settingsImage.image = tableRow.display.image
 
         switch tableRow {
-        case .appearance, .customFiles, .watch:
+        case .appearance, .customFiles:
             cell.plusIndicator.isHidden = SubscriptionHelper.hasActiveSubscription()
         default:
             break
@@ -192,8 +186,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             navigationController?.pushViewController(SiriSettingsViewController(), animated: true)
         case .customFiles:
             navigationController?.pushViewController(UploadedSettingsViewController(), animated: true)
-        case .watch:
-            navigationController?.pushViewController(WatchSettingsViewController(), animated: true)
         case .pocketCastsPlus:
                 navigationController?.present(OnboardingFlow.shared.begin(flow: .plusUpsell, source: .settings), animated: true)
         case .privacy:

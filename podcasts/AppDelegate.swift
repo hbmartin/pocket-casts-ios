@@ -116,7 +116,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         badgeHelper.setup()
-        WatchManager.shared.setup()
         shortcutManager.listenForShortcutChanges()
 
         setupBackgroundRefresh()
