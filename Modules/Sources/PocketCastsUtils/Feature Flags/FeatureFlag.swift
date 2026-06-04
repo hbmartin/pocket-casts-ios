@@ -361,11 +361,11 @@ public enum FeatureFlag: String, CaseIterable {
         case .ignoreRouteDisconnectedInterruption:
             true
         case .referrals:
-            true
+            false
         case .referralsClaim:
-            true
+            false
         case .referralsSend:
-            true
+            false
         case .syncStats:
             true
         case .playerIsReadyToPlay:
@@ -391,7 +391,7 @@ public enum FeatureFlag: String, CaseIterable {
         case .markAllSyncedInSingleStatement:
             true
         case .winback:
-            true
+            false
         case .manageDownloadedEpisodes:
 			true
         case .podcastFeedUpdate:
