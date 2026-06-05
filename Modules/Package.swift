@@ -6,7 +6,7 @@ import CompilerPluginSupport
 let package = Package(
     name: "Modules",
     platforms: [
-        .iOS(.v18), .watchOS(.v9), .macOS(.v10_15), .tvOS(.v17)
+        .iOS("18.0"), .watchOS(.v9), .macOS(.v10_15), .tvOS(.v17)
     ],
     products: XcodeSupport.products + [
         .library(

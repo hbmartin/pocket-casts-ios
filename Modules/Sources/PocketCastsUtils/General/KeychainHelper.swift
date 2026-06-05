@@ -58,26 +58,31 @@ public class KeychainHelper {
 
         // If the value is nil, delete the item
         guard let value else {
-            var query = createQuery()
+            var query = createService()
             query[kSecAttrService as String] = fullKey
             let status = SecItemDelete(query as CFDictionary)
 
             return status == errSecSuccess
         }
 
-        var saveParams = createService()
-        saveParams[kSecAttrService as String] = fullKey
-        saveParams[kSecAttrAccessible as String] = accessibility
-        saveParams[kSecValueData as String] = value.data(using: String.Encoding.utf8)
+        guard let data = value.data(using: String.Encoding.utf8) else { return false }
 
-        var status = SecItemAdd(saveParams as CFDictionary, nil)
-        if status == errSecDuplicateItem {
-            var query = createQuery()
-            query[kSecAttrService as String] = fullKey
-            status = SecItemDelete(query as CFDictionary)
+        var query = createService()
+        query[kSecAttrService as String] = fullKey
 
-            if status == errSecSuccess {
-                status = SecItemAdd(saveParams as CFDictionary, nil)
+        let attributesToUpdate: [String: Any] = [
+            kSecAttrAccessible as String: accessibility,
+            kSecValueData as String: data
+        ]
+
+        var status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
+        if status == errSecItemNotFound {
+            var saveParams = query
+            saveParams.merge(attributesToUpdate) { _, new in new }
+
+            status = SecItemAdd(saveParams as CFDictionary, nil)
+            if status == errSecDuplicateItem {
+                status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
             }
         }
 

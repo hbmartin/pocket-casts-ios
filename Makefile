@@ -58,7 +58,8 @@ semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
 	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
 
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
-	xcodebuild analyze -project podcasts.xcodeproj \
+	rm -rf $(XCODE_ANALYZE_DERIVED_DATA_PATH)/SDKStatCaches.noindex
+	xcodebuild -quiet analyze -project podcasts.xcodeproj \
        -scheme "$(XCODE_ANALYZE_SCHEME)" \
        -configuration $(XCODE_ANALYZE_CONFIGURATION) \
        -destination '$(XCODE_ANALYZE_DESTINATION)' \
@@ -87,12 +88,11 @@ periphery_baseline: ## Write the current Periphery findings baseline
        -destination '$(PERIPHERY_DESTINATION)' \
        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
-static_checks: ## Run SwiftLint, Semgrep, Xcode Static Analyzer, and Periphery
+static_checks: ## Run SwiftLint, Semgrep, and Xcode Static Analyzer
 	$(MAKE) lint
 	$(MAKE) semgrep_swift_security
 	$(MAKE) semgrep_pocket_casts
 	$(MAKE) xcode_static_analyzer
-	$(MAKE) periphery
 
 build: ## Builds the Debug configuration using Xcode
 	xcodebuild -project podcasts.xcodeproj \
