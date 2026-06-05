@@ -465,7 +465,7 @@ enum PlusUpgradeViewSource: String {
     }
 
     func paywallHeadline() -> String {
-        L10n.pocketCasts
+        L10n.appPocketCastsName
     }
 
     static func from(string: String?) -> PlusUpgradeViewSource {

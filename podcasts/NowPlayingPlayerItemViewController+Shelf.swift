@@ -8,7 +8,7 @@ protocol NowPlayingActionsDelegate: AnyObject {
     func starEpisodeTapped()
     func effectsTapped()
     func sleepTimerTapped()
-    func routePickerTapped()
+    func routePickerTapped(from action: PlayerAction)
     func shareTapped()
     func goToTapped()
     func markPlayedTapped()
@@ -199,7 +199,12 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         showSleepPanel()
     }
 
-    func routePickerTapped() {
+    func routePickerTapped(from _: PlayerAction) {
+        isPresentingOverflowRoutePicker = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.isPresentingOverflowRoutePicker = false
+        }
+
         // This is a bit hacky, but since when the button is located in the shelf, this action is not called
         // we have no way of knowing whether the picker was opened. So we're relying on the willShow delegate method
         // since we don't want to double the events up, we'll unregister the delegate while we show the
@@ -209,6 +214,8 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         // not super happy with this solution but there doesn't appear to be a public API to pop this dialog up...
         if let routePickerButton = routePicker.subviews.first(where: { $0 is UIButton }) as? UIButton {
             routePickerButton.sendActions(for: .touchUpInside)
+        } else {
+            isPresentingOverflowRoutePicker = false
         }
         routePicker.delegate = self
     }
@@ -555,6 +562,11 @@ extension NowPlayingPlayerItemViewController: AVRoutePickerViewDelegate {
             AVAudioSession.sharedInstance().prepareRouteSelectionForPlayback { shouldStartPlayback, routeSelection in
                 FileLog.shared.addMessage("Route selection prepared: shouldStartPlayback=\(shouldStartPlayback), type=\(routeSelection.rawValue)")
             }
+        }
+
+        if isPresentingOverflowRoutePicker {
+            isPresentingOverflowRoutePicker = false
+            return
         }
 
         shelfButtonTapped(.routePicker)

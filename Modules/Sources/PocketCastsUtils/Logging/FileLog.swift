@@ -156,7 +156,7 @@ public final class FileLog {
     }
 
     public func watchLogFileAsString() async -> String? {
-        nil
+        await logFileAsString()
     }
 
     // Creates a merged file from `mainLogFilePath` and `backupLogFilePath` to be used for enquing the file upload.

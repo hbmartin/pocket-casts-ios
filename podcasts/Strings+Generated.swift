@@ -248,6 +248,8 @@ internal enum L10n {
   internal static var appIconRoundDark: String { return L10n.tr("Localizable", "app_icon_round_dark", fallback: "Round Dark") }
   /// The name for the Round Light App Icon
   internal static var appIconRoundLight: String { return L10n.tr("Localizable", "app_icon_round_light", fallback: "Round Light") }
+  /// The app name shown when subscription UI needs a generic Pocket Casts label.
+  internal static var appPocketCastsName: String { return L10n.tr("Localizable", "app_pocket_casts_name", fallback: "Pocket Casts") }
   /// Text sent when sharing a link to our app with other people
   internal static var appShareText: String { return L10n.tr("Localizable", "app_share_text", fallback: "Hey! Here is a link to download the Pocket Casts app. I'm really enjoying it and thought you might too.") }
   /// App version label in the about controller. `%1$@` is a placeholder for the version number and %2$@ is a placeholder for the build number
@@ -2791,8 +2793,6 @@ internal enum L10n {
   internal static func plusYearlyFrequencyPricingFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_yearly_frequency_pricing_format", String(describing: p1), fallback: "%1$@ per year")
   }
-  /// The app name, Pocket Casts.
-  internal static var pocketCasts: String { return L10n.tr("Localizable", "pocket_casts", fallback: "Pocket Casts") }
   /// A Voice Over label for element which represents the Pocket Casts Logo
   internal static var pocketCastsLogo: String { return L10n.tr("Localizable", "pocket_casts_logo", fallback: "Pocket Casts logo") }
   /// The heading shown for the Pocket Casts Newsletter

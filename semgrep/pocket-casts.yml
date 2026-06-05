@@ -1,0 +1,53 @@
+rules:
+  - id: pocketcasts.subscription-helper-hardcoded-billing-state
+    message: Keep billing helpers truthful; use feature gates at call sites instead of hardcoded subscription state.
+    severity: WARNING
+    languages: [swift]
+    patterns:
+      - pattern-inside: |
+          open class SubscriptionHelper: NSObject {
+            ...
+          }
+      - pattern-either:
+          - pattern: |
+              public class func hasActiveSubscription() -> Bool {
+                  true
+              }
+          - pattern: |
+              public class func hasActiveSubscription() -> Bool {
+                  return true
+              }
+          - pattern: |
+              public static var activeTier: SubscriptionTier {
+                  .patron
+              }
+          - pattern: |
+              public static var activeTier: SubscriptionTier {
+                  return .patron
+              }
+
+  - id: pocketcasts.story-onappear-direct-advance
+    message: Defer story-model advancement out of SwiftUI onAppear using DispatchQueue.main.async.
+    severity: WARNING
+    languages: [swift]
+    pattern-either:
+      - pattern: |
+          .onAppear {
+              advanceToNextStory()
+          }
+      - pattern: |
+          .onAppear {
+              $MODEL.start()
+              $MODEL.next()
+          }
+
+  - id: pocketcasts.player-action-chromecast-reuses-persisted-value
+    message: Chromecast must not reuse an existing persisted PlayerAction integer value.
+    severity: WARNING
+    languages: [generic]
+    paths:
+      include:
+        - /podcasts/Enumerations.swift
+    pattern-either:
+      - pattern-regex: 'case\s+\.chromecast:\s*\n\s*return\s+(1|2|3|4|5|6|8|9|10|11|12|13)\b'
+      - pattern-regex: 'case\s+(1|2|3|4|5|6|8|9|10|11|12|13):\s*\n\s*self\s*=\s*\.chromecast\b'

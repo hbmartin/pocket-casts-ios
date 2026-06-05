@@ -1,5 +1,6 @@
 import SwiftUI
 
+import EndOfYear
 import PocketCastsServer
 
 struct PaidStoryWallView2025: StoryView {
@@ -18,7 +19,9 @@ struct PaidStoryWallView2025: StoryView {
     var body: some View {
         Color.clear
             .onAppear {
-                advanceToNextStory()
+                DispatchQueue.main.async {
+                    advanceToNextStory()
+                }
             }
     }
 
@@ -34,4 +37,5 @@ struct PaidStoryWallView2025: StoryView {
 
 #Preview("None") {
     PaidStoryWallView2025(subscriptionTier: .none)
+        .environmentObject(StoriesModel(dataSource: EndOfYearStoriesDataSource(model: EndOfYear2025StoriesModel()), configuration: StoriesConfiguration()))
 }

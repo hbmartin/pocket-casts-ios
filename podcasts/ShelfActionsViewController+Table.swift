@@ -96,9 +96,9 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
             case .sleepTimer:
                 self.playerActionsDelegate?.sleepTimerTapped()
             case .routePicker:
-                self.playerActionsDelegate?.routePickerTapped()
+                self.playerActionsDelegate?.routePickerTapped(from: action)
             case .chromecast:
-                self.playerActionsDelegate?.routePickerTapped()
+                self.playerActionsDelegate?.routePickerTapped(from: action)
             case .shareEpisode:
                 self.playerActionsDelegate?.shareTapped()
             case .goToPodcast:

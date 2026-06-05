@@ -13,8 +13,14 @@ XCODE_ANALYZE_SCHEME ?= Pocket Casts Staging
 XCODE_ANALYZE_CONFIGURATION ?= StagingDebug
 XCODE_ANALYZE_DESTINATION ?= generic/platform=iOS Simulator
 XCODE_ANALYZE_DERIVED_DATA_PATH ?= /tmp/pocketcasts-analyze-deriveddata
+PERIPHERY_PROJECT ?= podcasts.xcodeproj
+PERIPHERY_SCHEMES ?= Pocket Casts Staging
+PERIPHERY_CONFIGURATION ?= StagingDebug
+PERIPHERY_DESTINATION ?= generic/platform=iOS Simulator
+PERIPHERY_FLAGS ?= --retain-objc-accessible --relative-results --disable-update-check
+PERIPHERY_STRICT ?= 0
 
-.PHONY: help build clean test lint lint_lenient semgrep_swift_security xcode_static_analyzer static_checks format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts xcode_static_analyzer periphery static_checks format install_dependencies
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -45,7 +51,10 @@ lint_lenient:
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --lenient)
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
-	./scripts/security/run-akabe1-swift-semgrep.sh
+	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --exclude-rule semgrep.hardcoded_secret --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
+
+semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
+	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
 
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 	xcodebuild analyze -project podcasts.xcodeproj \
@@ -55,10 +64,23 @@ xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
        -derivedDataPath $(XCODE_ANALYZE_DERIVED_DATA_PATH) \
        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
-static_checks: ## Run SwiftLint, Semgrep, and Xcode Static Analyzer
+periphery: ## Scan for unused Swift declarations with Periphery
+	periphery scan \
+       --project "$(PERIPHERY_PROJECT)" \
+       --schemes "$(PERIPHERY_SCHEMES)" \
+       --format xcode \
+       $(PERIPHERY_FLAGS) $(if $(filter 1,$(PERIPHERY_STRICT)),--strict,) \
+       -- \
+       -configuration $(PERIPHERY_CONFIGURATION) \
+       -destination '$(PERIPHERY_DESTINATION)' \
+       CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+static_checks: ## Run SwiftLint, Semgrep, Xcode Static Analyzer, and Periphery
 	$(MAKE) lint
 	$(MAKE) semgrep_swift_security
+	$(MAKE) semgrep_pocket_casts
 	$(MAKE) xcode_static_analyzer
+	$(MAKE) periphery
 
 build: ## Builds the Debug configuration using Xcode
 	xcodebuild -project podcasts.xcodeproj \
