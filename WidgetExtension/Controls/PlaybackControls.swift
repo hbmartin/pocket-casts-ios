@@ -3,6 +3,39 @@ import PocketCastsUtils
 import SwiftUI
 import WidgetKit
 
+private enum PlaybackControlLocalization {
+    static let playPauseDisplayName = LocalizedStringResource(
+        "widget_playback_control_play_pause_display_name",
+        defaultValue: "Play / Pause",
+        table: "Localizable"
+    )
+    static let playPauseDescription = LocalizedStringResource(
+        "widget_playback_control_play_pause_description",
+        defaultValue: "Play or pause the current episode.",
+        table: "Localizable"
+    )
+    static let skipBackDisplayName = LocalizedStringResource(
+        "widget_playback_control_skip_back_display_name",
+        defaultValue: "Skip Back",
+        table: "Localizable"
+    )
+    static let skipBackDescription = LocalizedStringResource(
+        "widget_playback_control_skip_back_description",
+        defaultValue: "Skip back in the current episode.",
+        table: "Localizable"
+    )
+    static let skipForwardDisplayName = LocalizedStringResource(
+        "widget_playback_control_skip_forward_display_name",
+        defaultValue: "Skip Forward",
+        table: "Localizable"
+    )
+    static let skipForwardDescription = LocalizedStringResource(
+        "widget_playback_control_skip_forward_description",
+        defaultValue: "Skip forward in the current episode.",
+        table: "Localizable"
+    )
+}
+
 /// Control Center / Lock Screen control that toggles play/pause. It reads the
 /// shared app-group playback state to show the correct label and icon.
 struct PlaybackPlayPauseControl: ControlWidget {
@@ -12,8 +45,8 @@ struct PlaybackPlayPauseControl: ControlWidget {
                 Label(isPlaying ? L10n.pause : L10n.play, systemImage: isPlaying ? "pause.fill" : "play.fill")
             }
         }
-        .displayName("Play / Pause")
-        .description("Play or pause the current episode.")
+        .displayName(PlaybackControlLocalization.playPauseDisplayName)
+        .description(PlaybackControlLocalization.playPauseDescription)
     }
 }
 
@@ -25,8 +58,8 @@ struct PlaybackSkipBackControl: ControlWidget {
                 Label(L10n.skipBack, systemImage: "gobackward")
             }
         }
-        .displayName("Skip Back")
-        .description("Skip back in the current episode.")
+        .displayName(PlaybackControlLocalization.skipBackDisplayName)
+        .description(PlaybackControlLocalization.skipBackDescription)
     }
 }
 
@@ -38,8 +71,8 @@ struct PlaybackSkipForwardControl: ControlWidget {
                 Label(L10n.skipForward, systemImage: "goforward")
             }
         }
-        .displayName("Skip Forward")
-        .description("Skip forward in the current episode.")
+        .displayName(PlaybackControlLocalization.skipForwardDisplayName)
+        .description(PlaybackControlLocalization.skipForwardDescription)
     }
 }
 

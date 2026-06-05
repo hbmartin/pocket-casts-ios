@@ -28,12 +28,14 @@ struct FilterAppEntity: AppEntity {
 }
 
 struct FilterEntityQuery: EntityQuery {
+    @MainActor
     func entities(for identifiers: [String]) async throws -> [FilterAppEntity] {
         identifiers.compactMap { uuid in
             DataManager.sharedManager.findPlaylist(uuid: uuid).map(FilterAppEntity.init(filter:))
         }
     }
 
+    @MainActor
     func suggestedEntities() async throws -> [FilterAppEntity] {
         DataManager.sharedManager.allPlaylists(includeDeleted: false).map(FilterAppEntity.init(filter:))
     }
@@ -54,7 +56,7 @@ struct PlayFilterIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.playFilter(uuid: filter.id)
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.playFilter(uuid: filter.id))
         return .result()
     }
 }
@@ -74,7 +76,7 @@ struct PlayAllInFilterIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.playAllFilter(uuid: filter.id)
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.playAllFilter(uuid: filter.id))
         return .result()
     }
 }

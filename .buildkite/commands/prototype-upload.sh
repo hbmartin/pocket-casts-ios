@@ -11,8 +11,7 @@ echo "--- :arrow_down: Downloading Prototype Build"
 buildkite-agent artifact download "artifacts/*.ipa" . --step build_prototype
 buildkite-agent artifact download "artifacts/*.app.dSYM.zip" . --step build_prototype
 
-echo "--- :rubygems: Setting up Gems"
-install_gems
+"$(dirname "${BASH_SOURCE[0]}")/shared_setup.sh" --skip-swiftpm
 
 echo "--- :closed_lock_with_key: Installing Secrets"
 bundle exec fastlane run configure_apply

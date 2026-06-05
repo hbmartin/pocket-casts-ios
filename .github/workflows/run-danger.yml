@@ -6,10 +6,10 @@ on:
 
 jobs:
   dangermattic:
-    if: ${{ (github.event.pull_request.draft == false) }}
+    if: ${{ github.event.pull_request.draft == false && vars.ENABLE_BUILDKITE_DANGER_RETRY == 'true' }}
     uses: Automattic/dangermattic/.github/workflows/reusable-retry-buildkite-step-on-events.yml@v1
     with:
-      org-slug: automattic
+      org-slug: hbmartin
       pipeline-slug: pocket-casts-ios
       retry-step-key: danger
       build-commit-sha: ${{ github.event.pull_request.head.sha }}

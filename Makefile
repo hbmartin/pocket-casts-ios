@@ -52,7 +52,7 @@ lint_lenient:
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --lenient)
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
-	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --exclude-rule semgrep.hardcoded_secret --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
+	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
 
 semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
 	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)

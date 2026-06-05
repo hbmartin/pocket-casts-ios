@@ -9,7 +9,7 @@ These rules help ensure code is efficient and works well in the long term.
 
 - `@Observable` classes must be marked `@MainActor` unless the project has Main Actor default actor isolation. Flag any `@Observable` class missing this annotation.
 - All shared data should use `@Observable` classes with `@State` (for ownership) and `@Bindable` / `@Environment` (for passing).
-- Strongly prefer not to use `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject`, or `@EnvironmentObject` unless they are unavoidable, or if they exist in legacy/integration contexts when changing architecture would be complicated.
+- Strongly prefer not to use `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject`, or `@EnvironmentObject` unless they are unavoidable, or if they exist in legacy/integration contexts when changing architecture would be complicated. For Pocket Casts theming, `@EnvironmentObject private var theme: Theme` is the required project-level exception; inject it with `.environmentObject(Theme.sharedTheme)`.
 
 
 ## Local state

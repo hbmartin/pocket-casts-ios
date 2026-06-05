@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This file is `source`'d before calling `buildkite-agent pipeline upload`, and can be used
-# to set up some variables that will be interpolated in the `.yml` pipeline before uploading it.
+# This file is kept for compatibility with older Buildkite setup instructions.
+# The default pipeline no longer requires any sourced variables before upload.
 
 # 🎗️ If you update the image to a newer Xcode version, don't forget to also update the badge in the README.md file accordingly for consistency
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,10 +13,4 @@ if [[ ! -s "$XCODE_VERSION_FILE" ]]; then
 fi
 XCODE_VERSION=$(sed -E 's/^~> ?//' "$XCODE_VERSION_FILE")
 
-CI_TOOLKIT_PLUGIN_VERSION="6.0.0"
-
-TEST_COLLECTOR_PLUGIN_VERSION="1.11.0"
-
 export IMAGE_ID="xcode-$XCODE_VERSION"
-export CI_TOOLKIT="automattic/a8c-ci-toolkit#$CI_TOOLKIT_PLUGIN_VERSION"
-export TEST_COLLECTOR="test-collector#v$TEST_COLLECTOR_PLUGIN_VERSION"

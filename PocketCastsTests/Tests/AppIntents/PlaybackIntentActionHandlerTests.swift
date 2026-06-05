@@ -39,9 +39,9 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
         func skipToPreviousChapter() { previousChapterCount += 1 }
         func removeCurrentEpisodeFromUpNext() { removedCurrentFromUpNext += 1 }
         func loadSuggestedEpisode() -> Bool { suggestedLoads }
-        func loadTopEpisode(forFilterUuid uuid: String) -> Bool { filterTopLoads }
-        func playAllEpisodes(forFilterUuid uuid: String) -> Bool { filterAllStarts }
-        func loadTopEpisode(forPodcastUuid uuid: String) -> Bool { podcastTopLoads }
+        func loadTopEpisode(forFilterUuid _: String) -> Bool { filterTopLoads }
+        func playAllEpisodes(forFilterUuid _: String) -> Bool { filterAllStarts }
+        func loadTopEpisode(forPodcastUuid _: String) -> Bool { podcastTopLoads }
         func setSleepTimer(seconds: TimeInterval) { sleepTimerSeconds = seconds }
         func extendSleepTimer(bySeconds seconds: TimeInterval) { extendedBySeconds = seconds }
         func refreshWidgets() { refreshCount += 1 }
@@ -174,15 +174,33 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
 
     func testSleepTimerConvertsMinutesToSeconds() {
         let fake = FakePlaybackFacade()
-        makeHandler(fake).setSleepTimer(minutes: 10)
+        XCTAssertTrue(makeHandler(fake).setSleepTimer(minutes: 10))
         XCTAssertEqual(fake.sleepTimerSeconds, 600)
         XCTAssertEqual(fake.refreshCount, 1)
     }
 
+    func testSleepTimerRejectsNonPositiveMinutes() {
+        let fake = FakePlaybackFacade()
+
+        XCTAssertFalse(makeHandler(fake).setSleepTimer(minutes: 0))
+        XCTAssertFalse(makeHandler(fake).setSleepTimer(minutes: -1))
+        XCTAssertNil(fake.sleepTimerSeconds)
+        XCTAssertEqual(fake.refreshCount, 0)
+    }
+
     func testExtendSleepTimerConvertsMinutesToSeconds() {
         let fake = FakePlaybackFacade()
-        makeHandler(fake).extendSleepTimer(minutes: 5)
+        XCTAssertTrue(makeHandler(fake).extendSleepTimer(minutes: 5))
         XCTAssertEqual(fake.extendedBySeconds, 300)
         XCTAssertEqual(fake.refreshCount, 1)
+    }
+
+    func testExtendSleepTimerRejectsNonPositiveMinutes() {
+        let fake = FakePlaybackFacade()
+
+        XCTAssertFalse(makeHandler(fake).extendSleepTimer(minutes: 0))
+        XCTAssertFalse(makeHandler(fake).extendSleepTimer(minutes: -1))
+        XCTAssertNil(fake.extendedBySeconds)
+        XCTAssertEqual(fake.refreshCount, 0)
     }
 }

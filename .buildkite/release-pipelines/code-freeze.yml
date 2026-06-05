@@ -1,29 +1,25 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/buildkite/pipeline-schema/main/schema.json
 ---
 
-# This pipeline is meant to be triggered by the MC scenario in ReleasesV2
+# This pipeline is meant to be triggered by release automation.
 
-env:
-  IMAGE_ID: $IMAGE_ID
+agents:
+  queue: macos-large
 
 steps:
-  - label: "🚂 Code Freeze"
+  - label: "Code Freeze"
     command: |
-      echo '--- 🤖 Use bot for Git operations'
-      source use-bot-for-git
+      echo '--- Configure Git identity'
+      .buildkite/commands/use-bot-for-git.sh
 
-      echo '--- :ruby: Setup Ruby Tools'
-      install_gems
+      .buildkite/commands/shared_setup.sh --skip-swiftpm
 
-      echo '--- 🔐 Access Secrets'
+      echo '--- Access Secrets'
       bundle exec fastlane run configure_apply
 
-      echo '--- ❄️ Code Freeze'
+      echo '--- Code Freeze'
       bundle exec fastlane code_freeze version:"${RELEASE_VERSION}" skip_confirm:true
-    plugins: [$CI_TOOLKIT]
-    agents:
-      queue: "mac"
     retry:
       manual:
-        reason: If release jobs fail, you should always re-trigger the task from Releases V2 rather than retrying the individual job from Buildkite
+        reason: If release jobs fail, re-trigger the release task rather than retrying this individual job.
         allowed: false

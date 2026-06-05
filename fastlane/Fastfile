@@ -54,7 +54,7 @@ CODE_SIGNING_STORAGE_OPTIONS = {
   s3_region: 'us-east-2'
 }.freeze
 
-GITHUB_REPO = 'Automattic/pocket-casts-ios'
+GITHUB_REPO = ENV.fetch('GITHUB_REPOSITORY', 'hbmartin/pocket-casts-ios')
 GITHUB_URL = "https://github.com/#{GITHUB_REPO}".freeze
 DEFAULT_BRANCH = 'trunk'
 
@@ -1301,8 +1301,8 @@ platform :ios do
     else
       require_env_vars!('BUILDKITE_TOKEN')
       buildkite_trigger_build(
-        buildkite_organization: 'automattic',
-        buildkite_pipeline: 'pocket-casts-ios',
+        buildkite_organization: ENV.fetch('BUILDKITE_ORGANIZATION_SLUG', 'hbmartin'),
+        buildkite_pipeline: ENV.fetch('BUILDKITE_PIPELINE_SLUG', 'pocket-casts-ios'),
         branch: branch,
         **pipeline_args
       )

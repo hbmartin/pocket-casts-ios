@@ -4723,6 +4723,18 @@ internal enum L10n {
   internal static var whatsNewPageTwo720: String { return L10n.tr("Localizable", "whats_new_page_two_7_20", fallback: "We now sync your Home Screen (including your sort options) across devices! And you can drag and drop in the Web Player now as well.\n\nThis means you can rest easier, knowing the hard work you put in to arranging your podcasts page is being synced to your account.") }
   /// Title for page two of the 7.20 what's new dialog.
   internal static var whatsNewPageTwoTitle720: String { return L10n.tr("Localizable", "whats_new_page_two_title_7_20", fallback: "Home Grid Syncing") }
+  /// Description for the WidgetKit Control Center play/pause control.
+  internal static var widgetPlaybackControlPlayPauseDescription: String { return L10n.tr("Localizable", "widget_playback_control_play_pause_description", fallback: "Play or pause the current episode.") }
+  /// Display name for the WidgetKit Control Center play/pause control.
+  internal static var widgetPlaybackControlPlayPauseDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_play_pause_display_name", fallback: "Play / Pause") }
+  /// Description for the WidgetKit Control Center skip back control.
+  internal static var widgetPlaybackControlSkipBackDescription: String { return L10n.tr("Localizable", "widget_playback_control_skip_back_description", fallback: "Skip back in the current episode.") }
+  /// Display name for the WidgetKit Control Center skip back control.
+  internal static var widgetPlaybackControlSkipBackDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_skip_back_display_name", fallback: "Skip Back") }
+  /// Description for the WidgetKit Control Center skip forward control.
+  internal static var widgetPlaybackControlSkipForwardDescription: String { return L10n.tr("Localizable", "widget_playback_control_skip_forward_description", fallback: "Skip forward in the current episode.") }
+  /// Display name for the WidgetKit Control Center skip forward control.
+  internal static var widgetPlaybackControlSkipForwardDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_skip_forward_display_name", fallback: "Skip Forward") }
   /// Description of a widget to launch the app
   internal static var widgetsAppIconDescription: String { return L10n.tr("Localizable", "widgets_app_icon_description", fallback: "Quickly Launch Pocket Casts") }
   /// Title of a widget that displays the app icon

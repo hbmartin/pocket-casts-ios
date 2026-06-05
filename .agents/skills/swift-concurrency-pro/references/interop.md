@@ -121,9 +121,11 @@ If the API must stay synchronous, prefer a lock over introducing actor isolation
 | `publisher.map { }` | `stream.map { }` |
 | `publisher.filter { }` | `stream.filter { }` |
 | `PassthroughSubject` | `AsyncStream` via `makeStream(of:)` |
-| `CurrentValueSubject` | No direct equivalent (see note below) |
+| `CurrentValueSubject` | No direct equivalent; keep current state separately and expose changes with `AsyncStream` when needed |
 | `publisher.values` | Already an `AsyncSequence` – use directly |
 
 If a Combine publisher already exposes a `.values` property, consume that directly rather than wrapping it in a new `AsyncStream`.
 
-Combine is not officially deprecated at this time, but Apple’s advice is to avoid using it.
+`CurrentValueSubject` combines stored current value with future change publication. In Swift Concurrency, model the current value explicitly, often in an actor or observable model, and expose an `AsyncStream` only when consumers need an `AsyncSequence`.
+
+Combine is not officially deprecated. Prefer Swift Concurrency for new asynchronous code when the surrounding API already uses `async`/`await`, but keep Combine where it remains the framework API or the better abstraction for an existing reactive pipeline.

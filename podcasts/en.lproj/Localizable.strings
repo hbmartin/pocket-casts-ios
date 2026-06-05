@@ -3571,6 +3571,24 @@
 /* Up Next Lock Screen Widget description */
 "widgets_up_next_description" = "See the number of items in your Up Next queue or details about the next episode.";
 
+/* Display name for the WidgetKit Control Center play/pause control. */
+"widget_playback_control_play_pause_display_name" = "Play / Pause";
+
+/* Description for the WidgetKit Control Center play/pause control. */
+"widget_playback_control_play_pause_description" = "Play or pause the current episode.";
+
+/* Display name for the WidgetKit Control Center skip back control. */
+"widget_playback_control_skip_back_display_name" = "Skip Back";
+
+/* Description for the WidgetKit Control Center skip back control. */
+"widget_playback_control_skip_back_description" = "Skip back in the current episode.";
+
+/* Display name for the WidgetKit Control Center skip forward control. */
+"widget_playback_control_skip_forward_display_name" = "Skip Forward";
+
+/* Description for the WidgetKit Control Center skip forward control. */
+"widget_playback_control_skip_forward_description" = "Skip forward in the current episode.";
+
 /* Basic string used in formats like 'price / year' */
 "year" = "year";
 
