@@ -62,6 +62,7 @@ public struct Podcast: Identifiable, Equatable, Hashable, Sendable {
     public var folderUuid: String?
     public var usedCustomEffectsBefore = false
     public var isPrivate = false
+    public var isExplicit = false
     public var fundingURL: String?
 
     @GRDBIgnore

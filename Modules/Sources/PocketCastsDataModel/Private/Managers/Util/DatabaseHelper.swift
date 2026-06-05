@@ -13,7 +13,12 @@ class DatabaseHelper {
     /// Append future migrations here in strictly ascending version order, starting at
     /// baselineSchemaVersion + 1. Fresh installs create the baked baseline schema and then
     /// run every migration, so a fresh database and an upgraded one always converge.
-    static let migrations: [SchemaMigration] = []
+    static let migrations: [SchemaMigration] = [
+        // Adds the explicit-content flag parsed from the server feed (#4427).
+        SchemaMigration(toVersion: 74) { db in
+            try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN isExplicit INTEGER DEFAULT 0;", values: nil)
+        }
+    ]
 
     static func currentSchemaVersion(for migrations: [SchemaMigration]) -> Int32 {
         migrations.last?.toVersion ?? baselineSchemaVersion
