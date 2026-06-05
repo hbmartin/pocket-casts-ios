@@ -330,28 +330,30 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             return clampedTabIndex(savedIndex)
         }
 
-        guard let legacyTab = LegacyTab(rawValue: savedIndex) else {
-            let migratedIndex = clampedTabIndex(savedIndex)
-            UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
-            UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
-            return migratedIndex
-        }
-
-        let migratedIndex: Int
-        switch legacyTab {
-        case .podcasts, .discover:
-            migratedIndex = pcTabs.firstIndex(of: .podcasts) ?? 0
-        case .filter:
-            migratedIndex = pcTabs.firstIndex(of: .filter) ?? 0
-        case .upNext:
-            migratedIndex = pcTabs.firstIndex(of: .upNext) ?? 0
-        case .profile:
-            migratedIndex = pcTabs.firstIndex(of: .profile) ?? 0
-        }
+        let migratedIndex = migratedLastTabIndex(savedIndex)
 
         UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
         UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
         return migratedIndex
+    }
+
+    private func migratedLastTabIndex(_ savedIndex: Int) -> Int {
+        // Indices 1...3 are ambiguous after removing Discover: they can be old
+        // tab positions or already-correct positions from a build without Discover.
+        guard !pcTabs.indices.contains(savedIndex) else {
+            return savedIndex
+        }
+
+        guard let legacyTab = LegacyTab(rawValue: savedIndex) else {
+            return clampedTabIndex(savedIndex)
+        }
+
+        switch legacyTab {
+        case .profile:
+            return pcTabs.firstIndex(of: .profile) ?? clampedTabIndex(savedIndex)
+        case .podcasts, .discover, .filter, .upNext:
+            return clampedTabIndex(savedIndex)
+        }
     }
 
     private func clampedTabIndex(_ index: Int) -> Int {

@@ -140,6 +140,7 @@ class HeadphoneSettingsViewController: PCTableViewController {
         }
 
         guard selection.isUnlocked else {
+            SJUIUtils.showAlert(title: L10n.plusRequiredFeature, message: L10n.plusPromoParagraph, from: self)
             reloadData()
             return
         }

@@ -226,13 +226,18 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
     }
 
     private func handleDismiss() {
+        let resetFlow = {
+            DispatchQueue.main.async {
+                OnboardingFlow.shared.reset()
+            }
+        }
+
         if OnboardingFlow.shared.source == .promoCode {
             navigationController?.popToRootViewController(animated: true)
+            resetFlow()
         } else {
             navigationController?.dismiss(animated: true) {
-                DispatchQueue.main.async {
-                    OnboardingFlow.shared.reset()
-                }
+                resetFlow()
             }
         }
     }

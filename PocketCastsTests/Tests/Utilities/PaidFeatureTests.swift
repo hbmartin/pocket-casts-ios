@@ -1,16 +1,26 @@
 import XCTest
 
 @testable import podcasts
-import PocketCastsServer
+@testable import PocketCastsServer
 
 final class PaidFeatureTests: XCTestCase {
+    private var previousFeaturesUnlocked = false
+    private var previousSubscriptionPaidStatus = 0
+    private var previousSubscriptionTier: SubscriptionTier = .none
+
     override func setUp() {
         super.setUp()
+        previousFeaturesUnlocked = SubscriptionHelper.featuresUnlocked
+        previousSubscriptionPaidStatus = SubscriptionHelper.hasActiveSubscription() ? 1 : 0
+        previousSubscriptionTier = SubscriptionHelper.subscriptionTier
         SubscriptionHelper.featuresUnlocked = false
+        setSubscription(tier: .none)
     }
 
     override func tearDown() {
-        SubscriptionHelper.featuresUnlocked = true
+        SubscriptionHelper.featuresUnlocked = previousFeaturesUnlocked
+        SubscriptionHelper.setSubscriptionPaid(previousSubscriptionPaidStatus)
+        SubscriptionHelper.subscriptionTier = previousSubscriptionTier
         super.tearDown()
     }
 
@@ -24,7 +34,21 @@ final class PaidFeatureTests: XCTestCase {
 
     // MARK: - Plus Features
 
-    func testPlusFeatureIsUnlocked() {
+    func testPlusFeatureIsLockedWithoutSubscription() {
+        let feature = plusFeature()
+
+        XCTAssertFalse(feature.isUnlocked)
+    }
+
+    func testPlusFeatureIsUnlockedForPlusSubscription() {
+        setSubscription(tier: .plus)
+        let feature = plusFeature()
+
+        XCTAssertTrue(feature.isUnlocked)
+    }
+
+    func testPlusFeatureIsUnlockedForPatronSubscription() {
+        setSubscription(tier: .patron)
         let feature = plusFeature()
 
         XCTAssertTrue(feature.isUnlocked)
@@ -32,10 +56,26 @@ final class PaidFeatureTests: XCTestCase {
 
     // MARK: - Patron Features
 
-    func testPatronFeatureIsUnlocked() {
+    func testPatronFeatureIsLockedForPlusSubscription() {
+        setSubscription(tier: .plus)
+        let feature = patronFeature()
+
+        XCTAssertFalse(feature.isUnlocked)
+    }
+
+    func testPatronFeatureIsUnlockedForPatronSubscription() {
+        setSubscription(tier: .patron)
         let feature = patronFeature()
 
         XCTAssertTrue(feature.isUnlocked)
+    }
+
+    func testFeaturesUnlockedOverrideUnlocksPaidFeatures() {
+        SubscriptionHelper.featuresUnlocked = true
+        setSubscription(tier: .none)
+
+        XCTAssertTrue(plusFeature().isUnlocked)
+        XCTAssertTrue(patronFeature().isUnlocked)
     }
 
     // MARK: - Beta Testing
@@ -77,5 +117,10 @@ final class PaidFeatureTests: XCTestCase {
 
     private func feature(tier: SubscriptionTier) -> PaidFeature {
         PaidFeature(tier: tier)
+    }
+
+    private func setSubscription(tier: SubscriptionTier) {
+        SubscriptionHelper.setSubscriptionPaid(tier == .none ? 0 : 1)
+        SubscriptionHelper.subscriptionTier = tier
     }
 }

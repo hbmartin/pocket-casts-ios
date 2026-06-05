@@ -1,0 +1,45 @@
+name: Semgrep Swift Security
+
+on:
+  pull_request:
+    paths:
+      - "**/*.swift"
+      - ".github/workflows/semgrep.yml"
+      - "Makefile"
+      - "semgrep/swift-security.yml"
+      - "scripts/security/run-akabe1-swift-semgrep.sh"
+  push:
+    branches: [trunk]
+    paths:
+      - "**/*.swift"
+      - ".github/workflows/semgrep.yml"
+      - "Makefile"
+      - "semgrep/swift-security.yml"
+      - "scripts/security/run-akabe1-swift-semgrep.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  swift-semgrep:
+    name: akabe1 Swift/iOS Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    if: github.actor != 'dependabot[bot]'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run Swift Semgrep rules
+        run: ./scripts/security/run-akabe1-swift-semgrep.sh --sarif-output semgrep-swift.sarif
+
+      - name: Upload SARIF to code scanning
+        if: always() && hashFiles('semgrep-swift.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: semgrep-swift.sarif

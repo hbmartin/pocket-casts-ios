@@ -299,13 +299,46 @@ public enum PlayerAction: String, Codable, Equatable {
     case starEpisode = "star"
     case shareEpisode = "share"
     case goToPodcast = "podcast"
-    case chromecast = "case"
+    case chromecast = "cast"
     case markPlayed = "played"
     case archive = "archive"
     case addBookmark = "bookmark"
     case transcript = "transcript"
     case download = "download"
     case addToPlaylist = "playlist"
+
+    public init?(rawValue: String) {
+        switch rawValue {
+        case "effects":
+            self = .effects
+        case "sleep":
+            self = .sleepTimer
+        case "airplay":
+            self = .routePicker
+        case "star":
+            self = .starEpisode
+        case "share":
+            self = .shareEpisode
+        case "podcast":
+            self = .goToPodcast
+        case "cast", "case":
+            self = .chromecast
+        case "played":
+            self = .markPlayed
+        case "archive":
+            self = .archive
+        case "bookmark":
+            self = .addBookmark
+        case "transcript":
+            self = .transcript
+        case "download":
+            self = .download
+        case "playlist":
+            self = .addToPlaylist
+        default:
+            return nil
+        }
+    }
 }
 
 extension Array: @retroactive RawRepresentable where Element: RawRepresentable<String> {

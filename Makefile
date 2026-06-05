@@ -9,8 +9,12 @@ SIMULATOR_NAME = $(shell xcrun simctl list devices available \
 	| grep "iPhone" \
 	| tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$$//')
 SIMULATOR_OS ?= 18.5
+XCODE_ANALYZE_SCHEME ?= Pocket Casts Staging
+XCODE_ANALYZE_CONFIGURATION ?= StagingDebug
+XCODE_ANALYZE_DESTINATION ?= generic/platform=iOS Simulator
+XCODE_ANALYZE_DERIVED_DATA_PATH ?= /tmp/pocketcasts-analyze-deriveddata
 
-.PHONY: help build clean test lint lint_lenient semgrep_swift_security format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security xcode_static_analyzer static_checks format install_dependencies
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -42,6 +46,19 @@ lint_lenient:
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
 	./scripts/security/run-akabe1-swift-semgrep.sh
+
+xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
+	xcodebuild analyze -project podcasts.xcodeproj \
+       -scheme "$(XCODE_ANALYZE_SCHEME)" \
+       -configuration $(XCODE_ANALYZE_CONFIGURATION) \
+       -destination '$(XCODE_ANALYZE_DESTINATION)' \
+       -derivedDataPath $(XCODE_ANALYZE_DERIVED_DATA_PATH) \
+       CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+static_checks: ## Run SwiftLint, Semgrep, and Xcode Static Analyzer
+	$(MAKE) lint
+	$(MAKE) semgrep_swift_security
+	$(MAKE) xcode_static_analyzer
 
 build: ## Builds the Debug configuration using Xcode
 	xcodebuild -project podcasts.xcodeproj \

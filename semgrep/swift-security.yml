@@ -1,0 +1,2975 @@
+# Vendored from https://github.com/akabe1/akabe1-semgrep-rules/tree/main/ios/swift
+# Source commit: db843f16c4a740c22d97c489d176ff663c1776b6
+# Upstream README declares GNU GPL terms for these rules.
+# Local copy avoids network access during Semgrep scans.
+rules:
+
+  # Source: critical_device_features.yaml
+  - id: critical_device_features
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://owasp.org/www-project-automated-threats-to-web-applications/assets/oats/EN/OAT-017_Spamming
+        - https://owasp.org/www-pdf-archive/AMS_OWASP.pdf
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: LOW
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems calling critical device features (like: send SMS, make phone call,
+      or send email) during its functioning. 
+      Given the sensitivity of these features developers must take caution when using them, because
+      theyir misuse could expose the users to various kind of attacks (i.e. sending reserved data via
+      cleartext SMS, spamming via emails/SMS, unintended phone call frauds, etc.).  
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-either:
+                  # Found email and/or SMS controllers
+                  - pattern: |
+                      $OBJ = MFMailComposeViewController(...) 
+                  - pattern: |
+                      $OBJ = MFMessageComposeViewController(...)
+          - patterns:
+              # Found urls of phone call, SMS and/or email
+              - pattern-inside: |
+                  $OBJ = URL(string: $VALUE)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)"(tel|sms|mailto)://[\s\S]*"
+          - patterns:
+              # Found nsurls of phone call, SMS and/or email
+              - pattern-inside: |
+                  $OBJ = NSURL(string: $VALUE)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)"(tel|sms|mailto):[\s\S]*"
+
+  # Source: crypto/broken_commoncrypto.yaml
+  - id: broken_commoncrypto
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06e-Testing-Cryptography/
+        - https://support.apple.com/en-ca/guide/security/sece3bee0835/web
+        - https://developer.apple.com/library/archive/documentation/Security/Conceptual/cryptoservices/GeneralPurposeCrypto/GeneralPurposeCrypto.html
+        - https://cwe.mitre.org/data/definitions/327.html
+        - https://cwe.mitre.org/data/definitions/330.html
+        - https://cwe.mitre.org/data/definitions/338.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems performing an insecure use of cryptography, because the
+      implemented cryptographic process presents some security flaws. In detail, it was detected
+      the usage of a CommonCrypto cryptographic feature having some critical parameter (crypto
+      key, IV, keygen passphrase, etc.) set insecurely (static, hardcoded, null or empty).
+      An attacker could exploit this issue in order to retrieve the original value of the encrypted
+      data.
+      It is recommended to adopt only cryptographic features and algorithms offered by the iOS platform
+      that are internationally recognized as strong. It is also fundamental to ensure that the
+      encryption parameters (crypto key, IV, etc.) are generate randomly using a cryptographically
+      strong PRNG function (as the Apple method "SecRandomCopyBytes").
+      In addition, if it is needed to store an encryption parameter on device, a secure storage mechanism
+      like the iOS KeyChain must be used.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          #CommonCrypto and Apple-Swift-Crypto
+          - patterns:
+              - pattern-inside: |
+                  $CRYPTO(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(CCKeyDerivationPBKDF|deriveKey|CCHmac|CCCrypt) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $CRYPTO(..., $X: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(CCKeyDerivationPBKDF|deriveKey|CCHmac|CCCrypt) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(CCKeyDerivationPBKDF|deriveKey|CCHmac|CCCrypt) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $CRYPTO(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(CCKeyDerivationPBKDF|deriveKey|CCHmac|CCCrypt) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $CRYPTO(..., Array($KEY), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(CCKeyDerivationPBKDF|deriveKey|CCHmac|CCCrypt) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $CRYPTO(..., $X: Array($KEY), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(CCKeyDerivationPBKDF|deriveKey|CCHmac|CCCrypt) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+
+  # Source: crypto/broken_crypto_idz.yaml
+  - id: broken_crypto_idz
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06e-Testing-Cryptography/
+        - https://support.apple.com/en-ca/guide/security/sece3bee0835/web
+        - https://developer.apple.com/library/archive/documentation/Security/Conceptual/cryptoservices/GeneralPurposeCrypto/GeneralPurposeCrypto.html
+        - https://cwe.mitre.org/data/definitions/327.html
+        - https://cwe.mitre.org/data/definitions/330.html
+        - https://cwe.mitre.org/data/definitions/338.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems performing an insecure use of cryptography, because the
+      implemented cryptographic process presents some security flaws. In detail, it was detected
+      the usage of a IDZSwiftCommonCrypto cryptographic feature having some critical parameter 
+      (crypto key, IV, keygen passphrase, etc.) set insecurely (static, hardcoded, null 
+      or empty).  
+      An attacker could exploit this issue in order to retrieve the original value of the encrypted
+      data.
+      It is recommended to adopt only cryptographic features and algorithms offered by the iOS platform
+      that are internationally recognized as strong. It is also fundamental to ensure that the
+      encryption parameters (crypto key, IV, etc.) are generate randomly using a cryptographically
+      strong PRNG function (as the Apple method "SecRandomCopyBytes").
+      In addition, if it is needed to store an encryption parameter on device, a secure storage mechanism
+      like the iOS KeyChain must be used.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          #IDZSwiftCommonCrypto
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $DATA = $CRYPTO(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $DATA = try $CRYPTO(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $DATA = $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $DATA = try $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $DATA = $CRYPTO(..., $X: $KEY, ...).$Z(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $DATA = try $CRYPTO(..., $X: $KEY, ...).$Z(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $DATA = $CRYPTO(..., $KEY, ...).$Z(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $DATA = try $CRYPTO(..., $KEY, ...).$Z(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))                
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $DATA = $CRYPTO(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $DATA = try $CRYPTO(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $DATA = $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor) 
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $DATA = try $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Cryptor|StreamCryptor)
+          #IDZSwiftCommonCrypto key derivation
+          - patterns:
+              - pattern-inside: |
+                  $DATA = $PBKDF.$KEYGEN(..., $X: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = try $PBKDF.$KEYGEN(..., $X: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = $PBKDF.$KEYGEN(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = try $PBKDF.$KEYGEN(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $PBKDF.$KEYGEN(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $PBKDF.$KEYGEN(..., $X: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $PBKDF.$KEYGEN(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $PBKDF.$KEYGEN(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $PBKDF
+                  regex: (?i)(PBKDF)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+
+  # Source: crypto/broken_cryptoswift.yaml
+  - id: broken_crypto_cryptoswift
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06e-Testing-Cryptography/
+        - https://support.apple.com/en-ca/guide/security/sece3bee0835/web
+        - https://developer.apple.com/library/archive/documentation/Security/Conceptual/cryptoservices/GeneralPurposeCrypto/GeneralPurposeCrypto.html
+        - https://cwe.mitre.org/data/definitions/327.html
+        - https://cwe.mitre.org/data/definitions/330.html
+        - https://cwe.mitre.org/data/definitions/338.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems performing an insecure use of cryptography, because the
+      implemented cryptographic process presents some security flaws. In detail, it was detected
+      the usage of a CryptoSwift cryptographic feature having some critical parameter (crypto
+      key, IV, keygen passphrase, etc.) set insecurely (static, hardcoded, null or empty). 
+      An attacker could exploit this issue in order to retrieve the original value of the encrypted
+      data.
+      It is recommended to adopt only cryptographic features and algorithms offered by the iOS platform
+      that are internationally recognized as strong. It is also fundamental to ensure that the
+      encryption parameters (crypto key, IV, etc.) are generate randomly using a cryptographically
+      strong PRNG function (as the Apple method "SecRandomCopyBytes").
+      In addition, if it is needed to store an encryption parameter on device, a secure storage mechanism
+      like the iOS KeyChain must be used.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          #CryptoSwift encryption/decryption
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(AES|Blowfish|ChaCha20|Rabbit|HMAC|CBCMAC|Poly1305|CMAC|hChaCha20|XChaCha20|CBC|GCM|CCM|CFB|OFB|PCBC|CTR)
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $OBJ.$CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (?i)(AEADChaCha20Poly1305|chacha|XChaCha20)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|process|hChaCha20)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (?i)(AEADChaCha20Poly1305|chacha|XChaCha20)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|process|hChaCha20)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $OBJ.$CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (?i)(AEADChaCha20Poly1305|chacha|XChaCha20)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|process|hChaCha20)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (?i)(AEADChaCha20Poly1305|chacha|XChaCha20)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|process|hChaCha20)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $OBJ.$CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (?i)(AEADChaCha20Poly1305|chacha|XChaCha20)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|process|hChaCha20)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (?i)(AEADChaCha20Poly1305|chacha|XChaCha20)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|process|hChaCha20)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $OBJ.$CRYPTO(..., $PAR: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|AES|Blowfish|ChaCha20|XChaCha20|Rabbit)
+              - metavariable-regex:
+                  metavariable: $PAR
+                  regex: (?i)(key|iv)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|AES|Blowfish|ChaCha20|XChaCha20|Rabbit)
+          #CryptoSwift key derivation
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  try? PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  try? PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  try? PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  try? PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  try? PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  try? PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+          - patterns:
+              - pattern-inside: |
+                  PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i)(Array\("(.*?)"[\.\w]*\)|Array\('(.*?)'[\.\w]*\)|nil|arrayFrom\("(.*?)"\)|arrayFrom\('(.*?)'\))
+          - patterns:
+              - pattern-inside: |
+                  try? PKCS5.$CRYPTO(..., password: $KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i)(Array\("(.*?)"[\.\w]*\)|Array\('(.*?)'[\.\w]*\)|nil|arrayFrom\("(.*?)"\)|arrayFrom\('(.*?)'\))
+          - patterns:
+              - pattern-inside: |
+                  PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i)(Array\("(.*?)"[\.\w]*\)|Array\('(.*?)'[\.\w]*\)|nil|arrayFrom\("(.*?)"\)|arrayFrom\('(.*?)'\))
+          - patterns:
+              - pattern-inside: |
+                  try? PKCS5.$CRYPTO($KEY, ...).calculate()
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(PBKDF1|PBKDF2)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i)(Array\("(.*?)"[\.\w]*\)|Array\('(.*?)'[\.\w]*\)|nil|arrayFrom\("(.*?)"\)|arrayFrom\('(.*?)'\))
+
+  # Source: crypto/broken_rncrypt.yaml
+  - id: broken_crypto_rncrypt
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06e-Testing-Cryptography/
+        - https://support.apple.com/en-ca/guide/security/sece3bee0835/web
+        - https://developer.apple.com/library/archive/documentation/Security/Conceptual/cryptoservices/GeneralPurposeCrypto/GeneralPurposeCrypto.html
+        - https://cwe.mitre.org/data/definitions/327.html
+        - https://cwe.mitre.org/data/definitions/330.html
+        - https://cwe.mitre.org/data/definitions/338.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems performing an insecure use of cryptography, because the
+      implemented cryptographic process presents some security flaws. In detail, it was detected
+      the usage of a RNCrypt/Arcane/SwiftyRSA cryptographic feature having some critical parameter (crypto
+      key, IV, keygen passphrase, etc.) set insecurely (static, hardcoded, null or empty).  
+      An attacker could exploit this issue in order to retrieve the original value of the encrypted
+      data.
+      It is recommended to adopt only cryptographic features and algorithms offered by the iOS platform
+      that are internationally recognized as strong. It is also fundamental to ensure that the
+      encryption parameters (crypto key, IV, etc.) are generate randomly using a cryptographically
+      strong PRNG function (as the Apple method "SecRandomCopyBytes").
+      In addition, if it is needed to store an encryption parameter on device, a secure storage mechanism
+      like the iOS KeyChain must be used.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          #RNCrypt, Arcane and SwiftyRSA
+          - patterns:
+              - pattern-inside: |
+                  $DATA = $OBJ.$CRYPTO(..., $PSW: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = try $OBJ.$CRYPTO(..., $PSW: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = $OBJ.$CRYPTO(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = try $OBJ.$CRYPTO(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $PSW: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $PSW: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $PSW: $KEY.$X(...), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $PSW: $KEY.$X(...), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $KEY.$X(...), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $KEY.$X(...), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $PSW: $KEY.$X(...)!, ...)!
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $PSW: $KEY.$X(...)!, ...)!
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword|with|(.*?)key|iv)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $KEY.$X(...)!, ...)!
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $KEY.$X(...)!, ...)!
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(encrypt|decrypt|encryptData|decryptData|Encryptor|Decryptor|encrypted|decrypted)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          #RNCrypt specific
+          - patterns:
+              - pattern-inside: |
+                  $DATA = try $OBJ.$CRYPTO(..., $PSW: $VALUE, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))      
+          - patterns:
+              - pattern-inside: |
+                  $DATA = $OBJ.$CRYPTO(..., $PSW: $VALUE, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $DATA = try $OBJ.$CRYPTO(..., $VALUE, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))      
+          - patterns:
+              - pattern-inside: |
+                  $DATA = $OBJ.$CRYPTO(..., $VALUE, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $PSW: $KEY, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $PSW: $KEY, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(password|withPassword)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\(\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = try $OBJ.$CRYPTO(..., $KEY, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $DATA = $OBJ.$CRYPTO(..., $KEY, ...).$METHOD(...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(Encryptor|Decryptor)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: (encrypt|decrypt|encryptData|decryptData)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\(\))
+
+  # Source: crypto/broken_swiftcrypto_sodium.yaml
+  - id: broken_crypto_swiftcrypto_sodium
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06e-Testing-Cryptography/
+        - https://support.apple.com/en-ca/guide/security/sece3bee0835/web
+        - https://developer.apple.com/library/archive/documentation/Security/Conceptual/cryptoservices/GeneralPurposeCrypto/GeneralPurposeCrypto.html
+        - https://cwe.mitre.org/data/definitions/327.html
+        - https://cwe.mitre.org/data/definitions/330.html
+        - https://cwe.mitre.org/data/definitions/338.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems performing an insecure use of cryptography, because the
+      implemented cryptographic process presents some security flaws. In detail, it was detected
+      the usage of an Apple-Swift-Crypto/Swift-Sodium cryptographic feature having some critical 
+      parameter (crypto key, IV, keygen passphrase, etc.) set insecurely (static, hardcoded, null 
+      or empty). 
+      An attacker could exploit this issue in order to retrieve the original value of the encrypted
+      data.
+      It is recommended to adopt only cryptographic features and algorithms offered by the iOS platform
+      that are internationally recognized as strong. It is also fundamental to ensure that the
+      encryption parameters (crypto key, IV, etc.) are generate randomly using a cryptographically
+      strong PRNG function (as the Apple method "SecRandomCopyBytes").
+      In addition, if it is needed to store an encryption parameter on device, a secure storage mechanism
+      like the iOS KeyChain must be used.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          #Apple-Swift-Crypto and Swift-Sodium
+          - patterns:
+              - pattern-inside: |
+                  $OBJ.$CRYPTO(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $OBJ.$CRYPTO(..., $PSW: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(using|secretKey|key|passwd)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $OBJ.$CRYPTO(..., $PSW: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(using|secretKey|key|passwd)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $OBJ.$CRYPTO(..., Array($KEY), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = $VALUE
+                  ...
+                  $OBJ.$CRYPTO(..., $PSW: Array($KEY), ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(using|secretKey|key|passwd)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*) 
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+          - patterns:
+              - pattern-inside: |
+                  let $KEY: $ARRAY = [...]
+                  ...
+                  $OBJ.$CRYPTO(..., $PSW: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $ARRAY
+                  regex: (?i)(Array[\w<>]*)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(using|secretKey|key|passwd)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($Y: $VALUE)
+                  ...
+                  $OBJ.$CRYPTO(..., $PSW: $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b)
+              - metavariable-regex:
+                  metavariable: $PSW
+                  regex: (?i)(using|secretKey|key|passwd)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+          - patterns:
+              - pattern-inside: |
+                  $KEY = arrayFrom($VALUE)
+                  ...
+                  $OBJ.$CRYPTO(..., $KEY, ...)
+              - metavariable-regex:
+                  metavariable: $CRYPTO
+                  regex: (?i)(\bseal\b|\bopen\b|\bderive\b|\bderiveKey\b|\bhash\b|\bstr\b|\binitPush\b|\binitPull\b|\bsign\b) 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: ("(.*?)"|'(.*?)'|nil|String\((.*?)\))
+
+  # Source: improper_biometric_auth.yaml
+  - id: improper_biometric_auth
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://github.com/OWASP/owasp-mastg/blob/master/Document/0x06f-Testing-Local-Authentication.md
+        - https://developer.apple.com/documentation/localauthentication/logging_a_user_into_your_app_with_face_id_or_touch_id
+        - https://developer.apple.com/documentation/security/keychain_services/keychain_items/restricting_keychain_item_accessibility
+        - https://developer.apple.com/documentation/security/secaccesscontrolcreateflags
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application does not implement properly the Biometric Authentication mechanism, because
+      is using the Local Authentication framework or the Security framework configured with a weak Keychain
+      flag (such as: kSecAccessControlBiometryAny, kSecAccessControlTouchIDAny, kSecAccessControlTouchIDCurrentSet, 
+      kSecAccessControlUserPresence, kSecAttrAccessibleAlways, kSecAccessControlWatch, kSecAttrAccessibleAlwaysThisDeviceOnly, 
+      SecAccessControlCreateFlags.biometryAny, SecAccessControlCreateFlags.userPresence or SecAccessControlCreateFlags.watch). 
+      The biometric authentication checks implemented using Local Authentication framework could be bypassed 
+      by an attacker. Instead when the Security framework is configured with a weak (or legacy) Keychain flag 
+      an attacker could be able to: 
+      - add/enroll his biometric data to unlock the Keychain item without invalidate it, 
+      - always access the data in the Keychain item regardless of whether the device is locked,
+      - authenticate using a paired Apple Watch device instead of biometric data.
+      In sensitive contexts, it is recommended to implement Biometric Authentication controls using the Security
+      framework properly configured as stated in the official security guidelines for iOS. 
+      Specifically, the Security framework should be configured with the method "SecAccessControlCreateWithFlags"
+      having the "protection" argument set to "kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly" or
+      "kSecAttrAccessibleWhenPasscodeSet" values. 
+      In addition, if possible the method "SecAccessControlCreateWithFlags" should be set with any of the secure flags 
+      "kSecAccessControlBiometryCurrentSet" or "kSecAccessControlDevicePasscode". 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-either:
+                  - pattern: let $CONTEXT = LAContext()
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    $CONTEXT.evaluatePolicy(...)
+                    ...
+                  }
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    let $AUTHCONTROL = SecAccessControlCreateWithFlags(..., $VALUE, ...)
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (kSecAccessControlUserPresence|kSecAccessControlBiometryAny|SecAccessControlCreateFlags\.biometryAny|\.biometryAny|kSecAccessControlWatch|SecAccessControlCreateFlags\.watch|\.watch|kSecAccessControlTouchIDAny|SecAccessControlCreateFlags\.userPresence|\.userPresence|kSecAccessControlTouchIDCurrentSet|\.touchIDCurrentSet|kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly)
+              - focus-metavariable: $VALUE
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    let $AUTHCONTROL = SecAccessControlCreateWithFlags(..., $VALUE, ...)!
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (kSecAccessControlUserPresence|kSecAccessControlBiometryAny|SecAccessControlCreateFlags\.biometryAny|\.biometryAny|kSecAccessControlWatch|SecAccessControlCreateFlags\.watch|\.watch|kSecAccessControlTouchIDAny|SecAccessControlCreateFlags\.userPresence|\.userPresence|kSecAccessControlTouchIDCurrentSet|\.touchIDCurrentSet|kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly)
+              - focus-metavariable: $VALUE
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    guard let $AUTHCONTROL = SecAccessControlCreateWithFlags(..., $VALUE, ...) else {...}
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (kSecAccessControlUserPresence|kSecAccessControlBiometryAny|SecAccessControlCreateFlags\.biometryAny|\.biometryAny|kSecAccessControlWatch|SecAccessControlCreateFlags\.watch|\.watch|kSecAccessControlTouchIDAny|SecAccessControlCreateFlags\.userPresence|\.userPresence|kSecAccessControlTouchIDCurrentSet|\.touchIDCurrentSet|kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly)
+              - focus-metavariable: $VALUE
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    guard let $AUTHCONTROL = SecAccessControlCreateWithFlags(..., $VALUE, ...)! else {...}
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (kSecAccessControlUserPresence|kSecAccessControlBiometryAny|SecAccessControlCreateFlags\.biometryAny|\.biometryAny|kSecAccessControlWatch|SecAccessControlCreateFlags\.watch|\.watch|kSecAccessControlTouchIDAny|SecAccessControlCreateFlags\.userPresence|\.userPresence|kSecAccessControlTouchIDCurrentSet|\.touchIDCurrentSet|kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly)
+              - focus-metavariable: $VALUE
+
+  # Source: injections/log_inj.yaml
+  - id: log_inj
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://owasp.org/www-community/attacks/Log_Injection
+        - https://owasp.org/www-community/Injection_Flaws
+        - https://cwe.mitre.org/data/definitions/117.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application could be vulnerable to Log Injection, as it seems that some
+      untrusted input data is put into a logger without properly neutralizing it. 
+      This kind of vulnerabilities could lead to log forging, or injection of malicious
+      content (i.e. XSS stored).
+      It is suggested to perform output escaping and/or input validation/sanitization of
+      untrusted input before write it on logs.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          #Unvalidated input from app text fields
+          #Trying to catch textfields like --> @IBOutlet weak var textFieldName: UITextField!
+          - patterns: 
+              - pattern-inside: |
+                  class $CLASS: $X {
+                      ...
+                      var $INPUT: $TEXTFIELD
+                      ...
+                      func $FUNC() {
+                          ...
+                          NSLog("=~/.*(%@).*/", $INPUT.text)
+                          ...
+                      }
+                      ...
+                  }
+              - metavariable-regex:
+                  metavariable: $TEXTFIELD
+                  regex: (?i)(.*?)(?=TextField)([!]?)
+          - patterns:
+              - pattern-inside: |
+                  class $CLASS: $X {
+                      ...
+                      var $INPUT: $TEXTFIELD
+                      ...
+                      func $FUNC() {
+                        ...
+                        $VALUE = $INPUT.text
+                        ...
+                        NSLog("=~/.*(%@).*/", $VALUE)
+                        ...
+                      }
+                      ...
+                  }
+              - metavariable-regex:
+                  metavariable: $TEXTFIELD
+                  regex: (?i)(.*?)(?=TextField)([!]?)
+          - patterns: 
+              - pattern-inside: |
+                  class $CLASS: $X {
+                      ...
+                      var $INPUT: $TEXTFIELD
+                      ...
+                      func $FUNC() {
+                          ...
+                          NSLog("=~/.*(%@).*/", $INPUT.stringValue)
+                          ...
+                      }
+                      ...
+                  }
+              - metavariable-regex:
+                  metavariable: $TEXTFIELD
+                  regex: (?i)(.*?)(?=TextField)([!]?)
+          - patterns:
+              - pattern-inside: |
+                  class $CLASS: $X {
+                      ...
+                      var $INPUT: $TEXTFIELD
+                      ...
+                      func $FUNC() {
+                        ...
+                        $VALUE = $INPUT.stringValue
+                        ...
+                        NSLog("=~/.*(%@).*/", $VALUE)
+                        ...
+                      }
+                      ...
+                  }
+              - metavariable-regex:
+                  metavariable: $TEXTFIELD
+                  regex: (?i)(.*?)(?=TextField)([!]?)
+          #Unvalidated input from WebView
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.stringByEvaluatingJavaScript(...).$READ
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+              - metavariable-regex:
+                  metavariable: $READ
+                  regex: (?i)(value|innerText)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.stringByEvaluatingJavaScript(...)
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.stringByEvaluatingJavaScript(...)!
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.stringByEvaluatingJavaScriptFromString(...)
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.stringByEvaluatingJavaScriptFromString(...)!
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.request?.mainDocumentURL
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.request!.url!.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.request!.url?.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.request.url?.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = $WEBVIEW.request.url.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request.url?.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request!.url?.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request!.url!.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request.url.absoluteString
+                  ...
+                  NSLog("=~/.*(%@).*/", $INPUT)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request.url?.absoluteString
+                  ...
+                  $COMP = URLComponents(...)
+                  ...
+                  NSLog("=~/.*(%@).*/", $COMP.$ITEM)
+              - metavariable-regex:
+                  metavariable: $ITEM
+                  regex: (?i)(host|scheme|query|percentEncodedQuery|fragmqnt|password|path|port|user)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request!.url?.absoluteString
+                  ...
+                  $COMP = URLComponents(...)
+                  ...
+                  NSLog("=~/.*(%@).*/", $COMP.$ITEM)
+              - metavariable-regex:
+                  metavariable: $ITEM
+                  regex: (?i)(host|scheme|query|percentEncodedQuery|fragmqnt|password|path|port|user)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request!.url!.absoluteString
+                  ...
+                  $COMP = URLComponents(...)
+                  ...
+                  NSLog("=~/.*(%@).*/", $COMP.$ITEM)
+              - metavariable-regex:
+                  metavariable: $ITEM
+                  regex: (?i)(host|scheme|query|percentEncodedQuery|fragmqnt|password|path|port|user)
+          - patterns:
+              - pattern-inside: |
+                  $INPUT = navigationAction.request.url.absoluteString
+                  ...
+                  $COMP = URLComponents(...)
+                  ...
+                  NSLog("=~/.*(%@).*/", $COMP.$ITEM)
+              - metavariable-regex:
+                  metavariable: $ITEM
+                  regex: (?i)(host|scheme|query|percentEncodedQuery|fragmqnt|password|path|port|user)
+          - patterns:
+              - pattern-inside: |
+                    $ITEMS = $COMP.queryItems 
+                    ...
+                    for $ITEM in $ITEMS {
+                      ...
+                      NSLog("=~/.*(%@).*/", $ITEM.$FIELD)
+                      ...
+                    }
+          #    - metavariable-regex:
+          #        metavariable: $LOG
+          #        regex: ([\s\S]*?)(?=%@)([\s\S]*?)
+
+  # Source: injections/nosql_inj.yaml
+  - id: nosql_inj
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://capec.mitre.org/data/definitions/676.html
+        - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application could be vulnerable to NoSQL Injection, because the NoSQL queries
+      are built dynamically as string by concatenating code and untrusted input.
+      A successful NoSQL injection exploit, similar to that of a SQL injection, could allow an attacker
+      to bypass authentication, read sensitive data from database, modify database data (Insert/Update/Delete),
+      or even compromise the database and the underlying server. 
+      It is recommended to avoid to build NoSQL queries with string concatenation of code and
+      untrusted input, if this is needed at least a strong validation/sanitization of input
+      should be performed. 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: |
+                  $NOSQL = realm.objects($OBJ).filter($X + $Y)
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ^("([\s\S]*)"|'([\s\S]*)')
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+          - patterns:
+              - pattern: |
+                  $NOSQL = realm.objects($OBJ).filter($X + $Y + ...)
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ^("([\s\S]*)"|'([\s\S]*)')
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+          - patterns:
+              - pattern: |
+                  $NOSQL = realm.objects($OBJ).filter($X + ... + $Y)
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ^("([\s\S]*)"|'([\s\S]*)')
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+          - patterns:
+              - pattern: |
+                  $NOSQL = realm.objects($OBJ).filter($X + ... + $Y + ...)
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ^("([\s\S]*)"|'([\s\S]*)')
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+    
+
+  # Source: keychain/exportable_keychain.yaml
+  - id: exportable_keychain
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://developer.apple.com/documentation/security/keychain_services
+        - https://support.apple.com/guide/security/keychain-data-protection-secb0694df1a/web
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: LOW
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems configured with an exportable Keychain protection, when the
+      accessibility level do not contain the "ThisDeviceOnly" suffix, then the Keychain data could be
+      backed up to iCloud or via iTunes even if using unencrypted backups which can be restored to any
+      device. Depending on how sensitive and private the stored data is, this may raise a privacy concern.
+      When storing sensitive data it is recommended to use an high protection level for Keychain data having
+      the "ThisDeviceOnly" suffix. Note that by default the kSecAttrAccessible flag for Keychain is set
+      to "kSecAttrAccessibleWhenUnlocked".
+      NOTE: this rule does not find the cases of kSecAttrAccessible not explicitly set, by default the 
+      "kSecAttrAccessible" value is set to "kSecAttrAccessibleWhenUnlocked".
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  $QUERY[kSecAttrAccessible as String] = $KEYCHAINPROTECTION
+              - metavariable-regex:
+                  metavariable: $KEYCHAINPROTECTION
+                  regex: (?i)(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b)
+          - patterns:
+              - pattern-inside: |
+                  $QUERY[kSecAttrAccessible] = $KEYCHAINPROTECTION
+              - metavariable-regex:
+                  metavariable: $KEYCHAINPROTECTION
+                  regex: (?i)(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b)
+          - patterns:
+              - pattern-inside: |
+                  $QUERY = $VALUE as CFDictionary
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)([\s\S]*?)(?=(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b))([\s\S]*?)
+          - patterns:
+              - pattern-inside: |
+                  var $QUERY: [String: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b))([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $QUERY: [String: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b))([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  var $QUERY: [NSString: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b))([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $QUERY: [NSString: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(\bkSecAttrAccessibleWhenUnlocked\b|\bkSecAttrAccessibleAlways\b|\bkSecAttrAccessibleAfterFirstUnlock\b))([\s\S]*?)\]
+
+  # Source: keychain/weak_keychain.yaml
+  - id: weak_keychain
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://developer.apple.com/documentation/security/keychain_services
+        - https://support.apple.com/guide/security/keychain-data-protection-secb0694df1a/web
+        - https://developer.apple.com/documentation/security/keychain_services/keychain_items/restricting_keychain_item_accessibility
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems configured with a weak Keychain protection, because
+      presents the deprecated Keychian attribute "kSecAttrAccessibleAlways" or 
+      "kSecAttrAccessibleAlwaysThisDeviceOnly". These weak Keychain protection attributes could
+      allow an attacker to access the data stored in the corresponding Keychain item, regardless of
+      whether the device is locked.
+      It is recommended to use an adequate protection level for Keychain data possibly having the
+      "ThisDeviceOnly" suffix, related with the level of confidentiality required for the stored data. 
+      Note that by default the kSecAttrAccessible flag for iOS Keychain is set to "kSecAttrAccessibleWhenUnlocked".
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  $QUERY[kSecAttrAccessible as String] = $KEYCHAINPROTECTION
+              - metavariable-regex:
+                  metavariable: $KEYCHAINPROTECTION
+                  regex: (?i)(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly)
+          - patterns:
+              - pattern-inside: |
+                  $QUERY[kSecAttrAccessible] = $KEYCHAINPROTECTION
+              - metavariable-regex:
+                  metavariable: $KEYCHAINPROTECTION
+                  regex: (?i)(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly)
+          - patterns:
+              - pattern-inside: |
+                  $QUERY = $VALUE as CFDictionary
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)([\s\S]*?)(?=(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly))([\s\S]*?)
+          - patterns:
+              - pattern-inside: |
+                  var $QUERY: [String: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly))([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $QUERY: [String: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly))([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  var $QUERY: [NSString: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly))([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $QUERY: [NSString: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=(kSecAttrAccessibleAlways|kSecAttrAccessibleAlwaysThisDeviceOnly))([\s\S]*?)\]
+
+  # Source: pinning/afnetworking_pinning.yaml
+  - id: afnetworking_pinning
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning
+        - https://developer.apple.com/news/?id=g9ejcf8y
+        - https://cwe.mitre.org/data/definitions/295.html
+        - https://cwe.mitre.org/data/definitions/297.html
+        - https://cwe.mitre.org/data/slices/919.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems not implementing properly the Certificate Pinning checks when
+      connecting to external web servers, with AFNetworking libraries. 
+      An attacker could be able to abuse this vulnerability in order to intercept the communications
+      and perform MitM attacks. 
+      It is recommended to implement the proper Certificate Pinning controls in the iOS mobile application
+      following the official security guidelines for iOS. 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # AFNetworking with improper pinning configurations (pinning disabled, validation disabled for hostname/subdomains, or allowing invalid certificates)
+          - patterns:
+              # By default in AFNetworking the pinning is disabled
+              - pattern-inside: |
+                  let $SECURITYPOLICY = AFSecurityPolicy.default()
+          - patterns:
+              - pattern-inside: |
+                  let $SECURITYPOLICY = AFSecurityPolicy(pinningMode: $VALUE)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=AFSSLPinningMode.none)(.*?)
+          - patterns:
+              - pattern-inside: |
+                  let $SECURITYPOLICY = AFSecurityPolicy(pinningMode: $VALUE)
+                  ...
+                  $SECURITYPOLICY.validatesDomainName = false
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=AFSSLPinningMode.(certificate|publickey))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  let $SECURITYPOLICY = AFSecurityPolicy(pinningMode: $VALUE)
+                  ...
+                  $SECURITYPOLICY.validatesCertificateChain = false
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=AFSSLPinningMode.(certificate|publickey))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  let $SECURITYPOLICY = AFSecurityPolicy(pinningMode: $VALUE)
+                  ...
+                  $SECURITYPOLICY.allowInvalidCertificates = true
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=AFSSLPinningMode.(certificate|publickey))(.*?)
+
+  # Source: pinning/alamofire_pinning.yaml
+  - id: alamofire_pinning
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning
+        - https://developer.apple.com/news/?id=g9ejcf8y
+        - https://cwe.mitre.org/data/definitions/295.html
+        - https://cwe.mitre.org/data/definitions/297.html
+        - https://cwe.mitre.org/data/slices/919.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems not implementing properly the Certificate Pinning checks when
+      connecting to external web servers, with AlamoFire libraries. 
+      An attacker could be able to abuse this vulnerability in order to intercept the communications
+      and perform MitM attacks. 
+      It is recommended to implement the proper Certificate Pinning controls in the iOS mobile application
+      following the official security guidelines for iOS. 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # AlamoFire old versions with improper pinning configurations (pinning disabled for some domain, not validating hostname, or not validating chain of certs entirely)
+          - patterns:
+            - pattern-inside: |
+                let $SERVERTRUSTPOLICIES: [String: ServerTrustPolicy] = $VALUE
+            - metavariable-regex:
+                metavariable: $VALUE
+                regex: (?i)\[([\s\S]*?)(?=DisableEvaluation)([\s\S]*?)\]
+          - patterns:
+              # Match both PinCertificates() and PinPublicKeys()
+              - pattern-inside: |
+                  let $SERVERTRUSTPOLICIES: [String: ServerTrustPolicy] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=validateCertificateChain:\s?false)([\s\S]*?)\]
+          - patterns:
+              # Match both PinCertificates() and PinPublicKeys()
+              - pattern-inside: |
+                  let $SERVERTRUSTPOLICIES: [String: ServerTrustPolicy] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=validateHost:\s?false)([\s\S]*?)\]
+          # AlamoFire 5.x with improper pinning configurations (pinning disabled for some domain, not validating hostname, or accepting self-signed certs)
+          - patterns:
+              - pattern-inside: |
+                  let $TRUSTMANAGER = ServerTrustManager(..., [$X: DisabledEvaluator()], ...)
+          - patterns:
+              - pattern-inside: |
+                  let $SESSION = Session(..., serverTrustManager: ServerTrustManager(evaluators: [$X: DisabledTrustEvaluator()]), ...) 
+          - patterns:
+              - pattern-either:
+                  - pattern: |
+                      let $EVALUATORS = [$X: DefaultTrustEvaluator(..., validateHost: false, ...)]
+                  - pattern: |
+                      let $EVALUATORS = [$X: DefaultTrustEvaluator(..., acceptSelfSignedCertificates: true, ...)]
+                  - pattern: |
+                      let $EVALUATORS = [$X: DefaultTrustEvaluator(..., performDefaultValidation: false, ...)]
+          - patterns:
+              - pattern-either:
+                  - pattern: |
+                      let $EVALUATORS = [$X: PublicKeysTrustEvaluator(..., validateHost: false, ...)]
+                  - pattern: |
+                      let $EVALUATORS = [$X: PublicKeysTrustEvaluator(..., acceptSelfSignedCertificates: true, ...)]
+                  - pattern: |
+                      let $EVALUATORS = [$X: PublicKeysTrustEvaluator(..., performDefaultValidation: false, ...)]
+          - patterns:
+              - pattern-inside: |
+                  let $SERVERTRUSTPOLICIES = $EVALUATOR(..., validateHost: false, ...)
+              - metavariable-regex:
+                  metavariable: $EVALUATOR
+                  regex: (?i)(PinnedCertificatesTrustEvaluator|PublicKeysTrustEvaluator)
+          - patterns:
+              - pattern-inside: |
+                  let $SERVERTRUSTPOLICIES = $EVALUATOR(..., acceptSelfSignedCertificates: true, ...)
+              - metavariable-regex:
+                  metavariable: $EVALUATOR
+                  regex: (?i)(PinnedCertificatesTrustEvaluator|PublicKeysTrustEvaluator)
+          - patterns:
+              - pattern-inside: |
+                  let $SERVERTRUSTPOLICIES = $EVALUATOR(..., performDefaultValidation: false, ...)
+              - metavariable-regex:
+                  metavariable: $EVALUATOR
+                  regex: (?i)(PinnedCertificatesTrustEvaluator|PublicKeysTrustEvaluator)
+
+  # Source: pinning/trustkit_pinning.yaml
+  - id: trustkit_pinning
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning
+        - https://developer.apple.com/news/?id=g9ejcf8y
+        - https://cwe.mitre.org/data/definitions/295.html
+        - https://cwe.mitre.org/data/definitions/297.html
+        - https://cwe.mitre.org/data/slices/919.html
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems not implementing properly the Certificate Pinning checks when
+      connecting to external web servers, with TrustKit libraries. 
+      An attacker could be able to abuse this vulnerability in order to intercept the communications
+      and perform MitM attacks. 
+      It is recommended to implement the proper Certificate Pinning controls in the iOS mobile application
+      following the official security guidelines for iOS. 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # TrustKit with improper pinning configurations (pinning disabled or disabled for subdomains)
+          - patterns:
+              - pattern-inside: |
+                  let $TRUSTKITCONF: [String: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=kTSKEnforcePinning:\s?false)([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $TRUSTKITCONF: [String: Any] = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=kTSKIncludeSubdomains:\s?false)([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $TRUSTKITCONF = $VALUE as [String: Any] 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=kTSKEnforcePinning:\s?false)([\s\S]*?)\]
+          - patterns:
+              - pattern-inside: |
+                  let $TRUSTKITCONF = $VALUE as [String: Any] 
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[([\s\S]*?)(?=kTSKIncludeSubdomains:\s?false)([\s\S]*?)\]
+         
+
+  # Source: sql_inj/sqli_query.yaml
+  - id: sqli_query
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://cwe.mitre.org/data/definitions/89.html
+        - https://owasp.org/www-community/attacks/SQL_Injection
+        - https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      This iOS mobile application could be vulnerable to SQL Injection, because the SQL queries
+      are built as string by concatenating code and untrusted input.
+      A successful SQL injection exploit can read sensitive data from the database, modify
+      database data (Insert/Update/Delete), execute administration operations on the database
+      (such as shutdown the DBMS), recover the content of a given file present on the DBMS
+      file system and in some cases issue commands to the operating system.
+      It is recommended to avoid to build SQL queries with string concatenation of code and
+      untrusted input, instead adopt prepared statements with parametrized queries protection
+      mechanisms. 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: $FUNC($X + ... + $Y + ...)
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ((?i)["']{1}[\.\s\(]*(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})[\s]*)
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+              - pattern-not-inside: |
+                  $W.$Z.println(...)
+              - pattern-not-inside: |
+                  println(...)
+          - patterns:
+              - pattern: $SQL = $X + $Y
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ((?i)["']{1}[\.\s\(]*(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})[\s]*)
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+              - pattern-not-inside: |
+                  $W.$Z.println(...)
+              - pattern-not-inside: |
+                  println(...)
+          - patterns:
+              - pattern: $SQL = $X + $Y + ...
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ((?i)["']{1}[\.\s\(]*(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})[\s]*)
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+              - pattern-not-inside: |
+                  $W.$Z.println(...)
+              - pattern-not-inside: |
+                  println(...)
+          - patterns:
+              - pattern: $SQL = $X + ... + $Y
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ((?i)["']{1}[\.\s\(]*(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})[\s]*)
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+              - pattern-not-inside: |
+                  $W.$Z.println(...)
+              - pattern-not-inside: |
+                  println(...)
+          - patterns:
+              - pattern: $SQL = $X + ... + $Y + ...
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: ((?i)["']{1}[\.\s\(]*(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})[\s]*)
+              - metavariable-regex:
+                  metavariable: $Y
+                  regex: ^(?!")\w+
+              - pattern-not-inside: |
+                  $W.$Z.println(...)
+              - pattern-not-inside: |
+                  println(...)
+          - patterns:
+              # Trying to catch SQLi single string --> let query = "SELECT * FROM items WHERE owner='\(username)' AND itemname='\(item)'"
+              - pattern-inside: |
+                  let $SQL = $QUERY
+              - metavariable-regex:
+                  metavariable: $QUERY
+                  regex: (?i)"((ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})[\s]*)([\s\S]*?)(?='\\\(\w+\)')([\s\S]*?)"
+
+
+  # Source: storage/hardcoded_secret.yaml
+  - id: hardcoded_secret
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password
+        - https://cwe.mitre.org/data/definitions/798.html
+        - https://cwe.mitre.org/data/definitions/547.html
+      category: security
+      confidence: LOW
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems containing some hardcoded information, this storage mode
+      is insecure because does not guarantee the confidentiality of data.
+      An attacker could be able to retrieve the hardcoded data from the code of iOS mobile
+      application. 
+      When saving reserved data into the device, it is recommended to adopt any of the encryption
+      methods/tools internationally recognized as strong for iOS (adapt to the specific mobile
+      application context).
+    languages: [swift]
+    patterns:
+      # Hardcoded secret value
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  $SECRET = "=~/.*/"
+              - metavariable-regex:
+                  metavariable: $SECRET
+                  regex: (?i)(.*?)(?=(secret|user|account|password|pwd|psw|credit|card|key|encrypt|decrypt|pin|private|token|cookie|credential|code|client|bearer|\biv\b))(.*?)
+
+  # Source: storage/insecure_storage.yaml
+  - id: insecure_storage
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://cwe.mitre.org/data/definitions/311.html
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using a insecure storage mechanism, that does not guarantee
+      its confidentiality, to store some data locally into the device. 
+      In particular, there are some insecure storage methods offered by the platform which save the
+      data in cleartext (i.e. storing into PLIST files, using "UIImageWriteToSavedPhotosAlbum",
+      using "NSKeyedArchiver", using "NSUserDefaults", etc.).
+      An attacker could be able in some circumstances (i.e. jailbroken device) to exploit this issue
+      and retrieve the stored data.
+      It is recommended to adopt any of the encryption methods/tools internationally recognized as
+      strong for iOS (adapt to the specific mobile application context), when saving reserved data
+      into the device.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              # Find UIImageWriteToSavedPhotosAlbum which does not encrypt media
+              - pattern: UIImageWriteToSavedPhotosAlbum(...)
+          - patterns:
+              # Find NSKeyedArchiver which does not encrypt data
+              - pattern-either: 
+                  - pattern: |
+                      $DATA = try NSKeyedArchiver.archivedData(...)
+                  - pattern: |
+                      $DATA = NSKeyedArchiver.archivedData(...)
+          - patterns:
+              # Find NSUserDefaults which does not encrypt data
+              - pattern: |
+                  UserDefaults.standard.set($VALUE, forKey: $KEY)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i)(.*?)(?=(secret|password|pwd|psw|credit|card|cvv|key|crypto|pin|token))(.*?)
+          - patterns:
+              # Find NSUserDefaults (old version) which does not encrypt data
+              - pattern: |
+                  NSUserDefaults.standardUserDefaults().setObject($VALUE, forKey: $KEY)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i)(.*?)(?=(secret|password|pwd|psw|credit|card|cvv|key|crypto|pin|token))(.*?)
+          - patterns:
+              # Find PLIST file reading 
+              - pattern-inside: |
+                  $FILEPATH = NSBundle.mainBundle().pathForResource(..., ofType: "=~/plist/")
+                  ...
+                  $OBJ = NSDictionary(contentsOfFile: $FILEPATH)
+          - patterns:
+              # Find PLIST file reading
+              - pattern-inside: |
+                  $FILEPATH = Bundle.main.path(..., ofType: "=~/plist/")
+                  ...
+                  $OBJ = NSDictionary(contentsOfFile: $FILEPATH)
+          - patterns:
+              # Find PLIST file reading
+              - pattern-inside: |
+                  $FILEPATH = Bundle.main.path(..., ofType: "=~/plist/")
+                  ...
+                  $OBJ = FileManager.default.contents(atPath: $FILEPATH)
+          - patterns:
+              # Find PLIST file writing
+              - pattern-inside: |
+                  $FILEPATH = URL(fileURLWithPath: $X + ... + $TYPE)
+                  ...
+                  $RESULT = $OBJ.$WRITE(to: $FILEPATH, ...)
+              - metavariable-regex:
+                  metavariable: $TYPE
+                  regex: (?i)"([\s\S]*?)(plist)"
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToFile)
+          - patterns:
+              # Find PLIST file writing
+              - pattern-inside: |
+                  $FILENAME = $TYPE 
+                  ...
+                  $FILE = URL(fileURLWithPath: $X + ... + $FILENAME)
+                  ...
+                  $RESULT = $OBJ.$WRITE(to: $FILE, ...)
+              - metavariable-regex:
+                  metavariable: $TYPE
+                  regex: (?i)"([\s\S]*?)(plist)"
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToFile)
+          - patterns:
+              # Find PLIST file copy
+              - pattern-inside: |
+                  class $CLASS: $X {
+                    ...
+                    $FILEPATH = Bundle.main.resourcePath!.appending("=~/.*plist/")
+                    ...
+                    func $FUNC(){
+                      ...
+                      try FileManager.default.copyItem(atPath: $FILEPATH, toPath: $Y)
+                      ...
+                    }
+                    ...
+                  }
+              - pattern-inside: |
+                  class $CLASS: $X {
+                    ...
+                    $FILEPATH = Bundle.main.resourcePath!.appending("=~/.*plist/")
+                    ...
+                    func $FUNC(){
+                      ...
+                      try FileManager.default.copyItem(atPath: $Y, toPath: $FILEPATH)
+                      ...
+                    }
+                    ...
+                  }
+              - pattern-inside: |
+                  func $FUNC(){
+                    ...
+                    $FILEPATH = Bundle.main.resourcePath!.appending("=~/.*plist/")
+                    ...
+                    try FileManager.default.copyItem(atPath: $FILEPATH, toPath: $Y)
+                    ...
+                  }
+              - pattern-inside: |
+                  func $FUNC(){
+                    ...
+                    $FILEPATH = Bundle.main.resourcePath!.appending("=~/.*plist/")
+                    ...
+                    try FileManager.default.copyItem(atPath: $Y, toPath: $FILEPATH)
+                    ...
+                  }
+
+  # Source: storage/none_file_protection_part1.yaml
+  - id: none_file_protection_part1
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://developer.apple.com/documentation/foundation/nsfileprotectionnone
+        - https://developer.apple.com/documentation/foundation/nsdatawritingoptions/nsdatawritingfileprotectionnone
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using a insufficient data protection class when storing some
+      files locally into the device. The usage of the data protection class "NSFileProtectionNone" or
+      "FileProtectionType.none" means that the file is encrypted using a key derived only from the
+      device's UID. The usage of the file write option "NSDataWritingOptions.DataWritingFileProtectionNone"
+      instead allows to save unencrypted the file into the device. In both cases the file is accessible
+      any time the device is powered on, including when locked with a passcode or when booting.
+      This configuration could expose, under certain circumstances (i.e. jailbroken device), these files
+      to undesiderated accesses.
+      It is suggested to use the data protection class "NSFileProtectionComplete" or "FileProtectionType.complete"
+      or the file write option "NSDataWritingOptions.DataWritingFileProtectionComplete" when storing files
+      containing reserved data. 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  let $PROT = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)\]          
+          - patterns:
+              - pattern-inside: |
+                  $DATA.$WRITE(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToURL|writeToFile)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  $DATA.$WRITE(..., $X: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToURL|writeToFile)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  NSFileManager.defaultManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  NSFileManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  try NSFileManager.defaultManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  try NSFileManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  let $NSFM = NSFileManager()
+                  ...
+                  $NSFM.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  let $NSFM = NSFileManager()
+                  ...
+                  try $NSFM.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  FileManager.default.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  FileManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  $FM = FileManager()
+                  ...
+                  $FM.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+
+  # Source: storage/none_file_protection_part2.yaml
+  - id: none_file_protection_part2
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://developer.apple.com/documentation/foundation/nsfileprotectionnone
+        - https://developer.apple.com/documentation/foundation/nsdatawritingoptions/nsdatawritingfileprotectionnone
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using a insufficient data protection class when storing some
+      files locally into the device. The usage of the data protection class "NSFileProtectionNone" or
+      "FileProtectionType.none" means that the file is encrypted using a key derived only from the
+      device's UID. The usage of the file write option "NSDataWritingOptions.DataWritingFileProtectionNone"
+      instead allows to save unencrypted the file into the device. In both cases the file is accessible
+      any time the device is powered on, including when locked with a passcode or when booting.
+      This configuration could expose, under certain circumstances (i.e. jailbroken device), these files
+      to undesiderated accesses.
+      It is suggested to use the data protection class "NSFileProtectionComplete" or "FileProtectionType.complete"
+      or the file write option "NSDataWritingOptions.DataWritingFileProtectionComplete" when storing files
+      containing reserved data.  
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  FileManager.default.createFile(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  FileManager.default.createFile(..., attributes: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)\]          
+          - patterns:
+              - pattern-inside: |
+                  FileManager().createFile(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  FileManager().createFile(..., attributes: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)\]          
+          - patterns:
+              - pattern-inside: |
+                  $FM = FileManager()
+                  ...
+                  $FM.createFile(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)         
+          - patterns:
+              - pattern-inside: |
+                  $FM = FileManager()
+                  ...
+                  $FM.createFile(..., attributes: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionNone|DataWritingFileProtectionNone|FileProtectionType\.none))(.*?)\]          
+
+  # Source: storage/weak_file_protection_part1.yaml
+  - id: weak_file_protection_part1
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://developer.apple.com/documentation/foundation/nsfileprotectioncompleteunlessopen
+        - https://developer.apple.com/documentation/foundation/nsfileprotectioncompleteuntilfirstuserauthentication
+        - https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/encrypting_your_app_s_files
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using a weak data protection class when storing some
+      files locally into the device, this configuration could expose the files to undesiderated
+      accesses because the data remain accessible under certain circumstances (i.e. jailbroken device).
+      In particular, the FileProtectionType weak classes that should be used carefully are:
+      - "NSFileProtectionCompleteUnlessOpen"
+      - "FileProtectionType.completeUnlessOpen"
+      - "NSFileProtectionCompleteUntilFirstUserAuthentication" (default value on iOS)
+      - "FileProtectionType.completeUntilFirstUserAuthentication"
+      and the weak file write options are:
+      - "DataWritingFileProtectionCompleteUnlessOpen"
+      - "DataWritingFileProtectionCompleteUntilFirstUserAuthentication"
+      When saving reserved data in local files it is suggested to use any of the secure data protection classes
+      "NSFileProtectionComplete" and "FileProtectionType.complete", or the secure file write option
+      "NSDataWritingOptions.DataWritingFileProtectionComplete". 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  let $PROT = $VALUE
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)\]          
+          - patterns:
+              - pattern-inside: |
+                  $DATA.$WRITE(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToURL|writeToFile)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  $DATA.$WRITE(..., $X: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToURL|writeToFile)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  NSFileManager.defaultManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  NSFileManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                 try NSFileManager.defaultManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  try NSFileManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+               - pattern-inside: |
+                   let $NSFM = NSFileManager()
+                   ...
+                   $NSFM.setAttributes(..., $VALUE, ...)
+               - metavariable-regex:
+                   metavariable: $VALUE
+                   regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  let $NSFM = NSFileManager()
+                  ...
+                  try $NSFM.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  FileManager.default.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  FileManager().setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  $FM = FileManager()
+                  ...
+                  $FM.setAttributes(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+
+  # Source: storage/weak_file_protection_part2.yaml
+  - id: weak_file_protection_part2
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://developer.apple.com/documentation/foundation/nsfileprotectioncompleteunlessopen
+        - https://developer.apple.com/documentation/foundation/nsfileprotectioncompleteuntilfirstuserauthentication
+        - https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/encrypting_your_app_s_files
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using a weak data protection class when storing some
+      files locally into the device, this configuration could expose the files to undesiderated
+      accesses because the data remain accessible under certain circumstances (i.e. jailbroken device).
+      In particular, the FileProtectionType weak classes that should be used carefully are:
+      - "NSFileProtectionCompleteUnlessOpen"
+      - "FileProtectionType.completeUnlessOpen"
+      - "NSFileProtectionCompleteUntilFirstUserAuthentication" (default value on iOS)
+      - "FileProtectionType.completeUntilFirstUserAuthentication"
+      and the weak file write options are:
+      - "DataWritingFileProtectionCompleteUnlessOpen"
+      - "DataWritingFileProtectionCompleteUntilFirstUserAuthentication"
+      When saving reserved data in local files it is suggested to use any of the secure data protection classes
+      "NSFileProtectionComplete" and "FileProtectionType.complete", or the secure file write option
+      "NSDataWritingOptions.DataWritingFileProtectionComplete". 
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  FileManager.default.createFile(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  FileManager.default.createFile(..., attributes: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)\]
+          - patterns:
+              - pattern-inside: |
+                  FileManager().createFile(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  FileManager().createFile(..., attributes: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)\]
+          - patterns:
+              - pattern-inside: |
+                  $FM = FileManager()
+                  ...
+                  $FM.createFile(..., $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  $FM = FileManager()
+                  ...
+                  $FM.createFile(..., attributes: $VALUE, ...)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i)\[(.*?)(?=(NSFileProtectionCompleteUnlessOpen|DataWritingFileProtectionCompleteUnlessOpen|FileProtectionType\.completeUnlessOpen|NSFileProtectionCompleteUntilFirstUserAuthentication|DataWritingFileProtectionCompleteUntilFirstUserAuthentication|FileProtectionType\.completeUntilFirstUserAuthentication))(.*?)\]
+
+  # Source: webview/improper_wkwebview.yaml
+  - id: improper_wkwebview
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06h-Testing-Platform-Interaction
+        - https://developer.apple.com/documentation/webkit/wkwebview
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using a WKWebView object weakly configured from a security
+      point of view, as its settings present any of the following flaws:
+        - WKWebView has JavaScript support not explicitly disabled (enabled by default)
+        - WKWebView has enabled JavaScript to access content from other "file://" scheme URLs (allowFileAccessFromFileURLs default false)
+        - WKWebView has enabled JavaScript to access content from any origin (allowUniversalAccessFromFileURLs default false)
+      This configuration of WKWebView increases the attack surface of the mobile app and could lead to various
+      kind of vulnearbilities (i.e. reflected XSS, code injection, information disclosure, etc.).
+      If possible it is recommended to configure WKWebView in the mobile app with JavaScript disabled, and disabling 
+      the permission to access content from any origin or other file scheme URLs.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # WKWebView with JavaScript enabled
+          - patterns:
+              - pattern: |
+                  let $PREFS = WKPreferences()
+                  ...
+                  let $WEBVIEW = WKWebView(...)
+                  ...
+                  $WEBVIEW.$LOADFUNC(...)
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData)
+              - pattern-not-inside: |
+                  func $FUNC() {
+                      ...
+                      $PREFS.javaScriptEnabled = false
+                      ...
+                  }
+          - patterns:
+              - pattern-inside: |
+                  let $PREFS = WKPreferences()
+                  ...
+                  let $WEBVIEW : WKWebView
+                  ...
+                  $WEBVIEW.$LOADFUNC(...)
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData)
+              - pattern-not-inside: |
+                  func $FUNC() {
+                      ...
+                      $PREFS.javaScriptEnabled = false
+                      ...
+                  }
+          - patterns:
+              - pattern-inside: |
+                  let $PREFS = WKWebpagePreferences()
+                  ...
+                  let $WEBVIEW = WKWebView(...)
+                  ...
+                  $WEBVIEW.$LOADFUNC(...)
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData)
+              - pattern-not-inside: |
+                  func $FUNC() {
+                      ...
+                      $PREFS.allowsContentJavaScript = false
+                      ...
+                  }
+          - patterns:
+              - pattern-inside: |
+                  let $PREFS = WKWebpagePreferences()
+                  ...
+                  let $WEBVIEW : WKWebView
+                  ...
+                  $WEBVIEW.$LOADFUNC(...)
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData)
+              - pattern-not-inside: |
+                  func $FUNC() {
+                      ...
+                      $PREFS.allowsContentJavaScript = false
+                      ...
+                  }
+          - patterns:       
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    let $WEBVIEW = WKWebView(...)
+                    ...
+                    $WEBVIEW.$LOADFUNC(...)
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData)
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    let $PREFS = WKPreferences()
+                    ...
+                  }
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    let $PREFS = WKWebpagePreferences()
+                    ...
+                  }
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    $WEBVIEW.configuration.preferences.javaScriptEnabled = false
+                    ...
+                  }
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    $WEBVIEW.configuration.defaultWebpagePreferences.allowsContentJavaScript = false
+                    ...
+                  }
+          - patterns:       
+              - pattern-inside: |
+                  func $FUNC() {
+                    ...
+                    let $WEBVIEW : WKWebView
+                    ...
+                    $WEBVIEW.$LOADFUNC(...)
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData)
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    let $PREFS = WKPreferences()
+                    ...
+                  }
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    let $PREFS = WKWebpagePreferences()
+                    ...
+                  }
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    $WEBVIEW.configuration.preferences.javaScriptEnabled = false
+                    ...
+                  }
+              - pattern-not-inside: |
+                  func $FUNC() {
+                    ...
+                    $WEBVIEW.configuration.defaultWebpagePreferences.allowsContentJavaScript = false
+                    ...
+                  }
+          # WKWebView with JavaScript enabled to access content from other "file://" scheme URL, or from any origin
+          - patterns:
+              - pattern-either:
+                  - pattern: $PREFS.allowFileAccessFromFileURLs = true
+                  - pattern: $PREFS.allowUniversalAccessFromFileURLs = true
+                  - pattern: |
+                      $WEBVIEW.configuration.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+                  - pattern: |
+                      $WEBVIEW.configuration.preferences.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
+
+  # Source: webview/insecure_webview.yaml
+  - id: insecure_webview
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06h-Testing-Platform-Interaction
+        - https://developer.apple.com/documentation/webkit/replacing_uiwebview_in_your_app
+        - https://developer.apple.com/documentation/safariservices/sfsafariviewcontroller
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      This iOS mobile application seems using an insecure WebView in-app browser, which could expose
+      to various kind of vulnerabilities.
+      More specifically, the usage of the deprecated UIWebView should be avoided, because it
+      suffers of various security issues. Also the usage of SFSafariViewController should be avoided in
+      sensitive contexts, because it presents various potential security flaws (i.e. JavaScript disabling
+      not supported, cookies and other data shared with Safari browser, etc.).
+      An attacker could abuse this issue to perform various kind of injection attacks (like: XSS, code
+      injection, stealing of reserved information, etc.).
+      It is recommended to use the WKWebView component properly configured in the mobile app, if the usage
+      of SFSafariViewController is a requirements, it is suggested to adopt it only in trusted contexts.
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # UIWebView found
+          - patterns:
+              - pattern-inside: |
+                  let $WEBVIEW = UIWebView()
+                  ...
+                  $WEBVIEW.$LOADFUNC(...)
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData|loadRequest)
+          #- patterns:
+          #    - pattern-inside: |
+          #        @IBOutlet weak var $WEBVIEW: UIWebView
+          - patterns:
+              - pattern-inside: |
+                  class $CLASS: $X {
+                    ...
+                    var $WEBVIEW: UIWebView
+                    ...
+                    func $FUNC() {
+                      ...
+                      $WEBVIEW.$LOADFUNC(...)
+                      ...
+                    }
+                    ...
+                  }
+              - metavariable-regex:
+                  metavariable: $LOADFUNC
+                  regex: (?i)(loadHTMLString|loadData|loadRequest)
+          # SFSafariViewController found
+          - patterns:
+              - pattern-inside: |
+                  $VIEWCON = SFSafariViewController(...)
+          - patterns:       
+              - pattern-inside: |
+                   var $VIEWCON: SFSafariViewController 
+      
+
+  # Source: xxe/xxe.yaml
+  - id: xxe
+    severity: WARNING
+    metadata:
+      author: Maurizio Siddu
+      references:
+        - https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing
+        - https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+        - https://cwe.mitre.org/data/definitions/611.html
+        - https://developer.apple.com/documentation/foundation/nsxmlparser/1414143-shouldresolveexternalentities
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      The iOS mobile application could be vulnerable to XXE attacks, because the resolution of XML
+      external entities in DTD is enabled on it. 
+      This kind of vulnerabilities may lead to the disclosure of confidential data, denial of service,
+      server side request forgery, port scanning, and other system impacts.
+      It is recommended to disable external entities following the OWASP prevention cheat sheet.
+      In particular, to disable XML resolution of external entities for the Swift XML parser SAXReader
+      it is recommended to avoid to set to TRUE the "shouldResolveExternalEntities" option (by default
+      is FALSE).
+    languages: [swift]
+    patterns:
+      # By default the falg "shouldResolveExternalEntities" is false
+      - pattern-either:
+          - pattern-inside: |
+              $XMLPARSER = NSXMLParser(data: $OBJ.dataUsingEncoding($ENCODING)!)
+              ...
+              $XMLPARSER.shouldResolveExternalEntities = true
+              ...
+              $XMLPARSER.parse()
+          - pattern-inside: |
+              $XMLPARSER = NSXMLParser(data: $OBJ.dataUsingEncoding($ENCODING))
+              ...
+              $XMLPARSER.shouldResolveExternalEntities = true
+              ...
+              $XMLPARSER.parse()
+          - pattern-inside: |
+              var $RAWXMLDATA: NSData = $OBJ.data(using: $ENCODING)
+              ...
+              var $XMLPARSER: XMLParser = NSXMLParser(data: $RAWXMLDATA)
+              ...
+              $XMLPARSER.shouldResolveExternalEntities = true
+              ...
+              $XMLPARSER.parse()
+          - pattern-inside: |
+              func $FUNC() {
+                  ...
+                  $XMLPARSER.shouldResolveExternalEntities = true
+                  ...
+                  $XMLPARSER.parse()
+                  ...
+              }

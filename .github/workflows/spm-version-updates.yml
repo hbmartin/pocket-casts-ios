@@ -1,0 +1,40 @@
+name: Swift Package Version Updates
+
+on:
+  pull_request:
+    paths:
+      - "Modules/Package.swift"
+      - "Modules/Package.resolved"
+      - "BuildTools/Package.swift"
+      - "BuildTools/Package.resolved"
+      - ".swiftlint.yml"
+      - ".github/workflows/spm-version-updates.yml"
+      - "scripts/ci/generate-spm-version-updates-project.rb"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  spm-version-updates:
+    name: Check SPM Dependencies
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Generate SPM check project
+        run: |
+          ruby scripts/ci/generate-spm-version-updates-project.rb \
+            Modules/Package.swift \
+            BuildTools/Package.swift \
+            .spm-version-updates/PackageChecks.xcodeproj
+
+      - name: Check Swift package updates
+        uses: hbmartin/github-action-spm_version_updates@bedf15f8907c3375e12919373eba4451e0db2f3c
+        with:
+          xcode-project-path: .spm-version-updates/PackageChecks.xcodeproj
+          report-above-maximum: true

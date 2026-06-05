@@ -16,15 +16,15 @@ open class SubscriptionHelper: NSObject {
 
     /// Returns the users active subscription type or .none if they don't currently have one
     public static var activeSubscriptionType: SubscriptionType {
-        .plus
+        subscriptionType()
     }
 
     /// Whether paid feature gates should be opened independently of billing state.
-    public static var featuresUnlocked = true
+    public internal(set) static var featuresUnlocked = false
 
     /// Returns the users active subscription tier or .none if they don't currently have one
     public static var activeTier: SubscriptionTier {
-        .patron
+        hasActiveSubscription() ? subscriptionTier : .none
     }
 
     /// The users subscription tier, or .none if there isn't one available
@@ -41,7 +41,7 @@ open class SubscriptionHelper: NSObject {
     }
 
     public class func hasActiveSubscription() -> Bool {
-        true
+        UserDefaults.standard.integer(forKey: ServerConstants.UserDefaults.subscriptionPaid) == 1
     }
 
     public class func hasRenewingSubscription() -> Bool {

@@ -1,8 +1,15 @@
 ## Formatting
 
-Format all code using the linter formatter:
+Format all code using the formatter:
 ```bash
 make format
+```
+
+## Static Checks
+
+Run all local static checks with:
+```bash
+make static_checks
 ```
 
 ## Building and Running

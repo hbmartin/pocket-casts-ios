@@ -71,6 +71,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
                                 icon: { Image("upnext") },
                 actions: [
                     .init(title: L10n.podcastListGoToPodcastsAction) {
+                        Analytics.track(.upNextGoToPodcastsTapped)
                         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
                     }
                 ])
