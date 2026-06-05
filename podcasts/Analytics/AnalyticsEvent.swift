@@ -466,6 +466,7 @@ enum AnalyticsEvent: String {
     case upNextDismissed
     case upNextShuffleEnabled
     case upNextDiscoverButtonTapped
+    case upNextGoToPodcastsTapped
 
     // MARK: - Privacy
 

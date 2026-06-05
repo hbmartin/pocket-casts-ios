@@ -24,7 +24,7 @@ extension PaidFeature {
 class PaidFeature: ObservableObject {
     /// Whether the feature is unlocked for the active subscription tier
     var isUnlocked: Bool {
-        true
+        SubscriptionHelper.featuresUnlocked || subscriptionHelper.activeTier >= tier
     }
 
     /// The minimum subscription level required to unlock this feature
@@ -34,6 +34,8 @@ class PaidFeature: ObservableObject {
     ///
     /// Internally this doesn't change anything with the feature, but allows the app to check its state and display different UI if needed.
     let inEarlyAccess: Bool
+
+    private let subscriptionHelper: SubscriptionHelper
 
     /// Creates a new paid feature with a minimum tier
     /// - Parameters:
@@ -47,7 +49,7 @@ class PaidFeature: ObservableObject {
          buildEnvironment: BuildEnvironment = .current) {
         self.tier = betaTier != nil && buildEnvironment == .testFlight ? betaTier ?? tier : tier
         self.inEarlyAccess = inEarlyAccess
-        _ = subscriptionHelper
+        self.subscriptionHelper = subscriptionHelper
     }
 }
 
