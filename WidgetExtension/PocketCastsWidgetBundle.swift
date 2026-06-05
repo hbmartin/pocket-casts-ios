@@ -11,5 +11,8 @@ struct PocketCastsWidgetBundle: WidgetBundle {
         NowPlayingLockScreenWidget()
         AppIconWidget()
         UpNextLockScreenWidget()
+        PlaybackPlayPauseControl()
+        PlaybackSkipBackControl()
+        PlaybackSkipForwardControl()
     }
 }
