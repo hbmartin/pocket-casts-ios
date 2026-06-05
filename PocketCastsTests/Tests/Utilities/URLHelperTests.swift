@@ -42,15 +42,15 @@ final class URLHelperTests: XCTestCase {
         XCTAssertEqual(URLHelper.inAppBrowserDecision(for: httpsURL, context: .externalContent), .inAppBrowser)
     }
 
-    func testExternalContentRejectsUnsafeSchemesForInAppPresentation() {
-        let unsafeURLs = [
+    func testExternalContentRejectsNonWebURLsForInAppPresentation() {
+        let nonWebURLs = [
             customURL(scheme: "javascript", path: "alert(1)"),
             URL(fileURLWithPath: "/private/tmp/test.html"),
             customURL(scheme: "pocketcasts", host: "podcasts"),
             relativeURL(path: "example.com/path")
         ]
 
-        unsafeURLs.forEach {
+        nonWebURLs.forEach {
             XCTAssertFalse(URLHelper.canOpenInAppBrowser($0, context: .externalContent), "\($0) should not open in app")
         }
     }

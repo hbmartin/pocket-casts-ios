@@ -118,6 +118,7 @@ public enum ServerConstants {
         static let syncingPasswordKey = "SJSyncingPwd" // NOSONAR - Keychain item name, not a credential.
         static let syncingV2TokenKey = "SJSyncV2Token"
         static let refreshTokenKey = "SJRefreshToken"
+        static let pushTokenKey = "SJPushToken"
         static let appleAuthUserIDKey = "SJAppleAuthUserID"
         public static let appUserAgent = "Pocket Casts"
         static let customStorageUsed = "SJCustomStorageUsed"

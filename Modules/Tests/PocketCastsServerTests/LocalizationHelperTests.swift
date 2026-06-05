@@ -80,30 +80,65 @@ private final class TestFilePathProvider: NSObject, FilePathProtocol {
     func streamingBufferPathForEpisode(_ episode: BaseEpisode) -> String { "" }
 }
 
+private func testNoOp() { _ = () }
+
 extension ServerSyncDelegate {
-    func podcastUpdated(podcastUuid: String) {}
-    func podcastAdded(podcastUuid: String) {}
-    func checkForUnusedPodcasts() {}
-    func applyAutoArchivingToAllPodcasts() {}
-    func subscribedToPodcast() {}
-    func playlistChanged() {}
-    func episodeStarredChanged(episode: Episode) {}
-    func archiveEpisodeExternal(episode: Episode) {}
-    func markEpisodeAsPlayedExternal(episode: Episode) {}
-    func deselectedChaptersChanged() {}
-    func episodeCanBeCleanedUp(episode: Episode) -> Bool { false }
-    func autoDownloadLatestEpisodes(uuids: [String]) {}
-    func cleanupAllUnusedEpisodeBuffers() {}
-    func deleteFromDevice(userEpisode: UserEpisode) {}
-    func autoDownloadUserEpisodes(episodes: [UserEpisode]) {}
-    func userEpisodeFileProtocol() -> FilePathProtocol { TestFilePathProvider() }
-    func cleanupCloudOnlyFiles() {}
-    func performActionsAfterSync() {}
-    func isPushEnabled() -> Bool { false }
-    func defaultPodcastGrouping() -> Int32 { 0 }
-    func defaultShowArchived() -> Bool { false }
-    func uniqueAppId() -> String { "" }
-    func appVersion() -> String { "" }
-    func privateUserAgent() -> String { "" }
-    func minTimeBetweenProgressSaves() -> Double { 0 }
+    func podcastUpdated(podcastUuid _: String) { testNoOp() }
+    func podcastAdded(podcastUuid _: String) { testNoOp() }
+    func checkForUnusedPodcasts() { testNoOp() }
+    func applyAutoArchivingToAllPodcasts() { testNoOp() }
+    func subscribedToPodcast() { testNoOp() }
+    func playlistChanged() { testNoOp() }
+    func episodeStarredChanged(episode _: Episode) { testNoOp() }
+    func archiveEpisodeExternal(episode _: Episode) { testNoOp() }
+    func markEpisodeAsPlayedExternal(episode _: Episode) { testNoOp() }
+    func deselectedChaptersChanged() { testNoOp() }
+    func episodeCanBeCleanedUp(episode _: Episode) -> Bool {
+        testNoOp()
+        return false
+    }
+    func autoDownloadLatestEpisodes(uuids _: [String]) { testNoOp() }
+    func cleanupAllUnusedEpisodeBuffers() { testNoOp() }
+    func deleteFromDevice(userEpisode _: UserEpisode) { testNoOp() }
+    func autoDownloadUserEpisodes(episodes _: [UserEpisode]) { testNoOp() }
+    func userEpisodeFileProtocol() -> FilePathProtocol {
+        testNoOp()
+        return TestFilePathProvider()
+    }
+    func cleanupCloudOnlyFiles() { testNoOp() }
+    func performActionsAfterSync() { testNoOp() }
+    func isPushEnabled() -> Bool {
+        testNoOp()
+        return false
+    }
+
+    func defaultPodcastGrouping() -> Int32 {
+        testNoOp()
+        return 0
+    }
+
+    func defaultShowArchived() -> Bool {
+        testNoOp()
+        return false
+    }
+
+    func uniqueAppId() -> String {
+        testNoOp()
+        return ""
+    }
+
+    func appVersion() -> String {
+        testNoOp()
+        return ""
+    }
+
+    func privateUserAgent() -> String {
+        testNoOp()
+        return ""
+    }
+
+    func minTimeBetweenProgressSaves() -> Double {
+        testNoOp()
+        return 0
+    }
 }

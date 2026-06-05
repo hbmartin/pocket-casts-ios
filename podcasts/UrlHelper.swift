@@ -26,7 +26,7 @@ struct URLHelper {
         var completion: (() -> Void)?
 
         init(
-            presenter: UIViewController? = SceneHelper.rootViewController(),
+            presenter: UIViewController? = nil,
             prefersExternalBrowser: Bool = false,
             allowsExternalFallback: Bool = false,
             delegate: SFSafariViewControllerDelegate? = nil,
@@ -127,7 +127,9 @@ struct URLHelper {
             allowsExternalFallback: options.allowsExternalFallback
         ) {
         case .inAppBrowser:
-            guard let safariViewController = makeInAppBrowser(for: url, context: context), let presenter = options.presenter else { return nil }
+            guard let safariViewController = makeInAppBrowser(for: url, context: context) else { return nil }
+            let presenter = options.presenter ?? SceneHelper.rootViewController()
+            guard let presenter else { return nil }
 
             safariViewController.delegate = options.delegate
             if let modalPresentationStyle = options.modalPresentationStyle {
@@ -136,7 +138,9 @@ struct URLHelper {
             presenter.present(safariViewController, animated: true, completion: options.completion)
             return safariViewController
         case .externalApplication:
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            UIApplication.shared.open(url, options: [:]) { _ in
+                options.completion?()
+            }
             return nil
         case .blocked, .authenticationSessionRequired:
             return nil

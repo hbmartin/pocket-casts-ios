@@ -219,22 +219,28 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
                     PlaybackManager.shared.seekTo(time: timeToSkipTo)
                 })
             }
-        } else if Settings.openLinks {
-            URLHelper.open(
+        } else {
+            Analytics.track(
+                .playerShowNotesLinkTapped,
+                properties: ["episode_uuid": lastEpisodeUuidRendered]
+            )
+
+            if Settings.openLinks {
+                URLHelper.open(
+                    url,
+                    context: .externalContent,
+                    options: .init(
+                        prefersExternalBrowser: true,
+                        allowsExternalFallback: true
+                    )
+                )
+            } else if let safariViewController = URLHelper.open(
                 url,
                 context: .externalContent,
-                options: .init(
-                    prefersExternalBrowser: true,
-                    allowsExternalFallback: true
-                )
-            )
-        } else if let safariViewController = URLHelper.open(
-            url,
-            context: .externalContent,
-            options: .init(delegate: self)
-        ) {
+                options: .init(delegate: self)
+            ) {
                 self.safariViewController = safariViewController
-                Analytics.track(.playerShowNotesLinkTapped, properties: ["episode_uuid": lastEpisodeUuidRendered])
+            }
         }
 
         decisionHandler(.cancel)

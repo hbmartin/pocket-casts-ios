@@ -284,15 +284,41 @@ public class ServerSettings {
 
     // Push Token
     public class func pushToken() -> String? {
-        UserDefaults.standard.string(forKey: ServerConstants.UserDefaults.pushToken)
+        if let token = try? KeychainHelper.string(for: ServerConstants.Values.pushTokenKey) {
+            return token
+        }
+
+        guard let legacyToken = UserDefaults.standard.string(forKey: ServerConstants.UserDefaults.pushToken) else {
+            return nil
+        }
+
+        if savePushTokenToKeychain(legacyToken),
+           (try? KeychainHelper.string(for: ServerConstants.Values.pushTokenKey)) == legacyToken {
+            UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.pushToken)
+        }
+
+        return legacyToken
     }
 
     public class func setPushToken(token: String) {
-        UserDefaults.standard.set(token, forKey: ServerConstants.UserDefaults.pushToken)
+        guard savePushTokenToKeychain(token) else { return }
+
+        UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.pushToken)
     }
 
     public class func removePushToken() {
+        KeychainHelper.removeKey(ServerConstants.Values.pushTokenKey)
         UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.pushToken)
+    }
+
+    @discardableResult
+    private class func savePushTokenToKeychain(_ token: String) -> Bool {
+        let saved = KeychainHelper.save(string: token, key: ServerConstants.Values.pushTokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+        if !saved {
+            FileLog.shared.addMessage("ServerSettings: Failed to save push token to Keychain")
+        }
+
+        return saved
     }
 
     // MARK: - Auto add to Up Next Limit

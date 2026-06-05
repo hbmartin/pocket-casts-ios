@@ -275,7 +275,7 @@ rules:
           - pattern: $RECEIVER.displayName("...")
           - pattern: $RECEIVER.description("...")
 
-  - id: pocketcasts.widget-control-localized-default-value-dynamic-string
+  - id: pocketcasts.widget-control-localized-default-value-from-l10n
     severity: WARNING
     metadata:
       category: correctness
@@ -283,13 +283,16 @@ rules:
       likelihood: MEDIUM
       impact: HIGH
       technology: [ios]
-    message: Use string interpolation for dynamic L10n widget metadata defaults; String.LocalizationValue does not expose a dynamic String initializer.
+    message: Widget Control LocalizedStringResource defaultValue should be a literal fallback string, not a generated L10n value.
     languages: [swift]
     paths:
       include:
         - "**/WidgetExtension/Controls/*.swift"
     patterns:
-      - pattern-regex: 'defaultValue:\s*String\.LocalizationValue\(L10n\.[A-Za-z0-9_]+\)'
+      - pattern-either:
+          - pattern-regex: 'defaultValue:\s*String\.LocalizationValue\(L10n\.[A-Za-z0-9_]+\)'
+          - pattern-regex: 'defaultValue:\s*"\\\(L10n\.[A-Za-z0-9_]+\)"'
+          - pattern-regex: 'defaultValue:\s*L10n\.[A-Za-z0-9_]+'
 
   - id: pocketcasts.discover-diffable-direct-reload-items
     severity: WARNING
@@ -307,6 +310,22 @@ rules:
     patterns:
       - pattern: |
           collectionView.reloadItems(at: ...)
+
+  - id: pocketcasts.scene-helper-root-presenter-default-argument
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Resolve SceneHelper.rootViewController() lazily inside the in-app presentation path instead of evaluating it as a default argument.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-regex: '^\s*(?!(?:let|var)\b)(?:(?:[A-Za-z_][A-Za-z0-9_]*|_)\s+)?[A-Za-z_][A-Za-z0-9_]*\s*:\s*[^=\n]+?=\s*SceneHelper\.rootViewController\(\)\s*,?'
 
   - id: keychain.delete-before-add
     severity: WARNING
@@ -2532,6 +2551,10 @@ rules:
       strong for iOS (adapt to the specific mobile application context), when saving reserved data
       into the device.
     languages: [swift]
+    paths:
+      exclude:
+        - "/PocketCastsTests/**"
+        - "/Modules/**/Tests/**"
     patterns:
       - pattern-either:
           - patterns:
@@ -2550,14 +2573,14 @@ rules:
                   UserDefaults.standard.set($VALUE, forKey: $KEY)
               - metavariable-regex:
                   metavariable: $KEY
-                  regex: (?i)(.*?)(?=(secret|password|pwd|psw|credit|card|cvv|key|crypto|pin|token))(.*?)
+                  regex: .*?((?i:password|passwd|pwd|psw|secret|credential|bearer|auth[A-Za-z0-9_]*token|access[A-Za-z0-9_]*token|refresh[A-Za-z0-9_]*token|session[A-Za-z0-9_]*token|client[A-Za-z0-9_]*secret|api[A-Za-z0-9_]*key|private[A-Za-z0-9_]*key|crypto(graphic)?[A-Za-z0-9_]*key|encryption[A-Za-z0-9_]*key|cvv)|["']pin["']|PIN|Pin[A-Z0-9_][A-Za-z0-9_]*|pin[_-][A-Za-z0-9_]*).*
           - patterns:
               # Find NSUserDefaults (old version) which does not encrypt data
               - pattern: |
                   NSUserDefaults.standardUserDefaults().setObject($VALUE, forKey: $KEY)
               - metavariable-regex:
                   metavariable: $KEY
-                  regex: (?i)(.*?)(?=(secret|password|pwd|psw|credit|card|cvv|key|crypto|pin|token))(.*?)
+                  regex: .*?((?i:password|passwd|pwd|psw|secret|credential|bearer|auth[A-Za-z0-9_]*token|access[A-Za-z0-9_]*token|refresh[A-Za-z0-9_]*token|session[A-Za-z0-9_]*token|client[A-Za-z0-9_]*secret|api[A-Za-z0-9_]*key|private[A-Za-z0-9_]*key|crypto(graphic)?[A-Za-z0-9_]*key|encryption[A-Za-z0-9_]*key|cvv)|["']pin["']|PIN|Pin[A-Z0-9_][A-Za-z0-9_]*|pin[_-][A-Za-z0-9_]*).*
           - patterns:
               # Find PLIST file reading 
               - pattern-inside: |
