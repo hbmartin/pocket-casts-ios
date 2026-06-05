@@ -17,17 +17,8 @@ class EpisodeManager: NSObject {
         DataManager.sharedManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
 
         #if !APPCLIP
-        if shouldArchiveOnCompletion(episode: episode) {
-            if let episode = episode as? Episode {
-                archiveEpisode(episode: episode, fireNotification: false, userInitiated: false)
-            } else if let episode = episode as? UserEpisode {
-                if Settings.userEpisodeRemoveFileAfterPlaying() {
-                    UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                }
-                if Settings.userEpisodeRemoveFromCloudAfterPlaying() {
-                    UserEpisodeManager.deleteFromCloud(episode: episode)
-                }
-            }
+        if let episode = episode as? Episode, shouldArchiveOnCompletion(episode: episode) {
+            archiveEpisode(episode: episode, fireNotification: false, userInitiated: false)
         }
         #endif
 
@@ -44,7 +35,6 @@ class EpisodeManager: NSObject {
         guard !episodes.isEmpty else { return }
         var episodesToArchive = [Episode]()
         var episodesToMarkAsPlayed = [Episode]()
-        var userEpisodeToMarkAsPlayed = [UserEpisode]()
 
         var episodesMinusCurrent = episodes
         var currentEpisodeToMarkAsPlayed: BaseEpisode?
@@ -57,9 +47,7 @@ class EpisodeManager: NSObject {
         for baseEpisode in episodesMinusCurrent {
             DownloadManager.shared.removeFromQueue(episodeUuid: baseEpisode.uuid, fireNotification: false, userInitiated: true)
 
-            if let userEpisode = baseEpisode as? UserEpisode {
-                userEpisodeToMarkAsPlayed.append(userEpisode)
-            } else if let episode = baseEpisode as? Episode {
+            if let episode = baseEpisode as? Episode {
                 if shouldArchiveOnCompletion(episode: episode) {
                     episodesToArchive.append(episode)
 
@@ -80,21 +68,6 @@ class EpisodeManager: NSObject {
             DataManager.sharedManager.bulkMarkAsPlayed(episodes: episodesToMarkAsPlayed, updateSyncFlag: updateSyncFlag)
         }
 
-        if !userEpisodeToMarkAsPlayed.isEmpty {
-            DataManager.sharedManager.bulkMarkAsPlayed(episodes: userEpisodeToMarkAsPlayed, updateSyncFlag: updateSyncFlag)
-
-            #if !APPCLIP
-            userEpisodeToMarkAsPlayed.forEach { userEpisode in
-                // Do this last as it may delete the episode from the database
-                if Settings.userEpisodeRemoveFileAfterPlaying() {
-                    UserEpisodeManager.deleteFromDevice(userEpisode: userEpisode, removeFromPlaybackQueue: false)
-                }
-                if Settings.userEpisodeRemoveFromCloudAfterPlaying() {
-                    UserEpisodeManager.deleteFromCloud(episode: userEpisode, removeFromPlaybackQueue: false)
-                }
-            }
-            #endif
-        }
         if let currentEpisode = currentEpisodeToMarkAsPlayed {
             markAsPlayed(episode: currentEpisode, fireNotification: true, userInitiated: false)
         }
@@ -434,10 +407,6 @@ class EpisodeManager: NSObject {
         // For streaming or when no local files, return remote URL
         if let episode = episode as? Episode, let url = episode.downloadUrl {
             return URL(string: url)
-        } else if let episode = episode as? UserEpisode {
-            if let token = ServerSettings.syncingV2Token, episode.uploadStatus != UploadStatus.missing.rawValue {
-                return URL(string: "\(ServerConstants.Urls.api())files/url/\(episode.uuid)?token=\(token)")
-            }
         }
 
         return nil
@@ -451,8 +420,6 @@ class EpisodeManager: NSObject {
             }
 
             return Settings.autoArchivePlayedAfter() == 0 && (Settings.archiveStarredEpisodes() || !episode.keepEpisode)
-        } else if let _ = episode as? UserEpisode {
-            return Settings.userEpisodeRemoveFileAfterPlaying() || Settings.userEpisodeRemoveFromCloudAfterPlaying()
         }
         #endif
 
@@ -534,19 +501,12 @@ class EpisodeManager: NSObject {
         }
         let uuids = episodesToRemoveFromQueue.map(\.uuid)
         PlaybackManager.shared.bulkRemoveQueued(uuids: uuids)
-        var userEpisodeUuidsToDelete = [String]()
         var episodesToMarkAsNotDownloaded = [BaseEpisode]()
         for episode in episodes {
             deleteFilesForEpisode(episode)
-            if let userEpisode = episode as? UserEpisode, !userEpisode.uploaded() {
-                userEpisodeUuidsToDelete.append(userEpisode.uuid)
-            } else {
-                episodesToMarkAsNotDownloaded.append(episode)
-            }
+            episodesToMarkAsNotDownloaded.append(episode)
         }
 
-        // If user episodes are only downloaded on this device delete them
-        DataManager.sharedManager.deleteUserEpisodes(userEpisodeUuids: userEpisodeUuidsToDelete)
         DataManager.sharedManager.bulkUserFileDelete(baseEpisodes: episodesToMarkAsNotDownloaded)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
 

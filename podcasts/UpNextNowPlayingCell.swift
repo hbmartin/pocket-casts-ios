@@ -77,11 +77,7 @@ class UpNextNowPlayingCell: ThemeableCell {
 
         episodeTitle.text = episode.displayableTitle()
 
-        if let episode = episode as? Episode {
-            podcastImage.setPodcast(uuid: episode.podcastUuid, size: .list)
-        } else if let episode = episode as? UserEpisode {
-            podcastImage.setUserEpisode(uuid: episode.uuid, size: .list)
-        }
+        podcastImage.setPodcast(uuid: episode.parentIdentifier(), size: .list)
 
         EpisodeDateHelper.setDate(episode: episode, on: dateLabel, tintColor: ThemeColor.primaryText02(for: themeOverride))
 
@@ -183,13 +179,6 @@ class UpNextNowPlayingCell: ThemeableCell {
             downloadedIndicator.isHidden = true
             return
         }
-        if let episode = episode as? UserEpisode, episode.uploadStatus == UploadStatus.missing.rawValue {
-            downloadingIndicator.isHidden = true
-            downloadedIndicator.isHidden = true
-
-            return
-        }
-
         if episode.queued() {
             downloadingIndicator.stopAnimating()
             downloadingIndicator.isHidden = true

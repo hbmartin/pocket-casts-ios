@@ -346,19 +346,11 @@ extension PlayerAction: AnalyticsDescribable {
         case .shareEpisode:
             return L10n.share
         case .goToPodcast:
-            if episode is UserEpisode {
-                return L10n.playerActionTitleGoToFile
-            } else {
-                return L10n.goToPodcast
-            }
+            return L10n.goToPodcast
         case .markPlayed:
             return L10n.markPlayed
         case .archive:
-            if episode is UserEpisode {
-                return L10n.delete
-            } else {
-                return L10n.archive
-            }
+            return L10n.archive
 
         case .addBookmark:
             return L10n.addBookmark
@@ -404,7 +396,7 @@ extension PlayerAction: AnalyticsDescribable {
         case .markPlayed:
             return "episode-markasplayed"
         case .archive:
-            return episode is UserEpisode ? "delete-red" : "episode-archive"
+            return "episode-archive"
         case .addBookmark:
             return "bookmarks-shelf-overflow-icon"
         case .transcript:
@@ -438,7 +430,7 @@ extension PlayerAction: AnalyticsDescribable {
         case .markPlayed:
             return "shelf_played"
         case .archive:
-            return episode is UserEpisode ? "shelf_delete" : "shelf_archive"
+            return "shelf_archive"
         case .addBookmark:
             return "bookmarks-shelf-icon"
         case .transcript:

@@ -43,9 +43,6 @@ class SubscriptionStatusTask: ApiBaseTask {
                     createDateString = createDate.description
                 }
                 FileLog.shared.addMessage("Received subscription status paid : \(status.paid), platform : \(status.platform), frequency : \(status.frequency), giftDays : \(status.giftDays), createDate: \(createDateString), expiryDate : \(expiryDateString), autoRenewing : \(status.autoRenewing), timeToSubscriptionExpiry: \(SubscriptionHelper.timeToSubscriptionExpiry() ?? 0), originalSubscriptionStatus: \(originalSubscriptionStatus), shouldRemoveBannerAd: \(status.features.removeBannerAds), shouldRemoveDiscoverAds: \(status.features.removeDiscoverAds)")
-                if originalSubscriptionStatus, !SubscriptionHelper.hasActiveSubscription() {
-                    ServerConfig.shared.syncDelegate?.cleanupCloudOnlyFiles()
-                }
                 completion?(true)
             }
         } catch {

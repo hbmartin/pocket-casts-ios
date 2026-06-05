@@ -130,8 +130,6 @@ extension BaseEpisode {
     func subTitle() -> String {
         if let episode = self as? Episode {
             return episode.subTitle()
-        } else if let episode = self as? UserEpisode {
-            return episode.subTitle()
         }
 
         return ""

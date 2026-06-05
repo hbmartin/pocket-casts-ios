@@ -91,11 +91,9 @@ class PlaybackManager: ServerPlaybackDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(handleSystemAudioReset(_:)), name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleSkipTimesChanged), name: Constants.Notifications.skipTimesChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidUpdate(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidDownload(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateExtraActions), name: Constants.Notifications.extraMediaSessionActionsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshRemoteCommands), name: Constants.Notifications.remoteCommandSettingsChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateNowPlayingInfo), name: Constants.Notifications.userEpisodeUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: .episodeEmbeddedArtworkLoaded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentlyPlayingEpisodeUpdated), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
 
@@ -1164,16 +1162,6 @@ class PlaybackManager: ServerPlaybackDelegate {
             if EpisodeManager.shouldArchiveOnCompletion(episode: episode) {
                 if let episode = episode as? Episode {
                     EpisodeManager.archiveEpisode(episode: episode, fireNotification: true, removeFromPlayer: false, userInitiated: false)
-                } else if let episode = episode as? UserEpisode {
-                    // No App Clip episodes should be user episodes
-                    #if !APPCLIP
-                    if Settings.userEpisodeRemoveFileAfterPlaying() {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode, removeFromPlaybackQueue: false)
-                    }
-                    if Settings.userEpisodeRemoveFromCloudAfterPlaying() {
-                        UserEpisodeManager.deleteFromCloud(episode: episode, removeFromPlaybackQueue: false)
-                    }
-                    #endif
                 }
             } else {
                 EpisodeManager.cleanupUnusedBuffers(episode: episode)
@@ -1845,12 +1833,7 @@ class PlaybackManager: ServerPlaybackDelegate {
             } else {
                 starCommand.isActive = false
             }
-            if self.currentEpisode() is UserEpisode {
-                starCommand.isEnabled = false
-            }
-            else {
-                starCommand.isEnabled = true
-            }
+            starCommand.isEnabled = true
         } else {
             markPlayedCommand.removeTarget(nil)
             markPlayedCommand.isEnabled = false

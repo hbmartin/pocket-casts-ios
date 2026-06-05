@@ -327,15 +327,7 @@ class PlaybackQueue: NSObject {
             return episode
         }
 
-        guard let playlistEpisode = DataManager.sharedManager.playlistEpisodeAt(index: actualIndex) else { return nil }
-
-        let missingEpisode = UserEpisode()
-        missingEpisode.title = playlistEpisode.title
-        missingEpisode.uuid = playlistEpisode.episodeUuid
-        missingEpisode.uploadStatus = UploadStatus.missing.rawValue
-        missingEpisode.imageColor = 1
-
-        return missingEpisode
+        return nil
     }
 
     func upNextTotalDuration(includePlayingEpisode: Bool) -> TimeInterval {

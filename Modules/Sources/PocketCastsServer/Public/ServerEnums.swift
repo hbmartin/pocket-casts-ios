@@ -150,8 +150,6 @@ public enum AutoPlaySource: Codable, RawRepresentable, Equatable {
         switch rawValue {
         case "downloads":
             self = .downloads
-        case "files":
-            self = .files
         case "starred":
             self = .starred
         default:
@@ -165,8 +163,6 @@ public enum AutoPlaySource: Codable, RawRepresentable, Equatable {
             return uuid
         case .downloads:
             return "downloads"
-        case .files:
-            return "files"
         case .starred:
             return "starred"
         }
@@ -174,6 +170,5 @@ public enum AutoPlaySource: Codable, RawRepresentable, Equatable {
 
     case uuid(String)
     case downloads
-    case files
     case starred
 }

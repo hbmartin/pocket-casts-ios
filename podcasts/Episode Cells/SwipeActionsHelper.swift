@@ -112,14 +112,6 @@ enum SwipeActionsHelper {
         if let episode = episode as? Episode, episode.wasDeleted && swipeHandler.swipeSourceType.canRemoveEpisodeFromManualPlaylist {
             tableSwipeActions.addAction(TableSwipeAction.removeAction(indexPath: indexPath, tableView: tableView, swipeHandler: swipeHandler, episode: episode), at: 0)
             return tableSwipeActions // Only include delete
-        } else if episode is UserEpisode {
-            let deleteAction = TableSwipeAction(indexPath: indexPath, title: L10n.delete, removesFromList: false, backgroundColor: ThemeColor.support05(), icon: UIImage(named: "delete"), tableView: tableView, handler: { _ -> Bool in
-                swipeHandler.deleteRequested(uuid: storedUuid)
-                Self.performAction(.delete, handler: swipeHandler, willBeRemoved: true)
-                return true
-            })
-            tableSwipeActions.addAction(deleteAction)
-            return tableSwipeActions
         } else if episode.archived {
             let unarchiveAction = TableSwipeAction(indexPath: indexPath, title: L10n.unarchive, removesFromList: true, backgroundColor: ThemeColor.support06(), icon: UIImage(named: "list_unarchive"), tableView: tableView, handler: { _ -> Bool in
                 if let loadedEpisode = DataManager.sharedManager.findEpisode(uuid: storedUuid) {

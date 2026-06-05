@@ -28,29 +28,6 @@ final class EpisodeManagerTests: DBTestCase {
         XCTAssertEqual(localUrl, streamingUrl, "Both calls should return the same URL when no local content exists")
     }
 
-    func testUrlForEpisodeStreamingOnlyWithUserEpisode() {
-        // Given: A user episode (uploaded content)
-        let userEpisode = UserEpisode()
-        userEpisode.uuid = "user-episode-abc"
-        userEpisode.uploadStatus = UploadStatus.uploaded.rawValue
-
-        // Mock the server settings token
-        let originalToken = ServerSettings.syncingV2Token
-        ServerSettings.syncingV2Token = "mock-token-123"
-
-        defer {
-            // Cleanup
-            ServerSettings.syncingV2Token = originalToken
-        }
-
-        // When: Calling urlForEpisode with streamingOnly: true
-        let streamingUrl = EpisodeManager.urlForEpisode(userEpisode, streamingOnly: true)
-
-        // Then: Should return API URL for user episodes
-        let expectedUrl = "\(ServerConstants.Urls.api())files/url/user-episode-abc?token=mock-token-123"
-        XCTAssertEqual(streamingUrl?.absoluteString, expectedUrl, "Should return API URL for user episodes")
-    }
-
     func testUrlForEpisodeReturnsNilForInvalidEpisode() {
         // Given: An episode with no downloadUrl and not a user episode
         let episode = Episode()
@@ -118,27 +95,6 @@ final class EpisodeManagerTests: DBTestCase {
         XCTAssertTrue(url2?.scheme == "https", "Should be HTTPS for external access")
         XCTAssertFalse(url1?.isFileURL == true, "Should not be local file")
         XCTAssertFalse(url2?.isFileURL == true, "Should not be local file")
-    }
-
-    func testUrlForEpisodeUserEpisodeWithoutToken() {
-        // Given: A user episode but no sync token available
-        let userEpisode = UserEpisode()
-        userEpisode.uuid = "user-episode-no-token"
-        userEpisode.uploadStatus = UploadStatus.uploaded.rawValue
-
-        // Mock no token available
-        let originalToken = ServerSettings.syncingV2Token
-        ServerSettings.syncingV2Token = nil
-
-        defer {
-            ServerSettings.syncingV2Token = originalToken
-        }
-
-        // When: Calling urlForEpisode
-        let url = EpisodeManager.urlForEpisode(userEpisode, streamingOnly: true)
-
-        // Then: Should return nil since no token available
-        XCTAssertNil(url, "Should return nil when no sync token available for user episode")
     }
 
     // MARK: - cleanUpTmpFolder Tests

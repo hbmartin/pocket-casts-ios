@@ -38,7 +38,7 @@ class MultiSelectHelper {
         case .removeFromUpNext:
             removeFromUpNext(actionDelegate: actionDelegate)
         case .delete:
-            delete(actionDelegate: actionDelegate)
+            actionDelegate.multiSelectActionCompleted()
         case .share:
             share(actionDelegate: actionDelegate, view: view)
         case .removeListeningHistory:
@@ -63,69 +63,12 @@ class MultiSelectHelper {
         }
     }
 
-    private static func deleteFileMessage(_ count: Int) -> String {
-        count == 1 ? L10n.multiSelectDeleteFileMessageSingular : L10n.multiSelectDeleteFileMessagePlural(count.localized())
-    }
-
-    private class func delete(actionDelegate: MultiSelectActionDelegate) {
-        guard let selectedEpisodes = actionDelegate.multiSelectedBaseEpisodes() as? [UserEpisode] else { return }
-
-        let downloadedEpisodes = selectedEpisodes.filter { $0.downloaded(pathFinder: DownloadManager.shared) }
-        let uploadedEpisodes = selectedEpisodes.filter { $0.uploaded() }
-
-        let alert: UIAlertController
-        if downloadedEpisodes.isEmpty {
-            alert = UIAlertController(title: L10n.deleteFromCloud, message: deleteFileMessage(uploadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromCloud, style: .destructive) { _ in
-                Task.detached {
-                    for episode in uploadedEpisodes {
-                        UserEpisodeManager.deleteFromCloud(episode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        } else if uploadedEpisodes.isEmpty {
-            alert = UIAlertController(title: L10n.deleteFromDevice, message: deleteFileMessage(downloadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromDeviceOnly, style: .destructive) { _ in
-                Task.detached {
-                    for episode in downloadedEpisodes {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        } else {
-            alert = UIAlertController(title: L10n.deleteFile, message: deleteFileMessage(downloadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromDeviceOnly, style: .default) { _ in
-                Task.detached {
-                    for episode in downloadedEpisodes {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-            alert.addAction(UIAlertAction(title: L10n.deleteEverywhere, style: .destructive) { _ in
-                Task.detached {
-                    for episode in selectedEpisodes {
-                        UserEpisodeManager.deleteFromEverywhere(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        }
-
-        alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
-        actionDelegate.multiSelectPresentingViewController().present(alert, animated: true)
-    }
-
     private class func archiveEpisodes(actionDelegate: MultiSelectActionDelegate) {
         let selectedEpisodes = actionDelegate.multiSelectedBaseEpisodes().compactMap { $0 as? Episode }
-        let selectedUserEpisodes = actionDelegate.multiSelectedBaseEpisodes().compactMap { $0 as? UserEpisode }
         let status = selectedEpisodes.count == 1 ? L10n.multiSelectArchivingEpisodesSingular : L10n.multiSelectArchivingEpisodesPluralFormat(selectedEpisodes.count.localized())
         actionDelegate.multiSelectActionBegan(status: status)
         Task.detached {
             EpisodeManager.bulkArchive(episodes: selectedEpisodes, removeFromPlayer: true, updateSyncFlag: SyncManager.isUserLoggedIn())
-            EpisodeManager.bulkMarkAsPlayed(episodes: selectedUserEpisodes, updateSyncFlag: SyncManager.isUserLoggedIn())
             await actionDelegate.multiSelectActionCompleted()
         }
     }
@@ -333,13 +276,6 @@ class MultiSelectHelper {
     private class func addToPlaylist(actionDelegate: MultiSelectActionDelegate) {
         let allSelected = actionDelegate.multiSelectedBaseEpisodes()
         let episodes = allSelected.compactMap { $0 as? Episode }
-
-        // Check if any files (user episodes) are in the selection
-        let containsFiles = allSelected.contains { $0 is UserEpisode }
-        if containsFiles {
-            Toast.show(L10n.playlistManualAddFilesNotSupportedToast)
-            return
-        }
 
         guard !episodes.isEmpty else { return }
 

@@ -27,11 +27,7 @@ final class MiniPlayerLongPressPreviewViewController: UIViewController {
         let imageSize: CGFloat = 80
         let imageView = PodcastImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        if let userEpisode = episode as? UserEpisode {
-            imageView.setUserEpisode(uuid: userEpisode.uuid, size: .page)
-        } else {
-            imageView.setBaseEpisode(episode: episode, size: .page)
-        }
+        imageView.setBaseEpisode(episode: episode, size: .page)
         NSLayoutConstraint.activate([
             imageView.widthAnchor.constraint(equalToConstant: imageSize),
             imageView.heightAnchor.constraint(equalToConstant: imageSize),

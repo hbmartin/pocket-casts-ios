@@ -26,10 +26,6 @@ public class RefreshManager {
     public func syncUpNext() {
         if !SyncManager.isUserLoggedIn() { return }
 
-        // if the user has an active subscription, there might be custom episodes in their Up Next, so grab those first
-        if SubscriptionHelper.hasActiveSubscription() {
-            refreshQueue.addOperation(RetrieveCustomFilesTask())
-        }
         refreshQueue.addOperation(UpNextSyncTask())
     }
 

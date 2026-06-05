@@ -246,7 +246,7 @@ private extension Api_SyncUserBookmark {
 
         self.bookmarkUuid = bookmark.uuid
         self.episodeUuid = bookmark.episodeUuid
-        self.podcastUuid = bookmark.podcastUuid ?? DataConstants.userEpisodeFakePodcastId
+        self.podcastUuid = bookmark.podcastUuid ?? ""
         self.time.value = .init(bookmark.time)
         self.createdAt = .init(date: bookmark.created)
 

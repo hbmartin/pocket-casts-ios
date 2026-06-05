@@ -19,8 +19,6 @@ class EpisodesDataManager {
             }
         case .downloads:
             return downloadedEpisodes().flatMap { $0.elements.map { $0.episode } }
-        case .files:
-            return uploadedEpisodes()
         case .starred:
             return starredEpisodes().map { $0.episode }
         }
@@ -203,17 +201,5 @@ class EpisodesDataManager {
     func starredEpisodes() -> [ListEpisode] {
         let query = "keepEpisode = 1 ORDER BY starredModified DESC LIMIT 1000"
         return EpisodeTableHelper.loadEpisodes(query: query, arguments: nil)
-    }
-
-    // MARK: - Uploaded Files
-
-    func uploadedEpisodes() -> [UserEpisode] {
-        let sortBy = UploadedSort(rawValue: Settings.userEpisodeSortBy()) ?? UploadedSort.newestToOldest
-
-        if SubscriptionHelper.hasActiveSubscription() {
-            return DataManager.sharedManager.allUserEpisodes(sortedBy: sortBy)
-        } else {
-            return DataManager.sharedManager.allUserEpisodesDownloaded(sortedBy: sortBy)
-        }
     }
 }

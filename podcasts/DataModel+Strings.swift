@@ -1,42 +1,6 @@
 import Foundation
 import PocketCastsDataModel
 
-extension UploadedSort: AnalyticsDescribable {
-    var description: String {
-        switch self {
-        case .newestToOldest:
-            return L10n.podcastsEpisodeSortNewestToOldest
-        case .oldestToNewest:
-            return L10n.podcastsEpisodeSortOldestToNewest
-        case .titleAtoZ:
-            return L10n.uploadSortAlphaAToZ
-        case .titleZtoA:
-            return L10n.uploadSortAlphaZToA
-        case .shortestToLongest:
-            return L10n.uploadSortShortestToLongest
-        case .longestToShortest:
-            return L10n.uploadSortLongestToShortest
-        }
-    }
-
-    var analyticsDescription: String {
-        switch self {
-        case .newestToOldest:
-            return "newest_to_oldest"
-        case .oldestToNewest:
-            return "oldest_to_newest"
-        case .titleAtoZ:
-            return "title_a_to_z"
-        case .titleZtoA:
-            return "title_z_to_a"
-        case .shortestToLongest:
-            return "shortest_to_longest"
-        case .longestToShortest:
-            return "longest_to_shortest"
-        }
-    }
-}
-
 public extension PodcastGrouping {
     var description: String {
         switch self {

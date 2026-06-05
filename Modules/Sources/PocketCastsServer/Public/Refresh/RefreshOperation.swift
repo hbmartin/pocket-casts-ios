@@ -55,7 +55,6 @@ class RefreshOperation: Operation {
             if SyncManager.isUserLoggedIn() {
                 NotificationCenter.default.post(name: ServerNotifications.syncStarted, object: nil)
 
-                if SubscriptionHelper.hasActiveSubscription() { apiQueue.addOperation(RetrieveCustomFilesTask()) }
                 apiQueue.addOperation(UpNextSyncTask())
                 let syncTask = SyncTask()
                 apiQueue.addOperation(syncTask)

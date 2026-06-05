@@ -19,7 +19,7 @@ class BookmarkEpisodeListController: ThemedHostingController<BookmarkEpisodeList
         let viewModel = BookmarkEpisodeListViewModel(episode: episode,
                                                       bookmarkManager: bookmarkManager,
                                                       sortOption: Settings.episodeBookmarksSort)
-        viewModel.analyticsSource = (episode is Episode) ? .episodes : .files
+        viewModel.analyticsSource = .episodes
 
         self.viewModel = viewModel
 

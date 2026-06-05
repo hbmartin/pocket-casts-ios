@@ -305,18 +305,6 @@ class DownloadManager: NSObject, FilePathProtocol {
                     await strongSelf.performAddToQueue(episode: updatedEpisode, url: url, previousDownloadFailed: previousDownloadFailed, fireNotification: fireNotification, autoDownloadStatus: autoDownloadStatus)
                 }
             }
-        } else if let episode = episode as? UserEpisode {
-            ApiServerHandler.shared.uploadFilePlayRequest(episode: episode, completion: { [weak self] url in
-                guard let url else {
-                    self?.dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorTryAgain, downloadTaskId: nil, episode: episode)
-                    NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
-                    return
-                }
-
-                Task { [weak self] in
-                    await self?.performAddToQueue(episode: episode, url: url.absoluteString, previousDownloadFailed: previousDownloadFailed, fireNotification: fireNotification, autoDownloadStatus: autoDownloadStatus)
-                }
-            })
         }
     }
 

@@ -451,11 +451,7 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         guard needsReload else { return }
 
         lastEpisodeUuidImageLoaded = episode.uuid
-        if let userEpisode = episode as? UserEpisode {
-            podcastArtwork.setUserEpisode(uuid: userEpisode.uuid, size: .list)
-        } else {
-            podcastArtwork.setBaseEpisode(episode: episode, size: .list)
-        }
+        podcastArtwork.setBaseEpisode(episode: episode, size: .list)
     }
 
     /// Shows the current chapter title when the episode has chapters, falling
@@ -638,11 +634,9 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     private func currentPodcastTintColor() -> UIColor {
         if let podcast = podcastForEpisode(PlaybackManager.shared.currentEpisode()) {
             return Theme.isDarkTheme() ? ColorManager.darkThemeTintForPodcast(podcast) : ColorManager.lightThemeTintForPodcast(podcast)
-        } else if let episode = PlaybackManager.shared.currentEpisode() as? UserEpisode, episode.imageColor > 0 {
-            return AppTheme.userEpisodeColor(number: Int(episode.imageColor))
-        } else {
-            return AppTheme.userEpisodeColor(number: 1)
         }
+
+        return ThemeColor.primaryInteractive01()
     }
 
     private func podcastForEpisode(_ episode: BaseEpisode?) -> Podcast? {

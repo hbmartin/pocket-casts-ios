@@ -27,9 +27,6 @@ protocol NavigationProtocol: AnyObject {
 
     func navigateToUpNext(_ animated: Bool)
 
-    func navigateToFiles()
-    func navigateToAddCustom(_ fileURL: URL)
-
     func showSettings(row: SettingsViewController.TableRow?)
     func showSettingsAppearance(showThemeSelection: Bool)
     func showProfilePage()

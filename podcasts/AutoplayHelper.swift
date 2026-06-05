@@ -9,7 +9,6 @@ class AutoplayHelper {
         case podcast(uuid: String)
         case filter(uuid: String)
         case downloads
-        case files
         case starred
 
         var analyticsDescription: String {
@@ -20,8 +19,6 @@ class AutoplayHelper {
                 return "filter"
             case .downloads:
                 return "downloads"
-            case .files:
-                return "files"
             case .starred:
                 return "starred"
             }
@@ -42,8 +39,6 @@ class AutoplayHelper {
             switch SettingsStore.appSettings.autoPlayLastListUuid {
             case .downloads:
                 return .downloads
-            case .files:
-                return .files
             case .starred:
                 return .starred
             case .uuid(let uuid):
@@ -142,8 +137,6 @@ extension AutoPlaySource {
             self = .uuid(uuid)
         case .downloads:
             self = .downloads
-        case .files:
-            self = .files
         case .starred:
             self = .starred
         }

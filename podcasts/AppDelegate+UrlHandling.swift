@@ -235,8 +235,6 @@ extension AppDelegate {
                 Analytics.track(.widgetInteraction, properties: ["action": "episode"])
                 if let episode = baseEpisode as? Episode {
                     NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey, data: [NavigationManager.episodeUuidKey: episode.uuid])
-                } else if baseEpisode is UserEpisode {
-                    NavigationManager.sharedManager.navigateTo(NavigationManager.filesPageKey, data: nil)
                 }
             }
             return true

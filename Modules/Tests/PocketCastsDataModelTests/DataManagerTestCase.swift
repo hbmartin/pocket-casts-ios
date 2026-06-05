@@ -146,27 +146,6 @@ class DataManagerTestCase: XCTestCase {
         return playlist
     }
 
-    /// Creates a test user episode with the given properties
-    func createTestUserEpisode(
-        uuid: String = UUID().uuidString,
-        title: String = "Test User Episode",
-        episodeStatus: Int32 = DownloadStatus.notDownloaded.rawValue,
-        uploadStatus: Int32 = UploadStatus.notUploaded.rawValue,
-        addedDate: Date = Date(),
-        duration: Double = 3600,
-        dataManager: DataManager
-    ) -> UserEpisode {
-        let episode = UserEpisode()
-        episode.uuid = uuid
-        episode.title = title
-        episode.episodeStatus = episodeStatus
-        episode.uploadStatus = uploadStatus
-        episode.addedDate = addedDate
-        episode.duration = duration
-        dataManager.save(episode: episode)
-        return episode
-    }
-
     /// Creates a test folder with the given properties
     func createTestFolder(
         uuid: String = UUID().uuidString,

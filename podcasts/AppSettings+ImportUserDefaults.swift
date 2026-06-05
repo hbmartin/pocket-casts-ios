@@ -59,9 +59,6 @@ extension SettingsStore<AppSettings> {
             self.update(\.$gridLayout, value: LibraryType(old: old))
         }
         self.update(\.$badges, value: Int32(UserDefaults.standard.integer(forKey: Settings.badgeKey)))
-        self.update(\.$filesAutoUpNext, value: UserDefaults.standard.bool(forKey: Settings.userEpisodeAutoAddToUpNextKey))
-        self.update(\.$filesAfterPlayingDeleteLocal, value: UserDefaults.standard.bool(forKey: Settings.userEpisodeRemoveFileAfterPlayingKey))
-        self.update(\.$filesAfterPlayingDeleteCloud, value: UserDefaults.standard.bool(forKey: Settings.userEpisodeRemoveFromCloudAfterPlayingKey))
         self.update(\.$playerShelf, value: (UserDefaults.standard.playerActions ?? PlayerAction.defaultActions).map { ActionOption.known($0) })
         self.update(\.$useEmbeddedArtwork, value: UserDefaults.standard.bool(forKey: Constants.UserDefaults.loadEmbeddedImages))
         if let oldTheme = ThemeType.Old(rawValue: UserDefaults.standard.integer(forKey: Theme.themeKey)) {
@@ -77,9 +74,6 @@ extension SettingsStore<AppSettings> {
         self.update(\.$useDarkUpNextTheme, value: Constants.UserDefaults.appearance.darkUpNextTheme.value)
         self.update(\.$autoUpNextLimit, value: Int32(UserDefaults.standard.integer(forKey: ServerSettings.autoAddLimitKey)))
         self.update(\.$autoUpNextLimitReached, value: Int32(UserDefaults.standard.integer(forKey: ServerSettings.onAutoAddLimitReachedKey)))
-        if let old = UploadedSort.Old(rawValue: UserDefaults.standard.integer(forKey: Settings.userEpisodeSortByKey)) {
-            self.update(\.$filesSortOrder, value: UploadedSort(old: old))
-         }
     }
 
     /// Imports a value of a given key from UserDefaults, only if that value exists

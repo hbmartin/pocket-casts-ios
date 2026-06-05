@@ -61,10 +61,6 @@ struct Constants {
         static let podcastAdded = NSNotification.Name(rawValue: "SJPodcastAdded")
         static let podcastDeleted = NSNotification.Name(rawValue: "SJPodDeleted")
 
-        // user episode notifications
-        static let userEpisodeDeleted = NSNotification.Name(rawValue: "SJUserEpisodeDeleted")
-        static let userEpisodeUpdated = NSNotification.Name(rawValue: "SJUserEpisodeUpdated")
-
         // text editing
         static let textEditingDidStart = NSNotification.Name(rawValue: "SJTextEditingStarted")
         static let textEditingDidEnd = NSNotification.Name(rawValue: "SJTextEditingEnded")

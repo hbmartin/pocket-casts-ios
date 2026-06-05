@@ -5,7 +5,7 @@ import PocketCastsUtils
 
 extension NetworkUtils {
 #if os(tvOS)
-    //On tvOS it's allways allowed to download upload
+    //On tvOS it's allways allowed to download.
     func downloadEpisodeRequested(autoDownloadStatus: AutoDownloadStatus, _ allowed: ((_ later: Bool) -> Void)?, disallowed: (() -> Void)?) {
         allowed?(true)
     }
@@ -14,9 +14,6 @@ extension NetworkUtils {
         allowed?()
     }
 
-    func uploadEpisodeRequested(_ allowed: ((_ later: Bool) -> Void)?, disallowed: (() -> Void)?) {
-        allowed?(true)
-    }
 #else
     func downloadEpisodeRequested(autoDownloadStatus: AutoDownloadStatus, _ allowed: ((_ later: Bool) -> Void)?, disallowed: (() -> Void)?) {
         let mobileDataAllowed = autoDownloadStatus == .autoDownloaded ? Settings.autoDownloadMobileDataAllowed() : Settings.mobileDataAllowed()
@@ -65,32 +62,5 @@ extension NetworkUtils {
         optionsPicker.present()
     }
 
-    // MARK: - Upload Helpers
-
-    func uploadEpisodeRequested(_ allowed: ((_ later: Bool) -> Void)?, disallowed: (() -> Void)?) {
-        let mobileDataAllowed = !ServerSettings.userEpisodeOnlyOnWifi()
-
-        if mobileDataAllowed || isConnectedToUnexpensiveConnection() {
-            allowed?(false)
-
-            return
-        }
-
-        let optionsPicker = OptionsPicker()
-        let uploadAction = OptionAction(label: "Upload Now", icon: nil) {
-            allowed?(false)
-        }
-        let laterAction = OptionAction(label: L10n.queueForLater, icon: nil) {
-            allowed?(true)
-        }
-        laterAction.outline = true
-        optionsPicker.addDescriptiveActions(title: L10n.notOnWifi, message: "", icon: "option-alert", actions: [uploadAction, laterAction])
-
-        optionsPicker.setNoActionCallback {
-            disallowed?()
-        }
-
-        optionsPicker.present()
-    }
 #endif
 }

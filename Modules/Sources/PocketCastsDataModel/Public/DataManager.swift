@@ -6,7 +6,6 @@ import SQLite3
 public class DataManager {
     public static let podcastTableName = "SJPodcast"
     public static let episodeTableName = "SJEpisode"
-    public static let userEpisodeTableName = "SJUserEpisode"
     public static let playlistsTableName = "SJFilteredPlaylist"
     public static let playlistEpisodeTableName = "SJPlaylistEpisode"
     public static let upNextChangesTableName = "UpNextChanges"
@@ -17,7 +16,6 @@ public class DataManager {
     private let upNextChangesManager = UpNextChangesDataManager()
     private let playlistManager = PlaylistDataManager()
     private let episodeManager = EpisodeDataManager()
-    private let userEpisodeManager = UserEpisodeDataManager()
     private let folderManager = FolderDataManager()
     private lazy var upNextHistoryManager = UpNextHistoryManager()
     private lazy var folderHistoryManager = FolderHistoryManager()
@@ -165,34 +163,7 @@ public class DataManager {
     }
 
     public func allUpNextEpisodes() -> [BaseEpisode] {
-        let allUpNextEpisodes = upNextManager.allUpNextPlaylistEpisodes(dbQueue: dbQueue)
-        if allUpNextEpisodes.isEmpty { return [BaseEpisode]() }
-
-        let episodes = episodeManager.allUpNextEpisodes(dbQueue: dbQueue)
-        let userEpisodes = userEpisodeManager.allUpNextEpisodes(dbQueue: dbQueue)
-
-        // this extra step is to make sure we return the episodes in the order they are in the up next list, which they won't be if there's both Episodes and UserEpisodes in Up Next
-        if userEpisodes.isEmpty {
-            return episodes
-        }
-
-        var convertedEpisodes = [BaseEpisode]()
-        var episodeIndex = 0
-        var userEpisodeIndex = 0
-        for upNextEpisode in allUpNextEpisodes {
-            if let episode = episodes[safe: episodeIndex],
-               episode.uuid == upNextEpisode.episodeUuid {
-                convertedEpisodes.append(episode)
-                episodeIndex += 1
-                continue
-            }
-            if let userEpisode = userEpisodes[safe: userEpisodeIndex], userEpisode.uuid == upNextEpisode.episodeUuid {
-                convertedEpisodes.append(userEpisode)
-                userEpisodeIndex += 1
-            }
-        }
-
-        return convertedEpisodes
+        episodeManager.allUpNextEpisodes(dbQueue: dbQueue)
     }
 
     public func allUpNextEpisodeUuids() -> [BaseEpisode] {
@@ -254,11 +225,6 @@ public class DataManager {
 
     public func episodeInUpNextAt(index: Int) -> BaseEpisode? {
         guard let playlistEpisode = playlistEpisodeAt(index: index) else { return nil }
-
-        if let episode = userEpisodeManager.findBy(uuid: playlistEpisode.episodeUuid, dbQueue: dbQueue) {
-            return episode
-        }
-
         return episodeManager.findBy(uuid: playlistEpisode.episodeUuid, dbQueue: dbQueue)
     }
 
@@ -449,11 +415,7 @@ public class DataManager {
     }
 
     public func findBaseEpisode(uuid: String) -> BaseEpisode? {
-        if let episode = userEpisodeManager.findBy(uuid: uuid, dbQueue: dbQueue) {
-            return episode
-        }
-
-        return episodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
+        episodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
     }
 
     public func findEpisodeCount(podcastId: Int64) -> Int {
@@ -481,11 +443,7 @@ public class DataManager {
     }
 
     public func findBaseEpisode(downloadTaskId: String) -> BaseEpisode? {
-        if let episode = userEpisodeManager.findBy(downloadTaskId: downloadTaskId, dbQueue: dbQueue) {
-            return episode
-        }
-
-        return episodeManager.findBy(downloadTaskId: downloadTaskId, dbQueue: dbQueue)
+        episodeManager.findBy(downloadTaskId: downloadTaskId, dbQueue: dbQueue)
     }
 
     public func findEpisodeWhere(customWhere: String, arguments: [Any]?) -> Episode? {
@@ -493,10 +451,7 @@ public class DataManager {
     }
 
     public func findEpisodesWhereNotNull(propertyName: String) -> [BaseEpisode] {
-        var episodes = episodeManager.findWhereNotNull(columnName: propertyName, dbQueue: dbQueue) as [BaseEpisode]
-        let userEpisodes = userEpisodeManager.findWhereNotNull(columnName: propertyName, dbQueue: dbQueue) as [BaseEpisode]
-        episodes.append(contentsOf: userEpisodes)
-        return episodes
+        episodeManager.findWhereNotNull(columnName: propertyName, dbQueue: dbQueue) as [BaseEpisode]
     }
 
     public func findEpisodesWhere(customWhere: String, arguments: [Any]?) -> [Episode] {
@@ -527,10 +482,6 @@ public class DataManager {
         episodeManager.unsyncedEpisodes(limit: limit, dbQueue: dbQueue)
     }
 
-    public func unsyncedUserEpisodes() -> [UserEpisode] {
-        userEpisodeManager.unsyncedEpisodes(dbQueue: dbQueue)
-    }
-
     public func episodesWithListenHistory(limit: Int) -> [Episode] {
         episodeManager.episodesWithListenHistory(limit: limit, dbQueue: dbQueue)
     }
@@ -553,26 +504,16 @@ public class DataManager {
 
     public func findDownloadedEpisodes() -> [BaseEpisode] {
         let query = "episodeStatus = \(DownloadStatus.downloaded.rawValue)"
-        let downloadedEpisodes = findEpisodesWhere(customWhere: query, arguments: nil)
-
-        let downloadedUserEpisodes = userEpisodeManager.findAllDownloaded(sortedBy: .newestToOldest, dbQueue: dbQueue)
-        var allEpisodes: [BaseEpisode] = downloadedEpisodes + downloadedUserEpisodes
-
-        allEpisodes.sort(by: { $0.lastDownloadAttemptDate?.compare($1.lastDownloadAttemptDate ?? Date.distantPast) == .orderedDescending })
-        return allEpisodes
+        return findEpisodesWhere(customWhere: query, arguments: nil)
     }
 
     public func downloadedEpisodeCount() -> Int {
-        let episodeCount = episodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
-        let userEpisodeCount = userEpisodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
-        return episodeCount + userEpisodeCount
+        episodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
     }
 
     public func save(episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.save(episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.save(episode: episode, dbQueue: dbQueue)
         }
     }
 
@@ -588,10 +529,6 @@ public class DataManager {
         let episodes = baseEpisodes.compactMap { $0 as? Episode }
         if !episodes.isEmpty {
             episodeManager.bulkUserFileDelete(episodes: episodes, dbQueue: dbQueue)
-        }
-        let userEpisodes = baseEpisodes.compactMap { $0 as? UserEpisode }
-        if !userEpisodes.isEmpty {
-            userEpisodeManager.bulkUserFileDelete(episodes: userEpisodes, dbQueue: dbQueue)
         }
     }
 
@@ -622,16 +559,12 @@ public class DataManager {
 
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(playingStatus: PlayingStatus, episode: BaseEpisode, updateSyncFlag: Bool) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         }
     }
 
@@ -650,8 +583,6 @@ public class DataManager {
     public func saveEpisode(contentType: String, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveContentType(episode: episode, contentType: contentType, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveContentType(contentType: contentType, episode: episode, dbQueue: dbQueue)
         }
     }
 
@@ -666,8 +597,6 @@ public class DataManager {
     public func saveFrameCount(episode: BaseEpisode, frameCount: Int64) {
         if let episode = episode as? Episode {
             episodeManager.saveFrameCount(episodeId: episode.id, frameCount: frameCount, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveFrameCount(episodeId: episode.id, frameCount: frameCount, dbQueue: dbQueue)
         }
     }
 
@@ -676,8 +605,7 @@ public class DataManager {
             return episodeManager.findFrameCount(episodeId: episode.id, dbQueue: dbQueue)
         }
 
-        let userEpisode = episode as! UserEpisode
-        return userEpisodeManager.findFrameCount(episodeId: userEpisode.id, dbQueue: dbQueue)
+        return 0
     }
 
     public func saveEpisode(starred: Bool, starredModified: Int64? = nil, episode: Episode, updateSyncFlag: Bool) {
@@ -687,16 +615,12 @@ public class DataManager {
     public func saveEpisode(duration: Double, episode: BaseEpisode, updateSyncFlag: Bool) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(duration: duration, episode: episode, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(playbackError: String?, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(playbackError: playbackError, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(playbackError: playbackError, episode: episode, dbQueue: dbQueue)
         }
     }
 
@@ -707,48 +631,36 @@ public class DataManager {
     public func saveEpisode(downloadStatus: DownloadStatus, lastDownloadAttemptDate: Date, autoDownloadStatus: AutoDownloadStatus, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(downloadStatus: downloadStatus, lastDownloadAttemptDate: lastDownloadAttemptDate, autoDownloadStatus: autoDownloadStatus, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(downloadStatus: downloadStatus, lastDownloadAttemptDate: lastDownloadAttemptDate, autoDownloadStatus: autoDownloadStatus, episode: episode, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(downloadStatus: DownloadStatus, downloadError: String?, downloadTaskId: String?, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(downloadStatus: downloadStatus, downloadError: downloadError, downloadTaskId: downloadTaskId, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(downloadStatus: downloadStatus, downloadError: downloadError, downloadTaskId: downloadTaskId, episode: episode, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(autoDownloadStatus: AutoDownloadStatus, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(autoDownloadStatus: autoDownloadStatus, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(autoDownloadStatus: autoDownloadStatus, episode: episode, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(downloadStatus: DownloadStatus, downloadTaskId: String?, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(downloadStatus: downloadStatus, downloadTaskId: downloadTaskId, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(downloadStatus: downloadStatus, downloadTaskId: downloadTaskId, episode: episode, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(downloadStatus: DownloadStatus, sizeInBytes: Int64, downloadTaskId: String?, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(downloadStatus: downloadStatus, sizeInBytes: sizeInBytes, downloadTaskId: downloadTaskId, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(downloadStatus: downloadStatus, sizeInBytes: sizeInBytes, downloadTaskId: downloadTaskId, episode: episode, dbQueue: dbQueue)
         }
     }
 
     public func saveEpisode(downloadStatus: DownloadStatus, sizeInBytes: Int64, episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.saveEpisode(downloadStatus: downloadStatus, sizeInBytes: sizeInBytes, downloadTaskId: episode.uuid, episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(downloadStatus: downloadStatus, sizeInBytes: sizeInBytes, episode: episode, dbQueue: dbQueue)
         }
     }
 
@@ -757,7 +669,6 @@ public class DataManager {
     }
 
     public func updateEpisodePlaybackInteractionDate(episode: BaseEpisode) {
-        // only Episodes have playback interaction dates, we don't have those for UserEpisodes
         if let episode = episode as? Episode {
             episodeManager.updateEpisodePlaybackInteractionDate(episode: episode, dbQueue: dbQueue)
         }
@@ -786,8 +697,6 @@ public class DataManager {
     public func clearDownloadTaskId(episode: BaseEpisode) {
         if let episode = episode as? Episode {
             episodeManager.clearDownloadTaskId(episode: episode, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.clearDownloadTaskId(episode: episode, dbQueue: dbQueue)
         }
     }
 
@@ -795,19 +704,10 @@ public class DataManager {
         episodeManager.bulkMarkAsPlayed(episodes: episodes, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
     }
 
-    public func bulkMarkAsPlayed(episodes: [UserEpisode], updateSyncFlag: Bool) {
-        userEpisodeManager.bulkMarkAsPlayed(episodes: episodes, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-    }
-
     public func bulkMarkAsUnPlayed(baseEpisodes: [BaseEpisode], updateSyncFlag: Bool) {
         let episodes = baseEpisodes.compactMap { $0 as? Episode }
         if !episodes.isEmpty {
             episodeManager.bulkMarkAsUnPlayed(episodes: episodes, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        }
-
-        let userEpisodes = baseEpisodes.compactMap { $0 as? UserEpisode }
-        if !userEpisodes.isEmpty {
-            userEpisodeManager.bulkMarkAsUnPlayed(episodes: userEpisodes, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         }
     }
 
@@ -841,72 +741,6 @@ public class DataManager {
 
     public func randomPodcasts() -> [Podcast] {
         podcastManager.randomPodcasts(dbQueue: dbQueue)
-    }
-
-    // MARK: - User Episodes
-
-    public func findUserEpisode(uuid: String) -> UserEpisode? {
-        userEpisodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
-    }
-
-    public func allUserEpisodes(sortedBy: UploadedSort, limit: Int? = nil) -> [UserEpisode] {
-        userEpisodeManager.findAll(sortedBy: sortedBy, limit: limit, dbQueue: dbQueue)
-    }
-
-    public func allUserEpisodesDownloaded(sortedBy: UploadedSort, limit: Int? = nil) -> [UserEpisode] {
-        userEpisodeManager.findAllDownloaded(sortedBy: sortedBy, limit: limit, dbQueue: dbQueue)
-    }
-
-    public func allUserEpisodesUploaded() -> [UserEpisode] {
-        userEpisodeManager.findAllWithUploadStatus(.uploaded, dbQueue: dbQueue)
-    }
-
-    public func bulkSave(episodes: [UserEpisode]) {
-        userEpisodeManager.bulkSave(episodes: episodes, dbQueue: dbQueue)
-    }
-
-    public func delete(userEpisodeUuid: String) {
-        userEpisodeManager.delete(userEpisodeUuid: userEpisodeUuid, dbQueue: dbQueue)
-    }
-
-    public func deleteUserEpisodes(userEpisodeUuids: [String]) {
-        userEpisodeManager.delete(userEpisodeUuids: userEpisodeUuids, dbQueue: dbQueue)
-    }
-
-    public func saveEpisode(uploadStatus: UploadStatus, episode: UserEpisode) {
-        userEpisodeManager.saveEpisode(uploadStatus: uploadStatus, episode: episode, dbQueue: dbQueue)
-    }
-
-    public func saveEpisode(uploadStatus: UploadStatus, uploadTaskId: String?, episode: UserEpisode) {
-        userEpisodeManager.saveEpisode(uploadStatus: uploadStatus, uploadTaskId: uploadTaskId, episode: episode, dbQueue: dbQueue)
-    }
-
-    public func saveEpisode(uploadStatus: UploadStatus, uploadError: String?, uploadTaskId: String?, episode: UserEpisode) {
-        userEpisodeManager.saveEpisode(uploadStatus: uploadStatus, uploadError: uploadError, uploadTaskId: uploadTaskId, episode: episode, dbQueue: dbQueue)
-    }
-
-    public func clearUploadTaskId(episode: UserEpisode) {
-        userEpisodeManager.clearUploadTaskId(episode: episode, dbQueue: dbQueue)
-    }
-
-    public func findUserEpisode(uploadTaskId: String) -> UserEpisode? {
-        userEpisodeManager.findBy(uploadTaskId: uploadTaskId, dbQueue: dbQueue)
-    }
-
-    public func findUserEpisodesWithUploadStatus(_ status: UploadStatus) -> [UserEpisode] {
-        userEpisodeManager.findAllWithUploadStatus(status, dbQueue: dbQueue)
-    }
-
-    public func findUserEpisodesWhereNotNull(propertyName: String) -> [UserEpisode] {
-        userEpisodeManager.findWhereNotNull(columnName: propertyName, dbQueue: dbQueue)
-    }
-
-    public func markImageUploaded(episode: UserEpisode) {
-        userEpisodeManager.markEpisodeImageUploaded(episode: episode, dbQueue: dbQueue)
-    }
-
-    public func removeOrphanedUserEpisodes() {
-        userEpisodeManager.removeOrphaned(dbQueue: dbQueue)
     }
 
     // MARK: - Playlists

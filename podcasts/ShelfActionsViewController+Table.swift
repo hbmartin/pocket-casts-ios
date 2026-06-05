@@ -69,7 +69,7 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
             cell.actionName.layer.opacity = 1
         }
 
-        cell.actionSubtitle.text = (tableView.isEditing && playingEpisode is UserEpisode) ? action.subtitle() : nil
+        cell.actionSubtitle.text = nil
         cell.actionSubtitle.isHidden = (cell.actionSubtitle.text == nil)
 
         return cell

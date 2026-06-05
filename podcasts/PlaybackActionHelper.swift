@@ -56,23 +56,6 @@ class PlaybackActionHelper {
         }, disallowed: nil)
     }
 
-    class func upload(episodeUuid: String) {
-        NetworkUtils.shared.uploadEpisodeRequested({ later in
-            if later {
-                UploadManager.shared.queueForLaterUpload(episodeUuid: episodeUuid, fireNotification: true)
-            } else {
-                UploadManager.shared.addToQueue(episodeUuid: episodeUuid)
-            }
-        }, disallowed: nil)
-
-        AnalyticsEpisodeHelper.shared.episodeUploaded(episodeUUID: episodeUuid)
-    }
-
-    class func stopUpload(episodeUuid: String) {
-        UploadManager.shared.removeFromQueue(episodeUuid: episodeUuid, fireNotification: true)
-        AnalyticsEpisodeHelper.shared.episodeUploadCancelled(episodeUUID: episodeUuid)
-    }
-
     private class func performPlay(episode: BaseEpisode, playlistUuid: String? = nil, podcastUuid: String? = nil) {
         if PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episode.uuid) {
             PlaybackManager.shared.play()
@@ -81,7 +64,7 @@ class PlaybackActionHelper {
                 DataManager.sharedManager.saveEpisode(archived: false, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
             }
 
-            if episode is Episode { // only record play stats for Episodes, not UserEpisodes
+            if episode is Episode {
                 AnalyticsHelper.playedEpisode()
             }
 

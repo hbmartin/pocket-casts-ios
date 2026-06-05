@@ -162,9 +162,6 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.playbackPositionSaved, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodePlayStatusChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: ServerNotifications.userEpisodeUploadStatusChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(uploadProgressDidUpdate), name: ServerNotifications.userEpisodeUploadProgress, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(reloadArtwork(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(upNextEpisodeChanged(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(upNextEpisodeChanged(_:)), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueChanged), name: Constants.Notifications.upNextQueueChanged, object: nil)
@@ -242,13 +239,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
             setUpNextIndicator(visible: PlaybackManager.shared.inUpNext(episode: episode), animated: false)
             upNextIndicator.tintColor = ThemeColor.support01()
 
-            var uploadFailed = false
-            if let userEpisode = episode as? UserEpisode {
-                uploadStatusIndicator.isHidden = !userEpisode.uploaded()
-                uploadFailed = userEpisode.uploadFailed()
-            } else {
-                uploadStatusIndicator.isHidden = true
-            }
+            uploadStatusIndicator.isHidden = true
 
             // Since this calls out to the DB we'll cache the value here so later calls don't hit it again
             let showBookmarksIcon = self.showBookmarksIcon
@@ -258,10 +249,10 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
             bookmarkIcon.tintColor = mainTintColor
             bookmarkIcon.isHidden = !showBookmarksIcon
 
-            let hideStatus = !episode.archived && !episode.wasDeleted && !episode.downloaded(pathFinder: DownloadManager.shared) && !episode.downloadFailed() && !uploadFailed && !episode.playbackError()
+            let hideStatus = !episode.archived && !episode.wasDeleted && !episode.downloaded(pathFinder: DownloadManager.shared) && !episode.downloadFailed() && !episode.playbackError()
             if !hideStatus {
                 let statusImage: UIImage?
-                if episode.downloadFailed() || uploadFailed || episode.playbackError() {
+                if episode.downloadFailed() || episode.playbackError() {
                     statusImage = UIImage(named: "profile-alert")
                 } else if episode.downloaded(pathFinder: DownloadManager.shared) {
                     statusImage = UIImage(named: "list_downloaded")
@@ -295,11 +286,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
                 selectTickHorizontalOffset.constant = 4
                 selectCircleHorizontalOffset.constant = 4
 
-                if let userEpisode = episode as? UserEpisode {
-                    episodeImage.setUserEpisode(uuid: userEpisode.uuid, size: .list)
-                } else {
-                    episodeImage.setPodcast(uuid: episode.parentIdentifier(), size: .list)
-                }
+                episodeImage.setPodcast(uuid: episode.parentIdentifier(), size: .list)
             }
 
             if episode.played() || episode.archived || episode.wasDeleted {
@@ -320,8 +307,6 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         }
         else if episode.archived {
             informationLabel.text = L10n.podcastArchived + " • " + episode.displayableInfo(includeSize: false)
-        } else if let userEpisode = episode as? UserEpisode {
-            informationLabel.text = userEpisode.displayableInfo(includeSize: Settings.primaryRowAction() == .download)
         } else {
             informationLabel.text = episode.displayableInfo(includeSize: Settings.primaryRowAction() == .download)
         }
@@ -332,22 +317,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
             downloadingIndicator.stopAnimating()
         }
 
-        if let userEpisode = episode as? UserEpisode {
-            uploadProgressIndicator.isHidden = !(userEpisode.uploading() || userEpisode.uploadWaitingForWifi())
-            if userEpisode.uploading() {
-                if let progress = UploadManager.shared.progressManager.progressForEpisode(userEpisode.uuid) {
-                    uploadProgressIndicator.progress = progress.percentageProgress()
-                } else {
-                    uploadProgressIndicator.progress = 0.1
-                }
-                uploadProgressIndicator.alpha = 1
-            } else if userEpisode.uploadWaitingForWifi() {
-                uploadProgressIndicator.progress = 0
-                uploadProgressIndicator.alpha = 0.5
-            }
-        } else {
-            uploadProgressIndicator.isHidden = true
-        }
+        uploadProgressIndicator.isHidden = true
 
         if episode.wasDeleted {
             actionButton.isHidden = true
@@ -387,9 +357,6 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         }
         if episode.keepEpisode {
             desc.append(L10n.statusStarred)
-        }
-        if let userEpisode = episode as? UserEpisode, userEpisode.uploaded() {
-            desc.append(L10n.statusUploaded)
         }
         if isMultiSelectEnabled {
             if showTick {
@@ -511,32 +478,6 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         populate(progressOnly: true)
     }
 
-    @objc private func uploadProgressDidUpdate() {
-        guard let ourEpisode = episode as? UserEpisode, let _ = UploadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
-
-        // if this episode isn't listed as uploading, update it from the DB
-        if !ourEpisode.uploading() {
-            episode = reloadEpisode()
-        }
-
-        if Thread.isMainThread {
-            populate(progressOnly: true)
-        } else {
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-
-                self.populate(progressOnly: true)
-            }
-        }
-    }
-
-    @objc func reloadArtwork(_ notification: Notification) {
-        guard let episodeUuid = notification.object as? String,
-              episodeUuid == episode?.uuid,
-              let userEpisode = episode as? UserEpisode else { return }
-        episodeImage.setUserEpisode(uuid: userEpisode.uuid, size: .list)
-    }
-
     // MARK: - MainEpisodeActionViewDelegate
 
     func downloadTapped() {
@@ -601,8 +542,6 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
     private func reloadEpisode() -> BaseEpisode? {
         if let episode = episode as? Episode {
             return DataManager.sharedManager.findEpisode(uuid: episode.uuid)
-        } else if let episode = episode as? UserEpisode {
-            return DataManager.sharedManager.findUserEpisode(uuid: episode.uuid)
         }
 
         return nil

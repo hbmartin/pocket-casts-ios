@@ -64,11 +64,7 @@ class UpNextButton: UIButton {
 
     private func playEpisodeAddedAnimation(_ episode: BaseEpisode) {
         let imageView = PodcastImageView(frame: CGRect(x: -4, y: 0, width: bounds.width, height: bounds.height))
-        if episode is Episode {
-            imageView.setPodcast(uuid: episode.parentIdentifier(), size: .list)
-        } else {
-            imageView.setUserEpisode(uuid: episode.uuid, size: .list)
-        }
+        imageView.setPodcast(uuid: episode.parentIdentifier(), size: .list)
 
         addSubview(imageView)
 

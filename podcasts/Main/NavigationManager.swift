@@ -139,12 +139,8 @@ class NavigationManager {
             }
         } else if place == NavigationManager.filterAddKey {
             mainController?.navigateToAddFilter()
-        } else if place == NavigationManager.uploadedPageKey {
-            if let data, let fileURL = data[NavigationManager.uploadFileKey] as? URL {
-                mainController?.navigateToAddCustom(fileURL)
-            }
-        } else if place == NavigationManager.filesPageKey {
-            mainController?.navigateToFiles()
+        } else if place == NavigationManager.uploadedPageKey || place == NavigationManager.filesPageKey {
+            mainController?.showProfilePage()
         } else if place == NavigationManager.showPrivacyPolicyPageKey {
             mainController?.showPrivacyPolicy()
         } else if place == NavigationManager.showTermsOfUsePageKey {

@@ -243,7 +243,7 @@ class UpNextSyncTask: ApiBaseTask {
                     newEpisode.episodeUuid = episodeInfo.uuid
 
                     // The incoming episode from the server is not in the queue already.
-                    // The code below adds each missing episode to the queue using one of 3 checks:
+                    // The code below adds each missing episode to the queue using one of 2 checks:
 
                     // 1. If the new episode exists in the local database already, then just add it to the queue
                     if let localEpisode = DataManager.sharedManager.findBaseEpisode(uuid: episodeInfo.uuid) {
@@ -253,16 +253,7 @@ class UpNextSyncTask: ApiBaseTask {
                         newEpisode.title = localEpisode.displayableTitle()
                         DataManager.sharedManager.save(playlistEpisode: newEpisode)
                     }
-                    // 2. If the episode is a custom episode..
-                    else if episodeInfo.podcast == DataConstants.userEpisodeFakePodcastId {
-                        FileLog.shared.addMessage("UpNextSyncTask: Episode \(episodeInfo.title) is a custom episode, adding to the queue")
-                        // because a custom episode import task always runs before an Up Next sync, if we don't have this episode it's most likely local only on some other device
-                        // handle this here by adding it to our Up Next
-                        newEpisode.podcastUuid = DataConstants.userEpisodeFakePodcastId
-                        newEpisode.title = episodeInfo.title
-                        DataManager.sharedManager.save(playlistEpisode: newEpisode)
-                    }
-                    // 3. The episode is not in the local database, and is not custom so it will attempt to retrieve the episode from
+                    // 2. The episode is not in the local database, so it will attempt to retrieve the episode from
                     // the server. And will only add the episode if that succeeds.
                     else {
                         FileLog.shared.addMessage("UpNextSyncTask: Episode \(episodeInfo.title) is not in the local DB, fetching from the server...")

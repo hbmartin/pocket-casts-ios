@@ -152,7 +152,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         } else {
             DispatchQueue.global(qos: .userInitiated).async {
                 PodcastManager.shared.checkForPendingAndAutoDownloads()
-                UserEpisodeManager.checkForPendingUploads()
             }
         }
         PlaybackManager.shared.updateIdleTimer()

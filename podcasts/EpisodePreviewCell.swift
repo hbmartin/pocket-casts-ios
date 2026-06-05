@@ -28,11 +28,7 @@ class EpisodePreviewCell: ThemeableCell {
 
     func populateFrom(episode: BaseEpisode) {
         episodeTitle.text = episode.title
-        if let userEpisode = episode as? UserEpisode {
-            episodeImage.setUserEpisode(uuid: userEpisode.uuid, size: .list)
-        } else {
-            episodeImage.setPodcast(uuid: episode.parentIdentifier(), size: .list)
-        }
+        episodeImage.setPodcast(uuid: episode.parentIdentifier(), size: .list)
         EpisodeDateHelper.setDate(episode: episode, on: dateLabel, tintColor: nil)
         durationLabel.text = episode.displayableTimeLeft()
 

@@ -86,7 +86,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     var promoRedeemedMessage: String?
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
+    enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, bookmarks }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -301,9 +301,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .downloaded:
             cell.settingsImage.image = UIImage(named: "profile-download")
             cell.settingsLabel.text = L10n.downloads
-        case .uploadedFiles:
-            cell.settingsImage.image = UIImage(named: "profile_files")
-            cell.settingsLabel.text = L10n.files
         case .starred:
             cell.settingsImage.image = UIImage(named: "profile-star")
             cell.settingsLabel.text = L10n.statusStarred
@@ -357,9 +354,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .downloaded:
             let downloadController = DownloadsViewController()
             navigationController?.pushViewController(downloadController, animated: true)
-        case .uploadedFiles:
-            let uploadedController = UploadedViewController()
-            navigationController?.pushViewController(uploadedController, animated: true)
         case .starred:
             let starredController = StarredViewController()
             navigationController?.pushViewController(starredController, animated: true)
@@ -392,7 +386,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private func refreshTableData() {
         var data: [[ProfileViewController.TableRow]]
-        data = [[.allStats, .downloaded, .uploadedFiles, .starred, .bookmarks, .listeningHistory, .help]]
+        data = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help]]
 
         if informationalBannerCoordinator.shouldShowBanner() {
             data[0].insert(.informationalBanner, at: 0)

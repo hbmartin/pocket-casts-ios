@@ -43,9 +43,6 @@ extension Api_ChangeableSettings {
         gridOrder.update(settings.$gridOrder)
         gridLayoutGlobal.update(settings.$gridLayout)
         badgesGlobal.update(settings.$badges)
-        filesAutoUpNextGlobal.update(settings.$filesAutoUpNext)
-        filesAfterPlayingDeleteLocalGlobal.update(settings.$filesAfterPlayingDeleteLocal)
-        filesAfterPlayingDeleteCloudGlobal.update(settings.$filesAfterPlayingDeleteCloud)
         playerShelfGlobal.update(settings.$playerShelf)
         useEmbeddedArtworkGlobal.update(settings.$useEmbeddedArtwork)
         theme.update(settings.$theme)
@@ -56,7 +53,6 @@ extension Api_ChangeableSettings {
         autoUpNextLimit.update(settings.$autoUpNextLimit)
         autoUpNextLimitReached.update(settings.$autoUpNextLimitReached)
         autoPlayLastListUuid.update(settings.$autoPlayLastListUuid)
-        filesSortOrder.update(settings.$filesSortOrder)
     }
 }
 
@@ -101,9 +97,6 @@ extension AppSettings {
         $gridOrder.update(setting: settings.gridOrder)
         $gridLayout.update(setting: settings.gridLayoutGlobal)
         $badges.update(setting: settings.badgesGlobal)
-        $filesAutoUpNext.update(setting: settings.filesAutoUpNextGlobal)
-        $filesAfterPlayingDeleteLocal.update(setting: settings.filesAfterPlayingDeleteLocalGlobal)
-        $filesAfterPlayingDeleteCloud.update(setting: settings.filesAfterPlayingDeleteCloudGlobal)
         $playerShelf.update(setting: settings.playerShelfGlobal)
         $useEmbeddedArtwork.update(setting: settings.useEmbeddedArtworkGlobal)
         $theme.update(setting: settings.theme)
@@ -113,7 +106,6 @@ extension AppSettings {
         $useDarkUpNextTheme.update(setting: settings.useDarkUpNextTheme)
         $autoUpNextLimit.update(setting: settings.autoUpNextLimit)
         $autoUpNextLimitReached.update(setting: settings.autoUpNextLimitReached)
-        $filesSortOrder.update(setting: settings.filesSortOrder)
         oldSettings.printDiff(from: self)
         $autoPlayLastListUuid.update(setting: settings.autoPlayLastListUuid)
     }

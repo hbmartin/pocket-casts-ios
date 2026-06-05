@@ -32,9 +32,6 @@ class ImageManager {
         return subscribedPodcastsCache
     }()
 
-    // user episode image cache
-    private var userEpisodeCache = ImageCache(name: "userEpisodeImageCache")
-
     // Discover Cache
     private var discoverCache = ImageCache(name: "discoverCache")
 
@@ -62,9 +59,6 @@ class ImageManager {
         networkImageCache.diskStorage.config.expiration = .days(56) // 8 weeks
 
         searchImageCache.diskStorage.config.sizeLimit = UInt(10.megabytes)
-
-        userEpisodeCache.diskStorage.config.sizeLimit = UInt(10.megabytes)
-        userEpisodeCache.diskStorage.config.expiration = .days(365)
 
         discoverCache.diskStorage.config.expiration = .days(10)
         discoverCache.diskStorage.config.sizeLimit = UInt(50.megabytes)
@@ -173,22 +167,17 @@ class ImageManager {
             return
         }
 
-        // if that doesn't work, or they haven't opted in, load the podcast artwork instead
-        if let userEpisode = episode as? UserEpisode {
-            loadUserEpisodeImage(uuid: userEpisode.uuid, imageView: imageView, size: size, completionHandler: nil)
-        } else {
-            let url = podcastUrl(imageSize: size, uuid: episode.parentIdentifier())
-            // for larger images, avoid really obvious reload flashes by keeping whatever image is there currently while loading a new one
-            let placeholder = (imageView.image != nil && size == .page) ? imageView.image : placeHolderImage(size)
-            let processor = DefaultImageProcessor.default
-            imageView.kf.setImage(with: url, placeholder: placeholder, options: [.processor(processor), .targetCache(subscribedPodcastsCache), .transition(.fade(Constants.Animation.defaultAnimationTime))], progressBlock: nil) { [weak self] result in
-                switch result {
-                case .failure:
-                    if size == .page {
-                        imageView.image = self?.placeHolderImage(size)
-                    }
-                default: break
+        let url = podcastUrl(imageSize: size, uuid: episode.parentIdentifier())
+        // for larger images, avoid really obvious reload flashes by keeping whatever image is there currently while loading a new one
+        let placeholder = (imageView.image != nil && size == .page) ? imageView.image : placeHolderImage(size)
+        let processor = DefaultImageProcessor.default
+        imageView.kf.setImage(with: url, placeholder: placeholder, options: [.processor(processor), .targetCache(subscribedPodcastsCache), .transition(.fade(Constants.Animation.defaultAnimationTime))], progressBlock: nil) { [weak self] result in
+            switch result {
+            case .failure:
+                if size == .page {
+                    imageView.image = self?.placeHolderImage(size)
                 }
+            default: break
             }
         }
     }
@@ -202,12 +191,6 @@ class ImageManager {
         let url = podcastUrl(imageSize: size, uuid: podcastUuid)
 
         return retrieveImageFromCache(url: url, cache: subscribedPodcastsCache, fetchIfMissing: true)
-    }
-
-    func cachedImageForUserEpisode(episode: UserEpisode, size: PodcastThumbnailSize) -> UIImage? {
-        let url = episode.urlForImage()
-
-        return retrieveImageFromCache(url: url, cache: userEpisodeCache, fetchIfMissing: true)
     }
 
     private func retrieveImageFromCache(url: URL, cache: ImageCache, fetchIfMissing: Bool) -> UIImage? {
@@ -251,20 +234,13 @@ class ImageManager {
             return
         }
 
-        let imageURL: URL
-        let imageCache: ImageCache
-        if let userEpisode = episode as? UserEpisode {
-            imageURL = userEpisode.urlForImage()
-            imageCache = userEpisodeCache
-        } else if let episode = episode as? Episode, let parentPodcast = episode.parentPodcast() {
-            imageURL = podcastUrl(imageSize: size, uuid: parentPodcast.uuid)
-            imageCache = subscribedPodcastsCache
-        } else {
+        guard let episode = episode as? Episode, let parentPodcast = episode.parentPodcast() else {
             completionHandler(nil)
             return
         }
 
-        KingfisherManager.shared.retrieveImage(with: imageURL, options: [.targetCache(imageCache)]) { result in
+        let imageURL = podcastUrl(imageSize: size, uuid: parentPodcast.uuid)
+        KingfisherManager.shared.retrieveImage(with: imageURL, options: [.targetCache(subscribedPodcastsCache)]) { result in
             let image = try? result.get().image
             completionHandler(image)
         }
@@ -312,66 +288,6 @@ class ImageManager {
                 break
             }
         }
-    }
-
-    // MARK: - UserEpisode Images
-
-    func loadUserEpisodeImage(uuid: String, imageView: UIImageView, size: PodcastThumbnailSize, completionHandler: ((Bool) -> Void)?) {
-        imageView.image = nil
-
-        let userEpisode = DataManager.sharedManager.findUserEpisode(uuid: uuid)
-        let imageSize = size == .page ? 960 : 280
-        let url = userEpisode?.urlForImage(size: imageSize) ?? ServerHelper.userEpisodeDefaultImageUrl(isDark: Theme.isDarkTheme(), color: 1, size: imageSize)
-        if url.isFileURL {
-            let provider = LocalFileImageDataProvider(fileURL: url)
-            imageView.kf.setImage(with: provider, placeholder: placeHolderImage(size), options: [.targetCache(userEpisodeCache), .transition(.fade(Constants.Animation.defaultAnimationTime))], completionHandler: { result in
-                switch result {
-                case .success:
-                    completionHandler?(true)
-                case .failure:
-                    completionHandler?(false)
-                }
-            })
-        } else {
-            imageView.kf.setImage(with: url, placeholder: placeHolderImage(size), options: [.targetCache(userEpisodeCache), .transition(.fade(Constants.Animation.defaultAnimationTime))], completionHandler: { result in
-                switch result {
-                case .success:
-                    completionHandler?(true)
-                case .failure:
-                    completionHandler?(false)
-                }
-            })
-        }
-    }
-
-    func imageForUserEpisodeColor(color: Int, imageView: UIImageView, size: PodcastThumbnailSize, completionHandler: ((Bool) -> Void)?) {
-        imageView.image = nil
-        let imageSize = size == .page ? 960 : 280
-        let url = ServerHelper.userEpisodeDefaultImageUrl(isDark: Theme.isDarkTheme(), color: color, size: imageSize)
-
-        imageView.backgroundColor = AppTheme.userEpisodeColor(number: color)
-        imageView.kf.setImage(with: url, placeholder: nil, options: [.targetCache(userEpisodeCache), .transition(.fade(Constants.Animation.defaultAnimationTime))], completionHandler: { result in
-
-            switch result {
-            case .success:
-                completionHandler?(true)
-            case .failure:
-                completionHandler?(false)
-            }
-        })
-    }
-
-    func removeUserEpisodeImage(episode: UserEpisode, completionHandler: @escaping () -> Void) {
-        let fileUrl = URL(fileURLWithPath: episode.pathToLocalImage())
-        userEpisodeCache.removeImage(forKey: fileUrl.cacheKey, fromMemory: true, fromDisk: true, completionHandler: {
-            if let serverUrl = episode.imageUrl {
-                self.userEpisodeCache.removeImage(forKey: serverUrl, fromMemory: true, fromDisk: true, completionHandler: {
-                    completionHandler()
-                })
-            } else {
-                completionHandler()
-            }
-        })
     }
 
     // MARK: - Precaching

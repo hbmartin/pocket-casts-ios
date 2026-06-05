@@ -230,8 +230,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         #if !APPCLIP
         if PlaybackManager.shared.currentEpisode() is Episode {
             goToPodcast()
-        } else if PlaybackManager.shared.currentEpisode() is UserEpisode {
-            goToFiles()
         }
         #endif
     }
@@ -244,11 +242,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
     func archiveTapped() {
         #if !APPCLIP
-        if PlaybackManager.shared.currentEpisode() is UserEpisode {
-            delete()
-        } else {
-            archive()
-        }
+        archive()
         #endif
     }
 
@@ -439,10 +433,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     // MARK: - Actions Implementation
 
     #if !APPCLIP
-    private func goToFiles() {
-        NavigationManager.sharedManager.navigateTo(NavigationManager.filesPageKey, data: nil)
-    }
-
     private func goToPodcast() {
         guard let episode = PlaybackManager.shared.currentEpisode() as? Episode else { return }
 
@@ -459,13 +449,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             EpisodeManager.markAsPlayed(episode: episode, fireNotification: true)
         })
         present(alert, animated: true)
-    }
-
-    private func delete() {
-        guard let episode = PlaybackManager.shared.currentEpisode() as? UserEpisode else { return }
-        AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
-
-        UserEpisodeManager.presentDeleteOptions(episode: episode, from: self)
     }
 
     private func archive() {

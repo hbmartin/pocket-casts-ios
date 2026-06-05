@@ -43,42 +43,6 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
         }
     }
 
-    func testUserEpisodeDataManagerFiltersNonUpNextPlaylists() throws {
-        try runWithBothImplementations { dataManager, impl in
-            let upNextUserEpisode = UserEpisode()
-            upNextUserEpisode.uuid = "user-ep-upnext"
-            upNextUserEpisode.title = "Up Next User Episode"
-            upNextUserEpisode.addedDate = Date()
-
-            let otherUserEpisode = UserEpisode()
-            otherUserEpisode.uuid = "user-ep-other"
-            otherUserEpisode.title = "Other Playlist User Episode"
-            otherUserEpisode.addedDate = Date()
-
-            dataManager.save(episode: upNextUserEpisode)
-            dataManager.save(episode: otherUserEpisode)
-
-            saveUpNextEpisode(
-                dataManager: dataManager,
-                episodeUuid: upNextUserEpisode.uuid,
-                title: upNextUserEpisode.title ?? "",
-                podcastUuid: DataConstants.userEpisodeFakePodcastId,
-                position: 0
-            )
-            addPlaylistEntry(
-                queue: dataManager.testDbQueue,
-                episodeUuid: otherUserEpisode.uuid,
-                playlistId: 999,
-                position: 1,
-                title: otherUserEpisode.title ?? "",
-                podcastUuid: DataConstants.userEpisodeFakePodcastId
-            )
-
-            let results = dataManager.allUpNextEpisodes()
-            XCTAssertEqual(results.map(\.uuid), [upNextUserEpisode.uuid], "\(impl): should only return up next user episodes")
-        }
-    }
-
     func testSavingUpNextEpisodeShiftsExistingUpNextEntries() throws {
         try runWithBothImplementations { dataManager, impl in
             saveUpNextEpisode(dataManager: dataManager, episodeUuid: "existing-0", title: "Existing 0", podcastUuid: "pod", position: 0)

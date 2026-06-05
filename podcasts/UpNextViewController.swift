@@ -350,21 +350,12 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         track(.upNextQueueCleared)
     }
 
-    var userEpisodeDetailVC: UserEpisodeDetailViewController?
-
     func showEpisodeDetailViewController(for episode: BaseEpisode?) {
         if let episode = episode as? Episode, let parentPodcast = episode.parentPodcast() {
             let episodeController = EpisodeDetailViewController(episode: episode, podcast: parentPodcast, source: .upNext)
             episodeController.modalPresentationStyle = .formSheet
             episodeController.themeOverride = themeOverride
             present(episodeController, animated: true, completion: nil)
-        } else if let userEpisode = episode as? UserEpisode {
-            if let fullEpisode = DataManager.sharedManager.findUserEpisode(uuid: userEpisode.uuid) {
-                userEpisodeDetailVC = UserEpisodeDetailViewController(episode: fullEpisode)
-                userEpisodeDetailVC?.delegate = self
-                userEpisodeDetailVC?.themeOverride = themeOverride
-                userEpisodeDetailVC?.animateIn()
-            }
         }
     }
 

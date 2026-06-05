@@ -1,24 +1,5 @@
 import Foundation
 
-public enum UploadedSort: Int32, CaseIterable, Codable {
-    case newestToOldest = 0, oldestToNewest = 1, titleAtoZ = 2, titleZtoA = 3, shortestToLongest = 4, longestToShortest = 5
-
-    public enum Old: Int {
-        case newestToOldest = 0, oldestToNewest = 1, titleAtoZ = 2
-    }
-
-    public init(old: Old) {
-        switch old {
-        case .newestToOldest:
-            self = .newestToOldest
-        case .oldestToNewest:
-            self = .oldestToNewest
-        case .titleAtoZ:
-            self = .titleAtoZ
-        }
-    }
-}
-
 public enum AutoDownloadStatus: Int32 {
     case notSpecified = 0, userDeletedFile = 1, userCancelledDownload = 2, autoDownloaded = 3, playerDownloadedForStreaming = 4
 }
@@ -41,10 +22,6 @@ public enum AutoDownloadLimit: Int, CaseIterable {
 
 public enum PlayingStatus: Int32 {
     case notPlayed = 1, inProgress = 2, completed = 3, old = 4
-}
-
-public enum UploadStatus: Int32 {
-    case notUploaded = 1, queued = 2, uploading = 3, uploadFailed = 4, uploaded = 5, waitingForWifi = 6, missing = 7, deleteFromCloudPending = 8, deleteFromCloudAndLocalPending = 9
 }
 
 public enum PodcastGrouping: Int32, CaseIterable, Codable {

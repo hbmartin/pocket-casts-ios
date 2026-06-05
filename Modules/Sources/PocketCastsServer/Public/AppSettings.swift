@@ -47,10 +47,6 @@ public struct AppSettings: JSONCodable {
     @ModifiedDate public var podcastBookmarksSortType: BookmarksSort = .newestToOldest
     @ModifiedDate public var profileBookmarksSortType: BookmarksSort = .newestToOldest
 
-    @ModifiedDate public var filesAutoUpNext: Bool = false
-    @ModifiedDate public var filesAfterPlayingDeleteLocal: Bool = false
-    @ModifiedDate public var filesAfterPlayingDeleteCloud: Bool = false
-
     @ModifiedDate public var warnDataUsage: Bool = false
 
     @ModifiedDate public var autoUpNextLimit: Int32 = 100
@@ -66,8 +62,6 @@ public struct AppSettings: JSONCodable {
     @ModifiedDate public var gridOrder: LibrarySort = .dateAddedNewestToOldest
     @ModifiedDate public var gridLayout: LibraryType = .threeByThree
     @ModifiedDate public var badges: BadgeType = .off
-
-    @ModifiedDate public var filesSortOrder: UploadedSort = .newestToOldest
 
     @ModifiedDate public var playerShelf: [ActionOption] = []
 

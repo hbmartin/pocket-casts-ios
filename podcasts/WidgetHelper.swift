@@ -147,11 +147,7 @@ class WidgetHelper {
         let podcastColor: UIColor = ColorManager.backgroundColorForPodcastUuid(episode.parentIdentifier())
         var imageUrl = ""
 
-        if let episode = episode as? Episode {
-            imageUrl = ServerHelper.image(podcastUuid: episode.parentIdentifier(), size: 340)
-        } else if let userEpisode = episode as? UserEpisode {
-            imageUrl = userEpisodeImageString(userEpisode)
-        }
+        imageUrl = ServerHelper.image(podcastUuid: episode.parentIdentifier(), size: 340)
 
         return CommonUpNextItem(episodeUuid: episode.uuid, imageUrl: imageUrl, episodeTitle: episodeTitle, podcastName: episode.subTitle(), podcastColor: podcastColor.hexString(), duration: duration, isPlaying: isPlaying)
     }
@@ -169,51 +165,12 @@ class WidgetHelper {
         }
     }
 
-    func updateCustomImage(userEpisode: UserEpisode) {
-        guard PlaybackManager.shared.inUpNext(episode: userEpisode), userEpisode.urlForImage().isFileURL, let sharedPath = sharedWidgetImagePathFor(userEpisode) else { return }
-        let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: sharedPath.path) {
-            do {
-                try fileManager.removeItem(atPath: sharedPath.path)
-            } catch {}
-        }
-        updateSharedUpNext()
-    }
-
-    private func sharedWidgetImagePathFor(_ userEpisode: UserEpisode) -> URL? {
-        let sharedDirectory = sharedWidgetImageDirectory()
-        let fileName = "\(userEpisode.uuid).jpg"
-        return sharedDirectory?.appendingPathComponent(fileName)
-    }
-
     private func sharedWidgetImageDirectory() -> URL? {
         let fileManager = FileManager.default
         guard let container = fileManager.containerURL(forSecurityApplicationGroupIdentifier: WidgetHelper.appGroupId) else {
             return nil
         }
         return container.appendingPathComponent("widget_images")
-    }
-
-    private func userEpisodeImageString(_ userEpisode: UserEpisode) -> String {
-        let imageUrl = userEpisode.urlForImage().absoluteString
-        guard imageUrl.hasPrefix("file"), let path = URL(string: imageUrl), let sharedDirectory = sharedWidgetImageDirectory(), let sharedPath = sharedWidgetImagePathFor(userEpisode) else {
-            return imageUrl
-        }
-        do {
-            let fileManager = FileManager.default
-            var isDir: ObjCBool = false
-            if !fileManager.fileExists(atPath: sharedDirectory.path, isDirectory: &isDir) {
-                try fileManager.createDirectory(at: sharedDirectory, withIntermediateDirectories: false, attributes: nil)
-            }
-            if !fileManager.fileExists(atPath: sharedPath.path),
-               let customImage = UIImage(contentsOfFile: path.path), let downsized = customImage.resized(to: CGSize(width: 280, height: 280)) {
-                try downsized.jpegData(compressionQuality: 1)?.write(to: sharedPath)
-            }
-            return sharedPath.absoluteString
-        } catch let error as NSError {
-            FileLog.shared.addMessage("Failed to copy custom file image to app group \(error.localizedDescription)")
-        }
-        return ""
     }
 
     func cleanupAppGroupImages() {

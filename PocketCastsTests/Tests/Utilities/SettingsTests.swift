@@ -132,7 +132,6 @@ final class SettingsTests: XCTestCase {
         let newAppBadge = AppBadge.newSinceLastOpened
         let newPlayedAfter = AutoArchiveAfterTime.after1Week
         let newInactiveAfter = AutoArchiveAfterTime.after90Days
-        let newEpisodeSortBy = UploadedSort.titleAtoZ
         let newPlayerBookmarksSort = BookmarkSortOption.newestToOldest
         let newEpisodeBookmarksSort = BookmarkSortOption.oldestToNewest
         let newProfileBookmarksSort = BookmarkSortOption.podcastAndEpisode
@@ -150,7 +149,6 @@ final class SettingsTests: XCTestCase {
         Settings.appBadge = newAppBadge
         Settings.setAutoArchivePlayedAfter(newPlayedAfter.rawValue)
         Settings.setAutoArchiveInactiveAfter(newInactiveAfter.rawValue)
-        Settings.setUserEpisodeSortBy(newEpisodeSortBy.rawValue)
         Settings.playerBookmarksSort.wrappedValue = newPlayerBookmarksSort
         Settings.episodeBookmarksSort.wrappedValue = newEpisodeBookmarksSort
         Settings.profileBookmarksSort.wrappedValue = newProfileBookmarksSort
@@ -175,7 +173,6 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(newAppBadge, Settings.appBadge)
         XCTAssertEqual(newPlayedAfter.rawValue, Settings.autoArchivePlayedAfter())
         XCTAssertEqual(newInactiveAfter.rawValue, Settings.autoArchiveInactiveAfter())
-        XCTAssertEqual(newEpisodeSortBy.rawValue, Settings.userEpisodeSortBy())
         XCTAssertEqual(newPlayerBookmarksSort, Settings.playerBookmarksSort.wrappedValue)
         XCTAssertEqual(newEpisodeBookmarksSort, Settings.episodeBookmarksSort.wrappedValue)
         XCTAssertEqual(newProfileBookmarksSort, Settings.profileBookmarksSort.wrappedValue)

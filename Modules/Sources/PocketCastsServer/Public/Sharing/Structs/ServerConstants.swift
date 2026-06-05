@@ -120,9 +120,6 @@ public enum ServerConstants {
         static let refreshTokenKey = "SJRefreshToken"
         static let appleAuthUserIDKey = "SJAppleAuthUserID"
         public static let appUserAgent = "Pocket Casts"
-        static let customStorageUsed = "SJCustomStorageUsed"
-        static let customStorageNumFiles = "SJCustomStorageNumFiles"
-        static let customStorageUserLimit = "SJCustomStorageUserLimit"
 
         static let oldEpisodeCutoff = 2.weeks
     }
@@ -151,7 +148,6 @@ public enum ServerConstants {
         public static let marketingOptInKey = "SJMarketingOptIn"
         static let marketingOptInNeedsSyncKey = "SJMarketingOptInNeedsSync"
         static let subscriptionGiftAcknowledgementNeedsSyncKey = "SJGiftAcknowledgementNeedsSync"
-        static let filesLastModifiedKey = "UserFilesLastModified"
         static let statsStartDate = "StatsStartDate"
         static let statsSyncStatus = "StatsSyncStatus"
         static let statsDynamicSpeedSeconds = "StatsDynamicSpeed"

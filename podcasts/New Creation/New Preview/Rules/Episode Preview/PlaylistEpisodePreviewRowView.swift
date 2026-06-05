@@ -84,10 +84,6 @@ fileprivate struct PlaylistEpisodeImageViewWrapper: UIViewRepresentable {
     }
 
     func updateUIView(_ podcastImageView: PodcastImageView, context: Context) {
-        if let userEpisode = episode as? UserEpisode {
-            podcastImageView.setUserEpisode(uuid: userEpisode.uuid, size: size)
-        } else {
-            podcastImageView.setPodcast(uuid: episode.parentIdentifier(), size: size)
-        }
+        podcastImageView.setPodcast(uuid: episode.parentIdentifier(), size: size)
     }
 }

@@ -7,7 +7,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
-        case customFiles, importSteps, opml
+        case importSteps, opml
         case about, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
@@ -45,8 +45,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsAbout, UIImage(named: "settings_about"))
             case .siriShortcuts:
                 return (L10n.settingsSiriShortcuts, UIImage(named: "settings_shortcuts"))
-            case .customFiles:
-                return (L10n.files, UIImage(named: "profile_files"))
             case .privacy:
                 return (L10n.settingsPrivacy, UIImage(named: "privacy"))
             case .developer:
@@ -77,7 +75,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             developerSection,
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
-            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .customFiles],
+            [.storageAndDataUse, .siriShortcuts, .headphoneControls],
             [.importSteps, .opml],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -130,7 +128,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         cell.settingsImage.image = tableRow.display.image
 
         switch tableRow {
-        case .appearance, .customFiles:
+        case .appearance:
             cell.plusIndicator.isHidden = SubscriptionHelper.hasActiveSubscription()
         default:
             break
@@ -178,8 +176,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             navigationController?.present(hostingController, animated: true, completion: nil)
         case .siriShortcuts:
             navigationController?.pushViewController(SiriSettingsViewController(), animated: true)
-        case .customFiles:
-            navigationController?.pushViewController(UploadedSettingsViewController(), animated: true)
         case .privacy:
             navigationController?.pushViewController(PrivacySettingsViewController(), animated: true)
         case .developer:

@@ -22,8 +22,6 @@ public class ApiServerHandler {
         if let episode = episode as? Episode {
             let saveOperation = PositionSyncTask(upTo: time, duration: duration, episode: episode)
             shared.apiQueue.addOperation(saveOperation)
-        } else if let userEpisode = episode as? UserEpisode, userEpisode.uploaded() {
-            shared.uploadSingleFileUpdateRequest(episode: userEpisode, completion: { _ in })
         }
     }
 
@@ -31,8 +29,6 @@ public class ApiServerHandler {
         if let episode = episode as? Episode {
             let saveOperation = PositionSyncTask(upTo: episode.playedUpTo, duration: episode.duration, episode: episode)
             apiQueue.addOperation(saveOperation)
-        } else if let userEpisode = episode as? UserEpisode, userEpisode.uploaded() {
-            uploadSingleFileUpdateRequest(episode: userEpisode, completion: { _ in })
         }
     }
 
@@ -93,20 +89,6 @@ public class ApiServerHandler {
     public func reloadFoldersFromServer() {
         ServerSettings.setHomeGridNeedsRefresh(true)
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-    }
-
-    public func processPendingCloudDeletes(episodes: [UserEpisode], deleteCompletedHandler: ((UserEpisode) -> Void)?) {
-        FileLog.shared.addMessage("\(episodes.count) episodes pending to be cloud deleted, processing those now")
-        for episode in episodes {
-            let deleteOperation = UploadFileDeleteTask(episode: episode)
-            deleteOperation.completion = { success in
-                guard success else { return } // failed deletes will remain as pending
-
-                DataManager.sharedManager.saveEpisode(uploadStatus: .notUploaded, episode: episode)
-                deleteCompletedHandler?(episode)
-            }
-            apiQueue.addOperation(deleteOperation)
-        }
     }
 
     /// Swaps the current auth token with one scoped for use in Sonos connections

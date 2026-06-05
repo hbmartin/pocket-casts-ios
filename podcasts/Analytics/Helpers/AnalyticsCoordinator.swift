@@ -47,7 +47,6 @@ enum AnalyticsSource: String, AnalyticsDescribable {
     case starred
     case sync
     case upNext = "up_next"
-    case userEpisode = "user_episode"
     case videoPlayerSkipForwardLongPress = "video_player_skip_forward_long_press"
     case playbackFailed = "playback_failed"
     case watch
