@@ -6,32 +6,32 @@ import WidgetKit
 private enum PlaybackControlLocalization {
     static let playPauseDisplayName = LocalizedStringResource(
         "widget_playback_control_play_pause_display_name",
-        defaultValue: String.LocalizationValue(L10n.widgetPlaybackControlPlayPauseDisplayName),
+        defaultValue: "\(L10n.widgetPlaybackControlPlayPauseDisplayName)",
         table: "Localizable"
     )
     static let playPauseDescription = LocalizedStringResource(
         "widget_playback_control_play_pause_description",
-        defaultValue: String.LocalizationValue(L10n.widgetPlaybackControlPlayPauseDescription),
+        defaultValue: "\(L10n.widgetPlaybackControlPlayPauseDescription)",
         table: "Localizable"
     )
     static let skipBackDisplayName = LocalizedStringResource(
         "widget_playback_control_skip_back_display_name",
-        defaultValue: String.LocalizationValue(L10n.widgetPlaybackControlSkipBackDisplayName),
+        defaultValue: "\(L10n.widgetPlaybackControlSkipBackDisplayName)",
         table: "Localizable"
     )
     static let skipBackDescription = LocalizedStringResource(
         "widget_playback_control_skip_back_description",
-        defaultValue: String.LocalizationValue(L10n.widgetPlaybackControlSkipBackDescription),
+        defaultValue: "\(L10n.widgetPlaybackControlSkipBackDescription)",
         table: "Localizable"
     )
     static let skipForwardDisplayName = LocalizedStringResource(
         "widget_playback_control_skip_forward_display_name",
-        defaultValue: String.LocalizationValue(L10n.widgetPlaybackControlSkipForwardDisplayName),
+        defaultValue: "\(L10n.widgetPlaybackControlSkipForwardDisplayName)",
         table: "Localizable"
     )
     static let skipForwardDescription = LocalizedStringResource(
         "widget_playback_control_skip_forward_description",
-        defaultValue: String.LocalizationValue(L10n.widgetPlaybackControlSkipForwardDescription),
+        defaultValue: "\(L10n.widgetPlaybackControlSkipForwardDescription)",
         table: "Localizable"
     )
 }

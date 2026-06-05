@@ -17,6 +17,31 @@ struct URLHelper {
         case authenticationSessionRequired
     }
 
+    struct OpenOptions {
+        var presenter: UIViewController?
+        var prefersExternalBrowser: Bool
+        var allowsExternalFallback: Bool
+        var delegate: SFSafariViewControllerDelegate?
+        var modalPresentationStyle: UIModalPresentationStyle?
+        var completion: (() -> Void)?
+
+        init(
+            presenter: UIViewController? = SceneHelper.rootViewController(),
+            prefersExternalBrowser: Bool = false,
+            allowsExternalFallback: Bool = false,
+            delegate: SFSafariViewControllerDelegate? = nil,
+            modalPresentationStyle: UIModalPresentationStyle? = nil,
+            completion: (() -> Void)? = nil
+        ) {
+            self.presenter = presenter
+            self.prefersExternalBrowser = prefersExternalBrowser
+            self.allowsExternalFallback = allowsExternalFallback
+            self.delegate = delegate
+            self.modalPresentationStyle = modalPresentationStyle
+            self.completion = completion
+        }
+    }
+
     private static let trustedDocumentationHosts: Set<String> = [
         "support.pocketcasts.com",
         "support.pocketcasts.net",
@@ -93,27 +118,22 @@ struct URLHelper {
     static func open(
         _ url: URL,
         context: InAppBrowserContext,
-        from presenter: UIViewController? = SceneHelper.rootViewController(),
-        prefersExternalBrowser: Bool = false,
-        allowsExternalFallback: Bool = false,
-        delegate: SFSafariViewControllerDelegate? = nil,
-        modalPresentationStyle: UIModalPresentationStyle? = nil,
-        completion: (() -> Void)? = nil
+        options: OpenOptions = OpenOptions()
     ) -> SFSafariViewController? {
         switch inAppBrowserDecision(
             for: url,
             context: context,
-            prefersExternalBrowser: prefersExternalBrowser,
-            allowsExternalFallback: allowsExternalFallback
+            prefersExternalBrowser: options.prefersExternalBrowser,
+            allowsExternalFallback: options.allowsExternalFallback
         ) {
         case .inAppBrowser:
-            guard let safariViewController = makeInAppBrowser(for: url, context: context), let presenter else { return nil }
+            guard let safariViewController = makeInAppBrowser(for: url, context: context), let presenter = options.presenter else { return nil }
 
-            safariViewController.delegate = delegate
-            if let modalPresentationStyle {
+            safariViewController.delegate = options.delegate
+            if let modalPresentationStyle = options.modalPresentationStyle {
                 safariViewController.modalPresentationStyle = modalPresentationStyle
             }
-            presenter.present(safariViewController, animated: true, completion: completion)
+            presenter.present(safariViewController, animated: true, completion: options.completion)
             return safariViewController
         case .externalApplication:
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
@@ -147,7 +167,7 @@ struct URLHelper {
         return allowsExternalFallback ? .externalApplication : .blocked
     }
 
-    private static func isTrustedDocumentationURL(_ url: URL) -> Bool {
+    static func isTrustedDocumentationURL(_ url: URL) -> Bool {
         isHTTPSURL(url) && host(for: url).map(trustedDocumentationHosts.contains) == true
     }
 

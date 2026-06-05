@@ -48,7 +48,9 @@ struct PlayFilterIntent: AudioPlaybackIntent {
     @Parameter(title: "Filter")
     var filter: FilterAppEntity
 
-    init() {}
+    init() {
+        // Required by AppIntents for parameter decoding.
+    }
 
     init(filter: FilterAppEntity) {
         self.filter = filter
@@ -68,7 +70,9 @@ struct PlayAllInFilterIntent: AudioPlaybackIntent {
     @Parameter(title: "Filter")
     var filter: FilterAppEntity
 
-    init() {}
+    init() {
+        // Required by AppIntents for parameter decoding.
+    }
 
     init(filter: FilterAppEntity) {
         self.filter = filter
@@ -88,7 +92,9 @@ struct OpenFilterIntent: AppIntent {
     @Parameter(title: "Filter")
     var filter: FilterAppEntity
 
-    init() {}
+    init() {
+        // Required by AppIntents for parameter decoding.
+    }
 
     init(filter: FilterAppEntity) {
         self.filter = filter

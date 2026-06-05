@@ -5,7 +5,7 @@ import SafariServices
 import UIKit
 import WebKit
 
-class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewControllerDelegate, WKNavigationDelegate {
+class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewControllerDelegate, WKNavigationDelegate { // NOSONAR - Link taps are cancelled and routed through URLHelper.
     @IBOutlet var episodeTitle: UILabel! {
         didSet {
             episodeTitle.font = UIFont.font(ofSize: 22, weight: .bold, scalingWith: .title2)
@@ -223,13 +223,15 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
             URLHelper.open(
                 url,
                 context: .externalContent,
-                prefersExternalBrowser: true,
-                allowsExternalFallback: true
+                options: .init(
+                    prefersExternalBrowser: true,
+                    allowsExternalFallback: true
+                )
             )
         } else if let safariViewController = URLHelper.open(
             url,
             context: .externalContent,
-            delegate: self
+            options: .init(delegate: self)
         ) {
                 self.safariViewController = safariViewController
                 Analytics.track(.playerShowNotesLinkTapped, properties: ["episode_uuid": lastEpisodeUuidRendered])

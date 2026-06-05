@@ -48,7 +48,9 @@ struct PlayPodcastIntent: AudioPlaybackIntent {
     @Parameter(title: "Podcast")
     var podcast: PodcastAppEntity
 
-    init() {}
+    init() {
+        // Required by AppIntents for parameter decoding.
+    }
 
     init(podcast: PodcastAppEntity) {
         self.podcast = podcast

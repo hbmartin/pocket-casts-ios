@@ -80,7 +80,7 @@ class SlumberAnnouncementViewModel: ObservableObject {
     func showRedeem() {
         guard let parentController = SceneHelper.rootViewController(), let url = URL(string: "https://slumberstudios.com/pocketcasts/") else { return }
 
-        URLHelper.open(url, context: .trustedMarketing, from: parentController, modalPresentationStyle: .formSheet)
+        URLHelper.open(url, context: .trustedMarketing, options: .init(presenter: parentController, modalPresentationStyle: .formSheet))
     }
 }
 

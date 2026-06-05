@@ -27,31 +27,11 @@ def package_argument_lists(source)
     escaped = false
 
     while cursor < source.length && depth.positive?
-      character = source[cursor]
-
-      if in_string
-        if escaped
-          escaped = false
-        elsif character == "\\"
-          escaped = true
-        elsif character == "\""
-          in_string = false
-        end
-      else
-        case character
-        when "\""
-          in_string = true
-        when "("
-          depth += 1
-        when ")"
-          depth -= 1
-        end
-      end
-
+      depth, in_string, escaped = next_package_scan_state(source[cursor], depth, in_string, escaped)
       cursor += 1
     end
 
-    raise "Unterminated .package declaration near byte #{start}" if depth.positive?
+    raise ArgumentError, "Unterminated .package declaration near byte #{start}" if depth.positive?
 
     lists << source[argument_start...(cursor - 1)]
     offset = cursor
@@ -60,11 +40,32 @@ def package_argument_lists(source)
   lists
 end
 
+def next_package_scan_state(character, depth, in_string, escaped)
+  if in_string
+    return [depth, in_string, false] if escaped
+    return [depth, in_string, true] if character == "\\"
+    return [depth, false, escaped] if character == "\""
+
+    return [depth, in_string, escaped]
+  end
+
+  case character
+  when "\""
+    [depth, true, escaped]
+  when "("
+    [depth + 1, in_string, escaped]
+  when ")"
+    [depth - 1, in_string, escaped]
+  else
+    [depth, in_string, escaped]
+  end
+end
+
 def swiftlint_version(manifest_path)
   config_path = File.expand_path("../.swiftlint.yml", File.dirname(manifest_path))
   line = File.readlines(config_path).find { |entry| entry.match?(/swiftlint_version:/) }
   version = line&.split(":")&.last&.strip
-  raise "Unable to find swiftlint_version in #{config_path}" if version.nil? || version.empty?
+  raise ArgumentError, "Unable to find swiftlint_version in #{config_path}" if version.nil? || version.empty?
 
   version
 end
@@ -110,14 +111,14 @@ dependencies = manifest_paths.flat_map do |manifest_path|
     next if url.nil?
 
     requirement = requirement_for(arguments, manifest_path)
-    raise "Unsupported package requirement in #{manifest_path}: #{arguments.strip}" if requirement.nil?
+    raise ArgumentError, "Unsupported package requirement in #{manifest_path}: #{arguments.strip}" if requirement.nil?
 
     [url, requirement]
   end.compact
 end
 
 dependencies_by_url = dependencies.to_h
-raise "No package dependencies found" if dependencies_by_url.empty?
+raise ArgumentError, "No package dependencies found" if dependencies_by_url.empty?
 
 resolved_pins_by_location = {}
 

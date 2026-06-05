@@ -448,9 +448,11 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
             URLHelper.open(
                 url,
                 context: .externalContent,
-                from: self,
-                prefersExternalBrowser: Settings.openLinks,
-                allowsExternalFallback: Settings.openLinks
+                options: .init(
+                    presenter: self,
+                    prefersExternalBrowser: Settings.openLinks,
+                    allowsExternalFallback: Settings.openLinks
+                )
             )
         #endif
     }

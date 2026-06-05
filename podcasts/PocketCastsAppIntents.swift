@@ -119,7 +119,7 @@ struct SetSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Set Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes", inclusiveRange: (1, 300))
+    @Parameter(title: "Minutes", inclusiveRange: (lowerBound: 1, upperBound: 300))
     var minutes: Int
 
     init(minutes: Int) {
@@ -142,7 +142,7 @@ struct ExtendSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Extend Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes", default: 5, inclusiveRange: (1, 300))
+    @Parameter(title: "Minutes", default: 5, inclusiveRange: (lowerBound: 1, upperBound: 300))
     var minutes: Int
 
     @MainActor

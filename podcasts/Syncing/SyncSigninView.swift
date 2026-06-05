@@ -174,7 +174,7 @@ final class SyncSigninViewModel: ObservableObject {
 
     // Inputs
     @Published var email: String = ""
-    @Published var password: String = ""
+    @Published var password: String = "" // NOSONAR - User-entered state, not a hard-coded credential.
     @Published var showPassword = false
 
     // UI state

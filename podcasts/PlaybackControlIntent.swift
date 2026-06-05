@@ -39,7 +39,9 @@ struct PlaybackControlIntent: AudioPlaybackIntent {
     @Parameter(title: "Action")
     var action: PlaybackControlAction
 
-    init() {}
+    init() {
+        // Required by AppIntents for parameter decoding.
+    }
 
     init(_ action: PlaybackControlAction) {
         self.action = action

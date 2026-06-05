@@ -79,6 +79,10 @@ class SonarClient:
         except urllib.error.HTTPError as error:
             body = error.read().decode("utf-8", errors="replace")
             raise SystemExit(f"Sonar API error {error.code} for {path}: {body}") from error
+        except urllib.error.URLError as error:
+            raise SystemExit(
+                f"Sonar API connection error for {path}: {error.reason}"
+            ) from error
 
 
 def issue_path(issue: dict[str, Any]) -> str:

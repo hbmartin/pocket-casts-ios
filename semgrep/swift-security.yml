@@ -60,6 +60,22 @@ rules:
     patterns:
       - pattern-regex: '^\s*rm\s+-rf\s+"?\$\([A-Za-z0-9_]+\)[^#\n]*'
 
+  - id: pocketcasts.server-constants-identical-production-url-branches
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Production/staging ServerConstants URL branches should not return the same host.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/Public/Sharing/Structs/ServerConstants.swift"
+    patterns:
+      - pattern-regex: 'production\(\)\s*\?\s*"https://([^"]+)"\s*:\s*"https://\1"'
+
   - id: pocketcasts.app-intent-ignored-playback-result
     severity: WARNING
     metadata:
@@ -72,8 +88,8 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "/podcasts/*AppIntent*.swift"
-        - "/podcasts/*AppEntity*.swift"
+        - "**/podcasts/*AppIntent*.swift"
+        - "**/podcasts/*AppEntity*.swift"
     patterns:
       - pattern-inside: |
           func perform() async throws -> some IntentResult {
@@ -98,7 +114,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "/podcasts/*AppEntity.swift"
+        - "**/podcasts/*AppEntity.swift"
     patterns:
       - pattern-inside: |
           struct $QUERY: EntityQuery {
@@ -132,7 +148,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "/podcasts/PlaybackIntentActionHandler.swift"
+        - "**/podcasts/PlaybackIntentActionHandler.swift"
     patterns:
       - pattern-either:
           - pattern: |
@@ -166,7 +182,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "/podcasts/PocketCastsAppIntents.swift"
+        - "**/podcasts/PocketCastsAppIntents.swift"
     patterns:
       - pattern-either:
           - pattern-inside: |
@@ -197,6 +213,24 @@ rules:
             ...
           }
 
+  - id: pocketcasts.app-intent-inclusive-range-labeled-tuple
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: "This AppIntents SDK expects inclusiveRange as a labeled tuple, for example (lowerBound: 1, upperBound: 300)."
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/*AppIntent*.swift"
+    patterns:
+      - pattern-either:
+          - pattern-regex: 'inclusiveRange:\s*\([^:,\n]+,\s*[^:,\n]+\)'
+          - pattern-regex: 'inclusiveRange:\s*[^,\n]+\.{3}[^,\n)]+'
+
   - id: pocketcasts.sleep-timer-extend-posts-notification
     severity: WARNING
     metadata:
@@ -209,7 +243,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "/podcasts/PlaybackIntentActionHandler.swift"
+        - "**/podcasts/PlaybackIntentActionHandler.swift"
     patterns:
       - pattern-inside: |
           func extendSleepTimer(bySeconds seconds: TimeInterval) {
@@ -235,11 +269,44 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "/WidgetExtension/Controls/*.swift"
+        - "**/WidgetExtension/Controls/*.swift"
     patterns:
       - pattern-either:
           - pattern: $RECEIVER.displayName("...")
           - pattern: $RECEIVER.description("...")
+
+  - id: pocketcasts.widget-control-localized-default-value-dynamic-string
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Use string interpolation for dynamic L10n widget metadata defaults; String.LocalizationValue does not expose a dynamic String initializer.
+    languages: [swift]
+    paths:
+      include:
+        - "**/WidgetExtension/Controls/*.swift"
+    patterns:
+      - pattern-regex: 'defaultValue:\s*String\.LocalizationValue\(L10n\.[A-Za-z0-9_]+\)'
+
+  - id: pocketcasts.discover-diffable-direct-reload-items
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Discover uses a diffable data source; mutate a snapshot and apply it instead of calling collectionView.reloadItems(at:) directly.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/DiscoverCollectionViewController+DiscoverDelegate.swift"
+    patterns:
+      - pattern: |
+          collectionView.reloadItems(at: ...)
 
   - id: keychain.delete-before-add
     severity: WARNING

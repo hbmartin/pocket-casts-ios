@@ -222,7 +222,7 @@ class RichExpandableLabel: WKWebView {
     }
 }
 
-extension RichExpandableLabel: WKNavigationDelegate {
+extension RichExpandableLabel: WKNavigationDelegate { // NOSONAR - Link taps are cancelled after delegate handoff.
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         evaluateJavaScript("document.readyState", completionHandler: { [weak self] complete, _ in
             guard let self,
