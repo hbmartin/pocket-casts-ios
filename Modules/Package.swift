@@ -180,7 +180,6 @@ enum XcodeTargetNames {
     static let podcastsIntents = "PodcastsIntents"
     static let podcastsIntentsUI = "PodcastsIntentsUI"
     static let widgetExtension = "WidgetExtension"
-    static let pocketCastsAppClip = "Pocket Casts App Clip"
 }
 
 enum XcodeSupport {
@@ -191,7 +190,6 @@ enum XcodeSupport {
             XcodeTargetNames.podcastsIntents,
             XcodeTargetNames.podcastsIntentsUI,
             XcodeTargetNames.widgetExtension,
-            XcodeTargetNames.pocketCastsAppClip,
         ].map { .supportingProduct(forXcodeTarget: $0) }
     }
 
@@ -242,20 +240,6 @@ enum XcodeSupport {
                 XcodeTargetNames.widgetExtension,
                 dependencies: [
                     "PocketCastsUtils",
-                ]
-            ),
-            .xcodeTarget(
-                XcodeTargetNames.pocketCastsAppClip,
-                dependencies: [
-                    "PocketCastsDataModel",
-                    "PocketCastsServer",
-                    "PocketCastsUtils",
-                    .product(name: "AutomatticTracks", package: "Automattic-Tracks-iOS"),
-                    .product(name: "FirebaseAnalyticsWithoutAdIdSupport", package: "firebase-ios-sdk"),
-                    .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
-                    .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
-                    .product(name: "Kingfisher", package: "Kingfisher"),
-                    .product(name: "Lottie", package: "lottie-ios"),
                 ]
             ),
         ]

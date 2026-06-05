@@ -719,11 +719,7 @@ class PlaybackManager: ServerPlaybackDelegate {
 
         queue.removeAllEpisodes()
         cleanupCurrentPlayer(permanent: true)
-        #if os(watchOS)
-            WatchNowPlayingHelper.clearNowPlayingInfo()
-        #else
-            NowPlayingHelper.clearNowPlayingInfo()
-        #endif
+        NowPlayingHelper.clearNowPlayingInfo()
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEnded)
     }
@@ -1192,11 +1188,7 @@ class PlaybackManager: ServerPlaybackDelegate {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEnded)
             cleanupCurrentPlayer(permanent: true)
 
-            #if os(watchOS)
-                WatchNowPlayingHelper.clearNowPlayingInfo()
-            #else
-                NowPlayingHelper.clearNowPlayingInfo()
-            #endif
+            NowPlayingHelper.clearNowPlayingInfo()
 
             cancelSleepTimer()
         } else {
@@ -1593,19 +1585,11 @@ class PlaybackManager: ServerPlaybackDelegate {
 
     @objc private func updateNowPlayingInfo() {
         guard let episode = currentEpisode() else {
-            #if os(watchOS)
-                WatchNowPlayingHelper.clearNowPlayingInfo()
-            #else
-                NowPlayingHelper.clearNowPlayingInfo()
-            #endif
+            NowPlayingHelper.clearNowPlayingInfo()
 
             return
         }
-        #if os(watchOS)
-            WatchNowPlayingHelper.updateNowPlayingInfo(for: episode, duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
-        #else
-            NowPlayingHelper.updateNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
-        #endif
+        NowPlayingHelper.updateNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
     }
 
     func forceUpdateChapterInfo() {
@@ -1624,19 +1608,11 @@ class PlaybackManager: ServerPlaybackDelegate {
 
     @objc private func updateAllNowPlayingData() {
         guard let episode = currentEpisode() else {
-            #if os(watchOS)
-                WatchNowPlayingHelper.clearNowPlayingInfo()
-            #else
-                NowPlayingHelper.clearNowPlayingInfo()
-            #endif
+            NowPlayingHelper.clearNowPlayingInfo()
             return
         }
 
-        #if os(watchOS)
-            WatchNowPlayingHelper.setAllNowPlayingInfo(for: episode, duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
-        #else
-            NowPlayingHelper.setAllNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
-        #endif
+        NowPlayingHelper.setAllNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
     }
 
     // MARK: - Sleep Timer
