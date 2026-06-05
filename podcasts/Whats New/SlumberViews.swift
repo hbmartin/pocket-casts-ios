@@ -50,7 +50,9 @@ struct SlumberCustomBody: View {
             .padding(.bottom)
             .fixedSize(horizontal: false, vertical: true)
             .onTapGesture {
-                UIPasteboard.general.string = Settings.slumberPromoCode
+                guard let code = Settings.slumberPromoCode, !code.isEmpty else { return }
+
+                UIPasteboard.general.string = code
                 Toast.show(L10n.announcementSlumberCodeCopied)
             }
 

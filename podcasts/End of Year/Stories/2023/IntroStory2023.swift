@@ -101,10 +101,11 @@ struct IntroStory2023: ShareableStory {
 private struct IconParallaxModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject var manager: MotionManager = .init()
+    private let rollAndPitchBoundary = -1.4..<1.5
 
     func body(content: Content) -> some View {
-        let roll = manager.roll * 10
-        let pitch = manager.pitch
+        let roll = manager.roll.betweenOrClamped(to: rollAndPitchBoundary) * 10
+        let pitch = manager.pitch.betweenOrClamped(to: rollAndPitchBoundary)
         content
             .offset(x: roll, y: pitch * 10)
             .rotation3DEffect(.degrees(roll), axis: (0, 1, 0), perspective: 1)

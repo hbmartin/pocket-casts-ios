@@ -216,6 +216,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
     var errorAutoDismissWork: DispatchWorkItem?
 
     let routePicker = PCRoutePickerView(frame: CGRect.zero)
+    var isPresentingOverflowRoutePicker = false
 
     #if !APPCLIP
     private lazy var upNextController = UpNextViewController(source: .nowPlaying)

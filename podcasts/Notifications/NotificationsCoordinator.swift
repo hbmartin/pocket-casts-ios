@@ -64,7 +64,7 @@ enum NotificationType: String {
         case .reengagementWeekly:
             return L10n.notificationsReengagementWeeklyBody
         case .reengagementDownloads:
-                return L10n.notificationsReengagementDownloadsBody(NotificationsCoordinator.shared.numberOfDownloadsAvailable())
+            return L10n.notificationsReengagementDownloadsBody(NotificationsCoordinator.shared.numberOfDownloadsAvailable())
         case .recommendationsTrending:
             return L10n.notificationsRecommendationsTrendingBody
         case .recommendationsYouMightLike:
@@ -142,6 +142,7 @@ enum NotificationsGroup: CaseIterable {
     case dailyReminders
     case recommendations
     case newFeaturesAndTips
+    // Reserved to keep the offers notification preference stable.
     case offers
 
     var notifications: [NotificationType] {
@@ -170,6 +171,7 @@ enum NotificationsGroup: CaseIterable {
             case .newFeaturesAndTips:
                 return 16
             case .offers:
+                // Reserved for possible future local offer notifications.
                 return 14
         }
     }
@@ -225,6 +227,7 @@ enum NotificationsGroup: CaseIterable {
             case .newFeaturesAndTips:
                 return Self.speedUpNotifications ? 60.seconds: 1.week
             case .offers:
+                // Reserved for possible future local offer notifications.
                 return Self.speedUpNotifications ? 120.seconds: 2.week
         }
     }

@@ -8,17 +8,13 @@ struct WelcomeView: View {
         L10n.welcomeNewAccountTitle
     }
 
-    private var isPlus: Bool {
-        false
-    }
-
     var body: some View {
         ZStack(alignment: .top) {
-            WelcomeConfetti(type: isPlus ? .plus : .normal)
+            WelcomeConfetti(type: .normal)
 
             ScrollViewIfNeeded {
                 VStack(alignment: .leading) {
-                    HeaderIcon(isPlus: isPlus)
+                    HeaderIcon()
                     Label(titleText, for: .title)
                         .padding(.top, 28)
                         .padding(.bottom, 24)
@@ -121,14 +117,12 @@ struct WelcomeConfetti: View {
 /// icon without effecting the check mark
 private struct HeaderIcon: View {
     @EnvironmentObject var theme: Theme
-    let isPlus: Bool
 
     var body: some View {
         HStack {
             ZStack {
                 Image("welcome-icon")
-                    .foregroundColor(isPlus ? Color.plusGradientColor1 : AppTheme.color(for: .icon, theme: theme))
-                    .gradientOverlay(isPlus ? Color.plusGradient : nil)
+                    .foregroundColor(AppTheme.color(for: .icon, theme: theme))
                 Image("welcome-icon-check")
             }
             Spacer()
@@ -334,25 +328,4 @@ struct WelcomeConfettiEmitter: UIViewRepresentable {
             self.emit(with: images, config: NormalConfettiView.EmitterConfig())
         }
     }
-}
-
-private extension View {
-    @ViewBuilder
-    func gradientOverlay<Content: View>(_ content: Content?) -> some View {
-        if let content {
-            overlay(content).mask(self)
-        } else {
-            self
-        }
-    }
-}
-
-private extension Color {
-    static let plusGradient = LinearGradient(stops: [
-        Gradient.Stop(color: .plusGradientColor1, location: 0.0822),
-        Gradient.Stop(color: .plusGradientColor2, location: 0.9209)
-    ], startPoint: .topLeading, endPoint: .topTrailing)
-
-    static let plusGradientColor1 = Color(hex: "FED745")
-    static let plusGradientColor2 = Color(hex: "FEB525")
 }

@@ -30,6 +30,10 @@ make clean
 make test_staging
 ```
 
+## Security Scanning
+
+When PR feedback, unexpected planning decisions, bug discoveries, or other implementation learnings reveal a pattern that could be caught automatically, add or update local Semgrep rules in `semgrep/swift-security.yml` so the issue is checked going forward.
+
 ### Running a Single Test
 
 ```bash
@@ -141,6 +145,7 @@ SwiftLint is configured with opt-in rules. Notable custom rules:
 ## Protocol Buffers
 
 Server objects use protobuf. To regenerate after API changes:
+
 ```bash
 brew install protobuf swift-protobuf  # One-time setup
 make update_proto API_PATH=/path/to/pocketcasts-api/api/modules/protobuf/src/main/proto
@@ -151,11 +156,13 @@ make update_proto API_PATH=/path/to/pocketcasts-api/api/modules/protobuf/src/mai
 When asked to get the app running in Simulator from the CLI, use an explicit simulator UDID instead of a generic destination to avoid Xcode choosing the wrong matching simulator/architecture.
 
 If the build fails during credential generation because local secrets are missing, run:
+
 ```bash
 make external_contributor
 ```
 
 Build the staging app for the booted simulator with signing disabled:
+
 ```bash
 set -o pipefail
 xcodebuild -quiet -project podcasts.xcodeproj \
@@ -168,6 +175,7 @@ xcodebuild -quiet -project podcasts.xcodeproj \
 ```
 
 Use `set -o pipefail` when piping through `tee`; otherwise a failed `xcodebuild` can look successful. After a successful build, install and launch the main app bundle:
+
 ```bash
 xcrun simctl install <SIMULATOR_UDID> /tmp/pocketcasts-sim-deriveddata/Build/Products/StagingDebug-iphonesimulator/podcasts.app
 xcrun simctl launch <SIMULATOR_UDID> au.com.shiftyjelly.podcasts

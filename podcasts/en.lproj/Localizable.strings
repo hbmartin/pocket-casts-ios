@@ -1830,8 +1830,8 @@
 /* Label of a title explaining why to subscribe to Patron. */
 "patron_callout" = "Believe in what we’re doing and want to show your support?";
 
-/* The app name, Pocket Casts. */
-"pocket_casts" = "Pocket Casts";
+/* The app name shown when subscription UI needs a generic Pocket Casts label. */
+"app_pocket_casts_name" = "Pocket Casts";
 
 /* Label of a button that informs the user they can upgrade their account. . */
 "upgrade_account" = "Upgrade Account";
