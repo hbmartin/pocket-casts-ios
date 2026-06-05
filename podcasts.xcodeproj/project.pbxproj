@@ -39,11 +39,11 @@
 		10DFE9312C5A889700957D0A /* CategoryPodcastsTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DFE9302C5A889700957D0A /* CategoryPodcastsTable.swift */; };
 		3FC668C02F7CD3440072EBA8 /* XcodeTarget_podcasts in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668BF2F7CD3440072EBA8 /* XcodeTarget_podcasts */; };
 		3FC668C22F7CD4A60072EBA8 /* XcodeTarget_NotificationExtension in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668C12F7CD4A60072EBA8 /* XcodeTarget_NotificationExtension */; };
-		3FC668C42F7CD4F70072EBA8 /* XcodeTarget_Pocket Casts Watch App in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668C32F7CD4F70072EBA8 /* XcodeTarget_Pocket Casts Watch App */; };
+		3FC668C42F7CD4F70072EBA8 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		3FC668C62F7CD5020072EBA8 /* XcodeTarget_PodcastsIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668C52F7CD5020072EBA8 /* XcodeTarget_PodcastsIntents */; };
 		3FC668C82F7CD5140072EBA8 /* XcodeTarget_PodcastsIntentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668C72F7CD5140072EBA8 /* XcodeTarget_PodcastsIntentsUI */; };
 		3FC668CA2F7CD51E0072EBA8 /* XcodeTarget_WidgetExtension in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668C92F7CD51E0072EBA8 /* XcodeTarget_WidgetExtension */; };
-		3FC668CC2F7CD5A20072EBA8 /* XcodeTarget_Pocket Casts App Clip in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC668CB2F7CD5A20072EBA8 /* XcodeTarget_Pocket Casts App Clip */; };
+		3FC668CC2F7CD5A20072EBA8 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		4000A2A025463C6A00356FCE /* LeftAlignedFlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4000A29F25463C6900356FCE /* LeftAlignedFlowLayout.swift */; };
 		40043F0B23FBC6B1004A9B57 /* SiriPodcastItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40043F0A23FBC6B1004A9B57 /* SiriPodcastItem.swift */; };
 		40043F0D23FDFD91004A9B57 /* SiriPodcastItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40043F0A23FBC6B1004A9B57 /* SiriPodcastItem.swift */; };
@@ -277,8 +277,6 @@
 		4694FA652799C80300E9CF70 /* iPhone_GenerateScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA642799C80300E9CF70 /* iPhone_GenerateScreenshots.swift */; };
 		4694FA6D2799C85500E9CF70 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA6C2799C85500E9CF70 /* SnapshotHelper.swift */; };
 		4694FA712799E73E00E9CF70 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 460C375526D831E3008B3609 /* Localizable.strings */; };
-		46AB84D627AC392F00B219BA /* XCUIElement+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46316CF127A85F3000458BA4 /* XCUIElement+Extensions.swift */; };
-		46AFC24127AB1AD9004B026F /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA6C2799C85500E9CF70 /* SnapshotHelper.swift */; };
 		46C22EE028F73D9A00F4173B /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */; };
 		46C22EE328F7497300F4173B /* DeveloperMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C22EE228F7497300F4173B /* DeveloperMenu.swift */; };
 		46C3D552275EA16200DDE116 /* SingleEpisodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C3D551275EA16200DDE116 /* SingleEpisodeViewController.swift */; };
@@ -394,7 +392,6 @@
 		9AB2900A2ECB7EDB006086F9 /* PlaylistDetailViewController+PlayAll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB290092ECB7ED4006086F9 /* PlaylistDetailViewController+PlayAll.swift */; };
 		9AB2900C2ECB7F81006086F9 /* PlaylistPlayAllSheetHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB2900B2ECB7F75006086F9 /* PlaylistPlayAllSheetHost.swift */; };
 		9AB2900E2ECB82F9006086F9 /* PlaylistPlayAllSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB2900D2ECB82F6006086F9 /* PlaylistPlayAllSheet.swift */; };
-		9AB645182D5138B200A842C8 /* Pocket Casts App Clip.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = F5D5F7792CEBE769001F492D /* Pocket Casts App Clip.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9ACB950B2E0D9199007238A7 /* DescriptiveActionAttributedTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ACB950A2E0D9199007238A7 /* DescriptiveActionAttributedTextView.swift */; };
 		9ACB950C2E0D9199007238A7 /* DescriptiveActionAttributedTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ACB950A2E0D9199007238A7 /* DescriptiveActionAttributedTextView.swift */; };
 		9AD41AC22EB4E0750048FB8B /* PlaylistDetailViewController+Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD41AC12EB4E0700048FB8B /* PlaylistDetailViewController+Analytics.swift */; };
@@ -1244,7 +1241,7 @@
 		FF32F3E92FAB86C700226E58 /* PlayerColorHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2F3B9F2366C01400416633 /* PlayerColorHelper.swift */; };
 		FF32F3EB2FAB972700226E58 /* AuthenticationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4647623028F70CD0006D005A /* AuthenticationHelper.swift */; };
 		FF40C0662C65175B003A9D93 /* TranscriptErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF40C0652C65175B003A9D93 /* TranscriptErrorView.swift */; };
-		FF49232D2F9BCC9500E68E0C /* XcodeTarget_Pocket Casts TV App in Frameworks */ = {isa = PBXBuildFile; productRef = FF49232C2F9BCC9500E68E0C /* XcodeTarget_Pocket Casts TV App */; };
+		FF49232D2F9BCC9500E68E0C /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		FF492A7A2F9BDA9A00E68E0C /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A4D1B54E8F0000EC323 /* Constants.swift */; };
 		FF49FEAC2F9BBC9A00E68E0C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 460C375526D831E3008B3609 /* Localizable.strings */; };
 		FF49FEAD2F9BBCA900E68E0C /* LocalizationHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 461C46C6274D80990003D3A9 /* LocalizationHelpers.swift */; };
@@ -1405,13 +1402,6 @@
 			remoteGlobalIDString = BDBD53EB17019B2A0048C8C5;
 			remoteInfo = podcasts;
 		};
-		46AFC23A27AB19CE004B026F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BDD301631EFB9356004A9972;
-			remoteInfo = "Pocket Casts Watch App";
-		};
 		8B0845912A66C86500742C2F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
@@ -1426,26 +1416,12 @@
 			remoteGlobalIDString = 2F90990A2A4F88B00044FC55;
 			remoteInfo = "Share Extension";
 		};
-		9AB645112D51368300A842C8 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F5D5F7782CEBE769001F492D;
-			remoteInfo = "Pocket Casts App Clip";
-		};
 		BD3A21121E6CFC2400F42241 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = BD3A210C1E6CFC2400F42241;
 			remoteInfo = NotificationExtension;
-		};
-		BDD301801EFB9356004A9972 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BDD301631EFB9356004A9972;
-			remoteInfo = "Pocket Casts Watch App";
 		};
 		BDEFBA1F1E6D3C2300B9024B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1491,17 +1467,6 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9AB645172D51388400A842C8 /* Embed App Clips */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 8;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/AppClips";
-			dstSubfolderSpec = 16;
-			files = (
-				9AB645182D5138B200A842C8 /* Pocket Casts App Clip.app in Embed App Clips */,
-			);
-			name = "Embed App Clips";
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 		BD0CFBE12682C4E600765E33 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1536,26 +1501,6 @@
 			files = (
 			);
 			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		BDE48A462410DADE00ECA6CA /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F5F508F52CEBE985007D6E39 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-			);
-			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -2579,7 +2524,6 @@
 		F5BA5C992C7F701900BDA5B9 /* DiscoverCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverCollectionViewController.swift; sourceTree = "<group>"; };
 		F5BA5C9B2C80F38200BDA5B9 /* UIViewControllerContentConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewControllerContentConfiguration.swift; sourceTree = "<group>"; };
 		F5BA5C9D2C81254300BDA5B9 /* DiscoverCollectionViewController+DiscoverDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DiscoverCollectionViewController+DiscoverDelegate.swift"; sourceTree = "<group>"; };
-		F5D5F7792CEBE769001F492D /* Pocket Casts App Clip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Pocket Casts App Clip.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5EA21F12CC1CD040043C780 /* EndOfYearDeveloperMenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndOfYearDeveloperMenuButton.swift; sourceTree = "<group>"; };
 		F5F884622CC9EAA6002BED2C /* Humane-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Humane-Bold.otf"; sourceTree = "<group>"; };
 		F5FF611F2BD076BA00190711 /* Sharing.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Sharing.xcassets; sourceTree = "<group>"; };
@@ -2632,131 +2576,56 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3F26BBBE2F4FC23E0007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3F26BBBE2F4FC23E0007119B /* Exceptions for "PocketCastsTests" folder in "PocketCastsTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				UnitTests.xctestplan,
 			);
 			target = 45ECEF7A27E910E300C65030 /* PocketCastsTests */;
 		};
-		3F26BC052F4FC3090007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3F26BC052F4FC3090007119B /* Exceptions for "WidgetExtension" folder in "WidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 4090974D25235DFA00CED68C /* WidgetExtension */;
 		};
-		3F26BC1B2F4FC3CA0007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3F26BC1B2F4FC3CA0007119B /* Exceptions for "PodcastsIntents" folder in "PodcastsIntents" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 403B5B0F21813FFA00821A54 /* PodcastsIntents */;
 		};
-		3F26BF582F4FC7C40007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-				"Supporting Files/PushNotificationPayload.apns",
-			);
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-		};
-		3F584F392F56842C005A3593 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Bookmarks+Analytics.swift",
-			);
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-		};
-		3F74793E2F5550D7004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MNAVChapters/MNAVChapterReader.m,
-			);
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-		};
-		3F74793F2F5550D7004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MNAVChapters/MNAVChapterReader.m,
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		3F74794E2F555197004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Variation+CustomTreatment.swift",
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		3F74795C2F55519F004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Unlockable+Bookmarks.swift",
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		3F7479EC2F5551AA004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Analytics.swift,
-				"AnalyticsDescribable+Modules.swift",
-				AnalyticsEvent.swift,
-				AnonymousUUID.swift,
-				Helpers/AnalyticsCoordinator.swift,
-				Helpers/AnalyticsEpisodeHelper.swift,
-				Helpers/AnalyticsPlaybackHelper.swift,
-				"String+Analytics.swift",
-			);
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-		};
-		3F7479ED2F5551AA004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Adapters/Crash Logging/CrashLoggingAdapter.swift",
-				"Adapters/Crash Logging/CrashLoggingDataProvider.swift",
-				AnalyticsAppThemeProvider.swift,
-				AppLifecyleAnalytics.swift,
-				WidgetAnalytics.swift,
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		3F747A502F5551D5004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3F747A502F5551D5004C7FF6 /* Exceptions for "Utilities" folder in "WidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"SwiftUI/View+if.swift",
 			);
 			target = 4090974D25235DFA00CED68C /* WidgetExtension */;
 		};
-		3F747A512F5551D5004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"SwiftUI/View+UIView.swift",
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		3FDAD4EC2F46D75100CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3FDAD4EC2F46D75100CC3259 /* Exceptions for "NotificationContent" folder in "NotificationContent" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = BDEFBA131E6D3C2300B9024B /* NotificationContent */;
 		};
-		3FDAD4F12F46D75500CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3FDAD4F12F46D75500CC3259 /* Exceptions for "NotificationExtension" folder in "NotificationExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				NotificationService.swift,
 			);
 			target = BD3A210C1E6CFC2400F42241 /* NotificationExtension */;
 		};
-		3FDAD4FA2F46D77800CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3FDAD4FA2F46D77800CC3259 /* Exceptions for "PodcastsIntentsUI" folder in "PodcastsIntentsUI" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 403B5B1821813FFA00821A54 /* PodcastsIntentsUI */;
 		};
-		3FDAD5072F46D78E00CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3FDAD5072F46D78E00CC3259 /* Exceptions for "Share Extension" folder in "Share Extension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				/Localized/MainInterface.storyboard,
@@ -2764,185 +2633,476 @@
 			);
 			target = 2F90990A2A4F88B00044FC55 /* Share Extension */;
 		};
-		3FDAD51A2F46D79100CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		3FDAD5A42F46D82200CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3FDAD5A42F46D82200CC3259 /* Exceptions for "Test Plans" folder in "Screenshot Automation" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				ScreenshotAutomation_iPad_Light_Interface.xctestplan,
 			);
 			target = 4694FA5F2799C80300E9CF70 /* Screenshot Automation */;
 		};
-		FF3248CC2FACCDB300226E58 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Create & Edit/Views/PodcastImageViewWrapper.swift",
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF32F3D72FAB82D100226E58 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				EpisodeChangeType.swift,
-				"EpisodeFilter+ChangeType.swift",
-				PlaylistCacheInvalidationCoordinator.swift,
-				PlaylistMetadataLoader.swift,
-				"PlaylistMetadataLoader+Dependency.swift",
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF6024A42FAB478F00EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Bookmarks+Analytics.swift",
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF6033FA2FAB4B0200EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"NetworkUtils+Helpers.swift",
-				"Server+Strings.swift",
-				"String+Differentiable.swift",
-				"String+SentenceCase.swift",
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF6033FB2FAB4B8600EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Pocket-Casts-TV-App-Info.plist",
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF603BAA2FAB4F7100EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AllArchivedPlaceholder.swift,
-				EpisodeTableHelper.swift,
-				HomeGridListItem.swift,
-				ListEpisode.swift,
-				ListHeader.swift,
-				ListItem.swift,
-				NoSearchResultsPlaceholder.swift,
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF60EC562F890CF400B409BC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"String+SentenceCase.swift",
-			);
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-		};
-		FF60EC582F890D1F00B409BC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"String+SentenceCase.swift",
-			);
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-		};
-		FF65058E2FAA96BF00C3662E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AEXML.swift,
-				MNAVChapters/MNAVChapterReader.m,
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF65059E2FAA9CB800C3662E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Settings+Unlockable.swift",
-				Unlockable.swift,
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF8FF6A72FAA47450086A867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Adapters/Crash Logging/CrashLoggingAdapter.swift",
-				"Adapters/Crash Logging/CrashLoggingDataProvider.swift",
-				AnalyticsAppThemeProvider.swift,
-				WidgetAnalytics.swift,
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF8FFE482FAA4B170086A867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				CarPlayHelper.swift,
-				CustomObserver.swift,
-				SceneHelper.swift,
-				SwiftUI/AsyncImageView.swift,
-				"SwiftUI/View+if.swift",
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FF8FFE672FAA8E650086A867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				ShowInfoCoordinating.swift,
-				ShowInfoCoordinator.swift,
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
-		FFE437E72FBCB03800716EAA /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Model/SearchHistoryModel.swift,
-			);
-			target = FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		371E0318452B7C751D0C5611 /* Fingerprint */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Fingerprint; sourceTree = "<group>"; };
-		3F26BB7B2F4FC23E0007119B /* PocketCastsTests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F26BBBE2F4FC23E0007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PocketCastsTests; sourceTree = "<group>"; };
-		3F26BBE52F4FC3090007119B /* WidgetExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F26BC052F4FC3090007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = WidgetExtension; sourceTree = "<group>"; };
-		3F26BC112F4FC3C90007119B /* PodcastsIntents */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F26BC1B2F4FC3CA0007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PodcastsIntents; sourceTree = "<group>"; };
-		3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FF8FFE672FAA8E650086A867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "Episode Info Coordinator"; sourceTree = "<group>"; };
-		3F584D262F567EE1005A3593 /* Lists */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FF603BAA2FAB4F7100EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Lists; sourceTree = "<group>"; };
-		3F584DED2F56811B005A3593 /* End of Year */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "End of Year"; sourceTree = "<group>"; };
-		3F584E3E2F568131005A3593 /* Whats New */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Whats New"; sourceTree = "<group>"; };
-		3F584E492F568154005A3593 /* Theme */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Theme; sourceTree = "<group>"; };
-		3F584E4F2F568314005A3593 /* CarPlay */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = CarPlay; sourceTree = "<group>"; };
-		3F584E7B2F5683A8005A3593 /* Sharing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Sharing; sourceTree = "<group>"; };
-		3F584E952F5683B2005A3593 /* Up Next History */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Up Next History"; sourceTree = "<group>"; };
-		3F584EC02F5683D9005A3593 /* Common SwiftUI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Common SwiftUI"; sourceTree = "<group>"; };
-		3F584F202F56842C005A3593 /* Bookmarks */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F584F392F56842C005A3593 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF6024A42FAB478F00EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Bookmarks; sourceTree = "<group>"; };
-		3F584F3E2F568437005A3593 /* Ratings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Ratings; sourceTree = "<group>"; };
-		3F584FA42F568449005A3593 /* Onboarding */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Onboarding; sourceTree = "<group>"; };
-		3F584FEF2F5685CE005A3593 /* Episode Cells */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Episode Cells"; sourceTree = "<group>"; };
-		3F584FF12F568604005A3593 /* Main */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Main; sourceTree = "<group>"; };
-		3F584FF22F568621005A3593 /* Syncing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Syncing; sourceTree = "<group>"; };
-		3F584FF32F56869B005A3593 /* Folders */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FF3248CC2FACCDB300226E58 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Folders; sourceTree = "<group>"; };
-		3F584FFA2F5687F9005A3593 /* Common Components */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Common Components"; sourceTree = "<group>"; };
-		3F5850042F5689C2005A3593 /* Podcasts */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Podcasts; sourceTree = "<group>"; };
-		3F585D252F568CF8005A3593 /* Episode */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Episode; sourceTree = "<group>"; };
-		3F585D302F568D28005A3593 /* PlaylistMetadataLoader */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FF32F3D72FAB82D100226E58 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PlaylistMetadataLoader; sourceTree = "<group>"; };
-		3F585D3A2F568D9D005A3593 /* Categories */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Categories; sourceTree = "<group>"; };
-		3F585D5B2F568DDC005A3593 /* New Search */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FFE437E72FBCB03800716EAA /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "New Search"; sourceTree = "<group>"; };
-		3F7463D02F55488A004C7FF6 /* config */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = config; sourceTree = "<group>"; };
-		3F74793C2F5550AD004C7FF6 /* Third Party Libraries */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F74793E2F5550D7004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 3F74793F2F5550D7004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF65058E2FAA96BF00C3662E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "Third Party Libraries"; sourceTree = "<group>"; };
-		3F7479402F55510B004C7FF6 /* Utilities */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F747A502F5551D5004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 3F747A512F5551D5004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF8FFE482FAA4B170086A867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Utilities; sourceTree = "<group>"; };
-		3F7479452F555197004C7FF6 /* ABTest */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F74794E2F555197004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ABTest; sourceTree = "<group>"; };
-		3F7479522F55519F004C7FF6 /* Unlockable */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F74795C2F55519F004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF65059E2FAA9CB800C3662E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Unlockable; sourceTree = "<group>"; };
-		3F7479C32F5551AA004C7FF6 /* Analytics */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F7479EC2F5551AA004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 3F7479ED2F5551AA004C7FF6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF8FF6A72FAA47450086A867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Analytics; sourceTree = "<group>"; };
-		3F747A532F5553A1004C7FF6 /* Extensions */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FF60EC582F890D1F00B409BC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF60EC562F890CF400B409BC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, FF6033FA2FAB4B0200EB3AD5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Extensions; sourceTree = "<group>"; };
-		3F747A542F5598A2004C7FF6 /* Playback */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Playback; sourceTree = "<group>"; };
-		3F747A5A2F559925004C7FF6 /* Notifications */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Notifications; sourceTree = "<group>"; };
-		3FDAD4E72F46D75100CC3259 /* NotificationContent */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3FDAD4EC2F46D75100CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = NotificationContent; sourceTree = "<group>"; };
-		3FDAD4EF2F46D75400CC3259 /* NotificationExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3FDAD4F12F46D75500CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = NotificationExtension; sourceTree = "<group>"; };
-		3FDAD4F62F46D77800CC3259 /* PodcastsIntentsUI */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3FDAD4FA2F46D77800CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PodcastsIntentsUI; sourceTree = "<group>"; };
-		3FDAD5042F46D78E00CC3259 /* Share Extension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3FDAD5072F46D78E00CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "Share Extension"; sourceTree = "<group>"; };
-		3FDAD5122F46D79100CC3259 /* Pocket Casts App Clip */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3FDAD51A2F46D79100CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "Pocket Casts App Clip"; sourceTree = "<group>"; };
-		3FDAD5A22F46D82100CC3259 /* Test Plans */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3FDAD5A42F46D82200CC3259 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "Test Plans"; sourceTree = "<group>"; };
+		371E0318452B7C751D0C5611 /* Fingerprint */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Fingerprint;
+			sourceTree = "<group>";
+		};
+		3F26BB7B2F4FC23E0007119B /* PocketCastsTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3F26BBBE2F4FC23E0007119B /* Exceptions for "PocketCastsTests" folder in "PocketCastsTests" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PocketCastsTests;
+			sourceTree = "<group>";
+		};
+		3F26BBE52F4FC3090007119B /* WidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3F26BC052F4FC3090007119B /* Exceptions for "WidgetExtension" folder in "WidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = WidgetExtension;
+			sourceTree = "<group>";
+		};
+		3F26BC112F4FC3C90007119B /* PodcastsIntents */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3F26BC1B2F4FC3CA0007119B /* Exceptions for "PodcastsIntents" folder in "PodcastsIntents" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PodcastsIntents;
+			sourceTree = "<group>";
+		};
+		3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Episode Info Coordinator";
+			sourceTree = "<group>";
+		};
+		3F584D262F567EE1005A3593 /* Lists */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Lists;
+			sourceTree = "<group>";
+		};
+		3F584DED2F56811B005A3593 /* End of Year */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "End of Year";
+			sourceTree = "<group>";
+		};
+		3F584E3E2F568131005A3593 /* Whats New */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Whats New";
+			sourceTree = "<group>";
+		};
+		3F584E492F568154005A3593 /* Theme */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		3F584E4F2F568314005A3593 /* CarPlay */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = CarPlay;
+			sourceTree = "<group>";
+		};
+		3F584E7B2F5683A8005A3593 /* Sharing */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Sharing;
+			sourceTree = "<group>";
+		};
+		3F584E952F5683B2005A3593 /* Up Next History */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Up Next History";
+			sourceTree = "<group>";
+		};
+		3F584EC02F5683D9005A3593 /* Common SwiftUI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Common SwiftUI";
+			sourceTree = "<group>";
+		};
+		3F584F202F56842C005A3593 /* Bookmarks */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Bookmarks;
+			sourceTree = "<group>";
+		};
+		3F584F3E2F568437005A3593 /* Ratings */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Ratings;
+			sourceTree = "<group>";
+		};
+		3F584FA42F568449005A3593 /* Onboarding */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		3F584FEF2F5685CE005A3593 /* Episode Cells */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Episode Cells";
+			sourceTree = "<group>";
+		};
+		3F584FF12F568604005A3593 /* Main */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		3F584FF22F568621005A3593 /* Syncing */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Syncing;
+			sourceTree = "<group>";
+		};
+		3F584FF32F56869B005A3593 /* Folders */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Folders;
+			sourceTree = "<group>";
+		};
+		3F584FFA2F5687F9005A3593 /* Common Components */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Common Components";
+			sourceTree = "<group>";
+		};
+		3F5850042F5689C2005A3593 /* Podcasts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Podcasts;
+			sourceTree = "<group>";
+		};
+		3F585D252F568CF8005A3593 /* Episode */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Episode;
+			sourceTree = "<group>";
+		};
+		3F585D302F568D28005A3593 /* PlaylistMetadataLoader */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PlaylistMetadataLoader;
+			sourceTree = "<group>";
+		};
+		3F585D3A2F568D9D005A3593 /* Categories */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Categories;
+			sourceTree = "<group>";
+		};
+		3F585D5B2F568DDC005A3593 /* New Search */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "New Search";
+			sourceTree = "<group>";
+		};
+		3F7463D02F55488A004C7FF6 /* config */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = config;
+			sourceTree = "<group>";
+		};
+		3F74793C2F5550AD004C7FF6 /* Third Party Libraries */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Third Party Libraries";
+			sourceTree = "<group>";
+		};
+		3F7479402F55510B004C7FF6 /* Utilities */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3F747A502F5551D5004C7FF6 /* Exceptions for "Utilities" folder in "WidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		3F7479452F555197004C7FF6 /* ABTest */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ABTest;
+			sourceTree = "<group>";
+		};
+		3F7479522F55519F004C7FF6 /* Unlockable */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Unlockable;
+			sourceTree = "<group>";
+		};
+		3F7479C32F5551AA004C7FF6 /* Analytics */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Analytics;
+			sourceTree = "<group>";
+		};
+		3F747A532F5553A1004C7FF6 /* Extensions */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		3F747A542F5598A2004C7FF6 /* Playback */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Playback;
+			sourceTree = "<group>";
+		};
+		3F747A5A2F559925004C7FF6 /* Notifications */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		3FDAD4E72F46D75100CC3259 /* NotificationContent */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3FDAD4EC2F46D75100CC3259 /* Exceptions for "NotificationContent" folder in "NotificationContent" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = NotificationContent;
+			sourceTree = "<group>";
+		};
+		3FDAD4EF2F46D75400CC3259 /* NotificationExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3FDAD4F12F46D75500CC3259 /* Exceptions for "NotificationExtension" folder in "NotificationExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = NotificationExtension;
+			sourceTree = "<group>";
+		};
+		3FDAD4F62F46D77800CC3259 /* PodcastsIntentsUI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3FDAD4FA2F46D77800CC3259 /* Exceptions for "PodcastsIntentsUI" folder in "PodcastsIntentsUI" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PodcastsIntentsUI;
+			sourceTree = "<group>";
+		};
+		3FDAD5042F46D78E00CC3259 /* Share Extension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3FDAD5072F46D78E00CC3259 /* Exceptions for "Share Extension" folder in "Share Extension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Share Extension";
+			sourceTree = "<group>";
+		};
+		3FDAD5122F46D79100CC3259 /* Pocket Casts App Clip */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Pocket Casts App Clip";
+			sourceTree = "<group>";
+		};
+		3FDAD5A22F46D82100CC3259 /* Test Plans */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3FDAD5A42F46D82200CC3259 /* Exceptions for "Test Plans" folder in "Screenshot Automation" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "Test Plans";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2979,14 +3139,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		4478D0925E7FBEDEBE29C3DF /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3FC668C42F7CD4F70072EBA8 /* XcodeTarget_Pocket Casts Watch App in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		45ECEF7827E910E300C65030 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -2995,13 +3147,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		4694FA5D2799C80300E9CF70 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		46AFC23127AB19CE004B026F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -3032,22 +3177,6 @@
 			files = (
 				BDEFBA171E6D3C2300B9024B /* UserNotificationsUI.framework in Frameworks */,
 				BDEFBA151E6D3C2300B9024B /* UserNotifications.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F5D5F7762CEBE769001F492D /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3FC668CC2F7CD5A20072EBA8 /* XcodeTarget_Pocket Casts App Clip in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF4B83AB2F981D8E001B8C56 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				FF49232D2F9BCC9500E68E0C /* XcodeTarget_Pocket Casts TV App in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4562,7 +4691,6 @@
 				4694FA602799C80300E9CF70 /* Screenshot Automation.xctest */,
 				45ECEF7B27E910E300C65030 /* PocketCastsTests.xctest */,
 				2F90990B2A4F88B00044FC55 /* Share Extension.appex */,
-				F5D5F7792CEBE769001F492D /* Pocket Casts App Clip.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -5618,24 +5746,6 @@
 			productReference = 4694FA602799C80300E9CF70 /* Screenshot Automation.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		46AFC23327AB19CE004B026F /* Screenshot Automation Watch */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 46AFC23C27AB19CF004B026F /* Build configuration list for PBXNativeTarget "Screenshot Automation Watch" */;
-			buildPhases = (
-				46AFC23027AB19CE004B026F /* Sources */,
-				46AFC23127AB19CE004B026F /* Frameworks */,
-				46AFC23227AB19CE004B026F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-			);
-			name = "Screenshot Automation Watch";
-			productName = "Screenshot Automation Watch";
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		BD3A210C1E6CFC2400F42241 /* NotificationExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BD3A21171E6CFC2400F42241 /* Build configuration list for PBXNativeTarget "NotificationExtension" */;
@@ -5668,7 +5778,6 @@
 				BD5231EA1E3EDA6A000F0D38 /* Embed App Extensions */,
 				BDD3018A1EFB9356004A9972 /* Embed Watch Content */,
 				40BF0B3F241F55FE003E3ABD /* Embed Frameworks */,
-				9AB645172D51388400A842C8 /* Embed App Clips */,
 				C716FF45296F2BE3006B787D /* Modify Plist */,
 			);
 			buildRules = (
@@ -5682,7 +5791,6 @@
 				4090975A25235DFC00CED68C /* PBXTargetDependency */,
 				8B0845922A66C86500742C2F /* PBXTargetDependency */,
 				8B0845952A66C86D00742C2F /* PBXTargetDependency */,
-				9AB645122D51368300A842C8 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
@@ -5725,31 +5833,6 @@
 			productReference = BDBD53EC17019B2A0048C8C5 /* podcasts.app */;
 			productType = "com.apple.product-type.application";
 		};
-		BDD301631EFB9356004A9972 /* Pocket Casts Watch App */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BDD301891EFB9356004A9972 /* Build configuration list for PBXNativeTarget "Pocket Casts Watch App" */;
-			buildPhases = (
-				BDD301621EFB9356004A9972 /* Resources */,
-				4478D0925E7FBEDEBE29C3DF /* Frameworks */,
-				BDD3016C1EFB9356004A9972 /* Sources */,
-				BDE48A462410DADE00ECA6CA /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FF2CD57A2B9F4B2D009B58B5 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */,
-				3F7479522F55519F004C7FF6 /* Unlockable */,
-			);
-			name = "Pocket Casts Watch App";
-			packageProductDependencies = (
-				3FC668C32F7CD4F70072EBA8 /* XcodeTarget_Pocket Casts Watch App */,
-			);
-			productName = "Pocket Casts Watch App";
-			productType = "com.apple.product-type.application";
-		};
 		BDEFBA131E6D3C2300B9024B /* NotificationContent */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BDEFBA241E6D3C2300B9024B /* Build configuration list for PBXNativeTarget "NotificationContent" */;
@@ -5769,55 +5852,6 @@
 			productName = NotificationContent;
 			productReference = BDEFBA141E6D3C2300B9024B /* NotificationContent.appex */;
 			productType = "com.apple.product-type.app-extension";
-		};
-		F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F5D5F7AD2CEBE76A001F492D /* Build configuration list for PBXNativeTarget "Pocket Casts App Clip" */;
-			buildPhases = (
-				F5D5F7752CEBE769001F492D /* Sources */,
-				F5D5F7762CEBE769001F492D /* Frameworks */,
-				F5D5F7772CEBE769001F492D /* Resources */,
-				F5F508F52CEBE985007D6E39 /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */,
-				3F7479452F555197004C7FF6 /* ABTest */,
-				3F7479522F55519F004C7FF6 /* Unlockable */,
-				3F7479C32F5551AA004C7FF6 /* Analytics */,
-				3FDAD5122F46D79100CC3259 /* Pocket Casts App Clip */,
-			);
-			name = "Pocket Casts App Clip";
-			productName = "Pocket Casts App Clip";
-			productReference = F5D5F7792CEBE769001F492D /* Pocket Casts App Clip.app */;
-			productType = "com.apple.product-type.application.on-demand-install-capable";
-		};
-		FF4B83AD2F981D8E001B8C56 /* Pocket Casts TV App */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = FF4B83BA2F981D8F001B8C56 /* Build configuration list for PBXNativeTarget "Pocket Casts TV App" */;
-			buildPhases = (
-				FF4B83AA2F981D8E001B8C56 /* Sources */,
-				FF4B83AB2F981D8E001B8C56 /* Frameworks */,
-				FF4B83AC2F981D8E001B8C56 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FF49FEAB2F9BBC7600E68E0C /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				3F7479452F555197004C7FF6 /* ABTest */,
-				3F7479C32F5551AA004C7FF6 /* Analytics */,
-			);
-			name = "Pocket Casts TV App";
-			packageProductDependencies = (
-				FF49232C2F9BCC9500E68E0C /* XcodeTarget_Pocket Casts TV App */,
-			);
-			productName = "Pocket Casts TV App";
-			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
@@ -5930,8 +5964,6 @@
 				ca,
 			);
 			mainGroup = BDBD53E317019B290048C8C5;
-			packageReferences = (
-			);
 			preferredProjectObjectVersion = 51;
 			productRefGroup = BDBD53ED17019B2A0048C8C5 /* Products */;
 			projectDirPath = "";
@@ -5947,7 +5979,6 @@
 				4694FA5F2799C80300E9CF70 /* Screenshot Automation */,
 				45ECEF7A27E910E300C65030 /* PocketCastsTests */,
 				2F90990A2A4F88B00044FC55 /* Share Extension */,
-				F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */,
 			);
 		};
 /* End PBXProject section */
@@ -5996,13 +6027,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4694FA712799E73E00E9CF70 /* Localizable.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		46AFC23227AB19CE004B026F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6489,56 +6513,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BDD301621EFB9356004A9972 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C7360CB92A42128300456930 /* Bookmarks.xcassets in Resources */,
-				C7897B482A9D194F00BEF84F /* bookmark-creation-sound.wav in Resources */,
-				8B10E78A28D9094A00702C54 /* GoogleService-Info.plist in Resources */,
-				8BB4AA672BD1A80E0091480A /* sleep-timer-restarted-sound.mp3 in Resources */,
-				463538A426E16A2E00BA9D35 /* Localizable.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		BDEFBA121E6D3C2300B9024B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				8B10E78828D9094500702C54 /* GoogleService-Info.plist in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F5D5F7772CEBE769001F492D /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F553A1622CECF985006581A1 /* SleepTimerViewController.xib in Resources */,
-				F553A1652CECF99D006581A1 /* EffectsViewController.xib in Resources */,
-				FFEE59C42EB37F4300D4B145 /* playback2025_listening_time.json in Resources */,
-				F5F5097B2CEBFDDA007D6E39 /* effects_button.json in Resources */,
-				F5F5097E2CEBFDE6007D6E39 /* skip.json in Resources */,
-				F5C1FA212D1283F5007CFDF2 /* AppIcon.xcassets in Resources */,
-				F5F5097D2CEBFDE2007D6E39 /* skip_button.json in Resources */,
-				F5F509772CEBF9E3007D6E39 /* Localizable.strings in Resources */,
-				F55566FF2D14E3D000231367 /* VideoViewController.xib in Resources */,
-				F5FDDD852E58E94500FB1C33 /* GoogleService-Info.plist in Resources */,
-				F50D723F2E29F17F00764D9B /* pensive.json in Resources */,
-				F5F5097C2CEBFDDE007D6E39 /* player_play_button.json in Resources */,
-				F553A1692CECFAA3006581A1 /* sleep_button.json in Resources */,
-				F5F509782CEBFA71007D6E39 /* NowPlayingPlayerItemViewController.xib in Resources */,
-				F5F509412CEBF280007D6E39 /* PlayerContainerViewController.xib in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF4B83AC2F981D8E001B8C56 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				FF4B5C902FB4C81F004784EC /* TabBar.xcassets in Resources */,
-				FF3248CE2FACDDCC00226E58 /* NoArtwork.xcassets in Resources */,
-				FFE4107F2FBB5FED00716EAA /* GoogleService-Info.plist in Resources */,
-				FF49FEAC2F9BBC9A00E68E0C /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6709,15 +6688,6 @@
 				46673A3127A9B67E005F9EF5 /* iPad_GenerateScreenshots.swift in Sources */,
 				4694FA652799C80300E9CF70 /* iPhone_GenerateScreenshots.swift in Sources */,
 				4694FA6D2799C85500E9CF70 /* SnapshotHelper.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		46AFC23027AB19CE004B026F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				46AB84D627AC392F00B219BA /* XCUIElement+Extensions.swift in Sources */,
-				46AFC24127AB1AD9004B026F /* SnapshotHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7230,324 +7200,10 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BDD3016C1EFB9356004A9972 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BDE48A202410D0A000ECA6CA /* DownloadProgressManager.swift in Sources */,
-				8B1B782C2BC7104000DC3373 /* SleepTimerManager.swift in Sources */,
-				FF05C9902C0A255600E41EB3 /* FileManager+Helper.swift in Sources */,
-				BDE48A332410D48900ECA6CA /* ChapterManager.swift in Sources */,
-				BDE48A172410CFD100ECA6CA /* PlaybackManager.swift in Sources */,
-				BDE48A392410D5BD00ECA6CA /* PodcastManager+Cleanup.swift in Sources */,
-				FF06AFA42CB6928B0099EC9B /* MediaExporterResourceLoaderDelegate.swift in Sources */,
-				E3F37447291F0DD1005916ED /* Chapters.swift in Sources */,
-				BD74F15527F293ED00222785 /* HomeGridDataHelper.swift in Sources */,
-				BDE48A272410D27300ECA6CA /* Episode+Formatting.swift in Sources */,
-				BDE48A1E2410D08F00ECA6CA /* EpisodeManager.swift in Sources */,
-				BDE48A252410D25000ECA6CA /* DownloadManager+URLSessionDelegate.swift in Sources */,
-				BDE48A1D2410D08600ECA6CA /* Constants.swift in Sources */,
-				BDE48A312410D44000ECA6CA /* ArchiveHelper.swift in Sources */,
-				BDE48A192410D05D00ECA6CA /* PlaybackEffects.swift in Sources */,
-				BDE48A1A2410D06900ECA6CA /* DefaultPlayer.swift in Sources */,
-				46741E4F28FDE12700CC962E /* AuthenticationHelper.swift in Sources */,
-				C701C25D2A8E82DC00AD9FAB /* PaidFeature.swift in Sources */,
-				C741D9D228AD3D6C006CFBE7 /* Notifications.swift in Sources */,
-				C7D6551528E5153200AD7174 /* Debounce.swift in Sources */,
-				F57BAC682C00E7E6007B24BD /* URLSession+Episode.swift in Sources */,
-				C7ACD7F62878B07300AF3AB8 /* AnalyticsHelper.swift in Sources */,
-				BDADFF9B2431AA48006497B9 /* EpisodeDateHelper.swift in Sources */,
-				BDE48A242410D0D400ECA6CA /* UserEpisodeManager.swift in Sources */,
-				461C46CE274D9E400003D3A9 /* LocalizationHelpers.swift in Sources */,
-				C7252863299B353A00A582C3 /* BookmarkManager.swift in Sources */,
-				8BB4AA642BD17EC10091480A /* FadeOutManager.swift in Sources */,
-				BDE48A1B2410D06C00ECA6CA /* PlaybackItem.swift in Sources */,
-				8B1F88072C6404D00038E0D2 /* ArrayExtension.swift in Sources */,
-				BDE48A182410D05A00ECA6CA /* PlaybackQueue.swift in Sources */,
-				BDE48A3D2410D83100ECA6CA /* SJCommonUtils.m in Sources */,
-				BDE48A292410D27300ECA6CA /* BaseEpisode+Formatting.swift in Sources */,
-				FF54BCAA2C5A2F4D00A342E5 /* TranscriptFormat.swift in Sources */,
-				F5CDD79F2F4D1AE100D1B221 /* ApiCredentials.swift in Sources */,
-				4054146F2435B82B00431FD5 /* PlaylistManager.swift in Sources */,
-				FF06AFA82CB692D30099EC9B /* MediaFileHandle.swift in Sources */,
-				10756F892C59449C0089D34F /* Folder+Sortable.swift in Sources */,
-				BD74F15427F293E400222785 /* HomeGridItem.swift in Sources */,
-				FF8FFE592FAA5FEC0086A867 /* BackgroundShakeObserver.swift in Sources */,
-				BD26AFD527BDFD18008CC973 /* Folder+Formatting.swift in Sources */,
-				BDE48A262410D27300ECA6CA /* Podcast+Formatting.swift in Sources */,
-				8B3C7CA52A4DE36000939DED /* AutoplayHelper.swift in Sources */,
-				BD38F252253FB0670016713B /* PlaybackCatchUpHelper.swift in Sources */,
-				BDE48A222410D0AD00ECA6CA /* Settings.swift in Sources */,
-				BDEF20A62435AA780000ABB2 /* ColorManager.swift in Sources */,
-				10756F862C5944660089D34F /* Podcast+Sortable.swift in Sources */,
-				FF0A1D522C580CF5003931E6 /* TranscriptsDataRetriever.swift in Sources */,
-				BDE48A2E2410D3E700ECA6CA /* ShowNotesUpdater.swift in Sources */,
-				BDE48A322410D44900ECA6CA /* ChapterInfo.swift in Sources */,
-				463538AC26E814DD00BA9D35 /* DataModel+Strings.swift in Sources */,
-				F5197A412B995A1E007C8D0A /* DownloadManager+Logging.swift in Sources */,
-				FF0F407B2D5E37250036FFE9 /* ThreadSafeDictionary.swift in Sources */,
-				BDE48A282410D27300ECA6CA /* UserEpisode+Formatting.swift in Sources */,
-				BDE48A422410D92A00ECA6CA /* EpisodeFilter+Formatting.swift in Sources */,
-				BDE48A2C2410D2ED00ECA6CA /* EpisodeFileSizeUpdater.swift in Sources */,
-				BDE48A342410D49000ECA6CA /* PodcastChapterParser.swift in Sources */,
-				BDDAE72D27F2E76B003741A1 /* FileTypeUtil.swift in Sources */,
-				C791418E294CE33700F1852B /* StorageManager.swift in Sources */,
-				F58189C22DBC56A200B95199 /* PodcastInfo+DiscoverPodcast.swift in Sources */,
-				BDE48A2B2410D27300ECA6CA /* PlaylistEpisode+Formatting.swift in Sources */,
-				BDE48A2F2410D3F000ECA6CA /* PodcastManager.swift in Sources */,
-				FF2142D52C07369200672D8D /* MediaExporter.swift in Sources */,
-				BDE48A232410D0CA00ECA6CA /* Enumerations.swift in Sources */,
-				BD11C4232524799F00E308E6 /* SharedConstants.swift in Sources */,
-				463538F426F2413400BA9D35 /* Strings+L10n.swift in Sources */,
-				BDE48A1F2410D09900ECA6CA /* DownloadManager.swift in Sources */,
-				8BBE19F32BEA9EBC009E944B /* PodcastIndexChapterDataRetriever.swift in Sources */,
-				BDC063D1246A626E00208446 /* DownloadManager+SessionManagement.swift in Sources */,
-				BDE48A212410D0A300ECA6CA /* DownloadProgress.swift in Sources */,
-				467DF6EA26E10AFB00AC290C /* Strings+Generated.swift in Sources */,
-				BDE48A372410D4E300ECA6CA /* WatchNowPlayingHelper.swift in Sources */,
-				BDE48A1C2410D07300ECA6CA /* PlaybackProtocol.swift in Sources */,
-				BDD3018F1EFB9574004A9972 /* WatchConstants.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		BDEFBA101E6D3C2300B9024B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F5D5F7752CEBE769001F492D /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F57ABBFC2CECEBD800CC50AF /* ArchiveHelper.swift in Sources */,
-				F5F5094D2CEBF448007D6E39 /* SimpleActionView.swift in Sources */,
-				0C7BFA882FAD2A8C00C1E5FF /* LiquidGlass.swift in Sources */,
-				F5F509292CEBEF09007D6E39 /* TranscriptsDataRetriever.swift in Sources */,
-				F5F509102CEBEBC0007D6E39 /* PlaybackEffects.swift in Sources */,
-				F5F509552CEBF5D6007D6E39 /* TintableImageView.swift in Sources */,
-				F5F5092D2CEBEF46007D6E39 /* EpisodeArtwork.swift in Sources */,
-				FFE067392F86ADD000437ACC /* TranscriptFormat.swift in Sources */,
-				F5F509312CEBEF9C007D6E39 /* DownloadManager+Logging.swift in Sources */,
-				F5F509352CEBF1D0007D6E39 /* TimeSliderDelegate.swift in Sources */,
-				F553A1672CECF9E1006581A1 /* CustomStepper.swift in Sources */,
-				F5F508F22CEBE966007D6E39 /* PlaybackManager.swift in Sources */,
-				F5F509582CEBF64D007D6E39 /* ShiftyRoundButton.swift in Sources */,
-				F5F509372CEBF1EC007D6E39 /* SkipButton.swift in Sources */,
-				F5F509032CEBEA6E007D6E39 /* ThemeStyle.swift in Sources */,
-				F5F5093F2CEBF259007D6E39 /* ThemeableView.swift in Sources */,
-				F5F5090D2CEBEB9A007D6E39 /* PlayerColorHelper.swift in Sources */,
-				F5F509362CEBF1DE007D6E39 /* VideoViewController.swift in Sources */,
-				F553A1662CECF9D0006581A1 /* CustomTimeStepper.swift in Sources */,
-				F5F509422CEBF28F007D6E39 /* SJUIUtils.swift in Sources */,
-				F5F509282CEBEF01007D6E39 /* PodcastIndexChapterDataRetriever.swift in Sources */,
-				F5F5090C2CEBEB6B007D6E39 /* PlayerContainerViewController+Update.swift in Sources */,
-				F5F509432CEBF298007D6E39 /* PCNavigationController.swift in Sources */,
-				F5F509112CEBEBCC007D6E39 /* PlaybackCatchUpHelper.swift in Sources */,
-				F5F509082CEBEAEF007D6E39 /* PlaybackProtocol.swift in Sources */,
-				F5F509242CEBEE90007D6E39 /* FileTypeUtil.swift in Sources */,
-				F57ABBFB2CECEBCD00CC50AF /* PodcastManager.swift in Sources */,
-				F536B45B2DEA02830051A929 /* PCHostingController.swift in Sources */,
-				F5F5093A2CEBF217007D6E39 /* PlayPauseButton.swift in Sources */,
-				F5F509152CEBEC00007D6E39 /* Chapters.swift in Sources */,
-				F5F5093D2CEBF248007D6E39 /* OptionAction.swift in Sources */,
-				F5F509532CEBF4C4007D6E39 /* Enumerations.swift in Sources */,
-				F5F5094B2CEBF3F1007D6E39 /* VideoPlayerView.swift in Sources */,
-				F5D5F7C52CEBE84A001F492D /* NowPlayingPlayerItemViewController.swift in Sources */,
-				F5F5090F2CEBEBB1007D6E39 /* ChapterManager.swift in Sources */,
-				F5F5091B2CEBEC6F007D6E39 /* DownloadManager.swift in Sources */,
-				F5D5F7C72CEBE85D001F492D /* SimpleNotificationsViewController.swift in Sources */,
-				F5F5092B2CEBEF2C007D6E39 /* DownloadManager+URLSessionDelegate.swift in Sources */,
-				F5F5092C2CEBEF34007D6E39 /* StorageManager.swift in Sources */,
-				F553A1612CECF979006581A1 /* UIScreen+Sizes.swift in Sources */,
-				F5F5090E2CEBEBAA007D6E39 /* PlaybackQueue.swift in Sources */,
-				F5F509672CEBF7AF007D6E39 /* UserEpisode+Formatting.swift in Sources */,
-				F5F509172CEBEC14007D6E39 /* Debounce.swift in Sources */,
-				F5F508F02CEBE94F007D6E39 /* Strings+Generated.swift in Sources */,
-				F57ABC242CECF8AC00CC50AF /* NowPlayingPlayerItemViewController+Shelf.swift in Sources */,
-				F5F509052CEBEA80007D6E39 /* Theme.swift in Sources */,
-				F5F509202CEBEDF4007D6E39 /* Strings+L10n.swift in Sources */,
-				F5F509472CEBF318007D6E39 /* SharedConstants.swift in Sources */,
-				F5F509632CEBF70E007D6E39 /* Queue.swift in Sources */,
-				F5F509302CEBEF95007D6E39 /* URLSession+Episode.swift in Sources */,
-				F5F5094F2CEBF457007D6E39 /* MultipleActionView.swift in Sources */,
-				F5F5095D2CEBF697007D6E39 /* AudioUtils.swift in Sources */,
-				F580777C2DEA032A005AFBA6 /* Theme+Color.swift in Sources */,
-				F5F509402CEBF26F007D6E39 /* HapticsHelper.swift in Sources */,
-				F5F509592CEBF65E007D6E39 /* PlaybackItem.swift in Sources */,
-				F5F5095F2CEBF6AC007D6E39 /* SynchronizedAudioStack.swift in Sources */,
-				F5D5F7C62CEBE853001F492D /* PlayerContainerViewController.swift in Sources */,
-				F57ABBFD2CECEC6600CC50AF /* IncomingShareItem.swift in Sources */,
-				F5F5093C2CEBF240007D6E39 /* OptionsPicker.swift in Sources */,
-				F57ABBFF2CECEE2600CC50AF /* ServerSyncManager.swift in Sources */,
-				F5F5092F2CEBEF8F007D6E39 /* ShowNotesUpdater.swift in Sources */,
-				FF8FFE582FAA5FEC0086A867 /* BackgroundShakeObserver.swift in Sources */,
-				F5F509462CEBF2F8007D6E39 /* BasePlayPauseButton.swift in Sources */,
-				F5F5091A2CEBEC60007D6E39 /* NowPlayingHelper.swift in Sources */,
-				F5F509142CEBEBF7007D6E39 /* ChapterInfo.swift in Sources */,
-				F5F5095E2CEBF69D007D6E39 /* BufferedAudio.swift in Sources */,
-				F5F509072CEBEA9D007D6E39 /* SleepTimerManager.swift in Sources */,
-				F5F509512CEBF49D007D6E39 /* ThemeableSwitch.swift in Sources */,
-				F5F509232CEBEE87007D6E39 /* BaseEpisode+Formatting.swift in Sources */,
-				F5F5094E2CEBF451007D6E39 /* DescriptiveActionView.swift in Sources */,
-				F5F509712CEBF8C1007D6E39 /* SJMediaMetadataHelper.m in Sources */,
-				F5D5F7C82CEBE865001F492D /* PlayerTabsView.swift in Sources */,
-				F5F509042CEBEA73007D6E39 /* AppTheme.swift in Sources */,
-				F5F509522CEBF4AC007D6E39 /* Settings.swift in Sources */,
-				F5F509542CEBF5B3007D6E39 /* CustomSegmentedControl.swift in Sources */,
-				F5F509212CEBEDFB007D6E39 /* ImageManager.swift in Sources */,
-				F5F509012CEBEA36007D6E39 /* AnalyticsHelper.swift in Sources */,
-				F5F509382CEBF1FE007D6E39 /* ThemeableLabel.swift in Sources */,
-				FF0F407C2D5E37250036FFE9 /* ThreadSafeDictionary.swift in Sources */,
-				F5F509562CEBF62D007D6E39 /* DownloadProgress.swift in Sources */,
-				F5F509702CEBF8B8007D6E39 /* SJCommonUtils.m in Sources */,
-				F57ABBFE2CECEC8700CC50AF /* SharedItemImporter.swift in Sources */,
-				F5F5090A2CEBEB0C007D6E39 /* UIColor+SwiftUI.swift in Sources */,
-				F5F509682CEBF7DB007D6E39 /* TimeSliderLayer.swift in Sources */,
-				F5F509452CEBF2E2007D6E39 /* ShelfLoadState.swift in Sources */,
-				F5F508F12CEBE955007D6E39 /* RegionCancellingScrollView.swift in Sources */,
-				F5F5091D2CEBECB2007D6E39 /* EpisodeManager.swift in Sources */,
-				9ACB950B2E0D9199007238A7 /* DescriptiveActionAttributedTextView.swift in Sources */,
-				F5F5091C2CEBEC99007D6E39 /* DefaultPlayer.swift in Sources */,
-				F5F509392CEBF206007D6E39 /* ProgressCircleView.swift in Sources */,
-				F553A1642CECF997006581A1 /* EffectsViewController.swift in Sources */,
-				F5F509572CEBF638007D6E39 /* MediaFileHandle.swift in Sources */,
-				F5F509442CEBF2D6007D6E39 /* NowPlayingPlayerItemViewController+Update.swift in Sources */,
-				F5F509662CEBF788007D6E39 /* PaidFeature.swift in Sources */,
-				F5F509192CEBEC4E007D6E39 /* EpisodeFilter+Formatting.swift in Sources */,
-				F5F5093E2CEBF253007D6E39 /* FloatingVideoView.swift in Sources */,
-				F5F509332CEBEFD5007D6E39 /* FileManager+Helper.swift in Sources */,
-				F5D5F7C92CEBE86C001F492D /* PlayerItemViewController.swift in Sources */,
-				F5F5091F2CEBEDE9007D6E39 /* ColorManager.swift in Sources */,
-				F553A1632CECF98F006581A1 /* SleepTimerViewController.swift in Sources */,
-				F5F509482CEBF34D007D6E39 /* PCRoutePickerView.swift in Sources */,
-				F5F5095C2CEBF680007D6E39 /* AudioPlayTask.swift in Sources */,
-				F5F5093B2CEBF232007D6E39 /* VideoViewController+Controls.swift in Sources */,
-				F5F509222CEBEE61007D6E39 /* Episode+Formatting.swift in Sources */,
-				F5F5095B2CEBF679007D6E39 /* AudioReadTask.swift in Sources */,
-				F5F509342CEBEFDB007D6E39 /* EpisodeFileSizeUpdater.swift in Sources */,
-				F5F509252CEBEEE4007D6E39 /* PodcastChapterParser.swift in Sources */,
-				FF1F27052F224C5C001908BE /* UIFont+FontStyle.swift in Sources */,
-				F5F509622CEBF6DC007D6E39 /* ArrayExtension.swift in Sources */,
-				F5F5092A2CEBEF1E007D6E39 /* DownloadProgressManager.swift in Sources */,
-				F553A1602CECF95B006581A1 /* SleepTimerButton.swift in Sources */,
-				F5F509322CEBEFA4007D6E39 /* MediaExporterResourceLoaderDelegate.swift in Sources */,
-				F5F5091E2CEBED5C007D6E39 /* EffectsPlayer.swift in Sources */,
-				F5F509062CEBEA93007D6E39 /* ThemeColor.swift in Sources */,
-				F5F5095A2CEBF674007D6E39 /* PlayBufferManager.swift in Sources */,
-				F553A1682CECF9F0006581A1 /* PodcastImageView.swift in Sources */,
-				F5FDDD842E58E8B000FB1C33 /* FirebaseManager.swift in Sources */,
-				F5F508FE2CEBE9F8007D6E39 /* TimeSlider.swift in Sources */,
-				F5F509132CEBEBEC007D6E39 /* Notifications.swift in Sources */,
-				F5F5094C2CEBF412007D6E39 /* VideoViewController+Seek.swift in Sources */,
-				F553A15F2CECF953006581A1 /* EffectsButton.swift in Sources */,
-				F5D5F7CB2CEBE87F001F492D /* Constants.swift in Sources */,
-				F57ABC002CECEE6000CC50AF /* PodcastManager+Cleanup.swift in Sources */,
-				F5F5094A2CEBF3E5007D6E39 /* NowPlayingPlayerItemViewController+Seek.swift in Sources */,
-				F5F508FA2CEBE9C1007D6E39 /* ThemeableUIButton.swift in Sources */,
-				F5F509492CEBF3A0007D6E39 /* OptionsPickerRootController.swift in Sources */,
-				F5F509092CEBEAFB007D6E39 /* FadeOutManager.swift in Sources */,
-				81C8677C17743B85BF586B0B /* VoiceBoostN.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF4B83AA2F981D8E001B8C56 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				FF8FFE4C2FAA4BF50086A867 /* DownloadProgressManager.swift in Sources */,
-				FF32F3DB2FAB838900226E58 /* PlaylistDetailFetchOperation.swift in Sources */,
-				FF60249F2FAB458900EB3AD5 /* ThemeStyle.swift in Sources */,
-				FF8FFE522FAA4D110086A867 /* PlaybackCatchUpHelper.swift in Sources */,
-				FF49FEAE2F9BBCB400E68E0C /* Strings+Generated.swift in Sources */,
-				FF6505972FAA9A6C00C3662E /* NowPlayingHelper.swift in Sources */,
-				FF4B35662FB327D7004784EC /* PodcastImage.swift in Sources */,
-				FF49FEAF2F9BBCBC00E68E0C /* Strings+L10n.swift in Sources */,
-				FF8FFE622FAA63900086A867 /* SharedConstants.swift in Sources */,
-				FF8FF6A52FAA46D40086A867 /* Settings.swift in Sources */,
-				FF3248CD2FACCDC200226E58 /* PodcastImageView.swift in Sources */,
-				FF8FFE712FAA8F7C0086A867 /* SJCommonUtils.m in Sources */,
-				FF321A742FACA3F300226E58 /* Folder+Sortable.swift in Sources */,
-				FF6024A12FAB46DE00EB3AD5 /* TranscriptFilter.swift in Sources */,
-				FF32F3CD2FAB7E1F00226E58 /* PlaybackActionHelper.swift in Sources */,
-				FF8FF6A92FAA489E0086A867 /* UserEpisodeManager.swift in Sources */,
-				FF8FFE512FAA4D060086A867 /* PlaybackEffects.swift in Sources */,
-				FF8FF6A82FAA487F0086A867 /* PlaylistManager.swift in Sources */,
-				FF8FFE6D2FAA8EFE0086A867 /* TranscriptsDataRetriever.swift in Sources */,
-				FF8FF69F2FAA46100086A867 /* ServerSyncManager.swift in Sources */,
-				FF8FF6A22FAA468B0086A867 /* PlaybackManager.swift in Sources */,
-				FF60249E2FAB450500EB3AD5 /* ThemeColor.swift in Sources */,
-				FF4B5C8F2FB4C48A004784EC /* PodcastManager+Delete.swift in Sources */,
-				FF8FF6A02FAA46400086A867 /* PodcastManager.swift in Sources */,
-				FF32F3E22FAB846400226E58 /* PlaylistArchiveViewCellPlaceholder.swift in Sources */,
-				FF65059B2FAA9B6E00C3662E /* FileManager+Helper.swift in Sources */,
-				FF8FFE5B2FAA60A30086A867 /* DownloadProgress.swift in Sources */,
-				FF8FFE6F2FAA8F3E0086A867 /* DownloadManager+URLSessionDelegate.swift in Sources */,
-				FF32F3E62FAB851800226E58 /* PlaylistHeaderViewCellPlaceholder.swift in Sources */,
-				FF65058A2FAA95D500C3662E /* UserEpisode+Formatting.swift in Sources */,
-				FF8FFE642FAA8E470086A867 /* StorageManager.swift in Sources */,
-				FF6024A02FAB45D400EB3AD5 /* UIColor+SwiftUI.swift in Sources */,
-				FF8FFE602FAA62D50086A867 /* ThreadSafeDictionary.swift in Sources */,
-				FF8FFE682FAA8E760086A867 /* ChapterInfo.swift in Sources */,
-				FF603BAE2FAB500700EB3AD5 /* Podcast+Formatting.swift in Sources */,
-				FF603BB02FAB506F00EB3AD5 /* PlaylistDetailViewModel.swift in Sources */,
-				FF6505892FAA950300C3662E /* ImageManager.swift in Sources */,
-				FF65058F2FAA973E00C3662E /* Theme.swift in Sources */,
-				FF32F3E92FAB86C700226E58 /* PlayerColorHelper.swift in Sources */,
-				FF65058C2FAA965000C3662E /* SJMediaMetadataHelper.m in Sources */,
-				FF65059A2FAA9B0600C3662E /* DownloadManager+Logging.swift in Sources */,
-				FF65059F2FAA9DDC00C3662E /* ShowNotesUpdater.swift in Sources */,
-				FF6505A42FAA9F5200C3662E /* TranscriptModel.swift in Sources */,
-				FF6024A22FAB46EE00EB3AD5 /* Episode+Transcript.swift in Sources */,
-				FF6505992FAA9AE800C3662E /* EpisodeFileSizeUpdater.swift in Sources */,
-				FF6505A02FAA9DE400C3662E /* PlaybackItem.swift in Sources */,
-				FF8FFE6A2FAA8E950086A867 /* PodcastIndexChapterDataRetriever.swift in Sources */,
-				FF8FFE532FAA4D210086A867 /* BookmarkManager.swift in Sources */,
-				0CF5B7BE2FB3B0E60023691C /* LiquidGlass.swift in Sources */,
-				FF8FFE542FAA5FAC0086A867 /* ArchiveHelper.swift in Sources */,
-				FF8FFE4F2FAA4CCD0086A867 /* PlaybackProtocol.swift in Sources */,
-				FF4B5C8E2FB4C441004784EC /* SignOutHelper.swift in Sources */,
-				FF8FFE442FAA49BE0086A867 /* PodcastManager+Cleanup.swift in Sources */,
-				FFE477202FBE0D8100716EAA /* ServerPodcastManager+Subscription.swift in Sources */,
-				FF6033FD2FAB4C9700EB3AD5 /* EpisodesDataManager.swift in Sources */,
-				FF8FFE612FAA63750086A867 /* Enumerations.swift in Sources */,
-				FF8FFE652FAA8E5B0086A867 /* PodcastChapterParser.swift in Sources */,
-				FF8FFE6B2FAA8EA00086A867 /* Chapters.swift in Sources */,
-				FF32F3CE2FAB7F8E00226E58 /* HapticsHelper.swift in Sources */,
-				FF8FFE4A2FAA4B6D0086A867 /* FileTypeUtil.swift in Sources */,
-				FF65059C2FAA9C0100C3662E /* VoiceBoostN.c in Sources */,
-				FF60249D2FAB443300EB3AD5 /* AppTheme.swift in Sources */,
-				FF8FFE452FAA49D90086A867 /* AnalyticsHelper.swift in Sources */,
-				FF8FFE562FAA5FEC0086A867 /* BackgroundShakeObserver.swift in Sources */,
-				FF321A722FACA37900226E58 /* HomeGridItem.swift in Sources */,
-				FF8FFE632FAA63D10086A867 /* EpisodeFilter+Formatting.swift in Sources */,
-				FF6505962FAA9A3000C3662E /* Debounce.swift in Sources */,
-				FF321A712FACA36400226E58 /* HomeGridDataHelper.swift in Sources */,
-				FF8FFE492FAA4B310086A867 /* BaseEpisode+Formatting.swift in Sources */,
-				FF32F3E82FAB863700226E58 /* Theme+Color.swift in Sources */,
-				FF8FFE4E2FAA4C510086A867 /* FadeOutManager.swift in Sources */,
-				FF8FFE692FAA8E8B0086A867 /* PaidFeature.swift in Sources */,
-				FF6505A12FAA9E4900C3662E /* URLSession+Episode.swift in Sources */,
-				FF8FFE502FAA4CF60086A867 /* ChapterManager.swift in Sources */,
-				FF8FFE4D2FAA4C0D0086A867 /* SleepTimerManager.swift in Sources */,
-				FF8FFE462FAA4ACF0086A867 /* Episode+Formatting.swift in Sources */,
-				FF8FFE702FAA8F490086A867 /* EpisodeArtwork.swift in Sources */,
-				FF8FF6A12FAA46650086A867 /* DownloadManager.swift in Sources */,
-				FF8FF6A32FAA46AD0086A867 /* PlaybackQueue.swift in Sources */,
-				FF32F3CB2FAB7CDF00226E58 /* ColorManager.swift in Sources */,
-				FF8FF6A42FAA46B60086A867 /* EpisodeManager.swift in Sources */,
-				FF6033FC2FAB4C8300EB3AD5 /* AutoplayHelper.swift in Sources */,
-				FF49FEAD2F9BBCA900E68E0C /* LocalizationHelpers.swift in Sources */,
-				FF492A7A2F9BDA9A00E68E0C /* Constants.swift in Sources */,
-				FF8FFE6E2FAA8F240086A867 /* TranscriptFormat.swift in Sources */,
-				FF65058B2FAA963100C3662E /* Notifications.swift in Sources */,
-				FF32F3EB2FAB972700226E58 /* AuthenticationHelper.swift in Sources */,
-				FF32F3DA2FAB834500226E58 /* PlaylistDetailViewModel+Archive.swift in Sources */,
-				FF32F3D82FAB830100226E58 /* PlaylistArtworkView.swift in Sources */,
-				FF6505A32FAA9F4100C3662E /* TranscriptManager.swift in Sources */,
-				FF6505982FAA9A9800C3662E /* DefaultPlayer.swift in Sources */,
-				FF8FE76F2FAA35CD0086A867 /* ApiCredentials.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7589,11 +7245,6 @@
 			target = BDBD53EB17019B2A0048C8C5 /* podcasts */;
 			targetProxy = 4694FA662799C80300E9CF70 /* PBXContainerItemProxy */;
 		};
-		46AFC23B27AB19CE004B026F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-			targetProxy = 46AFC23A27AB19CE004B026F /* PBXContainerItemProxy */;
-		};
 		8B0845922A66C86500742C2F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BD3A210C1E6CFC2400F42241 /* NotificationExtension */;
@@ -7604,35 +7255,15 @@
 			target = 2F90990A2A4F88B00044FC55 /* Share Extension */;
 			targetProxy = 8B0845942A66C86D00742C2F /* PBXContainerItemProxy */;
 		};
-		9AB645122D51368300A842C8 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F5D5F7782CEBE769001F492D /* Pocket Casts App Clip */;
-			targetProxy = 9AB645112D51368300A842C8 /* PBXContainerItemProxy */;
-		};
 		BD3A21131E6CFC2400F42241 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BD3A210C1E6CFC2400F42241 /* NotificationExtension */;
 			targetProxy = BD3A21121E6CFC2400F42241 /* PBXContainerItemProxy */;
 		};
-		BDD301811EFB9356004A9972 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BDD301631EFB9356004A9972 /* Pocket Casts Watch App */;
-			targetProxy = BDD301801EFB9356004A9972 /* PBXContainerItemProxy */;
-		};
 		BDEFBA201E6D3C2300B9024B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BDEFBA131E6D3C2300B9024B /* NotificationContent */;
 			targetProxy = BDEFBA1F1E6D3C2300B9024B /* PBXContainerItemProxy */;
-		};
-		FF2CD57A2B9F4B2D009B58B5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 462EE0C02702532E003D67DC /* PreBuildActions */;
-			targetProxy = FF2CD5792B9F4B2D009B58B5 /* PBXContainerItemProxy */;
-		};
-		FF49FEAB2F9BBC7600E68E0C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 462EE0C02702532E003D67DC /* PreBuildActions */;
-			targetProxy = FF49FEAA2F9BBC7600E68E0C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -7973,38 +7604,6 @@
 			};
 			name = StagingDebug;
 		};
-		3FD6E0582BFC790F003941C0 /* StagingDebug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_COMPLICATION_NAME = Complication;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = "Pocket Casts Watch App/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MTL_ENABLE_DEBUG_INFO = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER_ROOT).watchkitapp";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Pocket Casts Watch App Development";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts Watch App/Supporting Files/watch-bridging-header.h";
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = StagingDebug;
-		};
 		3FD6E0592BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -8157,38 +7756,6 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = podcasts;
-			};
-			name = StagingDebug;
-		};
-		3FD6E05E2BFC790F003941C0 /* StagingDebug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Automatic;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "au.com.shiftyjelly.podcasts.Screenshot-Automation-Watch";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_TARGET_NAME = "Pocket Casts Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
 			};
 			name = StagingDebug;
 		};
@@ -8772,108 +8339,6 @@
 			};
 			name = Release;
 		};
-		46AFC23D27AB19CF004B026F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Automatic;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "au.com.shiftyjelly.podcasts.Screenshot-Automation-Watch";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_TARGET_NAME = "Pocket Casts Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Debug;
-		};
-		46AFC23E27AB19CF004B026F /* Prototype */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "au.com.shiftyjelly.podcasts.Screenshot-Automation-Watch";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_TARGET_NAME = "Pocket Casts Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Prototype;
-		};
-		46AFC23F27AB19CF004B026F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "au.com.shiftyjelly.podcasts.Screenshot-Automation-Watch";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_TARGET_NAME = "Pocket Casts Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Release;
-		};
 		BD3A21151E6CFC2400F42241 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -9061,38 +8526,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-			};
-			name = Prototype;
-		};
-		BD69A01E2266A9E400168459 /* Prototype */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_COMPLICATION_NAME = Complication;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = "Pocket Casts Watch App/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MTL_ENABLE_DEBUG_INFO = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER_ROOT).watchkitapp";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts Watch App/Supporting Files/watch-bridging-header.h";
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
 			};
 			name = Prototype;
 		};
@@ -9325,74 +8758,6 @@
 			};
 			name = Release;
 		};
-		BDD301831EFB9356004A9972 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_COMPLICATION_NAME = Complication;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = "Pocket Casts Watch App/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MTL_ENABLE_DEBUG_INFO = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER_ROOT).watchkitapp";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Pocket Casts Watch App Development";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts Watch App/Supporting Files/watch-bridging-header.h";
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Debug;
-		};
-		BDD301841EFB9356004A9972 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_COMPLICATION_NAME = Complication;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = "Pocket Casts Watch App/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MTL_ENABLE_DEBUG_INFO = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER_ROOT).watchkitapp";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts Watch App/Supporting Files/watch-bridging-header.h";
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
-			};
-			name = Release;
-		};
 		BDEFBA221E6D3C2300B9024B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -9444,425 +8809,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER_ROOT).NotificationContent";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-			};
-			name = Release;
-		};
-		F5D5F7A02CEBE76A001F492D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "Pocket Casts App Clip/Pocket_Casts_App_Clip.entitlements";
-				CODE_SIGN_STYLE = Manual;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_ASSET_PATHS = "\"Pocket Casts App Clip/Preview Content\"";
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts App Clip/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Pocket Casts";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.Clip;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Pocket Casts App Clip Development";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited) APPCLIP";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts App Clip/app-clip-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		F5D5F7A12CEBE76A001F492D /* StagingDebug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "Pocket Casts App Clip/Pocket_Casts_App_Clip.entitlements";
-				CODE_SIGN_STYLE = Manual;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_ASSET_PATHS = "\"Pocket Casts App Clip/Preview Content\"";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts App Clip/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Pocket Casts";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.Clip;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Pocket Casts App Clip Development";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = APPCLIP;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts App Clip/app-clip-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = StagingDebug;
-		};
-		F5D5F7A22CEBE76A001F492D /* Prototype */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "Pocket Casts App Clip/Pocket_Casts_App_Clip.entitlements";
-				CODE_SIGN_STYLE = Manual;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_ASSET_PATHS = "\"Pocket Casts App Clip/Preview Content\"";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts App Clip/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Pocket Casts";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.prototype.Clip;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = APPCLIP;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts App Clip/app-clip-Bridging-Header.h";
-				SWIFT_OPTIMIZATION_LEVEL = "-Osize";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Prototype;
-		};
-		F5D5F7A32CEBE76A001F492D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "Pocket Casts App Clip/Pocket_Casts_App_Clip.entitlements";
-				CODE_SIGN_STYLE = Manual;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_ASSET_PATHS = "\"Pocket Casts App Clip/Preview Content\"";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts App Clip/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Pocket Casts";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.Clip;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = APPCLIP;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts App Clip/app-clip-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		FF4B83B62F981D8F001B8C56 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReferenceRelativePath = Config/PocketCastsTV.debug.xcconfig;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Manual;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts TV App/Pocket-Casts-TV-App-Info.plist";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 0.1;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				SDKROOT = appletvos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts TV App/Supporting Files/tv-bridging-header.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		FF4B83B72F981D8F001B8C56 /* StagingDebug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReferenceRelativePath = Config/PocketCastsTV.staging.xcconfig;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Manual;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts TV App/Pocket-Casts-TV-App-Info.plist";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 0.1;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				SDKROOT = appletvos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts TV App/Supporting Files/tv-bridging-header.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = StagingDebug;
-		};
-		FF4B83B82F981D8F001B8C56 /* Prototype */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReferenceRelativePath = Config/PocketCastsTV.prototype.xcconfig;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Manual;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts TV App/Pocket-Casts-TV-App-Info.plist";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 0.1;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				SDKROOT = appletvos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts TV App/Supporting Files/tv-bridging-header.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Prototype;
-		};
-		FF4B83B92F981D8F001B8C56 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReferenceRelativePath = Config/PocketCastsTV.release.xcconfig;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_STYLE = Manual;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Pocket Casts TV App/Pocket-Casts-TV-App-Info.plist";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 0.1;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				SDKROOT = appletvos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Pocket Casts TV App/Supporting Files/tv-bridging-header.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -9946,17 +8892,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		46AFC23C27AB19CF004B026F /* Build configuration list for PBXNativeTarget "Screenshot Automation Watch" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				46AFC23D27AB19CF004B026F /* Debug */,
-				3FD6E05E2BFC790F003941C0 /* StagingDebug */,
-				46AFC23E27AB19CF004B026F /* Prototype */,
-				46AFC23F27AB19CF004B026F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		BD3A21171E6CFC2400F42241 /* Build configuration list for PBXNativeTarget "NotificationExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -9990,17 +8925,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BDD301891EFB9356004A9972 /* Build configuration list for PBXNativeTarget "Pocket Casts Watch App" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				BDD301831EFB9356004A9972 /* Debug */,
-				3FD6E0582BFC790F003941C0 /* StagingDebug */,
-				BD69A01E2266A9E400168459 /* Prototype */,
-				BDD301841EFB9356004A9972 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		BDEFBA241E6D3C2300B9024B /* Build configuration list for PBXNativeTarget "NotificationContent" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -10008,28 +8932,6 @@
 				3FD6E0572BFC790F003941C0 /* StagingDebug */,
 				BD69A01D2266A9E400168459 /* Prototype */,
 				BDEFBA231E6D3C2300B9024B /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F5D5F7AD2CEBE76A001F492D /* Build configuration list for PBXNativeTarget "Pocket Casts App Clip" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F5D5F7A02CEBE76A001F492D /* Debug */,
-				F5D5F7A12CEBE76A001F492D /* StagingDebug */,
-				F5D5F7A22CEBE76A001F492D /* Prototype */,
-				F5D5F7A32CEBE76A001F492D /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		FF4B83BA2F981D8F001B8C56 /* Build configuration list for PBXNativeTarget "Pocket Casts TV App" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				FF4B83B62F981D8F001B8C56 /* Debug */,
-				FF4B83B72F981D8F001B8C56 /* StagingDebug */,
-				FF4B83B82F981D8F001B8C56 /* Prototype */,
-				FF4B83B92F981D8F001B8C56 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -10045,10 +8947,6 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = XcodeTarget_NotificationExtension;
 		};
-		3FC668C32F7CD4F70072EBA8 /* XcodeTarget_Pocket Casts Watch App */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "XcodeTarget_Pocket Casts Watch App";
-		};
 		3FC668C52F7CD5020072EBA8 /* XcodeTarget_PodcastsIntents */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = XcodeTarget_PodcastsIntents;
@@ -10060,14 +8958,6 @@
 		3FC668C92F7CD51E0072EBA8 /* XcodeTarget_WidgetExtension */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = XcodeTarget_WidgetExtension;
-		};
-		3FC668CB2F7CD5A20072EBA8 /* XcodeTarget_Pocket Casts App Clip */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "XcodeTarget_Pocket Casts App Clip";
-		};
-		FF49232C2F9BCC9500E68E0C /* XcodeTarget_Pocket Casts TV App */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "XcodeTarget_Pocket Casts TV App";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
