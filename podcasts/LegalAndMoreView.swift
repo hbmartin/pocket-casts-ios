@@ -30,21 +30,15 @@ struct LegalAndMore: View {
             .listStyle(.insetGrouped)
         }
         .navigationBarTitle(L10n.aboutLegalAndMore, displayMode: .inline)
-        // Terms of Service
-        NavigationLink(
-            destination: WebView(url: Constants.termsOfUseURL).navigationTitle(L10n.aboutTermsOfService),
-            isActive: $showTermsOfService
-        ) {}
-        // Privacy Policy
-        NavigationLink(
-            destination: WebView(url: Constants.privacyPolicyURL).navigationTitle(L10n.aboutPrivacyPolicy),
-            isActive: $showPrivacyPolicy
-        ) {}
-        // Acknowledgements
-        NavigationLink(
-            destination: WebView(url: Constants.acknowledgementsURL).navigationTitle(L10n.aboutAcknowledgements),
-            isActive: $showAcknowledgements
-        ) {}
+        .navigationDestination(isPresented: $showTermsOfService) {
+            WebView(url: Constants.termsOfUseURL).navigationTitle(L10n.aboutTermsOfService)
+        }
+        .navigationDestination(isPresented: $showPrivacyPolicy) {
+            WebView(url: Constants.privacyPolicyURL).navigationTitle(L10n.aboutPrivacyPolicy)
+        }
+        .navigationDestination(isPresented: $showAcknowledgements) {
+            WebView(url: Constants.acknowledgementsURL).navigationTitle(L10n.aboutAcknowledgements)
+        }
     }
 
     private func track(row: String) {

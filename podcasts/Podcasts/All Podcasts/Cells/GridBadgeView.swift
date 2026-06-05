@@ -55,6 +55,8 @@ class GridBadgeView: UIView {
     }
 
     private func setup() {
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+
         badgeLabel.font = UIFont.font(ofSize: 13, weight: .bold, scalingWith: .largeTitle)
         badgeLabel.adjustsFontForContentSizeCategory = true
         badgeLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -101,15 +103,6 @@ class GridBadgeView: UIView {
         simpleBadge.centerColor = ThemeColor.primaryInteractive01()
         simpleBadge.backgroundColor = .clear
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
-    }
-
     private func updateSize() {
         let metrics = UIFontMetrics(forTextStyle: .largeTitle)
         simpleBadge.updateSizeConstraints(to: max(15, metrics.scaledValue(for: 15)))

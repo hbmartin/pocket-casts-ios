@@ -56,6 +56,7 @@ class UpNextNowPlayingCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         style = .primaryUi04
 
         NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.playbackProgress, object: nil)
@@ -251,11 +252,5 @@ class UpNextNowPlayingCell: ThemeableCell {
 
         episodeTitle.updateNumberOfLines(regular: 1, accessibility: 3)
         dateLabel.updateNumberOfLines(regular: 1, accessibility: 2)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

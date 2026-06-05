@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsUtils
 import SafariServices
 import UIKit
 
@@ -7,20 +8,17 @@ struct URLHelper {
         case trustedDocumentation
         case trustedMarketing
         case externalContent
-        case sensitiveAuth
     }
 
     enum InAppBrowserDecision: Equatable {
         case inAppBrowser
         case externalApplication
         case blocked
-        case authenticationSessionRequired
     }
 
     struct OpenOptions {
         var presenter: UIViewController?
         var prefersExternalBrowser: Bool
-        var allowsExternalFallback: Bool
         var delegate: SFSafariViewControllerDelegate?
         var modalPresentationStyle: UIModalPresentationStyle?
         var completion: (() -> Void)?
@@ -28,20 +26,20 @@ struct URLHelper {
         init(
             presenter: UIViewController? = nil,
             prefersExternalBrowser: Bool = false,
-            allowsExternalFallback: Bool = false,
             delegate: SFSafariViewControllerDelegate? = nil,
             modalPresentationStyle: UIModalPresentationStyle? = nil,
             completion: (() -> Void)? = nil
         ) {
             self.presenter = presenter
             self.prefersExternalBrowser = prefersExternalBrowser
-            self.allowsExternalFallback = allowsExternalFallback
             self.delegate = delegate
             self.modalPresentationStyle = modalPresentationStyle
             self.completion = completion
         }
     }
 
+    // Trusted contexts block any HTTPS host not listed here. Add new hosts before
+    // routing links through `.trustedDocumentation` or `.trustedMarketing`.
     private static let trustedDocumentationHosts: Set<String> = [
         "support.pocketcasts.com",
         "support.pocketcasts.net",
@@ -56,20 +54,6 @@ struct URLHelper {
         "www.slumberstudios.com"
     ]
 
-    private static let blockedExternalSchemes: Set<String> = [
-        "about",
-        "blob",
-        "data",
-        "file",
-        "javascript"
-    ]
-
-    static func isValidScheme(_ scheme: String?) -> Bool {
-        guard let scheme else { return false }
-
-        return ((scheme.caseInsensitiveCompare("http") == .orderedSame) || (scheme.caseInsensitiveCompare("https") == .orderedSame))
-    }
-
     static func isMailtoScheme(_ scheme: String?) -> Bool {
         guard let scheme else { return false }
 
@@ -77,7 +61,21 @@ struct URLHelper {
     }
 
     static func isWebURL(_ url: URL) -> Bool {
-        isValidScheme(url.scheme)
+        isHTTPSURL(url)
+    }
+
+    static func isAllowedEmbeddedContentNavigationURL(_ url: URL?) -> Bool {
+        guard let url else { return true }
+
+        if let scheme = url.scheme?.lowercased(), ["about", "applewebdata"].contains(scheme) {
+            return true
+        }
+
+        guard url.isFileURL else { return false }
+
+        let bundlePath = URL(fileURLWithPath: Bundle.main.bundlePath, isDirectory: true).standardizedFileURL.path
+        let path = url.standardizedFileURL.path
+        return path == bundlePath || path.hasPrefix(bundlePath + "/")
     }
 
     static func canOpenInAppBrowser(_ url: URL, context: InAppBrowserContext) -> Bool {
@@ -87,8 +85,7 @@ struct URLHelper {
     static func inAppBrowserDecision(
         for url: URL,
         context: InAppBrowserContext,
-        prefersExternalBrowser: Bool = false,
-        allowsExternalFallback: Bool = false
+        prefersExternalBrowser: Bool = false
     ) -> InAppBrowserDecision {
         switch context {
         case .trustedDocumentation:
@@ -100,11 +97,8 @@ struct URLHelper {
         case .externalContent:
             return externalContentDecision(
                 for: url,
-                prefersExternalBrowser: prefersExternalBrowser,
-                allowsExternalFallback: allowsExternalFallback
+                prefersExternalBrowser: prefersExternalBrowser
             )
-        case .sensitiveAuth:
-            return .authenticationSessionRequired
         }
     }
 
@@ -123,8 +117,7 @@ struct URLHelper {
         switch inAppBrowserDecision(
             for: url,
             context: context,
-            prefersExternalBrowser: options.prefersExternalBrowser,
-            allowsExternalFallback: options.allowsExternalFallback
+            prefersExternalBrowser: options.prefersExternalBrowser
         ) {
         case .inAppBrowser:
             guard let safariViewController = makeInAppBrowser(for: url, context: context) else { return nil }
@@ -142,24 +135,16 @@ struct URLHelper {
                 options.completion?()
             }
             return nil
-        case .blocked, .authenticationSessionRequired:
+        case .blocked:
+            FileLog.shared.addMessage("URLHelper blocked unsupported URL for \(context): \(redactedURLDescription(url))")
             return nil
         }
     }
 
     private static func externalContentDecision(
         for url: URL,
-        prefersExternalBrowser: Bool,
-        allowsExternalFallback: Bool
+        prefersExternalBrowser: Bool
     ) -> InAppBrowserDecision {
-        guard let scheme = url.scheme else {
-            return .blocked
-        }
-
-        if isBlockedExternalScheme(scheme) {
-            return .blocked
-        }
-
         if isWebURL(url) {
             return prefersExternalBrowser ? .externalApplication : .inAppBrowser
         }
@@ -168,7 +153,7 @@ struct URLHelper {
             return .externalApplication
         }
 
-        return allowsExternalFallback ? .externalApplication : .blocked
+        return .blocked
     }
 
     static func isTrustedDocumentationURL(_ url: URL) -> Bool {
@@ -183,13 +168,21 @@ struct URLHelper {
         url.scheme?.caseInsensitiveCompare("https") == .orderedSame
     }
 
-    private static func isBlockedExternalScheme(_ scheme: String?) -> Bool {
-        guard let scheme else { return false }
-
-        return blockedExternalSchemes.contains(scheme.lowercased())
-    }
-
     private static func host(for url: URL) -> String? {
         url.host?.lowercased()
+    }
+
+    private static func redactedURLDescription(_ url: URL) -> String {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let scheme = components.scheme
+        else {
+            return "relative-url"
+        }
+
+        guard let host = components.host else {
+            return scheme
+        }
+
+        return "\(scheme)://\(host)"
     }
 }

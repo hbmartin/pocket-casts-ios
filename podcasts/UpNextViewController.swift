@@ -167,6 +167,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         title = L10n.upNext
 
@@ -516,11 +517,5 @@ extension UpNextViewController {
         let metric = UIFontMetrics(forTextStyle: .largeTitle)
         let buttonSize = max(24, metric.scaledValue(for: 24))
         shuffleButton.updateSizeConstraints(to: buttonSize)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

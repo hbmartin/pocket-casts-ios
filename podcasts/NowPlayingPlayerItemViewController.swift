@@ -240,6 +240,9 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (controller: NowPlayingPlayerItemViewController, _) in
+            controller.preferredContentSizeCategoryDidChange()
+        }
 
         #if !APPCLIP
         let upNextPan = UIPanGestureRecognizer(target: self, action: #selector(panGestureRecognizerHandler(_:)))
@@ -378,21 +381,14 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         update(notification: nil)
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
+    private func preferredContentSizeCategoryDidChange() {
         #if !APPCLIP
         if FeatureFlag.bannerAdPlayer.enabled {
-            // Update banner height when text size category changes
-            if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-                updateBannerAdHeight()
-            }
+            updateBannerAdHeight()
         }
         #endif
 
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
+        updateSize()
     }
 
     var shelfIconSize: CGFloat {
@@ -450,8 +446,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
                 context: .externalContent,
                 options: .init(
                     presenter: self,
-                    prefersExternalBrowser: Settings.openLinks,
-                    allowsExternalFallback: Settings.openLinks
+                    prefersExternalBrowser: Settings.openLinks
                 )
             )
         #endif

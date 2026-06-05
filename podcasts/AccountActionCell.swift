@@ -72,6 +72,7 @@ class AccountActionCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         updateSize()
     }
 
@@ -82,15 +83,6 @@ class AccountActionCell: ThemeableCell {
 
         updateSize()
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
-    }
-
     func updateSize() {
         let metric = UIFontMetrics(forTextStyle: .largeTitle)
 

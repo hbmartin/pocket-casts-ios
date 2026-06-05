@@ -5,3 +5,12 @@ extension UIView {
         return Bundle(for: T.self).loadNibNamed(String(describing: T.self), owner: nil, options: nil)![0] as! T
     }
 }
+
+extension UITraitChangeObservable where Self: UITraitEnvironment {
+    @discardableResult
+    func registerForPreferredContentSizeCategoryChanges(_ handler: @escaping (Self) -> Void) -> UITraitChangeRegistration {
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (observable: Self, _) in
+            handler(observable)
+        }
+    }
+}

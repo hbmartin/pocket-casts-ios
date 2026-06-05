@@ -238,7 +238,11 @@ struct EndOfYear {
                 // After the share sheet is presented we take the snapshot
                 // This action needs to happen on the main thread because
                 // the view needs to be rendered.
-                StoryShareableProvider.shared.snapshot(viewModifier: model.sharingSnapshotModifier)
+                Task { @MainActor in
+                    StoryShareableProvider.shared.snapshot { view in
+                        model.sharingSnapshotModifier(view)
+                    }
+                }
             }
         }
     }

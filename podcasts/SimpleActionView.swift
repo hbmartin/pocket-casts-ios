@@ -21,6 +21,9 @@ class SimpleActionView: UIView {
         self.themeOverride = themeOverride
         self.iconTintStyle = iconTintStyle
         super.init(frame: frame)
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (view: SimpleActionView, _) in
+            view.updateSize()
+        }
     }
 
     @available(*, unavailable)
@@ -223,12 +226,5 @@ class SimpleActionView: UIView {
         if let selectedView {
             selectedView.updateSizeConstraints(to: imageSize)
         }
-    }
-
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

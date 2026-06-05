@@ -8,9 +8,7 @@ extension UIApplication {
             url,
             context: .externalContent,
             options: .init(
-                presenter: SceneHelper.rootViewController(),
-                prefersExternalBrowser: Settings.openLinks,
-                allowsExternalFallback: true
+                prefersExternalBrowser: Settings.openLinks
             )
         )
     }

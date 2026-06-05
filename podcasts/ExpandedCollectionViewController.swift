@@ -61,6 +61,7 @@ class ExpandedCollectionViewController: PCViewController, CollectionHeaderLinkDe
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         (view as? ThemeableView)?.style = .primaryUi02
 
         if let collectionSubtitle = podcastCollection?.subtitle?.localized.localizedCapitalized {
@@ -111,8 +112,7 @@ class ExpandedCollectionViewController: PCViewController, CollectionHeaderLinkDe
             context: .externalContent,
             options: .init(
                 presenter: self,
-                prefersExternalBrowser: Settings.openLinks,
-                allowsExternalFallback: Settings.openLinks
+                prefersExternalBrowser: Settings.openLinks
             )
         )
     }
@@ -142,13 +142,5 @@ class ExpandedCollectionViewController: PCViewController, CollectionHeaderLinkDe
 
     func updateSize() {
         updateFlowLayoutSize()
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

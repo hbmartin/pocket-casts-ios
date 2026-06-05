@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 import Combine
+import UserNotifications
 
 class BadgeHelper {
     deinit {
@@ -86,21 +87,18 @@ class BadgeHelper {
     }
 
     private func clearBadge(clearNotificationsToo: Bool) {
-        DispatchQueue.main.async {
-            let currentBadgeValue = UIApplication.shared.applicationIconBadgeNumber
-            if clearNotificationsToo, currentBadgeValue == 0 {
-                // if the badge is already 0, set it to 1 to clear out things like notifications, setting a badge that's 0 to 0 won't do that
-                UIApplication.shared.applicationIconBadgeNumber = 1
+        let notificationCenter = UNUserNotificationCenter.current()
+        if clearNotificationsToo {
+            // Setting a non-zero badge first preserves the old behavior that clears delivered notifications even when the badge was already zero.
+            notificationCenter.setBadgeCount(1) { _ in
+                notificationCenter.setBadgeCount(0)
             }
-            if !clearNotificationsToo, currentBadgeValue == 0 { return }
-
-            UIApplication.shared.applicationIconBadgeNumber = 0
+        } else {
+            notificationCenter.setBadgeCount(0)
         }
     }
 
     private func setBadgeTo(_ badgeNumber: Int) {
-        DispatchQueue.main.async {
-            UIApplication.shared.applicationIconBadgeNumber = badgeNumber
-        }
+        UNUserNotificationCenter.current().setBadgeCount(badgeNumber)
     }
 }

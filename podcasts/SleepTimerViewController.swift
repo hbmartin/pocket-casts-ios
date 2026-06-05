@@ -396,15 +396,16 @@ class MultiLineButton: ThemeableUIButton {
 
         let imageWidth: CGFloat
         if let img = imageView?.image {
-            imageWidth = img.size.width + imageEdgeInsets.left + imageEdgeInsets.right
+            imageWidth = img.size.width + (configuration?.imagePadding ?? 0)
         } else {
             imageWidth = 0
         }
 
+        let contentInsets = configuration?.contentInsets ?? .zero
+
         // Available width for text = button width - image - content insets - title insets
         let availableWidth = frame.width
-            - contentEdgeInsets.left - contentEdgeInsets.right
-            - titleEdgeInsets.left - titleEdgeInsets.right
+            - contentInsets.leading - contentInsets.trailing
             - imageWidth
 
         guard availableWidth > 0 else {
@@ -416,8 +417,7 @@ class MultiLineButton: ThemeableUIButton {
         )
 
         let totalHeight = textSize.height
-            + contentEdgeInsets.top + contentEdgeInsets.bottom
-            + titleEdgeInsets.top + titleEdgeInsets.bottom
+            + contentInsets.top + contentInsets.bottom
 
         return CGSize(width: frame.width, height: totalHeight)
     }

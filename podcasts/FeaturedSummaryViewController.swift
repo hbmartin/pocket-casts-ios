@@ -40,6 +40,7 @@ class FeaturedSummaryViewController: SimpleNotificationsViewController, GridLayo
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         (view as? ThemeableView)?.style = .primaryUi02
 
@@ -270,13 +271,5 @@ class FeaturedSummaryViewController: SimpleNotificationsViewController, GridLayo
     func updateSize() {
         lastLayedOutWidth = 0
         featuredCollectionViewHeight.constant = cellHeight
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

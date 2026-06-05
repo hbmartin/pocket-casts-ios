@@ -14,8 +14,9 @@ extension AVAsset {
         }
 
         guard let assetTrack = try await loadTracks(withMediaType: .video).first else {
-          throw CropError.missingVideoTrack
+            throw CropError.missingVideoTrack
         }
+        let duration = try await load(.duration)
         try compositionTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: duration), of: assetTrack, at: .zero)
 
         let videoComposition = AVMutableVideoComposition()
@@ -46,10 +47,8 @@ extension AVAsset {
 
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("PCiOS-Cropped-share-\(UUID().uuidString)").appendingPathExtension(for: .mpeg4Movie)
         export.videoComposition = videoComposition
-        export.outputURL = outputURL
-        export.outputFileType = .mp4
 
-        await export.export()
+        try await export.export(to: outputURL, as: .mp4)
 
         return outputURL
     }

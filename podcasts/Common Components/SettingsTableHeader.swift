@@ -28,6 +28,7 @@ class SettingsTableHeader: ThemeableView {
     private var lockImage: UIView?
 
     private func setupView(title: String, showLockedImage: Bool = false, lockedSelector: Selector? = nil, lockedTarget: Any? = nil, rightBtnTitle: String? = nil, rightBtnSelector: Selector? = nil, rightBtnTarget: Any? = nil, rightBtnThemeStyle: ThemeStyle = .primaryInteractive01, themeStyle: ThemeStyle) {
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         style = themeStyle
 
         titleLabel.style = .primaryText02
@@ -87,15 +88,6 @@ class SettingsTableHeader: ThemeableView {
             backgroundColor = .clear
         }
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
-    }
-
     private func updateSize() {
         let iconMetric = UIFontMetrics(forTextStyle: .largeTitle)
         let iconSize = max(24, iconMetric.scaledValue(for: 24))

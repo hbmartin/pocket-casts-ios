@@ -86,6 +86,7 @@ class TranscriptSearchAccessoryView: UIInputView {
     }
 
     private func setupView() {
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         overrideUserInterfaceStyle = .dark
 
         addSubview(mainStackView)
@@ -129,13 +130,6 @@ class TranscriptSearchAccessoryView: UIInputView {
         let config = UIImage.SymbolConfiguration(pointSize: UIFont.font(with: .callout, maxSizeCategory: maxContentSizeCategory).pointSize)
         upButton.setImage(UIImage(systemName: "chevron.up")?.withConfiguration(config), for: .normal)
         downButton.setImage(UIImage(systemName: "chevron.down")?.withConfiguration(config), for: .normal)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }
 

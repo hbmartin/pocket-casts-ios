@@ -81,6 +81,7 @@ enum VideoExporter {
         videoWriter.startWriting()
         videoWriter.startSession(atSourceTime: .zero)
 
+        let cancellableVideoWriter = UnsafeTransfer(videoWriter)
         try await withTaskCancellationHandler {
             try await writeFrames(of: view,
                                   size: parameters.size,
@@ -92,7 +93,7 @@ enum VideoExporter {
                                   progress: progress,
                                   frameCount: frameCount)
         } onCancel: {
-            videoWriter.cancelWriting()
+            cancellableVideoWriter.wrappedValue.cancelWriting()
         }
     }
 
@@ -139,7 +140,7 @@ enum VideoExporter {
             throw ExportError.taskCancelled
         }
 
-        let asset = AVAsset(url: sourceURL)
+        let asset = AVURLAsset(url: sourceURL)
         let composition = AVMutableComposition()
 
         guard let compositionVideoTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
@@ -187,26 +188,21 @@ enum VideoExporter {
             throw ExportError.failedToCreateExportSession
         }
 
-        exportSession.outputURL = outputURL
-        exportSession.outputFileType = fileType
         exportSession.timeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: duration, preferredTimescale: 600))
 
-        let timer = Timer(timeInterval: 0.01, repeats: true) { _ in
-            progress.completedUnitCount = Int64(exportSession.progress * 100)
-        }
-        RunLoop.main.add(timer, forMode: .common)
-
-        await withTaskCancellationHandler {
-            await exportSession.export()
-        } onCancel: {
-            exportSession.cancelExport()
-            progress.cancel()
-        }
-
-        timer.invalidate()
-
-        guard exportSession.status == .completed else {
-            throw ExportError.exportFailed(exportSession.error)
+        let cancellableExportSession = UnsafeTransfer(exportSession)
+        do {
+            try await withTaskCancellationHandler {
+                try await exportSession.export(to: outputURL, as: fileType)
+                progress.completedUnitCount = 100
+            } onCancel: {
+                cancellableExportSession.wrappedValue.cancelExport()
+                progress.cancel()
+            }
+        } catch is CancellationError {
+            throw ExportError.taskCancelled
+        } catch {
+            throw ExportError.exportFailed(error)
         }
     }
 
@@ -236,19 +232,41 @@ fileprivate actor Counter {
 fileprivate extension AVAssetWriterInput {
     func unsafeRequestMediaDataWhenReady(_ block: @escaping () async throws -> Bool) async throws {
         try await withCheckedThrowingContinuation { continuation in
-            requestMediaDataWhenReady(on: .global(qos: .userInitiated)) {
-                _unsafeWait {
-                    do {
-                        let finished = try await block()
-                        if finished {
-                            continuation.resume()
-                        }
-                    } catch {
-                        self.markAsFinished()
-                        continuation.resume(throwing: error)
+            let writerInput = UnsafeTransfer(self)
+            writerInput.wrappedValue.requestMediaDataWhenReady(on: .global(qos: .userInitiated)) {
+                switch Self.waitForMediaDataResult(block) {
+                case let .success(finished):
+                    if finished {
+                        continuation.resume()
                     }
+                case let .failure(error):
+                    writerInput.wrappedValue.markAsFinished()
+                    continuation.resume(throwing: error)
                 }
             }
         }
+    }
+
+    private static func waitForMediaDataResult(_ block: @escaping () async throws -> Bool) -> Result<Bool, Error> {
+        let semaphore = DispatchSemaphore(value: 0)
+        let lock = NSLock()
+        var result: Result<Bool, Error>?
+
+        Task {
+            let taskResult: Result<Bool, Error>
+            do {
+                taskResult = .success(try await block())
+            } catch {
+                taskResult = .failure(error)
+            }
+
+            lock.withLock {
+                result = taskResult
+            }
+            semaphore.signal()
+        }
+
+        semaphore.wait()
+        return lock.withLock { result } ?? .success(false)
     }
 }

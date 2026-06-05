@@ -10,12 +10,9 @@ class SiriShortcutSuggestedCell: ThemeableCell {
 
     @IBOutlet var titleLabel: UILabel!
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
     }
 
     private func updateSize() {

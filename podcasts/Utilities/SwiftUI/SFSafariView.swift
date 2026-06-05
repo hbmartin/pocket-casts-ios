@@ -1,3 +1,4 @@
+import PocketCastsUtils
 import SafariServices
 import SwiftUI
 import UIKit
@@ -6,15 +7,17 @@ struct SFSafariView: UIViewControllerRepresentable {
     let url: URL
     let context: URLHelper.InAppBrowserContext
 
-    func makeUIViewController(context: UIViewControllerRepresentableContext<Self>) -> SFSafariViewController {
+    func makeUIViewController(context: UIViewControllerRepresentableContext<Self>) -> UIViewController {
         guard let safariViewController = URLHelper.makeInAppBrowser(for: url, context: self.context) else {
-            preconditionFailure("SFSafariView requires a URL allowed for in-app browser presentation")
+            assertionFailure("SFSafariView requires a URL allowed for in-app browser presentation")
+            FileLog.shared.addMessage("SFSafariView blocked unsupported URL for \(self.context)")
+            return UIViewController()
         }
 
         return safariViewController
     }
 
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SFSafariView>) {
+    func updateUIViewController(_ uiViewController: UIViewController, context: UIViewControllerRepresentableContext<SFSafariView>) {
         // No need to do anything here
     }
 }
@@ -32,7 +35,7 @@ struct SFSafariViewModifier: ViewModifier {
                 case .externalApplication:
                     UIApplication.shared.open(incomingURL, options: [:], completionHandler: nil)
                     return .handled
-                case .blocked, .authenticationSessionRequired:
+                case .blocked:
                     return .discarded
                 }
             })

@@ -30,6 +30,7 @@ class FolderListCell: ThemeableCollectionCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         isAccessibilityElement = true
         updateSize()
     }
@@ -82,11 +83,5 @@ class FolderListCell: ThemeableCollectionCell {
                 break
         }
         unplayedBadge.layoutIfNeeded()
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

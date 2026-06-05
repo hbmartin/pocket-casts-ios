@@ -7,6 +7,7 @@ import PocketCastsUtils
 class DefaultPlayer: PlaybackProtocol, Hashable {
     private var audioMix: AVAudioMix?
     private var assetTrack: AVAssetTrack?
+    private var assetTrackLoadTask: Task<Void, Never>?
 
     private(set) var player: AVPlayer?
 
@@ -308,25 +309,50 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
             return
         }
 
-        if assetTrack == nil, player?.currentItem?.status == .readyToPlay, let tracks = player?.currentItem?.asset.tracks {
-            loadEmbeddedImage()
-
-            for track in tracks {
-                if track.mediaType == AVMediaType.audio {
-                    assetTrack = track
-                    break
-                }
-            }
-
-            #if !os(watchOS)
-                createAudioMix()
-                player?.currentItem?.audioMix = audioMix
-            #endif
-
-            isWaitingForInitialPlayback = false
+        if assetTrack == nil,
+           assetTrackLoadTask == nil,
+           let currentItem = player?.currentItem,
+           currentItem.status == .readyToPlay {
+            loadAssetTrack(for: currentItem)
         }
 
         PlaybackManager.shared.playerDidChangeNowPlayingInfo()
+    }
+
+    private func loadAssetTrack(for currentItem: AVPlayerItem) {
+        assetTrackLoadTask = Task { [weak self] in
+            guard let self else {
+                return
+            }
+
+            guard let tracks = try? await currentItem.asset.load(.tracks) else {
+                await MainActor.run {
+                    if self.player?.currentItem === currentItem {
+                        self.assetTrackLoadTask = nil
+                    }
+                }
+                return
+            }
+
+            await MainActor.run {
+                guard self.player?.currentItem === currentItem else {
+                    self.assetTrackLoadTask = nil
+                    return
+                }
+
+                self.assetTrackLoadTask = nil
+                self.loadEmbeddedImage()
+                self.assetTrack = tracks.first { $0.mediaType == .audio }
+
+                #if !os(watchOS)
+                    self.createAudioMix()
+                    self.player?.currentItem?.audioMix = self.audioMix
+                #endif
+
+                self.isWaitingForInitialPlayback = false
+                PlaybackManager.shared.playerDidChangeNowPlayingInfo()
+            }
+        }
     }
 
     // MARK: - Audio Mix
@@ -871,6 +897,8 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     }
 
     private func cleanupPlayer() {
+        assetTrackLoadTask?.cancel()
+        assetTrackLoadTask = nil
         player?.currentItem?.audioMix = nil
         durationObserver = nil
         rateObserver = nil

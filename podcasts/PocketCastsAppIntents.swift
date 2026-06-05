@@ -77,40 +77,24 @@ struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
     }
 }
 
-enum ChapterNavigationAction: String, AppEnum {
-    case previous
-    case next
-
-    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Chapter")
-    static var caseDisplayRepresentations: [ChapterNavigationAction: DisplayRepresentation] = [
-        .previous: DisplayRepresentation(title: "Previous Chapter"),
-        .next: DisplayRepresentation(title: "Next Chapter")
-    ]
-}
-
-struct ChapterNavigationIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Skip Chapter"
+struct NextChapterIntent: AudioPlaybackIntent {
+    static var title: LocalizedStringResource = "Next Chapter"
     static var openAppWhenRun: Bool { false }
-
-    @Parameter(title: "Direction")
-    var action: ChapterNavigationAction
-
-    init(action: ChapterNavigationAction) {
-        self.action = action
-    }
-
-    init() {
-        action = .next
-    }
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        switch action {
-        case .previous:
-            PlaybackIntentActionHandler.shared.previousChapter()
-        case .next:
-            PlaybackIntentActionHandler.shared.nextChapter()
-        }
+        PlaybackIntentActionHandler.shared.nextChapter()
+        return .result()
+    }
+}
+
+struct PreviousChapterIntent: AudioPlaybackIntent {
+    static var title: LocalizedStringResource = "Previous Chapter"
+    static var openAppWhenRun: Bool { false }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        PlaybackIntentActionHandler.shared.previousChapter()
         return .result()
     }
 }
@@ -184,13 +168,13 @@ struct PocketCastsAppShortcuts: AppShortcutsProvider {
             systemImageName: "sparkles"
         )
         AppShortcut(
-            intent: ChapterNavigationIntent(action: .next),
+            intent: NextChapterIntent(),
             phrases: ["Next chapter in \(.applicationName)"],
             shortTitle: "Next Chapter",
             systemImageName: "forward.end.fill"
         )
         AppShortcut(
-            intent: ChapterNavigationIntent(action: .previous),
+            intent: PreviousChapterIntent(),
             phrases: ["Previous chapter in \(.applicationName)"],
             shortTitle: "Previous Chapter",
             systemImageName: "backward.end.fill"

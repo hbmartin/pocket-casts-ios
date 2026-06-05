@@ -4,7 +4,7 @@ import Fingerprint
 import PocketCastsDataModel
 import PocketCastsUtils
 
-final class FingerprintTimingManager: NSObject {
+final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     // MARK: - Public Types
 
@@ -365,16 +365,18 @@ final class FingerprintTimingManager: NSObject {
         FileLog.shared.addMessage("FingerprintTimingManager: fetching reference from server for \(uuid)")
 
         let flag = cancellationFlag
+        let transferredEpisode = UnsafeTransfer(episode)
         fetchTask = Task { [weak self] in
             guard !flag.isCancelled else { return }
 
             let data = await FingerprintReferenceRetriever.shared.fetchReferenceData(
-                podcastUuid: episode.parentIdentifier(),
+                podcastUuid: transferredEpisode.wrappedValue.parentIdentifier(),
                 episodeUuid: uuid
             )
 
             self?.queue.async { [weak self] in
                 guard let self, !flag.isCancelled else { return }
+                let episode = transferredEpisode.wrappedValue
 
                 guard let data, let reference = ReferenceFingerprint.decode(from: data) else {
                     self.updateState(.unavailable)
@@ -1247,7 +1249,7 @@ final class FingerprintTimingManager: NSObject {
 
 // MARK: - Cancellation
 
-private final class CancellationFlag {
+private final class CancellationFlag: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
 

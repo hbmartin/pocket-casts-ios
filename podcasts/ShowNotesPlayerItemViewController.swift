@@ -5,7 +5,7 @@ import SafariServices
 import UIKit
 import WebKit
 
-class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewControllerDelegate, WKNavigationDelegate { // NOSONAR - Link taps are cancelled and routed through URLHelper.
+class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewControllerDelegate, WKNavigationDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
     @IBOutlet var episodeTitle: UILabel! {
         didSet {
             episodeTitle.font = UIFont.font(ofSize: 22, weight: .bold, scalingWith: .title2)
@@ -59,6 +59,7 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         setupWebView()
         updateColors()
@@ -196,7 +197,7 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url, navigationAction.navigationType == .linkActivated else {
-            decisionHandler(.allow)
+            decisionHandler(URLHelper.isAllowedEmbeddedContentNavigationURL(navigationAction.request.url) ? .allow : .cancel)
             return
         }
 
@@ -230,8 +231,7 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
                     url,
                     context: .externalContent,
                     options: .init(
-                        prefersExternalBrowser: true,
-                        allowsExternalFallback: true
+                        prefersExternalBrowser: true
                     )
                 )
             } else if let safariViewController = URLHelper.open(
@@ -279,12 +279,5 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
         let size = max(metric.scaledValue(for: 24), 24)
         durationImageView.updateSizeConstraints(to: size)
         dateImageView.updateSizeConstraints(to: size)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

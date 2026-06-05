@@ -89,6 +89,12 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
     override public func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { controller in
+            controller.refreshText()
+            controller.refreshError()
+            controller.refreshActionButtons()
+            controller.updateTextMargins()
+        }
         setupViews()
         if FeatureFlag.generatedTranscripts.enabled {
             addGeneratedTranscriptsObservers()
@@ -694,16 +700,6 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private func resetKmp() {
         kmpSearch = nil
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            refreshText()
-            refreshError()
-            refreshActionButtons()
-        }
-        updateTextMargins()
-    }
-
     private func refreshActionButtons() {
         let attributes: [NSAttributedString.Key: Any] = [
             .font: UIFont.font(with: .callout, maxSizeCategory: .extraExtraExtraLarge)

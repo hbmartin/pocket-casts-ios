@@ -259,11 +259,11 @@ public class ServerSettings {
     }
 
     public class func saveSyncingPassword(_ password: String) {
-        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingPasswordKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock)
     }
 
     public class func syncingPassword() -> String? {
-        try? KeychainHelper.string(for: ServerConstants.Values.syncingPasswordKey)
+        try? KeychainHelper.string(for: ServerConstants.Values.syncingLoginItemName)
     }
 
     public class func lastRefreshStartTime() -> Date? {
@@ -292,8 +292,7 @@ public class ServerSettings {
             return nil
         }
 
-        if savePushTokenToKeychain(legacyToken),
-           (try? KeychainHelper.string(for: ServerConstants.Values.pushTokenKey)) == legacyToken {
+        if savePushTokenToKeychain(legacyToken) {
             UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.pushToken)
         }
 

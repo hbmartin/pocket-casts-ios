@@ -66,7 +66,7 @@ public class SyncManager {
 
     public class func clearTokensFromKeyChain() {
         KeychainHelper.removeKey(ServerConstants.Values.syncingEmailKey)
-        KeychainHelper.removeKey(ServerConstants.Values.syncingPasswordKey)
+        KeychainHelper.removeKey(ServerConstants.Values.syncingLoginItemName)
         KeychainHelper.removeKey(ServerConstants.Values.syncingV2TokenKey)
         KeychainHelper.removeKey(ServerConstants.Values.refreshTokenKey)
         KeychainHelper.removeKey(ServerConstants.Values.appleAuthUserIDKey)
