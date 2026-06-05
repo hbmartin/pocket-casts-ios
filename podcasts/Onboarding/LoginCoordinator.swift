@@ -74,50 +74,6 @@ class LoginCoordinator: NSObject, OnboardingModel {
         navigationController?.pushViewController(controller, animated: true)
     }
 
-    func getStartedTapped() {
-        OnboardingFlow.shared.updateAnalyticsSource(.onboardingRecommendations)
-        let hostingController: UIViewController
-        if FeatureFlag.newOnboardingRecommendationChanges.enabled {
-            let view = InterestsView(continueCallback: { categories in
-                self.interestsContinueTapped(categories: categories)
-            }) {
-                self.interestsContinueTapped(categories: nil)
-            }
-            let controller = OnboardingHostingViewController(rootView: view.setupDefaultEnvironment())
-            controller.viewModel = self
-            hostingController = controller
-        } else {
-            let controller = OnboardingHostingViewController(rootView: OnboardingRecommendationsView(coordinator: self).setupDefaultEnvironment())
-            controller.viewModel = self
-            hostingController = controller
-        }
-
-        hostingController.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        navigationController?.pushViewController(hostingController, animated: true)
-    }
-
-    func interestsContinueTapped(categories: [DiscoverCategory]?) {
-        let configuration: RecommendationsViewModel.Configuration
-        if let categories {
-            configuration = .preselected(categories)
-        } else {
-            configuration = .all
-        }
-        let view = OnboardingRecommendationsView(coordinator: self, viewModel: RecommendationsViewModel(configuration: configuration))
-        let hostingController = OnboardingHostingViewController(rootView: view.setupDefaultEnvironment())
-        hostingController.viewModel = self
-        hostingController.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        navigationController?.pushViewController(hostingController, animated: true)
-    }
-
-    func recommendationsContinueTapped() {
-        socialAuthProvider = nil
-        let view = LoginLandingView(coordinator: self, fullScreenMode: true)
-        let hostingController = LoginLandingHostingController(rootView: view.setupDefaultEnvironment())
-        hostingController.viewModel = self
-        navigationController?.pushViewController(hostingController, animated: true)
-    }
-
     @objc func dismissTapped() {
         OnboardingFlow.shared.track(.setupAccountDismissed)
         navigationController?.dismiss(animated: true)
@@ -257,17 +213,10 @@ extension LoginCoordinator {
 
         let controller: UIViewController
 
-        if FeatureFlag.newOnboardingAccountCreation.enabled && isOnboarding {
-            let view = IntroCarouselView(coordinator: coordinator)
-                .setupDefaultEnvironment()
-            let hostingController = IntroCarouselHostingController(rootView: view)
-            controller = hostingController
-        } else {
-            let view = LoginLandingView(coordinator: coordinator, fullScreenMode: true)
-            let hostingController = LoginLandingHostingController(rootView: view.setupDefaultEnvironment())
-            hostingController.viewModel = coordinator
-            controller = hostingController
-        }
+        let view = LoginLandingView(coordinator: coordinator, fullScreenMode: true)
+        let hostingController = LoginLandingHostingController(rootView: view.setupDefaultEnvironment())
+        hostingController.viewModel = coordinator
+        controller = hostingController
 
         let navController = navigationController ?? UINavigationController(rootViewController: controller)
         navController.modalPresentationStyle = UIDevice.current.isiPad() ? .formSheet : .fullScreen

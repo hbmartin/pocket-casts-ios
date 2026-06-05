@@ -20,11 +20,8 @@ struct OnboardingFlow: AnalyticsSourceProvider {
 
         let flowController: UIViewController
         switch flow {
-        case .encourageAccountCreation:
-            flowController = InformationalModalViewModel.makeController()
-
         case .initialOnboarding:
-            flowController = LoginCoordinator.make(in: navigationController, isOnboarding: true)
+            flowController = WelcomeViewModel.make(in: navigationController, displayType: .newAccount)
         default:
             flowController = LoginCoordinator.make(in: navigationController, isOnboarding: false)
         }
@@ -34,9 +31,6 @@ struct OnboardingFlow: AnalyticsSourceProvider {
 
     /// Resets the internal flow state to none and clears any analytics sources
     mutating func reset() {
-        if (currentFlow == .initialOnboarding) || (currentFlow == .encourageAccountCreation) {
-            NavigationManager.sharedManager.showNotificationsPermissionsModal()
-        }
         source = .unknown
         currentFlow = .none
 
@@ -76,8 +70,6 @@ struct OnboardingFlow: AnalyticsSourceProvider {
         /// When the user was logged out due to a server or token issue, not as a result of user interaction and is
         /// asked to sign in again. See the `BackgroundSignOutListener`
         case forcedLoggedOut = "forced_logged_out"
-
-        case encourageAccountCreation = "encourage_account_creation"
 
         var analyticsDescription: String { rawValue }
 

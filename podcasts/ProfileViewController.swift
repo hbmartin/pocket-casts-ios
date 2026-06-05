@@ -72,17 +72,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, bookmarks }
-
-    private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
-        let viewModel = InformationalBannerViewModel(bannerType: .profile)
-        return InformationalBannerViewCoordinator(viewModel: viewModel)
-    }()
+    enum TableRow { case allStats, downloaded, starred, listeningHistory, help, bookmarks }
 
     @IBOutlet var profileTable: UITableView! {
         didSet {
             profileTable.register(UINib(nibName: "TopLevelSettingsCell", bundle: nil), forCellReuseIdentifier: settingsCellId)
-            profileTable.register(InformationalProfileBannerCell.self, forCellReuseIdentifier: InformationalProfileBannerCell.identifier)
         }
     }
 
@@ -255,17 +249,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let row = tableData[indexPath.section][indexPath.row]
 
-        if row == .informationalBanner {
-            let cell = tableView.dequeueReusableCell(withIdentifier: InformationalProfileBannerCell.identifier, for: indexPath) as! InformationalProfileBannerCell
-            cell.onCloseBannerTap = { [weak self] cell in
-                if let cell, let indexPath = tableView.indexPath(for: cell) {
-                    self?.tableData[indexPath.section].remove(at: indexPath.row)
-                    tableView.deleteRows(at: [indexPath], with: .fade)
-                }
-            }
-            return cell
-        }
-
         let cell = tableView.dequeueReusableCell(withIdentifier: settingsCellId, for: indexPath) as! TopLevelSettingsCell
 
         cell.settingsImage.tintColor = ThemeColor.primaryIcon01()
@@ -273,8 +256,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         cell.separatorInset = .zero
 
         switch row {
-        case .informationalBanner:
-            return InformationalProfileBannerCell()
         case .allStats:
             cell.settingsImage.image = UIImage(named: "profile-stats")
             cell.settingsLabel.text = L10n.settingsStats
@@ -299,18 +280,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     }
 
     func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
-        let row = tableData[indexPath.section][indexPath.row]
-        return row != .informationalBanner
+        true
     }
 
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        let row = tableData[indexPath.section][indexPath.row]
-        switch row {
-        case .informationalBanner:
-            return 160
-        default:
-            return 70
-        }
+        70
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -326,8 +300,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     func navigateToRow(_ row: TableRow) {
         switch row {
-        case .informationalBanner:
-            break
         case .allStats:
             let statsViewController = StatsViewController()
             navigationController?.pushViewController(statsViewController, animated: true)
@@ -365,14 +337,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     private var tableData: [[ProfileViewController.TableRow]] = []
 
     private func refreshTableData() {
-        var data: [[ProfileViewController.TableRow]]
-        data = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help]]
-
-        if informationalBannerCoordinator.shouldShowBanner() {
-            data[0].insert(.informationalBanner, at: 0)
-        }
-
-        tableData = data
+        tableData = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help]]
         profileTable.reloadData()
     }
 

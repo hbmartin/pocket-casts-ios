@@ -28,9 +28,6 @@ struct WelcomeView: View {
                     }
 
                     Spacer()
-                    newsletter
-                        .padding(.top, 30)
-                        .padding(.bottom, 16)
 
                     Button(L10n.done) {
                         viewModel.doneTapped()
@@ -44,29 +41,13 @@ struct WelcomeView: View {
         }
     }
 
-    private var newsletter: some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                Label(L10n.pocketCastsWelcomeNewsletterTitle, for: .newsletterTitle)
-                Label(L10n.pocketCastsNewsletterDescription, for: .newsletterDescription)
-            }
-
-            Spacer()
-
-            Toggle(isOn: $viewModel.newsletterOptIn) {
-                EmptyView()
-            }.toggleStyle(SwitchToggleStyle(tint: AppTheme.color(for: .primaryInteractive01, theme: theme)))
-                .frame(maxWidth: 60)
-        }
-    }
-
     private func model(for section: WelcomeViewModel.WelcomeSection) -> WelcomeSectionModel {
         switch section {
 
         case .importPodcasts:
             return WelcomeSectionModel(title: L10n.welcomeImportTitle, subtitle: L10n.welcomeImportDescription, imageName: "welcome-import", buttonTitle: L10n.welcomeImportButton)
-        case .discover:
-            return  WelcomeSectionModel(title: L10n.welcomeDiscoverTitle, subtitle: L10n.welcomeDiscoverDescription, imageName: "welcome-discover", buttonTitle: L10n.welcomeDiscoverButton)
+        case .podcasts:
+            return WelcomeSectionModel(title: L10n.podcastsPlural, subtitle: L10n.profileListeningHistoryEmptyDescription, imageName: "welcome-discover", buttonTitle: L10n.podcastListGoToPodcastsAction)
         }
     }
 }
@@ -137,8 +118,6 @@ private struct Label: View {
         case title
         case sectionTitle
         case sectionDescription
-        case newsletterTitle
-        case newsletterDescription
     }
 
     let text: String
@@ -161,9 +140,9 @@ private struct Label: View {
 
         case .title:
             return AppTheme.color(for: .text, theme: theme)
-        case .sectionTitle, .newsletterTitle:
+        case .sectionTitle:
             return AppTheme.color(for: .text, theme: theme)
-        case .sectionDescription, .newsletterDescription:
+        case .sectionDescription:
             return AppTheme.color(for: .sectionDescription, theme: theme)
         }
     }
@@ -179,10 +158,6 @@ private struct Label: View {
                 return content.font(size: 18, style: .body, weight: .semibold, maxSizeCategory: .extraExtraExtraLarge)
             case .sectionDescription:
                 return content.font(size: 13, style: .caption, maxSizeCategory: .extraExtraExtraLarge)
-            case .newsletterTitle:
-                return content.font(size: 15, style: .subheadline, weight: .medium, maxSizeCategory: .extraExtraExtraLarge)
-            case .newsletterDescription:
-                return content.font(size: 13, style: .footnote, maxSizeCategory: .extraExtraExtraLarge)
             }
         }
     }

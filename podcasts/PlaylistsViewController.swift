@@ -64,13 +64,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
 
     private var firstTimeLoading = true
 
-    lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
-        let invertedColor: Bool? = true
-        let bannerType: InformationalBannerType = .playlists
-        let viewModel = InformationalBannerViewModel(bannerType: bannerType, invertedColor: invertedColor)
-        return InformationalBannerViewCoordinator(viewModel: viewModel)
-    }()
-
     override func viewDidLoad() {
         super.viewDidLoad()
 

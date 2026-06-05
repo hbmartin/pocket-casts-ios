@@ -1394,17 +1394,6 @@ class Settings: NSObject {
 
     static var shouldEnableIAPInTestFlightBuilds: Bool = false
 
-    // MARK: - Informational Banner
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-    static func dismissBanner(for type: InformationalBannerType) {
-        UserDefaults.standard.set(true, forKey: "kInformational\(type.rawValue.capitalized)Banner")
-    }
-
-    static func shouldShowBanner(for type: InformationalBannerType) -> Bool {
-        return !UserDefaults.standard.bool(forKey: "kInformational\(type.rawValue.capitalized)Banner")
-    }
-#endif
-
     // MARK: - Notifications
     static var notificationsNewEpisodes: Bool {
         get {
@@ -1457,17 +1446,6 @@ class Settings: NSObject {
         }
         set {
             UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.notifications.triggerDates)
-        }
-    }
-
-    // MARK: - Encourage Account Creation
-
-    static var hasShownInformationalViewModal: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.informationalModal.hasShownViewModal) as? Bool ?? false
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.informationalModal.hasShownViewModal)
         }
     }
 

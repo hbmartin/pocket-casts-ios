@@ -1,13 +1,10 @@
 import Foundation
 import SwiftUI
-import PocketCastsServer
 
 class WelcomeViewModel: ObservableObject, OnboardingModel {
     weak var navigationController: UINavigationController?
     let displayType: DisplayType
-    let sections: [WelcomeSection] = [.importPodcasts, .discover]
-
-    var newsletterOptIn: Bool = true
+    let sections: [WelcomeSection] = [.importPodcasts, .podcasts]
 
     init(navigationController: UINavigationController? = nil, displayType: DisplayType) {
         self.navigationController = navigationController
@@ -21,21 +18,17 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
     func didDismiss(type: OnboardingDismissType) {
         guard type == .swipe else { return }
 
-        saveNewsletterOptIn()
         track(.welcomeDismissed)
     }
 
     func sectionTapped(_ section: WelcomeSection) {
-        saveNewsletterOptIn()
-
         switch section {
         case .importPodcasts:
             track(.welcomeImportTapped)
             let controller = ImportViewModel.make(in: navigationController)
             navigationController?.pushViewController(controller, animated: true)
 
-        case .discover:
-            trackNewsletterOptIn()
+        case .podcasts:
             track(.welcomeDiscoverTapped)
             navigationController?.dismiss(animated: true)
             NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, data: nil)
@@ -43,23 +36,8 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
     }
 
     func doneTapped() {
-        saveNewsletterOptIn()
-        trackNewsletterOptIn()
         track(.welcomeDismissed)
         navigationController?.dismiss(animated: true)
-    }
-
-    private func saveNewsletterOptIn() {
-        ServerSettings.setMarketingOptIn(newsletterOptIn)
-    }
-
-    private func trackNewsletterOptIn() {
-        let source: String
-        switch displayType {
-        case .newAccount: source = "welcome_new_account"
-        case .plus: source = "welcome_plus"
-        }
-        Analytics.track(.newsletterOptInChanged, properties: ["enabled": newsletterOptIn, "source": source])
     }
 
     // MARK: - Configuration
@@ -72,7 +50,7 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
 
     enum WelcomeSection: Int, Identifiable {
         case importPodcasts
-        case discover
+        case podcasts
 
         var id: Int { rawValue }
     }

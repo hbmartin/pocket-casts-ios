@@ -22,11 +22,6 @@ class ListeningHistoryViewController: PCViewController {
     private let episodesDataManager = EpisodesDataManager()
     private var searchController: PCSearchBarController?
 
-    private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
-        let viewModel = InformationalBannerViewModel(bannerType: .listeningHistory)
-        return InformationalBannerViewCoordinator(viewModel: viewModel)
-    }()
-
     @IBOutlet var listeningHistoryTable: ThemeableTable! {
         didSet {
             registerCells()
@@ -95,11 +90,6 @@ class ListeningHistoryViewController: PCViewController {
         setupNavBar()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: listeningHistoryTable)
         Analytics.track(.listeningHistoryShown)
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setupInformationalBanner()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -197,21 +187,6 @@ class ListeningHistoryViewController: PCViewController {
         optionsPicker.addAction(action: clearAction)
 
         optionsPicker.present(from: self)
-    }
-
-    private func setupInformationalBanner() {
-        if !informationalBannerCoordinator.shouldShowBanner() {
-            listeningHistoryTable.tableHeaderView = nil
-            return
-        }
-        if listeningHistoryTable.tableHeaderView != nil {
-            return
-        }
-        listeningHistoryTable.tableHeaderView = informationalBannerCoordinator.tableHeaderView(size: CGSize(width: listeningHistoryTable.bounds.width, height: 138)) {
-            UIView.animate(withDuration: 0.5) { [weak self] in
-                self?.listeningHistoryTable.tableHeaderView = nil
-            }
-        }
     }
 
     private func refreshContentUnavailable() {

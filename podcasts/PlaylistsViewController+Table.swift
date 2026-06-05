@@ -45,30 +45,15 @@ extension PlaylistsViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if informationalBannerCoordinator.shouldShowBanner() {
-            return UITableView.automaticDimension
-        } else {
-            return CGFloat.leastNormalMagnitude
-        }
+        CGFloat.leastNormalMagnitude
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if !informationalBannerCoordinator.shouldShowBanner() {
-            return nil
-        }
-        return informationalBannerCoordinator.tableHeaderView(size: CGSize(width: filtersTable.bounds.width, height: 135)) {
-            UIView.animate(withDuration: 0.5) { [weak self] in
-                self?.filtersTable.reloadData()
-            }
-        }
+        nil
     }
 
     func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
-        if informationalBannerCoordinator.shouldShowBanner() {
-            return 135
-        } else {
-            return CGFloat.leastNormalMagnitude
-        }
+        CGFloat.leastNormalMagnitude
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
