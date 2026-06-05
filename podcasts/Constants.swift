@@ -96,8 +96,6 @@ struct Constants {
 
         // Gravatar
         static let avatarNeedsRefreshing = NSNotification.Name(rawValue: "avatarNeedsRefreshing")
-
-        static let discoverNavigateToCategory = Notification.Name(rawValue: "DiscoverNavigateToCategory")
     }
 
     enum UserDefaults {

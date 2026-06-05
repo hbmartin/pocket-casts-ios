@@ -1,4 +1,3 @@
-import Combine
 import Foundation
 import PocketCastsUtils
 
@@ -7,11 +6,6 @@ public protocol DiscoverServerHandling {
 }
 
 public class DiscoverServerHandler: DiscoverServerHandling {
-    enum DiscoverServerError: Error {
-        case unknown
-        case badRequest
-    }
-
     public static let shared = DiscoverServerHandler()
 
     private let tokenHelper = {
@@ -58,18 +52,6 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         }
     }
 
-    public func discoverNetworkList(source: String, authenticated: Bool?, completion: @escaping ([PodcastNetwork]?) -> Void) {
-        discoverRequest(path: source, type: [PodcastNetwork].self, authenticated: authenticated) { networkList, _ in
-            completion(networkList)
-        }
-    }
-
-    public func discoverPodcastList(source: String, authenticated: Bool?, completion: @escaping (PodcastList?) -> Void) {
-        discoverRequest(path: source, type: PodcastList.self, authenticated: authenticated) { podcastList, _ in
-            completion(podcastList)
-        }
-    }
-
     public func discoverCategories(source: String, authenticated: Bool?, completion: @escaping ([DiscoverCategory]?) -> Void) {
         discoverRequest(path: source, type: [DiscoverCategory].self, authenticated: authenticated) { categories, _ in
             completion(categories)
@@ -108,41 +90,6 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         await withCheckedContinuation { continuation in
             discoverPodcastCollection(source: source, authenticated: authenticated) { result in
                 continuation.resume(returning: result)
-            }
-        }
-    }
-
-    public func discoverItem<T>(_ source: String?, authenticated: Bool, type: T.Type) -> AnyPublisher<T, Error> where T: Decodable {
-        guard let source else {
-            return Fail(error: DiscoverServerError.badRequest).eraseToAnyPublisher()
-        }
-
-        return Future { [unowned self] promise in
-            self.discoverRequest(path: source, type: type, authenticated: authenticated) { discoverList, _ in
-                if let discoverList {
-                    promise(.success(discoverList))
-                } else {
-                    promise(.failure(DiscoverServerError.unknown))
-                }
-            }
-        }
-        .eraseToAnyPublisher()
-    }
-
-    /// A method to check whether the response from the source URL authenticated successfully.
-    /// - Parameters:
-    ///   - item: An item which is `authenticated == true`
-    /// - Returns: Whether or not the authentication succeeded
-    public func checkSourceAuthentication(for item: DiscoverItem) async -> Bool {
-        // If there's no source URL, consider authentication failed. This shouldn't happen.
-        guard item.isAuthenticated, let source = item.source else {
-            return false
-        }
-
-        return await withCheckedContinuation { continuation in
-            performDiscoverRequest(path: source, authenticated: item.isAuthenticated) { _, response, _, _ in
-                let success = response?.extractStatusCode() == 200
-                continuation.resume(returning: success)
             }
         }
     }

@@ -9,9 +9,9 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, upNext, profile }
+    enum Tab: Int { case podcasts, filter, profile }
     private enum LegacyTab: Int { case podcasts, discover, filter, upNext, profile }
-    private static let removedDiscoverTabMigrationKey = "SJLastTabOpenedRemovedDiscoverMigrated"
+    private static let removedDiscoverAndUpNextTabsMigrationKey = "SJLastTabOpenedRemovedDiscoverAndUpNextMigrated"
 
     var pcTabs = [Tab]()
 
@@ -20,18 +20,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     lazy var endOfYear = EndOfYear()
 
     private lazy var profileTabBarItem = UITabBarItem(title: L10n.profile, image: UIImage(named: "profile_tab"), tag: pcTabs.firstIndex(of: .profile) ?? -1)
-
-    private lazy var upNextTabBarItem = UITabBarItem(title: L10n.upNext, image: UIImage(named: "upnext_tab"), tag: pcTabs.firstIndex(of: .upNext) ?? -1)
-
-    /// The last Up Next count rendered into the tab, used to pulse the tab only
-    /// when the queue actually changes (not on every refresh notification).
-    private var previousUpNextCount: Int?
-
-    /// `true` while the Up Next tab "pulse" spring is in flight, so a burst of
-    /// rapid adds doesn't stack overlapping transforms on the tab button.
-    /// Not `private`: set from the pulse code in `+Animations`.
-    var isPulsingUpNextTab = false
-
 
     /// The viewDidAppear can trigger more than once per lifecycle, setting this flag on the first did appear prevents use from prompting more than once per lifecycle. But still wait until the tab bar has appeared to do so.
     var viewDidAppearBefore: Bool = false
@@ -96,7 +84,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTarBarTraitCollectionOnIpadForiOS18()
 
-        pcTabs = [.podcasts, .filter, .upNext, .profile]
+        pcTabs = [.podcasts, .filter, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -109,9 +97,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
-        let upNextViewController = UpNextViewController(source: .tabBar, showingInTab: true)
-        upNextViewController.tabBarItem = upNextTabBarItem
-        vcsInTab = [podcastsController, filtersViewController, upNextViewController, profileViewController]
+        vcsInTab = [podcastsController, filtersViewController, profileViewController]
 
         displayEndOfYearBadgeIfNeeded()
 
@@ -135,13 +121,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         NotificationCenter.default.addObserver(self, selector: #selector(refreshProfileTabAvatar), name: .userLoginDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshProfileTabAvatarForcingReload), name: Constants.Notifications.avatarNeedsRefreshing, object: nil)
         refreshProfileTabAvatar()
-
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshUpNextTabBadge), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshUpNextTabBadge), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshUpNextTabBadge), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        // `upNextEpisodeAdded` refreshes the badge via the genie animation's tail, not here.
-        NotificationCenter.default.addObserver(self, selector: #selector(animateEpisodeAddedToUpNext(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
-        refreshUpNextTabBadge()
 
         observersForEndOfYearStats()
         addBookmarkCreatedToastHandler()
@@ -271,7 +250,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         updateTabBarColor()
         updateErrorColor()
         setNeedsStatusBarAppearanceUpdate()
-        refreshUpNextTabBadge()
     }
 
     private func setupMiniPlayer() {
@@ -320,39 +298,39 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     private func restoredLastTabIndex() -> Int {
         guard UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) != nil else {
-            UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+            UserDefaults.standard.set(true, forKey: Self.removedDiscoverAndUpNextTabsMigrationKey)
             return pcTabs.firstIndex(of: .podcasts) ?? 0
         }
 
         let savedIndex = UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened)
 
-        guard !UserDefaults.standard.bool(forKey: Self.removedDiscoverTabMigrationKey) else {
+        guard !UserDefaults.standard.bool(forKey: Self.removedDiscoverAndUpNextTabsMigrationKey) else {
             return clampedTabIndex(savedIndex)
         }
 
         let migratedIndex = migratedLastTabIndex(savedIndex)
 
         UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
-        UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+        UserDefaults.standard.set(true, forKey: Self.removedDiscoverAndUpNextTabsMigrationKey)
         return migratedIndex
     }
 
     private func migratedLastTabIndex(_ savedIndex: Int) -> Int {
-        // Indices 1...3 are ambiguous after removing Discover: they can be old
-        // tab positions or already-correct positions from a build without Discover.
-        guard !pcTabs.indices.contains(savedIndex) else {
-            return savedIndex
-        }
-
         guard let legacyTab = LegacyTab(rawValue: savedIndex) else {
             return clampedTabIndex(savedIndex)
         }
 
         switch legacyTab {
+        case .podcasts:
+            return pcTabs.firstIndex(of: .podcasts) ?? clampedTabIndex(savedIndex)
+        case .discover:
+            return pcTabs.firstIndex(of: .podcasts) ?? clampedTabIndex(savedIndex)
+        case .filter:
+            return pcTabs.firstIndex(of: .filter) ?? clampedTabIndex(savedIndex)
+        case .upNext:
+            return pcTabs.firstIndex(of: .podcasts) ?? clampedTabIndex(savedIndex)
         case .profile:
             return pcTabs.firstIndex(of: .profile) ?? clampedTabIndex(savedIndex)
-        case .podcasts, .discover, .filter, .upNext:
-            return clampedTabIndex(savedIndex)
         }
     }
 
@@ -480,7 +458,11 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     }
 
     func navigateToUpNext(_ animated: Bool) {
-        switchToTab(.upNext)
+        guard let miniPlayer = NavigationManager.sharedManager.miniPlayer else {
+            switchToTab(.podcasts)
+            return
+        }
+        miniPlayer.showUpNext(from: .unknown)
     }
 
     func navigateToProfile(row: ProfileViewController.TableRow? = nil, animated: Bool) {
@@ -954,8 +936,6 @@ private extension MainTabBarController {
             event = .filtersTabOpened
         case .profile:
             event = .profileTabOpened
-        case .upNext:
-            event = .upNextTabOpened
         }
 
         Analytics.track(event, properties: ["initial": isInitial])
@@ -1150,40 +1130,5 @@ private extension MainTabBarController {
     func resetProfileTabImage() {
         profileTabBarItem.image = UIImage(named: "profile_tab")
         profileTabBarItem.selectedImage = nil
-    }
-}
-
-// MARK: - Up Next tab badge
-
-extension MainTabBarController {
-    @objc func refreshUpNextTabBadge() {
-        guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
-
-        // Clamping lives in `composeUpNextTabImage`; track the true count here.
-        let count = PlaybackManager.shared.queue.upNextCount()
-        let previous = previousUpNextCount
-        previousUpNextCount = count
-
-        // Nothing to redraw if the count didn't move. The composed image is a
-        // template, so the tab bar re-tints it on theme changes for free — no
-        // rebuild needed there either.
-        guard count != previous else { return }
-
-        guard count > 0 else {
-            resetUpNextTabImage()
-            return
-        }
-
-        // A template image so the tab bar tints it like every other item.
-        upNextTabBarItem.image = Self.composeUpNextTabImage(count: count)
-        upNextTabBarItem.selectedImage = Self.composeUpNextTabImage(count: count, isSelected: true)
-
-        // Only celebrate the queue growing — a drain (playing/removing) shouldn't pop.
-        if previous.map({ count > $0 }) ?? false { pulseUpNextTabButton() }
-    }
-
-    func resetUpNextTabImage() {
-        upNextTabBarItem.image = UIImage(named: "upnext_tab")
-        upNextTabBarItem.selectedImage = nil
     }
 }

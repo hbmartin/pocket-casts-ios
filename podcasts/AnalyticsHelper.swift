@@ -272,8 +272,6 @@ class AnalyticsHelper {
                 logEvent("filter_tab_opened", parameters: nil)
             case .profile:
                 logEvent("profile_tab_opened", parameters: nil)
-            case .upNext:
-                logEvent("upnext_tab_opened", parameters: nil)
             }
         }
     #endif
