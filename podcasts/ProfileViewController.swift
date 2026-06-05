@@ -70,20 +70,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    @IBOutlet var plusInfoView: PlusLockedInfoView! {
-        didSet {
-            plusInfoView.isHidden = true
-            plusInfoView.delegate = self
-        }
-    }
-
-    var promoCode: String? {
-        didSet {
-            showPromotionViewController(promoCode: promoCode)
-        }
-    }
-
-    var promoRedeemedMessage: String?
     private let settingsCellId = "SettingsCell"
 
     enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, bookmarks }
@@ -164,11 +150,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
 
         addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
-        if promoRedeemedMessage != nil {
-            updateDisplayedData()
-            showPromotionRedeemedAcknowledgement()
-            promoRedeemedMessage = nil
-        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -236,7 +217,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         headerViewModel.update()
 
         updateLastRefreshDetails()
-        plusInfoView.isHidden = Settings.plusInfoDismissedOnProfile() || SubscriptionHelper.hasActiveSubscription()
         updateFooterFrame()
         refreshTableData()
     }
@@ -422,24 +402,6 @@ extension ProfileViewController: UIPopoverPresentationControllerDelegate {
         return .none
     }
 }
-// MARK: - PlusLockedInfoDelegate
-
-extension ProfileViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        Settings.setPlusInfoDismissedOnProfile(true)
-        plusInfoView.isHidden = true
-        updateFooterFrame()
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .profile
-    }
-}
-
 // MARK: - Refresh Control
 
 extension ProfileViewController {

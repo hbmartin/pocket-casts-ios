@@ -55,13 +55,6 @@ class SearchHistoryModel: ObservableObject {
     }
 
     private func updateFolders() {
-        guard SubscriptionHelper.hasActiveSubscription() else {
-            // User is not subscribed anymore, remove all folders from search history
-            entries = entries.filter { $0.podcast?.kind != .folder }
-            save()
-            return
-        }
-
         // A folder was changed, update all folders inside the search history
         entries = entries.compactMap { entry in
             if entry.podcast?.kind == .folder, let uuid = entry.podcast?.uuid {

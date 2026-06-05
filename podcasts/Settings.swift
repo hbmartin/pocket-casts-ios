@@ -350,7 +350,7 @@ class Settings: NSObject {
     }
 
     class func upNextShuffleEnabled() -> Bool {
-        if !FeatureFlag.upNextShuffle.enabled || !SubscriptionHelper.hasActiveSubscription() || !SyncManager.isUserLoggedIn() {
+        if !FeatureFlag.upNextShuffle.enabled || !SyncManager.isUserLoggedIn() {
             return false
         }
         return UserDefaults.standard.bool(forKey: Settings.upNextShuffleKey)
@@ -1039,7 +1039,7 @@ class Settings: NSObject {
             if FeatureFlag.newSettingsStorage.enabled {
                 return SettingsStore.appSettings.headphoneControlsPreviousAction.action
             } else {
-                return Constants.UserDefaults.headphones.previousAction.unlockedValue
+                return Constants.UserDefaults.headphones.previousAction.value
             }
         }
 
@@ -1056,7 +1056,7 @@ class Settings: NSObject {
             if FeatureFlag.newSettingsStorage.enabled {
                 return SettingsStore.appSettings.headphoneControlsNextAction.action
             } else {
-                return Constants.UserDefaults.headphones.nextAction.unlockedValue
+                return Constants.UserDefaults.headphones.nextAction.value
             }
         }
 

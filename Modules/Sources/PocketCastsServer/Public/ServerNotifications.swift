@@ -13,13 +13,6 @@ public enum ServerNotifications {
     public static let syncProgressPodcastUpto = NSNotification.Name(rawValue: "PCSyncUpto")
     public static let episodeTypeOrLengthChanged = NSNotification.Name(rawValue: "SJEpisodeTypeChanged")
 
-    // IAP notifications
-    public static let iapProductsUpdated = NSNotification.Name(rawValue: "SJIapProductsUpdated")
-    public static let iapProductsFailed = NSNotification.Name(rawValue: "SJIapProductsFailed")
-    public static let iapPurchaseCompleted = NSNotification.Name(rawValue: "SJIapPurchaseCompleted")
-    public static let iapPurchaseDeferred = NSNotification.Name(rawValue: "SJIapPurchaseDeferred")
-    public static let iapPurchaseFailed = NSNotification.Name(rawValue: "SJIapPurchaseFailed")
-    public static let iapPurchaseCancelled = NSNotification.Name(rawValue: "SJIapPurchaseCancelled")
     public static let subscriptionStatusChanged = NSNotification.Name(rawValue: "SJSubscriptionStatusChanged")
 
     // User Episode

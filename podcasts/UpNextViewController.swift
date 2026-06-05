@@ -255,7 +255,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc private func shuffleButtonTapped() {
-        FileLog.shared.addMessage("UpNext shuffleButtonTapped: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
+        FileLog.shared.addMessage("UpNext shuffleButtonTapped: user is logged in: \(SyncManager.isUserLoggedIn())")
 
         if !SyncManager.isUserLoggedIn() {
             // Shuffle still requires an account so the order can sync. Send the
@@ -283,43 +283,22 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc private func themeDidChange() {
-        FileLog.shared.addMessage("UpNext themeDidChange: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
+        FileLog.shared.addMessage("UpNext themeDidChange: user is logged in: \(SyncManager.isUserLoggedIn())")
 
-        if !SubscriptionHelper.hasActiveSubscription() || !SyncManager.isUserLoggedIn() {
-            shuffleButton.setImage(UIImage(named: "shuffle-plus"), for: .normal)
-            shuffleButton.isSelected = false
-        } else {
-            let unselected = UIImage(named: "shuffle")?.withTintColor(AppTheme.colorForStyle(.primaryIcon02, themeOverride: themeOverride), renderingMode: .alwaysOriginal)
-            let selected = UIImage(named: "shuffle-enabled")?.withTintColor(AppTheme.colorForStyle(.primaryIcon01, themeOverride: themeOverride), renderingMode: .alwaysOriginal)
-            shuffleButton.setImage(unselected, for: .normal)
-            shuffleButton.setImage(selected, for: .selected)
-            updateShuffleButtonState()
-        }
+        let unselected = UIImage(named: "shuffle")?.withTintColor(AppTheme.colorForStyle(.primaryIcon02, themeOverride: themeOverride), renderingMode: .alwaysOriginal)
+        let selected = UIImage(named: "shuffle-enabled")?.withTintColor(AppTheme.colorForStyle(.primaryIcon01, themeOverride: themeOverride), renderingMode: .alwaysOriginal)
+        shuffleButton.setImage(unselected, for: .normal)
+        shuffleButton.setImage(selected, for: .selected)
+        updateShuffleButtonState()
         shuffleButton.imageView?.adjustsImageSizeForAccessibilityContentSizeCategory = true
         shuffleButton.imageView?.contentMode = .scaleAspectFit
         shuffleButton.imageView?.translatesAutoresizingMaskIntoConstraints = false
-    }
-
-    @objc private func subscriptionStatusDidChange() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            if FeatureFlag.upNextShuffle.enabled {
-                // Update UI
-                FileLog.shared.addMessage("UpNext subscriptionStatusDidChange: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
-
-                setupActionButtonsIfNecessary()
-                themeDidChange()
-                updateNavBarButtons()
-                reloadTable()
-            }
-        }
     }
 
     private func setupActionButtonsIfNecessary() {
         if FeatureFlag.upNextShuffle.enabled {
             guard shuffleButton.allTargets.isEmpty else { return }
             NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(subscriptionStatusDidChange), name: ServerNotifications.subscriptionStatusChanged, object: nil)
             themeDidChange()
             shuffleButton.addTarget(self, action: #selector(shuffleButtonTapped), for: .touchUpInside)
         } else {

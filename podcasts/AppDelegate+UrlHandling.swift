@@ -281,20 +281,6 @@ extension AppDelegate {
             return true
         }
 
-        // Support - send IAP purchase receipt to server:
-        JLRoutes.global().addRoute("/support/sendreceipt/*") { [weak self] _ -> Bool in
-            guard self != nil else { return false }
-
-            ApiServerHandler.shared.sendPurchaseReceipt(completion: { success in
-                if success {
-                    FileLog.shared.addMessage("AppDelegate successfully validated receipt")
-                } else {
-                    FileLog.shared.addMessage("AppDelegate failed to validate receipt")
-                }
-            })
-            return true
-        }
-
         // Import OMPL extension
         JLRoutes.global().addRoute("/import-file/*") { [weak self] parameters -> Bool in
             guard let self,

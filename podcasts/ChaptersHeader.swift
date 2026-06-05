@@ -1,5 +1,4 @@
 import UIKit
-import PocketCastsServer
 
 class ChaptersHeader: UIView {
     weak var delegate: ChaptersHeaderDelegate?
@@ -30,9 +29,6 @@ class ChaptersHeader: UIView {
         button.addTarget(self, action: #selector(toggleChapterSelection), for: .touchUpInside)
         button.contentHorizontalAlignment = .trailing
         button.titleLabel?.lineBreakMode = .byWordWrapping
-        button.configuration?.imagePadding = 8
-        button.configuration?.imagePlacement = .trailing
-        button.configuration?.image = lockIcon
         button.configuration?.titleTextAttributesTransformer =
            UIConfigurationTextAttributesTransformer { incoming in
              var outgoing = incoming
@@ -48,10 +44,6 @@ class ChaptersHeader: UIView {
         divider.translatesAutoresizingMaskIntoConstraints = false
         return divider
     }()
-
-    private var lockIcon: UIImage? {
-        PaidFeature.deselectChapters.isUnlocked ? nil : (PaidFeature.deselectChapters.tier == .patron ? UIImage(named: "patron-heart") : UIImage(named: "plusGold"))
-    }
 
     // MARK: - Config
     override init(frame: CGRect) {
@@ -102,7 +94,7 @@ class ChaptersHeader: UIView {
     }
 
     private func updateButtonIcon() {
-        toggleButton.configuration?.image = lockIcon
+        toggleButton.configuration?.image = nil
     }
 
     private func setUpConstraints() {

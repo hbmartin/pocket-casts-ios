@@ -189,12 +189,10 @@ class SearchResultsModel: ObservableObject {
             }
         }
 
-        if SubscriptionHelper.hasActiveSubscription() {
-            let allFolders = dataMangager.allFolders()
-            for folder in allFolders {
-                if folder.name.localizedCaseInsensitiveContains(searchTerm) {
-                    results.append(PodcastFolderSearchResult(from: folder))
-                }
+        let allFolders = dataMangager.allFolders()
+        for folder in allFolders {
+            if folder.name.localizedCaseInsensitiveContains(searchTerm) {
+                results.append(PodcastFolderSearchResult(from: folder))
             }
         }
 

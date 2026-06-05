@@ -49,21 +49,6 @@ public class ApiServerHandler {
         apiQueue.addOperation(deleteAccountTask)
     }
 
-    public func cancelPaidPodcastSubcription(bundleUuid: String, completion: @escaping (Bool) -> Void) {
-        let cancelTask = CancelSubscriptionTask(bundleUuid: bundleUuid)
-        cancelTask.completion = completion
-        apiQueue.addOperation(cancelTask)
-
-        // The server doesn't actually mark the subscription as cancelled until it gets the Paddle webhook. I'm reliable informed by Phil that 1 second is enough, so here we'll give it 4
-        apiQueue.addOperation {
-            Thread.sleep(forTimeInterval: 4.seconds)
-        }
-
-        // since the users subscriptions will have changed after the previous call, queue up a refresh
-        let subscriptionStatusTask = SubscriptionStatusTask()
-        apiQueue.addOperation(subscriptionStatusTask)
-    }
-
     public func loadStatsRequest(getFullData: Bool = false, completion: @escaping (RemoteStats?) -> Void) {
         let statsOperation = RetrieveStatsTask()
         statsOperation.getFullStatsData = getFullData

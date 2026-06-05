@@ -3,7 +3,7 @@ import PocketCastsUtils
 import UIKit
 
 class AccountViewController: UIViewController, ChangeEmailDelegate {
-    enum TableRow { case changeAvatar, changeEmail, changePassword, newsletter, logout, deleteAccount, privacyPolicy, termsOfUse, supporterContributions }
+    enum TableRow { case changeAvatar, changeEmail, changePassword, newsletter, logout, deleteAccount, privacyPolicy, termsOfUse }
     var tableData: [[TableRow]] = [[.changeEmail, .changePassword, .newsletter], [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
 
     static let newsletterCellId = "NewsletterCellId"
@@ -50,7 +50,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         super.viewDidLoad()
         title = L10n.accountTitle
 
-        NotificationCenter.default.addObserver(self, selector: #selector(subscriptionStatusChanged), name: ServerNotifications.subscriptionStatusChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
 
         tableView.tableHeaderView = updatedHeaderContentView
@@ -78,14 +77,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         AppTheme.defaultStatusBarStyle()
     }
 
-    @objc private func subscriptionStatusChanged() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.updateDisplayedData()
-        }
-    }
-
     private func updateDisplayedData() {
         headerViewModel.update()
 
@@ -100,11 +91,7 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
             accountOptions.insert(.changeAvatar, safelyAt: 0)
         }
 
-        var newTableRows: [[TableRow]] = [accountOptions, [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
-
-        if let subscriptionPodcasts = SubscriptionHelper.subscriptionPodcasts(), !subscriptionPodcasts.isEmpty {
-            newTableRows[0].insert(.supporterContributions, at: 0)
-        }
+        let newTableRows: [[TableRow]] = [accountOptions, [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
 
         updateTableRows(newRows: newTableRows)
     }

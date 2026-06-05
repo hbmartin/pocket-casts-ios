@@ -17,7 +17,7 @@ class BookmarkEpisodeListViewModel: BookmarkListViewModel {
     }
 
     override func reload() {
-        guard feature.isUnlocked, let episode else {
+        guard let episode else {
             items = []
             return
         }

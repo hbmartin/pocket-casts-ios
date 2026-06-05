@@ -52,9 +52,7 @@ class PodcastHeaderViewModel: NSObject, ObservableObject {
     }()
 
     var folderImage: String {
-        let isSubscriptionAvailable = SubscriptionHelper.hasActiveSubscription() && SyncManager.isUserLoggedIn()
-        let folderImage = isSubscriptionAvailable ? (podcast.folderUuid?.isEmpty ?? true) ? "folder-empty" : "folder-check" : "folder-create"
-        return folderImage
+        (podcast.folderUuid?.isEmpty ?? true) ? "folder-empty" : "folder-check"
     }
 
     var firstCategory: String {

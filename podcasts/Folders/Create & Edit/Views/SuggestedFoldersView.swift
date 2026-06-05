@@ -111,25 +111,15 @@ struct SuggestedFoldersView: View {
                 Text(model.userHasExistingFolders ? L10n.suggestedFoldersReplaceConfirmationButton : L10n.suggestedFoldersUseSuggestedFolders)
                     .textStyle(RoundedButton())
             }
-            if model.userHasSubscription {
-                NavigationLink(destination: CreateFolderView(isInsideNavigation: true) { uuid in
-                    if let uuid {
-                        onCompletion(.createdManualFolder(uuid))
-                    } else {
-                        onCompletion(.dismiss)
-                    }
-                }, isActive: $createFolderActive) {
-                    Text(L10n.suggestedFoldersCreateCustomFolder)
-                        .textStyle(BorderButton())
+            NavigationLink(destination: CreateFolderView(isInsideNavigation: true) { uuid in
+                if let uuid {
+                    onCompletion(.createdManualFolder(uuid))
+                } else {
+                    onCompletion(.dismiss)
                 }
-            } else {
-                Button {
-                    track(.suggestedFoldersCreateCustomFolderTapped)
-                    onCompletion(.createdManualFolder(""))
-                } label: {
-                    Text(L10n.suggestedFoldersCreateCustomFolder)
-                        .textStyle(BorderButton())
-                }
+            }, isActive: $createFolderActive) {
+                Text(L10n.suggestedFoldersCreateCustomFolder)
+                    .textStyle(BorderButton())
             }
             Spacer()
         }

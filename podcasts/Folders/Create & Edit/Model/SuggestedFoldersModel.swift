@@ -74,11 +74,11 @@ class SuggestedFoldersModel: ObservableObject {
     }
 
     var userHasSubscription: Bool {
-        return SubscriptionHelper.hasActiveSubscription()
+        true
     }
 
     var showConfirmation: Bool {
-        return userHasExistingFolders && SubscriptionHelper.hasActiveSubscription()
+        userHasExistingFolders
     }
 
     var userHasExistingFolders: Bool {
@@ -93,9 +93,6 @@ class SuggestedFoldersModel: ObservableObject {
         var userType = "unsigned"
         if userIsSignedIn {
             userType = "free"
-        }
-        if userHasSubscription {
-            userType = "paid"
         }
         return userType
     }

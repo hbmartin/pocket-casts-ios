@@ -14,7 +14,6 @@
                 <outlet property="alertIcon" destination="DIr-Rj-zcX" id="uUW-gF-0g4"/>
                 <outlet property="footerView" destination="tbb-Ov-mq8" id="ecp-tq-Eiu"/>
                 <outlet property="lastRefreshTime" destination="VB8-yk-sc5" id="TNW-Qn-8ZM"/>
-                <outlet property="plusInfoView" destination="HPJ-89-MbZ" id="98u-FG-OHC"/>
                 <outlet property="profileTable" destination="O6Y-M5-xeo" id="H0S-9j-I26"/>
                 <outlet property="refreshButtonContainer" destination="p8e-4a-Gv8" id="RyB-fn-9Ka"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
@@ -73,13 +72,6 @@
                                 <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="40" id="pLP-KQ-QGL"/>
                             </constraints>
                         </view>
-                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="HPJ-89-MbZ" customClass="PlusLockedInfoView" customModule="podcasts" customModuleProvider="target">
-                            <rect key="frame" x="0.0" y="67" width="379" height="161"/>
-                            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                            <constraints>
-                                <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="161" id="YLV-kU-QQg"/>
-                            </constraints>
-                        </view>
                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="J4q-H0-via" userLabel="Bottom Padding View">
                             <rect key="frame" x="69.5" y="238" width="240" height="20"/>
                             <accessibility key="accessibilityConfiguration">
@@ -91,8 +83,6 @@
                         </view>
                     </subviews>
                     <constraints>
-                        <constraint firstAttribute="trailing" secondItem="HPJ-89-MbZ" secondAttribute="trailing" id="QGX-q3-DXK"/>
-                        <constraint firstItem="HPJ-89-MbZ" firstAttribute="leading" secondItem="OOU-Ue-K5o" secondAttribute="leading" id="Vps-DP-zZb"/>
                         <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="p8e-4a-Gv8" secondAttribute="trailing" constant="10" id="Wh7-8Z-pbt"/>
                         <constraint firstItem="p8e-4a-Gv8" firstAttribute="centerX" secondItem="OOU-Ue-K5o" secondAttribute="centerX" id="Xiv-ry-Tpj"/>
                         <constraint firstItem="p8e-4a-Gv8" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="OOU-Ue-K5o" secondAttribute="leading" constant="10" id="bRz-L5-H0n"/>
@@ -115,9 +105,6 @@
         <image name="profile-alert" width="24" height="24"/>
         <systemColor name="groupTableViewBackgroundColor">
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </systemColor>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
     </resources>
 </document>

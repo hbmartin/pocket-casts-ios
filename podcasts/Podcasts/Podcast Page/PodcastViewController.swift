@@ -918,16 +918,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func manageSubscriptionTapped() {
-        guard SyncManager.isUserLoggedIn() else {
-            let signinPage = SyncSigninViewController()
-            signinPage.delegate = self
-
-            navigationController?.pushViewController(signinPage, animated: true)
-            return
-        }
-        guard let podcast, let bundle = SubscriptionHelper.bundleSubscriptionForPodcast(podcastUuid: podcast.uuid) else { return }
-        let subscriptionController = SupporterPodcastViewController(bundleSubscription: bundle)
-        navigationController?.pushViewController(subscriptionController, animated: true)
+        // Supporter subscriptions are not managed in the fast and light build.
     }
 
     func didActivateSearch() {

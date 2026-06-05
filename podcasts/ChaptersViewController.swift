@@ -58,21 +58,11 @@ class ChaptersViewController: PlayerItemViewController {
         addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update))
         addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(update))
         addCustomObserver(UIApplication.willEnterForegroundNotification, selector: #selector(update))
-        addCustomObserver(ServerNotifications.iapPurchaseCompleted, selector: #selector(enableOrDisableChapterSelectionIfUserJustPurchased))
     }
 
     @objc private func update() {
         chaptersTable.reloadData()
         updateColors()
-    }
-
-    @objc private func enableOrDisableChapterSelectionIfUserJustPurchased() {
-        DispatchQueue.main.async { [weak self] in
-            self?.isTogglingChapters = PaidFeature.deselectChapters.isUnlocked ? true : false
-            self?.header.isTogglingChapters = self?.isTogglingChapters ?? false
-            self?.header.update()
-            self?.chaptersTable.reloadSections([0], with: .automatic)
-        }
     }
 
     private func updateColors() {

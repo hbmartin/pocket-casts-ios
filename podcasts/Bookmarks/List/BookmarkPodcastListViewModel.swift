@@ -21,11 +21,6 @@ class BookmarkPodcastListViewModel: BookmarkListViewModel {
     }
 
     override func reload() {
-        guard feature.isUnlocked else {
-            items = []
-            return
-        }
-
         var items: [Bookmark]
         if let podcast {
             items = bookmarkManager.bookmarks(for: podcast, sorted: sortOption).includeEpisodes()

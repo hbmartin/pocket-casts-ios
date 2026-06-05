@@ -1,4 +1,3 @@
-import PocketCastsServer
 import UIKit
 
 class AppearanceViewController: PCViewController, UITableViewDataSource, UITableViewDelegate, IconSelectorCellDelegate {
@@ -7,10 +6,9 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     private let buttonCellId = "ButtonCell"
     private let themeSelectorCellId = "ThemeSelectorCell"
     private let iconSelectorCellId = "IconSelectorCell"
-    private let plusLockedInfoCellId = "PlusLockedCell"
 
     private enum TableRow {
-        case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, plusCallout, darkUpNextTheme, tabBarMinimizing
+        case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, darkUpNextTheme, tabBarMinimizing
     }
 
     private var tableData = [[TableRow]]()
@@ -21,7 +19,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             settingsTable.register(UINib(nibName: "DisclosureCell", bundle: nil), forCellReuseIdentifier: disclosureCellId)
             settingsTable.register(UINib(nibName: "ButtonCell", bundle: nil), forCellReuseIdentifier: buttonCellId)
             settingsTable.register(UINib(nibName: "IconSelectorCell", bundle: nil), forCellReuseIdentifier: iconSelectorCellId)
-            settingsTable.register(UINib(nibName: "PlusLockedInfoCell", bundle: nil), forCellReuseIdentifier: plusLockedInfoCellId)
 
             settingsTable.rowHeight = UITableView.automaticDimension
             settingsTable.estimatedRowHeight = UITableView.automaticDimension
@@ -35,7 +32,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
         title = L10n.settingsAppearance
         updateTableAndData()
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(subscriptionStatusChanged))
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
         Analytics.track(.settingsAppearanceShown)
     }
@@ -50,14 +46,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
     deinit {
         removeAllCustomObservers()
-    }
-
-    @objc func subscriptionStatusChanged() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.updateTableAndData()
-        }
     }
 
     override func handleThemeChanged() {
@@ -148,10 +136,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             cell.cellSwitch.addTarget(self, action: #selector(loadEmbeddedArtToggled(_:)), for: UIControl.Event.valueChanged)
 
             return cell
-        case .plusCallout:
-            let cell = tableView.dequeueReusableCell(withIdentifier: plusLockedInfoCellId, for: indexPath) as! PlusLockedInfoCell
-            cell.lockView.delegate = self
-            return cell
         }
     }
 
@@ -225,9 +209,7 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     }
 
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        let item = tableData[indexPath.section][indexPath.row]
-
-        return item == .plusCallout ? nil : indexPath
+        return indexPath
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -276,10 +258,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             newTableData.append([.tabBarMinimizing])
         }
 
-        if !SubscriptionHelper.hasActiveSubscription(), !Settings.plusInfoDismissedOnAppearance() {
-            newTableData.append([.plusCallout])
-        }
-
         tableData = newTableData
         settingsTable.reloadData()
     }
@@ -310,22 +288,5 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
     func iconSelectorPresentingVC() -> UIViewController {
         self
-    }
-}
-
-// MARK: - PlusLockedInfoDelegate
-
-extension AppearanceViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        Settings.setPlusInfoDismissedOnAppearance(true)
-        updateTableAndData()
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .appearance
     }
 }

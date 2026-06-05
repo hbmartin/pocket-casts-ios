@@ -154,15 +154,6 @@ public class ServerSettings {
 
     // MARK: Date of Latest UnsentSubscription Purchase Receipt
 
-    private static let iapUnverifiedPurchaseReceipDatetKey = "SJIapDateUnverifiedPurchaseReceipt"
-    public class func setIapUnverifiedPurchaseReceiptDate(_ value: Date?) {
-        UserDefaults.standard.set(value, forKey: iapUnverifiedPurchaseReceipDatetKey)
-    }
-
-    public class func iapUnverifiedPurchaseReceiptDate() -> Date? {
-        UserDefaults.standard.object(forKey: iapUnverifiedPurchaseReceipDatetKey) as? Date
-    }
-
     public class func syncingEmail() -> String? {
         try? KeychainHelper.string(for: ServerConstants.Values.syncingEmailKey)
     }

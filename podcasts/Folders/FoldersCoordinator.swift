@@ -3,21 +3,8 @@ import SwiftUI
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
-import Combine
 
 class FoldersCoordinator: NSObject {
-
-    enum UpsellFlow {
-        case none
-        case cta
-        case userInitiated
-    }
-
-    private var currentUpsellFlow: UpsellFlow = .none
-    private weak var currentVC: UIViewController? = nil
-
-    private var currentSource: AnalyticsSource = .unknown
-
     private let startingTime = Date.now
 
     private let navigationManager: NavigationManager
@@ -63,20 +50,7 @@ class FoldersCoordinator: NSObject {
     }
 
     func showUpsellIfNeeded(from vc: UIViewController) {
-        guard FeatureFlag.suggestedFolders.enabled,
-              vc.presentedViewController == nil,
-              !SubscriptionHelper.featuresUnlocked,
-              !SubscriptionHelper.hasActiveSubscription(),
-              DateUtil.hasEnoughTimePassed(since: startingTime, time: Constants.intervalAfterStartup),
-              Settings.suggestedFoldersUpsellCount < Constants.maxUpsellDisplays,
-              DateUtil.hasEnoughTimePassed(since: Settings.suggestedFoldersLastUpsellDate, time: Constants.intervalBetweenUpsell),
-              dataManager.allPodcasts(includeUnsubscribed: false, reloadFromDatabase: false).count > Constants.minimumNumberOfPodcasts,
-              suggestedFoldersModel.loadingState == .loaded
-        else {
-            return
-        }
-        currentUpsellFlow = .cta
-        showUpsellSuggestedFolder(from: vc, fromUserAction: false, source: .suggestedFolderPopup)
+        // Suggested folders are free, so there is no background upsell flow.
     }
 
     private func manualFolderCreationFlow(from vc: UIViewController) {
@@ -113,37 +87,6 @@ class FoldersCoordinator: NSObject {
                 vc.dismiss(animated: true, completion: { [weak self] in
                     self?.navigationManager.navigateTo(NavigationManager.folderPageKey, data: [NavigationManager.folderKey: folder])
                 })
-            }
-        }
-        let hostingController = UIHostingController(rootView: suggestedFoldersView.environmentObject(Theme.sharedTheme))
-        vc.present(hostingController, animated: true, completion: nil)
-        hostingController.sheetPresentationController?.delegate = self
-    }
-
-    private func showUpsellSuggestedFolder(from vc: UIViewController, fromUserAction: Bool = false, source: AnalyticsSource) {
-        let suggestedFoldersView = SuggestedFoldersView(model: suggestedFoldersModel, source: source) { [weak vc, weak self] result in
-            guard let self, let vc else { return }
-            switch result {
-            case .dismiss:
-                vc.dismiss(animated: true)
-                //Update settings only if this was show by system
-                if !fromUserAction {
-                    Settings.suggestedFoldersLastUpsellDate = Date.now
-                    Settings.suggestedFoldersUpsellCount += 1
-                }
-                return
-            case .applySuggestedFolders(let folders):
-                vc.dismiss(animated: true, completion: nil)
-                applySuggestedFolders(folders)
-            case .createdManualFolder(let folderUuid):
-                guard let folder = dataManager.findFolder(uuid: folderUuid) else {
-                    vc.dismiss(animated: true, completion: nil)
-                    return
-                }
-                vc.dismiss(animated: true, completion: { [weak self] in
-                    self?.navigationManager.navigateTo(NavigationManager.folderPageKey, data: [NavigationManager.folderKey: folder])
-                })
-                return
             }
         }
         let hostingController = UIHostingController(rootView: suggestedFoldersView.environmentObject(Theme.sharedTheme))
@@ -188,58 +131,10 @@ class FoldersCoordinator: NSObject {
         dataManager.save(folder: folder)
         return folder
     }
-
-    private var cancellables = Set<AnyCancellable>()
-    private func addObservers() {
-        // Observe IAP flows notification
-        Publishers.Merge3(
-            NotificationCenter.default.publisher(for: ServerNotifications.iapPurchaseFailed),
-            NotificationCenter.default.publisher(for: ServerNotifications.iapPurchaseCancelled),
-            NotificationCenter.default.publisher(for: ServerNotifications.iapPurchaseCompleted)
-        )
-        .receive(on: OperationQueue.main)
-        .sink { [unowned self] _ in
-            refreshAfterUpsellFlow()
-        }
-        .store(in: &cancellables)
-
-        //Observe Login/Signup notification
-        NotificationCenter.default.publisher(for: .onboardingFlowDidDismiss)
-        .receive(on: OperationQueue.main)
-        .sink { [unowned self] _ in
-            refreshAfterUpsellFlow()
-        }
-        .store(in: &cancellables)
-    }
-
-    private func refreshAfterUpsellFlow() {
-        guard FeatureFlag.suggestedFolders.enabled,
-              SubscriptionHelper.hasActiveSubscription(),
-              let currentVC
-        else {
-            currentVC = nil
-            currentUpsellFlow = .none
-            cancellables = []
-            return
-        }
-        cancellables = []
-        currentUpsellFlow = .none
-        suggestedFolderCreationFlow(from: currentVC, source: currentSource)
-        self.currentVC = nil
-    }
 }
 
 extension FoldersCoordinator: UISheetPresentationControllerDelegate {
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        if currentUpsellFlow == .none {
-            Analytics.track(.suggestedFoldersPageDismissed, properties: [:])
-        } else {
-            if currentUpsellFlow == .cta {
-                Settings.suggestedFoldersLastUpsellDate = Date.now
-                Settings.suggestedFoldersUpsellCount += 1
-            }
-        }
-        currentUpsellFlow = .none
-        currentVC = nil
+        Analytics.track(.suggestedFoldersPageDismissed, properties: [:])
     }
 }

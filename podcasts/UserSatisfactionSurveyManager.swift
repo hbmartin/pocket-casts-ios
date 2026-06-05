@@ -48,14 +48,11 @@ public class UserSatisfactionSurveyManager: NSObject {
             return .userDeclinedRecently
         }
 
-        // Check user subscription status for appropriate entry points
-        let isPlus = SubscriptionHelper.hasActiveSubscription()
-
         switch event {
         case .thirdEpisodeCompleted, .episodeStarred, .showRated, .filterCreated:
-            return !isPlus ? .canShow : .wrongUserType // Free user events
+            return .canShow
         case .plusUpgraded, .folderCreated, .bookmarkCreated, .customThemeSet, .referralShared:
-            return isPlus ? .canShow : .wrongUserType // Plus user events
+            return .canShow
         }
     }
 

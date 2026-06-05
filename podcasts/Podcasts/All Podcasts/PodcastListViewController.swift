@@ -138,7 +138,6 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     private func addEventObservers() {
         addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshGridItems))
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(subscriptionStatusDidChange))
         addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshGridItems))
@@ -155,43 +154,17 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         addCustomObserver(Constants.Notifications.searchRequested, selector: #selector(searchRequested))
     }
 
-    @objc private func subscriptionStatusDidChange() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.updateNavigationButtons()
-            self.loadBannerAd()
-        }
-    }
-
     private func loadBannerAd() {
         bannerTask?.cancel()
 
-        if SubscriptionHelper.shouldDisplayBannerAd {
-            DiscoverServerHandler.shared.blazePromotion(for: .podcastList) { [weak self] promotion, shouldAnimate in
-                guard let self else { return }
-
-                if shouldAnimate {
-                    self.bannerTask = Task { [weak self] in
-                        try? await Task.sleep(for: .seconds(2))
-                        await MainActor.run {
-                            self?.setupBannerAd(promotion: promotion, shouldAnimate: true)
-                        }
-                    }
-                } else {
-                    self.setupBannerAd(promotion: promotion, shouldAnimate: false)
-                }
-            }
-        } else {
-            if bannerAdModel != nil {
-                bannerAdModel = nil
-                UIView.animate(withDuration: 0.25, delay: 0, options: [.curveEaseOut]) {
-                    self.isAnimatingBannerAd = false
-                } completion: { _ in
-                    self.podcastsCollectionView.performBatchUpdates({
-                        self.podcastsCollectionView.collectionViewLayout.invalidateLayout()
-                    })
-                }
+        if bannerAdModel != nil {
+            bannerAdModel = nil
+            UIView.animate(withDuration: 0.25, delay: 0, options: [.curveEaseOut]) {
+                self.isAnimatingBannerAd = false
+            } completion: { _ in
+                self.podcastsCollectionView.performBatchUpdates({
+                    self.podcastsCollectionView.collectionViewLayout.invalidateLayout()
+                })
             }
         }
     }
@@ -454,9 +427,6 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     }
 
     private func setupBannerAd(promotion: BlazePromotion, shouldAnimate: Bool) {
-        guard SubscriptionHelper.shouldDisplayBannerAd else {
-            return
-        }
         bannerAdModel = BannerAdModel(promotion: promotion) {
             UIApplication.shared.openSafariVCIfPossible(promotion.urlApple)
         }

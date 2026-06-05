@@ -33,21 +33,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
         let row = tableData[indexPath.section][indexPath.row]
 
         switch row {
-        case .supporterContributions:
-            let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
-            cell.cellLabel.text = L10n.supporterContributions
-            cell.cellImage.image = UIImage(named: "account-heart")
-            cell.iconStyle = .primaryInteractive01
-
-            let activeSubscriptionsCount = SubscriptionHelper.numActiveSubscriptionBundles()
-            if activeSubscriptionsCount > 0 {
-                cell.counterView.isHidden = false
-                cell.counterLabel.text = "\(activeSubscriptionsCount)"
-            } else {
-                cell.counterView.isHidden = true
-            }
-            cell.showsDisclosureIndicator = true
-            return cell
         case .changeAvatar:
             let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
             cell.cellLabel.text = L10n.settingsChangeAvatar
@@ -128,9 +113,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
         let row = tableData[indexPath.section][indexPath.row]
 
         switch row {
-        case .supporterContributions:
-            let supporterVC = SupporterContributionsViewController()
-            navigationController?.pushViewController(supporterVC, animated: true)
         case .changeAvatar:
             guard let email = headerViewModel.profile.email,
                   let safariViewController = GravatarSafariViewController(destination: .avatarUpdate(email: email)) else { return }

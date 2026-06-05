@@ -139,12 +139,6 @@ class HeadphoneSettingsViewController: PCTableViewController {
             self?.reloadData()
         }
 
-        guard selection.isUnlocked else {
-            SJUIUtils.showAlert(title: L10n.plusRequiredFeature, message: L10n.plusPromoParagraph, from: self)
-            reloadData()
-            return
-        }
-
         action()
     }
 
@@ -225,6 +219,6 @@ private extension HeadphoneControlAction {
     }
 
     var iconName: String? {
-        isUnlocked ? nil : "plusGold24"
+        nil
     }
 }
