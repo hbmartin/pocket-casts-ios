@@ -180,3 +180,4 @@ Use `set -o pipefail` when piping through `tee`; otherwise a failed `xcodebuild`
 xcrun simctl install <SIMULATOR_UDID> /tmp/pocketcasts-sim-deriveddata/Build/Products/StagingDebug-iphonesimulator/podcasts.app
 xcrun simctl launch <SIMULATOR_UDID> au.com.shiftyjelly.podcasts
 ```
+- If using XcodeBuildMCP, use the installed XcodeBuildMCP skill before calling XcodeBuildMCP tools.
