@@ -34,7 +34,6 @@ extension AppDelegate {
             // Disable dark up next theme for new users
             Settings.darkUpNextTheme = false
             Settings.setAutoDownloadOnFollow(true)
-            setWhatsNewAcknowledgeToLatest()
         }
 
         performUpdateIfRequired(updateKey: "v6Run") {
@@ -154,9 +153,4 @@ extension AppDelegate {
         UserDefaults.standard.set(true, forKey: updateKey)
     }
 
-    private func setWhatsNewAcknowledgeToLatest() {
-        if let whatsNewInfo = WhatsNewHelper.extractWhatsNewInfo() {
-            Settings.setWhatsNewLastAcknowledged(whatsNewInfo.versionCode)
-        }
-    }
 }

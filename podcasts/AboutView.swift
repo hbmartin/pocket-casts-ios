@@ -37,13 +37,6 @@ struct AboutView: View {
                     }
                     .padding(.top, 30)
                     Form {
-                        if model.shouldShowWhatsNew, let whatsNewInfo = model.whatsNewInfo {
-                            Section {
-                                AboutRow(mainText: model.whatsNewText) {
-                                    NavigationManager.sharedManager.navigateTo(NavigationManager.showWhatsNewPageKey, data: [NavigationManager.whatsNewInfoKey: whatsNewInfo])
-                                }
-                            }
-                        }
                         Section {
                             AboutRow(mainText: L10n.aboutRateUs) {
                                 model.track(action: .rateUs)
