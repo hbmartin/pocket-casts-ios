@@ -751,31 +751,6 @@ class Settings: NSObject {
         return nil
     }
 
-    // MARK: What's new
-
-    private static let whatsNewLastAcknowledgedKey = "SJWhatsNewLastAcknowledged"
-
-    class func setWhatsNewLastAcknowledged(_ value: Int) {
-        UserDefaults.standard.set(value, forKey: whatsNewLastAcknowledgedKey)
-    }
-
-    class func whatsNewLastAcknowledged() -> Int {
-        UserDefaults.standard.integer(forKey: whatsNewLastAcknowledgedKey)
-    }
-
-
-    private static let lastWhatsNewShownKey = "LastWhatsNewShown"
-    class var lastWhatsNewShown: String? {
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: lastWhatsNewShownKey)
-            UserDefaults.standard.synchronize()
-        }
-
-        get {
-            UserDefaults.standard.string(forKey: lastWhatsNewShownKey)
-        }
-    }
-
     class func setShouldFollowSystemTheme(_ value: Bool) {
         if FeatureFlag.newSettingsStorage.enabled {
             SettingsStore.appSettings.useSystemTheme = value
@@ -1062,59 +1037,6 @@ class Settings: NSObject {
 
         get {
             try? UserDefaults.standard.jsonObject(SleepTimerManager.SleepTimerSetting.self, forKey: Constants.UserDefaults.sleepTimerSetting)
-        }
-    }
-
-    // MARK: - End of Year 2022
-
-    class func showBadgeForEndOfYear(_ year: Int) -> Bool {
-        let key = String(format: Constants.UserDefaults.showBadgeForEndOfYear, year)
-        return UserDefaults.standard.bool(forKey: key)
-    }
-
-    class func setShowBadgeForEndOfYear(_ newValue: Bool, year: Int) {
-        let key = String(format: Constants.UserDefaults.showBadgeForEndOfYear, year)
-        UserDefaults.standard.set(newValue, forKey: key)
-    }
-
-    class func hasShownModalForEndOfYear(_ year: Int) -> Bool {
-        let key = String(format: Constants.UserDefaults.modalHasBeenShown, year)
-        return UserDefaults.standard.bool(forKey: key)
-    }
-
-    class func setHasShownModalForEndOfYear(_ newValue: Bool, year: Int) {
-        let key = String(format: Constants.UserDefaults.modalHasBeenShown, year)
-        UserDefaults.standard.set(newValue, forKey: key)
-    }
-
-    class func hasSyncedEpisodesForPlayback(year: Int) -> Bool {
-        let key = String(format: Constants.UserDefaults.hasSyncedEpisodesForPlayback, year)
-        return UserDefaults.standard.bool(forKey: key)
-    }
-
-    class func setHasSyncedEpisodesForPlayback(_ newValue: Bool, year: Int) {
-        let key = String(format: Constants.UserDefaults.hasSyncedEpisodesForPlayback, year)
-        UserDefaults.standard.set(newValue, forKey: key)
-    }
-
-    class func hasSyncedEpisodesForPlaybackAsPlusUser(year: Int) -> Bool {
-        let key = String(format: Constants.UserDefaults.hasSyncedEpisodesForPlaybackAsPlusUser, year)
-        return UserDefaults.standard.bool(forKey: key)
-    }
-
-    /// Whether the user was plus or not by the time the sync happened
-    class func setHasSyncedEpisodesForPlaybackAsPlusUser(_ newValue: Bool, year: Int) {
-        let key = String(format: Constants.UserDefaults.hasSyncedEpisodesForPlaybackAsPlusUser, year)
-        UserDefaults.standard.set(newValue, forKey: key)
-    }
-
-    class var top5PodcastsListLink: String? {
-        set {
-            UserDefaults.standard.set(newValue, forKey: Constants.UserDefaults.top5PodcastsListLink)
-        }
-
-        get {
-            UserDefaults.standard.string(forKey: Constants.UserDefaults.top5PodcastsListLink)
         }
     }
 
@@ -1548,15 +1470,6 @@ class Settings: NSObject {
         }
     }
 
-    static var shouldResultEndOfYearSyncStatus: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.shouldResultEndOfYearSyncStatus) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.shouldResultEndOfYearSyncStatus)
-        }
-    }
-
     // MARK: - Debug IAP in TF builds
 
     static var shouldEnableIAPInTestFlightBuilds: Bool = false
@@ -1693,11 +1606,6 @@ class Settings: NSObject {
 
         class func episodeSearchDebounceTime() -> TimeInterval {
             remoteMsToTime(key: Constants.RemoteParams.episodeSearchDebounceMs)
-        }
-
-        static var endOfYearRequireAccount: Bool {
-            let remote = RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.endOfYearRequireAccount)
-            return remote.boolValue
         }
 
         static var addMissingEpisodes: Bool {

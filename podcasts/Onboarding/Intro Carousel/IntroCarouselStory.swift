@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct IntroCarouselStory: StoryView {
+struct IntroCarouselStory: View {
     let item: CarouselItem
     let theme: Theme
 
@@ -11,9 +11,7 @@ struct IntroCarouselStory: StoryView {
     @State private var descriptionOpacity: Double = 0
     @State private var descriptionOffset: CGFloat = 30
 
-    var duration: TimeInterval { 7.0 }
     var identifier: String { item.title }
-    var plusOnly: Bool { false }
 
     var body: some View {
         VStack {

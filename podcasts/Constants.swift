@@ -91,9 +91,6 @@ struct Constants {
         /// This is triggered just once after a folder finishes editing
         static let folderEdited = NSNotification.Name(rawValue: "SJFolderEdited")
 
-        // End of Year
-        static let profileSeen = NSNotification.Name(rawValue: "profileSeen")
-
         // Gravatar
         static let avatarNeedsRefreshing = NSNotification.Name(rawValue: "avatarNeedsRefreshing")
     }
@@ -151,11 +148,6 @@ struct Constants {
         static let surveyPresentationDates = "surveyPresentationDates"
         static let lastSurveyNotReallyDate = "lastSurveyNotReallyDate"
 
-        static let showBadgeForEndOfYear = "showBadgeFor%dEndOfYear"
-        static let modalHasBeenShown = "modal%dHasBeenShown"
-        static let hasSyncedEpisodesForPlayback = "hasSyncedEpisodesForPlayback%d"
-        static let hasSyncedEpisodesForPlaybackAsPlusUser = "hasSyncedEpisodesForPlayback%dAsPlusUser"
-        static let top5PodcastsListLink = "top5PodcastsListLink2023_2"
         static let shouldShowInitialOnboardingFlow = "shouldShowInitialOnboardingFlow"
         static let shouldShowEncourageAccountCreationModal = "shouldShowEncourageAccountCreationModal"
 
@@ -179,7 +171,6 @@ struct Constants {
         static let playlistsOnboarding = "NewPlaylistsOnboarding"
         static let firstTimePlaylistCreated = "FirstTimePlaylistCreated"
         static let saveCurrentUpNextQueueIntoPlaylist = "SaveCurrentUpNextQueueIntoPlaylist"
-        static let shouldResultEndOfYearSyncStatus = "ShouldResultEndOfYearSyncStatus"
         static let lastNetworkDataUsageCleanupDate = "lastNetworkDataUsageCleanupDate"
 
         enum headphones {
@@ -330,9 +321,6 @@ struct Constants {
         static let customStorageLimitGB = "custom_storage_limit_gb"
         static let customStorageLimitGBDefault: Int = 20
 
-        static let endOfYearRequireAccount = "end_of_year_require_account"
-        static let endOfYearRequireAccountDefault: Bool = true
-
         static let patronCloudStorageGB = "patron_custom_storage_limit_gb"
         static let patronCloudStorageGBDefault = 100
 
@@ -410,7 +398,6 @@ enum PlusUpgradeViewSource: String {
     case icons
     case watch
     case unknown
-    case endOfYear
     case promoCode
     case promotionFinished
     case upNextShuffle
@@ -424,14 +411,12 @@ enum PlusUpgradeViewSource: String {
     case account
     case settings
     case referral
-    case deselectChapterWhatsNew = "deselect_chapters_whats_new"
     case bookmarksLocked = "bookmarks_locked"
     case overflowMenu = "overflow_menu"
     case slumber
     case deselectChapters = "deselect_chapters"
     case headphoneSettings =  "headphone_settings"
     case bookmarksShelfAction = "bookmarks_shelf_action"
-    case whatsNew
     case deepLink
 
     /// Converts the enum into a Firebase promotionId, this matches the values set on Android

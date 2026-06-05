@@ -284,12 +284,6 @@ struct DeveloperMenu: View {
             }
 
             Section {
-                EndOfYearDeveloperMenuButton()
-            } header: {
-                Text("End of Year")
-            }
-
-            Section {
                 Button("Reset Informational Modal Visibility") {
                     Settings.shouldShowInitialOnboardingFlow = true
                     Settings.hasShownInformationalViewModal = false

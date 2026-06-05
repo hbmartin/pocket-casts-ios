@@ -3,9 +3,6 @@ import UIKit
 #endif
 import Foundation
 import PocketCastsDataModel
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-import EndOfYear
-#endif
 
 extension EpisodeFilter {
     func iconImage() -> UIImage? {

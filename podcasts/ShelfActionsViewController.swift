@@ -82,12 +82,6 @@ class ShelfActionsViewController: UIViewController, CheckTranscriptAvailability 
         checkTranscriptAvailability()
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        highlightAddBookmarksIfNeeded()
-    }
-
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
@@ -186,24 +180,6 @@ class ShelfActionsViewController: UIViewController, CheckTranscriptAvailability 
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         .portrait
-    }
-}
-
-private extension ShelfActionsViewController {
-    /// Highlights the bookmarks row when triggered from the what's new
-    func highlightAddBookmarksIfNeeded() {
-        guard AnnouncementFlow.current == .bookmarksPlayer else {
-            return
-        }
-
-        defer { AnnouncementFlow.current = .none }
-
-        // Find the index of the row
-        guard let index = extraActions.firstIndex(of: .addBookmark) else {
-            return
-        }
-
-        actionsTable.selectRow(at: .init(row: index, section: 0), animated: true, scrollPosition: .middle)
     }
 }
 

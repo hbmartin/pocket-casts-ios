@@ -11,9 +11,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Whether logging of Firebase events in console are enabled
     case firebaseLogging
 
-    /// Whether End Of Year feature is enabled
-    case endOfYear
-
     /// Store settings as JSON in User Defaults (global) or SQLite (podcast)
     case newSettingsStorage
 
@@ -88,9 +85,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Run a vacuum process on the database in order to optimize data fetch
     case runVacuumOnVersionUpdate
-
-    /// Enable the End of Year 2024 recap
-    case endOfYear2024
 
     /// Enable the Up Next shuffle button
     case upNextShuffle
@@ -224,12 +218,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Enable localization headers
     case enableLocalizationHeaders
 
-    /// Enable the End of Year 2025 recap
-    case endOfYear2025
-
-    /// Enable the End of Year to use first story as loading screen
-    case endOfYearLoadIsFirstStory
-
     /// Upgrades the Effects Player's AudioReadTask to a QOS level of "userInitiated" from "default"
     case effectsPlayerQOSUpgrade
 
@@ -336,8 +324,6 @@ public enum FeatureFlag: String, CaseIterable {
             }
         case .firebaseLogging:
             false
-        case .endOfYear:
-            false
         case .newSettingsStorage:
             shouldEnableSyncedSettings
         case .settingsSync:
@@ -377,8 +363,6 @@ public enum FeatureFlag: String, CaseIterable {
         case .customPlaybackSettings:
             true
         case .runVacuumOnVersionUpdate:
-            false
-        case .endOfYear2024:
             false
         case .upNextShuffle:
             true
@@ -468,10 +452,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .enableLocalizationHeaders:
             true
-        case .endOfYear2025:
-            false
-        case .endOfYearLoadIsFirstStory:
-			true
         case .effectsPlayerQOSUpgrade:
             true
         case .refreshPlaylistOnSubscriptions:
@@ -549,8 +529,6 @@ public enum FeatureFlag: String, CaseIterable {
             shouldEnableSyncedSettings ? "settings_sync" : nil
         case .defaultPlayerFilterCallbackFix:
             "default_player_filter_callback_fix"
-        case .endOfYear2025:
-            "end_of_year_2025"
         default:
             rawValue.lowerSnakeCased()
         }

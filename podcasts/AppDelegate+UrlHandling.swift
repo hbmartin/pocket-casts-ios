@@ -156,13 +156,6 @@ extension AppDelegate {
 
             return true
         }
-        // developer features:
-        JLRoutes.global().addRoute("/resetalltours") { _ -> Bool in
-            Settings.setWhatsNewLastAcknowledged(0)
-
-            return true
-        }
-
         // Support for subscribing to a feed URL
         JLRoutes.global().addRoute("/subscribe/*") { [weak self] parameters -> Bool in
             guard

@@ -1,5 +1,4 @@
 import SwiftUI
-import EndOfYear
 
 // Many of these can be replaced with UIContentUnavailableConfigurations in iOS 17
 struct ContentUnavailableConfiguration {

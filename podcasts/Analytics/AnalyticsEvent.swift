@@ -795,25 +795,6 @@ enum AnalyticsEvent: String {
     case incomingShareListShown
     case incomingShareListSubscribedAll
 
-    // MARK: - End of Year stats
-
-    case endOfYearModalShown
-    case endOfYearStoriesShown
-    case endOfYearStoriesDismissed
-    case endOfYearStoriesFailedToLoad
-    case endOfYearStoryReplayButtonTapped
-    case endOfYearStoryShown
-    case endOfYearStoryShare
-    case endOfYearStoryShared
-    case playbackShared
-    case endOfYearProfileCardTapped
-    case endOfYearUpsellShown
-    case endOfYearLearnRatingsShown
-    case endOfYearProfileCardShown
-    case endOfYearModalTapped
-    case endOfYearModalDismissed
-    case endOfYearPlusContinued
-
     // MARK: - Welcome View
 
     case welcomeShown

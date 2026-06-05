@@ -30,10 +30,6 @@ let package = Package(
             targets: ["PocketCastsServer"]
         ),
         .library(
-            name: "EndOfYear",
-            targets: ["EndOfYear"]
-        ),
-        .library(
             name: "Modules",
             targets: ["Modules"]
         )
@@ -145,16 +141,6 @@ let package = Package(
             path: "Tests/PocketCastsServerTests",
             resources: [.copy("Fixtures")]
         ),
-        .target(
-            name: "EndOfYear",
-            dependencies: [
-                "PocketCastsDataModel",
-                "PocketCastsServer",
-                "PocketCastsUtils",
-                .product(name: "Kingfisher", package: "Kingfisher"),
-            ],
-            path: "Sources/EndOfYear"
-        ),
         .binaryTarget(
             name: "EventHorizonSDK",
             url: "https://a8c-libs.s3.amazonaws.com/ios/EventHorizon/pocket-casts-2026-04-29-13-55-38/EventHorizon-pocket-casts-2026-04-29-13-55-38.xcframework.zip",
@@ -220,7 +206,6 @@ enum XcodeSupport {
                     .product(name: "GoogleCast", package: "google-cast"),
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
                     .product(name: "Fingerprint", package: "pocket-casts-ios-fingerprint"),
-                    "EndOfYear",
                 ]
             ),
             .xcodeTarget(

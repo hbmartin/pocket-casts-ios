@@ -1,5 +1,4 @@
 import SwiftUI
-import EndOfYear
 
 fileprivate extension String {
     func wrapInSmartQuotes() -> String {
@@ -56,6 +55,9 @@ struct IntroCarouselView: View {
     @EnvironmentObject var theme: Theme
 
     let coordinator: LoginCoordinator
+    @State private var selectedIndex = 0
+
+    private let carouselDuration: TimeInterval = 7
 
     private let carouselItems = [
         CarouselItem(
@@ -103,20 +105,31 @@ struct IntroCarouselView: View {
         )
     ]
 
-    private var configuration: StoriesConfiguration {
-        let configuration = StoriesConfiguration()
-        configuration.shouldShowDismissButton = false
-        configuration.indicatorHeight = 4
-        configuration.indicatorSpacing = 4
-        return configuration
-    }
-
     var body: some View {
         VStack(spacing: 36) {
-            StoriesView(
-                dataSource: IntroCarouselDataSource(items: carouselItems, theme: theme),
-                configuration: configuration
-            )
+            VStack(spacing: 12) {
+                TabView(selection: $selectedIndex) {
+                    ForEach(carouselItems.indices, id: \.self) { index in
+                        IntroCarouselStory(item: carouselItems[index], theme: theme)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .onReceive(Timer.publish(every: carouselDuration, on: .main, in: .common).autoconnect()) { _ in
+                    withAnimation {
+                        selectedIndex = (selectedIndex + 1) % carouselItems.count
+                    }
+                }
+
+                HStack(spacing: 4) {
+                    ForEach(carouselItems.indices, id: \.self) { index in
+                        Capsule()
+                            .fill(index == selectedIndex ? theme.primaryText01 : theme.primaryField03)
+                            .frame(height: 4)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
 
             VStack(spacing: 16) {
                 Button(L10n.eacInformationalViewModalGetStartedButton) {

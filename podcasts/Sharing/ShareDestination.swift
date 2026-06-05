@@ -2,7 +2,6 @@ import SwiftUI
 import PocketCastsDataModel
 import Combine
 import PocketCastsUtils
-import EndOfYear
 
 enum ShareDestination: Hashable {
     case instagram

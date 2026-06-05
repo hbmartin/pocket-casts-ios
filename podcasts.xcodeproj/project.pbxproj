@@ -44,14 +44,6 @@
 		40043F0F23FE08B8004A9B57 /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD054A791E3EDEB300D9195B /* SharedConstants.swift */; };
 		40043F1123FE0A05004A9B57 /* SiriPodcastItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40043F0A23FBC6B1004A9B57 /* SiriPodcastItem.swift */; };
 		40043F1323FE0D9E004A9B57 /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD054A791E3EDEB300D9195B /* SharedConstants.swift */; };
-		4007B04C230E1FB4008DDCF5 /* WhatsNewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4007B04A230E1FB4008DDCF5 /* WhatsNewViewController.swift */; };
-		4007B04D230E1FB4008DDCF5 /* WhatsNewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4007B04B230E1FB4008DDCF5 /* WhatsNewViewController.xib */; };
-		4007B050230E201A008DDCF5 /* WhatsNewDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4007B04E230E201A008DDCF5 /* WhatsNewDetailViewController.swift */; };
-		4007B051230E201A008DDCF5 /* WhatsNewDetailViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4007B04F230E201A008DDCF5 /* WhatsNewDetailViewController.xib */; };
-		4007B053230E3115008DDCF5 /* WhatsNewPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4007B052230E3115008DDCF5 /* WhatsNewPageView.swift */; };
-		4007B055230E3134008DDCF5 /* WhatsNewPageView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4007B054230E3134008DDCF5 /* WhatsNewPageView.xib */; };
-		4007B05C230E392E008DDCF5 /* aboutWhatsNew.json in Resources */ = {isa = PBXBuildFile; fileRef = 4007B058230E392D008DDCF5 /* aboutWhatsNew.json */; };
-		4007B060230E3A81008DDCF5 /* WhatsNewStructs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4007B05F230E3A81008DDCF5 /* WhatsNewStructs.swift */; };
 		400A3EFA22703D54007361C7 /* AccountUpdatedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 400A3EF822703D54007361C7 /* AccountUpdatedViewController.swift */; };
 		400A3EFB22703D54007361C7 /* AccountUpdatedViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 400A3EF922703D54007361C7 /* AccountUpdatedViewController.xib */; };
 		400A3F032277CB3A007361C7 /* NewEmailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 400A3F012277CB3A007361C7 /* NewEmailViewController.swift */; };
@@ -120,8 +112,6 @@
 		404A080724E215A200308722 /* CheckboxSubtitleCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404A080524E215A200308722 /* CheckboxSubtitleCell.swift */; };
 		404A080824E215A200308722 /* CheckboxSubtitleCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 404A080624E215A200308722 /* CheckboxSubtitleCell.xib */; };
 		404A080A24E4C78000308722 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404A080924E4C78000308722 /* SceneDelegate.swift */; };
-		404BB866230F7FF5006FE8A9 /* WhatsNew.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 404BB865230F7FF5006FE8A9 /* WhatsNew.xcassets */; };
-		404BB868231361A6006FE8A9 /* WhatsNewLinkButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404BB867231361A6006FE8A9 /* WhatsNewLinkButton.swift */; };
 		404D74AD24809BC9009DF761 /* SupporterGratitudeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404D74AB24809BC9009DF761 /* SupporterGratitudeViewController.swift */; };
 		404D74AE24809BC9009DF761 /* SupporterGratitudeViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 404D74AC24809BC9009DF761 /* SupporterGratitudeViewController.xib */; };
 		4051A5762281A9DD00C13C12 /* AccountActionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4051A5742281A9DD00C13C12 /* AccountActionCell.swift */; };
@@ -174,8 +164,6 @@
 		40888F152563792300887D9A /* AppIcon-Round-Pink29x29~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 40888F042563792200887D9A /* AppIcon-Round-Pink29x29~ipad.png */; };
 		408971AD2512EE1F00783253 /* PodcastBundleCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408971AC2512EE1F00783253 /* PodcastBundleCountView.swift */; };
 		408971AF2512F57100783253 /* BundleImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408971AE2512F57100783253 /* BundleImageView.swift */; };
-		408C08872314BB50008C9667 /* WhatsNewThemeableImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408C08862314BB50008C9667 /* WhatsNewThemeableImageView.swift */; };
-		408C088E23155B34008C9667 /* WhatsNewHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408C088D23155B34008C9667 /* WhatsNewHelper.swift */; };
 		4090975025235DFA00CED68C /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4090974F25235DFA00CED68C /* WidgetKit.framework */; };
 		4090975B25235DFC00CED68C /* WidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 4090974E25235DFA00CED68C /* WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		40930E4D22D6EFCC00B9313C /* player_play_white_button.json in Resources */ = {isa = PBXBuildFile; fileRef = 40930E4C22D6EFCC00B9313C /* player_play_white_button.json */; };
@@ -256,7 +244,6 @@
 		8B907F182AA8E1F100926F4F /* MiniPlayerViewController+TransitionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B907F172AA8E1F100926F4F /* MiniPlayerViewController+TransitionDelegate.swift */; };
 		8B907F1A2AA8E5E500926F4F /* MiniPlayerToFullPlayerAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B907F192AA8E5E500926F4F /* MiniPlayerToFullPlayerAnimator.swift */; };
 		8B9D233F2C41B1BE004CD57D /* TranscriptShelfButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9D233E2C41B1BE004CD57D /* TranscriptShelfButton.swift */; };
-		8B9DEFD62906D1CE00075EAB /* EndOfYear.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B9DEFD52906D1CE00075EAB /* EndOfYear.xcassets */; };
 		8BA55A1528CA8FEB002BECC5 /* PrivacySettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA55A1428CA8FEB002BECC5 /* PrivacySettingsViewController.swift */; };
 		8BA55A1728CA92A7002BECC5 /* PrivacySettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8BA55A1628CA92A7002BECC5 /* PrivacySettingsViewController.xib */; };
 		8BAB27202A40B3340079E5B3 /* EpisodesDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BAB271F2A40B3340079E5B3 /* EpisodesDataManager.swift */; };
@@ -932,7 +919,6 @@
 		F5D5F7C82CEBE865001F492D /* PlayerTabsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDE954F12366900900CEB6DA /* PlayerTabsView.swift */; };
 		F5D5F7C92CEBE86C001F492D /* PlayerItemViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD92323423629F7B00C1E118 /* PlayerItemViewController.swift */; };
 		F5D5F7CB2CEBE87F001F492D /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A4D1B54E8F0000EC323 /* Constants.swift */; };
-		F5EA21F22CC1CD040043C780 /* EndOfYearDeveloperMenuButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5EA21F12CC1CD040043C780 /* EndOfYearDeveloperMenuButton.swift */; };
 		F5F508F02CEBE94F007D6E39 /* Strings+Generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467DF6E826E1093A00AC290C /* Strings+Generated.swift */; };
 		F5F508F12CEBE955007D6E39 /* RegionCancellingScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1E000D1F6BA44D0024542F /* RegionCancellingScrollView.swift */; };
 		F5F508F22CEBE966007D6E39 /* PlaybackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */; };
@@ -1235,14 +1221,6 @@
 		3FD6E04F2BF735EC003941C0 /* podcasts.prototype.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = podcasts.prototype.entitlements; sourceTree = "<group>"; };
 		4000A29F25463C6900356FCE /* LeftAlignedFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeftAlignedFlowLayout.swift; sourceTree = "<group>"; };
 		40043F0A23FBC6B1004A9B57 /* SiriPodcastItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriPodcastItem.swift; sourceTree = "<group>"; };
-		4007B04A230E1FB4008DDCF5 /* WhatsNewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewViewController.swift; sourceTree = "<group>"; };
-		4007B04B230E1FB4008DDCF5 /* WhatsNewViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = WhatsNewViewController.xib; sourceTree = "<group>"; };
-		4007B04E230E201A008DDCF5 /* WhatsNewDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewDetailViewController.swift; sourceTree = "<group>"; };
-		4007B04F230E201A008DDCF5 /* WhatsNewDetailViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = WhatsNewDetailViewController.xib; sourceTree = "<group>"; };
-		4007B052230E3115008DDCF5 /* WhatsNewPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewPageView.swift; sourceTree = "<group>"; };
-		4007B054230E3134008DDCF5 /* WhatsNewPageView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = WhatsNewPageView.xib; sourceTree = "<group>"; };
-		4007B058230E392D008DDCF5 /* aboutWhatsNew.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = aboutWhatsNew.json; sourceTree = "<group>"; };
-		4007B05F230E3A81008DDCF5 /* WhatsNewStructs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewStructs.swift; sourceTree = "<group>"; };
 		400A3EF822703D54007361C7 /* AccountUpdatedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccountUpdatedViewController.swift; path = podcasts/AccountUpdatedViewController.swift; sourceTree = SOURCE_ROOT; };
 		400A3EF922703D54007361C7 /* AccountUpdatedViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = AccountUpdatedViewController.xib; path = podcasts/AccountUpdatedViewController.xib; sourceTree = SOURCE_ROOT; };
 		400A3F012277CB3A007361C7 /* NewEmailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NewEmailViewController.swift; path = podcasts/NewEmailViewController.swift; sourceTree = SOURCE_ROOT; };
@@ -1308,8 +1286,6 @@
 		404A080524E215A200308722 /* CheckboxSubtitleCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckboxSubtitleCell.swift; sourceTree = "<group>"; };
 		404A080624E215A200308722 /* CheckboxSubtitleCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CheckboxSubtitleCell.xib; sourceTree = "<group>"; };
 		404A080924E4C78000308722 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		404BB865230F7FF5006FE8A9 /* WhatsNew.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = WhatsNew.xcassets; sourceTree = "<group>"; };
-		404BB867231361A6006FE8A9 /* WhatsNewLinkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewLinkButton.swift; sourceTree = "<group>"; };
 		404D74AB24809BC9009DF761 /* SupporterGratitudeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupporterGratitudeViewController.swift; sourceTree = "<group>"; };
 		404D74AC24809BC9009DF761 /* SupporterGratitudeViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SupporterGratitudeViewController.xib; sourceTree = "<group>"; };
 		4051A5742281A9DD00C13C12 /* AccountActionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountActionCell.swift; sourceTree = "<group>"; };
@@ -1362,8 +1338,6 @@
 		40888F042563792200887D9A /* AppIcon-Round-Pink29x29~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round-Pink29x29~ipad.png"; sourceTree = "<group>"; };
 		408971AC2512EE1F00783253 /* PodcastBundleCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastBundleCountView.swift; sourceTree = "<group>"; };
 		408971AE2512F57100783253 /* BundleImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleImageView.swift; sourceTree = "<group>"; };
-		408C08862314BB50008C9667 /* WhatsNewThemeableImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewThemeableImageView.swift; sourceTree = "<group>"; };
-		408C088D23155B34008C9667 /* WhatsNewHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewHelper.swift; sourceTree = "<group>"; };
 		4090974E25235DFA00CED68C /* WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4090974F25235DFA00CED68C /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		40930E4C22D6EFCC00B9313C /* player_play_white_button.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = player_play_white_button.json; sourceTree = "<group>"; };
@@ -1468,7 +1442,6 @@
 		8B907F172AA8E1F100926F4F /* MiniPlayerViewController+TransitionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MiniPlayerViewController+TransitionDelegate.swift"; sourceTree = "<group>"; };
 		8B907F192AA8E5E500926F4F /* MiniPlayerToFullPlayerAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerToFullPlayerAnimator.swift; sourceTree = "<group>"; };
 		8B9D233E2C41B1BE004CD57D /* TranscriptShelfButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptShelfButton.swift; sourceTree = "<group>"; };
-		8B9DEFD52906D1CE00075EAB /* EndOfYear.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = EndOfYear.xcassets; sourceTree = "<group>"; };
 		8BA55A1428CA8FEB002BECC5 /* PrivacySettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacySettingsViewController.swift; sourceTree = "<group>"; };
 		8BA55A1628CA92A7002BECC5 /* PrivacySettingsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PrivacySettingsViewController.xib; sourceTree = "<group>"; };
 		8BAB271F2A40B3340079E5B3 /* EpisodesDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodesDataManager.swift; sourceTree = "<group>"; };
@@ -2154,7 +2127,6 @@
 		F5AA0FD32E21D05D00ECDEEA /* SurveyDebugInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyDebugInfoView.swift; sourceTree = "<group>"; };
 		F5B312B32BF5B6D400290696 /* FirebaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseManager.swift; sourceTree = "<group>"; };
 		F5BA0D732E3443ED005931D3 /* PressableLottieButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressableLottieButtonStyle.swift; sourceTree = "<group>"; };
-		F5EA21F12CC1CD040043C780 /* EndOfYearDeveloperMenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndOfYearDeveloperMenuButton.swift; sourceTree = "<group>"; };
 		F5F884622CC9EAA6002BED2C /* Humane-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Humane-Bold.otf"; sourceTree = "<group>"; };
 		F5FF611F2BD076BA00190711 /* Sharing.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Sharing.xcassets; sourceTree = "<group>"; };
 		FCCC80722DD56B380080EB2C /* HowToUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUploadView.swift; sourceTree = "<group>"; };
@@ -2275,8 +2247,6 @@
 		3F26BC112F4FC3C90007119B /* PodcastsIntents */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3F26BC1B2F4FC3CA0007119B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PodcastsIntents; sourceTree = "<group>"; };
 		3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Episode Info Coordinator"; sourceTree = "<group>"; };
 		3F584D262F567EE1005A3593 /* Lists */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Lists; sourceTree = "<group>"; };
-		3F584DED2F56811B005A3593 /* End of Year */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "End of Year"; sourceTree = "<group>"; };
-		3F584E3E2F568131005A3593 /* Whats New */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Whats New"; sourceTree = "<group>"; };
 		3F584E492F568154005A3593 /* Theme */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Theme; sourceTree = "<group>"; };
 		3F584E7B2F5683A8005A3593 /* Sharing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Sharing; sourceTree = "<group>"; };
 		3F584E952F5683B2005A3593 /* Up Next History */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Up Next History"; sourceTree = "<group>"; };
@@ -2443,7 +2413,6 @@
 		4007B056230E38DD008DDCF5 /* What's New */ = {
 			isa = PBXGroup;
 			children = (
-				4007B058230E392D008DDCF5 /* aboutWhatsNew.json */,
 			);
 			name = "What's New";
 			sourceTree = "<group>";
@@ -2724,7 +2693,6 @@
 			children = (
 				F5AA0FD32E21D05D00ECDEEA /* SurveyDebugInfoView.swift */,
 				46C22EE228F7497300F4173B /* DeveloperMenu.swift */,
-				F5EA21F12CC1CD040043C780 /* EndOfYearDeveloperMenuButton.swift */,
 			);
 			name = "Developer Menu";
 			sourceTree = "<group>";
@@ -2792,8 +2760,6 @@
 			isa = PBXGroup;
 			children = (
 				871975870906424F8C3C70B0 /* Modules */,
-				3F584DED2F56811B005A3593 /* End of Year */,
-				3F584E3E2F568131005A3593 /* Whats New */,
 			);
 			name = Modules;
 			sourceTree = "<group>";
@@ -3591,7 +3557,6 @@
 			children = (
 				BD69EBBB1CD1D383007F273B /* SocialsHelper.swift */,
 				BD35E9191D45BBDA00CAE2A7 /* EmailHelper.swift */,
-				408C088D23155B34008C9667 /* WhatsNewHelper.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -3922,7 +3887,6 @@
 				BDE73A7F1B607DB6005BFE30 /* CommonImages.xcassets */,
 				40D1EF9822DC38E2000B9291 /* CustomStorage.xcassets */,
 				BDC692801BA7A91F0023B9F2 /* Discovery.xcassets */,
-				8B9DEFD52906D1CE00075EAB /* EndOfYear.xcassets */,
 				BDD6297A200EDB1700168DF7 /* Episodes.xcassets */,
 				BDE43412231759060045D0CB /* Files.xcassets */,
 				4053CE042150B3D5001C92B1 /* Filter.xcassets */,
@@ -3943,7 +3907,6 @@
 				40E1B4D0225C2A4F006C96CE /* Subscription.xcassets */,
 				BD4F25741F70F17B00B8857E /* TabBar.xcassets */,
 				BD8678A61C1954F600CC728B /* ThreeDeeTouch.xcassets */,
-				404BB865230F7FF5006FE8A9 /* WhatsNew.xcassets */,
 				F5FF611F2BD076BA00190711 /* Sharing.xcassets */,
 				FFFCD23E2C7768F900A345ED /* Referrals.xcassets */,
 				8BE85CA72876258300AEB5FF /* Acknowledgments */,
@@ -4134,15 +4097,6 @@
 				BD9F2FD527549BA300070958 /* AboutView.swift */,
 				BD6B43292755F516005E4017 /* AboutViewLogos.swift */,
 				BD27B8C82756FA20007A0EA7 /* ModalCloseButton.swift */,
-				4007B04A230E1FB4008DDCF5 /* WhatsNewViewController.swift */,
-				4007B04B230E1FB4008DDCF5 /* WhatsNewViewController.xib */,
-				4007B052230E3115008DDCF5 /* WhatsNewPageView.swift */,
-				4007B054230E3134008DDCF5 /* WhatsNewPageView.xib */,
-				4007B05F230E3A81008DDCF5 /* WhatsNewStructs.swift */,
-				408C08862314BB50008C9667 /* WhatsNewThemeableImageView.swift */,
-				4007B04E230E201A008DDCF5 /* WhatsNewDetailViewController.swift */,
-				4007B04F230E201A008DDCF5 /* WhatsNewDetailViewController.xib */,
-				404BB867231361A6006FE8A9 /* WhatsNewLinkButton.swift */,
 				8BE85CAA28762C4900AEB5FF /* LegalAndMoreView.swift */,
 			);
 			name = About;
@@ -4908,8 +4862,6 @@
 				371E0318452B7C751D0C5611 /* Fingerprint */,
 				3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */,
 				3F584D262F567EE1005A3593 /* Lists */,
-				3F584DED2F56811B005A3593 /* End of Year */,
-				3F584E3E2F568131005A3593 /* Whats New */,
 				3F584E492F568154005A3593 /* Theme */,
 				3F584E7B2F5683A8005A3593 /* Sharing */,
 				3F584E952F5683B2005A3593 /* Up Next History */,
@@ -5177,7 +5129,6 @@
 				BDAA3CF02122754700649F81 /* PlayerChapterCell.xib in Resources */,
 				BD92323923629FAA00C1E118 /* ShowNotesPlayerItemViewController.xib in Resources */,
 				40888F072563792300887D9A /* AppIcon-Round-Pink60x60@2x.png in Resources */,
-				404BB866230F7FF5006FE8A9 /* WhatsNew.xcassets in Resources */,
 				BDA002DC1F7B318B00DCB4AE /* AppIcon-Round-Dark29x29~ipad.png in Resources */,
 				40422D97251AF10500C80BE4 /* BundlePodcastCell.xib in Resources */,
 				BDA002E51F7B318B00DCB4AE /* AppIcon-Round-Dark83.5x83.5@2x~ipad.png in Resources */,
@@ -5278,7 +5229,6 @@
 				BD6B667D245BC25C00CF5245 /* AppIcon-Indigo29x29~ipad.png in Resources */,
 				40164A6823D696E00043907B /* PromotionViewController.xib in Resources */,
 				8B15E7222AD050EF0077F45A /* DMSans.ttf in Resources */,
-				4007B051230E201A008DDCF5 /* WhatsNewDetailViewController.xib in Resources */,
 				BD6B669B245BC28800CF5245 /* AppIcon-Red-Velvet20x20~ipad.png in Resources */,
 				F5FF61202BD076BA00190711 /* Sharing.xcassets in Resources */,
 				9AF4152D2EBA0B1F003D3677 /* 2025_top_5_podcasts_b.json in Resources */,
@@ -5302,7 +5252,6 @@
 				BDA002FE1F7B318B00DCB4AE /* AppIcon-Default29x29@2x~ipad.png in Resources */,
 				BD6B667F245BC25C00CF5245 /* AppIcon-Indigo40x40@2x~ipad.png in Resources */,
 				40FFCDB122FA817300395CA5 /* ThemeAbstractCell.xib in Resources */,
-				8B9DEFD62906D1CE00075EAB /* EndOfYear.xcassets in Resources */,
 				4011B93C2164546E00661A7D /* FilterEditOptionsViewController.xib in Resources */,
 				C7D8137E2A0D4B8A007F715F /* AppIcon-Patron-Chrome-iphone@2x.png in Resources */,
 				BD1292CE22F7CD83004608A6 /* AppIcon-Plus40x40@2x.png in Resources */,
@@ -5342,7 +5291,6 @@
 				BD6B66A2245BC28800CF5245 /* AppIcon-Red-Velvet29x29~ipad.png in Resources */,
 				BD6B6652245BC24C00CF5245 /* AppIcon-Pocket-Cats40x40~ipad.png in Resources */,
 				4041FE9E218AA4310089D4A1 /* PodcastShortcutsViewController.xib in Resources */,
-				4007B055230E3134008DDCF5 /* WhatsNewPageView.xib in Resources */,
 				40888F0E2563792300887D9A /* AppIcon-Round-Pink40x40@2x.png in Resources */,
 				406C6853216AC9EF0004E249 /* PodcastFilterSelectionCell.xib in Resources */,
 				BDBCE6CB244E7755004FFE13 /* AppIcon-Radioactive76x76@2x~ipad.png in Resources */,
@@ -5379,7 +5327,6 @@
 				BD01430621A299CE002FDDF4 /* OptionsPickerIcons.xcassets in Resources */,
 				BD1292F022F7D066004608A6 /* AppIcon-Classic76x76~ipad.png in Resources */,
 				BD6B66A3245BC28800CF5245 /* AppIcon-Red-Velvet29x29@2x~ipad.png in Resources */,
-				4007B04D230E1FB4008DDCF5 /* WhatsNewViewController.xib in Resources */,
 				BDA002D11F7B318B00DCB4AE /* AppIcon-Dark76x76@2x~ipad.png in Resources */,
 				9A24DA7E2EBE1E6600772CB1 /* Inter.ttf in Resources */,
 				BDA002E41F7B318B00DCB4AE /* AppIcon-Round-Dark76x76~ipad.png in Resources */,
@@ -5395,7 +5342,6 @@
 				400E3D1223F0E6D900ADAA63 /* PromotionFinishedViewController.xib in Resources */,
 				BD12931422F809F8004608A6 /* AppIcon-Electric-Pink29x29@2x~ipad.png in Resources */,
 				BD42E31B1B940AFF000EA14F /* DiscoverPodcastTableCell.xib in Resources */,
-				4007B05C230E392E008DDCF5 /* aboutWhatsNew.json in Resources */,
 				40251CEB22BB0F6E00551C51 /* CancelledAcknowledgeViewController.xib in Resources */,
 				BDA002DA1F7B318B00DCB4AE /* AppIcon-Round-Dark29x29@2x~ipad.png in Resources */,
 				C7D8137F2A0D4B8A007F715F /* AppIcon-Patron-Chrome-ipad-pro.png in Resources */,
@@ -5782,7 +5728,6 @@
 				BDBD2AC7202D66B300E0A79E /* OptionsPickerRootController.swift in Sources */,
 				F5516DBE2E1C9D82005DC201 /* UserSatisfactionSurveyView.swift in Sources */,
 				F5AA0FD42E21D05D00ECDEEA /* SurveyDebugInfoView.swift in Sources */,
-				F5EA21F22CC1CD040043C780 /* EndOfYearDeveloperMenuButton.swift in Sources */,
 				45ECEF8827E9253900C65030 /* ShowNotesFormatterUtils.swift in Sources */,
 				E3F37446291F0DD1005916ED /* Chapters.swift in Sources */,
 				BD7EA4DC1E52D4320014EAC5 /* PlayPauseButton.swift in Sources */,
@@ -5919,7 +5864,6 @@
 				8BBE19F02BEA9865009E944B /* PodcastIndexChapterDataRetriever.swift in Sources */,
 				462EE0B827024FF3003D67DC /* ApiCredentials.swift in Sources */,
 				BD93FDAD20159CF600F6EF55 /* FilterNameCell.swift in Sources */,
-				4007B050230E201A008DDCF5 /* WhatsNewDetailViewController.swift in Sources */,
 				8B907F182AA8E1F100926F4F /* MiniPlayerViewController+TransitionDelegate.swift in Sources */,
 				BD35E91A1D45BBDA00CAE2A7 /* EmailHelper.swift in Sources */,
 				463C127A2714B57800178F9E /* Themeable+SwiftUI.swift in Sources */,
@@ -5946,7 +5890,6 @@
 				4051A5762281A9DD00C13C12 /* AccountActionCell.swift in Sources */,
 				BD69EBBC1CD1D383007F273B /* SocialsHelper.swift in Sources */,
 				BDEDCF7124627F02005910C1 /* CustomSegmentedControl.swift in Sources */,
-				408C08872314BB50008C9667 /* WhatsNewThemeableImageView.swift in Sources */,
 				FF91A0F62B64159D002A0590 /* UIScreen+Sizes.swift in Sources */,
 				FF1EC6862CECBC7D006FBF9B /* ManageDownloadsCoordinator.swift in Sources */,
 				4047E1782419B2F800B79177 /* ServerSyncManager.swift in Sources */,
@@ -5966,10 +5909,8 @@
 				BDD5CA002303E8FA005E133C /* ThemeableUIButton.swift in Sources */,
 				403946E9228587FC00F55162 /* AddCustomViewController+CollectionView.swift in Sources */,
 				BD2BE6791C5B11C20087EE1E /* ShiftyRoundButton.swift in Sources */,
-				4007B04C230E1FB4008DDCF5 /* WhatsNewViewController.swift in Sources */,
 				BD8E76C61B9E9C03000E20C7 /* AppTheme.swift in Sources */,
 				BD542C20240382A100F35D26 /* EpisodeFilter+Formatting.swift in Sources */,
-				4007B060230E3A81008DDCF5 /* WhatsNewStructs.swift in Sources */,
 				4041FE8D218A7DA60089D4A1 /* SiriShortcutEnabledCell.swift in Sources */,
 				FF40C0662C65175B003A9D93 /* TranscriptErrorView.swift in Sources */,
 				9A72B6602E2115120078FC84 /* PlaylistCell.swift in Sources */,
@@ -5994,7 +5935,6 @@
 				400AB2FD220BA3050003EE21 /* UploadedViewController.swift in Sources */,
 				FF4B3E392C2D94F300F84DD6 /* TranscriptFilter.swift in Sources */,
 				9AF646892E5B56FC00627836 /* PlaylistBlurHeaderView.swift in Sources */,
-				4007B053230E3115008DDCF5 /* WhatsNewPageView.swift in Sources */,
 				BDCF3C8024283B0F005B6933 /* ListeningHistoryViewController+Swipe.swift in Sources */,
 				BD7641332588272B0070CBF3 /* ThemeableSwitch.swift in Sources */,
 				BD585C1F2047887700AC842C /* AppDelegate+UrlHandling.swift in Sources */,
@@ -6063,7 +6003,6 @@
 				BD2219F1253EAEAF000025BE /* PlaybackCatchUpHelper.swift in Sources */,
 				467DF6E926E1093A00AC290C /* Strings+Generated.swift in Sources */,
 				9AF355752E4E153F0083ECA7 /* SmartPlaylistRulesView.swift in Sources */,
-				404BB868231361A6006FE8A9 /* WhatsNewLinkButton.swift in Sources */,
 				BD44E36D20937D9C008BD7F0 /* PodcastChapterParser.swift in Sources */,
 				BDE954E9236684E300CEB6DA /* ChaptersViewController.swift in Sources */,
 				0CCC37A62FA3C30200BA79D1 /* SmartPlaylistRulesSectionView.swift in Sources */,
@@ -6173,7 +6112,6 @@
 				408971AF2512F57100783253 /* BundleImageView.swift in Sources */,
 				BD65E51C1CD9BDE000B90A67 /* OnlineSupportController.swift in Sources */,
 				FF9B6B752D0732D40057A504 /* LogsViewController.swift in Sources */,
-				408C088E23155B34008C9667 /* WhatsNewHelper.swift in Sources */,
 				463538A726E16CD100BA9D35 /* Strings+L10n.swift in Sources */,
 				40043F0B23FBC6B1004A9B57 /* SiriPodcastItem.swift in Sources */,
 				BD5E8D41206211E300C84B43 /* OpmlImporter.swift in Sources */,

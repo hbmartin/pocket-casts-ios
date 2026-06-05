@@ -9,7 +9,6 @@ enum BookmarkAnalyticsSource: String, AnalyticsDescribable {
     case player
     case files
     case headphones
-    case whatsNew = "whats_new"
 
     case unknown
 

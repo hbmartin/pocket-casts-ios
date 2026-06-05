@@ -196,19 +196,6 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         }
     }
 
-    private func makeBadge(size: CGFloat) -> UIView {
-        let badgeView = CircleView()
-        badgeView.borderColor = ThemeColor.secondaryUi01()
-        badgeView.centerColor = ThemeColor.primaryInteractive01()
-        badgeView.backgroundColor = .clear
-        badgeView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            badgeView.widthAnchor.constraint(equalToConstant: size),
-            badgeView.heightAnchor.constraint(equalToConstant: size),
-        ])
-        return badgeView
-    }
-
     private func makeProfileButton(email: String?) -> UIBarButtonItem {
         let avatarSize = CGFloat(32)
         let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: avatarSize, height: avatarSize))
@@ -235,15 +222,6 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
             imageView.heightAnchor.constraint(equalToConstant: avatarSize),
         ])
 
-        if EndOfYear.isEligible, EndOfYear.shouldShowBadge {
-            let badgeSize = CGFloat(10)
-            let badge = makeBadge(size: badgeSize)
-            imageView.addSubview(badge)
-            NSLayoutConstraint.activate([
-                badge.centerXAnchor.constraint(equalTo: imageView.rightAnchor, constant: -(badgeSize / 2)),
-                badge.centerYAnchor.constraint(equalTo: imageView.topAnchor, constant: +(badgeSize / 2)),
-            ])
-        }
         return UIBarButtonItem(customView: imageView)
     }
 

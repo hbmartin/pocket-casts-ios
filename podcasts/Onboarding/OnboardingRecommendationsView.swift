@@ -2,7 +2,6 @@ import SwiftUI
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
-import EndOfYear
 
 class RecommendationsViewModel: ObservableObject {
 

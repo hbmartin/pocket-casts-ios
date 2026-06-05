@@ -49,18 +49,6 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
         }
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        if AnnouncementFlow.current == .autoPlay {
-            settingsTable.scrollToRow(at: IndexPath(row: 0, section: settingsTable.numberOfSections - 1), at: .bottom, animated: true)
-
-
-            // Finish the Autoplay option flow
-            AnnouncementFlow.current = .none
-        }
-    }
-
     private func scrollToRow(_ row: TableRow) {
         for (sectionIndex, section) in tableData.enumerated() {
             if let row = section.firstIndex(of: row) {

@@ -56,8 +56,6 @@ public class UserSatisfactionSurveyManager: NSObject {
             return !isPlus ? .canShow : .wrongUserType // Free user events
         case .plusUpgraded, .folderCreated, .bookmarkCreated, .customThemeSet, .referralShared:
             return isPlus ? .canShow : .wrongUserType // Plus user events
-        case .endOfYearStoryShared, .endOfYearCompleted:
-            return .deferredEvent
         }
     }
 
@@ -196,13 +194,6 @@ extension UserSatisfactionSurveyManager: AnalyticsAdapter {
             return handlePlusUpgrade()
         case AnalyticsEvent.applicationOpened.eventName:
             return handleAppOpened()
-        case AnalyticsEvent.endOfYearStoryShared.eventName:
-            return .endOfYearStoryShared
-        case AnalyticsEvent.endOfYearStoryShown.eventName:
-            if properties["story"] as? String == "ending" {
-                return .endOfYearCompleted
-            }
-            return nil
         default:
             return nil
         }
@@ -335,22 +326,10 @@ enum SurveyTriggerEvent: String, CaseIterable {
     case bookmarkCreated = "bookmark_created"
     case customThemeSet = "custom_theme_set"
     case referralShared = "referral_shared"
-
-    // Shared events
-    case endOfYearStoryShared = "end_of_year_story_shared"
-    case endOfYearCompleted = "end_of_year_completed"
 }
 
 private extension SurveyTriggerEvent {
-    func shouldShowAnalytics(for event: String, properties: [String: Sendable]) -> Bool {
-        switch self {
-        case .endOfYearStoryShared, .endOfYearCompleted:
-            if AnalyticsEvent.endOfYearStoriesDismissed.eventName == event {
-                return true
-            }
-            return false
-        default:
-            return false
-        }
+    func shouldShowAnalytics(for _: String, properties _: [String: Sendable]) -> Bool {
+        false
     }
 }

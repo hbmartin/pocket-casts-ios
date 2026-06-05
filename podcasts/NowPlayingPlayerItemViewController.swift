@@ -253,13 +253,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
-        #if !APPCLIP
-        // Show the overflow menu
-        if AnnouncementFlow.current == .bookmarksPlayer {
-            overflowTapped()
-        }
-        #endif
     }
 
     override func viewWillAppear(_ animated: Bool) {
