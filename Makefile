@@ -10,7 +10,7 @@ SIMULATOR_NAME = $(shell xcrun simctl list devices available \
 	| tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$$//')
 SIMULATOR_OS ?= 18.5
 
-.PHONY: help build clean test lint lint_lenient format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security format install_dependencies
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -39,6 +39,9 @@ lint: ## Lint the codebase
 
 lint_lenient:
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --lenient)
+
+semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
+	./scripts/security/run-akabe1-swift-semgrep.sh
 
 build: ## Builds the Debug configuration using Xcode
 	xcodebuild -project podcasts.xcodeproj \

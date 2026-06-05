@@ -286,7 +286,6 @@ struct Constants {
         #else
             static let maxListItemsToSendToWatch = 50
             static let maxFilterItems = 1000
-            static let maxCarplayItems = 100
             static let maxBulkDownloads = 100
             static let maxSubscriptionExpirySeconds: TimeInterval = 30.days
             static let maxShelfActions = 4

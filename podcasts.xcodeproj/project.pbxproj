@@ -424,7 +424,6 @@
 		BD0F6D7B24BD60FF00EDFB99 /* FilterDurationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0F6D7924BD60FF00EDFB99 /* FilterDurationViewController.swift */; };
 		BD0F6D7C24BD60FF00EDFB99 /* FilterDurationViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = BD0F6D7A24BD60FF00EDFB99 /* FilterDurationViewController.xib */; };
 		BD108DFC182B0B90001F7B71 /* BadgeSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = BD108DFA182B0B90001F7B71 /* BadgeSettingsViewController.xib */; };
-		BD11C41D2524741C00E308E6 /* CarPlay.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD11C41C2524741C00E308E6 /* CarPlay.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		BD12927A22F7CCC9004608A6 /* AppIcon-Electric-Blue60x60@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BD12926822F7CCC6004608A6 /* AppIcon-Electric-Blue60x60@2x.png */; };
 		BD12927B22F7CCC9004608A6 /* AppIcon-Electric-Blue40x40@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BD12926922F7CCC7004608A6 /* AppIcon-Electric-Blue40x40@3x.png */; };
 		BD12927C22F7CCC9004608A6 /* AppIcon-Electric-Blue40x40@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BD12926A22F7CCC7004608A6 /* AppIcon-Electric-Blue40x40@2x.png */; };
@@ -767,9 +766,7 @@
 		BDA003031F7B318B00DCB4AE /* AppIcon-Default40x40@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002BF1F7B2C9E00DCB4AE /* AppIcon-Default40x40@3x.png */; };
 		BDA003041F7B318B00DCB4AE /* AppIcon-Default40x40~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002B11F7B2C9C00DCB4AE /* AppIcon-Default40x40~ipad.png */; };
 		BDA003051F7B318B00DCB4AE /* AppIcon-Default60x60@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002BD1F7B2C9E00DCB4AE /* AppIcon-Default60x60@2x.png */; };
-		BDA003061F7B318B00DCB4AE /* AppIcon-Default60x60@2x~car.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA0028E1F7B2C9900DCB4AE /* AppIcon-Default60x60@2x~car.png */; };
 		BDA003071F7B318B00DCB4AE /* AppIcon-Default60x60@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002A71F7B2C9B00DCB4AE /* AppIcon-Default60x60@3x.png */; };
-		BDA003081F7B318B00DCB4AE /* AppIcon-Default60x60@3x~car.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002801F7B2C9700DCB4AE /* AppIcon-Default60x60@3x~car.png */; };
 		BDA003091F7B318B00DCB4AE /* AppIcon-Default76x76@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002931F7B2C9900DCB4AE /* AppIcon-Default76x76@2x~ipad.png */; };
 		BDA0030A1F7B318B00DCB4AE /* AppIcon-Default76x76~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002921F7B2C9900DCB4AE /* AppIcon-Default76x76~ipad.png */; };
 		BDA0030B1F7B318B00DCB4AE /* AppIcon-Default83.5x83.5@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = BDA002B01F7B2C9C00DCB4AE /* AppIcon-Default83.5x83.5@2x~ipad.png */; };
@@ -881,7 +878,6 @@
 		BDEC9AB720511F8900088D76 /* SettingsOptionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDEC9AB620511F8900088D76 /* SettingsOptionsViewController.swift */; };
 		BDED042421474365003A51E0 /* FloatingVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDED042321474365003A51E0 /* FloatingVideoView.swift */; };
 		BDEDCF7124627F02005910C1 /* CustomSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDEDCF7024627F02005910C1 /* CustomSegmentedControl.swift */; };
-		BDEED1541EB06E26003FE87D /* Carplay.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BDEED1531EB06E26003FE87D /* Carplay.xcassets */; };
 		BDEFBA151E6D3C2300B9024B /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD5231D81E3EC53B000F0D38 /* UserNotifications.framework */; };
 		BDEFBA171E6D3C2300B9024B /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDEFBA161E6D3C2300B9024B /* UserNotificationsUI.framework */; };
 		BDEFBA211E6D3C2300B9024B /* NotificationContent.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BDEFBA141E6D3C2300B9024B /* NotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -1760,7 +1756,6 @@
 		BD0F6D7A24BD60FF00EDFB99 /* FilterDurationViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = FilterDurationViewController.xib; sourceTree = "<group>"; };
 		BD0FB5F317A9ECE000E2A138 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		BD108DFA182B0B90001F7B71 /* BadgeSettingsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BadgeSettingsViewController.xib; sourceTree = "<group>"; };
-		BD11C41C2524741C00E308E6 /* CarPlay.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CarPlay.framework; path = System/Library/Frameworks/CarPlay.framework; sourceTree = SDKROOT; };
 		BD12926822F7CCC6004608A6 /* AppIcon-Electric-Blue60x60@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Electric-Blue60x60@2x.png"; sourceTree = "<group>"; };
 		BD12926922F7CCC7004608A6 /* AppIcon-Electric-Blue40x40@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Electric-Blue40x40@3x.png"; sourceTree = "<group>"; };
 		BD12926A22F7CCC7004608A6 /* AppIcon-Electric-Blue40x40@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Electric-Blue40x40@2x.png"; sourceTree = "<group>"; };
@@ -2073,7 +2068,6 @@
 		BDA0027D1F7B2C9700DCB4AE /* AppIcon-Round29x29@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round29x29@2x.png"; sourceTree = "<group>"; };
 		BDA0027E1F7B2C9700DCB4AE /* AppIcon-Round83.5x83.5@2x~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round83.5x83.5@2x~ipad.png"; sourceTree = "<group>"; };
 		BDA0027F1F7B2C9700DCB4AE /* AppIcon-Dark29x29@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Dark29x29@2x.png"; sourceTree = "<group>"; };
-		BDA002801F7B2C9700DCB4AE /* AppIcon-Default60x60@3x~car.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Default60x60@3x~car.png"; sourceTree = "<group>"; };
 		BDA002811F7B2C9800DCB4AE /* AppIcon-Default40x40@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Default40x40@2x.png"; sourceTree = "<group>"; };
 		BDA002821F7B2C9800DCB4AE /* AppIcon-Round60x60@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round60x60@3x.png"; sourceTree = "<group>"; };
 		BDA002831F7B2C9800DCB4AE /* AppIcon-Round-Dark20x20@2x~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round-Dark20x20@2x~ipad.png"; sourceTree = "<group>"; };
@@ -2086,7 +2080,6 @@
 		BDA0028B1F7B2C9800DCB4AE /* AppIcon-Dark76x76@2x~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Dark76x76@2x~ipad.png"; sourceTree = "<group>"; };
 		BDA0028C1F7B2C9800DCB4AE /* AppIcon-Round-Dark40x40@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round-Dark40x40@2x.png"; sourceTree = "<group>"; };
 		BDA0028D1F7B2C9900DCB4AE /* AppIcon-Dark29x29~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Dark29x29~ipad.png"; sourceTree = "<group>"; };
-		BDA0028E1F7B2C9900DCB4AE /* AppIcon-Default60x60@2x~car.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Default60x60@2x~car.png"; sourceTree = "<group>"; };
 		BDA0028F1F7B2C9900DCB4AE /* AppIcon-Round-Dark29x29@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round-Dark29x29@3x.png"; sourceTree = "<group>"; };
 		BDA002901F7B2C9900DCB4AE /* AppIcon-Round20x20@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round20x20@2x.png"; sourceTree = "<group>"; };
 		BDA002911F7B2C9900DCB4AE /* AppIcon-Round-Dark76x76~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-Round-Dark76x76~ipad.png"; sourceTree = "<group>"; };
@@ -2258,7 +2251,6 @@
 		BDEC9AB620511F8900088D76 /* SettingsOptionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOptionsViewController.swift; sourceTree = "<group>"; };
 		BDED042321474365003A51E0 /* FloatingVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingVideoView.swift; sourceTree = "<group>"; };
 		BDEDCF7024627F02005910C1 /* CustomSegmentedControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSegmentedControl.swift; sourceTree = "<group>"; };
-		BDEED1531EB06E26003FE87D /* Carplay.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Carplay.xcassets; sourceTree = "<group>"; };
 		BDEFBA141E6D3C2300B9024B /* NotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BDEFBA161E6D3C2300B9024B /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 		BDF0507A1FBA65ED00194D68 /* ListeningHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningHistoryViewController.swift; sourceTree = "<group>"; };
@@ -2545,7 +2537,6 @@
 		3F584DED2F56811B005A3593 /* End of Year */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "End of Year"; sourceTree = "<group>"; };
 		3F584E3E2F568131005A3593 /* Whats New */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Whats New"; sourceTree = "<group>"; };
 		3F584E492F568154005A3593 /* Theme */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Theme; sourceTree = "<group>"; };
-		3F584E4F2F568314005A3593 /* CarPlay */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = CarPlay; sourceTree = "<group>"; };
 		3F584E7B2F5683A8005A3593 /* Sharing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Sharing; sourceTree = "<group>"; };
 		3F584E952F5683B2005A3593 /* Up Next History */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Up Next History"; sourceTree = "<group>"; };
 		3F584EC02F5683D9005A3593 /* Common SwiftUI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Common SwiftUI"; sourceTree = "<group>"; };
@@ -2640,7 +2631,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				46C22EE028F73D9A00F4173B /* AuthenticationServices.framework in Frameworks */,
-				BD11C41D2524741C00E308E6 /* CarPlay.framework in Frameworks */,
 				3FC668C02F7CD3440072EBA8 /* XcodeTarget_podcasts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4182,7 +4172,6 @@
 			isa = PBXGroup;
 			children = (
 				46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */,
-				BD11C41C2524741C00E308E6 /* CarPlay.framework */,
 				BD3C61A5221A91150061341D /* liblottie-ios.a */,
 				BD3C61A3221A90EA0061341D /* liblottie-ios.a */,
 				BD5231D81E3EC53B000F0D38 /* UserNotifications.framework */,
@@ -4217,7 +4206,6 @@
 		BDBD53F717019B2A0048C8C5 /* Pocket Casts */ = {
 			isa = PBXGroup;
 			children = (
-				3F584E4F2F568314005A3593 /* CarPlay */,
 				371E0318452B7C751D0C5611 /* Fingerprint */,
 				3F584E492F568154005A3593 /* Theme */,
 				3F747A542F5598A2004C7FF6 /* Playback */,
@@ -4268,7 +4256,6 @@
 				40FFCDA722FA756300395CA5 /* Appearance.xcassets */,
 				BD0D7AF31F6BC564006B673F /* AppIcon.xcassets */,
 				C7360CB72A42128300456930 /* Bookmarks.xcassets */,
-				BDEED1531EB06E26003FE87D /* Carplay.xcassets */,
 				BDE73A7F1B607DB6005BFE30 /* CommonImages.xcassets */,
 				40D1EF9822DC38E2000B9291 /* CustomStorage.xcassets */,
 				BDC692801BA7A91F0023B9F2 /* Discovery.xcassets */,
@@ -4779,9 +4766,7 @@
 				BDA002BF1F7B2C9E00DCB4AE /* AppIcon-Default40x40@3x.png */,
 				BDA002B11F7B2C9C00DCB4AE /* AppIcon-Default40x40~ipad.png */,
 				BDA002BD1F7B2C9E00DCB4AE /* AppIcon-Default60x60@2x.png */,
-				BDA0028E1F7B2C9900DCB4AE /* AppIcon-Default60x60@2x~car.png */,
 				BDA002A71F7B2C9B00DCB4AE /* AppIcon-Default60x60@3x.png */,
-				BDA002801F7B2C9700DCB4AE /* AppIcon-Default60x60@3x~car.png */,
 				BDA002931F7B2C9900DCB4AE /* AppIcon-Default76x76@2x~ipad.png */,
 				BDA002921F7B2C9900DCB4AE /* AppIcon-Default76x76~ipad.png */,
 				BDA002B01F7B2C9C00DCB4AE /* AppIcon-Default83.5x83.5@2x~ipad.png */,
@@ -5284,7 +5269,6 @@
 				3F584DED2F56811B005A3593 /* End of Year */,
 				3F584E3E2F568131005A3593 /* Whats New */,
 				3F584E492F568154005A3593 /* Theme */,
-				3F584E4F2F568314005A3593 /* CarPlay */,
 				3F584E7B2F5683A8005A3593 /* Sharing */,
 				3F584E952F5683B2005A3593 /* Up Next History */,
 				3F584EC02F5683D9005A3593 /* Common SwiftUI */,
@@ -5752,7 +5736,6 @@
 				8BDEBC0F28F6F82A00A1B03C /* AppIcon-Halloween-152@2x.png in Resources */,
 				BDBCE6D5244E7755004FFE13 /* AppIcon-Radioactive20x20~ipad.png in Resources */,
 				BDB1E4FF1B8C5C2B009AD30F /* CategorySummaryViewController.xib in Resources */,
-				BDEED1541EB06E26003FE87D /* Carplay.xcassets in Resources */,
 				F5F884632CC9EAA6002BED2C /* Humane-Bold.otf in Resources */,
 				40F1492D218BCC4F008F54EA /* PlaylistShortcutsViewController.xib in Resources */,
 				BDBCE6C6244E7755004FFE13 /* AppIcon-Radioactive29x29@3x.png in Resources */,
@@ -5773,7 +5756,6 @@
 				BDBCE6D7244E7755004FFE13 /* AppIcon-Radioactive40x40@2x~ipad.png in Resources */,
 				BD12927A22F7CCC9004608A6 /* AppIcon-Electric-Blue60x60@2x.png in Resources */,
 				BDA002FA1F7B318B00DCB4AE /* AppIcon-Default20x20@2x~ipad.png in Resources */,
-				BDA003061F7B318B00DCB4AE /* AppIcon-Default60x60@2x~car.png in Resources */,
 				40D1EF9922DC38E2000B9291 /* CustomStorage.xcassets in Resources */,
 				407B21E82231F6A300B4E492 /* UploadedSettingsViewController.xib in Resources */,
 				8B10E78628D9093E00702C54 /* GoogleService-Info.plist in Resources */,
@@ -5841,7 +5823,6 @@
 				BD00CB2C24BD20CD00A10257 /* TimeStepperCell.xib in Resources */,
 				BD1292C222F7CD83004608A6 /* AppIcon-Plus20x20@2x~ipad.png in Resources */,
 				BD86D950217EB81C0010FA1B /* FilterDownloadCell.xib in Resources */,
-				BDA003081F7B318B00DCB4AE /* AppIcon-Default60x60@3x~car.png in Resources */,
 				BDA002C41F7B318B00DCB4AE /* AppIcon-Dark20x20@2x~ipad.png in Resources */,
 				40888F082563792300887D9A /* AppIcon-Round-Pink60x60@3x.png in Resources */,
 				BD6B6658245BC24C00CF5245 /* AppIcon-Pocket-Cats40x40@2x.png in Resources */,

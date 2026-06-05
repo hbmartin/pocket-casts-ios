@@ -10,7 +10,7 @@ VI TÄNKER PÅ DETALJERNA
 • Design: Lyssna på, hantera och hitta nya podcasts enkelt.
 • Teman: Vi har vad du behöver, oavsett om du gillar ljusa eller mörka teman. OLED-fantaster kan njuta av vårt extra mörka tema.
 • Universellt: Anpassat men bekant iPad-gränssnitt, med stöd för Slide Over, Split View och Picture in Picture.
-• Överallt: CarPlay, AirPlay, Chromecast och Sonos. Lyssna på dina podcasts på fler platser än någonsin tidigare.
+• Överallt: AirPlay, Chromecast och Sonos. Lyssna på dina podcasts på fler platser än någonsin tidigare.
 
 KRAFTFULL UPPSPELNING
 • Nästa: Skapa automatiskt en uppspelningskö utifrån dina favoritshower. Logga in och synkronisera din Nästa-kö på alla dina enheter.
@@ -25,7 +25,6 @@ KRAFTFULL UPPSPELNING
 • Sömntimer: Vi pausar ditt avsnitt så att du kan vila ditt trötta huvud.
 • Airplay och Chromecast: Skicka avsnitt direkt till din TV eller dina högtalare med ett enda tryck.
 • Sonos: Bläddra igenom och spela upp din podcastsamling direkt i Sonos-appen.
-• CarPlay: När du sitter i bilen gör vi också det.
 
 SMARTA VERKTYG
 • Synkronisering: Prenumerationer, Nästa, lyssningshistorik, uppspelning och filter lagras alla säkert i molnet. Du kan fortsätta där du slutade på en annan enhet, eller till och med på webben.

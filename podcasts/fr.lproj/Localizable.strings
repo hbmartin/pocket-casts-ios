@@ -451,14 +451,6 @@ Laissez-nous d’abord vous aider</string>
     <string>Obtenir -50 %% sur la prochaine année</string>
     <key>canceling</key>
     <string>Annulation...</string>
-    <key>carplay_chapter_count</key>
-    <string>%1$@ sur %2$@. %3$@</string>
-    <key>carplay_more</key>
-    <string>Plus</string>
-    <key>carplay_playback_speed</key>
-    <string>Vitesse de lecture</string>
-    <key>carplay_up_next_queue</key>
-    <string>File d’attente</string>
     <key>champion_description</key>
     <string>Merci d’être à nos côtés depuis le début ! Si vous aimez utiliser notre application, nous aimerions avoir votre avis.</string>
     <key>champion_title</key>

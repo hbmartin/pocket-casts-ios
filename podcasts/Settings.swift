@@ -507,7 +507,7 @@ class Settings: NSObject {
         }
     }
 
-    // MARK: - CarPlay/Lock Screen actions
+    // MARK: - Lock Screen actions
 
     static let mediaSessionActionsKey = "MediaSessionActions"
     class func extraMediaSessionActionsEnabled() -> Bool {

@@ -40,23 +40,8 @@ extension EpisodeFilter {
 
         return PlaylistArtworkView(items: items)
             .frame(width: 56.0, height: 56.0)
-            .environmentObject(Theme(previewTheme: carPlayPreviewTheme()))
+            .environmentObject(Theme(previewTheme: Theme.sharedTheme.activeTheme))
             .snapshot()
-    }
-
-    private func carPlayPreviewTheme() -> Theme.ThemeType {
-        guard let interfaceStyle = CarPlayImageHelper.carTraitCollection?.userInterfaceStyle else {
-            return Theme.sharedTheme.activeTheme
-        }
-
-        switch interfaceStyle {
-        case .dark:
-            return .dark
-        case .light:
-            return .light
-        default:
-            return Theme.sharedTheme.activeTheme
-        }
     }
     #endif
 

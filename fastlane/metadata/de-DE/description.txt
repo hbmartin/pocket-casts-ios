@@ -10,7 +10,7 @@ WIR SIND VERSESSEN AUF DETAILS
 • Design: Podcasts einfach anhören, verwalten und finden.
 • Themes: Dunkles Design? Helles Design? Bei uns wird jeder fündig. Mit unserem extradunklen Theme kommen selbst OLED-Freunde auf ihre Kosten.
 • Universell: Individuelle, aber vertraute iPad-Benutzeroberfläche mit Unterstützung von Slide Over, geteiltem Bildschirm und Bild in Bild.
-• Überall zuhause: Über CarPlay, AirPlay, Chromecast und Sonos. hörst du deine Podcasts an mehr Orten als je zuvor.
+• Überall zuhause: Über AirPlay, Chromecast und Sonos. hörst du deine Podcasts an mehr Orten als je zuvor.
 
 STARKE WIEDERGABEFUNKTIONEN
 • Bald verfügbar: Erstelle automatisch eine Wiedergabewarteschlange aus deinen Lieblingssendungen. Melde dich an und lasse deine Warteschlange mit all deinen Geräten synchronisieren.
@@ -25,7 +25,6 @@ STARKE WIEDERGABEFUNKTIONEN
 • Schlummerfunktion: Wir pausieren deinen Podcast, damit du deinen wohlverdienten Schlaf bekommst.
 • Airplay & Chromecast: Spiele Folgen mit einem einzigen Tippen auf deinem Fernseher oder über deine Lautsprecher ab.
 • Sonos: Durchsuche deine Podcasts und gib sie direkt über die Sonos-App wieder.
-• CarPlay: Wenn du ins Auto steigst, sind wir dabei.
 
 INTELLIGENTE TOOLS
 • Synchronisation: Abonnements, Up Next, dein Hörverlauf, Wiedergaben und Filter – alles ist sicher in der Cloud gespeichert. Mach einfach da weiter, wo du aufgehört hast – auf einem anderen Gerät oder sogar im Web.

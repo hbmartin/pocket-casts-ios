@@ -457,14 +457,6 @@ Deixa'ns ajudar-te primer</string>
     <string>Aconsegueix un 50%% de descompte el teu any vinent</string>
     <key>canceling</key>
     <string>Cancel·lant...</string>
-    <key>carplay_chapter_count</key>
-    <string>%1$@ de %2$@. %3$@</string>
-    <key>carplay_more</key>
-    <string>Més</string>
-    <key>carplay_playback_speed</key>
-    <string>Velocitat de reproducció</string>
-    <key>carplay_up_next_queue</key>
-    <string>Llista «Tot seguit»</string>
     <key>champion_description</key>
     <string>Gràcies per estar amb nosaltres des del principi! Si t'agrada fer servir la nostra app, ens encantaria saber la teva opinió.</string>
     <key>champion_title</key>

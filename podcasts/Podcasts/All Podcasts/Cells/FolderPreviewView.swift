@@ -13,8 +13,6 @@ class FolderPreviewView: UIView {
 
     var showFolderName = true
 
-    var forCarPlay = false
-
     private var images: [PodcastImageView] = []
     private var gradientLayer: CAGradientLayer?
     private var nameLabel: UILabel?
@@ -103,12 +101,7 @@ class FolderPreviewView: UIView {
     }
 
     private func setImage(in imageView: PodcastImageView, for uuid: String) {
-        if forCarPlay {
-            // For CarPlay we just want to grab whatever we have in cache
-            imageView.imageView?.image = ImageManager.sharedManager.cachedImageFor(podcastUuid: uuid, size: .list)
-        } else {
-            imageView.setPodcast(uuid: uuid, size: .list)
-        }
+        imageView.setPodcast(uuid: uuid, size: .list)
     }
 
     override func layoutSubviews() {

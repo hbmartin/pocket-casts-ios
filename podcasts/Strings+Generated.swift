@@ -520,16 +520,6 @@ internal enum L10n {
   internal static var cancelSubscriptionYearlyPromotionTitle: String { return L10n.tr("Localizable", "cancel_subscription_yearly_promotion_title", fallback: "Get 50%% off your next year") }
   /// An activity message indicating that the process to cancel is running.
   internal static var canceling: String { return L10n.tr("Localizable", "canceling", fallback: "Canceling...") }
-  /// CarPlay subtitle information label that includes the current chapter and total chapter count and the current chapter length. '%1$@' is a placeholder for the current chapter. '%2$@' is a placeholder for the total chapters. '%3$@' is a placeholder for the length of the current chapter.
-  internal static func carplayChapterCount(_ p1: Any, _ p2: Any, _ p3: Any) -> String {
-    return L10n.tr("Localizable", "carplay_chapter_count", String(describing: p1), String(describing: p2), String(describing: p3), fallback: "%1$@ of %2$@. %3$@")
-  }
-  /// Provides a link to the menu to present more options.
-  internal static var carplayMore: String { return L10n.tr("Localizable", "carplay_more", fallback: "More") }
-  /// CarPlay option to modify the playback speed.
-  internal static var carplayPlaybackSpeed: String { return L10n.tr("Localizable", "carplay_playback_speed", fallback: "Playback Speed") }
-  /// CarPlay prompt to navigate to the up next Queue.
-  internal static var carplayUpNextQueue: String { return L10n.tr("Localizable", "carplay_up_next_queue", fallback: "Up Next Queue") }
   /// Subtitle of the Pocket Casts champion screen
   internal static var championDescription: String { return L10n.tr("Localizable", "champion_description", fallback: "Thanks for being with us since the beginning! If you enjoy using our app, we’d love to hear your feedback.") }
   /// Title of the Pocket Casts champion screen, greeting an user that has been using Pocket Casts for a long time

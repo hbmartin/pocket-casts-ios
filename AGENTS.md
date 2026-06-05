@@ -58,7 +58,7 @@ The codebase uses Swift Package Manager modules under `Modules/`:
 The main iOS app lives in `podcasts/` with:
 - UIKit + SwiftUI hybrid (123+ ViewControllers, XIBs/Storyboards)
 - Feature-based organization (Analytics, Bookmarks, Folders, IAP, Player, etc.)
-- Multi-platform targets: iOS, watchOS, widgets, App Clip, CarPlay
+- Multi-platform targets: iOS, watchOS, widgets, App Clip
 
 ### Key Directories
 
@@ -137,4 +137,31 @@ Server objects use protobuf. To regenerate after API changes:
 ```bash
 brew install protobuf swift-protobuf  # One-time setup
 make update_proto API_PATH=/path/to/pocketcasts-api/api/modules/protobuf/src/main/proto
+```
+
+## Simulator Launch Notes
+
+When asked to get the app running in Simulator from the CLI, use an explicit simulator UDID instead of a generic destination to avoid Xcode choosing the wrong matching simulator/architecture.
+
+If the build fails during credential generation because local secrets are missing, run:
+```bash
+make external_contributor
+```
+
+Build the staging app for the booted simulator with signing disabled:
+```bash
+set -o pipefail
+xcodebuild -quiet -project podcasts.xcodeproj \
+  -scheme "Pocket Casts Staging" \
+  -configuration StagingDebug \
+  -destination 'platform=iOS Simulator,id=<SIMULATOR_UDID>' \
+  -derivedDataPath /tmp/pocketcasts-sim-deriveddata \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+  2>&1 | tee /tmp/pocketcasts-sim-build.log
+```
+
+Use `set -o pipefail` when piping through `tee`; otherwise a failed `xcodebuild` can look successful. After a successful build, install and launch the main app bundle:
+```bash
+xcrun simctl install <SIMULATOR_UDID> /tmp/pocketcasts-sim-deriveddata/Build/Products/StagingDebug-iphonesimulator/podcasts.app
+xcrun simctl launch <SIMULATOR_UDID> au.com.shiftyjelly.podcasts
 ```

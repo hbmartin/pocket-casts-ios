@@ -451,14 +451,6 @@ Prima vorremmo aiutarti</string>
     <string>Ottieni uno sconto del 50%% sul prossimo anno</string>
     <key>canceling</key>
     <string>Annullamento in corso...</string>
-    <key>carplay_chapter_count</key>
-    <string>%1$@ di %2$@. %3$@</string>
-    <key>carplay_more</key>
-    <string>Altro</string>
-    <key>carplay_playback_speed</key>
-    <string>Velocità di riproduzione</string>
-    <key>carplay_up_next_queue</key>
-    <string>Coda Successivo</string>
     <key>champion_description</key>
     <string>Grazie per essere con noi fin dall'inizio! Se ti piace utilizzare la nostra app, gradiremmo sapere il tuo feedback.</string>
     <key>champion_title</key>

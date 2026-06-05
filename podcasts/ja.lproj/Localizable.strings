@@ -451,14 +451,6 @@ Pocket Casts Plus</string>
     <string>次年度が50%% オフ</string>
     <key>canceling</key>
     <string>キャンセルしています...</string>
-    <key>carplay_chapter_count</key>
-    <string>%1$@ / %2$@チャプター(現在のチャプター: %3$@)</string>
-    <key>carplay_more</key>
-    <string>他のオプション</string>
-    <key>carplay_playback_speed</key>
-    <string>再生速度</string>
-    <key>carplay_up_next_queue</key>
-    <string>次のエピソード待機リスト</string>
     <key>champion_description</key>
     <string>最初からご利用いただきありがとうございます ! アプリを気に入っていただけましたら、ぜひフィードバックをお寄せください。</string>
     <key>champion_title</key>
