@@ -3,9 +3,6 @@ import UIKit
 #endif
 import Foundation
 import PocketCastsDataModel
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-import EndOfYear
-#endif
 
 extension EpisodeFilter {
     func iconImage() -> UIImage? {
@@ -31,34 +28,6 @@ extension EpisodeFilter {
 
         return EpisodeFilter.imageName(forPlaylistIcon: icon)
     }
-
-    #if !os(watchOS) && !APPCLIP && !os(tvOS)
-    @MainActor func grid() -> UIImage {
-        let episodes = DataManager.sharedManager.playlistEpisodes(for: self)
-
-        let items = PlaylistCellViewModel.gridArtworkItems(from: episodes, limit: 4) { $0.podcastUuid }
-
-        return PlaylistArtworkView(items: items)
-            .frame(width: 56.0, height: 56.0)
-            .environmentObject(Theme(previewTheme: carPlayPreviewTheme()))
-            .snapshot()
-    }
-
-    private func carPlayPreviewTheme() -> Theme.ThemeType {
-        guard let interfaceStyle = CarPlayImageHelper.carTraitCollection?.userInterfaceStyle else {
-            return Theme.sharedTheme.activeTheme
-        }
-
-        switch interfaceStyle {
-        case .dark:
-            return .dark
-        case .light:
-            return .light
-        default:
-            return Theme.sharedTheme.activeTheme
-        }
-    }
-    #endif
 
     class func imageForPlaylistIcon(icon: PlaylistIcon) -> UIImage? {
         guard let name = imageName(forPlaylistIcon: icon) else { return nil }

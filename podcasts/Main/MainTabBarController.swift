@@ -795,7 +795,6 @@ private extension MainTabBarController {
             .receive(on: RunLoop.main)
             .filter { _ in
                 UIApplication.shared.applicationState == .active
-                && !CarPlayHelper.isConnectedToCarPlay
                 && NavigationManager.sharedManager.miniPlayer?.playerOpenState == .closed
             }
             .compactMap { event in
