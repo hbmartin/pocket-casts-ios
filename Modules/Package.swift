@@ -142,7 +142,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PocketCastsServerTests",
-            dependencies: ["PocketCastsServer"],
+            dependencies: [
+                "PocketCastsDataModel",
+                "PocketCastsServer",
+            ],
             path: "Tests/PocketCastsServerTests",
             resources: [.copy("Fixtures")]
         ),

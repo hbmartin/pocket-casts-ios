@@ -27,7 +27,7 @@ public enum ServerConstants {
         }
 
         public static func files() -> String {
-            production() ? "https://files.pocketcasts.com/files/" : "https://files.pocketcasts.com/files/"
+            production() ? "https://files.pocketcasts.com/files/" : "https://files.pocketcasts.net/files/"
         }
 
         public static func share() -> String {
@@ -115,7 +115,7 @@ public enum ServerConstants {
         static let apiScope = "mobile"
         static let deviceTypeiOS: Int32 = 1
         static let syncingEmailKey = "SJSyncingEmail"
-        static let syncingPasswordKey = "SJSyncingPwd"
+        static let syncingPasswordKey = "SJSyncingPwd" // NOSONAR - Keychain item name, not a credential.
         static let syncingV2TokenKey = "SJSyncV2Token"
         static let refreshTokenKey = "SJRefreshToken"
         static let appleAuthUserIDKey = "SJAppleAuthUserID"

@@ -7,8 +7,10 @@ extension UIApplication {
         URLHelper.open(
             url,
             context: .externalContent,
-            from: SceneHelper.rootViewController(),
-            allowsExternalFallback: true
+            options: .init(
+                presenter: SceneHelper.rootViewController(),
+                allowsExternalFallback: true
+            )
         )
     }
 }

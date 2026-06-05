@@ -1453,9 +1453,11 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         URLHelper.open(
             url,
             context: .externalContent,
-            prefersExternalBrowser: Settings.openLinks,
-            allowsExternalFallback: Settings.openLinks,
-            delegate: self
+            options: .init(
+                prefersExternalBrowser: Settings.openLinks,
+                allowsExternalFallback: Settings.openLinks,
+                delegate: self
+            )
         )
     }
 

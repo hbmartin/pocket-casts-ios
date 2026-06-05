@@ -19,7 +19,7 @@ struct UnderlineLinkTextView: View {
             guard URLHelper.open(
                 url,
                 context: .externalContent,
-                modalPresentationStyle: .formSheet
+                options: .init(modalPresentationStyle: .formSheet)
             ) != nil else {
                 return URLHelper.inAppBrowserDecision(for: url, context: .externalContent) == .blocked ? .discarded : .handled
             }

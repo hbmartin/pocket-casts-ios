@@ -232,7 +232,7 @@ extension NowPlayingPlayerItemViewController {
         }
         AnalyticsPlaybackHelper.shared.playbackErrorTapped(playerSource: .fullPlayer)
         #if !APPCLIP
-        URLHelper.open(url, context: .trustedDocumentation, from: self, modalPresentationStyle: .formSheet)
+        URLHelper.open(url, context: .trustedDocumentation, options: .init(presenter: self, modalPresentationStyle: .formSheet))
         #endif
     }
 

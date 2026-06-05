@@ -4,7 +4,7 @@ import PocketCastsUtils
 import SafariServices
 import WebKit
 
-extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControllerDelegate {
+extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControllerDelegate { // NOSONAR - Link taps are cancelled and routed through URLHelper.
     func setupWebView() {
         showNotesWebView = WKWebView()
 
@@ -101,16 +101,19 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
-            if let url = navigationAction.request.url,
-               let safariViewController = URLHelper.open(
-                   url,
-                   context: .externalContent,
-                   from: self,
-                   prefersExternalBrowser: Settings.openLinks,
-                   allowsExternalFallback: Settings.openLinks,
-                   delegate: self
-               ) {
-                self.safariViewController = safariViewController
+            if let url = navigationAction.request.url {
+                if let safariViewController = URLHelper.open(
+                    url,
+                    context: .externalContent,
+                    options: .init(
+                        presenter: self,
+                        prefersExternalBrowser: Settings.openLinks,
+                        allowsExternalFallback: Settings.openLinks,
+                        delegate: self
+                    )
+                ) {
+                    self.safariViewController = safariViewController
+                }
                 Analytics.track(.episodeDetailShowNotesLinkTapped, properties: ["episode_uuid": episode.uuid, "source": viewSource])
             }
 

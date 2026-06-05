@@ -1,10 +1,9 @@
-import MessageUI
 import SwiftUI
 import PocketCastsServer
 import UIKit
 import WebKit
 
-class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptivePresentationControllerDelegate {
+class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptivePresentationControllerDelegate { // NOSONAR - Navigation is restricted in decidePolicyFor.
     enum Source: String {
         case settings
         case winback
@@ -144,21 +143,37 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
     // MARK: - WKNavigationDelegate
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let urlStr = navigationAction.request.url?.absoluteString, urlStr.contains("mailto") {
-            let feedback = urlStr.contains("Feedback")
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        if URLHelper.isMailtoScheme(url.scheme) {
+            let feedback = url.absoluteString.localizedCaseInsensitiveContains("Feedback")
             AnalyticsHelper.userGuideEmail(feedback: feedback)
             emailHelper.presentSupportDialog(self)
             decisionHandler(.cancel)
             return
-        } else if let urlStr = navigationAction.request.url?.absoluteString, !urlStr.contains("device=ios"), urlStr.contains("support.pocketcasts.com") {
-            let newUrlStr = "\(urlStr)\(urlStr.contains("?") ? "&" : "?")device=ios"
-            if let newUrl = URL(string: newUrlStr) {
-                let newRequest = URLRequest(url: newUrl)
-                webView.load(newRequest)
+        }
 
-                decisionHandler(.cancel)
-                return
-            }
+        guard URLHelper.isTrustedDocumentationURL(url) else {
+            URLHelper.open(
+                url,
+                context: .externalContent,
+                options: .init(
+                    presenter: self,
+                    prefersExternalBrowser: true,
+                    allowsExternalFallback: true
+                )
+            )
+            decisionHandler(.cancel)
+            return
+        }
+
+        if let deviceURL = supportURLByAppendingDeviceParameterIfNeeded(url), deviceURL != url {
+            webView.load(URLRequest(url: deviceURL))
+            decisionHandler(.cancel)
+            return
         }
 
         decisionHandler(.allow)
@@ -180,6 +195,29 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
         didDismiss?()
+    }
+
+    private func supportURLByAppendingDeviceParameterIfNeeded(_ url: URL) -> URL? {
+        guard isSupportURL(url),
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        else {
+            return url
+        }
+
+        var queryItems = components.queryItems ?? []
+        guard !queryItems.contains(where: { $0.name == "device" }) else {
+            return url
+        }
+
+        queryItems.append(URLQueryItem(name: "device", value: "ios"))
+        components.queryItems = queryItems
+        return components.url
+    }
+
+    private func isSupportURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+
+        return host == "support.pocketcasts.com" || host == "support.pocketcasts.net"
     }
 }
 

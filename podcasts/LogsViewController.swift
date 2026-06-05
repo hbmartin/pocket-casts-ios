@@ -9,7 +9,6 @@ class LogsViewController: ThemedHostingController<LogsView> {
         let model = LogsViewModel()
         let screen = LogsView(model: model)
         super.init(rootView: screen)
-        model.presenter = self
     }
 
     @MainActor dynamic required init?(coder aDecoder: NSCoder) {

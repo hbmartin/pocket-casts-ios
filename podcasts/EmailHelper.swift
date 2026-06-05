@@ -7,7 +7,7 @@ class EmailHelper: NSObject {
     func presentSupportDialog(_ source: UIViewController) {
         DispatchQueue.main.async {
             guard let url = URL(string: ServerConstants.Urls.support) else { return }
-            URLHelper.open(url, context: .trustedDocumentation, from: source)
+            URLHelper.open(url, context: .trustedDocumentation, options: .init(presenter: source))
         }
     }
 }
