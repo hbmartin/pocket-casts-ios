@@ -1,10 +1,63 @@
-#!/bin/bash -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
-if "$(dirname "${BASH_SOURCE[0]}")/should-skip-job.sh" --job-type build; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+if "$SCRIPT_DIR/should-skip-job.sh" --job-type build; then
   exit 0
 fi
 
-"$(dirname "${BASH_SOURCE[0]}")/shared_setup.sh"
+cd "$REPO_ROOT"
+mkdir -p build/buildkite/logs build/buildkite/results
+rm -rf build/buildkite/results/PocketCastsTests.xcresult
 
-echo "--- Build & Test"
-bundle exec fastlane test
+"$SCRIPT_DIR/shared_setup.sh" --skip-gems
+
+echo "--- :closed_lock_with_key: Generating open-source credentials"
+make external_contributor
+
+echo "--- :iphone: Selecting an iOS Simulator"
+DESTINATION="$(
+  /usr/bin/ruby <<'RUBY'
+require 'json'
+
+devices_by_runtime = JSON.parse(`xcrun simctl list devices available --json`).fetch('devices')
+candidates = []
+
+devices_by_runtime.each do |runtime, devices|
+  next unless runtime.include?('iOS')
+
+  version = runtime.scan(/\d+/).map(&:to_i)
+  devices.each do |device|
+    next unless device['isAvailable']
+    next unless device['name'].start_with?('iPhone')
+
+    preference = device['name'].include?(' Pro') ? 1 : 0
+    candidates << [version, preference, device['name'], device['udid']]
+  end
+end
+
+abort('No available iPhone simulator found') if candidates.empty?
+
+selected = candidates.max_by { |version, preference, name, _udid| [version, preference, name] }
+puts "platform=iOS Simulator,id=#{selected[3]}"
+RUBY
+)"
+echo "Using destination: $DESTINATION"
+
+echo "--- :xcode: Xcode"
+xcodebuild -version
+
+echo "--- :test_tube: Build and test staging"
+set -o pipefail
+xcodebuild test \
+  -project podcasts.xcodeproj \
+  -scheme "Pocket Casts Staging" \
+  -configuration StagingDebug \
+  -only-testing:PocketCastsTests \
+  -destination "$DESTINATION" \
+  -derivedDataPath build/buildkite/DerivedData \
+  -resultBundlePath build/buildkite/results/PocketCastsTests.xcresult \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+  2>&1 | tee build/buildkite/logs/test-staging.log

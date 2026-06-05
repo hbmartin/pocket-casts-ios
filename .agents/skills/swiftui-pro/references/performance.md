@@ -2,7 +2,7 @@
 
 - When toggling modifier values, prefer ternary expressions over if/else view branching to avoid `_ConditionalContent`, preserve structural identity, and avoid repeatedly recreating underlying platform views.
 - Avoid `AnyView` unless absolutely required. Use `@ViewBuilder`, `Group`, or generics instead.
-- If a `ScrollView` has an opaque, static, and solid background, prefer to use `scrollContentBackground(.visible)` to improve scroll-edge rendering efficiency.
+- If a `ScrollView` has a custom opaque, static, and solid background, prefer `scrollContentBackground(.hidden)` so the system skips drawing the default scroll background underneath it.
 - It is more efficient to break views up by making dedicated SwiftUI views rather than place them into computed properties or methods. Using `@ViewBuilder` on a property or method does not solve this; breaking views up is strongly preferred.
 - Always ensure view initializers are kept as small and simple as possible, avoiding any non-trivial work. Flag any work that can be moved into a `task()` modifier to be run when the view is shown.
 - Similarly, assume each view’s `body` property is called frequently – if logic such as sorting or filtering can be moved out of there easily, it should be.

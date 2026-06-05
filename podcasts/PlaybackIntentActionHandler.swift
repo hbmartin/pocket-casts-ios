@@ -119,14 +119,20 @@ struct PlaybackIntentActionHandler {
         facade.refreshWidgets()
     }
 
-    func setSleepTimer(minutes: Int) {
+    @discardableResult
+    func setSleepTimer(minutes: Int) -> Bool {
+        guard minutes > 0 else { return false }
         facade.setSleepTimer(seconds: TimeInterval(minutes) * 60)
         facade.refreshWidgets()
+        return true
     }
 
-    func extendSleepTimer(minutes: Int) {
+    @discardableResult
+    func extendSleepTimer(minutes: Int) -> Bool {
+        guard minutes > 0 else { return false }
         facade.extendSleepTimer(bySeconds: TimeInterval(minutes) * 60)
         facade.refreshWidgets()
+        return true
     }
 }
 
@@ -209,6 +215,7 @@ struct LivePlaybackFacade: PlaybackFacade {
 
     func extendSleepTimer(bySeconds seconds: TimeInterval) {
         PlaybackManager.shared.sleepTimeRemaining += seconds
+        NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
     }
 
     func refreshWidgets() {

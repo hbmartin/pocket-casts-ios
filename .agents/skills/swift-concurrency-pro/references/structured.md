@@ -32,7 +32,7 @@ let results = try await withThrowingTaskGroup { group in
 
 ## `withDiscardingTaskGroup` (Swift 5.9+)
 
-When child tasks don't return meaningful results (fire-and-forget), use `withDiscardingTaskGroup` instead of `withTaskGroup`. It avoids accumulating unused results in memory.
+When child tasks don't return meaningful results, use `withDiscardingTaskGroup` instead of `withTaskGroup` for side-effect-only child tasks. It avoids accumulating unused results in memory while still remaining structured: child tasks are awaited before the parent returns, so this is not detached fire-and-forget work.
 
 ```swift
 // Preferred for side-effect-only child tasks

@@ -28,12 +28,14 @@ struct PodcastAppEntity: AppEntity {
 }
 
 struct PodcastEntityQuery: EntityQuery {
+    @MainActor
     func entities(for identifiers: [String]) async throws -> [PodcastAppEntity] {
         identifiers.compactMap { uuid in
             DataManager.sharedManager.findPodcast(uuid: uuid).map(PodcastAppEntity.init(podcast:))
         }
     }
 
+    @MainActor
     func suggestedEntities() async throws -> [PodcastAppEntity] {
         DataManager.sharedManager.allPodcastsOrderedByTitle().map(PodcastAppEntity.init(podcast:))
     }
@@ -54,7 +56,7 @@ struct PlayPodcastIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.playPodcast(uuid: podcast.id)
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.playPodcast(uuid: podcast.id))
         return .result()
     }
 }

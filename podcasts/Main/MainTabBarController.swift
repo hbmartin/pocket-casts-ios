@@ -94,7 +94,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        fixTarBarTraitCollectionOnIpadForiOS18()
+        fixTabBarTraitCollectionOnIpad()
 
         pcTabs = [.podcasts, .filter, .upNext, .profile]
 
@@ -243,7 +243,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         Settings.shouldShowInitialOnboardingFlow = false
     }
 
-    private func fixTarBarTraitCollectionOnIpadForiOS18() {
+    private func fixTabBarTraitCollectionOnIpad() {
         if UIDevice.current.userInterfaceIdiom == .pad {
             traitOverrides.horizontalSizeClass = .compact
             if let rootHorizontalSizeClass = view.window?.traitCollection.horizontalSizeClass {
@@ -262,7 +262,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         if let scene = view.window?.windowScene {
             Theme.systemIsDark = (scene.traitCollection.userInterfaceStyle == .dark)
         }
-        fixTarBarTraitCollectionOnIpadForiOS18()
+        fixTabBarTraitCollectionOnIpad()
         fireSystemThemeMayHaveChanged()
     }
 

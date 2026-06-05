@@ -14,8 +14,7 @@ STEP=testflight_build
 buildkite-agent artifact download "$ARTIFACTS_DIR/*.ipa" . --step $STEP
 buildkite-agent artifact download "$ARTIFACTS_DIR/*.zip" . --step $STEP
 
-echo "--- :rubygems: Setting up Gems"
-install_gems
+"$(dirname "${BASH_SOURCE[0]}")/shared_setup.sh" --skip-swiftpm
 
 echo "--- :closed_lock_with_key: Installing Secrets"
 bundle exec fastlane run configure_apply

@@ -27,15 +27,15 @@ extension DiscoverCollectionViewController: DiscoverDelegate {
 
     func invalidate(item: PocketCastsServer.DiscoverItem) {
         let context = UICollectionViewLayoutInvalidationContext()
-        let item = dataSource.snapshot().itemIdentifiers.first(where: {
-            if case .item(let item) = $0 {
-                item == item
-            } else {
-                false
+        let snapshotItem = dataSource.snapshot().itemIdentifiers.first(where: { snapshotItem in
+            guard case .item(let discoverItem) = snapshotItem else {
+                return false
             }
+
+            return discoverItem == item
         })
-        guard let item,
-              let indexPath = dataSource?.indexPath(for: item) else {
+        guard let snapshotItem,
+              let indexPath = dataSource?.indexPath(for: snapshotItem) else {
             return
         }
         context.invalidateItems(at: [indexPath])

@@ -73,14 +73,6 @@ import Security
 /// iOS 8.0+ (SecAccessControlCreateWithFlags), iOS 11.3+ (.biometryCurrentSet)
 func storeCredential(account: String, secret: Data, service: String) throws {
     // ✅ CORRECT — secrets are persisted in Keychain with explicit access control
-    // Delete existing item first to avoid errSecDuplicateItem
-    let deleteQuery: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrAccount as String: account,
-        kSecAttrService as String: service
-    ]
-    SecItemDelete(deleteQuery as CFDictionary)
-
     var error: Unmanaged<CFError>?
     guard let accessControl = SecAccessControlCreateWithFlags(
         kCFAllocatorDefault,
@@ -94,12 +86,25 @@ func storeCredential(account: String, secret: Data, service: String) throws {
     let query: [String: Any] = [
         kSecClass as String: kSecClassGenericPassword,
         kSecAttrAccount as String: account,
-        kSecAttrService as String: service,
+        kSecAttrService as String: service
+    ]
+
+    let attributesToUpdate: [String: Any] = [
         kSecAttrAccessControl as String: accessControl,
         kSecValueData as String: secret
     ]
 
-    let status = SecItemAdd(query as CFDictionary, nil)
+    var status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
+    if status == errSecItemNotFound {
+        var addQuery = query
+        addQuery.merge(attributesToUpdate) { _, new in new }
+
+        status = SecItemAdd(addQuery as CFDictionary, nil)
+        if status == errSecDuplicateItem {
+            status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
+        }
+    }
+
     guard status == errSecSuccess else {
         throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
     }

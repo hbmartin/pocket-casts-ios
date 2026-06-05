@@ -6,10 +6,10 @@
 - Prefer static member lookup to struct instances where possible, such as `.circle` rather than `Circle()`, and `.borderedProminent` rather than `BorderedProminentButtonStyle()`.
 - Avoid force unwraps (`!`) and force `try` unless the failure is truly unrecoverable, and even then prefer using `fatalError()` with a clear description. If possible, use `if let`, `guard let`, nil-coalescing, or `try?`/`do-catch`.
 - Filtering text based on user-input must be done using `localizedStandardContains()` as opposed to `contains()` or `localizedCaseInsensitiveContains()`.
-- Strongly prefer `Double` over `CGFloat`, except when using optionals or `inout`; Swift is able to bridge the two freely except in those two cases.
+- Prefer `Double` for internal model values and general math, but prefer `CGFloat` at CoreGraphics, CoreFoundation, SwiftUI, and UIKit/AppKit API boundaries that are typed as `CGFloat`. Convert at the handoff instead of forcing one type everywhere.
 - If you want to count array objects that match a predicate, always use `count(where:)` rather than `filter()` followed by `count`.
 - Prefer `Date.now` over `Date()` for clarity.
-- When `import SwiftUI` is already in a file, you do not need to add `import UIKit` or `import AppKit` to access things like `UIImage` or `NSImage` – they are imported automatically on the appropriate platform.
+- `import SwiftUI` does not guarantee access to UIKit/AppKit-specific types in every build context. Add `import UIKit` for `UIImage` and other UIKit symbols, or `import AppKit` for `NSImage` and other AppKit symbols, when those platform types are referenced directly.
 - When dealing with the names of people, strongly prefer to use `PersonNameComponents` with modern formatting over simple string interpolation such as `Text("\(firstName) \(lastName)")`.
 - If a given type of data is repeatedly sorted using an identical closure, e.g. `books.sorted { $0.author < $1.author }`, prefer to make the type in question conform to `Comparable` so the sort order is centralized.
 - Prefer to avoid manual date formatting strings if possible. If manual date formatting *is* used for user display, at least make sure to use “y” rather than “yyyy” for years, so the year value is correct in all localizations. If the purpose is data exchange with an API, this rule does not apply.

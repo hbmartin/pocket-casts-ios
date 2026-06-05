@@ -456,12 +456,13 @@ static void applyCompression(VBNState* restrict state, float* restrict samples, 
         return;
     }
 
-    // Pre-compute absolute values using vDSP (vectorized)
-    float* absBuffer = state->peakBuffer;  // Reuse limiter buffer
-    if (state->maxLimiterBufferSize < frameCount) {
-        // Will be allocated by limiter, use stack for small frames
-        float stackBuffer[2048];
-        absBuffer = (frameCount <= 2048) ? stackBuffer : state->peakBuffer;
+    // Pre-compute absolute values using vDSP when a safe buffer is available.
+    float stackBuffer[2048];
+    float* absBuffer = NULL;
+    if (state->peakBuffer && state->maxLimiterBufferSize >= frameCount) {
+        absBuffer = state->peakBuffer;
+    } else if (frameCount <= 2048) {
+        absBuffer = stackBuffer;
     }
     if (absBuffer) {
         vDSP_vabs(samples, 1, absBuffer, 1, frameCount);

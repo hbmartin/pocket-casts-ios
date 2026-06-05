@@ -24,6 +24,144 @@ rules:
               ...
       - pattern-regex: '^\s*-\s*/[^#\n]+'
 
+  - id: pocketcasts.app-intent-ignored-playback-result
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: App Intent perform() should not ignore PlaybackIntentActionHandler boolean results; throw on false so Shortcuts do not report success when playback did not start.
+    languages: [swift]
+    paths:
+      include:
+        - "podcasts/*AppIntent*.swift"
+        - "podcasts/*AppEntity*.swift"
+    patterns:
+      - pattern-inside: |
+          func perform() async throws -> some IntentResult {
+            ...
+          }
+      - pattern: PlaybackIntentActionHandler.shared.$ACTION(...)
+      - metavariable-regex:
+          metavariable: $ACTION
+          regex: ^(resume|playUpNext|playSuggested|playPodcast|playFilter|playAllFilter|setSleepTimer|extendSleepTimer)$
+      - pattern-not-inside: |
+          try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.$ACTION(...))
+
+  - id: pocketcasts.data-manager-entity-query-mainactor
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: EntityQuery implementations that read DataManager.sharedManager should be @MainActor isolated.
+    languages: [swift]
+    paths:
+      include:
+        - "podcasts/*AppEntity.swift"
+    patterns:
+      - pattern-inside: |
+          struct $QUERY: EntityQuery {
+            ...
+          }
+      - pattern-either:
+          - pattern: DataManager.sharedManager.findPodcast(...)
+          - pattern: DataManager.sharedManager.allPodcastsOrderedByTitle(...)
+          - pattern: DataManager.sharedManager.findPlaylist(...)
+          - pattern: DataManager.sharedManager.allPlaylists(...)
+      - pattern-not-inside: |
+          @MainActor
+          struct $QUERY: EntityQuery {
+            ...
+          }
+      - pattern-not-inside: |
+          @MainActor
+          func $FUNC(...) async throws -> $RET {
+            ...
+          }
+
+  - id: pocketcasts.sleep-timer-minutes-positive
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Sleep timer minute inputs must be validated as positive before converting to seconds.
+    languages: [swift]
+    paths:
+      include:
+        - "podcasts/PlaybackIntentActionHandler.swift"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              func setSleepTimer(minutes: Int) -> Bool {
+                ...
+                TimeInterval(minutes) * 60
+                ...
+              }
+          - pattern: |
+              func extendSleepTimer(minutes: Int) -> Bool {
+                ...
+                TimeInterval(minutes) * 60
+                ...
+              }
+      - pattern-not: |
+          func $FUNC(minutes: Int) -> Bool {
+            ...
+            guard minutes > 0 else { return false }
+            ...
+          }
+
+  - id: pocketcasts.sleep-timer-extend-posts-notification
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Extending the sleep timer should post sleepTimerChanged after mutating sleepTimeRemaining.
+    languages: [swift]
+    paths:
+      include:
+        - "podcasts/PlaybackIntentActionHandler.swift"
+    patterns:
+      - pattern-inside: |
+          func extendSleepTimer(bySeconds seconds: TimeInterval) {
+            ...
+          }
+      - pattern: PlaybackManager.shared.sleepTimeRemaining += seconds
+      - pattern-not-inside: |
+          func extendSleepTimer(bySeconds seconds: TimeInterval) {
+            ...
+            NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+            ...
+          }
+
+  - id: pocketcasts.widget-control-hardcoded-metadata
+    severity: WARNING
+    metadata:
+      category: localization
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Widget Control displayName/description should use Localizable.strings-backed LocalizedStringResource values instead of hardcoded English strings.
+    languages: [generic]
+    paths:
+      include:
+        - "WidgetExtension/Controls/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: .displayName("...")
+          - pattern: .description("...")
+
   - id: keychain.delete-before-add
     severity: WARNING
     metadata:
@@ -2206,10 +2344,19 @@ rules:
       - pattern-either:
           - patterns:
               - pattern-inside: |
-                  $SECRET = "=~/.*/"
+                  $SECRET = "=~/(?=.{16,})(?=.*[0-9])(?=.*[-_.:=+/])[A-Za-z0-9_.:=+/-]+/"
               - metavariable-regex:
                   metavariable: $SECRET
-                  regex: (?i)(.*?)(?=(secret|user|account|password|pwd|psw|credit|card|key|encrypt|decrypt|pin|private|token|cookie|credential|code|client|bearer|\biv\b))(.*?)
+                  regex: (?i)(.*?)(?=(secret|password|pwd|psw|token|cookie|credential|bearer|private|api_?key|access_?key|secret_?key|client_?secret|encrypt|decrypt|pin|\biv\b))(.*?)
+          - patterns:
+              - pattern-inside: |
+                  $SECRET = "=~/(?i)(sk_(live|test)_|pk_(live|test)_|ghp_|gho_|ghu_|ghs_|github_pat_|xox[baprs]-|AKIA|ASIA|AIza|ya29[.]|SG[.])[A-Za-z0-9_.:=+/-]{8,}/"
+          - patterns:
+              - pattern-inside: |
+                  $SECRET = "=~/[0-9][0-9 -]{12,18}[0-9]/"
+              - metavariable-regex:
+                  metavariable: $SECRET
+                  regex: (?i)(.*?)(?=(credit|card))(.*?)
 
   # Source: storage/insecure_storage.yaml
   - id: insecure_storage

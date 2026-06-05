@@ -1,4 +1,5 @@
 import AppIntents
+import Foundation
 
 // MARK: - Playback control App Intents
 //
@@ -6,13 +7,27 @@ import AppIntents
 // modern App Intents framework. They run in the app process and route through
 // the shared `PlaybackIntentActionHandler`.
 
+enum PlaybackIntentError: LocalizedError {
+    case actionFailed
+
+    var errorDescription: String? {
+        L10n.playbackFailed
+    }
+}
+
+func requireSuccessfulPlaybackAction(_ actionSucceeded: Bool) throws {
+    guard actionSucceeded else {
+        throw PlaybackIntentError.actionFailed
+    }
+}
+
 struct ResumePlaybackIntent: AudioPlaybackIntent {
     static var title: LocalizedStringResource = "Resume"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.resume()
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.resume())
         return .result()
     }
 }
@@ -34,7 +49,7 @@ struct PlayUpNextIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.playUpNext()
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.playUpNext())
         return .result()
     }
 }
@@ -45,7 +60,7 @@ struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.playSuggested()
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.playSuggested())
         return .result()
     }
 }
@@ -81,7 +96,7 @@ struct SetSleepTimerIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.setSleepTimer(minutes: minutes)
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.setSleepTimer(minutes: minutes))
         return .result()
     }
 }
@@ -95,7 +110,7 @@ struct ExtendSleepTimerIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.extendSleepTimer(minutes: minutes)
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.extendSleepTimer(minutes: minutes))
         return .result()
     }
 }

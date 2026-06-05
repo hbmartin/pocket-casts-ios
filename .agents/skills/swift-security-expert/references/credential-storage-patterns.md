@@ -351,20 +351,20 @@ extension KeychainManager {
     func atomicTokenUpdate(oldAccount: String = "oauth_tokens", newTokens: OAuthTokens) throws {
         let newData = try JSONEncoder().encode(newTokens) // Encode BEFORE mutation
 
-        var delQ: [CFString: Any] = [kSecClass: kSecClassGenericPassword,
-                                      kSecAttrService: self.service as CFString,
-                                      kSecAttrAccount: oldAccount as CFString]
-        #if os(macOS)
-        delQ[kSecUseDataProtectionKeychain] = true
-        #endif
-        let delStatus = SecItemDelete(delQ as CFDictionary)
-        guard delStatus == errSecSuccess || delStatus == errSecItemNotFound else {
-            throw KeychainError.unexpectedStatus(delStatus)
-        }
+        let updateAttrs: [CFString: Any] = [kSecValueData: newData]
 
         var addQ = baseQuery(account: oldAccount); addQ[kSecValueData] = newData
-        let addStatus = SecItemAdd(addQ as CFDictionary, nil)
-        guard addStatus == errSecSuccess else { throw KeychainError.unexpectedStatus(addStatus) }
+        var searchQ = baseQuery(account: oldAccount); searchQ.removeValue(forKey: kSecValueData)
+
+        var status = SecItemUpdate(searchQ as CFDictionary, updateAttrs as CFDictionary)
+        if status == errSecItemNotFound {
+            status = SecItemAdd(addQ as CFDictionary, nil)
+            if status == errSecDuplicateItem {
+                status = SecItemUpdate(searchQ as CFDictionary, updateAttrs as CFDictionary)
+            }
+        }
+
+        guard status == errSecSuccess else { throw KeychainError.unexpectedStatus(status) }
     }
 }
 ```
