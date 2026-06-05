@@ -77,13 +77,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    var promoCode: String? {
-        didSet {
-            showPromotionViewController(promoCode: promoCode)
-        }
-    }
-
-    var promoRedeemedMessage: String?
     private let settingsCellId = "SettingsCell"
 
     enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
@@ -165,11 +158,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(.whatsNewDismissed, selector: #selector(whatsNewDismissed))
 
         addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
-        if promoRedeemedMessage != nil {
-            updateDisplayedData()
-            showPromotionRedeemedAcknowledgement()
-            promoRedeemedMessage = nil
-        }
 
         whatsNewDismissed()
     }
