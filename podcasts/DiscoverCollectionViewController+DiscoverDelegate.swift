@@ -26,20 +26,18 @@ extension DiscoverCollectionViewController: DiscoverDelegate {
     }
 
     func invalidate(item: PocketCastsServer.DiscoverItem) {
-        let context = UICollectionViewLayoutInvalidationContext()
         let snapshotItem = dataSource.snapshot().itemIdentifiers.first(where: { snapshotItem in
-            guard case .item(let discoverItem) = snapshotItem else {
+            guard case .item(let cellItem) = snapshotItem else {
                 return false
             }
 
-            return discoverItem == item
+            return cellItem.model.item == item
         })
         guard let snapshotItem,
               let indexPath = dataSource?.indexPath(for: snapshotItem) else {
             return
         }
-        context.invalidateItems(at: [indexPath])
-        collectionView.collectionViewLayout.invalidateLayout(with: context)
+        collectionView.reloadItems(at: [indexPath])
     }
 
     func showExpanded(item: PocketCastsServer.DiscoverItem, category: PocketCastsServer.DiscoverCategory?) {

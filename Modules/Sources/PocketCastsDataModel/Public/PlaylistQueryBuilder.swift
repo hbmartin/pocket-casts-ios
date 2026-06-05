@@ -299,7 +299,7 @@ public class PlaylistQueryBuilder {
                 FROM \(DataManager.episodeTableName) episode
                 LEFT JOIN \(DataManager.podcastTableName) podcast
                   ON episode.podcast_id = podcast.id
-                WHERE episode.archived = 0 \(values)\(addedUuid ? ")" : ")")
+                WHERE episode.archived = 0 \(values)\(addedUuid ? "))" : ")")
                 \(sortClause)
                 LIMIT \(episodeLimit)
             )

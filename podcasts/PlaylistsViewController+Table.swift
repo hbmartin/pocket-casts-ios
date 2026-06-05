@@ -302,7 +302,7 @@ extension PlaylistsViewController: UITableViewDragDelegate, UITableViewDropDeleg
                     listPlaylistItems.insert(movedItem, at: destinationIndexPath.row)
                     tableView.moveRow(at: sourceIndexPath, to: destinationIndexPath)
                 }
-                coordinator.drop(item.dragItem, toRowAt: destinationIndexPath)
+                _ = coordinator.drop(item.dragItem, toRowAt: destinationIndexPath)
             }
         }
 

@@ -54,9 +54,7 @@ class FileTypeUtil {
         else if fileExtension.contains(".aiff") { return "audio/aiff" }
         else if fileExtension.contains(".amr") { return "audio/amr" }
         else if fileExtension.contains(".mp3") { return "audio/mp3" }
-        else if fileExtension.contains(".mp4") { return "audio/mp4" }
         else if fileExtension.contains(".wav") { return "audio/wav" }
-        else if fileExtension.contains(".m4a") { return "audio/x-m4a" }
         else if fileExtension.contains(".m4b") { return "audio/x-m4b" }
         else if fileExtension.contains(".m4p") { return "audio/x-m4p" }
 

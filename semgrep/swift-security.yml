@@ -24,6 +24,42 @@ rules:
               ...
       - pattern-regex: '^\s*-\s*/[^#\n]+'
 
+  - id: semgrep.regex-word-boundary-after-quote
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [semgrep]
+    message: Regex word boundaries after closing quotes usually cannot match; move the boundary inside the quoted token or remove it.
+    languages: [generic]
+    paths:
+      include:
+        - "**/semgrep/*.yml"
+        - "**/semgrep/*.yaml"
+    patterns:
+      - pattern-regex: '^\s*-?\s*pattern-regex:\s*[''"][^#\n]*"(?!\\\\)\\b'
+
+  - id: makefile.unguarded-rm-rf-make-variable
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [make]
+    message: Guard destructive rm -rf commands that use Make variables so an empty variable cannot delete an unintended absolute path.
+    languages: [generic]
+    paths:
+      include:
+        - "Makefile"
+        - "**/Makefile"
+        - "*.mk"
+        - "**/*.mk"
+    patterns:
+      - pattern-regex: '^\s*rm\s+-rf\s+"?\$\([A-Za-z0-9_]+\)[^#\n]*'
+
   - id: pocketcasts.app-intent-ignored-playback-result
     severity: WARNING
     metadata:
@@ -181,12 +217,12 @@ rules:
           SecItemDelete(...)
           ...
           SecItemAdd(...)
-      - pattern-not-inside: |
-          func $FUNC(...) {
-            ...
-            SecItemUpdate(...)
-            ...
-          }
+      - pattern-not: |
+          SecItemDelete(...)
+          ...
+          SecItemUpdate(...)
+          ...
+          SecItemAdd(...)
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

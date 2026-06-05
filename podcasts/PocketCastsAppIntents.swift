@@ -65,24 +65,40 @@ struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
     }
 }
 
-struct NextChapterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Next Chapter"
-    static var openAppWhenRun: Bool { false }
+enum ChapterNavigationAction: String, AppEnum {
+    case previous
+    case next
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.nextChapter()
-        return .result()
-    }
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Chapter")
+    static var caseDisplayRepresentations: [ChapterNavigationAction: DisplayRepresentation] = [
+        .previous: DisplayRepresentation(title: "Previous Chapter"),
+        .next: DisplayRepresentation(title: "Next Chapter")
+    ]
 }
 
-struct PreviousChapterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Previous Chapter"
+struct ChapterNavigationIntent: AudioPlaybackIntent {
+    static var title: LocalizedStringResource = "Skip Chapter"
     static var openAppWhenRun: Bool { false }
+
+    @Parameter(title: "Direction")
+    var action: ChapterNavigationAction
+
+    init(action: ChapterNavigationAction) {
+        self.action = action
+    }
+
+    init() {
+        action = .next
+    }
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.previousChapter()
+        switch action {
+        case .previous:
+            PlaybackIntentActionHandler.shared.previousChapter()
+        case .next:
+            PlaybackIntentActionHandler.shared.nextChapter()
+        }
         return .result()
     }
 }
@@ -91,8 +107,16 @@ struct SetSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Set Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes", default: 5)
+    @Parameter(title: "Minutes")
     var minutes: Int
+
+    init(minutes: Int) {
+        self.minutes = minutes
+    }
+
+    init() {
+        self.minutes = Int(Settings.customSleepTime() / 60)
+    }
 
     @MainActor
     func perform() async throws -> some IntentResult {
@@ -146,13 +170,13 @@ struct PocketCastsAppShortcuts: AppShortcutsProvider {
             systemImageName: "sparkles"
         )
         AppShortcut(
-            intent: NextChapterIntent(),
+            intent: ChapterNavigationIntent(action: .next),
             phrases: ["Next chapter in \(.applicationName)"],
             shortTitle: "Next Chapter",
             systemImageName: "forward.end.fill"
         )
         AppShortcut(
-            intent: PreviousChapterIntent(),
+            intent: ChapterNavigationIntent(action: .previous),
             phrases: ["Previous chapter in \(.applicationName)"],
             shortTitle: "Previous Chapter",
             systemImageName: "backward.end.fill"
