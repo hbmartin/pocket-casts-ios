@@ -1,5 +1,4 @@
 import SwiftUI
-import PocketCastsServer
 import PocketCastsUtils
 import EndOfYear
 
@@ -18,54 +17,11 @@ struct SubscriptionProfileImage: View {
             }
         }
         .clipShape(Circle())
-        .overlay(expirationProgressView())
         .task {
             shareProfilePhoto = ShareProfileViewModel.loadSavedProfilePhoto()
             for await _ in NotificationCenter.default.notifications(named: ShareProfileViewModel.photoDidChangeNotification) {
                 shareProfilePhoto = ShareProfileViewModel.loadSavedProfilePhoto()
             }
-        }
-    }
-
-    @ViewBuilder
-    private func expirationProgressView() -> some View {
-        if let subscription = viewModel.subscription {
-            let content = ExpirationProgress(tier: subscription.tier, progress: subscription.expirationProgress)
-
-            if subscription.tier == .patron {
-                HolographicEffect(mode: .overlay) {
-                    content
-                }
-            } else {
-                content
-            }
-        }
-    }
-
-    private struct ExpirationProgress: View {
-        @EnvironmentObject var theme: Theme
-
-        let tier: SubscriptionTier
-        let progress: Double
-
-        private var strokeColor: Color {
-            switch tier {
-            case .plus:
-                return theme.plusPrimaryColor
-            case .patron:
-                return theme.patronPrimaryColor
-            default:
-                return .clear
-            }
-        }
-
-        var body: some View {
-            CircularProgressView(value: max(0.02, progress),
-                                 stroke: strokeColor,
-                                 strokeWidth: 4,
-                                 direction: .down)
-            // Outset the progress
-            .padding(-5)
         }
     }
 }

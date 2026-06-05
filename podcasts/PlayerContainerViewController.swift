@@ -141,7 +141,6 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         #if !APPCLIP
         if nowPlayingItem.displayTranscript {
             transcriptsItem.didDisappear()
-            generatedTranscriptsPremiumOverlay.didDisappear()
         }
         #endif
     }

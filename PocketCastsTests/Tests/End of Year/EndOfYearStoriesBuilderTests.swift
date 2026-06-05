@@ -8,6 +8,7 @@ class EndOfYearStoriesBuilderTests: XCTestCase {
     override func setUp() {
         // Do not sync for episodes
         Settings.setHasSyncedEpisodesForPlayback(true, year: 2023)
+        Settings.setHasSyncedEpisodesForPlaybackAsPlusUser(SubscriptionHelper.hasActiveSubscription(), year: 2023)
 
         // Pretend we're logged in
         ServerSettings.setSyncingEmail(email: "test@test.com")
@@ -133,7 +134,7 @@ class EndOfYearStoriesBuilderTests: XCTestCase {
         let builder = EndOfYearStoriesBuilder(dataManager: dataManager, model: model)
 
         endOfYearManager.topPodcastsToReturn = []
-        let stories = await builder.build()
+        await builder.build()
 
         XCTAssertFalse(model.stories.contains(.topOnePodcast))
         XCTAssertEqual(model.data.topPodcasts.count, 0)
@@ -230,7 +231,7 @@ class EndOfYearStoriesBuilderTests: XCTestCase {
         let dataManager = DataManagerMock(endOfYearManager: endOfYearManager)
         let model = EndOfYear2023StoriesModel()
         let builder = EndOfYearStoriesBuilder(dataManager: dataManager, model: model, sync: { _ in syncCalled = true; return true })
-        Settings.setHasSyncedEpisodesForPlayback(true, year: 2023)
+        Settings.setHasSyncedEpisodesForPlayback(false, year: 2023)
 
         endOfYearManager.isFullListeningHistoryToReturn = false
         _ = await builder.build()
@@ -245,6 +246,7 @@ class EndOfYearStoriesBuilderTests: XCTestCase {
         let model = EndOfYear2023StoriesModel()
         let builder = EndOfYearStoriesBuilder(dataManager: dataManager, model: model, sync: { _ in syncCalled = true; return true })
         Settings.setHasSyncedEpisodesForPlayback(true, year: 2023)
+        Settings.setHasSyncedEpisodesForPlaybackAsPlusUser(SubscriptionHelper.hasActiveSubscription(), year: 2023)
 
         endOfYearManager.isFullListeningHistoryToReturn = false
         _ = await builder.build()

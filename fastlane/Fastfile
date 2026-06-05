@@ -234,8 +234,6 @@ platform :ios do
       team_id: TEAM_ID_APP_STORE,
       api_key: app_store_connect_api_key,
       app_identifier: BUNDLE_IDENTIFIERS_APP_STORE,
-      # This might turn out to be useful in the future
-      # template_name: 'CarPlay audio app (CarPlay + Media Player frameworks)iOS (Dist)'
       readonly: readonly,
       **CODE_SIGNING_STORAGE_OPTIONS
     )
@@ -254,8 +252,6 @@ platform :ios do
       team_id: TEAM_ID_ENTERPRISE,
       api_key: app_store_connect_api_key(in_house: true),
       app_identifier: BUNDLE_IDENTIFIERS_ENTERPRISE,
-      # This might turn out to be useful in the future
-      # template_name: 'CarPlay audio app (CarPlay + Media Player frameworks)iOS (Dist)'
       readonly: readonly,
       **CODE_SIGNING_STORAGE_OPTIONS
     )

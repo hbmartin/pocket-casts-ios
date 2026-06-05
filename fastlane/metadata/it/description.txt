@@ -10,7 +10,7 @@ APPROFONDIAMO I DETTAGLI
 • Design: ascolta, gestisci e trova facilmente nuovi podcast.
 • Temi: che tu sia una persona che predilige temi scuri o chiari, ti abbiamo coperto le spalle. Abbiamo pensato anche agli amanti degli schermi OLED con il nostro tema Scurissimo.
 • Universale: interfaccia iPad personalizzata ma familiare, che supporta Slide Over, Split View e Picture in Picture.
-• Ovunque: CarPlay, AirPlay, Chromecast e Sonos. Ascolta i tuoi podcast in ogni luogo tu desideri.
+• Ovunque: AirPlay, Chromecast e Sonos. Ascolta i tuoi podcast in ogni luogo tu desideri.
 
 POTENTE RIPRODUZIONE
 • Successivo: crea automaticamente una coda per la riproduzione dai tuoi show preferiti. Accedi e sincronizza la coda Successivo su tutti i tuoi dispositivi.
@@ -25,7 +25,6 @@ POTENTE RIPRODUZIONE
 • Timer di sospensione: metteremo in pausa il tuo episodio in modo che tu possa riposare la mente affaticata.
 • Airplay e Chromecast: invia gli episodi direttamente alla TV o agli altoparlanti con un solo tocco.
 • Sonos: sfoglia e riproduci la tua raccolta di podcast direttamente dall'app Sonos.
-• CarPlay: quando sei in macchina, noi viaggiamo con te.
 
 STRUMENTI INTELLIGENTI
 • Sincronizza: gli abbonamenti, Successivo, la cronologia di ascolto, la riproduzione e i filtri sono tutti archiviati in modo sicuro nel cloud. Puoi riprendere da dove avevi interrotto su un altro dispositivo e persino sul web.

@@ -451,14 +451,6 @@ Låt oss hjälpa dig först</string>
     <string>50 %% rabatt på ditt nästa år.</string>
     <key>canceling</key>
     <string>Avbryter …</string>
-    <key>carplay_chapter_count</key>
-    <string>%1$@ av %2$@. %3$@</string>
-    <key>carplay_more</key>
-    <string>Mer</string>
-    <key>carplay_playback_speed</key>
-    <string>Uppspelningshastighet</string>
-    <key>carplay_up_next_queue</key>
-    <string>Nästa-kö</string>
     <key>champion_description</key>
     <string>Tack för att du varit med oss sedan starten. Om du tycker om att använda vår app vill vi gärna höra din feedback.</string>
     <key>champion_title</key>

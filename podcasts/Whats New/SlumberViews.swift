@@ -1,6 +1,5 @@
 import SwiftUI
 import SafariServices
-import PocketCastsServer
 import EndOfYear
 
 struct SlumberWhatsNewHeader: View {
@@ -51,10 +50,6 @@ struct SlumberCustomBody: View {
             .padding(.bottom)
             .fixedSize(horizontal: false, vertical: true)
             .onTapGesture {
-                guard viewModel.isEligible() else {
-                    return
-                }
-
                 UIPasteboard.general.string = Settings.slumberPromoCode
                 Toast.show(L10n.announcementSlumberCodeCopied)
             }
@@ -62,65 +57,26 @@ struct SlumberCustomBody: View {
         Button(viewModel.buttonTitle) {
             Analytics.track(.whatsnewConfirmButtonTapped)
 
-            viewModel.showRedeemOrUpgrade()
+            viewModel.showRedeem()
         }
         .buttonStyle(RoundedButtonStyle(theme: theme))
         .padding(.top, 40)
         .padding(.bottom, 15)
-        .onReceive(NotificationCenter.default.publisher(for: ServerNotifications.subscriptionStatusChanged), perform: { _ in
-            viewModel.update()
-        })
     }
 }
 
 class SlumberAnnouncementViewModel: ObservableObject {
-    private lazy var upgradeOrRedeemViewModel = SlumberUpgradeRedeemViewModel()
+    @Published var buttonTitle: String = L10n.announcementSlumberRedeem
+    @Published var message: String = SlumberAnnouncementViewModel.description
 
-    @Published var buttonTitle: String = ""
-
-    @Published var message: String = ""
-
-    init() {
-        setUpCopies()
+    private static var description: String {
+        let code = Settings.slumberPromoCode ?? ""
+        return L10n.announcementSlumberDescription("**\(code)**")
+            .replacingOccurrences(of: L10n.announcementSlumberDescriptionLearnMore,
+                                   with: "[\(L10n.announcementSlumberDescriptionLearnMore)](https://slumberstudios.com)")
     }
 
-    private func setUpCopies() {
-        buttonTitle = isEligible() ? L10n.announcementSlumberRedeem : L10n.plusSubscribeTo
-
-        message = (isEligible() ? L10n.announcementSlumberPlusDescription("**\(Settings.slumberPromoCode ?? "")**") : L10n.announcementSlumberNonPlusDescription).replacingOccurrences(of: L10n.announcementSlumberPlusDescriptionLearnMore, with: "[\(L10n.announcementSlumberPlusDescriptionLearnMore)](https://slumberstudios.com)")
-    }
-
-    func update() {
-        setUpCopies()
-    }
-
-    func showRedeemOrUpgrade() {
-        upgradeOrRedeemViewModel.showRedeemOrUpgrade()
-    }
-
-    func isEligible() -> Bool {
-        SubscriptionHelper.subscriptionFrequencyValue() == .yearly || SubscriptionHelper.hasLifetimeGift()
-    }
-}
-
-class SlumberUpgradeRedeemViewModel: ObservableObject {
-    let feature: PaidFeature = .slumber
-    let upgradeSource: PlusUpgradeViewSource = .slumber
-
-    var upgradeLabel: String {
-        return L10n.plusSubscribeTo
-    }
-
-    func showRedeemOrUpgrade() {
-        // Slumber is free for everyone now, so always open the redeem page.
-        showRedeem()
-    }
-
-    func isEligible() -> Bool {
-        SubscriptionHelper.subscriptionFrequencyValue() == .yearly || SubscriptionHelper.hasLifetimeGift()
-    }
-
-    private func showRedeem() {
+    func showRedeem() {
         guard let parentController = SceneHelper.rootViewController(), let url = URL(string: "https://slumberstudios.com/pocketcasts/") else { return }
 
         let safariController = SFSafariViewController(with: url)

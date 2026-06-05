@@ -50,10 +50,12 @@ internal enum L10n {
   internal static var accessibilityHintStar: String { return L10n.tr("Localizable", "accessibility_hint_star", fallback: "Double tap to star episode") }
   /// Accessibility hint to inform the user how to un-star (remove favorite) for an episode.
   internal static var accessibilityHintUnstar: String { return L10n.tr("Localizable", "accessibility_hint_unstar", fallback: "Double tap to remove star from episode") }
+  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked.
+  internal static var accessibilityLockedFeature: String { return L10n.tr("Localizable", "accessibility_locked_feature", fallback: "Locked feature") }
   /// A common string used throughout the app. Accessibility hint to inform that the control opens a menu for more options.
   internal static var accessibilityMoreActions: String { return L10n.tr("Localizable", "accessibility_more_actions", fallback: "More actions") }
-  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked behind Patron subscription.
-  internal static var accessibilityPatronOnly: String { return L10n.tr("Localizable", "accessibility_patron_only", fallback: "Locked, Patron Feature") }
+  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked.
+  internal static var accessibilityPatronOnly: String { return L10n.tr("Localizable", "accessibility_patron_only", fallback: "Locked feature") }
   /// A common string used throughout the app. An accessibility label to inform the user the completed percentage of a given task. '%1$@' is a placeholder for the localized spelled out number for Voice Over
   internal static func accessibilityPercentCompleteFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "accessibility_percent_complete_format", String(describing: p1), fallback: "%1$@ percent completed")
@@ -74,8 +76,8 @@ internal enum L10n {
   }
   /// An accessibility label used for the playlist image
   internal static var accessibilityPlaylistImage: String { return L10n.tr("Localizable", "accessibility_playlist_image", fallback: "Playlist image") }
-  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked behind Pocket Casts Plus subscription.
-  internal static var accessibilityPlusOnly: String { return L10n.tr("Localizable", "accessibility_plus_only", fallback: "Locked, Plus Feature") }
+  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked.
+  internal static var accessibilityPlusOnly: String { return L10n.tr("Localizable", "accessibility_plus_only", fallback: "Locked feature") }
   /// Accessibility label fir the profile settings icon in the app. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app.
   internal static var accessibilityProfileSettings: String { return L10n.tr("Localizable", "accessibility_profile_settings", fallback: "Pocket Casts Settings") }
   /// A common string used throughout the app. Accessibility hint to inform the user that this control will select the episode.
@@ -186,6 +188,12 @@ internal enum L10n {
   internal static var announcementDeselectChaptersPlus: String { return L10n.tr("Localizable", "announcement_deselect_chapters_plus", fallback: "As part of your Plus subscription, you can now preselect and skip chapters automatically in any episode that supports them.") }
   /// Message shown when the code is copied to clipboard
   internal static var announcementSlumberCodeCopied: String { return L10n.tr("Localizable", "announcement_slumber_code_copied", fallback: "Code copied to clipboard") }
+  /// Slumber Studios partnership announcement description. %1$@ is a promo code.
+  internal static func announcementSlumberDescription(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "announcement_slumber_description", String(describing: p1), fallback: "Enjoy a 1-year subscription to Slumber Studios content using code %1$@. Learn more.")
+  }
+  /// Should match the "Learn more" translation on announcement_slumber_description
+  internal static var announcementSlumberDescriptionLearnMore: String { return L10n.tr("Localizable", "announcement_slumber_description_learn_more", fallback: "Learn more") }
   /// Slumber Studios partnership announcement description for non-subscribed users
   internal static var announcementSlumberNonPlusDescription: String { return L10n.tr("Localizable", "announcement_slumber_non_plus_description", fallback: "Subscribe to Plus Yearly and enjoy a 1-year subscription to Slumber Studios content, podcasts designed for the sweetest dreams. Learn more.") }
   /// Slumber Studios partnership announcement description for subscribed users
@@ -218,16 +226,16 @@ internal enum L10n {
   internal static var appIconHalloween: String { return L10n.tr("Localizable", "app_icon_halloween", fallback: "Halloween") }
   /// The name for the Indigo App Icon
   internal static var appIconIndigo: String { return L10n.tr("Localizable", "app_icon_indigo", fallback: "Indigo") }
-  /// The name for the Patron Chrome App Icon - Do not translate Patron
-  internal static var appIconPatronChrome: String { return L10n.tr("Localizable", "app_icon_patron_chrome", fallback: "Patron Chrome") }
-  /// The name for the Patron Dark App Icon - Do not translate Patron
-  internal static var appIconPatronDark: String { return L10n.tr("Localizable", "app_icon_patron_dark", fallback: "Patron Dark") }
-  /// The name for the Patron Glow App Icon - Do not translate Patron
-  internal static var appIconPatronGlow: String { return L10n.tr("Localizable", "app_icon_patron_glow", fallback: "Patron Glow") }
-  /// The name for the Patron Round App Icon - Do not translate Patron
-  internal static var appIconPatronRound: String { return L10n.tr("Localizable", "app_icon_patron_round", fallback: "Patron Round") }
-  /// The name for the Pocket Casts Plus App Icon
-  internal static var appIconPlus: String { return L10n.tr("Localizable", "app_icon_plus", fallback: "Plus") }
+  /// The name for the chrome App Icon
+  internal static var appIconPatronChrome: String { return L10n.tr("Localizable", "app_icon_patron_chrome", fallback: "Chrome") }
+  /// The name for the violet dark App Icon
+  internal static var appIconPatronDark: String { return L10n.tr("Localizable", "app_icon_patron_dark", fallback: "Violet Dark") }
+  /// The name for the violet glow App Icon
+  internal static var appIconPatronGlow: String { return L10n.tr("Localizable", "app_icon_patron_glow", fallback: "Violet Glow") }
+  /// The name for the violet round App Icon
+  internal static var appIconPatronRound: String { return L10n.tr("Localizable", "app_icon_patron_round", fallback: "Violet Round") }
+  /// The name for the gold App Icon
+  internal static var appIconPlus: String { return L10n.tr("Localizable", "app_icon_plus", fallback: "Gold") }
   /// The name for the Pocket Cats App Icon. The name for this one is meant to be a play on the App name Pocket Casts and the icon includes a cat image.
   internal static var appIconPocketCats: String { return L10n.tr("Localizable", "app_icon_pocket_cats", fallback: "Pocket Cats") }
   /// The name for the Radioactivity App Icon
@@ -512,16 +520,6 @@ internal enum L10n {
   internal static var cancelSubscriptionYearlyPromotionTitle: String { return L10n.tr("Localizable", "cancel_subscription_yearly_promotion_title", fallback: "Get 50%% off your next year") }
   /// An activity message indicating that the process to cancel is running.
   internal static var canceling: String { return L10n.tr("Localizable", "canceling", fallback: "Canceling...") }
-  /// CarPlay subtitle information label that includes the current chapter and total chapter count and the current chapter length. '%1$@' is a placeholder for the current chapter. '%2$@' is a placeholder for the total chapters. '%3$@' is a placeholder for the length of the current chapter.
-  internal static func carplayChapterCount(_ p1: Any, _ p2: Any, _ p3: Any) -> String {
-    return L10n.tr("Localizable", "carplay_chapter_count", String(describing: p1), String(describing: p2), String(describing: p3), fallback: "%1$@ of %2$@. %3$@")
-  }
-  /// Provides a link to the menu to present more options.
-  internal static var carplayMore: String { return L10n.tr("Localizable", "carplay_more", fallback: "More") }
-  /// CarPlay option to modify the playback speed.
-  internal static var carplayPlaybackSpeed: String { return L10n.tr("Localizable", "carplay_playback_speed", fallback: "Playback Speed") }
-  /// CarPlay prompt to navigate to the up next Queue.
-  internal static var carplayUpNextQueue: String { return L10n.tr("Localizable", "carplay_up_next_queue", fallback: "Up Next Queue") }
   /// Subtitle of the Pocket Casts champion screen
   internal static var championDescription: String { return L10n.tr("Localizable", "champion_description", fallback: "Thanks for being with us since the beginning! If you enjoy using our app, we’d love to hear your feedback.") }
   /// Title of the Pocket Casts champion screen, greeting an user that has been using Pocket Casts for a long time
@@ -2793,6 +2791,8 @@ internal enum L10n {
   internal static func plusYearlyFrequencyPricingFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_yearly_frequency_pricing_format", String(describing: p1), fallback: "%1$@ per year")
   }
+  /// The app name, Pocket Casts.
+  internal static var pocketCasts: String { return L10n.tr("Localizable", "pocket_casts", fallback: "Pocket Casts") }
   /// A Voice Over label for element which represents the Pocket Casts Logo
   internal static var pocketCastsLogo: String { return L10n.tr("Localizable", "pocket_casts_logo", fallback: "Pocket Casts logo") }
   /// The heading shown for the Pocket Casts Newsletter

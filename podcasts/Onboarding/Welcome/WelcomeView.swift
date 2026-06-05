@@ -5,16 +5,11 @@ struct WelcomeView: View {
     @ObservedObject var viewModel: WelcomeViewModel
 
     private var titleText: String {
-        switch viewModel.displayType {
-        case .plus:
-            return L10n.welcomePlusTitle
-        case .newAccount:
-            return L10n.welcomeNewAccountTitle
-        }
+        L10n.welcomeNewAccountTitle
     }
 
     private var isPlus: Bool {
-        viewModel.displayType == .plus
+        false
     }
 
     var body: some View {
@@ -102,7 +97,7 @@ private enum Config {
 // MARK: - Preview
 struct WelcomeView_Previews: PreviewProvider {
     static var previews: some View {
-        WelcomeView(viewModel: WelcomeViewModel(navigationController: UINavigationController(), displayType: .plus))
+        WelcomeView(viewModel: WelcomeViewModel(navigationController: UINavigationController(), displayType: .newAccount))
             .previewWithAllThemes()
     }
 }
@@ -339,4 +334,25 @@ struct WelcomeConfettiEmitter: UIViewRepresentable {
             self.emit(with: images, config: NormalConfettiView.EmitterConfig())
         }
     }
+}
+
+private extension View {
+    @ViewBuilder
+    func gradientOverlay<Content: View>(_ content: Content?) -> some View {
+        if let content {
+            overlay(content).mask(self)
+        } else {
+            self
+        }
+    }
+}
+
+private extension Color {
+    static let plusGradient = LinearGradient(stops: [
+        Gradient.Stop(color: .plusGradientColor1, location: 0.0822),
+        Gradient.Stop(color: .plusGradientColor2, location: 0.9209)
+    ], startPoint: .topLeading, endPoint: .topTrailing)
+
+    static let plusGradientColor1 = Color(hex: "FED745")
+    static let plusGradientColor2 = Color(hex: "FEB525")
 }

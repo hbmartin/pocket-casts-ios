@@ -81,8 +81,7 @@ class EpisodeArtwork {
             return false
         }
 
-        // Resize image to avoid really big images that appear
-        // super blurred on CarPlay.
+        // Resize image to avoid really big images.
         // If the image is smaller to the given size, no downsampling is done.
         let size = imageManager.biggestPodcastImageSize
         let resizeProcessor = DownsamplingImageProcessor(size: .init(width: size, height: size))

@@ -480,7 +480,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         navigationController?.pushViewController(controller, animated: true)
         AnnouncementFlow.current = .none
     }
-
 }
 
 extension ProfileViewController: UIPopoverPresentationControllerDelegate {

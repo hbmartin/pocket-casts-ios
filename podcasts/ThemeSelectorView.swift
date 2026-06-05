@@ -35,7 +35,7 @@ struct ThemeSelectorView: View {
                         Button(action: {
                             onThemeSelected(currentTheme)
                         }) {
-                            ThemePreviewView(themeType: currentTheme, isSelected: selectedTheme == currentTheme, isLocked: currentTheme.isPlusOnly && !SubscriptionHelper.hasActiveSubscription())
+                            ThemePreviewView(themeType: currentTheme, isSelected: selectedTheme == currentTheme, isLocked: false)
                         }
                     }
                 }
@@ -75,7 +75,7 @@ struct ThemePreviewView: View {
                 .textStyle(PrimaryText())
         }
         .opacity(isLocked ? 0.5 : 1)
-        .accessibilityLabel(isLocked ? L10n.accessibilityPlusOnly : themeType.description)
+        .accessibilityLabel(isLocked ? L10n.accessibilityLockedFeature : themeType.description)
     }
 }
 

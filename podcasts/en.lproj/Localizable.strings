@@ -34,11 +34,14 @@
 /* Accessibility hint to inform the user which filter color flag is being used. '%1$@' is a placeholder for the filter color number. */
 "accessibility_playlist_color" = "Playlist color %1$@";
 
-/* A common string used throughout the app. An accessibility label to inform the user that the selected item is locked behind Pocket Casts Plus subscription. */
-"accessibility_plus_only" = "Locked, Plus Feature";
+/* A common string used throughout the app. An accessibility label to inform the user that the selected item is locked. */
+"accessibility_locked_feature" = "Locked feature";
 
-/* A common string used throughout the app. An accessibility label to inform the user that the selected item is locked behind Patron subscription. */
-"accessibility_patron_only" = "Locked, Patron Feature";
+/* A common string used throughout the app. An accessibility label to inform the user that the selected item is locked. */
+"accessibility_plus_only" = "Locked feature";
+
+/* A common string used throughout the app. An accessibility label to inform the user that the selected item is locked. */
+"accessibility_patron_only" = "Locked feature";
 
 /* Accessibility label fir the profile settings icon in the app. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app. */
 "accessibility_profile_settings" = "Pocket Casts Settings";
@@ -178,8 +181,8 @@
 /* The name for the Indigo App Icon */
 "app_icon_indigo" = "Indigo";
 
-/* The name for the Pocket Casts Plus App Icon */
-"app_icon_plus" = "Plus";
+/* The name for the gold App Icon */
+"app_icon_plus" = "Gold";
 
 /* The name for the Pocket Cats App Icon. The name for this one is meant to be a play on the App name Pocket Casts and the icon includes a cat image. */
 "app_icon_pocket_cats" = "Pocket Cats";
@@ -202,17 +205,17 @@
 /* Halloween app icon name */
 "app_icon_halloween" = "Halloween";
 
-/* The name for the Patron Chrome App Icon - Do not translate Patron */
-"app_icon_patron_chrome" = "Patron Chrome";
+/* The name for the chrome App Icon */
+"app_icon_patron_chrome" = "Chrome";
 
-/* The name for the Patron Round App Icon - Do not translate Patron */
-"app_icon_patron_round" = "Patron Round";
+/* The name for the violet round App Icon */
+"app_icon_patron_round" = "Violet Round";
 
-/* The name for the Patron Glow App Icon - Do not translate Patron */
-"app_icon_patron_glow" = "Patron Glow";
+/* The name for the violet glow App Icon */
+"app_icon_patron_glow" = "Violet Glow";
 
-/* The name for the Patron Dark App Icon - Do not translate Patron */
-"app_icon_patron_dark" = "Patron Dark";
+/* The name for the violet dark App Icon */
+"app_icon_patron_dark" = "Violet Dark";
 
 /* App version label in the about controller. `%1$@` is a placeholder for the version number and %2$@ is a placeholder for the build number */
 "app_version" = "Version %1$@ (%2$@)";
@@ -324,18 +327,6 @@
 
 /* Prompt to allow the user to cancel their Pocket Casts Plus subscription. */
 "cancel_subscription" = "Cancel Subscription";
-
-/* CarPlay subtitle information label that includes the current chapter and total chapter count and the current chapter length. '%1$@' is a placeholder for the current chapter. '%2$@' is a placeholder for the total chapters. '%3$@' is a placeholder for the length of the current chapter. */
-"carplay_chapter_count" = "%1$@ of %2$@. %3$@";
-
-/* Provides a link to the menu to present more options. */
-"carplay_more" = "More";
-
-/* CarPlay option to modify the playback speed. */
-"carplay_playback_speed" = "Playback Speed";
-
-/* CarPlay prompt to navigate to the up next Queue. */
-"carplay_up_next_queue" = "Up Next Queue";
 
 /* Prompt to allow the user to update their email address. */
 "change_email" = "Change Email Address";
@@ -1838,6 +1829,9 @@
 
 /* Label of a title explaining why to subscribe to Patron. */
 "patron_callout" = "Believe in what we’re doing and want to show your support?";
+
+/* The app name, Pocket Casts. */
+"pocket_casts" = "Pocket Casts";
 
 /* Label of a button that informs the user they can upgrade their account. . */
 "upgrade_account" = "Upgrade Account";
@@ -4573,8 +4567,14 @@
 /* Slumber Studios partnership feature announcement title */
 "announcement_slumber_title" = "Dream big";
 
+/* Slumber Studios partnership announcement description. %1$@ is a promo code. */
+"announcement_slumber_description" = "Enjoy a 1-year subscription to Slumber Studios content using code %1$@. Learn more.";
+
 /* Slumber Studios partnership announcement description for subscribed users */
 "announcement_slumber_plus_description" = "As part of your Yearly Plus subscription, enjoy a 1-year subscription to Slumber Studios content using code %1$@. Learn more.";
+
+/* Should match the "Learn more" translation on announcement_slumber_description */
+"announcement_slumber_description_learn_more" = "Learn more";
 
 /* Should match the "Learn more" translation on announcement_slumber_plus_description and announcement_slumber_non_plus_description */
 "announcement_slumber_plus_description_learn_more" = "Learn more";

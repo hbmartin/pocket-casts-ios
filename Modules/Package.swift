@@ -176,12 +176,22 @@ let package = Package(
 
 enum XcodeTargetNames {
     static let podcasts = "podcasts"
+    static let notificationExtension = "NotificationExtension"
+    static let podcastsIntents = "PodcastsIntents"
+    static let podcastsIntentsUI = "PodcastsIntentsUI"
+    static let widgetExtension = "WidgetExtension"
+    static let pocketCastsAppClip = "Pocket Casts App Clip"
 }
 
 enum XcodeSupport {
     static var products: [Product] {
         [
             XcodeTargetNames.podcasts,
+            XcodeTargetNames.notificationExtension,
+            XcodeTargetNames.podcastsIntents,
+            XcodeTargetNames.podcastsIntentsUI,
+            XcodeTargetNames.widgetExtension,
+            XcodeTargetNames.pocketCastsAppClip,
         ].map { .supportingProduct(forXcodeTarget: $0) }
     }
 
@@ -215,6 +225,39 @@ enum XcodeSupport {
                     "EndOfYear",
                 ]
             ),
+            .xcodeTarget(
+                XcodeTargetNames.notificationExtension,
+                dependencies: [
+                    "PocketCastsServer",
+                ]
+            ),
+            .xcodeTarget(
+                XcodeTargetNames.podcastsIntents,
+                dependencies: [
+                    .product(name: "Fuse", package: "fuse-swift"),
+                ]
+            ),
+            .xcodeTarget(XcodeTargetNames.podcastsIntentsUI, dependencies: []),
+            .xcodeTarget(
+                XcodeTargetNames.widgetExtension,
+                dependencies: [
+                    "PocketCastsUtils",
+                ]
+            ),
+            .xcodeTarget(
+                XcodeTargetNames.pocketCastsAppClip,
+                dependencies: [
+                    "PocketCastsDataModel",
+                    "PocketCastsServer",
+                    "PocketCastsUtils",
+                    .product(name: "AutomatticTracks", package: "Automattic-Tracks-iOS"),
+                    .product(name: "FirebaseAnalyticsWithoutAdIdSupport", package: "firebase-ios-sdk"),
+                    .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
+                    .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
+                    .product(name: "Kingfisher", package: "Kingfisher"),
+                    .product(name: "Lottie", package: "lottie-ios"),
+                ]
+            ),
         ]
     }
 }
@@ -223,7 +266,7 @@ extension Product {
     static func supportingProduct(forXcodeTarget targetName: String) -> Product {
         .library(
             name: "XcodeTarget_\(targetName)",
-            targets: ["XcodeTarget_\(targetName)"]
+            targets: [targetName.supportingName]
         )
     }
 }

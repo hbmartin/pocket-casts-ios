@@ -15,7 +15,7 @@ WE SWEAT THE DETAILS
  • Design: Easily listen to, manage and find new podcasts.
  • Themes: Whether you're a dark or light theme person we've got you covered. We even have you OLED lovers covered with our Extra Dark theme.
  • Universal: Custom but familiar iPad interface, supporting Slide Over, Split View and Picture in Picture.
- • Everywhere: CarPlay, AirPlay, Chromecast and Sonos. Listen to your podcasts in more places than ever before.
+ • Everywhere: AirPlay, Chromecast and Sonos. Listen to your podcasts in more places than ever before.
 
 POWERFUL PLAYBACK
  • Up next: Automatically build a playback queue from your favorite shows. Sign in and have that Up Next queue sync to all your devices.
@@ -30,7 +30,6 @@ POWERFUL PLAYBACK
  • Sleep timer: We'll pause your episode so you can rest your weary head.
  • Airplay & Chromecast: Send episodes straight to your TV or speakers with a single tap.
  • Sonos: Browse and play your podcast collection directly from the Sonos app.
- • CarPlay: When you're in the car, so are we.
 
 SMART TOOLS
  • Sync: Subscriptions, Up Next, listening history, playback and filters are all securely stored in the cloud. You can pick up where you left off on another device and even the web.

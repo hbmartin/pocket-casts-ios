@@ -451,14 +451,6 @@ Pocket Casts Plus</string>
     <string>次年享有 50%% 優惠</string>
     <key>canceling</key>
     <string>正在取消…</string>
-    <key>carplay_chapter_count</key>
-    <string>第 %1$@ 章，共 %2$@ 章。%3$@</string>
-    <key>carplay_more</key>
-    <string>更多</string>
-    <key>carplay_playback_speed</key>
-    <string>播放速度</string>
-    <key>carplay_up_next_queue</key>
-    <string>「接下來播放」佇列</string>
     <key>champion_description</key>
     <string>感謝你從一開始就選擇我們！ 若你滿意我們的應用程式，我們很樂意聽聽你的意見回饋。</string>
     <key>champion_title</key>

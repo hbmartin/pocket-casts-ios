@@ -11,7 +11,6 @@ enum AnalyticsSource: String, AnalyticsDescribable {
     case appIconMenu = "app_icon_menu"
     case autoAdd = "auto_add"
     case autoDownloadSettings = "auto_download_settings"
-    case carPlay = "carplay"
     case chooseFolder = "choose_folder"
     case chromecast
     case discover

@@ -451,14 +451,6 @@ Pocket Casts Plus</string>
     <string>Получите скидку 50 %% на следующий год</string>
     <key>canceling</key>
     <string>Отмена...</string>
-    <key>carplay_chapter_count</key>
-    <string>%1$@ из %2$@. %3$@</string>
-    <key>carplay_more</key>
-    <string>Больше</string>
-    <key>carplay_playback_speed</key>
-    <string>Скорость воспроизведения</string>
-    <key>carplay_up_next_queue</key>
-    <string>Очередь «Следующие»</string>
     <key>champion_description</key>
     <string>Благодарим за то, что вы с нами с самого начала! Если вам нравится наше приложение, мы будем рады получить ваш отзыв.</string>
     <key>champion_title</key>

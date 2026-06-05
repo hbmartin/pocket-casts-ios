@@ -10,7 +10,7 @@ CHAQUE DÉTAIL A SON IMPORTANCE
 • Design : écoutez, gérez et recherchez facilement de nouveaux podcasts.
 • Thèmes : que vous préfériez les thèmes sombres ou les thèmes clairs, on vous couvre. Nous proposons également le thème Extra sombre pour les fans d’OLED.
 • Universel : interface iPad personnalisée mais familière, prenant en charge Slide Over, Split View et Image dans l’image.
-• Partout : CarPlay, AirPlay, Chromecast et Sonos. Écoutez vos podcasts dans plus d’endroits que jamais auparavant.
+• Partout : AirPlay, Chromecast et Sonos. Écoutez vos podcasts dans plus d’endroits que jamais auparavant.
 
 LECTURE PUISSANTE
 • File d’attente : créez automatiquement une file d’attente à partir de vos émissions préférées. Connectez-vous et synchronisez la sur tous vos appareils.
@@ -25,7 +25,6 @@ LECTURE PUISSANTE
 • Minuteur de mise en veille : nous mettrons votre épisode en pause pour que vous puissiez vous reposer.
 • Airplay et Chromecast : diffusez des épisodes directement sur votre téléviseur ou des enceintes en un clic.
 • Sonos : parcourez et lisez votre collection de podcasts directement à partir de l’app Sonos.
-• CarPlay : quand vous êtes dans la voiture, nous aussi.
 
 OUTILS INTELLIGENTS
 • Synchronisation : les abonnements, File d’attente, l’historique d’écoute, la lecture et les filtres sont tous stockés en toute sécurité dans le cloud. Vous pouvez reprendre là où vous vous êtes arrêté sur un autre appareil et même sur le Web.

@@ -329,18 +329,6 @@
 /* Prompt to allow the user to cancel their Pocket Casts Plus subscription. */
 "cancel_subscription" = "Cancel Subscription";
 
-/* CarPlay subtitle information label that includes the current chapter and total chapter count and the current chapter length. '%1$@' is a placeholder for the current chapter. '%2$@' is a placeholder for the total chapters. '%3$@' is a placeholder for the length of the current chapter. */
-"carplay_chapter_count" = "%1$@ of %2$@. %3$@";
-
-/* Provides a link to the menu to present more options. */
-"carplay_more" = "More";
-
-/* CarPlay option to modify the playback speed. */
-"carplay_playback_speed" = "Playback Speed";
-
-/* CarPlay prompt to navigate to the up next Queue. */
-"carplay_up_next_queue" = "Up Next Queue";
-
 /* Prompt to allow the user to update their email address. */
 "change_email" = "Change Email Address";
 
@@ -6324,4 +6312,3 @@
 "siri_intent_definition_key_xdnqvn" = "Container";
 
 "siri_intent_definition_key_zvlpk3" = "Skipped chapter";
-

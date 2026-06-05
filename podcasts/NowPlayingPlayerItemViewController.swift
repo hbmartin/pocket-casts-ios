@@ -511,6 +511,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         options.present(from: self)
     }
 
+    #if !APPCLIP
     private func toggleTranscript() {
         let isShowing = displayTranscript
 
@@ -571,7 +572,9 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
             skipFwdBtn.finishedTransition()
         })
     }
+    #endif
 
+    #if !APPCLIP
     // MARK: Banner Ad
 
     func addAdBanner(promotion: BlazePromotion, animated: Bool = true) {

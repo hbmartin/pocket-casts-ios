@@ -10,7 +10,7 @@ WE FOCUSSEN OP DE DETAILS
 • Design: Nieuwe podcasts eenvoudig beluisteren, beheren en vinden.
 • Thema's: Of je nu van een donker of licht thema houdt – het is allebei mogelijk. Voor de OLED-fans is er zelfs ons Extra donker-thema.
 • Universeel: Een aangepaste, maar vertrouwde iPad-interface met ondersteuning voor Slide Over, Split View en Beeld in Beeld.
-• Overal: CarPlay, AirPlay, Chromecast en Sonos. Luister op meer plekken dan ooit tevoren naar je podcasts.
+• Overal: AirPlay, Chromecast en Sonos. Luister op meer plekken dan ooit tevoren naar je podcasts.
 
 KRACHTIGE PLAYBACK
 • Hierna: Maak automatisch een playback-wachtrij van je favoriete shows. Meld je aan en synchroniseer deze Hierna-wachtrij op al je apparaten.
@@ -25,7 +25,6 @@ KRACHTIGE PLAYBACK
 • Slaaptimer: We pauzeren je aflevering zodat je even kunt uitrusten.
 • Airplay en Chromecast: Stuur afleveringen rechtstreeks naar je tv of luidsprekers met slechts één tik.
 • Sonos: Blader door je podcastverzameling en speel afleveringen rechtstreeks af vanuit de Sonos-app.
-• CarPlay: Wanneer jij in de auto zit, gaan wij met je mee.
 
 SLIMME TOOLS
 • Synchroniseren: Abonnementen, Hierna, luistergeschiedenis, playback en filters worden allemaal veilig bewaard in de cloud. Je kan op een ander apparaat en zelfs op het web verdergaan waar je was gestopt.

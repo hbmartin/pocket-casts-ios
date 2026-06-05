@@ -10,7 +10,7 @@ ATENÇÃO AOS MÍNIMOS DETALHES
 • Design: encontre, gerencie e ouça novos podcasts com facilidade.
 • Temas: quer você prefira um tema claro ou escuro, pode contar conosco. Nós agradamos até mesmo fãs de OLED com nosso tema Muito escuro.
 • Universal: interface de iPad personalizada mas familiar, compatível com Slide Over, Split View e Picture in Picture.
-• Em qualquer lugar: CarPlay, Chromecast, AirPlay e Sonos. Ouça seus podcasts em mais lugares do que nunca.
+• Em qualquer lugar: Chromecast, AirPlay e Sonos. Ouça seus podcasts em mais lugares do que nunca.
 
 REPRODUÇÃO POTENTE
 • Próximos: crie uma fila de reprodução dos seus programas favoritos automaticamente. Faça login para sincronizar sua fila de Próximos em todos os seus dispositivos.
@@ -25,7 +25,6 @@ REPRODUÇÃO POTENTE
 • Temporizador: pausamos o episódio para que você possa descansar.
 • Airplay e Chromecast: envie os episódios diretamente para a sua TV ou caixas de som com apenas um toque.
 • Sonos: procure e reproduza sua coleção de podcasts diretamente no aplicativo da Sonos.
-• CarPlay: quando você estiver no carro, estaremos com você.
 
 FERRAMENTAS INTELIGENTES
 • Sincronizar: assinaturas, Próximos, histórico de streaming, reprodução e filtros são todos armazenados em segurança na nuvem. Você pode retomar de onde parou em outro dispositivo ou até mesmo em um navegador.

@@ -1,5 +1,4 @@
 import SwiftUI
-import PocketCastsServer
 import PocketCastsUtils
 
 struct SurveyDebugInfoView: View {
@@ -7,7 +6,6 @@ struct SurveyDebugInfoView: View {
     @State private var lastSurveyNotReallyDate: Date?
     @State private var reviewRequestDates: [Date] = []
     @State private var episodeCompletionCount: Int = 0
-    @State private var plusUpgradeDate: Date?
     @State private var canShowSurvey: Bool = false
     @State private var surveyCheckResult: SurveyCheckResult = .canShow
 
@@ -76,17 +74,9 @@ struct SurveyDebugInfoView: View {
                 }
 
                 HStack {
-                    Text("Subscription Tier")
+                    Text("Feature Access")
                     Spacer()
-                    Text(SubscriptionHelper.hasActiveSubscription() ? "Plus/Patron" : "Free")
-                }
-
-                if let upgradeDate = plusUpgradeDate {
-                    HStack {
-                        Text("Upgrade Date")
-                        Spacer()
-                        Text(upgradeDate.formatted())
-                    }
+                    Text("Unlocked")
                 }
             }
 
@@ -114,7 +104,7 @@ struct SurveyDebugInfoView: View {
     }
 
     private var defaultEvent: SurveyTriggerEvent {
-        return SubscriptionHelper.hasActiveSubscription() ? .folderCreated : .episodeStarred
+        .folderCreated
     }
 
     private func presentSurveyWithAnimation(from rootViewController: UIViewController) {
@@ -126,19 +116,6 @@ struct SurveyDebugInfoView: View {
         lastSurveyNotReallyDate = Settings.lastSurveyNotReallyDate()
         reviewRequestDates = Settings.reviewRequestDates()
         episodeCompletionCount = UserSatisfactionSurveyManager.shared.episodeCompletionCount
-
-        if SubscriptionHelper.hasActiveSubscription(),
-           let expiryDate = SubscriptionHelper.subscriptionRenewalDate() {
-            let frequency = SubscriptionHelper.subscriptionFrequencyValue()
-            switch frequency {
-            case .monthly:
-                plusUpgradeDate = Calendar.current.date(byAdding: .month, value: -1, to: expiryDate)
-            case .yearly:
-                plusUpgradeDate = Calendar.current.date(byAdding: .year, value: -1, to: expiryDate)
-            default:
-                break
-            }
-        }
 
         #if !os(watchOS) && !APPCLIP
         surveyCheckResult = UserSatisfactionSurveyManager.shared.checkSurveyEligibility(for: defaultEvent)

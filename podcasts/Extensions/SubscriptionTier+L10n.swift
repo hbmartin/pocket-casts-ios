@@ -1,21 +1,13 @@
 import PocketCastsServer
 
 extension SubscriptionTier {
-    /// Pocket Casts Plus, or Patron
+    /// Generic display name for unlocked Pocket Casts access.
     var displayName: String {
-        switch self {
-        case .patron: L10n.patron
-        case .plus: L10n.pocketCastsPlus
-        case .none: L10n.pocketCastsPlus
-        }
+        L10n.pocketCasts
     }
 
-    /// Plus, or Patron
+    /// Generic short display name for unlocked Pocket Casts access.
     var displayNameShort: String {
-        switch self {
-        case .patron: L10n.patron
-        case .plus: L10n.pocketCastsPlusShort
-        case .none: L10n.pocketCastsShort
-        }
+        L10n.pocketCasts
     }
 }
