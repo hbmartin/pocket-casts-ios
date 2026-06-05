@@ -11,22 +11,12 @@ extension View {
 extension Image {
     @ViewBuilder
     func backwardWidgetAccentedRenderingMode(_ isAccentedRenderingMode: Bool = true) -> some View {
-        if #available(iOS 18.0, *) {
-            self.widgetAccentedRenderingMode(isAccentedRenderingMode ? .accented : .fullColor)
-        }
-        else {
-            self
-        }
+        self.widgetAccentedRenderingMode(isAccentedRenderingMode ? .accented : .fullColor)
     }
 
     @ViewBuilder
     func backwardWidgetAccentedDesaturatedRenderingMode() -> some View {
-        if #available(iOS 18.0, *) {
-            self.widgetAccentedRenderingMode(.accentedDesaturated)
-        }
-        else {
-            self
-        }
+        self.widgetAccentedRenderingMode(.accentedDesaturated)
     }
 
     @ViewBuilder

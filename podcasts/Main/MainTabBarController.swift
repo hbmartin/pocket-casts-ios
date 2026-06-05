@@ -244,8 +244,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     }
 
     private func fixTarBarTraitCollectionOnIpadForiOS18() {
-        if #available(iOS 18.0, *),
-           UIDevice.current.userInterfaceIdiom == .pad {
+        if UIDevice.current.userInterfaceIdiom == .pad {
             traitOverrides.horizontalSizeClass = .compact
             if let rootHorizontalSizeClass = view.window?.traitCollection.horizontalSizeClass {
                 tabBar.traitOverrides.horizontalSizeClass = rootHorizontalSizeClass
@@ -821,7 +820,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     private func registerSceneAppearanceObserverIfNeeded() {
         guard systemAppearanceObservation == nil,
               LiquidGlass.isEnabled,
-              #available(iOS 17.0, *),
               let scene = view.window?.windowScene else { return }
         systemAppearanceObservation = scene.registerForTraitChanges(
             [UITraitUserInterfaceStyle.self]
