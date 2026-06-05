@@ -19,6 +19,15 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     private lazy var profileTabBarItem = UITabBarItem(title: L10n.profile, image: UIImage(named: "profile_tab"), tag: pcTabs.firstIndex(of: .profile) ?? -1)
 
+    /// The last Up Next count observed, used to pulse the mini player artwork only
+    /// when the queue actually changes (not on every refresh notification).
+    private var previousUpNextCount: Int?
+
+    /// `true` while the Up Next "pulse" spring is in flight, so a burst of
+    /// rapid adds doesn't stack overlapping transforms on the mini player artwork.
+    /// Not `private`: set from the pulse code in `+Animations`.
+    var isPulsingUpNextTarget = false
+
 
     /// The viewDidAppear can trigger more than once per lifecycle, setting this flag on the first did appear prevents use from prompting more than once per lifecycle. But still wait until the tab bar has appeared to do so.
     var viewDidAppearBefore: Bool = false
@@ -119,6 +128,13 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         NotificationCenter.default.addObserver(self, selector: #selector(refreshProfileTabAvatar), name: .userLoginDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshProfileTabAvatarForcingReload), name: Constants.Notifications.avatarNeedsRefreshing, object: nil)
         refreshProfileTabAvatar()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.upNextQueueChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.playbackTrackChanged, object: nil)
+        // `upNextEpisodeAdded` refreshes the count via the genie animation's tail, not here.
+        NotificationCenter.default.addObserver(self, selector: #selector(animateEpisodeAddedToUpNext(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
+        upNextQueueDidChange()
 
         addBookmarkCreatedToastHandler()
         if FeatureFlag.displayErrorsOnPlayer.enabled {
@@ -961,5 +977,22 @@ private extension MainTabBarController {
     func resetProfileTabImage() {
         profileTabBarItem.image = UIImage(named: "profile_tab")
         profileTabBarItem.selectedImage = nil
+    }
+}
+
+// MARK: - Up Next queue pulse
+
+extension MainTabBarController {
+    @objc func upNextQueueDidChange() {
+        guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
+
+        let count = PlaybackManager.shared.queue.upNextCount()
+        let previous = previousUpNextCount
+        previousUpNextCount = count
+
+        guard count != previous else { return }
+
+        // Only celebrate the queue growing — a drain (playing/removing) shouldn't pop.
+        if previous.map({ count > $0 }) ?? false { pulseUpNextTarget() }
     }
 }
