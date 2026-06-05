@@ -17,7 +17,38 @@ rules:
       include:
         - "**/semgrep/*.yml"
         - "**/semgrep/*.yaml"
-    pattern-regex: '^\s*-\s*/[^#\n]+'
+    patterns:
+      - pattern-inside: |
+          paths:
+            include:
+              ...
+      - pattern-regex: '^\s*-\s*/[^#\n]+'
+
+  - id: keychain.delete-before-add
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Prefer SecItemUpdate before SecItemAdd for existing Keychain items; delete-before-add opens a race window and can lose item identity.
+    languages: [swift]
+    patterns:
+      - pattern-inside: |
+          func $FUNC(...) {
+            ...
+          }
+      - pattern: |
+          SecItemDelete(...)
+          ...
+          SecItemAdd(...)
+      - pattern-not-inside: |
+          func $FUNC(...) {
+            ...
+            SecItemUpdate(...)
+            ...
+          }
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

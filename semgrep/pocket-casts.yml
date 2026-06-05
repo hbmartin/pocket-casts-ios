@@ -47,7 +47,9 @@ rules:
     languages: [generic]
     paths:
       include:
+        - "**/Modules/Sources/PocketCastsDataModel/Public/Enums.swift"
         - "**/podcasts/Enumerations.swift"
     pattern-either:
+      - pattern-regex: 'case\s+chromecast\s*=\s*"case"\b'
       - pattern-regex: 'case\s+\.chromecast:\s*\n\s*return\s+(1|2|3|4|5|6|8|9|10|11|12|13)\b'
       - pattern-regex: 'case\s+(1|2|3|4|5|6|8|9|10|11|12|13):\s*\n\s*self\s*=\s*\.chromecast\b'
