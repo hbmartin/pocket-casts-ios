@@ -26,7 +26,7 @@ extension DiscoverCollectionViewController: DiscoverDelegate {
     }
 
     func invalidate(item: PocketCastsServer.DiscoverItem) {
-        let snapshotItem = dataSource.snapshot().itemIdentifiers.first(where: { snapshotItem in
+        let snapshotItem = dataSource?.snapshot().itemIdentifiers.first(where: { snapshotItem in
             guard case .item(let cellItem) = snapshotItem else {
                 return false
             }

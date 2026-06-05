@@ -18,7 +18,7 @@ The target runs the vendored Swift rules in
 `semgrep/swift-security.yml`, copied from the upstream `ios/swift`
 directory in `https://github.com/akabe1/akabe1-semgrep-rules` at
 commit `db843f16c4a740c22d97c489d176ff663c1776b6`, excluding the
-noisy `semgrep.hardcoded_secret` and `semgrep.insecure_storage` rules.
+noisy `semgrep.insecure_storage` rule.
 No dependency-specific filtering is applied; this keeps coverage for crypto,
 injection, keychain, pinning, SQL, WebView, XXE, biometric-auth, and
 critical-device-feature rules even when only a subset currently reports
@@ -41,13 +41,13 @@ those findings fail locally.
 To write JSON locally:
 
 ```bash
-semgrep scan --config semgrep/swift-security.yml --include "*.swift" --exclude-rule semgrep.hardcoded_secret --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check --json-output semgrep.json
+semgrep scan --config semgrep/swift-security.yml --include "*.swift" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check --json-output semgrep.json
 ```
 
 To write SARIF locally:
 
 ```bash
-semgrep scan --config semgrep/swift-security.yml --include "*.swift" --exclude-rule semgrep.hardcoded_secret --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check --sarif-output semgrep.sarif
+semgrep scan --config semgrep/swift-security.yml --include "*.swift" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check --sarif-output semgrep.sarif
 ```
 
 The GitHub Actions workflow in `.github/workflows/semgrep.yml` runs the

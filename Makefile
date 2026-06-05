@@ -52,10 +52,10 @@ lint_lenient:
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --lenient)
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
-	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "Makefile" --include "**/Makefile" --include "*.mk" --include "**/*.mk" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
+	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "Makefile" --include "**/Makefile" --include "*.mk" --include "**/*.mk" --exclude "semgrep/tests/**" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
 
 semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
-	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
+	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
 
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 	if [ -n "$(XCODE_ANALYZE_DERIVED_DATA_PATH)" ]; then rm -rf "$(XCODE_ANALYZE_DERIVED_DATA_PATH)/SDKStatCaches.noindex"; fi

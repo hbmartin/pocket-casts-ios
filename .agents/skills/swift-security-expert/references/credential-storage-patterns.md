@@ -354,7 +354,9 @@ extension KeychainManager {
         let updateAttrs: [CFString: Any] = [kSecValueData: newData]
 
         var addQ = baseQuery(account: oldAccount); addQ[kSecValueData] = newData
-        var searchQ = baseQuery(account: oldAccount); searchQ.removeValue(forKey: kSecValueData)
+        var searchQ = baseQuery(account: oldAccount)
+        searchQ.removeValue(forKey: kSecValueData)
+        searchQ.removeValue(forKey: kSecAttrAccessible)
 
         var status = SecItemUpdate(searchQ as CFDictionary, updateAttrs as CFDictionary)
         if status == errSecItemNotFound {

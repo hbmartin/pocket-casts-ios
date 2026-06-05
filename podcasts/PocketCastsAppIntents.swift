@@ -9,15 +9,27 @@ import Foundation
 
 enum PlaybackIntentError: LocalizedError {
     case actionFailed
+    case invalidDuration
 
     var errorDescription: String? {
-        L10n.playbackFailed
+        switch self {
+        case .actionFailed:
+            return L10n.playbackFailed
+        case .invalidDuration:
+            return L10n.sleepTimerInvalidDuration
+        }
     }
 }
 
 func requireSuccessfulPlaybackAction(_ actionSucceeded: Bool) throws {
     guard actionSucceeded else {
         throw PlaybackIntentError.actionFailed
+    }
+}
+
+func requireValidSleepTimerDuration(_ minutes: Int) throws {
+    guard (1...300).contains(minutes) else {
+        throw PlaybackIntentError.invalidDuration
     }
 }
 
@@ -107,7 +119,7 @@ struct SetSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Set Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes")
+    @Parameter(title: "Minutes", inclusiveRange: (1, 300))
     var minutes: Int
 
     init(minutes: Int) {
@@ -120,6 +132,7 @@ struct SetSleepTimerIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        try requireValidSleepTimerDuration(minutes)
         try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.setSleepTimer(minutes: minutes))
         return .result()
     }
@@ -129,11 +142,12 @@ struct ExtendSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Extend Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes", default: 5)
+    @Parameter(title: "Minutes", default: 5, inclusiveRange: (1, 300))
     var minutes: Int
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        try requireValidSleepTimerDuration(minutes)
         try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.extendSleepTimer(minutes: minutes))
         return .result()
     }

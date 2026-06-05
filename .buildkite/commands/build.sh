@@ -23,12 +23,16 @@ DESTINATION="$(
 require 'json'
 
 devices_by_runtime = JSON.parse(`xcrun simctl list devices available --json`).fetch('devices')
+requested_runtime_version = ENV['IOS_SIMULATOR_RUNTIME_VERSION']
 candidates = []
 
 devices_by_runtime.each do |runtime, devices|
   next unless runtime.include?('iOS')
 
   version = runtime.scan(/\d+/).map(&:to_i)
+  version_string = version.join('.')
+  next if requested_runtime_version && version_string != requested_runtime_version
+
   devices.each do |device|
     next unless device['isAvailable']
     next unless device['name'].start_with?('iPhone')
@@ -38,7 +42,10 @@ devices_by_runtime.each do |runtime, devices|
   end
 end
 
-abort('No available iPhone simulator found') if candidates.empty?
+if candidates.empty?
+  message = requested_runtime_version ? "No available iPhone simulator found for iOS #{requested_runtime_version}" : 'No available iPhone simulator found'
+  abort(message)
+end
 
 selected = candidates.max_by { |version, preference, name, _udid| [version, preference, name] }
 puts "platform=iOS Simulator,id=#{selected[3]}"

@@ -4071,6 +4071,8 @@ internal enum L10n {
   internal static func sleepTimerEpisodeCount(_ p1: Any) -> String {
     return L10n.tr("Localizable", "sleep_timer_episode_count", String(describing: p1), fallback: "In %1$@ episodes")
   }
+  /// Error shown when a sleep timer shortcut is run with a duration outside the supported 1 to 300 minute range.
+  internal static var sleepTimerInvalidDuration: String { return L10n.tr("Localizable", "sleep_timer_invalid_duration", fallback: "Enter a sleep timer duration between 1 and 300 minutes.") }
   /// Label showing that Sleep Timer will activate after a given number of episodes. %1$@ is the number of episodes and it's always bigger than 1.
   internal static func sleepTimerSleepingAfter(_ p1: Any) -> String {
     return L10n.tr("Localizable", "sleep_timer_sleeping_after", String(describing: p1), fallback: "Sleeping in %1$@ episodes")

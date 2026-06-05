@@ -1504,6 +1504,9 @@
 /* A common string used throughout the app. Generic message informing the user that playback failed. */
 "playback_failed" = "Playback Failed";
 
+/* Error shown when a sleep timer shortcut is run with a duration outside the supported 1 to 300 minute range. */
+"sleep_timer_invalid_duration" = "Enter a sleep timer duration between 1 and 300 minutes.";
+
 /* Playback settings option in the Effects Player panel */
 "playback_effect_all_podcasts" = "All podcasts";
 

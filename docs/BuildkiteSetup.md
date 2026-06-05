@@ -55,6 +55,7 @@ Optional variables:
 - `DANGER_GITHUB_API_TOKEN`: enables Danger comments/checks.
 - `ENABLE_DISTRIBUTION_JOBS=true`: shows TestFlight/Firebase distribution jobs. Leave this unset unless Apple signing, App Store Connect, Firebase, Sentry, and GitHub release secrets are configured.
 - `BUILDKITE_PIPELINE_SLUG`: only needed if the pipeline slug is not `pocket-casts-ios`.
+- `IOS_SIMULATOR_RUNTIME_VERSION`: pins simulator selection to an installed iOS runtime version such as `18.5`; when unset the build step uses the newest available iPhone runtime.
 
 ## Optional GitHub Retry Workflow
 

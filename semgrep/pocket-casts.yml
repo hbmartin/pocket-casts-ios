@@ -1,4 +1,62 @@
 rules:
+  - id: pocketcasts.direct-sfsafariviewcontroller
+    message: Use URLHelper.open(..., context:) for SFSafariViewController presentation so URL provenance is declared and validated.
+    severity: WARNING
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - pattern: "SFSafariViewController(with: ...)"
+          - pattern: "SFSafariViewController(url: ...)"
+          - pattern: "SFSafariViewController(...)"
+      - pattern-not-inside: |
+          struct URLHelper {
+            ...
+          }
+      - pattern-not-inside: |
+          extension SFSafariViewController {
+            ...
+          }
+
+  - id: pocketcasts.sensitive-auth-requires-aswebauthenticationsession
+    message: Sensitive authentication/payment/OAuth-style flows must use ASWebAuthenticationSession instead of in-app Safari presentation.
+    severity: ERROR
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - pattern: "URLHelper.open(..., context: .sensitiveAuth, ...)"
+          - pattern: "URLHelper.makeInAppBrowser(..., context: .sensitiveAuth, ...)"
+          - pattern: "SFSafariViewController(with: $URL)"
+          - pattern: "SFSafariViewController(url: $URL)"
+      - pattern-inside: |
+          func $FUNC(...) {
+            ...
+          }
+      - metavariable-regex:
+          metavariable: $FUNC
+          regex: (?i).*(auth|oauth|login|signin|signIn|payment|checkout|purchase|subscription).*
+      - pattern-not-inside: |
+          struct URLHelper {
+            ...
+          }
+      - pattern-not-inside: |
+          extension SFSafariViewController {
+            ...
+          }
+
+  - id: pocketcasts.webview-navigation-action-without-urlhelper
+    message: Navigation-action URLs should be routed through URLHelper.open(..., context:) before in-app browser or WebView presentation.
+    severity: WARNING
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          - pattern: "SFSafariViewController(with: $ACTION.request.url)"
+          - pattern: "SFSafariViewController(url: $ACTION.request.url)"
+          - pattern: "$WEBVIEW.load(URLRequest(url: $ACTION.request.url))"
+      - pattern-not-inside: |
+          struct URLHelper {
+            ...
+          }
+
   - id: pocketcasts.subscription-helper-hardcoded-billing-state
     message: Keep billing helpers truthful; use feature gates at call sites instead of hardcoded subscription state.
     severity: WARNING

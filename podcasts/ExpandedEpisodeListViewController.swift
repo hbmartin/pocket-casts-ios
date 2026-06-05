@@ -108,11 +108,13 @@ class ExpandedEpisodeListViewController: PCViewController, UITableViewDelegate, 
     func linkTapped() {
         guard let link = podcastCollection.webUrl, let url = URL(string: link) else { return }
 
-        if Settings.openLinks {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        } else {
-            present(SFSafariViewController(with: url), animated: true, completion: nil)
-        }
+        URLHelper.open(
+            url,
+            context: .externalContent,
+            from: self,
+            prefersExternalBrowser: Settings.openLinks,
+            allowsExternalFallback: Settings.openLinks
+        )
     }
 }
 

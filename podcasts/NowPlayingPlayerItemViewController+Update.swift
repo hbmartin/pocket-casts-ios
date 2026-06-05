@@ -232,9 +232,7 @@ extension NowPlayingPlayerItemViewController {
         }
         AnalyticsPlaybackHelper.shared.playbackErrorTapped(playerSource: .fullPlayer)
         #if !APPCLIP
-        let safariViewController = SFSafariViewController(with: url)
-        safariViewController.modalPresentationStyle = .formSheet
-        self.present(safariViewController, animated: true, completion: nil)
+        URLHelper.open(url, context: .trustedDocumentation, from: self, modalPresentationStyle: .formSheet)
         #endif
     }
 

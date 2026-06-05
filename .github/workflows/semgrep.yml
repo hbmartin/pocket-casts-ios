@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Swift Semgrep rules
-        run: semgrep scan --config semgrep/swift-security.yml --config semgrep/pocket-casts.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check --sarif-output semgrep-swift.sarif
+        run: semgrep scan --config semgrep/swift-security.yml --config semgrep/pocket-casts.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --exclude "semgrep/tests/**" --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check --sarif-output semgrep-swift.sarif
 
       - name: Upload SARIF to code scanning
         if: always() && hashFiles('semgrep-swift.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)

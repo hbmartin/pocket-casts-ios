@@ -1,5 +1,4 @@
 import PocketCastsServer
-import SafariServices
 import UIKit
 
 class EmailHelper: NSObject {
@@ -8,8 +7,7 @@ class EmailHelper: NSObject {
     func presentSupportDialog(_ source: UIViewController) {
         DispatchQueue.main.async {
             guard let url = URL(string: ServerConstants.Urls.support) else { return }
-            let safari = SFSafariViewController(url: url)
-            source.present(safari, animated: true, completion: nil)
+            URLHelper.open(url, context: .trustedDocumentation, from: source)
         }
     }
 }

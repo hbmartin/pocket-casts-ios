@@ -1,11 +1,17 @@
 import SafariServices
 import SwiftUI
+import UIKit
 
 struct SFSafariView: UIViewControllerRepresentable {
     let url: URL
+    let context: URLHelper.InAppBrowserContext
 
     func makeUIViewController(context: UIViewControllerRepresentableContext<Self>) -> SFSafariViewController {
-        return SFSafariViewController(url: url)
+        guard let safariViewController = URLHelper.makeInAppBrowser(for: url, context: self.context) else {
+            preconditionFailure("SFSafariView requires a URL allowed for in-app browser presentation")
+        }
+
+        return safariViewController
     }
 
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SFSafariView>) {
@@ -19,15 +25,23 @@ struct SFSafariViewModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .environment(\.openURL, OpenURLAction { incomingURL in
-                presentationState = .presenting(incomingURL)
-                return .handled
+                switch URLHelper.inAppBrowserDecision(for: incomingURL, context: .externalContent) {
+                case .inAppBrowser:
+                    presentationState = .presenting(incomingURL)
+                    return .handled
+                case .externalApplication:
+                    UIApplication.shared.open(incomingURL, options: [:], completionHandler: nil)
+                    return .handled
+                case .blocked, .authenticationSessionRequired:
+                    return .discarded
+                }
             })
             .sheet(isPresented: Binding(
                 get: { presentationState != .notPresented },
                 set: { if !$0 { presentationState = .notPresented } }
             )) {
                 if case .presenting(let url) = presentationState {
-                    SFSafariView(url: url)
+                    SFSafariView(url: url, context: .externalContent)
                         .onAppear {
                             print("Opening URL: \(url)")
                         }

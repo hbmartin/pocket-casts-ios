@@ -364,8 +364,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     func showInSafariViewController(urlString: String) {
         guard let url = URL(string: urlString) else { return }
 
-        let safariViewController = SFSafariViewController(with: url)
-        topController().present(safariViewController, animated: true, completion: nil)
+        URLHelper.open(url, context: .externalContent, from: topController())
     }
 
     func navigateToPodcastList(_ animated: Bool) {
@@ -1097,9 +1096,7 @@ extension MainTabBarController {
         }
         AnalyticsPlaybackHelper.shared.playbackErrorTapped(playerSource: .miniPlayer)
         #if !APPCLIP
-        let safariViewController = SFSafariViewController(with: url)
-        safariViewController.modalPresentationStyle = .formSheet
-        self.present(safariViewController, animated: true, completion: nil)
+        URLHelper.open(url, context: .trustedDocumentation, from: self, modalPresentationStyle: .formSheet)
         #endif
     }
 

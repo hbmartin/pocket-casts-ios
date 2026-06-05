@@ -86,7 +86,7 @@ struct Ratings2025Story: ShareableStory {
             pauseState.togglePause()
             openURL = false
         }, content: {
-            SFSafariView(url: ratingsBlogPostURL)
+            SFSafariView(url: ratingsBlogPostURL, context: .externalContent)
         })
         .padding(.horizontal, 24)
         .padding(.bottom, 40)
