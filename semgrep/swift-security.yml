@@ -3,6 +3,21 @@
 # Upstream README declares GNU GPL terms for these rules.
 # Local copy avoids network access during Semgrep scans.
 rules:
+  - id: semgrep.absolute-path-include
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [semgrep]
+    message: Semgrep paths.include entries are repo-relative; remove the leading slash so the rule can match.
+    languages: [generic]
+    paths:
+      include:
+        - "**/semgrep/*.yml"
+        - "**/semgrep/*.yaml"
+    pattern-regex: '^\s*-\s*/[^#\n]+'
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

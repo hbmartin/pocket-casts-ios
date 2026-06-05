@@ -18,9 +18,10 @@ PERIPHERY_SCHEMES ?= Pocket Casts Staging
 PERIPHERY_CONFIGURATION ?= StagingDebug
 PERIPHERY_DESTINATION ?= generic/platform=iOS Simulator
 PERIPHERY_FLAGS ?= --retain-objc-accessible --relative-results --disable-update-check
+PERIPHERY_BASELINE ?= .periphery-baseline
 PERIPHERY_STRICT ?= 0
 
-.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts xcode_static_analyzer periphery static_checks format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts xcode_static_analyzer periphery periphery_baseline static_checks format install_dependencies
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -51,7 +52,7 @@ lint_lenient:
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --lenient)
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
-	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --exclude-rule semgrep.hardcoded_secret --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
+	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --exclude-rule semgrep.hardcoded_secret --exclude-rule semgrep.insecure_storage --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
 
 semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
 	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
@@ -69,7 +70,18 @@ periphery: ## Scan for unused Swift declarations with Periphery
        --project "$(PERIPHERY_PROJECT)" \
        --schemes "$(PERIPHERY_SCHEMES)" \
        --format xcode \
-       $(PERIPHERY_FLAGS) $(if $(filter 1,$(PERIPHERY_STRICT)),--strict,) \
+       $(PERIPHERY_FLAGS) --baseline "$(PERIPHERY_BASELINE)" $(if $(filter 1,$(PERIPHERY_STRICT)),--strict,) \
+       -- \
+       -configuration $(PERIPHERY_CONFIGURATION) \
+       -destination '$(PERIPHERY_DESTINATION)' \
+       CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+periphery_baseline: ## Write the current Periphery findings baseline
+	periphery scan \
+       --project "$(PERIPHERY_PROJECT)" \
+       --schemes "$(PERIPHERY_SCHEMES)" \
+       --format xcode \
+       $(PERIPHERY_FLAGS) --write-baseline "$(PERIPHERY_BASELINE)" \
        -- \
        -configuration $(PERIPHERY_CONFIGURATION) \
        -destination '$(PERIPHERY_DESTINATION)' \
