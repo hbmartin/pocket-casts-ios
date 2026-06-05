@@ -6,32 +6,32 @@ import WidgetKit
 private enum PlaybackControlLocalization {
     static let playPauseDisplayName = LocalizedStringResource(
         "widget_playback_control_play_pause_display_name",
-        defaultValue: "\(L10n.widgetPlaybackControlPlayPauseDisplayName)",
+        defaultValue: "Play / Pause",
         table: "Localizable"
     )
     static let playPauseDescription = LocalizedStringResource(
         "widget_playback_control_play_pause_description",
-        defaultValue: "\(L10n.widgetPlaybackControlPlayPauseDescription)",
+        defaultValue: "Play or pause the current episode.",
         table: "Localizable"
     )
     static let skipBackDisplayName = LocalizedStringResource(
         "widget_playback_control_skip_back_display_name",
-        defaultValue: "\(L10n.widgetPlaybackControlSkipBackDisplayName)",
+        defaultValue: "Skip Back",
         table: "Localizable"
     )
     static let skipBackDescription = LocalizedStringResource(
         "widget_playback_control_skip_back_description",
-        defaultValue: "\(L10n.widgetPlaybackControlSkipBackDescription)",
+        defaultValue: "Skip back in the current episode.",
         table: "Localizable"
     )
     static let skipForwardDisplayName = LocalizedStringResource(
         "widget_playback_control_skip_forward_display_name",
-        defaultValue: "\(L10n.widgetPlaybackControlSkipForwardDisplayName)",
+        defaultValue: "Skip Forward",
         table: "Localizable"
     )
     static let skipForwardDescription = LocalizedStringResource(
         "widget_playback_control_skip_forward_description",
-        defaultValue: "\(L10n.widgetPlaybackControlSkipForwardDescription)",
+        defaultValue: "Skip forward in the current episode.",
         table: "Localizable"
     )
 }

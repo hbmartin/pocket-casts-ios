@@ -26,3 +26,23 @@ func navigationActionDirectLoad(webView: WKWebView, navigationAction: WKNavigati
     // ruleid: pocketcasts.webview-navigation-action-without-urlhelper
     webView.load(URLRequest(url: navigationAction.request.url))
 }
+
+final class SceneHelperDefaultPresenterExamples {
+    init(
+        // ruleid: pocketcasts.scene-helper-root-presenter-default-argument
+        presenter: UIViewController? = SceneHelper.rootViewController()
+    ) {}
+
+    func open(
+        // ruleid: pocketcasts.scene-helper-root-presenter-default-argument
+        _ presenter: UIViewController? = SceneHelper.rootViewController()
+    ) {}
+
+    func openSafely(presenter: UIViewController? = nil) {}
+
+    func resolvePresenterLazily() {
+        // ok: pocketcasts.scene-helper-root-presenter-default-argument
+        let presenter = SceneHelper.rootViewController()
+        _ = presenter
+    }
+}

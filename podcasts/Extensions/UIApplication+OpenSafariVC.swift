@@ -1,7 +1,7 @@
 import UIKit
 
 extension UIApplication {
-    /// Opens SFSafariViewController if the URL scheme is http or https. If not, opens using UIApplication.open(url)
+    /// Opens external content with URLHelper, respecting the user's external browser preference.
     /// - Parameter url: The url to attempt to open
     func openSafariVCIfPossible(_ url: URL) {
         URLHelper.open(
@@ -9,6 +9,7 @@ extension UIApplication {
             context: .externalContent,
             options: .init(
                 presenter: SceneHelper.rootViewController(),
+                prefersExternalBrowser: Settings.openLinks,
                 allowsExternalFallback: true
             )
         )
