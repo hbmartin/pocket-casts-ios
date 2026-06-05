@@ -28,18 +28,20 @@ jobs:
     name: akabe1 Swift/iOS Semgrep
     runs-on: ubuntu-latest
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep@sha256:207983631beecdbe7fa29196c7f4a7a5f29033933cdb76c687ce4a672e07618d
     if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
       - name: Run Swift Semgrep rules
         run: semgrep scan --config semgrep/swift-security.yml --config semgrep/pocket-casts.yml --include "*.swift" --exclude-rule semgrep.hardcoded_secret --metrics off --timeout 0 --disable-version-check --sarif-output semgrep-swift.sarif
 
       - name: Upload SARIF to code scanning
         if: always() && hashFiles('semgrep-swift.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e
         with:
           sarif_file: semgrep-swift.sarif
