@@ -101,7 +101,7 @@ struct IntroStory2023: ShareableStory {
 private struct IconParallaxModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject var manager: MotionManager = .init()
-    private let rollAndPitchBoundary = -1.4..<1.5
+    private let rollAndPitchBoundary = -1.4...1.5
 
     func body(content: Content) -> some View {
         let roll = manager.roll.betweenOrClamped(to: rollAndPitchBoundary) * 10
@@ -129,7 +129,7 @@ private struct TwentyThreeParallaxModifier: ViewModifier {
     var rollMultiplier: Double = 4
     var pitchMultiplier: Double = 40
 
-    private let rollAndPitchBoundary = -1.4..<1.5
+    private let rollAndPitchBoundary = -1.4...1.5
 
     func body(content: Content) -> some View {
         let roll = manager.roll.betweenOrClamped(to: rollAndPitchBoundary) * 7

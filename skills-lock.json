@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "swift-concurrency-pro": {
+      "source": "twostraws/swift-concurrency-agent-skill",
+      "sourceType": "github",
+      "skillPath": "swift-concurrency-pro/SKILL.md",
+      "computedHash": "db6c88d8da1a264188a2ad826a0ed73d227384315b27e47f3bb6b78ca1a3df40"
+    },
+    "swift-security-expert": {
+      "source": "ivan-magda/swift-security-skill",
+      "sourceType": "github",
+      "skillPath": "swift-security-expert/SKILL.md",
+      "computedHash": "2ed2d08862b10401756c671ffedbe707d883d6a2667a77082b529c36c5afb2f8"
+    },
+    "swiftui-pro": {
+      "source": "twostraws/swiftui-agent-skill",
+      "sourceType": "github",
+      "skillPath": "swiftui-pro/SKILL.md",
+      "computedHash": "07033426e384295a4b49cf0b2ffdefd4098cae4af53fef16bc1f2d9281118c41"
+    }
+  }
+}

@@ -201,7 +201,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
     func routePickerTapped(from _: PlayerAction) {
         isPresentingOverflowRoutePicker = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
             self?.isPresentingOverflowRoutePicker = false
         }
 
