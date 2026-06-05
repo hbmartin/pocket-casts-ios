@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE_PATH=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE_PATH\" | grep -q '\\.swift$'; then echo \"Running static checks after $FILE_PATH\"; make static_checks && echo \"Static checks completed\" || echo \"Static checks failed\"; fi"
+            "command": "FILE_PATH=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE_PATH\" | grep -q '\\.swift$'; then echo \"Running lint after $FILE_PATH\"; if make lint; then echo \"Lint completed\"; else echo \"Lint failed\"; exit 1; fi; fi"
           }
         ]
       }

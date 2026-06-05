@@ -292,7 +292,7 @@ public typealias ActionOption = Option<PlayerAction, String>
 
 extension ActionOption: Codable, Equatable {}
 
-public enum PlayerAction: String, Codable, Equatable {
+public enum PlayerAction: String, Codable, Equatable, CaseIterable {
     case effects = "effects"
     case sleepTimer = "sleep"
     case routePicker = "airplay"
@@ -308,36 +308,16 @@ public enum PlayerAction: String, Codable, Equatable {
     case addToPlaylist = "playlist"
 
     public init?(rawValue: String) {
-        switch rawValue {
-        case "effects":
-            self = .effects
-        case "sleep":
-            self = .sleepTimer
-        case "airplay":
-            self = .routePicker
-        case "star":
-            self = .starEpisode
-        case "share":
-            self = .shareEpisode
-        case "podcast":
-            self = .goToPodcast
-        case "cast", "case":
+        if rawValue == "case" {
             self = .chromecast
-        case "played":
-            self = .markPlayed
-        case "archive":
-            self = .archive
-        case "bookmark":
-            self = .addBookmark
-        case "transcript":
-            self = .transcript
-        case "download":
-            self = .download
-        case "playlist":
-            self = .addToPlaylist
-        default:
+            return
+        }
+
+        guard let action = Self.allCases.first(where: { $0.rawValue == rawValue }) else {
             return nil
         }
+
+        self = action
     }
 }
 
