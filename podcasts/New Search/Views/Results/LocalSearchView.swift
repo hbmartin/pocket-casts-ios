@@ -49,14 +49,7 @@ struct LocalSearchView: View {
             }
             .navigationTitle(viewModel.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .modify({ view in
-                if #available(iOS 17.1, *) {
-                    view
-                        .toolbarRole(.navigationStack)
-                } else {
-                    view
-                }
-            })
+            .toolbarRole(.navigationStack)
             .onChange(of: navigationPath) { newValue in
                 UIApplication.shared.endEditing(true) // Dismiss the keyboard and end editing any time we navigate between sections.
                 handleNavigationPathChange(newValue, previousPath: previousNavigationPath)

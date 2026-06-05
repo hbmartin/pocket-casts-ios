@@ -59,7 +59,7 @@ extension PlaylistDetailViewController {
     }
 
     func set(configuration: UIContentConfiguration?) {
-        self.setContentUnavailableConfiguration(configuration)
+        self.contentUnavailableConfiguration = configuration
     }
 
     private func emptyStateAction() {
