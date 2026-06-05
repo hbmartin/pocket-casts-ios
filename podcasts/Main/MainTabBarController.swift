@@ -217,14 +217,10 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             return
         }
 
-        if FeatureFlag.encourageAccountCreation.enabled,
-           !Settings.hasShownInformationalViewModal,
-           Settings.hasSeenInitialOnboardingBefore,
-           (UIApplication.shared.delegate as? AppDelegate)?.appInstallState == .updated {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.encourageAccountCreation])
-        } else {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.initialOnboarding])
-        }
+        // Account-creation nagging removed for the "fast & light" build: first
+        // launch always shows the minimal initial onboarding (welcome), never the
+        // account-push flow.
+        NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.initialOnboarding])
 
         // Set the flag so the user won't see the on launch flow again
         Settings.shouldShowInitialOnboardingFlow = false
