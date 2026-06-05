@@ -31,11 +31,13 @@ extension ChaptersViewController: UITableViewDataSource, UITableViewDelegate, UI
             }
 
             chapterCell.populateFrom(chapter: chapter, playState: state, isChapterToggleEnabled: isTogglingChapters) { [weak self] url in
-                if Settings.openLinks {
-                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                } else {
-                    self?.present(SFSafariViewController(with: url), animated: true)
-                }
+                URLHelper.open(
+                    url,
+                    context: .externalContent,
+                    from: self,
+                    prefersExternalBrowser: Settings.openLinks,
+                    allowsExternalFallback: Settings.openLinks
+                )
             }
 
             chapterCell.seperatorView.isHidden = (chapter.index == PlaybackManager.shared.currentChapters().index - 1 || chapter.index == PlaybackManager.shared.currentChapters().index || (indexPath.row == PlaybackManager.shared.chapterCount() - 1))

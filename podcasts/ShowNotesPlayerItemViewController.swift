@@ -220,18 +220,19 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
                 })
             }
         } else if Settings.openLinks {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        } else {
-            if URLHelper.isValidScheme(url.scheme) {
-                safariViewController = SFSafariViewController(with: url)
-                safariViewController?.delegate = self
-
-                SceneHelper.rootViewController()?.present(safariViewController!, animated: true, completion: nil)
-
+            URLHelper.open(
+                url,
+                context: .externalContent,
+                prefersExternalBrowser: true,
+                allowsExternalFallback: true
+            )
+        } else if let safariViewController = URLHelper.open(
+            url,
+            context: .externalContent,
+            delegate: self
+        ) {
+                self.safariViewController = safariViewController
                 Analytics.track(.playerShowNotesLinkTapped, properties: ["episode_uuid": lastEpisodeUuidRendered])
-            } else if URLHelper.isMailtoScheme(url.scheme), UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url, options: [:], completionHandler: nil)
-            }
         }
 
         decisionHandler(.cancel)

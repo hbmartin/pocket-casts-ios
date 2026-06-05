@@ -1,5 +1,4 @@
 import SwiftUI
-import SafariServices
 
 struct UnderlineLinkTextView: View {
     let text: String
@@ -17,9 +16,14 @@ struct UnderlineLinkTextView: View {
 
         // Open the link inside the app
         return textView.environment(\.openURL, OpenURLAction { url in
-            let safariViewController = SFSafariViewController(with: url)
-            safariViewController.modalPresentationStyle = .formSheet
-            SceneHelper.rootViewController()?.present(safariViewController, animated: true, completion: nil)
+            guard URLHelper.open(
+                url,
+                context: .externalContent,
+                modalPresentationStyle: .formSheet
+            ) != nil else {
+                return URLHelper.inAppBrowserDecision(for: url, context: .externalContent) == .blocked ? .discarded : .handled
+            }
+
             return .handled
         })
     }

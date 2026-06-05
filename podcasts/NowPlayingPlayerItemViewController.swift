@@ -445,11 +445,13 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         #if APPCLIP
         //TODO: Prompt to install app
         #else
-            if Settings.openLinks {
-                UIApplication.shared.open(url, options: [:], completionHandler: nil)
-            } else {
-                present(SFSafariViewController(with: url), animated: true)
-            }
+            URLHelper.open(
+                url,
+                context: .externalContent,
+                from: self,
+                prefersExternalBrowser: Settings.openLinks,
+                allowsExternalFallback: Settings.openLinks
+            )
         #endif
     }
 

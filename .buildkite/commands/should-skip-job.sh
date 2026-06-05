@@ -57,8 +57,8 @@ changed_files() {
     return 1
   fi
 
-  git fetch --no-tags --quiet origin "$base_branch"
-  git diff --name-only "origin/$base_branch"...HEAD
+  git fetch --no-tags --quiet origin "$base_branch" || return 1
+  git diff --name-only "origin/$base_branch"...HEAD || return 1
 }
 
 matches_any_pattern() {
@@ -77,22 +77,34 @@ matches_any_pattern() {
 
 any_changed_file_matches() {
   local patterns=("$@")
+  local files
   local file
+
+  if ! files="$(changed_files)"; then
+    echo "Unable to determine changed files; running job." >&2
+    return 0
+  fi
 
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
     if matches_any_pattern "$file" "${patterns[@]}"; then
       return 0
     fi
-  done < <(changed_files)
+  done <<< "$files"
 
   return 1
 }
 
 all_changed_files_match() {
   local patterns=("$@")
+  local files
   local file
   local saw_file=1
+
+  if ! files="$(changed_files)"; then
+    echo "Unable to determine changed files; running job." >&2
+    return 1
+  fi
 
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
@@ -100,7 +112,7 @@ all_changed_files_match() {
     if ! matches_any_pattern "$file" "${patterns[@]}"; then
       return 1
     fi
-  done < <(changed_files)
+  done <<< "$files"
 
   return "$saw_file"
 }

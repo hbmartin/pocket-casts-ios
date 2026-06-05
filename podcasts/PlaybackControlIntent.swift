@@ -1,4 +1,5 @@
 import AppIntents
+import PocketCastsUtils
 
 /// Background playback actions surfaced by the WidgetKit controls.
 enum PlaybackControlAction: String, AppEnum, CaseIterable {
@@ -51,6 +52,7 @@ struct PlaybackControlIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        FileLog.shared.addMessage("PlaybackControlIntent perform called for \(action.rawValue)")
         performPlaybackControlAction(action)
         return .result()
     }

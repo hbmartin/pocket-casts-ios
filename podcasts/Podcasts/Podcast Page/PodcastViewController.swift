@@ -1450,18 +1450,13 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func open(url: URL) {
-        if Settings.openLinks {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        } else {
-            if URLHelper.isValidScheme(url.scheme) {
-                let safariViewController = SFSafariViewController(with: url)
-                safariViewController.delegate = self
-
-                SceneHelper.rootViewController()?.present(safariViewController, animated: true, completion: nil)
-            } else if URLHelper.isMailtoScheme(url.scheme), UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url, options: [:], completionHandler: nil)
-            }
-        }
+        URLHelper.open(
+            url,
+            context: .externalContent,
+            prefersExternalBrowser: Settings.openLinks,
+            allowsExternalFallback: Settings.openLinks,
+            delegate: self
+        )
     }
 
     private func dismissPodcastFeedReloadTip() {

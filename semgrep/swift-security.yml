@@ -24,6 +24,42 @@ rules:
               ...
       - pattern-regex: '^\s*-\s*/[^#\n]+'
 
+  - id: semgrep.regex-word-boundary-after-quote
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [semgrep]
+    message: Regex word boundaries after closing quotes usually cannot match; move the boundary inside the quoted token or remove it.
+    languages: [generic]
+    paths:
+      include:
+        - "**/semgrep/*.yml"
+        - "**/semgrep/*.yaml"
+    patterns:
+      - pattern-regex: '^\s*-?\s*pattern-regex:\s*[''"][^#\n]*"(?!\\\\)\\b'
+
+  - id: makefile.unguarded-rm-rf-make-variable
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [make]
+    message: Guard destructive rm -rf commands that use Make variables so an empty variable cannot delete an unintended absolute path.
+    languages: [generic]
+    paths:
+      include:
+        - "Makefile"
+        - "**/Makefile"
+        - "*.mk"
+        - "**/*.mk"
+    patterns:
+      - pattern-regex: '^\s*rm\s+-rf\s+"?\$\([A-Za-z0-9_]+\)[^#\n]*'
+
   - id: pocketcasts.app-intent-ignored-playback-result
     severity: WARNING
     metadata:
@@ -36,8 +72,8 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "podcasts/*AppIntent*.swift"
-        - "podcasts/*AppEntity*.swift"
+        - "/podcasts/*AppIntent*.swift"
+        - "/podcasts/*AppEntity*.swift"
     patterns:
       - pattern-inside: |
           func perform() async throws -> some IntentResult {
@@ -62,7 +98,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "podcasts/*AppEntity.swift"
+        - "/podcasts/*AppEntity.swift"
     patterns:
       - pattern-inside: |
           struct $QUERY: EntityQuery {
@@ -96,7 +132,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "podcasts/PlaybackIntentActionHandler.swift"
+        - "/podcasts/PlaybackIntentActionHandler.swift"
     patterns:
       - pattern-either:
           - pattern: |
@@ -118,6 +154,49 @@ rules:
             ...
           }
 
+  - id: pocketcasts.sleep-timer-intent-invalid-duration-error
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Sleep timer App Intents should validate minute inputs before routing false results through the generic playback-failed error.
+    languages: [swift]
+    paths:
+      include:
+        - "/podcasts/PocketCastsAppIntents.swift"
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              struct SetSleepTimerIntent: AppIntent {
+                ...
+                func perform() async throws -> some IntentResult {
+                  ...
+                }
+                ...
+              }
+          - pattern-inside: |
+              struct ExtendSleepTimerIntent: AppIntent {
+                ...
+                func perform() async throws -> some IntentResult {
+                  ...
+                }
+                ...
+              }
+      - pattern: |
+          try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.$ACTION(minutes: minutes))
+      - metavariable-regex:
+          metavariable: $ACTION
+          regex: ^(setSleepTimer|extendSleepTimer)$
+      - pattern-not-inside: |
+          func perform() async throws -> some IntentResult {
+            ...
+            try requireValidSleepTimerDuration(minutes)
+            ...
+          }
+
   - id: pocketcasts.sleep-timer-extend-posts-notification
     severity: WARNING
     metadata:
@@ -130,7 +209,7 @@ rules:
     languages: [swift]
     paths:
       include:
-        - "podcasts/PlaybackIntentActionHandler.swift"
+        - "/podcasts/PlaybackIntentActionHandler.swift"
     patterns:
       - pattern-inside: |
           func extendSleepTimer(bySeconds seconds: TimeInterval) {
@@ -153,14 +232,14 @@ rules:
       impact: MEDIUM
       technology: [ios]
     message: Widget Control displayName/description should use Localizable.strings-backed LocalizedStringResource values instead of hardcoded English strings.
-    languages: [generic]
+    languages: [swift]
     paths:
       include:
-        - "WidgetExtension/Controls/*.swift"
+        - "/WidgetExtension/Controls/*.swift"
     patterns:
       - pattern-either:
-          - pattern: .displayName("...")
-          - pattern: .description("...")
+          - pattern: $RECEIVER.displayName("...")
+          - pattern: $RECEIVER.description("...")
 
   - id: keychain.delete-before-add
     severity: WARNING
@@ -181,12 +260,12 @@ rules:
           SecItemDelete(...)
           ...
           SecItemAdd(...)
-      - pattern-not-inside: |
-          func $FUNC(...) {
-            ...
-            SecItemUpdate(...)
-            ...
-          }
+      - pattern-not: |
+          SecItemDelete(...)
+          ...
+          SecItemUpdate(...)
+          ...
+          SecItemAdd(...)
 
   # Source: critical_device_features.yaml
   - id: critical_device_features
@@ -2316,6 +2395,9 @@ rules:
 
 
   # Source: storage/hardcoded_secret.yaml
+  # This rule intentionally favors known secret variable names, provider token
+  # prefixes, and card-shaped values to keep noise low in a mature mobile app.
+  # It will miss some high-entropy values stored under generic names.
   - id: hardcoded_secret
     severity: WARNING
     metadata:
@@ -3060,16 +3142,13 @@ rules:
       impact: MEDIUM
       technology: [ios]
     message: >-
-      This iOS mobile application seems using an insecure WebView in-app browser, which could expose
-      to various kind of vulnerabilities.
-      More specifically, the usage of the deprecated UIWebView should be avoided, because it
-      suffers of various security issues. Also the usage of SFSafariViewController should be avoided in
-      sensitive contexts, because it presents various potential security flaws (i.e. JavaScript disabling
-      not supported, cookies and other data shared with Safari browser, etc.).
+      This iOS mobile application seems using the deprecated UIWebView in-app browser, which could expose
+      it to various kinds of vulnerabilities.
+      The usage of the deprecated UIWebView should be avoided, because it suffers from various security issues.
       An attacker could abuse this issue to perform various kind of injection attacks (like: XSS, code
       injection, stealing of reserved information, etc.).
       It is recommended to use the WKWebView component properly configured in the mobile app, if the usage
-      of SFSafariViewController is a requirements, it is suggested to adopt it only in trusted contexts.
+      of a WebView is a requirement.
     languages: [swift]
     patterns:
       - pattern-either:
@@ -3101,14 +3180,6 @@ rules:
               - metavariable-regex:
                   metavariable: $LOADFUNC
                   regex: (?i)(loadHTMLString|loadData|loadRequest)
-          # SFSafariViewController found
-          - patterns:
-              - pattern-inside: |
-                  $VIEWCON = SFSafariViewController(...)
-          - patterns:       
-              - pattern-inside: |
-                   var $VIEWCON: SFSafariViewController 
-      
 
   # Source: xxe/xxe.yaml
   - id: xxe

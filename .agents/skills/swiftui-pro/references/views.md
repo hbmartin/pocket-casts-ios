@@ -17,7 +17,6 @@
 
 ## Animating views
 
-- When the project uses the WWDC 2025-era SwiftUI toolchain and iOS 26 SDK or newer, prefer the `@Animatable` macro over creating `animatableData` manually; the macro adds `Animatable` conformance and creates the correct `animatableData` property. Mark non-animatable properties with `@AnimatableIgnored`. For older toolchains or deployment environments that lack these macros, implement `Animatable` manually by providing `animatableData` and keeping non-animatable state outside that data.
 - Never use `animation(_ animation: Animation?)`; always provide a value to watch, such as `.animation(.bouncy, value: score)`.
 - Chaining animations must be done using a `completion` closure passed to `withAnimation()`, rather than trying to execute multiple `withAnimation()` calls using delays.
 

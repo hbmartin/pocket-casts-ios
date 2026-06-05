@@ -7,7 +7,7 @@ on:
 jobs:
   dangermattic:
     if: ${{ github.event.pull_request.draft == false && vars.ENABLE_BUILDKITE_DANGER_RETRY == 'true' }}
-    uses: Automattic/dangermattic/.github/workflows/reusable-retry-buildkite-step-on-events.yml@v1
+    uses: Automattic/dangermattic/.github/workflows/reusable-retry-buildkite-step-on-events.yml@595269bb89f8efffd47556e4182f0085053d2313
     with:
       org-slug: hbmartin
       pipeline-slug: pocket-casts-ios

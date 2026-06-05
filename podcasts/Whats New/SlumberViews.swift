@@ -1,5 +1,4 @@
 import SwiftUI
-import SafariServices
 import EndOfYear
 
 struct SlumberWhatsNewHeader: View {
@@ -81,9 +80,7 @@ class SlumberAnnouncementViewModel: ObservableObject {
     func showRedeem() {
         guard let parentController = SceneHelper.rootViewController(), let url = URL(string: "https://slumberstudios.com/pocketcasts/") else { return }
 
-        let safariController = SFSafariViewController(with: url)
-        safariController.modalPresentationStyle = .formSheet
-        parentController.present(safariController, animated: true)
+        URLHelper.open(url, context: .trustedMarketing, from: parentController, modalPresentationStyle: .formSheet)
     }
 }
 

@@ -2,6 +2,7 @@
 
 import PackageDescription
 import CompilerPluginSupport
+import Foundation
 
 let package = Package(
     name: "Modules",
@@ -276,7 +277,7 @@ extension Target {
         .target(
             name: name.supportingName,
             dependencies: dependencies,
-            path: "Sources/XcodeSupport/\(name.replacing(" ", with: "-").supportingName)"
+            path: "Sources/XcodeSupport/\(name.replacingOccurrences(of: " ", with: "-").supportingName)"
         )
     }
 }

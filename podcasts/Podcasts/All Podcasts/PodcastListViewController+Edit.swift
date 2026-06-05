@@ -136,7 +136,7 @@ extension PodcastListViewController: UICollectionViewDragDelegate, UICollectionV
             gridItems.insert(moved, at: destinationIndexPath.item)
             collectionView.moveItem(at: sourceIndexPath, to: destinationIndexPath)
         }
-        coordinator.drop(dropItem.dragItem, toItemAt: destinationIndexPath)
+        _ = coordinator.drop(dropItem.dragItem, toItemAt: destinationIndexPath)
         Analytics.track(.podcastsListReordered)
     }
 }

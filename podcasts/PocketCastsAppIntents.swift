@@ -9,15 +9,27 @@ import Foundation
 
 enum PlaybackIntentError: LocalizedError {
     case actionFailed
+    case invalidDuration
 
     var errorDescription: String? {
-        L10n.playbackFailed
+        switch self {
+        case .actionFailed:
+            return L10n.playbackFailed
+        case .invalidDuration:
+            return L10n.sleepTimerInvalidDuration
+        }
     }
 }
 
 func requireSuccessfulPlaybackAction(_ actionSucceeded: Bool) throws {
     guard actionSucceeded else {
         throw PlaybackIntentError.actionFailed
+    }
+}
+
+func requireValidSleepTimerDuration(_ minutes: Int) throws {
+    guard (1...300).contains(minutes) else {
+        throw PlaybackIntentError.invalidDuration
     }
 }
 
@@ -65,24 +77,40 @@ struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
     }
 }
 
-struct NextChapterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Next Chapter"
-    static var openAppWhenRun: Bool { false }
+enum ChapterNavigationAction: String, AppEnum {
+    case previous
+    case next
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.nextChapter()
-        return .result()
-    }
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Chapter")
+    static var caseDisplayRepresentations: [ChapterNavigationAction: DisplayRepresentation] = [
+        .previous: DisplayRepresentation(title: "Previous Chapter"),
+        .next: DisplayRepresentation(title: "Next Chapter")
+    ]
 }
 
-struct PreviousChapterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Previous Chapter"
+struct ChapterNavigationIntent: AudioPlaybackIntent {
+    static var title: LocalizedStringResource = "Skip Chapter"
     static var openAppWhenRun: Bool { false }
+
+    @Parameter(title: "Direction")
+    var action: ChapterNavigationAction
+
+    init(action: ChapterNavigationAction) {
+        self.action = action
+    }
+
+    init() {
+        action = .next
+    }
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PlaybackIntentActionHandler.shared.previousChapter()
+        switch action {
+        case .previous:
+            PlaybackIntentActionHandler.shared.previousChapter()
+        case .next:
+            PlaybackIntentActionHandler.shared.nextChapter()
+        }
         return .result()
     }
 }
@@ -91,11 +119,20 @@ struct SetSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Set Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes", default: 5)
+    @Parameter(title: "Minutes", inclusiveRange: (1, 300))
     var minutes: Int
+
+    init(minutes: Int) {
+        self.minutes = minutes
+    }
+
+    init() {
+        self.minutes = Int(Settings.customSleepTime() / 60)
+    }
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        try requireValidSleepTimerDuration(minutes)
         try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.setSleepTimer(minutes: minutes))
         return .result()
     }
@@ -105,11 +142,12 @@ struct ExtendSleepTimerIntent: AppIntent {
     static var title: LocalizedStringResource = "Extend Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
-    @Parameter(title: "Minutes", default: 5)
+    @Parameter(title: "Minutes", default: 5, inclusiveRange: (1, 300))
     var minutes: Int
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        try requireValidSleepTimerDuration(minutes)
         try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.extendSleepTimer(minutes: minutes))
         return .result()
     }
@@ -146,13 +184,13 @@ struct PocketCastsAppShortcuts: AppShortcutsProvider {
             systemImageName: "sparkles"
         )
         AppShortcut(
-            intent: NextChapterIntent(),
+            intent: ChapterNavigationIntent(action: .next),
             phrases: ["Next chapter in \(.applicationName)"],
             shortTitle: "Next Chapter",
             systemImageName: "forward.end.fill"
         )
         AppShortcut(
-            intent: PreviousChapterIntent(),
+            intent: ChapterNavigationIntent(action: .previous),
             phrases: ["Previous chapter in \(.applicationName)"],
             shortTitle: "Previous Chapter",
             systemImageName: "backward.end.fill"

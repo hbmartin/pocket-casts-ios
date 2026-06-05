@@ -110,7 +110,7 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
         case .episodes:
             return episodeInfo[safe: section]?.elements.count ?? 0
         case .bookmarks:
-            return section == PodcastViewController.headerSection ? 1 : 1 // Header + Bookmarks list
+            return 1
         case .youMightLike:
             switch youMightLikeSectionType(for: section) {
             case .header, .loading, .empty:
