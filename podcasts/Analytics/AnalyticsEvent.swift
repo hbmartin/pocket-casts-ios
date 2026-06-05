@@ -705,13 +705,6 @@ enum AnalyticsEvent: String {
     case settingsSiriShortcutAdded
     case settingsSiriShortcutRemoved
 
-    // MARK: - Settings: Apple Watch
-
-    case settingsAppleWatchShown
-    case settingsAppleWatchAutoDownloadUpNextToggled
-    case settingsAppleWatchAutoDownloadEpisodesChanged
-    case settingsAppleWatchAutoDownloadDeleteDownloadsToggled
-
     // MARK: - Settings: Files
 
     case settingsFilesShown
@@ -808,22 +801,6 @@ enum AnalyticsEvent: String {
     case onboardingImportAppSelected
     case onboardingImportOpenAppTapped
     case onboardingImportDismissed
-
-    // MARK: - Recommendations
-
-    case recommendationsShown
-    case recommendationsDismissed
-    case recommendationsSearchTapped
-    case recommendationsMoreTapped
-    case recommendationsContinueTapped
-    case recommendationsImportTapped
-
-    // MARK: - Interests
-    case onboardingInterestsShown
-    case onboardingInterestsNotNowTapped
-    case onboardingInterestsCategorySelected
-    case onboardingInterestsShownMoreTapped
-    case onboardingInterestsContinueTapped
 
     // MARK: - Cancel
     case cancelConfirmationViewShown
@@ -945,26 +922,6 @@ enum AnalyticsEvent: String {
     case referralPurchaseSuccess
     case referralPassBannerHideTapped
 
-    // MARK: - Winback
-    case winbackScreenShown
-    case winbackScreenDismissed
-    case winbackContinueButtonTap
-    case winbackMainScreenRowTap
-    case winbackOfferClaimedDoneButtonTapped
-    case winbackAvailablePlansBackButtonTapped
-    case winbackCancelConfirmationStayButtonTapped
-    case winbackCancelConfirmationCancelButtonTapped
-    case winbackAvailablePlansSelectPlan
-    case winbackAvailablePlansNewPlanPurchaseSuccessful
-    case winbackWinbackOfferCancelButtonTapped
-
-    // MARK: - Cancel Subscription Survey
-    case cancelSubscriptionSurveyShown
-    case cancelSubscriptionSurveyDismissed
-    case cancelSubscriptionSurveySubmitButtonTapped
-    case cancelSubscriptionSurveyFeedbackSubmitSuccess
-    case cancelSubscriptionSurveyFeedbackSubmitError
-
     // MARK: - Champion Dialog
     case pocketCastsChampionDialogShown
     case pocketCastsChampionDialogRateButtonTapped
@@ -989,15 +946,6 @@ enum AnalyticsEvent: String {
     case podcastScreenRefreshNewEpisodeFound
     case podcastRefreshEpisodeTooltipShown
     case podcastRefreshEpisodeTooltipDismissed
-
-    // MARK: - Encourage Account Creation
-    case informationalModalViewShowed
-    case informationalModalViewDismissed
-    case informationalModalViewGetStartedTap
-    case informationalModalViewLoginTap
-    case informationalModalViewCardShowed
-    case informationalBannerViewDismissed
-    case informationalBannerViewCreateAccountTap
 
     // MARK: - Podroll Information Modal
     case podcastScreenPodrollInformationModelShown

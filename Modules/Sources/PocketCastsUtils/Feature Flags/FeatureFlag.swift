@@ -20,9 +20,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Show the modal about the partnership with Slumber Studios
     case slumber
 
-    /// Enable the new flow for Account upgrade prompt where it start IAP flow directly from account cell
-    case newAccountUpgradePromptFlow
-
     /// Enable the AVExportSession parallel download of any playing episode
     case streamAndCachePlayingEpisode
 
@@ -42,9 +39,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Enables the Kids banner
     case kidsProfile
-
-    /// Enable the new Upgrade Experiments
-    case upgradeExperiment
 
     /// When enabled, we ignore audio interruptions with InterruptionReason set to routeDisconnected
     /// (introduced in iOS 17 and watchOS 10) because these are not really interruptions as we have
@@ -101,9 +95,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Use single update query to mark all episodes selected synced
     case markAllSyncedInSingleStatement
 
-    /// Enable the winback screen and flow
-    case winback
-
     /// Show Manage Downloaded episode banner/modal when running in low space in the device
     case manageDownloadedEpisodes
 
@@ -122,12 +113,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Enable synced transcripts with playback timing
     case syncedTranscripts
 
-    /// Encourage Account Creation
-    case encourageAccountCreation
-
-    /// Enable Libro.fm icons in Paywall
-    case libroFm
-
     /// Any time watch data is sent, we refresh the watch logs and save them to a file for sending to Zendesk or exporting
     case refreshAndSaveWatchLogsOnSend
 
@@ -140,23 +125,11 @@ public enum FeatureFlag: String, CaseIterable {
     /// Recommendations including discover v3 support
     case recommendations
 
-    /// Cancel Subscription Survey
-    case cancelSubscriptionSurvey
-
-    /// Ignore server IAP check
-    case newOfferEligibilityCheck
-
     /// When replacing an episode list with a new one, use the provided episode instead of Up Next Queue
     case replaceSpecificEpisode
 
     /// Shows transcript excerpt in episode detail
     case episodeDetailTranscript
-
-    /// Include banner ad atop the podcasts list. This is fetched from ths server so can be disabled from there as well.
-    case bannerAdPodcasts
-
-    /// Include the banner ad atop the player screen. This is fetched from ths server so can be disabled from there as well.
-    case bannerAdPlayer
 
     /// Improves configuration for the streaming requet download session
     case streamingCustomSessionConfiguration
@@ -169,12 +142,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Enabled the attributed text view in the Data Usage warning Sheet
     case useDescriptiveActionAttributedTextView
-
-    /// Use the new upgrade screens
-    case newOnboardingUpgrade
-
-    /// Use the new upgrade screens with Variant B timeline before features
-    case newOnboardingVariant
 
     /// Retry failed downloads and stream without the user agent
     case retryWithoutUserAgent
@@ -197,12 +164,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Skips switching player to downloaded file if already playing from the same cached streamed file
     case doNotSwitchToDownloadedFile
 
-    /// Do not show the free trial timeline on the upgrade screens on all variants
-    case newOnboardingUpgradeTrialTimeline
-
-    /// Use the new interests and recommendations flow
-    case newOnboardingRecommendationChanges
-
     /// Use the new search endpoint and new UI
     case searchImprovements
 
@@ -211,9 +172,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Render Bookmarks inline in PodcastViewController using SwiftUI BookmarksListView
     case podcastBookmarksInline
-
-    /// Enable reloading the subscription status in App Delegate
-    case earlyReloadSubscriptionStatus
 
     /// Enable localization headers
     case enableLocalizationHeaders
@@ -330,8 +288,6 @@ public enum FeatureFlag: String, CaseIterable {
             shouldEnableSyncedSettings
         case .slumber:
             false
-        case .newAccountUpgradePromptFlow:
-            false
         case .streamAndCachePlayingEpisode:
             true
         case .defaultPlayerFilterCallbackFix:
@@ -341,8 +297,6 @@ public enum FeatureFlag: String, CaseIterable {
         case .whenPlayingOnlyUpdateEpisodeIfPlaybackFails:
             true
         case .kidsProfile:
-            false
-        case .upgradeExperiment:
             false
         case .ignoreRouteDisconnectedInterruption:
             true
@@ -374,8 +328,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .markAllSyncedInSingleStatement:
             true
-        case .winback:
-            true
         case .manageDownloadedEpisodes:
 			true
         case .podcastFeedUpdate:
@@ -388,10 +340,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .syncedTranscripts:
             true
-        case .libroFm:
-            false
-        case .encourageAccountCreation:
-            true
         case .refreshAndSaveWatchLogsOnSend:
             true
         case .avoidReplaceOnEpisodeSwap:
@@ -400,18 +348,10 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .recommendations:
             true
-        case .cancelSubscriptionSurvey:
-            true
-        case .newOfferEligibilityCheck:
-            true
         case .replaceSpecificEpisode:
             true
         case .episodeDetailTranscript:
             true
-        case .bannerAdPodcasts:
-            false
-        case .bannerAdPlayer:
-            false
         case .streamingCustomSessionConfiguration:
             true
         case .guestListsNetworkHighlightsRedesign:
@@ -419,10 +359,6 @@ public enum FeatureFlag: String, CaseIterable {
         case .smartCategories:
             true
         case .useDescriptiveActionAttributedTextView:
-            true
-        case .newOnboardingUpgrade:
-            true
-        case .newOnboardingVariant:
             true
         case .retryWithoutUserAgent:
             true
@@ -438,17 +374,11 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .doNotSwitchToDownloadedFile:
             true
-        case .newOnboardingUpgradeTrialTimeline:
-            true
-        case .newOnboardingRecommendationChanges:
-            true
         case .searchImprovements:
             true
         case .searchPredictive:
             true
         case .podcastBookmarksInline:
-            true
-        case .earlyReloadSubscriptionStatus:
             true
         case .enableLocalizationHeaders:
             true
@@ -521,8 +451,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// This should match a Firebase Remote Config Parameter name (key)
     public var remoteKey: String? {
         switch self {
-        case .newAccountUpgradePromptFlow:
-            "new_account_upgrade_prompt_flow"
         case .newSettingsStorage:
             shouldEnableSyncedSettings ? "new_settings_storage" : nil
         case .settingsSync:

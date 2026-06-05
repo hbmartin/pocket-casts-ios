@@ -77,9 +77,6 @@ struct Constants {
         static let opmlImportCompleted = NSNotification.Name(rawValue: "SJOpmlImportCompleted")
         static let opmlImportFailed = NSNotification.Name(rawValue: "SJOpmlImportFailed")
 
-        // watch
-        static let watchAutoDownloadSettingsChanged = NSNotification.Name(rawValue: "SJWatchAutoDownloadSettingsChanged")
-
         // folders
         /// This is triggered many times whenever a folder is changed
         static let folderChanged = NSNotification.Name(rawValue: "SJFolderChanged")
@@ -120,12 +117,7 @@ struct Constants {
         static let lastFilterShown = "SJLastFilter"
         static let lastTabOpened = "SJLastTabOpened"
         static let lastImageRefreshTime = "SJLastImageRefreshDate"
-        static let promotionFinishedAcknowledged = "SJPromotionFinishedAcknowledged"
-
         static let loginDetailsUpdated = "SJLoginDetailsUpdated"
-        static let watchAutoDownloadUpNextEnabled = "SJWatchAutoDownloadUpNextEnabled"
-        static let watchAutoDownloadUpNextCount = "SJWatchAutoDownloadCountUpNext"
-        static let watchAutoDeleteUpNext = "SJWatchAutoDeleteUpNext"
 
         public static let analyticsOptOut = "SJAnalyticsOptOut"
 
@@ -145,7 +137,6 @@ struct Constants {
         static let lastSurveyNotReallyDate = "lastSurveyNotReallyDate"
 
         static let shouldShowInitialOnboardingFlow = "shouldShowInitialOnboardingFlow"
-        static let shouldShowEncourageAccountCreationModal = "shouldShowEncourageAccountCreationModal"
 
         static let autoplay = "autoplay"
 
@@ -221,10 +212,6 @@ struct Constants {
             static let recommendations = "notifications.recommendations"
             static let offers = "notifications.offers"
             static let triggerDates = "notifications.triggerDates"
-        }
-
-        enum informationalModal {
-            static let hasShownViewModal = "hasShownViewModal"
         }
 
         static let voiceBoostNEnabled = "VoiceBoostNEnabled"

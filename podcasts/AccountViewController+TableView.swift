@@ -7,10 +7,7 @@ import UIKit
 extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if section == 0, FeatureFlag.newOnboardingUpgrade.enabled {
-            return 1
-        }
-        return UITableView.automaticDimension
+        section == 0 ? 1 : UITableView.automaticDimension
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -200,11 +197,12 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if section == 0, FeatureFlag.newOnboardingUpgrade.enabled {
-            let view = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 2))
-            view.backgroundColor = AppTheme.colorForStyle(.primaryUi03, themeOverride: nil)
-            return view
+        guard section == 0 else {
+            return nil
         }
-        return nil
+
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 2))
+        view.backgroundColor = AppTheme.colorForStyle(.primaryUi03, themeOverride: nil)
+        return view
     }
 }

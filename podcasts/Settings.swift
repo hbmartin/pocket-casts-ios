@@ -585,84 +585,6 @@ class Settings: NSObject {
         UserDefaults.standard.set(value, forKey: playerChaptersExpandedKey)
     }
 
-    // MARK: Subscription Cancelled Acknowledgement
-
-    private static let subscriptionCancelledAcknowledgedKey = "SJCancelledAcknowledged"
-    class func setSubscriptionCancelledAcknowledged(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: subscriptionCancelledAcknowledgedKey)
-    }
-
-    class func subscriptionCancelledAcknowledged() -> Bool {
-        UserDefaults.standard.bool(forKey: subscriptionCancelledAcknowledgedKey)
-    }
-
-    private static let subscriptionCancelledSurveyShowedKey = "SJCancelledSurveyShowed"
-    static var subscriptionCancelledSurveyShown: Bool {
-        get {
-            UserDefaults.standard.bool(forKey: subscriptionCancelledSurveyShowedKey)
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: subscriptionCancelledSurveyShowedKey)
-        }
-    }
-
-    // MARK: Promotion Finished Acknowledgement
-
-    class func setPromotionFinishedAcknowledged(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Constants.UserDefaults.promotionFinishedAcknowledged)
-    }
-
-    class func promotionFinishedAcknowledged() -> Bool {
-        UserDefaults.standard.bool(forKey: Constants.UserDefaults.promotionFinishedAcknowledged)
-    }
-
-    // MARK: Plus Info Closed
-
-    private static let plusInfoFilesSettingsClosedKey = "PlusInfoClosedFileSettings"
-    class func plusInfoDismissedOnFilesSettings() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoFilesSettingsClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnFilesSettings(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoFilesSettingsClosedKey)
-    }
-
-    private static let plusInfoFilesAddClosedKey = "PlusInfoClosedFileAdd"
-    class func plusInfoDismissedOnFilesAdd() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoFilesAddClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnFilesAdd(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoFilesAddClosedKey)
-    }
-
-    private static let plusInfoAppearanceClosedKey = "PlusInfoClosedAppearance"
-    class func plusInfoDismissedOnAppearance() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoAppearanceClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnAppearance(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoAppearanceClosedKey)
-    }
-
-    private static let plusInfoWatchClosedKey = "PlusInfoClosedWatch"
-    class func plusInfoDismissedOnWatch() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoWatchClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnWatch(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoWatchClosedKey)
-    }
-
-    private static let plusInfoProfileClosedKey = "PlusInfoClosedProfile"
-    class func plusInfoDismissedOnProfile() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoProfileClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnProfile(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoProfileClosedKey)
-    }
-
     class func uniqueAppId() -> String? {
         if let appId = UserDefaults.standard.object(forKey: Constants.UserDefaults.appId) as? String {
             return appId
@@ -836,48 +758,6 @@ class Settings: NSObject {
 
     class func setLoginDetailsUpdated() {
         UserDefaults.standard.set(true, forKey: Constants.UserDefaults.loginDetailsUpdated)
-    }
-
-    // MARK: - Watch number of episodes to auto sync from the Up Next queue
-
-    class func setWatchAutoDownloadUpNextEnabled(isEnabled: Bool) {
-        UserDefaults.standard.set(isEnabled, forKey: Constants.UserDefaults.watchAutoDownloadUpNextEnabled)
-
-        trackValueToggled(.settingsAppleWatchAutoDownloadUpNextToggled, enabled: isEnabled)
-    }
-
-    class func watchAutoDownloadUpNextEnabled() -> Bool {
-        guard let isEnabled = UserDefaults.standard.object(forKey: Constants.UserDefaults.watchAutoDownloadUpNextEnabled) as? Bool else {
-            return false
-        }
-
-        return isEnabled
-    }
-
-    class func setWatchAutoDownloadUpNextCount(numEpisodes: Int) {
-        UserDefaults.standard.set(numEpisodes, forKey: Constants.UserDefaults.watchAutoDownloadUpNextCount)
-        trackValueChanged(.settingsAppleWatchAutoDownloadEpisodesChanged, value: numEpisodes)
-    }
-
-    class func watchAutoDownloadUpNextCount() -> Int {
-        guard let numEpisodes = UserDefaults.standard.object(forKey: Constants.UserDefaults.watchAutoDownloadUpNextCount) as? Int else {
-            return 3
-        }
-
-        return numEpisodes
-    }
-
-    class func setWatchAutoDeleteUpNext(isEnabled: Bool) {
-        UserDefaults.standard.set(isEnabled, forKey: Constants.UserDefaults.watchAutoDeleteUpNext)
-        trackValueToggled(.settingsAppleWatchAutoDownloadDeleteDownloadsToggled, enabled: isEnabled)
-    }
-
-    class func watchAutoDeleteUpNext() -> Bool {
-        guard let isEnabled = UserDefaults.standard.object(forKey: Constants.UserDefaults.watchAutoDeleteUpNext) as? Bool else {
-            return true
-        }
-
-        return isEnabled
     }
 
     // MARK: - App Store Review Requests
@@ -1389,10 +1269,6 @@ class Settings: NSObject {
             UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.saveCurrentUpNextQueueIntoPlaylist)
         }
     }
-
-    // MARK: - Debug IAP in TF builds
-
-    static var shouldEnableIAPInTestFlightBuilds: Bool = false
 
     // MARK: - Notifications
     static var notificationsNewEpisodes: Bool {

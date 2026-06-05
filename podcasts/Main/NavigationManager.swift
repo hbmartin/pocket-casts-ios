@@ -27,6 +27,8 @@ class NavigationManager {
     static let uploadFileKey = "uploadFile"
 
     static let filesPageKey = "filesPage"
+    static let showWhatsNewPageKey = "showWhatsNewPage"
+    static let endOfYearStories = "endOfYearStories"
 
     static let showPrivacyPolicyPageKey = "showPrivacyPage"
     static let showTermsOfUsePageKey = "showTermsOfUsePage"
@@ -72,6 +74,31 @@ class NavigationManager {
     private var lastNavKey = ""
     private var lastNavData: NSDictionary?
 
+    private static let removedPodcastFallbackKeys: Set<String> = [
+        homePageKey,
+        showWhatsNewPageKey,
+        endOfYearStories,
+        "appClip",
+        "appClipPage"
+    ]
+
+    private static let removedProfileFallbackKeys: Set<String> = [
+        "paywall",
+        "paywallPage",
+        "upsell",
+        "upsellPage",
+        "upgrade",
+        "upgradePage",
+        "plus",
+        "plusPage",
+        "patron",
+        "patronPage",
+        "subscription",
+        "subscriptionPage",
+        "watchSettings",
+        "watchSettingsPage"
+    ]
+
     init() {
         isPhone = UIDevice.current.userInterfaceIdiom == UIUserInterfaceIdiom.phone
     }
@@ -94,7 +121,11 @@ class NavigationManager {
         lastNavKey = place
         lastNavData = data
 
-        if place == NavigationManager.podcastPageKey {
+        if Self.removedPodcastFallbackKeys.contains(place) {
+            mainController?.navigateToPodcastList(animated)
+        } else if Self.removedProfileFallbackKeys.contains(place) {
+            mainController?.showProfilePage()
+        } else if place == NavigationManager.podcastPageKey {
             guard let data else { return }
 
             if let podcast = data[NavigationManager.podcastKey] as? Podcast {
@@ -190,6 +221,10 @@ class NavigationManager {
         }
         if feature == "suggestedFolders" {
             mainController?.navigateToSuggestedFolders()
+        } else if Self.removedProfileFallbackKeys.contains(feature) {
+            mainController?.showProfilePage()
+        } else {
+            mainController?.navigateToPodcastList(animated)
         }
     }
 

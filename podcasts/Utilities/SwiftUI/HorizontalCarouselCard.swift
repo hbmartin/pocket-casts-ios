@@ -83,7 +83,7 @@ fileprivate enum MockItem: String, CaseIterable, Identifiable, HorizontalCarouse
     }
 
     var image: String {
-        "informational_card_sync"
+        "welcome-import"
     }
 }
 

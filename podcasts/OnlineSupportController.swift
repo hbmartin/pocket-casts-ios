@@ -7,7 +7,6 @@ import WebKit
 class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptivePresentationControllerDelegate {
     enum Source: String {
         case settings
-        case winback
         case about
     }
 
@@ -63,23 +62,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
         AnalyticsHelper.userGuideOpened()
 
-        switch source {
-        case .winback:
-            Analytics.track(.winbackScreenShown, properties: ["screen": "help_and_feedback"])
-        default:
-            Analytics.track(.settingsHelpShown)
-        }
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-
-        switch source {
-        case .winback:
-            Analytics.track(.winbackScreenDismissed, properties: ["screen": "help_and_feedback"])
-        default:
-            break
-        }
+        Analytics.track(.settingsHelpShown)
     }
 
     private func setupLoadingIndicator() {
@@ -129,7 +112,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
     }
 
     private func showStatusPage() {
-        let hostingController = ThemedHostingController(rootView: StatusPageView(source: source))
+        let hostingController = ThemedHostingController(rootView: StatusPageView())
         navigationController?.pushViewController(hostingController, animated: true)
     }
 
@@ -228,7 +211,7 @@ private extension OnlineSupportController {
 
 private extension OnlineSupportController {
     func viewLogs(_ sender: UIBarButtonItem) {
-        let vc = LogsViewController(source: source)
+        let vc = LogsViewController()
         self.navigationController?.pushViewController(vc, animated: true)
     }
 }

@@ -299,7 +299,51 @@ extension AppDelegate {
         setupOnboardingRoutes()
         setupNewFeaturesRoutes()
         setupProfileRoutes()
-        setupTestFlightIAPRoutes()
+        setupRemovedFeatureFallbackRoutes()
+    }
+
+    func setupRemovedFeatureFallbackRoutes() {
+        let podcastFallbackRoutes = [
+            "/whats-new",
+            "/whats-new/*",
+            "/show-whats-new",
+            "/show-whats-new/*",
+            "/end-of-year",
+            "/end-of-year/*",
+            "/app-clip",
+            "/app-clip/*"
+        ]
+
+        podcastFallbackRoutes.forEach { route in
+            JLRoutes.global().addRoute(route) { _ -> Bool in
+                NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
+                return true
+            }
+        }
+
+        let profileFallbackRoutes = [
+            "/upsell",
+            "/upsell/*",
+            "/upgrade",
+            "/upgrade/*",
+            "/plus",
+            "/plus/*",
+            "/patron",
+            "/patron/*",
+            "/subscription",
+            "/subscription/*",
+            "/watch-settings",
+            "/watch-settings/*",
+            "/settings/watch",
+            "/iap/:enabled"
+        ]
+
+        profileFallbackRoutes.forEach { route in
+            JLRoutes.global().addRoute(route) { _ -> Bool in
+                NavigationManager.sharedManager.navigateTo(NavigationManager.settingsProfileKey)
+                return true
+            }
+        }
     }
 
     func setupOnboardingRoutes() {
@@ -460,31 +504,5 @@ extension AppDelegate {
                 }
             }
         })
-    }
-
-    private func setupTestFlightIAPRoutes() {
-        if BuildEnvironment.current != .testFlight {
-            return
-        }
-        JLRoutes.global().addRoute("/iap/:enabled") {[weak self] parameters -> Bool in
-            guard
-                self != nil,
-                let value = parameters["enabled"] as? String
-            else { return false }
-
-            let isEnabled = value.lowercased() == "true"
-            Settings.shouldEnableIAPInTestFlightBuilds = isEnabled
-
-            let title = isEnabled ? "✅ In-App Purchases Enabled" : "🚫 In-App Purchases Disabled"
-            let message = isEnabled ? "This beta build uses a test environment. Purchases made here are for testing only—please don’t use your production account." : "In-App Purchases are turned off on this device."
-
-            SJUIUtils.showAlert(
-                title: title,
-                message: message,
-                from: SceneHelper.rootViewController()
-            )
-
-            return true
-        }
     }
 }

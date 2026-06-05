@@ -5,8 +5,6 @@ struct StatusPageView: View {
 
     @ObservedObject var viewModel = StatusPageViewModel()
 
-    let source: OnlineSupportController.Source
-
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -81,28 +79,12 @@ struct StatusPageView: View {
         .padding(.horizontal, 16)
         .navigationTitle(L10n.settingsConnectionStatus)
         .applyDefaultThemeOptions()
-        .onAppear {
-            switch source {
-            case .winback:
-                Analytics.track(.winbackScreenShown, properties: ["screen": "connection_status"])
-            default:
-                break
-            }
-        }
-        .onDisappear {
-            switch source {
-            case .winback:
-                Analytics.track(.winbackScreenDismissed, properties: ["screen": "connection_status"])
-            default:
-                break
-            }
-        }
     }
 }
 
 struct StatusPageView_Previews: PreviewProvider {
     static var previews: some View {
-        StatusPageView(source: .settings)
+        StatusPageView()
             .setupDefaultEnvironment()
     }
 }
