@@ -96,7 +96,7 @@ struct URLHelper {
               url.port == nil,
               url.user == nil,
               url.password == nil,
-              url.path == "/",
+              url.path == "/" || url.path.isEmpty,
               url.query == nil,
               let fragment = url.fragment
         else {

@@ -34,50 +34,89 @@ class AVFileUtil: NSObject {
 
         metadataTask = Task { [weak self] in
             guard let self else { return }
-            guard let metadataItems = try? await asset.load(.commonMetadata) else {
+            let metadataItems: [AVMetadataItem]
+            do {
+                metadataItems = try await asset.load(.commonMetadata)
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
                 titleHandler(nil)
                 artworkHandler(nil)
                 return
             }
 
-            await processTitle(metadataItems: metadataItems)
-            await processArtwork(metadataItems: metadataItems)
+            do {
+                try await processTitle(metadataItems: metadataItems)
+                try Task.checkCancellation()
+                try await processArtwork(metadataItems: metadataItems)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
+                titleHandler(nil)
+                artworkHandler(nil)
+            }
         }
 
         // Load duration separately as it can take longer than basic metadata.
         durationTask = Task { [weak self] in
             guard let self else { return }
-            if let duration = try? await asset.load(.duration) {
+            do {
+                let duration = try await asset.load(.duration)
+                try Task.checkCancellation()
                 durationHandler(CMTimeGetSeconds(duration))
-            }
-        }
-    }
-
-    private func processTitle(metadataItems: [AVMetadataItem]) async {
-        let titleMetaData = AVMetadataItem.metadataItems(from: metadataItems, filteredByIdentifier: .commonIdentifierTitle)
-
-        if let metaData = titleMetaData.first {
-            if let title = try? await metaData.load(.stringValue), !title.isEmpty {
-                titleHandler(title)
+            } catch {
                 return
             }
         }
+    }
+
+    private func processTitle(metadataItems: [AVMetadataItem]) async throws {
+        try Task.checkCancellation()
+        let titleMetaData = AVMetadataItem.metadataItems(from: metadataItems, filteredByIdentifier: .commonIdentifierTitle)
+
+        if let metaData = titleMetaData.first {
+            do {
+                let title = try await metaData.load(.stringValue)
+                try Task.checkCancellation()
+                if let title, !title.isEmpty {
+                    titleHandler(title)
+                    return
+                }
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                guard !Task.isCancelled else { throw CancellationError() }
+            }
+        }
+
+        try Task.checkCancellation()
         titleHandler(nil)
     }
 
-    private func processArtwork(metadataItems: [AVMetadataItem]) async {
+    private func processArtwork(metadataItems: [AVMetadataItem]) async throws {
+        try Task.checkCancellation()
         let artworks = AVMetadataItem.metadataItems(from: metadataItems, filteredByIdentifier: .commonIdentifierArtwork)
         var artworkImages = [UIImage]()
 
         for item in artworks {
-            var embeddedImage: UIImage
-
-            if let data = try? await item.load(.dataValue), SJMediaMetadataHelper.isValidEmbeddedImage(data), let image = UIImage(data: data) {
-                embeddedImage = image
-                artworkImages.append(embeddedImage)
+            do {
+                try Task.checkCancellation()
+                let data = try await item.load(.dataValue)
+                try Task.checkCancellation()
+                if let data, SJMediaMetadataHelper.isValidEmbeddedImage(data), let image = UIImage(data: data) {
+                    artworkImages.append(image)
+                }
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                guard !Task.isCancelled else { throw CancellationError() }
             }
         }
 
+        try Task.checkCancellation()
         var biggestImage: UIImage?
         if artworkImages.isEmpty {
             artworkHandler(nil)
@@ -96,6 +135,7 @@ class AVFileUtil: NSObject {
             }
         }
 
+        try Task.checkCancellation()
         if let biggest = biggestImage, biggest.size.width >= CGFloat(AVFileUtil.min_artwork_size) {
             artworkHandler(biggest)
         } else {

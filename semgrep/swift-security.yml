@@ -425,6 +425,26 @@ rules:
     patterns:
       - pattern-regex: 'class\s+[A-Za-z_][A-Za-z0-9_]*\s*:\s*[^{\n]*@unchecked\s+Sendable[^{]*\{[\s\S]{0,800}?lazy\s+var\s+[A-Za-z_][A-Za-z0-9_]*\s*:\s*DispatchGroup'
 
+  - id: pocketcasts.dispatch-group-wait-without-timeout
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Use DispatchGroup.wait(timeout:) with logging or fallback handling so asynchronous callbacks cannot block a thread indefinitely.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-inside: |
+          class $CLASS: ApiBaseTask, @unchecked Sendable {
+            ...
+          }
+      - pattern: $GROUP.wait()
+
   - id: pocketcasts.badge-transient-clear-notifications
     severity: WARNING
     metadata:
