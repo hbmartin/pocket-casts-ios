@@ -24,16 +24,25 @@ class AVFileUtil: NSObject {
     }
 
     deinit {
+        cancelTasks()
+    }
+
+    func cancelLoading() {
+        cancelTasks()
+    }
+
+    private func cancelTasks() {
         metadataTask?.cancel()
         durationTask?.cancel()
+        metadataTask = nil
+        durationTask = nil
     }
 
     func loadMetaData() {
-        metadataTask?.cancel()
-        durationTask?.cancel()
+        cancelLoading()
 
         metadataTask = Task { [weak self] in
-            guard let self else { return }
+            guard let asset = self?.asset, let titleHandler = self?.titleHandler, let artworkHandler = self?.artworkHandler else { return }
             let metadataItems: [AVMetadataItem]
             do {
                 metadataItems = try await asset.load(.commonMetadata)
@@ -48,9 +57,9 @@ class AVFileUtil: NSObject {
             }
 
             do {
-                try await processTitle(metadataItems: metadataItems)
+                try await AVFileUtil.processTitle(metadataItems: metadataItems, titleHandler: titleHandler)
                 try Task.checkCancellation()
-                try await processArtwork(metadataItems: metadataItems)
+                try await AVFileUtil.processArtwork(metadataItems: metadataItems, artworkHandler: artworkHandler)
             } catch is CancellationError {
                 return
             } catch {
@@ -62,7 +71,7 @@ class AVFileUtil: NSObject {
 
         // Load duration separately as it can take longer than basic metadata.
         durationTask = Task { [weak self] in
-            guard let self else { return }
+            guard let asset = self?.asset, let durationHandler = self?.durationHandler else { return }
             do {
                 let duration = try await asset.load(.duration)
                 try Task.checkCancellation()
@@ -73,7 +82,7 @@ class AVFileUtil: NSObject {
         }
     }
 
-    private func processTitle(metadataItems: [AVMetadataItem]) async throws {
+    private static func processTitle(metadataItems: [AVMetadataItem], titleHandler: (String?) -> Void) async throws {
         try Task.checkCancellation()
         let titleMetaData = AVMetadataItem.metadataItems(from: metadataItems, filteredByIdentifier: .commonIdentifierTitle)
 
@@ -96,7 +105,7 @@ class AVFileUtil: NSObject {
         titleHandler(nil)
     }
 
-    private func processArtwork(metadataItems: [AVMetadataItem]) async throws {
+    private static func processArtwork(metadataItems: [AVMetadataItem], artworkHandler: (UIImage?) -> Void) async throws {
         try Task.checkCancellation()
         let artworks = AVMetadataItem.metadataItems(from: metadataItems, filteredByIdentifier: .commonIdentifierArtwork)
         var artworkImages = [UIImage]()

@@ -92,16 +92,16 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
 
             // on watchOS, we don't show history, so we also don't process server changes we only want to push changes up, not down
             #if !os(watchOS)
-            updateEpisodes(updates: response.history.changes)
-            #endif
-
+            success = updateEpisodes(updates: response.history.changes)
+            #else
             success = true
+            #endif
         } catch {
             print("SyncYearListeningHistory had issues decoding protobuf \(error.localizedDescription)")
         }
     }
 
-    private func updateEpisodes(updates: [Api_HistoryChange]) {
+    private func updateEpisodes(updates: [Api_HistoryChange]) -> Bool {
         let lock = NSLock()
 
         var podcastsToUpdate: Set<String> = []
@@ -140,6 +140,7 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
         let waitResult = dispatchGroup.wait(timeout: .now() + 30.seconds)
         if waitResult == .timedOut {
             FileLog.shared.addMessage("SyncYearListeningHistoryTask timed out waiting for missing episodes to update")
+            return false
         }
 
         lock.lock()
@@ -147,10 +148,10 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
         lock.unlock()
 
         // Sync episode status for the retrieved podcasts' episodes
-        updateEpisodes(for: podcastsToUpdateSnapshot)
+        return updateEpisodes(for: podcastsToUpdateSnapshot)
     }
 
-    private func updateEpisodes(for podcastsUuids: Set<String>) {
+    private func updateEpisodes(for podcastsUuids: Set<String>) -> Bool {
         let dispatchGroup = DispatchGroup()
 
         podcastsUuids.forEach { podcastUuid in
@@ -168,7 +169,10 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
         let waitResult = dispatchGroup.wait(timeout: .now() + 30.seconds)
         if waitResult == .timedOut {
             FileLog.shared.addMessage("SyncYearListeningHistoryTask timed out waiting for podcast episodes to update")
+            return false
         }
+
+        return true
     }
 }
 

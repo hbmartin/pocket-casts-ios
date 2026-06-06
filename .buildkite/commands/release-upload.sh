@@ -1,8 +1,11 @@
 #!/bin/bash -eu
 
 # Ensure we get the latest commit of the `release/*` branch, especially to get last version bump commit before publishing the GitHub Release and creating the git tag
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_VERSION="${1:?RELEASE_VERSION parameter missing}"
-"$(dirname "${BASH_SOURCE[0]}")/checkout-release-branch.sh" "$RELEASE_VERSION"
+source "$SCRIPT_DIR/select-xcode.sh"
+
+"$SCRIPT_DIR/checkout-release-branch.sh" "$RELEASE_VERSION"
 
 BETA_RELEASE=${2:-true} # use second call param, default to true for safety
 
@@ -14,7 +17,7 @@ STEP=testflight_build
 buildkite-agent artifact download "$ARTIFACTS_DIR/*.ipa" . --step $STEP
 buildkite-agent artifact download "$ARTIFACTS_DIR/*.zip" . --step $STEP
 
-"$(dirname "${BASH_SOURCE[0]}")/shared_setup.sh" --skip-swiftpm
+"$SCRIPT_DIR/shared_setup.sh" --skip-swiftpm
 
 echo "--- :closed_lock_with_key: Installing Secrets"
 bundle exec fastlane run configure_apply

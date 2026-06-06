@@ -12,6 +12,7 @@ steps:
       echo '--- Configure Git identity'
       .buildkite/commands/use-bot-for-git.sh
 
+      source .buildkite/commands/select-xcode.sh
       .buildkite/commands/checkout-release-branch.sh "${RELEASE_VERSION}"
       .buildkite/commands/shared_setup.sh --skip-swiftpm
 

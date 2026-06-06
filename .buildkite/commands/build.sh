@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+source "$SCRIPT_DIR/select-xcode.sh"
+
 if "$SCRIPT_DIR/should-skip-job.sh" --job-type build; then
   exit 0
 fi
