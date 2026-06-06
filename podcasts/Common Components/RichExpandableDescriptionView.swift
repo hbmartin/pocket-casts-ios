@@ -235,6 +235,11 @@ extension RichExpandableLabel: WKNavigationDelegate { // NOSONAR - WebView navig
             return
         }
 
+        guard URLHelper.isAllowedExternalContentLink(url) else {
+            decisionHandler(.cancel)
+            return
+        }
+
         delegate?.linkTapped(url: url)
 
         decisionHandler(.cancel)

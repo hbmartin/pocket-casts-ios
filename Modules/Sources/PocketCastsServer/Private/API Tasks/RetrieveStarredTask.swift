@@ -7,12 +7,9 @@ class RetrieveStarredTask: ApiBaseTask, @unchecked Sendable {
     var completion: (([Episode]?) -> Void)?
 
     private var convertedEpisodes = [Episode]()
+    private let convertedEpisodesLock = NSLock()
 
-    private lazy var addEpisodeGroup: DispatchGroup = {
-        let dispatchGroup = DispatchGroup()
-
-        return dispatchGroup
-    }()
+    private let addEpisodeGroup = DispatchGroup()
 
     override func apiTokenAcquired(token: String) {
         let url = ServerConstants.Urls.api() + "starred/list"
@@ -32,7 +29,7 @@ class RetrieveStarredTask: ApiBaseTask, @unchecked Sendable {
             do {
                 let serverEpisodes = try Api_StarredEpisodesResponse(serializedBytes: responseData).episodes
                 if serverEpisodes.isEmpty {
-                    completion?(convertedEpisodes)
+                    completion?(convertedEpisodesSnapshot())
 
                     return
                 }
@@ -40,10 +37,11 @@ class RetrieveStarredTask: ApiBaseTask, @unchecked Sendable {
                 for serverEpisode in serverEpisodes {
                     addEpisodeGroup.enter()
                     processEpisode(serverEpisode)
-                    addEpisodeGroup.wait()
                 }
 
-                completion?(convertedEpisodes)
+                addEpisodeGroup.wait()
+
+                completion?(convertedEpisodesSnapshot())
             } catch {
                 FileLog.shared.addMessage("Decoding starred failed \(error.localizedDescription)")
                 completion?(nil)
@@ -92,8 +90,17 @@ class RetrieveStarredTask: ApiBaseTask, @unchecked Sendable {
             DataManager.sharedManager.saveEpisode(starred: true, starredModified: protoEpisode.starredModified, episode: episode, updateSyncFlag: false)
         }
 
+        convertedEpisodesLock.lock()
         convertedEpisodes.append(episode)
+        convertedEpisodesLock.unlock()
 
         return true
+    }
+
+    private func convertedEpisodesSnapshot() -> [Episode] {
+        convertedEpisodesLock.lock()
+        defer { convertedEpisodesLock.unlock() }
+
+        return convertedEpisodes
     }
 }

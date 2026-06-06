@@ -7,7 +7,7 @@ class MetadataTask: Operation, @unchecked Sendable {
 
     var episodeUuid = ""
 
-    private lazy var dispatchGroup: DispatchGroup = {
+    private let dispatchGroup: DispatchGroup = {
         let dispatchGroup = DispatchGroup()
 
         return dispatchGroup

@@ -201,19 +201,8 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
             return
         }
 
-        if url.host == "localhost" {
-            guard let fragment = url.fragment else {
-                decisionHandler(.cancel)
-                return
-            }
-
-            let components = fragment.components(separatedBy: "=")
-            if components.count < 2 {
-                decisionHandler(.cancel)
-                return
-            }
-
-            let timeToSkipTo = SJCommonUtils.colonFormattedString(toTime: components[1])
+        if let timestamp = URLHelper.showNotesTimestampValue(from: url) {
+            let timeToSkipTo = SJCommonUtils.colonFormattedString(toTime: timestamp)
             if timeToSkipTo >= 0 {
                 containerDelegate?.scrollToNowPlaying()
                 SwiftUtils.performAfterDelayOnMainThread(0.4, closure: {
@@ -221,6 +210,11 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
                 })
             }
         } else {
+            guard URLHelper.isAllowedExternalContentLink(url) else {
+                decisionHandler(.cancel)
+                return
+            }
+
             Analytics.track(
                 .playerShowNotesLinkTapped,
                 properties: ["episode_uuid": lastEpisodeUuidRendered]

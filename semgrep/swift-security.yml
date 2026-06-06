@@ -409,6 +409,63 @@ rules:
           ...
           SecItemAdd(...)
 
+  - id: pocketcasts.unchecked-sendable-lazy-dispatch-group
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Eagerly initialize DispatchGroup in @unchecked Sendable classes; lazy initialization is not atomic.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-regex: 'class\s+[A-Za-z_][A-Za-z0-9_]*\s*:\s*[^{\n]*@unchecked\s+Sendable[^{]*\{[\s\S]{0,800}?lazy\s+var\s+[A-Za-z_][A-Za-z0-9_]*\s*:\s*DispatchGroup'
+
+  - id: pocketcasts.badge-transient-clear-notifications
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [ios]
+    message: Use removeAllDeliveredNotifications() plus setBadgeCount(0) instead of flashing a transient badge value to clear notifications.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern: |
+          $CENTER.setBadgeCount(1) {
+            ...
+            $CENTER.setBadgeCount(0)
+            ...
+          }
+
+  - id: pocketcasts.avfileutil-unstored-task
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Store AVFileUtil metadata tasks and cancel them in deinit so handlers cannot outlive the utility instance.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/Utilities/AVFileUtil.swift"
+    patterns:
+      - pattern-inside: |
+          class AVFileUtil: NSObject {
+            ...
+          }
+      - pattern-regex: '^\s*Task\s*\{'
+
   # Source: critical_device_features.yaml
   - id: critical_device_features
     severity: WARNING

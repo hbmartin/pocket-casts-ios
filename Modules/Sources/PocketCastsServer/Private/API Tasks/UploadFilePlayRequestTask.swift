@@ -4,11 +4,12 @@ import PocketCastsUtils
 import SwiftProtobuf
 
 class UploadFilePlayRequestTask: ApiBaseTask, @unchecked Sendable {
-    var completion: ((URL?) -> Void)?
+    private let completion: (URL?) -> Void
     private let episode: UserEpisode
 
-    init(episode: UserEpisode) {
+    init(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
         self.episode = episode
+        self.completion = completion
 
         super.init()
     }
@@ -20,7 +21,7 @@ class UploadFilePlayRequestTask: ApiBaseTask, @unchecked Sendable {
 
             guard let responseData = response else {
                 FileLog.shared.addMessage("Upload file play request missing response data \(httpStatus?.statusCode ?? -1)")
-                completion?(nil)
+                completion(nil)
                 return
             }
 
@@ -28,14 +29,14 @@ class UploadFilePlayRequestTask: ApiBaseTask, @unchecked Sendable {
                 let playResponse = try Files_FilePlayResponse(serializedBytes: responseData)
                 guard httpStatus?.statusCode == ServerConstants.HttpConstants.ok else {
                     FileLog.shared.addMessage("Upload file play request failed \(httpStatus?.statusCode ?? -1) with message: \(playResponse.textFormatString())")
-                    completion?(nil)
+                    completion(nil)
                     return
                 }
                 FileLog.shared.addMessage("Upload play response successful)")
-                completion?(URL(string: playResponse.url))
+                completion(URL(string: playResponse.url))
             } catch {
                 FileLog.shared.addMessage("Upload Play request response failed \(error.localizedDescription)")
-                completion?(nil)
+                completion(nil)
             }
         }
     }

@@ -54,6 +54,10 @@ struct URLHelper {
         "www.slumberstudios.com"
     ]
 
+    private static let showNotesTimestampScheme = "http"
+    private static let showNotesTimestampHost = "localhost"
+    private static let showNotesTimestampFragmentName = "playerJumpTo"
+
     static func isMailtoScheme(_ scheme: String?) -> Bool {
         guard let scheme else { return false }
 
@@ -80,6 +84,34 @@ struct URLHelper {
 
     static func canOpenInAppBrowser(_ url: URL, context: InAppBrowserContext) -> Bool {
         inAppBrowserDecision(for: url, context: context) == .inAppBrowser
+    }
+
+    static func isAllowedExternalContentLink(_ url: URL) -> Bool {
+        inAppBrowserDecision(for: url, context: .externalContent) != .blocked
+    }
+
+    static func showNotesTimestampValue(from url: URL) -> String? {
+        guard url.scheme?.caseInsensitiveCompare(showNotesTimestampScheme) == .orderedSame,
+              host(for: url) == showNotesTimestampHost,
+              url.port == nil,
+              url.user == nil,
+              url.password == nil,
+              url.path == "/",
+              url.query == nil,
+              let fragment = url.fragment
+        else {
+            return nil
+        }
+
+        let components = fragment.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+        guard components.count == 2,
+              components[0] == showNotesTimestampFragmentName,
+              !components[1].isEmpty
+        else {
+            return nil
+        }
+
+        return String(components[1])
     }
 
     static func inAppBrowserDecision(

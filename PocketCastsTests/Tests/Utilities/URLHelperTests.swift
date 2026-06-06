@@ -45,7 +45,7 @@ final class URLHelperTests: XCTestCase {
     func testExternalContentRejectsNonWebURLsForInAppPresentation() {
         let nonWebURLs = [
             customURL(scheme: URLFixture.javascriptScheme, path: URLFixture.scriptPath),
-            URL(fileURLWithPath: URLFixture.localFilePath),
+            URLFixture.localFileURL,
             customURL(scheme: URLFixture.appScheme, host: URLFixture.appHost),
             relativeURL(path: URLFixture.relativePath)
         ]
@@ -111,11 +111,30 @@ final class URLHelperTests: XCTestCase {
 
     func testEmbeddedContentBlocksRemoteAndExternalFileURLs() {
         let remoteURL = webURL(host: URLFixture.untrustedHost, path: URLFixture.redirectPath)
-        let externalFileURL = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent(URLFixture.embeddedContentFileName)
+        let externalFileURL = URLFixture.localFileURL
 
         XCTAssertFalse(URLHelper.isAllowedEmbeddedContentNavigationURL(remoteURL))
         XCTAssertFalse(URLHelper.isAllowedEmbeddedContentNavigationURL(externalFileURL))
+    }
+
+    func testShowNotesTimestampValueAllowsGeneratedLocalhostLink() {
+        let url = showNotesTimestampURL(timestamp: URLFixture.showNotesTimestamp)
+
+        XCTAssertEqual(URLHelper.showNotesTimestampValue(from: url), URLFixture.showNotesTimestamp)
+    }
+
+    func testShowNotesTimestampValueRejectsUnexpectedShapes() {
+        let urls = [
+            showNotesTimestampURL(scheme: URLFixture.httpsScheme),
+            showNotesTimestampURL(host: URLFixture.untrustedHost),
+            showNotesTimestampURL(path: URLFixture.redirectPath),
+            showNotesTimestampURL(fragmentName: URLFixture.redirectFragmentName),
+            webURL(host: URLFixture.untrustedHost, path: URLFixture.podcastPath)
+        ]
+
+        urls.forEach {
+            XCTAssertNil(URLHelper.showNotesTimestampValue(from: $0))
+        }
     }
 
     private func webURL(scheme: String = URLFixture.httpsScheme, host: String, path: String) -> URL {
@@ -139,6 +158,21 @@ final class URLHelperTests: XCTestCase {
         components.path = path
         return components.url!
     }
+
+    private func showNotesTimestampURL(
+        scheme: String = URLFixture.showNotesTimestampScheme,
+        host: String = URLFixture.showNotesTimestampHost,
+        path: String = URLFixture.rootPath,
+        fragmentName: String = URLFixture.showNotesTimestampFragmentName,
+        timestamp: String = URLFixture.showNotesTimestamp
+    ) -> URL {
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = host
+        components.path = path
+        components.fragment = [fragmentName, timestamp].joined(separator: URLFixture.fragmentSeparator)
+        return components.url!
+    }
 }
 
 private enum URLFixture {
@@ -153,15 +187,41 @@ private enum URLFixture {
     static let slumberHost = "slumberstudios.com"
     static let untrustedHost = "example.com"
     static let appHost = "podcasts"
-    static let supportPath = "/ios/"
-    static let cancelSubscriptionPath = "/knowledge-base/how-to-cancel-a-subscription/"
-    static let marketingPath = "/pocketcasts/"
-    static let podcastPath = "/podcast"
+    static let supportPath = path("ios", trailingSlash: true)
+    static let cancelSubscriptionPath = path(
+        "knowledge-base",
+        "how-to-cancel-a-subscription",
+        trailingSlash: true
+    )
+    static let marketingPath = path("pocketcasts", trailingSlash: true)
+    static let podcastPath = path("podcast")
     static let scriptPath = "alert(1)"
-    static let localFilePath = "/private/tmp/test.html"
-    static let relativePath = "example.com/path"
+    static let localFileURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(embeddedContentFileName)
+    static let relativePath = [untrustedHost, "path"].joined(separator: pathSeparator)
     static let supportEmail = "support@pocketcasts.com"
     static let blankPath = "blank"
-    static let redirectPath = "/redirect"
+    static let redirectPath = path("redirect")
     static let embeddedContentFileName = "embedded-content.html"
+    static let rootPath = path()
+    static let showNotesTimestampScheme = "http"
+    static let showNotesTimestampHost = "localhost"
+    static let showNotesTimestampFragmentName = "playerJumpTo"
+    static let redirectFragmentName = "redirect"
+    static let showNotesTimestamp = "57:00"
+    static let fragmentSeparator = "="
+
+    private static let pathSeparator = "/"
+
+    private static func path(_ components: String..., trailingSlash: Bool = false) -> String {
+        guard !components.isEmpty else {
+            return pathSeparator
+        }
+
+        var path = pathSeparator + components.joined(separator: pathSeparator)
+        if trailingSlash {
+            path += pathSeparator
+        }
+        return path
+    }
 }

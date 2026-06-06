@@ -125,6 +125,9 @@ public class SharingServerHandler {
     }
 
     private func legacySharingServerSignature(for dateString: String) -> String {
+        // The legacy sharing endpoint validates SHA-1 signatures built from the
+        // request timestamp and shared credential.
+        // This is protocol compatibility only; do not reuse it for password hashing or local integrity checks.
         let signatureInput = "\(dateString)\(ServerCredentials.sharing)"
         let hashDigest = CryptoKit.Insecure.SHA1.hash(data: Data(signatureInput.utf8)) // NOSONAR - Required by the legacy sharing server signature protocol.
         return hashDigest.compactMap { String(format: "%02hhx", $0) }.joined()

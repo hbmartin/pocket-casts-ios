@@ -8,6 +8,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private var audioMix: AVAudioMix?
     private var assetTrack: AVAssetTrack?
     private var assetTrackLoadTask: Task<Void, Never>?
+    private var loadingPlayerItem: AVPlayerItem?
 
     private(set) var player: AVPlayer?
 
@@ -310,8 +311,8 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         }
 
         if assetTrack == nil,
-           assetTrackLoadTask == nil,
            let currentItem = player?.currentItem,
+           loadingPlayerItem !== currentItem,
            currentItem.status == .readyToPlay {
             loadAssetTrack(for: currentItem)
         }
@@ -320,39 +321,52 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     }
 
     private func loadAssetTrack(for currentItem: AVPlayerItem) {
+        assetTrackLoadTask?.cancel()
+        loadingPlayerItem = currentItem
         assetTrackLoadTask = Task { [weak self] in
             guard let self else {
                 return
             }
 
-            guard let tracks = try? await currentItem.asset.load(.tracks) else {
-                await MainActor.run {
-                    if self.player?.currentItem === currentItem {
-                        self.assetTrackLoadTask = nil
-                    }
-                }
+            do {
+                let tracks = try await currentItem.asset.load(.tracks)
+                try Task.checkCancellation()
+                await self.applyLoadedTracks(currentItem: currentItem, tracks: tracks)
+            } catch is CancellationError {
+                await self.clearAssetTrackLoadTask(for: currentItem)
                 return
-            }
-
-            await MainActor.run {
-                guard self.player?.currentItem === currentItem else {
-                    self.assetTrackLoadTask = nil
-                    return
-                }
-
-                self.assetTrackLoadTask = nil
-                self.loadEmbeddedImage()
-                self.assetTrack = tracks.first { $0.mediaType == .audio }
-
-                #if !os(watchOS)
-                    self.createAudioMix()
-                    self.player?.currentItem?.audioMix = self.audioMix
-                #endif
-
-                self.isWaitingForInitialPlayback = false
-                PlaybackManager.shared.playerDidChangeNowPlayingInfo()
+            } catch {
+                await self.clearAssetTrackLoadTask(for: currentItem)
             }
         }
+    }
+
+    @MainActor
+    private func clearAssetTrackLoadTask(for currentItem: AVPlayerItem) {
+        guard loadingPlayerItem === currentItem else { return }
+        assetTrackLoadTask = nil
+        loadingPlayerItem = nil
+    }
+
+    @MainActor
+    private func applyLoadedTracks(currentItem: AVPlayerItem, tracks: [AVAssetTrack]) {
+        guard player?.currentItem === currentItem else {
+            clearAssetTrackLoadTask(for: currentItem)
+            return
+        }
+
+        assetTrackLoadTask = nil
+        loadingPlayerItem = nil
+        loadEmbeddedImage(for: currentItem)
+        assetTrack = tracks.first { $0.mediaType == .audio }
+
+        #if !os(watchOS)
+            createAudioMix()
+            currentItem.audioMix = audioMix
+        #endif
+
+        isWaitingForInitialPlayback = false
+        PlaybackManager.shared.playerDidChangeNowPlayingInfo()
     }
 
     // MARK: - Audio Mix
@@ -899,7 +913,10 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private func cleanupPlayer() {
         assetTrackLoadTask?.cancel()
         assetTrackLoadTask = nil
+        loadingPlayerItem = nil
         player?.currentItem?.audioMix = nil
+        audioMix = nil
+        assetTrack = nil
         durationObserver = nil
         rateObserver = nil
         playerStatusObserver = nil
@@ -933,9 +950,9 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         hasher.combine(ObjectIdentifier(self))
     }
 
-    func loadEmbeddedImage() {
+    func loadEmbeddedImage(for currentItem: AVPlayerItem? = nil) {
         #if !os(watchOS)
-        guard let asset = player?.currentItem?.asset, let episodeUuid, let podcastUuid else {
+        guard let asset = currentItem?.asset ?? player?.currentItem?.asset, let episodeUuid, let podcastUuid else {
             return
         }
 

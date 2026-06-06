@@ -4,17 +4,46 @@ import PocketCastsDataModel
 import EndOfYear
 
 class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @unchecked Sendable {
-    private var text: String
+    private let text: String
 
     private let pocketCastsUrl = ServerConstants.Urls.share()
 
-    private var shortenedURL: String?
-    private var longURL: String?
-    private var podcastListURL: String?
+    private let urlLock = NSLock()
+    private var shortenedURLStorage: String?
+    private let longURL: String?
+    private var podcastListURLStorage: String?
 
     var shareableMetadataProvider = ShareableMetadataProvider()
 
-    private var year: EndOfYear.Year
+    private let year: EndOfYear.Year
+
+    private var shortenedURL: String? {
+        get {
+            urlLock.lock()
+            defer { urlLock.unlock() }
+
+            return shortenedURLStorage
+        }
+        set {
+            urlLock.lock()
+            shortenedURLStorage = newValue
+            urlLock.unlock()
+        }
+    }
+
+    private var podcastListURL: String? {
+        get {
+            urlLock.lock()
+            defer { urlLock.unlock() }
+
+            return podcastListURLStorage
+        }
+        set {
+            urlLock.lock()
+            podcastListURLStorage = newValue
+            urlLock.unlock()
+        }
+    }
 
     var hashtags: [String] {
         var hashtags = ["pocketcasts"]
@@ -31,28 +60,30 @@ class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @
     init(_ text: String, year: EndOfYear.Year) {
         self.text = text
         self.year = year
+        longURL = nil
         super.init(placeholderItem: self.text)
     }
 
     init(_ text: String, podcast: Podcast, year: EndOfYear.Year) {
         self.text = text
         self.year = year
+        longURL = podcast.shareURL
         super.init(placeholderItem: self.text)
-        self.longURL = podcast.shareURL
         requestShortenedURL()
     }
 
     init(_ text: String, episode: Episode, year: EndOfYear.Year) {
         self.text = text
         self.year = year
+        longURL = episode.shareURL
         super.init(placeholderItem: self.text)
-        self.longURL = episode.shareURL
         requestShortenedURL()
     }
 
     init(_ text: String, podcasts: [Podcast], year: EndOfYear.Year) {
         self.text = text
         self.year = year
+        longURL = nil
         super.init(placeholderItem: self.text)
         podcastListURL = ""
         createList(from: podcasts)

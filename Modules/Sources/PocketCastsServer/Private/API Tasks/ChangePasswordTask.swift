@@ -6,8 +6,8 @@ import SwiftProtobuf
 class ChangePasswordTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((Bool) -> Void)?
 
-    private var oldPassword: String
-    private var newPassword: String
+    private let oldPassword: String
+    private let newPassword: String
 
     init(currentPassword: String, newPassword: String) {
         self.newPassword = newPassword

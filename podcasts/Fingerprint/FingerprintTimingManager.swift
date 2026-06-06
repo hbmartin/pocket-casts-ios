@@ -366,11 +366,12 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
         let flag = cancellationFlag
         let transferredEpisode = UnsafeTransfer(episode)
+        let podcastUuid = episode.parentIdentifier()
         fetchTask = Task { [weak self] in
             guard !flag.isCancelled else { return }
 
             let data = await FingerprintReferenceRetriever.shared.fetchReferenceData(
-                podcastUuid: transferredEpisode.wrappedValue.parentIdentifier(),
+                podcastUuid: podcastUuid,
                 episodeUuid: uuid
             )
 

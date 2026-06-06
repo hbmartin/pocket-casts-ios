@@ -101,20 +101,23 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
-            if let url = navigationAction.request.url {
-                if let safariViewController = URLHelper.open(
-                    url,
-                    context: .externalContent,
-                    options: .init(
-                        presenter: self,
-                        prefersExternalBrowser: Settings.openLinks,
-                        delegate: self
-                    )
-                ) {
-                    self.safariViewController = safariViewController
-                }
-                Analytics.track(.episodeDetailShowNotesLinkTapped, properties: ["episode_uuid": episode.uuid, "source": viewSource])
+            guard let url = navigationAction.request.url, URLHelper.isAllowedExternalContentLink(url) else {
+                decisionHandler(.cancel)
+                return
             }
+
+            if let safariViewController = URLHelper.open(
+                url,
+                context: .externalContent,
+                options: .init(
+                    presenter: self,
+                    prefersExternalBrowser: Settings.openLinks,
+                    delegate: self
+                )
+            ) {
+                self.safariViewController = safariViewController
+            }
+            Analytics.track(.episodeDetailShowNotesLinkTapped, properties: ["episode_uuid": episode.uuid, "source": viewSource])
 
             decisionHandler(.cancel)
             return

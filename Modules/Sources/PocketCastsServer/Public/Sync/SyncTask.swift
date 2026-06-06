@@ -5,16 +5,17 @@ import PocketCastsUtils
 
 class SyncTask: ApiBaseTask, @unchecked Sendable {
     private static let processDataLock = NSObject()
+    private let progressLock = NSLock()
 
-    lazy var importQueue: OperationQueue = {
+    let importQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 5
 
         return queue
     }()
 
-    var totalToImport = 0
-    var upToPodcast = 0
+    private var totalToImport = 0
+    private var upToPodcast = 0
 
     var status = UpdateStatus.notStarted
 
@@ -38,6 +39,35 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
 
     override func apiTokenAcquisitionFailed() {
         status = .failed
+    }
+
+    func resetPodcastImportProgress(total: Int, upTo: Int) {
+        progressLock.lock()
+        totalToImport = total
+        upToPodcast = upTo
+        progressLock.unlock()
+
+        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastCount, object: total)
+    }
+
+    func incrementAndPostPodcastImportProgress() {
+        progressLock.lock()
+        upToPodcast += 1
+        let currentPodcast = upToPodcast
+        progressLock.unlock()
+
+        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastUpto, object: currentPodcast)
+    }
+
+    func postPodcastImportProgressThenIncrement() {
+        progressLock.lock()
+        let currentPodcast = upToPodcast
+        let total = totalToImport
+        upToPodcast += 1
+        progressLock.unlock()
+
+        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastUpto, object: currentPodcast)
+        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastCount, object: total)
     }
 
     func incrementalSyncRequest(token: String) -> URLRequest? {

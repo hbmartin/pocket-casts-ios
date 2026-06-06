@@ -2,10 +2,10 @@ import Foundation
 import PocketCastsServer
 
 class SharedItemImporter: Operation, @unchecked Sendable {
-    private var urlToImport: String
-    private var completion: (IncomingShareItem?) -> Void
+    private let urlToImport: String
+    private let completion: (IncomingShareItem?) -> Void
 
-    private lazy var dispatchGroup: DispatchGroup = {
+    private let dispatchGroup: DispatchGroup = {
         let dispatchGroup = DispatchGroup()
 
         return dispatchGroup

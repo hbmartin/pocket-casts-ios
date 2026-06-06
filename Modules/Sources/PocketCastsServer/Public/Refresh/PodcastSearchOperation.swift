@@ -4,7 +4,7 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
     private let completion: (PodcastSearchResponse?) -> Void
     private let searchQuery: MainServerHandler.PodcastSearchQuery
 
-    private lazy var dispatchGroup: DispatchGroup = {
+    private let dispatchGroup: DispatchGroup = {
         let dispatchGroup = DispatchGroup()
 
         return dispatchGroup

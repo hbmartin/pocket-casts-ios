@@ -157,6 +157,11 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
         }
 
         guard URLHelper.isTrustedDocumentationURL(url) else {
+            guard URLHelper.isAllowedExternalContentLink(url) else {
+                decisionHandler(.cancel)
+                return
+            }
+
             URLHelper.open(
                 url,
                 context: .externalContent,
