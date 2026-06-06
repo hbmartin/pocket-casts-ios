@@ -86,7 +86,7 @@ struct SyncSigninView: View {
                 .submitLabel(.next)
                 .focused($focusedField, equals: .email)
                 .onSubmit { focusedField = .password }
-                .onChange(of: model.email) { _ in model.textFieldChanged() }
+                .onChange(of: model.email) { _, _ in model.textFieldChanged() }
         }
         .padding(9)
         .themedTextField(hasErrored: model.errorMessage != nil)
@@ -118,7 +118,7 @@ struct SyncSigninView: View {
                 .accessibilityLabel(model.showPassword ? L10n.signInHidePasswordLabel : L10n.signInShowPasswordLabel)
                 .tint(theme.primaryIcon03)
             }
-            .onChange(of: model.password) { _ in model.textFieldChanged() }
+            .onChange(of: model.password) { _, _ in model.textFieldChanged() }
         }
         .padding(9)
         .themedTextField(hasErrored: model.errorMessage != nil)
@@ -174,7 +174,7 @@ final class SyncSigninViewModel: ObservableObject {
 
     // Inputs
     @Published var email: String = ""
-    @Published var password: String = "" // NOSONAR - User-entered state, not a hard-coded credential.
+    @Published var password = String()
     @Published var showPassword = false
 
     // UI state

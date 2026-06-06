@@ -135,6 +135,7 @@ class DiscoverPodcastTableCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         updateSize()
     }
 
@@ -153,13 +154,5 @@ class DiscoverPodcastTableCell: ThemeableCell {
 
         podcastTitle.updateNumberOfLines(regular: 1, accessibility: 3)
         podcastAuthor.updateNumberOfLines(regular: 1, accessibility: 3)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

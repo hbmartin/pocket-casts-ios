@@ -1455,7 +1455,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
             context: .externalContent,
             options: .init(
                 prefersExternalBrowser: Settings.openLinks,
-                allowsExternalFallback: Settings.openLinks,
                 delegate: self
             )
         )

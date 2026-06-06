@@ -75,9 +75,19 @@ private final class TestServerSyncDelegate: ServerSyncDelegate {
 }
 
 private final class TestFilePathProvider: NSObject, FilePathProtocol {
-    func tempPathForEpisode(_ episode: BaseEpisode) -> String { "" }
-    func pathForEpisode(_ episode: BaseEpisode) -> String { "" }
-    func streamingBufferPathForEpisode(_ episode: BaseEpisode) -> String { "" }
+    func tempPathForEpisode(_: BaseEpisode) -> String { "" }
+    func pathForEpisode(_: BaseEpisode) -> String { "" }
+    func streamingBufferPathForEpisode(_: BaseEpisode) -> String { "" }
+}
+
+private enum TestServerDefaults {
+    static let pushNotificationsEnabled = false
+    static let defaultPodcastGrouping: Int32 = 0
+    static let showArchivedEpisodes = false
+    static let appId = "test-app-id"
+    static let appVersion = "test-app-version"
+    static let privateUserAgent = "test-user-agent"
+    static let minimumSecondsBetweenProgressSaves = 0.0
 }
 
 private func testNoOp() { _ = () }
@@ -108,37 +118,30 @@ extension ServerSyncDelegate {
     func cleanupCloudOnlyFiles() { testNoOp() }
     func performActionsAfterSync() { testNoOp() }
     func isPushEnabled() -> Bool {
-        testNoOp()
-        return false
+        TestServerDefaults.pushNotificationsEnabled
     }
 
     func defaultPodcastGrouping() -> Int32 {
-        testNoOp()
-        return 0
+        TestServerDefaults.defaultPodcastGrouping
     }
 
     func defaultShowArchived() -> Bool {
-        testNoOp()
-        return false
+        TestServerDefaults.showArchivedEpisodes
     }
 
     func uniqueAppId() -> String {
-        testNoOp()
-        return ""
+        TestServerDefaults.appId
     }
 
     func appVersion() -> String {
-        testNoOp()
-        return ""
+        TestServerDefaults.appVersion
     }
 
     func privateUserAgent() -> String {
-        testNoOp()
-        return ""
+        TestServerDefaults.privateUserAgent
     }
 
     func minTimeBetweenProgressSaves() -> Double {
-        testNoOp()
-        return 0
+        TestServerDefaults.minimumSecondsBetweenProgressSaves
     }
 }

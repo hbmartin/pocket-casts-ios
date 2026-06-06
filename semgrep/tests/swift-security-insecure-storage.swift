@@ -9,7 +9,7 @@ enum Constants {
     static let filesLastModifiedKey = "UserFilesLastModified"
     static let cleanupInProgress = "CleanupInProgress"
     static let podcastGroupingDefaultKey = "PodcastGroupingDefault"
-    static let PinCodeKey = "PinCode"
+    static let pinCodeKey = "PinCode"
 }
 
 enum ServerConstants {
@@ -32,7 +32,7 @@ func storesCredentials(accessToken: String, password: String, refreshToken: Stri
     UserDefaults.standard.set(apiKey, forKey: Constants.apiKey)
 
     // ruleid: insecure_storage
-    UserDefaults.standard.set("1234", forKey: Constants.PinCodeKey)
+    UserDefaults.standard.set("1234", forKey: Constants.pinCodeKey)
 }
 
 func storesPreferences(order: Int, optedIn: Bool, lastModified: String, pushToken: String) {

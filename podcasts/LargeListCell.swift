@@ -51,6 +51,7 @@ class LargeListCell: ThemeableCollectionCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         updateSize()
     }
 
@@ -99,13 +100,5 @@ class LargeListCell: ThemeableCollectionCell {
     func updateSize() {
         podcastTitle.updateNumberOfLines(regular: 1, accessibility: 2)
         podcastAuthor.updateNumberOfLines(regular: 1, accessibility: 2)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

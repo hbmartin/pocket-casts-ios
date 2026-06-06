@@ -113,8 +113,7 @@ class ExpandedEpisodeListViewController: PCViewController, UITableViewDelegate, 
             context: .externalContent,
             options: .init(
                 presenter: self,
-                prefersExternalBrowser: Settings.openLinks,
-                allowsExternalFallback: Settings.openLinks
+                prefersExternalBrowser: Settings.openLinks
             )
         )
     }

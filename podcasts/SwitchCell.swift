@@ -31,6 +31,7 @@ class SwitchCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         accessoryView = cellSwitch
         setNoImage()
     }
@@ -65,12 +66,5 @@ class SwitchCell: ThemeableCell {
 
         let settingsSize = max(24, metric.scaledValue(for: 24))
         cellImage.updateSizeConstraints(to: settingsSize)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

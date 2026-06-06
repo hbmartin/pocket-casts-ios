@@ -33,6 +33,7 @@ class PodcastHeaderListViewController: PCViewController, UITableViewDataSource, 
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.chartsTable.reloadData() }
 
         chartsTable.register(UINib(nibName: "DiscoverPodcastTableCell", bundle: nil), forCellReuseIdentifier: PodcastHeaderListViewController.cellId)
         chartsTable.register(UINib(nibName: "FeaturedTableViewCell", bundle: nil), forCellReuseIdentifier: PodcastHeaderListViewController.featuredCellId)
@@ -51,15 +52,6 @@ class PodcastHeaderListViewController: PCViewController, UITableViewDataSource, 
 
         chartsTable.reloadData()
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            chartsTable.reloadData()
-        }
-    }
-
     @objc private func handleShare() {
         guard let source = source?.deletingPathExtension() else { return }
         Analytics.track(.discoverListShareTapped)

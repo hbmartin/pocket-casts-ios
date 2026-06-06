@@ -17,11 +17,14 @@ PERIPHERY_PROJECT ?= podcasts.xcodeproj
 PERIPHERY_SCHEMES ?= Pocket Casts Staging
 PERIPHERY_CONFIGURATION ?= StagingDebug
 PERIPHERY_DESTINATION ?= generic/platform=iOS Simulator
-PERIPHERY_FLAGS ?= --retain-objc-accessible --relative-results --disable-update-check
+PERIPHERY_GENERATED_REPORT_EXCLUDES = --report-exclude "Modules/Sources/PocketCastsServer/Private/Protobuffer/*.pb.swift" --report-exclude "podcasts/Strings+Generated.swift" --report-exclude "podcasts/ThemeColor.swift" --report-exclude "podcasts/ThemeStyle.swift"
+PERIPHERY_FLAGS ?= --retain-objc-accessible --retain-swift-ui-previews --relative-results --disable-update-check $(PERIPHERY_GENERATED_REPORT_EXCLUDES)
 PERIPHERY_BASELINE ?= .periphery-baseline
 PERIPHERY_STRICT ?= 0
+SEMGREP_SWIFT_ERROR ?= 1
+SEMGREP_POCKET_CASTS_ERROR ?= 1
 
-.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts xcode_static_analyzer periphery periphery_baseline static_checks format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts semgrep_tests xcode_static_analyzer periphery periphery_baseline static_checks format install_dependencies
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -57,6 +60,12 @@ semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
 semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
 	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
 
+semgrep_tests: ## Run Semgrep rule tests
+	semgrep test --config semgrep/pocket-casts.yml semgrep/tests/pocket-casts-web-opening.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-insecure-storage.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift
+
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 	if [ -n "$(XCODE_ANALYZE_DERIVED_DATA_PATH)" ]; then rm -rf "$(XCODE_ANALYZE_DERIVED_DATA_PATH)/SDKStatCaches.noindex"; fi
 	xcodebuild -quiet analyze -project podcasts.xcodeproj \
@@ -90,6 +99,7 @@ periphery_baseline: ## Write the current Periphery findings baseline
 
 static_checks: ## Run SwiftLint, Semgrep, and Xcode Static Analyzer
 	$(MAKE) lint
+	$(MAKE) semgrep_tests
 	$(MAKE) semgrep_swift_security
 	$(MAKE) semgrep_pocket_casts
 	$(MAKE) xcode_static_analyzer

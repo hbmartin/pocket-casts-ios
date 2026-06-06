@@ -66,19 +66,14 @@ class PlusLockedInfoView: ThemeableView {
     }
 
     private func commonInit() {
+        registerForPreferredContentSizeCategoryChanges { view in
+            view.updateCloseButtonImage()
+            view.updateSize()
+        }
         Bundle.main.loadNibNamed("PlusLockedInfoView", owner: self, options: nil)
         addSubview(contentView)
         contentView.anchorToAllSidesOf(view: self)
         updateSize()
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateCloseButtonImage()
-            updateSize()
-        }
     }
 
     private func updateCloseButtonImage() {

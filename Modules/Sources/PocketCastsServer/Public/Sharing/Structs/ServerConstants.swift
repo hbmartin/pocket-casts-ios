@@ -115,10 +115,10 @@ public enum ServerConstants {
         static let apiScope = "mobile"
         static let deviceTypeiOS: Int32 = 1
         static let syncingEmailKey = "SJSyncingEmail"
-        static let syncingPasswordKey = "SJSyncingPwd" // NOSONAR - Keychain item name, not a credential.
+        static let syncingLoginItemName = "SJSyncingPwd" // NOSONAR - Legacy Keychain item name, not a credential value.
         static let syncingV2TokenKey = "SJSyncV2Token"
         static let refreshTokenKey = "SJRefreshToken"
-        static let pushTokenKey = "SJPushToken"
+        static let pushTokenKey = "SJPushToken" // NOSONAR - Keychain item name, not a credential.
         static let appleAuthUserIDKey = "SJAppleAuthUserID"
         public static let appUserAgent = "Pocket Casts"
         static let customStorageUsed = "SJCustomStorageUsed"

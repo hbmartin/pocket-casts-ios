@@ -46,6 +46,10 @@ class RichExpandableLabel: WKWebView {
     }
 
     private func commonInit() {
+        registerForPreferredContentSizeCategoryChanges { label in
+            label.reset()
+            label.setRichText(html: label.originalHTML)
+        }
         translatesAutoresizingMaskIntoConstraints = false
         let font = UIFont.preferredFont(forTextStyle: .body)
         let estimatedHeight = Self.estimateHeightFor(maxLines: maxLines, lineHeightMultiple: desiredLinedHeightMultiple, font: font)
@@ -87,17 +91,6 @@ class RichExpandableLabel: WKWebView {
         previousHTML = styledHTML
         self.loadHTMLString(styledHTML, baseURL: nil)
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-            super.traitCollectionDidChange(previousTraitCollection)
-
-            // Check if content size category specifically changed
-            if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-                reset()
-                setRichText(html: originalHTML)
-            }
-        }
-
     private func style(html: String) -> String {
         let  backgroundColor: UIColor = ThemeColor.primaryUi02()
         let textColor: UIColor = ThemeColor.primaryText01()
@@ -222,7 +215,7 @@ class RichExpandableLabel: WKWebView {
     }
 }
 
-extension RichExpandableLabel: WKNavigationDelegate { // NOSONAR - Link taps are cancelled after delegate handoff.
+extension RichExpandableLabel: WKNavigationDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         evaluateJavaScript("document.readyState", completionHandler: { [weak self] complete, _ in
             guard let self,
@@ -238,7 +231,7 @@ extension RichExpandableLabel: WKNavigationDelegate { // NOSONAR - Link taps are
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url, navigationAction.navigationType == .linkActivated else {
-            decisionHandler(.allow)
+            decisionHandler(URLHelper.isAllowedEmbeddedContentNavigationURL(navigationAction.request.url) ? .allow : .cancel)
             return
         }
 

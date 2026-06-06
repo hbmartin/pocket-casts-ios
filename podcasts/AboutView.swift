@@ -21,7 +21,7 @@ struct AboutView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 ThemeColor.primaryUi04(for: theme.activeTheme).color
                     .ignoresSafeArea()
@@ -123,10 +123,12 @@ struct AboutView: View {
                     .scrollContentBackground(.hidden)
                     .background(theme.primaryUi04)
                 }
-                NavigationLink(destination: LegalAndMore(), isActive: $showLegalAndMore) {}
+            }
+            .navigationDestination(isPresented: $showLegalAndMore) {
+                LegalAndMore()
             }
             .navigationBarHidden(true)
-        }.navigationViewStyle(StackNavigationViewStyle())
+        }
     }
 
     private func openShareApp() {

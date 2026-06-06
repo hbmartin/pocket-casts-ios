@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 public class SharingServerHandler {
@@ -82,7 +83,7 @@ public class SharingServerHandler {
         // add security params
         let dateStr = securityDateFormatter.string(from: Date())
         shareRequest.datetime = dateStr
-        shareRequest.h = "\(dateStr)\(ServerCredentials.sharing)".insecureSHA1Hash()
+        shareRequest.h = legacySharingServerSignature(for: dateStr)
 
         guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
             completion(nil)
@@ -121,5 +122,11 @@ public class SharingServerHandler {
                 completion(nil)
             }
         }.resume()
+    }
+
+    private func legacySharingServerSignature(for dateString: String) -> String {
+        let signatureInput = "\(dateString)\(ServerCredentials.sharing)"
+        let hashDigest = CryptoKit.Insecure.SHA1.hash(data: Data(signatureInput.utf8)) // NOSONAR - Required by the legacy sharing server signature protocol.
+        return hashDigest.compactMap { String(format: "%02hhx", $0) }.joined()
     }
 }

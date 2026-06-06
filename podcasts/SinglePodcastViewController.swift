@@ -48,6 +48,7 @@ class SinglePodcastViewController: UIViewController, DiscoverSummaryProtocol {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         (view as? ThemeableView)?.style = .primaryUi02
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showPodcast))
@@ -190,13 +191,5 @@ class SinglePodcastViewController: UIViewController, DiscoverSummaryProtocol {
     func updateSize() {
         podcastTitle.updateNumberOfLines(regular: 2, accessibility: 3)
         podcastDescription.updateNumberOfLines(regular: 4, accessibility: 6)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

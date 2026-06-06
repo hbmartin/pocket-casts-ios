@@ -57,6 +57,7 @@ class SmallPagedListSummaryViewController: DiscoverPeekViewController, GridLayou
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         (view as? ThemeableView)?.style = .primaryUi02
 
@@ -253,13 +254,5 @@ class SmallPagedListSummaryViewController: DiscoverPeekViewController, GridLayou
     func updateSize() {
         lastLayedOutWidth = 0
         smallPagedCollectionViewHeight.constant = (cellHeight + cellSpacing) * CGFloat(numberOfRows)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }

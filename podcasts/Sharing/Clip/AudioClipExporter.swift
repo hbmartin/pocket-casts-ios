@@ -38,43 +38,27 @@ class AudioClipExporter {
             throw AudioExportError.failedToInsertTimeRange
         }
 
-        exportSession.outputURL = outputURL
-        exportSession.outputFileType = .m4a
         exportSession.timeRange = CMTimeRangeMake(start: .zero, duration: duration)
 
-        let progressObserver = Task {
-            while !Task.isCancelled {
-                progress.completedUnitCount = Int64(exportSession.progress * 100)
-                try await Task.sleep(nanoseconds: 100*1000)
+        let cancellableExportSession = UnsafeTransfer(exportSession)
+        do {
+            try await withTaskCancellationHandler {
+                FileLog.shared.addMessage("AudioClipExporter Started Audio Export: \(date.timeIntervalSinceNow)")
+                try await exportSession.export(to: outputURL, as: .m4a)
+                FileLog.shared.addMessage("AudioClipExporter Ended Audio Export: \(date.timeIntervalSinceNow)")
+            } onCancel: {
+                cancellableExportSession.wrappedValue.cancelExport()
             }
-        }
-
-        await withTaskCancellationHandler {
-            FileLog.shared.addMessage("AudioClipExporter Started Audio Export: \(date.timeIntervalSinceNow)")
-            await exportSession.export()
-            FileLog.shared.addMessage("AudioClipExporter Ended Audio Export: \(date.timeIntervalSinceNow)")
-        } onCancel: {
-            exportSession.cancelExport()
-        }
-
-        progressObserver.cancel()
-
-        switch exportSession.status {
-        case .completed:
             progress.fileURL = outputURL
             progress.completedUnitCount = 100
             FileLog.shared.addMessage("AudioClipExporter Finished: \(date.timeIntervalSinceNow)")
-        case .failed:
-            progress.cancel()
-            if let error = exportSession.error {
-                FileLog.shared.addMessage("AudioClipExporter: Export failed \(error)")
-                throw AudioExportError.exportSessionFailed(error)
-            }
-        case .cancelled:
+        } catch is CancellationError {
             progress.cancel()
             throw AudioExportError.cancelledTask
-        default:
-            FileLog.shared.addMessage("AudioClipExporter: Export ended with status: \(exportSession.status.rawValue)")
+        } catch {
+            progress.cancel()
+            FileLog.shared.addMessage("AudioClipExporter: Export failed \(error)")
+            throw AudioExportError.exportSessionFailed(error)
         }
     }
 }

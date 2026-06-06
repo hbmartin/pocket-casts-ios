@@ -213,6 +213,7 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         addBookmarksTabIfNeeded()
 
@@ -776,11 +777,5 @@ extension EpisodeDetailViewController {
         let iconSize = max(24, metric.scaledValue(for: 24))
         messageIcon.updateSizeConstraints(to: iconSize)
         downloadIndicator.updateSizeConstraints(to: iconSize)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

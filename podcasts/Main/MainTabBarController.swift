@@ -93,6 +93,11 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self, UITraitHorizontalSizeClass.self]) { (controller: MainTabBarController, _) in
+            controller.updateSystemThemeFromScene()
+            controller.fixTabBarTraitCollectionOnIpad()
+            controller.fireSystemThemeMayHaveChanged()
+        }
 
         fixTabBarTraitCollectionOnIpad()
 
@@ -243,6 +248,12 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         Settings.shouldShowInitialOnboardingFlow = false
     }
 
+    private func updateSystemThemeFromScene() {
+        if let scene = view.window?.windowScene {
+            Theme.systemIsDark = (scene.traitCollection.userInterfaceStyle == .dark)
+        }
+    }
+
     private func fixTabBarTraitCollectionOnIpad() {
         if UIDevice.current.userInterfaceIdiom == .pad {
             traitOverrides.horizontalSizeClass = .compact
@@ -256,16 +267,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             }
         }
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if let scene = view.window?.windowScene {
-            Theme.systemIsDark = (scene.traitCollection.userInterfaceStyle == .dark)
-        }
-        fixTabBarTraitCollectionOnIpad()
-        fireSystemThemeMayHaveChanged()
-    }
-
     @objc func themeDidChange() {
         updateTabBarColor()
         updateErrorColor()

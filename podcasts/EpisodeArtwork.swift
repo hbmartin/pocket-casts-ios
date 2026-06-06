@@ -46,7 +46,7 @@ class EpisodeArtwork {
             guard !Task.isCancelled else { return }
 
             // Priority 2: Embedded artwork from audio file metadata
-            if let assetEpisodeArtwork = self.loadEpisodeArtwork(from: asset) {
+            if let assetEpisodeArtwork = await self.loadEpisodeArtwork(from: asset) {
                 self.imageManager.save(assetEpisodeArtwork, for: episodeUuid)
             }
         }
@@ -64,13 +64,26 @@ class EpisodeArtwork {
         imageManager.subscribedPodcastsCache.isCached(forKey: episodeUuid)
     }
 
-    private func loadEpisodeArtwork(from asset: AVAsset?) -> UIImage? {
+    private func loadEpisodeArtwork(from asset: AVAsset?) async -> UIImage? {
         guard let asset else {
             return nil
         }
 
-        let artworkItems = AVMetadataItem.metadataItems(from: asset.commonMetadata, filteredByIdentifier: .commonIdentifierArtwork)
-        return artworkItems.compactMap { $0.dataValue.flatMap { UIImage(data: $0) } }.first
+        guard let metadataItems = try? await asset.load(.commonMetadata) else {
+            return nil
+        }
+
+        let artworkItems = AVMetadataItem.metadataItems(from: metadataItems, filteredByIdentifier: .commonIdentifierArtwork)
+        for artworkItem in artworkItems {
+            guard let data = try? await artworkItem.load(.dataValue),
+                  let image = UIImage(data: data) else {
+                continue
+            }
+
+            return image
+        }
+
+        return nil
     }
 
     /// Attempts to load episode artwork from show notes URL.

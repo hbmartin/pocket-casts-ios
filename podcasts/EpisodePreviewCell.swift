@@ -26,6 +26,11 @@ class EpisodePreviewCell: ThemeableCell {
 
     @IBOutlet weak var imageLeftPadding: NSLayoutConstraint!
 
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+    }
+
     func populateFrom(episode: BaseEpisode) {
         episodeTitle.text = episode.title
         if let userEpisode = episode as? UserEpisode {
@@ -40,14 +45,6 @@ class EpisodePreviewCell: ThemeableCell {
     }
 
     // MARK: - Dynamic Type Updates
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
-    }
 
     private func updateSize() {
         let metric = UIFontMetrics(forTextStyle: .largeTitle)

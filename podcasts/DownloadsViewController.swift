@@ -79,6 +79,7 @@ class DownloadsViewController: PCViewController {
     override func viewDidLoad() {
         setupNavBar()
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         downloadsTable.tableFooterView = UIView(frame: CGRect.zero)
         downloadsTable.sectionFooterHeight = 0.0
@@ -330,13 +331,6 @@ class DownloadsViewController: PCViewController {
 
     private func updateSize() {
         showManageDownloadsBanner()
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }
 

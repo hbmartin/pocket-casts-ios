@@ -72,6 +72,16 @@ class ShiftyRoundButton: UIView {
 
     // MARK: - View Methods
 
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        registerContentSizeCategoryChanges()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        registerContentSizeCategoryChanges()
+    }
+
     override func awakeFromNib() {
         super.awakeFromNib()
 
@@ -100,6 +110,14 @@ class ShiftyRoundButton: UIView {
         textLayer.contentsScale = UIScreen.main.scale
         textLayer.font = CGFont(uiFont.fontName as CFString)
         textLayer.alignmentMode = CATextLayerAlignmentMode.center
+    }
+
+    private func registerContentSizeCategoryChanges() {
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (button: ShiftyRoundButton, _) in
+            button.lastCGRectRendered = .zero
+            button.updateTextLayerFont()
+            button.setNeedsLayout()
+        }
     }
 
     func setup() {
@@ -157,13 +175,5 @@ class ShiftyRoundButton: UIView {
         if !enabled { return }
 
         shapeLayer.transform = CATransform3DIdentity
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        lastCGRectRendered = .zero
-        updateTextLayerFont()
-        setNeedsLayout()
     }
 }

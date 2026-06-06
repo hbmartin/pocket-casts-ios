@@ -16,6 +16,9 @@ class MultipleActionView: UIView {
         self.themeOverride = themeOverride
 
         super.init(frame: frame)
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (view: MultipleActionView, _) in
+            view.updateSize()
+        }
     }
 
     @available(*, unavailable)
@@ -96,11 +99,5 @@ class MultipleActionView: UIView {
             let imageSize = max(24, metric.scaledValue(for: 24))
             imageView.updateSizeConstraints(to: imageSize)
         }
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

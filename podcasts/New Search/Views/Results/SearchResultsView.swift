@@ -16,16 +16,6 @@ struct SearchResultsView: View {
 
     var body: some View {
         Group {
-            NavigationLink(destination:
-                            SearchResultsListView(displayMode: displayMode)
-                                .setupDefaultEnvironment()
-                                .environmentObject(searchAnalyticsHelper)
-                                .environmentObject(searchResults)
-                                .environmentObject(searchHistory),
-                           isActive: $showInlineResults) {
-                EmptyView()
-            }
-
             if searchResults.episodeSearchError != nil && searchResults.podcastSearchError != nil {
                 HStack(alignment: .center) {
                     EmptyStateView(
@@ -64,6 +54,13 @@ struct SearchResultsView: View {
                     episodeList()
                 }
             }
+        }
+        .navigationDestination(isPresented: $showInlineResults) {
+            SearchResultsListView(displayMode: displayMode)
+                .setupDefaultEnvironment()
+                .environmentObject(searchAnalyticsHelper)
+                .environmentObject(searchResults)
+                .environmentObject(searchHistory)
         }
     }
 

@@ -4,7 +4,7 @@ import PocketCastsUtils
 import SafariServices
 import WebKit
 
-extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControllerDelegate { // NOSONAR - Link taps are cancelled and routed through URLHelper.
+extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControllerDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
     func setupWebView() {
         showNotesWebView = WKWebView()
 
@@ -108,7 +108,6 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
                     options: .init(
                         presenter: self,
                         prefersExternalBrowser: Settings.openLinks,
-                        allowsExternalFallback: Settings.openLinks,
                         delegate: self
                     )
                 ) {
@@ -121,7 +120,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
             return
         }
 
-        decisionHandler(.allow)
+        decisionHandler(URLHelper.isAllowedEmbeddedContentNavigationURL(navigationAction.request.url) ? .allow : .cancel)
     }
 
     func safariViewControllerDidFinish(_ controller: SFSafariViewController) {

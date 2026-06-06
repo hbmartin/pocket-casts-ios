@@ -162,8 +162,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
                 context: .externalContent,
                 options: .init(
                     presenter: self,
-                    prefersExternalBrowser: true,
-                    allowsExternalFallback: true
+                    prefersExternalBrowser: true
                 )
             )
             decisionHandler(.cancel)

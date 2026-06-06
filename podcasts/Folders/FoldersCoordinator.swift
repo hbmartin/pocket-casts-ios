@@ -163,8 +163,7 @@ class FoldersCoordinator: NSObject {
 
     private var currentPodcastsHash: String {
         let uuids = dataManager.allPodcastsOrderedByAddedDate().map { $0.uuid }.sorted()
-        let md5 = uuids.joined().md5
-        return md5
+        return uuids.joined().sha256Hash
     }
 
     private func saveLastUuidsUsed() {

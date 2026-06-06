@@ -28,6 +28,7 @@ class PodcastListCell: ThemeableCollectionCell {
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         isAccessibilityElement = true
     }
 
@@ -97,11 +98,5 @@ class PodcastListCell: ThemeableCollectionCell {
         }
 
         podcastTitle.updateNumberOfLines(regular: 1, accessibility: 3)
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory else { return }
-        updateSize()
     }
 }

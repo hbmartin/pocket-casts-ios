@@ -36,8 +36,7 @@ extension ChaptersViewController: UITableViewDataSource, UITableViewDelegate, UI
                     context: .externalContent,
                     options: .init(
                         presenter: self,
-                        prefersExternalBrowser: Settings.openLinks,
-                        allowsExternalFallback: Settings.openLinks
+                        prefersExternalBrowser: Settings.openLinks
                     )
                 )
             }

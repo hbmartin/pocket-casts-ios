@@ -23,8 +23,6 @@ rules:
     languages: [swift]
     patterns:
       - pattern-either:
-          - pattern: "URLHelper.open(..., context: .sensitiveAuth, ...)"
-          - pattern: "URLHelper.makeInAppBrowser(..., context: .sensitiveAuth, ...)"
           - pattern: "SFSafariViewController(with: $URL)"
           - pattern: "SFSafariViewController(url: $URL)"
       - pattern-inside: |

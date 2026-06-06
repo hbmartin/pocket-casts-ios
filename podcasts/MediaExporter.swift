@@ -11,13 +11,11 @@ struct MediaExporter {
     private static var currentExporter: AVAssetExportSession?
 
     private static func reportProgress(session: AVAssetExportSession, progressCallback: ProgressCallback? = nil) async {
-        let statusInProgress: Set<AVAssetExportSession.Status> = [.unknown, .exporting, .waiting]
         let size = (try? await session.estimatedOutputFileLengthInBytes) ?? 0
-        while session.progress != 1, statusInProgress.contains(session.status) {
-            progressCallback?(session.progress, size)
-            try? await Task.sleep(nanoseconds: 1 * 1_000_000_000)
-            //Only enable the logging bellow in order to help debug export session progress.
-            //FileLog.shared.addMessage("DownloadManager export session: \(session.outputURL!.lastPathComponent) | \(session.progress) | \(session.status) | \(size)")
+        for await state in session.states(updateInterval: 1) {
+            if case let .exporting(progress) = state {
+                progressCallback?(Float(progress.fractionCompleted), size)
+            }
         }
     }
 
@@ -27,12 +25,13 @@ struct MediaExporter {
 
         guard let compositionAudioTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: CMPersistentTrackID(kCMPersistentTrackID_Invalid)),
             let tracks = try? await item.asset.loadTracks(withMediaType: .audio),
-            let sourceAudioTrack = tracks.first else {
+            let sourceAudioTrack = tracks.first,
+            let duration = try? await item.asset.load(.duration) else {
             FileLog.shared.addMessage("DownloadManager export session: failed to create audio track")
             return false
         }
         do {
-            try compositionAudioTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: item.asset.duration), of: sourceAudioTrack, at: CMTime.zero)
+            try compositionAudioTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: duration), of: sourceAudioTrack, at: CMTime.zero)
         } catch {
             FileLog.shared.addMessage("DownloadManager export session: failed to create audio track -> \(error)")
             return false
@@ -43,8 +42,11 @@ struct MediaExporter {
             return false
         }
         currentExporter = exporter
-        exporter.outputURL = outputURL
-        exporter.outputFileType = AVFileType.m4a
+        defer {
+            if currentExporter === exporter {
+                currentExporter = nil
+            }
+        }
 
         if FileManager.default.fileExists(atPath: outputURL.path) {
             do {
@@ -54,26 +56,22 @@ struct MediaExporter {
                 return false
             }
         }
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                await exporter.export()
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask {
+                    try await exporter.export(to: outputURL, as: .m4a)
+                }
+                group.addTask {
+                    await reportProgress(session: exporter, progressCallback: progressCallback)
+                }
+                try await group.next()
+                group.cancelAll()
             }
-            group.addTask {
-                await reportProgress(session: exporter, progressCallback: progressCallback)
-            }
-        }
-
-        if let error = exporter.error {
-            FileLog.shared.addMessage("DownloadManager export session: finished with error -> \(error)")
-        }
-
-        if exporter.status == .cancelled {
+        } catch is CancellationError {
             FileLog.shared.addMessage("DownloadManager export session: cancelled")
             return false
-        }
-
-        if exporter.status == .failed {
-            FileLog.shared.addMessage("DownloadManager export session: failed")
+        } catch {
+            FileLog.shared.addMessage("DownloadManager export session: failed with error -> \(error)")
             return false
         }
         FileLog.shared.addMessage("DownloadManager export session: Finished exporting successfully")

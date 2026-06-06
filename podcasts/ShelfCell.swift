@@ -20,6 +20,7 @@ class ShelfCell: UITableViewCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
         setHighlightedState(false)
         overrideUserInterfaceStyle = .dark
@@ -56,15 +57,6 @@ class ShelfCell: UITableViewCell {
 
         customViewContainer.removeAllSubviews()
     }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
-    }
-
     private func updateSize() {
         let iconMetric = UIFontMetrics(forTextStyle: .largeTitle)
         let iconSize = max(24, iconMetric.scaledValue(for: 24))

@@ -39,6 +39,7 @@ class SingleEpisodeViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         (view as? ThemeableView)?.style = .primaryUi02
         view.translatesAutoresizingMaskIntoConstraints = false
 
@@ -122,13 +123,6 @@ class SingleEpisodeViewController: UIViewController {
         podcastTitle.sizeToFit()
         playButton.sizeToFit()
         view.sizeToFit()
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
-            updateSize()
-        }
     }
 }
 

@@ -75,6 +75,7 @@ class DiscoverFeaturedView: ThemeableView {
     }
 
     private func commonInit() {
+        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         Bundle.main.loadNibNamed("DiscoverFeaturedView", owner: self, options: nil)
         contentView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(contentView)
@@ -203,14 +204,6 @@ class DiscoverFeaturedView: ThemeableView {
                 titleTopConstraint,
                 titleLeadingConstraint
             ])
-        }
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
-            updateSize()
         }
     }
 }

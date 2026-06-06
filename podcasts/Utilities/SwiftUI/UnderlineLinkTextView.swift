@@ -16,15 +16,17 @@ struct UnderlineLinkTextView: View {
 
         // Open the link inside the app
         return textView.environment(\.openURL, OpenURLAction { url in
-            guard URLHelper.open(
-                url,
-                context: .externalContent,
-                options: .init(modalPresentationStyle: .formSheet)
-            ) != nil else {
-                return URLHelper.inAppBrowserDecision(for: url, context: .externalContent) == .blocked ? .discarded : .handled
+            switch URLHelper.inAppBrowserDecision(for: url, context: .externalContent) {
+            case .inAppBrowser, .externalApplication:
+                URLHelper.open(
+                    url,
+                    context: .externalContent,
+                    options: .init(modalPresentationStyle: .formSheet)
+                )
+                return .handled
+            case .blocked:
+                return .discarded
             }
-
-            return .handled
         })
     }
 }
