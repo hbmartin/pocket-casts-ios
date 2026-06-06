@@ -249,6 +249,18 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         customRightBtn = saveButton
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        if isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true {
+            cancelMetadataLoading()
+        }
+    }
+
+    deinit {
+        cancelMetadataLoading()
+    }
+
     // MARK: Private helpers
 
     private func setupScrollViewOffset() {
@@ -258,18 +270,22 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
 
     private var avFileUtil: AVFileUtil?
     private func setupFileDetails() {
-        avFileUtil = AVFileUtil(fileURL: destinationUrl, durationHandler: { duration in
-            self.duration = duration
-        }, titleHandler: { embeddedName in
-            if let embeddedName {
-                self.name = embeddedName
+        avFileUtil = AVFileUtil(fileURL: destinationUrl, durationHandler: { [weak self] duration in
+            DispatchQueue.main.async { [weak self] in
+                self?.duration = duration
             }
-            DispatchQueue.main.async {
+        }, titleHandler: { [weak self] embeddedName in
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if let embeddedName {
+                    self.name = embeddedName
+                }
                 self.nameTextfield.text = self.name
                 self.nameLabel.text = self.name
             }
-        }, artworkHandler: { image in
-            DispatchQueue.main.async {
+        }, artworkHandler: { [weak self] image in
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
                 self.embeddedImage = image
                 self.artwork = image
                 self.selectedColorIndex = 0
@@ -279,13 +295,19 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
             }
         })
 
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
             do {
                 let resources = try self.destinationUrl.resourceValues(forKeys: [.fileSizeKey])
                 self.fileSize = resources.fileSize ?? 0
                 self.sizeLabel.text = SizeFormatter.shared.defaultFormat(bytes: Int64(self.fileSize))
             } catch {}
         }
+    }
+
+    private func cancelMetadataLoading() {
+        avFileUtil?.cancelLoading()
+        avFileUtil = nil
     }
 
     private lazy var lockedArtworkTapGesture = UITapGestureRecognizer(target: self, action: #selector(showSubscriptionRequired))

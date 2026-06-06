@@ -440,7 +440,7 @@ rules:
         - "**/*.swift"
     patterns:
       - pattern-inside: |
-          class $CLASS: ApiBaseTask, @unchecked Sendable {
+          class $CLASS: ApiBaseTask {
             ...
           }
       - pattern: $GROUP.wait()
@@ -485,6 +485,26 @@ rules:
             ...
           }
       - pattern-regex: '^\s*Task\s*\{'
+
+  - id: pocketcasts.avfileutil-task-strong-self-before-await
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Avoid promoting weak self to strong self before awaited AVFileUtil task work; copy needed values or use optional self so deinit cancellation can run.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/Utilities/AVFileUtil.swift"
+    patterns:
+      - pattern-inside: |
+          class AVFileUtil: NSObject {
+            ...
+          }
+      - pattern-regex: 'Task\s*\{\s*\[weak\s+self\]\s+in[\s\S]{0,500}?guard\s+let\s+self(?:\s*=\s*self)?\s+else\s*\{\s*return\s*\}[\s\S]{0,1000}?await\b'
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

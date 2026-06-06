@@ -27,6 +27,22 @@ class SafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable {
     }
 }
 
+class UnsafeApiTaskDispatchGroupWaitWithoutSendable: ApiBaseTask {
+    func waitForEpisodes(dispatchGroup: DispatchGroup) {
+        // ruleid: pocketcasts.dispatch-group-wait-without-timeout
+        dispatchGroup.wait()
+    }
+}
+
+protocol RetriableApiTask {}
+
+class UnsafeApiTaskDispatchGroupWaitWithProtocol: ApiBaseTask, RetriableApiTask {
+    func waitForEpisodes(dispatchGroup: DispatchGroup) {
+        // ruleid: pocketcasts.dispatch-group-wait-without-timeout
+        dispatchGroup.wait()
+    }
+}
+
 func clearsBadgeWithTransientValue(notificationCenter: UNUserNotificationCenter) {
     // ruleid: pocketcasts.badge-transient-clear-notifications
     notificationCenter.setBadgeCount(1) {
@@ -55,5 +71,28 @@ class AVFileUtil: NSObject {
         }
     }
 
+    func startsStoredTaskWithStrongSelfBeforeAwait() {
+        // ruleid: pocketcasts.avfileutil-task-strong-self-before-await
+        metadataTask = Task { [weak self] in
+            guard let self else { return }
+            await self.loadMetadata()
+        }
+    }
+
+    func startsStoredTaskWithCopiedValues() {
+        // ok: pocketcasts.avfileutil-task-strong-self-before-await
+        metadataTask = Task { [weak self] in
+            guard let asset = self?.asset else { return }
+            await asset.loadMetadata()
+        }
+    }
+
+    private var asset: TestAsset?
     private var metadataTask: Task<Void, Never>?
+
+    private func loadMetadata() async {}
+}
+
+class TestAsset {
+    func loadMetadata() async {}
 }
