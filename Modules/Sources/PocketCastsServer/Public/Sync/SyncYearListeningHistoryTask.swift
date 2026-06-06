@@ -119,6 +119,8 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
             dispatchGroup.enter()
 
             DispatchQueue.global(qos: .userInitiated).async {
+                defer { dispatchGroup.leave() }
+
                 let interactionDate = Date(timeIntervalSince1970: TimeInterval(change.modifiedAt / 1000))
 
                 ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: change.episode, podcastUuid: change.podcast)
@@ -132,15 +134,20 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
                 DispatchQueue.main.async {
                     SyncYearListeningProgress.shared.episodeSynced()
                 }
-
-                dispatchGroup.leave()
             }
         }
 
-        dispatchGroup.wait()
+        let waitResult = dispatchGroup.wait(timeout: .now() + 30.seconds)
+        if waitResult == .timedOut {
+            FileLog.shared.addMessage("SyncYearListeningHistoryTask timed out waiting for missing episodes to update")
+        }
+
+        lock.lock()
+        let podcastsToUpdateSnapshot = podcastsToUpdate
+        lock.unlock()
 
         // Sync episode status for the retrieved podcasts' episodes
-        updateEpisodes(for: podcastsToUpdate)
+        updateEpisodes(for: podcastsToUpdateSnapshot)
     }
 
     private func updateEpisodes(for podcastsUuids: Set<String>) {
@@ -150,15 +157,18 @@ class SyncYearListeningHistoryTask: ApiBaseTask, @unchecked Sendable {
             dispatchGroup.enter()
 
             DispatchQueue.global(qos: .userInitiated).async {
+                defer { dispatchGroup.leave() }
+
                 if let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcastUuid) {
                     DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
                 }
-
-                dispatchGroup.leave()
             }
         }
 
-        dispatchGroup.wait()
+        let waitResult = dispatchGroup.wait(timeout: .now() + 30.seconds)
+        if waitResult == .timedOut {
+            FileLog.shared.addMessage("SyncYearListeningHistoryTask timed out waiting for podcast episodes to update")
+        }
     }
 }
 

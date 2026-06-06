@@ -13,6 +13,20 @@ class SafeDispatchGroupTask: Operation, @unchecked Sendable {
     private let dispatchGroup = DispatchGroup()
 }
 
+class UnsafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable {
+    func waitForEpisodes(dispatchGroup: DispatchGroup) {
+        // ruleid: pocketcasts.dispatch-group-wait-without-timeout
+        dispatchGroup.wait()
+    }
+}
+
+class SafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable {
+    func waitForEpisodes(dispatchGroup: DispatchGroup) {
+        // ok: pocketcasts.dispatch-group-wait-without-timeout
+        _ = dispatchGroup.wait(timeout: .now() + .seconds(30))
+    }
+}
+
 func clearsBadgeWithTransientValue(notificationCenter: UNUserNotificationCenter) {
     // ruleid: pocketcasts.badge-transient-clear-notifications
     notificationCenter.setBadgeCount(1) {

@@ -123,6 +123,12 @@ final class URLHelperTests: XCTestCase {
         XCTAssertEqual(URLHelper.showNotesTimestampValue(from: url), URLFixture.showNotesTimestamp)
     }
 
+    func testShowNotesTimestampValueAllowsLocalhostLinkWithoutTrailingSlash() {
+        let url = URL(string: "http://localhost#playerJumpTo=\(URLFixture.showNotesTimestamp)")!
+
+        XCTAssertEqual(URLHelper.showNotesTimestampValue(from: url), URLFixture.showNotesTimestamp)
+    }
+
     func testShowNotesTimestampValueRejectsUnexpectedShapes() {
         let urls = [
             showNotesTimestampURL(scheme: URLFixture.httpsScheme),

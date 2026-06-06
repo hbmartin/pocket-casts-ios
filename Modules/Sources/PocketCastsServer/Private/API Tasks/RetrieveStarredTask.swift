@@ -39,7 +39,10 @@ class RetrieveStarredTask: ApiBaseTask, @unchecked Sendable {
                     processEpisode(serverEpisode)
                 }
 
-                addEpisodeGroup.wait()
+                let waitResult = addEpisodeGroup.wait(timeout: .now() + 30.seconds)
+                if waitResult == .timedOut {
+                    FileLog.shared.addMessage("RetrieveStarredTask timed out waiting for episodes to process")
+                }
 
                 completion?(convertedEpisodesSnapshot())
             } catch {
