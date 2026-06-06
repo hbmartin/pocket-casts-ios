@@ -35,7 +35,7 @@ class AudioClipExporter {
 
         guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetAppleM4A) else {
             FileLog.shared.addMessage("AudioClipExporter: Failed to create export session")
-            throw AudioExportError.failedToInsertTimeRange
+            throw AudioExportError.failedToCreateExportSession
         }
 
         exportSession.timeRange = CMTimeRangeMake(start: .zero, duration: duration)

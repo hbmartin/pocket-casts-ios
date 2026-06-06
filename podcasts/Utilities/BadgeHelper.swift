@@ -89,13 +89,9 @@ class BadgeHelper {
     private func clearBadge(clearNotificationsToo: Bool) {
         let notificationCenter = UNUserNotificationCenter.current()
         if clearNotificationsToo {
-            // Setting a non-zero badge first preserves the old behavior that clears delivered notifications even when the badge was already zero.
-            notificationCenter.setBadgeCount(1) { _ in
-                notificationCenter.setBadgeCount(0)
-            }
-        } else {
-            notificationCenter.setBadgeCount(0)
+            notificationCenter.removeAllDeliveredNotifications()
         }
+        notificationCenter.setBadgeCount(0)
     }
 
     private func setBadgeTo(_ badgeNumber: Int) {

@@ -7,6 +7,8 @@ class AVFileUtil: NSObject {
     private var artworkHandler: (UIImage?) -> Void
     private var url: URL
     private var asset: AVURLAsset
+    private var metadataTask: Task<Void, Never>?
+    private var durationTask: Task<Void, Never>?
     static let min_artwork_size = 100
 
     init(fileURL: URL, durationHandler: @escaping ((TimeInterval) -> Void), titleHandler: @escaping ((String?) -> Void), artworkHandler: @escaping ((UIImage?) -> Void)) {
@@ -21,8 +23,17 @@ class AVFileUtil: NSObject {
         loadMetaData()
     }
 
+    deinit {
+        metadataTask?.cancel()
+        durationTask?.cancel()
+    }
+
     func loadMetaData() {
-        Task {
+        metadataTask?.cancel()
+        durationTask?.cancel()
+
+        metadataTask = Task { [weak self] in
+            guard let self else { return }
             guard let metadataItems = try? await asset.load(.commonMetadata) else {
                 titleHandler(nil)
                 artworkHandler(nil)
@@ -34,7 +45,8 @@ class AVFileUtil: NSObject {
         }
 
         // Load duration separately as it can take longer than basic metadata.
-        Task {
+        durationTask = Task { [weak self] in
+            guard let self else { return }
             if let duration = try? await asset.load(.duration) {
                 durationHandler(CMTimeGetSeconds(duration))
             }

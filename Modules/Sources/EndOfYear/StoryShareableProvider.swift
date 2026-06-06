@@ -9,18 +9,72 @@ import PocketCastsUtils
 /// avoid blocking the main thread and the share sheet
 /// having a delay when appearing.
 public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable {
-    public static var shared = StoryShareableProvider()
+    private static let sharedLock = NSLock()
+    private static var sharedStorage = StoryShareableProvider()
 
-    public var generatedItem: Any?
+    public static var shared: StoryShareableProvider {
+        sharedLock.lock()
+        defer { sharedLock.unlock() }
 
-    public var generatedItemURL: Any?
+        return sharedStorage
+    }
 
-    public var view: AnyView?
+    private let lock = NSLock()
+    private var generatedItemStorage: Any?
+    private var generatedItemURLStorage: Any?
+    private var viewStorage: AnyView?
+
+    public var generatedItem: Any? {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+
+            return generatedItemStorage
+        }
+        set {
+            lock.lock()
+            generatedItemStorage = newValue
+            lock.unlock()
+        }
+    }
+
+    public var generatedItemURL: Any? {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+
+            return generatedItemURLStorage
+        }
+        set {
+            lock.lock()
+            generatedItemURLStorage = newValue
+            lock.unlock()
+        }
+    }
+
+    public var view: AnyView? {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+
+            return viewStorage
+        }
+        set {
+            lock.lock()
+            viewStorage = newValue
+            lock.unlock()
+        }
+    }
 
     public static func new(_ view: AnyView) -> StoryShareableProvider {
-        shared = StoryShareableProvider()
-        shared.view = view
-        return shared
+        let provider = StoryShareableProvider()
+        provider.view = view
+
+        sharedLock.lock()
+        sharedStorage = provider
+        sharedLock.unlock()
+
+        return provider
     }
 
     public init() {
@@ -66,7 +120,7 @@ public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable
         let url = tempDir.appendingPathComponent("pocket-casts-share-image-\(uuid).png")
 
         do {
-           try imageData.write(to: url)
+            try imageData.write(to: url)
         } catch {
             return nil
         }

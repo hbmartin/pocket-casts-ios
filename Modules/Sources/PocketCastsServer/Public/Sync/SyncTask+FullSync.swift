@@ -50,14 +50,10 @@ extension SyncTask {
 
         guard let podcasts else { return }
 
-        totalToImport = podcasts.count
-        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastCount, object: totalToImport)
-
-        upToPodcast = 0
+        resetPodcastImportProgress(total: podcasts.count, upTo: 0)
         for podcast in podcasts {
             importQueue.addOperation {
-                self.upToPodcast += 1
-                NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastUpto, object: self.upToPodcast)
+                self.incrementAndPostPodcastImportProgress()
 
                 self.processPodcast(podcast, lastSyncAt: lastSyncAt)
             }

@@ -6,8 +6,8 @@ import SwiftProtobuf
 class ChangeEmailTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((Bool) -> Void)?
 
-    private var newEmail: String
-    private var password: String
+    private let newEmail: String
+    private let password: String
 
     init(newEmail: String, password: String) {
         self.newEmail = newEmail

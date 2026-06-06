@@ -37,9 +37,7 @@ extension SyncTask {
 
         DataManager.sharedManager.markAllSynced(episodeIDs: episodesToImport.map({ $0.uuid }))
 
-        totalToImport = podcastsToImport.count
-        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastCount, object: totalToImport)
-        upToPodcast = 1
+        resetPodcastImportProgress(total: podcastsToImport.count, upTo: 1)
 
         // The sync order here is important. Folders need to be added before podcasts, because podcasts have folderUuids in them. Podcasts are next so we can load any episodes we don't have and then read their sync data.
         for folderItem in foldersToImport {
@@ -138,9 +136,7 @@ extension SyncTask {
             _ = semaphore.wait(timeout: .distantFuture)
         }
 
-        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastUpto, object: upToPodcast)
-        NotificationCenter.default.post(name: ServerNotifications.syncProgressPodcastCount, object: totalToImport)
-        upToPodcast += 1
+        postPodcastImportProgressThenIncrement()
     }
 
     private func importItem(podcastItem: Api_SyncUserPodcast, into podcast: Podcast, checkIsDeleted: Bool) {

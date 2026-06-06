@@ -4,11 +4,12 @@ import PocketCastsUtils
 import SwiftProtobuf
 
 class UploadFileRequestTask: ApiBaseTask, @unchecked Sendable {
-    var completion: ((URL?) -> Void)?
+    private let completion: (URL?) -> Void
     private let episode: UserEpisode
 
-    init(episode: UserEpisode) {
+    init(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
         self.episode = episode
+        self.completion = completion
 
         super.init()
     }
@@ -29,14 +30,14 @@ class UploadFileRequestTask: ApiBaseTask, @unchecked Sendable {
 
             guard let responseData = response, httpStatus == ServerConstants.HttpConstants.ok else {
                 FileLog.shared.addMessage("Upload file request failed \(httpStatus)")
-                completion?(nil)
+                completion(nil)
                 return
             }
 
             do {
                 let uploadResponse = try Files_FileUploadResponse(serializedBytes: responseData)
                 FileLog.shared.addMessage("Upload request response \(uploadResponse)")
-                completion?(URL(string: uploadResponse.url))
+                completion(URL(string: uploadResponse.url))
                 return
             } catch {
                 FileLog.shared.addMessage("Upload request response failed \(error.localizedDescription)")
@@ -45,6 +46,6 @@ class UploadFileRequestTask: ApiBaseTask, @unchecked Sendable {
             print("Protobuf Encoding failed")
         }
 
-        completion?(nil)
+        completion(nil)
     }
 }

@@ -9,8 +9,7 @@ public extension ApiServerHandler {
     }
 
     func uploadFileRequest(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
-        let uploadOperation = UploadFileRequestTask(episode: episode)
-        uploadOperation.completion = completion
+        let uploadOperation = UploadFileRequestTask(episode: episode, completion: completion)
         apiQueue.addOperation(uploadOperation)
     }
 
@@ -27,8 +26,7 @@ public extension ApiServerHandler {
     }
 
     func uploadFilePlayRequest(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
-        let requestOperation = UploadFilePlayRequestTask(episode: episode)
-        requestOperation.completion = completion
+        let requestOperation = UploadFilePlayRequestTask(episode: episode, completion: completion)
         apiQueue.addOperation(requestOperation)
     }
 

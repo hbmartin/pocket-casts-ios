@@ -3,12 +3,13 @@ import PocketCastsUtils
 import SwiftProtobuf
 
 class SupportFeedbackTask: ApiBaseTask, @unchecked Sendable {
-    var completion: ((Bool) -> Void)?
+    private let completion: (Bool) -> Void
 
     private let message: String
 
-    init(message: String) {
+    init(message: String, completion: @escaping (Bool) -> Void) {
         self.message = message
+        self.completion = completion
     }
 
     override func main() {
@@ -36,7 +37,7 @@ class SupportFeedbackTask: ApiBaseTask, @unchecked Sendable {
 
             if response == nil {
                 FileLog.shared.addMessage("Failed to send the feedback message because response is empty")
-                completion?(false)
+                completion(false)
                 return
             }
 
@@ -45,10 +46,10 @@ class SupportFeedbackTask: ApiBaseTask, @unchecked Sendable {
             } else {
                 FileLog.shared.addMessage("Failed to send the feedback message as \(feedbackType.rawValue), http status \(httpStatus)")
             }
-            completion?(httpStatus == ServerConstants.HttpConstants.ok)
+            completion(httpStatus == ServerConstants.HttpConstants.ok)
         } catch {
             FileLog.shared.addMessage("Failed to serialize Api_SupportFeedbackRequest \(error.localizedDescription)")
-            completion?(false)
+            completion(false)
         }
     }
 

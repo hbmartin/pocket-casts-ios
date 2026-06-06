@@ -113,5 +113,14 @@ final class MediaExporterResourceLoaderDelegateErrorHandlingTests: XCTestCase {
 // MARK: - Helpers
 
 private func makeURLSessionTask() -> URLSessionTask {
-    URLSession.shared.dataTask(with: URL(string: "https://example.com")!)
+    URLSession.shared.dataTask(with: URLSessionTaskFixture.url)
+}
+
+private enum URLSessionTaskFixture {
+    static var url: URL {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "example.com"
+        return components.url!
+    }
 }

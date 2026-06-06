@@ -13,18 +13,10 @@ XCODE_ANALYZE_SCHEME ?= Pocket Casts Staging
 XCODE_ANALYZE_CONFIGURATION ?= StagingDebug
 XCODE_ANALYZE_DESTINATION ?= generic/platform=iOS Simulator
 XCODE_ANALYZE_DERIVED_DATA_PATH ?= /tmp/pocketcasts-analyze-deriveddata
-PERIPHERY_PROJECT ?= podcasts.xcodeproj
-PERIPHERY_SCHEMES ?= Pocket Casts Staging
-PERIPHERY_CONFIGURATION ?= StagingDebug
-PERIPHERY_DESTINATION ?= generic/platform=iOS Simulator
-PERIPHERY_GENERATED_REPORT_EXCLUDES = --report-exclude "Modules/Sources/PocketCastsServer/Private/Protobuffer/*.pb.swift" --report-exclude "podcasts/Strings+Generated.swift" --report-exclude "podcasts/ThemeColor.swift" --report-exclude "podcasts/ThemeStyle.swift"
-PERIPHERY_FLAGS ?= --retain-objc-accessible --retain-swift-ui-previews --relative-results --disable-update-check $(PERIPHERY_GENERATED_REPORT_EXCLUDES)
-PERIPHERY_BASELINE ?= .periphery-baseline
-PERIPHERY_STRICT ?= 0
 SEMGREP_SWIFT_ERROR ?= 1
 SEMGREP_POCKET_CASTS_ERROR ?= 1
 
-.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts semgrep_tests xcode_static_analyzer periphery periphery_baseline static_checks format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts semgrep_tests xcode_static_analyzer static_checks format install_dependencies
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -65,6 +57,7 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-insecure-storage.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift
 
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 	if [ -n "$(XCODE_ANALYZE_DERIVED_DATA_PATH)" ]; then rm -rf "$(XCODE_ANALYZE_DERIVED_DATA_PATH)/SDKStatCaches.noindex"; fi
@@ -73,28 +66,6 @@ xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
        -configuration $(XCODE_ANALYZE_CONFIGURATION) \
        -destination '$(XCODE_ANALYZE_DESTINATION)' \
        -derivedDataPath $(XCODE_ANALYZE_DERIVED_DATA_PATH) \
-       CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-
-periphery: ## Scan for unused Swift declarations with Periphery
-	periphery scan \
-       --project "$(PERIPHERY_PROJECT)" \
-       --schemes "$(PERIPHERY_SCHEMES)" \
-       --format xcode \
-       $(PERIPHERY_FLAGS) --baseline "$(PERIPHERY_BASELINE)" $(if $(filter 1,$(PERIPHERY_STRICT)),--strict,) \
-       -- \
-       -configuration $(PERIPHERY_CONFIGURATION) \
-       -destination '$(PERIPHERY_DESTINATION)' \
-       CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-
-periphery_baseline: ## Write the current Periphery findings baseline
-	periphery scan \
-       --project "$(PERIPHERY_PROJECT)" \
-       --schemes "$(PERIPHERY_SCHEMES)" \
-       --format xcode \
-       $(PERIPHERY_FLAGS) --write-baseline "$(PERIPHERY_BASELINE)" \
-       -- \
-       -configuration $(PERIPHERY_CONFIGURATION) \
-       -destination '$(PERIPHERY_DESTINATION)' \
        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
 static_checks: ## Run SwiftLint, Semgrep, and Xcode Static Analyzer

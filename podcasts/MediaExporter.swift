@@ -13,6 +13,7 @@ struct MediaExporter {
     private static func reportProgress(session: AVAssetExportSession, progressCallback: ProgressCallback? = nil) async {
         let size = (try? await session.estimatedOutputFileLengthInBytes) ?? 0
         for await state in session.states(updateInterval: 1) {
+            guard !Task.isCancelled else { return }
             if case let .exporting(progress) = state {
                 progressCallback?(Float(progress.fractionCompleted), size)
             }
@@ -57,16 +58,14 @@ struct MediaExporter {
             }
         }
         do {
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                group.addTask {
-                    try await exporter.export(to: outputURL, as: .m4a)
-                }
-                group.addTask {
-                    await reportProgress(session: exporter, progressCallback: progressCallback)
-                }
-                try await group.next()
-                group.cancelAll()
+            let progressTask = Task {
+                await reportProgress(session: exporter, progressCallback: progressCallback)
             }
+            defer {
+                progressTask.cancel()
+            }
+
+            try await exporter.export(to: outputURL, as: .m4a)
         } catch is CancellationError {
             FileLog.shared.addMessage("DownloadManager export session: cancelled")
             return false

@@ -5,13 +5,7 @@ import SwiftProtobuf
 class RetrieveEpisodesTask: ApiBaseTask, @unchecked Sendable {
     var completion: (([EpisodeSyncInfo]?) -> Void)?
 
-    private var podcastUuid: String
-
-    private lazy var addPodcastGroup: DispatchGroup = {
-        let dispatchGroup = DispatchGroup()
-
-        return dispatchGroup
-    }()
+    private let podcastUuid: String
 
     private var convertedEpisodes = [EpisodeSyncInfo]()
 
