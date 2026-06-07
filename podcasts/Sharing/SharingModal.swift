@@ -245,7 +245,7 @@ extension SharingModal.Option {
 
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("video_export-\(clipUUID)-\(style.hashValue)-\(clipTime.start)-\(clipTime.end)-\(destination.hashValue)", conformingTo: .mpeg4Movie)
         let fileURL: URL
-        if FileManager.default.fileExistsAtURL(url) {
+        if FileManager.default.fileExists(atPath: url.path) {
             fileURL = url
         } else {
             fileURL = try await destination.export(info: imageInfo,
@@ -275,7 +275,7 @@ extension SharingModal.Option {
             newURL.deleteLastPathComponent()
             newURL.appendPathComponent(fileName)
 
-            if FileManager.default.fileExistsAtURL(newURL) {
+            if FileManager.default.fileExists(atPath: newURL.path) {
                 try FileManager.default.removeItem(at: newURL)
             }
             try FileManager.default.copyItem(at: fileURL, to: newURL)

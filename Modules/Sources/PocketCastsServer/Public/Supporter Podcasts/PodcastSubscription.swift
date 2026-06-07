@@ -1,5 +1,4 @@
 import Foundation
-import PocketCastsUtils
 
 public struct PodcastSubscription: Codable {
     public var uuid: String // userUuid

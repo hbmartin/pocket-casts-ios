@@ -31,9 +31,6 @@ extension MainTabBarController {
         let filtersCommand = UIKeyCommand(title: L10n.filters, action: #selector(handleFilters), input: "2", modifierFlags: [.command])
         addKeyCommand(filtersCommand)
 
-        let discoverCommand = UIKeyCommand(title: L10n.discover, action: #selector(handleDiscover), input: "3", modifierFlags: [.command])
-        addKeyCommand(discoverCommand)
-
         let upNextCommand = UIKeyCommand(title: L10n.upNext, action: #selector(handleUpNext), input: "4", modifierFlags: [.command])
         addKeyCommand(upNextCommand)
 
@@ -66,10 +63,6 @@ extension MainTabBarController {
 
     @objc private func handleFilters() {
         navigateToFilterTab()
-    }
-
-    @objc private func handleDiscover() {
-        navigateToDiscover(true)
     }
 
     @objc private func handleUpNext() {

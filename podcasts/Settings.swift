@@ -1194,7 +1194,7 @@ class Settings: NSObject {
             if FeatureFlag.newSettingsStorage.enabled {
                 return SettingsStore.appSettings.headphoneControlsPreviousAction.action
             } else {
-                return Constants.UserDefaults.headphones.previousAction.unlockedValue
+                return Constants.UserDefaults.headphones.previousAction.value
             }
         }
 
@@ -1211,7 +1211,7 @@ class Settings: NSObject {
             if FeatureFlag.newSettingsStorage.enabled {
                 return SettingsStore.appSettings.headphoneControlsNextAction.action
             } else {
-                return Constants.UserDefaults.headphones.nextAction.unlockedValue
+                return Constants.UserDefaults.headphones.nextAction.value
             }
         }
 

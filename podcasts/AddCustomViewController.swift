@@ -48,12 +48,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @IBOutlet var lockView: PlusLockedInfoView! {
-        didSet {
-            lockView.delegate = self
-        }
-    }
-
     @IBOutlet var imageBackgroundView: UIView!
     @IBOutlet var fileImageView: UIImageView! {
         didSet {
@@ -310,14 +304,11 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         avFileUtil = nil
     }
 
-    private lazy var lockedArtworkTapGesture = UITapGestureRecognizer(target: self, action: #selector(showSubscriptionRequired))
-
     @objc private func setupUserAccess() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
             self.addCustomlock.isHidden = true
-            self.lockView.isHidden = true
             self.addCustomImageButton.alpha = 1
         }
     }
@@ -461,9 +452,5 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
             nameLabel.text = L10n.fileUploadNameRequired
             nameLabel.style = .support05
         }
-    }
-
-    @objc func showSubscriptionRequired() {
-        // Custom file uploads are free now, so there is no upsell to present.
     }
 }

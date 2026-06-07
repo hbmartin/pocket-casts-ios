@@ -58,8 +58,6 @@
 		401EBA6A23725C6400899F93 /* UpNextNowPlayingCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 401EBA6823725C6400899F93 /* UpNextNowPlayingCell.xib */; };
 		4022A4C0236BA15800900734 /* SleepTimerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4022A4BE236BA15800900734 /* SleepTimerViewController.swift */; };
 		4022A4C1236BA15800900734 /* SleepTimerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4022A4BF236BA15800900734 /* SleepTimerViewController.xib */; };
-		40251CEB22BB0F6E00551C51 /* CancelledAcknowledgeViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 40251CE922BB0F6E00551C51 /* CancelledAcknowledgeViewController.xib */; };
-		40251CEC22BB0F6E00551C51 /* CancelledAcknowledgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40251CEA22BB0F6E00551C51 /* CancelledAcknowledgeViewController.swift */; };
 		40256C32223486A20091EFC6 /* UploadedStorageHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40256C31223486A10091EFC6 /* UploadedStorageHeaderView.swift */; };
 		40256C34223486DA0091EFC6 /* UploadedStorageHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 40256C33223486DA0091EFC6 /* UploadedStorageHeaderView.xib */; };
 		402772D721B6105D00769811 /* PodcastManager+Delete.swift in Sources */ = {isa = PBXBuildFile; fileRef = 402772D621B6105D00769811 /* PodcastManager+Delete.swift */; };
@@ -124,8 +122,6 @@
 		407B21E82231F6A300B4E492 /* UploadedSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 407B21E62231F6A300B4E492 /* UploadedSettingsViewController.xib */; };
 		407B9B6223875AA1008E7CA8 /* UpNextViewController+Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407B9B6123875AA1008E7CA8 /* UpNextViewController+Table.swift */; };
 		407B9B72238B5D91008E7CA8 /* UpNextViewController+MultiSelectActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407B9B71238B5D91008E7CA8 /* UpNextViewController+MultiSelectActions.swift */; };
-		407CD7292266DF510033C18E /* CancelInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407CD7272266DF510033C18E /* CancelInfoViewController.swift */; };
-		407CD72A2266DF510033C18E /* CancelInfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 407CD7282266DF510033C18E /* CancelInfoViewController.xib */; };
 		408426332134CBE60076D82E /* SmallListCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4084262F2134CBE50076D82E /* SmallListCell.xib */; };
 		408426352134CBE60076D82E /* SmallListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408426312134CBE50076D82E /* SmallListCell.swift */; };
 		4084F68624DCE2F6006E5D97 /* StarredViewController+Multiselect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4084F68524DCE2F6006E5D97 /* StarredViewController+Multiselect.swift */; };
@@ -821,7 +817,6 @@
 		BDFFC9AF2148A1460026D875 /* PCRoutePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFFC9AE2148A1460026D875 /* PCRoutePickerView.swift */; };
 		BDFFC9B12148E87E0026D875 /* VideoViewController+Seek.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFFC9B02148E87E0026D875 /* VideoViewController+Seek.swift */; };
 		C6C3B10211780A90700EF861 /* FilterAppEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47292CD2914D326709870624 /* FilterAppEntity.swift */; };
-		C701C25C2A8E82DC00AD9FAB /* PaidFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = C701C25B2A8E82DC00AD9FAB /* PaidFeature.swift */; };
 		C713D4F42A04C90500A78468 /* ProfileDataViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4EC2A04C90400A78468 /* ProfileDataViewModel.swift */; };
 		C713D4F52A04C90500A78468 /* ProfileImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4ED2A04C90400A78468 /* ProfileImage.swift */; };
 		C713D4F62A04C90500A78468 /* AccountHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4EE2A04C90400A78468 /* AccountHeaderView.swift */; };
@@ -829,7 +824,6 @@
 		C713D4F82A04C90500A78468 /* ProfileHeaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4F02A04C90400A78468 /* ProfileHeaderViewModel.swift */; };
 		C713D4F92A04C90500A78468 /* SubscriptionProfileImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4F12A04C90500A78468 /* SubscriptionProfileImage.swift */; };
 		C713D4FA2A04C90500A78468 /* AccountHeaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4F22A04C90500A78468 /* AccountHeaderViewModel.swift */; };
-		C713D4FB2A04C90500A78468 /* SubscriptionBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4F32A04C90500A78468 /* SubscriptionBadge.swift */; };
 		C713D4FD2A05168B00A78468 /* Theme+AppColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = C713D4FC2A05168B00A78468 /* Theme+AppColors.swift */; };
 		C715EE0F2A0497DB0054A082 /* Theme+Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = C715EE0E2A0497DB0054A082 /* Theme+Color.swift */; };
 		C725285F299B315000A582C3 /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C725285E299B315000A582C3 /* BookmarkManager.swift */; };
@@ -1104,8 +1098,6 @@
 		401EBA6823725C6400899F93 /* UpNextNowPlayingCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = UpNextNowPlayingCell.xib; sourceTree = "<group>"; };
 		4022A4BE236BA15800900734 /* SleepTimerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepTimerViewController.swift; sourceTree = "<group>"; };
 		4022A4BF236BA15800900734 /* SleepTimerViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SleepTimerViewController.xib; sourceTree = "<group>"; };
-		40251CE922BB0F6E00551C51 /* CancelledAcknowledgeViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CancelledAcknowledgeViewController.xib; sourceTree = "<group>"; };
-		40251CEA22BB0F6E00551C51 /* CancelledAcknowledgeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CancelledAcknowledgeViewController.swift; sourceTree = "<group>"; };
 		40256C31223486A10091EFC6 /* UploadedStorageHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadedStorageHeaderView.swift; sourceTree = "<group>"; };
 		40256C33223486DA0091EFC6 /* UploadedStorageHeaderView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = UploadedStorageHeaderView.xib; sourceTree = "<group>"; };
 		402772D621B6105D00769811 /* PodcastManager+Delete.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PodcastManager+Delete.swift"; sourceTree = "<group>"; };
@@ -1167,8 +1159,6 @@
 		407B21E62231F6A300B4E492 /* UploadedSettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = UploadedSettingsViewController.xib; sourceTree = "<group>"; };
 		407B9B6123875AA1008E7CA8 /* UpNextViewController+Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpNextViewController+Table.swift"; sourceTree = "<group>"; };
 		407B9B71238B5D91008E7CA8 /* UpNextViewController+MultiSelectActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpNextViewController+MultiSelectActions.swift"; sourceTree = "<group>"; };
-		407CD7272266DF510033C18E /* CancelInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CancelInfoViewController.swift; path = podcasts/CancelInfoViewController.swift; sourceTree = SOURCE_ROOT; };
-		407CD7282266DF510033C18E /* CancelInfoViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = CancelInfoViewController.xib; path = podcasts/CancelInfoViewController.xib; sourceTree = SOURCE_ROOT; };
 		4084262F2134CBE50076D82E /* SmallListCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SmallListCell.xib; sourceTree = "<group>"; };
 		408426312134CBE50076D82E /* SmallListCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SmallListCell.swift; sourceTree = "<group>"; };
 		4084F68524DCE2F6006E5D97 /* StarredViewController+Multiselect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StarredViewController+Multiselect.swift"; sourceTree = "<group>"; };
@@ -1931,7 +1921,6 @@
 		BDFB53CA2362B9080001806E /* UpNextViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = UpNextViewController.xib; sourceTree = "<group>"; };
 		BDFFC9AE2148A1460026D875 /* PCRoutePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PCRoutePickerView.swift; sourceTree = "<group>"; };
 		BDFFC9B02148E87E0026D875 /* VideoViewController+Seek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VideoViewController+Seek.swift"; sourceTree = "<group>"; };
-		C701C25B2A8E82DC00AD9FAB /* PaidFeature.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PaidFeature.swift; sourceTree = "<group>"; };
 		C713D4EC2A04C90400A78468 /* ProfileDataViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileDataViewModel.swift; sourceTree = "<group>"; };
 		C713D4ED2A04C90400A78468 /* ProfileImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileImage.swift; sourceTree = "<group>"; };
 		C713D4EE2A04C90400A78468 /* AccountHeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AccountHeaderView.swift; sourceTree = "<group>"; };
@@ -1939,7 +1928,6 @@
 		C713D4F02A04C90400A78468 /* ProfileHeaderViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileHeaderViewModel.swift; sourceTree = "<group>"; };
 		C713D4F12A04C90500A78468 /* SubscriptionProfileImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionProfileImage.swift; sourceTree = "<group>"; };
 		C713D4F22A04C90500A78468 /* AccountHeaderViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AccountHeaderViewModel.swift; sourceTree = "<group>"; };
-		C713D4F32A04C90500A78468 /* SubscriptionBadge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionBadge.swift; sourceTree = "<group>"; };
 		C713D4FC2A05168B00A78468 /* Theme+AppColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Theme+AppColors.swift"; sourceTree = "<group>"; };
 		C715EE0E2A0497DB0054A082 /* Theme+Color.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Theme+Color.swift"; sourceTree = "<group>"; };
 		C725285E299B315000A582C3 /* BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkManager.swift; sourceTree = "<group>"; };
@@ -2699,8 +2687,6 @@
 		40251CE822BB0F5900551C51 /* Acknowledge Modals */ = {
 			isa = PBXGroup;
 			children = (
-				40251CEA22BB0F6E00551C51 /* CancelledAcknowledgeViewController.swift */,
-				40251CE922BB0F6E00551C51 /* CancelledAcknowledgeViewController.xib */,
 			);
 			name = "Acknowledge Modals";
 			sourceTree = "<group>";
@@ -2749,8 +2735,6 @@
 				40542E2B2265604700046330 /* AccountViewController.swift */,
 				403D1AB32281C36100CE7C9B /* AccountViewController+TableView.swift */,
 				40542E2A2265604600046330 /* AccountViewController.xib */,
-				407CD7272266DF510033C18E /* CancelInfoViewController.swift */,
-				407CD7282266DF510033C18E /* CancelInfoViewController.xib */,
 				400A3EF822703D54007361C7 /* AccountUpdatedViewController.swift */,
 				400A3EF922703D54007361C7 /* AccountUpdatedViewController.xib */,
 				400A3F012277CB3A007361C7 /* NewEmailViewController.swift */,
@@ -3325,7 +3309,6 @@
 				C7C4CAF228ABFD0900CFC8CF /* Notifications.swift */,
 				C7D6551328E5153200AD7174 /* Debounce.swift */,
 				C791418C294CE32D00F1852B /* StorageManager.swift */,
-				C701C25B2A8E82DC00AD9FAB /* PaidFeature.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -4393,7 +4376,6 @@
 			children = (
 				C713D4ED2A04C90400A78468 /* ProfileImage.swift */,
 				C799373A2A095F6F0010DC64 /* ProfileInfoLabels.swift */,
-				C713D4F32A04C90500A78468 /* SubscriptionBadge.swift */,
 				C713D4F12A04C90500A78468 /* SubscriptionProfileImage.swift */,
 			);
 			path = "Common Views";
@@ -5577,7 +5559,6 @@
 				BDDA14DD219B021A0066441E /* SearchLoadingCell.xib in Resources */,
 				BD12931422F809F8004608A6 /* AppIcon-Electric-Pink29x29@2x~ipad.png in Resources */,
 				BD42E31B1B940AFF000EA14F /* DiscoverPodcastTableCell.xib in Resources */,
-				40251CEB22BB0F6E00551C51 /* CancelledAcknowledgeViewController.xib in Resources */,
 				BDA002DA1F7B318B00DCB4AE /* AppIcon-Round-Dark29x29@2x~ipad.png in Resources */,
 				C7D8137F2A0D4B8A007F715F /* AppIcon-Patron-Chrome-ipad-pro.png in Resources */,
 				BD12928422F7CCC9004608A6 /* AppIcon-Electric-Blue40x40~ipad.png in Resources */,
@@ -5691,7 +5672,6 @@
 				BD6B6699245BC28800CF5245 /* AppIcon-Red-Velvet40x40@2x.png in Resources */,
 				BD95ED6B1BAFA532004335B0 /* CountryChooserViewController.xib in Resources */,
 				40E1B4CB2255856C006C96CE /* PlaylistsShortcutsViewController.xib in Resources */,
-				407CD72A2266DF510033C18E /* CancelInfoViewController.xib in Resources */,
 				BD1292E922F7D066004608A6 /* AppIcon-Classic40x40@3x.png in Resources */,
 				C7360CB82A42128300456930 /* Bookmarks.xcassets in Resources */,
 				BD1292D222F7CD83004608A6 /* AppIcon-Plus83.5x83.5@2x~ipad.png in Resources */,
@@ -6002,7 +5982,6 @@
 				BDCA84F21C1FB7260022ED4D /* DownloadSettingsViewController.swift in Sources */,
 				F29158942FBD0C3F0028F7F3 /* CameraPicker.swift in Sources */,
 				91319B0B2C171F69000220A4 /* GravatarSafariViewController.swift in Sources */,
-				C701C25C2A8E82DC00AD9FAB /* PaidFeature.swift in Sources */,
 				401EBA6923725C6400899F93 /* UpNextNowPlayingCell.swift in Sources */,
 				8BF623012C53ED7C00D10F57 /* TranscriptSearchAccessoryView.swift in Sources */,
 				BDA206601BB3D4D600D38389 /* DownloadsViewController.swift in Sources */,
@@ -6107,7 +6086,6 @@
 				F26CC6322FACD5D400C1F8F7 /* ShareProfileView.swift in Sources */,
 				F26CC6332FACD5D400C1F8F7 /* ShareProfileViewModel.swift in Sources */,
 				BDD40A181FA1ABF500A53AE1 /* PCNavigationController.swift in Sources */,
-				407CD7292266DF510033C18E /* CancelInfoViewController.swift in Sources */,
 				BD585C21204794AE00AC842C /* IncomingShareItem.swift in Sources */,
 				BD542C222403845500F35D26 /* PlaylistEpisode+Formatting.swift in Sources */,
 				BD2CB3E32418B48600E2D762 /* ArrayExtension.swift in Sources */,
@@ -6146,7 +6124,6 @@
 				407B9B6223875AA1008E7CA8 /* UpNextViewController+Table.swift in Sources */,
 				BDA156EB187E5EE600F5D412 /* SJMediaMetadataHelper.m in Sources */,
 				40FE395F229CF424004526CD /* UserEpisode+Formatting.swift in Sources */,
-				C713D4FB2A04C90500A78468 /* SubscriptionBadge.swift in Sources */,
 				9AF355862E535A5A0083ECA7 /* PlaylistPreviewViewModel.swift in Sources */,
 				9AF6468F2E5B58C200627836 /* PlaylistHeaderViewCell.swift in Sources */,
 				46737E6A272B2EEC00739C3E /* ReadOnlyTextView.swift in Sources */,
@@ -6306,7 +6283,6 @@
 				9AF646952E5E081600627836 /* PlaylistDetailViewController+TableView.swift in Sources */,
 				BD27B8C52756F486007A0EA7 /* UIColor+SwiftUI.swift in Sources */,
 				C791418D294CE32D00F1852B /* StorageManager.swift in Sources */,
-				40251CEC22BB0F6E00551C51 /* CancelledAcknowledgeViewController.swift in Sources */,
 				F5BA0D742E3443ED005931D3 /* PressableLottieButtonStyle.swift in Sources */,
 				BDF15A401B54E064000EC323 /* PlaybackQueue.swift in Sources */,
 				C713D4F42A04C90500A78468 /* ProfileDataViewModel.swift in Sources */,

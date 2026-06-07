@@ -13,9 +13,6 @@ class ProfileDataViewModel: ObservableObject {
     /// The user profile information such as logged in, email, etc
     var profile: UserInfo.Profile = .init()
 
-    /// The users subscription information, will be nil if there is no active subscription
-    var subscription: UserInfo.Subscription?
-
     /// Listening Stats
     var stats: UserInfo.Stats = .init()
 
@@ -35,7 +32,6 @@ class ProfileDataViewModel: ObservableObject {
     /// Refresh the store data
     func update() {
         profile = .init()
-        subscription = .init(loggedIn: profile.isLoggedIn)
         stats = .init()
 
         objectWillChange.send()
