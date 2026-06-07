@@ -29,8 +29,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private var backgroundSignOutListener: BackgroundSignOutListener?
     private(set) var appInstallState: AppLifecycleAnalytics.AppInstallState?
 
-    lazy var whatsNew = WhatsNew()
-
     // MARK: - App Lifecycle
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
@@ -51,9 +49,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             case .updated:
                 Settings.notificationsNewEpisodes = UserDefaults.standard.bool(forKey: Constants.UserDefaults.pushEnabled)
 
-                if FeatureFlag.encourageAccountCreation.enabled, !Settings.hasShownInformationalViewModal {
-                    Settings.shouldShowInitialOnboardingFlow = !SyncManager.isUserLoggedIn()
-                }
                 Settings.shouldShowNewFilterTip = false
                 Settings.shouldShowNewFilterTipInCreationView = false
             case .installed:
@@ -78,13 +73,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         setupRoutes()
-
-        if Settings.shouldResultEndOfYearSyncStatus {
-            Settings.setHasSyncedEpisodesForPlayback(false, year: 2025)
-            Settings.setHasSyncedEpisodesForPlaybackAsPlusUser(false, year: 2025)
-            Settings.shouldResultEndOfYearSyncStatus = false
-        }
-
 
         NotificationsHelper.shared.register(checkToken: false)
 
@@ -285,7 +273,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
 
         FirebaseManager.refreshRemoteConfig() { [weak self] _ in
-            self?.updateEndOfYearRemoteValue()
             self?.updateRemoteFeatureFlags()
         }
     }
@@ -315,11 +302,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 }
             }
         }
-    }
-
-    private func updateEndOfYearRemoteValue() {
-        // Update if EOY requires an account to be seen
-        EndOfYear.requireAccount = Settings.endOfYearRequireAccount
     }
 
     private func postLaunchSetup() {

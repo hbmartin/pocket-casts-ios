@@ -17,8 +17,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     let playPauseCommand = UIKeyCommand(title: L10n.keycommandPlayPause, action: #selector(handlePlayPauseKey), input: " ", modifierFlags: [])
 
-    lazy var endOfYear = EndOfYear()
-
     private lazy var profileTabBarItem = UITabBarItem(title: L10n.profile, image: UIImage(named: "profile_tab"), tag: pcTabs.firstIndex(of: .profile) ?? -1)
 
     private lazy var upNextTabBarItem = UITabBarItem(title: L10n.upNext, image: UIImage(named: "upnext_tab"), tag: pcTabs.firstIndex(of: .upNext) ?? -1)
@@ -35,9 +33,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     /// The viewDidAppear can trigger more than once per lifecycle, setting this flag on the first did appear prevents use from prompting more than once per lifecycle. But still wait until the tab bar has appeared to do so.
     var viewDidAppearBefore: Bool = false
-
-    /// Whether we're actively presenting the what's new
-    var isShowingWhatsNew: Bool = false
 
     /// Displayed during database migrations
     var alert: ShiftyLoadingAlert?
@@ -118,8 +113,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         upNextViewController.tabBarItem = upNextTabBarItem
         vcsInTab = [podcastsController, filtersViewController, upNextViewController, profileViewController]
 
-        displayEndOfYearBadgeIfNeeded()
-
         viewControllers = vcsInTab.map { SJUIUtils.navController(for: $0) }
         selectedIndex = restoredLastTabIndex()
 
@@ -148,7 +141,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         NotificationCenter.default.addObserver(self, selector: #selector(animateEpisodeAddedToUpNext(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
         refreshUpNextTabBadge()
 
-        observersForEndOfYearStats()
         addBookmarkCreatedToastHandler()
         if FeatureFlag.displayErrorsOnPlayer.enabled {
             setupErrorBanner()
@@ -165,13 +157,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         registerSceneAppearanceObserverIfNeeded()
         fireSystemThemeMayHaveChanged()
-        checkWhatsNewAcknowledged()
 
-        // Show any app launch announcements/prompts only once
         if !viewDidAppearBefore {
-            showWhatsNewIfNeeded()
-            showEndOfYearPromptIfNeeded()
-
             viewDidAppearBefore = true
         }
 
@@ -235,14 +222,9 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             return
         }
 
-        if FeatureFlag.encourageAccountCreation.enabled,
-           !Settings.hasShownInformationalViewModal,
-           Settings.hasSeenInitialOnboardingBefore,
-           (UIApplication.shared.delegate as? AppDelegate)?.appInstallState == .updated {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.encourageAccountCreation])
-        } else {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.initialOnboarding])
-        }
+        // Account-creation nagging was removed in the "fast & light" build; new users
+        // still get the lightweight initial onboarding, and login stays optional via Profile.
+        NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.initialOnboarding])
 
         // Set the flag so the user won't see the on launch flow again
         Settings.shouldShowInitialOnboardingFlow = false
@@ -568,21 +550,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         showInSafariViewController(urlString: ServerConstants.Urls.termsOfUse)
     }
 
-    func showWhatsNew(whatsNewInfo: WhatsNewInfo) {
-        guard let controller = view.window?.rootViewController else { return }
-
-        let whatsNewVC = SJUIUtils.popupNavController(for: WhatsNewViewController(whatsNewInfo: whatsNewInfo))
-        whatsNewVC.modalPresentationStyle = .formSheet
-
-        if controller.presentedViewController != nil {
-            controller.dismiss(animated: true) {
-                controller.present(whatsNewVC, animated: true, completion: nil)
-            }
-        } else {
-            controller.present(whatsNewVC, animated: true, completion: nil)
-        }
-    }
-
     func navigateToFilterTab() {
         switchToTab(.filter)
     }
@@ -671,17 +638,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
-    func showEndOfYearStories() {
-        guard let presentedViewController else {
-            endOfYear.showStories(in: self, from: .modal)
-            return
-        }
-
-        presentedViewController.dismiss(animated: true) {
-            self.endOfYear.showStories(in: self, from: .modal)
-        }
-    }
-
     func dismissPresentedViewController(completion: (() -> Void)? = nil) {
         presentedViewController?.dismiss(animated: true, completion: completion)
     }
@@ -724,47 +680,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         return true
     }
 
-    // MARK: - End of Year
-
     @objc private func profileSeen() {
         profileTabBarItem.badgeValue = nil
-        if let year = endOfYear.storyModelType?.year {
-            Settings.setShowBadgeForEndOfYear(false, year: year)
-        }
-    }
-
-    func observersForEndOfYearStats() {
-        guard FeatureFlag.endOfYear.enabled || FeatureFlag.endOfYear2024.enabled || FeatureFlag.endOfYear2025.enabled else {
-            return
-        }
-
-        NotificationCenter.default.addObserver(forName: .userSignedIn, object: nil, queue: .main) { _ in
-            self.endOfYear.resetStateIfNeeded()
-        }
-
-        // When the What's New is dismissed, check to see if we should also show the end of year prompt
-        NotificationCenter.default.addObserver(forName: .whatsNewDismissed, object: nil, queue: .main) { _ in
-            self.isShowingWhatsNew = false
-            self.showEndOfYearPromptIfNeeded()
-        }
-
-        NotificationCenter.default.addObserver(forName: .onboardingFlowDidDismiss, object: nil, queue: .main) { _ in
-            self.endOfYear.showPromptBasedOnState(in: self)
-
-            self.displayEndOfYearBadgeIfNeeded()
-        }
-
-        // If the requirement for EOY changes and registration is not required anymore
-        // Show the modal
-        NotificationCenter.default.addObserver(forName: .eoyRegistrationNotRequired, object: nil, queue: .main) { [weak self] _ in
-            guard let self else {
-                return
-            }
-
-            if self.presentedViewController == nil {
-                self.endOfYear.showPrompt(in: self)
-            }
-        }
     }
 
     // MARK: - Orientation
@@ -773,8 +690,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         .portrait
     }
-
-    // MARK: - End of Year
 
     private func updateTabBarColor() {
         tabBar.unselectedItemTintColor = AppTheme.unselectedTabBarItemColor()
@@ -801,12 +716,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         tabBar.standardAppearance = appearance
         tabBar.scrollEdgeAppearance = appearance
-    }
-
-    private func displayEndOfYearBadgeIfNeeded() {
-        if EndOfYear.isEligible, let year = endOfYear.storyModelType?.year, Settings.showBadgeForEndOfYear(year) {
-            profileTabBarItem.badgeValue = "●"
-        }
     }
 
     @objc private func willEnterForeground() {
@@ -845,15 +754,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         fireSystemThemeMayHaveChanged()
     }
 
-    private func checkWhatsNewAcknowledged() {
-        guard let whatsNewInfo = WhatsNewHelper.extractWhatsNewInfo(), whatsNewInfo.versionCode > Settings.whatsNewLastAcknowledged() else { return }
-
-        if ProcessInfo().isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: whatsNewInfo.minOSVersion, minorVersion: 0, patchVersion: 0)) {
-            NavigationManager.sharedManager.navigateTo(NavigationManager.showWhatsNewPageKey, data: [NavigationManager.whatsNewInfoKey: whatsNewInfo])
-        } else {
-            Settings.setWhatsNewLastAcknowledged(whatsNewInfo.versionCode)
-        }
-    }
 
     // There are different areas of the app that relies on presenting VCs from the tab bar
     // However, sometimes the tab bar is already displaying the player.
@@ -957,26 +857,6 @@ private extension MainTabBarController {
         }
 
         Analytics.track(event, properties: ["initial": isInitial])
-    }
-}
-
-// MARK: - App Launch Prompts
-
-private extension MainTabBarController {
-    func showEndOfYearPromptIfNeeded() {
-        // Only show the prompt if there isn't an active announcement flow
-        guard !isShowingWhatsNew, AnnouncementFlow.current == .none else { return }
-
-        endOfYear.showPromptBasedOnState(in: self)
-    }
-
-    func showWhatsNewIfNeeded() {
-        guard let controller = view.window?.rootViewController else { return }
-
-        if let whatsNewViewController = appDelegate()?.whatsNew.viewControllerToShow() {
-            controller.present(whatsNewViewController, animated: true)
-            isShowingWhatsNew = true
-        }
     }
 }
 
