@@ -20,7 +20,11 @@ open class SubscriptionHelper: NSObject {
     }
 
     /// Whether paid feature gates should be opened independently of billing state.
-    public internal(set) static var featuresUnlocked = false
+    ///
+    /// In the "fast & light" build every previously-paid feature is free, so this is `true`.
+    /// `PaidFeature.isUnlocked` and the remaining `featuresUnlocked` call sites all read this,
+    /// so flipping it here opens every gate without editing each call site.
+    public internal(set) static var featuresUnlocked = true
 
     /// Returns the users active subscription tier or .none if they don't currently have one
     public static var activeTier: SubscriptionTier {
