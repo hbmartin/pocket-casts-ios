@@ -1,15 +1,6 @@
 {
-  "originHash" : "9432273f1581b26f58e9b33ef1f1ef4c2a45f288df5ddc2d6346db54e774597d",
+  "originHash" : "1b66b63ff639cfb39737de63db163d10f1966735f6cdb356607f1ffc45c76a4c",
   "pins" : [
-    {
-      "identity" : "abseil-cpp-binary",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/abseil-cpp-binary.git",
-      "state" : {
-        "revision" : "194a6706acbd25e4ef639bcaddea16e8758a3e27",
-        "version" : "1.2024011602.0"
-      }
-    },
     {
       "identity" : "agrume",
       "kind" : "remoteSourceControl",
@@ -17,15 +8,6 @@
       "state" : {
         "revision" : "c2090b3387729965fa0bdbc61adc2ec7af1753f9",
         "version" : "5.6.13"
-      }
-    },
-    {
-      "identity" : "app-check",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/app-check.git",
-      "state" : {
-        "revision" : "3b62f154d00019ae29a71e9738800bb6f18b236d",
-        "version" : "10.19.2"
       }
     },
     {
@@ -38,11 +20,21 @@
       }
     },
     {
-      "identity" : "automattic-tracks-ios",
+      "identity" : "capture-ios",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Automattic/Automattic-Tracks-iOS",
+      "location" : "https://github.com/bitdriftlabs/capture-ios.git",
       "state" : {
-        "revision" : "ce83ea7dc017beb9a3b42710e9da74ac2b7f4913"
+        "revision" : "b0c0c89bf774647b73d446e2045c881d6279f1ba",
+        "version" : "0.23.4"
+      }
+    },
+    {
+      "identity" : "cocoalumberjack",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/CocoaLumberjack/CocoaLumberjack.git",
+      "state" : {
+        "revision" : "c5f2ed4d219866117e135cf648180dc7b66739d3",
+        "version" : "3.9.1"
       }
     },
     {
@@ -64,15 +56,6 @@
       }
     },
     {
-      "identity" : "firebase-ios-sdk",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/firebase/firebase-ios-sdk.git",
-      "state" : {
-        "revision" : "eca84fd638116dd6adb633b5a3f31cc7befcbb7d",
-        "version" : "10.29.0"
-      }
-    },
-    {
       "identity" : "fuse-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/krisk/fuse-swift",
@@ -91,24 +74,6 @@
       }
     },
     {
-      "identity" : "googleappmeasurement",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/GoogleAppMeasurement.git",
-      "state" : {
-        "revision" : "fe727587518729046fc1465625b9afd80b5ab361",
-        "version" : "10.28.0"
-      }
-    },
-    {
-      "identity" : "googledatatransport",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/GoogleDataTransport.git",
-      "state" : {
-        "revision" : "a637d318ae7ae246b02d7305121275bc75ed5565",
-        "version" : "9.4.0"
-      }
-    },
-    {
       "identity" : "googlesignin-ios",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleSignIn-iOS",
@@ -118,30 +83,12 @@
       }
     },
     {
-      "identity" : "googleutilities",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/GoogleUtilities.git",
-      "state" : {
-        "revision" : "57a1d307f42df690fdef2637f3e5b776da02aad6",
-        "version" : "7.13.3"
-      }
-    },
-    {
       "identity" : "grdb.swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift.git",
       "state" : {
         "revision" : "36e30a6f1ef10e4194f6af0cff90888526f0c115",
         "version" : "7.10.0"
-      }
-    },
-    {
-      "identity" : "grpc-binary",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/grpc-binary.git",
-      "state" : {
-        "revision" : "e9fad491d0673bdda7063a0341fb6b47a30c5359",
-        "version" : "1.62.2"
       }
     },
     {
@@ -163,15 +110,6 @@
       }
     },
     {
-      "identity" : "interop-ios-for-google-sdks",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/interop-ios-for-google-sdks.git",
-      "state" : {
-        "revision" : "2d12673670417654f08f5f90fdd62926dc3a2648",
-        "version" : "100.0.0"
-      }
-    },
-    {
       "identity" : "jlroutes",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/joeldev/JLRoutes",
@@ -190,30 +128,12 @@
       }
     },
     {
-      "identity" : "leveldb",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/firebase/leveldb.git",
-      "state" : {
-        "revision" : "a0bc79961d7be727d258d33d5a6b2f1023270ba1",
-        "version" : "1.22.5"
-      }
-    },
-    {
       "identity" : "lottie-ios",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/airbnb/lottie-ios.git",
       "state" : {
         "revision" : "0cb03fd7564d27345bcd96144b811e56212949c6",
         "version" : "4.6.0"
-      }
-    },
-    {
-      "identity" : "nanopb",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/firebase/nanopb.git",
-      "state" : {
-        "revision" : "b7e1104502eca3a213b46303391ca4d3bc8ddec1",
-        "version" : "2.30910.0"
       }
     },
     {
@@ -226,21 +146,12 @@
       }
     },
     {
-      "identity" : "promises",
+      "identity" : "swift-log",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/google/promises.git",
+      "location" : "https://github.com/apple/swift-log",
       "state" : {
-        "revision" : "540318ecedd63d883069ae7f1ed811a2df00b6ac",
-        "version" : "2.4.0"
-      }
-    },
-    {
-      "identity" : "sentry-cocoa",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/getsentry/sentry-cocoa",
-      "state" : {
-        "revision" : "05d3ce8332097ff0b2347231ac66476fd7d2f4d8",
-        "version" : "9.8.0"
+        "revision" : "2aed77ae5ec9a86d8fe42c12275e4c2653a286ee",
+        "version" : "1.13.1"
       }
     },
     {
@@ -250,15 +161,6 @@
       "state" : {
         "revision" : "a008af1a102ff3dd6cc3764bb69bf63226d0f5f6",
         "version" : "1.36.1"
-      }
-    },
-    {
-      "identity" : "swift-sodium",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/jedisct1/swift-sodium",
-      "state" : {
-        "revision" : "e7e799cd1eaa4d0f6d3eab56832e7f4b377f4a4f",
-        "version" : "0.10.0"
       }
     },
     {
@@ -277,6 +179,15 @@
       "state" : {
         "revision" : "2c3d282cda97ce49adb196700404d8e46df9778c",
         "version" : "1.9.0"
+      }
+    },
+    {
+      "identity" : "swiftybeaver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwiftyBeaver/SwiftyBeaver.git",
+      "state" : {
+        "revision" : "8cba041db09596183331d123f337d0eb2e6e8e91",
+        "version" : "2.1.1"
       }
     },
     {
@@ -304,15 +215,6 @@
       "state" : {
         "revision" : "05d691ee7bab64f5ff075b97f47ef41d36a81f6f",
         "version" : "1.0.1"
-      }
-    },
-    {
-      "identity" : "uideviceidentifier",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/squarefrog/UIDeviceIdentifier",
-      "state" : {
-        "revision" : "4699794b08bb79a4d77785edaba6ea739e298e4b",
-        "version" : "2.3.0"
       }
     },
     {

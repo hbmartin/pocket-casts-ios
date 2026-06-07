@@ -7,9 +7,6 @@ if "$SCRIPT_DIR/should-skip-job.sh" --job-type build; then
   exit 0
 fi
 
-# Sentry CLI needs to be up-to-date
-brew upgrade sentry-cli
-
 "$SCRIPT_DIR/shared_setup.sh"
 
 echo "--- :closed_lock_with_key: Installing Secrets"

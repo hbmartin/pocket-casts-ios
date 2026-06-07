@@ -1,13 +1,10 @@
 import BackgroundTasks
-import AutomatticRemoteLogging
-import Firebase
-import FirebasePerformance
+import Capture
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import Combine
-import Sentry
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     private static let initialRefreshDelay = 2.seconds
@@ -15,7 +12,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private let shortcutManager = ShortcutManager()
     private let badgeHelper = BadgeHelper()
-    private let traceHandler = TraceHelper()
 
     @objc var backgroundSessionCompletionHandler: (() -> Void)?
 
@@ -32,15 +28,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - App Lifecycle
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        configureFirebase()
-        TraceManager.shared.setup(handler: traceHandler)
-
+        configureBitdrift()
         setupSecrets()
         addAnalyticsObservers()
         setupAnalytics()
 
-        DataManager.logger = SentryLogger()
-        ServerConfig.shared.errorLogger = SentryLogger()
+        let errorLogger = BitdriftErrorLogger()
+        DataManager.logger = errorLogger
+        ServerConfig.shared.errorLogger = errorLogger
 
         appInstallState = appLifecycleAnalytics.checkApplicationInstalledOrUpgraded()
 
@@ -262,39 +257,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         badgeHelper.updateBadge()
     }
 
-    private func configureFirebase() {
-        FirebaseApp.configure()
-
-        FirebaseManager.refreshRemoteConfig() { [weak self] _ in
-            self?.updateRemoteFeatureFlags()
-        }
-    }
-
-    func updateRemoteFeatureFlags(forceReload: Bool = false) {
-        guard BuildEnvironment.current != .debug || forceReload else { return }
-
-        if FeatureFlag.newSettingsStorage.enabled != Settings.newSettingsStorage {
-            if FeatureFlag.newSettingsStorage.enabled {
-                SettingsStore.appSettings.importUserDefaults()
-                DataManager.sharedManager.importPodcastSettings()
-            }
-        }
-
-        FeatureFlag.allCases.forEach { flag in
-            if let remoteKey = flag.remoteKey {
-                let remoteValue = RemoteConfig.remoteConfig().configValue(forKey: remoteKey)
-                if remoteValue.source == .remote {
-                    do {
-                        FileLog.shared.console("Override \(flag): \(remoteValue.boolValue)")
-                        try FeatureFlagOverrideStore().override(flag, withValue: remoteValue.boolValue)
-                    } catch {
-                        FileLog.shared.addMessage("Failed to set remote feature flag \(flag): \(error)")
-                    }
-                }
-            }
-        }
-    }
-
     private func postLaunchSetup() {
         if !UserDefaults.standard.bool(forKey: "CreatedDefPlaylistsV2") {
             PlaylistManager.createDefaultPlaylists()
@@ -348,6 +310,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: Secrets
 
+    private func configureBitdrift() {
+        guard !ApiCredentials.bitdriftSDKKey.isEmpty else {
+            FileLog.shared.addMessage("Bitdrift SDK key is empty; skipping Bitdrift startup")
+            return
+        }
+
+        Logger.start(
+            withAPIKey: ApiCredentials.bitdriftSDKKey,
+            sessionStrategy: .fixed()
+        )
+    }
+
     private func setupSecrets() {
         ServerCredentials.sharing = ApiCredentials.sharingServerSecret
     }
@@ -361,19 +335,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-struct SentryLogger: ErrorLogger {
+struct BitdriftErrorLogger: ErrorLogger {
     func log(error: Error, context: [String: String]?) {
-        if BuildEnvironment.current == .appStore {
-            let crumb = Breadcrumb()
-            crumb.level = SentryLevel.info
-            crumb.category = "grdb"
-            crumb.message = error.localizedDescription
-            SentrySDK.addBreadcrumb(crumb)
-            return
+        var fields = (context ?? [:]).reduce(into: Fields()) { result, entry in
+            result[entry.key] = entry.value
         }
+        fields["category"] = "grdb"
 
-    #if os(iOS)
-    CrashLoggingAdapter.sharedManager?.crashLogging?.logError(error, tags: context ?? [:], level: .warning)
-    #endif
+        Logger.logWarning(
+            "Pocket Casts error: \(error.localizedDescription)",
+            error: error,
+            fields: fields
+        )
     }
 }

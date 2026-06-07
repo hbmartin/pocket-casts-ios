@@ -53,19 +53,3 @@ steps:
           - build_tvos_app_store
           - upload_tvos_testflight_input
         command: .buildkite/commands/upload-tvos-app-store.sh
-
-      - input: "Deploy Prototype Build"
-        prompt: "Share a Prototype Build via Firebase App Distribution?"
-        key: prototype_triggered
-
-      - label: "Prototype Build - Build"
-        key: build_prototype
-        depends_on: prototype_triggered
-        command: .buildkite/commands/prototype-build.sh
-        artifact_paths:
-          - artifacts/*.ipa
-          - artifacts/*.app.dSYM.zip
-
-      - label: "Prototype Build - Upload"
-        depends_on: build_prototype
-        command: .buildkite/commands/prototype-upload.sh

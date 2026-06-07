@@ -26,9 +26,9 @@ struct ApiCredentials {
     ///
     static let sharingServerSecret = "%{sharing_server_secret}"
 
-    /// Sentry Secret
+    /// Bitdrift SDK Key
     ///
-    static let sentryDSN = "%{sentry_dsn}"
+    static let bitdriftSDKKey = "%{bitdrift_sdk_key}"
 
     /// Google Sign In
     ///

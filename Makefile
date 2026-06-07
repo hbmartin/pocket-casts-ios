@@ -58,6 +58,7 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/Main/MainTabBarController.swift
 
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 	if [ -n "$(XCODE_ANALYZE_DERIVED_DATA_PATH)" ]; then rm -rf "$(XCODE_ANALYZE_DERIVED_DATA_PATH)/SDKStatCaches.noindex"; fi
@@ -111,9 +112,6 @@ test_staging: ## Build and run Unit Tests using the StagingDebug configuration
 
 format: ## Lint and autocorrect linter errors
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --autocorrect)
-
-upload_dsyms: ## Upload dSYMs
-	./scripts/upload-symbols -gsp $(HOME)/.configure/pocketcasts-ios/secrets/GoogleService-Info.plist -p ios ./podcasts.app.dSYM.zip
 
 install_dependencies: ## Install dependencies to run this project
 	bundle install

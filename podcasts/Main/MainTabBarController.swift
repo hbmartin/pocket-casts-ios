@@ -11,7 +11,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     enum Tab: Int { case podcasts, filter, profile }
     private enum LegacyTab: Int { case podcasts, discover, filter, upNext, profile }
-    private static let removedTabsMigrationKey = "SJLastTabOpenedRemovedTabsMigrated"
+    private static let removedTabsMigrationKey = "SJLastTabOpenedRemovedDiscoverMigrated"
 
     var pcTabs = [Tab]()
 
@@ -306,7 +306,9 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         switch legacyTab {
         case .profile:
             return pcTabs.firstIndex(of: .profile) ?? 0
-        case .podcasts, .discover, .filter, .upNext:
+        case .filter:
+            return pcTabs.firstIndex(of: .filter) ?? 0
+        case .podcasts, .discover, .upNext:
             return pcTabs.firstIndex(of: .podcasts) ?? 0
         }
     }

@@ -325,7 +325,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
             uuidsSet.contains(episode.uuid) ? count : count + 1
         }
 
-        // Log to Sentry only if queue is significantly modified to avoid noise from normal sync
+        // Log only if queue is significantly modified to avoid noise from normal sync
         // Threshold: more than 75% of local queue replaced
         let deletionPercentage = !localEpisodes.isEmpty ? Double(deletedCount) / Double(localEpisodes.count) : 0
         let isSignificantDeletion = deletionPercentage > 0.75

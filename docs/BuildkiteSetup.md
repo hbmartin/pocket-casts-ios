@@ -53,7 +53,8 @@ For basic CI, no Buildkite environment variables are required.
 Optional variables:
 
 - `DANGER_GITHUB_API_TOKEN`: enables Danger comments/checks.
-- `ENABLE_DISTRIBUTION_JOBS=true`: shows TestFlight/Firebase distribution jobs. Leave this unset unless Apple signing, App Store Connect, Firebase, Sentry, and GitHub release secrets are configured.
+- `ENABLE_DISTRIBUTION_JOBS=true`: shows TestFlight distribution jobs. Leave this unset unless Apple signing, App Store Connect, Bitdrift, and GitHub release secrets are configured.
+- `BITDRIFT_API_KEY`: required for release builds so the Xcode build phase can upload dSYMs to Bitdrift.
 - `BUILDKITE_PIPELINE_SLUG`: only needed if the pipeline slug is not `pocket-casts-ios`.
 - `IOS_SIMULATOR_RUNTIME_VERSION`: pins simulator selection to an installed iOS runtime version such as `18.5`; when unset the build step uses the newest available iPhone runtime.
 

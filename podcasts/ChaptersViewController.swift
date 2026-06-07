@@ -16,6 +16,7 @@ class ChaptersViewController: PlayerItemViewController {
     private(set) lazy var header: ChaptersHeader = {
         let header = ChaptersHeader()
         header.delegate = self
+        header.isTogglingChapters = isTogglingChapters
         return header
     }()
 

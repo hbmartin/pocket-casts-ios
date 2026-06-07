@@ -9,6 +9,11 @@ source "$SCRIPT_DIR/select-xcode.sh"
 
 "$SCRIPT_DIR/shared_setup.sh"
 
+if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
+  echo "BITDRIFT_API_KEY is required for Release dSYM upload to Bitdrift."
+  exit 1
+fi
+
 echo "--- :closed_lock_with_key: Installing Secrets"
 bundle exec fastlane run configure_apply
 

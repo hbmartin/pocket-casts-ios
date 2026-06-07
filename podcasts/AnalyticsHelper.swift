@@ -1,21 +1,7 @@
-#if !os(watchOS) && !os(tvOS)
-    import Firebase
-#endif
-
 import Foundation
-import os
 import PocketCastsUtils
 
 class AnalyticsHelper {
-    /// Whether the user has opted out of analytics or not
-    static var optedOut: Bool {
-        #if APPCLIP
-        return true
-        #else
-        return Settings.analyticsOptOut()
-        #endif
-    }
-
     class func openedCategory(categoryId: Int, region: String) {
         logEvent("category_open", parameters: ["id": categoryId, "region": region])
         logEvent("category_page_open_\(categoryId)", parameters: nil)
@@ -204,7 +190,6 @@ class AnalyticsHelper {
 
     class func didChooseIcon(iconName: String?) {
         if let name = iconName {
-            // Firebase doesn't like dashes (Event name must contain only letters, numbers, or underscores)
             logEvent("icon_\(name.replacingOccurrences(of: "-", with: "_"))", parameters: nil)
         } else {
             logEvent("icon_default", parameters: nil)
@@ -317,30 +302,18 @@ class AnalyticsHelper {
     extension AnalyticsHelper {
         static func plusUpgradeViewed(source: PlusUpgradeViewSource) {
             Analytics.track(.plusPromotionShown, properties: ["source": source.rawValue])
-
-            logPromotionEvent(AnalyticsEventViewPromotion,
-                              promotionId: source.promotionId(),
-                              promotionName: source.promotionName())
         }
 
         static func plusUpgradeConfirmed(source: PlusUpgradeViewSource) {
             Analytics.track(.plusPromotionUpgradeButtonTapped, properties: ["source": source.rawValue])
-
-            logPromotionEvent(AnalyticsEventSelectPromotion,
-                              promotionId: source.promotionId(),
-                              promotionName: source.promotionName())
         }
 
         static func plusUpgradeDismissed(source: PlusUpgradeViewSource) {
             Analytics.track(.plusPromotionDismissed, properties: ["source": source.rawValue])
-
-            logPromotionEvent("close_promotion",
-                              promotionId: source.promotionId(),
-                              promotionName: source.promotionName())
         }
 
         static func plusPlanPurchased() {
-            logEvent(AnalyticsEventPurchase)
+            logEvent("purchase")
         }
     }
 
@@ -367,45 +340,16 @@ class AnalyticsHelper {
             logEvent("folder_created")
         }
     }
-
-    // MARK: - Promotion Events
-
-    private extension AnalyticsHelper {
-        // Helper method to log a Firebase promotion event
-        static func logPromotionEvent(_ name: String, promotionId: String, promotionName: String) {
-            let parameters = [
-                AnalyticsParameterPromotionID: promotionId,
-                AnalyticsParameterPromotionName: promotionName
-            ]
-
-            logEvent(name, parameters: parameters)
-        }
-    }
 #endif // End iOS Only Check
 
 // MARK: - Private
 
 private extension AnalyticsHelper {
-    static let logger = Logger()
-
     class func bumpStat(_ name: String, parameters: [String: Any]? = nil) {
-        Self.logEvent(name, parameters: parameters)
+        logEvent(name, parameters: parameters)
     }
 
     class func logEvent(_ name: String, parameters: [String: Any]? = nil) {
-        guard optedOut == false else { return }
-
-        // assuming for now we don't want analytics on a watch
-        #if !os(watchOS) && !os(tvOS)
-            Firebase.Analytics.logEvent(name, parameters: parameters)
-
-        if FeatureFlag.firebaseLogging.enabled {
-                if let parameters {
-                    logger.debug("🟢 Tracked: \(name) \(parameters)")
-                } else {
-                    logger.debug("🟢 Tracked: \(name)")
-                }
-            }
-        #endif
+        // Legacy event helper retained as a no-op for call-site compatibility.
     }
 }

@@ -92,14 +92,6 @@ struct DeveloperMenu: View {
                 Button("Clear all folder information") {
                     DataManager.sharedManager.clearAllFolderInformation()
                 }
-
-                Button("Force Reload Feature Flags") {
-                    FirebaseManager.refreshRemoteConfig(expirationDuration: 0) { _ in
-                        DispatchQueue.main.async {
-                            (UIApplication.shared.delegate as? AppDelegate)?.updateRemoteFeatureFlags(forceReload: true)
-                        }
-                    }
-                }
             }
 
             Section {

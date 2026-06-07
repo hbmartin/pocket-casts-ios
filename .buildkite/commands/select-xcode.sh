@@ -117,8 +117,7 @@ _pocketcasts_select_xcode_main() {
   cat <<EOF
 Unable to find a Swift 6-capable Xcode.
 
-The Modules package currently depends on Automattic-Tracks-iOS, which depends on
-Sentry Cocoa 9.x. Sentry Cocoa 9.x declares swift-tools-version 6.0, so SwiftPM
+The Modules package currently depends on Swift 6 package manifests, so SwiftPM
 resolution fails when Buildkite starts with an Xcode 15 / Swift 5 toolchain.
 
 Configure the Buildkite macOS queue to use Xcode 16 or newer, or install an
