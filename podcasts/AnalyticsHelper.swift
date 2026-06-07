@@ -257,8 +257,6 @@ class AnalyticsHelper {
                 logEvent("filter_tab_opened", parameters: nil)
             case .profile:
                 logEvent("profile_tab_opened", parameters: nil)
-            case .upNext:
-                logEvent("upnext_tab_opened", parameters: nil)
             }
         }
     #endif
@@ -300,18 +298,6 @@ class AnalyticsHelper {
 
 #if os(iOS)
     extension AnalyticsHelper {
-        static func plusUpgradeViewed(source: PlusUpgradeViewSource) {
-            Analytics.track(.plusPromotionShown, properties: ["source": source.rawValue])
-        }
-
-        static func plusUpgradeConfirmed(source: PlusUpgradeViewSource) {
-            Analytics.track(.plusPromotionUpgradeButtonTapped, properties: ["source": source.rawValue])
-        }
-
-        static func plusUpgradeDismissed(source: PlusUpgradeViewSource) {
-            Analytics.track(.plusPromotionDismissed, properties: ["source": source.rawValue])
-        }
-
         static func plusPlanPurchased() {
             logEvent("purchase")
         }

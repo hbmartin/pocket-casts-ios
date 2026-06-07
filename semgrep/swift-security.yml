@@ -405,6 +405,24 @@ rules:
     patterns:
       - pattern-regex: 'private\s+static\s+let\s+removedTabsMigrationKey\s*=\s*"(?!SJLastTabOpenedRemovedDiscoverMigrated")[^"]+"'
 
+  - id: pocketcasts.no-removed-plus-locked-info-ui
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: PlusLockedInfoView and PlusLockedInfoCell were removed; do not leave Swift or XIB references to these classes.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/*.xib"
+        - "**/*.storyboard"
+    patterns:
+      - pattern-regex: '\bPlusLockedInfo(?:View|Cell)\b'
+
   - id: pocketcasts.keychain-redundant-read-after-save
     severity: WARNING
     metadata:

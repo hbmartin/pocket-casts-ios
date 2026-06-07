@@ -14,10 +14,6 @@ protocol NavigationProtocol: AnyObject {
 
     func navigateToEpisode(_ episodeUuid: String, podcastUuid: String?, timestamp: TimeInterval?)
 
-    func navigateToDiscover(_ animated: Bool)
-    func navigateToDiscover(category: String, animated: Bool)
-    func navigateToDiscover(listID: String, animated: Bool)
-
     func navigateToProfile(row: ProfileViewController.TableRow?, animated: Bool)
 
     func navigateToFilter(_ filter: EpisodeFilter?, animated: Bool)

@@ -70,13 +70,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    @IBOutlet var plusInfoView: PlusLockedInfoView! {
-        didSet {
-            plusInfoView.isHidden = true
-            plusInfoView.delegate = self
-        }
-    }
-
     var promoCode: String?
 
     private let settingsCellId = "SettingsCell"

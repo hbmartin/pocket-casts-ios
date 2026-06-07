@@ -476,6 +476,36 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
+    func navigateToAddCustom(_ url: URL) {
+        appDelegate()?.miniPlayer()?.closeUpNextAndFullPlayer(completion: { [weak self] in
+            guard let self, switchToTab(.profile),
+                  let navController = selectedViewController as? UINavigationController else {
+                return
+            }
+
+            if let existingUploadedViewController = navController.viewControllers.last as? UploadedViewController {
+                existingUploadedViewController.closeAllChildrenViewControllers()
+            }
+            navController.popToRootViewController(animated: false)
+
+            let uploadedViewController = UploadedViewController()
+            uploadedViewController.fileURL = url
+            navController.pushViewController(uploadedViewController, animated: false)
+        })
+    }
+
+    func navigateToFiles() {
+        guard switchToTab(.profile),
+              let navController = selectedViewController as? UINavigationController else {
+            return
+        }
+
+        navController.popToRootViewController(animated: false)
+
+        let filesController = UploadedViewController()
+        navController.pushViewController(filesController, animated: true)
+    }
+
     func showPrivacyPolicy() {
         showInSafariViewController(urlString: ServerConstants.Urls.privacyPolicy)
     }

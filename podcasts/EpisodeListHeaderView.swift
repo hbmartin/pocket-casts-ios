@@ -2,6 +2,10 @@ import Combine
 import PocketCastsServer
 import UIKit
 
+protocol CollectionHeaderLinkDelegate: AnyObject {
+    func linkTapped()
+}
+
 class EpisodeListHeaderView: UIView {
     private var cancellables = Set<AnyCancellable>()
     @Published var contentViewSize: CGSize = .zero

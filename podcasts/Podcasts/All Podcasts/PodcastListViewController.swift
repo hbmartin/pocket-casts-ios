@@ -10,12 +10,6 @@ import SafariServices
 class PodcastListViewController: PCViewController, ShareListDelegate {
     let gridHelper = GridHelper()
     var refreshController: FullSyncRefreshController?
-    var bannerAdModel: BannerAdModel?
-
-    /// Indicates whether the banner ad is currently animating to indicate to the collection view layout which size to use
-    var isAnimatingBannerAd = false
-
-    private var bannerTask: Task<Void, Never>? = nil
 
     @IBOutlet var addPodcastBtn: ThemeableButton! {
         didSet {
@@ -123,12 +117,10 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         super.viewWillAppear(animated)
 
         navigationController?.navigationBar.shadowImage = UIImage()
-        loadBannerAd()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        bannerTask?.cancel()
         navigationController?.navigationBar.shadowImage = nil
         removeAllCustomObservers()
         if isEditingOrder {

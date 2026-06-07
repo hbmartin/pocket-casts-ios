@@ -344,8 +344,8 @@ struct BitdriftErrorLogger: ErrorLogger {
 
         Logger.logWarning(
             "Pocket Casts error: \(error.localizedDescription)",
-            error: error,
-            fields: fields
+            fields: fields,
+            error: error
         )
     }
 }

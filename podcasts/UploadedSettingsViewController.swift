@@ -3,14 +3,12 @@ import UIKit
 
 class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource {
     private let switchCellId = "SwitchCell"
-    private let lockInfoCellId = "LockCell"
-    private enum TableSections: Int { case autoSync, autoAddToUpNext, afterPlaying, onlyOnWifi, lockedInfo }
-    private enum TableRows: Int { case autoDownload, autoUpload, autoAddToUpNext, removeFileAfterPlaying, removeFromCloudAfterPlaying, onlyOnWifi, lockedInfo }
+    private enum TableSections: Int { case autoSync, autoAddToUpNext, afterPlaying, onlyOnWifi }
+    private enum TableRows: Int { case autoDownload, autoUpload, autoAddToUpNext, removeFileAfterPlaying, removeFromCloudAfterPlaying, onlyOnWifi }
 
     @IBOutlet var settingsTable: UITableView! {
         didSet {
             settingsTable.register(UINib(nibName: "SwitchCell", bundle: nil), forCellReuseIdentifier: switchCellId)
-            settingsTable.register(UINib(nibName: "PlusLockedInfoCell", bundle: nil), forCellReuseIdentifier: lockInfoCellId)
 
             settingsTable.rowHeight = UITableView.automaticDimension
             settingsTable.estimatedRowHeight = UITableView.automaticDimension
@@ -52,12 +50,6 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let row = tableRows()[indexPath.section][indexPath.row]
 
-        if row == .lockedInfo {
-            let cell = tableView.dequeueReusableCell(withIdentifier: lockInfoCellId, for: indexPath) as! PlusLockedInfoCell
-            cell.lockView.delegate = self
-            return cell
-        }
-
         let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
         cell.cellSwitch.removeTarget(self, action: nil, for: UIControl.Event.valueChanged)
 
@@ -93,8 +85,6 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
             cell.cellSwitch.isOn = ServerSettings.userEpisodeOnlyOnWifi()
             cell.cellSwitch.addTarget(self, action: #selector(onlyOnWifiToggled(_:)), for: .valueChanged)
             cell.setImage(imageName: "settings_wifi")
-        case .lockedInfo:
-            break
         }
         return cell
     }
@@ -136,24 +126,16 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
             title = ""
         }
 
-        let headerView = SettingsTableHeader(frame: headerFrame, title: title, showLockedImage: false, lockedSelector: #selector(showSubscriptionRequired), target: self)
+        let headerView = SettingsTableHeader(frame: headerFrame, title: title, showLockedImage: false)
 
         return headerView
     }
 
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        let section = tableSections()[indexPath.section]
-        if section == .lockedInfo {
-            return nil
-        }
         return indexPath
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    }
-
-    @objc func showSubscriptionRequired() {
-        // Custom file storage is free now, so there is no upsell to present.
     }
 
     // MARK: - Switch Actions

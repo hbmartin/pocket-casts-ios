@@ -23,7 +23,6 @@
                 <outlet property="fileImageView" destination="baZ-1v-cXz" id="yVj-Sg-qsP"/>
                 <outlet property="imageBackgroundView" destination="Q6p-wE-PtD" id="5wf-kD-gcq"/>
                 <outlet property="imageSaveErrorLabel" destination="Ly7-YU-Ta3" id="n6w-gk-2Y0"/>
-                <outlet property="lockView" destination="I9x-9P-cq0" id="WP2-td-ZS0"/>
                 <outlet property="nameContainerView" destination="ger-DT-mZH" id="FEl-82-VTT"/>
                 <outlet property="nameLabel" destination="rNd-8L-UY3" id="pP7-uI-xrW"/>
                 <outlet property="nameTextfield" destination="IGc-dw-QFR" id="l89-cd-T1u"/>
@@ -177,14 +176,6 @@
                                                 <constraint firstItem="Y67-ye-7RA" firstAttribute="centerX" secondItem="pQg-9V-SPI" secondAttribute="centerX" id="hOg-ZJ-JDy"/>
                                                 <constraint firstAttribute="height" constant="331" id="jtt-En-y1y"/>
                                             </constraints>
-                                        </view>
-                                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="I9x-9P-cq0" customClass="PlusLockedInfoView" customModule="podcasts" customModuleProvider="target">
-                                            <rect key="frame" x="0.0" y="348" width="377" height="161"/>
-                                            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                            <constraints>
-                                                <constraint firstAttribute="height" constant="161" id="c0K-hg-JAi"/>
-                                            </constraints>
-                                            <viewLayoutGuide key="safeArea" id="h5x-Dk-PE6"/>
                                         </view>
                                     </subviews>
                                     <constraints>

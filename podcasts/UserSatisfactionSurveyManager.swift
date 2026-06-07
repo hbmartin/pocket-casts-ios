@@ -182,14 +182,10 @@ extension UserSatisfactionSurveyManager: AnalyticsAdapter {
             return .folderCreated
         case AnalyticsEvent.bookmarkEditFormSubmitted.eventName:
             return .bookmarkCreated
-        case AnalyticsEvent.referralPassShared.eventName:
-            return .referralShared
         case AnalyticsEvent.settingsAppearanceThemeChanged.eventName:
             return .customThemeSet
         case AnalyticsEvent.episodeMarkedAsPlayed.eventName:
             return handleEpisodeCompletion()
-        case AnalyticsEvent.purchaseSuccessful.eventName:
-            return handlePlusUpgrade()
         case AnalyticsEvent.applicationOpened.eventName:
             return handleAppOpened()
         case AnalyticsEvent.endOfYearStoryShared.eventName:

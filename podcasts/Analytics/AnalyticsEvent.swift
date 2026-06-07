@@ -59,6 +59,7 @@ enum AnalyticsEvent: String {
     case termsOfUseRejected
 
     // MARK: - Podcasts List
+    case podcastsListShown
     case podcastsListFolderButtonTapped
     case podcastsListPodcastTapped
     case podcastsListFolderTapped
@@ -443,6 +444,11 @@ enum AnalyticsEvent: String {
     case playerShown
     case playerDismissed
 
+    case deselectChaptersChapterSelected
+    case deselectChaptersChapterDeselected
+    case deselectChaptersToggledOn
+    case deselectChaptersToggledOff
+
     case playerTabSelected
     case playerShowNotesLinkTapped
     case playerChapterSelected
@@ -577,6 +583,11 @@ enum AnalyticsEvent: String {
     case settingsPlusShown
     case settingsPlusUpgradeButtonTapped
     case settingsPlusLearnMoreTapped
+
+    // MARK: - Winback
+
+    case winbackScreenShown
+    case winbackScreenDismissed
 
     // MARK: - Settings: General
 
