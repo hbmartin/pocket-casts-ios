@@ -59,3 +59,6 @@ func storesValueWithGenericKey(value: TimeInterval, key: String) {
     // ok: insecure_storage
     UserDefaults.standard.set(value, forKey: key)
 }
+
+// ruleid: pocketcasts.no-sentry-or-automattic-tracks
+import Sentry

@@ -3,8 +3,6 @@ Pods/
 /.DS_Store
 /Themes.txt
 .DS_Store
-GoogleService-Info.plist
-
 # Local environment/secrets
 .env
 .env.*

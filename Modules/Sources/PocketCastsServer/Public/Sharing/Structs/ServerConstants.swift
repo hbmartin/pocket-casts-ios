@@ -137,8 +137,16 @@ public enum ServerConstants {
         static let upNextServerLastModified = "SJUpNextServerLastModified"
         static let lastClearHistoryDate = "SJLastClearHistoryDate"
         static let pushToken = "SJPushToken"
+        static let subscriptionPaid = "SJSubscriptionPaid"
+        static let subscriptionExpiryDate = "SJSubscriptionExpiryDate"
+        static let subscriptionAutoRenewing = "SJSubscriptionAutorenewing"
+        static let subscriptionPlatform = "SJSubscriptionPlatform"
+        static let subscriptionGiftDays = "SJSubscriptionGiftDays"
+        public static let subscriptionGiftAcknowledgement = "SJSubscriptionGiftAcknowledgement"
+        static let subscriptionPodcasts = "SJSubscriptionPodcasts"
         public static let marketingOptInKey = "SJMarketingOptIn"
         static let marketingOptInNeedsSyncKey = "SJMarketingOptInNeedsSync"
+        static let subscriptionGiftAcknowledgementNeedsSyncKey = "SJGiftAcknowledgementNeedsSync"
         static let filesLastModifiedKey = "UserFilesLastModified"
         static let statsStartDate = "StatsStartDate"
         static let statsSyncStatus = "StatsSyncStatus"
@@ -154,6 +162,9 @@ public enum ServerConstants {
         static let statsAutoSkipServer = "StatsIntroSkipServer"
         static let statsStartedDateServer = "StatsStartedDateServer"
         static let userId = "UserId"
+        static let removeBannerAds = "SJSubscriptionRemoveBannerAds"
+        static let removeDiscoverAds = "SJSubscriptionRemoveDiscoverAds"
+        static let subscriptionCreateDate = "SJSubscriptionCreateDate"
     }
 
     public enum Limits {

@@ -87,9 +87,9 @@ class UploadedStorageHeaderView: UIView {
         storageSizeLabel.text = "\(SizeFormatter.shared.defaultFormat(bytes: usedStorage))/ \(SizeFormatter.shared.defaultFormat(bytes: maxStorage))"
         percentageLabel.text = L10n.profilePercentFull(percentageUsed.localized(.percent))
 
-        if percentageUsed >= 99 {
+        if percentageUsed >= 0.99 {
             percentageLabel.textColor = AppTheme.colorForStyle(.support05)
-        } else if percentageUsed >= 90, percentageUsed < 99 {
+        } else if percentageUsed >= 0.90 {
             percentageLabel.textColor = AppTheme.colorForStyle(.support08)
         } else {
             percentageLabel.textColor = AppTheme.colorForStyle(.primaryText01)

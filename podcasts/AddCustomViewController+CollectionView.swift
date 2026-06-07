@@ -49,8 +49,6 @@ extension AddCustomViewController: UICollectionViewDelegate, UICollectionViewDat
             cell.imageView.image = artwork
             cell.imageView.contentMode = .scaleToFill
             cell.imageView.isHidden = false
-        } else if indexPath == greyIndexPath {
-            cell.imageView.isHidden = true
         } else {
             cell.imageView.isHidden = true
         }

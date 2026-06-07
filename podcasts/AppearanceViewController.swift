@@ -7,7 +7,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     private let buttonCellId = "ButtonCell"
     private let themeSelectorCellId = "ThemeSelectorCell"
     private let iconSelectorCellId = "IconSelectorCell"
-    private let plusLockedInfoCellId = "PlusLockedCell"
 
     private enum TableRow {
         case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, darkUpNextTheme, tabBarMinimizing
@@ -21,7 +20,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             settingsTable.register(UINib(nibName: "DisclosureCell", bundle: nil), forCellReuseIdentifier: disclosureCellId)
             settingsTable.register(UINib(nibName: "ButtonCell", bundle: nil), forCellReuseIdentifier: buttonCellId)
             settingsTable.register(UINib(nibName: "IconSelectorCell", bundle: nil), forCellReuseIdentifier: iconSelectorCellId)
-            settingsTable.register(UINib(nibName: "PlusLockedInfoCell", bundle: nil), forCellReuseIdentifier: plusLockedInfoCellId)
 
             settingsTable.rowHeight = UITableView.automaticDimension
             settingsTable.estimatedRowHeight = UITableView.automaticDimension
@@ -139,10 +137,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             cell.cellSwitch.addTarget(self, action: #selector(loadEmbeddedArtToggled(_:)), for: UIControl.Event.valueChanged)
 
             return cell
-        case .plusCallout:
-            let cell = tableView.dequeueReusableCell(withIdentifier: plusLockedInfoCellId, for: indexPath) as! PlusLockedInfoCell
-            cell.lockView.delegate = self
-            return cell
         }
     }
 
@@ -213,12 +207,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
     func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
         ThemeableTable.setHeaderFooterTextColor(on: view)
-    }
-
-    func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        let item = tableData[indexPath.section][indexPath.row]
-
-        return item == .plusCallout ? nil : indexPath
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {

@@ -9,23 +9,9 @@ struct BetaMenu: View {
         List {
             ForEach(filteredFeatures, id: \.self) { feature in
                 Toggle(isOn: feature.isOn) {
-                    VStack(alignment: .leading) {
-                        Text(String(describing: feature))
-                        Text(feature.remoteKey ?? "No Key")
-                            .font(.caption)
-                            .foregroundStyle(.gray)
-                    }
+                    Text(String(describing: feature))
                 }
                 .onTapGesture { }
-                .onLongPressGesture(minimumDuration: 0.2) {
-                    if let key = feature.remoteKey {
-                        UIPasteboard.general.setValue(key,
-                                    forPasteboardType: UTType.plainText.identifier)
-                        Toast.show("Key \(key) copied!")
-                    } else {
-                        Toast.show("No key available")
-                    }
-                }
             }
         }
         .id(resetTrigger)

@@ -17,7 +17,7 @@ steps:
     notify:
       - slack: "#build-and-ship"
 
-  - label: "Release Upload (TestFlight, Sentry, GitHub)"
+  - label: "Release Upload (TestFlight, GitHub)"
     depends_on: testflight_build
     command: .buildkite/commands/release-upload.sh "${RELEASE_VERSION}" "${BETA_RELEASE}"
     priority: 1

@@ -436,12 +436,12 @@ enum PlusUpgradeViewSource: String {
     case whatsNew
     case deepLink
 
-    /// Converts the enum into a Firebase promotionId, this matches the values set on Android
+    /// Converts the enum into a promotion identifier matching the values set on Android.
     func promotionId() -> String {
         return rawValue.uppercased()
     }
 
-    /// Converts the enum into a Firebase promotion name, this matches the values set on Android
+    /// Converts the enum into a promotion name matching the values set on Android.
     func promotionName() -> String {
         switch self {
         case .profile, .appearance:

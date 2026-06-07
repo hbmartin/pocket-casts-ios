@@ -18,8 +18,6 @@ VERSION_XCCONFIG_PATH = File.join(PROJECT_ROOT_FOLDER, 'config', 'Version.xcconf
 RESOURCES_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'podcasts', 'Resources')
 RELEASE_NOTES_SOURCE_PATH = File.join(PROJECT_ROOT_FOLDER, 'CHANGELOG.md')
 EXTRACTED_RELEASE_NOTES_PATH = File.join(RESOURCES_FOLDER, 'release_notes.txt')
-SENTRY_ORG_SLUG = 'a8c'
-SENTRY_PROJECT_SLUG = 'pocket-casts-ios'
 
 ENV_FILE_NAME = 'pocket-casts-ios.env'
 USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
@@ -105,9 +103,6 @@ ASC_API_KEY_ENV_VARS = %w[
   APP_STORE_CONNECT_API_KEY_ISSUER_ID
   APP_STORE_CONNECT_API_KEY_KEY
 ].freeze
-
-FIREBASE_APP_ID = '1:124902176124:ios:3999f43bfa1fcd1b1620f9'
-FIREBASE_TESTERS_GROUP = 'pocketcasts-ios---prototype-builds'
 
 FROZEN_STRINGS_PATH = File.join(FASTLANE_FOLDER, 'Frozen.strings')
 
@@ -617,7 +612,7 @@ platform :ios do
   #
   # Once the app binary is built by this lane, you might want to call:
   #  - `upload_app_store_connect_build_to_testflight` to upload the binary to TestFlight
-  #  - `symbols_upload` to upload dSYMs to Sentry
+  #  - Bitdrift debug file upload runs from the Xcode build phase for Release builds
   #  - `create_release_on_github(beta_release: …)` to create the GitHub Release
   #
   # @param set_up_code_signing [Boolean] If true, will call `configure_code_signing_app_store` before building. Recommended on CI.
@@ -654,7 +649,7 @@ platform :ios do
   # Builds the tvOS app binary for distribution to App Store Connect
   #
   # Once the app binary is built by this lane, you might want to call:
-  #  - `symbols_upload` to upload dSYMs to Sentry
+  #  - Bitdrift debug file upload runs from the Xcode build phase for Release builds
   #
   # @param set_up_code_signing [Boolean] If true, will call `configure_code_signing_app_store_tvos` before building. Recommended on CI.
   # @param build_number [String, nil] When given, overrides `VERSION_LONG` (i.e. `CURRENT_PROJECT_VERSION`). Defaults to the `xcconfig` value.
@@ -745,8 +740,6 @@ platform :ios do
 
   # Builds the app binary for Enterprise distribution (Prototype Build)
   #
-  # Once the app binary is built, you might want to call `upload_enterprise`
-  #
   # @param fetch_code_signing [Boolean] If true, will call `configure_code_signing_app_store` before building. Recommended on CI.
   #
   lane :build_enterprise do |set_up_code_signing: true|
@@ -778,57 +771,6 @@ platform :ios do
     )
   end
 
-  # Distributes the Prototype Build to Firebase App Distribution
-  #
-  # Typically called after having built the binary with `build_enterprise`
-  #
-  # @note Expects the `.ipa` and `.dSYM` files to be present in `ARTIFACTS_FOLDER/PROTOTYPE_BUILD_NAME.{ipa,app.dSYM.zip}`
-  #
-  lane :upload_enterprise do
-    require_env_vars!('FIREBASE_APP_DISTRIBUTION_ACCOUNT_KEY')
-
-    release_notes = <<~NOTES
-      Pull Request: ##{pull_request_number || 'N/A'}
-      Branch: `#{ENV.fetch('BUILDKITE_BRANCH', 'N/A')}`
-      Commit: #{ENV.fetch('BUILDKITE_COMMIT', 'N/A')[0...7]}
-    NOTES
-
-    firebase_app_distribution(
-      app: FIREBASE_APP_ID,
-      ipa_path: File.join(ARTIFACTS_FOLDER, "#{PROTOTYPE_BUILD_NAME}.ipa"),
-      service_credentials_json_data: get_required_env!('FIREBASE_APP_DISTRIBUTION_ACCOUNT_KEY'),
-      release_notes: release_notes,
-      groups: FIREBASE_TESTERS_GROUP
-    )
-
-    next if pull_request_number.nil?
-
-    # Post PR Comment
-    comment_body = prototype_build_details_comment(
-      app_display_name: 'Pocket Casts Prototype Build',
-      fold: true
-    )
-    comment_on_pr(
-      project: GITHUB_REPO,
-      pr_number: pull_request_number,
-      reuse_identifier: 'prototype-build-link',
-      body: comment_body
-    )
-  end
-
-  # Uploads DSYM Symbols
-  #
-  lane :symbols_upload do |dsym_path: APP_STORE_CONNECT_BUILD_DSYMS_PATH|
-    require_env_vars!('SENTRY_AUTH_TOKEN')
-
-    symbols_path = dsym_path || lane_context[SharedValues::DSYM_OUTPUT_PATH]
-    sentry_debug_files_upload(
-      auth_token: get_required_env!('SENTRY_AUTH_TOKEN'),
-      org_slug: SENTRY_ORG_SLUG,
-      project_slug: SENTRY_PROJECT_SLUG,
-      path: symbols_path
-    )
-  end
 
   # Create a GitHub Release for a beta or final build
   #

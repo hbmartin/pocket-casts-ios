@@ -4,7 +4,7 @@ import PocketCastsUtils
 /// Simple tracking adapter that just logs the event
 struct AnalyticsLoggingAdapter: AnalyticsAdapter {
     func track(name: String, properties: [String: Sendable]) async {
-        guard FeatureFlag.tracksLogging.enabled else { return }
+        guard FeatureFlag.analyticsLogging.enabled else { return }
 
         if properties.isEmpty {
             log("🔵 Tracked: \(name)")

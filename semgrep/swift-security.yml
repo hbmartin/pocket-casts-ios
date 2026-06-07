@@ -41,6 +41,28 @@ rules:
     patterns:
       - pattern-regex: '^\s*-?\s*pattern-regex:\s*[''"][^#\n]*"(?!\\\\)\\b'
 
+  - id: pocketcasts.no-sentry-or-automattic-tracks
+    severity: ERROR
+    metadata:
+      category: dependency
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Sentry and Automattic Tracks have been replaced by Bitdrift; do not reintroduce these SDKs or CI upload paths.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/Package.swift"
+        - "**/Package.resolved"
+        - "Gemfile"
+        - "Gemfile.lock"
+        - "/fastlane/**"
+        - "/.buildkite/**"
+    patterns:
+      - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|fastlane-plugin-sentry|sentry_debug_files_upload|SENTRY_AUTH_TOKEN|sentry-cli)\b'
+
   - id: makefile.unguarded-rm-rf-make-variable
     severity: WARNING
     metadata:
@@ -366,6 +388,22 @@ rules:
                   ...
                 )
               )
+
+  - id: pocketcasts.main-tab-removed-tabs-migration-key
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Keep the removed-tabs migration key compatible with the removed-discover migration; changing this string remigrates existing users' saved tab indexes.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/Main/MainTabBarController.swift"
+    patterns:
+      - pattern-regex: 'private\s+static\s+let\s+removedTabsMigrationKey\s*=\s*"(?!SJLastTabOpenedRemovedDiscoverMigrated")[^"]+"'
 
   - id: pocketcasts.keychain-redundant-read-after-save
     severity: WARNING

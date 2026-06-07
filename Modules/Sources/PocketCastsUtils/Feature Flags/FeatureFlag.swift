@@ -2,14 +2,11 @@ import Foundation
 
 public enum FeatureFlag: String, CaseIterable {
 
-    /// Whether logging of Tracks events in console are enabled
-    case tracksLogging
+    /// Whether logging of analytics events in console are enabled
+    case analyticsLogging
 
-    /// Whether logging the theme properties in the Tracks events
+    /// Whether logging the theme properties in analytics events
     case appThemePropertiesLogging
-
-    /// Whether logging of Firebase events in console are enabled
-    case firebaseLogging
 
     /// Whether End Of Year feature is enabled
     case endOfYear
@@ -29,8 +26,7 @@ public enum FeatureFlag: String, CaseIterable {
     /// Enable the AVExportSession parallel download of any playing episode
     case streamAndCachePlayingEpisode
 
-    /// When enabled it updates the code on filter callback to use a safer method to convert unmanaged player references
-    /// This is to fix this: https://a8c.sentry.io/share/issue/39a6d2958b674ec3b7a4d9248b4b5ffa/
+    /// When enabled it updates the code on filter callback to use a safer method to convert unmanaged player references.
     case defaultPlayerFilterCallbackFix
 
     /// When a user sign in, we always mark ALL podcasts as unsynced
@@ -306,10 +302,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Show the listening activity heatmap on the Stats screen
     case statsHeatmap
-    /// If enabled, send explicit watch-related error logs to Sentry.
-    /// This does not control automatic crash reporting.
-    case watchSentryLogs
-
     /// Enable the Liquid Glass UI redesign
     case liquidGlass
 
@@ -326,7 +318,7 @@ public enum FeatureFlag: String, CaseIterable {
 
     public var `default`: Bool {
         switch self {
-        case .tracksLogging:
+        case .analyticsLogging:
             false
         case .appThemePropertiesLogging:
             if BuildEnvironment.current == .debug {
@@ -334,8 +326,6 @@ public enum FeatureFlag: String, CaseIterable {
             } else {
                 true
             }
-        case .firebaseLogging:
-            false
         case .endOfYear:
             false
         case .newSettingsStorage:
@@ -524,8 +514,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .statsHeatmap:
             false
-        case .watchSentryLogs:
-            false
         case .liquidGlass:
             true
         case .shareProfile:
@@ -535,25 +523,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     private var shouldEnableSyncedSettings: Bool {
         false
-    }
-
-    /// Remote Feature Flag
-    /// This should match a Firebase Remote Config Parameter name (key)
-    public var remoteKey: String? {
-        switch self {
-        case .newAccountUpgradePromptFlow:
-            "new_account_upgrade_prompt_flow"
-        case .newSettingsStorage:
-            shouldEnableSyncedSettings ? "new_settings_storage" : nil
-        case .settingsSync:
-            shouldEnableSyncedSettings ? "settings_sync" : nil
-        case .defaultPlayerFilterCallbackFix:
-            "default_player_filter_callback_fix"
-        case .endOfYear2025:
-            "end_of_year_2025"
-        default:
-            rawValue.lowerSnakeCased()
-        }
     }
 }
 

@@ -11,7 +11,7 @@ public class ServerConfig {
     public var syncDelegate: ServerSyncDelegate?
     public var playbackDelegate: ServerPlaybackDelegate?
 
-    /// Error logger for reporting sync errors to crash reporting services (e.g., Sentry)
+    /// Error logger for reporting sync errors to crash reporting services.
     public var errorLogger: ErrorLogger?
 
     public func setBackgroundSessionCompletionHandler(handler: (() -> Void)?) {
