@@ -256,8 +256,6 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc private func shuffleButtonTapped() {
-        FileLog.shared.addMessage("UpNext shuffleButtonTapped: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
-
         if !SyncManager.isUserLoggedIn() {
             // Shuffle still requires an account so the order can sync. Send the
             // user to the login/onboarding flow instead of a paywall.
@@ -279,14 +277,11 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         if upNextShuffleEnabled {
             Toast.show(L10n.upNextShuffleToastMessage, aboveMiniPlayer: self.showingInTab ? true : false)
         }
-        FileLog.shared.addMessage("UpNext shuffleButtonTapped: shuffle enabled: \(upNextShuffleEnabled)")
         track(.upNextShuffleEnabled, properties: ["value": upNextShuffleEnabled])
     }
 
     @objc private func themeDidChange() {
-        FileLog.shared.addMessage("UpNext themeDidChange: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
-
-        if !SubscriptionHelper.hasActiveSubscription() || !SyncManager.isUserLoggedIn() {
+        if !SyncManager.isUserLoggedIn() {
             shuffleButton.setImage(UIImage(named: "shuffle-plus"), for: .normal)
             shuffleButton.isSelected = false
         } else {
@@ -306,8 +301,6 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             guard let self else { return }
             if FeatureFlag.upNextShuffle.enabled {
                 // Update UI
-                FileLog.shared.addMessage("UpNext subscriptionStatusDidChange: user has active subscription: \(SubscriptionHelper.hasActiveSubscription()) and is logged in: \(SyncManager.isUserLoggedIn())")
-
                 setupActionButtonsIfNecessary()
                 themeDidChange()
                 updateNavBarButtons()

@@ -33,16 +33,13 @@ class SearchHistoryModel: ObservableObject {
     private func addNotificationObservers() {
         let notificationCenter = NotificationCenter.default
 
-        // Listen for folder and subscription changes
-        Publishers.Merge(
-            notificationCenter.publisher(for: ServerNotifications.subscriptionStatusChanged),
-            notificationCenter.publisher(for: Constants.Notifications.folderEdited)
-        )
-        .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-        .sink { [weak self] _ in
-            self?.updateFolders()
-        }
-        .store(in: &notifications)
+        // Listen for folder changes
+        notificationCenter.publisher(for: Constants.Notifications.folderEdited)
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.updateFolders()
+            }
+            .store(in: &notifications)
 
         // Listen for folder deletion changes
         notificationCenter.publisher(for: Constants.Notifications.folderDeleted)
@@ -55,13 +52,6 @@ class SearchHistoryModel: ObservableObject {
     }
 
     private func updateFolders() {
-        guard SubscriptionHelper.hasActiveSubscription() else {
-            // User is not subscribed anymore, remove all folders from search history
-            entries = entries.filter { $0.podcast?.kind != .folder }
-            save()
-            return
-        }
-
         // A folder was changed, update all folders inside the search history
         entries = entries.compactMap { entry in
             if entry.podcast?.kind == .folder, let uuid = entry.podcast?.uuid {

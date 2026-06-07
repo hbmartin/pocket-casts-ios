@@ -129,13 +129,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         cell.settingsLabel.accessibilityIdentifier = tableRow.rawValue
         cell.settingsImage.image = tableRow.display.image
 
-        switch tableRow {
-        case .appearance, .customFiles:
-            cell.plusIndicator.isHidden = SubscriptionHelper.hasActiveSubscription()
-        default:
-            break
-        }
-
         return cell
     }
 

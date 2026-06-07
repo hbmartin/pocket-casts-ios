@@ -9,26 +9,15 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, upNext, profile }
+    enum Tab: Int { case podcasts, filter, profile }
     private enum LegacyTab: Int { case podcasts, discover, filter, upNext, profile }
-    private static let removedDiscoverTabMigrationKey = "SJLastTabOpenedRemovedDiscoverMigrated"
+    private static let removedTabsMigrationKey = "SJLastTabOpenedRemovedTabsMigrated"
 
     var pcTabs = [Tab]()
 
     let playPauseCommand = UIKeyCommand(title: L10n.keycommandPlayPause, action: #selector(handlePlayPauseKey), input: " ", modifierFlags: [])
 
     private lazy var profileTabBarItem = UITabBarItem(title: L10n.profile, image: UIImage(named: "profile_tab"), tag: pcTabs.firstIndex(of: .profile) ?? -1)
-
-    private lazy var upNextTabBarItem = UITabBarItem(title: L10n.upNext, image: UIImage(named: "upnext_tab"), tag: pcTabs.firstIndex(of: .upNext) ?? -1)
-
-    /// The last Up Next count rendered into the tab, used to pulse the tab only
-    /// when the queue actually changes (not on every refresh notification).
-    private var previousUpNextCount: Int?
-
-    /// `true` while the Up Next tab "pulse" spring is in flight, so a burst of
-    /// rapid adds doesn't stack overlapping transforms on the tab button.
-    /// Not `private`: set from the pulse code in `+Animations`.
-    var isPulsingUpNextTab = false
 
 
     /// The viewDidAppear can trigger more than once per lifecycle, setting this flag on the first did appear prevents use from prompting more than once per lifecycle. But still wait until the tab bar has appeared to do so.
@@ -96,7 +85,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTabBarTraitCollectionOnIpad()
 
-        pcTabs = [.podcasts, .filter, .upNext, .profile]
+        pcTabs = [.podcasts, .filter, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -109,9 +98,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
-        let upNextViewController = UpNextViewController(source: .tabBar, showingInTab: true)
-        upNextViewController.tabBarItem = upNextTabBarItem
-        vcsInTab = [podcastsController, filtersViewController, upNextViewController, profileViewController]
+        vcsInTab = [podcastsController, filtersViewController, profileViewController]
 
         viewControllers = vcsInTab.map { SJUIUtils.navController(for: $0) }
         selectedIndex = restoredLastTabIndex()
@@ -133,13 +120,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         NotificationCenter.default.addObserver(self, selector: #selector(refreshProfileTabAvatar), name: .userLoginDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshProfileTabAvatarForcingReload), name: Constants.Notifications.avatarNeedsRefreshing, object: nil)
         refreshProfileTabAvatar()
-
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshUpNextTabBadge), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshUpNextTabBadge), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshUpNextTabBadge), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        // `upNextEpisodeAdded` refreshes the badge via the genie animation's tail, not here.
-        NotificationCenter.default.addObserver(self, selector: #selector(animateEpisodeAddedToUpNext(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
-        refreshUpNextTabBadge()
 
         addBookmarkCreatedToastHandler()
         if FeatureFlag.displayErrorsOnPlayer.enabled {
@@ -253,7 +233,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         updateTabBarColor()
         updateErrorColor()
         setNeedsStatusBarAppearanceUpdate()
-        refreshUpNextTabBadge()
     }
 
     private func setupMiniPlayer() {
@@ -302,39 +281,33 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     private func restoredLastTabIndex() -> Int {
         guard UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) != nil else {
-            UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+            UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
             return pcTabs.firstIndex(of: .podcasts) ?? 0
         }
 
         let savedIndex = UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened)
 
-        guard !UserDefaults.standard.bool(forKey: Self.removedDiscoverTabMigrationKey) else {
+        guard !UserDefaults.standard.bool(forKey: Self.removedTabsMigrationKey) else {
             return clampedTabIndex(savedIndex)
         }
 
         let migratedIndex = migratedLastTabIndex(savedIndex)
 
         UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
-        UserDefaults.standard.set(true, forKey: Self.removedDiscoverTabMigrationKey)
+        UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
         return migratedIndex
     }
 
     private func migratedLastTabIndex(_ savedIndex: Int) -> Int {
-        // Indices 1...3 are ambiguous after removing Discover: they can be old
-        // tab positions or already-correct positions from a build without Discover.
-        guard !pcTabs.indices.contains(savedIndex) else {
-            return savedIndex
-        }
-
         guard let legacyTab = LegacyTab(rawValue: savedIndex) else {
             return clampedTabIndex(savedIndex)
         }
 
         switch legacyTab {
         case .profile:
-            return pcTabs.firstIndex(of: .profile) ?? clampedTabIndex(savedIndex)
+            return pcTabs.firstIndex(of: .profile) ?? 0
         case .podcasts, .discover, .filter, .upNext:
-            return clampedTabIndex(savedIndex)
+            return pcTabs.firstIndex(of: .podcasts) ?? 0
         }
     }
 
@@ -447,21 +420,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
-    // Discover has been removed; route any lingering Discover navigation to the Podcasts tab.
-    func navigateToDiscover(_ animated: Bool) {
-        switchToTab(.podcasts)
-    }
-
-    func navigateToDiscover(category: String, animated: Bool) {
-        switchToTab(.podcasts)
-    }
-
-    func navigateToDiscover(listID: String, animated: Bool) {
-        switchToTab(.podcasts)
-    }
-
     func navigateToUpNext(_ animated: Bool) {
-        switchToTab(.upNext)
+        NavigationManager.sharedManager.miniPlayer?.showUpNext(from: .unknown)
     }
 
     func navigateToProfile(row: ProfileViewController.TableRow? = nil, animated: Bool) {
@@ -511,34 +471,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         } else {
             let root = rootViewController ?? navController.topViewController
             root?.present(navVC, animated: true, completion: nil)
-        }
-    }
-
-    func navigateToAddCustom(_ url: URL) {
-        appDelegate()?.miniPlayer()?.closeUpNextAndFullPlayer(completion: {
-            self.switchToTab(.profile)
-
-            if let navController = self.selectedViewController as? UINavigationController {
-                if let existingUploadedViewController = (navController.viewControllers.last as? UploadedViewController) {
-                    existingUploadedViewController.closeAllChildrenViewControllers()
-                }
-                navController.popToRootViewController(animated: false)
-
-                let uploadedViewController = UploadedViewController()
-                uploadedViewController.fileURL = url
-                navController.pushViewController(uploadedViewController, animated: false)
-            }
-        })
-    }
-
-    func navigateToFiles() {
-        switchToTab(.profile)
-
-        if let navController = selectedViewController as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-
-            let filesController = UploadedViewController()
-            navController.pushViewController(filesController, animated: true)
         }
     }
 
@@ -852,8 +784,6 @@ private extension MainTabBarController {
             event = .filtersTabOpened
         case .profile:
             event = .profileTabOpened
-        case .upNext:
-            event = .upNextTabOpened
         }
 
         Analytics.track(event, properties: ["initial": isInitial])
@@ -1026,40 +956,5 @@ private extension MainTabBarController {
     func resetProfileTabImage() {
         profileTabBarItem.image = UIImage(named: "profile_tab")
         profileTabBarItem.selectedImage = nil
-    }
-}
-
-// MARK: - Up Next tab badge
-
-extension MainTabBarController {
-    @objc func refreshUpNextTabBadge() {
-        guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
-
-        // Clamping lives in `composeUpNextTabImage`; track the true count here.
-        let count = PlaybackManager.shared.queue.upNextCount()
-        let previous = previousUpNextCount
-        previousUpNextCount = count
-
-        // Nothing to redraw if the count didn't move. The composed image is a
-        // template, so the tab bar re-tints it on theme changes for free — no
-        // rebuild needed there either.
-        guard count != previous else { return }
-
-        guard count > 0 else {
-            resetUpNextTabImage()
-            return
-        }
-
-        // A template image so the tab bar tints it like every other item.
-        upNextTabBarItem.image = Self.composeUpNextTabImage(count: count)
-        upNextTabBarItem.selectedImage = Self.composeUpNextTabImage(count: count, isSelected: true)
-
-        // Only celebrate the queue growing — a drain (playing/removing) shouldn't pop.
-        if previous.map({ count > $0 }) ?? false { pulseUpNextTabButton() }
-    }
-
-    func resetUpNextTabImage() {
-        upNextTabBarItem.image = UIImage(named: "upnext_tab")
-        upNextTabBarItem.selectedImage = nil
     }
 }

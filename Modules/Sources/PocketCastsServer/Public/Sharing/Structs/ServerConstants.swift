@@ -55,10 +55,8 @@ public enum ServerConstants {
         }
 
         public static let support = "https://support.pocketcasts.com/ios/"
-        public static let cancelSubscription = "https://support.pocketcasts.com/knowledge-base/how-to-cancel-a-subscription/"
         public static let termsOfUse = "https://support.pocketcasts.com/article/terms-of-use/"
         public static let privacyPolicy = "https://support.pocketcasts.com/article/privacy-policy/"
-        public static let plusInfo = "https://pocketcasts.com/plus/"
         public static let pocketcastsDotCom = "https://pocketcasts.com/"
         public static let automatticDotCom = "https://automattic.com/"
         public static let automatticWorkWithUs = "https://automattic.com/work-with-us/"
@@ -139,19 +137,8 @@ public enum ServerConstants {
         static let upNextServerLastModified = "SJUpNextServerLastModified"
         static let lastClearHistoryDate = "SJLastClearHistoryDate"
         static let pushToken = "SJPushToken"
-        static let subscriptionPaid = "SJSubscriptionPaid"
-        static let subscriptionExpiryDate = "SJSubscriptionExpiryDate"
-        static let subscriptionAutoRenewing = "SJSubscriptionAutorenewing"
-        static let subscriptionPlatform = "SJSubscriptionPlatform"
-        static let subscriptionGiftDays = "SJSubscriptionGiftDays"
-        public static let subscriptionGiftAcknowledgement = "SJSubscriptionGiftAcknowledgement"
-        public static let subscriptionFrequency = "SJSubscriptionFrequency"
-        static let subscriptionPodcasts = "SJSubscriptionPodcasts"
-        static let subscriptionType = "SJSubscriptionType"
-        static let subscriptionTier = "SJSubscriptionTier"
         public static let marketingOptInKey = "SJMarketingOptIn"
         static let marketingOptInNeedsSyncKey = "SJMarketingOptInNeedsSync"
-        static let subscriptionGiftAcknowledgementNeedsSyncKey = "SJGiftAcknowledgementNeedsSync"
         static let filesLastModifiedKey = "UserFilesLastModified"
         static let statsStartDate = "StatsStartDate"
         static let statsSyncStatus = "StatsSyncStatus"
@@ -167,9 +154,6 @@ public enum ServerConstants {
         static let statsAutoSkipServer = "StatsIntroSkipServer"
         static let statsStartedDateServer = "StatsStartedDateServer"
         static let userId = "UserId"
-        static let removeBannerAds = "SJSubscriptionRemoveBannerAds"
-        static let removeDiscoverAds = "SJSubscriptionRemoveDiscoverAds"
-        static let subscriptionCreateDate = "SJSubscriptionCreateDate"
     }
 
     public enum Limits {

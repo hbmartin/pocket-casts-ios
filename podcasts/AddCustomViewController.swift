@@ -316,25 +316,9 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
-            if SubscriptionHelper.featuresUnlocked || SubscriptionHelper.hasActiveSubscription() {
-                self.addCustomlock.isHidden = true
-                self.lockView.isHidden = true
-                self.addCustomImageButton.alpha = 1
-            } else {
-                self.addCustomImageButton.setTitle(L10n.fileUploadAddImage, for: .normal)
-                self.addCustomImageButton.isEnabled = true
-                self.addCustomlock.isHidden = false
-                self.lockView.isHidden = Settings.plusInfoDismissedOnFilesAdd()
-
-                if self.embeddedImage == nil {
-                    self.customiseArtworkView.addGestureRecognizer(self.lockedArtworkTapGesture)
-                    self.customiseArtworkView.alpha = 0.3
-                } else {
-                    self.customiseArtworkView.removeGestureRecognizer(self.lockedArtworkTapGesture)
-                    self.customiseArtworkView.alpha = 1
-                    self.addCustomImageButton.alpha = 0.3
-                }
-            }
+            self.addCustomlock.isHidden = true
+            self.lockView.isHidden = true
+            self.addCustomImageButton.alpha = 1
         }
     }
 
@@ -391,11 +375,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     }
 
     @IBAction func addCustomImageClicked(_ sender: Any) {
-        guard SubscriptionHelper.featuresUnlocked || SubscriptionHelper.hasActiveSubscription() else {
-            showSubscriptionRequired()
-            return
-        }
-
         if artwork == nil { // add image
             // Check permissions and add the actions
             switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -486,22 +465,5 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
 
     @objc func showSubscriptionRequired() {
         // Custom file uploads are free now, so there is no upsell to present.
-    }
-}
-
-// MARK: Plus Locked Info Delegate
-
-extension AddCustomViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        lockView.isHidden = true
-        Settings.setPlusInfoDismissedOnFilesAdd(true)
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .files
     }
 }

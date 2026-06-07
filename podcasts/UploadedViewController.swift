@@ -110,11 +110,9 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         registerCells()
         title = L10n.files
 
-        if SubscriptionHelper.hasActiveSubscription() {
-            let controller = UploadedFilesRefreshController(source: .files)
-            tableRefreshController = controller
-            uploadsTable.refreshControl = controller.refreshControl
-        }
+        let controller = UploadedFilesRefreshController(source: .files)
+        tableRefreshController = controller
+        uploadsTable.refreshControl = controller.refreshControl
 
         headerView.controllerForPresenting = self
 
@@ -234,12 +232,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     private func reloadAllFiles() {
-        if SubscriptionHelper.hasActiveSubscription() {
-            UserEpisodeManager.updateUserEpisodes()
-            updateHeaderView()
-        } else {
-            reloadLocalFiles()
-        }
+        UserEpisodeManager.updateUserEpisodes()
+        updateHeaderView()
     }
 
     func howTo() {
@@ -360,13 +354,6 @@ private extension UploadedViewController {
 
         manager.onBookmarksDeleted
             .filter { $0.items.contains(where: { $0.podcast == nil }) }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.handleReloadFromNotification()
-            }
-            .store(in: &cancellables)
-
-        PaidFeature.bookmarks.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleReloadFromNotification()

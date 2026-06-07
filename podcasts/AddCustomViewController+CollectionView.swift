@@ -52,9 +52,7 @@ extension AddCustomViewController: UICollectionViewDelegate, UICollectionViewDat
         } else if indexPath == greyIndexPath {
             cell.imageView.isHidden = true
         } else {
-            cell.imageView.image = UIImage(named: "locked")
-            cell.imageView.contentMode = .center
-            cell.imageView.isHidden = SubscriptionHelper.hasActiveSubscription()
+            cell.imageView.isHidden = true
         }
         return cell
     }

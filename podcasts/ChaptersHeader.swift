@@ -50,7 +50,7 @@ class ChaptersHeader: UIView {
     }()
 
     private var lockIcon: UIImage? {
-        PaidFeature.deselectChapters.isUnlocked ? nil : (PaidFeature.deselectChapters.tier == .patron ? UIImage(named: "patron-heart") : UIImage(named: "plusGold"))
+        nil
     }
 
     // MARK: - Config

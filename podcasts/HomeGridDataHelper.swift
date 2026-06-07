@@ -26,12 +26,10 @@ class HomeGridDataHelper {
             }
         }
 
-        if SubscriptionHelper.hasActiveSubscription() {
-            let allFolders = DataManager.sharedManager.allFolders()
-            for folder in allFolders {
-                if folder.name.localizedCaseInsensitiveContains(searchTerm) {
-                    filteredItems.append(HomeGridItem(folder: folder))
-                }
+        let allFolders = DataManager.sharedManager.allFolders()
+        for folder in allFolders {
+            if folder.name.localizedCaseInsensitiveContains(searchTerm) {
+                filteredItems.append(HomeGridItem(folder: folder))
             }
         }
 
@@ -125,18 +123,13 @@ class HomeGridDataHelper {
     }
 
     private class func gridItems(orderedBy: LibrarySort, sortedPodcasts: [Podcast]) -> [HomeGridItem] {
-        // When a user doesn't have Pocket Casts Plus, all their podcasts will be loaded into the main grid, regardless of if they are in a folder or not
         var gridItems: [HomeGridItem] = []
-        if SubscriptionHelper.hasActiveSubscription() {
-            let allFolders = DataManager.sharedManager.allFolders()
+        let allFolders = DataManager.sharedManager.allFolders()
 
-            gridItems += sortedPodcasts.compactMap { podcast in
-                allFolders.contains { $0.uuid == podcast.folderUuid } ? nil : HomeGridItem(podcast: podcast)
-            }
-            gridItems += allFolders.map { HomeGridItem(folder: $0) }
-        } else {
-            gridItems += sortedPodcasts.map { HomeGridItem(podcast: $0) }
+        gridItems += sortedPodcasts.compactMap { podcast in
+            allFolders.contains { $0.uuid == podcast.folderUuid } ? nil : HomeGridItem(podcast: podcast)
         }
+        gridItems += allFolders.map { HomeGridItem(folder: $0) }
 
         // sort the grid items based on the supplied sort order
         gridItems.sort { item1, item2 in

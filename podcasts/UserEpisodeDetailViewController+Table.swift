@@ -37,7 +37,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             cell.titleLabel.style = .primaryText01
             cell.actionImage?.image = UIImage(named: "plus_upload")
             cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-            cell.setLocked(locked: !SubscriptionHelper.hasActiveSubscription())
         case .removeFromCloud:
             cell.titleLabel.text = L10n.customEpisodeRemoveUpload
             cell.titleLabel.style = .primaryText01

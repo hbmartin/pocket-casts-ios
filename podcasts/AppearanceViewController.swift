@@ -10,7 +10,7 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     private let plusLockedInfoCellId = "PlusLockedCell"
 
     private enum TableRow {
-        case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, plusCallout, darkUpNextTheme, tabBarMinimizing
+        case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, darkUpNextTheme, tabBarMinimizing
     }
 
     private var tableData = [[TableRow]]()
@@ -35,7 +35,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
         title = L10n.settingsAppearance
         updateTableAndData()
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(subscriptionStatusChanged))
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
         Analytics.track(.settingsAppearanceShown)
     }
@@ -50,14 +49,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
     deinit {
         removeAllCustomObservers()
-    }
-
-    @objc func subscriptionStatusChanged() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.updateTableAndData()
-        }
     }
 
     override func handleThemeChanged() {
@@ -276,10 +267,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             newTableData.append([.tabBarMinimizing])
         }
 
-        if !SubscriptionHelper.hasActiveSubscription(), !Settings.plusInfoDismissedOnAppearance() {
-            newTableData.append([.plusCallout])
-        }
-
         tableData = newTableData
         settingsTable.reloadData()
     }
@@ -310,22 +297,5 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
     func iconSelectorPresentingVC() -> UIViewController {
         self
-    }
-}
-
-// MARK: - PlusLockedInfoDelegate
-
-extension AppearanceViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        Settings.setPlusInfoDismissedOnAppearance(true)
-        updateTableAndData()
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .appearance
     }
 }

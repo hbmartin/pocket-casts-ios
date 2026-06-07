@@ -62,25 +62,5 @@ extension PodcastManager {
     }
 
     func checkForExpiredPodcastsAndCleanup() {
-        let allPaidPodcasts = dataManager.allPaidPodcasts()
-
-        let licenseRestrictedPodcasts = allPaidPodcasts.filter { $0.licensing == PodcastLicensing.deleteEpisodesAfterExpiry.rawValue }
-        if licenseRestrictedPodcasts.isEmpty { return }
-
-        for podcast in licenseRestrictedPodcasts {
-            guard let subscription = SubscriptionHelper.subscriptionForPodcast(uuid: podcast.uuid) else { continue }
-
-            let expiryDate = Date(timeIntervalSince1970: subscription.expiryDate)
-            if expiryDate.timeIntervalSinceNow < 0, !subscription.autoRenewing {
-                let downloadedEpisodes = dataManager.findEpisodesWhere(customWhere: "podcast_id == ? AND episodeStatus == ?", arguments: [podcast.id, DownloadStatus.downloaded.rawValue])
-                for episode in downloadedEpisodes {
-                    FileLog.shared.addMessage("Deleting downloaded episode \(episode.title ?? "No Title"), licensing expired")
-
-                    PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: false)
-                    downloadManager.removeFromQueue(episode: episode, fireNotification: false, userInitiated: false)
-                    EpisodeManager.deleteDownloadedFiles(episode: episode)
-                }
-            }
-        }
     }
 }

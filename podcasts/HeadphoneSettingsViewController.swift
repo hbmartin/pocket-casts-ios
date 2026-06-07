@@ -122,30 +122,19 @@ class HeadphoneSettingsViewController: PCTableViewController {
     // MARK: - Headphone Option
 
     private func headphoneOptionChanged(to selection: HeadphoneControlAction, for row: TableSection.Row) {
-        // Store the setting action as a closure to be able to finish setting the value after the purchase
-        let action = { [weak self] in
-            switch row {
-            case .previousAction:
-                Settings.trackValueChanged(.settingsHeadphoneControlsPreviousChanged, value: selection)
-                Settings.headphonesPreviousAction = selection
+        switch row {
+        case .previousAction:
+            Settings.trackValueChanged(.settingsHeadphoneControlsPreviousChanged, value: selection)
+            Settings.headphonesPreviousAction = selection
 
-            case .nextAction:
-                Settings.trackValueChanged(.settingsHeadphoneControlsNextChanged, value: selection)
-                Settings.headphonesNextAction = selection
+        case .nextAction:
+            Settings.trackValueChanged(.settingsHeadphoneControlsNextChanged, value: selection)
+            Settings.headphonesNextAction = selection
 
-            default: break
-            }
-
-            self?.reloadData()
+        default: break
         }
 
-        guard selection.isUnlocked else {
-            SJUIUtils.showAlert(title: L10n.plusRequiredFeature, message: L10n.plusPromoParagraph, from: self)
-            reloadData()
-            return
-        }
-
-        action()
+        self.reloadData()
     }
 
     // MARK: - Data Struct
@@ -225,6 +214,6 @@ private extension HeadphoneControlAction {
     }
 
     var iconName: String? {
-        isUnlocked ? nil : "plusGold24"
+        nil
     }
 }

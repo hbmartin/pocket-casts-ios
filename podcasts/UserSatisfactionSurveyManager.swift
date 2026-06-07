@@ -48,14 +48,10 @@ public class UserSatisfactionSurveyManager: NSObject {
             return .userDeclinedRecently
         }
 
-        // Check user subscription status for appropriate entry points
-        let isPlus = SubscriptionHelper.hasActiveSubscription()
-
         switch event {
-        case .thirdEpisodeCompleted, .episodeStarred, .showRated, .filterCreated:
-            return !isPlus ? .canShow : .wrongUserType // Free user events
-        case .plusUpgraded, .folderCreated, .bookmarkCreated, .customThemeSet, .referralShared:
-            return isPlus ? .canShow : .wrongUserType // Plus user events
+        case .thirdEpisodeCompleted, .episodeStarred, .showRated, .filterCreated,
+             .plusUpgraded, .folderCreated, .bookmarkCreated, .customThemeSet, .referralShared:
+            return .canShow
         case .endOfYearStoryShared, .endOfYearCompleted:
             return .deferredEvent
         }
@@ -76,7 +72,7 @@ public class UserSatisfactionSurveyManager: NSObject {
             case .yes:
                 Analytics.track(.userSatisfactionSurveyYesResponse, properties: [
                     "trigger_event": event.rawValue,
-                    "user_type": SubscriptionHelper.hasActiveSubscription() ? "plus" : "free"
+                    "user_type": "free"
                 ])
                 DispatchQueue.main.async {
                     if let windowScene = UIApplication.shared.connectedScenes
@@ -90,7 +86,7 @@ public class UserSatisfactionSurveyManager: NSObject {
             case .no:
                 Analytics.track(.userSatisfactionSurveyNoResponse, properties: [
                     "trigger_event": event.rawValue,
-                    "user_type": SubscriptionHelper.hasActiveSubscription() ? "plus" : "free"
+                    "user_type": "free"
                 ])
                 Settings.setSurveyNotReallyResponse()
                 EmailHelper().presentSupportDialog(source)
@@ -120,7 +116,7 @@ public class UserSatisfactionSurveyManager: NSObject {
         Settings.addSurveyPresented()
         Analytics.track(.userSatisfactionSurveyShown, properties: [
             "trigger_event": event.rawValue,
-            "user_type": SubscriptionHelper.hasActiveSubscription() ? "plus" : "free"
+            "user_type": "free"
         ])
     }
 
@@ -150,7 +146,7 @@ extension UserSatisfactionSurveyManager: UIAdaptivePresentationControllerDelegat
     public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
         Analytics.track(.userSatisfactionSurveyDismissed, properties: [
             "trigger_event": currentEvent?.rawValue ?? "unknown",
-            "user_type": SubscriptionHelper.hasActiveSubscription() ? "plus" : "free"
+            "user_type": "free"
         ])
         currentEvent = nil
     }
@@ -264,12 +260,6 @@ extension UserSatisfactionSurveyManager: AnalyticsAdapter {
     private func handleAppOpened() -> SurveyTriggerEvent? {
         // Check plus upgrade survey eligibility when app opens
         guard let upgradeDate = plusUpgradeDate else {
-            // Track upgrade date if user has active subscription but no stored date
-            if SubscriptionHelper.hasActiveSubscription() {
-                let date = Date()
-                FileLog.shared.addMessage("UserSatisfactionSurveyManager: Saved plus upgrade date at \(date)")
-                plusUpgradeDate = date
-            }
             return nil
         }
 

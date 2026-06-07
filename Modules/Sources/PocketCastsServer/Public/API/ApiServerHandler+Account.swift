@@ -220,42 +220,4 @@ public extension ApiServerHandler {
         operation.completion = completion
         apiQueue.addOperation(operation)
     }
-
-    // MARK: - Subscription Tasks
-
-    func sendPurchaseReceipt(completion: @escaping (Bool) -> Void) {
-        guard ServerSettings.syncingEmail() != nil else {
-            FileLog.shared.addMessage("Purchase receipt not send as user has no sync email")
-            completion(false)
-            return
-        }
-
-        let operation = PurchaseReceiptTask()
-        operation.completion = completion
-        apiQueue.addOperation(operation)
-    }
-
-    func retrieveSubscriptionStatus() {
-        let subscriptionStatusTask = SubscriptionStatusTask()
-        apiQueue.addOperation(subscriptionStatusTask)
-    }
-
-    @discardableResult
-    func retrieveSubscriptionStatus() async -> Bool {
-        return await withCheckedContinuation { continuation in
-            let operation = SubscriptionStatusTask()
-            operation.completion = { success in
-                continuation.resume(returning: success)
-            }
-            apiQueue.addOperation(operation)
-        }
-    }
-
-    // MARK: - Subscription Promotion Codes
-
-    func redeemPromoCode(promoCode: String, completion: @escaping (Int, String?, APIError?) -> Void) {
-        let redeemOperation = RedeemPromoCodeTask(promoCode: promoCode)
-        redeemOperation.completion = completion
-        apiQueue.addOperation(redeemOperation)
-    }
 }

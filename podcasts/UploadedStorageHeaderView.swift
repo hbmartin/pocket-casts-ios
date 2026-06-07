@@ -75,29 +75,24 @@ class UploadedStorageHeaderView: UIView {
     }
 
     @objc func update() {
-        if SubscriptionHelper.hasActiveSubscription() {
-            plusView.isHidden = false
-            noPlusView.isHidden = true
+        plusView.isHidden = false
+        noPlusView.isHidden = true
 
-            let maxStorage = Int64(ServerSettings.customStorageUserLimit())
-            let usedStorage = Int64(ServerSettings.customStorageUsed())
-            let numFiles = ServerSettings.customStorageNumFiles()
+        let maxStorage = Int64(ServerSettings.customStorageUserLimit())
+        let usedStorage = Int64(ServerSettings.customStorageUsed())
+        let numFiles = ServerSettings.customStorageNumFiles()
 
-            let percentageUsed = maxStorage > 0 ? Double(usedStorage) / Double(maxStorage) : 0
-            numFilesLabel.text = numFiles == 1 ? L10n.profileSingleFile : L10n.profileNumberOfFiles(numFiles.localized())
-            storageSizeLabel.text = "\(SizeFormatter.shared.defaultFormat(bytes: usedStorage))/ \(SizeFormatter.shared.defaultFormat(bytes: maxStorage))"
-            percentageLabel.text = L10n.profilePercentFull(percentageUsed.localized(.percent))
+        let percentageUsed = maxStorage > 0 ? Double(usedStorage) / Double(maxStorage) : 0
+        numFilesLabel.text = numFiles == 1 ? L10n.profileSingleFile : L10n.profileNumberOfFiles(numFiles.localized())
+        storageSizeLabel.text = "\(SizeFormatter.shared.defaultFormat(bytes: usedStorage))/ \(SizeFormatter.shared.defaultFormat(bytes: maxStorage))"
+        percentageLabel.text = L10n.profilePercentFull(percentageUsed.localized(.percent))
 
-            if percentageUsed >= 99 {
-                percentageLabel.textColor = AppTheme.colorForStyle(.support05)
-            } else if percentageUsed >= 90, percentageUsed < 99 {
-                percentageLabel.textColor = AppTheme.colorForStyle(.support08)
-            } else {
-                percentageLabel.textColor = AppTheme.colorForStyle(.primaryText01)
-            }
+        if percentageUsed >= 99 {
+            percentageLabel.textColor = AppTheme.colorForStyle(.support05)
+        } else if percentageUsed >= 90, percentageUsed < 99 {
+            percentageLabel.textColor = AppTheme.colorForStyle(.support08)
         } else {
-            plusView.isHidden = true
-            noPlusView.isHidden = false
+            percentageLabel.textColor = AppTheme.colorForStyle(.primaryText01)
         }
     }
 }

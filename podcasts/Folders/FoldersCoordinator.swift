@@ -63,20 +63,6 @@ class FoldersCoordinator: NSObject {
     }
 
     func showUpsellIfNeeded(from vc: UIViewController) {
-        guard FeatureFlag.suggestedFolders.enabled,
-              vc.presentedViewController == nil,
-              !SubscriptionHelper.featuresUnlocked,
-              !SubscriptionHelper.hasActiveSubscription(),
-              DateUtil.hasEnoughTimePassed(since: startingTime, time: Constants.intervalAfterStartup),
-              Settings.suggestedFoldersUpsellCount < Constants.maxUpsellDisplays,
-              DateUtil.hasEnoughTimePassed(since: Settings.suggestedFoldersLastUpsellDate, time: Constants.intervalBetweenUpsell),
-              dataManager.allPodcasts(includeUnsubscribed: false, reloadFromDatabase: false).count > Constants.minimumNumberOfPodcasts,
-              suggestedFoldersModel.loadingState == .loaded
-        else {
-            return
-        }
-        currentUpsellFlow = .cta
-        showUpsellSuggestedFolder(from: vc, fromUserAction: false, source: .suggestedFolderPopup)
     }
 
     private func manualFolderCreationFlow(from vc: UIViewController) {
@@ -186,45 +172,6 @@ class FoldersCoordinator: NSObject {
         folder.sortType = Int32(Settings.homeFolderSortOrder().old.rawValue)
         dataManager.save(folder: folder)
         return folder
-    }
-
-    private var cancellables = Set<AnyCancellable>()
-    private func addObservers() {
-        // Observe IAP flows notification
-        Publishers.Merge3(
-            NotificationCenter.default.publisher(for: ServerNotifications.iapPurchaseFailed),
-            NotificationCenter.default.publisher(for: ServerNotifications.iapPurchaseCancelled),
-            NotificationCenter.default.publisher(for: ServerNotifications.iapPurchaseCompleted)
-        )
-        .receive(on: OperationQueue.main)
-        .sink { [unowned self] _ in
-            refreshAfterUpsellFlow()
-        }
-        .store(in: &cancellables)
-
-        //Observe Login/Signup notification
-        NotificationCenter.default.publisher(for: .onboardingFlowDidDismiss)
-        .receive(on: OperationQueue.main)
-        .sink { [unowned self] _ in
-            refreshAfterUpsellFlow()
-        }
-        .store(in: &cancellables)
-    }
-
-    private func refreshAfterUpsellFlow() {
-        guard FeatureFlag.suggestedFolders.enabled,
-              SubscriptionHelper.hasActiveSubscription(),
-              let currentVC
-        else {
-            currentVC = nil
-            currentUpsellFlow = .none
-            cancellables = []
-            return
-        }
-        cancellables = []
-        currentUpsellFlow = .none
-        suggestedFolderCreationFlow(from: currentVC, source: currentSource)
-        self.currentVC = nil
     }
 }
 
