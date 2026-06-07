@@ -77,13 +77,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    var promoCode: String? {
-        didSet {
-            showPromotionViewController(promoCode: promoCode)
-        }
-    }
+    var promoCode: String?
 
-    var promoRedeemedMessage: String?
     private let settingsCellId = "SettingsCell"
 
     enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
@@ -165,11 +160,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
 
         addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
-        if promoRedeemedMessage != nil {
-            updateDisplayedData()
-            showPromotionRedeemedAcknowledgement()
-            promoRedeemedMessage = nil
-        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -237,7 +227,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         headerViewModel.update()
 
         updateLastRefreshDetails()
-        plusInfoView.isHidden = Settings.plusInfoDismissedOnProfile() || SubscriptionHelper.hasActiveSubscription()
+        // Every feature is free in the "fast & light" build, so the Plus upsell banner never shows.
+        plusInfoView.isHidden = true
         updateFooterFrame()
         refreshTableData()
     }
