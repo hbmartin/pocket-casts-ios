@@ -152,17 +152,6 @@ public class ServerSettings {
         UserDefaults.standard.set(false, forKey: ServerConstants.UserDefaults.marketingOptInNeedsSyncKey)
     }
 
-    // MARK: Date of Latest UnsentSubscription Purchase Receipt
-
-    private static let iapUnverifiedPurchaseReceipDatetKey = "SJIapDateUnverifiedPurchaseReceipt"
-    public class func setIapUnverifiedPurchaseReceiptDate(_ value: Date?) {
-        UserDefaults.standard.set(value, forKey: iapUnverifiedPurchaseReceipDatetKey)
-    }
-
-    public class func iapUnverifiedPurchaseReceiptDate() -> Date? {
-        UserDefaults.standard.object(forKey: iapUnverifiedPurchaseReceipDatetKey) as? Date
-    }
-
     // MARK: Files last modified
 
     public class func setFilesLastModified(_ value: String) {
@@ -357,7 +346,7 @@ public class ServerSettings {
     }
 
     public class func syncSettings() {
-        guard SyncManager.isUserLoggedIn(), ServerSettings.marketingOptInNeedsSyncing() || SubscriptionHelper.subscriptionGiftAcknowledgementNeedsSyncing() else { return }
+        guard SyncManager.isUserLoggedIn(), ServerSettings.marketingOptInNeedsSyncing() else { return }
 
         ApiServerHandler.shared.syncSettings()
     }

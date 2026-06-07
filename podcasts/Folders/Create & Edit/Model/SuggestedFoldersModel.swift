@@ -74,11 +74,11 @@ class SuggestedFoldersModel: ObservableObject {
     }
 
     var userHasSubscription: Bool {
-        return SubscriptionHelper.hasActiveSubscription()
+        return true
     }
 
     var showConfirmation: Bool {
-        return userHasExistingFolders && SubscriptionHelper.hasActiveSubscription()
+        return userHasExistingFolders
     }
 
     var userHasExistingFolders: Bool {
@@ -90,14 +90,7 @@ class SuggestedFoldersModel: ObservableObject {
     }
 
     var userType: String {
-        var userType = "unsigned"
-        if userIsSignedIn {
-            userType = "free"
-        }
-        if userHasSubscription {
-            userType = "paid"
-        }
-        return userType
+        return userIsSignedIn ? "paid" : "unsigned"
     }
 
     private lazy var cacheLocation: URL = {

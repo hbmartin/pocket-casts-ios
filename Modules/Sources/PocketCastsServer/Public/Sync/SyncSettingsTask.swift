@@ -147,9 +147,6 @@ class SyncSettingsTask: ApiBaseTask, @unchecked Sendable {
                 if ServerSettings.marketingOptInNeedsSyncing() {
                     settingsRequest.settings.marketingOptIn.value = ServerSettings.marketingOptIn()
                 }
-                if SubscriptionHelper.subscriptionGiftAcknowledgementNeedsSyncing() {
-                    settingsRequest.settings.freeGiftAcknowledgement.value = SubscriptionHelper.subscriptionGiftAcknowledgement()
-                }
                 if ServerSettings.homeGridSortOrderNeedsSyncing() {
                     settingsRequest.settings.gridOrder.value = ServerConverter.convertToServerSortType(clientType: ServerSettings.homeGridSortOrder())
                 }
@@ -194,10 +191,6 @@ class SyncSettingsTask: ApiBaseTask, @unchecked Sendable {
                     ServerSettings.setMarketingOptIn(marketingOptIn)
                 }
 
-                if settings.freeGiftAcknowledgement.changed.value {
-                    let acknowledgement = settings.freeGiftAcknowledgement.value.value
-                    SubscriptionHelper.setSubscriptionGiftAcknowledgement(acknowledgement)
-                }
                 if settings.gridOrder.changed.value {
                     let newOrder = ServerConverter.convertToClientSortType(serverType: settings.gridOrder.value.value)
                     ServerSettings.setHomeGridSortOrder(newOrder, syncChange: false)
@@ -210,7 +203,6 @@ class SyncSettingsTask: ApiBaseTask, @unchecked Sendable {
             ServerSettings.setSkipForwardSynced()
             ServerSettings.marketingOptInSynced()
             ServerSettings.setHomeGridSortOrderSynced()
-            SubscriptionHelper.subscriptionGiftAcknowledgementSynced()
         } catch {
             FileLog.shared.addMessage("SyncSettingsTask decoding response failed \(error.localizedDescription)")
         }

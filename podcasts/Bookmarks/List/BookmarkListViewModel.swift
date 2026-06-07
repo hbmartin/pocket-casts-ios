@@ -34,7 +34,6 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
     var cancellables = Set<AnyCancellable>()
     @Binding private var sortSettingValue: BookmarkSortOption
 
-    let feature: PaidFeature = .bookmarks
     var analyticsSource: BookmarkAnalyticsSource = .unknown
 
     init(bookmarkManager: BookmarkManager, sortOption: SortSetting) {
@@ -78,14 +77,6 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.reload()
-            }
-            .store(in: &cancellables)
-
-        feature.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.reload()
-                self?.objectWillChange.send()
             }
             .store(in: &cancellables)
     }

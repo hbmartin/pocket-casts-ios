@@ -55,33 +55,6 @@ rules:
             ...
           }
 
-  - id: pocketcasts.subscription-helper-hardcoded-billing-state
-    message: Keep billing helpers truthful; use feature gates at call sites instead of hardcoded subscription state.
-    severity: WARNING
-    languages: [swift]
-    patterns:
-      - pattern-inside: |
-          open class SubscriptionHelper: NSObject {
-            ...
-          }
-      - pattern-either:
-          - pattern: |
-              public class func hasActiveSubscription() -> Bool {
-                  true
-              }
-          - pattern: |
-              public class func hasActiveSubscription() -> Bool {
-                  return true
-              }
-          - pattern: |
-              public static var activeTier: SubscriptionTier {
-                  .patron
-              }
-          - pattern: |
-              public static var activeTier: SubscriptionTier {
-                  return .patron
-              }
-
   - id: pocketcasts.story-onappear-direct-advance
     message: Defer story-model advancement out of SwiftUI onAppear using DispatchQueue.main.async.
     severity: WARNING

@@ -23,25 +23,6 @@ enum AnalyticsEvent: String {
     case userPasswordReset
     case ssoStarted
 
-    // MARK: - Payment Events
-
-    case purchaseSuccessful
-    case purchaseFailed
-    case purchaseCancelled
-
-    // MARK: - Plus Upsell Dialog
-
-    case plusPromotionShown
-    case plusPromotionDismissed
-    case plusPromotionUpgradeButtonTapped
-    case plusPromotionNotNowButtonTapped
-    case plusPromotionSubscriptionTierChanged
-    case plusPromotionSubscriptionFrequencyChanged
-    case plusPromotionPrivacyPolicyTapped
-    case plusPromotionTermsAndConditionsTapped
-    case plusPromotionDetailsTapped
-    case plusPromotionBannerButtonTapped
-
     // MARK: - Setup Account
 
     case setupAccountShown
@@ -77,21 +58,7 @@ enum AnalyticsEvent: String {
     case termsOfUseAccepted
     case termsOfUseRejected
 
-    // MARK: - Select Payment Frequency
-
-    case selectPaymentFrequencyShown
-    case selectPaymentFrequencyDismissed
-    case selectPaymentFrequencyNextButtonTapped
-
-    // MARK: - Confirm Payment
-
-    case confirmPaymentShown
-    case confirmPaymentDismissed
-    case confirmPaymentConfirmButtonTapped
-
     // MARK: - Podcasts List
-
-    case podcastsListShown
     case podcastsListFolderButtonTapped
     case podcastsListPodcastTapped
     case podcastsListFolderTapped
@@ -130,14 +97,9 @@ enum AnalyticsEvent: String {
     case profileRefreshButtonTapped
     case profileBookmarksShow
 
-    case accountDetailsCancelTapped
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy
     case accountDetailsChangeAvatar
-
-    // MARK: - Upgrade banner
-
-    case upgradeBannerDismissed
 
     // MARK: - Stats View
 
@@ -844,12 +806,6 @@ enum AnalyticsEvent: String {
     case onboardingInterestsShownMoreTapped
     case onboardingInterestsContinueTapped
 
-    // MARK: - Cancel
-    case cancelConfirmationViewShown
-    case cancelConfirmationViewDismissed
-    case cancelConfirmationStayButtonTapped
-    case cancelConfirmationCancelButtonTapped
-
     // MARK: - Search History
     case searchHistoryCleared
     case searchHistoryItemTapped
@@ -874,7 +830,6 @@ enum AnalyticsEvent: String {
     // MARK: - Bookmarks
     case bookmarkCreated
     case bookmarkUpdateTitle
-    case bookmarksGetBookmarksButtonTapped
     case bookmarksEmptyGoToHeadphoneSettings
     case bookmarkPlayTapped
     case bookmarksSortByChanged
@@ -893,14 +848,7 @@ enum AnalyticsEvent: String {
     case settingsHeadphoneControlsPreviousChanged
     case settingsHeadphoneControlsBookmarkSoundToggled
 
-    // MARK: - Skipping Chapters
-    case deselectChaptersToggledOn
-    case deselectChaptersToggledOff
-    case deselectChaptersChapterSelected
-    case deselectChaptersChapterDeselected
-
     // MARK: - Kids Profile
-    case kidsProfileBannerSeen
     case kidsProfileEarlyAccessRequested
     case kidsProfileBannerDismissed
     case kidsProfileSendFeedbackTapped
@@ -917,9 +865,6 @@ enum AnalyticsEvent: String {
     case transcriptSearchShown
     case transcriptSearchNextResult
     case transcriptSearchPreviousResult
-    case transcriptGeneratedPaywallShown
-    case transcriptGeneratedPaywallDismissed
-    case transcriptGeneratedPaywallSubscribeTapped
     case episodeDetailTranscriptCardShown
     case episodeDetailTranscriptCardTapped
     case episodeTranscriptShown
@@ -947,42 +892,6 @@ enum AnalyticsEvent: String {
     case shareScreenNavigationButtonTapped
     case shareScreenEditButtonTapped
     case shareScreenCloseButtonTapped
-
-    // MARK: - Referrals
-
-    case referralTooltipShow
-    case referralTooltipTapped
-    case referralShareScreenShown
-    case referralShareScreenDismissed
-    case referralPassShared
-    case referralClaimScreenShown
-    case referralActivateTapped
-    case referralNotNowTapped
-    case referralUsedScreenShown
-    case referralPassBannerShown
-    case referralPurchaseShown
-    case referralPurchaseSuccess
-    case referralPassBannerHideTapped
-
-    // MARK: - Winback
-    case winbackScreenShown
-    case winbackScreenDismissed
-    case winbackContinueButtonTap
-    case winbackMainScreenRowTap
-    case winbackOfferClaimedDoneButtonTapped
-    case winbackAvailablePlansBackButtonTapped
-    case winbackCancelConfirmationStayButtonTapped
-    case winbackCancelConfirmationCancelButtonTapped
-    case winbackAvailablePlansSelectPlan
-    case winbackAvailablePlansNewPlanPurchaseSuccessful
-    case winbackWinbackOfferCancelButtonTapped
-
-    // MARK: - Cancel Subscription Survey
-    case cancelSubscriptionSurveyShown
-    case cancelSubscriptionSurveyDismissed
-    case cancelSubscriptionSurveySubmitButtonTapped
-    case cancelSubscriptionSurveyFeedbackSubmitSuccess
-    case cancelSubscriptionSurveyFeedbackSubmitError
 
     // MARK: - Champion Dialog
     case pocketCastsChampionDialogShown

@@ -32,7 +32,7 @@ struct UserEpisodeManager {
 
             DataManager.sharedManager.save(episode: episode)
 
-            if SubscriptionHelper.hasActiveSubscription(), Settings.userFilesAutoUpload() {
+            if Settings.userFilesAutoUpload() {
                 uploadUserEpisode(userEpisode: episode)
             }
 

@@ -50,7 +50,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         super.viewDidLoad()
         title = L10n.accountTitle
 
-        NotificationCenter.default.addObserver(self, selector: #selector(subscriptionStatusChanged), name: ServerNotifications.subscriptionStatusChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
 
         tableView.tableHeaderView = updatedHeaderContentView
@@ -76,14 +75,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
         AppTheme.defaultStatusBarStyle()
-    }
-
-    @objc private func subscriptionStatusChanged() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.updateDisplayedData()
-        }
     }
 
     private func updateDisplayedData() {
@@ -125,8 +116,8 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         // Every feature is free now, so there is no plus marketing page to show.
     }
 
-    @objc func themeDidChange() {
-        updateDisplayedData() // in case the expiry text color neds updating
+    @objc private func themeDidChange() {
+        updateDisplayedData() // in case the avatar text color needs updating
     }
 
     // MARK: Change email delegate

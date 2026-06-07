@@ -2,62 +2,6 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-extension SubscriptionPlatform: AnalyticsDescribable {
-    var analyticsDescription: String {
-        switch self {
-        case .none:
-            return "none"
-        case .iOS:
-            return "ios"
-        case .android:
-            return "android"
-        case .web:
-            return "web"
-        case .gift:
-            return "gift"
-        }
-    }
-}
-
-extension SubscriptionFrequency: AnalyticsDescribable {
-    var analyticsDescription: String {
-        switch self {
-        case .none:
-            return "none"
-        case .monthly:
-            return "monthly"
-        case .yearly:
-            return "yearly"
-        }
-    }
-}
-
-extension SubscriptionType: AnalyticsDescribable {
-    var analyticsDescription: String {
-        switch self {
-        case .none:
-            return "none"
-        case .plus:
-            return "plus"
-        case .supporter:
-            return "supporter"
-        }
-    }
-}
-
-extension SubscriptionTier: AnalyticsDescribable {
-    var analyticsDescription: String {
-        switch self {
-        case .none:
-            return "none"
-        case .plus:
-            return "plus"
-        case .patron:
-            return "patron"
-        }
-    }
-}
-
 extension AudioVideoFilter: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {

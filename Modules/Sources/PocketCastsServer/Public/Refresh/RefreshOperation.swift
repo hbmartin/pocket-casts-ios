@@ -55,7 +55,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
             if SyncManager.isUserLoggedIn() {
                 NotificationCenter.default.post(name: ServerNotifications.syncStarted, object: nil)
 
-                if SubscriptionHelper.hasActiveSubscription() { apiQueue.addOperation(RetrieveCustomFilesTask()) }
+                apiQueue.addOperation(RetrieveCustomFilesTask())
                 apiQueue.addOperation(UpNextSyncTask())
                 let syncTask = SyncTask()
                 apiQueue.addOperation(syncTask)
@@ -63,10 +63,6 @@ class RefreshOperation: Operation, @unchecked Sendable {
                 apiQueue.addOperation(SyncHistoryTask())
 
                 apiQueue.addOperation(SyncSettingsTask())
-
-                #if !os(watchOS)
-                    ServerSettings.iapUnverifiedPurchaseReceiptDate() == nil ? apiQueue.addOperation(SubscriptionStatusTask()) : apiQueue.addOperation(PurchaseReceiptTask())
-                #endif
 
                 #if !os(watchOS)
                     // update our local copy of the remote stats. Doesn't really matter if this fails or succeeds

@@ -256,18 +256,10 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
-        #if !APPCLIP
-        // Show the overflow menu
-        if AnnouncementFlow.current == .bookmarksPlayer {
-            overflowTapped()
-        }
-        #endif
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadBannerAd()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -287,27 +279,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
             toggleTranscript()
 #endif
         }
-    }
-
-    private func loadBannerAd() {
-#if !APPCLIP
-        if SubscriptionHelper.shouldDisplayPlayerBannerAd {
-            DiscoverServerHandler.shared.blazePromotion(for: .player) { [weak self] promotion, shouldAnimate in
-                guard let self else { return }
-
-                if shouldAnimate {
-                    self.bannerTask = Task { [weak self] in
-                        try? await Task.sleep(for: .seconds(2))
-                        await MainActor.run {
-                            self?.addAdBanner(promotion: promotion, animated: true)
-                        }
-                    }
-                } else {
-                    self.addAdBanner(promotion: promotion, animated: false)
-                }
-            }
-        }
-#endif
     }
 
     private var playerContainer: PlayerContainerViewController? {

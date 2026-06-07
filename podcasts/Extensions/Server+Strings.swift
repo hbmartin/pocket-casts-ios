@@ -1,24 +1,6 @@
 import Foundation
 import PocketCastsServer
 
-public extension SubscriptionHelper {
-    class func subscriptionFrequency() -> String {
-        let frequency = UserDefaults.standard.integer(forKey: ServerConstants.UserDefaults.subscriptionFrequency)
-        return readableSubscriptionFrequency(frequency: frequency)
-    }
-
-    class func readableSubscriptionFrequency(frequency: Int) -> String {
-        switch frequency {
-        case SubscriptionFrequency.monthly.rawValue:
-            return L10n.monthly
-        case SubscriptionFrequency.yearly.rawValue:
-            return L10n.yearly
-        default:
-            return ""
-        }
-    }
-}
-
 public extension APIError {
     var localizedDescription: String {
         switch self {

@@ -227,8 +227,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         headerViewModel.update()
 
         updateLastRefreshDetails()
-        // Every feature is free in the "fast & light" build, so the Plus upsell banner never shows.
-        plusInfoView.isHidden = true
         updateFooterFrame()
         refreshTableData()
     }
@@ -404,51 +402,12 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         footerView.frame = CGRect(x: footerView.frame.minX, y: footerView.frame.minY, width: footerView.frame.width, height: height)
         profileTable.tableFooterView = footerView
     }
-    // MARK: - What's New Autoplay flow
-
-    @objc private func whatsNewDismissed() {
-        showGeneralSettingsIfNeeded()
-        showHeadphoneControlsFromWhatsNew()
-    }
-
-    private func showGeneralSettingsIfNeeded() {
-        if AnnouncementFlow.current == .autoPlay {
-            let generalSettingsViewController = GeneralSettingsViewController()
-            navigationController?.pushViewController(generalSettingsViewController, animated: true)
-        }
-    }
-
-    // Pushes to the headphone controls if shown from the what's new
-    private func showHeadphoneControlsFromWhatsNew() {
-        guard AnnouncementFlow.current == .bookmarksProfile else { return }
-
-        let controller = HeadphoneSettingsViewController()
-        navigationController?.pushViewController(controller, animated: true)
-        AnnouncementFlow.current = .none
-    }
 }
 
 extension ProfileViewController: UIPopoverPresentationControllerDelegate {
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         // Return no adaptive presentation style, use default presentation behaviour
         return .none
-    }
-}
-// MARK: - PlusLockedInfoDelegate
-
-extension ProfileViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        Settings.setPlusInfoDismissedOnProfile(true)
-        plusInfoView.isHidden = true
-        updateFooterFrame()
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .profile
     }
 }
 

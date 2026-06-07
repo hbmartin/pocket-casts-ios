@@ -26,7 +26,7 @@ class ChapterInfo: Equatable {
         #if APPCLIP
         return false
         #else
-        PaidFeature.deselectChapters.isUnlocked ? shouldPlay : true
+        shouldPlay
         #endif
     }
 

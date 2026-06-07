@@ -2324,7 +2324,7 @@ extension PlaybackManager {
 
 extension PlaybackManager {
     private var bookmarksEnabled: Bool {
-        PaidFeature.bookmarks.isUnlocked
+        true
     }
 
     func bookmark(source: BookmarkAnalyticsSource) {

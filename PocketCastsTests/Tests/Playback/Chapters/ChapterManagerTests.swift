@@ -8,19 +8,12 @@ import XCTest
 class ChapterManagerTests: XCTestCase {
     let featureFlagMock = FeatureFlagMock()
     var previousSubscriptionPaidStatus: Int!
-    var previousSubscriptionTier: SubscriptionTier!
 
     override func setUp() {
-        previousSubscriptionPaidStatus = SubscriptionHelper.hasActiveSubscription() ? 1 : 0
-        previousSubscriptionTier = SubscriptionHelper.subscriptionTier
-        SubscriptionHelper.setSubscriptionPaid(1)
-        SubscriptionHelper.subscriptionTier = .patron
     }
 
     override func tearDown() {
         featureFlagMock.reset()
-        SubscriptionHelper.setSubscriptionPaid(previousSubscriptionPaidStatus)
-        SubscriptionHelper.subscriptionTier = previousSubscriptionTier
     }
 
     /// Update the current chapter given a TimeInterval

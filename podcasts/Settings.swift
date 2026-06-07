@@ -350,7 +350,7 @@ class Settings: NSObject {
     }
 
     class func upNextShuffleEnabled() -> Bool {
-        if !FeatureFlag.upNextShuffle.enabled || !SubscriptionHelper.hasActiveSubscription() || !SyncManager.isUserLoggedIn() {
+        if !FeatureFlag.upNextShuffle.enabled || !SyncManager.isUserLoggedIn() {
             return false
         }
         return UserDefaults.standard.bool(forKey: Settings.upNextShuffleKey)

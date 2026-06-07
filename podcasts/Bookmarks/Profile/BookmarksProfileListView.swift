@@ -52,8 +52,6 @@ struct BookmarksProfileListView: View {
                         Image("more")
                     }
                 }
-                .disabled(!viewModel.feature.isUnlocked)
-                .opacity(viewModel.feature.isUnlocked ? 1 : 0)
                 .tint(style.theme.secondaryIcon01)
             }
         }
