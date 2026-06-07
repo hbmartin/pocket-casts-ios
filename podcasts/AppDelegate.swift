@@ -49,9 +49,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             case .updated:
                 Settings.notificationsNewEpisodes = UserDefaults.standard.bool(forKey: Constants.UserDefaults.pushEnabled)
 
-                if FeatureFlag.encourageAccountCreation.enabled, !Settings.hasShownInformationalViewModal {
-                    Settings.shouldShowInitialOnboardingFlow = !SyncManager.isUserLoggedIn()
-                }
                 Settings.shouldShowNewFilterTip = false
                 Settings.shouldShowNewFilterTipInCreationView = false
             case .installed:
