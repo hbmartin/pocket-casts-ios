@@ -801,9 +801,6 @@ enum AnalyticsEvent: String {
     case notAllowedToRateScreenShown
     case notAllowedToRateScreenDismissed
 
-    // MARK: - Patron
-    case patronWelcomeAppIconChanged
-
     // MARK: - What's New
     case whatsnewShown
     case whatsnewDismissed

@@ -17,15 +17,6 @@ extension ThemeType: AnalyticsDescribable {
         }
     }
 
-    var isPlusOnly: Bool {
-        switch self {
-        case .electric, .classic:
-            return true
-        default:
-            return false
-        }
-    }
-
     var description: String {
         switch self {
         case .light:

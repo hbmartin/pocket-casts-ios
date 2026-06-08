@@ -157,9 +157,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Render Bookmarks inline in PodcastViewController using SwiftUI BookmarksListView
     case podcastBookmarksInline
 
-    /// Enable reloading the subscription status in App Delegate
-    case earlyReloadSubscriptionStatus
-
     /// Enable localization headers
     case enableLocalizationHeaders
 
@@ -356,8 +353,6 @@ public enum FeatureFlag: String, CaseIterable {
         case .searchPredictive:
             true
         case .podcastBookmarksInline:
-            true
-        case .earlyReloadSubscriptionStatus:
             true
         case .enableLocalizationHeaders:
             true
