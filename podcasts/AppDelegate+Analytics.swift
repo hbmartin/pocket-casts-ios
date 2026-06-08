@@ -16,7 +16,7 @@ extension AppDelegate {
 
         // Only setup if protected data is available, the user hasn't opted out, and we aren't already registered
         if !Settings.analyticsOptOut() {
-            adapters = [AnalyticsLoggingAdapter(), BitdriftAnalyticsAdapter()]
+            adapters = [AnalyticsLoggingAdapter(), BitdriftAnalyticsAdapter(), TelemetryDeckAnalyticsAdapter()]
         }
 
         // LiveAnalyticsStreamer buffers events for all builds, sends when server enables liveAnalyticsUrl
