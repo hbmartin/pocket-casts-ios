@@ -1,17 +1,17 @@
 import Foundation
 
 public struct RemoteConfigValueStore {
-    public static let keyPrefix = "remote-config-"
+    public static let defaultKeyPrefix = "remote-config-"
 
     private let store: UserDefaults
     private let keyPrefix: String
 
-    public init(store: UserDefaults = .standard, keyPrefix: String = Self.keyPrefix) {
+    public init(store: UserDefaults = .standard, keyPrefix: String = Self.defaultKeyPrefix) {
         self.store = store
         self.keyPrefix = keyPrefix
     }
 
-    public static func key(for key: String) -> String {
+    public func key(for key: String) -> String {
         "\(keyPrefix)\(key)"
     }
 
@@ -83,6 +83,6 @@ public struct RemoteConfigValueStore {
     }
 
     private func object(forKey key: String) -> Any? {
-        store.object(forKey: "\(keyPrefix)\(key)")
+        store.object(forKey: self.key(for: key))
     }
 }

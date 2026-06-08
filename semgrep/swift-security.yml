@@ -84,7 +84,7 @@ rules:
           }
       - pattern: private let $TIMER = Timer.publish(...)
 
-  - id: pocketcasts.podcast-exists-cache-lookup-must-be-atomic
+  - id: pocketcasts.no-datamanager-query-while-holding-nslock
     severity: ERROR
     metadata:
       category: correctness
@@ -92,25 +92,25 @@ rules:
       likelihood: MEDIUM
       impact: HIGH
       technology: [ios]
-    message: Keep PodcastExistsHelper cache checks, database lookups, and positive cache writes atomic with invalidate(uuid:).
+    message: Do not call DataManager.sharedManager while an NSLock is held; release the lock before database queries to avoid lock inversion deadlocks.
     languages: [swift]
     paths:
       include:
-        - "**/Modules/Sources/PocketCastsServer/Public/Sync/PodcastExistsHelper.swift"
+        - "**/*.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-inside: |
-          func exists(uuid: String) -> Bool {
-            ...
-          }
-      - pattern: |
-          if cachedExists(uuid: uuid) {
-            return true
-          }
-          ...
-          if $EXISTS {
-            markExists(uuid: uuid)
-          }
+      - pattern-either:
+          - pattern: |
+              $LOCK.lock()
+              defer { $LOCK.unlock() }
+              ...
+              DataManager.sharedManager.$METHOD(...)
+          - pattern: |
+              $LOCK.withLock {
+                ...
+                DataManager.sharedManager.$METHOD(...)
+                ...
+              }
 
   - id: pocketcasts.external-link-tap-requires-allowlist-guard
     severity: WARNING

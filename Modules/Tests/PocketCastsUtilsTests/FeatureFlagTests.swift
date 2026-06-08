@@ -64,8 +64,9 @@ class FeatureFlagTests: XCTestCase {
     func testRemoteConfigBooleanOverridesFeatureFlag() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
         let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+        let remoteConfigStore = RemoteConfigValueStore(store: defaults)
 
-        defaults.set(false, forKey: RemoteConfigValueStore.key(for: remoteKey))
+        defaults.set(false, forKey: remoteConfigStore.key(for: remoteKey))
 
         XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
     }
@@ -73,10 +74,24 @@ class FeatureFlagTests: XCTestCase {
     func testRemoteConfigStringBooleanOverridesFeatureFlag() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
         let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+        let remoteConfigStore = RemoteConfigValueStore(store: defaults)
 
-        defaults.set("false", forKey: RemoteConfigValueStore.key(for: remoteKey))
+        defaults.set("false", forKey: remoteConfigStore.key(for: remoteKey))
 
         XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
+    }
+
+    func testRemoteConfigValueStoreUsesCustomKeyPrefix() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
+        let defaultStore = RemoteConfigValueStore(store: defaults)
+        let customStore = RemoteConfigValueStore(store: defaults, keyPrefix: "custom-prefix-")
+        let remoteKey = "custom_remote_key"
+
+        defaults.set(false, forKey: customStore.key(for: remoteKey))
+        defaults.set(true, forKey: defaultStore.key(for: remoteKey))
+
+        XCTAssertEqual(customStore.bool(forKey: remoteKey), false)
+        XCTAssertEqual(defaultStore.bool(forKey: remoteKey), true)
     }
 
     func testRemoteConfigBareKeyDoesNotOverrideFeatureFlag() throws {
@@ -91,7 +106,7 @@ class FeatureFlagTests: XCTestCase {
     func testEnabledUsesRemoteConfigValueAfterLocalOverride() throws {
         let flag = FeatureFlag.defaultPlayerFilterCallbackFix
         let remoteKey = try XCTUnwrap(flag.remoteKey)
-        let remoteConfigKey = RemoteConfigValueStore.key(for: remoteKey)
+        let remoteConfigKey = RemoteConfigValueStore().key(for: remoteKey)
         defer {
             UserDefaults.standard.removeObject(forKey: remoteConfigKey)
             try? FeatureFlagOverrideStore().override(flag, withValue: flag.default)

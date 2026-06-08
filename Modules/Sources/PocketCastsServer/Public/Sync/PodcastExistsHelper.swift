@@ -6,22 +6,23 @@ public final class PodcastExistsHelper {
     public static let shared = PodcastExistsHelper()
 
     private var checkedUuidsThatExist = Set<String>()
+    private var cacheRevision: UInt64 = 0
     private let lock = NSLock()
 
     private init() {}
 
     func exists(uuid: String) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-
-        if checkedUuidsThatExist.contains(uuid) {
+        // Avoid holding the cache lock during the database lookup. The revision
+        // prevents caching a positive result if this uuid is invalidated mid-query.
+        let revision = cacheRevisionForLookup(uuid: uuid)
+        if revision.exists {
             return true
         }
 
         let exists = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) != nil
 
         if exists {
-            checkedUuidsThatExist.insert(uuid)
+            markExists(uuid: uuid, unlessInvalidatedAfter: revision.value)
         }
 
         return exists
@@ -38,6 +39,25 @@ public final class PodcastExistsHelper {
         lock.lock()
         defer { lock.unlock() }
 
+        cacheRevision += 1
         checkedUuidsThatExist.remove(uuid)
+    }
+
+    private func cacheRevisionForLookup(uuid: String) -> (exists: Bool, value: UInt64) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return (checkedUuidsThatExist.contains(uuid), cacheRevision)
+    }
+
+    private func markExists(uuid: String, unlessInvalidatedAfter revision: UInt64) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        guard cacheRevision == revision else {
+            return
+        }
+
+        checkedUuidsThatExist.insert(uuid)
     }
 }

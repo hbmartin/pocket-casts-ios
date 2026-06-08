@@ -27,6 +27,12 @@ final class SettingsTests: XCTestCase {
         return actions
     }()
 
+    private struct ConfigurableDefaultRemoteConfigKeys {
+        let podcastSearchDebounce: String
+        let customStorageLimit: String
+        let errorLogoutHandling: String
+    }
+
     override func setUp() {
         super.setUp()
         UserDefaults.standard.removePersistentDomain(forName: userDefaultsSuiteName)
@@ -46,6 +52,24 @@ final class SettingsTests: XCTestCase {
     private func setupSettingsStore() throws {
         let userDefaults = try XCTUnwrap(UserDefaults(suiteName: userDefaultsSuiteName), "User Defaults suite should load")
         SettingsStore.appSettings = SettingsStore(userDefaults: userDefaults, key: "app_settings", value: AppSettings.defaults)
+    }
+
+    private func configurableDefaultRemoteConfigKeys() -> ConfigurableDefaultRemoteConfigKeys {
+        let valueStore = RemoteConfigValueStore()
+        return ConfigurableDefaultRemoteConfigKeys(
+            podcastSearchDebounce: valueStore.key(for: Constants.RemoteParams.podcastSearchDebounceMs),
+            customStorageLimit: valueStore.key(for: Constants.RemoteParams.customStorageLimitGB),
+            errorLogoutHandling: valueStore.key(for: Constants.RemoteParams.errorLogoutHandling)
+        )
+    }
+
+    private func removeConfigurableDefaultOverrides(keys: ConfigurableDefaultRemoteConfigKeys) {
+        UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.podcastSearchDebounceMs)
+        UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.customStorageLimitGB)
+        UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.errorLogoutHandling)
+        UserDefaults.standard.removeObject(forKey: keys.podcastSearchDebounce)
+        UserDefaults.standard.removeObject(forKey: keys.customStorageLimit)
+        UserDefaults.standard.removeObject(forKey: keys.errorLogoutHandling)
     }
 
     func testImportOldHeadphoneControls() throws {
@@ -131,22 +155,15 @@ final class SettingsTests: XCTestCase {
 
     func testConfigurableDefaultsUseUserDefaultsOverrides() throws {
         try override(flag: .searchPredictive, value: false)
-        let podcastSearchDebounceKey = RemoteConfigValueStore.key(for: Constants.RemoteParams.podcastSearchDebounceMs)
-        let customStorageLimitKey = RemoteConfigValueStore.key(for: Constants.RemoteParams.customStorageLimitGB)
-        let errorLogoutHandlingKey = RemoteConfigValueStore.key(for: Constants.RemoteParams.errorLogoutHandling)
+        let remoteConfigKeys = configurableDefaultRemoteConfigKeys()
         defer {
             try? reset(flag: .searchPredictive)
-            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.podcastSearchDebounceMs)
-            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.customStorageLimitGB)
-            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.errorLogoutHandling)
-            UserDefaults.standard.removeObject(forKey: podcastSearchDebounceKey)
-            UserDefaults.standard.removeObject(forKey: customStorageLimitKey)
-            UserDefaults.standard.removeObject(forKey: errorLogoutHandlingKey)
+            removeConfigurableDefaultOverrides(keys: remoteConfigKeys)
         }
 
-        UserDefaults.standard.set(250, forKey: podcastSearchDebounceKey)
-        UserDefaults.standard.set(42, forKey: customStorageLimitKey)
-        UserDefaults.standard.set(true, forKey: errorLogoutHandlingKey)
+        UserDefaults.standard.set(250, forKey: remoteConfigKeys.podcastSearchDebounce)
+        UserDefaults.standard.set(42, forKey: remoteConfigKeys.customStorageLimit)
+        UserDefaults.standard.set(true, forKey: remoteConfigKeys.errorLogoutHandling)
 
         XCTAssertEqual(Settings.podcastSearchDebounceTime(), 0.25)
         XCTAssertEqual(Settings.plusCloudStorageLimit, 42)
@@ -155,21 +172,14 @@ final class SettingsTests: XCTestCase {
 
     func testConfigurableDefaultsIgnoreBareUserDefaultsOverrides() throws {
         try override(flag: .searchPredictive, value: false)
-        let podcastSearchDebounceKey = RemoteConfigValueStore.key(for: Constants.RemoteParams.podcastSearchDebounceMs)
-        let customStorageLimitKey = RemoteConfigValueStore.key(for: Constants.RemoteParams.customStorageLimitGB)
-        let errorLogoutHandlingKey = RemoteConfigValueStore.key(for: Constants.RemoteParams.errorLogoutHandling)
+        let remoteConfigKeys = configurableDefaultRemoteConfigKeys()
         defer {
             try? reset(flag: .searchPredictive)
-            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.podcastSearchDebounceMs)
-            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.customStorageLimitGB)
-            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.errorLogoutHandling)
-            UserDefaults.standard.removeObject(forKey: podcastSearchDebounceKey)
-            UserDefaults.standard.removeObject(forKey: customStorageLimitKey)
-            UserDefaults.standard.removeObject(forKey: errorLogoutHandlingKey)
+            removeConfigurableDefaultOverrides(keys: remoteConfigKeys)
         }
-        UserDefaults.standard.removeObject(forKey: podcastSearchDebounceKey)
-        UserDefaults.standard.removeObject(forKey: customStorageLimitKey)
-        UserDefaults.standard.removeObject(forKey: errorLogoutHandlingKey)
+        UserDefaults.standard.removeObject(forKey: remoteConfigKeys.podcastSearchDebounce)
+        UserDefaults.standard.removeObject(forKey: remoteConfigKeys.customStorageLimit)
+        UserDefaults.standard.removeObject(forKey: remoteConfigKeys.errorLogoutHandling)
 
         UserDefaults.standard.set(250, forKey: Constants.RemoteParams.podcastSearchDebounceMs)
         UserDefaults.standard.set(42, forKey: Constants.RemoteParams.customStorageLimitGB)

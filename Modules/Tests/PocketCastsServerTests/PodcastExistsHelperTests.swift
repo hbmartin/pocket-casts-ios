@@ -44,10 +44,29 @@ final class PodcastExistsHelperTests: XCTestCase {
         XCTAssertFalse(PodcastExistsHelper.shared.exists(uuid: podcastUuid))
         XCTAssertEqual(dataManager.findPodcastCallCount, 2)
     }
+
+    func testLookupDoesNotCacheResultWhenInvalidatedDuringDatabaseLookup() {
+        let podcast = Podcast()
+        podcast.uuid = podcastUuid
+        dataManager.podcasts[podcastUuid] = podcast
+        dataManager.beforeReturningPodcast = { [weak dataManager] uuid in
+            PodcastExistsHelper.shared.invalidate(uuid: uuid)
+            dataManager?.podcasts[uuid] = nil
+        }
+
+        XCTAssertTrue(PodcastExistsHelper.shared.exists(uuid: podcastUuid))
+        XCTAssertEqual(dataManager.findPodcastCallCount, 1)
+
+        dataManager.beforeReturningPodcast = nil
+
+        XCTAssertFalse(PodcastExistsHelper.shared.exists(uuid: podcastUuid))
+        XCTAssertEqual(dataManager.findPodcastCallCount, 2)
+    }
 }
 
 private final class PodcastLookupDataManager: DataManager {
     var podcasts: [String: Podcast] = [:]
+    var beforeReturningPodcast: ((String) -> Void)?
     private(set) var findPodcastCallCount = 0
 
     init() throws {
@@ -58,6 +77,8 @@ private final class PodcastLookupDataManager: DataManager {
 
     override public func findPodcast(uuid: String, includeUnsubscribed: Bool = false) -> Podcast? {
         findPodcastCallCount += 1
-        return podcasts[uuid]
+        let podcast = podcasts[uuid]
+        beforeReturningPodcast?(uuid)
+        return podcast
     }
 }

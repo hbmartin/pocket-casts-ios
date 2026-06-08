@@ -28,14 +28,56 @@ struct SafeStoriesView: View {
 
 final class UnsafePodcastExistsHelper {
     private var checkedUuidsThatExist = Set<String>()
+    private let lock = NSLock()
 
     func exists(uuid: String) -> Bool {
-        // ruleid: pocketcasts.podcast-exists-cache-lookup-must-be-atomic
+        // ruleid: pocketcasts.no-datamanager-query-while-holding-nslock
+        lock.lock()
+        defer { lock.unlock() }
+
+        if checkedUuidsThatExist.contains(uuid) {
+            return true
+        }
+
+        let exists = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) != nil
+
+        if exists {
+            checkedUuidsThatExist.insert(uuid)
+        }
+
+        return exists
+    }
+}
+
+final class UnsafeWithLockPodcastExistsHelper {
+    private let lock = NSLock()
+
+    func exists(uuid: String) -> Bool {
+        // ruleid: pocketcasts.no-datamanager-query-while-holding-nslock
+        lock.withLock {
+            DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) != nil
+        }
+    }
+}
+
+final class SafePodcastExistsHelper {
+    private var checkedUuidsThatExist = Set<String>()
+    private let lock = NSLock()
+
+    private func cachedExists(uuid: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return checkedUuidsThatExist.contains(uuid)
+    }
+
+    func exists(uuid: String) -> Bool {
         if cachedExists(uuid: uuid) {
             return true
         }
 
-        let exists = findPodcast(uuid: uuid) != nil
+        // ok: pocketcasts.no-datamanager-query-while-holding-nslock
+        let exists = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) != nil
 
         if exists {
             markExists(uuid: uuid)
@@ -44,42 +86,11 @@ final class UnsafePodcastExistsHelper {
         return exists
     }
 
-    private func cachedExists(uuid: String) -> Bool {
-        checkedUuidsThatExist.contains(uuid)
-    }
-
-    private func findPodcast(uuid: String) -> String? {
-        uuid
-    }
-
     private func markExists(uuid: String) {
-        checkedUuidsThatExist.insert(uuid)
-    }
-}
-
-final class SafePodcastExistsHelper {
-    private var checkedUuidsThatExist = Set<String>()
-    private let lock = NSLock()
-
-    func exists(uuid: String) -> Bool {
         lock.lock()
         defer { lock.unlock() }
 
-        if checkedUuidsThatExist.contains(uuid) {
-            return true
-        }
-
-        let exists = findPodcast(uuid: uuid) != nil
-
-        if exists {
-            checkedUuidsThatExist.insert(uuid)
-        }
-
-        return exists
-    }
-
-    private func findPodcast(uuid: String) -> String? {
-        uuid
+        checkedUuidsThatExist.insert(uuid)
     }
 }
 
