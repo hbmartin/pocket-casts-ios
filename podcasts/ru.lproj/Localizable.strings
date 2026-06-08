@@ -133,8 +133,6 @@
 Коснитесь кнопки ниже, чтобы повторно войти в учётную запись Pocket Casts.</string>
     <key>account_signed_out_alert_title</key>
     <string>Вы вышли из системы.</string>
-    <key>account_sso_failed</key>
-    <string>Вход не выполнен. Повторите попытку.</string>
     <key>account_title</key>
     <string>Учетная запись Pocket Casts</string>
     <key>account_upgraded</key>
@@ -297,24 +295,6 @@
     <string>В режиме «Включено» таймер сна будет автоматически перезапущен, если вы воспроизведёте выпуск в течение 5 минут после последней остановки.</string>
     <key>back</key>
     <string>Назад</string>
-    <key>banner_ads_info_label</key>
-    <string>Реклама</string>
-    <key>banner_ads_remove_ads</key>
-    <string>Отключить рекламу</string>
-    <key>banner_ads_report_ad</key>
-    <string>Пожаловаться на рекламу</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>Почему вы хотите пожаловаться на эту рекламу?</string>
-    <key>banner_ads_report_broken</key>
-    <string>Похоже, эта реклама работает некорректно</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>Вы пожаловались на эту рекламу.</string>
-    <key>banner_ads_report_malicious</key>
-    <string>Это вредоносная реклама</string>
-    <key>banner_ads_report_other</key>
-    <string>Другое</string>
-    <key>banner_ads_report_too_often</key>
-    <string>Я вижу эту рекламу слишком часто</string>
     <key>beta_purchase_disabled</key>
     <string>Загрузите Pocket Casts из App Store, чтобы приобрести %1$@.</string>
     <key>beta_thank_you</key>
@@ -1510,30 +1490,6 @@ Pocket Casts на полную мощность.</string>
     <string>Открыть плеер</string>
     <key>keycommand_play_pause</key>
     <string>Воспроизведение/пауза</string>
-    <key>kids_profile_banner_badge</key>
-    <string>Уже скоро</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>Запросить ранний доступ </string>
-    <key>kids_profile_banner_text</key>
-    <string>Новый профиль исключительно с детским контентом, не затрагивающий ваши подписки.</string>
-    <key>kids_profile_banner_title</key>
-    <string>Профиль «Дети»</string>
-    <key>kids_profile_submit_error</key>
-    <string>Что-то пошло не так. Попробуйте отправить отзыв ещё раз</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>Отправить</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>Что бы вы хотели видеть в профиле «Дети» Pocket Casts?</string>
-    <key>kids_profile_submit_success</key>
-    <string>Спасибо за ваш отзыв!</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>Нет, спасибо</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>Отправить отзыв</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>Когда новый профиль «Дети» будет готов, вы получите уведомление в приложении. Желаете сообщить нам, что вы хотели бы увидеть?</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>Благодарим за проявленный интерес!</string>
     <key>learn_about_ratings</key>
     <string>Подробнее об оценках</string>
     <key>learn_more</key>
@@ -2755,45 +2711,6 @@ Pocket Casts на полную мощность.</string>
     <string>Оцените лучшие подкасты, чтобы авторы знали, как вам важна их работа. Кроме того, ваши оценки помогут остальным найти новые интересные материалы!</string>
     <key>rating_whats_new_title</key>
     <string>Уже доступно: оценки подкастов 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>Активировать пропуск</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>Откройте невероятные возможности прослушивания</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>Получите бесплатный гостевой пропуск в Plus на %1$@</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>Это предложение действительно только для новых участников. По истечении бесплатного периода будет автоматически списан ежегодный членский взнос в размере %1$@.</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>Получите бесплатный гостевой пропуск на %1$@</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>Войдите или зарегистрируйтесь, чтобы предъявить ваш гостевой пропуск.</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>Гостевой пропуск на %1$@</string>
-    <key>referrals_not_available_to_send</key>
-    <string>В данный момент гостевой пропуск недоступен</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>Гостевым пропуском могут воспользоваться только те, у кого нет подписки Plus или Patron, и только один раз. Благодарим за прослушивание!</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>Это предложение недействительно</string>
-    <key>referrals_share_guest_pass</key>
-    <string>Поделиться гостевым пропуском</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>Спасибо, что поделились пропуском Pocket Casts! Мы сообщим, когда у вас появятся новые пропуска.</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>Вы потратили все гостевые пропуска!</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>Здравствуйте!
-
-Это гостевой пропуск на %1$@ в Pocket Casts Plus — мой любимый плеер подкастов. В нём есть множество уникальных функций, которых больше нет нигде: закладки, папки и многое другое. Надеюсь, вам он тоже понравится!
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>Привет! По ссылке ниже лежит ваш гостевой пропуск в Pocket Casts Plus сроком на %1$@. Воспользуйтесь им и слушайте подкасты на любом из ваших устройств!</string>
-    <key>referrals_share_pass_subject</key>
-    <string>Гостевой пропуск Pocket Casts Plus на %1$@</string>
-    <key>referrals_tip_message</key>
-    <string>%1$@ пользования Pocket Casts Plus в подарок!</string>
-    <key>referrals_tip_title</key>
-    <string>Вы можете поделиться пропусками (%1$@)</string>
     <key>refresh_control_fetching_episodes</key>
     <string>ПОИСК НОВЫХ ВЫПУСКОВ ПОДКАСТА</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3582,10 +3499,6 @@ Pocket Casts на полную мощность.</string>
     <string>Это поможет вам войти в курс дела. Они автоматически обновляются на основе ваших предпочтений.</string>
     <key>smart_playlists_tip_view_title</key>
     <string>Умные плейлисты готовы к работе</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>Продолжить с Apple</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>Продолжить с помощью Google</string>
     <key>sonos_connect_action</key>
     <string>ПОДКЛЮЧИТЬСЯ</string>
     <key>sonos_connect_prompt</key>

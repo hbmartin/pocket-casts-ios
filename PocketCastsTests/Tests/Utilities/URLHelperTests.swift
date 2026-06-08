@@ -28,12 +28,6 @@ final class URLHelperTests: XCTestCase {
         XCTAssertTrue(URLHelper.isTrustedDocumentationURL(url))
     }
 
-    func testTrustedMarketingAllowsSlumberURL() {
-        let url = webURL(host: URLFixture.slumberHost, path: URLFixture.marketingPath)
-
-        XCTAssertEqual(URLHelper.inAppBrowserDecision(for: url, context: .trustedMarketing), .inAppBrowser)
-    }
-
     func testExternalContentAllowsHTTPSAndBlocksHTTP() {
         let httpURL = webURL(scheme: URLFixture.httpScheme, host: URLFixture.untrustedHost, path: URLFixture.podcastPath)
         let httpsURL = webURL(host: URLFixture.untrustedHost, path: URLFixture.podcastPath)
@@ -190,7 +184,6 @@ private enum URLFixture {
     static let aboutScheme = "about"
     static let supportHost = "support.pocketcasts.com"
     static let stagingSupportHost = "support.pocketcasts.net"
-    static let slumberHost = "slumberstudios.com"
     static let untrustedHost = "example.com"
     static let appHost = "podcasts"
     static let supportPath = path("ios", trailingSlash: true)
@@ -199,7 +192,6 @@ private enum URLFixture {
         "how-to-cancel-a-subscription",
         trailingSlash: true
     )
-    static let marketingPath = path("pocketcasts", trailingSlash: true)
     static let podcastPath = path("podcast")
     static let scriptPath = "alert(1)"
     static let localFileURL = URL(fileURLWithPath: NSTemporaryDirectory())

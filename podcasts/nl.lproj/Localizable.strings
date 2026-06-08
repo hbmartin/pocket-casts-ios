@@ -133,8 +133,6 @@
 Tik op de onderstaande knop om opnieuw in te loggen bij je Pocket Casts-account.</string>
     <key>account_signed_out_alert_title</key>
     <string>Je bent uitgelogd.</string>
-    <key>account_sso_failed</key>
-    <string>Aanmelden mislukt. Probeer het nog eens.</string>
     <key>account_title</key>
     <string>Pocket Casts-account</string>
     <key>account_upgraded</key>
@@ -297,22 +295,6 @@ Download de app voor de volledige ervaring!</string>
     <string>Indien ingeschakeld, wordt de slaaptimer automatisch opnieuw opgestart als je een aflevering afspeelt binnen vijf minuten van de laatste pauzering.</string>
     <key>back</key>
     <string>Terug</string>
-    <key>banner_ads_remove_ads</key>
-    <string>Advertenties verwijderen</string>
-    <key>banner_ads_report_ad</key>
-    <string>Advertentie rapporteren</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>Waarom rapporteer je deze advertentie?</string>
-    <key>banner_ads_report_broken</key>
-    <string>Deze advertentie lijkt kapot</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>Je hebt deze advertentie gemeld.</string>
-    <key>banner_ads_report_malicious</key>
-    <string>Dit is een schadelijke advertentie</string>
-    <key>banner_ads_report_other</key>
-    <string>Anders</string>
-    <key>banner_ads_report_too_often</key>
-    <string>Ik zie deze advertentie te vaak</string>
     <key>beta_purchase_disabled</key>
     <string>Download Pocket Casts via de App Store om %1$@ aan te kunnen schaffen.</string>
     <key>beta_thank_you</key>
@@ -1508,30 +1490,6 @@ podcasts mee</string>
     <string>Speler openen</string>
     <key>keycommand_play_pause</key>
     <string>Afspelen/pauzeren</string>
-    <key>kids_profile_banner_badge</key>
-    <string>Binnenkort</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>Vroegtijdige toegang aanvragen </string>
-    <key>kids_profile_banner_text</key>
-    <string>Een nieuw profiel met alleen content voor kinderen, om je abonnementen overzichtelijk te houden.</string>
-    <key>kids_profile_banner_title</key>
-    <string>Kids-profiel</string>
-    <key>kids_profile_submit_error</key>
-    <string>Er is iets fout gegaan. Probeer je feedback opnieuw in te dienen</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>Verzenden</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>Wat zijn je wensen voor een Kids-profiel voor Pocket Casts?</string>
-    <key>kids_profile_submit_success</key>
-    <string>Bedankt voor je feedback!</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>Nee, bedankt</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>Geef feedback</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>Je ontvangt een melding via de app wanneer het nieuwe Kids-profiel klaar is! Wil je ons je wensen vertellen?</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>Bedankt voor je interesse</string>
     <key>learn_about_ratings</key>
     <string>Meer informatie over beoordelingen</string>
     <key>learn_more</key>
@@ -2747,45 +2705,6 @@ Als je op zoek bent naar inspiratie, probeer dan het tabblad Ontdekken.</string>
     <string>Beoordeel je favoriete podcasts en laat makers weten wat je van hun werk vindt. Daarnaast kan je met je beoordelingen anderen helpen nieuwe favoriete shows te ontdekken!</string>
     <key>rating_whats_new_title</key>
     <string>Nu beschikbaar: podcastbeoordelingen 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>Activeer mijn pas</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>Ontgrendel de volledige luisterervaring</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>Claim je %1$@ gastenpas voor Plus</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>Deze aanbieding geldt alleen voor nieuwe leden. Lidmaatschap wordt automatisch verlengd met een betaald jaarlidmaatschap van %1$@.</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>Claim je gastenpas van %1$@ voor Plus</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>Log in of meld je aan om je gastenpas te claimen.</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>%1$@ gastenpas</string>
-    <key>referrals_not_available_to_send</key>
-    <string>Gastenpas is momenteel niet beschikbaar</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>Deze gastenpas kan eenmalig worden ingewisseld en is beschikbaar voor iedereen zonder een actief Plus- of Patron-abonnement. Bedankt voor het luisteren!</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>Deze aanbieding is niet geldig</string>
-    <key>referrals_share_guest_pass</key>
-    <string>Gastenpassen delen</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>Bedankt dat je Pocket Casts hebt gedeeld! We laten het je weten wanneer je meer passen kan weggeven.</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>Je hebt al je gastenpassen al uitgedeeld</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>Hallo!
-
-Hier is een gastenpas van %1$@ voor Pocket Casts Plus, mijn favoriete podcastspeler. Deze zit vol met unieke functies die je nergens anders vindt, zoals bladwijzers, mappen en meer. Jij zal er vast ook dol op zijn!
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>Hallo! Gebruik de onderstaande link om je gastenpas van %1$@ voor Pocket Casts Plus te claimen en op al je devices naar podcasts te luisteren!</string>
-    <key>referrals_share_pass_subject</key>
-    <string>Gastenpas van %1$@ voor Pocket Casts Plus!</string>
-    <key>referrals_tip_message</key>
-    <string>Geef %1$@ Pocket Casts Plus weg!</string>
-    <key>referrals_tip_title</key>
-    <string>Je hebt %1$@ passen die je kan delen</string>
     <key>refresh_control_fetching_episodes</key>
     <string>NIEUWE PODCASTAFLEVERINGEN ZOEKEN</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3574,10 +3493,6 @@ Hier is een gastenpas van %1$@ voor Pocket Casts Plus, mijn favoriete podcastspe
     <string>We hebben deze gemaakt om je op weg te helpen. Ze worden automatisch bijgewerkt op basis van je luistergedrag.</string>
     <key>smart_playlists_tip_view_title</key>
     <string>Intelligente playlists, klaar voor gebruik</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>Doorgaan met Apple</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>Doorgaan met Google</string>
     <key>sonos_connect_action</key>
     <string>VERBINDEN</string>
     <key>sonos_connect_prompt</key>
