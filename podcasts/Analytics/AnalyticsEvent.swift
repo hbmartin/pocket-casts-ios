@@ -736,13 +736,6 @@ enum AnalyticsEvent: String {
     case searchPredictiveTermTapped
     case searchPredictiveViewAllTapped
 
-    // MARK: - Chromecast
-
-    case chromecastViewShown
-    case chromecastStartedCasting
-    case chromecastStoppedCasting
-    case chromecastViewDismissed
-
     // MARK: - Podcast List Share
 
     case sharePodcastsShown

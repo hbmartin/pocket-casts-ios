@@ -299,7 +299,6 @@ public enum PlayerAction: String, Codable, Equatable, CaseIterable {
     case starEpisode = "star"
     case shareEpisode = "share"
     case goToPodcast = "podcast"
-    case chromecast = "cast"
     case markPlayed = "played"
     case archive = "archive"
     case addBookmark = "bookmark"
@@ -308,11 +307,6 @@ public enum PlayerAction: String, Codable, Equatable, CaseIterable {
     case addToPlaylist = "playlist"
 
     public init?(rawValue: String) {
-        if rawValue == "case" {
-            self = .chromecast
-            return
-        }
-
         guard let action = Self.allCases.first(where: { $0.rawValue == rawValue }) else {
             return nil
         }

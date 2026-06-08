@@ -277,8 +277,6 @@ extension PlayerAction: AnalyticsDescribable {
             self = .shareEpisode
         case 6:
             self = .goToPodcast
-        case 7:
-            self = .chromecast
         case 8:
             self = .markPlayed
         case 9:
@@ -310,8 +308,6 @@ extension PlayerAction: AnalyticsDescribable {
             return 5
         case .goToPodcast:
             return 6
-        case .chromecast:
-            return 7
         case .markPlayed:
             return 8
         case .archive:
@@ -335,8 +331,6 @@ extension PlayerAction: AnalyticsDescribable {
             return L10n.playerActionTitleSleepTimer
         case .routePicker:
             return L10n.playerActionTitleOutputOptions
-        case .chromecast:
-            return L10n.chromecastCastTo
         case .starEpisode:
             if episode?.keepEpisode ?? false {
                 return L10n.playerActionTitleUnstarEpisode
@@ -393,8 +387,6 @@ extension PlayerAction: AnalyticsDescribable {
             return "sleep-menu"
         case .routePicker:
             return "route_picker"
-        case .chromecast:
-            return "nav_cast_off"
         case .starEpisode:
             return (episode?.keepEpisode ?? false) ? "player_star_filled" : "player_star_empty"
         case .shareEpisode:
@@ -427,8 +419,6 @@ extension PlayerAction: AnalyticsDescribable {
             return "sleep-menu"
         case .routePicker:
             return ""
-        case .chromecast:
-            return "shelf_nav_cast_off"
         case .starEpisode:
             return (episode?.keepEpisode ?? false) ? "player_star_filled" : "player_star_empty"
         case .shareEpisode:
@@ -476,8 +466,6 @@ extension PlayerAction: AnalyticsDescribable {
             return "sleep_timer"
         case .routePicker:
             return "route_picker"
-        case .chromecast:
-            return "chromecast"
         case .starEpisode:
             return "star_episode"
         case .shareEpisode:

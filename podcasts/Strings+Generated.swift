@@ -536,18 +536,6 @@ internal enum L10n {
   }
   /// A common string used throughout the app. Informs the user how many podcasts have been chosen. This is the singular format for an accompanying plural option.
   internal static var chosenPodcastsSingular: String { return L10n.tr("Localizable", "chosen_podcasts_singular", fallback: "1 Podcast Chosen") }
-  /// Title for the screen that provides the list of available ChromeCast devices.
-  internal static var chromecastCastTo: String { return L10n.tr("Localizable", "chromecast_cast_to", fallback: "Cast to") }
-  /// Informs the user that ChromeCast has connected.
-  internal static var chromecastConnected: String { return L10n.tr("Localizable", "chromecast_connected", fallback: "Connected") }
-  /// Informs the user that ChromeCast has connected to the device. Used as a title when no episode is playing.
-  internal static var chromecastConnectedToDevice: String { return L10n.tr("Localizable", "chromecast_connected_to_device", fallback: "Connected to device") }
-  /// Error message informing the user that the app is unable to Cast local files in ChromeCast.
-  internal static var chromecastError: String { return L10n.tr("Localizable", "chromecast_error", fallback: "Unable to cast local file") }
-  /// Informs the user that ChromeCast has connected to the device but no episode is playing.
-  internal static var chromecastNothingPlaying: String { return L10n.tr("Localizable", "chromecast_nothing_playing", fallback: "Nothing is playing") }
-  /// Placeholder name for when ChromeCast doesn't have a device name.
-  internal static var chromecastUnnamedDevice: String { return L10n.tr("Localizable", "chromecast_unnamed_device", fallback: "Un-named device") }
   /// A common string used throughout the app. Prompt to perform a clean up operation on the selected items.
   internal static var cleanUp: String { return L10n.tr("Localizable", "clean_up", fallback: "Clean Up") }
   /// A common string used throughout the app. Prompt to clear the up next queue.

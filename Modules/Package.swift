@@ -54,7 +54,6 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Kingfisher", from: "7.10.2"),
         .package(url: "https://github.com/dagronf/SwiftSubtitles", from: "1.8.3"),
         .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0"),
-        .package(url: "https://github.com/Automattic/google-cast", from: "1.0.1"),
         .package(url: "https://github.com/ksemianov/WrappingHStack", from: "0.2.0"),
     ],
     targets: XcodeSupport.targets + [
@@ -209,7 +208,6 @@ enum XcodeSupport {
                     .product(name: "Kingfisher", package: "Kingfisher"),
                     .product(name: "SwiftSubtitles", package: "SwiftSubtitles"),
                     .product(name: "TelemetryDeck", package: "SwiftSDK"),
-                    .product(name: "GoogleCast", package: "google-cast"),
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
                     "EndOfYear",
                 ]
