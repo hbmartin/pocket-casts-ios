@@ -64,6 +64,38 @@ final class DatabaseHelperBaselineTests: XCTestCase {
         }
     }
 
+    func testBaselineSetupFailureRollsBackPartialSchema() throws {
+        let databaseName = "\(UUID().uuidString).sqlite3"
+        guard let dbPool = try DatabasePool.newTestDatabase(databaseName: databaseName) else {
+            XCTFail("Expected test database")
+            return
+        }
+
+        try dbPool.write { db in
+            try db.execute(sql: "CREATE TABLE SJEpisode (id INTEGER PRIMARY KEY);")
+        }
+
+        let setupSucceeded = DatabaseHelper.setup(queue: GRDBQueue(dbPool: dbPool))
+
+        XCTAssertFalse(setupSucceeded)
+
+        try dbPool.read { db in
+            XCTAssertEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 0)
+
+            let tables = Set(try String.fetchAll(
+                db,
+                sql: "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ))
+
+            XCTAssertTrue(tables.contains("SJEpisode"))
+            let unexpectedTables = Self.expectedTables.subtracting(["SJEpisode"]).intersection(tables)
+            XCTAssertTrue(
+                unexpectedTables.isEmpty,
+                "Unexpected partial schema tables: \(unexpectedTables)"
+            )
+        }
+    }
+
     private static let expectedTables: Set<String> = [
         "SJPodcast",
         "SJEpisode",

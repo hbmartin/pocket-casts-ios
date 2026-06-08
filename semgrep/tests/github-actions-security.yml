@@ -117,3 +117,37 @@ script: |
       exit 1
     fi
   fi
+---
+workflow_dispatch:
+  inputs:
+    # ruleid: pocketcasts.release-fastlane-release-version-required
+    release_version:
+      description: "Release version, for example 8.9."
+      required: false
+      type: string
+---
+workflow_dispatch:
+  inputs:
+    # ok: pocketcasts.release-fastlane-release-version-required
+    release_version:
+      description: "Release version, for example 8.9."
+      required: true
+      type: string
+---
+workflow_dispatch:
+  inputs:
+    # ruleid: pocketcasts.release-fastlane-beta-release-optional
+    beta_release:
+      description: "Optional; only used when task is release_build."
+      required: true
+      type: boolean
+      default: true
+---
+workflow_dispatch:
+  inputs:
+    # ok: pocketcasts.release-fastlane-beta-release-optional
+    beta_release:
+      description: "Optional; only used when task is release_build."
+      required: false
+      type: boolean
+      default: true

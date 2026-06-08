@@ -8,8 +8,11 @@ class DatabaseHelper {
     @discardableResult
     class func setup(queue: PCDBQueue) -> Bool {
         var setupSucceeded = true
+        var transactionStarted = false
 
-        queue.write { db in
+        queue.inTransaction { db, rollback in
+            transactionStarted = true
+
             do {
                 try db.executeQuery("PRAGMA busy_timeout = 10000", values: nil).close()
 
@@ -23,13 +26,18 @@ class DatabaseHelper {
                     try db.executeUpdate("PRAGMA user_version = \(newSchemaVersion)", values: nil)
                 }
             } catch {
+                rollback.pointee = true
                 setupSucceeded = false
                 assertionFailure("Failed to setup database \(db.lastErrorCode()): \(db.lastErrorMessage()) actual error: \(error)")
                 FileLog.shared.addMessage("Failed to setup database \(db.lastErrorCode()): \(db.lastErrorMessage()) actual error: \(error)")
             }
         }
 
-        return setupSucceeded
+        if !transactionStarted {
+            FileLog.shared.addMessage("Failed to setup database: transaction did not start")
+        }
+
+        return setupSucceeded && transactionStarted
     }
 
     private class func upgradeIfRequired(schemaVersion: inout Int32, db: PCDatabase) throws {
@@ -43,8 +51,6 @@ class DatabaseHelper {
             throw error
         }
 
-        db.beginTransaction()
-
         do {
             if schemaVersion == 0 {
                 try createCurrentSchema(db: db)
@@ -52,11 +58,9 @@ class DatabaseHelper {
             } else {
                 try migrateSchema(schemaVersion: &schemaVersion, db: db)
             }
-            db.commit()
         } catch {
             let lastErrorCode = db.lastErrorCode()
             let lastErrorMessage = db.lastErrorMessage()
-            db.rollback()
             FileLog.shared.addMessage("Schema setup failed, code \(lastErrorCode): \(lastErrorMessage), actual error: \(error)")
             throw error
         }

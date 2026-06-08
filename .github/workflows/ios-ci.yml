@@ -15,8 +15,8 @@ on:
         type: string
 
 concurrency:
-  group: ios-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ios-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -86,6 +86,10 @@ jobs:
       - name: Run static checks
         run: scripts/ci/static-checks.sh
 
+      - name: Lint localized strings
+        if: ${{ !cancelled() }}
+        run: scripts/ci/localization-lint.sh
+
       - name: Upload static check logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -94,28 +98,3 @@ jobs:
           path: build/github/logs/**/*.log
           if-no-files-found: ignore
           retention-days: 14
-
-  localization_lint:
-    name: Lint Localized Strings Format
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: [self-hosted, macOS, pocket-casts-ios]
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout repository
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '' }}
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Checkout manually approved PR head
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.pull_request_number != '' }}
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: refs/pull/${{ inputs.pull_request_number }}/head
-
-      - name: Lint localized strings
-        run: scripts/ci/localization-lint.sh

@@ -324,12 +324,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func configureTelemetryDeck() {
-        guard !ApiCredentials.telemetryDeckAppID.isEmpty else {
+        guard !Settings.analyticsOptOut() else {
+            FileLog.shared.addMessage("Analytics opt-out enabled; skipping TelemetryDeck startup")
+            return
+        }
+
+        let telemetryDeckAppID = ApiCredentials.telemetryDeckAppID
+
+        guard !telemetryDeckAppID.isEmpty else {
             FileLog.shared.addMessage("TelemetryDeck App ID is empty; skipping TelemetryDeck startup")
             return
         }
 
-        TelemetryDeck.initialize(config: TelemetryDeck.Config(appID: ApiCredentials.telemetryDeckAppID))
+        guard telemetryDeckAppID != "%{telemetry_deck_app_id}" else {
+            FileLog.shared.addMessage("TelemetryDeck App ID is not configured; skipping TelemetryDeck startup")
+            return
+        }
+
+        TelemetryDeck.initialize(config: TelemetryDeck.Config(appID: telemetryDeckAppID))
     }
 
     private func setupSecrets() {
