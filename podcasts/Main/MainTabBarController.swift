@@ -148,31 +148,10 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         showInitialOnboardingIfNeeded()
 
-        updateDatabaseIndexes()
         optimizeDatabaseIfNeeded()
 
         if DataManager.loginAgain {
             loginAgain()
-        }
-    }
-
-    /// Update database indexes and delete unused columns
-    /// This is outside of migrations and done just once
-    /// because for larger databases it's very time consuming
-    private func updateDatabaseIndexes() {
-        guard !Settings.upgradedIndexes else {
-            return
-        }
-
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            guard let self else { return }
-
-            if DataManager.sharedManager.podcastCount() > 100 {
-                self.presentLoader()
-            }
-            DataManager.sharedManager.cleanUp()
-            self.dismissLoader()
-            Settings.upgradedIndexes = true
         }
     }
 

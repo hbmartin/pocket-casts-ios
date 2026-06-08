@@ -37,6 +37,32 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
         )
     }
 
+    func testDatabaseTableDoesNotHaveRemovedSubscriptionColumns() throws {
+        let dataManager = DataManager.newTestDataManager()
+
+        guard let grdbQueue = dataManager.dbQueue as? GRDBQueue else {
+            XCTFail("Expected GRDBQueue for database introspection")
+            return
+        }
+
+        let tableColumns = try grdbQueue.dbPool.read { db -> Set<String> in
+            let columns = try db.columns(in: DataManager.podcastTableName)
+            return Set(columns.map { $0.name })
+        }
+
+        let removedColumns: Set<String> = [
+            "isPlus",
+            "subscriptionType",
+            "subscriptionExpiry",
+            "referralCode"
+        ]
+
+        XCTAssertTrue(
+            removedColumns.isDisjoint(with: tableColumns),
+            "Database table still has removed subscription columns: \(removedColumns.intersection(tableColumns))"
+        )
+    }
+
     // MARK: - Round-Trip Tests
 
     func testSaveAndLoadPreservesAllFields() throws {
