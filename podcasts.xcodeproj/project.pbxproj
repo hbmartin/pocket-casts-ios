@@ -917,7 +917,6 @@
 		FFEE59C32EB37F4300D4B145 /* playback2025_listening_time.json in Resources */ = {isa = PBXBuildFile; fileRef = FFEE59C22EB37F4300D4B145 /* playback2025_listening_time.json */; };
 		FFF024CF2B62B13A00457373 /* Pocket Casts Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = C7547F77286F571900DC1C9E /* Pocket Casts Configuration.storekit */; };
 		FFF23E8A2CC91E370046D3AD /* ServerPodcastManager+Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFF23E892CC91E2A0046D3AD /* ServerPodcastManager+Subscription.swift */; };
-		FFFCD23F2C7768F900A345ED /* Referrals.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FFFCD23E2C7768F900A345ED /* Referrals.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -2015,7 +2014,6 @@
 		FFEE599B2EB378B300D4B145 /* Humane-SemiBold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Humane-SemiBold.otf"; sourceTree = "<group>"; };
 		FFEE59C22EB37F4300D4B145 /* playback2025_listening_time.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = playback2025_listening_time.json; sourceTree = "<group>"; };
 		FFF23E892CC91E2A0046D3AD /* ServerPodcastManager+Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ServerPodcastManager+Subscription.swift"; sourceTree = "<group>"; };
-		FFFCD23E2C7768F900A345ED /* Referrals.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Referrals.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -4111,7 +4109,6 @@
 				BD4F25741F70F17B00B8857E /* TabBar.xcassets */,
 				BD8678A61C1954F600CC728B /* ThreeDeeTouch.xcassets */,
 				F5FF611F2BD076BA00190711 /* Sharing.xcassets */,
-				FFFCD23E2C7768F900A345ED /* Referrals.xcassets */,
 				8BE85CA72876258300AEB5FF /* Acknowledgments */,
 				BD7EA4CE1E52C2800014EAC5 /* Animations */,
 				C7D813A72A0D4E3E007F715F /* Icons */,
@@ -5458,7 +5455,6 @@
 				9AF415882EBA69B3003D3677 /* 2025_completion_rate_40.json in Resources */,
 				9AF415892EBA69B3003D3677 /* 2025_completion_rate_60.json in Resources */,
 				9AF4158A2EBA69B3003D3677 /* 2025_completion_rate_80.json in Resources */,
-				FFFCD23F2C7768F900A345ED /* Referrals.xcassets in Resources */,
 				BD1292E722F7D066004608A6 /* AppIcon-Classic60x60@3x.png in Resources */,
 				BD12927C22F7CCC9004608A6 /* AppIcon-Electric-Blue40x40@2x.png in Resources */,
 				BD12930F22F809F8004608A6 /* AppIcon-Electric-Pink40x40~ipad.png in Resources */,

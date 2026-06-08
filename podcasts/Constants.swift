@@ -198,11 +198,6 @@ struct Constants {
             static let tabBarMinimizingEnabled = SettingValue("appearance.tabBarMinimizingEnabled", defaultValue: true)
         }
 
-        enum referrals {
-            static let showTip = "referrals.showtip"
-            static let claimURL = "referrals.claimURL"
-        }
-
         enum manageDownloads {
             static let lastCheckDate = "manageDownloadsLastCheckDate"
         }

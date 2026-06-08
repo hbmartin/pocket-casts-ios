@@ -186,13 +186,6 @@ struct DeveloperMenu: View {
                 Text("Playlist Rebranding")
             }
             Section {
-                Button("Reset Referrals Tip") {
-                    Settings.shouldShowReferralsTip = true
-                }
-            } header: {
-                Text("Playlist Rebranding")
-            }
-            Section {
                 Text(Bundle.main.identifier)
             } header: {
                 Text("Bundle ID")
