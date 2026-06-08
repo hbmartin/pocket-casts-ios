@@ -17,24 +17,16 @@ class SceneHelper {
     }
 
     class func rootViewController(includeTopMost: Bool = true) -> UIViewController? {
-        #if os(tvOS)
-            return nil
-        #else
         let appScene = connectedScene()?.windows.first(where: { $0.rootViewController is MainTabBarController })
         let rootVC = appScene?.rootViewController
         if includeTopMost {
             return rootVC?.topMostPresentedViewController ?? rootVC
         }
         return rootVC
-        #endif
     }
 
     /// Returns the main window for the app from the AppDelegate
     static var mainWindow: UIWindow? {
-        #if os(tvOS)
-            return nil
-        #else
             (UIApplication.shared.delegate as? AppDelegate)?.window
-        #endif
     }
 }

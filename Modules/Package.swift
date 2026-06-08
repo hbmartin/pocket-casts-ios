@@ -7,7 +7,7 @@ import Foundation
 let package = Package(
     name: "Modules",
     platforms: [
-        .iOS("18.0"), .watchOS(.v9), .macOS(.v10_15), .tvOS(.v17)
+        .iOS("18.0"), .watchOS(.v9), .macOS(.v10_15)
     ],
     products: XcodeSupport.products + [
         .library(

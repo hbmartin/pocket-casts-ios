@@ -140,12 +140,7 @@ class EpisodesDataManager {
 
     func episodes(for filter: EpisodeFilter, limit: Int = Constants.Limits.maxFilterItems) -> [ListEpisode] {
         let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: limit)
-        #if os(tvOS)
-        // Just a placeholder, because this is not going to be used on tvOS
-        let tintColor = UIColor.white
-        #else
         let tintColor = filter.playlistColor()
-        #endif
         return EpisodeTableHelper.loadEpisodes(tintColor: tintColor, query: query, arguments: nil)
     }
 

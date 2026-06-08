@@ -2013,11 +2013,7 @@ class PlaybackManager: ServerPlaybackDelegate {
         guard let userInfo = notification.userInfo else { return }
 
         let interruptionType = userInfo[AVAudioSessionInterruptionTypeKey] as! NSNumber
-        #if os(tvOS)
-        let interruptionReason: UInt? = nil
-        #else
         let interruptionReason = userInfo[AVAudioSessionInterruptionReasonKey] as? UInt
-        #endif
         if interruptionType.uintValue == AVAudioSession.InterruptionType.ended.rawValue {
             interruptInProgress = false
             let interruptionOption = userInfo[AVAudioSessionInterruptionOptionKey] as! NSNumber

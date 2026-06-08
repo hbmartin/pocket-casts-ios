@@ -1,11 +1,3 @@
-#if os(tvOS)
-class BackgroundShakeObserver {
-    var whenShook: (() -> Void)?
-
-    func stopObserving() {
-    }
-}
-#else
 import CoreMotion
 
 class BackgroundShakeObserver {
@@ -63,4 +55,3 @@ class BackgroundShakeObserver {
         manager.stopDeviceMotionUpdates()
     }
 }
-#endif
