@@ -1541,16 +1541,6 @@ class Settings: NSObject {
 
     // MARK: - Database (internal)
 
-    class var upgradedIndexes: Bool {
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: "upgraded_indexes_v4")
-        }
-
-        get {
-            UserDefaults.standard.bool(forKey: "upgraded_indexes_v4")
-        }
-    }
-
     class var lastAppVersionThatRunVacuum: String? {
         set {
             UserDefaults.standard.setValue(newValue, forKey: "last_app_version_that_run_vacuum")
