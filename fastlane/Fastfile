@@ -756,7 +756,7 @@ platform :ios do
     UI.important('Remember not to commit the modified project file! The change is only meant to allow building for Enterprise where App Clips are not supported.')
 
     build_number = ENV.fetch('GITHUB_RUN_NUMBER', '0')
-    pr_or_branch = pull_request_number&.then { |num| "PR ##{num}" } || ENV['GITHUB_HEAD_REF'] || ENV['GITHUB_REF_NAME']
+    pr_or_branch = pull_request_number&.then { |num| "PR ##{num}" } || ENV['GITHUB_HEAD_REF'] || ENV['GITHUB_REF_NAME'] || git_branch
 
     build_app(
       scheme: SCHEME_ENTERPRISE,
@@ -1234,6 +1234,8 @@ platform :ios do
   #
   def trigger_github_release_build(branch:, beta:)
     require_env_vars!('GITHUB_TOKEN')
+    release_version = branch.sub(%r{\Arelease/}, '')
+    UI.user_error!("Expected a release/* branch, got: #{branch}") if release_version == branch || release_version.empty?
 
     workflow_file = ENV.fetch('GITHUB_RELEASE_WORKFLOW_FILE', 'release-fastlane.yml')
     github_api_url = ENV.fetch('GITHUB_API_URL', 'https://api.github.com').sub(%r{/*$}, '')
@@ -1248,7 +1250,7 @@ platform :ios do
       ref: branch,
       inputs: {
         task: 'release_build',
-        release_version: release_version_current,
+        release_version: release_version,
         beta_release: beta.to_s
       }
     )
