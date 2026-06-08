@@ -840,13 +840,6 @@ enum AnalyticsEvent: String {
     case episodeTranscriptShown
     case transcriptShared
     case transcriptTextHighlighted
-    case syncedTranscriptSeekUsed
-    case syncedTranscriptPreparationStarted
-    case syncedTranscriptPreparationCompleted
-    case syncedTranscriptPreparationFailed
-    case syncedTranscriptUnavailable
-    case syncedTranscriptSeekFailed
-    case syncedTranscriptAutoScrollResumed
 
     // MARK: - Widgets
 

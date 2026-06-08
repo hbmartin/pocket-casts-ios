@@ -56,7 +56,6 @@ let package = Package(
         .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0"),
         .package(url: "https://github.com/Automattic/google-cast", from: "1.0.1"),
         .package(url: "https://github.com/ksemianov/WrappingHStack", from: "0.2.0"),
-        .package(url: "https://github.com/Automattic/pocket-casts-ios-fingerprint", branch: "trunk"),
     ],
     targets: XcodeSupport.targets + [
         .target(
@@ -212,7 +211,6 @@ enum XcodeSupport {
                     .product(name: "TelemetryDeck", package: "SwiftSDK"),
                     .product(name: "GoogleCast", package: "google-cast"),
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
-                    .product(name: "Fingerprint", package: "pocket-casts-ios-fingerprint"),
                     "EndOfYear",
                 ]
             ),
