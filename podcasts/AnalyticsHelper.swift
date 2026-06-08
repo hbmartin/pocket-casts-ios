@@ -254,12 +254,6 @@ class AnalyticsHelper {
         logEvent("tour_cancelled", parameters: ["tour": tourName, "step": step])
     }
 
-    #if !os(watchOS) && !APPCLIP && !os(tvOS)
-        class func tabSelected(tab _: MainTabBarController.Tab) {
-            // MainTabBarController.trackTabOpened emits current tab analytics.
-        }
-    #endif
-
     class func nowPlayingOpened() {
         logEvent("now_playing_open", parameters: nil)
     }

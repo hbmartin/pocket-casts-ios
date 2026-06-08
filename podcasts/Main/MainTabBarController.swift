@@ -273,7 +273,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         if tabIndex != selectedIndex {
             let tab = pcTabs[tabIndex]
             trackTabOpened(tab)
-            AnalyticsHelper.tabSelected(tab: tab)
         }
 
         UserDefaults.standard.set(tabIndex, forKey: Constants.UserDefaults.lastTabOpened)
