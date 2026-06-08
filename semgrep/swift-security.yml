@@ -64,6 +64,74 @@ rules:
     patterns:
       - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|fastlane-plugin-sentry|sentry_debug_files_upload|SENTRY_AUTH_TOKEN|sentry-cli)\b'
 
+  - id: pocketcasts.github-actions-pin-actions-to-sha
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [github-actions]
+    message: Pin GitHub Actions to immutable commit SHAs instead of moving version tags.
+    languages: [generic]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-regex: 'uses:\s+[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@v[0-9]+(?:\.[0-9]+)?\b'
+
+  - id: pocketcasts.github-actions-no-workflow-level-write-permissions
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [github-actions]
+    message: Keep workflow-level GitHub token permissions read-only; move write scopes to the specific job that needs them.
+    languages: [generic]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-regex: '(?m)^permissions:\n(?:(?:[ \t]+[A-Za-z-]+:\s*(?:read|none)\s*\n)|(?:[ \t]*#.*\n))*[ \t]+(?:actions|attestations|checks|contents|deployments|discussions|id-token|issues|packages|pages|pull-requests|repository-projects|security-events|statuses):\s*write\b'
+
+  - id: pocketcasts.github-actions-checkout-persist-credentials-false
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [github-actions]
+    message: Set persist-credentials false on actions/checkout steps so GitHub credentials are not left in the repo config.
+    languages: [generic]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-regex: '(?s)uses:\s+actions/checkout@[^\n]+\n\s*with:\s*\n(?!(?:(?!\n\s*-\s+name:).)*persist-credentials:\s*false)(?:(?!\n\s*-\s+name:).)*fetch-depth:\s*0'
+
+  - id: pocketcasts.bitdrift-gate-on-github-actions
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [shell]
+    message: Bitdrift API-key enforcement should be gated on GITHUB_ACTIONS, not the generic CI variable.
+    languages: [generic]
+    paths:
+      include:
+        - "**/scripts/build-phases/upload-bitdrift-debug-files.sh"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-regex: '\[\[\s+-n\s+"\$\{CI:-\}"\s*\]\]'
+
   - id: pocketcasts.swiftui-connectable-timer-publisher-must-be-state
     severity: WARNING
     metadata:
@@ -112,6 +180,25 @@ rules:
                 DataManager.sharedManager.$METHOD(...)
                 ...
               }
+
+  - id: pocketcasts.no-destructive-database-schema-reset
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Do not reintroduce schema-wide database reset paths; fresh installs should create the baseline schema and future versions should use incremental migrations.
+    languages: [generic]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/Private/Managers/Util/DatabaseHelper.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-either:
+          - pattern-regex: '\bdropExistingSchema\b'
+          - pattern-regex: '(?s)executeQuery\("""\s*SELECT\s+name\s+FROM\s+sqlite_master'
 
   - id: pocketcasts.external-link-tap-requires-allowlist-guard
     severity: WARNING

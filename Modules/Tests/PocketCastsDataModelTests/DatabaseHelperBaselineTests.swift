@@ -33,7 +33,7 @@ final class DatabaseHelperBaselineTests: XCTestCase {
         }
     }
 
-    func testOutdatedDatabaseIsDroppedAndRebuilt() throws {
+    func testPrebaselineDatabaseIsIgnoredWithoutDroppingOrRebuilding() throws {
         let databaseName = "\(UUID().uuidString).sqlite3"
         guard let dbPool = try DatabasePool.newTestDatabase(databaseName: databaseName) else {
             XCTFail("Expected test database")
@@ -42,24 +42,23 @@ final class DatabaseHelperBaselineTests: XCTestCase {
 
         try dbPool.write { db in
             try db.execute(sql: "CREATE TABLE LegacyOnly (id INTEGER PRIMARY KEY);")
+            try db.execute(sql: "INSERT INTO LegacyOnly (id) VALUES (1);")
             try db.execute(sql: "PRAGMA user_version = 72;")
         }
 
         DatabaseHelper.setup(queue: GRDBQueue(dbPool: dbPool))
 
         try dbPool.read { db in
-            XCTAssertEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 73)
+            XCTAssertEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 72)
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM LegacyOnly") ?? -1, 1)
 
             let tables = Set(try String.fetchAll(
                 db,
                 sql: "SELECT name FROM sqlite_master WHERE type = 'table'"
             ))
 
-            XCTAssertFalse(tables.contains("LegacyOnly"))
-            XCTAssertTrue(
-                Self.expectedTables.isSubset(of: tables),
-                "Missing expected tables after rebuild: \(Self.expectedTables.subtracting(tables))"
-            )
+            XCTAssertTrue(tables.contains("LegacyOnly"))
+            XCTAssertTrue(Self.expectedTables.isDisjoint(with: tables))
         }
     }
 

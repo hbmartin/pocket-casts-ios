@@ -15,8 +15,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 jobs:
   danger:
@@ -24,6 +22,10 @@ jobs:
     if: ${{ github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, macOS, pocket-casts-ios]
     timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository

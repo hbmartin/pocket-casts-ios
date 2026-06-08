@@ -1,0 +1,58 @@
+# ruleid: pocketcasts.github-actions-no-workflow-level-write-permissions
+permissions:
+  contents: write
+jobs:
+  build:
+    steps:
+      - run: echo unsafe
+---
+# ok: pocketcasts.github-actions-no-workflow-level-write-permissions
+permissions:
+  contents: read
+jobs:
+  danger:
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+---
+steps:
+  - name: Upload
+    # ruleid: pocketcasts.github-actions-pin-actions-to-sha
+    uses: actions/upload-artifact@v4
+---
+steps:
+  - name: Upload
+    # ok: pocketcasts.github-actions-pin-actions-to-sha
+    uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+---
+steps:
+  - name: Checkout repository
+    # ruleid: pocketcasts.github-actions-checkout-persist-credentials-false
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      fetch-depth: 0
+---
+steps:
+  - name: Checkout repository
+    # ok: pocketcasts.github-actions-checkout-persist-credentials-false
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      fetch-depth: 0
+      persist-credentials: false
+---
+script: |
+  if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
+    # ruleid: pocketcasts.bitdrift-gate-on-github-actions
+    if [[ -n "${CI:-}" ]]; then
+      exit 1
+    fi
+  fi
+---
+script: |
+  if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
+    # ok: pocketcasts.bitdrift-gate-on-github-actions
+    if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+      exit 1
+    fi
+  fi
