@@ -4,8 +4,11 @@ import UIKit
 import WebKit
 
 class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptivePresentationControllerDelegate { // NOSONAR - Navigation is restricted in decidePolicyFor.
+    static let settingsAnalyticsSource = "settings"
+
     private let loadingIndicator = AngularActivityIndicator(size: CGSize(width: 40, height: 40), lineWidth: 2.0, duration: 1.0)
 
+    private let analyticsSource: String
     private var emailHelper = EmailHelper()
     private var supportWebView = WKWebView()
     private var databaseExport: DatabaseExport? = nil
@@ -15,7 +18,8 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
     var request: URLRequest
 
-    init(url: URL = ServerHelper.asUrl(ServerConstants.Urls.support)) {
+    init(url: URL = ServerHelper.asUrl(ServerConstants.Urls.support), analyticsSource: String = OnlineSupportController.settingsAnalyticsSource) {
+        self.analyticsSource = analyticsSource
         request = URLRequest(url: url)
         super.init(nibName: nil, bundle: nil)
     }
@@ -54,7 +58,9 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
         AnalyticsHelper.userGuideOpened()
 
-        Analytics.track(.settingsHelpShown)
+        if analyticsSource == Self.settingsAnalyticsSource {
+            Analytics.track(.settingsHelpShown)
+        }
     }
 
     private func setupLoadingIndicator() {
@@ -205,7 +211,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
 private extension OnlineSupportController {
     func export(_ sender: UIBarButtonItem) {
-        Analytics.track(.exportDatabaseTapped, properties: ["source": "settings"])
+        Analytics.track(.exportDatabaseTapped, properties: ["source": analyticsSource])
 
         databaseExport = .init()
 

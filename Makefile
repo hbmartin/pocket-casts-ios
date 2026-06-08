@@ -58,6 +58,7 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-pr-feedback.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/Main/MainTabBarController.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/ProfileViewController.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedPlusLockedInfo.swift

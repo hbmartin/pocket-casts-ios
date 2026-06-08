@@ -1,18 +1,18 @@
 <p align="center">
     <!-- Pocket Casts brand image -->
-    <img src="https://user-images.githubusercontent.com/308331/194037473-41ad7eba-8602-4be5-be73-49e3c0c48c12.svg#gh-light-mode-only" />
-    <img src="https://user-images.githubusercontent.com/308331/194041226-4c6d8181-cafa-4ea8-8735-1d8106f5e5f6.svg#gh-dark-mode-only" />
+    <img alt="Pocket Casts" src="https://user-images.githubusercontent.com/308331/194037473-41ad7eba-8602-4be5-be73-49e3c0c48c12.svg#gh-light-mode-only" />
+    <img alt="Pocket Casts" src="https://user-images.githubusercontent.com/308331/194041226-4c6d8181-cafa-4ea8-8735-1d8106f5e5f6.svg#gh-dark-mode-only" />
 </p>
 
 <p align="center">
     <!-- Badge: "Semgrep Swift Security: {trunk GitHub Actions status}" -->
-    <a href="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml"><img src="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml/badge.svg?branch=trunk" /></a>
+    <a href="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml"><img alt="Semgrep Swift Security workflow status" src="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml/badge.svg?branch=trunk" /></a>
     <!-- Badge: "license: MPL" -->
-    <a href="https://github.com/hbmartin/pocket-casts-ios/blob/trunk/LICENSE.md"><img src="https://img.shields.io/badge/license-MPL-black" /></a>
+    <a href="https://github.com/hbmartin/pocket-casts-ios/blob/trunk/LICENSE.md"><img alt="License MPL" src="https://img.shields.io/badge/license-MPL-black" /></a>
     <!-- Badge: "platform: ios|watchos" -->
-    <img src="https://img.shields.io/badge/platform-ios%20%7C%20watchos-lightgrey" />
+    <img alt="Platform iOS and watchOS" src="https://img.shields.io/badge/platform-ios%20%7C%20watchos-lightgrey" />
     <!-- Badge: "Xcode: {version}+" -->
-    <img src="https://img.shields.io/badge/Xcode-v26.4.1%2B-informational" />
+    <img alt="Xcode v26.4.1 or newer" src="https://img.shields.io/badge/Xcode-v26.4.1%2B-informational" />
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ Open the `.xcodeproj` file, select the Pocket Casts project and the Simulator De
 
 The `make` targets wrap the common `xcodebuild` invocations:
 
-```
+```bash
 make build_staging   # Build the "Pocket Casts Staging" scheme (StagingDebug)
 make test_staging    # Build and run the unit tests
 make static_checks   # SwiftLint, Semgrep rules/tests, and the Xcode static analyzer
@@ -58,7 +58,7 @@ make clean           # Clean the build artifacts
 
 Scope the tests to a single class, method, or module with `ONLY_TESTING`:
 
-```
+```bash
 make test_staging ONLY_TESTING=PocketCastsServerTests
 make test_staging ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName
 ```

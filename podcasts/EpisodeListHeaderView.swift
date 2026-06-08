@@ -106,7 +106,7 @@ class EpisodeListHeaderView: UIView {
     }
 
     @objc private func linkTapped() {
-        guard let webURL else { return }
+        guard let webURL, URLHelper.isAllowedExternalContentLink(webURL) else { return }
 
         URLHelper.open(
             webURL,

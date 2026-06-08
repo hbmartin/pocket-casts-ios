@@ -56,7 +56,7 @@ private struct WebView: UIViewControllerRepresentable {
     var url: URL
 
     func makeUIViewController(context: Context) -> OnlineSupportController {
-        OnlineSupportController(url: url)
+        OnlineSupportController(url: url, analyticsSource: "legal_and_more")
     }
 
     func updateUIViewController(_ uiViewController: OnlineSupportController, context: Context) {}

@@ -11,14 +11,17 @@ public final class PodcastExistsHelper {
     private init() {}
 
     func exists(uuid: String) -> Bool {
-        if cachedExists(uuid: uuid) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if checkedUuidsThatExist.contains(uuid) {
             return true
         }
 
         let exists = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) != nil
 
         if exists {
-            markExists(uuid: uuid)
+            checkedUuidsThatExist.insert(uuid)
         }
 
         return exists
@@ -36,12 +39,5 @@ public final class PodcastExistsHelper {
         defer { lock.unlock() }
 
         checkedUuidsThatExist.remove(uuid)
-    }
-
-    private func cachedExists(uuid: String) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-
-        return checkedUuidsThatExist.contains(uuid)
     }
 }

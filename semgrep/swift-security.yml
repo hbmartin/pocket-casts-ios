@@ -63,6 +63,89 @@ rules:
     patterns:
       - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|fastlane-plugin-sentry|sentry_debug_files_upload|SENTRY_AUTH_TOKEN|sentry-cli)\b'
 
+  - id: pocketcasts.swiftui-connectable-timer-publisher-must-be-state
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Store manually connected Timer.publish publishers in SwiftUI state so @State subscriptions cannot outlive a recreated publisher.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/Onboarding/Intro Carousel/StoriesView.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          struct $VIEW: View {
+            ...
+          }
+      - pattern: private let $TIMER = Timer.publish(...)
+
+  - id: pocketcasts.podcast-exists-cache-lookup-must-be-atomic
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Keep PodcastExistsHelper cache checks, database lookups, and positive cache writes atomic with invalidate(uuid:).
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/Public/Sync/PodcastExistsHelper.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          func exists(uuid: String) -> Bool {
+            ...
+          }
+      - pattern: |
+          if cachedExists(uuid: uuid) {
+            return true
+          }
+          ...
+          if $EXISTS {
+            markExists(uuid: uuid)
+          }
+
+  - id: pocketcasts.external-link-tap-requires-allowlist-guard
+    severity: WARNING
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: Tap handlers that open stored external-content URLs should re-check URLHelper.isAllowedExternalContentLink before opening.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/EpisodeListHeaderView.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          @objc private func linkTapped() {
+            ...
+          }
+      - pattern: |
+          URLHelper.open(
+            $URL,
+            context: .externalContent,
+            ...
+          )
+      - pattern-not-inside: |
+          @objc private func linkTapped() {
+            ...
+            guard ..., URLHelper.isAllowedExternalContentLink($URL), ... else {
+              ...
+            }
+            ...
+          }
+
   - id: makefile.unguarded-rm-rf-make-variable
     severity: WARNING
     metadata:
@@ -453,7 +536,7 @@ rules:
       include:
         - "**/*.swift"
     patterns:
-      - pattern-regex: '\b(?:plusPlanPurchased|iapProductsUpdated|iapProductsFailed|iapPurchaseCompleted|iapPurchaseDeferred|iapPurchaseFailed|iapPurchaseCancelled|checkTrialEligibility|CancelSubscriptionTask|CancelSubscriptionSurveyTask|WinbackOfferTask|WinbackOfferInfo|ValidatePromoCodeTask|RedeemPromoCodeTask|validatePromoCode|promoCode|loadWinbackOffer|submitSurveyResult|newAccountUpgradePromptFlow|newOnboardingUpgrade|upgradeExperiment|cancelSubscriptionSurvey|newOfferEligibilityCheck|newOnboardingUpgradeTrialTimeline|libroFm|winbackScreenShown|winbackScreenDismissed|PlusUpgradeViewSource|paywallHeadline|isEligibleForExperiment|setPromotionFinishedAcknowledged|promotionFinishedAcknowledged|subscriptionCancelledAcknowledged|subscriptionCancelledSurveyShown|shouldEnableIAPInTestFlightBuilds|paymentFailedImageName|paymentDeferredImageName|accountUpgradedImageName|plusCreatedImageName|plusCancelledImageName|plusCancelledGoldImageName|cancelSubscriptionImageName|pcPlusLogoHorizontalImageName|pcPlusLogoVerticalImageName|folderLockedImageName|setupNewAccountGoldImageName)\b'
+      - pattern-regex: '\b(?:plusPlanPurchased|iapProductsUpdated|iapProductsFailed|iapPurchaseCompleted|iapPurchaseDeferred|iapPurchaseFailed|iapPurchaseCancelled|checkTrialEligibility|CancelSubscriptionTask|CancelSubscriptionSurveyTask|WinbackOfferTask|WinbackOfferInfo|ValidatePromoCodeTask|RedeemPromoCodeTask|validatePromoCode|loadWinbackOffer|submitSurveyResult|newAccountUpgradePromptFlow|newOnboardingUpgrade|upgradeExperiment|cancelSubscriptionSurvey|newOfferEligibilityCheck|newOnboardingUpgradeTrialTimeline|libroFm|winbackScreenShown|winbackScreenDismissed|PlusUpgradeViewSource|paywallHeadline|isEligibleForExperiment|setPromotionFinishedAcknowledged|promotionFinishedAcknowledged|subscriptionCancelledAcknowledged|subscriptionCancelledSurveyShown|shouldEnableIAPInTestFlightBuilds|paymentFailedImageName|paymentDeferredImageName|accountUpgradedImageName|plusCreatedImageName|plusCancelledImageName|plusCancelledGoldImageName|cancelSubscriptionImageName|pcPlusLogoHorizontalImageName|pcPlusLogoVerticalImageName|folderLockedImageName|setupNewAccountGoldImageName)\b'
 
   - id: pocketcasts.no-removed-user-satisfaction-survey
     severity: ERROR
