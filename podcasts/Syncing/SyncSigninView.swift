@@ -44,10 +44,6 @@ struct SyncSigninView: View {
 
                 signInButton()
 
-                divider()
-
-                SocialLoginButtons(coordinator: coordinator)
-
                 // Add bottom padding to ensure content doesn't get cut off
                 Color.clear.frame(height: 50)
             }

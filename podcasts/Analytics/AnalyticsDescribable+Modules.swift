@@ -109,14 +109,3 @@ extension PodcastInfo: AnalyticsDescribable {
         return "unknown"
     }
 }
-
-extension SocialAuthProvider: AnalyticsDescribable {
-    var analyticsDescription: String {
-        switch self {
-        case .apple:
-            return "apple"
-        case .google:
-            return "google"
-        }
-    }
-}

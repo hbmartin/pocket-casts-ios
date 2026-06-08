@@ -21,7 +21,6 @@ enum AnalyticsEvent: String {
     case userEmailUpdated
     case userPasswordUpdated
     case userPasswordReset
-    case ssoStarted
 
     // MARK: - Setup Account
 

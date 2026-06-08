@@ -2,9 +2,6 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
-#if !os(watchOS)
-import AuthenticationServices
-#endif
 
 class AuthenticationHelper {
 
@@ -44,13 +41,6 @@ class AuthenticationHelper {
         handleSuccessfulSignIn(response)
 
         ServerSettings.setRefreshToken(response.refreshToken)
-
-        return response
-    }
-
-    static func validateLogin(identityToken: String, provider: SocialAuthProvider)  async throws -> AuthenticationResponse {
-        let response = try await ApiServerHandler.shared.validateLogin(identityToken: identityToken, provider: provider)
-        handleSuccessfulSignIn(response)
 
         return response
     }

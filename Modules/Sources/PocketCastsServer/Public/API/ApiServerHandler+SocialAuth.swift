@@ -49,16 +49,6 @@ public extension ApiServerHandler {
         return try await obtainToken(request: request, usingRefreshToken: true)
     }
 
-    func validateLogin(identityToken: String, provider: SocialAuthProvider) async throws -> AuthenticationResponse {
-        guard let request = tokenRequest(identityToken: identityToken, provider: provider)
-        else {
-            FileLog.shared.addMessage("Unable to create protobuffer request to obtain token via SSO")
-            throw APIError.UNKNOWN
-        }
-
-        return try await obtainToken(request: request, usingRefreshToken: true)
-    }
-
     func refreshIdentityToken() async throws -> AuthenticationResponse {
         guard
             let identityToken = try ServerSettings.refreshToken(),
@@ -84,32 +74,5 @@ public extension ApiServerHandler {
         data.scope = scope.rawValue
 
         return ServerHelper.createProtoRequest(url: url, data: try! data.serializedData())
-    }
-
-    private func tokenRequest(identityToken: String?, cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy, timeoutInterval: TimeInterval = 15.seconds, provider: SocialAuthProvider) -> URLRequest? {
-        guard let identityToken else {
-            return nil
-        }
-
-        var data = Api_TokenLoginRequest()
-        data.idToken = identityToken
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.api() + provider.endpointURL)
-
-        return ServerHelper.createProtoRequest(url: url, data: try! data.serializedData())
-    }
-}
-
-public enum SocialAuthProvider: CaseIterable {
-    case apple
-    case google
-
-    var endpointURL: String {
-        switch self {
-        case .apple:
-            return "user/login_apple"
-        case .google:
-            return "user/login_google"
-        }
     }
 }

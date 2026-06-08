@@ -30,11 +30,6 @@ struct ApiCredentials {
     ///
     static let bitdriftSDKKey = "%{bitdrift_sdk_key}"
 
-    /// Google Sign In
-    ///
-    static let googleSignInSecret = "%{google_sign_in_secret}"
-    static let googleSignInServerClientId = "%{google_sign_in_server_client_id}"
-
     /// Instagram App ID
     ///
     static let instagramAppID = "%{instagram_app_id}"
