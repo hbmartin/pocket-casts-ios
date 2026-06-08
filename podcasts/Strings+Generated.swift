@@ -150,8 +150,6 @@ internal enum L10n {
   internal static var accountSignedOutAlertMessage: String { return L10n.tr("Localizable", "account_signed_out_alert_message", fallback: "Turns out, if you type Google into Google, you can break the internet. 🫢 \n\nTap the button below to sign into your Pocket Casts account again.") }
   /// Title of an alert that informs the user that they have been signed out of their account
   internal static var accountSignedOutAlertTitle: String { return L10n.tr("Localizable", "account_signed_out_alert_title", fallback: "You've been signed out.") }
-  /// Error message for when the account registration request has failed.
-  internal static var accountSsoFailed: String { return L10n.tr("Localizable", "account_sso_failed", fallback: "Sign in failed. Please try again.") }
   /// Title for the account screen for the user's Pocket Casts Account. 'Pocket Casts' refers to the app name and is treated as a proper noun so it shouldn't be localized.
   internal static var accountTitle: String { return L10n.tr("Localizable", "account_title", fallback: "Pocket Casts Account") }
   /// Title informing the user that their account has been successfully upgraded to Pocket Casts Plus
@@ -336,24 +334,6 @@ internal enum L10n {
   internal static var autoRestartSleepTimerDescription: String { return L10n.tr("Localizable", "auto_restart_sleep_timer_description", fallback: "If on, the sleep timer will restart automatically if you play an episode within 5 minutes after the last pause.") }
   /// A common string used throughout the app. Title for the back button. Used with the accessibility settings.
   internal static var back: String { return L10n.tr("Localizable", "back", fallback: "Back") }
-  /// Banner Ads label. This needs to be an extremely short version of "advertisement" to indicate an ad in a tiny space.
-  internal static var bannerAdsInfoLabel: String { return L10n.tr("Localizable", "banner_ads_info_label", fallback: "AD") }
-  /// The title of an option to remove banner ads. This will take the user to a page to purchase plus.
-  internal static var bannerAdsRemoveAds: String { return L10n.tr("Localizable", "banner_ads_remove_ads", fallback: "Remove ads") }
-  /// The title of an option to report a specific banner ad for one of several reasons.
-  internal static var bannerAdsReportAd: String { return L10n.tr("Localizable", "banner_ads_report_ad", fallback: "Report ad") }
-  /// The title shown after a user selects "report ad" which sits over the options of why they wanted to report the ad.
-  internal static var bannerAdsReportAdTitle: String { return L10n.tr("Localizable", "banner_ads_report_ad_title", fallback: "Why are you reporting this ad?") }
-  /// The title of an option to report a specific banner ad for one of several reasons.
-  internal static var bannerAdsReportBroken: String { return L10n.tr("Localizable", "banner_ads_report_broken", fallback: "This ad seems broken") }
-  /// The title shown in a Toast after reporting a banner ad.
-  internal static var bannerAdsReportConfirmation: String { return L10n.tr("Localizable", "banner_ads_report_confirmation", fallback: "You reported this ad.") }
-  /// The title of an option to report a banner ad as malicious.
-  internal static var bannerAdsReportMalicious: String { return L10n.tr("Localizable", "banner_ads_report_malicious", fallback: "This is a malicious ad") }
-  /// The title of an option to report a banner ad as "other".
-  internal static var bannerAdsReportOther: String { return L10n.tr("Localizable", "banner_ads_report_other", fallback: "Other") }
-  /// The title of an option to report a banner ad as occurring too often.
-  internal static var bannerAdsReportTooOften: String { return L10n.tr("Localizable", "banner_ads_report_too_often", fallback: "See this ad too often") }
   /// Message of an alert that informs the user purchasing is disabled in the beta. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app. %1$@ is the name of the tier (Plus or Patron)
   internal static func betaPurchaseDisabled(_ p1: Any) -> String {
     return L10n.tr("Localizable", "beta_purchase_disabled", String(describing: p1), fallback: "Please download Pocket Casts from the App Store to purchase %1$@.")
@@ -1694,30 +1674,6 @@ internal enum L10n {
   internal static var keycommandOpenPlayer: String { return L10n.tr("Localizable", "keycommand_open_player", fallback: "Open Player") }
   /// Title for the hardware keyboard command that toggles play and pause of playback.
   internal static var keycommandPlayPause: String { return L10n.tr("Localizable", "keycommand_play_pause", fallback: "Play/Pause") }
-  /// Kids Profile banner badge title
-  internal static var kidsProfileBannerBadge: String { return L10n.tr("Localizable", "kids_profile_banner_badge", fallback: "Soon") }
-  /// Kids Profile banner action button title
-  internal static var kidsProfileBannerRequestButton: String { return L10n.tr("Localizable", "kids_profile_banner_request_button", fallback: "Request Early Access ") }
-  /// Kids Profile banner text
-  internal static var kidsProfileBannerText: String { return L10n.tr("Localizable", "kids_profile_banner_text", fallback: "A new profile with only content for kids to keep your subscriptions tidy.") }
-  /// Kids Profile banner title
-  internal static var kidsProfileBannerTitle: String { return L10n.tr("Localizable", "kids_profile_banner_title", fallback: "Kids Profile") }
-  /// Kids Profile Toast message if feedback sent failed
-  internal static var kidsProfileSubmitError: String { return L10n.tr("Localizable", "kids_profile_submit_error", fallback: "Something went wrong. Please try submitting your feedback again") }
-  /// Kids Profile Submit screen send button title
-  internal static var kidsProfileSubmitFeedbackSendButton: String { return L10n.tr("Localizable", "kids_profile_submit_feedback_send_button", fallback: "Send") }
-  /// Kids Profile Submit screen title
-  internal static var kidsProfileSubmitFeedbackTitle: String { return L10n.tr("Localizable", "kids_profile_submit_feedback_title", fallback: "What would you like to see in a Kids profile for Pocket Casts?") }
-  /// Kids Profile Toast message if feedback sent succeeded
-  internal static var kidsProfileSubmitSuccess: String { return L10n.tr("Localizable", "kids_profile_submit_success", fallback: "Thank you for your feedback!") }
-  /// Kids Profile Thank You screen close button title
-  internal static var kidsProfileThankyouButtonClose: String { return L10n.tr("Localizable", "kids_profile_thankyou_button_close", fallback: "No, thank you") }
-  /// Kids Profile Thank You screen send button title
-  internal static var kidsProfileThankyouButtonSend: String { return L10n.tr("Localizable", "kids_profile_thankyou_button_send", fallback: "Send Feedback") }
-  /// Kids Profile Thank You screen text
-  internal static var kidsProfileThankyouText: String { return L10n.tr("Localizable", "kids_profile_thankyou_text", fallback: "You’ll get a notification via the app when the new Kids profile is ready! Want to let us know what you’d like to see?") }
-  /// Kids Profile Thank You screen title
-  internal static var kidsProfileThankyouTitle: String { return L10n.tr("Localizable", "kids_profile_thankyou_title", fallback: "Thank you for your interest") }
   /// A title shown on a button to open information about the Podcast Ratings feature
   internal static var learnAboutRatings: String { return L10n.tr("Localizable", "learn_about_ratings", fallback: "Learn about ratings") }
   /// Text for a button where you learn more about a feature
@@ -3175,60 +3131,6 @@ internal enum L10n {
   internal static var ratingWhatsNewMessage: String { return L10n.tr("Localizable", "rating_whats_new_message", fallback: "Rate your top podcasts and let creators know how much you appreciate their work. Plus, your ratings help others find new favorite shows!") }
   /// What's New sheet title
   internal static var ratingWhatsNewTitle: String { return L10n.tr("Localizable", "rating_whats_new_title", fallback: "Now Available: Podcast Ratings 🎉") }
-  /// Referrals - Claim Guest Pass action button title
-  internal static var referralsClaimGuestPassAction: String { return L10n.tr("Localizable", "referrals_claim_guest_pass_action", fallback: "Activate my pass") }
-  /// Referrals - Claim Guest Pass banner message.
-  internal static var referralsClaimGuestPassBannerDetail: String { return L10n.tr("Localizable", "referrals_claim_guest_pass_banner_detail", fallback: "Unlock the full listening experience") }
-  /// Referrals - Claim Guest Pass banner title. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
-  internal static func referralsClaimGuestPassBannerTitle(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_claim_guest_pass_banner_title", String(describing: p1), fallback: "Claim your %1$@ Guest Pass to Plus")
-  }
-  /// Referrals - Claim Guest Pass screen detail message. `%1$@' is a placeholder for the localized cost of the subscription after the free day period
-  internal static func referralsClaimGuestPassDetail(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_claim_guest_pass_detail", String(describing: p1), fallback: "This offer is for new members only. Membership will automatically renew to a paid annual membership at %1$@.")
-  }
-  /// Referrals - Claim Guest Pass screen title. `%1$@' is a placeholder for the offer duration on the Plus subscription
-  internal static func referralsClaimGuestPassTitle(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_claim_guest_pass_title", String(describing: p1), fallback: "Claim your %1$@ Guest Pass")
-  }
-  /// Referrals - You need to be logged in before you can claim your guest pass
-  internal static var referralsClaimNeedToBeLoggedin: String { return L10n.tr("Localizable", "referrals_claim_need_to_be_loggedin", fallback: "Please log in or sign up to claim your guest pass.") }
-  /// Referrals - Guest Pass Offer Message '%1$@' is a placeholder for the duration of free days on the Plus subscription. Ex: 2-Month Guest Pass
-  internal static func referralsGuestPassOffer(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_guest_pass_offer", String(describing: p1), fallback: "%1$@ Guest Pass")
-  }
-  /// Referrals - Guest Pass not available
-  internal static var referralsNotAvailableToSend: String { return L10n.tr("Localizable", "referrals_not_available_to_send", fallback: "Guest Pass not available at the moment") }
-  /// Referrals - Detail message for screen saying that referral offer isn't available for user
-  internal static var referralsOfferNotAvailableDetail: String { return L10n.tr("Localizable", "referrals_offer_not_available_detail", fallback: "This guest pass can only be redeemed once and is available for those without an active Plus or Patron subscription. Thanks for listening!") }
-  /// Referrals - Title for screen saying that referral offer isn't available for user
-  internal static var referralsOfferNotAvailableTitle: String { return L10n.tr("Localizable", "referrals_offer_not_available_title", fallback: "This offer isn’t available") }
-  /// Referrals - Share Guest Pass button title
-  internal static var referralsShareGuestPass: String { return L10n.tr("Localizable", "referrals_share_guest_pass", fallback: "Share Guest Pass") }
-  /// Referrals - Share Guest Pass no more passes message
-  internal static var referralsShareNoGuestPassMessage: String { return L10n.tr("Localizable", "referrals_share_no_guest_pass_message", fallback: "Thanks for sharing Pocket Casts! We'll let you know when you have more passes to give.") }
-  /// Referrals - Share Guest Pass no more passes title
-  internal static var referralsShareNoGuestPassTitle: String { return L10n.tr("Localizable", "referrals_share_no_guest_pass_title", fallback: "You've shared all yours guest passes!") }
-  /// Referrals - Share Pass message. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
-  internal static func referralsSharePassLongMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_share_pass_long_message", String(describing: p1), fallback: "Hi there!\n\nHere is a %1$@ guest pass for Pocket Casts Plus - my favorite podcast player. It's packed with unique features like bookmarks, folders, and more that you won't find anywhere else. I think you'll love it too!\n")
-  }
-  /// Referrals - Share Pass message. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
-  internal static func referralsSharePassMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_share_pass_message", String(describing: p1), fallback: "Hey! Use the link below to claim your %1$@ guest pass for Pocket Casts Plus and enjoy podcasts across all your devices!")
-  }
-  /// Referrals - Share Pass subject title for sharing to email. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
-  internal static func referralsSharePassSubject(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_share_pass_subject", String(describing: p1), fallback: "%1$@ Guest Pass for Pocket Casts Plus!")
-  }
-  /// Referrals - Tip Message '%1$@' is a placeholder for the duration of free period on the Plus subscription
-  internal static func referralsTipMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_tip_message", String(describing: p1), fallback: "Gift %1$@ of Pocket Casts Plus!")
-  }
-  /// Referrals - Tip Title. '%1$@' is a placeholder for the number of referrals passes available to share
-  internal static func referralsTipTitle(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_tip_title", String(describing: p1), fallback: "You have %1$@ passes to share")
-  }
   /// Hint text in the pull to refresh custom control. Provides a notice that new Podcast episodes are being fetched.
   internal static var refreshControlFetchingEpisodes: String { return L10n.tr("Localizable", "refresh_control_fetching_episodes", fallback: "FINDING NEW PODCAST EPISODES") }
   /// Hint text in the pull to refresh custom control.
@@ -4093,10 +3995,6 @@ internal enum L10n {
   internal static var smartPlaylistsTipViewDescription: String { return L10n.tr("Localizable", "smart_playlists_tip_view_description", fallback: "We made these to help you get started. They auto-update based on your listening.") }
   /// The title shown in a Tip View when the user hasn't yet added a smart playlist
   internal static var smartPlaylistsTipViewTitle: String { return L10n.tr("Localizable", "smart_playlists_tip_view_title", fallback: "Smart playlists, ready to go") }
-  /// Label of a button that lets the user login/signup with Apple
-  internal static var socialSignInContinueWithApple: String { return L10n.tr("Localizable", "social_sign_in_continue_with_apple", fallback: "Continue with Apple") }
-  /// Label of a button that lets the user login/signup with Google
-  internal static var socialSignInContinueWithGoogle: String { return L10n.tr("Localizable", "social_sign_in_continue_with_google", fallback: "Continue with Google") }
   /// Prompt to confirm when presented with a connection prompt. Used when connecting to a Sonos speaker.
   internal static var sonosConnectAction: String { return L10n.tr("Localizable", "sonos_connect_action", fallback: "CONNECT") }
   /// Prompt to connect to a Sonos speaker. 'Sonos' refers the the speaker manufacturer.

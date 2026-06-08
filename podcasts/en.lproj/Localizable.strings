@@ -133,9 +133,6 @@
 /* Message of the confirmation alert shown before signing the user out of their account, reassuring them their data will still be available when they sign back in. */
 "account_sign_out_alert_message" = "Your podcasts, progress, and data will be here when you are back.";
 
-/* Error message for when the account registration request has failed. */
-"account_sso_failed" = "Sign in failed. Please try again.";
-
 /* Title for the account screen for the user's Pocket Casts Account. 'Pocket Casts' refers to the app name and is treated as a proper noun so it shouldn't be localized. */
 "account_title" = "Pocket Casts Account";
 
@@ -4303,12 +4300,6 @@
 /* Button title that lets the user continue the cancellation process */
 "cancel_confirm_cancel_button_title" =  "Cancel my subscription";
 
-/* Label of a button that lets the user login/signup with Apple */
-"social_sign_in_continue_with_apple" = "Continue with Apple";
-
-/* Label of a button that lets the user login/signup with Google */
-"social_sign_in_continue_with_google" = "Continue with Google";
-
 /* Label of a button that lets the user login/signup with Email */
 "sign_in_continue_with_email" = "Continue with Email";
 
@@ -4723,7 +4714,6 @@
 /* A title shown for a share option which creates an audio clip of an episode */
 "create_audio_clip_title" = "Create audio file";
 
-
 /* A description shown for a share option which creates an audio clip of an episode. This produces a ".m4a" file which is like an mp3 */
 "create_audio_clip_description" = "Create a .m4a audio file";
 
@@ -4753,42 +4743,6 @@
 
 /* Title of a button that allows the user to rate the app */
 "rate_pocket_casts" = "Rate Pocket Casts";
-
-/* Kids Profile banner title */
-"kids_profile_banner_title" = "Kids Profile";
-
-/* Kids Profile banner badge title */
-"kids_profile_banner_badge" = "Soon";
-
-/* Kids Profile banner text */
-"kids_profile_banner_text" = "A new profile with only content for kids to keep your subscriptions tidy.";
-
-/* Kids Profile banner action button title */
-"kids_profile_banner_request_button" = "Request Early Access ";
-
-/* Kids Profile Thank You screen title*/
-"kids_profile_thankyou_title" = "Thank you for your interest";
-
-/* Kids Profile Thank You screen text*/
-"kids_profile_thankyou_text" = "You’ll get a notification via the app when the new Kids profile is ready! Want to let us know what you’d like to see?";
-
-/* Kids Profile Thank You screen send button title */
-"kids_profile_thankyou_button_send" = "Send Feedback";
-
-/* Kids Profile Thank You screen close button title */
-"kids_profile_thankyou_button_close" = "No, thank you";
-
-/* Kids Profile Submit screen title */
-"kids_profile_submit_feedback_title" = "What would you like to see in a Kids profile for Pocket Casts?";
-
-/* Kids Profile Submit screen send button title */
-"kids_profile_submit_feedback_send_button" = "Send";
-
-/* Kids Profile Toast message if feedback sent succeeded */
-"kids_profile_submit_success" = "Thank you for your feedback!";
-
-/* Kids Profile Toast message if feedback sent failed */
-"kids_profile_submit_error" = "Something went wrong. Please try submitting your feedback again";
 
 /* Transcript error message when a transcript is not available*/
 "transcript_error_not_available" = "Sorry, but this episode has no transcript available";
@@ -4933,57 +4887,6 @@
 
 /* A Voice Over label used to identify the container for the shareable media options. This contains different image and video sizes such as "large, medium, small" as well as the "audio" format */
 "clips_shareable_media_item_a11y_label" = "%1$@ format %2$@ of %3$@";
-
-/* Referrals - Tip Title. '%1$@' is a placeholder for the number of referrals passes available to share*/
-"referrals_tip_title" = "You have %1$@ passes to share";
-
-/* Referrals - Tip Message '%1$@' is a placeholder for the duration of free period on the Plus subscription*/
-"referrals_tip_message" = "Gift %1$@ of Pocket Casts Plus!";
-
-/* Referrals - Guest Pass Offer Message '%1$@' is a placeholder for the duration of free days on the Plus subscription. Ex: 2-Month Guest Pass*/
-"referrals_guest_pass_offer" = "%1$@ Guest Pass";
-
-/* Referrals - Share Guest Pass button title*/
-"referrals_share_guest_pass" = "Share Guest Pass";
-
-/* Referrals - Share Guest Pass no more passes title*/
-"referrals_share_no_guest_pass_title" = "You've shared all yours guest passes!";
-
-/* Referrals - Share Guest Pass no more passes message*/
-"referrals_share_no_guest_pass_message" = "Thanks for sharing Pocket Casts! We'll let you know when you have more passes to give.";
-
-/* Referrals - Claim Guest Pass screen title. `%1$@' is a placeholder for the offer duration on the Plus subscription*/
-"referrals_claim_guest_pass_title" = "Claim your %1$@ Guest Pass";
-
-/* Referrals - Claim Guest Pass screen detail message. `%1$@' is a placeholder for the localized cost of the subscription after the free day period*/
-"referrals_claim_guest_pass_detail" = "This offer is for new members only. Membership will automatically renew to a paid annual membership at %1$@.";
-
-/* Referrals - Claim Guest Pass action button title*/
-"referrals_claim_guest_pass_action" = "Activate my pass";
-
-/* Referrals - Claim Guest Pass banner title. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription*/
-"referrals_claim_guest_pass_banner_title" = "Claim your %1$@ Guest Pass to Plus";
-
-/* Referrals - Claim Guest Pass banner message.*/
-"referrals_claim_guest_pass_banner_detail" = "Unlock the full listening experience";
-
-/* Referrals - Share Pass message. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription*/
-"referrals_share_pass_message" = "Hey! Use the link below to claim your %1$@ guest pass for Pocket Casts Plus and enjoy podcasts across all your devices!";
-
-/* Referrals - Share Pass subject title for sharing to email. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription*/
-"referrals_share_pass_subject" = "%1$@ Guest Pass for Pocket Casts Plus!";
-
-/* Referrals - Title for screen saying that referral offer isn't available for user*/
-"referrals_offer_not_available_title" = "This offer isn’t available";
-
-/* Referrals - Detail message for screen saying that referral offer isn't available for user*/
-"referrals_offer_not_available_detail" = "This guest pass can only be redeemed once and is available for those without an active Plus or Patron subscription. Thanks for listening!";
-
-/* Referrals - Guest Pass not available*/
-"referrals_not_available_to_send" = "Guest Pass not available at the moment";
-
-/* Referrals - You need to be logged in before you can claim your guest pass*/
-"referrals_claim_need_to_be_loggedin" = "Please log in or sign up to claim your guest pass.";
 
 /* day */
 "day" = "day";
@@ -5177,9 +5080,6 @@
 /* Description of the success screen when the cancel yearly subscription offer is applied */
 "cancel_subscription_offer_yearly_success_view_description" = "Thanks for choosing Pocket Casts. Your discounted year begins after your current plan ends.";
 
-/* Referrals - Share Pass message. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription*/
-"referrals_share_pass_long_message" = "Hi there!\n\nHere is a %1$@ guest pass for Pocket Casts Plus - my favorite podcast player. It's packed with unique features like bookmarks, folders, and more that you won't find anywhere else. I think you'll love it too!\n";
-
 /* Auto Downloads Setting - Auto download on follow of a blog*/
 "settings_auto_downloads_on_follow" = "On Follow";
 
@@ -5341,7 +5241,6 @@
 
 /* Subtitle for Notifications opt-in option in the Notifications screen during onboarding */
 "notifications_onboarding_notifications_subtitle" = "Receive news, podcast suggestions and more";
-
 
 /* Notification permission banner title*/
 "notitifications_permission_banner_title" = "Allow Push Notifications";
@@ -5519,35 +5418,6 @@
 
 /* Notification button title to open device notification settings*/
 "notifications_permissions_open_settings" = "Open Settings";
-
-/* Banner Ads label. This needs to be an extremely short version of "advertisement" to indicate an ad in a tiny space. */
-"banner_ads_info_label" = "AD";
-
-/* The title of an option to remove banner ads. This will take the user to a page to purchase plus. */
-"banner_ads_remove_ads" = "Remove ads";
-
-/* The title of an option to report a specific banner ad for one of several reasons. */
-"banner_ads_report_ad" = "Report ad";
-
-/* The title shown after a user selects "report ad" which sits over the options of why they wanted to report the ad. */
-"banner_ads_report_ad_title" = "Why are you reporting this ad?";
-
-/* The title of an option to report a specific banner ad for one of several reasons. */
-"banner_ads_report_broken" = "This ad seems broken";
-
-/* The title of an option to report a banner ad as malicious. */
-"banner_ads_report_malicious" = "This is a malicious ad";
-
-/* The title of an option to report a banner ad as occurring too often. */
-"banner_ads_report_too_often" = "See this ad too often";
-
-/* The title shown in a Toast after reporting a banner ad. */
-"banner_ads_report_confirmation" = "You reported this ad.";
-
-/* The title of an option to report a banner ad as "other". */
-"banner_ads_report_other" = "Other";
-/* Episodes will be displayed in based on season and episode numbers*/
-"podcasts_episode_sort_serial" = "Serial";
 
 /* Name for group of episodes that don't have a season defined when sorting in serial mode*/
 "podcast_extras" = "Extras";
