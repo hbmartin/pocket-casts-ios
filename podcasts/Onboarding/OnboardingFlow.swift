@@ -77,9 +77,6 @@ struct OnboardingFlow: AnalyticsSourceProvider {
         /// asked to sign in again. See the `BackgroundSignOutListener`
         case forcedLoggedOut = "forced_logged_out"
 
-        /// When the user is brought into the onboarding flow from the End Of Year prompt
-        case endOfYear
-
         case encourageAccountCreation = "encourage_account_creation"
 
         var analyticsDescription: String { rawValue }

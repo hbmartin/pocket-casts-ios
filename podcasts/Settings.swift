@@ -1006,28 +1006,6 @@ class Settings: NSObject {
         }
     }
 
-    // MARK: - End of Year 2022
-
-    class func showBadgeForEndOfYear(_ year: Int) -> Bool {
-        let key = String(format: Constants.UserDefaults.showBadgeForEndOfYear, year)
-        return UserDefaults.standard.bool(forKey: key)
-    }
-
-    class func setShowBadgeForEndOfYear(_ newValue: Bool, year: Int) {
-        let key = String(format: Constants.UserDefaults.showBadgeForEndOfYear, year)
-        UserDefaults.standard.set(newValue, forKey: key)
-    }
-
-    class func hasShownModalForEndOfYear(_ year: Int) -> Bool {
-        let key = String(format: Constants.UserDefaults.modalHasBeenShown, year)
-        return UserDefaults.standard.bool(forKey: key)
-    }
-
-    class func setHasShownModalForEndOfYear(_ newValue: Bool, year: Int) {
-        let key = String(format: Constants.UserDefaults.modalHasBeenShown, year)
-        UserDefaults.standard.set(newValue, forKey: key)
-    }
-
     class func hasSyncedEpisodesForPlayback(year: Int) -> Bool {
         let key = String(format: Constants.UserDefaults.hasSyncedEpisodesForPlayback, year)
         return UserDefaults.standard.bool(forKey: key)
@@ -1489,15 +1467,6 @@ class Settings: NSObject {
         }
     }
 
-    static var shouldResultEndOfYearSyncStatus: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.shouldResultEndOfYearSyncStatus) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.shouldResultEndOfYearSyncStatus)
-        }
-    }
-
     // MARK: - Informational Banner
 #if !os(watchOS) && !APPCLIP && !os(tvOS)
     static func dismissBanner(for type: InformationalBannerType) {
@@ -1644,13 +1613,6 @@ class Settings: NSObject {
                     key: Constants.RemoteParams.episodeSearchDebounceMs,
                     default: Constants.RemoteParams.episodeSearchDebounceMsDefault
                 )
-            )
-        }
-
-        static var endOfYearRequireAccount: Bool {
-            configuredBool(
-                key: Constants.RemoteParams.endOfYearRequireAccount,
-                default: Constants.RemoteParams.endOfYearRequireAccountDefault
             )
         }
 
