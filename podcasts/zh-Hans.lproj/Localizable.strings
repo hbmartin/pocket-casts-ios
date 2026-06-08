@@ -133,8 +133,6 @@
 点击下方按钮再次登录您的 Pocket Casts 账户。</string>
     <key>account_signed_out_alert_title</key>
     <string>您已退出。</string>
-    <key>account_sso_failed</key>
-    <string>登录失败。 请重试。</string>
     <key>account_title</key>
     <string>Pocket Casts 账户</string>
     <key>account_upgraded</key>
@@ -297,24 +295,6 @@
     <string>如果打开，则如果您在最后一次暂停后的 5 分钟内播放了剧集，睡眠计时器将自动重启。</string>
     <key>back</key>
     <string>返回</string>
-    <key>banner_ads_info_label</key>
-    <string>广告</string>
-    <key>banner_ads_remove_ads</key>
-    <string>删除广告</string>
-    <key>banner_ads_report_ad</key>
-    <string>举报广告</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>您为何要举报此广告？</string>
-    <key>banner_ads_report_broken</key>
-    <string>这则广告似乎显示异常</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>您举报了这则广告。</string>
-    <key>banner_ads_report_malicious</key>
-    <string>这是一则恶意广告</string>
-    <key>banner_ads_report_other</key>
-    <string>其他</string>
-    <key>banner_ads_report_too_often</key>
-    <string>看到此广告的频率过高</string>
     <key>beta_purchase_disabled</key>
     <string>请从 App Store 中下载 Pocket Casts，以购买 %1$@。</string>
     <key>beta_thank_you</key>
@@ -1510,30 +1490,6 @@ Pocket Casts。</string>
     <string>打开播放器</string>
     <key>keycommand_play_pause</key>
     <string>播放/暂停</string>
-    <key>kids_profile_banner_badge</key>
-    <string>即将推出</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>请求抢先体验 </string>
-    <key>kids_profile_banner_text</key>
-    <string>仅包含儿童相关内容的新个人资料，可保持订阅界面整洁有序。</string>
-    <key>kids_profile_banner_title</key>
-    <string>儿童个人资料</string>
-    <key>kids_profile_submit_error</key>
-    <string>出错了。 请尝试重新提交您的反馈</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>发送</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>您希望在 Pocket Casts 的儿童个人资料中看到什么内容？</string>
-    <key>kids_profile_submit_success</key>
-    <string>感谢您的反馈！</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>不用，谢谢</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>发送反馈</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>当新的儿童个人资料准备就绪时，您会通过应用程序收到通知！ 想告诉我们您想看到的内容？</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>感谢您的关注</string>
     <key>learn_about_ratings</key>
     <string>了解评分</string>
     <key>learn_more</key>
@@ -2755,45 +2711,6 @@ Pocket Casts。</string>
     <string>为您喜爱的播客评分，让创作者知道您有多欣赏他们的作品。 此外，您的评分还能帮助他人找到节目新宠！</string>
     <key>rating_whats_new_title</key>
     <string>现已上线：播客评分功能 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>激活我的通行证</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>解锁完整的收听体验</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>领取您的 %1$@ Plus 访客通行证</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>此优惠仅限新会员使用。 会员资格将以 %1$@ 的价格自动续订为年度付费会员资格。</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>领取您的 %1$@ 访客通行证</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>请登录或注册，以领取您的访客通行证。</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>%1$@ 访客通行证</string>
-    <key>referrals_not_available_to_send</key>
-    <string>访客通行证暂不可用</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>该访客通行证仅可兑换一次，适用于未激活 Plus 或 Patron 订阅的用户。 感谢收听！</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>此优惠不可用</string>
-    <key>referrals_share_guest_pass</key>
-    <string>共享访客通行证</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>感谢您共享 Pocket Casts！ 我们会在您有更多可共享的通行证时通知您。</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>您已共享您的所有访客通行证！</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>您好！
-
-这是一张 %1$@ 的 Pocket Casts Plus 访客通行证，Pocket Casts Plus 是我最喜欢的播客播放器。 它拥有您在别处享受不到的独特功能，如书签、文件夹等。 我想您也会喜欢！
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>您好！ 点击下方链接领取 %1$@ 的 Pocket Casts Plus 访客通行证，即可在所有设备上收听播客！</string>
-    <key>referrals_share_pass_subject</key>
-    <string>%1$@ 的 Pocket Casts Plus 访客通行证！</string>
-    <key>referrals_tip_message</key>
-    <string>赠送 %1$@ Pocket Casts Plus 使用权！</string>
-    <key>referrals_tip_title</key>
-    <string>您有 %1$@ 张通行证可共享</string>
     <key>refresh_control_fetching_episodes</key>
     <string>查找新的播客剧集</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3582,10 +3499,6 @@ Pocket Casts。</string>
     <string>我们创建了这些内容，以助您轻松上手。 它们会根据您的收听习惯自动更新。</string>
     <key>smart_playlists_tip_view_title</key>
     <string>智能播放列表，一键畅听</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>继续使用 Apple</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>继续使用 Google</string>
     <key>sonos_connect_action</key>
     <string>连接</string>
     <key>sonos_connect_prompt</key>

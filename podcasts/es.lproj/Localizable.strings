@@ -133,8 +133,6 @@
 Toca el botón de abajo para volver a acceder a tu cuenta de Pocket Casts.</string>
     <key>account_signed_out_alert_title</key>
     <string>Tu sesión se ha cerrado.</string>
-    <key>account_sso_failed</key>
-    <string>No se ha podido iniciar sesión. Inténtalo de nuevo.</string>
     <key>account_title</key>
     <string>Cuenta de Pocket Casts</string>
     <key>account_upgraded</key>
@@ -297,24 +295,6 @@ Descarga la aplicación para disfrutar de la experiencia completa.</string>
     <string>Si está activado, el temporizador se reiniciará automáticamente si reproduces un episodio en los 5 minutos siguientes a la última pausa.</string>
     <key>back</key>
     <string>Volver</string>
-    <key>banner_ads_info_label</key>
-    <string>ANUNCIO</string>
-    <key>banner_ads_remove_ads</key>
-    <string>Elimina los anuncios</string>
-    <key>banner_ads_report_ad</key>
-    <string>Denunciar anuncio</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>¿Por qué denuncias este anuncio?</string>
-    <key>banner_ads_report_broken</key>
-    <string>Parece que el anuncio no funciona bien</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>Denunciaste este anuncio.</string>
-    <key>banner_ads_report_malicious</key>
-    <string>Es un anuncio malicioso</string>
-    <key>banner_ads_report_other</key>
-    <string>Otros</string>
-    <key>banner_ads_report_too_often</key>
-    <string>Veo este anuncio con demasiada frecuencia</string>
     <key>beta_purchase_disabled</key>
     <string>Descarga Pocket Casts de la App Store para comprar %1$@.</string>
     <key>beta_thank_you</key>
@@ -1510,30 +1490,6 @@ pódcast contigo</string>
     <string>Abrir reproductor</string>
     <key>keycommand_play_pause</key>
     <string>Reproducir / Pausar</string>
-    <key>kids_profile_banner_badge</key>
-    <string>Pronto</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>Solicitar acceso anticipado </string>
-    <key>kids_profile_banner_text</key>
-    <string>Un perfil nuevo solo con contenido para niños para mantener organizadas tus suscripciones.</string>
-    <key>kids_profile_banner_title</key>
-    <string>Perfil para niños</string>
-    <key>kids_profile_submit_error</key>
-    <string>Se ha producido un error. Prueba a enviar tus comentarios de nuevo</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>Enviar</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>¿Qué quieres ver en un perfil para niños de Pocket Casts?</string>
-    <key>kids_profile_submit_success</key>
-    <string>¡Gracias por tus comentarios!</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>No, gracias</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>Enviar comentarios</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>Recibirás una notificación a través de la aplicación cuando esté listo el nuevo perfil para niños. ¿Quieres decirnos lo que te gustaría ver?</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>Gracias por tu interés</string>
     <key>learn_about_ratings</key>
     <string>Más información sobre las valoraciones</string>
     <key>learn_more</key>
@@ -2755,45 +2711,6 @@ Si quieres nuevas ideas, ve a la pestaña Descubrir.</string>
     <string>Valora tus podcasts favoritos y haz saber a los creadores lo mucho que valoras su trabajo.  Además, tus calificaciones ayudan a otras personas a encontrar nuevos programas favoritos.</string>
     <key>rating_whats_new_title</key>
     <string>Ya disponible: valoraciones de podcast 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>Activar mi pase</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>Desbloquea la experiencia auditiva completa</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>Solicita tu pase de invitado de %1$@ a Plus</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>Esta oferta es solo para nuevos miembros. La suscripción se renovará automáticamente a una suscripción anual de pago en %1$@.</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>Solicita tu pase de invitado de %1$@</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>Accede o regístrate para solicitar tu pase de invitado.</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>Pase de invitado de %1$@</string>
-    <key>referrals_not_available_to_send</key>
-    <string>El pase de invitado no está disponible en este momento</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>Este pase de invitado solo puede canjearse una vez y está disponible para quienes no tengan una suscripción Plus o Patron activa. Gracias por escucharnos.</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>Esta oferta no está disponible</string>
-    <key>referrals_share_guest_pass</key>
-    <string>Compartir pase de invitado</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>Muchas gracias por compartir Pocket Casts. Te avisaremos cuando tengas más pases para regalar.</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>Has compartido todos tus pases de invitado.</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>Hola:
-
-Aquí tienes un pase de invitado de %1$@ para Pocket Casts Plus, mi reproductor de podcast favorito. Cuenta con funciones únicas como los marcadores, las carpetas y muchas más que no encontrarás en otras plataformas. Creemos que a ti también te encantará.
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>¡Hola! Utiliza el siguiente enlace para solicitar tu pase de invitado de %1$@ para Pocket Casts Plus y disfrutar de podcasts en todos tus dispositivos.</string>
-    <key>referrals_share_pass_subject</key>
-    <string>Pase de invitado de %1$@ para Pocket Casts Plus.</string>
-    <key>referrals_tip_message</key>
-    <string>Regala %1$@ de Pocket Casts Plus.</string>
-    <key>referrals_tip_title</key>
-    <string>Tienes %1$@ pases para compartir</string>
     <key>refresh_control_fetching_episodes</key>
     <string>BUSCANDO NUEVOS EPISODIOS DE PODCAST</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3582,10 +3499,6 @@ Aquí tienes un pase de invitado de %1$@ para Pocket Casts Plus, mi reproductor 
     <string>Hemos creado estas para ayudarte a empezar. Se actualizan automáticamente en función de tus escuchas.</string>
     <key>smart_playlists_tip_view_title</key>
     <string>Playlist inteligentes, listas para usar</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>Continuar con Apple</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>Continuar con Google</string>
     <key>sonos_connect_action</key>
     <string>CONECTAR</string>
     <key>sonos_connect_prompt</key>

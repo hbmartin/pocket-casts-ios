@@ -6,7 +6,6 @@ import UIKit
 struct URLHelper {
     enum InAppBrowserContext: Equatable {
         case trustedDocumentation
-        case trustedMarketing
         case externalContent
     }
 
@@ -39,7 +38,7 @@ struct URLHelper {
     }
 
     // Trusted contexts block any HTTPS host not listed here. Add new hosts before
-    // routing links through `.trustedDocumentation` or `.trustedMarketing`.
+    // routing links through `.trustedDocumentation`.
     private static let trustedDocumentationHosts: Set<String> = [
         "support.pocketcasts.com",
         "support.pocketcasts.net",
@@ -47,11 +46,6 @@ struct URLHelper {
         "www.pocketcasts.com",
         "pocketcasts.net",
         "www.pocketcasts.net"
-    ]
-
-    private static let trustedMarketingHosts: Set<String> = [
-        "slumberstudios.com",
-        "www.slumberstudios.com"
     ]
 
     private static let showNotesTimestampScheme = "http"
@@ -123,9 +117,6 @@ struct URLHelper {
         case .trustedDocumentation:
             guard isTrustedDocumentationURL(url) else { return .blocked }
             return prefersExternalBrowser ? .externalApplication : .inAppBrowser
-        case .trustedMarketing:
-            guard isTrustedMarketingURL(url) else { return .blocked }
-            return prefersExternalBrowser ? .externalApplication : .inAppBrowser
         case .externalContent:
             return externalContentDecision(
                 for: url,
@@ -190,10 +181,6 @@ struct URLHelper {
 
     static func isTrustedDocumentationURL(_ url: URL) -> Bool {
         isHTTPSURL(url) && host(for: url).map(trustedDocumentationHosts.contains) == true
-    }
-
-    private static func isTrustedMarketingURL(_ url: URL) -> Bool {
-        isHTTPSURL(url) && host(for: url).map(trustedMarketingHosts.contains) == true
     }
 
     private static func isHTTPSURL(_ url: URL) -> Bool {

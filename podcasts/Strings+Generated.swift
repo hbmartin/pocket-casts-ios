@@ -2991,7 +2991,7 @@ internal enum L10n {
   internal static var podcastsEpisodeSortNewestToOldest: String { return L10n.tr("Localizable", "podcasts_episode_sort_newest_to_oldest", fallback: "Newest to oldest") }
   /// Episodes will be displayed in order from the oldest to the most resent.
   internal static var podcastsEpisodeSortOldestToNewest: String { return L10n.tr("Localizable", "podcasts_episode_sort_oldest_to_newest", fallback: "Oldest to newest") }
-  /// Episodes will be displayed in based on season and episode numbers
+  /// Episodes will be displayed in serial podcast order.
   internal static var podcastsEpisodeSortSerial: String { return L10n.tr("Localizable", "podcasts_episode_sort_serial", fallback: "Serial") }
   /// Episodes will be displayed in order from the shortest to the longest.
   internal static var podcastsEpisodeSortShortestToLongest: String { return L10n.tr("Localizable", "podcasts_episode_sort_shortest_to_longest", fallback: "Shortest to Longest") }

@@ -133,8 +133,6 @@
 下のボタンをタップして、Pocket Casts アカウントに再度ログインしてください。</string>
     <key>account_signed_out_alert_title</key>
     <string>ログアウトされました。</string>
-    <key>account_sso_failed</key>
-    <string>ログインに失敗しました。 もう一度お試しください。</string>
     <key>account_title</key>
     <string>Pocket Casts アカウント</string>
     <key>account_upgraded</key>
@@ -297,24 +295,6 @@
     <string>オンにすると、最後の一時停止から5分以内にエピソードを再生した際にスリープタイマーが自動的に再開されます。</string>
     <key>back</key>
     <string>戻る</string>
-    <key>banner_ads_info_label</key>
-    <string>広告</string>
-    <key>banner_ads_remove_ads</key>
-    <string>広告を削除する</string>
-    <key>banner_ads_report_ad</key>
-    <string>広告を報告する</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>この広告を報告する理由</string>
-    <key>banner_ads_report_broken</key>
-    <string>この広告は表示に不具合がある</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>この広告を報告しました。</string>
-    <key>banner_ads_report_malicious</key>
-    <string>この広告には悪意がある</string>
-    <key>banner_ads_report_other</key>
-    <string>その他</string>
-    <key>banner_ads_report_too_often</key>
-    <string>この広告の表示頻度が高すぎる</string>
     <key>beta_purchase_disabled</key>
     <string>%1$@ を購入するには App Store から Pocket Cast をダウンロードしてください。</string>
     <key>beta_thank_you</key>
@@ -1510,30 +1490,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>プレーヤーを開く</string>
     <key>keycommand_play_pause</key>
     <string>再生 / 一時停止</string>
-    <key>kids_profile_banner_badge</key>
-    <string>すぐに</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>早期アクセスをリクエスト </string>
-    <key>kids_profile_banner_text</key>
-    <string>子ども向けコンテンツのみのプロフィールを新規に作成して、サブスクリプションを整理しておくことができます。</string>
-    <key>kids_profile_banner_title</key>
-    <string>キッズプロフィール</string>
-    <key>kids_profile_submit_error</key>
-    <string>問題が発生しました。 フィードバックをもう一度送信してください</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>送信</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>Pocket Casts のキッズプロフィールに表示したいものは何ですか ?</string>
-    <key>kids_profile_submit_success</key>
-    <string>フィードバックをありがとうございます。</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>結構です</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>フィードバックを送る</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>新しいキッズプロフィールの準備ができたら、アプリから通知が届きます ! ご覧になりたいものは何ですか ?</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>ご検討いただきありがとうございます</string>
     <key>learn_about_ratings</key>
     <string>評価について</string>
     <key>learn_more</key>
@@ -2753,45 +2709,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>お気に入りのポッドキャストを評価して、作品をどの程度気に入っているかをクリエイターに伝えましょう。 さらに、あなたの評価は他のユーザーが新しいお気に入り番組を見つけるのに役立ちます !</string>
     <key>rating_whats_new_title</key>
     <string>ポッドキャストの評価が利用可能になりました 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>パスを有効化</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>リスニング体験をすべてご利用いただけます</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>Plus の%1$@のゲストパスを取得しましょう</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>このオファーは新規メンバーのみが対象です。 メンバーシップは%1$@の有料年間メンバーシップに自動的に更新されます。</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>%1$@のゲストパスを取得しましょう</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>ゲストパスを取得するには、ログインまたはサインアップしてください。</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>%1$@のゲストパス</string>
-    <key>referrals_not_available_to_send</key>
-    <string>ゲストパスは現在利用できません</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>このゲストパスは Plus または Patron のサブスクリプションがアクティブでないユーザーが対象で、1回に限りご利用いただけます。 お聴きいただきありがとうございます !</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>このオファーは利用できません</string>
-    <key>referrals_share_guest_pass</key>
-    <string>ゲストパスを共有</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>Pocket Casts を共有いただきありがとうございます。 プレゼントできるパスが増えたらお知らせします。</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>ゲストパスをすべて共有しました !</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>こんにちは。
-
-こちらは、私のお気に入りのポッドキャストプレイヤー、Pocket Casts Plus を利用できる%1$@のゲストパスです。 ブックマークやフォルダーなど、他にはないユニークな機能が満載です。 きっと気に入ってもらえると思います。
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>こんにちは。 以下のリンクを使用して Pocket Casts Plus の%1$@のゲストパスを取得し、お使いの全端末でポッドキャストをお楽しみください !</string>
-    <key>referrals_share_pass_subject</key>
-    <string>Pocket Casts Plus の%1$@のゲストパス !</string>
-    <key>referrals_tip_message</key>
-    <string>Pocket Casts Plus を%1$@プレゼント !</string>
-    <key>referrals_tip_title</key>
-    <string>共有できるパスが%1$@個あります</string>
     <key>refresh_control_fetching_episodes</key>
     <string>新しいポッドキャストエピソードを検索しています</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3576,10 +3493,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>ご利用開始をサポートするよう作られています。 聴取内容に基づいて自動更新されます。</string>
     <key>smart_playlists_tip_view_title</key>
     <string>すぐに使えるスマートプレイリスト</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>Apple で続ける</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>Google で続ける</string>
     <key>sonos_connect_action</key>
     <string>接続</string>
     <key>sonos_connect_prompt</key>

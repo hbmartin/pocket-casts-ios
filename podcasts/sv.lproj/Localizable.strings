@@ -133,8 +133,6 @@
 Tryck på knappen nedan för att logga in på ditt Pocket Casts-konto igen.</string>
     <key>account_signed_out_alert_title</key>
     <string>Du har blivit utloggad.</string>
-    <key>account_sso_failed</key>
-    <string>Inloggning misslyckades. Försök igen.</string>
     <key>account_title</key>
     <string>Pocket Casts-konto</string>
     <key>account_upgraded</key>
@@ -297,24 +295,6 @@ Ladda ner appen för att få den fullständiga upplevelsen.</string>
     <string>Om det här alternativet är aktiverat kommer sömntimern att starta om automatiskt om du spelar upp ett avsnitt inom 5 minuter efter den senaste pausen.</string>
     <key>back</key>
     <string>Tillbaka</string>
-    <key>banner_ads_info_label</key>
-    <string>Annons</string>
-    <key>banner_ads_remove_ads</key>
-    <string>Ta bort annonser</string>
-    <key>banner_ads_report_ad</key>
-    <string>Rapportera annonsen</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>Varför rapporterar du annonsen?</string>
-    <key>banner_ads_report_broken</key>
-    <string>Annonsen verkar trasig</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>Du rapporterade denna annons.</string>
-    <key>banner_ads_report_malicious</key>
-    <string>Det här är en skadlig annons</string>
-    <key>banner_ads_report_other</key>
-    <string>Övrigt</string>
-    <key>banner_ads_report_too_often</key>
-    <string>Får upp denna annons för ofta</string>
     <key>beta_purchase_disabled</key>
     <string>Ladda ner Pocket Casts från App Store för att köpa %1$@.</string>
     <key>beta_thank_you</key>
@@ -1510,30 +1490,6 @@ podcasts med dig</string>
     <string>Öppna spelare</string>
     <key>keycommand_play_pause</key>
     <string>Spela upp/pausa</string>
-    <key>kids_profile_banner_badge</key>
-    <string>Snart</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>Begär tidig åtkomst </string>
-    <key>kids_profile_banner_text</key>
-    <string>En ny profil med endast innehåll för barn för att hålla ordning på dina prenumerationer.</string>
-    <key>kids_profile_banner_title</key>
-    <string>Barnprofil</string>
-    <key>kids_profile_submit_error</key>
-    <string>Något gick fel. Försök skicka din feedback igen</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>Skicka</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>Vad skulle du vilja se i en barnprofil för Pocket Casts?</string>
-    <key>kids_profile_submit_success</key>
-    <string>Tack för din feedback!</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>Nej tack</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>Skicka feedback</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>Du kommer att få en notis via appen när barnprofilen är redo. Vill du berätta för oss vad du skulle vilja se?</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>Tack för ditt intresse</string>
     <key>learn_about_ratings</key>
     <string>Läs om betyg</string>
     <key>learn_more</key>
@@ -2755,45 +2711,6 @@ Om du behöver inspiration så kan du Upptäcka nya podcasts nedan.</string>
     <string>Betygsätt dina favoritpodcasts och låt kreatörerna få veta hur mycket du uppskattar deras arbete. Dina betyg hjälper dessutom andra att hitta nya favoritshower.</string>
     <key>rating_whats_new_title</key>
     <string>Nu tillgängligt: Podcastbetyg 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>Aktivera mitt pass</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>Lås upp den fullständiga lyssningsupplevelsen</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>Gör anspråk på ditt %1$@ gästpass för Plus</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>Detta erbjudande gäller endast nya medlemmar. Medlemskapet förnyas automatiskt som ett årligt betalmedlemskap för %1$@.</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>Gör anspråk på ditt %1$@ gästpass</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>Logga in eller registrera dig för att göra anspråk på ditt gästpass.</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>%1$@ gästpass</string>
-    <key>referrals_not_available_to_send</key>
-    <string>Gästpasset är inte tillgängligt för tillfället</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>Detta gästpass kan endast lösas in en gång och är tillgängligt för användare utan en aktiv Plus- eller Patron-prenumeration. Tack för att du lyssnar.</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>Detta erbjudande är inte tillgängligt</string>
-    <key>referrals_share_guest_pass</key>
-    <string>Dela gästpass</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>Tack för att du delar Pocket Casts! Vi meddelar dig när du har fler gästpass att ge bort.</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>Du har delat ut alla dina gästpass.</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>Hej!
-
-Här är ett %1$@ gästpass för Pocket Casts Plus – min favoritpodcastspelare. Den är fullspäckad med unika funktioner som bokmärken, mappar och annat som du inte hittar någon annanstans. Jag tror att du också kommer att älska den!
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>Hej! Använd länken nedan för att göra anspråk på ditt %1$@ gästpass för Pocket Casts Plus och ta del av podcasts på alla dina enheter.</string>
-    <key>referrals_share_pass_subject</key>
-    <string>%1$@ gästpass för Pocket Casts Plus.</string>
-    <key>referrals_tip_message</key>
-    <string>Ge bort %1$@ med Pocket Casts Plus.</string>
-    <key>referrals_tip_title</key>
-    <string>Du har %1$@ gästpass att dela</string>
     <key>refresh_control_fetching_episodes</key>
     <string>HÄMTAR NYA PODCASTAVSNITT</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3582,10 +3499,6 @@ Här är ett %1$@ gästpass för Pocket Casts Plus – min favoritpodcastspelare
     <string>Vi har skapat dessa för att hjälpa dig att komma igång. De uppdateras automatiskt baserat på ditt lyssnande.</string>
     <key>smart_playlists_tip_view_title</key>
     <string>Smarta spellistor, redo att användas</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>Fortsätt med Apple</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>Fortsätt med Google</string>
     <key>sonos_connect_action</key>
     <string>ANSLUT</string>
     <key>sonos_connect_prompt</key>

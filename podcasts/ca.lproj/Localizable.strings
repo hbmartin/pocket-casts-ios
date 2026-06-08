@@ -133,8 +133,6 @@
  Prem el botó de baix per a tornar a accedir al teu compte de Pocket Casts.</string>
     <key>account_signed_out_alert_title</key>
     <string>La teva sessió s'ha tancat.</string>
-    <key>account_sso_failed</key>
-    <string>Ha fallat l'accés amb Apple. Prova-ho de nou.</string>
     <key>account_title</key>
     <string>Compte del Pocket Casts</string>
     <key>account_upgraded</key>
@@ -303,24 +301,6 @@ Descarrega l'app per a una experiència completa!</string>
     <string>Si està activat, el temporitzador de son es reiniciarà automàticament si reprodueixes un episodi als  5 minuts següents a l'última pausa.</string>
     <key>back</key>
     <string>Enrere</string>
-    <key>banner_ads_info_label</key>
-    <string>Anunci</string>
-    <key>banner_ads_remove_ads</key>
-    <string>Esborra els anuncis</string>
-    <key>banner_ads_report_ad</key>
-    <string>Denuncia l'anunci</string>
-    <key>banner_ads_report_ad_title</key>
-    <string>Per què estàs denunciant aquest anunci?</string>
-    <key>banner_ads_report_broken</key>
-    <string>Aquest anunci sembla que no funciona bé</string>
-    <key>banner_ads_report_confirmation</key>
-    <string>Has denunciat aquest anunci.</string>
-    <key>banner_ads_report_malicious</key>
-    <string>Aquest és un anunci maliciós</string>
-    <key>banner_ads_report_other</key>
-    <string>Altres</string>
-    <key>banner_ads_report_too_often</key>
-    <string>Veig aquest anunci massa sovint</string>
     <key>beta_purchase_disabled</key>
     <string>Per favor, descarrega Pocket Casts des de l'App Store per a comprar  %1$@.</string>
     <key>beta_thank_you</key>
@@ -1510,30 +1490,6 @@ Nota: Potser necessitaràs enviar-te per correu electrònic el fitxer OPML, mant
     <string>Obre el reproductor</string>
     <key>keycommand_play_pause</key>
     <string>Reprodueix / Posa en pausa</string>
-    <key>kids_profile_banner_badge</key>
-    <string>Aviat</string>
-    <key>kids_profile_banner_request_button</key>
-    <string>Sol·licita accés anticipat </string>
-    <key>kids_profile_banner_text</key>
-    <string>Un nou perfil només amb contingut per a infants per a mantenir les teves subscripcions ordenades.</string>
-    <key>kids_profile_banner_title</key>
-    <string>Perfil per a infants</string>
-    <key>kids_profile_submit_error</key>
-    <string>Alguna cosa ha anat malament. Prova de tornar a enviar un comentari</string>
-    <key>kids_profile_submit_feedback_send_button</key>
-    <string>Envia</string>
-    <key>kids_profile_submit_feedback_title</key>
-    <string>Què t'agradaria veure en un perfil d'infants per a Pocket Casts?</string>
-    <key>kids_profile_submit_success</key>
-    <string>Gràcies per la teva aportació!</string>
-    <key>kids_profile_thankyou_button_close</key>
-    <string>No, gràcies</string>
-    <key>kids_profile_thankyou_button_send</key>
-    <string>Envia comentaris</string>
-    <key>kids_profile_thankyou_text</key>
-    <string>Rebràs una notificació a través de l'app quan el nou perfil d'infants estigui llest! Vols fer-nos saber què t'agradaria veure?</string>
-    <key>kids_profile_thankyou_title</key>
-    <string>Gràcies pel teu interès</string>
     <key>learn_about_ratings</key>
     <string>Informa't sobre les valoracions</string>
     <key>learn_more</key>
@@ -2754,45 +2710,6 @@ Si vols noves idees, ves a la pestanya Descobreix.</string>
     <string>Valora els teus pòdcasts preferits i fes saber als creadors com valores la seva feina. A més, les teves valoracions ajuden altres a trobar nous programes favorits!</string>
     <key>rating_whats_new_title</key>
     <string>Ja està disponible: Valoracions dels pòdcasts 🎉</string>
-    <key>referrals_claim_guest_pass_action</key>
-    <string>Activa la meva invitació</string>
-    <key>referrals_claim_guest_pass_banner_detail</key>
-    <string>Desbloqueja l'experiència d'escolta completa</string>
-    <key>referrals_claim_guest_pass_banner_title</key>
-    <string>Reclama la teva invitació de convidat a Plus de  %1$@</string>
-    <key>referrals_claim_guest_pass_detail</key>
-    <string>Aquesta oferta és només per a nous membres. La subscripció es renovarà automàticament a una subscripció anual de pagament a %1$@.</string>
-    <key>referrals_claim_guest_pass_title</key>
-    <string>Reclama la teva invitació de convidat de %1$@</string>
-    <key>referrals_claim_need_to_be_loggedin</key>
-    <string>Inicia sessió o registra't per a reclamar la teva invitació.</string>
-    <key>referrals_guest_pass_offer</key>
-    <string>Invitació de %1$@</string>
-    <key>referrals_not_available_to_send</key>
-    <string>L'accés com a convidat no està disponible ara mateix</string>
-    <key>referrals_offer_not_available_detail</key>
-    <string>La invitació només es pot bescanviar una vegada i està disponible per a aquells sense una subscripció Plus o Patron activa. Gràcies per escoltar!</string>
-    <key>referrals_offer_not_available_title</key>
-    <string>Aquesta oferta no està disponible</string>
-    <key>referrals_share_guest_pass</key>
-    <string>Comparteix les invitacions per a convidats</string>
-    <key>referrals_share_no_guest_pass_message</key>
-    <string>Gràcies per a compartir Pocket Casts! Et farem saber quan tinguis més invitacions per a donar.</string>
-    <key>referrals_share_no_guest_pass_title</key>
-    <string>Has compartit totes les teves invitacions!</string>
-    <key>referrals_share_pass_long_message</key>
-    <string>Hola!
-
-Aquí tens una invitació de  %1$@ per a Pocket Casts Plus, el meu reproductor de pòdcasts favorit. Està ple de funcions úniques com ara marcadors, carpetes i molt més que no trobaràs enlloc més. Crec que també t'encantarà!
-</string>
-    <key>referrals_share_pass_message</key>
-    <string>Ei! Utilitza l'enllaç a continuació per a reclamar la teva %1$@ invitació per a Pocket Casts Plus i gaudeix de pòdcasts a tots els teus dispositius!</string>
-    <key>referrals_share_pass_subject</key>
-    <string>%1$@ accés convidat a Pocket Casts Plus!</string>
-    <key>referrals_tip_message</key>
-    <string>Regala %1$@ de Pocket Casts Plus!</string>
-    <key>referrals_tip_title</key>
-    <string>Tens %1$@ invitacions per a compartir</string>
     <key>refresh_control_fetching_episodes</key>
     <string>CERCANT NOUS EPISODIS DELS PÒDCASTS</string>
     <key>refresh_control_pull_to_refresh</key>
@@ -3581,10 +3498,6 @@ Aquí tens una invitació de  %1$@ per a Pocket Casts Plus, el meu reproductor d
     <string>Ho hem fet per ajudar-te a començar. S'actualitzen automàticament segons la teva escolta.</string>
     <key>smart_playlists_tip_view_title</key>
     <string>Llistes intel·ligents, llestes per començar</string>
-    <key>social_sign_in_continue_with_apple</key>
-    <string>Inicia sessió amb un compte d'Apple</string>
-    <key>social_sign_in_continue_with_google</key>
-    <string>Inicia sessió amb un compte de Google</string>
     <key>sonos_connect_action</key>
     <string>CONNECTA</string>
     <key>sonos_connect_prompt</key>
