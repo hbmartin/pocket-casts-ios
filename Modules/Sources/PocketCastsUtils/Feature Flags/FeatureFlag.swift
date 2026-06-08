@@ -8,9 +8,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Whether logging the theme properties in analytics events
     case appThemePropertiesLogging
 
-    /// Whether End Of Year feature is enabled
-    case endOfYear
-
     /// Store settings as JSON in User Defaults (global) or SQLite (podcast)
     case newSettingsStorage
 
@@ -33,24 +30,12 @@ public enum FeatureFlag: String, CaseIterable {
     /// but can lead to a bigger time between tapping play and actually playing it
     case whenPlayingOnlyUpdateEpisodeIfPlaybackFails
 
-    /// Enables the Kids banner
-    case kidsProfile
-
     /// When enabled, we ignore audio interruptions with InterruptionReason set to routeDisconnected
     /// (introduced in iOS 17 and watchOS 10) because these are not really interruptions as we have
     /// implemented them previously. If the route is disconnected, audio stops indefinitely
     /// until a new route connects (for which we'll received a different notification and handle accordingly)
     /// See: https://github.com/Automattic/pocket-casts-ios/issues/2049
     case ignoreRouteDisconnectedInterruption
-
-    /// Enable the Referrals feature
-    case referrals
-
-    /// Enables the referrals Send Flow
-    case referralsSend
-
-    /// Enables the referrals Claim Flow
-    case referralsClaim
 
     /// When accessing Stats, it checks if the local stats are behind remote
     /// If it is, it updates it
@@ -75,9 +60,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Run a vacuum process on the database in order to optimize data fetch
     case runVacuumOnVersionUpdate
-
-    /// Enable the End of Year 2024 recap
-    case endOfYear2024
 
     /// Enable the Up Next shuffle button
     case upNextShuffle
@@ -133,12 +115,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Shows transcript excerpt in episode detail
     case episodeDetailTranscript
 
-    /// Include banner ad atop the podcasts list. This is fetched from ths server so can be disabled from there as well.
-    case bannerAdPodcasts
-
-    /// Include the banner ad atop the player screen. This is fetched from ths server so can be disabled from there as well.
-    case bannerAdPlayer
-
     /// Improves configuration for the streaming requet download session
     case streamingCustomSessionConfiguration
 
@@ -181,17 +157,8 @@ public enum FeatureFlag: String, CaseIterable {
     /// Render Bookmarks inline in PodcastViewController using SwiftUI BookmarksListView
     case podcastBookmarksInline
 
-    /// Enable reloading the subscription status in App Delegate
-    case earlyReloadSubscriptionStatus
-
     /// Enable localization headers
     case enableLocalizationHeaders
-
-    /// Enable the End of Year 2025 recap
-    case endOfYear2025
-
-    /// Enable the End of Year to use first story as loading screen
-    case endOfYearLoadIsFirstStory
 
     /// Upgrades the Effects Player's AudioReadTask to a QOS level of "userInitiated" from "default"
     case effectsPlayerQOSUpgrade
@@ -297,8 +264,6 @@ public enum FeatureFlag: String, CaseIterable {
             } else {
                 true
             }
-        case .endOfYear:
-            false
         case .newSettingsStorage:
             shouldEnableSyncedSettings
         case .settingsSync:
@@ -311,15 +276,7 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .whenPlayingOnlyUpdateEpisodeIfPlaybackFails:
             true
-        case .kidsProfile:
-            false
         case .ignoreRouteDisconnectedInterruption:
-            true
-        case .referrals:
-            true
-        case .referralsClaim:
-            true
-        case .referralsSend:
             true
         case .syncStats:
             true
@@ -332,8 +289,6 @@ public enum FeatureFlag: String, CaseIterable {
         case .customPlaybackSettings:
             true
         case .runVacuumOnVersionUpdate:
-            false
-        case .endOfYear2024:
             false
         case .upNextShuffle:
             true
@@ -371,10 +326,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .episodeDetailTranscript:
             true
-        case .bannerAdPodcasts:
-            false
-        case .bannerAdPlayer:
-            false
         case .streamingCustomSessionConfiguration:
             true
         case .guestListsNetworkHighlightsRedesign:
@@ -403,13 +354,7 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .podcastBookmarksInline:
             true
-        case .earlyReloadSubscriptionStatus:
-            true
         case .enableLocalizationHeaders:
-            true
-        case .endOfYear2025:
-            false
-        case .endOfYearLoadIsFirstStory:
             true
         case .effectsPlayerQOSUpgrade:
             true
@@ -483,8 +428,6 @@ public enum FeatureFlag: String, CaseIterable {
             shouldEnableSyncedSettings ? "settings_sync" : nil
         case .defaultPlayerFilterCallbackFix:
             "default_player_filter_callback_fix"
-        case .endOfYear2025:
-            "end_of_year_2025"
         default:
             rawValue.lowerSnakeCased()
         }

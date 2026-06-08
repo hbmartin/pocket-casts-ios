@@ -61,7 +61,6 @@ public struct AppSettings: JSONCodable {
 
     @ModifiedDate public var privacyAnalytics: Bool = true
     @ModifiedDate public var marketingOptIn: Bool = false
-    @ModifiedDate public var freeGiftAcknowledgement: Bool = false
 
     @ModifiedDate public var gridOrder: LibrarySort = .dateAddedNewestToOldest
     @ModifiedDate public var gridLayout: LibraryType = .threeByThree

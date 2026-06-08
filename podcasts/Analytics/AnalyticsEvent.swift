@@ -21,7 +21,6 @@ enum AnalyticsEvent: String {
     case userEmailUpdated
     case userPasswordUpdated
     case userPasswordReset
-    case ssoStarted
 
     // MARK: - Setup Account
 
@@ -757,24 +756,7 @@ enum AnalyticsEvent: String {
     case incomingShareListShown
     case incomingShareListSubscribedAll
 
-    // MARK: - End of Year stats
-
-    case endOfYearModalShown
-    case endOfYearStoriesShown
-    case endOfYearStoriesDismissed
-    case endOfYearStoriesFailedToLoad
-    case endOfYearStoryReplayButtonTapped
-    case endOfYearStoryShown
-    case endOfYearStoryShare
-    case endOfYearStoryShared
     case playbackShared
-    case endOfYearProfileCardTapped
-    case endOfYearUpsellShown
-    case endOfYearLearnRatingsShown
-    case endOfYearProfileCardShown
-    case endOfYearModalTapped
-    case endOfYearModalDismissed
-    case endOfYearPlusContinued
 
     // MARK: - Welcome View
 
@@ -819,9 +801,6 @@ enum AnalyticsEvent: String {
     case notAllowedToRateScreenShown
     case notAllowedToRateScreenDismissed
 
-    // MARK: - Patron
-    case patronWelcomeAppIconChanged
-
     // MARK: - What's New
     case whatsnewShown
     case whatsnewDismissed
@@ -847,15 +826,6 @@ enum AnalyticsEvent: String {
     case settingsHeadphoneControlsNextChanged
     case settingsHeadphoneControlsPreviousChanged
     case settingsHeadphoneControlsBookmarkSoundToggled
-
-    // MARK: - Kids Profile
-    case kidsProfileEarlyAccessRequested
-    case kidsProfileBannerDismissed
-    case kidsProfileSendFeedbackTapped
-    case kidsProfileNoThankYouTapped
-    case kidsProfileThankYouForYourInterestSeen
-    case kidsProfileFeedbackFormSeen
-    case kidsProfileFeedbackSent
 
     // MARK: - Transcript
 
@@ -925,9 +895,4 @@ enum AnalyticsEvent: String {
     case podcastScreenPodrollInformationModelShown
     case podcastScreenPodrollPodcastSubscribed
     case podcastScreenPodrollPodcastTapped
-
-    // MARK: - Banner Ads
-    case bannerAdImpression
-    case bannerAdTapped
-    case bannerAdReport
 }

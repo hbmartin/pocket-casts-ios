@@ -91,9 +91,6 @@ struct Constants {
         /// This is triggered just once after a folder finishes editing
         static let folderEdited = NSNotification.Name(rawValue: "SJFolderEdited")
 
-        // End of Year
-        static let profileSeen = NSNotification.Name(rawValue: "profileSeen")
-
         // Gravatar
         static let avatarNeedsRefreshing = NSNotification.Name(rawValue: "avatarNeedsRefreshing")
 
@@ -150,7 +147,6 @@ struct Constants {
 
         static let reviewRequestDates = "reviewRequestDates"
 
-        static let showBadgeForEndOfYear = "showBadgeFor%dEndOfYear"
         static let modalHasBeenShown = "modal%dHasBeenShown"
         static let hasSyncedEpisodesForPlayback = "hasSyncedEpisodesForPlayback%d"
         static let hasSyncedEpisodesForPlaybackAsPlusUser = "hasSyncedEpisodesForPlayback%dAsPlusUser"
@@ -178,7 +174,6 @@ struct Constants {
         static let playlistsOnboarding = "NewPlaylistsOnboarding"
         static let firstTimePlaylistCreated = "FirstTimePlaylistCreated"
         static let saveCurrentUpNextQueueIntoPlaylist = "SaveCurrentUpNextQueueIntoPlaylist"
-        static let shouldResultEndOfYearSyncStatus = "ShouldResultEndOfYearSyncStatus"
         static let lastNetworkDataUsageCleanupDate = "lastNetworkDataUsageCleanupDate"
 
         enum headphones {
@@ -201,11 +196,6 @@ struct Constants {
         enum appearance {
             static let darkUpNextTheme = SettingValue("appearance.darkUpNextTheme", defaultValue: true)
             static let tabBarMinimizingEnabled = SettingValue("appearance.tabBarMinimizingEnabled", defaultValue: true)
-        }
-
-        enum referrals {
-            static let showTip = "referrals.showtip"
-            static let claimURL = "referrals.claimURL"
         }
 
         enum manageDownloads {
@@ -328,9 +318,6 @@ struct Constants {
 
         static let customStorageLimitGB = "custom_storage_limit_gb"
         static let customStorageLimitGBDefault: Int = 20
-
-        static let endOfYearRequireAccount = "end_of_year_require_account"
-        static let endOfYearRequireAccountDefault: Bool = true
 
         static let patronCloudStorageGB = "patron_custom_storage_limit_gb"
         static let patronCloudStorageGBDefault = 100

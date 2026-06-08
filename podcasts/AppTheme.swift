@@ -270,19 +270,6 @@ class AppTheme {
         }
     }
 
-    static func socialIconAppleImageName(theme: Theme = .sharedTheme) -> String {
-        switch theme.activeTheme {
-        case .dark, .extraDark, .electric, .contrastDark:
-            return "sso-icon-apple-dark"
-        case .light, .classic, .indigo, .rosé, .contrastLight:
-            return "sso-icon-apple"
-        }
-    }
-
-    static func socialIconGoogleImageName() -> String {
-        return "sso-icon-google"
-    }
-
     class func pcLogoVerticalImageName() -> String {
         switch Theme.sharedTheme.activeTheme {
         case .dark, .extraDark, .electric, .contrastDark:
