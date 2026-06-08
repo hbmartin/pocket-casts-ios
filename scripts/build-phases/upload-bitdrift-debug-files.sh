@@ -59,7 +59,7 @@ fi
 if [[ ! -f "$BD" ]]; then
     curl -fSL "$BD_URL" -o "$BD"
     curl -fSL "$BD_SHA256_URL" -o "$BD.sha256" || {
-        echo "error: Failed to download bd CLI checksum from $BD_SHA256_URL"
+        echo "error: Failed to download bd CLI checksum from $BD_SHA256_URL" >&2
         rm -f "$BD"
         exit 1
     }

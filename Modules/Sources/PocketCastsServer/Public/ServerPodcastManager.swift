@@ -147,14 +147,17 @@ public class ServerPodcastManager: NSObject {
     public func addMissingPodcastAndEpisode(episodeUuid: String, podcastUuid: String, shouldUpdateEpisode: Bool = false, completion: ((Episode?) -> ())? = nil) {
         let url = ServerConstants.Urls.cache() + "mobile/podcast/findbyepisode/\(podcastUuid)/\(episodeUuid)"
 
-        if let info = loadFrom(url: url) {
-            let episode = addMissingEpisode(
-                podcastInfo: info,
-                podcastUuid: podcastUuid,
-                shouldUpdateEpisode: shouldUpdateEpisode
-            )
-            completion?(episode)
+        guard let info = loadFrom(url: url) else {
+            completion?(nil)
+            return
         }
+
+        let episode = addMissingEpisode(
+            podcastInfo: info,
+            podcastUuid: podcastUuid,
+            shouldUpdateEpisode: shouldUpdateEpisode
+        )
+        completion?(episode)
     }
 
     private func addMissingEpisode(podcastInfo: [String: Any], podcastUuid: String, shouldUpdateEpisode: Bool) -> Episode? {

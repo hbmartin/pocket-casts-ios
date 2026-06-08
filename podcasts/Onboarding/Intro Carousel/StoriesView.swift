@@ -76,11 +76,11 @@ struct StoriesView: View {
 
     @State private var isReady = false
     @State private var isPaused = false
+    @State private var isVisible = false
     @State private var currentStoryIndex = 0
     @State private var storyStartDate = Date()
     @State private var timerSubscription: Cancellable?
-
-    private let timer = Timer.publish(every: 0.02, on: .main, in: .common)
+    @State private var timer = Timer.publish(every: 0.02, on: .main, in: .common)
 
     init(dataSource: StoriesDataSource, configuration: StoriesConfiguration = StoriesConfiguration()) {
         self.dataSource = dataSource
@@ -112,9 +112,11 @@ struct StoriesView: View {
             updateProgress()
         }
         .onAppear {
+            isVisible = true
             updateTimerSubscription()
         }
         .onDisappear {
+            isVisible = false
             stopTimer()
         }
         .onChange(of: isReady) { _, _ in
@@ -209,12 +211,13 @@ struct StoriesView: View {
     }
 
     private func updateTimerSubscription() {
-        if isReady, !isPaused, dataSource.numberOfStories > 0 {
-            guard timerSubscription == nil else { return }
-            timerSubscription = timer.connect()
-        } else {
+        guard isVisible, isReady, !isPaused, dataSource.numberOfStories > 0 else {
             stopTimer()
+            return
         }
+
+        guard timerSubscription == nil else { return }
+        timerSubscription = timer.connect()
     }
 
     private func stopTimer() {

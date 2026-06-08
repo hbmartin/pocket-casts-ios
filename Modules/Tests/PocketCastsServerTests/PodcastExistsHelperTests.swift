@@ -12,7 +12,7 @@ final class PodcastExistsHelperTests: XCTestCase {
         try super.setUpWithError()
 
         originalDataManager = DataManager.sharedManager
-        dataManager = PodcastLookupDataManager()
+        dataManager = try PodcastLookupDataManager()
         DataManager.sharedManager = dataManager
         PodcastExistsHelper.shared.invalidate(uuid: podcastUuid)
     }
@@ -50,9 +50,9 @@ private final class PodcastLookupDataManager: DataManager {
     var podcasts: [String: Podcast] = [:]
     private(set) var findPodcastCallCount = 0
 
-    init() {
+    init() throws {
         let dbPath = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")
-        let pool = try! DatabasePool(path: dbPath)
+        let pool = try DatabasePool(path: dbPath)
         super.init(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
     }
 

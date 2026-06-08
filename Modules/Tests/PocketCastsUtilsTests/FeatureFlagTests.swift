@@ -5,7 +5,7 @@ class FeatureFlagTests: XCTestCase {
     var store: FeatureFlagOverrideStore!
 
     override func setUp() {
-        store = FeatureFlagOverrideStore(store: UserDefaults(suiteName: "\(Int.random(in: 0..<1000))")!)
+        store = FeatureFlagOverrideStore(store: UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)")!)
     }
 
     func testEnabledFeatureFlagValueIsOverridden() {
@@ -62,7 +62,7 @@ class FeatureFlagTests: XCTestCase {
     }
 
     func testRemoteConfigBooleanOverridesFeatureFlag() throws {
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: "\(Int.random(in: 0..<1000))"))
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
         let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
 
         defaults.set(false, forKey: remoteKey)
@@ -71,7 +71,7 @@ class FeatureFlagTests: XCTestCase {
     }
 
     func testRemoteConfigStringBooleanOverridesFeatureFlag() throws {
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: "\(Int.random(in: 0..<1000))"))
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
         let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
 
         defaults.set("false", forKey: "remote-config-\(remoteKey)")
