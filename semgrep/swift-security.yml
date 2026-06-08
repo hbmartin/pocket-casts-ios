@@ -73,13 +73,17 @@ rules:
       impact: MEDIUM
       technology: [github-actions]
     message: Pin GitHub Actions to immutable commit SHAs instead of moving version tags.
-    languages: [generic]
+    languages: [yaml]
     paths:
       include:
         - "**/.github/workflows/*.yml"
         - "**/semgrep/tests/github-actions-security.yml"
     patterns:
-      - pattern-regex: 'uses:\s+[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@v[0-9]+(?:\.[0-9]+)?\b'
+      - pattern: |
+          uses: $ACTION
+      - metavariable-regex:
+          metavariable: $ACTION
+          regex: ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*@(?![0-9a-fA-F]{40}$).+$
 
   - id: pocketcasts.github-actions-no-workflow-level-write-permissions
     severity: ERROR
@@ -90,13 +94,23 @@ rules:
       impact: MEDIUM
       technology: [github-actions]
     message: Keep workflow-level GitHub token permissions read-only; move write scopes to the specific job that needs them.
-    languages: [generic]
+    languages: [yaml]
     paths:
       include:
         - "**/.github/workflows/*.yml"
         - "**/semgrep/tests/github-actions-security.yml"
     patterns:
-      - pattern-regex: '(?m)^permissions:\n(?:(?:[ \t]+[A-Za-z-]+:\s*(?:read|none)\s*\n)|(?:[ \t]*#.*\n))*[ \t]+(?:actions|attestations|checks|contents|deployments|discussions|id-token|issues|packages|pages|pull-requests|repository-projects|security-events|statuses):\s*write\b'
+      - pattern-either:
+          - pattern: |
+              permissions: write-all
+          - pattern: |
+              permissions:
+                ...
+                $SCOPE: write
+                ...
+      - pattern-not-inside: |
+          jobs:
+            ...
 
   - id: pocketcasts.github-actions-checkout-persist-credentials-false
     severity: ERROR
@@ -107,13 +121,24 @@ rules:
       impact: MEDIUM
       technology: [github-actions]
     message: Set persist-credentials false on actions/checkout steps so GitHub credentials are not left in the repo config.
-    languages: [generic]
+    languages: [yaml]
     paths:
       include:
         - "**/.github/workflows/*.yml"
         - "**/semgrep/tests/github-actions-security.yml"
     patterns:
-      - pattern-regex: '(?s)uses:\s+actions/checkout@[^\n]+\n\s*with:\s*\n(?!(?:(?!\n\s*-\s+name:).)*persist-credentials:\s*false)(?:(?!\n\s*-\s+name:).)*fetch-depth:\s*0'
+      - pattern: |
+          uses: $ACTION
+      - metavariable-regex:
+          metavariable: $ACTION
+          regex: ^actions/checkout@
+      - pattern-not-inside: |
+          - ...
+            uses: $ACTION
+            with:
+              ...
+              persist-credentials: false
+              ...
 
   - id: pocketcasts.bitdrift-gate-on-github-actions
     severity: WARNING

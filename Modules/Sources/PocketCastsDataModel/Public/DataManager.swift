@@ -81,7 +81,9 @@ public class DataManager {
     public init(dbQueue: PCDBQueue) {
         self.dbQueue = dbQueue
 
-        DatabaseHelper.setup(queue: dbQueue)
+        guard DatabaseHelper.setup(queue: dbQueue) else {
+            preconditionFailure("Failed to setup database")
+        }
 
         // closing it above won't affect these calls, since they will re-open it
         podcastManager.setup(dbQueue: dbQueue)
