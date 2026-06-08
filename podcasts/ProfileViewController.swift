@@ -70,8 +70,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    var promoCode: String?
-
     private let settingsCellId = "SettingsCell"
 
     enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }

@@ -24,6 +24,7 @@ extension PodcastManager {
             // Delete all the episodes for the podcast that we're deleting
             dataManager.deleteAllEpisodesInPodcast(podcastId: podcast.id)
             dataManager.delete(podcast: podcast)
+            PodcastExistsHelper.shared.invalidate(uuid: podcast.uuid)
         }
     }
 

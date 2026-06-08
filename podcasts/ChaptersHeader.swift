@@ -4,7 +4,12 @@ import PocketCastsServer
 class ChaptersHeader: UIView {
     weak var delegate: ChaptersHeaderDelegate?
 
-    var isTogglingChapters = false
+    var isTogglingChapters = false {
+        didSet {
+            updateButtonLabel()
+            updateButtonIcon()
+        }
+    }
 
     private lazy var container: UIView = {
         let container = UIView()

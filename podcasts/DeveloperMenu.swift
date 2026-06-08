@@ -10,7 +10,6 @@ struct DeveloperMenu: View {
     @State var showingRecommendationsOnboarding = false
     @State var showingInterestsOnboarding = false
     @State var showingRecommendationsOnboardingSelected = false
-    @State var showSurvey = false
     @State var showIntroCarousel = false
     @State var showingNotificationsPermissions = false
     @State var enableDebugPlaylistLimit = false
@@ -131,16 +130,6 @@ struct DeveloperMenu: View {
                 }
             } header: {
                 Text("Notifications")
-            }
-
-            Section {
-                NavigationLink("Debug Info") {
-                    SurveyDebugInfoView()
-                        .navigationTitle("Survey Debug Info")
-                        .navigationBarTitleDisplayMode(.inline)
-                }
-            } header: {
-                Text("Ratings")
             }
 
             Section {

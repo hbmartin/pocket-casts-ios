@@ -578,17 +578,6 @@ enum AnalyticsEvent: String {
     case podcastSettingsSiriShortcutAdded
     case podcastSettingsSiriShortcutRemoved
 
-    // MARK: - Settings: Plus
-
-    case settingsPlusShown
-    case settingsPlusUpgradeButtonTapped
-    case settingsPlusLearnMoreTapped
-
-    // MARK: - Winback
-
-    case winbackScreenShown
-    case winbackScreenDismissed
-
     // MARK: - Settings: General
 
     case settingsGeneralShown
@@ -907,12 +896,6 @@ enum AnalyticsEvent: String {
     // MARK: - Champion Dialog
     case pocketCastsChampionDialogShown
     case pocketCastsChampionDialogRateButtonTapped
-
-    // MARK: - User Satisfaction Survey
-    case userSatisfactionSurveyShown
-    case userSatisfactionSurveyDismissed
-    case userSatisfactionSurveyYesResponse
-    case userSatisfactionSurveyNoResponse
 
     // MARK: - Select/Choose Podcasts
     case settingsSelectPodcastsShown

@@ -89,7 +89,7 @@ class TranscriptManager {
                 "url": transcriptURL.absoluteString
             ]
 
-            Logger.logInfo(
+            Capture.Logger.logInfo(
                 "Transcript file loaded",
                 fields: fields
             )

@@ -8,6 +8,6 @@ struct BitdriftAnalyticsAdapter: AnalyticsAdapter {
             fields["property_\(property.key)"] = String(describing: property.value)
         }
 
-        Logger.logInfo("Analytics event", fields: fields)
+        Capture.Logger.logInfo("Analytics event", fields: fields)
     }
 }

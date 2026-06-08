@@ -129,6 +129,24 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(ActionOption(rawValue: "case"), .some(.known(.chromecast)))
     }
 
+    func testConfigurableDefaultsUseUserDefaultsOverrides() throws {
+        try override(flag: .searchPredictive, value: false)
+        defer {
+            try? reset(flag: .searchPredictive)
+            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.podcastSearchDebounceMs)
+            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.customStorageLimitGB)
+            UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.errorLogoutHandling)
+        }
+
+        UserDefaults.standard.set(250, forKey: Constants.RemoteParams.podcastSearchDebounceMs)
+        UserDefaults.standard.set(42, forKey: Constants.RemoteParams.customStorageLimitGB)
+        UserDefaults.standard.set(true, forKey: Constants.RemoteParams.errorLogoutHandling)
+
+        XCTAssertEqual(Settings.podcastSearchDebounceTime(), 0.25)
+        XCTAssertEqual(Settings.plusCloudStorageLimit, 42)
+        XCTAssertTrue(Settings.errorLogoutHandling)
+    }
+
     func testImportOldDefaults() throws {
         // Start with disabled settingsSync
         try override(flag: .newSettingsStorage, value: false)

@@ -129,7 +129,6 @@ struct Constants {
         static let lastFilterShown = "SJLastFilter"
         static let lastTabOpened = "SJLastTabOpened"
         static let lastImageRefreshTime = "SJLastImageRefreshDate"
-        static let promotionFinishedAcknowledged = "SJPromotionFinishedAcknowledged"
 
         static let loginDetailsUpdated = "SJLoginDetailsUpdated"
         static let watchAutoDownloadUpNextEnabled = "SJWatchAutoDownloadUpNextEnabled"
@@ -150,8 +149,6 @@ struct Constants {
         static let lastRunVersion = "lastRunVersion"
 
         static let reviewRequestDates = "reviewRequestDates"
-        static let surveyPresentationDates = "surveyPresentationDates"
-        static let lastSurveyNotReallyDate = "lastSurveyNotReallyDate"
 
         static let showBadgeForEndOfYear = "showBadgeFor%dEndOfYear"
         static let modalHasBeenShown = "modal%dHasBeenShown"
@@ -343,9 +340,6 @@ struct Constants {
 
         static let errorLogoutHandling = "error_logout_handling"
         static let errorLogoutHandlingDefault: Bool = false
-
-        static let slumberStudiosPromoCode = "slumber_studios_yearly_promo_code"
-        static let slumberStudiosPromoCodeDefault = ""
     }
 
     static let defaultDebounceTime: TimeInterval = 0.5
@@ -403,74 +397,15 @@ struct Constants {
     }
 }
 
-enum PlusUpgradeViewSource: String {
-    case profile
-    case appearance
-    case files
-    case folders
-    case themes
-    case icons
-    case watch
+enum OnboardingFlowSource: String {
     case unknown
-    case endOfYear
-    case promoCode
-    case promotionFinished
     case upNextShuffle
-    case generatedTranscripts
     case onboarding
     case onboardingRecommendations = "onboarding_recommendations"
-    case suggestedFolders = "suggested_folders"
-    case bannerAd = "banner_ad"
-    case login
-    case accountCreated = "account_created"
-    case account
-    case settings
-    case referral
-    case deselectChapterWhatsNew = "deselect_chapters_whats_new"
-    case bookmarksLocked = "bookmarks_locked"
-    case overflowMenu = "overflow_menu"
-    case slumber
-    case deselectChapters = "deselect_chapters"
-    case headphoneSettings =  "headphone_settings"
-    case bookmarksShelfAction = "bookmarks_shelf_action"
-    case whatsNew
-    case deepLink
 
-    /// Converts the enum into a promotion identifier matching the values set on Android.
-    func promotionId() -> String {
-        return rawValue.uppercased()
-    }
-
-    /// Converts the enum into a promotion name matching the values set on Android.
-    func promotionName() -> String {
-        switch self {
-        case .profile, .appearance:
-            return "Upgrade to Plus from \(rawValue)"
-
-        case .unknown:
-            return "Unknown"
-
-        default:
-            return "Upgrade to Plus for \(rawValue)"
-        }
-    }
-
-    func isEligibleForExperiment() -> Bool {
-        switch self {
-        case .profile, .onboarding:
-            return true
-        default:
-            return false
-        }
-    }
-
-    func paywallHeadline() -> String {
-        L10n.appPocketCastsName
-    }
-
-    static func from(string: String?) -> PlusUpgradeViewSource {
+    static func from(string: String?) -> OnboardingFlowSource {
         guard let string else { return .unknown }
-        return PlusUpgradeViewSource(rawValue: string) ?? .unknown
+        return OnboardingFlowSource(rawValue: string) ?? .unknown
     }
 }
 

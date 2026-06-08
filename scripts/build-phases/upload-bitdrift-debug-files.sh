@@ -19,11 +19,19 @@ fi
 
 if [[ "$(uname -m)" == arm64 ]]; then
     BD_ARCH=arm64
+    # Pin the bd CLI objects that were current on 2026-06-02.
+    BD_OBJECT_VERSION_ID="fQWnL4K4Cj4bqEXR9XD0IADRlr31YIDx"
+    BD_SHA256_VERSION_ID="Rh11RtV34nw_NKnINPLZnyZeswOO6K3K"
 else
     BD_ARCH=x86_64
+    # Pin the bd CLI objects that were current on 2026-06-02.
+    BD_OBJECT_VERSION_ID="M6lZR6Ajd1k2GPfEN1eG5LpVpRD0oPHC"
+    BD_SHA256_VERSION_ID="3QR4crPFpuaWS5c9uyIr1tOVk6NRBK5Z"
 fi
 
-BD_URL="https://dl.bitdrift.io/bd-cli/latest/bd-cli-mac-${BD_ARCH}.tar.gz/bd"
+BD_BASE_URL="https://dl.bitdrift.io/bd-cli/latest/bd-cli-mac-${BD_ARCH}.tar.gz/bd"
+BD_URL="${BD_BASE_URL}?versionId=${BD_OBJECT_VERSION_ID}"
+BD_SHA256_URL="${BD_BASE_URL}.sha256?versionId=${BD_SHA256_VERSION_ID}"
 BD="${TEMP_DIR}/bd"
 dsym_files=()
 
@@ -50,8 +58,8 @@ fi
 
 if [[ ! -f "$BD" ]]; then
     curl -fSL "$BD_URL" -o "$BD"
-    curl -fSL "$BD_URL.sha256" -o "$BD.sha256" || {
-        echo "error: Failed to download bd CLI checksum from $BD_URL.sha256"
+    curl -fSL "$BD_SHA256_URL" -o "$BD.sha256" || {
+        echo "error: Failed to download bd CLI checksum from $BD_SHA256_URL"
         rm -f "$BD"
         exit 1
     }

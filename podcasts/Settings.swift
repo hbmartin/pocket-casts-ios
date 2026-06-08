@@ -662,37 +662,6 @@ class Settings: NSObject {
         UserDefaults.standard.set(value, forKey: playerChaptersExpandedKey)
     }
 
-    // MARK: Subscription Cancelled Acknowledgement
-
-    private static let subscriptionCancelledAcknowledgedKey = "SJCancelledAcknowledged"
-    class func setSubscriptionCancelledAcknowledged(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: subscriptionCancelledAcknowledgedKey)
-    }
-
-    class func subscriptionCancelledAcknowledged() -> Bool {
-        UserDefaults.standard.bool(forKey: subscriptionCancelledAcknowledgedKey)
-    }
-
-    private static let subscriptionCancelledSurveyShowedKey = "SJCancelledSurveyShowed"
-    static var subscriptionCancelledSurveyShown: Bool {
-        get {
-            UserDefaults.standard.bool(forKey: subscriptionCancelledSurveyShowedKey)
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: subscriptionCancelledSurveyShowedKey)
-        }
-    }
-
-    // MARK: Promotion Finished Acknowledgement
-
-    class func setPromotionFinishedAcknowledged(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Constants.UserDefaults.promotionFinishedAcknowledged)
-    }
-
-    class func promotionFinishedAcknowledged() -> Bool {
-        UserDefaults.standard.bool(forKey: Constants.UserDefaults.promotionFinishedAcknowledged)
-    }
-
     // MARK: Plus Info Closed
 
     private static let plusInfoFilesSettingsClosedKey = "PlusInfoClosedFileSettings"
@@ -996,31 +965,6 @@ class Settings: NSObject {
 
     class func resetReviewRequests() {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.reviewRequestDates)
-    }
-
-    // MARK: - User Satisfaction Survey
-
-    class func addSurveyPresented() {
-        var surveyDates = Self.surveyPresentationDates()
-        surveyDates.append(Date())
-        UserDefaults.standard.set(surveyDates, forKey: Constants.UserDefaults.surveyPresentationDates)
-    }
-
-    class func surveyPresentationDates() -> [Date] {
-        UserDefaults.standard.array(forKey: Constants.UserDefaults.surveyPresentationDates) as? [Date] ?? [Date]()
-    }
-
-    class func lastSurveyNotReallyDate() -> Date? {
-        UserDefaults.standard.object(forKey: Constants.UserDefaults.lastSurveyNotReallyDate) as? Date
-    }
-
-    class func setSurveyNotReallyResponse() {
-        UserDefaults.standard.set(Date(), forKey: Constants.UserDefaults.lastSurveyNotReallyDate)
-    }
-
-    class func resetSurveyData() {
-        UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.surveyPresentationDates)
-        UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.lastSurveyNotReallyDate)
     }
 
     // MARK: - Tracks
@@ -1554,10 +1498,6 @@ class Settings: NSObject {
         }
     }
 
-    // MARK: - Debug IAP in TF builds
-
-    static var shouldEnableIAPInTestFlightBuilds: Bool = false
-
     // MARK: - Informational Banner
 #if !os(watchOS) && !APPCLIP && !os(tvOS)
     static func dismissBanner(for type: InformationalBannerType) {
@@ -1677,43 +1617,69 @@ class Settings: NSObject {
 
     #if !os(watchOS)
         class func minTimeBetweenProgressSaves() -> TimeInterval {
-            millisecondsToTime(Constants.RemoteParams.periodicSaveTimeMsDefault)
+            millisecondsToTime(
+                configuredDouble(
+                    key: Constants.RemoteParams.periodicSaveTimeMs,
+                    default: Constants.RemoteParams.periodicSaveTimeMsDefault
+                )
+            )
         }
 
         class func podcastSearchDebounceTime() -> TimeInterval {
             if FeatureFlag.searchPredictive.enabled {
                 return 0.2
             } else {
-                return millisecondsToTime(Constants.RemoteParams.podcastSearchDebounceMsDefault)
+                return millisecondsToTime(
+                    configuredDouble(
+                        key: Constants.RemoteParams.podcastSearchDebounceMs,
+                        default: Constants.RemoteParams.podcastSearchDebounceMsDefault
+                    )
+                )
             }
         }
 
         class func episodeSearchDebounceTime() -> TimeInterval {
-            millisecondsToTime(Constants.RemoteParams.episodeSearchDebounceMsDefault)
+            millisecondsToTime(
+                configuredDouble(
+                    key: Constants.RemoteParams.episodeSearchDebounceMs,
+                    default: Constants.RemoteParams.episodeSearchDebounceMsDefault
+                )
+            )
         }
 
         static var endOfYearRequireAccount: Bool {
-            Constants.RemoteParams.endOfYearRequireAccountDefault
+            configuredBool(
+                key: Constants.RemoteParams.endOfYearRequireAccount,
+                default: Constants.RemoteParams.endOfYearRequireAccountDefault
+            )
         }
 
         static var addMissingEpisodes: Bool {
-            Constants.RemoteParams.addMissingEpisodesDefault
+            configuredBool(
+                key: Constants.RemoteParams.addMissingEpisodes,
+                default: Constants.RemoteParams.addMissingEpisodesDefault
+            )
         }
 
         static var plusCloudStorageLimit: Int {
-            Constants.RemoteParams.customStorageLimitGBDefault
+            configuredInt(
+                key: Constants.RemoteParams.customStorageLimitGB,
+                default: Constants.RemoteParams.customStorageLimitGBDefault
+            )
         }
 
         static var patronCloudStorageLimit: Int {
-            Constants.RemoteParams.patronCloudStorageGBDefault
+            configuredInt(
+                key: Constants.RemoteParams.patronCloudStorageGB,
+                default: Constants.RemoteParams.patronCloudStorageGBDefault
+            )
         }
 
         static var errorLogoutHandling: Bool {
-            Constants.RemoteParams.errorLogoutHandlingDefault
-        }
-
-        static var slumberPromoCode: String? {
-            Constants.RemoteParams.slumberStudiosPromoCodeDefault
+            configuredBool(
+                key: Constants.RemoteParams.errorLogoutHandling,
+                default: Constants.RemoteParams.errorLogoutHandlingDefault
+            )
         }
 
         static var newSettingsStorage: Bool {
@@ -1722,6 +1688,77 @@ class Settings: NSObject {
 
         private class func millisecondsToTime(_ milliseconds: Double) -> TimeInterval {
             TimeInterval(milliseconds / 1000)
+        }
+
+        private static func configuredBool(key: String, default defaultValue: Bool) -> Bool {
+            guard let value = configuredObject(forKey: key) else {
+                return defaultValue
+            }
+
+            if let bool = value as? Bool {
+                return bool
+            }
+
+            if let number = value as? NSNumber {
+                return number.boolValue
+            }
+
+            if let string = value as? String {
+                switch string.lowercased() {
+                case "true", "yes", "1":
+                    return true
+                case "false", "no", "0":
+                    return false
+                default:
+                    return defaultValue
+                }
+            }
+
+            return defaultValue
+        }
+
+        private static func configuredDouble(key: String, default defaultValue: Double) -> Double {
+            guard let value = configuredObject(forKey: key) else {
+                return defaultValue
+            }
+
+            if let double = value as? Double {
+                return double
+            }
+
+            if let number = value as? NSNumber {
+                return number.doubleValue
+            }
+
+            if let string = value as? String, let double = Double(string) {
+                return double
+            }
+
+            return defaultValue
+        }
+
+        private static func configuredInt(key: String, default defaultValue: Int) -> Int {
+            guard let value = configuredObject(forKey: key) else {
+                return defaultValue
+            }
+
+            if let int = value as? Int {
+                return int
+            }
+
+            if let number = value as? NSNumber {
+                return number.intValue
+            }
+
+            if let string = value as? String, let int = Int(string) {
+                return int
+            }
+
+            return defaultValue
+        }
+
+        private static func configuredObject(forKey key: String) -> Any? {
+            UserDefaults.standard.object(forKey: key) ?? UserDefaults.standard.object(forKey: "remote-config-\(key)")
         }
     #endif
 }

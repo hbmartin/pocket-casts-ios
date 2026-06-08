@@ -33,9 +33,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         addAnalyticsObservers()
         setupAnalytics()
 
-        let errorLogger = BitdriftErrorLogger()
-        DataManager.logger = errorLogger
-        ServerConfig.shared.errorLogger = errorLogger
+        DataManager.logger = BitdriftErrorLogger(category: "grdb")
+        ServerConfig.shared.errorLogger = BitdriftErrorLogger(category: "sync")
 
         appInstallState = appLifecycleAnalytics.checkApplicationInstalledOrUpgraded()
 
@@ -316,7 +315,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        Logger.start(
+        Capture.Logger.start(
             withAPIKey: ApiCredentials.bitdriftSDKKey,
             sessionStrategy: .fixed()
         )
@@ -336,13 +335,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 
 struct BitdriftErrorLogger: ErrorLogger {
+    let category: String
+
     func log(error: Error, context: [String: String]?) {
         var fields = (context ?? [:]).reduce(into: Fields()) { result, entry in
             result[entry.key] = entry.value
         }
-        fields["category"] = "grdb"
+        fields["category"] = category
 
-        Logger.logWarning(
+        Capture.Logger.logWarning(
             "Pocket Casts error: \(error.localizedDescription)",
             fields: fields,
             error: error

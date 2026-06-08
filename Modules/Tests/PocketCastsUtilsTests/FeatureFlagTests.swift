@@ -60,6 +60,41 @@ class FeatureFlagTests: XCTestCase {
         try? store.override(flag, withValue: false)
         XCTAssertFalse(store.isOverridden(flag))
     }
+
+    func testRemoteConfigBooleanOverridesFeatureFlag() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "\(Int.random(in: 0..<1000))"))
+        let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+
+        defaults.set(false, forKey: remoteKey)
+
+        XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
+    }
+
+    func testRemoteConfigStringBooleanOverridesFeatureFlag() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "\(Int.random(in: 0..<1000))"))
+        let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+
+        defaults.set("false", forKey: "remote-config-\(remoteKey)")
+
+        XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
+    }
+
+    func testEnabledUsesRemoteConfigValueAfterLocalOverride() throws {
+        let flag = FeatureFlag.defaultPlayerFilterCallbackFix
+        let remoteKey = try XCTUnwrap(flag.remoteKey)
+        defer {
+            UserDefaults.standard.removeObject(forKey: remoteKey)
+            try? FeatureFlagOverrideStore().override(flag, withValue: flag.default)
+        }
+
+        UserDefaults.standard.set(false, forKey: remoteKey)
+
+        XCTAssertFalse(flag.enabled)
+
+        try FeatureFlagOverrideStore().override(flag, withValue: true)
+
+        XCTAssertTrue(flag.enabled)
+    }
 }
 
 enum MockFeatureFlag: OverrideableFlag {

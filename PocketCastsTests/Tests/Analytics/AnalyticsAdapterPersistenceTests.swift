@@ -3,7 +3,7 @@ import XCTest
 
 /// Tests that verify the Analytics opt-out/opt-in flow works correctly.
 /// This tests the fix from commit f60bcd3ff "Call setupAnalytics after unregister"
-/// which ensures that UserSatisfactionSurveyManager and NotificationsCoordinator
+/// which ensures that NotificationsCoordinator
 /// remain registered as adapters after optOutOfAnalytics and optInOfAnalytics are called.
 class AnalyticsAdapterPersistenceTests: XCTestCase {
 
@@ -63,7 +63,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
 
         // Then: The method should attempt to call setupAnalytics
         // Note: In the real app, this would call (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
-        // which would re-register UserSatisfactionSurveyManager and NotificationsCoordinator
+        // which would re-register NotificationsCoordinator
         // We can't test this directly without mocking UIApplication, but we can verify the flow
         #if !os(watchOS) && !APPCLIP
         // The method completed without error, indicating setupAnalytics would be called
@@ -72,13 +72,12 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
     }
 
     @MainActor
-    func testOptOutOptInFlowWithBothAdapters() {
-        // Given: Both adapters are registered (simulating app startup)
-        let surveyManager = UserSatisfactionSurveyManager.shared
+    func testOptOutOptInFlowWithNotificationsAdapter() {
+        // Given: The app startup adapter is registered
         let notificationsCoordinator = NotificationsCoordinator.shared
-        let adapters: [AnalyticsAdapter] = [surveyManager, notificationsCoordinator]
+        let adapters: [AnalyticsAdapter] = [notificationsCoordinator]
         Analytics.register(adapters: adapters)
-        XCTAssertTrue(analytics.adaptersRegistered, "Both adapters should be registered")
+        XCTAssertTrue(analytics.adaptersRegistered, "Adapter should be registered")
 
         // When: User opts out of analytics
         analytics.optOutOfAnalytics()
@@ -92,12 +91,12 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         analytics.refreshRegistered()
 
         // Then: The system should be ready for re-registration
-        // In the real app, setupAnalytics would be called automatically and would re-register the adapters
+        // In the real app, setupAnalytics would be called automatically and would re-register the adapter
         XCTAssertFalse(Settings.analyticsOptOut(), "User should be opted back in")
 
-        // Simulate what setupAnalytics would do - re-register the adapters
+        // Simulate what setupAnalytics would do - re-register the adapter
         Analytics.register(adapters: adapters)
-        XCTAssertTrue(analytics.adaptersRegistered, "Adapters should be re-registered after opt-in")
+        XCTAssertTrue(analytics.adaptersRegistered, "Adapter should be re-registered after opt-in")
     }
 
     func testOptInOfAnalyticsCallsSetupAnalytics() {
@@ -112,7 +111,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         XCTAssertFalse(Settings.analyticsOptOut(), "User should be opted in after calling optInOfAnalytics")
 
         // The method should have attempted to call setupAnalytics
-        // In the real app, this would re-register UserSatisfactionSurveyManager and NotificationsCoordinator
+        // In the real app, this would re-register NotificationsCoordinator
         #if !os(watchOS) && !APPCLIP
         XCTAssertTrue(true, "optInOfAnalytics completed successfully")
         #endif

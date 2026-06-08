@@ -2,10 +2,6 @@ import Combine
 import PocketCastsServer
 import UIKit
 
-protocol CollectionHeaderLinkDelegate: AnyObject {
-    func linkTapped()
-}
-
 class EpisodeListHeaderView: UIView {
     private var cancellables = Set<AnyCancellable>()
     @Published var contentViewSize: CGSize = .zero
@@ -25,7 +21,6 @@ class EpisodeListHeaderView: UIView {
         }
     }
 
-    weak var linkDelegate: CollectionHeaderLinkDelegate?
     @IBOutlet var linkView: ThemeableView! {
         didSet {
             linkView.style = .primaryUi06
@@ -55,8 +50,11 @@ class EpisodeListHeaderView: UIView {
     }
 
     let podcastCollection: PodcastCollection
+    private let webURL: URL?
+
     init(collection: PodcastCollection) {
         podcastCollection = collection
+        webURL = collection.webUrl.flatMap(URL.init(string:))
         super.init(frame: .zero)
 
         Bundle.main.loadNibNamed(String(describing: EpisodeListHeaderView.self), owner: self, options: nil)
@@ -73,7 +71,7 @@ class EpisodeListHeaderView: UIView {
         listTitle.text = podcastCollection.title
         listDescription.text = podcastCollection.description
 
-        if let linkTitle = collection.webTitle, collection.webUrl != nil {
+        if let linkTitle = collection.webTitle, let webURL, URLHelper.isAllowedExternalContentLink(webURL) {
             linkView.isHidden = false
             linkLabel.text = linkTitle
         } else {
@@ -108,6 +106,12 @@ class EpisodeListHeaderView: UIView {
     }
 
     @objc private func linkTapped() {
-        linkDelegate?.linkTapped()
+        guard let webURL else { return }
+
+        URLHelper.open(
+            webURL,
+            context: .externalContent,
+            options: .init(prefersExternalBrowser: Settings.openLinks)
+        )
     }
 }

@@ -4,27 +4,19 @@ import UIKit
 import WebKit
 
 class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptivePresentationControllerDelegate { // NOSONAR - Navigation is restricted in decidePolicyFor.
-    enum Source: String {
-        case settings
-        case winback
-        case about
-    }
-
     private let loadingIndicator = AngularActivityIndicator(size: CGSize(width: 40, height: 40), lineWidth: 2.0, duration: 1.0)
 
     private var emailHelper = EmailHelper()
     private var supportWebView = WKWebView()
     private var databaseExport: DatabaseExport? = nil
     private var loadingAlert: ShiftyLoadingAlert?
-    private let source: Source
 
     var didDismiss: (() -> Void)? = nil
 
     var request: URLRequest
 
-    init(url: URL = ServerHelper.asUrl(ServerConstants.Urls.support), source: Source = .settings) {
+    init(url: URL = ServerHelper.asUrl(ServerConstants.Urls.support)) {
         request = URLRequest(url: url)
-        self.source = source
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -62,23 +54,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
         AnalyticsHelper.userGuideOpened()
 
-        switch source {
-        case .winback:
-            Analytics.track(.winbackScreenShown, properties: ["screen": "help_and_feedback"])
-        default:
-            Analytics.track(.settingsHelpShown)
-        }
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-
-        switch source {
-        case .winback:
-            Analytics.track(.winbackScreenDismissed, properties: ["screen": "help_and_feedback"])
-        default:
-            break
-        }
+        Analytics.track(.settingsHelpShown)
     }
 
     private func setupLoadingIndicator() {
@@ -128,7 +104,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
     }
 
     private func showStatusPage() {
-        let hostingController = ThemedHostingController(rootView: StatusPageView(source: source))
+        let hostingController = ThemedHostingController(rootView: StatusPageView())
         navigationController?.pushViewController(hostingController, animated: true)
     }
 
@@ -229,7 +205,7 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
 
 private extension OnlineSupportController {
     func export(_ sender: UIBarButtonItem) {
-        Analytics.track(.exportDatabaseTapped, properties: ["source": source.rawValue])
+        Analytics.track(.exportDatabaseTapped, properties: ["source": "settings"])
 
         databaseExport = .init()
 
@@ -270,7 +246,7 @@ private extension OnlineSupportController {
 
 private extension OnlineSupportController {
     func viewLogs(_ sender: UIBarButtonItem) {
-        let vc = LogsViewController(source: source)
+        let vc = LogsViewController()
         self.navigationController?.pushViewController(vc, animated: true)
     }
 }

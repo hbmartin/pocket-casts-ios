@@ -2,6 +2,15 @@ import Foundation
 import PocketCastsUtils
 
 class AnalyticsHelper {
+    /// Whether the user has opted out of analytics or not.
+    static var optedOut: Bool {
+        #if APPCLIP
+            return true
+        #else
+            return Settings.analyticsOptOut()
+        #endif
+    }
+
     class func openedCategory(categoryId: Int, region: String) {
         logEvent("category_open", parameters: ["id": categoryId, "region": region])
         logEvent("category_page_open_\(categoryId)", parameters: nil)
@@ -294,15 +303,7 @@ class AnalyticsHelper {
     }
 }
 
-// MARK: - Plus Upgrades
-
 #if os(iOS)
-    extension AnalyticsHelper {
-        static func plusPlanPurchased() {
-            logEvent("purchase")
-        }
-    }
-
     // MARK: - Account Creation
 
     extension AnalyticsHelper {
@@ -332,10 +333,15 @@ class AnalyticsHelper {
 
 private extension AnalyticsHelper {
     class func bumpStat(_ name: String, parameters: [String: Any]? = nil) {
-        logEvent(name, parameters: parameters)
+        // These legacy Firebase duplicates already have Analytics.track calls.
     }
 
     class func logEvent(_ name: String, parameters: [String: Any]? = nil) {
-        // Legacy event helper retained as a no-op for call-site compatibility.
+        guard optedOut == false else { return }
+
+        #if !os(watchOS) && !os(tvOS)
+            let properties = parameters?.mapValues { String(describing: $0) }
+            Analytics.track(name: name, properties: properties)
+        #endif
     }
 }

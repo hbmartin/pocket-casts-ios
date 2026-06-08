@@ -48,7 +48,7 @@ let package = Package(
         .package(url: "https://github.com/ra1028/DifferenceKit", from: "1.2.0"),
         .package(url: "https://github.com/krisk/fuse-swift", from: "1.4.0"),
         .package(url: "https://github.com/shiftyjelly/SwipeCellKit", from: "2.7.6"),
-        .package(url: "https://github.com/bitdriftlabs/capture-ios.git", from: "0.23.4"),
+        .package(url: "https://github.com/bitdriftlabs/capture-ios.git", .upToNextMinor(from: "0.23.4")),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "7.1.0"),
         .package(url: "https://github.com/Automattic/Agrume", from: "5.6.12"),
         .package(url: "https://github.com/joeldev/JLRoutes", from: "2.1.1"),
