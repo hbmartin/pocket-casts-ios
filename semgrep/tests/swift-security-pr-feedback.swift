@@ -123,3 +123,32 @@ final class SafeEpisodeListHeaderView {
         )
     }
 }
+
+final class UnsafeDatabaseSchemaResetHelper {
+    // ruleid: pocketcasts.no-destructive-database-schema-reset
+    private class func dropExistingSchema(db: PCDatabase) throws {
+        try db.executeUpdate("DROP TABLE IF EXISTS SJPodcast;", values: nil)
+    }
+}
+
+final class UnsafeSQLiteMasterBulkDropHelper {
+    private class func resetTables(db: PCDatabase) throws {
+        // ruleid: pocketcasts.no-destructive-database-schema-reset
+        let resultSet = try db.executeQuery("""
+            SELECT name FROM sqlite_master
+            WHERE type = 'table'
+        """, values: nil)
+
+        while resultSet.next() {
+            guard let table = resultSet.string(forColumn: "name") else { continue }
+            try db.executeUpdate("DROP TABLE IF EXISTS \(table);", values: nil)
+        }
+    }
+}
+
+final class SafeDatabaseSchemaSetupHelper {
+    private class func createCurrentSchema(db: PCDatabase) throws {
+        // ok: pocketcasts.no-destructive-database-schema-reset
+        try db.executeUpdate("CREATE TABLE SJPodcast (id INTEGER PRIMARY KEY);", values: nil)
+    }
+}

@@ -3,6 +3,7 @@ import PocketCastsUtils
 
 class DatabaseHelper {
     private static let currentSchemaVersion: Int32 = 73
+    private static let minimumMigratableSchemaVersion: Int32 = 73
 
     class func setup(queue: PCDBQueue) {
         queue.write { db in
@@ -27,37 +28,30 @@ class DatabaseHelper {
 
     private class func upgradeIfRequired(schemaVersion: inout Int32, db: PCDatabase) {
         guard schemaVersion < currentSchemaVersion else { return }
+        guard schemaVersion == 0 || schemaVersion >= minimumMigratableSchemaVersion else { return }
 
         db.beginTransaction()
 
         do {
-            try dropExistingSchema(db: db)
-            try createCurrentSchema(db: db)
-            schemaVersion = currentSchemaVersion
+            if schemaVersion == 0 {
+                try createCurrentSchema(db: db)
+                schemaVersion = currentSchemaVersion
+            } else {
+                try migrateSchema(schemaVersion: &schemaVersion, db: db)
+            }
             db.commit()
         } catch {
             let lastErrorCode = db.lastErrorCode()
             let lastErrorMessage = db.lastErrorMessage()
             db.rollback()
-            FileLog.shared.addMessage("Schema baseline creation failed, code \(lastErrorCode): \(lastErrorMessage), actual error: \(error)")
+            FileLog.shared.addMessage("Schema setup failed, code \(lastErrorCode): \(lastErrorMessage), actual error: \(error)")
         }
     }
 
-    private class func dropExistingSchema(db: PCDatabase) throws {
-        let resultSet = try db.executeQuery("""
-            SELECT name FROM sqlite_master
-            WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
-        """, values: nil)
-        defer { resultSet.close() }
-
-        while resultSet.next() {
-            guard let table = resultSet.string(forColumn: "name") else { continue }
-            try db.executeUpdate("DROP TABLE IF EXISTS \(quotedIdentifier(table));", values: nil)
-        }
-    }
-
-    private class func quotedIdentifier(_ identifier: String) -> String {
-        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
+    private class func migrateSchema(schemaVersion: inout Int32, db: PCDatabase) throws {
+        _ = db
+        _ = schemaVersion
+        // Append future migrations here as currentSchemaVersion increases, updating schemaVersion after each step.
     }
 
     private class func createCurrentSchema(db: PCDatabase) throws {

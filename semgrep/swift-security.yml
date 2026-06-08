@@ -113,6 +113,25 @@ rules:
                 ...
               }
 
+  - id: pocketcasts.no-destructive-database-schema-reset
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Do not reintroduce schema-wide database reset paths; fresh installs should create the baseline schema and future versions should use incremental migrations.
+    languages: [generic]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/Private/Managers/Util/DatabaseHelper.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-either:
+          - pattern-regex: '\bdropExistingSchema\b'
+          - pattern-regex: '(?s)executeQuery\("""\s*SELECT\s+name\s+FROM\s+sqlite_master'
+
   - id: pocketcasts.external-link-tap-requires-allowlist-guard
     severity: WARNING
     metadata:
