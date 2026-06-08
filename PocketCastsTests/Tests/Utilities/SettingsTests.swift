@@ -135,22 +135,10 @@ final class SettingsTests: XCTestCase {
         try reset(flag: .newSettingsStorage)
     }
 
-    func testChromecastPlayerActionUsesCastRawValue() {
-        XCTAssertEqual(PlayerAction.chromecast.rawValue, "cast")
-    }
-
     func testPlayerActionRawValueInitializerHandlesAllCases() {
         PlayerAction.allCases.forEach { action in
             XCTAssertEqual(PlayerAction(rawValue: action.rawValue), action)
         }
-    }
-
-    func testChromecastPlayerActionDecodesLegacyRawValue() throws {
-        let decoded = try JSONDecoder().decode(PlayerAction.self, from: Data("\"case\"".utf8))
-
-        XCTAssertEqual(PlayerAction(rawValue: "case"), .chromecast)
-        XCTAssertEqual(decoded, .chromecast)
-        XCTAssertEqual(ActionOption(rawValue: "case"), .some(.known(.chromecast)))
     }
 
     func testConfigurableDefaultsUseUserDefaultsOverrides() throws {

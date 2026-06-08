@@ -355,24 +355,6 @@
 /* A common string used throughout the app. Informs the user how many podcasts have been chosen. This is the singular format for an accompanying plural option. */
 "chosen_podcasts_singular" = "1 Podcast Chosen";
 
-/* Title for the screen that provides the list of available ChromeCast devices. */
-"chromecast_cast_to" = "Cast to";
-
-/* Informs the user that ChromeCast has connected. */
-"chromecast_connected" = "Connected";
-
-/* Informs the user that ChromeCast has connected to the device. Used as a title when no episode is playing. */
-"chromecast_connected_to_device" = "Connected to device";
-
-/* Error message informing the user that the app is unable to Cast local files in ChromeCast. */
-"chromecast_error" = "Unable to cast local file";
-
-/* Informs the user that ChromeCast has connected to the device but no episode is playing. */
-"chromecast_nothing_playing" = "Nothing is playing";
-
-/* Placeholder name for when ChromeCast doesn't have a device name. */
-"chromecast_unnamed_device" = "Un-named device";
-
 /* A common string used throughout the app. Prompt to perform a clean up operation on the selected items. */
 "clean_up" = "Clean Up";
 

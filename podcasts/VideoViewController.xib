@@ -11,7 +11,6 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="VideoViewController" customModule="podcasts" customModuleProvider="target">
             <connections>
-                <outlet property="castButton" destination="DOV-qE-ZNr" id="Pfp-XB-yJD"/>
                 <outlet property="closeFileStackView" destination="yW4-dK-d0d" id="Lc9-Rp-2xN"/>
                 <outlet property="closeToSafeTopConstraint" destination="aWx-SG-wH6" id="SBI-GQ-fG8"/>
                 <outlet property="closeToViewTopConstraint" destination="MTO-yh-Zcf" id="FEh-jc-9Kl"/>
@@ -104,15 +103,6 @@
                                     <connections>
                                         <action selector="pictureInPictureTapped:" destination="-1" eventType="touchUpInside" id="uVI-Pa-BOr"/>
                                     </connections>
-                                </button>
-                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="DOV-qE-ZNr" customClass="PCGoogleCastButton" customModule="podcasts" customModuleProvider="target">
-                                    <rect key="frame" x="76" y="0.0" width="24" height="24"/>
-                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                    <constraints>
-                                        <constraint firstAttribute="height" constant="24" id="dpb-mg-GZS"/>
-                                        <constraint firstAttribute="width" constant="24" id="uqH-88-CLm"/>
-                                    </constraints>
-                                    <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 </button>
                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="cWH-GU-meK" customClass="PCRoutePickerView" customModule="podcasts" customModuleProvider="target">
                                     <rect key="frame" x="132" y="0.0" width="24" height="24"/>

@@ -190,13 +190,11 @@ final class WatchSyncManagerTests: XCTestCase {
 
     func testIntegration_ContextUpdateFlow_WhenUncertain_ShouldNotTriggerBackgroundSync() {
         XCTAssertFalse(WatchSyncDecision.shouldPerformBackgroundRefresh(
-            isPlusUser: true,
             isAppInBackground: true,
             comparisonResult: .notEnoughInformation,
             isFirstSyncInProgress: false
         ))
         XCTAssertFalse(WatchSyncDecision.shouldPerformBackgroundRefresh(
-            isPlusUser: true,
             isAppInBackground: true,
             comparisonResult: .same,
             isFirstSyncInProgress: false

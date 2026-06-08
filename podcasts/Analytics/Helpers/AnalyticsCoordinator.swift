@@ -12,7 +12,6 @@ enum AnalyticsSource: String, AnalyticsDescribable {
     case autoAdd = "auto_add"
     case autoDownloadSettings = "auto_download_settings"
     case chooseFolder = "choose_folder"
-    case chromecast
     case discover
     case discoverCategory = "discover_category"
     case discoverEpisodeList = "discover_episode_list"

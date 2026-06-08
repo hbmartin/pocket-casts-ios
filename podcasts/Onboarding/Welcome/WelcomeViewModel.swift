@@ -57,14 +57,12 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
         let source: String
         switch displayType {
         case .newAccount: source = "welcome_new_account"
-        case .plus: source = "welcome_plus"
         }
         Analytics.track(.newsletterOptInChanged, properties: ["enabled": newsletterOptIn, "source": source])
     }
 
     // MARK: - Configuration
     enum DisplayType: String, AnalyticsDescribable {
-        case plus
         case newAccount = "created_account"
 
         var analyticsDescription: String { rawValue }

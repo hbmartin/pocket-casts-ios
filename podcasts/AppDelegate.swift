@@ -5,6 +5,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import Combine
+import TelemetryDeck
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     private static let initialRefreshDelay = 2.seconds
@@ -29,6 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         configureBitdrift()
+        configureTelemetryDeck()
         setupSecrets()
         addAnalyticsObservers()
         setupAnalytics()
@@ -319,6 +321,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             withAPIKey: ApiCredentials.bitdriftSDKKey,
             sessionStrategy: .fixed()
         )
+    }
+
+    private func configureTelemetryDeck() {
+        guard !ApiCredentials.telemetryDeckAppID.isEmpty else {
+            FileLog.shared.addMessage("TelemetryDeck App ID is empty; skipping TelemetryDeck startup")
+            return
+        }
+
+        TelemetryDeck.initialize(config: TelemetryDeck.Config(appID: ApiCredentials.telemetryDeckAppID))
     }
 
     private func setupSecrets() {

@@ -193,7 +193,7 @@ enum IconType: Int, CaseIterable, AnalyticsDescribable {
         }
     }
 
-    /// Whether the icon is unlocked for the users active subscription
+    /// All alternate app icons are available to everyone.
     var isUnlocked: Bool {
         true
     }

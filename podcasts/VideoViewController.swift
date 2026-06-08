@@ -91,8 +91,6 @@ class VideoViewController: SimpleNotificationsViewController, AVPictureInPicture
 
     @IBOutlet var airplayButton: UIButton!
 
-    @IBOutlet var castButton: UIButton!
-
     private var pipController: AVPictureInPictureController?
     @IBOutlet var controlsOverlay: UIView! {
         didSet {
