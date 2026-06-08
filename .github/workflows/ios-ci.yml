@@ -1,0 +1,117 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - trunk
+      - "release/**"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: "Optional PR number to run manually after reviewing forked PR code."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  IOS_SIMULATOR_RUNTIME_VERSION: ${{ vars.IOS_SIMULATOR_RUNTIME_VERSION }}
+
+jobs:
+  build_and_test:
+    name: Build and Test
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout manually approved PR head
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.pull_request_number != '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: refs/pull/${{ inputs.pull_request_number }}/head
+
+      - name: Build and test
+        run: scripts/ci/build-and-test.sh
+
+      - name: Upload build logs and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-and-test-${{ github.run_id }}
+          path: |
+            build/github/logs/**/*.log
+            build/github/results/**/*
+          if-no-files-found: ignore
+          retention-days: 14
+
+  static_checks:
+    name: Static Checks
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout manually approved PR head
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.pull_request_number != '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: refs/pull/${{ inputs.pull_request_number }}/head
+
+      - name: Run static checks
+        run: scripts/ci/static-checks.sh
+
+      - name: Upload static check logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-checks-${{ github.run_id }}
+          path: build/github/logs/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  localization_lint:
+    name: Lint Localized Strings Format
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout manually approved PR head
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.pull_request_number != '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: refs/pull/${{ inputs.pull_request_number }}/head
+
+      - name: Lint localized strings
+        run: scripts/ci/localization-lint.sh

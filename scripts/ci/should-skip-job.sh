@@ -2,10 +2,6 @@
 set -euo pipefail
 
 # Usage: should-skip-job.sh --job-type [build|localization]
-# --job-type build: skip PR builds when changes are limited to documentation,
-#     tooling, and non-code files.
-# --job-type localization: skip PR builds when no localization files changed.
-#
 # Return codes:
 # 0  - Job should be skipped.
 # 1  - Job should not be skipped.
@@ -31,28 +27,17 @@ LOCALIZATION_PATTERNS=(
 BUILD="build"
 LOCALIZATION="localization"
 
-buildkite_annotate() {
-  local style="$1"
-  local context="$2"
-  local message="$3"
-
-  if command -v buildkite-agent >/dev/null 2>&1; then
-    echo "$message" | buildkite-agent annotate --style "$style" --context "$context"
-  fi
-}
-
-buildkite_cancel_step() {
-  if command -v buildkite-agent >/dev/null 2>&1; then
-    buildkite-agent step cancel
-  fi
+is_pull_request_build() {
+  [[ "${GITHUB_EVENT_NAME:-}" == "pull_request" ]]
 }
 
 changed_files() {
-  if [[ "${BUILDKITE_PULL_REQUEST:-false}" == "false" ]]; then
-    return 1
+  local base_branch=""
+
+  if [[ "${GITHUB_EVENT_NAME:-}" == "pull_request" ]]; then
+    base_branch="${GITHUB_BASE_REF:-}"
   fi
 
-  local base_branch="${BUILDKITE_PULL_REQUEST_BASE_BRANCH:-${BUILDKITE_BRANCH:-}}"
   if [[ -z "$base_branch" ]]; then
     return 1
   fi
@@ -119,22 +104,28 @@ all_changed_files_match() {
 
 show_skip_message() {
   local job_type=$1
-  local message="Skipped ${BUILDKITE_LABEL:-Job} - no relevant files changed"
-  local context="skip-$(echo "${BUILDKITE_LABEL:-$job_type}" | sed -E -e 's/[^[:alnum:]]+/-/g' | tr A-Z a-z)"
+  local label="${GITHUB_JOB:-$job_type}"
+  local message="Skipped ${label} - no relevant files changed"
 
-  buildkite_annotate "info" "$context" "$message"
   echo "$message"
+
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    {
+      echo "### Skipped job"
+      echo
+      echo "$message"
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
 }
 
 if [[ -z "${1:-}" || "$1" != "--job-type" || -z "${2:-}" ]]; then
   echo "Error: Must specify --job-type [$BUILD|$LOCALIZATION]"
-  buildkite_cancel_step
   exit 15
 fi
 
-# Always run branch builds. Skip decisions are only safe for PR builds because
-# Buildkite exposes a clear target branch for them.
-if [[ "${BUILDKITE_PULL_REQUEST:-false}" == "false" ]]; then
+# Skip decisions are only safe for automatic PR builds. Branch and manual runs
+# should run because there is no clear target branch in every case.
+if ! is_pull_request_build; then
   exit 1
 fi
 
@@ -156,7 +147,6 @@ case "$job_type" in
     ;;
   *)
     echo "Error: Job type must be either '$BUILD' or '$LOCALIZATION'"
-    buildkite_cancel_step
     exit 15
     ;;
 esac

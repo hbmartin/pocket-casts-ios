@@ -25,7 +25,7 @@ for arg in "$@"; do
 done
 
 if [[ "$INSTALL_GEMS" -eq 1 ]]; then
-  echo "--- :ruby: Setting up Ruby tools"
+  echo "Setting up Ruby tools"
 
   if command -v rbenv >/dev/null 2>&1 && [[ -s "$REPO_ROOT/.ruby-version" ]]; then
     RUBY_VERSION="$(tr -d '[:space:]' < "$REPO_ROOT/.ruby-version")"
@@ -35,7 +35,7 @@ if [[ "$INSTALL_GEMS" -eq 1 ]]; then
         rbenv install -s "$RUBY_VERSION"
       else
         echo "rbenv is installed, but Ruby $RUBY_VERSION is not and ruby-build is unavailable."
-        echo "Install Ruby $RUBY_VERSION on this agent or remove rbenv from the agent environment."
+        echo "Install Ruby $RUBY_VERSION on this runner or remove rbenv from the runner environment."
         exit 1
       fi
     fi
@@ -53,7 +53,7 @@ if [[ "$INSTALL_GEMS" -eq 1 ]]; then
 fi
 
 if [[ "$RESOLVE_SWIFTPM" -eq 1 ]]; then
-  echo "--- :swift: Resolving Swift Package Manager dependencies"
+  echo "Resolving Swift Package Manager dependencies"
   swift package --package-path "$REPO_ROOT/Modules" resolve
   swift package --package-path "$REPO_ROOT/BuildTools" resolve
 fi

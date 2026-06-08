@@ -8,7 +8,7 @@ if [[ "${CONFIGURATION}" != "Release" ]]; then
 fi
 
 if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
-    if [[ -n "${BUILDKITE:-}" || -n "${CI:-}" ]]; then
+    if [[ -n "${CI:-}" ]]; then
         echo "error: BITDRIFT_API_KEY is required to upload Release dSYMs to Bitdrift."
         exit 1
     fi

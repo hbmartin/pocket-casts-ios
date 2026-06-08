@@ -109,7 +109,7 @@ To configure Bitdrift for internal builds, add the SDK key to the existing secre
 
 The credentials generator writes this into `podcasts/Credentials/ApiCredentials.swift` from `podcasts/Credentials/ApiCredentials.tpl`. Do not hard-code the SDK key in source files.
 
-Release builds upload dSYMs to Bitdrift from the Xcode build phase `Upload Bitdrift Debug Files`. Buildkite release builds require `BITDRIFT_API_KEY` to be configured in the pipeline environment; local Release builds without this variable skip the upload. The upload uses Bitdrift's [`bd debug-files upload`](https://docs.bitdrift.io/sdk/features/fatal-issues.html) command.
+Release builds upload dSYMs to Bitdrift from the Xcode build phase `Upload Bitdrift Debug Files`. GitHub Actions release builds require `BITDRIFT_API_KEY` to be available in the runner environment; local Release builds without this variable skip the upload. The upload uses Bitdrift's [`bd debug-files upload`](https://docs.bitdrift.io/sdk/features/fatal-issues.html) command.
 
 ### Export Files
 
