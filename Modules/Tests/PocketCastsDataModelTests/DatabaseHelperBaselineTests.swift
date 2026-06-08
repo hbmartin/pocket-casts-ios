@@ -33,7 +33,7 @@ final class DatabaseHelperBaselineTests: XCTestCase {
         }
     }
 
-    func testPrebaselineDatabaseIsIgnoredWithoutDroppingOrRebuilding() throws {
+    func testPrebaselineDatabaseFailsWithoutDroppingOrRebuilding() throws {
         let databaseName = "\(UUID().uuidString).sqlite3"
         guard let dbPool = try DatabasePool.newTestDatabase(databaseName: databaseName) else {
             XCTFail("Expected test database")
@@ -46,7 +46,9 @@ final class DatabaseHelperBaselineTests: XCTestCase {
             try db.execute(sql: "PRAGMA user_version = 72;")
         }
 
-        DatabaseHelper.setup(queue: GRDBQueue(dbPool: dbPool))
+        let setupSucceeded = DatabaseHelper.setup(queue: GRDBQueue(dbPool: dbPool))
+
+        XCTAssertFalse(setupSucceeded)
 
         try dbPool.read { db in
             XCTAssertEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 72)

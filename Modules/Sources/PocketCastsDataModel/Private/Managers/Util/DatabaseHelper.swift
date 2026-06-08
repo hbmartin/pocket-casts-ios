@@ -5,7 +5,10 @@ class DatabaseHelper {
     private static let currentSchemaVersion: Int32 = 73
     private static let minimumMigratableSchemaVersion: Int32 = 73
 
-    class func setup(queue: PCDBQueue) {
+    @discardableResult
+    class func setup(queue: PCDBQueue) -> Bool {
+        var setupSucceeded = true
+
         queue.write { db in
             do {
                 try db.executeQuery("PRAGMA busy_timeout = 10000", values: nil).close()
@@ -13,22 +16,32 @@ class DatabaseHelper {
                 let startingSchemaVersion = db.pragmaUserVersion() ?? 0
 
                 var newSchemaVersion = startingSchemaVersion
-                upgradeIfRequired(schemaVersion: &newSchemaVersion, db: db)
+                try upgradeIfRequired(schemaVersion: &newSchemaVersion, db: db)
 
                 if newSchemaVersion != startingSchemaVersion {
                     FileLog.shared.addMessage("Schema update from \(startingSchemaVersion) to \(newSchemaVersion)")
                     try db.executeUpdate("PRAGMA user_version = \(newSchemaVersion)", values: nil)
                 }
             } catch {
+                setupSucceeded = false
                 assertionFailure("Failed to setup database \(db.lastErrorCode()): \(db.lastErrorMessage()) actual error: \(error)")
                 FileLog.shared.addMessage("Failed to setup database \(db.lastErrorCode()): \(db.lastErrorMessage()) actual error: \(error)")
             }
         }
+
+        return setupSucceeded
     }
 
-    private class func upgradeIfRequired(schemaVersion: inout Int32, db: PCDatabase) {
+    private class func upgradeIfRequired(schemaVersion: inout Int32, db: PCDatabase) throws {
         guard schemaVersion < currentSchemaVersion else { return }
-        guard schemaVersion == 0 || schemaVersion >= minimumMigratableSchemaVersion else { return }
+        guard schemaVersion == 0 || schemaVersion >= minimumMigratableSchemaVersion else {
+            let error = DatabaseSetupError.schemaTooOld(
+                schemaVersion: schemaVersion,
+                minimumMigratableSchemaVersion: minimumMigratableSchemaVersion
+            )
+            FileLog.shared.addMessage(error.description)
+            throw error
+        }
 
         db.beginTransaction()
 
@@ -45,6 +58,22 @@ class DatabaseHelper {
             let lastErrorMessage = db.lastErrorMessage()
             db.rollback()
             FileLog.shared.addMessage("Schema setup failed, code \(lastErrorCode): \(lastErrorMessage), actual error: \(error)")
+            throw error
+        }
+    }
+
+    private enum DatabaseSetupError: LocalizedError, CustomStringConvertible {
+        case schemaTooOld(schemaVersion: Int32, minimumMigratableSchemaVersion: Int32)
+
+        var errorDescription: String? {
+            description
+        }
+
+        var description: String {
+            switch self {
+            case let .schemaTooOld(schemaVersion, minimumMigratableSchemaVersion):
+                return "Database schema version \(schemaVersion) is older than the minimum migratable version \(minimumMigratableSchemaVersion). Database setup cannot continue."
+            }
         }
     }
 

@@ -16,10 +16,51 @@ jobs:
       issues: write
       pull-requests: write
 ---
+# ruleid: pocketcasts.github-actions-no-workflow-level-write-permissions
+permissions: write-all
+jobs:
+  release:
+    steps:
+      - run: echo unsafe
+---
+# ok: pocketcasts.github-actions-no-workflow-level-write-permissions
+permissions:
+  contents: read
+jobs:
+  release:
+    permissions: write-all
+    steps:
+      - run: echo scoped
+---
 steps:
   - name: Upload
     # ruleid: pocketcasts.github-actions-pin-actions-to-sha
     uses: actions/upload-artifact@v4
+---
+steps:
+  - name: Upload
+    # ruleid: pocketcasts.github-actions-pin-actions-to-sha
+    uses: actions/upload-artifact@v1.2.3
+---
+steps:
+  - name: Upload
+    # ruleid: pocketcasts.github-actions-pin-actions-to-sha
+    uses: actions/upload-artifact@main
+---
+steps:
+  - name: Upload
+    # ruleid: pocketcasts.github-actions-pin-actions-to-sha
+    uses: actions/upload-artifact@latest
+---
+steps:
+  - name: Upload SARIF
+    # ok: pocketcasts.github-actions-pin-actions-to-sha
+    uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e
+---
+steps:
+  - name: Local action
+    # ok: pocketcasts.github-actions-pin-actions-to-sha
+    uses: ./.github/actions/local
 ---
 steps:
   - name: Upload
@@ -30,8 +71,28 @@ steps:
   - name: Checkout repository
     # ruleid: pocketcasts.github-actions-checkout-persist-credentials-false
     uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+---
+steps:
+  - name: Checkout repository
+    # ruleid: pocketcasts.github-actions-checkout-persist-credentials-false
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
     with:
       fetch-depth: 0
+---
+steps:
+  - name: Checkout repository
+    # ruleid: pocketcasts.github-actions-checkout-persist-credentials-false
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      fetch-depth: 0
+      persist-credentials: true
+---
+steps:
+  - name: Checkout repository
+    # ruleid: pocketcasts.github-actions-checkout-persist-credentials-false
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      submodules: recursive
 ---
 steps:
   - name: Checkout repository
