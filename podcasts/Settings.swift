@@ -662,53 +662,6 @@ class Settings: NSObject {
         UserDefaults.standard.set(value, forKey: playerChaptersExpandedKey)
     }
 
-    // MARK: Plus Info Closed
-
-    private static let plusInfoFilesSettingsClosedKey = "PlusInfoClosedFileSettings"
-    class func plusInfoDismissedOnFilesSettings() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoFilesSettingsClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnFilesSettings(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoFilesSettingsClosedKey)
-    }
-
-    private static let plusInfoFilesAddClosedKey = "PlusInfoClosedFileAdd"
-    class func plusInfoDismissedOnFilesAdd() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoFilesAddClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnFilesAdd(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoFilesAddClosedKey)
-    }
-
-    private static let plusInfoAppearanceClosedKey = "PlusInfoClosedAppearance"
-    class func plusInfoDismissedOnAppearance() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoAppearanceClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnAppearance(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoAppearanceClosedKey)
-    }
-
-    private static let plusInfoWatchClosedKey = "PlusInfoClosedWatch"
-    class func plusInfoDismissedOnWatch() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoWatchClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnWatch(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoWatchClosedKey)
-    }
-
-    private static let plusInfoProfileClosedKey = "PlusInfoClosedProfile"
-    class func plusInfoDismissedOnProfile() -> Bool {
-        UserDefaults.standard.bool(forKey: Settings.plusInfoProfileClosedKey)
-    }
-
-    class func setPlusInfoDismissedOnProfile(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: Settings.plusInfoProfileClosedKey)
-    }
-
     class func uniqueAppId() -> String? {
         if let appId = UserDefaults.standard.object(forKey: Constants.UserDefaults.appId) as? String {
             return appId

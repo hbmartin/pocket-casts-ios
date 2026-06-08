@@ -73,10 +73,9 @@ public struct UpNextListComparator {
 }
 
 public struct WatchSyncDecision {
-    public static func shouldPerformBackgroundRefresh(isPlusUser: Bool,
-                                                      isAppInBackground: Bool,
+    public static func shouldPerformBackgroundRefresh(isAppInBackground: Bool,
                                                       comparisonResult: UpNextComparisonResult,
                                                       isFirstSyncInProgress: Bool) -> Bool {
-        isPlusUser && isAppInBackground && comparisonResult == .watchNeedsUpdate && !isFirstSyncInProgress
+        isAppInBackground && comparisonResult == .watchNeedsUpdate && !isFirstSyncInProgress
     }
 }

@@ -10,7 +10,7 @@ struct WelcomeView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            WelcomeConfetti(type: .normal)
+            WelcomeConfetti()
 
             ScrollViewIfNeeded {
                 VStack(alignment: .leading) {
@@ -100,11 +100,9 @@ struct WelcomeView_Previews: PreviewProvider {
 
 // MARK: - View Components
 struct WelcomeConfetti: View {
-    let type: WelcomeConfettiEmitter.ConfettiType
-
     var body: some View {
         GeometryReader { proxy in
-            WelcomeConfettiEmitter(type: type, frame: proxy.frame(in: .local)).ignoresSafeArea()
+            WelcomeConfettiEmitter(frame: proxy.frame(in: .local)).ignoresSafeArea()
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -262,17 +260,10 @@ private struct SectionButton: ButtonStyle {
 // MARK: - Confetti 🎉
 
 struct WelcomeConfettiEmitter: UIViewRepresentable {
-    let type: ConfettiType
     let frame: CGRect
     let afterDelay: TimeInterval
 
-    enum ConfettiType {
-        case normal
-        case plus
-    }
-
-    init(type: ConfettiType, frame: CGRect, afterDelay: TimeInterval = 0.5) {
-        self.type = type
+    init(frame: CGRect, afterDelay: TimeInterval = 0.5) {
         self.frame = frame
         self.afterDelay = afterDelay
     }
@@ -285,33 +276,13 @@ struct WelcomeConfettiEmitter: UIViewRepresentable {
                 confettiView.removeFromSuperview()
             }
 
-            let confetti = (type == .plus) ? PlusConfettiView.self : NormalConfettiView.self
-            confetti.cleanupAndAnimate(on: hostView, frame: frame, onAnimationCompletion: completion)
+            NormalConfettiView.cleanupAndAnimate(on: hostView, frame: frame, onAnimationCompletion: completion)
         }
 
         return hostView
     }
 
     func updateUIView(_ uiView: UIView, context: Context) { }
-
-    private class PlusConfettiView: ConfettiView {
-        override func emitConfetti() {
-            guard let icon = UIImage(named: "confetti-plus") else {
-                return
-            }
-
-            // Add more to the emitter
-            var particles: [Particle] = []
-            for _ in 0..<10 {
-                particles.append(Particle(image: icon))
-            }
-
-            var config = PlusConfettiView.EmitterConfig()
-            config.scaleRange = 1.2
-
-            self.emit(with: particles, config: config)
-        }
-    }
 
     private class NormalConfettiView: ConfettiView {
         override func emitConfetti() {
