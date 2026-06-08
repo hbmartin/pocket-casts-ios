@@ -1,6 +1,6 @@
 import PocketCastsServer
-import PocketCastsUtils
 import PocketCastsDataModel
+import PocketCastsUtils
 
 extension AppDelegate {
     private var shouldRegisterAdapters: Bool {
@@ -23,10 +23,6 @@ extension AppDelegate {
         adapters.append(LiveAnalyticsStreamer())
 
         adapters.append(NotificationsCoordinator.shared)
-
-        if FeatureFlag.userSatisfactionSurvey.enabled {
-            adapters.append(UserSatisfactionSurveyManager.shared)
-        }
 
         Analytics.register(adapters: adapters)
         Analytics.add(analyticsAppThemeProvider: AnalyticsAppThemeProvider())

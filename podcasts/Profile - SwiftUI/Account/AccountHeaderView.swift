@@ -1,12 +1,11 @@
 import SwiftUI
-import PocketCastsUtils
 
 struct AccountHeaderView: View {
     @ObservedObject var viewModel: AccountHeaderViewModel
 
     var body: some View {
         container { _ in
-            VStack(spacing: FeatureFlag.newOnboardingUpgrade.enabled ? 8 : Constants.padding.vertical) {
+            VStack(spacing: Constants.padding.vertical) {
                 SubscriptionProfileImage(viewModel: viewModel)
                     .frame(width: Constants.imageSize, height: Constants.imageSize)
                 ProfileInfoLabels(profile: viewModel.profile, alignment: .center, spacing: Constants.spacing)

@@ -134,7 +134,7 @@ extension ImportViewModel {
         controller.viewModel = viewModel
 
         if let source {
-            OnboardingFlow.shared.updateAnalyticsSource(PlusUpgradeViewSource.from(string: source))
+            OnboardingFlow.shared.updateAnalyticsSource(OnboardingFlowSource.from(string: source))
         }
         return navigationController == nil ? navController : controller
     }

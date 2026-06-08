@@ -2,26 +2,46 @@ import Foundation
 import PocketCastsDataModel
 
 /// Helper that checks for podcast existence and caches database requests.
-class PodcastExistsHelper {
-    static let shared = PodcastExistsHelper()
+public final class PodcastExistsHelper {
+    public static let shared = PodcastExistsHelper()
 
-    private var checkedUuidsThatExist: [String] = []
-    private var lock = NSLock()
+    private var checkedUuidsThatExist = Set<String>()
+    private let lock = NSLock()
+
+    private init() {}
 
     func exists(uuid: String) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-
-        if checkedUuidsThatExist.contains(uuid) {
+        if cachedExists(uuid: uuid) {
             return true
         }
 
         let exists = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) != nil
 
         if exists {
-            checkedUuidsThatExist.append(uuid)
+            markExists(uuid: uuid)
         }
 
         return exists
+    }
+
+    func markExists(uuid: String) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        checkedUuidsThatExist.insert(uuid)
+    }
+
+    public func invalidate(uuid: String) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        checkedUuidsThatExist.remove(uuid)
+    }
+
+    private func cachedExists(uuid: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return checkedUuidsThatExist.contains(uuid)
     }
 }

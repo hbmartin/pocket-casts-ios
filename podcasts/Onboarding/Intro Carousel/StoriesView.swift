@@ -1,3 +1,4 @@
+import Combine
 import EndOfYear
 import SwiftUI
 
@@ -77,8 +78,9 @@ struct StoriesView: View {
     @State private var isPaused = false
     @State private var currentStoryIndex = 0
     @State private var storyStartDate = Date()
+    @State private var timerSubscription: Cancellable?
 
-    private let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 0.02, on: .main, in: .common)
 
     init(dataSource: StoriesDataSource, configuration: StoriesConfiguration = StoriesConfiguration()) {
         self.dataSource = dataSource
@@ -109,12 +111,24 @@ struct StoriesView: View {
         .onReceive(timer) { _ in
             updateProgress()
         }
+        .onAppear {
+            updateTimerSubscription()
+        }
+        .onDisappear {
+            stopTimer()
+        }
+        .onChange(of: isReady) { _, _ in
+            updateTimerSubscription()
+        }
+        .onChange(of: isPaused) { _, _ in
+            updateTimerSubscription()
+        }
     }
 
     private var indicators: some View {
         VStack {
             HStack(spacing: configuration.indicatorSpacing) {
-                ForEach(0 ..< dataSource.numberOfStories, id: \.self) { index in
+                ForEach(Array(0 ..< dataSource.numberOfStories), id: \.self) { index in
                     StoryIndicator(
                         index: index,
                         style: dataSource.indicatorStyle(for: index),
@@ -192,5 +206,19 @@ struct StoriesView: View {
 
     private func showPreviousStory() {
         startStory(at: max(currentStoryIndex - 1, 0))
+    }
+
+    private func updateTimerSubscription() {
+        if isReady, !isPaused, dataSource.numberOfStories > 0 {
+            guard timerSubscription == nil else { return }
+            timerSubscription = timer.connect()
+        } else {
+            stopTimer()
+        }
+    }
+
+    private func stopTimer() {
+        timerSubscription?.cancel()
+        timerSubscription = nil
     }
 }

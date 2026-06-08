@@ -7,11 +7,11 @@ struct OnboardingFlow: AnalyticsSourceProvider {
     static var shared = OnboardingFlow()
 
     private(set) var currentFlow: Flow = .none
-    private(set) var source: PlusUpgradeViewSource? = nil
+    private(set) var source: OnboardingFlowSource? = nil
 
     private(set) var accountCreated: ((Bool)->())?
 
-    mutating func begin(flow: Flow, in controller: UIViewController? = nil, source: PlusUpgradeViewSource, context: Context? = nil, customTitle: String? = nil, accountCreated: ((Bool)->())? = nil) -> UIViewController {
+    mutating func begin(flow: Flow, in controller: UIViewController? = nil, source: OnboardingFlowSource, context: Context? = nil, customTitle: String? = nil, accountCreated: ((Bool)->())? = nil) -> UIViewController {
         self.currentFlow = flow
         self.source = source
         self.accountCreated = accountCreated
@@ -45,7 +45,7 @@ struct OnboardingFlow: AnalyticsSourceProvider {
 
     /// Updates the source passed for analytics
     /// Any `track` events will use this new source
-    mutating func updateAnalyticsSource(_ source: PlusUpgradeViewSource) {
+    mutating func updateAnalyticsSource(_ source: OnboardingFlowSource) {
         self.source = source
     }
 

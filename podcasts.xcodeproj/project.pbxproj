@@ -866,20 +866,14 @@
 		F26CC6332FACD5D400C1F8F7 /* ShareProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F26CC62F2FACD5D400C1F8F7 /* ShareProfileViewModel.swift */; };
 		F29158922FBD0C3E0028F7F3 /* ProfilePhotoMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29158912FBD0C3E0028F7F3 /* ProfilePhotoMenu.swift */; };
 		F29158942FBD0C3F0028F7F3 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29158932FBD0C3F0028F7F3 /* CameraPicker.swift */; };
-		F50D723C2E29F17800764D9B /* heart-eyes.json in Resources */ = {isa = PBXBuildFile; fileRef = F50D723B2E29F17800764D9B /* heart-eyes.json */; };
-		F50D723E2E29F17F00764D9B /* pensive.json in Resources */ = {isa = PBXBuildFile; fileRef = F50D723D2E29F17F00764D9B /* pensive.json */; };
 		F518BC6D2E71252300E84711 /* BookmarkActionFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F518BC6C2E71252300E84711 /* BookmarkActionFactory.swift */; };
 		F5197A402B995A1E007C8D0A /* DownloadManager+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5197A3F2B995A1E007C8D0A /* DownloadManager+Logging.swift */; };
 		F51E3B522CC70A4A00AFAD05 /* Humane-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = F51E3B512CC70A4A00AFAD05 /* Humane-Medium.otf */; };
-		F53481C62E21C07B00E80253 /* UserSatisfactionSurveyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F53481C52E21C07B00E80253 /* UserSatisfactionSurveyManager.swift */; };
-		F5516DBE2E1C9D82005DC201 /* UserSatisfactionSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5516DBD2E1C9D82005DC201 /* UserSatisfactionSurveyView.swift */; };
 		F55449452B75935F00F68AE9 /* AppSettings+ImportUserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55449442B75935F00F68AE9 /* AppSettings+ImportUserDefaults.swift */; };
 		F561A6EA2F68F81C0014889E /* StreamingCellularTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F561A6E92F68F81C0014889E /* StreamingCellularTracker.swift */; };
 		F565602F2B7ACD9B003E76D5 /* DataManager+Import.swift in Sources */ = {isa = PBXBuildFile; fileRef = F565602E2B7ACD9B003E76D5 /* DataManager+Import.swift */; };
 		F57BAC672C00CD9C007B24BD /* URLSession+Episode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57BAC662C00CD9C007B24BD /* URLSession+Episode.swift */; };
 		F58189C32DBC56A200B95199 /* PodcastInfo+DiscoverPodcast.swift in Sources */ = {isa = PBXBuildFile; fileRef = F58189C12DBC56A200B95199 /* PodcastInfo+DiscoverPodcast.swift */; };
-		F5AA0FD42E21D05D00ECDEEA /* SurveyDebugInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AA0FD32E21D05D00ECDEEA /* SurveyDebugInfoView.swift */; };
-		F5BA0D742E3443ED005931D3 /* PressableLottieButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5BA0D732E3443ED005931D3 /* PressableLottieButtonStyle.swift */; };
 		F5BA5C9C2C80F38200BDA5B9 /* UIViewControllerContentConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5BA5C9B2C80F38200BDA5B9 /* UIViewControllerContentConfiguration.swift */; };
 		F5F884632CC9EAA6002BED2C /* Humane-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = F5F884622CC9EAA6002BED2C /* Humane-Bold.otf */; };
 		F5FF61202BD076BA00190711 /* Sharing.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5FF611F2BD076BA00190711 /* Sharing.xcassets */; };
@@ -1969,20 +1963,14 @@
 		F26CC62F2FACD5D400C1F8F7 /* ShareProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareProfileViewModel.swift; sourceTree = "<group>"; };
 		F29158912FBD0C3E0028F7F3 /* ProfilePhotoMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotoMenu.swift; sourceTree = "<group>"; };
 		F29158932FBD0C3F0028F7F3 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
-		F50D723B2E29F17800764D9B /* heart-eyes.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "heart-eyes.json"; sourceTree = "<group>"; };
-		F50D723D2E29F17F00764D9B /* pensive.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = pensive.json; sourceTree = "<group>"; };
 		F518BC6C2E71252300E84711 /* BookmarkActionFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BookmarkActionFactory.swift; path = Shared/BookmarkActionFactory.swift; sourceTree = "<group>"; };
 		F5197A3F2B995A1E007C8D0A /* DownloadManager+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DownloadManager+Logging.swift"; sourceTree = "<group>"; };
 		F51E3B512CC70A4A00AFAD05 /* Humane-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Humane-Medium.otf"; sourceTree = "<group>"; };
-		F53481C52E21C07B00E80253 /* UserSatisfactionSurveyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSatisfactionSurveyManager.swift; sourceTree = "<group>"; };
-		F5516DBD2E1C9D82005DC201 /* UserSatisfactionSurveyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSatisfactionSurveyView.swift; sourceTree = "<group>"; };
 		F55449442B75935F00F68AE9 /* AppSettings+ImportUserDefaults.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AppSettings+ImportUserDefaults.swift"; sourceTree = "<group>"; };
 		F561A6E92F68F81C0014889E /* StreamingCellularTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingCellularTracker.swift; sourceTree = "<group>"; };
 		F565602E2B7ACD9B003E76D5 /* DataManager+Import.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DataManager+Import.swift"; sourceTree = "<group>"; };
 		F57BAC662C00CD9C007B24BD /* URLSession+Episode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Episode.swift"; sourceTree = "<group>"; };
 		F58189C12DBC56A200B95199 /* PodcastInfo+DiscoverPodcast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PodcastInfo+DiscoverPodcast.swift"; sourceTree = "<group>"; };
-		F5AA0FD32E21D05D00ECDEEA /* SurveyDebugInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyDebugInfoView.swift; sourceTree = "<group>"; };
-		F5BA0D732E3443ED005931D3 /* PressableLottieButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressableLottieButtonStyle.swift; sourceTree = "<group>"; };
 		F5BA5C9B2C80F38200BDA5B9 /* UIViewControllerContentConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewControllerContentConfiguration.swift; sourceTree = "<group>"; };
 		F5F884622CC9EAA6002BED2C /* Humane-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Humane-Bold.otf"; sourceTree = "<group>"; };
 		F5FF611F2BD076BA00190711 /* Sharing.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Sharing.xcassets; sourceTree = "<group>"; };
@@ -2898,7 +2886,6 @@
 		46C22EE128F7496000F4173B /* Developer Menu */ = {
 			isa = PBXGroup;
 			children = (
-				F5AA0FD32E21D05D00ECDEEA /* SurveyDebugInfoView.swift */,
 				46C22EE228F7497300F4173B /* DeveloperMenu.swift */,
 			);
 			name = "Developer Menu";
@@ -3846,8 +3833,6 @@
 				9AF4152C2EBA0B1F003D3677 /* 2025_top_5_podcasts_b.json */,
 				FF9BCB322EA659B400A25F12 /* playback_2025_listened.json */,
 				FFB74B0D2E993A8C00F16857 /* end_of_year_2025_intro.json */,
-				F50D723B2E29F17800764D9B /* heart-eyes.json */,
-				F50D723D2E29F17F00764D9B /* pensive.json */,
 				BDAA3CF82122A2DA00649F81 /* effects_button.json */,
 				BDAA3CF42122A2D900649F81 /* player_play_button.json */,
 				BD43BDE52122AD0600E63165 /* skip_button.json */,
@@ -4078,9 +4063,6 @@
 				BDDA72D41C9BA7CF003A3BEB /* Theme */,
 				BD2A49EE1701AA8500C2F192 /* User Interface */,
 				BD585C1C204785EF00AC842C /* AppDelegate.swift */,
-				F5516DBD2E1C9D82005DC201 /* UserSatisfactionSurveyView.swift */,
-				F5BA0D732E3443ED005931D3 /* PressableLottieButtonStyle.swift */,
-				F53481C52E21C07B00E80253 /* UserSatisfactionSurveyManager.swift */,
 				C73CD7A72916E8A900EAE879 /* SwiftUI+Previews.swift */,
 				BD585C1E2047887700AC842C /* AppDelegate+UrlHandling.swift */,
 				BD585C242047C74D00AC842C /* AppDelegate+Defaults.swift */,
@@ -5330,7 +5312,6 @@
 				BD6D4181200C5BD600CA8993 /* Podcasts.xcassets in Resources */,
 				8BD5A50A2A1F96C200F473C6 /* AppIcon-Pride40x40@3x.png in Resources */,
 				BDE954EA236684E300CEB6DA /* ChaptersViewController.xib in Resources */,
-				F50D723E2E29F17F00764D9B /* pensive.json in Resources */,
 				BDBCE6D2244E7755004FFE13 /* AppIcon-Radioactive76x76~ipad.png in Resources */,
 				BD056F0F1F6F8BE300AF8260 /* Main.storyboard in Resources */,
 				BD6B664D245BC24C00CF5245 /* AppIcon-Pocket-Cats40x40@3x.png in Resources */,
@@ -5417,7 +5398,6 @@
 				BDCA84F31C1FB7260022ED4D /* DownloadSettingsViewController.xib in Resources */,
 				BDA002F61F7B318B00DCB4AE /* AppIcon-Round76x76~ipad.png in Resources */,
 				BDA002EA1F7B318B00DCB4AE /* AppIcon-Round20x20~ipad.png in Resources */,
-				F50D723C2E29F17800764D9B /* heart-eyes.json in Resources */,
 				BD12931522F809F8004608A6 /* AppIcon-Electric-Pink76x76@2x~ipad.png in Resources */,
 				BDBCE6C9244E7755004FFE13 /* AppIcon-Radioactive83.5x83.5@2x~ipad.png in Resources */,
 				BD12927B22F7CCC9004608A6 /* AppIcon-Electric-Blue40x40@3x.png in Resources */,
@@ -5964,8 +5944,6 @@
 				BD74F15127F28E6600222785 /* HomeGridDataHelper.swift in Sources */,
 				BDE954F22366900900CEB6DA /* PlayerTabsView.swift in Sources */,
 				BDBD2AC7202D66B300E0A79E /* OptionsPickerRootController.swift in Sources */,
-				F5516DBE2E1C9D82005DC201 /* UserSatisfactionSurveyView.swift in Sources */,
-				F5AA0FD42E21D05D00ECDEEA /* SurveyDebugInfoView.swift in Sources */,
 				45ECEF8827E9253900C65030 /* ShowNotesFormatterUtils.swift in Sources */,
 				E3F37446291F0DD1005916ED /* Chapters.swift in Sources */,
 				BD7EA4DC1E52D4320014EAC5 /* PlayPauseButton.swift in Sources */,
@@ -6098,7 +6076,6 @@
 				BD83DE0C2068B8E000012C06 /* MiniPlayerViewController+Gestures.swift in Sources */,
 				C799373B2A095F6F0010DC64 /* ProfileInfoLabels.swift in Sources */,
 				C725285F299B315000A582C3 /* BookmarkManager.swift in Sources */,
-				F53481C62E21C07B00E80253 /* UserSatisfactionSurveyManager.swift in Sources */,
 				BD27B8C72756F4C9007A0EA7 /* Styles.swift in Sources */,
 				406C6854216AC9EF0004E249 /* PodcastFilterSelectionCell.swift in Sources */,
 				BDEC9AB720511F8900088D76 /* SettingsOptionsViewController.swift in Sources */,
@@ -6283,7 +6260,6 @@
 				9AF646952E5E081600627836 /* PlaylistDetailViewController+TableView.swift in Sources */,
 				BD27B8C52756F486007A0EA7 /* UIColor+SwiftUI.swift in Sources */,
 				C791418D294CE32D00F1852B /* StorageManager.swift in Sources */,
-				F5BA0D742E3443ED005931D3 /* PressableLottieButtonStyle.swift in Sources */,
 				BDF15A401B54E064000EC323 /* PlaybackQueue.swift in Sources */,
 				C713D4F42A04C90500A78468 /* ProfileDataViewModel.swift in Sources */,
 				BD6B1F011CE05159003CE958 /* AnalyticsHelper.swift in Sources */,

@@ -232,13 +232,8 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
             }
         }
 
-        if OnboardingFlow.shared.source == .promoCode {
-            navigationController?.popToRootViewController(animated: true)
+        navigationController?.dismiss(animated: true) {
             resetFlow()
-        } else {
-            navigationController?.dismiss(animated: true) {
-                resetFlow()
-            }
         }
     }
 

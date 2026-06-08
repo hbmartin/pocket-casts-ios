@@ -83,7 +83,6 @@ class AuthenticationHelper {
         NotificationCenter.postOnMainThread(notification: .userLoginDidChange)
 
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-        Settings.setPromotionFinishedAcknowledged(true)
         Settings.setLoginDetailsUpdated()
     }
 

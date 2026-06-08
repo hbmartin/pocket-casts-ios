@@ -148,14 +148,39 @@ public class ServerPodcastManager: NSObject {
         let url = ServerConstants.Urls.cache() + "mobile/podcast/findbyepisode/\(podcastUuid)/\(episodeUuid)"
 
         if let info = loadFrom(url: url) {
-            // Ensure podcast is added, otherwise episode won't be
-            if !PodcastExistsHelper.shared.exists(uuid: podcastUuid) {
-                _ = addPodcast(podcastInfo: info, subscribe: false, lastModified: nil)
-            }
-
-            let episode = addEpisode(podcastInfo: info, shouldUpdate: shouldUpdateEpisode)
+            let episode = addMissingEpisode(
+                podcastInfo: info,
+                podcastUuid: podcastUuid,
+                shouldUpdateEpisode: shouldUpdateEpisode
+            )
             completion?(episode)
         }
+    }
+
+    private func addMissingEpisode(podcastInfo: [String: Any], podcastUuid: String, shouldUpdateEpisode: Bool) -> Episode? {
+        guard ensurePodcastExists(podcastUuid: podcastUuid, podcastInfo: podcastInfo) else {
+            return nil
+        }
+
+        var episode = addEpisode(podcastInfo: podcastInfo, shouldUpdate: shouldUpdateEpisode)
+
+        if episode == nil {
+            PodcastExistsHelper.shared.invalidate(uuid: podcastUuid)
+
+            if ensurePodcastExists(podcastUuid: podcastUuid, podcastInfo: podcastInfo) {
+                episode = addEpisode(podcastInfo: podcastInfo, shouldUpdate: shouldUpdateEpisode)
+            }
+        }
+
+        return episode
+    }
+
+    private func ensurePodcastExists(podcastUuid: String, podcastInfo: [String: Any]) -> Bool {
+        if PodcastExistsHelper.shared.exists(uuid: podcastUuid) {
+            return true
+        }
+
+        return addPodcast(podcastInfo: podcastInfo, subscribe: false, lastModified: nil)
     }
 
     private func addToDatabase(upNextItem: UpNextItem, to podcast: Podcast) {
@@ -181,7 +206,10 @@ public class ServerPodcastManager: NSObject {
 
         // check if we already have this podcast, and if we do treat it differently
         if let existingPodcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
-            if existingPodcast.isSubscribed(), subscribe { return true }
+            if existingPodcast.isSubscribed(), subscribe {
+                PodcastExistsHelper.shared.markExists(uuid: podcastUuid)
+                return true
+            }
 
             if !existingPodcast.isSubscribed(), subscribe {
                 // we have this podcast, just in a non-subscribed state, so subscribe to it
@@ -193,6 +221,7 @@ public class ServerPodcastManager: NSObject {
             updateLatestEpisodeInfo(podcast: existingPodcast, setDefaults: true, autoDownloadLimit: autoDownloads)
 
             ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: existingPodcast.uuid)
+            PodcastExistsHelper.shared.markExists(uuid: podcastUuid)
 
             return true
         }
@@ -217,6 +246,7 @@ public class ServerPodcastManager: NSObject {
         updateLatestEpisodeInfo(podcast: podcast, setDefaults: subscribe, autoDownloadLimit: autoDownloads)
 
         if subscribe { ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: podcast.uuid) }
+        PodcastExistsHelper.shared.markExists(uuid: podcastUuid)
 
         return true
     }

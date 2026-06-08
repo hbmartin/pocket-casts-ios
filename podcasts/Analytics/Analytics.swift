@@ -33,6 +33,15 @@ class Analytics {
         Self.shared.track(event, properties: properties)
     }
 
+    /// Tracks an event whose name is already normalized.
+    ///
+    /// Prefer `AnalyticsEvent` for new analytics. This exists so legacy
+    /// Firebase-only events can keep their existing names while using the
+    /// current analytics adapters.
+    static func track(name: String, properties: [String: Sendable]? = nil) {
+        Self.shared._track(name, properties: properties)
+    }
+
     func track(_ event: AnalyticsEvent, properties: [String: Sendable]? = nil) {
         _track(event.eventName, properties: properties)
     }

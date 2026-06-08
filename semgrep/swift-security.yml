@@ -58,8 +58,8 @@ rules:
         - "**/Package.resolved"
         - "Gemfile"
         - "Gemfile.lock"
-        - "/fastlane/**"
-        - "/.buildkite/**"
+        - "**/fastlane/**"
+        - "**/.buildkite/**"
     patterns:
       - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|fastlane-plugin-sentry|sentry_debug_files_upload|SENTRY_AUTH_TOKEN|sentry-cli)\b'
 
@@ -422,6 +422,56 @@ rules:
         - "**/*.storyboard"
     patterns:
       - pattern-regex: '\bPlusLockedInfo(?:View|Cell)\b'
+
+  - id: pocketcasts.profile-uploaded-files-row-present
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Keep the Uploaded Files row in ProfileViewController's table data.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/ProfileViewController.swift"
+    patterns:
+      - pattern-regex: '^\s*data\s*=\s*\[\[(?=[^\]\n]*\.allStats)(?=[^\]\n]*\.downloaded)(?=[^\]\n]*\.starred)(?=[^\]\n]*\.bookmarks)(?=[^\]\n]*\.listeningHistory)(?=[^\]\n]*\.help)(?![^\]\n]*\.uploadedFiles)[^\]\n]*\]\]'
+
+  - id: pocketcasts.no-legacy-plus-payment-entry-points
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Pocket Casts app features are free now; do not reintroduce legacy Plus IAP, trial eligibility, or winback payment entry points.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-regex: '\b(?:plusPlanPurchased|iapProductsUpdated|iapProductsFailed|iapPurchaseCompleted|iapPurchaseDeferred|iapPurchaseFailed|iapPurchaseCancelled|checkTrialEligibility|CancelSubscriptionTask|CancelSubscriptionSurveyTask|WinbackOfferTask|WinbackOfferInfo|ValidatePromoCodeTask|RedeemPromoCodeTask|validatePromoCode|promoCode|loadWinbackOffer|submitSurveyResult|newAccountUpgradePromptFlow|newOnboardingUpgrade|upgradeExperiment|cancelSubscriptionSurvey|newOfferEligibilityCheck|newOnboardingUpgradeTrialTimeline|libroFm|winbackScreenShown|winbackScreenDismissed|PlusUpgradeViewSource|paywallHeadline|isEligibleForExperiment|setPromotionFinishedAcknowledged|promotionFinishedAcknowledged|subscriptionCancelledAcknowledged|subscriptionCancelledSurveyShown|shouldEnableIAPInTestFlightBuilds|paymentFailedImageName|paymentDeferredImageName|accountUpgradedImageName|plusCreatedImageName|plusCancelledImageName|plusCancelledGoldImageName|cancelSubscriptionImageName|pcPlusLogoHorizontalImageName|pcPlusLogoVerticalImageName|folderLockedImageName|setupNewAccountGoldImageName)\b'
+
+  - id: pocketcasts.no-removed-user-satisfaction-survey
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: UserSatisfactionSurveyManager and its survey UI were removed; do not reintroduce this in-app satisfaction survey flow.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+      exclude:
+        - "**/Strings+Generated.swift"
+    patterns:
+      - pattern-regex: '\b(?:UserSatisfactionSurveyManager|UserSatisfactionSurveyView|SurveyDebugInfoView|SurveyTriggerEvent|SurveyCheckResult|userSatisfactionSurvey|surveyPresentationDates|lastSurveyNotReallyDate|addSurveyPresented|resetSurveyData|setSurveyNotReallyResponse|surveyEpisodeCompletionCount|surveyPlusUpgradeDate)\b'
 
   - id: pocketcasts.keychain-redundant-read-after-save
     severity: WARNING

@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-    <!-- Badge: "build: {trunk CI status}" -->
-    <a href="https://buildkite.com/automattic/pocket-casts-ios"><img src="https://badge.buildkite.com/6c995de3d1584006341cc4dfda1312619f375385f5c0319dfe.svg?branch=trunk" /></a>
+    <!-- Badge: "Semgrep Swift Security: {trunk GitHub Actions status}" -->
+    <a href="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml"><img src="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml/badge.svg?branch=trunk" /></a>
     <!-- Badge: "license: MPL" -->
-    <a href="https://github.com/Automattic/pocket-casts-ios/blob/trunk/LICENSE.md"><img src="https://img.shields.io/badge/license-MPL-black" /></a>
+    <a href="https://github.com/hbmartin/pocket-casts-ios/blob/trunk/LICENSE.md"><img src="https://img.shields.io/badge/license-MPL-black" /></a>
     <!-- Badge: "platform: ios|watchos" -->
     <img src="https://img.shields.io/badge/platform-ios%20%7C%20watchos-lightgrey" />
     <!-- Badge: "Xcode: {version}+" -->
-    <img src="https://img.shields.io/badge/Xcode-v26.1.1%2B-informational" />
+    <img src="https://img.shields.io/badge/Xcode-v26.4.1%2B-informational" />
 </p>
 
 <p align="center">
@@ -35,9 +35,7 @@ If you're an external contributor run `make external_contributor`. After that yo
 
 ## Swift Formatting
 
-We use [SwiftLint](https://github.com/realm/SwiftLint) to ensure code is spaced and formatted the same way and follows the same [general conventions](https://github.com/Automattic/swiftlint-config). We have a script that will run it over the whole project.
-
-Once the required dependencies are installed via `bundle exec pod install`, you can run:
+We use [SwiftLint](https://github.com/realm/SwiftLint) to ensure code is spaced and formatted the same way and follows the same [general conventions](https://github.com/Automattic/swiftlint-config). SwiftLint runs through the BuildTools Swift Package plugin, so no extra setup is required — just run it over the whole project with:
 
 `make format`
 
@@ -46,6 +44,24 @@ You should do this before making a pull request.
 ## Running
 
 Open the `.xcodeproj` file, select the Pocket Casts project and the Simulator Device you want to run on, and hit the play button.
+
+## Building & Testing
+
+The `make` targets wrap the common `xcodebuild` invocations:
+
+```
+make build_staging   # Build the "Pocket Casts Staging" scheme (StagingDebug)
+make test_staging    # Build and run the unit tests
+make static_checks   # SwiftLint, Semgrep rules/tests, and the Xcode static analyzer
+make clean           # Clean the build artifacts
+```
+
+Scope the tests to a single class, method, or module with `ONLY_TESTING`:
+
+```
+make test_staging ONLY_TESTING=PocketCastsServerTests
+make test_staging ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName
+```
 
 ## Localization
 
@@ -77,7 +93,23 @@ make update_proto API_PATH={API_PATH}
 Logs can be found in the app as a view and shared from there through the system sheet or mail:
 * Profile > Help & Feedback > ⋯ > Logs
 
-When debugging analytics, the `tracksLogging` feature flag will enable logging for these events.
+When debugging analytics, the `analyticsLogging` feature flag will enable logging for these events.
+
+### Bitdrift
+
+Pocket Casts uses [Bitdrift Capture](https://docs.bitdrift.io/sdk/quickstart) for crash and log collection. The SDK starts during app launch when `ApiCredentials.bitdriftSDKKey` has a value. External contributor builds leave this value empty, which skips Bitdrift startup.
+
+To configure Bitdrift for internal builds, add the SDK key to the existing secrets JSON as:
+
+```json
+{
+  "bitdrift_sdk_key": "..."
+}
+```
+
+The credentials generator writes this into `podcasts/Credentials/ApiCredentials.swift` from `podcasts/Credentials/ApiCredentials.tpl`. Do not hard-code the SDK key in source files.
+
+Release builds upload dSYMs to Bitdrift from the Xcode build phase `Upload Bitdrift Debug Files`. Buildkite release builds require `BITDRIFT_API_KEY` to be configured in the pipeline environment; local Release builds without this variable skip the upload. The upload uses Bitdrift's [`bd debug-files upload`](https://docs.bitdrift.io/sdk/features/fatal-issues.html) command.
 
 ### Export Files
 
@@ -92,6 +124,6 @@ These exports can also be imported to the app, replacing the database and settin
 
 ### Crash Log Symbolication
 
-All [releases](https://github.com/Automattic/pocket-casts-ios/releases) include dSYMs inside of the `xcarchive` file.
+All [releases](https://github.com/hbmartin/pocket-casts-ios/releases) include dSYMs inside of the `xcarchive` file.
 
 These can be used along with the [MacSymbolicator](https://github.com/inket/MacSymbolicator) app to symbolicate any crash logs.
