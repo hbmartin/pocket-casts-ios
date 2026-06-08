@@ -492,11 +492,10 @@ public enum FeatureFlag: String, CaseIterable {
 }
 
 public struct FeatureFlagRemoteConfigStore {
-    private let store: UserDefaults
-    private let overrideKeyPrefix = "remote-config-"
+    private let values: RemoteConfigValueStore
 
     public init(store: UserDefaults = .standard) {
-        self.store = store
+        values = RemoteConfigValueStore(store: store)
     }
 
     public func overriddenValue(for flag: FeatureFlag) -> Bool? {
@@ -504,34 +503,7 @@ public struct FeatureFlagRemoteConfigStore {
             return nil
         }
 
-        return boolValue(forKey: remoteKey) ?? boolValue(forKey: "\(overrideKeyPrefix)\(remoteKey)")
-    }
-
-    private func boolValue(forKey key: String) -> Bool? {
-        guard let value = store.object(forKey: key) else {
-            return nil
-        }
-
-        if let bool = value as? Bool {
-            return bool
-        }
-
-        if let number = value as? NSNumber {
-            return number.boolValue
-        }
-
-        if let string = value as? String {
-            switch string.lowercased() {
-            case "true", "yes", "1":
-                return true
-            case "false", "no", "0":
-                return false
-            default:
-                return nil
-            }
-        }
-
-        return nil
+        return values.bool(forKey: remoteKey)
     }
 }
 

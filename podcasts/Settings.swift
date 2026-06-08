@@ -1691,74 +1691,15 @@ class Settings: NSObject {
         }
 
         private static func configuredBool(key: String, default defaultValue: Bool) -> Bool {
-            guard let value = configuredObject(forKey: key) else {
-                return defaultValue
-            }
-
-            if let bool = value as? Bool {
-                return bool
-            }
-
-            if let number = value as? NSNumber {
-                return number.boolValue
-            }
-
-            if let string = value as? String {
-                switch string.lowercased() {
-                case "true", "yes", "1":
-                    return true
-                case "false", "no", "0":
-                    return false
-                default:
-                    return defaultValue
-                }
-            }
-
-            return defaultValue
+            RemoteConfigValueStore().bool(forKey: key) ?? defaultValue
         }
 
         private static func configuredDouble(key: String, default defaultValue: Double) -> Double {
-            guard let value = configuredObject(forKey: key) else {
-                return defaultValue
-            }
-
-            if let double = value as? Double {
-                return double
-            }
-
-            if let number = value as? NSNumber {
-                return number.doubleValue
-            }
-
-            if let string = value as? String, let double = Double(string) {
-                return double
-            }
-
-            return defaultValue
+            RemoteConfigValueStore().double(forKey: key) ?? defaultValue
         }
 
         private static func configuredInt(key: String, default defaultValue: Int) -> Int {
-            guard let value = configuredObject(forKey: key) else {
-                return defaultValue
-            }
-
-            if let int = value as? Int {
-                return int
-            }
-
-            if let number = value as? NSNumber {
-                return number.intValue
-            }
-
-            if let string = value as? String, let int = Int(string) {
-                return int
-            }
-
-            return defaultValue
-        }
-
-        private static func configuredObject(forKey key: String) -> Any? {
-            UserDefaults.standard.object(forKey: key) ?? UserDefaults.standard.object(forKey: "remote-config-\(key)")
+            RemoteConfigValueStore().int(forKey: key) ?? defaultValue
         }
     #endif
 }

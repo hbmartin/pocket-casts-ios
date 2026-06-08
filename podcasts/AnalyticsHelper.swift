@@ -13,7 +13,7 @@ class AnalyticsHelper {
 
     class func openedCategory(categoryId: Int, region: String) {
         logEvent("category_open", parameters: ["id": categoryId, "region": region])
-        logEvent("category_page_open_\(categoryId)", parameters: nil)
+        logEvent("category_page_open", parameters: ["id": categoryId, "region": region])
     }
 
     class func openedFeaturedPodcast() {
@@ -198,11 +198,8 @@ class AnalyticsHelper {
     }
 
     class func didChooseIcon(iconName: String?) {
-        if let name = iconName {
-            logEvent("icon_\(name.replacingOccurrences(of: "-", with: "_"))", parameters: nil)
-        } else {
-            logEvent("icon_default", parameters: nil)
-        }
+        let name = iconName?.replacingOccurrences(of: "-", with: "_") ?? "default"
+        logEvent("icon_selected", parameters: ["name": name])
     }
 
     class func siriSleeptimer() {
@@ -246,27 +243,20 @@ class AnalyticsHelper {
     }
 
     class func tourStarted(tourName: String) {
-        logEvent("\(tourName)_tour_started", parameters: nil)
+        logEvent("tour_started", parameters: ["tour": tourName])
     }
 
     class func tourCompleted(tourName: String) {
-        logEvent("\(tourName)_tour_completed", parameters: nil)
+        logEvent("tour_completed", parameters: ["tour": tourName])
     }
 
     class func tourCancelled(tourName: String, at step: Int) {
-        logEvent("\(tourName)_tour_cancelled_\(step)", parameters: nil)
+        logEvent("tour_cancelled", parameters: ["tour": tourName, "step": step])
     }
 
     #if !os(watchOS) && !APPCLIP && !os(tvOS)
-        class func tabSelected(tab: MainTabBarController.Tab) {
-            switch tab {
-            case .podcasts:
-                logEvent("podcast_tab_opened", parameters: nil)
-            case .filter:
-                logEvent("filter_tab_opened", parameters: nil)
-            case .profile:
-                logEvent("profile_tab_opened", parameters: nil)
-            }
+        class func tabSelected(tab _: MainTabBarController.Tab) {
+            // MainTabBarController.trackTabOpened emits current tab analytics.
         }
     #endif
 

@@ -65,7 +65,7 @@ class FeatureFlagTests: XCTestCase {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
         let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
 
-        defaults.set(false, forKey: remoteKey)
+        defaults.set(false, forKey: RemoteConfigValueStore.key(for: remoteKey))
 
         XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
     }
@@ -74,20 +74,30 @@ class FeatureFlagTests: XCTestCase {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
         let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
 
-        defaults.set("false", forKey: "remote-config-\(remoteKey)")
+        defaults.set("false", forKey: RemoteConfigValueStore.key(for: remoteKey))
 
         XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
+    }
+
+    func testRemoteConfigBareKeyDoesNotOverrideFeatureFlag() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
+        let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+
+        defaults.set(false, forKey: remoteKey)
+
+        XCTAssertNil(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix))
     }
 
     func testEnabledUsesRemoteConfigValueAfterLocalOverride() throws {
         let flag = FeatureFlag.defaultPlayerFilterCallbackFix
         let remoteKey = try XCTUnwrap(flag.remoteKey)
+        let remoteConfigKey = RemoteConfigValueStore.key(for: remoteKey)
         defer {
-            UserDefaults.standard.removeObject(forKey: remoteKey)
+            UserDefaults.standard.removeObject(forKey: remoteConfigKey)
             try? FeatureFlagOverrideStore().override(flag, withValue: flag.default)
         }
 
-        UserDefaults.standard.set(false, forKey: remoteKey)
+        UserDefaults.standard.set(false, forKey: remoteConfigKey)
 
         XCTAssertFalse(flag.enabled)
 

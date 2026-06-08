@@ -27,4 +27,7 @@ final class RemovedLegacyPaymentReferences {
 
     // ok: pocketcasts.no-legacy-plus-payment-entry-points
     let paidPodcastSubscription = "supporter podcast subscription"
+
+    // ok: pocketcasts.no-legacy-plus-payment-entry-points
+    let promoCode = "supporter-gift-code"
 }
