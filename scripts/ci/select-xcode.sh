@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# This file is intended to be sourced by Buildkite command scripts so the
-# selected Xcode applies to every later swift, xcodebuild, and fastlane command.
+# Source this script before swift, xcodebuild, or fastlane commands so every CI
+# step uses a Swift 6 capable Xcode.
 
 _pocketcasts_swift_major() {
   local developer_dir="${1:-}"
@@ -14,14 +14,6 @@ _pocketcasts_swift_major() {
   fi
 
   echo "$output" | sed -nE 's/.*Swift version ([0-9]+).*/\1/p' | head -n 1
-}
-
-_pocketcasts_xcode_version() {
-  local developer_dir="$1"
-  local output
-
-  output="$(DEVELOPER_DIR="$developer_dir" xcodebuild -version 2>/dev/null || true)"
-  echo "$output" | sed -nE 's/^Xcode ([^[:space:]]+).*/\1/p' | head -n 1
 }
 
 _pocketcasts_add_xcode_candidate() {
@@ -96,7 +88,7 @@ _pocketcasts_select_xcode_main() {
     return 0
   fi
 
-  echo "--- :xcode: Selecting Xcode"
+  echo "Selecting Xcode"
   echo "Active developer directory: $(xcode-select --print-path 2>/dev/null || echo unavailable)"
   xcodebuild -version 2>/dev/null || echo "Active Xcode version unavailable"
   xcrun swift --version 2>/dev/null || swift --version 2>/dev/null || true
@@ -115,13 +107,13 @@ _pocketcasts_select_xcode_main() {
   fi
 
   cat <<EOF
-Unable to find a Swift 6-capable Xcode.
+Unable to find a Swift 6 capable Xcode.
 
-The Modules package currently depends on Swift 6 package manifests, so SwiftPM
-resolution fails when Buildkite starts with an Xcode 15 / Swift 5 toolchain.
+The Modules and BuildTools packages depend on Swift 6 capable tooling, so
+SwiftPM resolution can fail when the runner starts with an older toolchain.
 
-Configure the Buildkite macOS queue to use Xcode 16 or newer, or install an
-Xcode version compatible with $xcode_version_file.
+Install an Xcode version compatible with $xcode_version_file or set
+DEVELOPER_DIR to a Swift 6 capable Xcode before starting the GitHub runner.
 EOF
 
   return 1

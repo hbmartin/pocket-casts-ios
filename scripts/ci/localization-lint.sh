@@ -10,7 +10,7 @@ fi
 
 cd "$REPO_ROOT"
 
-echo "--- :sleuth_or_spy: Lint localized strings"
+echo "Lint localized strings"
 find podcasts \
   \( -name "*.strings" -o -name "*.stringsdict" \) \
   -print0 \

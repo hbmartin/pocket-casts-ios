@@ -1,0 +1,10 @@
+self-hosted-runner:
+  labels:
+    - pocket-casts-ios
+
+config-variables: null
+
+paths:
+  .github/workflows/release-fastlane.yml:
+    ignore:
+      - 'SC2317'

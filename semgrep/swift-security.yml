@@ -59,7 +59,8 @@ rules:
         - "Gemfile"
         - "Gemfile.lock"
         - "**/fastlane/**"
-        - "**/.buildkite/**"
+        - "**/.github/workflows/*.yml"
+        - "**/scripts/ci/*.sh"
     patterns:
       - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|fastlane-plugin-sentry|sentry_debug_files_upload|SENTRY_AUTH_TOKEN|sentry-cli)\b'
 

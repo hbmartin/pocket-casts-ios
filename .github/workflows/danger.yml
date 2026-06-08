@@ -1,0 +1,41 @@
+name: Danger
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
+      - unlabeled
+      - milestoned
+      - demilestoned
+      - edited
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  danger:
+    name: Danger
+    if: ${{ github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Ruby tools
+        run: scripts/ci/shared-setup.sh --skip-swiftpm
+
+      - name: Run Danger
+        env:
+          DANGER_GITHUB_API_TOKEN: ${{ github.token }}
+        run: bundle exec danger

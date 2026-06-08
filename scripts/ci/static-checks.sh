@@ -8,14 +8,14 @@ source "$SCRIPT_DIR/select-xcode.sh"
 
 cd "$REPO_ROOT"
 
-"$SCRIPT_DIR/shared_setup.sh" --skip-gems
+"$SCRIPT_DIR/shared-setup.sh" --skip-gems
 
-echo "--- :closed_lock_with_key: Generating open-source credentials"
+echo "Generating open-source credentials"
 make external_contributor
 
 if ! command -v semgrep >/dev/null 2>&1; then
   if command -v brew >/dev/null 2>&1; then
-    echo "--- :homebrew: Installing Semgrep"
+    echo "Installing Semgrep"
     brew install semgrep
   else
     echo "semgrep is required for make static_checks, but Homebrew is unavailable."
@@ -23,5 +23,5 @@ if ! command -v semgrep >/dev/null 2>&1; then
   fi
 fi
 
-echo "--- :mag: Static checks"
+echo "Static checks"
 make static_checks

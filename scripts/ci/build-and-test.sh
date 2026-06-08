@@ -11,15 +11,15 @@ if "$SCRIPT_DIR/should-skip-job.sh" --job-type build; then
 fi
 
 cd "$REPO_ROOT"
-mkdir -p build/buildkite/logs build/buildkite/results
-rm -rf build/buildkite/results/PocketCastsTests.xcresult
+mkdir -p build/github/logs build/github/results
+rm -rf build/github/results/PocketCastsTests.xcresult
 
-"$SCRIPT_DIR/shared_setup.sh" --skip-gems
+"$SCRIPT_DIR/shared-setup.sh" --skip-gems
 
-echo "--- :closed_lock_with_key: Generating open-source credentials"
+echo "Generating open-source credentials"
 make external_contributor
 
-echo "--- :iphone: Selecting an iOS Simulator"
+echo "Selecting an iOS Simulator"
 DESTINATION="$(
   /usr/bin/ruby <<'RUBY'
 require 'json'
@@ -55,18 +55,18 @@ RUBY
 )"
 echo "Using destination: $DESTINATION"
 
-echo "--- :xcode: Xcode"
+echo "Xcode"
 xcodebuild -version
 
-echo "--- :test_tube: Build and test staging"
+echo "Build and test staging"
 set -o pipefail
 xcodebuild test \
   -project podcasts.xcodeproj \
   -scheme "Pocket Casts Staging" \
   -configuration StagingDebug \
-  -only-testing:PocketCastsTests \
+  "-only-testing:${ONLY_TESTING:-PocketCastsTests}" \
   -destination "$DESTINATION" \
-  -derivedDataPath build/buildkite/DerivedData \
-  -resultBundlePath build/buildkite/results/PocketCastsTests.xcresult \
+  -derivedDataPath build/github/DerivedData \
+  -resultBundlePath build/github/results/PocketCastsTests.xcresult \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-  2>&1 | tee build/buildkite/logs/test-staging.log
+  2>&1 | tee build/github/logs/test-staging.log

@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 require 'dotenv'
+require 'json'
+require 'net/http'
 require 'open3'
+require 'uri'
 
 fastlane_version '2.0'
 
@@ -203,7 +206,6 @@ end
 
 platform :ios do
   # This explicit timeout is necessary for the `xcodebuild -showBuildSettings` call to succeed in CI.
-  # See https://buildkite.com/automattic/pocket-casts-ios/builds/4875#018b7eea-e8d7-40a1-8ce5-515dd8feafce/666-805
   ENV['FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT'] = '120'
 
   # Run the unit tests
@@ -597,7 +599,7 @@ platform :ios do
   # @param branch_to_build [String] The name of the branch we want the CI to build, e.g. `release/19.3`
   #
   lane :trigger_beta_build do |branch_to_build:|
-    trigger_buildkite_release_build(branch: branch_to_build, beta: true)
+    trigger_github_release_build(branch: branch_to_build, beta: true)
   end
 
   # Triggers a stable release build on CI
@@ -605,7 +607,7 @@ platform :ios do
   # @param branch_to_build [String] The name of the branch we want the CI to build, e.g. `release/19.3`
   #
   lane :trigger_release_build do |branch_to_build:|
-    trigger_buildkite_release_build(branch: branch_to_build, beta: false)
+    trigger_github_release_build(branch: branch_to_build, beta: false)
   end
 
   # Builds the app binary for distribution to App Store Connect
@@ -753,8 +755,8 @@ platform :ios do
     remove_app_clip_dependency!
     UI.important('Remember not to commit the modified project file! The change is only meant to allow building for Enterprise where App Clips are not supported.')
 
-    build_number = ENV.fetch('BUILDKITE_BUILD_NUMBER', '0')
-    pr_or_branch = pull_request_number&.then { |num| "PR ##{num}" } || ENV.fetch('BUILDKITE_BRANCH', nil)
+    build_number = ENV.fetch('GITHUB_RUN_NUMBER', '0')
+    pr_or_branch = pull_request_number&.then { |num| "PR ##{num}" } || ENV['GITHUB_HEAD_REF'] || ENV['GITHUB_REF_NAME']
 
     build_app(
       scheme: SCHEME_ENTERPRISE,
@@ -1224,30 +1226,55 @@ platform :ios do
     "release/#{release_version_current}"
   end
 
-  # Kicks off a Buildkite build using the `release-builds.yml` pipeline
+  # Kicks off the GitHub Actions release build workflow.
   #
   # @param branch [String] The git branch on which to trigger the CI build on
   # @param beta [Boolean] If true, build a beta; if false, build a final release
-  # @return [String] The URL of the build that has been triggered
+  # @return [String] The URL of the workflow that has been triggered
   #
-  def trigger_buildkite_release_build(branch:, beta:)
-    pipeline_args = {
-      pipeline_file: 'release-builds.yml',
-      environment: {
-        RELEASE_VERSION: release_version_current,
-        BETA_RELEASE: beta
+  def trigger_github_release_build(branch:, beta:)
+    require_env_vars!('GITHUB_TOKEN')
+
+    workflow_file = ENV.fetch('GITHUB_RELEASE_WORKFLOW_FILE', 'release-fastlane.yml')
+    github_api_url = ENV.fetch('GITHUB_API_URL', 'https://api.github.com').sub(%r{/*$}, '')
+    workflow_path = URI.encode_www_form_component(workflow_file)
+    uri = URI("#{github_api_url}/repos/#{GITHUB_REPO}/actions/workflows/#{workflow_path}/dispatches")
+
+    request = Net::HTTP::Post.new(uri)
+    request['Accept'] = 'application/vnd.github+json'
+    request['Authorization'] = "Bearer #{get_required_env!('GITHUB_TOKEN')}"
+    request['X-GitHub-Api-Version'] = '2022-11-28'
+    request.body = JSON.generate(
+      ref: branch,
+      inputs: {
+        task: 'release_build',
+        release_version: release_version_current,
+        beta_release: beta.to_s
       }
-    }
-    if is_ci?
-      buildkite_pipeline_upload(**pipeline_args)
-    else
-      require_env_vars!('BUILDKITE_TOKEN')
-      buildkite_trigger_build(
-        buildkite_organization: ENV.fetch('BUILDKITE_ORGANIZATION_SLUG', 'hbmartin'),
-        buildkite_pipeline: ENV.fetch('BUILDKITE_PIPELINE_SLUG', 'pocket-casts-ios'),
-        branch: branch,
-        **pipeline_args
-      )
+    )
+
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      http.request(request)
+    end
+
+    unless response.is_a?(Net::HTTPNoContent)
+      UI.user_error!("Failed to dispatch GitHub release workflow: HTTP #{response.code} #{response.body}")
+    end
+
+    workflow_url = "#{GITHUB_URL}/actions/workflows/#{workflow_file}"
+    UI.success("Dispatched GitHub release workflow for #{branch}: #{workflow_url}")
+    workflow_url
+  end
+
+  def append_ci_summary(title:, message:)
+    summary_path = ENV['GITHUB_STEP_SUMMARY']
+    return unless summary_path && !summary_path.empty?
+
+    File.open(summary_path, 'a') do |file|
+      file.puts "### #{title}"
+      file.puts
+      file.puts message
+      file.puts
     end
   end
 
@@ -1288,7 +1315,7 @@ platform :ios do
       MESSAGE
 
       UI.error(error_message)
-      buildkite_annotate(style: 'warning', context: 'error-with-milestone', message: error_message) if is_ci
+      append_ci_summary(title: 'Error freezing milestone', message: error_message) if is_ci
     end
 
     UI.message("Moved the following PRs to milestone #{next_version}: #{moved_prs.join(', ')}")
@@ -1300,7 +1327,7 @@ platform :ios do
                        "#{moved_prs.count} PRs targeting `#{new_version}` were still open and thus moved to `#{next_version}`:\n" \
                          + moved_prs.map { |pr_num| "[##{pr_num}](https://github.com/#{GITHUB_REPO}/pull/#{pr_num})" }.join(', ')
                      end
-    buildkite_annotate(style: moved_prs.empty? ? 'success' : 'warning', context: 'start-code-freeze', message: moved_prs_info) if is_ci
+    append_ci_summary(title: 'Code freeze milestone update', message: moved_prs_info) if is_ci
   end
 
   # Private helper to create backmerge Pull Requests after new betas or final build
@@ -1354,9 +1381,12 @@ platform :ios do
   end
 
   def pull_request_number
-    # Buildkite sets this env var to the PR number if on a PR, but to 'false' (and not nil) if not on a PR
-    pr_num = ENV.fetch('BUILDKITE_PULL_REQUEST', 'false')
-    pr_num == 'false' ? nil : Integer(pr_num)
+    if ENV['GITHUB_EVENT_NAME'] == 'pull_request' && ENV['GITHUB_EVENT_PATH'] && File.exist?(ENV['GITHUB_EVENT_PATH'])
+      event = JSON.parse(File.read(ENV['GITHUB_EVENT_PATH']))
+      return event.dig('pull_request', 'number')
+    end
+
+    nil
   end
 
   # Create a commit with the typical message to use for a version bump
@@ -1477,7 +1507,7 @@ platform :ios do
     error_message = "The branch `#{branch_name}` already exists. Please check first if there is an existing Pull Request that needs to be merged or closed first, " \
                     'or delete the branch to then run again the release task.'
 
-    buildkite_annotate(style: 'error', context: 'error-checking-branch', message: error_message) if is_ci
+    append_ci_summary(title: 'Release branch already exists', message: error_message) if is_ci
 
     UI.user_error!(error_message)
   end
