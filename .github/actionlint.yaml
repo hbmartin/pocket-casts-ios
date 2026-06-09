@@ -1,6 +1,6 @@
 self-hosted-runner:
   labels:
-    - pocket-casts-ios
+    - ARM64
 
 config-variables: null
 

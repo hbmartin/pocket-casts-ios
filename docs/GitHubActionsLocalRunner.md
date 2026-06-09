@@ -10,21 +10,20 @@ Create the runner from:
 GitHub repository > Settings > Actions > Runners > New self-hosted runner
 ```
 
-Install it on the Mac that should build Pocket Casts, then add the repo-specific label:
+Install it on the Mac that should build Pocket Casts, then ensure it has the ARM64 label:
 
 ```bash
-./config.sh --url https://github.com/hbmartin/pocket-casts-ios --token <TOKEN> --labels pocket-casts-ios
+./config.sh --url https://github.com/hbmartin/pocket-casts-ios --token <TOKEN> --labels ARM64
 ```
 
 The workflows target:
 
 ```yaml
-runs-on: [self-hosted, macOS, pocket-casts-ios]
+runs-on: [self-hosted, macOS, ARM64]
 ```
 
-GitHub automatically provides the `self-hosted` and `macOS` labels. The custom
-`pocket-casts-ios` label prevents unrelated self-hosted runners from picking up
-this repo's iOS jobs.
+GitHub automatically provides the `self-hosted`, `macOS`, and `ARM64` labels for
+an Apple Silicon macOS runner.
 
 Install and start the runner service under the macOS user that has access to
 Xcode, simulators, Ruby, and any local Fastlane secrets:
@@ -79,8 +78,8 @@ workflows allow it. This fork keeps the runner usable by narrowing what reaches
 the Mac:
 
 - Register the runner at the repository level, not at the organization level.
-- Keep the custom `pocket-casts-ios` label and only use it in workflows that are
-  intended to run on this Mac.
+- Keep the `ARM64` label in workflows that are intended to run on Apple Silicon
+  Macs.
 - Keep fork PR jobs skipped unless a maintainer manually dispatches the workflow
   after reviewing the code.
 - Keep release lanes manual and separate from public PR execution.

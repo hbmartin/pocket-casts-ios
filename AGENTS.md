@@ -32,7 +32,7 @@ make test_staging
 
 ## Security Scanning
 
-When PR feedback, unexpected planning decisions, bug discoveries, or other implementation learnings reveal a pattern that could be caught automatically, add or update local Semgrep rules in `semgrep/swift-security.yml` so the issue is checked going forward.
+When PR feedback, unexpected planning decisions, bug discoveries, or other implementation learnings reveal a broader problem class that could be caught automatically, add or update local Semgrep rules in `semgrep/swift-security.yml`. Prefer rules that generalize the risk over rules that only freeze the exact fix already covered by tests. Do not add Semgrep rules for Ruby or Ruby-specific files.
 
 ### Running a Single Test
 

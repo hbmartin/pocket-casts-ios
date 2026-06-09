@@ -20,7 +20,7 @@ jobs:
   danger:
     name: Danger
     if: ${{ github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 30
     permissions:
       contents: read

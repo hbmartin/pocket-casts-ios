@@ -56,13 +56,10 @@ rules:
         - "**/*.swift"
         - "**/Package.swift"
         - "**/Package.resolved"
-        - "Gemfile"
-        - "Gemfile.lock"
-        - "**/fastlane/**"
         - "**/.github/workflows/*.yml"
         - "**/scripts/ci/*.sh"
     patterns:
-      - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|fastlane-plugin-sentry|sentry_debug_files_upload|SENTRY_AUTH_TOKEN|sentry-cli)\b'
+      - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|SENTRY_AUTH_TOKEN|sentry-cli)\b'
 
   - id: pocketcasts.github-actions-pin-actions-to-sha
     severity: ERROR
@@ -271,7 +268,25 @@ rules:
         - "**/podcasts/**/*.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-regex: '(?s)action:\s*\.init\([^)]*\)\s*\{(?![^\n]*\[weak\s+self\])[^}]*\bself\.'
+      - pattern-inside: |
+          ContentUnavailableConfiguration.nativeEmptyState(...)
+      - pattern: |
+          .init(...) {
+            ...
+            $EXPR
+            ...
+          }
+      - metavariable-pattern:
+          metavariable: $EXPR
+          pattern: self.$MEMBER
+      - pattern-not: |
+          .init(...) { [weak self] in
+            ...
+          }
+      - pattern-not: |
+          .init(...) { [weak self] $PARAM in
+            ...
+          }
 
   - id: pocketcasts.content-unavailable-assigned-inside-empty-branch
     severity: ERROR
@@ -332,7 +347,15 @@ rules:
         - "**/podcasts/PlaylistCellViewModel.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-regex: '(?s)\bgroup\.addTask\s*\{[^}]*\bself\.imageManager\b'
+      - pattern: |
+          $GROUP.addTask {
+            ...
+            $EXPR
+            ...
+          }
+      - metavariable-pattern:
+          metavariable: $EXPR
+          pattern: self.imageManager
 
   - id: pocketcasts.playlist-cell-task-group-episode-object-capture
     severity: WARNING
@@ -349,7 +372,19 @@ rules:
         - "**/podcasts/PlaylistCellViewModel.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-regex: '(?s)\bgroup\.addTask\s*\{[^}]*\bepisode\.(?:podcastUuid|uuid)\b'
+      - pattern: |
+          $GROUP.addTask {
+            ...
+            $EXPR
+            ...
+          }
+      - metavariable-pattern:
+          metavariable: $EXPR
+          patterns:
+            - pattern: episode.$FIELD
+            - metavariable-regex:
+                metavariable: $FIELD
+                regex: ^(?:podcastUuid|uuid)$
 
   - id: pocketcasts.share-button-localized-clip-export-failure
     severity: WARNING
@@ -470,24 +505,6 @@ rules:
         - "**/*.mk"
     patterns:
       - pattern-regex: '^\s*rm\s+-rf\s+"?\$\([A-Za-z0-9_]+\)[^#\n]*'
-
-  - id: makefile.no-hardcoded-system-ruby
-    severity: WARNING
-    metadata:
-      category: ci
-      confidence: HIGH
-      likelihood: MEDIUM
-      impact: MEDIUM
-      technology: [make]
-    message: Use ruby instead of /usr/bin/ruby in Makefile recipes so Ruby version managers can provide the expected interpreter.
-    languages: [generic]
-    paths:
-      include:
-        - "Makefile"
-        - "**/Makefile"
-        - "**/semgrep/tests/makefile-portability.mk"
-    patterns:
-      - pattern-regex: '^\s*/usr/bin/ruby\b'
 
   - id: pocketcasts.server-constants-identical-production-url-branches
     severity: WARNING
@@ -1072,23 +1089,6 @@ rules:
         - "**/semgrep/tests/generate-credentials-placeholder-regex.sh"
     patterns:
       - pattern-regex: 'static let \[a-zA-Z0-9_\]\+\[\[:space:\]\]\*='
-
-  - id: pocketcasts.generate-credentials-test-preserve-nil-env-unsets
-    severity: WARNING
-    metadata:
-      category: correctness
-      confidence: HIGH
-      likelihood: MEDIUM
-      impact: MEDIUM
-      technology: [ruby]
-    message: Preserve nil env overrides when calling Open3 so tests can unset inherited Xcode environment variables.
-    languages: [ruby]
-    paths:
-      include:
-        - "**/scripts/tests/generate_credentials_test.rb"
-        - "**/semgrep/tests/generate-credentials-env-test.rb"
-    patterns:
-      - pattern: $ENV.merge($OVERRIDES).compact
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

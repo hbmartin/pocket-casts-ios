@@ -2,7 +2,7 @@
 
 Pocket Casts iOS releases are driven by Fastlane and, for normal team use, by
 the manual GitHub Actions workflow in `.github/workflows/release-fastlane.yml`.
-The workflow runs on the self-hosted macOS runner labeled `pocket-casts-ios`.
+The workflow runs on the self-hosted macOS runner labeled `ARM64`.
 
 This document covers the release surfaces that are easy to confuse:
 versioning, branch creation, code signing, TestFlight upload, App Store
@@ -51,7 +51,7 @@ trusted to publish builds and mutate release state. In practical terms, that
 means the person or automation needs all of the following:
 
 - Permission to manually dispatch `.github/workflows/release-fastlane.yml`.
-- Access to the self-hosted macOS runner labeled `pocket-casts-ios`.
+- Access to the self-hosted macOS runner labeled `ARM64`.
 - Access to `POCKET_CASTS_RELEASE_GITHUB_TOKEN`, exposed to Fastlane as
   `GITHUB_TOKEN`.
 - App Store Connect API credentials for the Pocket Casts App Store team.
