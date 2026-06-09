@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-// Adapted from: https://github.com/wordpress-mobile/WordPress-iOS/blob/trunk/WordPress/Classes/ViewRelated/Notifications/Milestone%20Notifications/ConfettiView.swift
+// Adapted from an open-source ConfettiView implementation.
 
 class ConfettiView: UIView {
     public struct EmitterConfig {

@@ -719,6 +719,24 @@ rules:
     patterns:
       - pattern-regex: '\b(?:UserSatisfactionSurveyManager|UserSatisfactionSurveyView|SurveyDebugInfoView|SurveyTriggerEvent|SurveyCheckResult|userSatisfactionSurvey|surveyPresentationDates|lastSurveyNotReallyDate|addSurveyPresented|resetSurveyData|setSurveyNotReallyResponse|surveyEpisodeCompletionCount|surveyPlusUpgradeDate)\b'
 
+  - id: pocketcasts.no-zendesk-or-wordpress-integration
+    severity: ERROR
+    metadata:
+      category: dependency
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Zendesk support credentials/SDK and WordPress-hosted translation sources were removed; do not reintroduce the removed ApiCredentials entries, Zendesk SDK imports, or WordPress-hosted GlotPress/org URLs.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/*.tpl"
+        - "**/fastlane/**"
+    patterns:
+      - pattern-regex: '\b(?:zendeskAPIKey|zendeskUrl|zendeskNewUrl|dotcomSecret|zendesk_api_key|zendesk_url|zendesk_new_url|dotcom_secret)\b|\bimport\s+Zendesk\w*|translate\.wordpress\.com|wordpress-mobile'
+
   - id: pocketcasts.keychain-redundant-read-after-save
     severity: WARNING
     metadata:

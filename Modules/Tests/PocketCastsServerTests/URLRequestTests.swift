@@ -23,7 +23,7 @@ class URLRequestTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: ServerConstants.HttpHeaders.userRegion), "en")
         XCTAssertEqual(request.value(forHTTPHeaderField: ServerConstants.HttpHeaders.appLanguage), "en-US")
 
-        let externalURL = try XCTUnwrap(URL(string: "https://wordpress.com/"))
+        let externalURL = try XCTUnwrap(URL(string: "https://example.com/"))
         var newRequest = URLRequest(url: externalURL)
         newRequest.addLocalizationHeaders()
 

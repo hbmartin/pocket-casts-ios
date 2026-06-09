@@ -2788,13 +2788,6 @@
 			name = Generated;
 			sourceTree = "<group>";
 		};
-		462EE0A926FCBF5B003D67DC /* Zendesk */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Zendesk;
-			sourceTree = "<group>";
-		};
 		462EE0B127024FF3003D67DC /* Credentials */ = {
 			isa = PBXGroup;
 			children = (
@@ -3717,7 +3710,6 @@
 		BD69EBB61CD1C7EE007F273B /* Support */ = {
 			isa = PBXGroup;
 			children = (
-				462EE0A926FCBF5B003D67DC /* Zendesk */,
 				BD65E51A1CD9BDE000B90A67 /* OnlineSupportController.swift */,
 				8BD5A4E32A1E844D00F473C6 /* StatusPageView.swift */,
 				8BFB434D2A1FFB4B00F3D409 /* StatusPageViewModel.swift */,

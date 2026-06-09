@@ -47,7 +47,7 @@ lint_lenient:
 	$(call run_in_buildtools,$(SWIFTLINT_FROM_BUILDTOOLS) --lenient)
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
-	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/Package.swift" --include "**/Package.resolved" --include "Gemfile" --include "Gemfile.lock" --include "**/fastlane/**" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "Makefile" --include "**/Makefile" --include "*.mk" --include "**/*.mk" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
+	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "*.tpl" --include "**/Package.swift" --include "**/Package.resolved" --include "Gemfile" --include "Gemfile.lock" --include "**/fastlane/**" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "Makefile" --include "**/Makefile" --include "*.mk" --include "**/*.mk" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
 
 semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
 	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
@@ -59,6 +59,7 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-pr-feedback.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-zendesk-wordpress.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/github-actions-security.yml
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/Main/MainTabBarController.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/ProfileViewController.swift
