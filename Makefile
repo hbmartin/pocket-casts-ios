@@ -66,6 +66,9 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedLegacyPayment.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedUserSatisfactionSurvey.swift
 
+credentials_script_tests: ## Run credentials generation script tests
+	/usr/bin/ruby scripts/tests/generate_credentials_test.rb
+
 xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 	if [ -n "$(XCODE_ANALYZE_DERIVED_DATA_PATH)" ]; then rm -rf "$(XCODE_ANALYZE_DERIVED_DATA_PATH)/SDKStatCaches.noindex"; fi
 	xcodebuild -quiet analyze -project podcasts.xcodeproj \
@@ -77,6 +80,7 @@ xcode_static_analyzer: ## Run Xcode Static Analyzer for the staging app
 
 static_checks: ## Run SwiftLint, Semgrep, and Xcode Static Analyzer
 	$(MAKE) lint
+	$(MAKE) credentials_script_tests
 	$(MAKE) semgrep_tests
 	$(MAKE) semgrep_swift_security
 	$(MAKE) semgrep_pocket_casts
@@ -127,5 +131,6 @@ update_proto: ## Generates the protobuffer Swift files
 
 external_contributor: ## Generates an empty ApiCredentials.swift so the app builds
 	@cp podcasts/Credentials/ApiCredentials.tpl podcasts/Credentials/LocalApiCredentials.swift
-	@sed -i '' 's/%{.*}//' "podcasts/Credentials/LocalApiCredentials.swift"
+	@sed -i '' -e 's/%%{/__ESCAPED_PLACEHOLDER_OPEN__/g' -e 's/%{[^}]*}//g' -e 's/__ESCAPED_PLACEHOLDER_OPEN__/%{/g' "podcasts/Credentials/LocalApiCredentials.swift"
 	$(info You're ready to build the app, go ahead! 🎙)
+

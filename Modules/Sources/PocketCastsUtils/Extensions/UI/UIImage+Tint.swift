@@ -3,8 +3,6 @@ import UIKit
 public extension UIImage {
     func tintedImage(_ color: UIColor) -> UIImage? {
         // lets tint the icon - assumes your icons are black
-        guard cgImage != nil else { return nil }
-
         let format = UIGraphicsImageRendererFormat.preferred()
         format.opaque = false
 

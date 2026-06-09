@@ -222,8 +222,10 @@ class ListeningHistoryViewController: PCViewController {
         listeningHistoryTable.backgroundView = UIView()
         listeningHistoryTable.themeStyle = LiquidGlass.isEnabled ? .primaryUi02 : .primaryUi04
 
+        let isSearching = searchController?.searchTextField.text?.isEmpty == false
+
         if episodes.isEmpty {
-            if searchController?.searchTextField.text?.isEmpty == false {
+            if isSearching {
                 // Empty State when searching
                 let title = L10n.listeningHistorySearchNoEpisodesTitle
                 let message = L10n.listeningHistorySearchNoEpisodesText
@@ -248,10 +250,10 @@ class ListeningHistoryViewController: PCViewController {
                         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
                     }
                 )
-
-                self.contentUnavailableConfiguration = config
             }
         }
+
+        self.contentUnavailableConfiguration = isSearching ? nil : config
     }
 }
 

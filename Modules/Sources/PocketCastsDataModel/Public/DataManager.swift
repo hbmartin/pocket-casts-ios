@@ -955,6 +955,24 @@ public class DataManager {
         return episodeManager.findPlaylistEpisodesWhere(query: query, arguments: nil, dbQueue: dbQueue)
     }
 
+    public func playlistFirstDistinctEpisodes(
+        for playlist: EpisodeFilter,
+        limit: Int = 4,
+        shouldShowArchived: Bool = false,
+        search: String? = nil,
+        episodeUuidToAdd: String? = nil
+    ) -> [Episode] {
+        let query = PlaylistQueryBuilder.query(
+            clause: .firstDistinctEpisodes,
+            for: playlist,
+            episodeUuidToAdd: episodeUuidToAdd,
+            searchTerm: search,
+            limit: limit,
+            shouldShowArchived: shouldShowArchived
+        )
+        return episodeManager.findPlaylistEpisodesWhere(query: query, arguments: nil, dbQueue: dbQueue)
+    }
+
     public func deleteDeletedPlaylists() {
         playlistManager.deleteDeletedPlaylists(dbQueue: dbQueue)
     }

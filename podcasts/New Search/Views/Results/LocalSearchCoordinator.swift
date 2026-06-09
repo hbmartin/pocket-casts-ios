@@ -107,9 +107,8 @@ final class LocalSearchCoordinator {
         cancelPreloadTask()
         isSearchInFlight = true
         preloadTask = Task { [weak self] in
-            guard let self else { return }
-
-            let playlistUUIDs = self.playlistEpisodeUUIDs
+            guard let playlistUUIDs = self?.playlistEpisodeUUIDs,
+                  let dataManager = self?.dataManager else { return }
 
             let episodeResults = await Task.detached { [dataManager, playlistUUIDs, podcast] in
                 let podcastEpisodes = dataManager.allEpisodesForPodcast(id: podcast.id)
@@ -124,8 +123,8 @@ final class LocalSearchCoordinator {
 
             guard !Task.isCancelled else { return }
 
-            self.episodes = episodeResults
-            self.isSearchInFlight = false
+            self?.episodes = episodeResults
+            self?.isSearchInFlight = false
         }
     }
 

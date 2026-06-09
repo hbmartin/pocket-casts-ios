@@ -3037,6 +3037,9 @@
 /* Title indicating that sharing has failed. */
 "share_podcasts_sharing_failed_title" = "Sharing Failed";
 
+/* Toast shown when exporting a shareable clip fails. %@ is the system error description. */
+"sharing_clip_export_failed" = "Failed clip export: %@";
+
 /* A common string used throughout the app. Title for the screen to select multiple podcasts to share. */
 "share_select_podcasts" = "Select Podcasts";
 
