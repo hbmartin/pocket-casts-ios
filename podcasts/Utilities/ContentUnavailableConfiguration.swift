@@ -1,5 +1,6 @@
 import SwiftUI
 import EndOfYear
+import UIKit
 
 // Many of these can be replaced with UIContentUnavailableConfigurations in iOS 17
 struct ContentUnavailableConfiguration {
@@ -38,6 +39,24 @@ struct ContentUnavailableConfiguration {
             EmptyStateView(title: title, message: message, icon: icon, actions: actions, style: style)
                 .environmentObject(Theme.sharedTheme)
         }
+    }
+
+    /// A native `UIContentUnavailableConfiguration` for simple title/message/icon empty states.
+    /// Colours mirror `DefaultEmptyStateStyle`. Because this is a static snapshot (unlike the hosted
+    /// `emptyState`, which re-themes live), callers must rebuild it on theme change, e.g. from `handleThemeChanged()`.
+    static func nativeEmptyState(title: String, message: String?, imageName: String?, theme: Theme = .sharedTheme) -> UIContentConfiguration {
+        let themeType = theme.activeTheme
+        var config = UIContentUnavailableConfiguration.empty()
+        config.text = title
+        config.secondaryText = message
+        config.textProperties.color = ThemeColor.primaryText01(for: themeType)
+        config.secondaryTextProperties.color = ThemeColor.primaryText02(for: themeType)
+        if let imageName {
+            config.image = UIImage(named: imageName)?.withRenderingMode(.alwaysTemplate)
+            config.imageProperties.tintColor = ThemeColor.primaryIcon03(for: themeType)
+            config.imageProperties.maximumSize = CGSize(width: 30, height: 30)
+        }
+        return config
     }
 }
 

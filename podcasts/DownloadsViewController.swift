@@ -180,7 +180,7 @@ class DownloadsViewController: PCViewController {
         if episodes.isEmpty {
             let title = L10n.downloadsNoDownloadsTitle
             let message = L10n.downloadsNoDownloadsDesc
-            config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("filter_downloaded") })
+            config = ContentUnavailableConfiguration.nativeEmptyState(title: title, message: message, imageName: "filter_downloaded")
         }
 
         self.contentUnavailableConfiguration = config
@@ -189,6 +189,8 @@ class DownloadsViewController: PCViewController {
     override func handleThemeChanged() {
         downloadsTable.reloadData()
         view.backgroundColor = ThemeColor.primaryUi02()
+        // Rebuild the native content-unavailable config so its snapshotted colours follow the theme.
+        refreshContentUnavailable()
     }
 
     private func addEventObservers() {

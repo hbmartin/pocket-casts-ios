@@ -55,7 +55,6 @@ struct SuggestedFoldersView: View {
                             }
                         }
                 }
-                .navigationViewStyle(.stack)
                 .tint(navBarTint)
             case .failed:
                 CreateFolderView(isInsideNavigation: false) { uuid in
