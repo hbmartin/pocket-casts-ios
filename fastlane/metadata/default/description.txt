@@ -26,7 +26,6 @@ POWERFUL PLAYBACK
  • Chapters: Jump between chapters easily, and enjoy embedded artwork that the author has added (we support MP3 and M4A chapter formats).
  • Audio & video: Play all of your favorite episodes, toggle video to audio.
  • Skip playback: Skip episode intros, jump through episodes with custom skip intervals.
- • Apple Watch: Control playback from our Apple Watch app, adjust the volume or change playback effects, all without ever touching your phone.
  • Sleep timer: We'll pause your episode so you can rest your weary head.
  • Airplay & Chromecast: Send episodes straight to your TV or speakers with a single tap.
  • Sonos: Browse and play your podcast collection directly from the Sonos app.

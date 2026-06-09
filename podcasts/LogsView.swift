@@ -2,27 +2,13 @@ import Foundation
 import PocketCastsUtils
 import SwiftUI
 
-enum LogSource: String, CaseIterable {
-    case iOS
-    case watchOS
-}
-
 class LogsViewModel: ObservableObject {
     @Published var logs = ""
-    @Published var selectedSource: LogSource = .iOS
 
     func load() async {
-        switch selectedSource {
-        case .iOS:
-            let result = await FileLog.shared.logFileAsString()
-            await MainActor.run {
-                self.logs = result
-            }
-        case .watchOS:
-            let result = await FileLog.shared.watchLogFileAsString()
-            await MainActor.run {
-                self.logs = result ?? L10n.logsWatchOsNotAvailable
-            }
+        let result = await FileLog.shared.logFileAsString()
+        await MainActor.run {
+            self.logs = result
         }
     }
 
@@ -52,15 +38,6 @@ struct LogsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("Log Source", selection: $model.selectedSource) {
-                ForEach(LogSource.allCases, id: \.self) { source in
-                    Text(source.rawValue).tag(source)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-
             NonEditableTextView(text: model.logs, scrolledToBottom: true)
                 .ignoresSafeArea(edges: .bottom)
         }
@@ -77,7 +54,7 @@ struct LogsView: View {
         }
         .foregroundStyle(theme.primaryIcon01)
         .applyDefaultThemeOptions()
-        .task(id: model.selectedSource) {
+        .task {
             await model.load()
         }
     }

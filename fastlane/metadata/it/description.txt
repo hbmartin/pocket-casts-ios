@@ -21,7 +21,6 @@ POTENTE RIPRODUZIONE
 • Capitoli: passa facilmente da un capitolo all'altro e goditi la grafica incorporata che l'autore ha aggiunto (supportiamo i formati dei capitoli MP3 e M4A).
 • Audio e video: riproduci tutti i tuoi episodi preferiti, passa dal video all'audio.
 • Salta la riproduzione: salta le introduzioni degli episodi, passa da un episodio all'altro con intervalli di salto personalizzati.
-• Apple Watch: controlla la riproduzione dall'app sull'Apple Watch, regola il volume o modifica gli effetti di riproduzione, il tutto senza mai toccare il telefono.
 • Timer di sospensione: metteremo in pausa il tuo episodio in modo che tu possa riposare la mente affaticata.
 • Airplay e Chromecast: invia gli episodi direttamente alla TV o agli altoparlanti con un solo tocco.
 • Sonos: sfoglia e riproduci la tua raccolta di podcast direttamente dall'app Sonos.

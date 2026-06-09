@@ -83,7 +83,6 @@ EXTENSIONS = %w[
   PodcastsIntents
   PodcastsIntentsUI
   Share-Extension
-  watchkitapp
   WidgetExtension
 ].freeze
 
@@ -1192,27 +1191,6 @@ platform :ios do
       devices: ipad_devices,
       dark_mode: true,
       testplan: 'ScreenshotAutomation_iPad_Dark_Interface'
-    )
-  end
-
-  # Generates localized screenshots for the Apple Watch.
-  #
-  # Tests run in the simulator so be sure to make any necessary Podfile changes such as
-  # converting to use google-cast-sdk-no-bluetooth-mock
-  #
-  # Setup:
-  #  - Log into an account with Plus. Run the test iPhone_GenerateScreenshots.test_watchSetup
-  #    on a device that is connected to the watch mentioned in the test.
-  #  - Ensure the data syncs to the simulated watch. Mocking out the ApplicationContext from
-  #    the device can help ensure a consistent response.
-  #
-  lane :watch_screenshots do
-    watch_devices = ['Apple Watch Series 7 - 45mm']
-
-    snapshot(
-      scheme: 'Screenshot Automation Watch',
-      devices: watch_devices,
-      test_without_building: false
     )
   end
 

@@ -28,7 +28,6 @@ class AutoplayHelper {
         }
     }
 
-    #if !os(watchOS)
     static let shared = AutoplayHelper()
 
     private let userDefaults: UserDefaults
@@ -130,7 +129,6 @@ class AutoplayHelper {
         userDefaults.set(data, forKey: userDefaultsKey)
         FileLog.shared.addMessage("Autoplay: saving the latest playlist: \(playlist)")
     }
-    #endif
 }
 
 extension AutoPlaySource {

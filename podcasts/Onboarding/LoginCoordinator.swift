@@ -158,7 +158,6 @@ extension LoginCoordinator: SyncSigninDelegate, CreateAccountDelegate {
             resetFlow()
         }
     }
-
 }
 
 // MARK: - Helpers

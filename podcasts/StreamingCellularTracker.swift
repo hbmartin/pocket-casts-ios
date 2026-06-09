@@ -13,7 +13,6 @@ import PocketCastsUtils
 ///
 /// DB writes happen only on connection type changes and when tracking stops (not during streaming).
 /// An access log observer keeps an in-memory byte count up to date so that flushes are accurate.
-#if !os(watchOS)
 class StreamingCellularTracker {
     private var monitor: NWPathMonitor?
     private let monitorQueue = DispatchQueue(label: "com.pocketcasts.StreamingCellularTracker")
@@ -171,4 +170,3 @@ private extension NetworkDataUsageManager.ConnectionType {
         }
     }
 }
-#endif

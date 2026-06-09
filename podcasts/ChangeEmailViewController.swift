@@ -198,7 +198,6 @@ class ChangeEmailViewController: PCViewController, UITextFieldDelegate {
 
                 ServerSettings.setSyncingEmail(email: newEmail)
                 self.delegate?.emailChanged()
-                Settings.setLoginDetailsUpdated()
                 DispatchQueue.main.async {
                     let updatedVC = AccountUpdatedViewController()
                     updatedVC.titleText = L10n.changeEmailConf

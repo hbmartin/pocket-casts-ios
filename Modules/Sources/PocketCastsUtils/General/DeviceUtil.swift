@@ -1,9 +1,5 @@
 import Foundation
-#if os(watchOS)
-    import WatchKit
-#else
     import UIKit
-#endif
 
 public enum DeviceUtil {
     // Gets the identifier from the system, such as "iPhone7,1"
@@ -21,10 +17,6 @@ public enum DeviceUtil {
 
     // The current version of the operating system (e.g. 8.4 or 9.2).
     public static var systemVersion: String? {
-        #if os(watchOS)
-            return WKInterfaceDevice.current().systemVersion
-        #else
             return UIDevice.current.systemVersion
-        #endif
     }
 }

@@ -36,9 +36,7 @@
 @property (nonatomic, copy) NSString * _Nullable url;
 @property (nonatomic) CMTime time;
 @property (nonatomic) CMTime duration;
-#if !TARGET_OS_WATCH
 @property (nonatomic) UIImage * _Nullable artwork;
-#endif
 - (BOOL)isEqualToChapter:(MNAVChapter *_Nonnull)aChapter;
 - (MNAVChapter *_Nonnull)initWithTime:(CMTime)time duration:(CMTime)duration;
 + (MNAVChapter *_Nonnull)chapterWithTime:(CMTime)time duration:(CMTime)duration;

@@ -6,9 +6,7 @@ import PocketCastsUtils
 
 class Settings: NSObject {
 
-#if !os(watchOS)
     static var debugPlaylistsLimit = Constants.Limits.maxFilterItems
-#endif
 
     static var isLockScreenScrubbingDisabled: Bool {
         set {
@@ -848,62 +846,6 @@ class Settings: NSObject {
         UserDefaults.standard.set(actionInts, forKey: Settings.upNextMultiSelectActionsKey)
     }
 
-    // MARK: - Password changed and watch requires update
-
-    class func loginDetailsUpdated() -> Bool {
-        UserDefaults.standard.bool(forKey: Constants.UserDefaults.loginDetailsUpdated)
-    }
-
-    class func clearLoginDetailsUpdated() {
-        UserDefaults.standard.set(false, forKey: Constants.UserDefaults.loginDetailsUpdated)
-    }
-
-    class func setLoginDetailsUpdated() {
-        UserDefaults.standard.set(true, forKey: Constants.UserDefaults.loginDetailsUpdated)
-    }
-
-    // MARK: - Watch number of episodes to auto sync from the Up Next queue
-
-    class func setWatchAutoDownloadUpNextEnabled(isEnabled: Bool) {
-        UserDefaults.standard.set(isEnabled, forKey: Constants.UserDefaults.watchAutoDownloadUpNextEnabled)
-
-        trackValueToggled(.settingsAppleWatchAutoDownloadUpNextToggled, enabled: isEnabled)
-    }
-
-    class func watchAutoDownloadUpNextEnabled() -> Bool {
-        guard let isEnabled = UserDefaults.standard.object(forKey: Constants.UserDefaults.watchAutoDownloadUpNextEnabled) as? Bool else {
-            return false
-        }
-
-        return isEnabled
-    }
-
-    class func setWatchAutoDownloadUpNextCount(numEpisodes: Int) {
-        UserDefaults.standard.set(numEpisodes, forKey: Constants.UserDefaults.watchAutoDownloadUpNextCount)
-        trackValueChanged(.settingsAppleWatchAutoDownloadEpisodesChanged, value: numEpisodes)
-    }
-
-    class func watchAutoDownloadUpNextCount() -> Int {
-        guard let numEpisodes = UserDefaults.standard.object(forKey: Constants.UserDefaults.watchAutoDownloadUpNextCount) as? Int else {
-            return 3
-        }
-
-        return numEpisodes
-    }
-
-    class func setWatchAutoDeleteUpNext(isEnabled: Bool) {
-        UserDefaults.standard.set(isEnabled, forKey: Constants.UserDefaults.watchAutoDeleteUpNext)
-        trackValueToggled(.settingsAppleWatchAutoDownloadDeleteDownloadsToggled, enabled: isEnabled)
-    }
-
-    class func watchAutoDeleteUpNext() -> Bool {
-        guard let isEnabled = UserDefaults.standard.object(forKey: Constants.UserDefaults.watchAutoDeleteUpNext) as? Bool else {
-            return true
-        }
-
-        return isEnabled
-    }
-
     // MARK: - App Store Review Requests
 
     class func addReviewRequested() {
@@ -1400,7 +1342,7 @@ class Settings: NSObject {
     }
 
     // MARK: - Informational Banner
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
     static func dismissBanner(for type: InformationalBannerType) {
         UserDefaults.standard.set(true, forKey: "kInformational\(type.rawValue.capitalized)Banner")
     }
@@ -1506,7 +1448,6 @@ class Settings: NSObject {
 
     // MARK: - Configurable Defaults
 
-    #if !os(watchOS)
         class func minTimeBetweenProgressSaves() -> TimeInterval {
             millisecondsToTime(
                 configuredDouble(
@@ -1585,7 +1526,6 @@ class Settings: NSObject {
         private static func configuredInt(key: String, default defaultValue: Int) -> Int {
             RemoteConfigValueStore().int(forKey: key) ?? defaultValue
         }
-    #endif
 }
 
 extension Settings {
@@ -1598,7 +1538,7 @@ extension Settings {
     }
 }
 
-#if !os(watchOS) && !os(tvOS)
+#if !os(tvOS)
 extension L10n {
     static var plusCloudStorageLimit: String {
         plusCloudStorageLimitFormat(Settings.plusCloudStorageLimit.localized())

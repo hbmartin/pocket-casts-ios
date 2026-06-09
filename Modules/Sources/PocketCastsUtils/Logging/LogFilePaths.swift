@@ -2,8 +2,6 @@ import Foundation
 
 public enum LogFilePaths {
 
-    public static var watchUploadLog: String { logDirectory + "/uploadWatchDebug.log" }
-
     public static var debugUploadLog: String { logDirectory + "/uploadDebug.log" }
 
     static var mainLogFilePath: String { logDirectory + "/main.log" }

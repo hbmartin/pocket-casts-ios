@@ -254,11 +254,9 @@ extension ServerPodcastManager {
 
         DataManager.sharedManager.save(podcast: podcast)
         DataManager.sharedManager.setPushDefaultForNewPodcast(podcast)
-        #if !os(watchOS)
         if let latestEpisode = latestEpisodes.first {
                 MetadataUpdater.shared.updatedMetadata(episodeUuid: latestEpisode.uuid)
             }
-        #endif
     }
 
     private func cleanupDeletedEpisodes(podcast: Podcast, serverEpisodes: [[String: Any]]) {

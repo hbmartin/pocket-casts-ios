@@ -21,7 +21,6 @@ KRAFTFULL UPPSPELNING
 • Kapitel: Hoppa enkelt mellan kapitel och njut av inbäddade omslag som podcastens skapare har lagt till (vi stöder kapitelformaten MP3 och M4A).
 • Ljud och video: Spela upp dina favoritavsnitt, växla mellan video och ljud.
 • Hoppa över uppspelning: Hoppa över avsnittsintron, hoppa genom avsnitt med anpassade överhoppningsintervall.
-• Apple Watch: Styr uppspelningen från din Apple Watch-app, justera volymen eller ändra uppspelningseffekterna, allt utan att behöva trycka på din telefon.
 • Sömntimer: Vi pausar ditt avsnitt så att du kan vila ditt trötta huvud.
 • Airplay och Chromecast: Skicka avsnitt direkt till din TV eller dina högtalare med ett enda tryck.
 • Sonos: Bläddra igenom och spela upp din podcastsamling direkt i Sonos-appen.

@@ -210,7 +210,6 @@ private extension AnalyticsEpisodeHelper {
 
 private extension AnalyticsEpisodeHelper {
     func addNotificationObservers() {
-        #if !os(watchOS)
             NotificationCenter.default.addObserver(forName: Constants.Notifications.episodeDownloaded, object: nil, queue: .main) { notification in
                 // Verify the UUID is one that we're tracking
                 guard let uuid = notification.object as? String, self.episodeDownloadQueue.contains(uuid) else {
@@ -254,6 +253,5 @@ private extension AnalyticsEpisodeHelper {
                     break
                 }
             }
-        #endif
     }
 }

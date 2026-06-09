@@ -2,9 +2,6 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
-#if os(watchOS)
-    import WatchKit
-#endif
 
 public class RefreshManager {
     public static let shared = RefreshManager()
@@ -16,12 +13,7 @@ public class RefreshManager {
         return queue
     }()
 
-    // the watch has less resources than a phone, so be a bit more aggressive about not refreshing constantly
-    #if os(watchOS)
-        private static let minTimeBetweenRefreshes = 1.minute
-    #else
-        private static let minTimeBetweenRefreshes = 15.seconds
-    #endif
+    private static let minTimeBetweenRefreshes = 15.seconds
 
     public func syncUpNext() {
         if !SyncManager.isUserLoggedIn() { return }
@@ -81,7 +73,6 @@ public class RefreshManager {
         refresh(podcasts: DataManager.sharedManager.allPodcasts(includeUnsubscribed: false))
     }
 
-    #if !os(watchOS)
     private func refresh(podcasts: [Podcast], completion: (() -> Void)? = nil) {
         UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshStartTime)
 
@@ -95,40 +86,7 @@ public class RefreshManager {
             }
         }
     }
-    #endif
 
-    #if os(watchOS)
-    // Watch OS 10 has a very very very weird issue that happened after using Xcode 16:
-    // if the refresh call uses a [weak self] the system kills the app.
-    // I'm not entirely sure why that happens but removing the weak part fixes the issue.
-    // We can safely remove this method once we remove support to watchOS 10.
-    private func refresh(podcasts: [Podcast], completion: (() -> Void)? = nil) {
-        UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshStartTime)
-
-        DispatchQueue.global().async {
-            let watchOsMajorVersion = WKInterfaceDevice.current().systemVersion.split(separator: ".")[safe: 0]
-
-            if watchOsMajorVersion == "10" {
-                // Let's not use [weak self] so the app is not killed
-                MainServerHandler.shared.refresh(podcasts: podcasts) { refreshResponse in
-                    self.processPodcastRefreshResponse(refreshResponse) { _ in
-                        completion?()
-                    }
-                }
-
-                return
-            }
-
-            MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in
-                guard let self else { return }
-
-                self.processPodcastRefreshResponse(refreshResponse) { _ in
-                    completion?()
-                }
-            }
-        }
-    }
-    #endif
 
     public func refreshPodcasts(completion: @escaping (RefreshFetchResult) -> Void) {
         DispatchQueue.global().async {

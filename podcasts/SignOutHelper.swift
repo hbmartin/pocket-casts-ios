@@ -11,7 +11,6 @@ class SignOutHelper {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.shouldFollowSystemThemeKey)
         SyncManager.signout(userInitiated: true)
         UserEpisodeManager.cleanupCloudOnlyFiles()
-        Settings.setLoginDetailsUpdated()
         paidPodcasts.forEach { PodcastManager.shared.unsubscribe(podcast: $0) }
 
         NotificationCenter.postOnMainThread(notification: ServerNotifications.subscriptionStatusChanged)

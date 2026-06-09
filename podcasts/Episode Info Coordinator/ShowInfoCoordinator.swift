@@ -63,9 +63,6 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
     }
 
     public func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
-#if os(watchOS)
-        return (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
-#else
         let metadata = try await loadShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
 
         if FeatureFlag.generatedTranscripts.enabled {
@@ -90,7 +87,6 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
             return (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
         }
         return (transcripts: transcripts, hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
-#endif
     }
 
     @discardableResult

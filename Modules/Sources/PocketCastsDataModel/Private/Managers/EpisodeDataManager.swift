@@ -1217,13 +1217,6 @@ class EpisodeDataManager {
     }
 }
 
-#if os(watchOS)
-// Only here to support watchOS 8
-public enum SortOrder {
-    case forward
-    case reverse
-}
-#endif
 
 
 // MARK: - 👻 Ghost Episodes 👻

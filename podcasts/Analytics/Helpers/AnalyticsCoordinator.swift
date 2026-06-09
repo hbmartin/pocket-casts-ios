@@ -49,7 +49,6 @@ enum AnalyticsSource: String, AnalyticsDescribable {
     case userEpisode = "user_episode"
     case videoPlayerSkipForwardLongPress = "video_player_skip_forward_long_press"
     case playbackFailed = "playback_failed"
-    case watch
     case bookmark
     case interactiveWidget = "interactive_widget"
     case multiSelect = "multi_select"
@@ -77,42 +76,42 @@ class AnalyticsCoordinator {
             return currentSource
         }
 
-        #if !os(watchOS) && !APPCLIP
+        #if !APPCLIP
         return topAnalyticsSourceProvider()?.analyticsSource ?? .unknown
         #else
         return .unknown
         #endif
     }
 
-#if !os(watchOS) && !APPCLIP
-        func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
-            // Only dispatch async on the main thread if needed
-            guard Thread.isMainThread else {
-                DispatchQueue.main.async {
-                    self.track(event, properties: properties)
-                }
-                return
+    #if !APPCLIP
+    func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
+        // Only dispatch async on the main thread if needed
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async {
+                self.track(event, properties: properties)
             }
-
-            let defaultProperties: [String: Any] = ["source": currentAnalyticsSource, "content_type": currentEpisodeIsVideo ? "video" : "audio"]
-            let mergedProperties = defaultProperties.merging(properties ?? [:]) { current, _ in current }
-            Analytics.track(event, properties: mergedProperties)
+            return
         }
+
+        let defaultProperties: [String: Any] = ["source": currentAnalyticsSource, "content_type": currentEpisodeIsVideo ? "video" : "audio"]
+        let mergedProperties = defaultProperties.merging(properties ?? [:]) { current, _ in current }
+        Analytics.track(event, properties: mergedProperties)
+    }
 
     func getTopViewController(base: UIViewController? = SceneHelper.rootViewController()) -> UIViewController? {
-            guard UIApplication.shared.applicationState == .active else {
-                return nil
-            }
-
-            if let nav = base as? UINavigationController {
-                return getTopViewController(base: nav.visibleViewController)
-            } else if let tab = base as? UITabBarController, let selected = tab.selectedViewController {
-                return getTopViewController(base: selected)
-            } else if let presented = base?.presentedViewController {
-                return getTopViewController(base: presented)
-            }
-            return base
+        guard UIApplication.shared.applicationState == .active else {
+            return nil
         }
+
+        if let nav = base as? UINavigationController {
+            return getTopViewController(base: nav.visibleViewController)
+        } else if let tab = base as? UITabBarController, let selected = tab.selectedViewController {
+            return getTopViewController(base: selected)
+        } else if let presented = base?.presentedViewController {
+            return getTopViewController(base: presented)
+        }
+        return base
+    }
 
     func topAnalyticsSourceProvider() -> AnalyticsSourceProvider? {
         guard let topViewController = getTopViewController() else { return nil }
@@ -128,7 +127,7 @@ class AnalyticsCoordinator {
         return nil
     }
     #else
-        /// NOOP track event to preventing needing to wrap all the events in #if checks
-        func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {}
+    /// NOOP track event to preventing needing to wrap all the events in #if checks
+    func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {}
     #endif
 }

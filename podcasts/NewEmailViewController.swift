@@ -207,8 +207,6 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
                 SyncManager.syncReason = .accountCreated
                 RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
 
-                Settings.setLoginDetailsUpdated()
-
                 // Let a delegate decide what to do next
                 if let delegate = self.delegate {
                     delegate.handleAccountCreated()

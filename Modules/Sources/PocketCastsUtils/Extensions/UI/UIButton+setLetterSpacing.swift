@@ -1,4 +1,3 @@
-#if !os(watchOS)
     import UIKit
 
     public extension UIButton {
@@ -9,4 +8,3 @@
             setAttributedTitle(attributedString, for: .normal)
         }
     }
-#endif

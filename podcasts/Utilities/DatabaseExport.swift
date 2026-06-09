@@ -72,11 +72,6 @@ class DatabaseExport {
             let debugInfoFile = exportDirectory.appendingPathComponent("info.txt")
             fileManager.createFile(atPath: debugInfoFile.path, contents: DebugInfo.string(optOut: UserDefaults.standard.debugOptedOut).data(using: .utf8))
 
-            if let watchLog = await FileLog.shared.watchLogFileAsString() {
-                let watchLogFile = exportDirectory.appendingPathComponent("watchos-logs.txt", isDirectory: false)
-                try watchLog.write(to: watchLogFile, atomically: true, encoding: .utf8)
-            }
-
             // Write the bundle document
             let exportFile = exportDirectory.appendingPathComponent("export", conformingTo: .pcasts)
             let wrapper = try PCBundleDoc().fileWrapper()

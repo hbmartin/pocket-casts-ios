@@ -2,8 +2,6 @@ import Foundation
 import PocketCastsUtils
 #if os(iOS)
 import UIKit
-#elseif os(watchOS)
-import WatchKit
 #endif
 
 class TokenHelper {
@@ -132,8 +130,6 @@ class TokenHelper {
         DispatchQueue.main.async {
             #if os(iOS)
             isBackgrounded = UIApplication.shared.applicationState == .background
-            #elseif os(watchOS)
-            isBackgrounded = WKExtension.shared().applicationState == .background
             #endif
 
             semaphore.signal()

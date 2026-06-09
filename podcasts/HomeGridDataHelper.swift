@@ -40,7 +40,6 @@ class HomeGridDataHelper {
         return filteredItems
     }
 
-    #if !os(watchOS)
         class func gridListItems(orderedBy: LibrarySort, badgeType: BadgeType) -> [HomeGridListItem] {
             let allPodcasts: [Podcast]
             if FeatureFlag.podcastsSortChanges.enabled {
@@ -102,7 +101,6 @@ class HomeGridDataHelper {
 
             return gridItems
         }
-    #endif
 
     class func gridItems(orderedBy: LibrarySort) -> [HomeGridItem] {
         let allPodcasts: [Podcast]

@@ -1,5 +1,5 @@
 {
-  "originHash" : "75e620ddac544c62867562b6b6ee77b64cdf4c2f6e38ecd26492f65ec0eae2d0",
+  "originHash" : "85f5c555b0609f18d5ba8b3bfd82adda50c14dae13d72429e63b2e7adb535168",
   "pins" : [
     {
       "identity" : "agrume",
@@ -56,15 +56,6 @@
       }
     },
     {
-      "identity" : "google-cast",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Automattic/google-cast",
-      "state" : {
-        "revision" : "b553f49f8507a524c8857638ba8fe38c9568978b",
-        "version" : "1.0.1"
-      }
-    },
-    {
       "identity" : "grdb.swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift.git",
@@ -101,15 +92,6 @@
       }
     },
     {
-      "identity" : "pocket-casts-ios-fingerprint",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Automattic/pocket-casts-ios-fingerprint",
-      "state" : {
-        "branch" : "trunk",
-        "revision" : "b696bd9a4a495604532b1b7a484ab140c144eccc"
-      }
-    },
-    {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log",
@@ -134,6 +116,15 @@
       "state" : {
         "revision" : "2bc86522d115234d1f588efe2bcb4ce4be8f8b82",
         "version" : "510.0.3"
+      }
+    },
+    {
+      "identity" : "swiftsdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/TelemetryDeck/SwiftSDK",
+      "state" : {
+        "revision" : "ad4a03ec7ea7416a4081370f21c86e55b02a5b88",
+        "version" : "2.14.1"
       }
     },
     {

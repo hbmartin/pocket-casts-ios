@@ -36,11 +36,9 @@ class Chapters: Equatable {
         1
     }
 
-#if !os(watchOS)
     var artwork: UIImage? {
         chapters.last(where: { $0.image != nil })?.image
     }
-#endif
 
     init(chapters: [ChapterInfo] = []) {
         if chaptersOverlap(chapters) {

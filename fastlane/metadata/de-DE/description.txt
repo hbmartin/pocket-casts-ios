@@ -21,7 +21,6 @@ STARKE WIEDERGABEFUNKTIONEN
 • Kapitel: Wechsle leicht zwischen verschiedenen Kapiteln und bewundere die eingebetteten Kunstwerke, die vom Autor hinzugefügt wurden. Wir unterstützen die Kapitelformate MP3 und M4A.
 • Audio & Video: Beim Abspielen deiner Lieblingsfolgen kannst du zwischen Audio und Video wechseln.
 • Wiedergabe überspringen: Überspringe die Einführung oder bewege dich in anpassbaren Intervallen innerhalb von Folgen vor und zurück.
-• Apple Watch: Steuere die Wiedergabe über deine Apple Watch-App. Ändere die Lautstärke oder Effekte, ohne dein Telefon zu berühren.
 • Schlummerfunktion: Wir pausieren deinen Podcast, damit du deinen wohlverdienten Schlaf bekommst.
 • Airplay & Chromecast: Spiele Folgen mit einem einzigen Tippen auf deinem Fernseher oder über deine Lautsprecher ab.
 • Sonos: Durchsuche deine Podcasts und gib sie direkt über die Sonos-App wieder.

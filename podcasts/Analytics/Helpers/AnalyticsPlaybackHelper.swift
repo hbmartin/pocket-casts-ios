@@ -104,7 +104,7 @@ class AnalyticsPlaybackHelper: AnalyticsCoordinator {
     }
 
     func playerString(player: PlaybackProtocol?) -> String {
-        #if !os(watchOS) && !os(tvOS)
+        #if !os(tvOS)
         if player is EffectsPlayer {
             return "effects"
         }

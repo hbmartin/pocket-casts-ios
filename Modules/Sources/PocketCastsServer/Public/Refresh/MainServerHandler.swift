@@ -1,11 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
-#if os(watchOS)
-    import WatchKit
-#else
     import UIKit
-#endif
 
 protocol BaseRequest: Encodable {
     var device: String? { get set }
@@ -421,11 +417,7 @@ public class MainServerHandler {
         json["l"] = locale.language.languageCode?.identifier
         json["c"] = locale.region?.identifier
 
-        #if os(watchOS)
-            json["m"] = WKInterfaceDevice.current().systemVersion
-        #else
             json["m"] = UIDevice.current.systemVersion
-        #endif
 
         json["dt"] = MainServerHandler.deviceType
         json["v"] = MainServerHandler.parserVersion
@@ -440,11 +432,7 @@ public class MainServerHandler {
         baseRequest.l = locale.language.languageCode?.identifier
         baseRequest.c = locale.region?.identifier
 
-        #if os(watchOS)
-            baseRequest.m = WKInterfaceDevice.current().systemVersion
-        #else
             baseRequest.m = UIDevice.current.systemVersion
-        #endif
 
         baseRequest.dt = MainServerHandler.deviceType
         baseRequest.v = MainServerHandler.parserVersion

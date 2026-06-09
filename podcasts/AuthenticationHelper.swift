@@ -73,7 +73,6 @@ class AuthenticationHelper {
         NotificationCenter.postOnMainThread(notification: .userLoginDidChange)
 
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-        Settings.setLoginDetailsUpdated()
     }
 
     // MARK: Code Login - For tv login using a QR Code

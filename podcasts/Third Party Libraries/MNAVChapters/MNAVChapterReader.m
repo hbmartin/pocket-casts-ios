@@ -102,9 +102,7 @@ static NSString *const MNAVMetadataFormatID3 = @"org.id3";
     for (AVTimedMetadataGroup *group in groups) {
         MNAVChapter *chapter = [MNAVChapter new];
         chapter.title = [self titleFromGroup:group];
-        #if !TARGET_OS_WATCH
         chapter.artwork = [self imageFromGroup:group];
-        #endif
         chapter.url = [self urlFromGroup:group forTitle:chapter.title];
         chapter.time = [self timeFromGroup:group];
         chapter.duration = [self durationFromGroup:group];
@@ -292,9 +290,7 @@ long btoi(char* bytes, long size, long offset);
     chapter.duration = CMTimeMake(endTime - startTime, 1000);
     chapter.title = [self titleInData:data];
     chapter.url = [self userURLInData:data];
-    #if !TARGET_OS_WATCH
     chapter.artwork = [self imageInData:data];
-    #endif
     
     return chapter;
 }

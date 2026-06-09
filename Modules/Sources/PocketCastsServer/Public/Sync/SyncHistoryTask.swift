@@ -56,10 +56,7 @@ class SyncHistoryTask: ApiBaseTask, @unchecked Sendable {
         do {
             let response = try Api_HistoryResponse(serializedBytes: serverData)
 
-            // on watchOS, we don't show history, so we also don't process server changes we only want to push changes up, not down
-            #if !os(watchOS)
-                updateEpisodes(updates: response.changes)
-            #endif
+            updateEpisodes(updates: response.changes)
 
             // save the server last modified so we can send it back next time
             UserDefaults.standard.set("\(response.serverModified)", forKey: ServerConstants.UserDefaults.historyServerLastModified)

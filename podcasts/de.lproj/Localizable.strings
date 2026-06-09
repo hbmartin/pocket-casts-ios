@@ -1094,8 +1094,6 @@ Folge dauerte
     <string>1 Jahr Inhalte von Slumber Studios</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>Warteschlange zufällig abspielen</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Apps für Wear OS und Apple Watch</string>
     <key>feature_tour_end_tour</key>
     <string>Tour beenden</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ Podcasts mit</string>
     <string>Logs</string>
     <key>logs_no_email_account_configured</key>
     <string>Du musst ein E-Mail-Konto auf dem Gerät konfigurieren, um die Protokolle senden zu können</string>
-    <key>logs_watch_os_not_available</key>
-    <string>Keine watchOS-Protokolle verfügbar. Stelle sicher, dass eine Apple Watch gekoppelt und die Pocket Casts Watch-App installiert ist.</string>
     <key>manage_downloads_action</key>
     <string>Downloads verwalten</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ UM UPDATES ZU ERHALTEN</string>
     <string>Hol dir exklusive Themes mit Pocket Casts Plus und vieles mehr</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>Höre mit Pocket Casts Plus deine Folgen in einer zufälligen Reihenfolge und vieles mehr</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Höre dir mit Pocket Casts Plus Inhalte über deine Uhr an und vieles mehr</string>
     <key>phone</key>
     <string>Telefon</string>
     <key>play</key>
@@ -2276,8 +2270,6 @@ Passe die Regeln an oder speichere diese Playlist für zukünftige passende Folg
     <string>Genieße 1 Jahr lang Premium-Inhalte von Slumber Studios.</string>
     <key>plus_feature_card_text_storage</key>
     <string>Lade deine Audiodateien in den Cloud-Speicher. Dann kannst du von überall aus darauf zugreifen.</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>Lass das Smartphone liegen und gehe joggen.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Lesezeichen</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2290,8 +2282,6 @@ Passe die Regeln an oder speichere diese Playlist für zukünftige passende Folg
     <string>Erholsamer Schlaf mit Slumber Studios</string>
     <key>plus_feature_card_title_storage</key>
     <string>20 GB Speicher</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Apple Watch- und Wear OS-Wiedergabe</string>
     <key>plus_feature_gratitude</key>
     <string>Die unendliche Dankbarkeit von allen bei Pocket Casts</string>
     <key>plus_feature_librofm</key>
@@ -2342,8 +2332,6 @@ Passe die Regeln an oder speichere diese Playlist für zukünftige passende Folg
     <string>Mit unseren Windows-, macOS- und Web-Apps hast du deine Podcasts immer parat</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>Verwalte deine Podcasts in Ordnern und halte sie auf all deinen Geräten synchron.</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Apple Watch- und Wear OS-Apps</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@ pro Monat</string>
     <key>plus_payment_canceled</key>
@@ -3279,22 +3267,6 @@ Viele Anregungen findest du im Tab „Entdecken“.</string>
     <string>Neue Folgen werden automatisch zu „Als Nächstes“ hinzugefügt. Wenn unter „Als Nächstes“ %1$@ Folgen erreicht sind, wird die letzte Folge in der Warteschlange entfernt, sobald neue Folgen automatisch oben hinzugefügt wurden. Folgen, die automatisch unten hinzugefügt werden, werden erst hinzugefügt, wenn „Als Nächstes“ unter dem Limit ist.</string>
     <key>settings_volume_boost</key>
     <string>Lautstärke-Booster</string>
-    <key>settings_watch_auto_download</key>
-    <string>Warteschlange automatisch herunterladen</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Lege fest, wie viele Folgen deiner Warteschlange heruntergeladen werden sollen, damit du sie offline auf deiner Watch abspielen kannst.</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>Downloads über Maximalanzahl löschen</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>Um Speicherplatz auf deiner Watch zu sparen, werden maximal 25 Folgen in deiner Warteschlange automatisch heruntergeladen. Ältere Download-Dateien, die über dieser maximalen Anzahl liegen, werden automatisch gelöscht.</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>Alle Download-Dateien in deiner Warteschlange, die über dieser maximalen Anzahl liegen, werden automatisch gelöscht. Für manuelle Downloads gelten diese Einstellungen nicht.</string>
-    <key>settings_watch_episode_limit</key>
-    <string>Anzahl der Folgen</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts lädt die ersten %1$@ Folgen deiner Warteschlange auf deine Watch, damit du sie offline abspielen kannst.</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>Die ersten %1$@</string>
     <key>setup_account</key>
     <string>Konto einrichten</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3633,14 +3605,6 @@ Deine E-Mail-Adresse, dein Passwort und andere sensible Daten werden nicht getei
     <string>Intelligente Ordner</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>Diese Ordner verwenden</string>
-    <key>support_watch_help_message</key>
-    <string>Wenn du Probleme mit Pocket Casts in der Watch-App hast, können wir dir Wearable-Protokolle senden, um dich besser zu unterstützen. Öffne dafür Pocket Casts auf deiner Watch.</string>
-    <key>support_watch_help_opened_app</key>
-    <string>Ich habe die Watch-App geöffnet</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Ohne Watch-Protokolle senden</string>
-    <key>support_watch_help_title</key>
-    <string>Du brauchst Unterstützung bei der Watch-App?</string>
     <key>supporter</key>
     <string>Unterstützer</string>
     <key>supporter_contributions</key>
@@ -3925,8 +3889,6 @@ Pocket Casts ist mit Abstand die beste App zum Anhören von Podcasts. Sie bietet
 Die Nutzung dieser App kann ganz einfach oder sehr kompliziert sein – das hängt allein vom Benutzer ab. Entweder man nutzt sie einfach als „Plug &amp; Play“ oder man richtet verschiedene Funktionen ein, wie Timer für das Überspringen von Intros und Outros.</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>Die Synchronisationsfunktion ist unglaublich gut. Ich weiß wirklich nicht, welche Magie in dieser App steckt, aber es ist die beste App, die ich je benutzt habe.</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>Ich benutze die App seit über 6 Jahren. Damals habe ich auf Android damit angefangen und seit knapp einem Jahr nutze ich sie auf iOS. Sie funktioniert auf beiden Betriebssystemen gleich. Es ist einfach, Podcasts zu finden, die man sich anhören will. Die Benutzeroberfläche ist ansprechend und man kann sogar Podcasts über RSS-Feed-URL hinzufügen. Die Watch-App ist praktisch, aber ich nutze sie eigentlich nur zum Abspielen/Anhalten. Man kann sich mit einem Konto anmelden und eine geräteübergreifende Synchronisation durchführen. Das ist aber kein Muss.</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>Pocket Casts ist seit Jahren meine erste Adresse. Ich habe zwar auch andere Podcast-Apps ausprobiert, aber ich kehre immer wieder zu Pocket Casts zurück. Die App ist unkompliziert, die Benutzeroberfläche ansprechend und der Support hervorragend. Man sollte sich die App auf jeden Fall angesehen haben, besonders, wenn man mit seiner derzeitigen Podcast-App nicht zufrieden ist.</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3977,54 +3939,6 @@ Die Nutzung dieser App kann ganz einfach oder sehr kompliziert sein – das hä
     <string>Die Stimmpegel sind konsistenter</string>
     <key>wait_for_wifi</key>
     <string>Auf WLAN warten</string>
-    <key>watch</key>
-    <string>Watch</string>
-    <key>watch_buffering</key>
-    <string>Wird gepuffert …</string>
-    <key>watch_chapter_next</key>
-    <string>Nächstes Kapitel</string>
-    <key>watch_chapter_prev</key>
-    <string>Voriges Kapitel</string>
-    <key>watch_effects</key>
-    <string>Effekte</string>
-    <key>watch_episode_details</key>
-    <string>Details zur Folge</string>
-    <key>watch_main_menu</key>
-    <string>Hauptmenü</string>
-    <key>watch_no_episodes</key>
-    <string>Keine Folgen</string>
-    <key>watch_no_filters</key>
-    <string>Keine Filter</string>
-    <key>watch_no_playlists</key>
-    <string>Keine Playlists</string>
-    <key>watch_no_podcasts</key>
-    <string>Keine Podcasts</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>Genieße die Ruhe oder finde neue Inhalte zum Wiedergeben.
-
-Beides klingt gut. 🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>Aktuell keine Wiedergabe</string>
-    <key>watch_play_source</key>
-    <string>Quelle der Wiedergabe</string>
-    <key>watch_source_msg</key>
-    <string>Podcasts werden über den Lautsprecher abgespielt, mit dem das ausgewählte Gerät verbunden ist</string>
-    <key>watch_source_plus_info</key>
-    <string>Lade Folgen direkt auf deine Uhr herunter und höre sie ohne Smartphone an. Besuche Pocket Casts Plus in deiner Mobil-App oder im Web.</string>
-    <key>watch_source_refresh_account</key>
-    <string>Konto aktualisieren</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Wenn du ein Pocket Casts Plus-Konto besitzt, aktualisiere es und versuche, es zu aktivieren</string>
-    <key>watch_source_refresh_data</key>
-    <string>Daten aktualisieren</string>
-    <key>watch_source_sign_in_info</key>
-    <string>Anmelden oder Konto auf deinem Mobiltelefon erstellen</string>
-    <key>watch_tap_to_open</key>
-    <string>Zum Öffnen tippen</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>Über den Bildschirm „Details zur Folge“ kannst du Folgen, die als Nächstes gespielt werden sollen, in die Warteschlange stellen, oder du kannst sie auf deinem Mobiltelefon hinzufügen.</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>„Als Nächstes“ leer</string>
     <key>week</key>
     <string>Woche</string>
     <key>welcome_discover_button</key>

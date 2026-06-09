@@ -293,7 +293,7 @@ class AnalyticsHelper {
             logEvent("folder_created")
         }
     }
-#endif // End iOS Only Check
+#endif
 
 // MARK: - Private
 
@@ -305,7 +305,7 @@ private extension AnalyticsHelper {
     class func logEvent(_ name: String, parameters: [String: Any]? = nil) {
         guard optedOut == false else { return }
 
-        #if !os(watchOS) && !os(tvOS)
+        #if !os(tvOS)
             let properties = parameters?.mapValues { String(describing: $0) }
             Analytics.track(name: name, properties: properties)
         #endif

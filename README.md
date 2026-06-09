@@ -9,8 +9,8 @@
     <a href="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml"><img alt="Semgrep Swift Security workflow status" src="https://github.com/hbmartin/pocket-casts-ios/actions/workflows/semgrep.yml/badge.svg?branch=trunk" /></a>
     <!-- Badge: "license: MPL" -->
     <a href="https://github.com/hbmartin/pocket-casts-ios/blob/trunk/LICENSE.md"><img alt="License MPL" src="https://img.shields.io/badge/license-MPL-black" /></a>
-    <!-- Badge: "platform: ios|watchos" -->
-    <img alt="Platform iOS and watchOS" src="https://img.shields.io/badge/platform-ios%20%7C%20watchos-lightgrey" />
+    <!-- Badge: "platform: ios" -->
+    <img alt="Platform iOS" src="https://img.shields.io/badge/platform-ios-lightgrey" />
     <!-- Badge: "Xcode: {version}+" -->
     <img alt="Xcode v26.4.1 or newer" src="https://img.shields.io/badge/Xcode-v26.4.1%2B-informational" />
 </p>

@@ -39,22 +39,14 @@ extension UserEpisode {
 
     func urlForImage(size: Int = 280) -> URL {
         if imageColor > 0 {
-            #if !os(watchOS)
                 return ServerHelper.userEpisodeDefaultImageUrl(isDark: Theme.isDarkTheme(), color: Int(imageColor), size: size)
-            #else
-                return ServerHelper.userEpisodeDefaultImageUrl(isDark: true, color: Int(imageColor), size: size)
-            #endif
         }
 
         if let serverImageLocation = imageUrl, let serverURL = URL(string: serverImageLocation) {
             return serverURL
         }
-        #if !os(watchOS)
             let path = pathToLocalImage()
             return URL(fileURLWithPath: path)
-        #else
-            return ServerHelper.userEpisodeDefaultImageUrl(isDark: true, color: 1, size: size)
-        #endif
     }
 
     func pathToLocalImage() -> String {

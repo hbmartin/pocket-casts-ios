@@ -1,4 +1,3 @@
-#if !os(watchOS)
 import UIKit
 
 public class GradientView: UIView {
@@ -55,4 +54,3 @@ public class GradientView: UIView {
         gradientLayer?.frame = bounds
     }
 }
-#endif

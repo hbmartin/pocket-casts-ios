@@ -1,4 +1,3 @@
-#if !os(watchOS)
 import UIKit
 
 extension UITextView {
@@ -32,4 +31,3 @@ extension UITextView {
         scrollRectToVisible(visibleRect, animated: true)
     }
 }
-#endif

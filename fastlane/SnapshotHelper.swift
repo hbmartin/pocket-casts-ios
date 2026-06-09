@@ -169,7 +169,6 @@ open class Snapshot: NSObject {
             let image = XCUIDevice.shared.orientation.isLandscape ?  fixLandscapeOrientation(image: screenshot.image) : screenshot.image
             #else
             let image = screenshot.image
-            #endif
 
             guard var simulator = ProcessInfo().environment["SIMULATOR_DEVICE_NAME"], let screenshotsDir = screenshotsDirectory else { return }
 
@@ -189,13 +188,11 @@ open class Snapshot: NSObject {
                 NSLog("Problem writing screenshot: \(name) to \(screenshotsDir)/\(simulator)-\(name).png")
                 NSLog(error.localizedDescription)
             }
+            #endif
         #endif
     }
 
     class func fixLandscapeOrientation(image: UIImage) -> UIImage {
-        #if os(watchOS)
-            return image
-        #else
             if #available(iOS 10.0, *) {
                 let format = UIGraphicsImageRendererFormat()
                 format.scale = image.scale
@@ -206,7 +203,6 @@ open class Snapshot: NSObject {
             } else {
                 return image
             }
-        #endif
     }
 
     class func waitForLoadingIndicatorToDisappear(within timeout: TimeInterval) {
@@ -227,7 +223,7 @@ open class Snapshot: NSObject {
     class func getCacheDirectory() throws -> URL {
         let cachePath = "Library/Caches/tools.fastlane"
         // on OSX config is stored in /Users/<username>/Library
-        // and on iOS/tvOS/WatchOS it's in simulator's home dir
+        // and on iOS/tvOS it's in simulator's home dir
         #if os(OSX)
             let homeDir = URL(fileURLWithPath: NSHomeDirectory())
             return homeDir.appendingPathComponent(cachePath)

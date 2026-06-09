@@ -1,6 +1,5 @@
 import Foundation
 
-// I couldn't get either JSONEncoder/JSONDecoder and the property list one to stop crashing when decoding on a series 3 Apple Watch, so here we do it manually
 public extension Episode {
     func encodeToMap() -> [String: String] {
         var episodeMap = [String: String]()

@@ -5,7 +5,6 @@ extension L10n {
     // MARK: Proper Nouns
 
     /// These strings are proper nouns and shouldn't be localized
-    static let appleWatch = "Apple Watch"
     static let pocketCastsShort = "Casts"
     static let xCom = "X"
     static let instagram = "Instagram"
@@ -55,9 +54,6 @@ extension L10n {
 
     /* Title for the display field that shows the attached tags */
     static let supportLogsTags = "Tags:"
-
-    /* Title for the display field that shows the attached wearable logs */
-    static let supportLogsWearable = "Watch Logs:"
 
     /* Persistent prompt on the support request screen for the user to enter their name */
     static let supportNameIndicator = "Name:"
@@ -123,11 +119,7 @@ extension L10n {
     }
 
     static let bulkDownloadMax: String = {
-        #if os(watchOS)
-            return L10n.bulkDownloadMaxFormat(100.localized())
-        #else
             return L10n.bulkDownloadMaxFormat(Constants.Limits.maxBulkDownloads.localized())
-        #endif
     }()
 
     static func seasonEpisodeShorthand(seasonNumber: Int64, episodeNumber: Int64, shortFormat: Bool = false) -> String {

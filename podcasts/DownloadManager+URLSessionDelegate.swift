@@ -12,13 +12,7 @@ extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
 
     // make sure to call the completion handler on the main queue, otherwise it will crash
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
-#if os(watchOS)
-        DispatchQueue.main.async { [weak self] in
-            guard let self, let task = pendingWatchBackgroundTask else { return }
-
-            task.setTaskCompletedWithSnapshot(true)
-        }
-#elseif APPCLIP || os(tvOS)
+#if APPCLIP || os(tvOS)
         //TODO: Check this and see whether anything should be done
 #else
         DispatchQueue.main.async { [weak self] in

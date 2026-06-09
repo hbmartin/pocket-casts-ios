@@ -27,11 +27,7 @@ actor LogBuffer {
         self.logger = logger
     }
 
-    #if os(watchOS)
-        private let maxFileSize = 65.kilobytes
-    #else
-        private let maxFileSize = 1.megabytes
-    #endif
+    private let maxFileSize = 1.megabytes
 
     func append(_ message: String, date: Date) {
         // if it's important enough to log to file, write it to the debug console as well
@@ -153,10 +149,6 @@ public final class FileLog {
 
     public func logFileAsString() async -> String {
         return await logBuffer.loadLogFileAsString()
-    }
-
-    public func watchLogFileAsString() async -> String? {
-        nil
     }
 
     // Creates a merged file from `mainLogFilePath` and `backupLogFilePath` to be used for enquing the file upload.
