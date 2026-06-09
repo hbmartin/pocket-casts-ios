@@ -1,29 +1,51 @@
-import SwiftSyntax
+import MacroTesting
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
 import XCTest
 
 #if canImport(GRDBMacrosPlugin)
 import GRDBMacrosPlugin
-
-let testMacros: [String: Macro.Type] = [
-    "GRDBRecord": GRDBRecordMacro.self,
-    "GRDBColumn": GRDBColumnMacro.self,
-    "GRDBIgnore": GRDBIgnoreMacro.self,
-]
 #endif
+
+/// Base class that registers the GRDB macros for `assertMacro` once, via
+/// `swift-macro-testing`'s `withMacroTesting`. Subclasses inherit the
+/// configuration, so individual tests just call `assertMacro { … } expansion: { … }`.
+///
+/// Macro plugins only build/run on the host (macOS) toolchain, so registration
+/// is fenced behind `canImport(GRDBMacrosPlugin)`; the individual tests skip on
+/// other platforms.
+///
+/// To refresh the expected expansions after changing the macro, temporarily pass
+/// `record: .all` to `withMacroTesting` below (or set the `SNAPSHOT_TESTING_RECORD`
+/// environment variable), run the tests once, then revert.
+class GRDBMacroTestCase: XCTestCase {
+    override func invokeTest() {
+        #if canImport(GRDBMacrosPlugin)
+        withMacroTesting(
+            macros: [
+                "GRDBRecord": GRDBRecordMacro.self,
+                "GRDBColumn": GRDBColumnMacro.self,
+                "GRDBIgnore": GRDBIgnoreMacro.self,
+            ]
+        ) {
+            super.invokeTest()
+        }
+        #else
+        super.invokeTest()
+        #endif
+    }
+}
 
 // MARK: - NSObject Subclass Tests
 
 /// Tests for the @GRDBRecord macro applied to NSObject subclasses.
 /// Pattern used by: Episode, Podcast, Folder, EpisodeFilter
-final class GRDBRecordNSObjectTests: XCTestCase {
+final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
 
     // MARK: - Basic NSObject Pattern (Episode-like)
 
     func testNSObjectWithTableName() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJEpisode")
             public class Episode: NSObject {
@@ -31,8 +53,9 @@ final class GRDBRecordNSObjectTests: XCTestCase {
                 @objc public var title: String?
                 @objc public var uuid = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class Episode: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var title: String?
@@ -63,9 +86,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension Episode: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -75,7 +97,7 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
     func testNSObjectWithVariousPropertyTypes() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJPodcast")
             public class Podcast: NSObject {
@@ -87,8 +109,9 @@ final class GRDBRecordNSObjectTests: XCTestCase {
                 @objc public var title: String?
                 @objc public var uuid = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class Podcast: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var addedDate: Date?
@@ -135,9 +158,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension Podcast: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -147,7 +169,7 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
     func testNSObjectWithGRDBColumn() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJPodcast")
             public class Podcast: NSObject {
@@ -155,8 +177,9 @@ final class GRDBRecordNSObjectTests: XCTestCase {
                 @GRDBColumn("episodeKeepSetting")
                 @objc public var autoArchiveEpisodeLimit = 0 as Int32
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class Podcast: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var autoArchiveEpisodeLimit = 0 as Int32
@@ -183,9 +206,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension Podcast: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -195,7 +217,7 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
     func testNSObjectWithLetProperty() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJFilteredPlaylist")
             public class EpisodeFilter: NSObject {
@@ -203,8 +225,9 @@ final class GRDBRecordNSObjectTests: XCTestCase {
                 @objc public let filterDownloading = true
                 @objc public var filterFinished = false
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class EpisodeFilter: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public let filterDownloading = true
@@ -232,9 +255,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension EpisodeFilter: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -244,7 +266,7 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
     func testNSObjectSkipsNonObjcProperties() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJPodcast")
             public class Podcast: NSObject {
@@ -253,8 +275,9 @@ final class GRDBRecordNSObjectTests: XCTestCase {
                 public var cachedUnreadCount = 0
                 public var forceRefreshEpisodeFrom: String? = nil
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class Podcast: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var uuid = ""
@@ -283,9 +306,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension Podcast: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -295,7 +317,7 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
     func testNSObjectWithGRDBIgnore() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "TestTable")
             public class TestModel: NSObject {
@@ -305,8 +327,9 @@ final class GRDBRecordNSObjectTests: XCTestCase {
                 @GRDBIgnore
                 @objc public var cachedValue: String? = nil
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class TestModel: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var name = ""
@@ -334,9 +357,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension TestModel: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -346,14 +368,15 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
     func testSingleProperty() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "TestTable")
             public class TestModel: NSObject {
                 @objc public var id = 0 as Int64
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class TestModel: NSObject {
                 @objc public var id = 0 as Int64
 
@@ -376,9 +399,8 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
             extension TestModel: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -389,21 +411,22 @@ final class GRDBRecordNSObjectTests: XCTestCase {
 
 /// Tests for @GRDBRecord applied to Codable classes.
 /// Pattern used by: PlaylistEpisode, UpNextChanges
-final class GRDBRecordCodableClassTests: XCTestCase {
+final class GRDBRecordCodableClassTests: GRDBMacroTestCase {
 
     // MARK: - Codable class with table parameter (no existing databaseTableName)
 
     func testCodableClassWithTableParameter() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJPlaylistEpisode")
             public class PlaylistEpisode {
                 public var id: Int64?
                 public var episodeUuid = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class PlaylistEpisode {
                 public var id: Int64?
                 public var episodeUuid = ""
@@ -423,9 +446,8 @@ final class GRDBRecordCodableClassTests: XCTestCase {
 
             extension PlaylistEpisode: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -435,20 +457,20 @@ final class GRDBRecordCodableClassTests: XCTestCase {
 // MARK: - @GRDBColumn and @GRDBIgnore Marker Macro Tests
 
 /// Tests for the marker macros that generate no code themselves.
-final class GRDBMarkerMacroTests: XCTestCase {
+final class GRDBMarkerMacroTests: GRDBMacroTestCase {
 
     func testGRDBColumnMarkerMacroGeneratesNoCode() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBColumn("custom_column")
             var myProperty: String
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             var myProperty: String
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -456,16 +478,16 @@ final class GRDBMarkerMacroTests: XCTestCase {
 
     func testGRDBIgnoreMarkerMacroGeneratesNoCode() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBIgnore
             var transientProperty: String?
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             var transientProperty: String?
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -475,21 +497,22 @@ final class GRDBMarkerMacroTests: XCTestCase {
 // MARK: - Access Level Tests
 
 /// Tests for proper access level propagation in generated code.
-final class GRDBRecordAccessLevelTests: XCTestCase {
+final class GRDBRecordAccessLevelTests: GRDBMacroTestCase {
 
     // MARK: - Internal NSObject class generates internal members
 
     func testInternalNSObjectGeneratesInternalMembers() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "TestTable")
             class InternalModel: NSObject {
                 @objc var id = 0 as Int64
                 @objc var name = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             class InternalModel: NSObject {
                 @objc var id = 0 as Int64
                 @objc var name = ""
@@ -516,9 +539,8 @@ final class GRDBRecordAccessLevelTests: XCTestCase {
 
             extension InternalModel: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -528,15 +550,16 @@ final class GRDBRecordAccessLevelTests: XCTestCase {
 
     func testInternalCodableClassGeneratesInternalMembers() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "TestTable")
             class InternalCodable {
                 var id: Int64?
                 var name = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             class InternalCodable {
                 var id: Int64?
                 var name = ""
@@ -556,9 +579,8 @@ final class GRDBRecordAccessLevelTests: XCTestCase {
 
             extension InternalCodable: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -568,13 +590,13 @@ final class GRDBRecordAccessLevelTests: XCTestCase {
 // MARK: - Static Property Exclusion Tests
 
 /// Tests that static properties are correctly excluded from generated code.
-final class GRDBRecordStaticPropertyTests: XCTestCase {
+final class GRDBRecordStaticPropertyTests: GRDBMacroTestCase {
 
     // MARK: - Codable class with static property excludes it from Columns
 
     func testCodableClassExcludesStaticProperties() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord
             public class PlaylistEpisode {
@@ -582,8 +604,9 @@ final class GRDBRecordStaticPropertyTests: XCTestCase {
                 public var id: Int64?
                 public var episodeUuid = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class PlaylistEpisode {
                 public static let databaseTableName = "SJPlaylistEpisode"
                 public var id: Int64?
@@ -602,9 +625,8 @@ final class GRDBRecordStaticPropertyTests: XCTestCase {
 
             extension PlaylistEpisode: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -614,7 +636,7 @@ final class GRDBRecordStaticPropertyTests: XCTestCase {
 
     func testCodableStructExcludesAllStaticProperties() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "Bookmarks")
             public struct Bookmark {
@@ -623,8 +645,9 @@ final class GRDBRecordStaticPropertyTests: XCTestCase {
                 public var id: Int64?
                 public var title = ""
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public struct Bookmark {
                 public static let defaultTitle = "Untitled"
                 public static var counter = 0
@@ -646,9 +669,8 @@ final class GRDBRecordStaticPropertyTests: XCTestCase {
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -658,13 +680,13 @@ final class GRDBRecordStaticPropertyTests: XCTestCase {
 // MARK: - Codable Struct Tests
 
 /// Tests for @GRDBRecord applied to Codable structs (like Bookmark).
-final class GRDBRecordCodableStructTests: XCTestCase {
+final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
 
     // MARK: - Struct with @GRDBColumn for custom column names
 
     func testStructWithGRDBColumn() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "Bookmark")
             public struct Bookmark: Hashable {
@@ -677,8 +699,9 @@ final class GRDBRecordCodableStructTests: XCTestCase {
                 @GRDBColumn("episode_uuid")
                 public let episodeUuid: String
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public struct Bookmark: Hashable {
                 public let uuid: String
                 public var title: String
@@ -704,9 +727,8 @@ final class GRDBRecordCodableStructTests: XCTestCase {
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -716,7 +738,7 @@ final class GRDBRecordCodableStructTests: XCTestCase {
 
     func testStructWithGRDBIgnore() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "Bookmark")
             public struct Bookmark {
@@ -728,8 +750,9 @@ final class GRDBRecordCodableStructTests: XCTestCase {
                 @GRDBIgnore
                 public var podcast: String? = nil
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public struct Bookmark {
                 public let uuid: String
                 public var title: String
@@ -751,9 +774,8 @@ final class GRDBRecordCodableStructTests: XCTestCase {
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -763,7 +785,7 @@ final class GRDBRecordCodableStructTests: XCTestCase {
 
     func testStructWithGRDBColumnAndIgnore() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "Bookmark")
             public struct Bookmark: Hashable {
@@ -779,8 +801,9 @@ final class GRDBRecordCodableStructTests: XCTestCase {
                 @GRDBIgnore
                 public var episode: String? = nil
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public struct Bookmark: Hashable {
                 public let uuid: String
                 public var title: String
@@ -807,9 +830,8 @@ final class GRDBRecordCodableStructTests: XCTestCase {
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -819,13 +841,13 @@ final class GRDBRecordCodableStructTests: XCTestCase {
 // MARK: - Edge Cases and Property Type Tests
 
 /// Tests for various edge cases and property type handling.
-final class GRDBRecordEdgeCaseTests: XCTestCase {
+final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
 
     // MARK: - Inferred types from type cast (as Int64 pattern)
 
     func testInferredTypesFromTypeCast() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "TestTable")
             public class TestModel: NSObject {
@@ -833,8 +855,9 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
                 @objc public var inferredInt32 = 0 as Int32
                 @objc public var inferredDouble = 1 as Double
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class TestModel: NSObject {
                 @objc public var inferredInt64 = 0 as Int64
                 @objc public var inferredInt32 = 0 as Int32
@@ -865,9 +888,8 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
             extension TestModel: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -877,7 +899,7 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
     func testOptionalDateProperties() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJEpisode")
             public class Episode: NSObject {
@@ -886,8 +908,9 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
                 @objc public var publishedDate: Date?
                 @objc public var lastPlaybackInteractionDate: Date?
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class Episode: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var addedDate: Date?
@@ -922,9 +945,8 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
             extension Episode: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -934,7 +956,7 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
     func testNegativeDefaultValues() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "SJEpisode")
             public class Episode: NSObject {
@@ -942,8 +964,9 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
                 @objc public var episodeNumber = -1 as Int64
                 @objc public var seasonNumber = -1 as Int64
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class Episode: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var episodeNumber = -1 as Int64
@@ -974,9 +997,8 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
             extension Episode: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -986,15 +1008,16 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
     func testStringDefaultValues() throws {
         #if canImport(GRDBMacrosPlugin)
-        assertMacroExpansion(
+        assertMacro {
             """
             @GRDBRecord(table: "TestTable")
             public class TestModel: NSObject {
                 @objc public var emptyString = ""
                 @objc public var defaultString = "default"
             }
-            """,
-            expandedSource: """
+            """
+        } expansion: {
+            """
             public class TestModel: NSObject {
                 @objc public var emptyString = ""
                 @objc public var defaultString = "default"
@@ -1021,9 +1044,8 @@ final class GRDBRecordEdgeCaseTests: XCTestCase {
 
             extension TestModel: FetchableRecord, TableRecord, Decodable {
             }
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
