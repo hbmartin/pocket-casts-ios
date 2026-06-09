@@ -193,6 +193,7 @@ class DownloadsViewController: PCViewController {
     override func handleThemeChanged() {
         downloadsTable.reloadData()
         view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable()
     }
 
     private func addEventObservers() {

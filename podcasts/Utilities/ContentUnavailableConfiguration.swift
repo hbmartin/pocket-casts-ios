@@ -42,21 +42,24 @@ struct ContentUnavailableConfiguration {
         title: String,
         message: String?,
         image: UIImage?,
-        action: Action? = nil
+        action: Action? = nil,
+        theme: Theme = .sharedTheme
     ) -> UIContentConfiguration {
+        let themeType = theme.activeTheme
         var configuration = UIKit.UIContentUnavailableConfiguration.empty()
         configuration.text = title
         configuration.secondaryText = message
         configuration.image = image?.withRenderingMode(.alwaysTemplate)
-        configuration.imageProperties.tintColor = ThemeColor.primaryIcon01()
-        configuration.textProperties.color = ThemeColor.primaryText01()
-        configuration.secondaryTextProperties.color = ThemeColor.primaryText02()
+        configuration.imageProperties.tintColor = ThemeColor.primaryIcon01(for: themeType)
+        configuration.imageProperties.maximumSize = CGSize(width: 30, height: 30)
+        configuration.textProperties.color = ThemeColor.primaryText01(for: themeType)
+        configuration.secondaryTextProperties.color = ThemeColor.primaryText02(for: themeType)
 
         if let action {
             var button = UIButton.Configuration.borderedProminent()
             button.title = action.title
-            button.baseBackgroundColor = ThemeColor.primaryInteractive01()
-            button.baseForegroundColor = ThemeColor.primaryInteractive02()
+            button.baseBackgroundColor = ThemeColor.primaryInteractive01(for: themeType)
+            button.baseForegroundColor = ThemeColor.primaryInteractive02(for: themeType)
             configuration.button = button
             configuration.buttonProperties.primaryAction = UIAction { _ in
                 action.handler()

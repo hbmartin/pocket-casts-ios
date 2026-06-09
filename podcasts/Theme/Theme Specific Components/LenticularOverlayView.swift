@@ -10,14 +10,14 @@ class LenticularOverlayView: UIView {
 
         let patternSize = CGSize(width: height * 2, height: height)
 
-        let image = UIGraphicsImageRenderer(size: patternSize).image { _ in
-            let color1Path = UIBezierPath(rect: CGRect(x: 0, y: 0, width: height, height: height))
+        let format = UIGraphicsImageRendererFormat.preferred()
+        format.opaque = false
+        let image = UIGraphicsImageRenderer(size: patternSize, format: format).image { _ in
             color1.setFill()
-            color1Path.fill()
+            UIBezierPath(rect: CGRect(x: 0, y: 0, width: height, height: height)).fill()
 
-            let color2Path = UIBezierPath(rect: CGRect(x: height, y: 0, width: height, height: height))
             color2.setFill()
-            color2Path.fill()
+            UIBezierPath(rect: CGRect(x: height, y: 0, width: height, height: height)).fill()
         }
 
         let color = UIColor(patternImage: image)

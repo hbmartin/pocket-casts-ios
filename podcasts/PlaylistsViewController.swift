@@ -182,6 +182,7 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         if !LiquidGlass.isEnabled {
             customRightBtn?.tintColor = ThemeColor.secondaryIcon01()
         }
+        refreshContentUnavailable()
     }
 
     private func updateNavTintColors() {

@@ -1983,6 +1983,9 @@ class PlaybackManager: ServerPlaybackDelegate {
                     interruptInProgress = true
                 }
             } else {
+                // We do not get the InterruptionReason.routeDisconnected notification on older versions, so
+                // no need to perform the same check for older versions.
+                // Also, will default to the old behaviour if the feature flag is disabled on newer versions.
                 interruptInProgress = true
             }
 

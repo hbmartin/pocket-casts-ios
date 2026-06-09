@@ -261,6 +261,12 @@ class FolderViewController: PCViewController, UIGestureRecognizerDelegate {
         refreshContentUnavailable(shouldShow: shouldShowEmpty)
     }
 
+    override func handleThemeChanged() {
+        mainGrid.reloadData()
+        view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable(shouldShow: podcasts.isEmpty)
+    }
+
     private func refreshContentUnavailable(shouldShow: Bool) {
         var config: UIContentConfiguration?
 

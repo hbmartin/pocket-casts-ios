@@ -129,6 +129,8 @@ class ListeningHistoryViewController: PCViewController {
 
     override func handleThemeChanged() {
         listeningHistoryTable.reloadData()
+        view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable()
     }
 
     func refreshEpisodes(animated: Bool) {

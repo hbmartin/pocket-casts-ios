@@ -166,6 +166,12 @@ class StarredViewController: PCViewController {
         navigationItem.backBarButtonItem = isMultiSelectEnabled ? nil : UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
+    override func handleThemeChanged() {
+        starredTable.reloadData()
+        view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable()
+    }
+
     private func refreshContentUnavailable() {
         var config: UIContentConfiguration?
 
