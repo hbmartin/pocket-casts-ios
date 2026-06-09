@@ -1,15 +1,14 @@
-import Lottie
 import UIKit
 
 class PlayPauseButton: BasePlayPauseButton {
     private let circleView = UIView()
 
-    // Used to animate given LottieAnimationView doesn't animate with UIView.animate
+    // Used to provide a smooth snapshot while the button resizes during transitions
     private var snapshot: UIView?
 
     private var circleSizeConstraints: [NSLayoutConstraint] = []
 
-    /// When set, pins the visible circle (and its Lottie animation) to this size,
+    /// When set, pins the visible circle (and its play/pause icon) to this size,
     /// decoupling the visual size from the button's tap target.
     var visualSize: CGFloat? {
         didSet { updateCircleSizeConstraints() }
@@ -37,7 +36,7 @@ class PlayPauseButton: BasePlayPauseButton {
         circleView.layer.cornerRadius = 0.5 * circleView.bounds.width
     }
 
-    override func place(animation: LottieAnimationView) {
+    override func place(icon: UIView) {
         circleView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(circleView)
         NSLayoutConstraint.activate([
@@ -46,13 +45,13 @@ class PlayPauseButton: BasePlayPauseButton {
         ])
         updateCircleSizeConstraints()
 
-        animation.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(animation)
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(icon)
         NSLayoutConstraint.activate([
-            animation.centerXAnchor.constraint(equalTo: circleView.centerXAnchor),
-            animation.centerYAnchor.constraint(equalTo: circleView.centerYAnchor),
-            animation.widthAnchor.constraint(equalTo: circleView.widthAnchor, multiplier: 0.48),
-            animation.heightAnchor.constraint(equalTo: circleView.heightAnchor, multiplier: 0.48)
+            icon.centerXAnchor.constraint(equalTo: circleView.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: circleView.centerYAnchor),
+            icon.widthAnchor.constraint(equalTo: circleView.widthAnchor, multiplier: 0.48),
+            icon.heightAnchor.constraint(equalTo: circleView.heightAnchor, multiplier: 0.48)
         ])
     }
 
@@ -73,8 +72,9 @@ class PlayPauseButton: BasePlayPauseButton {
         NSLayoutConstraint.activate(circleSizeConstraints)
     }
 
-    // When using UIVIew.animate LottieAnimationView doesn't play nice with it
-    // Here we snapshot the view to provide a smooth animation
+    // The button resizes via Auto Layout during the transcript/zoom transitions.
+    // Snapshotting the current rendering and scaling that bitmap keeps the resize
+    // smooth while the live icon reflows underneath.
     func prepareForAnimateTransition() {
         guard let snapshot = snapshotView(afterScreenUpdates: false) else { return }
 
