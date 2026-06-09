@@ -53,6 +53,25 @@ make test_staging ONLY_TESTING=PocketCastsServerTests
 make test_staging ONLY_TESTING=PocketCastsUtilsTests
 ```
 
+### UI Snapshot Tests
+
+SwiftUI views are regression-tested with [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+in the `SnapshotTests` SwiftPM target (`Modules/Tests/SnapshotTests`). Image snapshots render through
+`UIHostingController`, so they run on the iOS Simulator, not `swift test`.
+
+```bash
+# Verify against committed reference images
+make test_staging ONLY_TESTING=SnapshotTests
+
+# Record / refresh baselines, then review and commit the images under
+# Modules/Tests/SnapshotTests/__Snapshots__/
+SNAPSHOT_TESTING_RECORD=all make test_staging ONLY_TESTING=SnapshotTests
+```
+
+Record and verify on the Simulator/OS that CI pins (`IOS_SIMULATOR_RUNTIME_VERSION`); see
+`docs/snapshot-testing.md` for the full workflow, the one-time Xcode scheme wiring required before CI
+runs these, and how to extend snapshots to app-level themed views.
+
 ## Architecture
 
 ### Modular Structure
