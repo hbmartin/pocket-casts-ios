@@ -17,11 +17,11 @@ on:
           - release_build
       release_version:
         description: "Release version, for example 8.9."
-        required: false
+        required: true
         type: string
       beta_release:
-        description: "Create beta/TestFlight GitHub release when task is release_build."
-        required: true
+        description: "Optional; only used when task is release_build."
+        required: false
         type: boolean
         default: true
 

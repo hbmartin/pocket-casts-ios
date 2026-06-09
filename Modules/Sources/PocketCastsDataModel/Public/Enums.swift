@@ -305,14 +305,6 @@ public enum PlayerAction: String, Codable, Equatable, CaseIterable {
     case transcript = "transcript"
     case download = "download"
     case addToPlaylist = "playlist"
-
-    public init?(rawValue: String) {
-        guard let action = Self.allCases.first(where: { $0.rawValue == rawValue }) else {
-            return nil
-        }
-
-        self = action
-    }
 }
 
 extension Array: @retroactive RawRepresentable where Element: RawRepresentable<String> {

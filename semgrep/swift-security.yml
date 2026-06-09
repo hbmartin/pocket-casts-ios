@@ -140,6 +140,56 @@ rules:
               persist-credentials: false
               ...
 
+  - id: pocketcasts.release-fastlane-release-version-required
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [github-actions]
+    message: release-fastlane hard-fails without release_version; keep the workflow_dispatch input required.
+    languages: [yaml]
+    paths:
+      include:
+        - "**/.github/workflows/release-fastlane.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-inside: |
+          workflow_dispatch:
+            inputs:
+              ...
+      - pattern: |
+          release_version:
+            ...
+            required: false
+            ...
+
+  - id: pocketcasts.release-fastlane-beta-release-optional
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [github-actions]
+    message: beta_release is only used by release_build; keep it optional in the manual workflow UI.
+    languages: [yaml]
+    paths:
+      include:
+        - "**/.github/workflows/release-fastlane.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-inside: |
+          workflow_dispatch:
+            inputs:
+              ...
+      - pattern: |
+          beta_release:
+            ...
+            required: true
+            ...
+
   - id: pocketcasts.bitdrift-gate-on-github-actions
     severity: WARNING
     metadata:
