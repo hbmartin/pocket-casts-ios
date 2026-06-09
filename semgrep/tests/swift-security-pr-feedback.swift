@@ -261,10 +261,11 @@ final class UnsafePlaylistCellViewModelTaskGroupCapture {
     func loadImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
         try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
+                let podcastUuid = episode.podcastUuid
                 // ruleid: pocketcasts.playlist-cell-task-group-image-manager-self-capture
                 group.addTask {
-                    let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
-                    return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
+                    let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
 
@@ -281,10 +282,52 @@ final class SafePlaylistCellViewModelTaskGroupCapture {
 
         return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
+                let podcastUuid = episode.podcastUuid
                 // ok: pocketcasts.playlist-cell-task-group-image-manager-self-capture
+                group.addTask {
+                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
+                }
+            }
+
+            return []
+        }
+    }
+}
+
+final class UnsafePlaylistCellViewModelEpisodeObjectCapture {
+    private let imageManager = ImageManager.sharedManager
+
+    func loadImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
+        let imageManager = self.imageManager
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+            for episode in episodes {
+                // ruleid: pocketcasts.playlist-cell-task-group-episode-object-capture
                 group.addTask {
                     let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
+                }
+            }
+
+            return []
+        }
+    }
+}
+
+final class SafePlaylistCellViewModelEpisodeObjectCapture {
+    private let imageManager = ImageManager.sharedManager
+
+    func loadImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
+        let imageManager = self.imageManager
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+            for episode in episodes {
+                let podcastUuid = episode.podcastUuid
+                // ok: pocketcasts.playlist-cell-task-group-episode-object-capture
+                group.addTask {
+                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
 
