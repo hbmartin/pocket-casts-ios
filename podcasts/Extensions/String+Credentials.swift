@@ -8,8 +8,8 @@ extension String {
     /// strips placeholders) or as the raw `%{token}` placeholder. Either way the value
     /// must not be handed to an SDK, so callers should skip initialization.
     ///
-    /// Detecting the placeholder *shape* — rather than comparing against a specific
-    /// literal — keeps this correct even if a token in `ApiCredentials.tpl` is renamed.
+    /// This is a conservative heuristic: any value exactly shaped like `%{...}` is
+    /// treated as unresolved so renamed template tokens are still caught.
     var isMissingOrPlaceholderCredential: Bool {
         isEmpty || (hasPrefix("%{") && hasSuffix("}"))
     }

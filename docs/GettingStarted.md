@@ -67,12 +67,12 @@ make test_staging SIMULATOR_OS=18.4
 ```
 
 The repo's Ruby tooling expects the version in `.ruby-version`, currently
-`3.2.2`. Using `rbenv` keeps the repo isolated from the system Ruby:
+`3.4.9`. Using `rbenv` keeps the repo isolated from the system Ruby:
 
 ```bash
 brew install rbenv ruby-build
-rbenv install 3.2.2
-rbenv local 3.2.2
+rbenv install 3.4.9
+rbenv local 3.4.9
 rbenv exec gem install bundler
 ```
 

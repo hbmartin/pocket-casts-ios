@@ -60,8 +60,18 @@ class GenerateCredentialsTest < Minitest::Test
     assert_match(/static let bitdriftSDKKey = "%\{bitdrift_sdk_key\}"/, stdout + stderr)
   end
 
+  def test_json_generation_fails_when_empty_placeholder_persists
+    write_secrets(bitdrift_sdk_key: '%{}', telemetry_deck_app_id: 'telemetry-real')
+
+    stdout, stderr, status = run_script
+
+    refute status.success?, stdout + stderr
+    assert_match(/Unresolved placeholder\(s\) found/, stdout + stderr)
+    assert_match(/static let bitdriftSDKKey = "%\{\}"/, stdout + stderr)
+  end
+
   def test_local_credentials_path_succeeds_without_placeholders
-    write_local_credentials(with_placeholder: false)
+    write_local_credentials(value: 'real-value')
 
     stdout, stderr, status = run_script
 
@@ -69,7 +79,7 @@ class GenerateCredentialsTest < Minitest::Test
   end
 
   def test_local_credentials_path_fails_with_placeholder
-    write_local_credentials(with_placeholder: true)
+    write_local_credentials(value: '%{some_token}')
 
     stdout, stderr, status = run_script
 
@@ -77,16 +87,43 @@ class GenerateCredentialsTest < Minitest::Test
     assert_match(/Unresolved placeholder\(s\) found/, stdout + stderr)
   end
 
+  def test_local_credentials_path_fails_with_empty_placeholder
+    write_local_credentials(value: '%{}')
+
+    stdout, stderr, status = run_script
+
+    refute status.success?, stdout + stderr
+    assert_match(/Unresolved placeholder\(s\) found/, stdout + stderr)
+  end
+
+  def test_local_credentials_path_fails_with_typed_placeholder
+    write_local_credentials(value: '%{some_token}', declaration: 'static let someKey: String')
+
+    stdout, stderr, status = run_script
+
+    refute status.success?, stdout + stderr
+    assert_match(/Unresolved placeholder\(s\) found/, stdout + stderr)
+  end
+
+  def test_missing_xcode_environment_fails_with_named_error
+    write_secrets(bitdrift_sdk_key: 'bitdrift-real', telemetry_deck_app_id: 'telemetry-real')
+
+    stdout, stderr, status = run_script('BUILT_PRODUCTS_DIR' => nil)
+
+    refute status.success?, stdout + stderr
+    assert_match(/BUILT_PRODUCTS_DIR must be set by Xcode/, stdout + stderr)
+  end
+
   private
 
-  def run_script
+  def run_script(env_overrides = {})
     env = {
       'SOURCE_ROOT' => @source_root,
       'SRCROOT' => @source_root,
       'BUILT_PRODUCTS_DIR' => @build_products_dir,
       'SECRETS_PATH' => @secrets_path,
       'RUBY_BIN' => RbConfig.ruby
-    }
+    }.merge(env_overrides).compact
 
     Open3.capture3(env, 'bash', SCRIPT_PATH)
   end
@@ -112,13 +149,12 @@ class GenerateCredentialsTest < Minitest::Test
     )
   end
 
-  def write_local_credentials(with_placeholder:)
-    value = with_placeholder ? '%{some_token}' : 'real-value'
+  def write_local_credentials(value:, declaration: 'static let someKey')
     File.write(
       File.join(@credentials_dir, 'LocalApiCredentials.swift'),
       <<~SWIFT
         struct ApiCredentials {
-            static let someKey = "#{value}"
+            #{declaration} = "#{value}"
         }
       SWIFT
     )

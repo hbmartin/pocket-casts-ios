@@ -3829,9 +3829,9 @@ internal enum L10n {
   }
   /// Title for a dialog presented when a user selects to subscribe to all podcasts in a list.
   internal static var sharedListSubscribeConfTitle: String { return L10n.tr("Localizable", "shared_list_subscribe_conf_title", fallback: "That's a lot of podcasts!") }
-  /// Toast shown when exporting a shareable clip fails. %@ is the system error description.
-  internal static func sharingClipExportFailed(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "sharing_clip_export_failed", String(describing: p1), fallback: "Failed clip export: %@")
+  /// Toast shown when exporting a shareable clip fails. %1$@ is the system error description.
+  internal static func sharingClipExportFailedDescription(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "sharing_clip_export_failed_description", String(describing: p1), fallback: "Failed clip export: %1$@")
   }
   /// A common string used throughout the app. Refers to the Notes (show notes) tab in the player.
   internal static var showNotes: String { return L10n.tr("Localizable", "show_notes", fallback: "Notes") }

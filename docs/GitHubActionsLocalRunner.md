@@ -43,7 +43,7 @@ The runner needs:
 
 - Xcode compatible with `.xcode-version` or another Swift 6 capable Xcode.
 - An installed iPhone simulator runtime. Set repository variable `IOS_SIMULATOR_RUNTIME_VERSION` to pin one, for example `18.5`.
-- Ruby `3.2.2`, preferably through `rbenv`.
+- Ruby `3.4.9`, preferably through `rbenv`.
 - Bundler and Homebrew.
 - Semgrep. CI can install it with Homebrew if it is missing.
 

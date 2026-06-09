@@ -255,6 +255,44 @@ final class SafePlaylistCellViewModelFacadeUse {
     }
 }
 
+final class UnsafePlaylistCellViewModelTaskGroupCapture {
+    private let imageManager = ImageManager.sharedManager
+
+    func loadImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
+        try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+            for episode in episodes {
+                // ruleid: pocketcasts.playlist-cell-task-group-image-manager-self-capture
+                group.addTask {
+                    let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
+                }
+            }
+
+            return []
+        }
+    }
+}
+
+final class SafePlaylistCellViewModelTaskGroupCapture {
+    private let imageManager = ImageManager.sharedManager
+
+    func loadImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
+        let imageManager = self.imageManager
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+            for episode in episodes {
+                // ok: pocketcasts.playlist-cell-task-group-image-manager-self-capture
+                group.addTask {
+                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
+                }
+            }
+
+            return []
+        }
+    }
+}
+
 final class UnsafeClipExportToast {
     func show(error: Error) {
         // ruleid: pocketcasts.share-button-localized-clip-export-failure

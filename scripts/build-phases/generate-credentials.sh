@@ -2,21 +2,25 @@
 
 set -euo pipefail
 
-DERIVED_PATH=${BUILT_PRODUCTS_DIR}/../DerivedSources
-SCRIPT_PATH=${SOURCE_ROOT}/podcasts/Credentials/replace_secrets.rb
+: "${BUILT_PRODUCTS_DIR:?BUILT_PRODUCTS_DIR must be set by Xcode}"
+: "${SOURCE_ROOT:?SOURCE_ROOT must be set by Xcode}"
+: "${SRCROOT:?SRCROOT must be set by Xcode}"
+
+DERIVED_PATH="${BUILT_PRODUCTS_DIR}/../DerivedSources"
+SCRIPT_PATH="${SOURCE_ROOT}/podcasts/Credentials/replace_secrets.rb"
 RUBY_BIN=${RUBY_BIN:-ruby}
 
-CREDS_INPUT_PATH=${SOURCE_ROOT}/podcasts/Credentials/ApiCredentials.tpl
+CREDS_INPUT_PATH="${SOURCE_ROOT}/podcasts/Credentials/ApiCredentials.tpl"
 LOCAL_SECRETS_FILE="${SRCROOT}/podcasts/Credentials/LocalApiCredentials.swift"
-CREDS_OUTPUT_PATH=${DERIVED_PATH}/ApiCredentials.swift
+CREDS_OUTPUT_PATH="${DERIVED_PATH}/ApiCredentials.swift"
 
 validate_credentials() {
     local credentials_file=$1
     local placeholders
 
-    # Find any lines that look like: static let someKey = "%{token}"
-    # and extract the value part.
-    placeholders=$(grep -E 'static let [a-zA-Z0-9_]+[[:space:]]*=[[:space:]]*"%\{[^}]+\}"' "$credentials_file" || true)
+    # Find any static credential values that are still placeholder-shaped,
+    # including the empty `%{}` case handled by the runtime credential check.
+    placeholders=$(grep -E 'static let [a-zA-Z0-9_]+[^=]*=[[:space:]]*"%\{[^}]*\}"' "$credentials_file" || true)
 
     if [[ -n "$placeholders" ]]; then
         echo "error: Unresolved placeholder(s) found in ${credentials_file}:" >&2

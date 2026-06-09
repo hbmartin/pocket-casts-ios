@@ -317,6 +317,23 @@ rules:
           - pattern: episodesDataManager.playlistFirstDistinctEpisodes(...)
           - pattern: self.episodesDataManager.playlistFirstDistinctEpisodes(...)
 
+  - id: pocketcasts.playlist-cell-task-group-image-manager-self-capture
+    severity: WARNING
+    metadata:
+      category: performance
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Capture imageManager before entering the PlaylistCellViewModel task group instead of implicitly capturing self in child tasks.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/PlaylistCellViewModel.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: '(?s)\baddTask\s*\{.{0,1200}\bself\.imageManager\b'
+
   - id: pocketcasts.share-button-localized-clip-export-failure
     severity: WARNING
     metadata:
@@ -436,6 +453,24 @@ rules:
         - "**/*.mk"
     patterns:
       - pattern-regex: '^\s*rm\s+-rf\s+"?\$\([A-Za-z0-9_]+\)[^#\n]*'
+
+  - id: makefile.no-hardcoded-system-ruby
+    severity: WARNING
+    metadata:
+      category: ci
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [make]
+    message: Use ruby instead of /usr/bin/ruby in Makefile recipes so Ruby version managers can provide the expected interpreter.
+    languages: [generic]
+    paths:
+      include:
+        - "Makefile"
+        - "**/Makefile"
+        - "**/semgrep/tests/makefile-portability.mk"
+    patterns:
+      - pattern-regex: '^\s*/usr/bin/ruby\b'
 
   - id: pocketcasts.server-constants-identical-production-url-branches
     severity: WARNING
@@ -986,6 +1021,40 @@ rules:
         - "**/PocketCastsTests/**"
     patterns:
       - pattern-regex: '"%\{[A-Za-z0-9_-]+\}"'
+
+  - id: pocketcasts.credential-placeholder-regex-allows-empty-token
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [shell]
+    message: Credential placeholder validation should match empty `%{}` tokens too; use `[^}]*` instead of `[^}]+` so build-time validation agrees with runtime credential gating.
+    languages: [generic]
+    paths:
+      include:
+        - "**/scripts/build-phases/generate-credentials.sh"
+        - "**/semgrep/tests/generate-credentials-placeholder-regex.sh"
+    patterns:
+      - pattern-regex: '%\\\{\[\^}\]\+\\\}'
+
+  - id: pocketcasts.credential-placeholder-regex-allows-type-annotation
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [shell]
+    message: Credential placeholder validation should allow explicit static let type annotations; use [^=]* before the assignment.
+    languages: [generic]
+    paths:
+      include:
+        - "**/scripts/build-phases/generate-credentials.sh"
+        - "**/semgrep/tests/generate-credentials-placeholder-regex.sh"
+    patterns:
+      - pattern-regex: 'static let \[a-zA-Z0-9_\]\+\[\[:space:\]\]\*='
 
   # Source: critical_device_features.yaml
   - id: critical_device_features
