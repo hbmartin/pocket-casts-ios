@@ -157,7 +157,9 @@ class PlaylistCellViewModel: ObservableObject {
     }
 
     private func loadImagesURLs(episodes: [Episode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
-        try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+        let imageManager = self.imageManager
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
                 group.addTask {
                     if includingEpisodeArtwork,
@@ -165,7 +167,7 @@ class PlaylistCellViewModel: ObservableObject {
                        let url = URL(string: imageUrl) {
                         return PlaylistArtworkView.ImageItem(id: episode.uuid, url: url)
                     }
-                    let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
+                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
                 }
             }
