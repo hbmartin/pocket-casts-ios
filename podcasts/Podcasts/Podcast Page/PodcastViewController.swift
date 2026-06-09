@@ -279,6 +279,8 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
         super.viewDidLoad()
 
+        view.backgroundColor = ThemeColor.primaryUi01()
+
         if FeatureFlag.podcastFeedUpdate.enabled {
             podcastFeedViewModel = PodcastFeedViewModel(uuid: podcast?.uuid ?? podcastInfo?.uuid)
 
@@ -584,6 +586,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     private func updateColors() {
+        view.backgroundColor = ThemeColor.primaryUi01()
         reloadData()
         navTitleLabel.textColor = ThemeColor.primaryText01()
     }
