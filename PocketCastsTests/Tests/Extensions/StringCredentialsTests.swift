@@ -23,5 +23,7 @@ final class StringCredentialsTests: XCTestCase {
         XCTAssertFalse("prefix-%{token}-suffix".isMissingOrPlaceholderCredential)
         XCTAssertFalse("%{unterminated".isMissingOrPlaceholderCredential)
         XCTAssertFalse("unstarted}".isMissingOrPlaceholderCredential)
+        XCTAssertFalse("%{".isMissingOrPlaceholderCredential)
+        XCTAssertFalse("}".isMissingOrPlaceholderCredential)
     }
 }

@@ -38,6 +38,11 @@ struct ContentUnavailableConfiguration {
         }
     }
 
+    /// Returns a UIKit-backed empty state using the current theme colors.
+    ///
+    /// Callers must recreate the configuration when the app theme changes because
+    /// UIKit content configurations do not observe `Theme` updates like the
+    /// SwiftUI-hosted empty states do.
     static func nativeEmptyState(
         title: String,
         message: String?,
@@ -51,7 +56,8 @@ struct ContentUnavailableConfiguration {
         configuration.secondaryText = message
         configuration.image = image?.withRenderingMode(.alwaysTemplate)
         configuration.imageProperties.tintColor = ThemeColor.primaryIcon01(for: themeType)
-        configuration.imageProperties.maximumSize = CGSize(width: 30, height: 30)
+        let iconSize = UIFontMetrics(forTextStyle: .headline).scaledValue(for: 30)
+        configuration.imageProperties.maximumSize = CGSize(width: iconSize, height: iconSize)
         configuration.textProperties.color = ThemeColor.primaryText01(for: themeType)
         configuration.secondaryTextProperties.color = ThemeColor.primaryText02(for: themeType)
 

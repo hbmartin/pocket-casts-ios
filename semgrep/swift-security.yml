@@ -876,7 +876,7 @@ rules:
         - "**/Strings+Generated.swift"
         - "**/PocketCastsTests/**"
     patterns:
-      - pattern-regex: '"%\{[A-Za-z0-9_]+\}"'
+      - pattern-regex: '"%\{[A-Za-z0-9_-]+\}"'
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

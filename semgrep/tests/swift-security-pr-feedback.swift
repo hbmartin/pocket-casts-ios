@@ -159,6 +159,11 @@ final class CredentialPlaceholderRegressionHelper {
         id == "%{telemetry_deck_app_id}"
     }
 
+    func isUnconfiguredHyphenated(_ id: String) -> Bool {
+        // ruleid: pocketcasts.no-hardcoded-credential-placeholder-literal
+        id == "%{telemetry-deck-app-id}"
+    }
+
     func isUnconfiguredPreferred(_ id: String) -> Bool {
         // ok: pocketcasts.no-hardcoded-credential-placeholder-literal
         id.isMissingOrPlaceholderCredential
