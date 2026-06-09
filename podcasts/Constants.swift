@@ -81,9 +81,6 @@ struct Constants {
         static let opmlImportCompleted = NSNotification.Name(rawValue: "SJOpmlImportCompleted")
         static let opmlImportFailed = NSNotification.Name(rawValue: "SJOpmlImportFailed")
 
-        // watch
-        static let watchAutoDownloadSettingsChanged = NSNotification.Name(rawValue: "SJWatchAutoDownloadSettingsChanged")
-
         // folders
         /// This is triggered many times whenever a folder is changed
         static let folderChanged = NSNotification.Name(rawValue: "SJFolderChanged")
@@ -126,11 +123,6 @@ struct Constants {
         static let lastFilterShown = "SJLastFilter"
         static let lastTabOpened = "SJLastTabOpened"
         static let lastImageRefreshTime = "SJLastImageRefreshDate"
-
-        static let loginDetailsUpdated = "SJLoginDetailsUpdated"
-        static let watchAutoDownloadUpNextEnabled = "SJWatchAutoDownloadUpNextEnabled"
-        static let watchAutoDownloadUpNextCount = "SJWatchAutoDownloadCountUpNext"
-        static let watchAutoDeleteUpNext = "SJWatchAutoDeleteUpNext"
 
         public static let analyticsOptOut = "SJAnalyticsOptOut"
 
@@ -268,15 +260,10 @@ struct Constants {
         static let minSleepTime = 5.minutes
         static let maxSleepTime = 5.hours
 
-        #if os(watchOS)
-            static let watchListItems = 50
-        #else
-            static let maxListItemsToSendToWatch = 50
-            static let maxFilterItems = 1000
-            static let maxBulkDownloads = 100
-            static let maxSubscriptionExpirySeconds: TimeInterval = 30.days
-            static let maxShelfActions = 4
-        #endif
+        static let maxFilterItems = 1000
+        static let maxBulkDownloads = 100
+        static let maxSubscriptionExpirySeconds: TimeInterval = 30.days
+        static let maxShelfActions = 4
     }
 
     enum Animation {
@@ -288,7 +275,6 @@ struct Constants {
         static let playerTabSwitch: TimeInterval = 0.2
     }
 
-    #if !os(watchOS)
         enum SiriActions {
             static let resumeId = "Resume ID"
             static let playPodcastId = "Play podcast ID"
@@ -300,7 +286,6 @@ struct Constants {
             static let nextChapterId = "Next Chapter ID"
             static let previousChapterId = "Previous Chapter ID"
         }
-    #endif
 
     enum Audio {
         static let defaultFrameSize = 1152

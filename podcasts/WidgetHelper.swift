@@ -44,10 +44,8 @@ class WidgetHelper {
     }
 
     func updateSharedUpNext() {
-        #if !os(watchOS)
             publishUpNextInfo()
             updateAllWidgets()
-        #endif
     }
 
     func updateUpNextWidgets() {

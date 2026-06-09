@@ -3,7 +3,7 @@ import UIKit
 #endif
 import Foundation
 import PocketCastsDataModel
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
 import EndOfYear
 #endif
 
@@ -32,7 +32,7 @@ extension EpisodeFilter {
         return EpisodeFilter.imageName(forPlaylistIcon: icon)
     }
 
-    #if !os(watchOS) && !APPCLIP && !os(tvOS)
+    #if !APPCLIP && !os(tvOS)
     @MainActor func grid() -> UIImage {
         let episodes = DataManager.sharedManager.playlistEpisodes(for: self)
 
@@ -73,7 +73,6 @@ extension EpisodeFilter {
         return nil
     }
 
-    #if !os(watchOS)
         func playlistColor() -> UIColor {
             AppTheme.colorForStyle(playlistStyle())
         }
@@ -94,7 +93,6 @@ extension EpisodeFilter {
                 return .filter03
             }
         }
-    #endif
 
     func maxAutoDownloadEpisodes() -> Int32 {
         autoDownloadLimit == 0 ? Constants.Values.defaultPlaylistDownloadLimit : autoDownloadLimit

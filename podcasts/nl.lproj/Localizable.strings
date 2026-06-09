@@ -1094,8 +1094,6 @@ waar je naar hebt geluisterd was
     <string>1 jaar lang content van Slumber Studios</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>Shuffle je wachtrij</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Apps voor Wear OS en Apple Watch</string>
     <key>feature_tour_end_tour</key>
     <string>Einde rondleiding</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ podcasts mee</string>
     <string>Logs</string>
     <key>logs_no_email_account_configured</key>
     <string>Configureer een e-mailaccount op het apparaat om de logboeken te verzenden</string>
-    <key>logs_watch_os_not_available</key>
-    <string>Geen watchOS-logboeken beschikbaar. Zorg ervoor dat je een Apple Watch hebt gekoppeld en dat de Pocket Casts-app voor horloges is geïnstalleerd.</string>
     <key>manage_downloads_action</key>
     <string>Downloads beheren</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ UPDATES</string>
     <string>Krijg exclusief toegang tot themas met Pocket Casts Plus, en meer</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>Speel afleveringen op willekeurige volgorde af met Pocket Casts Plus en meer</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Luister vanaf je horloge met Pocket Casts Plus, en meer</string>
     <key>phone</key>
     <string>Telefoon</string>
     <key>play</key>
@@ -2272,8 +2266,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Krijg 1 jaar premium content van Slumber Studios.</string>
     <key>plus_feature_card_text_storage</key>
     <string>Wanneer je je audiobestanden naar een cloudopslag uploadt, zijn ze overal beschikbaar.</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>Leg je telefoon aan de kant en ga hardlopen.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Bladwijzers</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2286,8 +2278,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Droom met Slumber Studios</string>
     <key>plus_feature_card_title_storage</key>
     <string>20 GB opslag</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Afspelen op Apple Watch en Wear OS</string>
     <key>plus_feature_gratitude</key>
     <string>De eeuwige dank van iedereen bij Pocket Casts</string>
     <key>plus_feature_librofm</key>
@@ -2338,8 +2328,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Luister overal met onze apps voor Windows en macOS en de online apps</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>Organiseer je podcasts in mappen en synchroniseer ze op al je apparaten.</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Apple Watch- en Wear OS-apps</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@ per maand</string>
     <key>plus_payment_canceled</key>
@@ -3273,22 +3261,6 @@ Als je op zoek bent naar inspiratie, probeer dan het tabblad Ontdekken.</string>
     <string>Nieuwe afleveringen automatisch toevoegen aan Hierna. Wanneer Hierna de %1$@ bereikt, wordt de laatste aflevering in de wachtrij automatisch verwijderd wanneer nieuwe afleveringen automatisch bovenaan worden toegevoegd. Afleveringen die zijn ingesteld op automatisch onderaan toevoegen worden pas toegevoegd als Hierna onder de limiet ligt.</string>
     <key>settings_volume_boost</key>
     <string>Volumeboost</string>
-    <key>settings_watch_auto_download</key>
-    <string>Hierna automatisch downloaden</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Stel het aantal afleveringen in van je wachtrij Hierna die door Pocket Casts worden gedownload, zodat je ze offline kan afspelen op je horloge.</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>Downloads buiten limiet verwijderen</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>Om de opslagruimte van je horloge te besparen, worden maximaal 25 afleveringen in je wachtrij Hierna automatisch gedownload. Oudere downloadbestanden, buiten deze limiet, worden automatisch verwijderd.</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>Alle gedownloade bestanden in je wachtrij Hierna die buiten deze limiet liggen, worden automatisch verwijderd. Handmatige downloads worden niet beheerd door deze instellingen.</string>
-    <key>settings_watch_episode_limit</key>
-    <string>Aantal afleveringen</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts downloadt de %1$@ afleveringen die bovenaan je wachtrij Hierna staan, zodat je ze offline kan afspelen op je horloge.</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>Bovenste %1$@</string>
     <key>setup_account</key>
     <string>Account instellen</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3627,14 +3599,6 @@ Je e-mailadres, wachtwoord en andere gevoelige gegevens worden nooit gedeeld.</s
     <string>Slimme mappen</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>Deze mappen gebruiken</string>
-    <key>support_watch_help_message</key>
-    <string>Als je problemen ondervindt met de Pocket Casts horloge-app, kunnen we jouw draagbare logboeken versturen om je beter te helpen. Om dit te doen moet je Pocket Casts op je horloge openen.</string>
-    <key>support_watch_help_opened_app</key>
-    <string>Ik heb de horloge-app geopend</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Versturen zonder horloge-logboeken</string>
-    <key>support_watch_help_title</key>
-    <string>Hulp nodig met de horloge-app?</string>
     <key>supporter</key>
     <string>Ondersteuner</string>
     <key>supporter_contributions</key>
@@ -3919,8 +3883,6 @@ En dit is absoluut de beste app die er bestaat om podcasts mee te luisteren. Er 
 Deze app kan zo eenvoudig of moeilijk te gebruiken zijn als je zelf maar wilt. Dus gebruik hem als plug-and-play of stel van alles in zoals outro's overslaan, timers voor intro's en andere kleine functies die je wilt inschakelen.</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>De sync-functie is echt magisch. Ik weet niet wat voor tovenarij deze app gebruikt, maar deze app is beter dan welke andere app dan ook.</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>Ik gebruik deze app al 6 jaar, of eigenlijk ik ben ermee begonnen op Android en gebruik hem nu bijna een jaar op iOS. De app werkt op beide platforms hetzelfde. Het is makkelijk om nieuwe podcasts te vinden, de app heeft een mooie UI en je kan zelf podcasts toevoegen via een rss feed-url. De horloge-app werkt ook, maar deze gebruik voornamelijk voor afspelen/pauzeren. Maak een account aan om op verschillende apparaten te kunnen synchroniseren, maar dit is niet verplicht.</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>PC is al jaren mijn favoriet. Ik heb andere podcastapps geprobeerd, maar kwam altijd weer terug naar PC vanwege de eenvoud, UI en support. Deze app is het zeker waard om even te bekijken, vooral als je je huidige podcastapp zat bent geworden.</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3971,54 +3933,6 @@ Deze app kan zo eenvoudig of moeilijk te gebruiken zijn als je zelf maar wilt. D
     <string>Spraakniveaus zijn consistenter</string>
     <key>wait_for_wifi</key>
     <string>Wachten op wifi</string>
-    <key>watch</key>
-    <string>Horloge</string>
-    <key>watch_buffering</key>
-    <string>Bufferen ...</string>
-    <key>watch_chapter_next</key>
-    <string>Volgende aflevering</string>
-    <key>watch_chapter_prev</key>
-    <string>Vorige aflevering</string>
-    <key>watch_effects</key>
-    <string>Effecten</string>
-    <key>watch_episode_details</key>
-    <string>Informatie over aflevering</string>
-    <key>watch_main_menu</key>
-    <string>Hoofdmenu</string>
-    <key>watch_no_episodes</key>
-    <string>Geen afleveringen</string>
-    <key>watch_no_filters</key>
-    <string>Geen filters</string>
-    <key>watch_no_playlists</key>
-    <string>Geen afspeellijsten</string>
-    <key>watch_no_podcasts</key>
-    <string>Geen podcasts</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>Geniet van de stilte of vind iets nieuws om af te spelen.
-
-Je kunt geen verkeerde keuze maken. 🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>Er wordt niets afgespeeld</string>
-    <key>watch_play_source</key>
-    <string>Bron afspelen</string>
-    <key>watch_source_msg</key>
-    <string>Podcast wordt afgespeeld via de speaker waarop het gekozen apparaat is aangesloten</string>
-    <key>watch_source_plus_info</key>
-    <string>Download direct op je smartwatch en luister ook zonder je telefoon. Ontdek Pocket Casts Plus met een app op je telefoon of op het web.</string>
-    <key>watch_source_refresh_account</key>
-    <string>Account vernieuwen</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Als je al een Pocket Casts Plus-account hebt, vernieuw je account dan om deze te proberen in te schakelen</string>
-    <key>watch_source_refresh_data</key>
-    <string>Gegevens vernieuwen</string>
-    <key>watch_source_sign_in_info</key>
-    <string>Log in of maak een account aan op je telefoon</string>
-    <key>watch_tap_to_open</key>
-    <string>Tik om te openen</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>Je kunt in het scherm Informatie over aflevering of vanaf je telefoon afleveringen in de wachtrij zetten om als volgende te worden afgespeeld.</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>Niets in Hierna</string>
     <key>week</key>
     <string>week</string>
     <key>welcome_discover_button</key>

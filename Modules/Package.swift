@@ -7,7 +7,7 @@ import Foundation
 let package = Package(
     name: "Modules",
     platforms: [
-        .iOS("18.0"), .watchOS(.v9), .macOS(.v10_15)
+        .iOS("18.0"), .macOS(.v10_15)
     ],
     products: XcodeSupport.products + [
         .library(
@@ -134,7 +134,7 @@ let package = Package(
             ],
             linkerSettings: [
                 .linkedFramework("CFNetwork", .when(platforms: [.iOS])),
-                .linkedFramework("AuthenticationServices", .when(platforms: [.iOS, .watchOS]))
+                .linkedFramework("AuthenticationServices", .when(platforms: [.iOS]))
             ]
         ),
         .testTarget(

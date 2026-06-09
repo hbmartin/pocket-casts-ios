@@ -1,4 +1,3 @@
-#if !os(watchOS)
     import UIKit
 
     public extension UIView {
@@ -83,4 +82,3 @@
             }
         }
     }
-#endif

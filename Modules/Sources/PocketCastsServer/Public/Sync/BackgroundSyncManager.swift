@@ -2,22 +2,12 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-#if os(watchOS)
-    import WatchKit
-#endif
 
 public class BackgroundSyncManager: NSObject {
     public static let sessionIdPrefix = "SyncBgSession"
 
     public static let shared = BackgroundSyncManager()
 
-    #if os(watchOS)
-    var pendingWatchBackgroundTasks: [String: WKURLSessionRefreshBackgroundTask] = [:]
-    public func processBackgroundTaskCallback(task: WKURLSessionRefreshBackgroundTask, identifier: String) {
-        pendingWatchBackgroundTasks[identifier] = task
-        _ = createUrlSession(identifier: identifier)
-    }
-    #endif
 
     let refreshTaskId = "refresh"
     let upNextSyncTaskId = "upnext"

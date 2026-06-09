@@ -1,6 +1,5 @@
 import Foundation
 
-#if !os(watchOS)
     import UIKit
 
     public extension NSLayoutConstraint {
@@ -26,4 +25,3 @@ import Foundation
             return newConstraint
         }
     }
-#endif

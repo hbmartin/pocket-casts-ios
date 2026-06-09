@@ -1094,8 +1094,6 @@ que vous avez écouté était
     <string>1 an de contenu de Slumber Studios</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>Lisez votre file d’attente en mode aléatoire</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Applications pour Wear OS et Apple Watch</string>
     <key>feature_tour_end_tour</key>
     <string>Fin de la visite</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ podcasts partout avec</string>
     <string>Logs</string>
     <key>logs_no_email_account_configured</key>
     <string>Vous devez configurer un compte de messagerie sur l’appareil pour envoyer les journaux</string>
-    <key>logs_watch_os_not_available</key>
-    <string>Aucun journal watchOS disponible. Vérifiez que votre Apple Watch est connectée et que l’application Pocket Casts Watch est installée.</string>
     <key>manage_downloads_action</key>
     <string>Gérer les téléchargements</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ MISES À JOUR</string>
     <string>Obtenir des thèmes exclusifs avec Pocket Casts Plus, et plus encore</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>Écouter vos épisodes en mode aléatoire avec Pocket Casts Plus, et plus encore</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Contrôler votre écoute depuis votre montre avec Pocket Casts Plus, et plus encore</string>
     <key>phone</key>
     <string>Téléphone</string>
     <key>play</key>
@@ -2276,8 +2270,6 @@ Essayez d’ajuster les règles ou enregistrez cette playlist pour les futurs é
     <string>Obtenez un an de contenu premium de Slumber Studios.</string>
     <key>plus_feature_card_text_storage</key>
     <string>Chargez vos fichiers audio dans le stockage cloud afin de pouvoir y accéder n’importe où.</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>Laissez tomber le téléphone et allez courir.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Signets</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2290,8 +2282,6 @@ Essayez d’ajuster les règles ou enregistrez cette playlist pour les futurs é
     <string>Rêver avec Slumber Studios</string>
     <key>plus_feature_card_title_storage</key>
     <string>Espace de stockage de 20 Go</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Lecture sur Apple Watch et Wear OS</string>
     <key>plus_feature_gratitude</key>
     <string>L’infinie gratitude de tous les membres de Pocket Casts</string>
     <key>plus_feature_librofm</key>
@@ -2342,8 +2332,6 @@ Essayez d’ajuster les règles ou enregistrez cette playlist pour les futurs é
     <string>Écoutez vos podcasts partout grâce à nos applications Windows, macOS et Web</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>Organisez vos podcasts dans des dossiers et synchronisez-les sur tous vos appareils.</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Applications Apple Watch et Wear OS</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@ par mois</string>
     <key>plus_payment_canceled</key>
@@ -3279,22 +3267,6 @@ Si vous cherchez de l’inspiration, consultez l’onglet Découvrir.</string>
     <string>Ajoute automatiquement les nouveaux épisodes à la file d’attente. Lorsque la file d’attente atteint %1$@ éléments, les nouveaux épisodes ajoutés automatiquement au début suppriment ceux qui sont à la fin. Les épisodes qui doivent s’ajouter automatiquement à la fin ne sont pas ajoutés tant que la file d’attente n’est pas en dessous de la limite.</string>
     <key>settings_volume_boost</key>
     <string>Augmenter le volume</string>
-    <key>settings_watch_auto_download</key>
-    <string>Téléchargement auto de la file d'attente</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Définir le nombre d’épisodes de votre file d’attente que Pocket Casts téléchargera sur votre montre pour une lecture hors ligne.</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>Supprimer les téléchargements hors limite</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>Pour économiser l’espace de stockage de la montre, un maximum de 25 épisodes dans votre file d’attente sera téléchargé automatiquement. Les anciens fichiers téléchargés en dehors de cette limite seront automatiquement supprimés.</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>Tous les fichiers téléchargés dans votre file d’attente qui dépassent cette limite seront automatiquement supprimés. Les téléchargements manuels ne sont pas gérés par ces réglages.</string>
-    <key>settings_watch_episode_limit</key>
-    <string>Nombre d’épisodes</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts téléchargera les %1$@ premiers épisodes de votre file d’attente sur votre montre pour une lecture hors ligne.</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>Les %1$@ premiers</string>
     <key>setup_account</key>
     <string>Créer un compte</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3633,14 +3605,6 @@ Votre adresse e-mail, votre mot de passe et d’autres éléments sensibles ne s
     <string>Dossiers intelligents</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>Utiliser ces dossiers</string>
-    <key>support_watch_help_message</key>
-    <string>Si vous rencontrez des difficultés avec l’application Pocket Casts Watch, nous pouvons vous envoyer les journaux de votre montre afin de mieux vous aider. Pour ce faire, ouvrez Pocket Casts sur votre montre.</string>
-    <key>support_watch_help_opened_app</key>
-    <string>J’ai ouvert l’application Watch</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Envoyer sans les journaux de la montre</string>
-    <key>support_watch_help_title</key>
-    <string>Besoin d’aide pour utiliser l’application Watch ?</string>
     <key>supporter</key>
     <string>Abonné</string>
     <key>supporter_contributions</key>
@@ -3925,8 +3889,6 @@ C’est sans conteste la meilleure application pour écouter des podcasts. Elle 
 Usage simple ou complexe, cette application est telle que vous la souhaitez. Utilisez-la en plug and play, configurez des minuteurs pour passer les génériques de fin et intro ou toute autre fonctionnalité que vous souhaitez activer.</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>La fonction de synchronisation est magique. J’ignore ce qui fait qu’elle est aussi fantastique, mais c’est la meilleure application que j’aie jamais utilisée.</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>J’utilise cette application depuis au moins 6 ans, j’étais d’abord sur Android et maintenant je suis sur iOS depuis près d’un an. L’application fonctionne aussi bien sur les deux plateformes. Il est facile de trouver des nouveaux podcasts à écouter, l’interface utilisateur est très agréable et il est également possible d’ajouter des podcasts par leur URL de flux RSS. L’application sur Apple Watch est fonctionnelle, mais je l’utilise surtout pour lire ou mettre en pause. Connectez-vous avec un compte pour permettre la synchronisation sur tous vos appareils, mais rien d’obligatoire là-dedans.</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>PC est mon application de prédilection depuis des années. J’ai essayé d’autres applications de podcast, mais je reviens toujours à PC pour sa simplicité, son interface utilisateur et son assistance. Cela vaut vraiment le coup d’y jeter un œil, en particulier si votre application de podcast actuelle ne vous satisfait plus.</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3977,54 +3939,6 @@ Usage simple ou complexe, cette application est telle que vous la souhaitez. Uti
     <string>Les niveaux de voix sont plus cohérents</string>
     <key>wait_for_wifi</key>
     <string>En attente de WiFi</string>
-    <key>watch</key>
-    <string>Montre</string>
-    <key>watch_buffering</key>
-    <string>Mise en tampon...</string>
-    <key>watch_chapter_next</key>
-    <string>Chapitre suivant</string>
-    <key>watch_chapter_prev</key>
-    <string>Chapitre précédent</string>
-    <key>watch_effects</key>
-    <string>Effets</string>
-    <key>watch_episode_details</key>
-    <string>Détails de l’épisode</string>
-    <key>watch_main_menu</key>
-    <string>Menu principal</string>
-    <key>watch_no_episodes</key>
-    <string>Aucun épisode</string>
-    <key>watch_no_filters</key>
-    <string>Aucun filtre</string>
-    <key>watch_no_playlists</key>
-    <string>Aucune liste de lecture</string>
-    <key>watch_no_podcasts</key>
-    <string>Aucun Podcast</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>Profitez du silence ou découvrez une nouveauté.
-
-Impossible de se tromper. 🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>Aucune lecture en cours</string>
-    <key>watch_play_source</key>
-    <string>Lire Source</string>
-    <key>watch_source_msg</key>
-    <string>Les podcasts seront diffusés sur l’enceinte à laquelle le périphérique choisi est connecté.</string>
-    <key>watch_source_plus_info</key>
-    <string>Téléchargez des podcasts directement sur votre montre et écoutez-les sans votre téléphone. Découvrez Pocket Casts Plus sur l’application mobile ou sur le Web.</string>
-    <key>watch_source_refresh_account</key>
-    <string>Actualiser le compte</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Si vous possédez un compte Pocket Casts Plus, actualisez-le pour tenter de l’activer.</string>
-    <key>watch_source_refresh_data</key>
-    <string>Actualiser les données</string>
-    <key>watch_source_sign_in_info</key>
-    <string>Connectez-vous ou créez un compte depuis votre téléphone</string>
-    <key>watch_tap_to_open</key>
-    <string>Appuyer pour ouvrir</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>Vous pouvez mettre en file d’attente des épisodes à lire ensuite depuis l’écran de détails de ces derniers, ou les ajouter sur votre téléphone.</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>Rien dans Up Next</string>
     <key>week</key>
     <string>semaine</string>
     <key>welcome_discover_button</key>

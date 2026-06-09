@@ -99,9 +99,7 @@ class PodcastChapterParser {
                     for chapter in chapters {
                         let convertedChapter = ChapterInfo()
                         convertedChapter.title = chapter.title ?? ""
-                        #if !os(watchOS)
                             convertedChapter.image = chapter.artwork
-                        #endif
 
                         convertedChapter.startTime = chapter.time
                         convertedChapter.duration = chapter.duration.seconds

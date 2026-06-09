@@ -1094,8 +1094,6 @@ du lyssnade på var
     <string>1 års innehåll från Slumber Studios</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>Blanda din kö</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Appar för Wear OS och Apple Watch</string>
     <key>feature_tour_end_tour</key>
     <string>Avsluta rundtur</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ podcasts med dig</string>
     <string>Loggar</string>
     <key>logs_no_email_account_configured</key>
     <string>Du behöver konfigurera ett e-postkonto på enheten för att skicka loggarna</string>
-    <key>logs_watch_os_not_available</key>
-    <string>Inga watchOS-loggar är tillgängliga. Se till att du har en Apple Watch parkopplad och klockappen för Pocket Casts installerad.</string>
     <key>manage_downloads_action</key>
     <string>Hantera nedladdningar</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ UPPDATERINGAR</string>
     <string>Få exklusiva teman och mer därtill med Pocket Casts Plus</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>Spela upp dina avsnitt slumpvis och mer därtill med Pocket Cast Plus</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Lyssna via din klocka och mer därtill med Pocket Casts Plus</string>
     <key>phone</key>
     <string>Telefon</string>
     <key>play</key>
@@ -2276,8 +2270,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Få 1 år av premiuminnehåll från Slumber Studios.</string>
     <key>plus_feature_card_text_storage</key>
     <string>Ladda upp dina ljudfiler till molnlagringen och ha dem tillgängliga överallt.</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>Lämna telefonen hemma och ta en löptur.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Bokmärken</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2290,8 +2282,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Dröm med Slumber Studios</string>
     <key>plus_feature_card_title_storage</key>
     <string>20 GB lagringsutrymme</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Apple Watch- och Wear OS-uppspelning</string>
     <key>plus_feature_gratitude</key>
     <string>Den eviga tacksamheten hos alla här på Pocket Casts</string>
     <key>plus_feature_librofm</key>
@@ -2342,8 +2332,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Lyssna på fler platser med våra Windows-, macOS- och webbappar</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>Organisera dina podcasts i mappar och håll dem synkroniserade på alla dina enheter.</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Apple Watch- och Wear OS-appar</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@ per månad</string>
     <key>plus_payment_canceled</key>
@@ -3279,22 +3267,6 @@ Om du behöver inspiration så kan du Upptäcka nya podcasts nedan.</string>
     <string>Lägg automatiskt till nya avsnitt i Nästa. När Nästa når %1$@ läggs nya avsnitt automatiskt till högst upp, varpå det sista avsnittet i kön tas bort. Avsnitt som är inställda på att läggas till automatiskt längst ner läggs inte till förrän Nästa är under gränsen.</string>
     <key>settings_volume_boost</key>
     <string>Volymökning</string>
-    <key>settings_watch_auto_download</key>
-    <string>Ladda automatiskt ner Nästa </string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Ange antalet avsnitt från Nästa som du vill att Pocket Casts ska ladda ner till din Klocka.</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>Ta bort nedladdningar som ligger utanför gränsen</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>För att spara utrymme kommer maximalt 25 avsnitt i din Nästa-kö att laddas ner automatiskt. Äldre nedladdningsfiler som ligger utanför den här gränsen kommer att tas bort automatiskt.</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>Alla nedladdningsfiler i din Nästa-kö som ligger utanför den här gränsen kommer att tas bort automatiskt. Manuella nedladdningar hanteras inte med dessa inställningar.</string>
-    <key>settings_watch_episode_limit</key>
-    <string>Antal avsnitt</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts laddar ner de %1$@ översta avsnitten i din Nästa-kö för offline-uppspelning.</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>Topp %1$@</string>
     <key>setup_account</key>
     <string>Konfigurera konto</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3633,14 +3605,6 @@ Din e-postadress, ditt lösenord eller annan känslig information delas aldrig.<
     <string>Smarta mappar</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>Använd dessa mappar</string>
-    <key>support_watch_help_message</key>
-    <string>Om du har problem med Pocket Casts Watch-appen kan vi skicka dina bärbara loggar för att hjälpa dig. Om du vill att vi ska göra det, öppna Pocket Casts på din klocka.</string>
-    <key>support_watch_help_opened_app</key>
-    <string>Jag har öppnat Watch-appen</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Skicka utan Watch-loggar</string>
-    <key>support_watch_help_title</key>
-    <string>Behöver du hjälp med Watch-appen?</string>
     <key>supporter</key>
     <string>Supporter</string>
     <key>supporter_contributions</key>
@@ -3925,8 +3889,6 @@ Det här är utan tvekan den bästa appen för att lyssna på podcaster. Det har
 Appen kan vara så enkel eller svår att använda som du själv vill att den ska vara. Så antingen använder du den bara för att ansluta och spela upp eller så ställer du in hoppa över outro- och intro-timers och alla andra små funktioner du vill aktivera.</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>Synkroniseringsfunktionen är magisk. Jag vet inte vilken slags speciell magi den här appen har, men den är bättre än alla andra appar jag har använt.</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>Jag började med Android och nu har jag använt iOS i nästan ett år. Totalt har jag använt den här appen i minst 6 år. Fungerar lika bra på båda plattformarna. Det är enkelt att hitta nya podcaster att lyssna på, mycket trevlig Ul och man kan även lägga till podcaster via url för rss-flöde. Klockappen är funktionell, men jag använder den mest för att spela/pausa. Du kan logga in med ett konto för att synkronisera mellan enheter, men det är inget krav.</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>PC har varit min favorit i flera år. Jag har provat andra podcast-appar men kommer alltid tillbaka till PC för enkelheten, gränssnittet och supporten. Det är helt klart värt att prova, särskilt om du har tröttnat på din nuvarande podcast-app.</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3977,54 +3939,6 @@ Appen kan vara så enkel eller svår att använda som du själv vill att den ska
     <string>Röstnivåer är mer konsekventa</string>
     <key>wait_for_wifi</key>
     <string>Väntar på WiFi</string>
-    <key>watch</key>
-    <string>Klocka</string>
-    <key>watch_buffering</key>
-    <string>Buffrar …</string>
-    <key>watch_chapter_next</key>
-    <string>Nästa kapitel</string>
-    <key>watch_chapter_prev</key>
-    <string>Föregående kapitel</string>
-    <key>watch_effects</key>
-    <string>Effekter</string>
-    <key>watch_episode_details</key>
-    <string>Avsnittsinformation</string>
-    <key>watch_main_menu</key>
-    <string>Huvudmeny</string>
-    <key>watch_no_episodes</key>
-    <string>Inga avsnitt</string>
-    <key>watch_no_filters</key>
-    <string>Inga filter</string>
-    <key>watch_no_playlists</key>
-    <string>Inga spellistor</string>
-    <key>watch_no_podcasts</key>
-    <string>Inga podcasts</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>Njut av tystnaden, eller hitta något att spela upp.
-
-Båda alternativen är ärligt talat riktigt bra. 🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>Inget spelas</string>
-    <key>watch_play_source</key>
-    <string>Spela källa</string>
-    <key>watch_source_msg</key>
-    <string>Podcasts spelas upp från den högtalare som den valda enheten är ansluten till</string>
-    <key>watch_source_plus_info</key>
-    <string>Ladda ner direkt till din klocka och lyssna utan din telefon Kolla in Pocket Casts Plus i din telefonapp, eller på webben.</string>
-    <key>watch_source_refresh_account</key>
-    <string>Uppdatera konto</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Om du redan har ett Pocket Casts Plus-konto kan du uppdatera kontot för att aktivera det</string>
-    <key>watch_source_refresh_data</key>
-    <string>Uppdatera data</string>
-    <key>watch_source_sign_in_info</key>
-    <string>Logga in eller skapa ett konto på din telefon</string>
-    <key>watch_tap_to_open</key>
-    <string>Tryck för att öppna</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>Du kan placera avsnitt i kö för uppspelning via skärmen Avsnittsinformation, eller så kan du lägga till dem på din telefon.</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>Inget i Nästa</string>
     <key>week</key>
     <string>vecka</string>
     <key>welcome_discover_button</key>

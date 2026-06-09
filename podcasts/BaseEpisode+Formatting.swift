@@ -34,11 +34,7 @@ extension BaseEpisode {
     func commonDisplayableInfo(includeSize: Bool) -> String {
         if downloading() {
             if let progress = DownloadManager.shared.progressManager.progressForEpisode(uuid) {
-                #if os(watchOS)
-                    return "\(progress.percentageProgressAsString())"
-                #else
                     return L10n.podcastDownloading(progress.percentageProgressAsString())
-                #endif
             } else {
                 return L10n.podcastDownloading("").trimmingCharacters(in: .whitespaces)
             }

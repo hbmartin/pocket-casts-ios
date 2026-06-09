@@ -1,17 +1,13 @@
 import AVFoundation
 import Foundation
 import PocketCastsUtils
-#if !os(watchOS)
 import UIKit
-#endif
 
 class ChapterInfo: Equatable {
     var title = ""
     var url: String?
     var startTime = CMTime(seconds: 0, preferredTimescale: 0)
-    #if !os(watchOS)
         var image: UIImage?
-    #endif
     var isFirst = false
     var isLast = false
     var index = 0

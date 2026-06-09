@@ -37,7 +37,7 @@ class PodcastManager: NSObject {
 
     // MARK: - Notifications
 
-    #if !os(watchOS) && !APPCLIP && !os(tvOS)
+    #if !APPCLIP && !os(tvOS)
         func setNotificationsEnabled(podcast: Podcast, enabled: Bool) {
             if enabled {
                 if !NotificationsGroup.newEpisodes.isEnabled {
@@ -84,7 +84,6 @@ class PodcastManager: NSObject {
     }
 
     func didReceiveToken(_ token: String) {
-        #if !os(watchOS)
             let currentToken = ServerSettings.pushToken()
 
             if currentToken == token { return } // they are the same, no need to do anything
@@ -92,7 +91,6 @@ class PodcastManager: NSObject {
             ServerSettings.setPushToken(token: token)
 
             RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-        #endif
     }
 
     // MARK: - Downloads
@@ -172,7 +170,7 @@ class PodcastManager: NSObject {
 
     // MARK: - Import
 
-    #if !os(watchOS) && !os(tvOS)
+    #if !os(tvOS)
         func importSharedItemFromUrl(_ strippedUrl: String, completion: @escaping (IncomingShareItem?) -> Void) {
             importerQueue.cancelAllOperations()
 
@@ -181,7 +179,7 @@ class PodcastManager: NSObject {
         }
     #endif
 
-    #if !os(watchOS) && !APPCLIP && !os(tvOS)
+    #if !APPCLIP && !os(tvOS)
         func importPodcastsFromOpml(_ opmlFile: URL, progressWindow: ShiftyLoadingAlert? = nil) {
             importerQueue.cancelAllOperations()
 

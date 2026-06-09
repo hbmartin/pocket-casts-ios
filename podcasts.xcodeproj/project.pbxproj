@@ -1044,16 +1044,6 @@
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BDD3018A1EFB9356004A9972 /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -1863,7 +1853,6 @@
 		BDE292E223680D6100A4EEAE /* EffectsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EffectsViewController.swift; sourceTree = "<group>"; };
 		BDE292E323680D6100A4EEAE /* EffectsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EffectsViewController.xib; sourceTree = "<group>"; };
 		BDE43412231759060045D0CB /* Files.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Files.xcassets; sourceTree = "<group>"; };
-		BDE48A352410D4BB00ECA6CA /* WatchNowPlayingHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNowPlayingHelper.swift; sourceTree = "<group>"; };
 		BDE5B8D71E6401F80039B409 /* EpisodeFileSizeUpdater.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeFileSizeUpdater.swift; sourceTree = "<group>"; };
 		BDE73A7D1B607AF5005BFE30 /* PlayerImages.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PlayerImages.xcassets; sourceTree = "<group>"; };
 		BDE73A7F1B607DB6005BFE30 /* CommonImages.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = CommonImages.xcassets; sourceTree = "<group>"; };
@@ -3665,7 +3654,6 @@
 				FFF23E892CC91E2A0046D3AD /* ServerPodcastManager+Subscription.swift */,
 				4041FE562181751F0089D4A1 /* SiriShortcutsManager.swift */,
 				BDB206A92191734D00C1E456 /* NowPlayingHelper.swift */,
-				BDE48A352410D4BB00ECA6CA /* WatchNowPlayingHelper.swift */,
 				BD583AF321AE5F9E0048D78D /* EpisodeDateHelper.swift */,
 				BDA681AA220D03930053BEEE /* UserEpisodeManager.swift */,
 				8BAB271F2A40B3340079E5B3 /* EpisodesDataManager.swift */,
@@ -5026,7 +5014,6 @@
 				BDBD53E917019B2A0048C8C5 /* Frameworks */,
 				BDBD53EA17019B2A0048C8C5 /* Resources */,
 				BD5231EA1E3EDA6A000F0D38 /* Embed App Extensions */,
-				BDD3018A1EFB9356004A9972 /* Embed Watch Content */,
 				40BF0B3F241F55FE003E3ABD /* Embed Frameworks */,
 				8B6D7F312EFBD00100BD0001 /* Upload Bitdrift Debug Files */,
 			);

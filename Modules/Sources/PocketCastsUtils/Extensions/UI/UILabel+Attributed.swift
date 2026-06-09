@@ -1,4 +1,3 @@
-#if !os(watchOS)
     import UIKit
 
     public extension UILabel {
@@ -40,4 +39,3 @@
             self.numberOfLines = traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? accessibility : regular
         }
     }
-#endif

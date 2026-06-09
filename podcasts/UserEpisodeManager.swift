@@ -5,7 +5,7 @@ import PocketCastsUtils
 import UIKit
 
 struct UserEpisodeManager {
-    #if !os(watchOS) && !os(tvOS)
+    #if !os(tvOS)
         static func addUserEpisode(uuid: String, title: String, localFileUrl: URL, artwork: UIImage?, color: Int, fileSize: Int, duration: TimeInterval) throws -> UserEpisode {
             let episode = UserEpisode()
             episode.title = title
@@ -86,7 +86,7 @@ struct UserEpisodeManager {
             UserEpisodeManager.updateUserEpisodes()
         })
 
-        #if !os(watchOS) && !os(tvOS)
+        #if !os(tvOS)
             AnalyticsEpisodeHelper.shared.episodeDeletedFromCloud(episode: episode)
         #endif
     }
@@ -180,7 +180,7 @@ struct UserEpisodeManager {
         }
     }
 
-    #if !os(watchOS) && !os(tvOS)
+    #if !os(tvOS)
         static func updateUserEpisodeImage(uuid: String, artwork: UIImage?, completion: @escaping () -> Void) throws {
             guard let episode = DataManager.sharedManager.findUserEpisode(uuid: uuid) else {
                 return
@@ -248,7 +248,7 @@ struct UserEpisodeManager {
         ServerSettings.removeFilesLastModifiedKey()
     }
 
-    #if !os(watchOS) && !os(tvOS)
+    #if !os(tvOS)
     static func presentDeleteOptions(episode: UserEpisode, from presenter: UIViewController, dismissCallback: (() -> ())? = nil, actionCallback: ((Bool, Bool) -> Void)? = nil) {
         let cancelAction = UIAlertAction(title: L10n.cancel, style: .cancel) { _ in
             dismissCallback?()

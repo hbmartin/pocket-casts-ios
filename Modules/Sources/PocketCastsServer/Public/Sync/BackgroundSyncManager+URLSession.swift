@@ -77,12 +77,6 @@ extension BackgroundSyncManager: URLSessionDelegate, URLSessionDownloadDelegate 
         syncProcessQueue.addOperation {
             FileLog.shared.addMessage("Processing queue complete, firing sync completed and completing task")
             ServerNotificationsHelper.shared.fireSyncCompleted()
-            #if os(watchOS)
-            if  let identifier = session.configuration.identifier, let pendingWatchBackgroundTask = self.pendingWatchBackgroundTasks[identifier] {
-                pendingWatchBackgroundTask.setTaskCompletedWithSnapshot(true)
-                self.pendingWatchBackgroundTasks[identifier] = nil
-            }
-            #endif
 
             session.invalidateAndCancel()
             self.pendingTasks.removeAll()

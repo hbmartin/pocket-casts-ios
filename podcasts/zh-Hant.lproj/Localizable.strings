@@ -1094,8 +1094,6 @@ Pocket Casts Plus</string>
     <string>1 年份的 Slumber Studios 內容</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>隨機播放佇列</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Wear OS 和 Apple Watch 版應用程式</string>
     <key>feature_tour_end_tour</key>
     <string>結束導覽</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ Pocket Casts Plus</string>
     <string>記錄</string>
     <key>logs_no_email_account_configured</key>
     <string>請在裝置上設定電子郵件帳號，以利傳送記錄</string>
-    <key>logs_watch_os_not_available</key>
-    <string>沒有可用的 watchOS 記錄。 請確認你已配對 Apple Watch 並安裝 Pocket Casts Watch 應用程式。</string>
     <key>manage_downloads_action</key>
     <string>管理下載項目</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ Pocket Casts Plus</string>
     <string>Pocket Casts Plus 提供專屬佈景主題並享有更多功能</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>透過 Pocket Casts Plus 隨機播放單集並享有更多功能</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>運用 Pocket Casts Plus 直接從手錶聆聽並享有更多功能</string>
     <key>phone</key>
     <string>手機</string>
     <key>play</key>
@@ -2276,8 +2270,6 @@ Pocket Casts Plus</string>
     <string>獲得 1 年份 Slumber Studios 的 Premium 版內容。</string>
     <key>plus_feature_card_text_storage</key>
     <string>可將音訊檔案上傳至雲端儲存空間，隨時隨地使用。</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>拋開手機出門跑步。</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>書籤</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2290,8 +2282,6 @@ Pocket Casts Plus</string>
     <string>Slumber Studios 伴你進入夢鄉</string>
     <key>plus_feature_card_title_storage</key>
     <string>20 GB 儲存空間</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Apple Watch 和 Wear OS 播放</string>
     <key>plus_feature_gratitude</key>
     <string>Pocket Casts 所有使用者向你表達誠摯的謝意</string>
     <key>plus_feature_librofm</key>
@@ -2342,8 +2332,6 @@ Pocket Casts Plus</string>
     <string>使用我們的 Windows、macOS 和網頁應用程式，在更多地方收聽</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>在資料夾中整理你的 Podcast，並在所有裝置間同步。</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Apple Watch 和穿戴式裝置 OS</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>每月 %1$@ </string>
     <key>plus_payment_canceled</key>
@@ -3279,22 +3267,6 @@ Pocket Casts Plus</string>
     <string>自動新增集數到「接下來播放」。 「接下來播放」達到 %1$@ 集後，自動新增至最上方的新單集會移除佇列中最後的單集。 設定為自動新增至底部的單集，必須在「接下來播放」低於上限後才會新增。</string>
     <key>settings_volume_boost</key>
     <string>音量增強</string>
-    <key>settings_watch_auto_download</key>
-    <string>自動下載「接下來播放」</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>設定 Pocket Casts 會從「接下來播放」佇列中下載到手錶中供離線播放的單集。</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>刪除超出限制的下載檔案</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>為節省手錶儲存空間，系統會從「接下來播放」佇列中自動下載最多 25 集。超出此限制的舊下載檔案會自動刪除。</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>「接下來播放」佇列中超出此限制的所有下載檔案會自動刪除。手動下載並不受這些設定管理。</string>
-    <key>settings_watch_episode_limit</key>
-    <string>單集</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts 會將「接下來播放」佇列中的前 %1$@ 集下載至你的手錶供離線播放。</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>前 %1$@ 集</string>
     <key>setup_account</key>
     <string>設定帳號</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3633,14 +3605,6 @@ Pocket Casts Plus</string>
     <string>智慧資料夾</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>使用這些資料夾</string>
-    <key>support_watch_help_message</key>
-    <string>如果 Pocket Casts Watch 應用程式發生問題，我們可以傳送你的穿戴記錄給你以提供協助。 若要進行此操作，請在 Watch 上開啟 Pocket Casts。</string>
-    <key>support_watch_help_opened_app</key>
-    <string>我已開啟 Watch 應用程式</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>不附加 Watch 記錄並傳送</string>
-    <key>support_watch_help_title</key>
-    <string>需要 Watch 應用程式的相關協助嗎？</string>
     <key>supporter</key>
     <string>支持者</string>
     <key>supporter_contributions</key>
@@ -3925,8 +3889,6 @@ Pocket Casts Plus</string>
 你可以依照喜好調整此應用程式的使用複雜度。 可以隨插播放，或設定跳過尾奏和前奏、設定計時器以及任何其他供你啟用的小功能。</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>同步功能非常神奇。 不知道這款應用程式有什麼魔法，但這比我用過的任何其他應用程式都還更棒。</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>使用此應用程式 6 年以上了，起初是用 Android，現在則是用 iOS 一年了。 兩個平台上的運作方式都一樣。 可以輕鬆找到新 Podcast 來聽，具有十分出色的 UI 設計，也能夠透過 RSS 摘要 URL 來新增 Podcast。 Watch 應用程式功能強大，但我大部分都只有用播放/暫停功能。 登入帳號就能同步不同裝置，不過這非必要。</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>這幾年來電腦一直是我的必備工具。我嘗試過其他 Podcast 應用程式，但總是會回頭使用電腦，因為電腦用起來較簡單，加上其 UI 設計及支援服務。 絕對值得一試，要是你對目前的 Podcast 應用程式感到厭倦，那尤其更該試試。</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3977,54 +3939,6 @@ Pocket Casts Plus</string>
     <string>音量更一致</string>
     <key>wait_for_wifi</key>
     <string>正在等候 WiFi</string>
-    <key>watch</key>
-    <string>觀看</string>
-    <key>watch_buffering</key>
-    <string>緩衝處理中…</string>
-    <key>watch_chapter_next</key>
-    <string>下一節</string>
-    <key>watch_chapter_prev</key>
-    <string>上一節</string>
-    <key>watch_effects</key>
-    <string>效果</string>
-    <key>watch_episode_details</key>
-    <string>本集詳細資訊</string>
-    <key>watch_main_menu</key>
-    <string>主選單</string>
-    <key>watch_no_episodes</key>
-    <string>沒有單集</string>
-    <key>watch_no_filters</key>
-    <string>沒有篩選器</string>
-    <key>watch_no_playlists</key>
-    <string>沒有播放清單</string>
-    <key>watch_no_podcasts</key>
-    <string>沒有 Podcast 節目</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>享受靜謐時光，或尋找要播放的新內容
-
-兩者都是很棒的選擇。🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>沒有正在播放的內容</string>
-    <key>watch_play_source</key>
-    <string>播放來源</string>
-    <key>watch_source_msg</key>
-    <string>Podcast 節目會從所選裝置連接的喇叭播放</string>
-    <key>watch_source_plus_info</key>
-    <string>直接下載到你的手錶，不用手機就能聆聽。在你的手機應用程式或網頁上查看 Pocket Casts Plus。</string>
-    <key>watch_source_refresh_account</key>
-    <string>重新整理帳號</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>如果你有 Pocket Casts Plus 帳號，請重新整理帳號以嘗試啟用此按鈕</string>
-    <key>watch_source_refresh_data</key>
-    <string>重新整理資料</string>
-    <key>watch_source_sign_in_info</key>
-    <string>在你的手機上登入或建立帳號</string>
-    <key>watch_tap_to_open</key>
-    <string>點選以開啟</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>您可以從「本集詳細資訊」畫面或從手機上，將單集加入接下來要播放的佇列。</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>「接著播放」中沒有內容</string>
     <key>week</key>
     <string>週</string>
     <key>welcome_discover_button</key>

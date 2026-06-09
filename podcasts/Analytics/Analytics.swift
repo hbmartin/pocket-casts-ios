@@ -4,7 +4,7 @@ import PocketCastsUtils
 class Analytics {
     static let shared = Analytics()
     private var adapters: [AnalyticsAdapter]?
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
     var analyticsAppThemeProvider: AnalyticsAppThemeProviding?
 #endif
 
@@ -21,7 +21,7 @@ class Analytics {
         Self.shared.adapters = nil
         Self.shared.setAdaptersRegisteredStatus(false)
     }
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
     static func add(analyticsAppThemeProvider: AnalyticsAppThemeProviding) {
         Self.shared.analyticsAppThemeProvider = analyticsAppThemeProvider
     }
@@ -49,7 +49,7 @@ class Analytics {
         var properties: [String: Sendable] = (properties ?? [:]).mapValues { value in
             (value as? AnalyticsDescribable)?.analyticsDescription ?? value
         }
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
         if FeatureFlag.appThemePropertiesLogging.enabled {
             analyticsAppThemeProvider?.appThemeProperties.forEach { key, value in
                 properties[key] = value
@@ -96,7 +96,7 @@ extension Analytics {
     }
 
     func optInOfAnalytics() {
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
         Settings.setAnalytics(optOut: false)
         setAdaptersRegisteredStatus(false)
         (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
@@ -108,7 +108,7 @@ extension Analytics {
         if Settings.analyticsOptOut() {
             Analytics.unregister()
         }
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
         (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
 #endif
         FileLog.shared.addMessage("Analytics: Refreshed Registered Adapters")

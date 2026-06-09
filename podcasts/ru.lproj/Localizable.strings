@@ -1094,8 +1094,6 @@ Pocket Casts на полную мощность.</string>
     <string>Контент от Slumber Studios на 1 год</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>Прослушивайте подкасты в случайном порядке</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Приложения для Wear OS и Apple Watch</string>
     <key>feature_tour_end_tour</key>
     <string>Завершить ознакомительный тур</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ Pocket Casts на полную мощность.</string>
     <string>Журналы</string>
     <key>logs_no_email_account_configured</key>
     <string>Для отправки журналов необходимо настроить учётную запись электронной почты на устройстве.</string>
-    <key>logs_watch_os_not_available</key>
-    <string>Нет доступных журналов watchOS. Убедитесь, что установлены сопряжённые часы Apple Watch и приложение для часов Pocket Casts.</string>
     <key>manage_downloads_action</key>
     <string>Управлять скачиваниями</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ Pocket Casts на полную мощность.</string>
     <string>Получайте эксклюзивные темы с Pocket Casts Plus и многое другое</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>При помощи Pocket Casts Plus можно воспроизводить выпуски в случайном порядке и делать ещё много интересного</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Прослушивайте подкасты через наручные часы при помощи Pocket Casts Plus и многое другое</string>
     <key>phone</key>
     <string>Телефон</string>
     <key>play</key>
@@ -2276,8 +2270,6 @@ Pocket Casts на полную мощность.</string>
     <string>Получите годовую подписку на премиум-контент от Slumber Studios.</string>
     <key>plus_feature_card_text_storage</key>
     <string>Загрузите аудиофайлы в облачное хранилище и пользуйтесь ими, где бы вы ни находились.</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>Отправляйтесь на лёгкую пробежку без телефона.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Закладки</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2290,8 +2282,6 @@ Pocket Casts на полную мощность.</string>
     <string>Slumber Studios — мы помогаем вам мечтать</string>
     <key>plus_feature_card_title_storage</key>
     <string>20 ГБ дискового пространства</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Воспроизведение на Apple Watch и Wear OS</string>
     <key>plus_feature_gratitude</key>
     <string>Бесконечная благодарность от всей команды Pocket Casts</string>
     <key>plus_feature_librofm</key>
@@ -2342,8 +2332,6 @@ Pocket Casts на полную мощность.</string>
     <string>Слушайте подкасты везде: в приложениях для Windows и macOS и веб-приложении.</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>Распределите подкасты по папкам и синхронизируйте их на всех устройствах.</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Приложения для Apple Watch и Wear OS</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@ в месяц</string>
     <key>plus_payment_canceled</key>
@@ -3279,22 +3267,6 @@ Pocket Casts на полную мощность.</string>
     <string>Автоматически добавлять новые выпуски в список «Следующие». Когда размер очереди «Следующие» достигает %1$@ вып., каждый новый выпуск, автоматически добавляемый в начало, будет удалять из очереди самый старый выпуск. Автоматически добавляемые в конец выпуски не будут добавляться, пока размер очереди «Следующие» не снизится до лимита.</string>
     <key>settings_volume_boost</key>
     <string>Усилитель звука</string>
-    <key>settings_watch_auto_download</key>
-    <string>Автоматическая загрузка следующих выпусков</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Укажите количество выпусков из очереди «Следующие», которые Pocket Casts скачает в ваши часы для автономного воспроизведения.</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>Удалить скачивания, превышающие порог</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>Чтобы сэкономить память часов, автоматически загружается не более 25 выпусков из вашей очереди «Следующие». Более старые файлы для скачивания, превышающие этот порог, будут автоматически удаляться.</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>Все файлы для скачивания в вашей очереди «Следующие», превышающие этот порог, будут автоматически удалены. Эти настройки не управляют скачиванием вручную.</string>
-    <key>settings_watch_episode_limit</key>
-    <string>Количество выпусков</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts скачает в Watch первые %1$@ выпусков из вашей очереди «Следующие» для автономного прослушивания.</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>Первые %1$@</string>
     <key>setup_account</key>
     <string>Создать учетную запись</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3633,14 +3605,6 @@ Pocket Casts на полную мощность.</string>
     <string>Умные папки</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>Использовать эти папки</string>
-    <key>support_watch_help_message</key>
-    <string>Если у вас возникли проблемы с приложением Pocket Casts для часов, мы можем отправить журналы с носимого устройства, чтобы помочь вам. Для этого откройте Pocket Casts на часах.</string>
-    <key>support_watch_help_opened_app</key>
-    <string>Я открыл (-а) приложение для часов</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Отправить без журналов часов</string>
-    <key>support_watch_help_title</key>
-    <string>Нужна помощь с приложением для часов?</string>
     <key>supporter</key>
     <string>Спонсор</string>
     <key>supporter_contributions</key>
@@ -3925,8 +3889,6 @@ Pocket Casts на полную мощность.</string>
 Приложение может быть настолько простым или сложным, насколько это вам нужно. Так что вы можете либо пользоваться только функцией plug and play, либо настроить пропуск заставок, либо включить любую другую функцию, которая вам нравится.</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>Синхронизация просто супер. Не знаю, что там за волшебство, но это приложение определённо лучше всех, которыми я пользовался.</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>Пользуюсь приложением уже 6 лет или даже больше, начинал на Android, а теперь уже почти год — на iOS. Работает одинаково на обеих платформах. Легко искать и находить новые подкасты, отличный пользовательский интерфейс, можно добавлять подкасты по URL-адресу в RSS-ленте. Приложение в часах тоже работает, но я чаще всего пользуюсь им как кнопкой воспроизведения или паузы. Можно войти с данными учётной записи, чтобы синхронизировать приложение на всех устройствах, но это делать необязательно.</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>PC уже много лет остаётся моим любимым приложением. Я пробовал другие приложения для подкастов, но всегда возвращался к PC: это самый простой вариант с лучшим пользовательским интерфейсом и поддержкой. Безусловно, стоит попробовать, особенно если вам надоело ваше нынешнее приложение для подкастов.</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3977,54 +3939,6 @@ Pocket Casts на полную мощность.</string>
     <string>Уровни громкости голоса более стабильны</string>
     <key>wait_for_wifi</key>
     <string>В ожидании WiFi</string>
-    <key>watch</key>
-    <string>Watch</string>
-    <key>watch_buffering</key>
-    <string>Буферизация...</string>
-    <key>watch_chapter_next</key>
-    <string>Следующая глава</string>
-    <key>watch_chapter_prev</key>
-    <string>Предыдущая глава</string>
-    <key>watch_effects</key>
-    <string>Эффекты</string>
-    <key>watch_episode_details</key>
-    <string>Сведения о выпуске</string>
-    <key>watch_main_menu</key>
-    <string>Главное меню</string>
-    <key>watch_no_episodes</key>
-    <string>Нет выпусков</string>
-    <key>watch_no_filters</key>
-    <string>Нет фильтров</string>
-    <key>watch_no_playlists</key>
-    <string>Нет плейлистов</string>
-    <key>watch_no_podcasts</key>
-    <string>Нет подкастов</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>Наслаждайтесь тишиной или поищите, что ещё можно послушать.
-
-Оба варианта — отличный выбор. 🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>Ничего не воспроизводится</string>
-    <key>watch_play_source</key>
-    <string>Воспроизвести источник</string>
-    <key>watch_source_msg</key>
-    <string>Подкасты будут воспроизводиться из динамика, к которому подключено выбранное устройство</string>
-    <key>watch_source_plus_info</key>
-    <string>Загрузите приложение на часы и слушайте без телефона. Попробуйте Pocket Casts Plus на телефоне или в веб-приложении.</string>
-    <key>watch_source_refresh_account</key>
-    <string>Обновить учетную запись</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Если у вас учетная запись Pocket Casts Plus, обновите ее, чтобы включить все возможности</string>
-    <key>watch_source_refresh_data</key>
-    <string>Обновить данные</string>
-    <key>watch_source_sign_in_info</key>
-    <string>Войдите или создайте учетную запись на телефоне</string>
-    <key>watch_tap_to_open</key>
-    <string>Нажмите, чтобы открыть</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>Эпизоды можно добавлять в очередь для последующего воспроизведения на экране сведений об эпизодах либо посредством их добавления на телефоне.</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>Очередь пуста</string>
     <key>week</key>
     <string>неделя</string>
     <key>welcome_discover_button</key>

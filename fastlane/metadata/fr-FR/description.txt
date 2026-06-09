@@ -21,7 +21,6 @@ LECTURE PUISSANTE
 • Chapitres : passez facilement d’un chapitre à l’autre et profitez des illustrations intégrées ajoutées par l’auteur (formats de chapitre MP3 et M4A supportés).
 • Audio et vidéo : lisez tous vos épisodes préférés et basculez la vidéo en audio.
 • Ignorer la lecture : ignorez les intros d’épisodes, parcourez les épisodes avec des intervalles de saut personnalisés.
-• Apple Watch : contrôlez la lecture à partir de votre Apple Watch, réglez le volume ou modifiez les effets de lecture, sans jamais toucher votre téléphone.
 • Minuteur de mise en veille : nous mettrons votre épisode en pause pour que vous puissiez vous reposer.
 • Airplay et Chromecast : diffusez des épisodes directement sur votre téléviseur ou des enceintes en un clic.
 • Sonos : parcourez et lisez votre collection de podcasts directement à partir de l’app Sonos.

@@ -69,7 +69,7 @@ The codebase uses Swift Package Manager modules under `Modules/`:
 The main iOS app lives in `podcasts/` with:
 - UIKit + SwiftUI hybrid (123+ ViewControllers, XIBs/Storyboards)
 - Feature-based organization (Analytics, Bookmarks, Folders, IAP, Player, etc.)
-- Multi-platform targets: iOS, watchOS, widgets, App Clip
+- Multi-platform targets: iOS, widgets, App Clip
 
 ### Key Directories
 
@@ -77,7 +77,6 @@ The main iOS app lives in `podcasts/` with:
 |-----------|---------|
 | `podcasts/` | Main iOS app source |
 | `PocketCastsTests/` | Unit tests organized by feature |
-| `Pocket Casts Watch App/` | watchOS companion |
 | `WidgetExtension/` | Home screen widgets |
 | `BuildTools/` | SwiftLint and SwiftGen plugins |
 

@@ -1,4 +1,3 @@
-#if !os(watchOS)
 import UIKit
 
 extension UIView {
@@ -14,4 +13,3 @@ extension UIView {
         return screenHeight - viewFrameInWindow.maxY
     }
 }
-#endif

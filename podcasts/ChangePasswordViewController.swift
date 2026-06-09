@@ -218,7 +218,6 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
             if success {
                 Analytics.track(.userPasswordUpdated)
 
-                Settings.setLoginDetailsUpdated()
                 ServerSettings.saveSyncingPassword(newPassword)
                 DispatchQueue.main.async {
                     let updatedVC = AccountUpdatedViewController()

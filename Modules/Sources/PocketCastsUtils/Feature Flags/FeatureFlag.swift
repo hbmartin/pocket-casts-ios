@@ -31,7 +31,7 @@ public enum FeatureFlag: String, CaseIterable {
     case whenPlayingOnlyUpdateEpisodeIfPlaybackFails
 
     /// When enabled, we ignore audio interruptions with InterruptionReason set to routeDisconnected
-    /// (introduced in iOS 17 and watchOS 10) because these are not really interruptions as we have
+    /// (introduced in iOS 17) because these are not really interruptions as we have
     /// implemented them previously. If the route is disconnected, audio stops indefinitely
     /// until a new route connects (for which we'll received a different notification and handle accordingly)
     /// See: https://github.com/Automattic/pocket-casts-ios/issues/2049
@@ -93,9 +93,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Encourage Account Creation
     case encourageAccountCreation
-
-    /// Any time watch data is sent, we refresh the watch logs and save them to a file for sending to Zendesk or exporting
-    case refreshAndSaveWatchLogsOnSend
 
     /// Avoid replace actions for Up Next episode queue when swapping the currently playing episode
     case avoidReplaceOnEpisodeSwap
@@ -192,9 +189,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Allow the release of the Media Exporter when is no longer being used by the player
     case releaseMediaExporterWhenNoLongerActive
 
-    /// Fix Watch app overwriting phone's Up Next queue by adding debouncing and fixing timestamp comparison logic
-    case watchUpNextSyncFix
-
     /// Enable VoiceBoostN with updated description copy (TestFlight only)
     case voiceBoostN
 
@@ -204,20 +198,11 @@ public enum FeatureFlag: String, CaseIterable {
     /// Adds invalidation to the playlist cache on appearance when its been > 30 seconds
     case playlistCacheInvalidation
 
-    /// Use WCSessionFileTransfer to send logs from watchOS to iPhone instead of sendMessage reply
-    case watchLogFileTransfer
-
     /// Skip Up Next sync when protected data is unavailable to prevent sync with incorrect UserDefaults values
     case skipSyncWhenProtectedDataUnavailable
 
     /// Check if protected data is available before running migrations that touch keychain
     case checkProtectedDataBeforeMigration
-
-    /// Use transferUserInfo API for watch-to-phone actions and sendMessage for phone-to-watch state updates
-    case watchTransferUserInfoApi
-
-    /// Remove the 50-episode limit when syncing Up Next to Apple Watch
-    case unlimitedWatchUpNextSync
 
     /// Ensure that tmp files are removed when no longer needed
     case cleanUpTmpFiles
@@ -309,8 +294,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .encourageAccountCreation:
             true
-        case .refreshAndSaveWatchLogsOnSend:
-            true
         case .avoidReplaceOnEpisodeSwap:
             true
         case .podcastsSortChanges:
@@ -375,23 +358,15 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .releaseMediaExporterWhenNoLongerActive:
             true
-        case .watchUpNextSyncFix:
-            true
         case .voiceBoostN:
             false
         case .grdbQueryInterface:
             true
         case .playlistCacheInvalidation:
             true
-        case .watchLogFileTransfer:
-            true
         case .skipSyncWhenProtectedDataUnavailable:
             true
         case .checkProtectedDataBeforeMigration:
-            true
-        case .watchTransferUserInfoApi:
-            true
-        case .unlimitedWatchUpNextSync:
             true
         case .cleanUpTmpFiles:
             true

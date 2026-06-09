@@ -1,4 +1,4 @@
-#if !os(watchOS) && !os(tvOS)
+#if !os(tvOS)
     import UIKit
 
     public enum UIUtil {

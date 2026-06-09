@@ -3,9 +3,6 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import AVKit
-#if os(watchOS)
-    import WatchKit
-#endif
 
 protocol DownloadManagerEpisodesCache {
     subscript(index: String) -> BaseEpisode? { get set }
@@ -78,15 +75,10 @@ class DownloadManager: NSObject, FilePathProtocol {
 
     var downloadAttempts: [Int: DownloadAttempt] = [:]
 
-    #if os(watchOS)
-        var pendingWatchBackgroundTask: WKURLSessionRefreshBackgroundTask?
-    #endif
 
-    #if !os(watchOS)
          private lazy var episodeArtwork: EpisodeArtwork = {
              EpisodeArtwork()
          }()
-    #endif
 
     /// Eagerly initializes all URLSessions to avoid race conditions.
     /// Swift lazy properties are not thread-safe: if multiple threads access an
@@ -173,13 +165,9 @@ class DownloadManager: NSObject, FilePathProtocol {
 
             fileManager.createDirectory(atPath: tempDownloadFolder, withIntermediateDirectories: true)
             fileManager.createDirectory(atPath: podcastsDirectory, withIntermediateDirectories: true)
-            #if !os(watchOS)
                 SJCommonUtils.setDontBackupFlag(URL(fileURLWithPath: podcastsDirectory))
-            #endif
             fileManager.createDirectory(atPath: streamingBufferDirectory, withIntermediateDirectories: true)
-            #if !os(watchOS)
                 SJCommonUtils.setDontBackupFlag(URL(fileURLWithPath: streamingBufferDirectory))
-            #endif
         }
     }
 
@@ -264,9 +252,7 @@ class DownloadManager: NSObject, FilePathProtocol {
         ShowNotesUpdater.updateShowNotesInBackground(podcastUuid: episode.parentIdentifier(), episodeUuid: episode.uuid)
 
         // try and cache the episode embedded artwork
-        #if !os(watchOS)
         episodeArtwork.loadEmbeddedImage(asset: nil, podcastUuid: episode.parentIdentifier(), episodeUuid: episode.uuid)
-        #endif
 
         // download requested for something we already have buferred, just move it
         if episode.bufferedForStreaming(), autoDownloadStatus != AutoDownloadStatus.playerDownloadedForStreaming {
@@ -364,7 +350,7 @@ class DownloadManager: NSObject, FilePathProtocol {
             return playbackItem
         }
         var newItem: AVPlayerItem = playbackItem
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
+        #if !APPCLIP && !os(tvOS)
         if let customDelegate = downloadAndStreamEpisodes[episode.uuid] {
             // We are already downloading this episode for streaming
             FileLog.shared.addMessage("DownloadManager stream and download: skipping because we are already exporting: \(episode.uuid)")
@@ -535,11 +521,7 @@ class DownloadManager: NSObject, FilePathProtocol {
         let mobileDataAllowed = autoDownloadStatus == .autoDownloaded ? Settings.autoDownloadMobileDataAllowed() : Settings.mobileDataAllowed()
         let useCellularSession = (mobileDataAllowed || (!NetworkUtils.shared.isConnectedToUnexpensiveConnection() && autoDownloadStatus != .autoDownloaded)) // allow cellular downloads if not on WiFi and not auto downloaded, because it means the user said yes to a confirmation prompt
 
-        #if os(watchOS)
-            let sessionToUse = await WKApplication.shared().applicationState == .background ? cellularBackgroundSession : cellularForegroundSession
-        #else
             let sessionToUse = useCellularSession ? cellularBackgroundSession : wifiOnlyBackgroundSession
-        #endif
 
         if FeatureFlag.streamAndCachePlayingEpisode.enabled, downloadAndStreamEpisodes[episode.uuid] != nil {
             return
@@ -587,9 +569,6 @@ class DownloadManager: NSObject, FilePathProtocol {
         let uniquedDownloadId = episode.downloadTaskId
         cancelTaskId(uniquedDownloadId, episode: episode, session: wifiOnlyBackgroundSession)
         cancelTaskId(uniquedDownloadId, episode: episode, session: cellularBackgroundSession)
-        #if os(watchOS)
-            cancelTaskId(uniquedDownloadId, episode: episode, session: cellularForegroundSession)
-        #endif
 
         removeEpisodeFromCache(episode)
 
@@ -737,11 +716,6 @@ class DownloadManager: NSObject, FilePathProtocol {
             downloadTask = session.downloadTask(with: request)
             if estimatedBytes > 0 {
                 downloadTask?.countOfBytesClientExpectsToReceive = estimatedBytes
-            } else {
-                // if there's no known size for this file, and we're on watchOS, specify 20MB's so the scheduler knows it's going to be a decent size download
-                #if os(watchOS)
-                    downloadTask?.countOfBytesClientExpectsToReceive = Int64(20.megabytes)
-                #endif
             }
         }
 

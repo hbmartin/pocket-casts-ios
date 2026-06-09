@@ -666,13 +666,6 @@ enum AnalyticsEvent: String {
     case settingsSiriShortcutAdded
     case settingsSiriShortcutRemoved
 
-    // MARK: - Settings: Apple Watch
-
-    case settingsAppleWatchShown
-    case settingsAppleWatchAutoDownloadUpNextToggled
-    case settingsAppleWatchAutoDownloadEpisodesChanged
-    case settingsAppleWatchAutoDownloadDeleteDownloadsToggled
-
     // MARK: - Settings: Files
 
     case settingsFilesShown

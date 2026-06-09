@@ -7,7 +7,7 @@ class BackgroundShakeObserver {
     var whenShook: (() -> Void)?
 
     init() {
-        #if !os(watchOS) && !APPCLIP
+        #if !APPCLIP
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(sleepTimerChanged), name: Constants.Notifications.sleepTimerChanged, object: nil)

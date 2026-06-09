@@ -1,7 +1,6 @@
 import SwiftUI
 
 extension Color {
-    #if !os(watchOS)
     /// Return the contrast between the current color and a given one
     ///
     /// - Parameters:
@@ -25,5 +24,4 @@ extension Color {
 
         return 0.2126 * adjust(colorComponent: ciColor.red) + 0.7152 * adjust(colorComponent: ciColor.green) + 0.0722 * adjust(colorComponent: ciColor.blue)
     }
-    #endif
 }

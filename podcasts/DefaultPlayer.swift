@@ -41,11 +41,10 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private var podcastUuid: String?
 
 
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !APPCLIP && !os(tvOS)
     private var cellularTracker: StreamingCellularTracker?
 #endif
 
-    #if !os(watchOS)
         private lazy var episodeArtwork: EpisodeArtwork = {
             EpisodeArtwork()
         }()
@@ -56,13 +55,10 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         private var backgroundTaskId: UIBackgroundTaskIdentifier
         private var voiceBoostNState: OpaquePointer?
         private var cachedSampleRate: Double = 0
-    #endif
 
     init() {
-        #if !os(watchOS)
             backgroundTaskId = .invalid
             NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        #endif
     }
 
     func loadEpisode(_ episode: BaseEpisode) {
@@ -92,7 +88,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         // Start cellular tracking for remote streaming
         // MediaExporterResourceLoaderDelegate handles its own tracking for cache+stream,
         // but for direct AVPlayer streaming we use StreamingCellularTracker
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
+        #if !APPCLIP && !os(tvOS)
         if FeatureFlag.trackNetworkDataUsage.enabled,
            let urlAsset = playerItem.asset as? AVURLAsset,
            !urlAsset.url.isFileURL,
@@ -214,7 +210,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         }
         cleanupPlayer()
 
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
+        #if !APPCLIP && !os(tvOS)
         cellularTracker?.stopTracking()
         cellularTracker = nil
         #endif
@@ -360,17 +356,14 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         loadEmbeddedImage(for: currentItem)
         assetTrack = tracks.first { $0.mediaType == .audio }
 
-        #if !os(watchOS)
             createAudioMix()
             currentItem.audioMix = audioMix
-        #endif
 
         isWaitingForInitialPlayback = false
         PlaybackManager.shared.playerDidChangeNowPlayingInfo()
     }
 
     // MARK: - Audio Mix
-#if !os(watchOS)
     private class AudioProcessingTapProxy {
         weak var input: DefaultPlayer?
 
@@ -698,7 +691,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
             var actionFlags = AudioUnitRenderActionFlags()
             return AudioUnitRender(peakLimiter, &actionFlags, &audioTimeStamp, 0, inNumberFrames, ioData)
         }
-    #endif
 
     // MARK: - Helpers
 
@@ -725,7 +717,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     }
 
     private func startBackgroundTask() {
-        #if !os(watchOS)
             guard backgroundTaskId == .invalid else { return } // already started
 
             backgroundTaskId = UIApplication.shared.beginBackgroundTask(expirationHandler: { [weak self] in
@@ -747,16 +738,13 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
                     }
                 }
             }
-        #endif
     }
 
     private func endBackgroundTask() {
-        #if !os(watchOS)
             if backgroundTaskId == .invalid { return } // already cancelled
 
             UIApplication.shared.endBackgroundTask(backgroundTaskId)
             backgroundTaskId = .invalid
-        #endif
     }
 
     // MARK: - Error Handling
@@ -772,9 +760,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     // MARK: - Player Setup/Cleanup
 
     private func configurePlayer(videoPodcast: Bool) {
-        #if !os(watchOS)
             player?.allowsExternalPlayback = videoPodcast
-        #endif
 
         durationObserver = player?.currentItem?.observe(\.duration) { _, _ in
             PlaybackManager.shared.playerDidCalculateDuration()
@@ -785,7 +771,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         //
         // This should fix: https://github.com/Automattic/pocket-casts-ios/issues/47
         timeControlStatusObserver = player?.observe(\.timeControlStatus) { [weak self] player, _ in
-            #if !os(watchOS)
             // We're going to be very explicit about the trigger for this to prevent triggering it when we don't want to
 
             // Only apply the logic when playing over AirPlay
@@ -811,7 +796,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
 
             FileLog.shared.addMessage("[DefaultPlayer] Detected that playback was paused while trying to play the next item. Attempting to resume playback...")
             self.play()
-            #endif
         }
 
         rateObserver = player?.observe(\.rate) { [weak self] player, _ in
@@ -951,13 +935,11 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     }
 
     func loadEmbeddedImage(for currentItem: AVPlayerItem? = nil) {
-        #if !os(watchOS)
         guard let asset = currentItem?.asset ?? player?.currentItem?.asset, let episodeUuid, let podcastUuid else {
             return
         }
 
         episodeArtwork.loadEmbeddedImage(asset: asset, podcastUuid: podcastUuid, episodeUuid: episodeUuid)
-        #endif
     }
 
     // MARK: - Volume

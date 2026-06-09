@@ -1,4 +1,3 @@
-#if !os(watchOS)
 import UIKit
 
 /// A custom UITextField that allows a label appearing near the clear button
@@ -74,4 +73,3 @@ public class CustomTextField: UITextField {
         setNeedsLayout()
     }
 }
-#endif

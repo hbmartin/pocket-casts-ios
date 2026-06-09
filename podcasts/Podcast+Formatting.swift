@@ -60,7 +60,6 @@ extension Podcast {
         }
     }
 
-    #if !os(watchOS)
         func iconTintColor(for theme: Theme.ThemeType? = nil) -> UIColor {
             let theme = theme ?? Theme.sharedTheme.activeTheme
             let podcastColor = theme.isDark ? ColorManager.darkThemeTintForPodcast(self) : ColorManager.lightThemeTintForPodcast(self)
@@ -90,7 +89,6 @@ extension Podcast {
         func bgColor() -> UIColor {
             ColorManager.backgroundColorForPodcast(self)
         }
-    #endif
 
     func podcastGrouping() -> PodcastGrouping {
         if FeatureFlag.newSettingsStorage.enabled {

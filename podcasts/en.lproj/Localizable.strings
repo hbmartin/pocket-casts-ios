@@ -1450,7 +1450,7 @@
 /* A common string used throughout the app. Prompt to pause the playback. */
 "pause" = "Pause";
 
-/* A common string used throughout the app. Used to reference the Phone as the playing source with in the Apple Watch App (Watch is the other option for this use case) */
+/* A common string used throughout the app. Used to reference a phone. */
 "phone" = "Phone";
 
 /* A common string used throughout the app. Prompt to start playback. */
@@ -1686,9 +1686,6 @@
 
 /* Pocket Casts Plus marketing page, title of the Themes & Icons feature */
 "plus_marketing_themes_icons_title" = "Themes & Icons";
-
-/* Pocket Casts Plus marketing page, title of the Apple Watch & Wear OS apps feature */
-"plus_marketing_watch_playback_title" = "Apple Watch & Wear OS apps";
 
 /* Pocket Casts Plus marketing page, title of the Folders and Bookmarks feature */
 "plus_marketing_folders_and_bookmarks_title" = "Folders & Bookmarks";
@@ -2236,7 +2233,7 @@
 /* A common string used throughout the app. Prompt to remove the selected item(s) from the up next queue. */
 "remove_from_up_next" = "Remove From Up Next";
 
-/* A common string used throughout the app. Prompt to remove the selected item(s) from the up next queue. Shorter form of 'Remove From Up Next' to conserve space on the Apple Watch. */
+/* A common string used throughout the app. Prompt to remove the selected item(s) from the up next queue. Shorter form of 'Remove From Up Next'. */
 "remove_up_next" = "Remove Up Next";
 
 /* A common string used throughout the app. Prompt to retry the recent request. */
@@ -2854,30 +2851,6 @@
 /* Provides a prompt for the user to toggle on the volume boosting setting. */
 "settings_volume_boost" = "Volume Boost";
 
-/* Prompt for the toggle that enables auto downloads for the Apple Watch app. */
-"settings_watch_auto_download" = "Auto Download Up Next";
-
-/* Subtitle for the toggle that explains the behavior for the auto download feature for the Apple Watch app. */
-"settings_watch_auto_download_off_subtitle" = "Set the number of episodes from your Up Next queue Pocket Casts will download to your watch for offline playback.";
-
-/* Prompt for the toggle that enables the feature to delete auto downloads that fall outside episode limit for the Apple Watch app. */
-"settings_watch_delete_downloads" = "Delete Downloads Outside Limit";
-
-/* Subtitle explaining the behavior of the app for when the toggle to delete auto downloads is turned off. */
-"settings_watch_delete_downloads_off_subtitle" = "To conserve watch storage, a maximum of 25 episodes in your Up Next queue will be auto-downloaded. Older download files outside this limit will be automatically deleted.";
-
-/* Subtitle explaining the behavior of the app for when the toggle to delete auto downloads is turned on. */
-"settings_watch_delete_downloads_on_subtitle" = "All download files in your Up Next queue that are outside this limit will be automatically deleted. Manual downloads aren't managed by these settings.";
-
-/* Prompt for the option to select the number of episodes to auto downloads for the Apple Watch app. */
-"settings_watch_episode_limit" = "Number of Episodes";
-
-/* Subtitle explaining for the option to select the number of episodes to auto downloads for the Apple Watch app. '%1$@' is a placeholder for the number of items to download. */
-"settings_watch_episode_limit_subtitle" = "Pocket Casts will download the top %1$@ episodes of your Up Next queue to your watch for offline playback.";
-
-/* Prompt for the option format to select the number of episodes to auto downloads for the Apple Watch app. '%1$@' is a placeholder for the number of items to download */
-"settings_watch_episode_number_option_format" = "Top %1$@";
-
 /* Label displayed right next the button to opt-in/out for Analytics tracking */
 "settings_collect_information" = "Collect information";
 
@@ -3459,72 +3432,6 @@
 
 /* A common string used throughout the app. Informs the user that the app is waiting for wifi to reconnect. */
 "wait_for_wifi" = "Waiting for WiFi";
-
-/* A common string used throughout the app. Used to reference the Watch as the playing source with in the Apple Watch App (Phone is the other option for this use case) */
-"watch" = "Watch";
-
-/* Indicates that the episode is being played is currently buffering to download more content for playback. */
-"watch_buffering" = "Buffering ...";
-
-/* Prompt in the Apple Watch App for the controls to move to the next chapter of the podcast. */
-"watch_chapter_next" = "Next Chapter";
-
-/* Prompt in the Apple Watch App for the controls to move to the previous chapter of the podcast. */
-"watch_chapter_prev" = "Prev Chapter";
-
-/* Title for the playback effects screen on the Apple Watch */
-"watch_effects" = "Effects";
-
-/* Prompt in the Apple Watch App to open episode details. */
-"watch_episode_details" = "Episode Details";
-
-/* Prompt in the Apple Watch app to return to the Main Menu */
-"watch_main_menu" = "Main Menu";
-
-/* Label in the Apple Watch app informing the user that they don't have any episodes in their selected list. */
-"watch_no_episodes" = "No Episodes";
-
-/* Label in the Apple Watch app informing the user that they haven't configured any of their filters. */
-"watch_no_filters" = "No Filters";
-
-/* Label in the Apple Watch app informing the user that they haven't configured any playlists. */
-"watch_no_playlists" = "No Playlists";
-
-/* Label in the Apple Watch app informing the user that they haven't subscribed to podcasts. */
-"watch_no_podcasts" = "No Podcasts";
-
-/* Title text used on the now playing screen in the Watch App. Indicates there is nothing palying or paused in the app. */
-"watch_nothing_playing_title" = "Nothing Playing";
-
-/* Subtitle text used on the now playing screen in the Watch App. Indicates there is nothing palying or paused in the app. Please leave the "\\n\\n" part in there, that's a new line indicator. */
-"watch_nothing_playing_subtitle" = "Enjoy the silence, or find something new to play.\n\nHonestly both are solid choices. 🙂";
-
-/* Information label providing a brief explanation of Pocket Casts Plus. */
-"watch_source_plus_info" = "Download direct to your watch and listen without your phone. Check out Pocket Casts Plus on your phone app, or on the web.";
-
-/* Message detailing where the audio will play from when selecting the source on the Apple Watch */
-"watch_source_msg" = "Podcasts will play from the speaker that the chosen device is connected to";
-
-/* Button that allows the user to manually trigger a refresh of their profile from the watch app. */
-"watch_source_refresh_account" = "Refresh Account";
-
-/* Information label accompanying the Refresh Account button. */
-"watch_source_refresh_account_info" = "If you have a Pocket Casts Plus account, refresh account to attempt to enable it";
-
-/* Button that allows the user to manually trigger a refresh of their data from the watch app. */
-"watch_source_refresh_data" = "Refresh Data";
-
-/* Information label informing users if they want to sign in to the Watch app they need to do that from the phone app. */
-"watch_source_sign_in_info" = "Sign in or create an account on your phone";
-
-/* Apple Watch complication prompt to tap the control to open the watch app. */
-"watch_tap_to_open" = "Tap to open";
-
-/* Title for the up next screen when a user has no episode queued up to play. */
-"watch_up_next_no_items_title" = "Nothing in Up Next";
-
-/* Subtitle for the up next screen when a user has no episode queued up to play. */
-"watch_up_next_no_items_subtitle" = "You can queue episodes to play next from the episode details screen, or adding them on your phone.";
 
 /* Text on the about page button to tell people's what's new in this version. %1$@ is placeholder for the version number, for example 7.1. */
 "whats_new_in_version" = "What's New In %1$@";
@@ -4315,18 +4222,6 @@
 /* The string for the act of Copy (from Copy & Paste) */
 "copy" = "Copy";
 
-/* Title of an alert shown to the user */
-"support_watch_help_title" = "Looking for Watch app help?";
-
-/* Description of an alert shown to the user */
-"support_watch_help_message" = "If you're having issues with the Pocket Casts Watch app we can send your wearable logs to better assist you. In order to do so, please open Pocket Casts on your Watch.";
-
-/* Button that the user can press if they opened the Watch app */
-"support_watch_help_opened_app" = "I've opened the Watch app";
-
-/* Button that the user can press if they want to request help without the Apple Watch logs */
-"support_watch_help_send_without_log" = "Send without Watch logs";
-
 /* Title of a tab in the player that shows the episode description (show notes). */
 "player_show_notes_title" = "Details";
 
@@ -4663,9 +4558,6 @@
 /* Message confirming podcasts were restored to the folders */
 "restore_folders_success" = "Podcasts restored to their original folders";
 
-/* Title for root screen of the Watch App*/
-"watch_play_source" = "Play Source";
-
 /* A title shown when sharing an episode */
 "share_episode" = "Share episode";
 
@@ -4768,9 +4660,6 @@
 /* Upgrade Experiment - Features Variation: Bokmarks feature card title*/
 "plus_feature_card_title_bookmarks" = "Bookmarks";
 
-/* Upgrade Experiment - Features Variation: Wear OS feature card title*/
-"plus_feature_card_title_wear_os" = "Apple Watch and Wear OS playback";
-
 /* Upgrade Experiment - Features Variation: Slumber Studio feature card title*/
 "plus_feature_card_title_slumber_studio" = "Dream with Slumber Studios";
 
@@ -4788,9 +4677,6 @@
 
 /* Upgrade Experiment - Features Variation: Bokmarks feature card text*/
 "plus_feature_card_text_bookmarks" = "Save your favorite bits from any episode and go back to them.";
-
-/* Upgrade Experiment - Features Variation: Wear OS feature card text*/
-"plus_feature_card_text_wear_os" = "Ditch the phone and go for a run.";
 
 /* Upgrade Experiment - Features Variation: Slumber Studio feature card text*/
 "plus_feature_card_text_slumber_studio" = "Get 1 year of premium content from Slumber Studios.";
@@ -4839,9 +4725,6 @@
 
 /* Upgrade Experiment - Reviews Variation: title for Review card 4 */
 "upgrade_experiment_reviews_review_title_4" = "Works great and easy to find or add new pods";
-
-/* Upgrade Experiment - Reviews Variation: text for Review card 4 */
-"upgrade_experiment_reviews_review_text_4" = "Been using this app for 6 years or better, started on android and now l've been on iOS for almost a year. Works the same on both platforms. Easy to find new podcasts to listen to, very nice Ul, can add podcasts by rss feed url too. The watch app is functional, but I mostly use for my play/pause. Sign in with an account to sync across devices but no requirement to do so.";
 
 /* Upgrade Experiment - Reviews Variation: title for Review card 5 */
 "upgrade_experiment_reviews_review_title_5" = "Go-To Podcast App";
@@ -4917,9 +4800,6 @@
 
 /* Paywall header for when the view is presented from the themes source */
 "paywall_dynamic_headline_themes" = "Get exclusive themes with Pocket Casts Plus, and more";
-
-/* Paywall header for when the view is presented from the watch source */
-"paywall_dynamic_headline_watch" = "Listen from your watch with Pocket Casts Plus, and more";
 
 /* Paywall header for when the view is presented from the icons source */
 "paywall_dynamic_headline_icons" = "Get exclusive app icons with Pocket Casts Plus, and more";
@@ -5073,9 +4953,6 @@
 
 /* Message when no email account is configured to be able to send the logs*/
 "logs_no_email_account_configured" = "You need to configure an email account on the device in order to send the logs";
-
-/* Message shown when watchOS logs are not available */
-"logs_watch_os_not_available" = "No watchOS logs available. Make sure you have an Apple Watch paired and the Pocket Casts watch app installed.";
 
 /* Title for action to remove episode from listening history */
 "listening_history_remove" = "Remove from history";
@@ -5439,9 +5316,6 @@
 
 /* Cloud Storage feature marketing message. The %1$@ argument is the amount of cloud disk space available. Ex: 20 GB Cloud Storage for your files */
 "feature_marketing_cloud_storage" = "%1$@ GB Cloud Storage for your files";
-
-/* Watch playback feature marketing message */
-"feature_marketing_watch_playback" = "Apps for Wear OS and Apple Watch";
 
 /* Extra Themes And App Icons feature marketing message */
 "feature_marketing_extra_themes_icons" = "Extra Themes and App Icons";

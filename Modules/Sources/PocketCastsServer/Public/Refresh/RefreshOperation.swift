@@ -64,10 +64,8 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
                 apiQueue.addOperation(SyncSettingsTask())
 
-                #if !os(watchOS)
                     // update our local copy of the remote stats. Doesn't really matter if this fails or succeeds
                     StatsManager.shared.loadRemoteStats(completion: nil)
-                #endif
 
                 apiQueue.waitUntilAllOperationsAreFinished()
 
@@ -140,14 +138,12 @@ class RefreshOperation: Operation, @unchecked Sendable {
                     DataManager.sharedManager.autoAddCandidates.add(podcastUUID: podcast.uuid, episodeUUID: episode.uuid)
                 }
 
-                #if !os(watchOS)
                     // so we don't flood the users phone, set a limit on the amount of meta data requests made. So if they open it after
                     // 4 weeks of not using it doesn't sit there for years
                     if metadataRequestsQueued < 10 {
                         MetadataUpdater.shared.updatedMetadata(episodeUuid: episode.uuid)
                         metadataRequestsQueued += 1
                     }
-                #endif
             }
 
             newEpisodesAdded += episodes.count

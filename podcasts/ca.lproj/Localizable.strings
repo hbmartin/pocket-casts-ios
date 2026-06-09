@@ -1096,8 +1096,6 @@ Ens veiem el 2024!</string>
     <string>1 any de contingut de Slumber Studios</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>Posa en mode aleatori la teva cua</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Apps per a Wear OS i Apple Watch</string>
     <key>feature_tour_end_tour</key>
     <string>Acaba la guia</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ Nota: Potser necessitaràs enviar-te per correu electrònic el fitxer OPML, mant
     <string>Registres</string>
     <key>logs_no_email_account_configured</key>
     <string>Has de configurar un compte de correu electrònic al dispositiu per poder enviar els registres</string>
-    <key>logs_watch_os_not_available</key>
-    <string>No hi ha registres de watchOS disponibles. Assegura't que tens un Apple Watch emparellat i l'aplicació de rellotge Pocket Casts instal·lada.</string>
     <key>manage_downloads_action</key>
     <string>Gestiona les descàrregues</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ ACTUALITZACIONS</string>
     <string>Aconsegueix temes exclusius amb Pocket Casts Plus, i més</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>Barreja els teus episodis amb Pocket Casts Plus, i més</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Escolta des del teu rellotge amb Pocket Casts Plus, i més</string>
     <key>phone</key>
     <string>Telèfon</string>
     <key>play</key>
@@ -2276,8 +2270,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Aconsegueix 1 any de contingut prèmium de Slumber Studios.</string>
     <key>plus_feature_card_text_storage</key>
     <string>Carrega els teus arxius a l'emmagatzematge al núvol per a poder accedir-hi des de qualsevol lloc.</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>Deixa el telèfon i ves a córrer.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Marcadors</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2290,8 +2282,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Somnia amb Slumber Studios</string>
     <key>plus_feature_card_title_storage</key>
     <string>20 GB d'emmagatzematge</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Reproducció d'Apple Watch i Wear OS</string>
     <key>plus_feature_gratitude</key>
     <string>L'etern agraïment de l'equip de Pocket Casts</string>
     <key>plus_feature_librofm</key>
@@ -2342,8 +2332,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Escolta els teus pòdcasts a més llocs amb les nostres aplicacions per a Windows, macOS i web</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>Organitza els teus pòdcasts en carpetes i així els podràs tenir sincronitzats en tots els teus dispositius.</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Aplicacions d'Apple Watch i de Wear OS</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@ al mes</string>
     <key>plus_payment_canceled</key>
@@ -3278,22 +3266,6 @@ Si vols noves idees, ves a la pestanya Descobreix.</string>
     <string>Afegeix automàticament episodis nous a «Tot seguit». Quan «Tot seguit» arriba a %1$@, els episodis nous afegits automàticament al principi eliminaran l'últim episodi de la cua. Els episodis configurats per afegir-se automàticament al final no s'afegiran fins que «Tot seguit» estigui per sota del límit.</string>
     <key>settings_volume_boost</key>
     <string>Apuja el volum</string>
-    <key>settings_watch_auto_download</key>
-    <string>Descàrrega automàtica de la llista «Tot seguit»</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Estableix el nombre d'episodis de la llista «Tot seguit» que Pocket Casts descarregarà al teu rellotge perquè els puguis reproduir sense connexió.</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>Esborra les descàrregues que superin el límit</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>Per a estalviar emmagatzematge al rellotge, es descarregarà automàticament un màxim de 25 episodis de la llista «Tot seguit». S'esborraran automàticament els fitxers de descàrrega més antics que superin aquest límit.</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>S'esborraran automàticament tots els fitxers descarregats a la llista «Tot seguit» que superin aquest límit. Aquests paràmetres no afecten les descàrregues manuals.</string>
-    <key>settings_watch_episode_limit</key>
-    <string>Nombre d'episodis</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts descarregarà al teu rellotge els %1$@ principals episodis de la llista «Tot seguit» perquè puguis reproduir-los sense connexió.</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>Els  %1$@ principals</string>
     <key>setup_account</key>
     <string>Configura el compte</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3631,14 +3603,6 @@ Mai es compartirà la teva adreça de correu electrònic, ni la contrasenya ni c
     <string>Carpetes intel·ligents</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>Utilitza aquestes carpetes</string>
-    <key>support_watch_help_message</key>
-    <string>Si tens problemes amb l'aplicació Pocket Casts Watch, podem enviar-te els teus registres del rellotge per a ajudar-te millor. Per a fer-ho, obre Pocket Casts al teu rellotge.</string>
-    <key>support_watch_help_opened_app</key>
-    <string>He obert l'app al Watch</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Envia sense els logs del Watch</string>
-    <key>support_watch_help_title</key>
-    <string>Busques ajuda per a l'aplicació Watch?</string>
     <key>supporter</key>
     <string>Col·laborador</string>
     <key>supporter_contributions</key>
@@ -3923,8 +3887,6 @@ Aquesta és, sense dubte, la millor app per a escoltar pòdcasts. Té moltes fun
 Aquesta app pot ser tan senzilla o difícil d'utilitzar com tu vulguis. Així que pots fer que sigui un 'plug and play' o configurar temporitzadors per a saltar les intros i els temps finals i qualsevol altra petita funció que vulguis activar.</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>La funció de sincronització és màgica. No sé quina màgia especial té aquesta app, però és millor que qualsevol altra app que he utilitzat.</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>He estat utilitzant aquesta app durant 6 anys o més, vaig començar amb Android i ara fa gairebé un any que estic a iOS. Funciona igual a les dues plataformes. És fàcil trobar nous pòdcasts per a escoltar, té una interfície molt bonica, també es poden afegir pòdcasts mitjançant l'URL del feed RSS. L'app per a rellotge és funcional, però la faig servir sobretot per a reproduir/posar en pausa. Inicia sessió amb un compte per a sincronitzar entre dispositius, però no és obligatori fer-ho.</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>El PC ha estat el meu preferit durant anys. He provat altres aplicacions de pòdcast i sempre torno a PC per la seva simplicitat, interfície i suport. Definitivament, val la pena provar-ho, especialment si t'has cansat de la teva actual aplicació de pòdcast.</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3975,54 +3937,6 @@ Aquesta app pot ser tan senzilla o difícil d'utilitzar com tu vulguis. Així qu
     <string>Els nivells de veu són més consistents</string>
     <key>wait_for_wifi</key>
     <string>Esperant a la xarxa Wi-Fi</string>
-    <key>watch</key>
-    <string>Rellotge</string>
-    <key>watch_buffering</key>
-    <string>Emmagatzemant a la memòria...</string>
-    <key>watch_chapter_next</key>
-    <string>Següent capítol</string>
-    <key>watch_chapter_prev</key>
-    <string>Capítol anterior</string>
-    <key>watch_effects</key>
-    <string>Efectes</string>
-    <key>watch_episode_details</key>
-    <string>Informació de l'episodi</string>
-    <key>watch_main_menu</key>
-    <string>Menú principal</string>
-    <key>watch_no_episodes</key>
-    <string>No hi ha episodis</string>
-    <key>watch_no_filters</key>
-    <string>Sense filtres</string>
-    <key>watch_no_playlists</key>
-    <string>No hi ha llistes de reproducció</string>
-    <key>watch_no_podcasts</key>
-    <string>No hi ha pòdcasts</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>Gaudeix del silenci o troba alguna cosa nova per a reproduir.
-
-Sincerament, totes dues són bones decisions. 🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>No sona res</string>
-    <key>watch_play_source</key>
-    <string>Reprodueix des de</string>
-    <key>watch_source_msg</key>
-    <string>Els pòdcasts es reproduiran a través de l'altaveu en el qual està connectat el dispositiu triat</string>
-    <key>watch_source_plus_info</key>
-    <string>Descarrega el contingut directament al rellotge i escolta'l sense el mòbil. Fes una ullada a Pocket Casts Plus a l'aplicació mòbil o a la web.</string>
-    <key>watch_source_refresh_account</key>
-    <string>Actualitza el compte</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Si tens un compte de Pocket Casts Plus, actualitza per a intentar activar-la</string>
-    <key>watch_source_refresh_data</key>
-    <string>Actualitza les dades</string>
-    <key>watch_source_sign_in_info</key>
-    <string>Inicia sessió o crea un compte des del teu telèfon</string>
-    <key>watch_tap_to_open</key>
-    <string>Toca per a obrir</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>Per tal que els episodis es reprodueixin a continuació, pots posar-los a la cua des de la pantalla de detalls de l'episodi o afegir-los amb el telèfon.</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>No hi ha res a la cua</string>
     <key>week</key>
     <string>setmana</string>
     <key>welcome_discover_button</key>

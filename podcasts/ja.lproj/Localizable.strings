@@ -1094,8 +1094,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>Slumber Studios のコンテンツを1年間聴取可能</string>
     <key>feature_marketing_up_next_shuffle</key>
     <string>キューをシャッフル</string>
-    <key>feature_marketing_watch_playback</key>
-    <string>Wear OS と Apple Watch 向けアプリ</string>
     <key>feature_tour_end_tour</key>
     <string>ツアーを終了</string>
     <key>feature_tour_new</key>
@@ -1516,8 +1514,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>ログ</string>
     <key>logs_no_email_account_configured</key>
     <string>ログを送信するには、端末にメールアドレスアカウントを設定する必要があります</string>
-    <key>logs_watch_os_not_available</key>
-    <string>利用可能な watchOS ログはありません。 Apple Watch がペアリングされており、Pocket Casts ウォッチアプリがインストールされていることを確認してください。</string>
     <key>manage_downloads_action</key>
     <string>ダウンロードを管理</string>
     <key>manage_downloads_detail</key>
@@ -1853,8 +1849,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>Pocket Casts Plus で専用テーマの取得などを利用しましょう</string>
     <key>paywall_dynamic_headline_up_next_shuffle</key>
     <string>Pocket Casts Plus でエピソードのシャッフルなどを利用しましょう</string>
-    <key>paywall_dynamic_headline_watch</key>
-    <string>Pocket Casts Plus でスマートウォッチからの聴取などを利用しましょう</string>
     <key>phone</key>
     <string>スマートフォン</string>
     <key>play</key>
@@ -2274,8 +2268,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>Slumber Studios のプレミアムコンテンツ1年分をご利用ください。</string>
     <key>plus_feature_card_text_storage</key>
     <string>音声ファイルをクラウドストレージにアップロードしてどこからでも利用できるようにします。</string>
-    <key>plus_feature_card_text_wear_os</key>
-    <string>スマートフォンを手放してランニングに出かけましょう。</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>ブックマーク</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2288,8 +2280,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>Slumber Studios でぐっすり眠る</string>
     <key>plus_feature_card_title_storage</key>
     <string>20GB のストレージ</string>
-    <key>plus_feature_card_title_wear_os</key>
-    <string>Apple Watch と Wear OS での再生</string>
     <key>plus_feature_gratitude</key>
     <string>Pocket Casts をお使いの皆さまに感謝の気持ちを込めて</string>
     <key>plus_feature_librofm</key>
@@ -2340,8 +2330,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>Pocket Casts の Windows 版、macOS 版、ウェブ版アプリでさらに多くの場所で聞きましょう</string>
     <key>plus_marketing_updated_folders_description</key>
     <string>ポッドキャストをフォルダーに整理し、すべてのデバイス間で同期させます。</string>
-    <key>plus_marketing_watch_playback_title</key>
-    <string>Apple Watch アプリと Wear OS アプリ</string>
     <key>plus_monthly_frequency_pricing_format</key>
     <string>%1$@/ 月</string>
     <key>plus_payment_canceled</key>
@@ -3277,22 +3265,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>「次のエピソード」に新しいエピソードを自動的に追加します。 「次のエピソード」の数が%1$@件に達すると、待機リストの一番上に新しいエピソードが自動的に追加されたときに最後のエピソードが削除されます。 一番下に自動的に追加されるよう設定されたエピソードは、「次のエピソード」が上限を下回るまで追加されません。</string>
     <key>settings_volume_boost</key>
     <string>ボリュームブースト</string>
-    <key>settings_watch_auto_download</key>
-    <string>次のエピソードを自動ダウンロード</string>
-    <key>settings_watch_auto_download_off_subtitle</key>
-    <string>Watch でのオフライン再生を可能にするために、Pocket Casts が次のエピソード待機リストからダウンロードするエピソード数を設定します。</string>
-    <key>settings_watch_delete_downloads</key>
-    <string>上限を超えるダウンロードファイルを削除</string>
-    <key>settings_watch_delete_downloads_off_subtitle</key>
-    <string>視聴ストレージを節約するため、自動ダウンロードされる待機リスト中の次のエピソード数は、最大25件に設定されます。 この上限を超えるダウンロードファイルは古い順に自動的に削除されます。</string>
-    <key>settings_watch_delete_downloads_on_subtitle</key>
-    <string>この上限を超える次のエピソード待機リストのダウンロードファイルは自動的に削除されます。 この設定にすると手動ダウンロードは管理されません。</string>
-    <key>settings_watch_episode_limit</key>
-    <string>エピソード数</string>
-    <key>settings_watch_episode_limit_subtitle</key>
-    <string>Pocket Casts が次のエピソード待機リストの上位%1$@件をダウンロードし、Watch でのオフライン再生を可能にします。</string>
-    <key>settings_watch_episode_number_option_format</key>
-    <string>上位%1$@件</string>
     <key>setup_account</key>
     <string>アカウントを設定</string>
     <key>shake_to_restart_sleep_timer</key>
@@ -3627,14 +3599,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>スマートフォルダー</string>
     <key>suggested_folders_use_suggested_folders</key>
     <string>これらのフォルダーを使用</string>
-    <key>support_watch_help_message</key>
-    <string>Pocket Casts Watch アプリで問題が発生した場合は、ウェアラブルログを送信するとサポートの際に役立ちます。 これを行うには、Watch で Pocket Cast を開いてください。</string>
-    <key>support_watch_help_opened_app</key>
-    <string>Watch アプリを開きました</string>
-    <key>support_watch_help_send_without_log</key>
-    <string>Watch ログなしで送信</string>
-    <key>support_watch_help_title</key>
-    <string>Watch アプリのヘルプをお探しですか ?</string>
     <key>supporter</key>
     <string>サポーター</string>
     <key>supporter_contributions</key>
@@ -3919,8 +3883,6 @@ Pocket Casts は間違いなく、ポッドキャストを聴くための最高�
 このアプリは自分の思いどおりにシンプルにも複雑にもできます。 すぐに使い始めることも、アウトロのスキップやイントロのタイマーを設定することも、その他の細かい機能を有効にすることも可能です。</string>
     <key>upgrade_experiment_reviews_review_text_3</key>
     <string>同期機能は魔法のようです。 このアプリでどんな特別な魔法が使われているかはわかりませんが、今まで使ったどのアプリよりも優れています。</string>
-    <key>upgrade_experiment_reviews_review_text_4</key>
-    <string>このアプリを6年以上使っています。使い始めたのは Android 版で、今は iOS 版を1年近く使っています。 両方のプラットフォームで同じように動作します。 新しいポッドキャストを簡単に見つけて再生できます。Ul が使いやすく、RSS フィードの URL でもポッドキャストを追加できます。 Watch アプリも便利ですが、私はほとんど再生や一時停止のために使っています。 端末間での同期にはアカウントでサインインする必要がありますが、そうしなくても使えます。</string>
     <key>upgrade_experiment_reviews_review_text_5</key>
     <string>PC は長年のお気に入りです。他のポッドキャストアプリも試しましたが、PC はシンプルさ、Ul、サポートが優れているため、いつも PC に戻ってきます。 特に、今使っているポッドキャストアプリに飽きてしまった人は、PC をチェックする価値があります。</string>
     <key>upgrade_experiment_reviews_review_title_0</key>
@@ -3971,54 +3933,6 @@ Pocket Casts は間違いなく、ポッドキャストを聴くための最高�
     <string>音声レベルの安定性が向上</string>
     <key>wait_for_wifi</key>
     <string>Wi-Fi に再接続しています</string>
-    <key>watch</key>
-    <string>Watch</string>
-    <key>watch_buffering</key>
-    <string>バッファリングしています…</string>
-    <key>watch_chapter_next</key>
-    <string>次のチャプター</string>
-    <key>watch_chapter_prev</key>
-    <string>前のチャプター</string>
-    <key>watch_effects</key>
-    <string>効果</string>
-    <key>watch_episode_details</key>
-    <string>エピソードの詳細</string>
-    <key>watch_main_menu</key>
-    <string>メインメニュー</string>
-    <key>watch_no_episodes</key>
-    <string>エピソードなし</string>
-    <key>watch_no_filters</key>
-    <string>フィルターなし</string>
-    <key>watch_no_playlists</key>
-    <string>プレイリストなし</string>
-    <key>watch_no_podcasts</key>
-    <string>ポッドキャストなし</string>
-    <key>watch_nothing_playing_subtitle</key>
-    <string>静かな時間を楽しむか、新しいエピソードを見つけて再生しましょう。
-
-どちらもおすすめの選択肢です。🙂</string>
-    <key>watch_nothing_playing_title</key>
-    <string>再生中のエピソードがありません</string>
-    <key>watch_play_source</key>
-    <string>再生元</string>
-    <key>watch_source_msg</key>
-    <string>ポッドキャストは選択デバイスが接続しているスピーカーで再生されます</string>
-    <key>watch_source_plus_info</key>
-    <string>スマートウォッチに直接ダウンロードして、スマートフォンなしでお聞きいただけます。 スマートフォンアプリやウェブで Pocket Casts Plus をお試しください。</string>
-    <key>watch_source_refresh_account</key>
-    <string>アカウントを更新</string>
-    <key>watch_source_refresh_account_info</key>
-    <string>Pocket Casts Plus アカウントを保有している場合は、アカウントを更新して有効になるかご確認ください</string>
-    <key>watch_source_refresh_data</key>
-    <string>データを更新</string>
-    <key>watch_source_sign_in_info</key>
-    <string>スマートフォンでログインまたはアカウントを作成する</string>
-    <key>watch_tap_to_open</key>
-    <string>タップして開く</string>
-    <key>watch_up_next_no_items_subtitle</key>
-    <string>エピソードの詳細画面から次に再生するエピソードを待機リストに追加できます。スマートフォンで追加することもできます。</string>
-    <key>watch_up_next_no_items_title</key>
-    <string>次のエピソードには何もありません</string>
     <key>week</key>
     <string>週</string>
     <key>welcome_discover_button</key>

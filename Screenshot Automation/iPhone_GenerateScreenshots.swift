@@ -7,47 +7,9 @@ private extension Config {
     static let step_05_podcastName = "All In The Mind"
     static let step_06_podcastName = "Distributed, with Matt Mullenweg"
     static let step_06_episodeKey = "Distributed by Default"
-
-    static let watch_setup_podcastName = "The Vergecast"
-    static let watch_setup_episodeKey = "481"
-    static let watch_setup_podcastNameToDownload = "Download This Show"
-    static let watch_setup_episodeKeyToDownload = "Wordle"
 }
 
 class iPhone_GenerateScreenshots: GenerateScreenshots {
-    func test_watchSetup() throws {
-        XCTAssert(app.wait(for: .runningForeground, timeout: 5))
-        selectTab(.podcasts)
-
-        scrollToAndTap(app.buttons[Config.watch_setup_podcastName])
-        openEpisode(Config.watch_setup_episodeKey)
-        hittablePlayButton.waitForThenTap()
-
-        // Pause episode
-        hittablePlayButton.waitForThenTap()
-
-        // Skip Forward a bit to show progress
-        for _ in 0 ... 30 {
-            app.buttons["Skip Forward"].waitForThenTap()
-        }
-
-        app.buttons["Close"].waitForThenTap()
-
-        scrollToAndTap(app.buttons[Config.watch_setup_podcastNameToDownload])
-        openEpisode(Config.watch_setup_episodeKeyToDownload)
-
-        // Download an episode
-        if !app.buttons["Remove Download"].exists {
-            app.buttons["Download"].waitForThenTap()
-        }
-
-        // Wait for the episode to download
-        let _ = app.buttons["Remove Download"].waitForExistence(timeout: 120)
-
-        // Background the app to make sure CoreData saves
-        safari.launch()
-    }
-
     func test_generateScreenshots() throws {
         // 01 - Podcast List (Default Light Theme)
         selectTab(.podcasts)

@@ -1,4 +1,3 @@
-#if !os(watchOS)
 import UIKit
 
 public extension UIScrollView {
@@ -11,4 +10,3 @@ public extension UIScrollView {
         showsVerticalScrollIndicator = true
     }
 }
-#endif

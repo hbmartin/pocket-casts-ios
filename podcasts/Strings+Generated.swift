@@ -1238,8 +1238,6 @@ internal enum L10n {
   internal static var featureMarketingSlumber: String { return L10n.tr("Localizable", "feature_marketing_slumber", fallback: "1 year of content from Slumber Studios") }
   /// Shuffle up next queue feature marketing message
   internal static var featureMarketingUpNextShuffle: String { return L10n.tr("Localizable", "feature_marketing_up_next_shuffle", fallback: "Shuffle your queue") }
-  /// Watch playback feature marketing message
-  internal static var featureMarketingWatchPlayback: String { return L10n.tr("Localizable", "feature_marketing_watch_playback", fallback: "Apps for Wear OS and Apple Watch") }
   /// Indicator during the new feature tour serves as a prompt to end the tour.
   internal static var featureTourEndTour: String { return L10n.tr("Localizable", "feature_tour_end_tour", fallback: "End Tour") }
   /// Indicator during the new feature tour. Used as a navigation indicator when the tour is on the first step. This is replaced with 'position of total' as the user progresses.
@@ -1688,8 +1686,6 @@ internal enum L10n {
   internal static var logs: String { return L10n.tr("Localizable", "logs", fallback: "Logs") }
   /// Message when no email account is configured to be able to send the logs
   internal static var logsNoEmailAccountConfigured: String { return L10n.tr("Localizable", "logs_no_email_account_configured", fallback: "You need to configure an email account on the device in order to send the logs") }
-  /// Message shown when watchOS logs are not available
-  internal static var logsWatchOsNotAvailable: String { return L10n.tr("Localizable", "logs_watch_os_not_available", fallback: "No watchOS logs available. Make sure you have an Apple Watch paired and the Pocket Casts watch app installed.") }
   /// Button title for manage downloads file space usage banner and modal.
   internal static var manageDownloadsAction: String { return L10n.tr("Localizable", "manage_downloads_action", fallback: "Manage downloads") }
   /// Detail for manage downloads file space usage banner and modal. %1$@ is the disk space in Mb/GB that the episodes take
@@ -2091,9 +2087,7 @@ internal enum L10n {
   internal static var paywallDynamicHeadlineThemes: String { return L10n.tr("Localizable", "paywall_dynamic_headline_themes", fallback: "Get exclusive themes with Pocket Casts Plus, and more") }
   /// Paywall header for when the view is presented from the Up Next Shuffle source
   internal static var paywallDynamicHeadlineUpNextShuffle: String { return L10n.tr("Localizable", "paywall_dynamic_headline_up_next_shuffle", fallback: "Shuffle your episodes with Pocket Casts Plus, and more") }
-  /// Paywall header for when the view is presented from the watch source
-  internal static var paywallDynamicHeadlineWatch: String { return L10n.tr("Localizable", "paywall_dynamic_headline_watch", fallback: "Listen from your watch with Pocket Casts Plus, and more") }
-  /// A common string used throughout the app. Used to reference the Phone as the playing source with in the Apple Watch App (Watch is the other option for this use case)
+  /// A common string used throughout the app. Used to reference a phone.
   internal static var phone: String { return L10n.tr("Localizable", "phone", fallback: "Phone") }
   /// A common string used throughout the app. Prompt to start playback.
   internal static var play: String { return L10n.tr("Localizable", "play", fallback: "Play") }
@@ -2603,8 +2597,6 @@ internal enum L10n {
   internal static var plusFeatureCardTextSlumberStudio: String { return L10n.tr("Localizable", "plus_feature_card_text_slumber_studio", fallback: "Get 1 year of premium content from Slumber Studios.") }
   /// Upgrade Experiment - Features Variation: Storage feature card text
   internal static var plusFeatureCardTextStorage: String { return L10n.tr("Localizable", "plus_feature_card_text_storage", fallback: "Upload your audio files to cloud storage and have them available everywhere.") }
-  /// Upgrade Experiment - Features Variation: Wear OS feature card text
-  internal static var plusFeatureCardTextWearOs: String { return L10n.tr("Localizable", "plus_feature_card_text_wear_os", fallback: "Ditch the phone and go for a run.") }
   /// Upgrade Experiment - Features Variation: Bokmarks feature card title
   internal static var plusFeatureCardTitleBookmarks: String { return L10n.tr("Localizable", "plus_feature_card_title_bookmarks", fallback: "Bookmarks") }
   /// Upgrade Experiment - Features Variation: Desktop feature card title
@@ -2617,8 +2609,6 @@ internal enum L10n {
   internal static var plusFeatureCardTitleSlumberStudio: String { return L10n.tr("Localizable", "plus_feature_card_title_slumber_studio", fallback: "Dream with Slumber Studios") }
   /// Upgrade Experiment - Features Variation: Storage feature card title
   internal static var plusFeatureCardTitleStorage: String { return L10n.tr("Localizable", "plus_feature_card_title_storage", fallback: "20 GB of storage") }
-  /// Upgrade Experiment - Features Variation: Wear OS feature card title
-  internal static var plusFeatureCardTitleWearOs: String { return L10n.tr("Localizable", "plus_feature_card_title_wear_os", fallback: "Apple Watch and Wear OS playback") }
   /// Message about our gratitude when an user subscribe to Plus
   internal static var plusFeatureGratitude: String { return L10n.tr("Localizable", "plus_feature_gratitude", fallback: "The undying gratitude of everyone here at Pocket Casts") }
   /// Message about the exclusive content from Libro.fm. Don't translate Libro.fm
@@ -2671,8 +2661,6 @@ internal enum L10n {
   internal static var plusMarketingUpdatedDesktopAppsDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_desktop_apps_description", fallback: "Listen in more places with our Windows, macOS and Web apps") }
   /// Pocket Casts Plus marketing page, description of the Folders feature
   internal static var plusMarketingUpdatedFoldersDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_folders_description", fallback: "Organise your podcasts in folders, and keep them in sync across all your devices.") }
-  /// Pocket Casts Plus marketing page, title of the Apple Watch & Wear OS apps feature
-  internal static var plusMarketingWatchPlaybackTitle: String { return L10n.tr("Localizable", "plus_marketing_watch_playback_title", fallback: "Apple Watch & Wear OS apps") }
   /// Monthly pricing format, %1$@ is the price
   internal static func plusMonthlyFrequencyPricingFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_monthly_frequency_pricing_format", String(describing: p1), fallback: "%1$@ per month")
@@ -3165,7 +3153,7 @@ internal enum L10n {
   internal static var removeFromPlaylist: String { return L10n.tr("Localizable", "remove_from_playlist", fallback: "Remove from playlist") }
   /// A common string used throughout the app. Prompt to remove the selected item(s) from the up next queue.
   internal static var removeFromUpNext: String { return L10n.tr("Localizable", "remove_from_up_next", fallback: "Remove From Up Next") }
-  /// A common string used throughout the app. Prompt to remove the selected item(s) from the up next queue. Shorter form of 'Remove From Up Next' to conserve space on the Apple Watch.
+  /// A common string used throughout the app. Prompt to remove the selected item(s) from the up next queue. Shorter form of 'Remove From Up Next'.
   internal static var removeUpNext: String { return L10n.tr("Localizable", "remove_up_next", fallback: "Remove Up Next") }
   /// Button label prompting the user to renew their subscription
   internal static var renewSubscription: String { return L10n.tr("Localizable", "renew_subscription", fallback: "Renew your Subscription") }
@@ -3735,26 +3723,6 @@ internal enum L10n {
   }
   /// Provides a prompt for the user to toggle on the volume boosting setting.
   internal static var settingsVolumeBoost: String { return L10n.tr("Localizable", "settings_volume_boost", fallback: "Volume Boost") }
-  /// Prompt for the toggle that enables auto downloads for the Apple Watch app.
-  internal static var settingsWatchAutoDownload: String { return L10n.tr("Localizable", "settings_watch_auto_download", fallback: "Auto Download Up Next") }
-  /// Subtitle for the toggle that explains the behavior for the auto download feature for the Apple Watch app.
-  internal static var settingsWatchAutoDownloadOffSubtitle: String { return L10n.tr("Localizable", "settings_watch_auto_download_off_subtitle", fallback: "Set the number of episodes from your Up Next queue Pocket Casts will download to your watch for offline playback.") }
-  /// Prompt for the toggle that enables the feature to delete auto downloads that fall outside episode limit for the Apple Watch app.
-  internal static var settingsWatchDeleteDownloads: String { return L10n.tr("Localizable", "settings_watch_delete_downloads", fallback: "Delete Downloads Outside Limit") }
-  /// Subtitle explaining the behavior of the app for when the toggle to delete auto downloads is turned off.
-  internal static var settingsWatchDeleteDownloadsOffSubtitle: String { return L10n.tr("Localizable", "settings_watch_delete_downloads_off_subtitle", fallback: "To conserve watch storage, a maximum of 25 episodes in your Up Next queue will be auto-downloaded. Older download files outside this limit will be automatically deleted.") }
-  /// Subtitle explaining the behavior of the app for when the toggle to delete auto downloads is turned on.
-  internal static var settingsWatchDeleteDownloadsOnSubtitle: String { return L10n.tr("Localizable", "settings_watch_delete_downloads_on_subtitle", fallback: "All download files in your Up Next queue that are outside this limit will be automatically deleted. Manual downloads aren't managed by these settings.") }
-  /// Prompt for the option to select the number of episodes to auto downloads for the Apple Watch app.
-  internal static var settingsWatchEpisodeLimit: String { return L10n.tr("Localizable", "settings_watch_episode_limit", fallback: "Number of Episodes") }
-  /// Subtitle explaining for the option to select the number of episodes to auto downloads for the Apple Watch app. '%1$@' is a placeholder for the number of items to download.
-  internal static func settingsWatchEpisodeLimitSubtitle(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "settings_watch_episode_limit_subtitle", String(describing: p1), fallback: "Pocket Casts will download the top %1$@ episodes of your Up Next queue to your watch for offline playback.")
-  }
-  /// Prompt for the option format to select the number of episodes to auto downloads for the Apple Watch app. '%1$@' is a placeholder for the number of items to download
-  internal static func settingsWatchEpisodeNumberOptionFormat(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "settings_watch_episode_number_option_format", String(describing: p1), fallback: "Top %1$@")
-  }
   /// Title for the options for the user to configure their account.
   internal static var setupAccount: String { return L10n.tr("Localizable", "setup_account", fallback: "Set Up Account") }
   /// Name of the option to shake to restart sleep timer
@@ -4129,14 +4097,6 @@ internal enum L10n {
   internal static var suggestedFoldersTitle: String { return L10n.tr("Localizable", "suggested_folders_title", fallback: "Smart Folders") }
   /// Suggested Folders button title to accept suggested folders
   internal static var suggestedFoldersUseSuggestedFolders: String { return L10n.tr("Localizable", "suggested_folders_use_suggested_folders", fallback: "Use these folders") }
-  /// Description of an alert shown to the user
-  internal static var supportWatchHelpMessage: String { return L10n.tr("Localizable", "support_watch_help_message", fallback: "If you're having issues with the Pocket Casts Watch app we can send your wearable logs to better assist you. In order to do so, please open Pocket Casts on your Watch.") }
-  /// Button that the user can press if they opened the Watch app
-  internal static var supportWatchHelpOpenedApp: String { return L10n.tr("Localizable", "support_watch_help_opened_app", fallback: "I've opened the Watch app") }
-  /// Button that the user can press if they want to request help without the Apple Watch logs
-  internal static var supportWatchHelpSendWithoutLog: String { return L10n.tr("Localizable", "support_watch_help_send_without_log", fallback: "Send without Watch logs") }
-  /// Title of an alert shown to the user
-  internal static var supportWatchHelpTitle: String { return L10n.tr("Localizable", "support_watch_help_title", fallback: "Looking for Watch app help?") }
   /// A label used to identify that a user is a supporter of the selected podcast.
   internal static var supporter: String { return L10n.tr("Localizable", "supporter", fallback: "Supporter") }
   /// Menu option to open details on available podcast supporter contribution options.
@@ -4471,8 +4431,6 @@ internal enum L10n {
   internal static var upgradeExperimentReviewsReviewText2: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_2", fallback: "I've been a Pocket Casts user since 2017.\n\nThis is hands down the best app to listen to podcasts. It's feature rich and actively developed. There have been some complaints about the Ul change but I haven't really noticed it too much.\n\nThis app can be as simple or difficult to use as you'd like it to be. So either let it be a plug and play or set up skip outro and intro timers and any other little feature you want to enable.") }
   /// Upgrade Experiment - Reviews Variation: text for Review card 3
   internal static var upgradeExperimentReviewsReviewText3: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_3", fallback: "The sync function is magic. Don't know what special magic this app has going on but it's better than any other app l've used.") }
-  /// Upgrade Experiment - Reviews Variation: text for Review card 4
-  internal static var upgradeExperimentReviewsReviewText4: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_4", fallback: "Been using this app for 6 years or better, started on android and now l've been on iOS for almost a year. Works the same on both platforms. Easy to find new podcasts to listen to, very nice Ul, can add podcasts by rss feed url too. The watch app is functional, but I mostly use for my play/pause. Sign in with an account to sync across devices but no requirement to do so.") }
   /// Upgrade Experiment - Reviews Variation: text for Review card 5
   internal static var upgradeExperimentReviewsReviewText5: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_5", fallback: "PC has been my go-to for years. l've tried other podcast apps and always come back to PC for their simplicity, Ul and support. Definitely worth checking it out, especially if you have grown tired of your current podcast app.") }
   /// Upgrade Experiment - Reviews Variation: title for Review card 0
@@ -4525,54 +4483,6 @@ internal enum L10n {
   internal static var volumeBoostNDescription: String { return L10n.tr("Localizable", "volume_boost_n_description", fallback: "Voice levels are more consistent") }
   /// A common string used throughout the app. Informs the user that the app is waiting for wifi to reconnect.
   internal static var waitForWifi: String { return L10n.tr("Localizable", "wait_for_wifi", fallback: "Waiting for WiFi") }
-  /// A common string used throughout the app. Used to reference the Watch as the playing source with in the Apple Watch App (Phone is the other option for this use case)
-  internal static var watch: String { return L10n.tr("Localizable", "watch", fallback: "Watch") }
-  /// Indicates that the episode is being played is currently buffering to download more content for playback.
-  internal static var watchBuffering: String { return L10n.tr("Localizable", "watch_buffering", fallback: "Buffering ...") }
-  /// Prompt in the Apple Watch App for the controls to move to the next chapter of the podcast.
-  internal static var watchChapterNext: String { return L10n.tr("Localizable", "watch_chapter_next", fallback: "Next Chapter") }
-  /// Prompt in the Apple Watch App for the controls to move to the previous chapter of the podcast.
-  internal static var watchChapterPrev: String { return L10n.tr("Localizable", "watch_chapter_prev", fallback: "Prev Chapter") }
-  /// Title for the playback effects screen on the Apple Watch
-  internal static var watchEffects: String { return L10n.tr("Localizable", "watch_effects", fallback: "Effects") }
-  /// Prompt in the Apple Watch App to open episode details.
-  internal static var watchEpisodeDetails: String { return L10n.tr("Localizable", "watch_episode_details", fallback: "Episode Details") }
-  /// Prompt in the Apple Watch app to return to the Main Menu
-  internal static var watchMainMenu: String { return L10n.tr("Localizable", "watch_main_menu", fallback: "Main Menu") }
-  /// Label in the Apple Watch app informing the user that they don't have any episodes in their selected list.
-  internal static var watchNoEpisodes: String { return L10n.tr("Localizable", "watch_no_episodes", fallback: "No Episodes") }
-  /// Label in the Apple Watch app informing the user that they haven't configured any of their filters.
-  internal static var watchNoFilters: String { return L10n.tr("Localizable", "watch_no_filters", fallback: "No Filters") }
-  /// Label in the Apple Watch app informing the user that they haven't configured any playlists.
-  internal static var watchNoPlaylists: String { return L10n.tr("Localizable", "watch_no_playlists", fallback: "No Playlists") }
-  /// Label in the Apple Watch app informing the user that they haven't subscribed to podcasts.
-  internal static var watchNoPodcasts: String { return L10n.tr("Localizable", "watch_no_podcasts", fallback: "No Podcasts") }
-  /// Subtitle text used on the now playing screen in the Watch App. Indicates there is nothing palying or paused in the app. Please leave the "\
-  /// \
-  /// " part in there, that's a new line indicator.
-  internal static var watchNothingPlayingSubtitle: String { return L10n.tr("Localizable", "watch_nothing_playing_subtitle", fallback: "Enjoy the silence, or find something new to play.\n\nHonestly both are solid choices. 🙂") }
-  /// Title text used on the now playing screen in the Watch App. Indicates there is nothing palying or paused in the app.
-  internal static var watchNothingPlayingTitle: String { return L10n.tr("Localizable", "watch_nothing_playing_title", fallback: "Nothing Playing") }
-  /// Title for root screen of the Watch App
-  internal static var watchPlaySource: String { return L10n.tr("Localizable", "watch_play_source", fallback: "Play Source") }
-  /// Message detailing where the audio will play from when selecting the source on the Apple Watch
-  internal static var watchSourceMsg: String { return L10n.tr("Localizable", "watch_source_msg", fallback: "Podcasts will play from the speaker that the chosen device is connected to") }
-  /// Information label providing a brief explanation of Pocket Casts Plus.
-  internal static var watchSourcePlusInfo: String { return L10n.tr("Localizable", "watch_source_plus_info", fallback: "Download direct to your watch and listen without your phone. Check out Pocket Casts Plus on your phone app, or on the web.") }
-  /// Button that allows the user to manually trigger a refresh of their profile from the watch app.
-  internal static var watchSourceRefreshAccount: String { return L10n.tr("Localizable", "watch_source_refresh_account", fallback: "Refresh Account") }
-  /// Information label accompanying the Refresh Account button.
-  internal static var watchSourceRefreshAccountInfo: String { return L10n.tr("Localizable", "watch_source_refresh_account_info", fallback: "If you have a Pocket Casts Plus account, refresh account to attempt to enable it") }
-  /// Button that allows the user to manually trigger a refresh of their data from the watch app.
-  internal static var watchSourceRefreshData: String { return L10n.tr("Localizable", "watch_source_refresh_data", fallback: "Refresh Data") }
-  /// Information label informing users if they want to sign in to the Watch app they need to do that from the phone app.
-  internal static var watchSourceSignInInfo: String { return L10n.tr("Localizable", "watch_source_sign_in_info", fallback: "Sign in or create an account on your phone") }
-  /// Apple Watch complication prompt to tap the control to open the watch app.
-  internal static var watchTapToOpen: String { return L10n.tr("Localizable", "watch_tap_to_open", fallback: "Tap to open") }
-  /// Subtitle for the up next screen when a user has no episode queued up to play.
-  internal static var watchUpNextNoItemsSubtitle: String { return L10n.tr("Localizable", "watch_up_next_no_items_subtitle", fallback: "You can queue episodes to play next from the episode details screen, or adding them on your phone.") }
-  /// Title for the up next screen when a user has no episode queued up to play.
-  internal static var watchUpNextNoItemsTitle: String { return L10n.tr("Localizable", "watch_up_next_no_items_title", fallback: "Nothing in Up Next") }
   /// week
   internal static var week: String { return L10n.tr("Localizable", "week", fallback: "week") }
   /// Title of a button prompting the user find new podcasts in discover

@@ -5,7 +5,6 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-#if !os(watchOS)
 /// MediaExporterItemConfiguration global configuration.
 enum MediaExporterItemConfiguration {
     /// How much data is allowed to be read in memory at a time.
@@ -441,4 +440,3 @@ class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelega
         invalidateAndCancelSession(shouldResetData: false)
     }
 }
-#endif
