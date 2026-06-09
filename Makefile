@@ -48,6 +48,7 @@ lint_lenient:
 
 semgrep_swift_security: ## Run akabe1 Swift/iOS Semgrep security rules
 	semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/Package.swift" --include "**/Package.resolved" --include "Gemfile" --include "Gemfile.lock" --include "**/fastlane/**" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "Makefile" --include "**/Makefile" --include "*.mk" --include "**/*.mk" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
+	semgrep scan --config semgrep/swift-security.yml scripts/tests/generate_credentials_test.rb --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_SWIFT_ERROR)),--error,)
 
 semgrep_pocket_casts: ## Run Pocket Casts custom Semgrep rules
 	semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $(if $(filter 1,$(SEMGREP_POCKET_CASTS_ERROR)),--error,)
@@ -66,6 +67,7 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedLegacyPayment.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedUserSatisfactionSurvey.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/generate-credentials-placeholder-regex.sh
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/generate-credentials-env-test.rb
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/makefile-portability.mk
 
 credentials_script_tests: ## Run credentials generation script tests

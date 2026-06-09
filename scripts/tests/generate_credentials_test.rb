@@ -123,7 +123,7 @@ class GenerateCredentialsTest < Minitest::Test
       'BUILT_PRODUCTS_DIR' => @build_products_dir,
       'SECRETS_PATH' => @secrets_path,
       'RUBY_BIN' => RbConfig.ruby
-    }.merge(env_overrides).compact
+    }.merge(env_overrides)
 
     Open3.capture3(env, 'bash', SCRIPT_PATH)
   end

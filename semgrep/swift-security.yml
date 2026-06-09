@@ -332,7 +332,24 @@ rules:
         - "**/podcasts/PlaylistCellViewModel.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-regex: '(?s)\baddTask\s*\{.{0,1200}\bself\.imageManager\b'
+      - pattern-regex: '(?s)\bgroup\.addTask\s*\{[^}]*\bself\.imageManager\b'
+
+  - id: pocketcasts.playlist-cell-task-group-episode-object-capture
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Capture Episode uuid and podcastUuid before entering PlaylistCellViewModel task-group child tasks instead of reading the mutable Episode object concurrently.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/PlaylistCellViewModel.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: '(?s)\bgroup\.addTask\s*\{[^}]*\bepisode\.(?:podcastUuid|uuid)\b'
 
   - id: pocketcasts.share-button-localized-clip-export-failure
     severity: WARNING
@@ -1055,6 +1072,23 @@ rules:
         - "**/semgrep/tests/generate-credentials-placeholder-regex.sh"
     patterns:
       - pattern-regex: 'static let \[a-zA-Z0-9_\]\+\[\[:space:\]\]\*='
+
+  - id: pocketcasts.generate-credentials-test-preserve-nil-env-unsets
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ruby]
+    message: Preserve nil env overrides when calling Open3 so tests can unset inherited Xcode environment variables.
+    languages: [ruby]
+    paths:
+      include:
+        - "**/scripts/tests/generate_credentials_test.rb"
+        - "**/semgrep/tests/generate-credentials-env-test.rb"
+    patterns:
+      - pattern: $ENV.merge($OVERRIDES).compact
 
   # Source: critical_device_features.yaml
   - id: critical_device_features

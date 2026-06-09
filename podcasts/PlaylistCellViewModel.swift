@@ -158,17 +158,20 @@ class PlaylistCellViewModel: ObservableObject {
 
     private func loadImagesURLs(episodes: [Episode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
         let imageManager = self.imageManager
+        let episodeIdentifiers = episodes.map { (podcastUuid: $0.podcastUuid, episodeUuid: $0.uuid) }
 
         return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
-            for episode in episodes {
+            for episodeIdentifier in episodeIdentifiers {
+                let podcastUuid = episodeIdentifier.podcastUuid
+                let episodeUuid = episodeIdentifier.episodeUuid
                 group.addTask {
                     if includingEpisodeArtwork,
-                       let imageUrl = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: episode.podcastUuid, episodeUuid: episode.uuid),
+                       let imageUrl = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid),
                        let url = URL(string: imageUrl) {
-                        return PlaylistArtworkView.ImageItem(id: episode.uuid, url: url)
+                        return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
-                    return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
+                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
             var results: [PlaylistArtworkView.ImageItem] = []
@@ -176,8 +179,8 @@ class PlaylistCellViewModel: ObservableObject {
                 results.append(item)
             }
 
-            let mapEpisodes = Dictionary(uniqueKeysWithValues: episodes.enumerated().map { ($1.uuid, $0) })
-            let mapPodcasts = Dictionary(uniqueKeysWithValues: episodes.enumerated().map { ($1.podcastUuid, $0) })
+            let mapEpisodes = Dictionary(uniqueKeysWithValues: episodeIdentifiers.enumerated().map { ($1.episodeUuid, $0) })
+            let mapPodcasts = Dictionary(uniqueKeysWithValues: episodeIdentifiers.enumerated().map { ($1.podcastUuid, $0) })
 
             return results.sorted { lhs, rhs in
                 let lhsIndex = (mapEpisodes[lhs.id] ?? mapPodcasts[lhs.id]) ?? Int.max
