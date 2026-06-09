@@ -20,15 +20,13 @@ struct ShareButton: View {
     var body: some View {
         Button {
             isExporting = true
-            shareTask = Task.detached { @MainActor in
+            shareTask = Task { @MainActor in
                 do {
                     try await destination.share(option, style: style, clipTime: clipTime, clipUUID: clipUUID, progress: $progress, presentFrom: frame, source: source)
                 } catch {
                     if Task.isCancelled { return }
-                    await MainActor.run {
-                        Toast.show("Failed clip export: \(error.localizedDescription)")
-                        progress = nil
-                    }
+                    Toast.show("Failed clip export: \(error.localizedDescription)")
+                    progress = nil
                 }
             }
         } label: {

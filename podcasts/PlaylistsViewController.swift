@@ -182,6 +182,7 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         if !LiquidGlass.isEnabled {
             customRightBtn?.tintColor = ThemeColor.secondaryIcon01()
         }
+        refreshContentUnavailable()
     }
 
     private func updateNavTintColors() {
@@ -272,20 +273,14 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
             // Empty State when playlists is empty
             let title = L10n.playlistsEmptyStateTitle
             let message = L10n.playlistsEmptyStateDescription
-            config = ContentUnavailableConfiguration.emptyState(
+            config = ContentUnavailableConfiguration.nativeEmptyState(
                 title: title,
                 message: message,
-                icon: {
-                    Image("filter_list")
-                },
-                actions: [
-                .init(
-                    title: L10n.playlistsDefaultNewPlaylist,
-                    action: { [weak self] in
+                image: UIImage(named: "filter_list"),
+                action: .init(title: L10n.playlistsDefaultNewPlaylist) { [weak self] in
                     self?.addNewFilter()
-                    }
-                )
-                ])
+                }
+            )
         }
         set(configuration: config)
     }

@@ -261,17 +261,26 @@ class FolderViewController: PCViewController, UIGestureRecognizerDelegate {
         refreshContentUnavailable(shouldShow: shouldShowEmpty)
     }
 
+    override func handleThemeChanged() {
+        mainGrid.reloadData()
+        view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable(shouldShow: podcasts.isEmpty)
+    }
+
     private func refreshContentUnavailable(shouldShow: Bool) {
         var config: UIContentConfiguration?
 
         if shouldShow {
             let title = L10n.folderEmptyTitle
             let message = L10n.folderEmptyDescription
-            config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("folder-empty") }, actions: [
-                .init(title: L10n.folderEmptyButtonTitle, action: {
+            config = ContentUnavailableConfiguration.nativeEmptyState(
+                title: title,
+                message: message,
+                image: UIImage(named: "folder-empty"),
+                action: .init(title: L10n.folderEmptyButtonTitle) {
                     self.addPodcastsTapped(self)
-                })
-            ])
+                }
+            )
         }
 
         self.contentUnavailableConfiguration = config

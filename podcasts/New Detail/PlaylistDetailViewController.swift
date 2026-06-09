@@ -218,6 +218,7 @@ class PlaylistDetailViewController: PCViewController, UIScrollViewDelegate {
 
     override func handleThemeChanged() {
         updateColors()
+        reloadEmptyState()
     }
 
     override func handleAppDidEnterBackground() {

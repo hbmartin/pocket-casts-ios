@@ -166,13 +166,23 @@ class StarredViewController: PCViewController {
         navigationItem.backBarButtonItem = isMultiSelectEnabled ? nil : UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
+    override func handleThemeChanged() {
+        starredTable.reloadData()
+        view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable()
+    }
+
     private func refreshContentUnavailable() {
         var config: UIContentConfiguration?
 
         if episodes.isEmpty {
             let title = L10n.profileStarredNoEpisodesTitle
             let message = L10n.profileStarredNoEpisodesDesc
-            config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("star_empty") })
+            config = ContentUnavailableConfiguration.nativeEmptyState(
+                title: title,
+                message: message,
+                image: UIImage(named: "star_empty")
+            )
         }
 
         self.contentUnavailableConfiguration = config

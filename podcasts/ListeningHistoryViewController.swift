@@ -129,6 +129,8 @@ class ListeningHistoryViewController: PCViewController {
 
     override func handleThemeChanged() {
         listeningHistoryTable.reloadData()
+        view.backgroundColor = ThemeColor.primaryUi02()
+        refreshContentUnavailable()
     }
 
     func refreshEpisodes(animated: Bool) {
@@ -225,10 +227,10 @@ class ListeningHistoryViewController: PCViewController {
                 // Empty State when searching
                 let title = L10n.listeningHistorySearchNoEpisodesTitle
                 let message = L10n.listeningHistorySearchNoEpisodesText
-                config = ContentUnavailableConfiguration.emptyState(
+                config = ContentUnavailableConfiguration.nativeEmptyState(
                     title: title,
                     message: message,
-                    icon: { Image("profile-download").renderingMode(.template) }
+                    image: UIImage(named: "profile-download")
                 )
 
                 listeningHistoryTable.backgroundColor = UIColor(Theme.sharedTheme.primaryUi02)
@@ -237,12 +239,15 @@ class ListeningHistoryViewController: PCViewController {
                 // Empty State when not searching
                 let title = L10n.profileListeningHistoryEmptyTitle
                 let message = L10n.profileListeningHistoryEmptyDescription
-                config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("options-history").renderingMode(.template) }, actions: [
-                    .init(title: L10n.goToDiscover, action: {
+                config = ContentUnavailableConfiguration.nativeEmptyState(
+                    title: title,
+                    message: message,
+                    image: UIImage(named: "options-history"),
+                    action: .init(title: L10n.goToDiscover) {
                         Analytics.track(.listeningHistoryDiscoverButtonTapped)
                         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
-                    })
-                ])
+                    }
+                )
 
                 self.contentUnavailableConfiguration = config
             }

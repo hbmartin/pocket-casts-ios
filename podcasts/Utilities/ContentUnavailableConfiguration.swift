@@ -1,8 +1,19 @@
 import SwiftUI
 import EndOfYear
+import UIKit
 
-// Many of these can be replaced with UIContentUnavailableConfigurations in iOS 17
+// Bespoke states stay SwiftUI-hosted until their native UIKit equivalents have exact visual parity.
 struct ContentUnavailableConfiguration {
+    struct Action {
+        let title: String
+        let handler: () -> Void
+
+        init(title: String, handler: @escaping () -> Void) {
+            self.title = title
+            self.handler = handler
+        }
+    }
+
     static func loading() -> UIContentConfiguration {
         return UIHostingConfiguration {
             LoadingView().environmentObject(Theme.sharedTheme)
@@ -25,6 +36,37 @@ struct ContentUnavailableConfiguration {
         return UIHostingConfiguration {
             EmptyView()
         }
+    }
+
+    static func nativeEmptyState(
+        title: String,
+        message: String?,
+        image: UIImage?,
+        action: Action? = nil,
+        theme: Theme = .sharedTheme
+    ) -> UIContentConfiguration {
+        let themeType = theme.activeTheme
+        var configuration = UIKit.UIContentUnavailableConfiguration.empty()
+        configuration.text = title
+        configuration.secondaryText = message
+        configuration.image = image?.withRenderingMode(.alwaysTemplate)
+        configuration.imageProperties.tintColor = ThemeColor.primaryIcon01(for: themeType)
+        configuration.imageProperties.maximumSize = CGSize(width: 30, height: 30)
+        configuration.textProperties.color = ThemeColor.primaryText01(for: themeType)
+        configuration.secondaryTextProperties.color = ThemeColor.primaryText02(for: themeType)
+
+        if let action {
+            var button = UIButton.Configuration.borderedProminent()
+            button.title = action.title
+            button.baseBackgroundColor = ThemeColor.primaryInteractive01(for: themeType)
+            button.baseForegroundColor = ThemeColor.primaryInteractive02(for: themeType)
+            configuration.button = button
+            configuration.buttonProperties.primaryAction = UIAction { _ in
+                action.handler()
+            }
+        }
+
+        return configuration
     }
 
     static func emptyState<Style: EmptyStateViewStyle>(

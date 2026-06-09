@@ -148,8 +148,10 @@ class PlaylistCellViewModel: ObservableObject {
 
     private func loadListEpisodes() async -> [ListEpisode] {
         let playlist = self.playlist
-        return await Task.detached(priority: .userInitiated) { [weak self] in
-            self?.episodesDataManager.playlistFirstDistinctEpisodes(for: playlist, shouldShowArchived: playlist.showArchivedEpisodes) ?? []
+        let episodesDataManager = self.episodesDataManager
+
+        return await Task.detached(priority: .userInitiated) { [episodesDataManager, playlist] in
+            episodesDataManager.playlistFirstDistinctEpisodes(for: playlist, shouldShowArchived: playlist.showArchivedEpisodes)
         }.value
     }
 
@@ -186,7 +188,7 @@ class PlaylistCellViewModel: ObservableObject {
         let playlist = self.playlist
         let dataManager = self.dataManager
 
-        return await Task.detached(priority: .userInitiated) {
+        return await Task.detached(priority: .userInitiated) { [dataManager, playlist] in
             dataManager.allPlaylistEpisodeCount(
                 for: playlist,
                 episodeUuidToAdd: playlist.episodeUuidToAddToQueries(),

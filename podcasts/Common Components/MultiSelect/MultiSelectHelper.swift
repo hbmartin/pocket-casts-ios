@@ -248,7 +248,7 @@ class MultiSelectHelper {
                 DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
                 queuedEpisodes += 1
                 if queuedEpisodes == Constants.Limits.maxBulkDownloads {
-                    return
+                    break
                 }
             }
             await actionDelegate.multiSelectActionCompleted()
@@ -264,7 +264,7 @@ class MultiSelectHelper {
                 DownloadManager.shared.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
                 queuedEpisodes += 1
                 if queuedEpisodes == Constants.Limits.maxBulkDownloads {
-                    return
+                    break
                 }
             }
             await actionDelegate.multiSelectActionCompleted()
