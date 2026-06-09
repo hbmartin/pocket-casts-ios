@@ -180,7 +180,10 @@ class PlaylistCellViewModel: ObservableObject {
             }
 
             let mapEpisodes = Dictionary(uniqueKeysWithValues: episodeIdentifiers.enumerated().map { ($1.episodeUuid, $0) })
-            let mapPodcasts = Dictionary(uniqueKeysWithValues: episodeIdentifiers.enumerated().map { ($1.podcastUuid, $0) })
+            let mapPodcasts = Dictionary(
+                episodeIdentifiers.enumerated().map { ($1.podcastUuid, $0) },
+                uniquingKeysWith: { firstIndex, _ in firstIndex }
+            )
 
             return results.sorted { lhs, rhs in
                 let lhsIndex = (mapEpisodes[lhs.id] ?? mapPodcasts[lhs.id]) ?? Int.max

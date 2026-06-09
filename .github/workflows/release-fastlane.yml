@@ -36,7 +36,7 @@ jobs:
   release_task:
     name: Release Task
     if: ${{ inputs.task != 'release_build' }}
-    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 90
 
     steps:
@@ -104,7 +104,7 @@ jobs:
   release_build:
     name: Release Build
     if: ${{ inputs.task == 'release_build' }}
-    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 180
 
     steps:
@@ -152,7 +152,7 @@ jobs:
     name: Release Upload
     if: ${{ inputs.task == 'release_build' }}
     needs: release_build
-    runs-on: [self-hosted, macOS, pocket-casts-ios]
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 90
 
     steps:

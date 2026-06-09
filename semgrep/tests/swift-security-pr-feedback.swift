@@ -184,6 +184,22 @@ final class UnsafeNativeEmptyStateActionViewController {
         )
     }
 
+    func refreshContentUnavailableWithNestedScope() {
+        _ = ContentUnavailableConfiguration.nativeEmptyState(
+            title: "Empty",
+            message: nil,
+            image: nil,
+            // ruleid: pocketcasts.native-empty-state-action-weak-self
+            action: .init(title: "Add") {
+                if Bool.random() {
+                    print("nested")
+                }
+
+                self.addPodcastsTapped(self)
+            }
+        )
+    }
+
     func addPodcastsTapped(_ sender: Any) {}
 }
 
@@ -272,6 +288,25 @@ final class UnsafePlaylistCellViewModelTaskGroupCapture {
             return []
         }
     }
+
+    func loadNestedImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
+        try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+            for episode in episodes {
+                let podcastUuid = episode.podcastUuid
+                // ruleid: pocketcasts.playlist-cell-task-group-image-manager-self-capture
+                group.addTask {
+                    if Bool.random() {
+                        print("nested")
+                    }
+
+                    let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
+                }
+            }
+
+            return []
+        }
+    }
 }
 
 final class SafePlaylistCellViewModelTaskGroupCapture {
@@ -307,6 +342,26 @@ final class UnsafePlaylistCellViewModelEpisodeObjectCapture {
                 group.addTask {
                     let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: episode.podcastUuid, url: url)
+                }
+            }
+
+            return []
+        }
+    }
+
+    func loadNestedImagesURLs(episodes: [Episode]) async throws -> [PlaylistArtworkView.ImageItem] {
+        let imageManager = self.imageManager
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+            for episode in episodes {
+                // ruleid: pocketcasts.playlist-cell-task-group-episode-object-capture
+                group.addTask {
+                    if Bool.random() {
+                        print("nested")
+                    }
+
+                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.uuid)
+                    return PlaylistArtworkView.ImageItem(id: "nested", url: url)
                 }
             }
 
