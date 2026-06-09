@@ -180,7 +180,11 @@ class DownloadsViewController: PCViewController {
         if episodes.isEmpty {
             let title = L10n.downloadsNoDownloadsTitle
             let message = L10n.downloadsNoDownloadsDesc
-            config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("filter_downloaded") })
+            config = ContentUnavailableConfiguration.nativeEmptyState(
+                title: title,
+                message: message,
+                image: UIImage(named: "filter_downloaded")
+            )
         }
 
         self.contentUnavailableConfiguration = config

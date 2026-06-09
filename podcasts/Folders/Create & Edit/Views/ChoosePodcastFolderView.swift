@@ -9,7 +9,7 @@ struct ChoosePodcastFolderView: View {
     var dismissAction: (String?) -> Void
 
     var body: some View {
-        NavigationView {
+        NavigationContainer {
             ScrollView {
                 VStack {
                     ThemedDivider()
@@ -64,7 +64,6 @@ struct ChoosePodcastFolderView: View {
                 Analytics.track(.folderChooseShown)
             }
         }
-        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 

@@ -8,7 +8,7 @@ struct EditFolderPodcastsView: View {
     var dismissAction: () -> Void
 
     var body: some View {
-        NavigationView {
+        NavigationContainer {
             PodcastPickerView(pickerModel: pickerModel)
                 .navigationTitle(L10n.folderChoosePodcasts)
                 .toolbar {
@@ -24,7 +24,6 @@ struct EditFolderPodcastsView: View {
                 }
                 .applyDefaultThemeOptions()
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             pickerModel.pickingForFolderUuid = model.folderUuid
             pickerModel.selectedPodcastUuids = model.selectedPodcastUuids

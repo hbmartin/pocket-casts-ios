@@ -70,9 +70,7 @@ final class LocalSearchViewModel: ObservableObject {
     }
 
     private func loadDefaultLibraryItems() async {
-        await MainActor.run {
-            self.isLoadingDefaultLibrary = true
-        }
+        isLoadingDefaultLibrary = true
 
         let items = await Task.detached {
             let sortOrder = Settings.homeFolderSortOrder()
@@ -88,10 +86,8 @@ final class LocalSearchViewModel: ObservableObject {
             }
         }.value
 
-        await MainActor.run {
-            self.defaultLibraryItems = items
-            self.isLoadingDefaultLibrary = false
-        }
+        defaultLibraryItems = items
+        isLoadingDefaultLibrary = false
     }
 
     var filteredFolderPodcastResults: [PodcastFolderSearchResult] {
@@ -225,9 +221,7 @@ final class LocalSearchViewModel: ObservableObject {
                 await filterPodcasts(using: "")
             }
 
-            await MainActor.run {
-                self.episodeCoordinator?.clearResults()
-            }
+            episodeCoordinator?.clearResults()
             previousPodcastSearchState = nil
         }
     }
@@ -250,9 +244,7 @@ final class LocalSearchViewModel: ObservableObject {
                 await filterPodcasts(using: searchText, disableAnimationsWhenClearing: false)
             }
 
-            await MainActor.run {
-                self.episodeCoordinator?.clearResults()
-            }
+            episodeCoordinator?.clearResults()
             previouslySelectedFolder = nil
         }
     }
@@ -330,11 +322,9 @@ final class LocalSearchViewModel: ObservableObject {
     }
 
     private func loadPodcastsForSelectedFolder(_ folder: Folder) async {
-        await MainActor.run {
-            self.isLoadingFolderPodcasts = true
-        }
+        isLoadingFolderPodcasts = true
 
-        let sorted = await Task.detached {
+        let sorted = await Task.detached { [folder] in
             let podcasts = DataManager.sharedManager.allPodcastsInFolder(folder: folder)
             return podcasts.sorted { lhs, rhs in
                 let lhsTitle = lhs.title ?? ""
@@ -343,11 +333,9 @@ final class LocalSearchViewModel: ObservableObject {
             }
         }.value
 
-        await MainActor.run {
-            self.folderPodcasts = sorted
-            self.filteredFolderPodcasts = sorted
-            self.isLoadingFolderPodcasts = false
-        }
+        folderPodcasts = sorted
+        filteredFolderPodcasts = sorted
+        isLoadingFolderPodcasts = false
     }
 
     private func refreshPlaylistEpisodes() async {
@@ -377,17 +365,13 @@ final class LocalSearchViewModel: ObservableObject {
             if trimmed.isEmpty {
                 filtered = folderPodcastsCopy
             } else {
-                filtered = await Task.detached {
-                    folderPodcastsCopy.filter { podcast in
-                        guard let title = podcast.title else { return false }
-                        return title.localizedCaseInsensitiveContains(trimmed)
-                    }
-                }.value
+                filtered = folderPodcastsCopy.filter { podcast in
+                    guard let title = podcast.title else { return false }
+                    return title.localizedCaseInsensitiveContains(trimmed)
+                }
             }
 
-            await MainActor.run {
-                self.filteredFolderPodcasts = filtered
-            }
+            filteredFolderPodcasts = filtered
         } else {
             guard let searchResultsModel else { return }
             if trimmed.isEmpty {
@@ -399,7 +383,7 @@ final class LocalSearchViewModel: ObservableObject {
                     searchResultsModel.clearSearch()
                 }
                 if disableAnimationsWhenClearing {
-                    DispatchQueue.main.async { [weak self] in
+                    Task { @MainActor [weak self] in
                         self?.disableLibraryAnimation = false
                     }
                 }

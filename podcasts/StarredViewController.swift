@@ -172,7 +172,11 @@ class StarredViewController: PCViewController {
         if episodes.isEmpty {
             let title = L10n.profileStarredNoEpisodesTitle
             let message = L10n.profileStarredNoEpisodesDesc
-            config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("star_empty") })
+            config = ContentUnavailableConfiguration.nativeEmptyState(
+                title: title,
+                message: message,
+                image: UIImage(named: "star_empty")
+            )
         }
 
         self.contentUnavailableConfiguration = config

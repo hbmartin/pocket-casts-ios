@@ -61,7 +61,7 @@ struct CreateFolderView: View {
     }
 
     var navWrappedBody: some View {
-        NavigationView {
+        NavigationContainer {
             mainBody
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -83,7 +83,6 @@ struct CreateFolderView: View {
                     }
                 }
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .tint(ThemeColor.secondaryIcon01(for: theme.activeTheme).color)
     }
 

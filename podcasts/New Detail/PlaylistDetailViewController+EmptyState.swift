@@ -1,5 +1,5 @@
-import SwiftUI
 import PocketCastsUtils
+import UIKit
 
 extension PlaylistDetailViewController {
     private var emptyStateTitle: String {
@@ -16,8 +16,8 @@ extension PlaylistDetailViewController {
         return L10n.playlistSmartNoEpisodesMsg
     }
 
-    private var emptyStateIcon: Image {
-        return viewModel.isManualPlaylist ? Image("playlists_tab") : Image("empty-playlist-info")
+    private var emptyStateImage: UIImage? {
+        return UIImage(named: viewModel.isManualPlaylist ? "playlists_tab" : "empty-playlist-info")
     }
 
     private var emptyStateButtonTitle: String {
@@ -40,20 +40,14 @@ extension PlaylistDetailViewController {
 
         if viewModel.shouldShowEmptyPlaceholder {
             // Empty State when playlists is empty
-            config = ContentUnavailableConfiguration.emptyState(
+            config = ContentUnavailableConfiguration.nativeEmptyState(
                 title: emptyStateTitle,
                 message: emptyStateDescription,
-                icon: {
-                    self.emptyStateIcon
-                },
-                actions: [
-                .init(
-                    title: emptyStateButtonTitle,
-                    action: { [weak self] in
-                        self?.emptyStateAction()
-                    }
-                )
-                ])
+                image: emptyStateImage,
+                action: .init(title: emptyStateButtonTitle) { [weak self] in
+                    self?.emptyStateAction()
+                }
+            )
         }
         set(configuration: config)
     }

@@ -13,7 +13,7 @@ struct EditFolderView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationContainer {
             VStack(alignment: .leading) {
                 Group {
                     Text(L10n.name.localizedUppercase)
@@ -95,7 +95,6 @@ struct EditFolderView: View {
             .applyDefaultThemeOptions()
             .navigationTitle(L10n.folderEdit)
         }
-        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 

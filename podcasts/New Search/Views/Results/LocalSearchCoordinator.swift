@@ -29,6 +29,7 @@ final class LocalSearchCoordinator {
 
     deinit {
         searchTask?.cancel()
+        preloadTask?.cancel()
     }
 
     func refreshPlaylistEpisodes() async {
@@ -37,9 +38,7 @@ final class LocalSearchCoordinator {
             return Set(playlistEpisodes.map { $0.uuid })
         }.value
 
-        await MainActor.run {
-            self.playlistEpisodeUUIDs = uuids
-        }
+        playlistEpisodeUUIDs = uuids
     }
 
     func scheduleSearch(for trimmedTerm: String, podcastUuid: String?) {
@@ -110,9 +109,9 @@ final class LocalSearchCoordinator {
         preloadTask = Task { [weak self] in
             guard let self else { return }
 
-            let playlistUUIDs = await MainActor.run { self.playlistEpisodeUUIDs }
+            let playlistUUIDs = self.playlistEpisodeUUIDs
 
-            let episodeResults = await Task.detached { [dataManager] in
+            let episodeResults = await Task.detached { [dataManager, playlistUUIDs, podcast] in
                 let podcastEpisodes = dataManager.allEpisodesForPodcast(id: podcast.id)
                 let sortedEpisodes = podcastEpisodes.sorted { lhs, rhs in
                     let lhsDate = lhs.publishedDate ?? lhs.addedDate ?? .distantPast
@@ -123,10 +122,10 @@ final class LocalSearchCoordinator {
                 return availableEpisodes.map { EpisodeSearchResult(episode: $0) }
             }.value
 
-            await MainActor.run {
-                self.episodes = episodeResults
-                self.isSearchInFlight = false
-            }
+            guard !Task.isCancelled else { return }
+
+            self.episodes = episodeResults
+            self.isSearchInFlight = false
         }
     }
 
@@ -137,9 +136,11 @@ final class LocalSearchCoordinator {
     }
 
     func handleAddEpisode(_ searchResult: EpisodeSearchResult) {
+        let episodeUUID = searchResult.uuid
+
         Task {
-            let result = await Task.detached { [dataManager, playlist] in
-                guard let episode = dataManager.findEpisode(uuid: searchResult.uuid) else {
+            let result = await Task.detached { [dataManager, playlist, episodeUUID] in
+                guard let episode = dataManager.findEpisode(uuid: episodeUUID) else {
                     return (didAdd: false, episode: nil as Episode?, isFull: false)
                 }
 
@@ -150,6 +151,8 @@ final class LocalSearchCoordinator {
                 let isFull = !didAdd
                 return (didAdd: didAdd, episode: episode, isFull: isFull)
             }.value
+
+            guard !Task.isCancelled else { return }
 
             guard let episode = result.episode else {
                 assertionFailure("Episode should exist")
@@ -177,43 +180,35 @@ final class LocalSearchCoordinator {
                     ]
             )
 
-            await MainActor.run {
-                self.playlistEpisodeUUIDs.insert(searchResult.uuid)
-                self.episodes.removeAll { $0.uuid == searchResult.uuid }
-                self.addedEpisodeCount += 1
-            }
+            playlistEpisodeUUIDs.insert(episodeUUID)
+            episodes.removeAll { $0.uuid == episodeUUID }
+            addedEpisodeCount += 1
         }
     }
 
     private func performSearch(term: String, podcastUuid: String) async {
-        await MainActor.run {
-            self.currentEpisodeSearchTerm = term
-            self.currentSearchPodcastUUID = podcastUuid
-            self.episodes = []
-        }
+        currentEpisodeSearchTerm = term
+        currentSearchPodcastUUID = podcastUuid
+        episodes = []
 
-        let episodeResults = await Task.detached {
-            let matchedEpisodes = DataManager.sharedManager.findEpisodes(with: term, podcastUUID: podcastUuid)
+        let episodeResults = await Task.detached { [dataManager, term, podcastUuid] in
+            let matchedEpisodes = dataManager.findEpisodes(with: term, podcastUUID: podcastUuid)
             return matchedEpisodes.map { EpisodeSearchResult(episode: $0) }
         }.value
 
         guard !Task.isCancelled else {
-            await MainActor.run {
-                if self.currentEpisodeSearchTerm == term, self.currentSearchPodcastUUID == podcastUuid {
-                    self.isSearchInFlight = false
-                }
+            if currentEpisodeSearchTerm == term, currentSearchPodcastUUID == podcastUuid {
+                isSearchInFlight = false
             }
             return
         }
 
-        await MainActor.run {
-            guard self.currentEpisodeSearchTerm == term,
-                  self.currentSearchPodcastUUID == podcastUuid else {
-                return
-            }
-
-            self.episodes = episodeResults
-            self.isSearchInFlight = false
+        guard currentEpisodeSearchTerm == term,
+              currentSearchPodcastUUID == podcastUuid else {
+            return
         }
+
+        episodes = episodeResults
+        isSearchInFlight = false
     }
 }

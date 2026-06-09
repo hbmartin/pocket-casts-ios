@@ -147,8 +147,8 @@ final class PlaylistCacheInvalidationCoordinator {
             }
         }
 
-        // Process each change type off the main thread
-        Task.detached { [dataManager, playlistMetadataLoader] in
+        // Keep playlist fetching off the main actor; markStaleIfAffected is actor-isolated.
+        Task.detached { [changesByType, dataManager, playlistMetadataLoader] in
             // Fetch all playlists on background thread to avoid blocking main
             let playlists = dataManager.allPlaylists(includeDeleted: false)
 
