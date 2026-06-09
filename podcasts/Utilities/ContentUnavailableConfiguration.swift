@@ -50,22 +50,21 @@ struct ContentUnavailableConfiguration {
         action: Action? = nil,
         theme: Theme = .sharedTheme
     ) -> UIContentConfiguration {
-        let themeType = theme.activeTheme
         var configuration = UIKit.UIContentUnavailableConfiguration.empty()
         configuration.text = title
         configuration.secondaryText = message
         configuration.image = image?.withRenderingMode(.alwaysTemplate)
-        configuration.imageProperties.tintColor = ThemeColor.primaryIcon01(for: themeType)
+        configuration.imageProperties.tintColor = UIColor(AppTheme.color(for: .primaryIcon01, theme: theme))
         let iconSize = UIFontMetrics(forTextStyle: .headline).scaledValue(for: 30)
         configuration.imageProperties.maximumSize = CGSize(width: iconSize, height: iconSize)
-        configuration.textProperties.color = ThemeColor.primaryText01(for: themeType)
-        configuration.secondaryTextProperties.color = ThemeColor.primaryText02(for: themeType)
+        configuration.textProperties.color = UIColor(AppTheme.color(for: .primaryText01, theme: theme))
+        configuration.secondaryTextProperties.color = UIColor(AppTheme.color(for: .primaryText02, theme: theme))
 
         if let action {
             var button = UIButton.Configuration.borderedProminent()
             button.title = action.title
-            button.baseBackgroundColor = ThemeColor.primaryInteractive01(for: themeType)
-            button.baseForegroundColor = ThemeColor.primaryInteractive02(for: themeType)
+            button.baseBackgroundColor = UIColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+            button.baseForegroundColor = UIColor(AppTheme.color(for: .primaryInteractive02, theme: theme))
             configuration.button = button
             configuration.buttonProperties.primaryAction = UIAction { _ in
                 action.handler()

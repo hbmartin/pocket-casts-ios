@@ -25,7 +25,7 @@ struct ShareButton: View {
                     try await destination.share(option, style: style, clipTime: clipTime, clipUUID: clipUUID, progress: $progress, presentFrom: frame, source: source)
                 } catch {
                     if Task.isCancelled { return }
-                    Toast.show("Failed clip export: \(error.localizedDescription)")
+                    Toast.show(L10n.sharingClipExportFailed(error.localizedDescription))
                     progress = nil
                 }
             }

@@ -256,6 +256,115 @@ rules:
                 ...
               }
 
+  - id: pocketcasts.native-empty-state-action-weak-self
+    severity: ERROR
+    metadata:
+      category: performance
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Native empty-state action closures are retained by contentUnavailableConfiguration; capture self weakly.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: '(?s)action:\s*\.init\([^)]*\)\s*\{(?![^\n]*\[weak\s+self\])[^}]*\bself\.'
+
+  - id: pocketcasts.content-unavailable-assigned-inside-empty-branch
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Assign contentUnavailableConfiguration after the empty-state branch so it is cleared when content returns.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/ListeningHistoryViewController.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          private func refreshContentUnavailable() {
+            ...
+          }
+      - pattern-inside: |
+          if $ITEMS.isEmpty {
+            ...
+          }
+      - pattern: self.contentUnavailableConfiguration = $CONFIG
+
+  - id: pocketcasts.playlist-cell-bypass-datamanager-facade
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: PlaylistCellViewModel playlist episode reads should go through DataManager.sharedManager or the injected DataManager facade.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/PlaylistCellViewModel.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-either:
+          - pattern: episodesDataManager.playlistFirstDistinctEpisodes(...)
+          - pattern: self.episodesDataManager.playlistFirstDistinctEpisodes(...)
+
+  - id: pocketcasts.share-button-localized-clip-export-failure
+    severity: WARNING
+    metadata:
+      category: localization
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: LOW
+      technology: [ios]
+    message: Localize the clip export failure toast with an L10n-backed string.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/Sharing/ShareButton.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: 'Toast\.show\("Failed clip export:'
+
+  - id: pocketcasts.native-empty-state-themecolor-bypass
+    severity: WARNING
+    metadata:
+      category: theming
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Native empty-state themed colors should go through AppTheme.color(for:theme:).
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/Utilities/ContentUnavailableConfiguration.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          static func nativeEmptyState(...) -> UIContentConfiguration {
+            ...
+          }
+      - pattern-either:
+          - pattern: |
+              ThemeColor.primaryIcon01(for: ...)
+          - pattern: |
+              ThemeColor.primaryText01(for: ...)
+          - pattern: |
+              ThemeColor.primaryText02(for: ...)
+          - pattern: |
+              ThemeColor.primaryInteractive01(for: ...)
+          - pattern: |
+              ThemeColor.primaryInteractive02(for: ...)
+
   - id: pocketcasts.no-destructive-database-schema-reset
     severity: ERROR
     metadata:

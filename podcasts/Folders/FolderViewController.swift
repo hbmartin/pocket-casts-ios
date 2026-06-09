@@ -265,6 +265,7 @@ class FolderViewController: PCViewController, UIGestureRecognizerDelegate {
         mainGrid.reloadData()
         view.backgroundColor = ThemeColor.primaryUi02()
         refreshContentUnavailable(shouldShow: podcasts.isEmpty)
+        updateNavTintColor()
     }
 
     private func refreshContentUnavailable(shouldShow: Bool) {
@@ -277,7 +278,8 @@ class FolderViewController: PCViewController, UIGestureRecognizerDelegate {
                 title: title,
                 message: message,
                 image: UIImage(named: "folder-empty"),
-                action: .init(title: L10n.folderEmptyButtonTitle) {
+                action: .init(title: L10n.folderEmptyButtonTitle) { [weak self] in
+                    guard let self else { return }
                     self.addPodcastsTapped(self)
                 }
             )

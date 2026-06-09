@@ -16,7 +16,7 @@ validate_credentials() {
 
     # Find any lines that look like: static let someKey = "%{token}"
     # and extract the value part.
-    placeholders=$(grep -E 'static let [a-zA-Z0-9_]+ = "%\{[^}]+\}"' "$credentials_file" || true)
+    placeholders=$(grep -E 'static let [a-zA-Z0-9_]+[[:space:]]*=[[:space:]]*"%\{[^}]+\}"' "$credentials_file" || true)
 
     if [[ -n "$placeholders" ]]; then
         echo "error: Unresolved placeholder(s) found in ${credentials_file}:" >&2

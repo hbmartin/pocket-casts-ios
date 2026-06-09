@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import SwiftUI
+import UIKit
 
 struct UnsafeStoriesView: View {
     @State private var timerSubscription: Cancellable?
@@ -167,5 +168,124 @@ final class CredentialPlaceholderRegressionHelper {
     func isUnconfiguredPreferred(_ id: String) -> Bool {
         // ok: pocketcasts.no-hardcoded-credential-placeholder-literal
         id.isMissingOrPlaceholderCredential
+    }
+}
+
+final class UnsafeNativeEmptyStateActionViewController {
+    func refreshContentUnavailable() {
+        _ = ContentUnavailableConfiguration.nativeEmptyState(
+            title: "Empty",
+            message: nil,
+            image: nil,
+            // ruleid: pocketcasts.native-empty-state-action-weak-self
+            action: .init(title: "Add") {
+                self.addPodcastsTapped(self)
+            }
+        )
+    }
+
+    func addPodcastsTapped(_ sender: Any) {}
+}
+
+final class SafeNativeEmptyStateActionViewController {
+    func refreshContentUnavailable() {
+        _ = ContentUnavailableConfiguration.nativeEmptyState(
+            title: "Empty",
+            message: nil,
+            image: nil,
+            action: .init(title: "Add") { [weak self] in
+                // ok: pocketcasts.native-empty-state-action-weak-self
+                guard let self else { return }
+                self.addPodcastsTapped(self)
+            }
+        )
+    }
+
+    func addPodcastsTapped(_ sender: Any) {}
+}
+
+final class UnsafeListeningHistoryEmptyStateController {
+    private var episodes = [String]()
+    private var contentUnavailableConfiguration: UIContentConfiguration?
+
+    private func refreshContentUnavailable() {
+        var config: UIContentConfiguration?
+
+        if episodes.isEmpty {
+            config = ContentUnavailableConfiguration.empty()
+            // ruleid: pocketcasts.content-unavailable-assigned-inside-empty-branch
+            self.contentUnavailableConfiguration = config
+        }
+    }
+}
+
+final class SafeListeningHistoryEmptyStateController {
+    private var episodes = [String]()
+    private var contentUnavailableConfiguration: UIContentConfiguration?
+
+    private func refreshContentUnavailable() {
+        var config: UIContentConfiguration?
+
+        if episodes.isEmpty {
+            config = ContentUnavailableConfiguration.empty()
+        }
+
+        // ok: pocketcasts.content-unavailable-assigned-inside-empty-branch
+        self.contentUnavailableConfiguration = config
+    }
+}
+
+final class UnsafePlaylistCellViewModelFacadeBypass {
+    private let episodesDataManager = EpisodesDataManager()
+    private let playlist = EpisodeFilter()
+
+    func loadListEpisodes() {
+        // ruleid: pocketcasts.playlist-cell-bypass-datamanager-facade
+        episodesDataManager.playlistFirstDistinctEpisodes(for: playlist, shouldShowArchived: true)
+    }
+}
+
+final class SafePlaylistCellViewModelFacadeUse {
+    private let dataManager = DataManager.sharedManager
+    private let playlist = EpisodeFilter()
+
+    func loadListEpisodes() {
+        // ok: pocketcasts.playlist-cell-bypass-datamanager-facade
+        dataManager.playlistFirstDistinctEpisodes(for: playlist, shouldShowArchived: true)
+    }
+}
+
+final class UnsafeClipExportToast {
+    func show(error: Error) {
+        // ruleid: pocketcasts.share-button-localized-clip-export-failure
+        Toast.show("Failed clip export: \(error.localizedDescription)")
+    }
+}
+
+final class SafeClipExportToast {
+    func show(error: Error) {
+        let format = L10n.localizedFormat("sharing_clip_export_failed", "Localizable", "Failed clip export: %@")
+        // ok: pocketcasts.share-button-localized-clip-export-failure
+        Toast.show(String(format: format, locale: Locale.current, error.localizedDescription))
+    }
+}
+
+struct UnsafeNativeEmptyStateThemeColor {
+    static func nativeEmptyState(title: String, message: String?, image: UIImage?) -> UIContentConfiguration {
+        let themeType = Theme.sharedTheme.activeTheme
+        var configuration = UIKit.UIContentUnavailableConfiguration.empty()
+        // ruleid: pocketcasts.native-empty-state-themecolor-bypass
+        configuration.imageProperties.tintColor = ThemeColor.primaryIcon01(for: themeType)
+        return configuration
+    }
+}
+
+struct SafeNativeEmptyStateThemeColor {
+    static func nativeEmptyState(title: String, message: String?, image: UIImage?) -> UIContentConfiguration {
+        let theme = Theme.sharedTheme
+        var configuration = UIKit.UIContentUnavailableConfiguration.empty()
+        // ok: pocketcasts.native-empty-state-themecolor-bypass
+        configuration.imageProperties.tintColor = UIColor(AppTheme.color(for: .primaryIcon01, theme: theme))
+        return configuration
     }
 }
