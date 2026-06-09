@@ -858,6 +858,26 @@ rules:
           }
       - pattern-regex: 'Task\s*\{\s*\[weak\s+self\]\s+in[\s\S]{0,500}?guard\s+let\s+self(?:\s*=\s*self)?\s+else\s*\{\s*return\s*\}[\s\S]{0,1000}?await\b'
 
+  - id: pocketcasts.no-hardcoded-credential-placeholder-literal
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Do not compare credentials against a hardcoded credential placeholder literal; use String.isMissingOrPlaceholderCredential, which detects the placeholder shape and survives token renames in ApiCredentials.tpl.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+      exclude:
+        - "**/Strings+Generated.swift"
+        - "**/PocketCastsTests/**"
+    patterns:
+      - pattern-regex: '"%\{[A-Za-z0-9_]+\}"'
+
   # Source: critical_device_features.yaml
   - id: critical_device_features
     severity: WARNING

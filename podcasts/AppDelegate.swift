@@ -312,8 +312,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: Secrets
 
     private func configureBitdrift() {
-        guard !ApiCredentials.bitdriftSDKKey.isEmpty else {
-            FileLog.shared.addMessage("Bitdrift SDK key is empty; skipping Bitdrift startup")
+        guard !ApiCredentials.bitdriftSDKKey.isMissingOrPlaceholderCredential else {
+            FileLog.shared.addMessage("Bitdrift SDK key is not configured; skipping Bitdrift startup")
             return
         }
 
@@ -331,12 +331,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         let telemetryDeckAppID = ApiCredentials.telemetryDeckAppID
 
-        guard !telemetryDeckAppID.isEmpty else {
-            FileLog.shared.addMessage("TelemetryDeck App ID is empty; skipping TelemetryDeck startup")
-            return
-        }
-
-        guard telemetryDeckAppID != "%{telemetry_deck_app_id}" else {
+        guard !telemetryDeckAppID.isMissingOrPlaceholderCredential else {
             FileLog.shared.addMessage("TelemetryDeck App ID is not configured; skipping TelemetryDeck startup")
             return
         }

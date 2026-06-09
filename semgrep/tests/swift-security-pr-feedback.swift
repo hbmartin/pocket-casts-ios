@@ -152,3 +152,15 @@ final class SafeDatabaseSchemaSetupHelper {
         try db.executeUpdate("CREATE TABLE SJPodcast (id INTEGER PRIMARY KEY);", values: nil)
     }
 }
+
+final class CredentialPlaceholderRegressionHelper {
+    func isUnconfigured(_ id: String) -> Bool {
+        // ruleid: pocketcasts.no-hardcoded-credential-placeholder-literal
+        id == "%{telemetry_deck_app_id}"
+    }
+
+    func isUnconfiguredPreferred(_ id: String) -> Bool {
+        // ok: pocketcasts.no-hardcoded-credential-placeholder-literal
+        id.isMissingOrPlaceholderCredential
+    }
+}
