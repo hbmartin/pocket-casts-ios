@@ -9,8 +9,6 @@ class AboutViewModel: ObservableObject {
             Analytics.track(.settingsAboutShareWithFriendsTapped)
         case .website:
             Analytics.track(.settingsAboutWebsiteTapped)
-        case .instagram:
-            Analytics.track(.settingsAboutInstagramTapped)
         case .twitter:
             Analytics.track(.settingsAboutTwitterTapped)
         case .automatticFamily:
@@ -24,7 +22,6 @@ class AboutViewModel: ObservableObject {
         case rateUs
         case shareWithFriends
         case website
-        case instagram
         case twitter
         case automatticFamily
         case workWithUs

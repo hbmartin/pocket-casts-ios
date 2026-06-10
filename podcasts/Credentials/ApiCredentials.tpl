@@ -17,8 +17,4 @@ struct ApiCredentials {
     /// TelemetryDeck App ID
     ///
     static let telemetryDeckAppID = "%{telemetry_deck_app_id}"
-
-    /// Instagram App ID
-    ///
-    static let instagramAppID = "%{instagram_app_id}"
 }

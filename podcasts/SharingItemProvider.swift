@@ -10,7 +10,7 @@ class SharingItemProvider: UIActivityItemProvider, @unchecked Sendable {
 
     override func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
         // return the sharing string containing the podcast and episode name, but only to services where it makes sense
-        if activityType == .postToFacebook || activityType == .postToTwitter || activityType == .postToWeibo || activityType == .message || activityType == .mail || activityType == .postToTencentWeibo {
+        if activityType == .postToTwitter || activityType == .postToWeibo || activityType == .message || activityType == .mail || activityType == .postToTencentWeibo {
             return sharingString
         }
 
