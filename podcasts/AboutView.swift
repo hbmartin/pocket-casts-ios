@@ -52,10 +52,6 @@ struct AboutView: View {
                                 model.track(action: .website)
                                 openUrl(ServerConstants.Urls.pocketcastsDotCom)
                             }
-                            AboutRow(mainText: L10n.instagram, secondaryText: L10n.socialHandle) {
-                                model.track(action: .instagram)
-                                SocialsHelper.openInstagram()
-                            }
                             AboutRow(mainText: L10n.xCom, secondaryText: L10n.socialHandle) {
                                 model.track(action: .twitter)
                                 SocialsHelper.openTwitter()

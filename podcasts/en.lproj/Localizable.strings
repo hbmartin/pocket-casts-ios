@@ -4012,7 +4012,7 @@
 /* When loading the End of Year stats stories fails. */
 "eoy_stories_failed" = "Failed to load stories.";
 
-/* Label of a button to share the current story (similar to Instagram stories) */
+/* Label of a button to share the current story as a shareable story card */
 "eoy_share" = "Share this story";
 
 /* Title of the story when this year's listening time is way bigger than previous year. */
@@ -4587,9 +4587,6 @@
 
 /* A title shown for a share option which copies a link to a podcast or episode */
 "share_copy_link" = "Copy link";
-
-/* A button title shown for a share option which shares a image or video clip to Instagram Stories */
-"share_instagram_stories" = "Stories";
 
 /* A common string used throughout the app. Often refers to the Transcript tab in the player. */
 "transcript" = "Transcript";

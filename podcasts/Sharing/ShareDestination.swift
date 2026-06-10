@@ -5,14 +5,11 @@ import PocketCastsUtils
 import EndOfYear
 
 enum ShareDestination: Hashable {
-    case instagram
     case copyLink
     case systemSheet(vc: UIViewController)
 
     var name: String {
         switch self {
-        case .instagram:
-            L10n.shareInstagramStories
         case .copyLink:
             L10n.shareCopyLink
         case .systemSheet:
@@ -22,8 +19,6 @@ enum ShareDestination: Hashable {
 
     var icon: Image {
         switch self {
-        case .instagram:
-            Image("instagram")
         case .copyLink:
             Image("pocketcasts")
         case .systemSheet:
@@ -45,24 +40,6 @@ enum ShareDestination: Hashable {
                presentFrom rect: CurrentValueSubject<CGRect, Never>,
                source: AnalyticsSource) async throws {
         switch self {
-        case .instagram:
-            let item = try await option.shareData(style: style, destination: self, clipUUID: clipUUID, progress: progress).mapFirst { shareItem -> (Data, UTType)? in
-                if let data = shareItem.item as? Data {
-                    return (data, .mpeg4Movie)
-                } else if let image = shareItem.item as? UIImage, let data = image.pngData() {
-                    return (data, .png)
-                } else {
-                    return nil
-                }
-            }
-
-            guard let item else {
-                throw ShareError.noMatchingItemIdentifier
-            }
-
-            instagramShare(data: item.0, type: item.1, url: option.shareURL)
-            ShareDestination.logClipShared(option: option, style: style, clipUUID: clipUUID, source: source)
-            ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source)
         case .copyLink:
             UIPasteboard.general.string = option.shareURL
             Toast.show(L10n.shareCopiedToClipboard)
@@ -86,57 +63,13 @@ enum ShareDestination: Hashable {
         }
     }
 
-    @MainActor
-    private func instagramShare(data: Data, type: UTType, url: String) {
-        let attributionURL = url
-        let appID = ApiCredentials.instagramAppID
-
-        guard let urlScheme = URL(string: "instagram-stories://share?source_application=\(appID)"),
-            UIApplication.shared.canOpenURL(urlScheme) else {
-            return
-        }
-
-        let backgroundTopColor = UIColor.green
-        let backgroundBottomColor = UIColor.systemPink
-
-        let dataKey = type == .mpeg4Movie ? "com.instagram.sharedSticker.backgroundVideo" : "com.instagram.sharedSticker.backgroundImage"
-        let pasteboardItems = [[dataKey: data,
-                                "com.instagram.sharedSticker.backgroundTopColor": backgroundTopColor.hexString(),
-                                "com.instagram.sharedSticker.backgroundBottomColor": backgroundBottomColor.hexString(),
-                                "com.instagram.sharedSticker.contentURL": attributionURL]]
-        let pasteboardOptions: [UIPasteboard.OptionsKey: Any] = [.expirationDate: Date().addingTimeInterval(5.minutes)]
-
-        UIPasteboard.general.setItems(pasteboardItems, options: pasteboardOptions)
-
-        UIApplication.shared.open(urlScheme)
-    }
-
-    var isIncluded: Bool {
-        switch self {
-        case .instagram:
-            if let url = URL(string: "instagram-stories://share"), UIApplication.shared.canOpenURL(url) {
-                true
-            } else {
-                false
-            }
-        default:
-            true
-        }
-    }
-
     var analyticsDescription: String {
         switch self {
-        case .instagram:
-            "ig_story"
         case .copyLink:
             "url"
         case .systemSheet:
             "system_sheet"
         }
-    }
-
-    enum Constants {
-        static let displayedAppsCount = 3
     }
 
     static func ==(lhs: ShareDestination, rhs: ShareDestination) -> Bool {
@@ -145,18 +78,6 @@ enum ShareDestination: Hashable {
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(name)
-    }
-
-    static var displayedApps: Array<ShareDestination>.SubSequence {
-        apps.prefix(Constants.displayedAppsCount)
-    }
-
-    private static var apps: [Self] {
-        let thirdPartyApps: [Self] = [.instagram]
-        return thirdPartyApps.compactMap({ destination -> Self? in
-            guard destination.isIncluded else { return nil }
-            return destination
-        })
     }
 }
 
@@ -253,13 +174,7 @@ extension ShareDestination {
         }
 
         func exportVideo() async throws -> URL {
-            let size: CGSize
-            switch self {
-            case .instagram:
-                size = CGSize(width: style.videoSize.width, height: style.videoSize.height)
-            default:
-                size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
-            }
+            let size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
 
             let parameters = await VideoExporter.Parameters(duration: CMTimeGetSeconds(duration), size: size, scale: scale, episodeAsset: playerItem.asset, audioStartTime: startTime, audioDuration: duration, fileType: .mp4)
             try await VideoExporter.export(view: AnimatedShareImageView(info: info, style: style, size: size), with: parameters, to: url, progress: progress)
@@ -269,15 +184,9 @@ extension ShareDestination {
 
         switch style {
         case .audio:
-            switch self {
-            case .instagram:
-                // Instagram will not accept a straight m4a file for sharing so we need to generate a video clip to share
-                return try await exportVideo()
-            default:
-                let url = FileManager.default.temporaryDirectory.appendingPathComponent("audio_export-\(UUID().uuidString)", conformingTo: .m4a)
-                try await AudioClipExporter.exportAudioClip(from: playerItem.asset, startTime: startTime, duration: duration, to: url, progress: progress)
-                return url
-            }
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("audio_export-\(UUID().uuidString)", conformingTo: .m4a)
+            try await AudioClipExporter.exportAudioClip(from: playerItem.asset, startTime: startTime, duration: duration, to: url, progress: progress)
+            return url
         default:
             return try await exportVideo()
         }

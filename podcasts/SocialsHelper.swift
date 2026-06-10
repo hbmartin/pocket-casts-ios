@@ -8,12 +8,6 @@ class SocialsHelper {
         openUrls(urls: urls)
     }
 
-    class func openInstagram() {
-        let urls = ["instagram://user?username=pocketcasts", "https://www.instagram.com/pocketcasts/", ""]
-
-        openUrls(urls: urls)
-    }
-
     private class func openUrls(urls: [String]) {
         let application = UIApplication.shared
         for urlString in urls {

@@ -31,22 +31,3 @@ def get_required_env!(key, env_file_path: USER_ENV_FILE_PATH)
     MSG
   end
 end
-
-# Fails loudly to make it clear that the WordPress-backed translation sync is
-# disabled.
-#
-# The GlotPress project that previously hosted the Pocket Casts iOS strings and
-# App Store metadata has been removed. Until a replacement translation source is
-# wired up, the lanes that downloaded localized strings/metadata or checked
-# translation progress must fail explicitly rather than silently skip
-# translation work.
-def glotpress_translation_sync_disabled!
-  UI.user_error! <<~MSG
-    WordPress-backed translation sync is disabled.
-
-    The GlotPress project that previously hosted these translations has been
-    removed, so downloading localized strings/metadata and checking translation
-    progress are no longer available. Implement a replacement translation source
-    and re-enable these lanes before running the release/localization flow.
-  MSG
-end

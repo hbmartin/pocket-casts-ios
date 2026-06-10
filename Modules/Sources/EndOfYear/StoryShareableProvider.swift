@@ -21,7 +21,6 @@ public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable
 
     private let lock = NSLock()
     private var generatedItemStorage: Any?
-    private var generatedItemURLStorage: Any?
     private var viewStorage: AnyView?
 
     public var generatedItem: Any? {
@@ -34,20 +33,6 @@ public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable
         set {
             lock.lock()
             generatedItemStorage = newValue
-            lock.unlock()
-        }
-    }
-
-    public var generatedItemURL: Any? {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-
-            return generatedItemURLStorage
-        }
-        set {
-            lock.lock()
-            generatedItemURLStorage = newValue
             lock.unlock()
         }
     }
@@ -82,13 +67,7 @@ public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable
     }
 
     override public var item: Any {
-        get {
-            if activityType?.rawValue.contains("instagram") == true {
-                generatedItemURL ?? NSURL()
-            } else {
-                generatedItem ?? UIImage()
-            }
-        }
+        generatedItem ?? UIImage()
     }
 
     // This method is called when the share sheet appeared
@@ -106,26 +85,8 @@ public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable
         .ignoresSafeArea()
         .snapshotUIKit()
 
-        let snapshotURL = save(snapshot: snapshot)
-        generatedItemURL = snapshotURL
         generatedItem = snapshot
         self.view = nil
-    }
-
-    private func save(snapshot: UIImage) -> URL? {
-        guard let imageData = snapshot.pngData() else { return nil }
-
-        let tempDir = FileManager.default.temporaryDirectory
-        let uuid = UUID().uuidString
-        let url = tempDir.appendingPathComponent("pocket-casts-share-image-\(uuid).png")
-
-        do {
-            try imageData.write(to: url)
-        } catch {
-            return nil
-        }
-
-        return url
     }
 }
 

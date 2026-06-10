@@ -115,7 +115,7 @@ enum SharingModal {
             return
         }
 
-        let sharingDestinations: [ShareDestination] = ShareDestination.displayedApps + [.copyLink, .systemSheet(vc: viewController)]
+        let sharingDestinations: [ShareDestination] = [.copyLink, .systemSheet(vc: viewController)]
         let sharingView = SharingView(destinations: sharingDestinations, selectedOption: option, source: source)
         let modalView = ModalView {
             sharingView
@@ -215,13 +215,7 @@ extension SharingModal.Option {
         case .clipShare(let episode, let clipTime, _):
             media = try await mediaData(imageInfo: info, style: style, episode: episode, clipTime: clipTime, destination: destination, clipUUID: clipUUID, scale: Constants.exportedAssetScale, progress: progress)
         default:
-            let size: CGSize
-            switch destination {
-            case .instagram:
-                size = CGSize(width: style.videoSize.width, height: style.videoSize.height)
-            default:
-                size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
-            }
+            let size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
             media = ShareImageView(info: info, style: style, angle: .constant(0)).frame(width: size.width, height: size.height).snapshot(scale: Constants.exportedAssetScale)
         }
 
@@ -261,26 +255,22 @@ extension SharingModal.Option {
 
         progress.wrappedValue = nil
 
-        if destination == .instagram {
-            return try? Data(contentsOf: fileURL) // For some reason, I couldn't get this to work with just a URL
-        } else {
-            let components = [
-                episode.parentPodcast()?.title,
-                episode.title,
-                "\(clipTime.start.secondsFormatted())-\(clipTime.end.secondsFormatted())"
-            ].compactMap { $0 }
+        let components = [
+            episode.parentPodcast()?.title,
+            episode.title,
+            "\(clipTime.start.secondsFormatted())-\(clipTime.end.secondsFormatted())"
+        ].compactMap { $0 }
 
-            let fileName = components.joined(separator: " - ").appending(".\(fileURL.pathExtension)").sanitizedFileName()
-            var newURL = fileURL
-            newURL.deleteLastPathComponent()
-            newURL.appendPathComponent(fileName)
+        let fileName = components.joined(separator: " - ").appending(".\(fileURL.pathExtension)").sanitizedFileName()
+        var newURL = fileURL
+        newURL.deleteLastPathComponent()
+        newURL.appendPathComponent(fileName)
 
-            if FileManager.default.fileExists(atPath: newURL.path) {
-                try FileManager.default.removeItem(at: newURL)
-            }
-            try FileManager.default.copyItem(at: fileURL, to: newURL)
-            return newURL as NSURL // Third party apps need URLs and won't accept Data
+        if FileManager.default.fileExists(atPath: newURL.path) {
+            try FileManager.default.removeItem(at: newURL)
         }
+        try FileManager.default.copyItem(at: fileURL, to: newURL)
+        return newURL as NSURL // Third party apps need URLs and won't accept Data
     }
 
     var shareURL: String {

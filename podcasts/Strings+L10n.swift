@@ -7,7 +7,6 @@ extension L10n {
     /// These strings are proper nouns and shouldn't be localized
     static let pocketCastsShort = "Casts"
     static let xCom = "X"
-    static let instagram = "Instagram"
     static let socialHandle = "@pocketcasts"
     static let websiteShort = "pocketcasts.com"
 

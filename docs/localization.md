@@ -6,13 +6,11 @@ On each build any new string added to the english localization of `Localizable.s
 
 When Strings are generated, they are converted from snake case to camel case and strings with an associated format are created as functions that will accept the passed in parameters and perform a type checking.
 
-> **Translation sync is currently disabled.** The WordPress-hosted GlotPress project that previously translated these strings has been removed, so the release lanes that uploaded the source strings and downloaded translations now fail explicitly. The existing `*.lproj` translations are frozen until a replacement is wired up. See [translation-reimplementation.md](./translation-reimplementation.md).
-
-Historically, during the release process the `en.lproj/Localizable.strings` file was uploaded to GlotPress for translation, and before the release build was finalized all the translations were grabbed from GlotPress and saved back to the `Localizable.strings` files.
+> **There is no automated translation pipeline.** The previous translation sync (and all of its release tooling) has been removed. The per-locale `*.lproj` translations currently in the repo are frozen — whatever was last committed — until a replacement translation source is wired up. See [translation-reimplementation.md](./translation-reimplementation.md) for the plan and integration points.
 
 ## Use Snake Cased Keys
 
-When adding strings add then with meaningful keys that describe `feature_` + `relevantIdentifier(s)_` + `description`. GlotPress will truncate strings over 255 characters which can cause issues with detecting changes.
+When adding strings add them with meaningful keys that describe `feature_` + `relevantIdentifier(s)_` + `description`. Keep keys under 255 characters — some translation platforms truncate longer keys, which can cause issues with detecting changes.
 
 ```swift
 // Do
@@ -68,7 +66,7 @@ let str = NSLocalizedString("© \(year) Acme, Inc.", comment: "Copyright Notice"
 
 ## Pluralization
 
-GlotPress currently does not support pluralization using the [`.stringsdict` file](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/LocalizingYourApp/LocalizingYourApp.html#//apple_ref/doc/uid/10000171i-CH5-SW10). So, right now, you have to support plurals manually by having separate localized strings.
+Pluralization via the [`.stringsdict` file](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/LocalizingYourApp/LocalizingYourApp.html#//apple_ref/doc/uid/10000171i-CH5-SW10) is not used. So, right now, you have to support plurals manually by having separate localized strings.
 
 ```swift
 // Localizable Strings

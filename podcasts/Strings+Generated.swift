@@ -984,7 +984,7 @@ internal enum L10n {
   internal static var eoyDescription: String { return L10n.tr("Localizable", "eoy_description", fallback: "See your top podcasts, categories, listening stats, and more. Share with friends and shout out your favorite creators!") }
   /// Label of the End of Year dismiss button
   internal static var eoyNotNow: String { return L10n.tr("Localizable", "eoy_not_now", fallback: "Not Now") }
-  /// Label of a button to share the current story (similar to Instagram stories)
+  /// Label of a button to share the current story as a shareable story card
   internal static var eoyShare: String { return L10n.tr("Localizable", "eoy_share", fallback: "Share this story") }
   /// Message of an alert displayed to the user asking if they want to share the current story
   internal static var eoyShareThisStoryMessage: String { return L10n.tr("Localizable", "eoy_share_this_story_message", fallback: "Paste this image to your socials and give a shout out to your favorite shows and creators") }
@@ -3749,8 +3749,6 @@ internal enum L10n {
   }
   /// A title used when sharing artwork and link to a podcast episode
   internal static var shareEpisodeTitle: String { return L10n.tr("Localizable", "share_episode_title", fallback: "Share episode") }
-  /// A button title shown for a share option which shares a image or video clip to Instagram Stories
-  internal static var shareInstagramStories: String { return L10n.tr("Localizable", "share_instagram_stories", fallback: "Stories") }
   /// Message indicating that the process to subscribe to a podcast list is in progress.
   internal static var shareListSubscribing: String { return L10n.tr("Localizable", "share_list_subscribing", fallback: "Subscribing...") }
   /// A title shown for the share action which displays the system share sheet
