@@ -78,7 +78,15 @@ class SleepTimerButton: UIButton {
     }
 
     @objc private func reduceMotionStatusDidChange() {
-        sleepTimerOn && window != nil ? animateToOn() : animateToOff()
+        // While detached, leave the animation state alone; didMoveToWindow
+        // re-evaluates it on the next attach.
+        guard window != nil else { return }
+
+        if sleepTimerOn {
+            animateToOn()
+        } else {
+            animateToOff()
+        }
     }
 
     @objc private func applicationWillResignActive() {

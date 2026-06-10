@@ -197,7 +197,10 @@ class SkipIconView: UIView {
 
     /// Plays a single rotation to acknowledge a tap.
     func spin() {
-        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        guard !UIAccessibility.isReduceMotionEnabled else {
+            acknowledgeTapWithoutMotion()
+            return
+        }
 
         let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
         rotation.fromValue = 0
@@ -215,6 +218,19 @@ class SkipIconView: UIView {
             CAMediaTimingFunction(name: .easeInEaseOut),
         ]
         layer.add(scale, forKey: Self.scaleKey)
+    }
+
+    /// Reduce Motion alternative to `spin()`: a brief opacity dip so taps still
+    /// get visual acknowledgement without any movement.
+    private func acknowledgeTapWithoutMotion() {
+        alpha = 1.0
+        UIView.animate(withDuration: 0.1, animations: {
+            self.alpha = 0.5
+        }, completion: { _ in
+            UIView.animate(withDuration: 0.2) {
+                self.alpha = 1.0
+            }
+        })
     }
 
     private func arrowPath() -> CGPath {
