@@ -1,6 +1,7 @@
 import PocketCastsServer
 import PocketCastsDataModel
 import PocketCastsUtils
+import TelemetryDeck
 
 extension AppDelegate {
     private var shouldRegisterAdapters: Bool {
@@ -16,7 +17,11 @@ extension AppDelegate {
 
         // Only setup if protected data is available, the user hasn't opted out, and we aren't already registered
         if !Settings.analyticsOptOut() {
-            adapters = [AnalyticsLoggingAdapter(), BitdriftAnalyticsAdapter(), TelemetryDeckAnalyticsAdapter()]
+            adapters = [AnalyticsLoggingAdapter(), BitdriftAnalyticsAdapter()]
+
+            if TelemetryManager.isInitialized {
+                adapters.append(TelemetryDeckAnalyticsAdapter())
+            }
         }
 
         // LiveAnalyticsStreamer buffers events for all builds, sends when server enables liveAnalyticsUrl

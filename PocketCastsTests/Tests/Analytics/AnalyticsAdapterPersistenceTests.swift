@@ -1,5 +1,8 @@
 import XCTest
 @testable import podcasts
+#if canImport(TelemetryDeck)
+import TelemetryDeck
+#endif
 
 /// Tests that verify the Analytics opt-out/opt-in flow works correctly.
 /// This tests the fix from commit f60bcd3ff "Call setupAnalytics after unregister"
@@ -26,7 +29,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         Settings.setAnalytics(optOut: false)
     }
 
-    func testAnalyticsUnregistersAfterOptOut() {
+    @MainActor func testAnalyticsUnregistersAfterOptOut() {
         // Given: Analytics adapters are registered
         let testAdapters = [TestAnalyticsAdapter()]
         Analytics.register(adapters: testAdapters)
@@ -40,7 +43,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         XCTAssertTrue(Settings.analyticsOptOut(), "Settings should show user opted out")
     }
 
-    func testRefreshRegisteredUnregistersWhenOptedOut() {
+    @MainActor func testRefreshRegisteredUnregistersWhenOptedOut() {
         // Given: Analytics adapters are registered and user opts out
         let testAdapters = [TestAnalyticsAdapter()]
         Analytics.register(adapters: testAdapters)
@@ -53,7 +56,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         XCTAssertFalse(analytics.adaptersRegistered, "Analytics should be unregistered when user is opted out")
     }
 
-    func testRefreshRegisteredCallsSetupAnalyticsWhenOptedIn() {
+    @MainActor func testRefreshRegisteredCallsSetupAnalyticsWhenOptedIn() {
         // Given: User is opted in to analytics but adapters are not registered
         Settings.setAnalytics(optOut: false)
         XCTAssertFalse(analytics.adaptersRegistered, "Analytics should not be registered initially")
@@ -99,7 +102,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         XCTAssertTrue(analytics.adaptersRegistered, "Adapter should be re-registered after opt-in")
     }
 
-    func testOptInOfAnalyticsCallsSetupAnalytics() {
+    @MainActor func testOptInOfAnalyticsCallsSetupAnalytics() {
         // Given: User is opted out
         Settings.setAnalytics(optOut: true)
         Analytics.unregister()
@@ -116,6 +119,18 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         XCTAssertTrue(true, "optInOfAnalytics completed successfully")
         #endif
     }
+
+#if canImport(TelemetryDeck)
+    func testTelemetryDeckAdapterIgnoresEventsWhenSDKIsNotInitialized() async {
+        TelemetryDeck.terminate()
+
+        XCTAssertFalse(TelemetryManager.isInitialized, "TelemetryDeck should start uninitialized for this regression test")
+
+        await TelemetryDeckAnalyticsAdapter().track(name: "test_event", properties: ["source": "unit_test"])
+
+        XCTAssertFalse(TelemetryManager.isInitialized, "Tracking should not initialize TelemetryDeck implicitly")
+    }
+#endif
 }
 
 // MARK: - Test Helper Classes

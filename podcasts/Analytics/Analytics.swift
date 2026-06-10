@@ -89,22 +89,24 @@ extension Analytics {
 // MARK: - Opt out/in
 
 extension Analytics {
-    func optOutOfAnalytics() {
+    @MainActor func optOutOfAnalytics() {
         Analytics.track(.analyticsOptOut)
         Settings.setAnalytics(optOut: true)
         refreshRegistered()
     }
 
-    func optInOfAnalytics() {
+    @MainActor func optInOfAnalytics() {
 #if !APPCLIP && !os(tvOS)
         Settings.setAnalytics(optOut: false)
         setAdaptersRegisteredStatus(false)
-        (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
+        let appDelegate = UIApplication.shared.delegate as? AppDelegate
+        appDelegate?.configureTelemetryDeck()
+        appDelegate?.setupAnalytics()
         Analytics.track(.analyticsOptIn)
 #endif
     }
 
-    func refreshRegistered() {
+    @MainActor func refreshRegistered() {
         if Settings.analyticsOptOut() {
             Analytics.unregister()
         }

@@ -46,8 +46,9 @@ The runner needs:
 - Bundler and Homebrew.
 - Semgrep. CI can install it with Homebrew if it is missing.
 
-Basic CI does not need Apple signing secrets. The workflow runs
-`make external_contributor` before build, test, and static check jobs.
+Basic CI does not need Apple signing secrets. Build, test, and static check jobs
+prepare placeholder credentials unless a trusted event provides the optional
+`POCKET_CASTS_CREDENTIALS_JSON` repository secret.
 
 ## Public Repository Safety
 
@@ -183,9 +184,12 @@ queueing jobs to an out-of-date runner, especially for security updates.
 
 ### Secrets And Signing Material
 
-Public CI should not need signing credentials. The workflows run
-`make external_contributor` before build, test, and static check jobs so normal
-CI can build with signing disabled or with placeholder contributor setup.
+Public CI should not need signing credentials. The workflows use placeholder
+credentials for PR jobs so normal CI can build with signing disabled or with
+contributor setup. Trusted push and manual non-PR runs may provide
+`POCKET_CASTS_CREDENTIALS_JSON`; CI writes it to
+`~/.configure/pocketcasts-ios/secrets/pocket_casts_credentials.json` with
+`chmod 600` before invoking Xcode.
 
 Release jobs are different. They need Fastlane, App Store Connect, code signing,
 Slack, Bitdrift, and GitHub release permissions. Keep those credentials scoped
@@ -201,6 +205,8 @@ and inspectable:
   protects values it knows about.
 - Use a dedicated `POCKET_CASTS_RELEASE_GITHUB_TOKEN` with only the permissions
   needed by the release lanes.
+- Store service API credentials as one JSON repository secret named
+  `POCKET_CASTS_CREDENTIALS_JSON`; do not expose it to `pull_request` jobs.
 - Rotate App Store Connect keys, GitHub tokens, Slack webhooks, Bitdrift keys,
   and signing credentials after any suspicious runner job.
 
@@ -257,6 +263,7 @@ Keep these rules in place when changing workflows:
 - Use explicit `permissions:` blocks. Default to `contents: read` for CI and
   grant write permissions only where the lane requires them.
 - Do not expose release secrets to `pull_request` jobs.
+- Do not expose `POCKET_CASTS_CREDENTIALS_JSON` to `pull_request` jobs.
 - Do not use `pull_request_target` for build or test jobs.
 - Do not evaluate PR-controlled text directly in shell scripts. Assign it to an
   environment variable first if it must be used.
