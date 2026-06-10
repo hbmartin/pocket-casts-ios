@@ -377,7 +377,7 @@ public enum FeatureFlag: String, CaseIterable {
         case .trackNetworkDataUsage:
             true
         case .statsHeatmap:
-            false
+            true
         case .liquidGlass:
             true
         case .shareProfile:
