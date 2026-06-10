@@ -145,7 +145,7 @@ private extension UIViewController {
             sheetController.prefersGrabberVisible = showingGrabber
             sheetController.preferredCornerRadius = LiquidGlass.isEnabled ? 26 : 10
 
-            // Prevent sheet from being dismissed by dragging down
+            // Scrolling content to the edge should not expand the sheet to a larger detent
             sheetController.prefersScrollingExpandsWhenScrolledToEdge = false
         }
 

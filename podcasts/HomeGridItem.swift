@@ -17,6 +17,7 @@ struct HomeGridItem: Identifiable {
         } else if let folder {
             return .folder(folder.uuid)
         }
+        // Unreachable: both initializers guarantee a podcast or folder.
         return .empty
     }
 
