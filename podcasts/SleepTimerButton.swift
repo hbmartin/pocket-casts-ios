@@ -34,6 +34,7 @@ class SleepTimerButton: UIButton {
         iconView.transform = CGAffineTransform(scaleX: scaleAmount, y: scaleAmount)
 
         super.init(frame: frame)
+        setupObservers()
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -42,12 +43,52 @@ class SleepTimerButton: UIButton {
         iconView.transform = CGAffineTransform(scaleX: scaleAmount, y: scaleAmount)
 
         super.init(coder: aDecoder)
+        setupObservers()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     override func awakeFromNib() {
         super.awakeFromNib()
 
         setupAnimation()
+    }
+
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reduceMotionStatusDidChange),
+            name: UIAccessibility.reduceMotionStatusDidChangeNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    @objc private func reduceMotionStatusDidChange() {
+        sleepTimerOn ? animateToOn() : animateToOff()
+    }
+
+    @objc private func applicationWillResignActive() {
+        iconView.stopAnimating()
+    }
+
+    @objc private func applicationDidBecomeActive() {
+        if sleepTimerOn {
+            animateToOn()
+        }
     }
 
     func setupAnimation() {

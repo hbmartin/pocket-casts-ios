@@ -136,14 +136,25 @@ class PlayPauseIconView: UIView {
         shapeLayer.path = target
         CATransaction.commit()
 
-        guard animated, let fromPath else { return }
+        guard animated else { return }
 
-        let morph = CABasicAnimation(keyPath: "path")
-        morph.duration = Self.morphDuration
-        morph.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        morph.fromValue = fromPath
-        morph.toValue = target
-        shapeLayer.add(morph, forKey: Self.morphKey)
+        if let fromPath = fromPath {
+            let morph = CABasicAnimation(keyPath: "path")
+            morph.duration = Self.morphDuration
+            morph.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            morph.fromValue = fromPath
+            morph.toValue = target
+            shapeLayer.add(morph, forKey: Self.morphKey)
+        }
+
+        if !UIAccessibility.isReduceMotionEnabled {
+            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+            scale.values = [0.86, 1.0]
+            scale.keyTimes = [0, 1]
+            scale.duration = Self.morphDuration
+            scale.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            layer.add(scale, forKey: "playPauseScale")
+        }
     }
 
     private func currentPath() -> CGPath {

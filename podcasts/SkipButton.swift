@@ -202,6 +202,18 @@ class SkipIconView: UIView {
         rotation.duration = 0.4
         rotation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         arcLayer.add(rotation, forKey: Self.spinKey)
+
+        if !UIAccessibility.isReduceMotionEnabled {
+            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+            scale.values = [1.0, 0.85, 1.0]
+            scale.keyTimes = [0, 0.4, 1]
+            scale.duration = 0.4
+            scale.timingFunctions = [
+                CAMediaTimingFunction(name: .easeInEaseOut),
+                CAMediaTimingFunction(name: .easeInEaseOut),
+            ]
+            layer.add(scale, forKey: "skipScale")
+        }
     }
 
     private func arrowPath() -> CGPath {

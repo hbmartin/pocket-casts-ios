@@ -37,11 +37,38 @@ class NowPlayingAnimationView: UIView {
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupBars()
+        setupObservers()
     }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupBars()
+        setupObservers()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reduceMotionStatusDidChange),
+            name: UIAccessibility.reduceMotionStatusDidChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func reduceMotionStatusDidChange() {
+        animating ? animateToOn() : animateToOff()
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        if animating {
+            animateToOn()
+        }
     }
 
     private func setupBars() {
