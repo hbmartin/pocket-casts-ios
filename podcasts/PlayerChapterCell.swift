@@ -147,7 +147,10 @@ class PlayerChapterCell: UITableViewCell {
 
             currentEpisode.deselectedChaptersModified = TimeFormatter.currentUTCTimeInMillis()
 
-            DataManager.sharedManager.save(episode: currentEpisode)
+            // Persist off the main thread; a contended write lock would otherwise hang the UI.
+            DispatchQueue.global(qos: .userInitiated).async {
+                DataManager.sharedManager.save(episode: currentEpisode)
+            }
         }
     }
 

@@ -123,9 +123,9 @@ class UpNextDataManager {
                     WHERE episodePosition >= ?
                       AND wasDeleted = 0
                       AND playlist_id = ?
-                      AND episodeUuid NOT IN (\(DataHelper.convertArrayToInString(uuids)))
+                      AND episodeUuid NOT IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """,
-                    values: [playlistEpisodes.count, topPosition, UpNextDataManager.upNextPlaylistId]
+                    values: [playlistEpisodes.count, topPosition, UpNextDataManager.upNextPlaylistId] + uuids
                 )
 
                 for playlistEpisode in playlistEpisodes {
@@ -192,7 +192,7 @@ class UpNextDataManager {
                         values: [UpNextDataManager.upNextPlaylistId]
                     )
                 } else {
-                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid NOT IN (\(DataHelper.convertArrayToInString(uuids))) AND playlist_id = ?", values: [UpNextDataManager.upNextPlaylistId])
+                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid NOT IN (\(DBUtils.placeholders(amount: uuids.count))) AND playlist_id = ?", values: uuids + [UpNextDataManager.upNextPlaylistId])
                 }
             } catch {
                 FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesNotIn error: \(error)")
@@ -206,7 +206,7 @@ class UpNextDataManager {
         guard !uuids.isEmpty else { return }
         dbQueue.write { db in
             do {
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid IN (\(DataHelper.convertArrayToInString(uuids))) AND playlist_id = ?", values: [UpNextDataManager.upNextPlaylistId])
+                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid IN (\(DBUtils.placeholders(amount: uuids.count))) AND playlist_id = ?", values: uuids + [UpNextDataManager.upNextPlaylistId])
             } catch {
                 FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesNotIn error: \(error)")
             }

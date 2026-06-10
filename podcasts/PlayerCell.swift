@@ -145,7 +145,7 @@ class PlayerCell: ThemeableSwipeCell {
         guard let ourEpisode = episode, let _ = DownloadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
 
         if !ourEpisode.downloading() {
-            episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
+            refreshEpisodeFromDatabase(uuid: ourEpisode.uuid)
         }
 
         updateDownloadStatus()
@@ -156,9 +156,19 @@ class PlayerCell: ThemeableSwipeCell {
         guard let ourEpisode = episode, let uuid = notification.object as? String, ourEpisode.uuid == uuid else { return }
 
         // if it is, reload our episode so we get the latest status for it
-        episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
+        refreshEpisodeFromDatabase(uuid: ourEpisode.uuid)
+    }
 
-        updateDownloadStatus()
+    /// Reloads the episode from the database off the main thread, then refreshes the
+    /// download UI — guarding against cell reuse while the read was in flight.
+    private func refreshEpisodeFromDatabase(uuid: String) {
+        Task { [weak self] in
+            guard let refreshed = await DataManager.sharedManager.findBaseEpisodeAsync(uuid: uuid) else { return }
+            guard let self, self.episode?.uuid == uuid else { return }
+
+            self.episode = refreshed
+            self.updateDownloadStatus()
+        }
     }
 
     func updateDownloadStatus() {

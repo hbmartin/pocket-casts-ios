@@ -141,7 +141,7 @@ class EpisodesDataManager {
     func episodes(for filter: EpisodeFilter, limit: Int = Constants.Limits.maxFilterItems) -> [ListEpisode] {
         let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: limit)
         let tintColor = filter.playlistColor()
-        return EpisodeTableHelper.loadEpisodes(tintColor: tintColor, query: query, arguments: nil)
+        return EpisodeTableHelper.loadEpisodes(tintColor: tintColor, query: query.sql, arguments: query.arguments)
     }
 
     func playlistEpisodes(
@@ -151,7 +151,7 @@ class EpisodesDataManager {
         search: String? = nil
     ) -> [ListEpisode] {
         let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), searchTerm: search, limit: limit, shouldShowArchived: shouldShowArchived)
-        return EpisodeTableHelper.loadPlaylistEpisodes(query: query)
+        return EpisodeTableHelper.loadPlaylistEpisodes(query: query.sql, arguments: query.arguments)
     }
 
     func playlistFirstDistinctEpisodes(
@@ -161,7 +161,7 @@ class EpisodesDataManager {
         search: String? = nil
     ) -> [ListEpisode] {
         let query = PlaylistQueryBuilder.query(clause: .firstDistinctEpisodes, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), searchTerm: search, limit: limit, shouldShowArchived: shouldShowArchived)
-        return EpisodeTableHelper.loadPlaylistEpisodes(query: query)
+        return EpisodeTableHelper.loadPlaylistEpisodes(query: query.sql, arguments: query.arguments)
     }
 
     // MARK: - Downloads

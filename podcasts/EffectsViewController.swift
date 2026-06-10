@@ -346,7 +346,10 @@ class EffectsViewController: SimpleNotificationsViewController {
         guard let episode = PlaybackManager.shared.currentEpisode() as? Episode, let podcast = episode.parentPodcast() else { return }
 
         podcast.isEffectsOverridden = false
-        DataManager.sharedManager.save(podcast: podcast)
+        // Persist off the main thread; a contended write lock would otherwise hang the UI.
+        DispatchQueue.global(qos: .userInitiated).async {
+            DataManager.sharedManager.save(podcast: podcast)
+        }
         PlaybackManager.shared.effectsChangedExternally()
         updateClearView()
     }

@@ -61,16 +61,26 @@ class EpisodeDataManager {
         loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE uuid = ?", values: [uuid], dbQueue: dbQueue)
     }
 
+    func findByAsync(uuid: String, dbQueue: PCDBQueue) async -> Episode? {
+        let query = "SELECT * from \(DataManager.episodeTableName) WHERE uuid = ?"
+        do {
+            return try await dbQueue.read { db in
+                try self.loadSingle(query: query, values: [uuid], db: db)
+            }
+        } catch {
+            FileLog.shared.addMessage("EpisodeDataManager.findByAsync error: \(error)")
+            return nil
+        }
+    }
+
     func findWhere(customWhere: String, arguments: [Any]?, dbQueue: PCDBQueue) -> Episode? {
         loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE \(customWhere)", values: arguments, dbQueue: dbQueue)
     }
 
     func findPlayedEpisodes(uuids: [String], dbQueue: PCDBQueue) -> [String] {
-        let list = uuids.map { "'\($0)'" }.joined(separator: ",")
-
         let query = """
         SELECT * from \(DataManager.episodeTableName)
-        WHERE uuid IN (\(list))
+        WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
         AND playingStatus = ?
         LIMIT \(uuids.count)
         """
@@ -78,7 +88,7 @@ class EpisodeDataManager {
         var episodes = [String]()
         dbQueue.read { db in
             do {
-                let resultSet = try db.executeQuery(query, values: [PlayingStatus.completed.rawValue])
+                let resultSet = try db.executeQuery(query, values: uuids + [PlayingStatus.completed.rawValue])
                 defer { resultSet.close() }
 
                 while resultSet.next() {
@@ -93,18 +103,16 @@ class EpisodeDataManager {
     }
 
     func findMatchingEpisodes(uuids: [String], dbQueue: PCDBQueue) -> [String] {
-        let list = uuids.map { "'\($0)'" }.joined(separator: ",")
-
         let query = """
         SELECT uuid from \(DataManager.episodeTableName)
-        WHERE uuid IN (\(list))
+        WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
         LIMIT \(uuids.count)
         """
 
         var episodes = [String]()
         dbQueue.read { db in
             do {
-                let resultSet = try db.executeQuery(query, values: nil)
+                let resultSet = try db.executeQuery(query, values: uuids)
                 defer { resultSet.close() }
 
                 while resultSet.next() {
@@ -274,7 +282,7 @@ class EpisodeDataManager {
     }
 
     func allUpNextEpisodes(from uuids: [String], dbQueue: PCDBQueue) -> [Episode] {
-        let placeholders = uuids.map { "'\($0)'" }.joined(separator: ", ")
+        let placeholders = DBUtils.placeholders(amount: uuids.count)
         let upNextTableName = DataManager.playlistEpisodeTableName
         let episodeTableName = DataManager.episodeTableName
         return loadMultiple(
@@ -286,7 +294,7 @@ class EpisodeDataManager {
             WHERE \(episodeTableName).uuid IN (\(placeholders))
             ORDER BY \(upNextTableName).episodePosition ASC
             """,
-            values: nil,
+            values: uuids,
             dbQueue: dbQueue
         )
     }
@@ -295,18 +303,20 @@ class EpisodeDataManager {
         var episode: Episode?
         dbQueue.read { db in
             do {
-                let resultSet = try db.executeQuery(query, values: values)
-                defer { resultSet.close() }
-
-                if resultSet.next() {
-                    episode = self.createEpisodeFrom(resultSet: resultSet)
-                }
+                episode = try self.loadSingle(query: query, values: values, db: db)
             } catch {
                 FileLog.shared.addMessage("EpisodeDataManager.loadSingle error: \(error)")
             }
         }
 
         return episode
+    }
+
+    private func loadSingle(query: String, values: [Any]?, db: PCDatabase) throws -> Episode? {
+        let resultSet = try db.executeQuery(query, values: values)
+        defer { resultSet.close() }
+
+        return resultSet.next() ? createEpisodeFrom(resultSet: resultSet) : nil
     }
 
     private func loadMultiple(query: String, values: [Any]?, dbQueue: PCDBQueue) -> [Episode] {
@@ -892,8 +902,8 @@ class EpisodeDataManager {
             do {
                 db.beginTransaction()
                 if FeatureFlag.markAllSyncedInSingleStatement.enabled {
-                    let ids = episodes.map({"\($0.id)"})
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE id IN (\(ids.joined(separator: ",")))", values: nil)
+                    let ids = episodes.map(\.id)
+                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE id IN (\(DBUtils.placeholders(amount: ids.count)))", values: ids)
                 } else {
                     for episode in episodes {
                         try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE id = ?", values: [episode.id])
@@ -915,10 +925,10 @@ class EpisodeDataManager {
             do {
                 db.beginTransaction()
                 if FeatureFlag.markAllSyncedInSingleStatement.enabled {
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE uuid IN (\(ids.map { "'\($0)'"}.joined(separator: ",")))", values: nil)
+                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE uuid IN (\(DBUtils.placeholders(amount: ids.count)))", values: ids)
                 } else {
                     for episodeId in ids {
-                        try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE uuid = ?", values: ["'\(episodeId)'"])
+                        try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE uuid = ?", values: [episodeId])
                     }
                 }
                 db.commit()

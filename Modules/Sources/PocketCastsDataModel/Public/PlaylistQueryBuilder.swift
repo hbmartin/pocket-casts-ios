@@ -38,14 +38,18 @@ public class PlaylistQueryBuilder {
         limit: Int = 0,
         shouldShowArchived: Bool = false,
         sortType: PlaylistSort? = nil
-    ) -> String {
+    ) -> (sql: String, arguments: [Any]) {
 
         let sortType = sortType?.rawValue ?? playlist.sortType
 
         var queryString: String = ""
+        var arguments = [Any]()
         var mainQueryHasWhere = true
 
         if playlist.manual {
+            // Every inline manual-playlist query below binds the playlist uuid exactly once;
+            // branches that return early build their own (sql, arguments) pairs instead.
+            arguments.append(playlist.uuid)
             switch clause {
             case .episode:
                 if FeatureFlag.optimizeManualPlaylistQueries.enabled {
@@ -55,7 +59,7 @@ public class PlaylistQueryBuilder {
                         WITH playlist AS (
                           SELECT episodeUuid, MIN(episodePosition) AS pos
                           FROM \(DataManager.playlistEpisodeTableName)
-                          WHERE playlist_uuid = '\(playlist.uuid)'
+                          WHERE playlist_uuid = ?
                           GROUP BY episodeUuid
                         ),
                         deduped_episode AS (
@@ -97,7 +101,7 @@ public class PlaylistQueryBuilder {
                         WITH playlist AS (
                           SELECT episodeUuid, MIN(episodePosition) AS pos
                           FROM \(DataManager.playlistEpisodeTableName)
-                          WHERE playlist_uuid = '\(playlist.uuid)'
+                          WHERE playlist_uuid = ?
                           GROUP BY episodeUuid
                         ),
                         deduped_episode AS (
@@ -136,7 +140,7 @@ public class PlaylistQueryBuilder {
                         WITH playlist AS (
                           SELECT episodeUuid, MIN(episodePosition) AS pos
                           FROM \(DataManager.playlistEpisodeTableName)
-                          WHERE playlist_uuid = '\(playlist.uuid)'
+                          WHERE playlist_uuid = ?
                           GROUP BY episodeUuid
                         ),
                         deduped_episode AS (
@@ -181,7 +185,7 @@ public class PlaylistQueryBuilder {
                         WITH playlist AS (
                           SELECT episodeUuid, MIN(episodePosition) AS pos
                           FROM \(DataManager.playlistEpisodeTableName)
-                          WHERE playlist_uuid = '\(playlist.uuid)'
+                          WHERE playlist_uuid = ?
                           GROUP BY episodeUuid
                         ),
                         deduped_episode AS (
@@ -229,26 +233,28 @@ public class PlaylistQueryBuilder {
             }
         } else {
             var queryValues = [QueryResult]()
-            let addedUuid = add(episodeUuidToAdd: episodeUuidToAdd)
+            let addedUuid = add(episodeUuidToAdd: episodeUuidToAdd, arguments: &arguments)
             queryValues.append(addedUuid)
-            queryValues.append(add(smartRulesFor: playlist))
+            queryValues.append(add(smartRulesFor: playlist, arguments: &arguments))
             var stringifiedValues = queryValues.map({$0.value}).joined(separator: " ")
             PlaylistQueryBuilder.removeEmptyFilterGroups(from: &stringifiedValues)
 
             if clause == .firstDistinctEpisodes {
-                return smartPlaylistFirstDistinctEpisodes(
+                let sql = smartPlaylistFirstDistinctEpisodes(
                     sortFor: sortType,
                     limit: limit,
                     values: stringifiedValues,
                     addedUuid: addedUuid.boolValue
                 )
+                return (sql, arguments)
             }
             if clause == .episodeCount || clause == .allEpisodeCount {
-                return smartPlaylistEpisodesCount(
+                let sql = smartPlaylistEpisodesCount(
                     shouldShowArchived: shouldShowArchived,
                     allEpisodesCount: clause == .allEpisodeCount,
                     values: stringifiedValues
                 )
+                return (sql, arguments)
             }
 
             let select = select(clause: clause)
@@ -262,15 +268,27 @@ public class PlaylistQueryBuilder {
         PlaylistQueryBuilder.removeEmptyFilterGroups(from: &queryString)
         if let searchTerm {
             let searchClause = mainQueryHasWhere ? "AND" : "WHERE"
-            let safeSearchTerm = searchTerm.uppercased().replacingOccurrences(of: "'", with: "''")
-            queryString += " \(searchClause) (UPPER(episode.title) LIKE '%\(safeSearchTerm)%' ESCAPE '\\'"
-            queryString += " OR UPPER(podcast.title) LIKE '%\(safeSearchTerm)%'  ESCAPE '\\')"
+            let pattern = likePattern(for: searchTerm)
+            queryString += " \(searchClause) (UPPER(episode.title) LIKE ? ESCAPE '\\'"
+            queryString += " OR UPPER(podcast.title) LIKE ?  ESCAPE '\\')"
+            arguments.append(pattern)
+            arguments.append(pattern)
         }
         if let sort = add(sortFor: sortType), clause != .episodeCount, clause != .allEpisodeCount {
             queryString += " \(sort) "
         }
         if limit > 0 { queryString += " LIMIT \(limit)" }
-        return queryString
+        return (queryString, arguments)
+    }
+
+    /// Wraps a search term in % wildcards for a LIKE comparison, escaping any
+    /// literal %, _ or \ in the term itself (the queries declare ESCAPE '\').
+    private static func likePattern(for searchTerm: String) -> String {
+        let escaped = searchTerm
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
+        return "%\(escaped.uppercased())%"
     }
 
     public class func podcastExistsInPlaylistEpisodesQuery(includeDeleted: Bool = false) -> String {
@@ -328,18 +346,18 @@ public class PlaylistQueryBuilder {
         playlistUUID: String,
         shouldShowArchived: Bool,
         allEpisodesCount: Bool
-    ) -> String {
+    ) -> (sql: String, arguments: [Any]) {
         let whereClause = if allEpisodesCount {
             "WHERE t.rn = 1 \(shouldShowArchived ? "" : "AND t.archived = 0")"
         } else {
             "WHERE t.rn = 1 AND t.archived = \(shouldShowArchived ? 1 : 0)"
         }
-        return
+        let sql =
             """
             WITH playlist AS (
               SELECT episodeUuid
               FROM \(DataManager.playlistEpisodeTableName)
-              WHERE playlist_uuid = '\(playlistUUID)'
+              WHERE playlist_uuid = ?
               GROUP BY episodeUuid
             ),
             deduped_uuid AS (
@@ -362,6 +380,7 @@ public class PlaylistQueryBuilder {
             JOIN deduped_uuid d
               ON d.uuid = p.episodeUuid
             """
+        return (sql, [playlistUUID])
     }
 
     private static func smartPlaylistEpisodesCount(
@@ -422,7 +441,7 @@ public class PlaylistQueryBuilder {
         limit: Int,
         playlistUUID: String,
         shouldShowArchived: Bool
-    ) -> String {
+    ) -> (sql: String, arguments: [Any]) {
         let isCustomOrderSortType = sortType == 4
 
         var playlistPositionOrderBy = "ORDER BY playlist_position ASC"
@@ -446,11 +465,11 @@ public class PlaylistQueryBuilder {
 
         if isCustomOrderSortType {
             if FeatureFlag.optimizeManualPlaylistQueries.enabled {
-                return """
+                return ("""
                 WITH playlist AS (
                   SELECT episodeUuid, MIN(episodePosition) AS episodePosition
                   FROM \(DataManager.playlistEpisodeTableName)
-                  WHERE playlist_uuid = '\(playlistUUID)'
+                  WHERE playlist_uuid = ?
                   GROUP BY episodeUuid
                 ),
                 deduped_episode AS (
@@ -496,10 +515,10 @@ public class PlaylistQueryBuilder {
                   ON episode.id = c.id
                 ORDER BY c.playlist_position ASC
                 LIMIT \(limit)
-                """
+                """, [playlistUUID])
             } else {
                 // Original query without deduplication
-                return """
+                return ("""
                 WITH playlist_rows AS (
                   SELECT episode.id,
                          episode.podcast_id,
@@ -507,7 +526,7 @@ public class PlaylistQueryBuilder {
                   FROM \(DataManager.episodeTableName) episode
                   JOIN \(DataManager.playlistEpisodeTableName) playlist
                     ON episode.uuid = playlist.episodeUuid
-                  WHERE playlist.playlist_uuid = '\(playlistUUID)'
+                  WHERE playlist.playlist_uuid = ?
                   \(archivedPredicate)
                   LIMIT \(episodeLimit)
                 ),
@@ -529,17 +548,17 @@ public class PlaylistQueryBuilder {
                   ON episode.id = c.id
                 ORDER BY c.playlist_position ASC
                 LIMIT \(limit)
-                """
+                """, [playlistUUID])
             }
         }
 
         if FeatureFlag.optimizeManualPlaylistQueries.enabled {
             // Optimized version: deduplicates by UUID first, then partitions by podcast
-            return """
+            return ("""
             WITH playlist AS (
               SELECT episodeUuid, MIN(episodePosition) AS episodePosition
               FROM \(DataManager.playlistEpisodeTableName)
-              WHERE playlist_uuid = '\(playlistUUID)'
+              WHERE playlist_uuid = ?
               GROUP BY episodeUuid
             ),
             deduped_episode AS (
@@ -578,10 +597,10 @@ public class PlaylistQueryBuilder {
             WHERE oe.podcast_rn = 1
             \(playlistPositionOrderBy)
             LIMIT \(limit)
-            """
+            """, [playlistUUID])
         }
 
-        return """
+        return ("""
         WITH ordered_episodes AS (
           SELECT episode.id,
                  episode.podcast_id,
@@ -592,7 +611,7 @@ public class PlaylistQueryBuilder {
           FROM \(DataManager.episodeTableName) episode
           JOIN \(DataManager.playlistEpisodeTableName) playlist
             ON episode.uuid = playlist.episodeUuid
-          WHERE playlist.playlist_uuid = '\(playlistUUID)'
+          WHERE playlist.playlist_uuid = ?
           \(archivedPredicateForEpisode)
           LIMIT \(episodeLimit)
         ),
@@ -611,7 +630,7 @@ public class PlaylistQueryBuilder {
         WHERE n.rn = 1
         \(playlistPositionOrderBy)
         LIMIT \(limit)
-        """
+        """, [playlistUUID])
     }
 
     private static func select(clause: SelectClause) -> String {
@@ -625,9 +644,10 @@ public class PlaylistQueryBuilder {
         }
     }
 
-    private static func add(episodeUuidToAdd uuids: String?) -> QueryResult {
+    private static func add(episodeUuidToAdd uuids: String?, arguments: inout [Any]) -> QueryResult {
         if let uuids {
-            return .value("AND ((episode.uuid = '\(uuids)') OR (", true)
+            arguments.append(uuids)
+            return .value("AND ((episode.uuid = ?) OR (", true)
         }
         return .value("AND (", false)
     }
@@ -650,7 +670,7 @@ public class PlaylistQueryBuilder {
         }
     }
 
-    private static func add(smartRulesFor playlist: EpisodeFilter) -> QueryResult {
+    private static func add(smartRulesFor playlist: EpisodeFilter, arguments: inout [Any]) -> QueryResult {
         var queryString = ""
         var haveStartedWhere = false
 
@@ -687,12 +707,14 @@ public class PlaylistQueryBuilder {
         buildParticularPodcastsQuery(
             playlist: playlist,
             queryString: &queryString,
+            arguments: &arguments,
             haveStartedWhere: &haveStartedWhere
         )
 
         filterUnsubscribedPodcastsQuery(
             playlist: playlist,
             queryString: &queryString,
+            arguments: &arguments,
             haveStartedWhere: &haveStartedWhere
         )
 
@@ -810,17 +832,15 @@ public class PlaylistQueryBuilder {
     private static func buildParticularPodcastsQuery(
         playlist: EpisodeFilter,
         queryString: inout String,
+        arguments: inout [Any],
         haveStartedWhere: inout Bool
     ) {
         if !playlist.filterAllPodcasts, !playlist.podcastUuids.isEmpty, playlist.podcastUuids != "null" {
             if haveStartedWhere { queryString += "AND " }
 
             let podcastUuidArr = playlist.podcastUuids.components(separatedBy: ",")
-            queryString += " episode.podcastUuid in ("
-            for (index, uuid) in podcastUuidArr.enumerated() {
-                queryString += "\(index > 0 ? "," : "")'\(uuid)'"
-            }
-            queryString += ") "
+            queryString += " episode.podcastUuid in (\(DBUtils.placeholders(amount: podcastUuidArr.count))) "
+            arguments.append(contentsOf: podcastUuidArr)
             haveStartedWhere = true
         }
     }
@@ -828,17 +848,15 @@ public class PlaylistQueryBuilder {
     private static func filterUnsubscribedPodcastsQuery(
         playlist: EpisodeFilter,
         queryString: inout String,
+        arguments: inout [Any],
         haveStartedWhere: inout Bool
     ) {
         let unsubscribedUuids = DataManager.sharedManager.allUnsubscribedPodcastUuids()
         if !unsubscribedUuids.isEmpty {
             if haveStartedWhere { queryString += "AND " }
 
-            queryString += " episode.podcastUuid NOT IN ("
-            for (index, uuid) in unsubscribedUuids.enumerated() {
-                queryString += "\(index > 0 ? "," : "")'\(uuid)'"
-            }
-            queryString += ") "
+            queryString += " episode.podcastUuid NOT IN (\(DBUtils.placeholders(amount: unsubscribedUuids.count))) "
+            arguments.append(contentsOf: unsubscribedUuids)
             haveStartedWhere = true
         }
     }
@@ -858,12 +876,14 @@ public class PlaylistQueryBuilder {
 
     // MARK: - Legacy
 
-    public class func queryFor(filter: EpisodeFilter, episodeUuidToAdd: String?, limit: Int) -> String {
+    public class func queryFor(filter: EpisodeFilter, episodeUuidToAdd: String?, limit: Int) -> (sql: String, arguments: [Any]) {
         var queryString = "archived = 0 "
+        var arguments = [Any]()
         var addedUuid = false
 
         if let episodeUuidToAdd {
-            queryString += "AND ((uuid = '\(episodeUuidToAdd)') OR ("
+            queryString += "AND ((uuid = ?) OR ("
+            arguments.append(episodeUuidToAdd)
             addedUuid = true
         } else {
             queryString += "AND ("
@@ -951,11 +971,8 @@ public class PlaylistQueryBuilder {
             if haveStartedWhere { queryString += "AND " }
 
             let podcastUuidArr = filter.podcastUuids.components(separatedBy: ",")
-            queryString += " podcastUuid in ("
-            for (index, uuid) in podcastUuidArr.enumerated() {
-                queryString += "\(index > 0 ? "," : "")'\(uuid)'"
-            }
-            queryString += ") "
+            queryString += " podcastUuid in (\(DBUtils.placeholders(amount: podcastUuidArr.count))) "
+            arguments.append(contentsOf: podcastUuidArr)
             haveStartedWhere = true
         }
 
@@ -964,11 +981,8 @@ public class PlaylistQueryBuilder {
         if !unsubscribedUuids.isEmpty {
             if haveStartedWhere { queryString += "AND " }
 
-            queryString += " podcastUuid NOT IN ("
-            for (index, uuid) in unsubscribedUuids.enumerated() {
-                queryString += "\(index > 0 ? "," : "")'\(uuid)'"
-            }
-            queryString += ") "
+            queryString += " podcastUuid NOT IN (\(DBUtils.placeholders(amount: unsubscribedUuids.count))) "
+            arguments.append(contentsOf: unsubscribedUuids)
             haveStartedWhere = true
         }
 
@@ -1000,7 +1014,7 @@ public class PlaylistQueryBuilder {
             queryString += " LIMIT \(limit)"
         }
 
-        return queryString
+        return (queryString, arguments)
     }
 
     private class func removeEmptyFilterGroups(from string: inout String) {

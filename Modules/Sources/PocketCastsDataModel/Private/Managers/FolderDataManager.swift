@@ -104,7 +104,7 @@ class FolderDataManager {
     }
 
     func bulkSetSyncModified(_ syncModified: Int64, onFolders folderUuids: [String], dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ? WHERE uuid IN (\(DataHelper.convertArrayToInString(folderUuids)))", values: [syncModified], methodName: "FolderDataManager.bulkSetSyncModified", onQueue: dbQueue)
+        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ? WHERE uuid IN (\(DBUtils.placeholders(amount: folderUuids.count)))", values: [syncModified] + folderUuids, methodName: "FolderDataManager.bulkSetSyncModified", onQueue: dbQueue)
         cacheFolders(dbQueue: dbQueue)
     }
 

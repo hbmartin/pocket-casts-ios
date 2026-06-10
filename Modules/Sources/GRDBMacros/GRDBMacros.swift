@@ -7,7 +7,7 @@ import GRDB
 ///
 /// **For NSObject subclasses** (e.g., Episode, Podcast):
 /// - `databaseTableName` (if table parameter provided)
-/// - `CodingKeys` enum matching @objc properties
+/// - `CodingKeys` enum matching stored properties (everything not marked @GRDBIgnore)
 /// - `init(from decoder: Decoder)` implementation
 /// - `encode(to container: PersistenceContainer)` for PersistableRecord
 /// - `Columns` enum for type-safe query building

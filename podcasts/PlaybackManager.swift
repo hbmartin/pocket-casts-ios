@@ -678,7 +678,7 @@ class PlaybackManager: ServerPlaybackDelegate {
     func play(playlist: EpisodeFilter) {
         let playlistEpisodes: [Episode]
         let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: ServerSettings.autoAddToUpNextLimit(), shouldShowArchived: playlist.showArchivedEpisodes)
-        playlistEpisodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query, arguments: nil)
+        playlistEpisodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments)
         if playlist.manual {
             let archivedEpisodes = playlistEpisodes.filter(\.archived)
             EpisodeManager.bulkUnarchive(episodes: archivedEpisodes, trackEvent: false)

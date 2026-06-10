@@ -140,9 +140,9 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
     }
 
-    private func executeQuery(_ query: String, in dbPool: DatabasePool) throws -> [[String: DatabaseValue]] {
+    private func executeQuery(_ query: (sql: String, arguments: [Any]), in dbPool: DatabasePool) throws -> [[String: DatabaseValue]] {
         try dbPool.read { db in
-            let rows = try Row.fetchAll(db, sql: query)
+            let rows = try Row.fetchAll(db, sql: query.sql, arguments: StatementArguments(query.arguments)!)
             return rows.map { row in
                 var dict: [String: DatabaseValue] = [:]
                 for column in row.columnNames {
@@ -180,11 +180,12 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         let query = PlaylistQueryBuilder.query(clause: .episode, for: filter)
 
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query))
-        XCTAssertTrue(query.contains("WITH playlist AS"))
-        XCTAssertTrue(query.contains("SELECT episodeUuid, MIN(episodePosition) AS pos"))
-        XCTAssertTrue(query.contains("JOIN deduped_episode episode"))
-        XCTAssertTrue(query.contains("playlist_uuid = 'manual-playlist'"))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query.sql, values: query.arguments))
+        XCTAssertTrue(query.sql.contains("WITH playlist AS"))
+        XCTAssertTrue(query.sql.contains("SELECT episodeUuid, MIN(episodePosition) AS pos"))
+        XCTAssertTrue(query.sql.contains("JOIN deduped_episode episode"))
+        XCTAssertTrue(query.sql.contains("playlist_uuid = ?"))
+        XCTAssertEqual(query.arguments as? [String], ["manual-playlist"])
     }
 
     func testQueryDoesNotIncludeEpisodesForSmartPlaylist() {
@@ -193,8 +194,8 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         let query = PlaylistQueryBuilder.query(clause: .episode, for: filter)
 
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query))
-        XCTAssertFalse(query.contains("WITH playlist AS"))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query.sql, values: query.arguments))
+        XCTAssertFalse(query.sql.contains("WITH playlist AS"))
     }
 
     func testManualPodcastQuery() {
@@ -204,7 +205,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         let query = PlaylistQueryBuilder.query(clause: .firstDistinctEpisodes, for: filter)
 
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query.sql, values: query.arguments))
     }
 
     func testEmptyManualPlaylistDoesNotProduceInvalidInClause() {
@@ -214,7 +215,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         let query = PlaylistQueryBuilder.query(clause: .episode, for: filter)
 
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query.sql, values: query.arguments))
     }
 
     func testSmartPlaylistFirstDistinctEpisodesRemovesEmptyFilterGroups() {
@@ -233,8 +234,8 @@ final class PlaylistQueryBuilderTests: XCTestCase {
             limit: 10
         )
 
-        XCTAssertFalse(query.contains("AND ()"), "Query should not contain empty AND group: \(query)")
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query))
+        XCTAssertFalse(query.sql.contains("AND ()"), "Query should not contain empty AND group: \(query)")
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: query.sql, values: query.arguments))
     }
 
     func testPodcastExistsQueryExcludesDeletedByDefault() {
@@ -397,11 +398,11 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: true)
         let queryOptimized = PlaylistQueryBuilder.query(clause: .episode, for: filter)
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOptimized))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOptimized.sql, values: queryOptimized.arguments))
 
         try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: false)
         let queryOriginal = PlaylistQueryBuilder.query(clause: .episode, for: filter)
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOriginal))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOriginal.sql, values: queryOriginal.arguments))
     }
 
     func testManualEpisodeCountValidWithBothFeatureFlagStates() throws {
@@ -411,11 +412,11 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: true)
         let queryOptimized = PlaylistQueryBuilder.query(clause: .episodeCount, for: filter)
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOptimized))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOptimized.sql, values: queryOptimized.arguments))
 
         try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: false)
         let queryOriginal = PlaylistQueryBuilder.query(clause: .episodeCount, for: filter)
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOriginal))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOriginal.sql, values: queryOriginal.arguments))
     }
 
     func testManualAllEpisodeCountValidWithBothFeatureFlagStates() throws {
@@ -425,11 +426,11 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: true)
         let queryOptimized = PlaylistQueryBuilder.query(clause: .allEpisodeCount, for: filter)
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOptimized))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOptimized.sql, values: queryOptimized.arguments))
 
         try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: false)
         let queryOriginal = PlaylistQueryBuilder.query(clause: .allEpisodeCount, for: filter)
-        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOriginal))
+        XCTAssertNoThrow(try SQLiteValidator.validate(sql: queryOriginal.sql, values: queryOriginal.arguments))
     }
 
     func testManualFirstDistinctEpisodesValidWithBothFeatureFlagStates() throws {
@@ -448,7 +449,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                 sortType: sortType
             )
             XCTAssertNoThrow(
-                try SQLiteValidator.validate(sql: queryOptimized),
+                try SQLiteValidator.validate(sql: queryOptimized.sql, values: queryOptimized.arguments),
                 "Optimized query should be valid for sort type: \(sortType)"
             )
 
@@ -460,7 +461,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                 sortType: sortType
             )
             XCTAssertNoThrow(
-                try SQLiteValidator.validate(sql: queryOriginal),
+                try SQLiteValidator.validate(sql: queryOriginal.sql, values: queryOriginal.arguments),
                 "Original query should be valid for sort type: \(sortType)"
             )
         }
@@ -483,7 +484,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                     shouldShowArchived: shouldShowArchived
                 )
                 XCTAssertNoThrow(
-                    try SQLiteValidator.validate(sql: queryOptimized),
+                    try SQLiteValidator.validate(sql: queryOptimized.sql, values: queryOptimized.arguments),
                     "Optimized query should be valid for clause \(clause) with archived=\(shouldShowArchived)"
                 )
 
@@ -494,7 +495,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                     shouldShowArchived: shouldShowArchived
                 )
                 XCTAssertNoThrow(
-                    try SQLiteValidator.validate(sql: queryOriginal),
+                    try SQLiteValidator.validate(sql: queryOriginal.sql, values: queryOriginal.arguments),
                     "Original query should be valid for clause \(clause) with archived=\(shouldShowArchived)"
                 )
             }
@@ -529,7 +530,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
 
         // Verify query excludes archived episodes
-        XCTAssertTrue(queryOptimized.contains("WHERE episode.archived = 0"),
+        XCTAssertTrue(queryOptimized.sql.contains("WHERE episode.archived = 0"),
                       "Query should filter out archived episodes when shouldShowArchived is false")
     }
 
@@ -557,7 +558,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
 
         // Verify query filters for archived episodes
-        XCTAssertTrue(queryOptimized.contains("WHERE episode.archived = 1"),
+        XCTAssertTrue(queryOptimized.sql.contains("WHERE episode.archived = 1"),
                       "Query should filter for archived episodes when shouldShowArchived is true")
     }
 
@@ -584,7 +585,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
 
         // Verify query excludes archived episodes
-        XCTAssertTrue(queryOptimized.contains("WHERE episode.archived = 0"),
+        XCTAssertTrue(queryOptimized.sql.contains("WHERE episode.archived = 0"),
                       "Query should filter out archived episodes when shouldShowArchived is false")
     }
 
@@ -611,7 +612,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
 
         // Verify query does NOT filter archived episodes
-        XCTAssertFalse(queryOptimized.contains("WHERE episode.archived"),
+        XCTAssertFalse(queryOptimized.sql.contains("WHERE episode.archived"),
                        "Query should not filter archived episodes when shouldShowArchived is true")
     }
 
@@ -642,7 +643,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
 
         // Verify query excludes archived episodes
-        XCTAssertTrue(queryOptimized.contains("WHERE episode.archived = 0"),
+        XCTAssertTrue(queryOptimized.sql.contains("WHERE episode.archived = 0"),
                       "Query should filter out archived episodes when shouldShowArchived is false")
     }
 
@@ -664,7 +665,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         XCTAssertEqual(resultsOptimized.count, 8, "Should return all episodes when shouldShowArchived is true")
 
         // Verify query does NOT filter archived episodes
-        XCTAssertFalse(queryOptimized.contains("WHERE episode.archived"),
+        XCTAssertFalse(queryOptimized.sql.contains("WHERE episode.archived"),
                        "Query should not filter archived episodes when shouldShowArchived is true")
     }
 
@@ -697,7 +698,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         }
 
         // Verify query excludes archived episodes (uses de.archived in deduped CTE)
-        XCTAssertTrue(queryOptimized.contains("de.archived = 0"),
+        XCTAssertTrue(queryOptimized.sql.contains("de.archived = 0"),
                       "Query should filter out archived episodes when shouldShowArchived is false")
     }
 
@@ -728,7 +729,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
         // Verify query does NOT filter archived episodes
         // Note: The query may contain "archived" in other contexts, so we check it doesn't have the filter
-        XCTAssertFalse(queryOptimized.contains("AND de.archived = 0"),
+        XCTAssertFalse(queryOptimized.sql.contains("AND de.archived = 0"),
                        "Query should not filter archived episodes when shouldShowArchived is true")
 
         // Verify that results include at least some episodes (not empty due to incorrect filtering)
@@ -748,15 +749,15 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                 clause: .episode, for: filter, searchTerm: "hello", shouldShowArchived: false
             )
             XCTAssertNoThrow(
-                try SQLiteValidator.validate(sql: query),
+                try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
                 "Query should be valid SQL (flag=\(flagValue)): \(query)"
             )
             XCTAssertTrue(
-                query.contains("WHERE episode.archived = 0"),
+                query.sql.contains("WHERE episode.archived = 0"),
                 "Query should filter archived when shouldShowArchived is false (flag=\(flagValue))"
             )
             XCTAssertFalse(
-                query.contains("WHERE (UPPER(episode.title)"),
+                query.sql.contains("WHERE (UPPER(episode.title)"),
                 "Search clause should use AND (not WHERE) when archived filter already added WHERE (flag=\(flagValue))"
             )
         }
@@ -773,15 +774,15 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                 clause: .episode, for: filter, searchTerm: "hello", shouldShowArchived: true
             )
             XCTAssertNoThrow(
-                try SQLiteValidator.validate(sql: query),
+                try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
                 "Query should be valid SQL (flag=\(flagValue)): \(query)"
             )
             XCTAssertFalse(
-                query.contains("WHERE episode.archived"),
+                query.sql.contains("WHERE episode.archived"),
                 "Query should not filter by archived when shouldShowArchived is true (flag=\(flagValue))"
             )
             XCTAssertTrue(
-                query.contains("WHERE (UPPER(episode.title)"),
+                query.sql.contains("WHERE (UPPER(episode.title)"),
                 "Search clause should use WHERE (not AND) when main query has no archived filter (flag=\(flagValue))"
             )
         }
@@ -799,7 +800,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                     clause: .episode, for: filter, searchTerm: "O'Brien", shouldShowArchived: shouldShowArchived
                 )
                 XCTAssertNoThrow(
-                    try SQLiteValidator.validate(sql: query),
+                    try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
                     "Query with apostrophe should be valid SQL (flag=\(flagValue), archived=\(shouldShowArchived)): \(query)"
                 )
             }
@@ -815,9 +816,68 @@ final class PlaylistQueryBuilderTests: XCTestCase {
             clause: .episode, for: filter, searchTerm: "O'Brien"
         )
         XCTAssertNoThrow(
-            try SQLiteValidator.validate(sql: query),
+            try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
             "Smart playlist query with apostrophe should be valid SQL: \(query)"
         )
+    }
+
+    func testSearchTermWithApostropheAndWildcardsMatchesEndToEnd() throws {
+        let dbPool = try createTestDatabase()
+        let playlistUUID = "search-behavior"
+        try insertTestData(in: dbPool, playlistUUID: playlistUUID)
+        try dbPool.write { db in
+            try db.execute(sql: """
+                INSERT INTO SJEpisode (id, uuid, podcastUuid, podcast_id, title, publishedDate, addedDate, duration, playingStatus, episodeStatus, archived)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, arguments: [100, "ep-quote", "podcast-1", 1, "O'Brien 100% Special_Edition", 0.0, 0.0, 60.0, 0, 1, 0])
+            try db.execute(sql: """
+                INSERT INTO SJPlaylistEpisode (episodeUuid, playlist_id, playlist_uuid, episodePosition)
+                VALUES (?, 1, ?, 9)
+                """, arguments: ["ep-quote", playlistUUID])
+        }
+
+        let filter = EpisodeFilter()
+        filter.manual = true
+        filter.uuid = playlistUUID
+
+        try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: true)
+
+        let query = PlaylistQueryBuilder.query(clause: .episode, for: filter, searchTerm: "o'brien 100%", shouldShowArchived: true)
+        let results = try executeQuery(query, in: dbPool)
+        XCTAssertEqual(results.count, 1, "Apostrophe and percent in the search term should match literally")
+    }
+
+    func testSearchTermTreatsLikeWildcardsAsLiterals() throws {
+        let dbPool = try createTestDatabase()
+        let playlistUUID = "search-wildcards"
+        try insertTestData(in: dbPool, playlistUUID: playlistUUID)
+        try dbPool.write { db in
+            try db.execute(sql: """
+                INSERT INTO SJEpisode (id, uuid, podcastUuid, podcast_id, title, publishedDate, addedDate, duration, playingStatus, episodeStatus, archived)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, arguments: [100, "ep-percent", "podcast-1", 1, "100% Legit", 0.0, 0.0, 60.0, 0, 1, 0])
+            try db.execute(sql: """
+                INSERT INTO SJPlaylistEpisode (episodeUuid, playlist_id, playlist_uuid, episodePosition)
+                VALUES (?, 1, ?, 9)
+                """, arguments: ["ep-percent", playlistUUID])
+        }
+
+        let filter = EpisodeFilter()
+        filter.manual = true
+        filter.uuid = playlistUUID
+
+        try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: true)
+
+        // A bare % must only match titles containing a literal percent sign,
+        // not act as a LIKE wildcard that matches every episode.
+        let percentQuery = PlaylistQueryBuilder.query(clause: .episode, for: filter, searchTerm: "%", shouldShowArchived: true)
+        let percentResults = try executeQuery(percentQuery, in: dbPool)
+        XCTAssertEqual(percentResults.count, 1, "A literal %% search should only match titles containing %%")
+
+        // _ must not act as a single-character wildcard either.
+        let underscoreQuery = PlaylistQueryBuilder.query(clause: .episode, for: filter, searchTerm: "episode_1", shouldShowArchived: true)
+        let underscoreResults = try executeQuery(underscoreQuery, in: dbPool)
+        XCTAssertEqual(underscoreResults.count, 0, "A literal _ search should not wildcard-match 'Episode 1'")
     }
 
     func testShouldShowArchivedConsistencyAcrossAllClauses() throws {

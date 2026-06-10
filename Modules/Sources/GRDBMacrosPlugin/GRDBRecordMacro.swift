@@ -76,7 +76,7 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
 
         if isNSObject {
             // For NSObject subclasses: generate CodingKeys, init(from decoder:), encode(to:), and Columns
-            let properties = extractObjcProperties(from: declaration)
+            let properties = extractStoredProperties(from: declaration)
 
             // 2. Generate CodingKeys enum
             members.append(generateCodingKeys(properties: properties))
@@ -157,8 +157,12 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
         }
     }
 
-    /// Extract properties with @objc attribute (for classes/NSObject subclasses)
-    private static func extractObjcProperties(from declaration: some DeclGroupSyntax) -> [PropertyInfo] {
+    /// Extract stored instance properties (for classes/NSObject subclasses).
+    /// Every stored `var` is treated as a database column unless marked @GRDBIgnore —
+    /// non-@objc properties (e.g. `Bool?`, which @objc cannot represent) are included,
+    /// so a missing @GRDBIgnore fails loudly with an unknown-column error instead of
+    /// silently dropping the value on save.
+    private static func extractStoredProperties(from declaration: some DeclGroupSyntax) -> [PropertyInfo] {
         var properties: [PropertyInfo] = []
 
         for member in declaration.memberBlock.members {
@@ -167,17 +171,14 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
                 continue
             }
 
+            // Skip static/class properties
+            let isStatic = varDecl.modifiers.contains { modifier in
+                modifier.name.tokenKind == .keyword(.static) || modifier.name.tokenKind == .keyword(.class)
+            }
+            guard !isStatic else { continue }
+
             // Skip properties marked with @GRDBIgnore
             guard !hasGRDBIgnore(varDecl) else { continue }
-
-            // Only include properties with @objc attribute (database-stored properties)
-            let hasObjc = varDecl.attributes.contains { attr in
-                if case .attribute(let attributeSyntax) = attr {
-                    return attributeSyntax.attributeName.trimmedDescription == "objc"
-                }
-                return false
-            }
-            guard hasObjc else { continue }
 
             if let propInfo = extractPropertyInfo(from: varDecl) {
                 properties.append(propInfo)

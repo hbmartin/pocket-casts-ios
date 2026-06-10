@@ -12,7 +12,7 @@ final class PodcastExistsHelperTests: XCTestCase {
         try super.setUpWithError()
 
         originalDataManager = DataManager.sharedManager
-        dataManager = try PodcastLookupDataManager()
+        dataManager = try PodcastLookupDataManager.make()
         DataManager.sharedManager = dataManager
         PodcastExistsHelper.shared.invalidate(uuid: podcastUuid)
     }
@@ -69,10 +69,10 @@ private final class PodcastLookupDataManager: DataManager {
     var beforeReturningPodcast: ((String) -> Void)?
     private(set) var findPodcastCallCount = 0
 
-    init() throws {
+    static func make() throws -> PodcastLookupDataManager {
         let dbPath = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")
         let pool = try DatabasePool(path: dbPath)
-        super.init(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
+        return PodcastLookupDataManager(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
     }
 
     override public func findPodcast(uuid: String, includeUnsubscribed: Bool = false) -> Podcast? {
