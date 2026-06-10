@@ -909,7 +909,7 @@
 - Added some more places we missed in terms of translations
 - Fixed some padding/wrapping/display issues with some translations
 - Fixed video player being able to rotate to upside down on phones with home buttons
-- Changed feedback form to go to our new Zendesk instance
+- Changed feedback form to go to our new support instance
 
 ### 7.19 Build 850
 - Fixes an issue where the active Google Cast dialog was cut off under the navigation bar

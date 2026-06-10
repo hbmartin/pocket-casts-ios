@@ -59,6 +59,7 @@ semgrep_tests: ## Run Semgrep rule tests
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-pr-feedback.swift
+	semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-zendesk-wordpress.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/github-actions-security.yml
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/Main/MainTabBarController.swift
 	semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/ProfileViewController.swift

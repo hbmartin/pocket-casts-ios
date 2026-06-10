@@ -143,15 +143,10 @@ SPELLCHECK_KNOWN_WORDS = %w[
   Bazinga Wahhh Aaaah Heyooo Ew
 ].freeze
 
-# URL of the GlotPress project containing the strings used in the app
-GLOTPRESS_APP_STRINGS_PROJECT_URL = 'https://translate.wordpress.com/projects/pocket-casts/ios/'
-# URL of the GlotPress project containing App Store Connect metadata
-GLOTPRESS_APP_STORE_METADATA_PROJECT_URL = 'https://translate.wordpress.com/projects/pocket-casts/ios/release-notes/'
-
 # List of locales used for the app strings (GlotPress code => `*.lproj` folder name`).
 # Sorted like Xcode sorts them in the File Inspector for easier comparison.
 #
-# TODO: Replace with `LocaleHelper` once provided by release toolkit (https://github.com/wordpress-mobile/release-toolkit/pull/296)
+# TODO: Replace with `LocaleHelper` once provided by the release toolkit.
 GLOTPRESS_TO_LPROJ_APP_LOCALE_CODES = {
   'zh-cn' => 'zh-Hans', # Chinese (China, Simplified)
   'zh-tw' => 'zh-Hant', # Chinese (Taiwan, Traditional)
@@ -172,8 +167,7 @@ GLOTPRESS_TO_LPROJ_APP_LOCALE_CODES = {
 # Mapping of all locales which can be used for AppStore metadata
 # (GlotPress code => AppStore Connect code)
 #
-# TODO: Replace with `LocaleHelper` once provided by release toolkit
-# (https://github.com/wordpress-mobile/release-toolkit/pull/296)
+# TODO: Replace with `LocaleHelper` once provided by the release toolkit.
 GLOTPRESS_TO_ASC_METADATA_LOCALE_CODES = {
   'de' => 'de-DE',
   'es' => 'es-ES',
@@ -951,119 +945,32 @@ platform :ios do
     )
   end
 
-  # Downloads localized `.strings` from GlotPress
+  # Previously downloaded localized `.strings` from the WordPress-hosted
+  # GlotPress project. That translation source has been removed, so this lane
+  # now fails explicitly instead of silently skipping translation work.
   #
   lane :download_localized_strings_from_glotpress do
-    # Use the same name as the frozen strings source to make it explicit these
-    # are not to be copied as-is in the `*.lproj/Localizable.strings`
-    table_basename = basename_without_extension(path: FROZEN_STRINGS_PATH)
-
-    # Notice that we don't need to track the files we'll download here in Git,
-    # because the content they carry will be read and ported into the
-    # appropriate individual localization files next.
-    download_dir = File.join(FASTLANE_FOLDER, 'app-localization-downloads')
-    ios_download_strings_files_from_glotpress(
-      project_url: GLOTPRESS_APP_STRINGS_PROJECT_URL,
-      locales: GLOTPRESS_TO_LPROJ_APP_LOCALE_CODES,
-      download_dir: download_dir,
-      table_basename: table_basename
-    )
-
-    # Redispatch the appropriate subset of translations back to the individual
-    # `.strings` files that we merged via `ios_merge_strings_files` during `code_freeze`.
-    modified_files = ios_extract_keys_from_strings_files(
-      source_parent_dir: download_dir,
-      source_tablename: table_basename,
-      target_original_files: MANUALLY_MAINTAINED_STRINGS_FILES
-    )
-    git_commit(
-      path: modified_files,
-      message: 'Update localization files with up-to-date values from GlotPress',
-      allow_nothing_to_commit: true
-    )
+    glotpress_translation_sync_disabled!
   end
 
-  # Downloads localized metadata for App Store Connect from GlotPress
+  # Previously downloaded localized App Store Connect metadata from the
+  # WordPress-hosted GlotPress project. That translation source has been
+  # removed, so this lane now fails explicitly instead of silently skipping
+  # translation work.
   #
   lane :download_localized_app_store_metadata_from_glotpress do
-    # FIXME: Replace this with a call to the future replacement of
-    # `gp_downloadmetadata` once it's implemented in the release-toolkit (see
-    # paaHJt-31O-p2).
-    target_files = {
-      "v#{release_version_current}-whats-new": {
-        desc: 'release_notes.txt',
-        max_size: 4000
-      },
-      app_store_subtitle: { desc: 'subtitle.txt', max_size: 30 },
-      app_store_desc: { desc: 'description.txt', max_size: 4000 },
-      app_store_keywords: { desc: 'keywords.txt', max_size: 100 }
-    }
-
-    gp_downloadmetadata(
-      project_url: GLOTPRESS_APP_STORE_METADATA_PROJECT_URL,
-      target_files: target_files,
-      locales: GLOTPRESS_TO_ASC_METADATA_LOCALE_CODES,
-      download_path: APP_STORE_METADATA_FOLDER
-    )
-    files_to_commit = [File.join(APP_STORE_METADATA_FOLDER, '**', '*.txt')]
-
-    # Ensure that none of the `.txt` files in `en-US` would accidentally
-    # override our originals in `default`
-    target_files.values.map { |h| h[:desc] }.each do |file|
-      en_file_path = File.join(APP_STORE_METADATA_FOLDER, 'en-US', file)
-      next unless File.exist?(en_file_path)
-
-      UI.user_error! <<~ERROR
-        File `#{en_file_path}` would override the same one in `#{APP_STORE_METADATA_FOLDER}/default`, but `default/` is the source of truth.
-        Delete the `#{en_file_path}` file, ensure the `default/` one has the expected original copy, and try again.
-      ERROR
-    end
-
-    # Ensure even empty locale folders have an empty `.gitkeep` file (in case
-    # we don't have any translation at all ready for some locales)
-    GLOTPRESS_TO_ASC_METADATA_LOCALE_CODES.each_value do |locale|
-      gitkeep = File.join(APP_STORE_METADATA_FOLDER, locale, '.gitkeep')
-      next if File.exist?(gitkeep)
-
-      FileUtils.mkdir_p(File.dirname(gitkeep))
-      FileUtils.touch(gitkeep)
-      files_to_commit.append(gitkeep)
-    end
-
-    # Commit
-    git_add(path: files_to_commit, shell_escape: false)
-    git_commit(
-      path: files_to_commit,
-      message: 'Update App Store metadata translations',
-      allow_nothing_to_commit: true
-    )
+    glotpress_translation_sync_disabled!
   end
 
-  # Checks the translation progress (%) of all Mag16 for all the projects (app
-  # strings and metadata) in GlotPress.
+  # Previously checked the translation progress (%) of all Mag16 for all the
+  # projects (app strings and metadata) on the WordPress-backed GlotPress
+  # instance. That translation source has been removed, so this lane now fails
+  # explicitly instead of silently skipping translation work.
   #
-  # @param interactive [Boolean] If true, will pause and ask confirmation to continue
-  #        if it found any locale translated below the threshold (default: false)
+  # @param interactive [Boolean] Retained so existing callers keep resolving to this lane; unused now that it always fails.
   #
   lane :check_all_translations_progress do |interactive: false|
-    abort_on_violations = false
-    skip_confirm = interactive == false
-
-    UI.header('Checking app strings translation status...')
-    check_translation_progress(
-      glotpress_url: GLOTPRESS_APP_STRINGS_PROJECT_URL,
-      language_codes: GLOTPRESS_TO_ASC_METADATA_LOCALE_CODES.keys,
-      abort_on_violations: abort_on_violations,
-      skip_confirm: skip_confirm
-    )
-
-    UI.header('Checking release notes strings translation status...')
-    check_translation_progress(
-      glotpress_url: GLOTPRESS_APP_STORE_METADATA_PROJECT_URL,
-      language_codes: GLOTPRESS_TO_ASC_METADATA_LOCALE_CODES.keys,
-      abort_on_violations: abort_on_violations,
-      skip_confirm: skip_confirm
-    )
+    glotpress_translation_sync_disabled!
   end
 
   # Upload the localized metadata (from `fastlane/metadata/`) to App Store Connect

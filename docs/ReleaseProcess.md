@@ -202,8 +202,11 @@ release body. If the section is empty, it writes a fallback note that
 
 App Store "What's New" copy is separate from the raw changelog. The default
 English App Store copy lives in `fastlane/metadata/default/release_notes.txt`.
-The metadata localization flow sends that copy through GlotPress and writes
-localized `release_notes.txt` files under `fastlane/metadata/<locale>/`.
+The metadata localization flow previously sent that copy through GlotPress and
+wrote localized `release_notes.txt` files under `fastlane/metadata/<locale>/`.
+That translation sync is currently **disabled** (see
+[translation-reimplementation.md](./translation-reimplementation.md)); existing
+localized metadata is frozen until a replacement is wired up.
 
 ## Fastlane Release Flow
 
@@ -293,21 +296,26 @@ App Store metadata lives under `fastlane/metadata/`.
 
 - `fastlane/metadata/default/` is the English source of truth.
 - Locale folders such as `de-DE`, `fr-FR`, and `pt-BR` contain translated
-  metadata downloaded from GlotPress.
+  metadata that was downloaded from GlotPress before that source was removed.
 - `fastlane/AppStoreStrings.po` is updated from the metadata sources for
   translation.
+
+> **Note:** The GlotPress download lanes are currently **disabled** and fail
+> explicitly when invoked. The localized metadata in the repo is frozen until a
+> replacement translation source is implemented — see
+> [translation-reimplementation.md](./translation-reimplementation.md).
 
 Relevant lanes:
 
 ```bash
 bundle exec fastlane update_app_store_strings
-bundle exec fastlane download_localized_app_store_metadata_from_glotpress
 bundle exec fastlane update_metadata_on_app_store_connect
 ```
 
-`download_localized_strings_and_metadata_from_glotpress` downloads both app
-localizations and App Store metadata localizations. `new_beta_release` and
-`finalize_release` call it as part of the release flow.
+`download_localized_strings_and_metadata_from_glotpress` (and the per-project
+download lanes) previously downloaded both app localizations and App Store
+metadata localizations as part of `new_beta_release` and `finalize_release`.
+These now raise an error until translation sync is re-implemented.
 
 `update_metadata_on_app_store_connect` uploads metadata from
 `fastlane/metadata/` to App Store Connect with `skip_binary_upload:true`.
@@ -394,8 +402,11 @@ the local release branch.
 - If TestFlight rejects a duplicate build number, run `new_beta_release` for a
   beta or the appropriate finalize lane for a final build so Fastlane bumps
   `VERSION_LONG`.
-- If App Store metadata is stale, rerun the GlotPress metadata download and
-  then `update_metadata_on_app_store_connect`.
+- If App Store metadata is stale, note that the GlotPress metadata download is
+  currently disabled (see
+  [translation-reimplementation.md](./translation-reimplementation.md)); update
+  the localized metadata via the replacement source, then run
+  `update_metadata_on_app_store_connect`.
 - If Bitdrift upload fails in CI, treat the build as incomplete unless the
   release manager explicitly decides to proceed with the dSYMs attached to the
   GitHub release archive.

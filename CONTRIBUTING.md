@@ -14,7 +14,7 @@ For bugs, please head to [Issues](https://github.com/Automattic/pocket-casts-ios
 
 ## Translating
 
-We use GlotPress to manage translations. Please go to the [Pocket Casts for iOS GlotPress page](https://translate.wordpress.com/projects/pocket-casts/ios/) for more information on how to add or edit translations.
+Translation sync is currently being re-implemented (the previous GlotPress-based pipeline has been removed). If you'd like to help add or edit translations, please get in touch via the [Pocket Casts Forum](https://forums.pocketcasts.com).
 
 ## Beta Testing
 
