@@ -90,7 +90,9 @@ class SettingsTableHeader: ThemeableView {
         titleLabel.setContentHuggingPriority(.required, for: .horizontal)
 
         let infoButton = HitTargetButton(type: .system)
-        infoButton.setImage(UIImage(named: "empty-playlist-info")?.withRenderingMode(.alwaysTemplate), for: .normal)
+        let infoImage = UIImage(named: "empty-playlist-info")
+        assert(infoImage != nil, "Missing image asset: empty-playlist-info")
+        infoButton.setImage(infoImage?.withRenderingMode(.alwaysTemplate), for: .normal)
         infoButton.tintColor = AppTheme.colorForStyle(.primaryText02, themeOverride: themeOverride)
         infoButton.imageView?.contentMode = .scaleAspectFit
         infoButton.translatesAutoresizingMaskIntoConstraints = false
