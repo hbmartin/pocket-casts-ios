@@ -78,7 +78,7 @@ class SleepTimerButton: UIButton {
     }
 
     @objc private func reduceMotionStatusDidChange() {
-        sleepTimerOn ? animateToOn() : animateToOff()
+        sleepTimerOn && window != nil ? animateToOn() : animateToOff()
     }
 
     @objc private func applicationWillResignActive() {
@@ -86,8 +86,20 @@ class SleepTimerButton: UIButton {
     }
 
     @objc private func applicationDidBecomeActive() {
-        if sleepTimerOn {
+        if sleepTimerOn, window != nil {
             animateToOn()
+        }
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        if window != nil {
+            if sleepTimerOn {
+                animateToOn()
+            }
+        } else {
+            animateToOff()
         }
     }
 
@@ -99,6 +111,11 @@ class SleepTimerButton: UIButton {
     }
 
     private func animateToOn() {
+        guard window != nil else {
+            iconView.stopAnimating()
+            return
+        }
+
         iconView.startAnimating()
     }
 
@@ -178,6 +195,8 @@ class SleepIconView: UIView {
     }
 
     func startAnimating() {
+        stopAnimating()
+
         guard !UIAccessibility.isReduceMotionEnabled else { return }
 
         // The Z's shimmer in sequence to suggest rising "Zzz".

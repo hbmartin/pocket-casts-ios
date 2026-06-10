@@ -80,6 +80,7 @@ class BasePlayPauseButton: UIButton {
 class PlayPauseIconView: UIView {
     private static let morphDuration: CFTimeInterval = 0.3
     private static let morphKey = "playPauseMorph"
+    private static let scaleKey = "playPauseScale"
 
     private let shapeLayer = CAShapeLayer()
 
@@ -127,7 +128,7 @@ class PlayPauseIconView: UIView {
         guard bounds.width > 0, bounds.height > 0 else { return }
 
         let target = currentPath()
-        let fromPath = (shapeLayer.presentation() as? CAShapeLayer)?.path ?? shapeLayer.path
+        let fromPath = shapeLayer.presentation()?.path ?? shapeLayer.path
 
         // Set the model value without an implicit animation; an explicit morph
         // (below) drives the visible transition when animating.
@@ -137,8 +138,9 @@ class PlayPauseIconView: UIView {
         CATransaction.commit()
 
         guard animated else { return }
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
 
-        if let fromPath = fromPath {
+        if let fromPath {
             let morph = CABasicAnimation(keyPath: "path")
             morph.duration = Self.morphDuration
             morph.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -147,14 +149,12 @@ class PlayPauseIconView: UIView {
             shapeLayer.add(morph, forKey: Self.morphKey)
         }
 
-        if !UIAccessibility.isReduceMotionEnabled {
-            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
-            scale.values = [0.86, 1.0]
-            scale.keyTimes = [0, 1]
-            scale.duration = Self.morphDuration
-            scale.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            layer.add(scale, forKey: "playPauseScale")
-        }
+        let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+        scale.values = [0.86, 1.0]
+        scale.keyTimes = [0, 1]
+        scale.duration = Self.morphDuration
+        scale.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        layer.add(scale, forKey: Self.scaleKey)
     }
 
     private func currentPath() -> CGPath {

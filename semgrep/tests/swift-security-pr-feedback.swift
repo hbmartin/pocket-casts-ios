@@ -95,6 +95,37 @@ final class SafePodcastExistsHelper {
     }
 }
 
+final class UnsafeReduceMotionAnimationView: UIView {
+    private let iconLayer = CALayer()
+
+    func spin() {
+        let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
+        // ruleid: pocketcasts.core-animation-add-requires-reduce-motion-guard
+        iconLayer.add(rotation, forKey: "spin")
+    }
+}
+
+final class SafeReduceMotionAnimationView: UIView {
+    private let iconLayer = CALayer()
+
+    func spinWithGuard() {
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+
+        let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
+        // ok: pocketcasts.core-animation-add-requires-reduce-motion-guard
+        iconLayer.add(rotation, forKey: "spin")
+    }
+
+    func spinWithIf() {
+        let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
+
+        if !UIAccessibility.isReduceMotionEnabled {
+            // ok: pocketcasts.core-animation-add-requires-reduce-motion-guard
+            iconLayer.add(rotation, forKey: "spin")
+        }
+    }
+}
+
 final class UnsafeEpisodeListHeaderView {
     private var webURL: URL?
 
@@ -213,6 +244,32 @@ final class SafeNativeEmptyStateActionViewController {
                 // ok: pocketcasts.native-empty-state-action-weak-self
                 guard let self else { return }
                 self.addPodcastsTapped(self)
+            }
+        )
+    }
+
+    func refreshContentUnavailableWithAdditionalCapture() {
+        _ = ContentUnavailableConfiguration.nativeEmptyState(
+            title: "Empty",
+            message: nil,
+            image: nil,
+            action: .init(title: "Add") { [weak self, weak coordinator] in
+                // ok: pocketcasts.native-empty-state-action-weak-self
+                guard let self else { return }
+                self.addPodcastsTapped(self)
+            }
+        )
+    }
+
+    func refreshContentUnavailableWithAdditionalCaptureAndParameter() {
+        _ = ContentUnavailableConfiguration.nativeEmptyState(
+            title: "Empty",
+            message: nil,
+            image: nil,
+            action: .init(title: "Add") { [weak coordinator, weak self] sender in
+                // ok: pocketcasts.native-empty-state-action-weak-self
+                guard let self else { return }
+                self.addPodcastsTapped(sender)
             }
         )
     }
