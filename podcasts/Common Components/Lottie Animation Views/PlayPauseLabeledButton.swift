@@ -1,5 +1,4 @@
 import Combine
-import Lottie
 import PocketCastsDataModel
 import PocketCastsServer
 import UIKit
@@ -74,18 +73,18 @@ class PlayPauseLabeledButton: BasePlayPauseButton {
         layer.cornerRadius = frame.size.height / 2
     }
 
-    override func place(animation: LottieAnimationView) {
-        animation.translatesAutoresizingMaskIntoConstraints = false
-        animation.isUserInteractionEnabled = false
+    override func place(icon: UIView) {
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        icon.isUserInteractionEnabled = false
         label.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(animation)
+        addSubview(icon)
         addSubview(label)
         NSLayoutConstraint.activate([
-            animation.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            animation.centerYAnchor.constraint(equalTo: centerYAnchor),
-            animation.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.6),
-            animation.heightAnchor.constraint(equalTo: animation.widthAnchor),
-            label.leadingAnchor.constraint(equalTo: animation.trailingAnchor, constant: 5),
+            icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            icon.centerYAnchor.constraint(equalTo: centerYAnchor),
+            icon.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.6),
+            icon.heightAnchor.constraint(equalTo: icon.widthAnchor),
+            label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 5),
             label.topAnchor.constraint(equalTo: topAnchor),
             label.bottomAnchor.constraint(equalTo: bottomAnchor),
             label.topAnchor.constraint(equalTo: topAnchor),
