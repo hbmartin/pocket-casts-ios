@@ -4,6 +4,10 @@ import XCTest
 
 @MainActor
 final class NowPlayingAnimationViewTests: XCTestCase {
+    // Isolated centre so posting lifecycle notifications only reaches the view
+    // under test, not every observer in the test host app.
+    private let notificationCenter = NotificationCenter()
+
     func testRestartsAnimationsAfterForegroundingWhileAttached() throws {
         try XCTSkipIf(UIAccessibility.isReduceMotionEnabled, "Reduce Motion disables equalizer animations.")
 
@@ -13,17 +17,17 @@ final class NowPlayingAnimationViewTests: XCTestCase {
         view.animating = true
         XCTAssertTrue(view.hasAnimationsOnEachBar)
 
-        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
+        notificationCenter.post(name: UIApplication.willResignActiveNotification, object: nil)
         XCTAssertFalse(view.hasAnimationsOnAnyBar)
 
-        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        notificationCenter.post(name: UIApplication.didBecomeActiveNotification, object: nil)
         XCTAssertTrue(view.hasAnimationsOnEachBar)
     }
 
     func testDoesNotStartAnimationsWhileDetached() throws {
         try XCTSkipIf(UIAccessibility.isReduceMotionEnabled, "Reduce Motion disables equalizer animations.")
 
-        let view = NowPlayingAnimationView(frame: CGRect(x: 0, y: 0, width: 30, height: 20))
+        let view = makeView()
 
         view.animating = true
         XCTAssertFalse(view.hasAnimationsOnAnyBar)
@@ -36,13 +40,16 @@ final class NowPlayingAnimationViewTests: XCTestCase {
         XCTAssertNil(view.window)
         XCTAssertFalse(view.hasAnimationsOnAnyBar)
 
-        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        notificationCenter.post(name: UIApplication.didBecomeActiveNotification, object: nil)
         XCTAssertFalse(view.hasAnimationsOnAnyBar)
     }
 
+    private func makeView() -> NowPlayingAnimationView {
+        NowPlayingAnimationView(frame: CGRect(x: 0, y: 0, width: 30, height: 20), notificationCenter: notificationCenter)
+    }
+
     private func makeAttachedView() -> (view: NowPlayingAnimationView, window: UIWindow) {
-        let view = NowPlayingAnimationView(frame: CGRect(x: 0, y: 0, width: 30, height: 20))
-        return attach(view)
+        attach(makeView())
     }
 
     private func attach(_ view: NowPlayingAnimationView) -> (view: NowPlayingAnimationView, window: UIWindow) {
@@ -55,14 +62,10 @@ final class NowPlayingAnimationViewTests: XCTestCase {
 
 private extension NowPlayingAnimationView {
     var hasAnimationsOnAnyBar: Bool {
-        barLayers.contains { $0.animationKeys()?.isEmpty == false }
+        bars.contains { $0.animationKeys()?.isEmpty == false }
     }
 
     var hasAnimationsOnEachBar: Bool {
-        barLayers.count == 3 && barLayers.allSatisfy { $0.animationKeys()?.isEmpty == false }
-    }
-
-    private var barLayers: [CALayer] {
-        layer.sublayers ?? []
+        !bars.isEmpty && bars.allSatisfy { $0.animationKeys()?.isEmpty == false }
     }
 }

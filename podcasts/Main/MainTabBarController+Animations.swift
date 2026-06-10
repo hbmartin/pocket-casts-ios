@@ -9,15 +9,24 @@ extension MainTabBarController {
 
     @objc func animateEpisodeAddedToUpNext(_ notification: Notification) {
         guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
-        guard let episodeUuid = notification.object as? String,
-              let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid) else {
+
+        // Posted via postOnMainThread, so we're already on the main thread here.
+        guard let episodeUuid = notification.object as? String else {
             // Nothing to animate — just keep the count current.
-            DispatchQueue.main.async { [weak self] in self?.upNextQueueDidChange() }
+            upNextQueueDidChange()
             return
         }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.playUpNextAddedGenieAnimation(for: episode)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let episode {
+                    self.playUpNextAddedGenieAnimation(for: episode)
+                } else {
+                    self.upNextQueueDidChange()
+                }
+            }
         }
     }
 
