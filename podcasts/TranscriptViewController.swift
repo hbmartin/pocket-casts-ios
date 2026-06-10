@@ -656,8 +656,6 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         let formattedText = NSMutableAttributedString(attributedString: transcript.attributedText)
         formattedText.beginEditing()
         let normalStyle = makeStyle()
-        var highlightStyle = normalStyle
-        highlightStyle[.foregroundColor] = showFromEpisode ? ThemeColor.primaryInteractive01() : ThemeColor.playerContrast01()
 
         let fullLength = NSRange(location: 0, length: formattedText.length)
         formattedText.addAttributes(normalStyle, range: fullLength)
@@ -675,12 +673,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
             let searchTermLength = searchTerm.count
             searchIndicesResult.enumerated().forEach { index, indice in
                 if indice + searchTermLength <= length {
-                    let backgroundColor = showFromEpisode ? ThemeColor.primaryText01().withAlphaComponent(index == currentSearchIndex ? 1 : 0.6) : .white.withAlphaComponent(index == currentSearchIndex ? 1 : 0.4)
-                    let highlightStyle: [NSAttributedString.Key: Any] = [
-                        .backgroundColor: backgroundColor,
-                        .foregroundColor: showFromEpisode ? ThemeColor.primaryUi01() : index == currentSearchIndex ? UIColor.black : ThemeColor.playerContrast01()
-                    ]
-
+                    let highlightStyle = TranscriptSearchHighlightStyle.attributes(showFromEpisode: showFromEpisode, isCurrent: index == currentSearchIndex)
                     formattedText.addAttributes(highlightStyle, range: NSRange(location: indice, length: searchTermLength))
                 }
             }

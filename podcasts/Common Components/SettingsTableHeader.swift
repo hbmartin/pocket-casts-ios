@@ -26,6 +26,7 @@ class SettingsTableHeader: ThemeableView {
     }
 
     private var lockImage: UIView?
+    private var infoButton: UIButton?
 
     private func setupView(title: String, showLockedImage: Bool = false, lockedSelector: Selector? = nil, lockedTarget: Any? = nil, rightBtnTitle: String? = nil, rightBtnSelector: Selector? = nil, rightBtnTarget: Any? = nil, rightBtnThemeStyle: ThemeStyle = .primaryInteractive01, themeStyle: ThemeStyle) {
         registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
@@ -104,12 +105,14 @@ class SettingsTableHeader: ThemeableView {
             infoButton.heightAnchor.constraint(equalToConstant: iconSize),
             trailingAnchor.constraint(greaterThanOrEqualTo: infoButton.trailingAnchor, constant: 16)
         ])
+        self.infoButton = infoButton
     }
 
     override func handleThemeDidChange() {
         if clearBackground {
             backgroundColor = .clear
         }
+        infoButton?.tintColor = AppTheme.colorForStyle(.primaryText02, themeOverride: themeOverride)
     }
     private func updateSize() {
         let iconMetric = UIFontMetrics(forTextStyle: .largeTitle)
@@ -121,7 +124,7 @@ class SettingsTableHeader: ThemeableView {
 /// A button whose tappable area is expanded to a minimum size, centered on its
 /// bounds, without affecting its visible layout.
 private final class HitTargetButton: UIButton {
-    var minimumHitTarget = CGSize(width: 44, height: 44)
+    let minimumHitTarget = CGSize(width: 44, height: 44)
 
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         let dx = min(0, (bounds.width - minimumHitTarget.width) / 2)
