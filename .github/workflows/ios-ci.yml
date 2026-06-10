@@ -48,6 +48,8 @@ jobs:
           ref: refs/pull/${{ inputs.pull_request_number }}/head
 
       - name: Build and test
+        env:
+          POCKET_CASTS_CREDENTIALS_JSON: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.pull_request_number == '')) && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
         run: scripts/ci/build-and-test.sh
 
       - name: Upload build logs and results
@@ -84,6 +86,8 @@ jobs:
           ref: refs/pull/${{ inputs.pull_request_number }}/head
 
       - name: Run static checks
+        env:
+          POCKET_CASTS_CREDENTIALS_JSON: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.pull_request_number == '')) && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
         run: scripts/ci/static-checks.sh
 
       - name: Lint localized strings

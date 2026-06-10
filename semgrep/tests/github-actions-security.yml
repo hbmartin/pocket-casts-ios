@@ -102,6 +102,20 @@ steps:
       fetch-depth: 0
       persist-credentials: false
 ---
+steps:
+  - name: Build and test
+    env:
+      # ruleid: pocketcasts.github-actions-no-unconditional-service-credentials
+      POCKET_CASTS_CREDENTIALS_JSON: ${{ secrets.POCKET_CASTS_CREDENTIALS_JSON }}
+    run: scripts/ci/build-and-test.sh
+---
+steps:
+  - name: Build and test
+    env:
+      # ok: pocketcasts.github-actions-no-unconditional-service-credentials
+      POCKET_CASTS_CREDENTIALS_JSON: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.pull_request_number == '')) && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
+    run: scripts/ci/build-and-test.sh
+---
 script: |
   if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
     # ruleid: pocketcasts.bitdrift-gate-on-github-actions

@@ -16,8 +16,7 @@ rm -rf build/github/results/PocketCastsTests.xcresult
 
 "$SCRIPT_DIR/shared-setup.sh" --skip-gems
 
-echo "Generating open-source credentials"
-make external_contributor
+"$SCRIPT_DIR/prepare-credentials.sh"
 
 echo "Selecting an iOS Simulator"
 DESTINATION="$(

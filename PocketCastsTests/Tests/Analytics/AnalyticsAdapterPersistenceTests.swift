@@ -1,5 +1,8 @@
 import XCTest
 @testable import podcasts
+#if canImport(TelemetryDeck)
+import TelemetryDeck
+#endif
 
 /// Tests that verify the Analytics opt-out/opt-in flow works correctly.
 /// This tests the fix from commit f60bcd3ff "Call setupAnalytics after unregister"
@@ -116,6 +119,18 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         XCTAssertTrue(true, "optInOfAnalytics completed successfully")
         #endif
     }
+
+#if canImport(TelemetryDeck)
+    func testTelemetryDeckAdapterIgnoresEventsWhenSDKIsNotInitialized() async {
+        TelemetryDeck.terminate()
+
+        XCTAssertFalse(TelemetryManager.isInitialized, "TelemetryDeck should start uninitialized for this regression test")
+
+        await TelemetryDeckAnalyticsAdapter().track(name: "test_event", properties: ["source": "unit_test"])
+
+        XCTAssertFalse(TelemetryManager.isInitialized, "Tracking should not initialize TelemetryDeck implicitly")
+    }
+#endif
 }
 
 // MARK: - Test Helper Classes

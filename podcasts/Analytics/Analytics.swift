@@ -99,7 +99,9 @@ extension Analytics {
 #if !APPCLIP && !os(tvOS)
         Settings.setAnalytics(optOut: false)
         setAdaptersRegisteredStatus(false)
-        (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
+        let appDelegate = UIApplication.shared.delegate as? AppDelegate
+        appDelegate?.configureTelemetryDeck()
+        appDelegate?.setupAnalytics()
         Analytics.track(.analyticsOptIn)
 #endif
     }
