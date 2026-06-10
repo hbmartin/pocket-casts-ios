@@ -31,39 +31,46 @@ class NowPlayingAnimationView: UIView {
 
     private static let minScale: CGFloat = 0.35
 
-    private var bars: [CALayer] = []
+    private(set) var bars: [CALayer] = []
     private var fillColor: UIColor = .white
+    private let notificationCenter: NotificationCenter
 
     required init?(coder aDecoder: NSCoder) {
+        notificationCenter = .default
         super.init(coder: aDecoder)
         setupBars()
         setupObservers()
     }
 
-    override init(frame: CGRect) {
+    override convenience init(frame: CGRect) {
+        self.init(frame: frame, notificationCenter: .default)
+    }
+
+    init(frame: CGRect, notificationCenter: NotificationCenter) {
+        self.notificationCenter = notificationCenter
         super.init(frame: frame)
         setupBars()
         setupObservers()
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.removeObserver(self)
     }
 
     private func setupObservers() {
-        NotificationCenter.default.addObserver(
+        notificationCenter.addObserver(
             self,
             selector: #selector(reduceMotionStatusDidChange),
             name: UIAccessibility.reduceMotionStatusDidChangeNotification,
             object: nil
         )
-        NotificationCenter.default.addObserver(
+        notificationCenter.addObserver(
             self,
             selector: #selector(applicationWillResignActive),
             name: UIApplication.willResignActiveNotification,
             object: nil
         )
-        NotificationCenter.default.addObserver(
+        notificationCenter.addObserver(
             self,
             selector: #selector(applicationDidBecomeActive),
             name: UIApplication.didBecomeActiveNotification,
@@ -72,7 +79,11 @@ class NowPlayingAnimationView: UIView {
     }
 
     @objc private func reduceMotionStatusDidChange() {
-        animating ? animateToOn() : animateToOff()
+        if animating {
+            animateToOn()
+        } else {
+            animateToOff()
+        }
     }
 
     @objc private func applicationWillResignActive() {
