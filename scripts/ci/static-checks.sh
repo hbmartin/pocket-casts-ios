@@ -10,8 +10,7 @@ cd "$REPO_ROOT"
 
 "$SCRIPT_DIR/shared-setup.sh" --skip-gems
 
-echo "Generating open-source credentials"
-make external_contributor
+"$SCRIPT_DIR/prepare-credentials.sh"
 
 if ! command -v semgrep >/dev/null 2>&1; then
   if command -v brew >/dev/null 2>&1; then
