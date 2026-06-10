@@ -136,10 +136,6 @@ class GenerateCredentialsTest < Minitest::Test
     File.write(
       @secrets_path,
       JSON.pretty_generate(
-        'zendesk_api_key' => 'zendesk-api-key',
-        'zendesk_url' => 'https://zendesk.example.com',
-        'zendesk_new_url' => 'https://new-zendesk.example.com',
-        'dotcom_secret' => 'dotcom-secret',
         'encrypted_log_key' => 'encrypted-log-key',
         'sharing_server_secret' => 'sharing-server-secret',
         'bitdrift_sdk_key' => bitdrift_sdk_key,

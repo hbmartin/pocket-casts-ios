@@ -6,7 +6,9 @@ On each build any new string added to the english localization of `Localizable.s
 
 When Strings are generated, they are converted from snake case to camel case and strings with an associated format are created as functions that will accept the passed in parameters and perform a type checking.
 
-During the release process, the `en.lproj/Localizable.strings` file is then uploaded to GlotPress for translation. Before the release build is finalized, all the translations are grabbed from GlotPress and saved back to the `Localizable.strings` files.
+> **Translation sync is currently disabled.** The WordPress-hosted GlotPress project that previously translated these strings has been removed, so the release lanes that uploaded the source strings and downloaded translations now fail explicitly. The existing `*.lproj` translations are frozen until a replacement is wired up. See [translation-reimplementation.md](./translation-reimplementation.md).
+
+Historically, during the release process the `en.lproj/Localizable.strings` file was uploaded to GlotPress for translation, and before the release build was finalized all the translations were grabbed from GlotPress and saved back to the `Localizable.strings` files.
 
 ## Use Snake Cased Keys
 
