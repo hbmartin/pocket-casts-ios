@@ -253,6 +253,34 @@ rules:
                 ...
               }
 
+  - id: pocketcasts.core-animation-add-requires-reduce-motion-guard
+    severity: WARNING
+    metadata:
+      category: accessibility
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Guard Core Animation additions in animated controls with UIAccessibility.isReduceMotionEnabled.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/BasePlayPauseButton.swift"
+        - "**/podcasts/SkipButton.swift"
+        - "**/podcasts/SleepTimerButton.swift"
+        - "**/podcasts/Common Components/Animated Controls/NowPlayingAnimationView.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: |
+          $LAYER.add($ANIMATION, forKey: $KEY)
+      - pattern-not-inside: |
+          if !UIAccessibility.isReduceMotionEnabled {
+            ...
+          }
+      - pattern-not-inside: |
+          guard !UIAccessibility.isReduceMotionEnabled else { return }
+          ...
+
   - id: pocketcasts.native-empty-state-action-weak-self
     severity: ERROR
     metadata:
@@ -279,14 +307,7 @@ rules:
       - metavariable-pattern:
           metavariable: $EXPR
           pattern: self.$MEMBER
-      - pattern-not: |
-          .init(...) { [weak self] in
-            ...
-          }
-      - pattern-not: |
-          .init(...) { [weak self] $PARAM in
-            ...
-          }
+      - pattern-not-regex: '(?s)\.init\s*\([^{}]*\)\s*\{\s*\[[^\]]*\bweak\s+self\b[^\]]*\]\s*(?:in\b|[^\{\}\n]*\bin\b)'
 
   - id: pocketcasts.content-unavailable-assigned-inside-empty-branch
     severity: ERROR

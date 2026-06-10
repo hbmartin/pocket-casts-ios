@@ -57,14 +57,41 @@ class NowPlayingAnimationView: UIView {
             name: UIAccessibility.reduceMotionStatusDidChangeNotification,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
     }
 
     @objc private func reduceMotionStatusDidChange() {
         animating ? animateToOn() : animateToOff()
     }
 
+    @objc private func applicationWillResignActive() {
+        removeBarAnimations()
+    }
+
+    @objc private func applicationDidBecomeActive() {
+        if window != nil, animating {
+            animateToOn()
+        }
+    }
+
     override func didMoveToWindow() {
         super.didMoveToWindow()
+
+        guard window != nil else {
+            removeBarAnimations()
+            return
+        }
 
         if animating {
             animateToOn()
@@ -115,7 +142,15 @@ class NowPlayingAnimationView: UIView {
     }
 
     private func animateToOn() {
-        bars.forEach { $0.isHidden = false }
+        guard window != nil else {
+            removeBarAnimations()
+            return
+        }
+
+        bars.forEach {
+            $0.removeAnimation(forKey: Self.animationKey)
+            $0.isHidden = false
+        }
 
         // Respect Reduce Motion: show the bars at rest without bouncing.
         guard !UIAccessibility.isReduceMotionEnabled else { return }
@@ -139,5 +174,9 @@ class NowPlayingAnimationView: UIView {
             $0.removeAnimation(forKey: Self.animationKey)
             $0.isHidden = true
         }
+    }
+
+    private func removeBarAnimations() {
+        bars.forEach { $0.removeAnimation(forKey: Self.animationKey) }
     }
 }

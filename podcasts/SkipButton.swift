@@ -155,6 +155,7 @@ class SkipButton: UIButton {
 /// seconds value is rendered separately by `SkipButton`'s label in the centre.
 class SkipIconView: UIView {
     private static let spinKey = "skipSpin"
+    private static let scaleKey = "skipScale"
 
     private let arcLayer = CAShapeLayer()
 
@@ -196,6 +197,8 @@ class SkipIconView: UIView {
 
     /// Plays a single rotation to acknowledge a tap.
     func spin() {
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+
         let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
         rotation.fromValue = 0
         rotation.toValue = 2 * CGFloat.pi
@@ -203,17 +206,15 @@ class SkipIconView: UIView {
         rotation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         arcLayer.add(rotation, forKey: Self.spinKey)
 
-        if !UIAccessibility.isReduceMotionEnabled {
-            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
-            scale.values = [1.0, 0.85, 1.0]
-            scale.keyTimes = [0, 0.4, 1]
-            scale.duration = 0.4
-            scale.timingFunctions = [
-                CAMediaTimingFunction(name: .easeInEaseOut),
-                CAMediaTimingFunction(name: .easeInEaseOut),
-            ]
-            layer.add(scale, forKey: "skipScale")
-        }
+        let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+        scale.values = [1.0, 0.85, 1.0]
+        scale.keyTimes = [0, 0.4, 1]
+        scale.duration = 0.4
+        scale.timingFunctions = [
+            CAMediaTimingFunction(name: .easeInEaseOut),
+            CAMediaTimingFunction(name: .easeInEaseOut),
+        ]
+        layer.add(scale, forKey: Self.scaleKey)
     }
 
     private func arrowPath() -> CGPath {
