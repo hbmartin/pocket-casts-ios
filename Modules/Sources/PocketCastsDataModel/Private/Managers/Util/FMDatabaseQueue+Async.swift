@@ -1,3 +1,5 @@
+import PocketCastsUtils
+
 extension PCDBQueue {
 
     /// Asynchronously perform queries on an `PCDatabase` from a `PCDBQueue`
@@ -13,15 +15,19 @@ extension PCDBQueue {
     ///             print("Uh oh", error)
     ///
     func perform<T>(_ action: (PCDatabase) throws -> T) async -> Result<T, Error> {
-        await withCheckedContinuation { continuation in
+        // The result is produced inside the database block and handed over wholesale to the
+        // awaiting task; box it because T cannot be constrained to Sendable (result sets are
+        // mutable classes).
+        let boxed: Result<UncheckedSendable<T>, Error> = await withCheckedContinuation { continuation in
             write { db in
                 do {
-                    continuation.resume(returning: .success(try action(db)))
+                    continuation.resume(returning: .success(UncheckedSendable(try action(db))))
                 } catch {
                     continuation.resume(returning: .failure(error))
                 }
             }
         }
+        return boxed.map(\.value)
     }
 
     /// Helper async function perform `executeUpdate` from a database queue

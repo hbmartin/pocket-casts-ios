@@ -4,6 +4,19 @@ import PackageDescription
 import CompilerPluginSupport
 import Foundation
 
+/// Strict-concurrency hardening while staying in the Swift 5 language mode:
+/// diagnostics surface as warnings, not errors. Applied target-by-target.
+let strictConcurrencySettings: [SwiftSetting] = [
+    .enableUpcomingFeature("StrictConcurrency"),
+    .enableUpcomingFeature("InferSendableFromCaptures"),
+]
+
+/// Same as `strictConcurrencySettings` plus -enable-testing, pre-concatenated so the
+/// package manifest stays simple enough for the manifest type-checker.
+let strictConcurrencyTestableSettings: [SwiftSetting] = strictConcurrencySettings + [
+    .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
+]
+
 let package = Package(
     name: "Modules",
     platforms: [
@@ -63,12 +76,14 @@ let package = Package(
     targets: XcodeSupport.targets + [
         .target(
             name: "PocketCastsDependencyInjection",
-            path: "Sources/PocketCastsDependencyInjection"
+            path: "Sources/PocketCastsDependencyInjection",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "PocketCastsDependencyInjectionTests",
             dependencies: ["PocketCastsDependencyInjection"],
-            path: "Tests/PocketCastsDependencyInjectionTests"
+            path: "Tests/PocketCastsDependencyInjectionTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "GRDBMacros",
@@ -76,7 +91,8 @@ let package = Package(
                 "GRDBMacrosPlugin",
                 .product(name: "GRDB", package: "GRDB.swift"),
             ],
-            path: "Sources/GRDBMacros"
+            path: "Sources/GRDBMacros",
+            swiftSettings: strictConcurrencySettings
         ),
         .macro(
             name: "GRDBMacrosPlugin",
@@ -85,7 +101,8 @@ let package = Package(
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ],
-            path: "Sources/GRDBMacrosPlugin"
+            path: "Sources/GRDBMacrosPlugin",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "GRDBMacrosTests",
@@ -93,19 +110,19 @@ let package = Package(
                 "GRDBMacrosPlugin",
                 .product(name: "MacroTesting", package: "swift-macro-testing"),
             ],
-            path: "Tests/GRDBMacrosTests"
+            path: "Tests/GRDBMacrosTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "PocketCastsUtils",
             path: "Sources/PocketCastsUtils",
-            swiftSettings: [
-                .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
-            ]
+            swiftSettings: strictConcurrencyTestableSettings
         ),
         .testTarget(
             name: "PocketCastsUtilsTests",
             dependencies: ["PocketCastsUtils"],
-            path: "Tests/PocketCastsUtilsTests"
+            path: "Tests/PocketCastsUtilsTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "PocketCastsDataModel",
@@ -116,9 +133,7 @@ let package = Package(
                 "GRDBMacros",
             ],
             path: "Sources/PocketCastsDataModel",
-            swiftSettings: [
-                .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
-            ]
+            swiftSettings: strictConcurrencyTestableSettings
         ),
         .target(
             name: "PocketCastsDataModelTesting",
@@ -127,8 +142,9 @@ let package = Package(
         ),
         .testTarget(
             name: "PocketCastsDataModelTests",
-            dependencies: ["PocketCastsDataModel", "PocketCastsDataModelTesting"],
-            path: "Tests/PocketCastsDataModelTests"
+            dependencies: ["PocketCastsDataModel"],
+            path: "Tests/PocketCastsDataModelTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "PocketCastsServer",
@@ -139,9 +155,7 @@ let package = Package(
                 "PocketCastsUtils",
             ],
             path: "Sources/PocketCastsServer",
-            swiftSettings: [
-                .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
-            ],
+            swiftSettings: strictConcurrencyTestableSettings,
             linkerSettings: [
                 .linkedFramework("CFNetwork", .when(platforms: [.iOS])),
                 .linkedFramework("AuthenticationServices", .when(platforms: [.iOS]))
@@ -154,7 +168,8 @@ let package = Package(
                 "PocketCastsServer",
             ],
             path: "Tests/PocketCastsServerTests",
-            resources: [.copy("Fixtures")]
+            resources: [.copy("Fixtures")],
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "EndOfYear",
@@ -164,16 +179,19 @@ let package = Package(
                 "PocketCastsUtils",
                 .product(name: "Kingfisher", package: "Kingfisher"),
             ],
-            path: "Sources/EndOfYear"
+            path: "Sources/EndOfYear",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "Modules",
-            path: "Sources/Modules"
+            path: "Sources/Modules",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "ModulesTests",
             dependencies: ["Modules"],
-            path: "Tests/ModulesTests"
+            path: "Tests/ModulesTests",
+            swiftSettings: strictConcurrencySettings
         )
     ]
 )
@@ -258,7 +276,8 @@ extension Target {
         .target(
             name: name.supportingName,
             dependencies: dependencies,
-            path: "Sources/XcodeSupport/\(name.replacingOccurrences(of: " ", with: "-").supportingName)"
+            path: "Sources/XcodeSupport/\(name.replacingOccurrences(of: " ", with: "-").supportingName)",
+            swiftSettings: strictConcurrencySettings
         )
     }
 }

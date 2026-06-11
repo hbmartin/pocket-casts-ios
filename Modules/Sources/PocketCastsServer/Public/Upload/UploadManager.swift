@@ -2,12 +2,16 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-public class UploadManager: NSObject {
+// @unchecked Sendable (required by its URLSession delegate conformance): the episode
+// cache and progress manager are touched from session delegate callbacks, preserved
+// pre-concurrency behavior.
+public final class UploadManager: NSObject, @unchecked Sendable {
     public static let shared = UploadManager()
 
-    public var progressManager = UploadProgressManager()
+    public let progressManager = UploadProgressManager()
 
-    var uploadingEpisodesCache = [String: UserEpisode]()
+    private let stateLock = NSLock()
+    private var uploadingEpisodesCache = [String: UserEpisode]()
     let imageTaskPrefix = "Image-"
     private lazy var wifiOnlyBackgroundSession: URLSession = {
         var config = URLSessionConfiguration.background(withIdentifier: "au.com.shiftyjelly.PCUploadBackgroundSession")
@@ -132,8 +136,8 @@ public class UploadManager: NSObject {
     }
 
     public func stopAllUploads() {
-        for uploadTask in uploadingEpisodesCache {
-            removeFromQueue(episodeUuid: uploadTask.value.uuid, fireNotification: false)
+        for episode in cachedUploadingEpisodes() {
+            removeFromQueue(episodeUuid: episode.uuid, fireNotification: false)
         }
     }
 
@@ -158,12 +162,11 @@ public class UploadManager: NSObject {
     }
 
     public func removeTaskIdFromCache(taskId: String) {
-        guard let episode = uploadingEpisodesCache[taskId] else { return }
+        guard let episode = removeCachedEpisode(forTaskId: taskId) else { return }
 
         if !isImageUpload(taskId: taskId) {
             progressManager.removeProgressForEpisode(episode.uuid)
         }
-        uploadingEpisodesCache.removeValue(forKey: taskId)
     }
 
     public func isImageUpload(taskId: String) -> Bool {
@@ -210,7 +213,7 @@ public class UploadManager: NSObject {
 
             uploadTask.taskDescription = taskId
             if let taskId {
-                self.uploadingEpisodesCache[taskId] = episode
+                self.cache(episode: episode, forTaskId: taskId)
             }
             uploadTask.resume()
 
@@ -246,9 +249,37 @@ public class UploadManager: NSObject {
 
             uploadTask?.taskDescription = "\(self.imageTaskPrefix)\(episode.uuid)"
             if let taskId = uploadTask?.taskDescription {
-                self.uploadingEpisodesCache[taskId] = episode
+                self.cache(episode: episode, forTaskId: taskId)
             }
             uploadTask?.resume()
         })
+    }
+
+    func cachedEpisode(forTaskId taskId: String) -> UserEpisode? {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
+        return uploadingEpisodesCache[taskId]
+    }
+
+    func cache(episode: UserEpisode, forTaskId taskId: String) {
+        stateLock.lock()
+        uploadingEpisodesCache[taskId] = episode
+        stateLock.unlock()
+    }
+
+    @discardableResult
+    func removeCachedEpisode(forTaskId taskId: String) -> UserEpisode? {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
+        return uploadingEpisodesCache.removeValue(forKey: taskId)
+    }
+
+    private func cachedUploadingEpisodes() -> [UserEpisode] {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
+        return Array(uploadingEpisodesCache.values)
     }
 }

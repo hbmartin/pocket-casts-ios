@@ -137,6 +137,27 @@ rules:
               persist-credentials: false
               ...
 
+  - id: pocketcasts.github-actions-no-unconditional-service-credentials
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [github-actions]
+    message: Gate service-credential secrets on trusted triggers (e.g. push or non-PR workflow_dispatch) instead of exposing them unconditionally to every run.
+    languages: [yaml]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern: |
+          $ENVKEY: $SECRET
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: ^\$\{\{\s*secrets\.[A-Za-z0-9_]*CREDENTIALS[A-Za-z0-9_]*\s*\}\}$
+
   - id: pocketcasts.release-fastlane-release-version-required
     severity: WARNING
     metadata:
@@ -252,6 +273,133 @@ rules:
                 DataManager.sharedManager.$METHOD(...)
                 ...
               }
+
+  - id: pocketcasts.servercredentials-use-configure-sharing
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Configure ServerCredentials.sharing through ServerCredentials.configureSharing so startup write-once semantics are enforced.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: ServerCredentials.sharing = $VALUE
+
+  - id: pocketcasts.no-notificationdelegate-mainactor-assumeisolated
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: UNUserNotificationCenterDelegate callbacks are not guaranteed to run on the main actor; dispatch explicitly with Task { @MainActor in ... }.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          class $CLASS: $BASE, UNUserNotificationCenterDelegate {
+            ...
+          }
+      - pattern: |
+          MainActor.assumeIsolated {
+            ...
+          }
+
+  - id: pocketcasts.timer-assumeisolated-requires-main-runloop
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Timer callbacks that use MainActor.assumeIsolated must be added to RunLoop.main, not RunLoop.current.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: 'RunLoop\.current\.add\([^,\n]+,\s*forMode:'
+
+  - id: pocketcasts.podcast-search-wait-timeout-result-required
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: PodcastSearchOperation must inspect DispatchGroup.wait(timeout:) before reading cross-callback state.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/Public/Refresh/PodcastSearchOperation.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              class $CLASS {
+                ...
+              }
+          - pattern-inside: |
+              class $CLASS: $BASE {
+                ...
+              }
+          - pattern-inside: |
+              class $CLASS: $BASE, @unchecked Sendable {
+                ...
+              }
+      - metavariable-regex:
+          metavariable: $CLASS
+          regex: ^(?:PodcastSearchOperation|UnsafePodcastSearchWait)$
+      - pattern: |
+          _ = $GROUP.wait(timeout: ...)
+
+  - id: pocketcasts.no-podcast-retry-thread-sleep
+    severity: ERROR
+    metadata:
+      category: performance
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Podcast retry backoff should schedule asynchronously instead of blocking a queue thread with Thread.sleep.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: |
+          Thread.sleep(forTimeInterval: $TRY.pollWaitingTime)
+
+  - id: pocketcasts.future-promise-failure-must-return-before-success
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Return immediately after completing a Future promise with failure so execution cannot fall through to success.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: '(?s)\b\w+\.value\(\.failure\([^\n]*\)\)(?!\s*return).*?\b\w+\.value\(\.success\('
 
   - id: pocketcasts.core-animation-add-requires-reduce-motion-guard
     severity: WARNING

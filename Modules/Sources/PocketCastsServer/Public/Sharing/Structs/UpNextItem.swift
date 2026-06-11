@@ -1,6 +1,6 @@
 import Foundation
 
-public struct UpNextItem {
+public struct UpNextItem: Sendable {
     public var podcastUuid: String
     public var episodeUuid: String
     public var title: String?

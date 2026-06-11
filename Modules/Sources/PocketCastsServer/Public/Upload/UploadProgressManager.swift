@@ -3,11 +3,7 @@ import UIKit
 
 public class UploadProgressManager: NSObject {
     private var progressItems = [String: UploadProgress]()
-    private lazy var progressItemsQueue: DispatchQueue = {
-        let queue = DispatchQueue(label: "au.com.pocketcasts.UploadProgressItemsQueue")
-
-        return queue
-    }()
+    private let progressItemsQueue = DispatchQueue(label: "au.com.pocketcasts.UploadProgressItemsQueue")
 
     private var finishedItemCount: Double = 0
     private var lastUiUpdateTime: Date?

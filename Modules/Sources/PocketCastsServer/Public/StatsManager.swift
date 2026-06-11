@@ -2,7 +2,8 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-public class StatsManager {
+// @unchecked Sendable: all mutable stats state is accessed through `updateQueue`.
+public final class StatsManager: @unchecked Sendable {
     public static let shared = StatsManager()
 
     private var savedDynamicSpeed = -1 as TimeInterval
@@ -65,7 +66,7 @@ public class StatsManager {
     // MARK: - dynamic speed
 
     public func timeSavedDynamicSpeed() -> TimeInterval {
-        savedDynamicSpeed
+        updateQueue.sync { savedDynamicSpeed }
     }
 
     public func addTimeSavedDynamicSpeed(_ seconds: TimeInterval) {
@@ -78,7 +79,7 @@ public class StatsManager {
     // MARK: - variable speed
 
     public func timeSavedVariableSpeed() -> TimeInterval {
-        savedVariableSpeed
+        updateQueue.sync { savedVariableSpeed }
     }
 
     public func addTimeSavedVariableSpeed(_ seconds: TimeInterval) {
@@ -91,7 +92,7 @@ public class StatsManager {
     // MARK: - total listened
 
     public func totalListeningTime() -> TimeInterval {
-        totalListenedTo
+        updateQueue.sync { totalListenedTo }
     }
 
     public func addTotalListeningTime(_ seconds: TimeInterval) {
@@ -104,7 +105,7 @@ public class StatsManager {
     // MARK: - total skipped
 
     public func totalSkippedTime() -> TimeInterval {
-        totalSkipped
+        updateQueue.sync { totalSkipped }
     }
 
     public func addSkippedTime(_ seconds: TimeInterval) {
@@ -117,7 +118,7 @@ public class StatsManager {
     // MARK: - total auto skipped
 
     public func totalAutoSkippedTime() -> TimeInterval {
-        savedAutoSkipping
+        updateQueue.sync { savedAutoSkipping }
     }
 
     public func addAutoSkipTime(_ seconds: TimeInterval) {

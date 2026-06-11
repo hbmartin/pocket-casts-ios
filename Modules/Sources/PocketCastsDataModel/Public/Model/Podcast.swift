@@ -4,7 +4,10 @@ import GRDBMacros
 import PocketCastsUtils
 
 @GRDBRecord(table: "SJPodcast")
-public class Podcast: NSObject, Identifiable {
+// @unchecked Sendable: mutable model object passed across threads by long-standing
+// convention in this codebase; consistency is maintained by database-write discipline
+// rather than by the type itself.
+public class Podcast: NSObject, Identifiable, @unchecked Sendable {
     @objc public var id = 0 as Int64
     @objc public var addedDate: Date?
     @objc public var autoDownloadSetting = 0 as Int32

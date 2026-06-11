@@ -18,12 +18,13 @@ struct MockSingleton {
 }
 
 struct MockSingletonKey: DependencyKey {
-    static var currentValue = MockSingleton(name: "default")
+    // nonisolated(unsafe): test-only key; tests run single-threaded.
+    nonisolated(unsafe) static var currentValue = MockSingleton(name: "default")
 }
 
 extension TestDependencyContainer {
     var mockSingleton: MockSingleton {
         get { Self[MockSingletonKey.self] }
-        set { Self[MockSingletonKey.self] = newValue }
+        nonmutating set { Self[MockSingletonKey.self] = newValue }
     }
 }

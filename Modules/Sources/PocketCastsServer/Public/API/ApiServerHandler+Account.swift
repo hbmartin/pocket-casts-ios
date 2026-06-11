@@ -19,13 +19,13 @@ public extension ApiServerHandler {
         return try await obtainToken(request: request, usingRefreshToken: false)
     }
 
-    func validateLogin(username: String, password: String, completion: @escaping (_ success: Bool, _ userId: String?, _ error: APIError?) -> Void) {
+    func validateLogin(username: String, password: String, completion: @escaping @Sendable (_ success: Bool, _ userId: String?, _ error: APIError?) -> Void) {
         obtainToken(username: username, password: password, scope: ServerConstants.Values.apiScope) { token, userId, error in
             completion(token != nil, userId, error)
         }
     }
 
-    func forgotPassword(email: String, completion: @escaping (_ success: Bool, _ error: APIError?) -> Void) {
+    func forgotPassword(email: String, completion: @escaping @Sendable (_ success: Bool, _ error: APIError?) -> Void) {
         var request = Api_EmailRequest()
         request.email = email
 
@@ -59,7 +59,7 @@ public extension ApiServerHandler {
         }
     }
 
-    func registerAccount(username: String, password: String, completion: @escaping (_ success: Bool, _ userId: String?, _ error: APIError?) -> Void) {
+    func registerAccount(username: String, password: String, completion: @escaping @Sendable (_ success: Bool, _ userId: String?, _ error: APIError?) -> Void) {
         var request = Api_RegisterRequest()
         request.email = username
         request.password = password
@@ -95,7 +95,7 @@ public extension ApiServerHandler {
         }
     }
 
-    func obtainToken(username: String, password: String, scope: String, completion: @escaping (_ token: String?, _ userId: String?, _ error: APIError?) -> Void) {
+    func obtainToken(username: String, password: String, scope: String, completion: @escaping @Sendable (_ token: String?, _ userId: String?, _ error: APIError?) -> Void) {
         var loginRequest = Api_UserLoginRequest()
         loginRequest.email = username
         loginRequest.password = password
@@ -134,7 +134,7 @@ public extension ApiServerHandler {
         }
     }
 
-    func obtainToken(request: URLRequest, completion: @escaping (Result<AuthenticationResponse, APIError>) -> Void) {
+    func obtainToken(request: URLRequest, completion: @escaping @Sendable (Result<AuthenticationResponse, APIError>) -> Void) {
         Task {
             do {
                 let response = try await obtainToken(request: request, usingRefreshToken: false)
@@ -209,13 +209,13 @@ public extension ApiServerHandler {
 
     // MARK: Change email and password
 
-    func changeEmailRequest(newEmail: String, password: String, completion: @escaping (Bool) -> Void) {
+    func changeEmailRequest(newEmail: String, password: String, completion: @escaping @Sendable (Bool) -> Void) {
         let operation = ChangeEmailTask(newEmail: newEmail, password: password)
         operation.completion = completion
         apiQueue.addOperation(operation)
     }
 
-    func changePasswordRequest(currentPassword: String, newPassword: String, completion: @escaping (Bool) -> Void) {
+    func changePasswordRequest(currentPassword: String, newPassword: String, completion: @escaping @Sendable (Bool) -> Void) {
         let operation = ChangePasswordTask(currentPassword: currentPassword, newPassword: newPassword)
         operation.completion = completion
         apiQueue.addOperation(operation)

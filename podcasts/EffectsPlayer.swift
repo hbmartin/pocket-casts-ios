@@ -401,12 +401,7 @@ class EffectsPlayer: PlaybackProtocol, Hashable {
             setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_AttackTime, value: 0.05)
             setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_ReleaseTime, value: 0.2)
 
-            // This variable was renamed in Xcode 13, iOS 15. Include this check so it still compiles in Xcode 12
-            #if swift(<5.5)
-                setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_MasterGain, value: 0)
-            #else
-                setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_OverallGain, value: 0)
-            #endif
+            setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_OverallGain, value: 0)
 
             setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_CompressionAmount, value: 0)
             setFloatParameter(dynamicsProcessor?.audioUnit, key: kDynamicsProcessorParam_InputAmplitude, value: -120)

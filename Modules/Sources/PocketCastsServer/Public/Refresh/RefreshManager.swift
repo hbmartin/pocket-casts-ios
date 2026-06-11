@@ -3,10 +3,11 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-public class RefreshManager {
+// @unchecked Sendable: the only stored property is an OperationQueue (thread-safe).
+public final class RefreshManager: @unchecked Sendable {
     public static let shared = RefreshManager()
 
-    lazy var refreshQueue: OperationQueue = {
+    let refreshQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 
@@ -73,7 +74,7 @@ public class RefreshManager {
         refresh(podcasts: DataManager.sharedManager.allPodcasts(includeUnsubscribed: false))
     }
 
-    private func refresh(podcasts: [Podcast], completion: (() -> Void)? = nil) {
+    private func refresh(podcasts: [Podcast], completion: (@Sendable () -> Void)? = nil) {
         UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshStartTime)
 
         DispatchQueue.global().async {
@@ -88,7 +89,7 @@ public class RefreshManager {
     }
 
 
-    public func refreshPodcasts(completion: @escaping (RefreshFetchResult) -> Void) {
+    public func refreshPodcasts(completion: @escaping @Sendable (RefreshFetchResult) -> Void) {
         DispatchQueue.global().async {
             let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
             MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in

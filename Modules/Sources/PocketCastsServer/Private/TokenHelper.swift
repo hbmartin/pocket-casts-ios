@@ -4,7 +4,9 @@ import PocketCastsUtils
 import UIKit
 #endif
 
-class TokenHelper {
+// @unchecked Sendable: the only stored property is an immutable URLConnection;
+// token state lives in the keychain/ServerSettings.
+final class TokenHelper: @unchecked Sendable {
 
     static let shared = TokenHelper(urlConnection: URLConnection(handler: URLSession.shared))
 
@@ -14,7 +16,7 @@ class TokenHelper {
         self.urlConnection = urlConnection
     }
 
-    func callSecureUrl(request: URLRequest, completion: @escaping ((HTTPURLResponse?, Data?, Error?) -> Void)) {
+    func callSecureUrl(request: URLRequest, completion: @escaping @Sendable (HTTPURLResponse?, Data?, Error?) -> Void) {
         DispatchQueue.global().async { [weak self] in
             self?.performCallSecureUrl(request: request, retryOnUnauthorized: true, completion: completion)
         }
@@ -36,7 +38,7 @@ class TokenHelper {
         }
     }
 
-    private func performCallSecureUrl(request: URLRequest, retryOnUnauthorized: Bool = true, completion: @escaping ((HTTPURLResponse?, Data?, Error?) -> Void)) {
+    private func performCallSecureUrl(request: URLRequest, retryOnUnauthorized: Bool = true, completion: @escaping @Sendable (HTTPURLResponse?, Data?, Error?) -> Void) {
         var mutableRequest = request
 
         if let privateUserAgent = ServerConfig.shared.syncDelegate?.privateUserAgent() {
@@ -80,25 +82,25 @@ class TokenHelper {
     }
 
     func acquireToken() -> String? {
+        // The semaphore establishes the happens-before edge for the boxed result.
         let semaphore = DispatchSemaphore(value: 0)
-        var refreshedToken: String? = nil
-        var refreshedRefreshToken: String? = nil
-        var error: Error? = nil
+        let box = UncheckedSendableBox<(token: String?, refreshToken: String?, error: Error?)>((nil, nil, nil))
 
         asyncAcquireToken { result in
             switch result {
             case .success(let authenticationResponse):
-                refreshedToken = authenticationResponse?.token
-                refreshedRefreshToken = authenticationResponse?.refreshToken
+                box.value.token = authenticationResponse?.token
+                box.value.refreshToken = authenticationResponse?.refreshToken
             case .failure(let resultError):
-                refreshedToken = nil
-                error = resultError
+                box.value.token = nil
+                box.value.error = resultError
             }
             semaphore.signal()
         }
 
         semaphore.wait()
 
+        let (refreshedToken, refreshedRefreshToken, error) = box.value
         if let token = refreshedToken, !token.isEmpty {
             ServerSettings.syncingV2Token = token
             ServerSettings.setRefreshToken(refreshedRefreshToken)
@@ -124,19 +126,20 @@ class TokenHelper {
     }
 
     private func isApplicationBackgrounded() -> Bool {
+        // The semaphore establishes the happens-before edge for the boxed result.
         let semaphore = DispatchSemaphore(value: 0)
-        var isBackgrounded = false
+        let isBackgrounded = UncheckedSendableBox(false)
 
         DispatchQueue.main.async {
             #if os(iOS)
-            isBackgrounded = UIApplication.shared.applicationState == .background
+            isBackgrounded.value = UIApplication.shared.applicationState == .background
             #endif
 
             semaphore.signal()
         }
 
         semaphore.wait()
-        return isBackgrounded
+        return isBackgrounded.value
     }
 
     // MARK: - Email / Password Token
@@ -192,7 +195,7 @@ class TokenHelper {
 
     // MARK: - Email / Password Token
 
-    func asyncAcquireToken(completion: @escaping (Result<AuthenticationResponse?, Error>) -> Void) {
+    func asyncAcquireToken(completion: @escaping @Sendable (Result<AuthenticationResponse?, Error>) -> Void) {
         do {
             if let authenticationResponse = try acquirePasswordToken() {
                 completion(.success(authenticationResponse))

@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-public struct ImportOpmlResponse: Decodable {
+public struct ImportOpmlResponse: Decodable, Sendable {
     public var status: String? = nil
     public var message: String? = nil
     public var result: ImportOpmlResult?
@@ -18,7 +18,7 @@ public struct ImportOpmlResponse: Decodable {
     }
 }
 
-public struct ImportOpmlResult: Decodable {
+public struct ImportOpmlResult: Decodable, Sendable {
     public var uuids: [String]?
     public var pollUuids: [String]?
     public var failedCount: Int
@@ -30,7 +30,7 @@ public struct ImportOpmlResult: Decodable {
     }
 }
 
-public struct ExportPodcastsResponse: Decodable {
+public struct ExportPodcastsResponse: Decodable, Sendable {
     public var status: String? = nil
     public var message: String? = nil
     public var result: [String: String]?
@@ -47,7 +47,7 @@ public struct ExportPodcastsResponse: Decodable {
     }
 }
 
-public struct ShareListResponse: Decodable {
+public struct ShareListResponse: Decodable, Sendable {
     public var status: String? = nil
     public var message: String? = nil
     public var result: ShareListResult? = nil
@@ -64,7 +64,7 @@ public struct ShareListResponse: Decodable {
     }
 }
 
-public struct ShareListResult: Decodable {
+public struct ShareListResult: Decodable, Sendable {
     public var time: String?
     public var podcast: SharedPodcast?
     public var episode: RefreshEpisode?
@@ -75,7 +75,7 @@ public struct ShareListResult: Decodable {
     }
 }
 
-public struct SharedPodcast: Decodable {
+public struct SharedPodcast: Decodable, Sendable {
     public var title: String?
     public var uuid: String?
     public var podcastDescription: String?
@@ -89,7 +89,7 @@ public struct SharedPodcast: Decodable {
     }
 }
 
-public struct PodcastRefreshResponse: Decodable {
+public struct PodcastRefreshResponse: Decodable, Sendable {
     public var status: String?
     public var message: String?
     public var result: RefreshResult?
@@ -106,11 +106,11 @@ public struct PodcastRefreshResponse: Decodable {
     }
 }
 
-public struct RefreshResult: Decodable {
+public struct RefreshResult: Decodable, Sendable {
     public var podcastUpdates: [String: [RefreshEpisode]]?
 }
 
-public struct RefreshEpisode: Decodable {
+public struct RefreshEpisode: Decodable, Sendable {
     public var title: String?
     public var uuid: String?
     public var url: String?
@@ -140,7 +140,7 @@ public struct RefreshEpisode: Decodable {
     }
 }
 
-public struct PodcastSearchResponse: Decodable {
+public struct PodcastSearchResponse: Decodable, Sendable {
     public var status: String? = nil
     public var message: String? = nil
     public var result: SearchResult? = nil
@@ -157,7 +157,7 @@ public struct PodcastSearchResponse: Decodable {
     }
 }
 
-public struct SearchResult: Decodable {
+public struct SearchResult: Decodable, Sendable {
     public var podcast: PodcastInfo?
     public var searchResults: [PodcastInfo]?
 
@@ -168,7 +168,7 @@ public struct SearchResult: Decodable {
     }
 }
 
-public struct PodcastInfo: Codable {
+public struct PodcastInfo: Codable, Sendable {
     public var author: String?
     public var shortDescription: String?
     public var title: String?
@@ -205,7 +205,7 @@ public struct PodcastInfo: Codable {
     }
 }
 
-public struct EpisodeSyncInfo {
+public struct EpisodeSyncInfo: Sendable {
     public var uuid: String?
     public var duration: Int?
     public var playingStatus: Int?
@@ -215,7 +215,7 @@ public struct EpisodeSyncInfo {
     public var deselectedChapters: String?
 }
 
-public struct PodcastSyncInfo {
+public struct PodcastSyncInfo: Sendable {
     var uuid: String?
     var autoStartFrom: Int?
     var autoSkipLast: Int?
@@ -225,7 +225,7 @@ public struct PodcastSyncInfo {
     var settings: PodcastSettings?
 }
 
-public struct FolderSyncInfo {
+public struct FolderSyncInfo: Sendable {
     var uuid: String
     var name: String
     var color: Int32
@@ -234,7 +234,7 @@ public struct FolderSyncInfo {
     var addedDate: Date
 }
 
-public struct DiscoverLayout: Decodable {
+public struct DiscoverLayout: Decodable, Sendable {
     public var layout: [DiscoverItem]?
     public var regions: [String: DiscoverRegion]?
     public var regionCodeToken: String
@@ -250,13 +250,13 @@ public struct DiscoverLayout: Decodable {
     }
 }
 
-public struct DiscoverRegion: Decodable {
+public struct DiscoverRegion: Decodable, Sendable {
     public var name: String
     public var code: String
     public var flag: String
 }
 
-public struct DiscoverItem: Decodable, Equatable {
+public struct DiscoverItem: Decodable, Equatable, Sendable {
     public var id: String?
     public var uuid: String?
     public var title: String?
@@ -338,12 +338,12 @@ extension DiscoverItem: Hashable {
     }
 }
 
-public struct CarouselSponsoredPodcast: Decodable, Equatable {
+public struct CarouselSponsoredPodcast: Decodable, Equatable, Sendable {
     public var position: Int?
     public var source: String?
 }
 
-public struct PodcastNetwork: Decodable {
+public struct PodcastNetwork: Decodable, Sendable {
     public var title: String?
     public var source: String?
     public var description: String?
@@ -357,14 +357,14 @@ public struct PodcastNetwork: Decodable {
     }
 }
 
-public struct PodcastList: Decodable {
+public struct PodcastList: Decodable, Sendable {
     public var title: String?
     public var description: String?
     public var podcasts: [DiscoverPodcast]?
     public let datetime: String?
 }
 
-public struct PodcastCollection: Decodable {
+public struct PodcastCollection: Decodable, Sendable {
     public let listId: String?
     public var title: String?
     public var subtitle: String?
@@ -397,7 +397,7 @@ public struct PodcastCollection: Decodable {
     }
 }
 
-public struct DiscoverPodcast: Codable, Equatable, Hashable {
+public struct DiscoverPodcast: Codable, Equatable, Hashable, Sendable {
     public var title: String?
     public var author: String?
     public var shortDescription: String?
@@ -442,26 +442,26 @@ public struct DiscoverCategory: Decodable, Equatable, Sendable, Hashable {
     }
 }
 
-public struct DiscoverSource: Decodable, Equatable {
+public struct DiscoverSource: Decodable, Equatable, Sendable {
     public var source: String?
     public var authenticated: Bool?
 }
 
-public struct DiscoverCategoryDetails: Decodable {
+public struct DiscoverCategoryDetails: Decodable, Sendable {
     public var title: String?
     public var description: String?
     public var podcasts: [DiscoverPodcast]?
     public var promotion: DiscoverCategoryPromotion?
 }
 
-public struct DiscoverCategoryPromotion: Decodable {
+public struct DiscoverCategoryPromotion: Decodable, Sendable {
     public var promotion_uuid: String?
     public var podcast_uuid: String?
     public var title: String?
     public var description: String?
 }
 
-public struct RemoteStats {
+public struct RemoteStats: Sendable {
     public var silenceRemovalTime: Int64
     public var totalListenTime: Int64
     public var autoSkipTime: Int64
@@ -470,19 +470,19 @@ public struct RemoteStats {
     public var startedStatsAt: Int64
 }
 
-public struct PodcastCollectionColors: Codable {
+public struct PodcastCollectionColors: Codable, Sendable {
     public var onLightBackground: String?
     public var onDarkBackground: String?
 }
 
-public struct CollageImage: Codable {
+public struct CollageImage: Codable, Sendable {
     public var key: String?
     public var image_url: String?
 }
 
 // MARK: Episode List
 
-public struct DiscoverEpisode: Decodable {
+public struct DiscoverEpisode: Decodable, Sendable {
     public enum CodingKeys: String, CodingKey {
         case title, duration, url, uuid, type, published, season, number
 

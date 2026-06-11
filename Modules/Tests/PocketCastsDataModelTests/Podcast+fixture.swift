@@ -2,7 +2,7 @@ import Foundation
 @testable import PocketCastsDataModel
 
 extension Podcast {
-    static var fixture: String = """
+    static let fixture: String = """
 {
     "episode_frequency": "Unknown",
     "estimated_next_episode_at": "2025-03-03T08:05:00Z",

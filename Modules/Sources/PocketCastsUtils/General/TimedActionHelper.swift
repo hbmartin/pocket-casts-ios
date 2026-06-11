@@ -1,6 +1,8 @@
 import Foundation
 
-public class TimedActionHelper {
+// @unchecked Sendable: `timer` is only created/invalidated on the main thread (enforced by
+// the Thread.isMainThread checks below); preserved pre-concurrency behavior.
+public final class TimedActionHelper: @unchecked Sendable {
     private var timer: Timer?
 
     private var action: (() -> Void)?
@@ -8,51 +10,58 @@ public class TimedActionHelper {
     public init() {}
 
     public func startTimer(for time: TimeInterval, action: @escaping () -> Void) {
-        self.action = action
-        performStartTimer(for: time)
+        let action = UncheckedSendable(action)
+        if Thread.isMainThread {
+            performStartTimer(for: time, action: action.value)
+        } else {
+            DispatchQueue.main.sync { [weak self] in
+                self?.performStartTimer(for: time, action: action.value)
+            }
+        }
     }
 
     public func cancelTimer() {
-        performCancelTimer()
+        if Thread.isMainThread {
+            performCancelTimer()
+        } else {
+            DispatchQueue.main.sync { [weak self] in
+                self?.performCancelTimer()
+            }
+        }
     }
 
     public func isTimerValid() -> Bool {
+        if !Thread.isMainThread {
+            return DispatchQueue.main.sync { [weak self] in
+                self?.isTimerValid() ?? false
+            }
+        }
+
         guard let timer else {
             return false
         }
         return timer.isValid
     }
 
-    private func performStartTimer(for time: TimeInterval) {
+    private func performStartTimer(for time: TimeInterval, action: @escaping () -> Void) {
         performCancelTimer()
+        self.action = action
 
         // Timers need to run on a thread that has a runloop, the easiest one being the main thread so we use that here
-        if Thread.isMainThread {
-            timer = Timer.scheduledTimer(timeInterval: time, target: self, selector: #selector(timerFired), userInfo: nil, repeats: false)
-        } else {
-            DispatchQueue.main.sync { [weak self] in
-                guard let self else { return }
-
-                self.timer = Timer.scheduledTimer(timeInterval: time, target: self, selector: #selector(self.timerFired), userInfo: nil, repeats: false)
-            }
-        }
+        timer = Timer.scheduledTimer(timeInterval: time, target: self, selector: #selector(timerFired), userInfo: nil, repeats: false)
     }
 
     private func performCancelTimer() {
         // a Timer must always be invalidated from the thread it was created on, in our case being the main thread
-        if Thread.isMainThread {
-            timer?.invalidate()
-        } else {
-            DispatchQueue.main.sync { [weak self] in
-                self?.timer?.invalidate()
-            }
-        }
-
+        timer?.invalidate()
         timer = nil
+        action = nil
     }
 
     @objc private func timerFired() {
-        action?()
+        let action = action
+        self.action = nil
         timer = nil
+        action?()
     }
 }

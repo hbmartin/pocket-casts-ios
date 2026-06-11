@@ -1,6 +1,6 @@
 import Foundation
 
-public struct UserPodcastRating: Codable {
+public struct UserPodcastRating: Codable, Sendable {
     public let podcastRating: UInt32
     public let podcastUuid: String
     public let modifiedAt: Date

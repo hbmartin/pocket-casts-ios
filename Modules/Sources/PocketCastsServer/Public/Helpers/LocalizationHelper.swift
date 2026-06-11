@@ -1,7 +1,22 @@
 import Foundation
 
 public class LocalizationHelper {
-    public static var provider: InternationalizationProvider?
+    private static let providerLock = NSLock()
+    nonisolated(unsafe) private static var storedProvider: InternationalizationProvider?
+
+    public static var provider: InternationalizationProvider? {
+        get {
+            providerLock.lock()
+            defer { providerLock.unlock() }
+
+            return storedProvider
+        }
+        set {
+            providerLock.lock()
+            storedProvider = newValue
+            providerLock.unlock()
+        }
+    }
 
     public static func update(userRegion: String) {
         provider = InternationalizationProvider(userRegion: userRegion)

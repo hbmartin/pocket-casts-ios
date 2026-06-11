@@ -1,6 +1,6 @@
 import PocketCastsUtils
 
-public struct PodcastSettings: JSONCodable, Equatable {
+public struct PodcastSettings: JSONCodable, Equatable, Sendable {
     @ModifiedDate public var customEffects: Bool = false
 
     @ModifiedDate public var autoStartFrom: Int32 = 0

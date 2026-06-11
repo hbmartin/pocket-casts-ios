@@ -3,7 +3,10 @@ import PocketCastsDataModel
 import PocketCastsUtils
 
 
-public class BackgroundSyncManager: NSObject {
+// @unchecked Sendable (required by its URLSession delegate conformance): background
+// sync state is only touched from the serial syncProcessQueue and session delegate
+// callbacks, preserved pre-concurrency behavior.
+public final class BackgroundSyncManager: NSObject, @unchecked Sendable {
     public static let sessionIdPrefix = "SyncBgSession"
 
     public static let shared = BackgroundSyncManager()
@@ -23,7 +26,7 @@ public class BackgroundSyncManager: NSObject {
     // we retain these so they aren't immediately released on method exit
     var pendingTasks = [URLSessionDownloadTask]()
 
-    lazy var syncProcessQueue: OperationQueue = {
+    let syncProcessQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 
@@ -31,6 +34,13 @@ public class BackgroundSyncManager: NSObject {
     }()
 
     public func performBackgroundRefresh(subscribedPodcasts: [Podcast]) {
+        let subscribedPodcasts = UncheckedSendable(subscribedPodcasts)
+        syncProcessQueue.addOperation { [weak self] in
+            self?.performBackgroundRefreshOnSyncQueue(subscribedPodcasts: subscribedPodcasts.value)
+        }
+    }
+
+    private func performBackgroundRefreshOnSyncQueue(subscribedPodcasts: [Podcast]) {
         guard DateUtil.hasEnoughTimePassed(since: lastBgSyncDate, time: 5.minutes) else { return }
         lastBgSyncDate = Date()
 

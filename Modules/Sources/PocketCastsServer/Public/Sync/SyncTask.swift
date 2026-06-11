@@ -4,7 +4,8 @@ import PocketCastsDataModel
 import PocketCastsUtils
 
 class SyncTask: ApiBaseTask, @unchecked Sendable {
-    private static let processDataLock = NSObject()
+    // nonisolated(unsafe): lock token for objc_sync_enter/exit; never mutated.
+    nonisolated(unsafe) private static let processDataLock = NSObject()
     private let progressLock = NSLock()
 
     let importQueue: OperationQueue = {

@@ -6,7 +6,9 @@ public protocol DiscoverServerHandling {
     func discoverCategories(source: String, authenticated: Bool?) async -> [DiscoverCategory]
 }
 
-public class DiscoverServerHandler: DiscoverServerHandling {
+// @unchecked Sendable: stored properties are a token helper and a URLCache,
+// both internally thread-safe and configured at init.
+public final class DiscoverServerHandler: DiscoverServerHandling, @unchecked Sendable {
     enum DiscoverServerError: Error {
         case unknown
         case badRequest
@@ -19,10 +21,7 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         return TokenHelper(urlConnection: connection)
     }()
 
-    public private(set) lazy var discoveryCache: URLCache = {
-        let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 5 * 1024 * 1024, diskPath: "discovery")
-        return cache
-    }()
+    public let discoveryCache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 5 * 1024 * 1024, diskPath: "discovery")
 
     /**
      * Valid image sizes: 130,140,200,210,280,340,400,420,680,960
@@ -51,26 +50,26 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         }
     }
 
-    public func discoverPage(completion: @escaping (DiscoverLayout?, Bool) -> Void) {
+    public func discoverPage(completion: @escaping @Sendable (DiscoverLayout?, Bool) -> Void) {
         Task {
             let page = await discoverPage()
             completion(page.0, page.1)
         }
     }
 
-    public func discoverNetworkList(source: String, authenticated: Bool?, completion: @escaping ([PodcastNetwork]?) -> Void) {
+    public func discoverNetworkList(source: String, authenticated: Bool?, completion: @escaping @Sendable ([PodcastNetwork]?) -> Void) {
         discoverRequest(path: source, type: [PodcastNetwork].self, authenticated: authenticated) { networkList, _ in
             completion(networkList)
         }
     }
 
-    public func discoverPodcastList(source: String, authenticated: Bool?, completion: @escaping (PodcastList?) -> Void) {
+    public func discoverPodcastList(source: String, authenticated: Bool?, completion: @escaping @Sendable (PodcastList?) -> Void) {
         discoverRequest(path: source, type: PodcastList.self, authenticated: authenticated) { podcastList, _ in
             completion(podcastList)
         }
     }
 
-    public func discoverCategories(source: String, authenticated: Bool?, completion: @escaping ([DiscoverCategory]?) -> Void) {
+    public func discoverCategories(source: String, authenticated: Bool?, completion: @escaping @Sendable ([DiscoverCategory]?) -> Void) {
         discoverRequest(path: source, type: [DiscoverCategory].self, authenticated: authenticated) { categories, _ in
             completion(categories)
         }
@@ -84,7 +83,7 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         }
     }
 
-    public func discoverCategoryDetails(source: String, authenticated: Bool?, completion: @escaping (DiscoverCategoryDetails?) -> Void) {
+    public func discoverCategoryDetails(source: String, authenticated: Bool?, completion: @escaping @Sendable (DiscoverCategoryDetails?) -> Void) {
         discoverRequest(path: source, type: DiscoverCategoryDetails.self, authenticated: authenticated) { categoryDetails, _ in
             completion(categoryDetails)
         }
@@ -98,7 +97,7 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         }
     }
 
-    public func discoverPodcastCollection(source: String, authenticated: Bool?, completion: @escaping (PodcastCollection?) -> Void) {
+    public func discoverPodcastCollection(source: String, authenticated: Bool?, completion: @escaping @Sendable (PodcastCollection?) -> Void) {
         discoverRequest(path: source, type: PodcastCollection.self, authenticated: authenticated) { podcastCollection, _ in
             completion(podcastCollection)
         }
@@ -112,17 +111,20 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         }
     }
 
-    public func discoverItem<T>(_ source: String?, authenticated: Bool, type: T.Type) -> AnyPublisher<T, Error> where T: Decodable {
+    public func discoverItem<T>(_ source: String?, authenticated: Bool, type: T.Type) -> AnyPublisher<T, Error> where T: Decodable & Sendable {
         guard let source else {
             return Fail(error: DiscoverServerError.badRequest).eraseToAnyPublisher()
         }
 
         return Future { [unowned self] promise in
+            // Future's promise is not @Sendable-typed, but Combine documents it as safe to
+            // call from any thread; hand it to the completion via an unchecked wrapper.
+            let promise = UncheckedSendable(promise)
             self.discoverRequest(path: source, type: type, authenticated: authenticated) { discoverList, _ in
                 if let discoverList {
-                    promise(.success(discoverList))
+                    promise.value(.success(discoverList))
                 } else {
-                    promise(.failure(DiscoverServerError.unknown))
+                    promise.value(.failure(DiscoverServerError.unknown))
                 }
             }
         }
@@ -161,7 +163,7 @@ public class DiscoverServerHandler: DiscoverServerHandling {
     private func performDiscoverRequest(
         path: String,
         authenticated: Bool?,
-        completion: @escaping (Data?, URLResponse?, Error?, Bool) -> Void
+        completion: @escaping @Sendable (Data?, URLResponse?, Error?, Bool) -> Void
     ) {
         let url = ServerHelper.asUrl(path)
         var request = URLRequest(url: url)
@@ -212,8 +214,8 @@ public class DiscoverServerHandler: DiscoverServerHandling {
         path: String,
         type: T.Type,
         authenticated: Bool?,
-        completion: @escaping (T?, Bool) -> Void
-    ) where T: Decodable {
+        completion: @escaping @Sendable (T?, Bool) -> Void
+    ) where T: Decodable & Sendable {
         let url = ServerHelper.asUrl(path)
         let request = URLRequest(url: url)
 
