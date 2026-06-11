@@ -43,4 +43,28 @@ class FireAndForgetSaveFixture {
         // ok: pocketcasts.no-fire-and-forget-datamanager-write
         DataManager.sharedManager.save(podcast: podcast)
     }
+
+    func badQueuedAsyncSave(episode: BaseEpisode) {
+        // ruleid: pocketcasts.no-queued-datamanager-save-task
+        queuedSaveTask = Task { [previousSave = queuedSaveTask] in
+            await previousSave?.value
+            await DataManager.sharedManager.saveAsync(episode: episode)
+        }
+    }
+
+    func goodDebouncedAsyncSave(episode: BaseEpisode) {
+        // ok: pocketcasts.no-queued-datamanager-save-task
+        queuedSaveTask?.cancel()
+        queuedSaveTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: 300_000_000)
+            } catch {
+                return
+            }
+
+            await DataManager.sharedManager.saveAsync(episode: episode)
+        }
+    }
+
+    private var queuedSaveTask: Task<Void, Never>?
 }

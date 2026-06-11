@@ -7,12 +7,16 @@ final class PodcastExistsHelperTests: XCTestCase {
     private let podcastUuid = "podcast-exists-helper-\(UUID().uuidString)"
     private var originalDataManager: DataManager!
     private var dataManager: PodcastLookupDataManager!
+    private var temporaryDatabaseDirectory: URL?
 
     override func setUpWithError() throws {
         try super.setUpWithError()
 
         originalDataManager = DataManager.sharedManager
-        dataManager = try PodcastLookupDataManager.make()
+        let temporaryDatabaseDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: temporaryDatabaseDirectory, withIntermediateDirectories: true)
+        self.temporaryDatabaseDirectory = temporaryDatabaseDirectory
+        dataManager = try PodcastLookupDataManager.make(databaseDirectory: temporaryDatabaseDirectory)
         DataManager.sharedManager = dataManager
         PodcastExistsHelper.shared.invalidate(uuid: podcastUuid)
     }
@@ -22,6 +26,10 @@ final class PodcastExistsHelperTests: XCTestCase {
         DataManager.sharedManager = originalDataManager
         dataManager = nil
         originalDataManager = nil
+        if let temporaryDatabaseDirectory {
+            try? FileManager.default.removeItem(at: temporaryDatabaseDirectory)
+        }
+        temporaryDatabaseDirectory = nil
 
         try super.tearDownWithError()
     }
@@ -69,9 +77,9 @@ private final class PodcastLookupDataManager: DataManager {
     var beforeReturningPodcast: ((String) -> Void)?
     private(set) var findPodcastCallCount = 0
 
-    static func make() throws -> PodcastLookupDataManager {
-        let dbPath = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")
-        let pool = try DatabasePool(path: dbPath)
+    static func make(databaseDirectory: URL) throws -> PodcastLookupDataManager {
+        let dbURL = databaseDirectory.appendingPathComponent("\(UUID().uuidString).sqlite")
+        let pool = try DatabasePool(path: dbURL.path)
         return PodcastLookupDataManager(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
     }
 

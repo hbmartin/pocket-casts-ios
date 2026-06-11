@@ -228,7 +228,8 @@ public class PlaylistQueryBuilder {
                     sortFor: sortType,
                     limit: limit,
                     playlistUUID: playlist.uuid,
-                    shouldShowArchived: shouldShowArchived
+                    shouldShowArchived: shouldShowArchived,
+                    searchTerm: searchTerm
                 )
             }
         } else {
@@ -240,12 +241,15 @@ public class PlaylistQueryBuilder {
             PlaylistQueryBuilder.removeEmptyFilterGroups(from: &stringifiedValues)
 
             if clause == .firstDistinctEpisodes {
+                let search = searchPredicate(for: searchTerm)
                 let sql = smartPlaylistFirstDistinctEpisodes(
                     sortFor: sortType,
                     limit: limit,
                     values: stringifiedValues,
-                    addedUuid: addedUuid.boolValue
+                    addedUuid: addedUuid.boolValue,
+                    searchSQL: search.sql
                 )
+                arguments.append(contentsOf: search.arguments)
                 return (sql, arguments)
             }
             if clause == .episodeCount || clause == .allEpisodeCount {
@@ -291,6 +295,14 @@ public class PlaylistQueryBuilder {
         return "%\(escaped.uppercased())%"
     }
 
+    private static func searchPredicate(for searchTerm: String?, episodeAlias: String = "episode", podcastAlias: String = "podcast") -> (sql: String, arguments: [Any]) {
+        guard let searchTerm else { return ("", []) }
+
+        let pattern = likePattern(for: searchTerm)
+        let sql = "AND (UPPER(\(episodeAlias).title) LIKE ? ESCAPE '\\' OR UPPER(\(podcastAlias).title) LIKE ? ESCAPE '\\')"
+        return (sql, [pattern, pattern])
+    }
+
     public class func podcastExistsInPlaylistEpisodesQuery(includeDeleted: Bool = false) -> String {
         let deletedClause = includeDeleted ? "" : " AND wasDeleted = 0"
         return "SELECT 1 FROM \(DataManager.playlistEpisodeTableName) WHERE podcastUuid = ?\(deletedClause) LIMIT 1"
@@ -300,7 +312,8 @@ public class PlaylistQueryBuilder {
         sortFor sortType: Int32,
         limit: Int,
         values: String,
-        addedUuid: Bool
+        addedUuid: Bool,
+        searchSQL: String
     ) -> String {
         let sortClause = add(sortFor: sortType) ?? ""
         var sortClauseStripped = sortClause.replacingOccurrences(of: "ORDER BY", with: "")
@@ -318,6 +331,7 @@ public class PlaylistQueryBuilder {
                 LEFT JOIN \(DataManager.podcastTableName) podcast
                   ON episode.podcast_id = podcast.id
                 WHERE episode.archived = 0 \(values)\(addedUuid ? "))" : ")")
+                \(searchSQL)
                 \(sortClause)
                 LIMIT \(episodeLimit)
             )
@@ -440,7 +454,8 @@ public class PlaylistQueryBuilder {
         sortFor sortType: Int32,
         limit: Int,
         playlistUUID: String,
-        shouldShowArchived: Bool
+        shouldShowArchived: Bool,
+        searchTerm: String?
     ) -> (sql: String, arguments: [Any]) {
         let isCustomOrderSortType = sortType == 4
 
@@ -462,6 +477,9 @@ public class PlaylistQueryBuilder {
         let archivedPreference = shouldShowArchived ? "1" : "0"
         let archivedPredicate = shouldShowArchived ? "" : "AND episode.archived = 0"
         let episodePositionOrderByStripped = episodePositionOrderBy.replacingOccurrences(of: "episode.", with: "")
+        let search = searchPredicate(for: searchTerm)
+        let arguments: [Any] = [playlistUUID] + search.arguments
+        let podcastSearchJoin = search.sql.isEmpty ? "" : "LEFT JOIN \(DataManager.podcastTableName) podcast ON episode.podcast_id = podcast.id"
 
         if isCustomOrderSortType {
             if FeatureFlag.optimizeManualPlaylistQueries.enabled {
@@ -484,7 +502,9 @@ public class PlaylistQueryBuilder {
                              episode.id ASC
                          ) AS uuid_rn
                   FROM \(DataManager.episodeTableName) episode
+                  \(podcastSearchJoin)
                   WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+                  \(search.sql)
                 ),
                 playlist_rows AS (
                   SELECT de.id,
@@ -515,7 +535,7 @@ public class PlaylistQueryBuilder {
                   ON episode.id = c.id
                 ORDER BY c.playlist_position ASC
                 LIMIT \(limit)
-                """, [playlistUUID])
+                """, arguments)
             } else {
                 // Original query without deduplication
                 return ("""
@@ -526,8 +546,10 @@ public class PlaylistQueryBuilder {
                   FROM \(DataManager.episodeTableName) episode
                   JOIN \(DataManager.playlistEpisodeTableName) playlist
                     ON episode.uuid = playlist.episodeUuid
+                  \(podcastSearchJoin)
                   WHERE playlist.playlist_uuid = ?
                   \(archivedPredicate)
+                  \(search.sql)
                   LIMIT \(episodeLimit)
                 ),
                 first_per_podcast AS (
@@ -548,7 +570,7 @@ public class PlaylistQueryBuilder {
                   ON episode.id = c.id
                 ORDER BY c.playlist_position ASC
                 LIMIT \(limit)
-                """, [playlistUUID])
+                """, arguments)
             }
         }
 
@@ -573,7 +595,9 @@ public class PlaylistQueryBuilder {
                          episode.id ASC
                      ) AS uuid_rn
               FROM \(DataManager.episodeTableName) episode
+              \(podcastSearchJoin)
               WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+              \(search.sql)
             ),
             ordered_episodes AS (
               SELECT de.id,
@@ -597,7 +621,7 @@ public class PlaylistQueryBuilder {
             WHERE oe.podcast_rn = 1
             \(playlistPositionOrderBy)
             LIMIT \(limit)
-            """, [playlistUUID])
+            """, arguments)
         }
 
         return ("""
@@ -611,8 +635,10 @@ public class PlaylistQueryBuilder {
           FROM \(DataManager.episodeTableName) episode
           JOIN \(DataManager.playlistEpisodeTableName) playlist
             ON episode.uuid = playlist.episodeUuid
+          \(podcastSearchJoin)
           WHERE playlist.playlist_uuid = ?
           \(archivedPredicateForEpisode)
+          \(search.sql)
           LIMIT \(episodeLimit)
         ),
         numbered AS (
@@ -630,7 +656,7 @@ public class PlaylistQueryBuilder {
         WHERE n.rn = 1
         \(playlistPositionOrderBy)
         LIMIT \(limit)
-        """, [playlistUUID])
+        """, arguments)
     }
 
     private static func select(clause: SelectClause) -> String {

@@ -1075,6 +1075,24 @@ rules:
           }
       - pattern-regex: 'Task\s*\{\s*\[weak\s+self\]\s+in[\s\S]{0,500}?guard\s+let\s+self(?:\s*=\s*self)?\s+else\s*\{\s*return\s*\}[\s\S]{0,1000}?await\b'
 
+  - id: pocketcasts.no-queued-datamanager-save-task
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Do not queue UI-driven DataManager saveAsync calls by awaiting a previous save task; debounce or coalesce the save so rapid input persists only the final state.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/*.swift"
+        - "**/podcasts/**/*.swift"
+        - "**/semgrep/tests/swift-security-fire-and-forget-save.swift"
+    patterns:
+      - pattern-regex: 'Task\s*\{\s*\[previousSave\s*=\s*[^\]]+\]\s+in[\s\S]{0,500}?await\s+previousSave\?\.value[\s\S]{0,500}?await\s+DataManager\.sharedManager\.(?:saveAsync|bulkSaveAsync|bulkSetAsync|deleteAsync)\s*\('
+
   - id: pocketcasts.no-hardcoded-credential-placeholder-literal
     severity: ERROR
     metadata:

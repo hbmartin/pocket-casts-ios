@@ -142,7 +142,8 @@ final class PlaylistQueryBuilderTests: XCTestCase {
 
     private func executeQuery(_ query: (sql: String, arguments: [Any]), in dbPool: DatabasePool) throws -> [[String: DatabaseValue]] {
         try dbPool.read { db in
-            let rows = try Row.fetchAll(db, sql: query.sql, arguments: StatementArguments(query.arguments)!)
+            let arguments = try XCTUnwrap(StatementArguments(query.arguments), "Failed to create StatementArguments from: \(query.arguments)")
+            let rows = try Row.fetchAll(db, sql: query.sql, arguments: arguments)
             return rows.map { row in
                 var dict: [String: DatabaseValue] = [:]
                 for column in row.columnNames {
@@ -819,6 +820,72 @@ final class PlaylistQueryBuilderTests: XCTestCase {
             try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
             "Smart playlist query with apostrophe should be valid SQL: \(query)"
         )
+    }
+
+    func testSearchTermFiltersManualPlaylistFirstDistinctEpisodes() throws {
+        let dbPool = try createTestDatabase()
+        let playlistUUID = "search-manual-first-distinct"
+        try insertTestData(in: dbPool, playlistUUID: playlistUUID)
+
+        let filter = EpisodeFilter()
+        filter.manual = true
+        filter.uuid = playlistUUID
+
+        for flagValue in [true, false] {
+            try FeatureFlagOverrideStore().override(FeatureFlag.optimizeManualPlaylistQueries, withValue: flagValue)
+
+            for sortType in [PlaylistSort.dragAndDrop, .newestToOldest] {
+                filter.sortType = sortType.rawValue
+                let query = PlaylistQueryBuilder.query(
+                    clause: .firstDistinctEpisodes,
+                    for: filter,
+                    searchTerm: "P2",
+                    limit: 10,
+                    shouldShowArchived: true
+                )
+
+                XCTAssertNoThrow(
+                    try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
+                    "Query should be valid SQL (flag=\(flagValue), sort=\(sortType)): \(query)"
+                )
+                XCTAssertEqual(query.arguments as? [String], [playlistUUID, "%P2%", "%P2%"])
+
+                let results = try executeQuery(query, in: dbPool)
+                XCTAssertEqual(results.count, 1, "Search should limit first-distinct results to the matching podcast")
+                let podcastID = try XCTUnwrap(results.first?["podcast_id"].flatMap(Int.fromDatabaseValue))
+                XCTAssertEqual(podcastID, 2)
+            }
+        }
+    }
+
+    func testSearchTermFiltersSmartPlaylistFirstDistinctEpisodes() throws {
+        let dbPool = try createTestDatabase()
+        let playlistUUID = "search-smart-first-distinct"
+        try insertTestData(in: dbPool, playlistUUID: playlistUUID)
+
+        let filter = EpisodeFilter()
+        filter.manual = false
+        filter.filterDownloaded = true
+        filter.filterNotDownloaded = true
+
+        let query = PlaylistQueryBuilder.query(
+            clause: .firstDistinctEpisodes,
+            for: filter,
+            searchTerm: "P2",
+            limit: 10,
+            shouldShowArchived: true
+        )
+
+        XCTAssertNoThrow(
+            try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
+            "Smart first-distinct search query should be valid SQL: \(query)"
+        )
+        XCTAssertEqual(query.arguments.suffix(2).compactMap { $0 as? String }, ["%P2%", "%P2%"])
+
+        let results = try executeQuery(query, in: dbPool)
+        XCTAssertEqual(results.count, 1, "Search should limit smart first-distinct results to the matching podcast")
+        let podcastID = try XCTUnwrap(results.first?["podcast_id"].flatMap(Int.fromDatabaseValue))
+        XCTAssertEqual(podcastID, 2)
     }
 
     func testSearchTermWithApostropheAndWildcardsMatchesEndToEnd() throws {

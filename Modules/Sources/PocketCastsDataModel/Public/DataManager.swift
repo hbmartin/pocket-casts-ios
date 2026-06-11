@@ -446,7 +446,8 @@ public class DataManager {
         return episodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
     }
 
-    /// Native-async variant of `findBaseEpisode(uuid:)`.
+    /// Native-async variant of `findBaseEpisode(uuid:)`; the reads run on the
+    /// database engine's reader pool instead of blocking the calling thread.
     public func findBaseEpisodeAsync(uuid: String) async -> BaseEpisode? {
         if let episode = await userEpisodeManager.findByAsync(uuid: uuid, dbQueue: dbQueue) {
             return episode
@@ -848,7 +849,8 @@ public class DataManager {
         userEpisodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
     }
 
-    /// Native-async variant of `findUserEpisode(uuid:)`.
+    /// Native-async variant of `findUserEpisode(uuid:)`; the read runs on the
+    /// database engine's reader pool instead of blocking the calling thread.
     public func findUserEpisodeAsync(uuid: String) async -> UserEpisode? {
         await userEpisodeManager.findByAsync(uuid: uuid, dbQueue: dbQueue)
     }
