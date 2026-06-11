@@ -1,7 +1,10 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
 
-public class ServerPodcastManager: NSObject {
+// @unchecked Sendable: stored properties are formatters and OperationQueues,
+// configured at init and read-only afterwards.
+public final class ServerPodcastManager: NSObject, @unchecked Sendable {
     private static let maxAutoDownloadSeperationTime = 12.hours
 
     public static let shared = ServerPodcastManager()
@@ -38,8 +41,7 @@ public class ServerPodcastManager: NSObject {
     ///   - subscribe: if we should subscribe to the podcast after adding
     ///   - tries: the number of tries already done
     ///   - completion: the code to execute on completion
-    public func addFromUuidWithRetries(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, tries: Int = 0, completion: ((Bool) -> Void)?) {
-        var pollbackCounter = tries
+    public func addFromUuidWithRetries(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, tries: Int = 0, completion: (@Sendable (Bool) -> Void)?) {
         addFromUuid(podcastUuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads) { [weak self] success in
             guard let self else {
                 return
@@ -50,17 +52,17 @@ public class ServerPodcastManager: NSObject {
                 return
             }
 
-            pollbackCounter += 1
-            if pollbackCounter < 8 {
-                Thread.sleep(forTimeInterval: pollbackCounter.pollWaitingTime)
-                addFromUuidWithRetries(podcastUuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, tries: pollbackCounter, completion: completion)
+            let nextTry = tries + 1
+            if nextTry < 8 {
+                Thread.sleep(forTimeInterval: nextTry.pollWaitingTime)
+                addFromUuidWithRetries(podcastUuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, tries: nextTry, completion: completion)
                 return
             }
             completion?(false)
         }
     }
 
-    public func addFromUuid(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool) -> Void)?) {
+    public func addFromUuid(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, completion: (@Sendable (Bool) -> Void)?) {
         CacheServerHandler.shared.loadPodcastInfo(podcastUuid: podcastUuid) { [weak self] podcastInfo, lastModified in
             if let podcastInfo {
                 self?.addFromJson(podcastUuid: podcastUuid, lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
@@ -70,7 +72,7 @@ public class ServerPodcastManager: NSObject {
         }
     }
 
-    public func addFromiTunesId(_ itunesId: Int, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool, String?) -> Void)?) {
+    public func addFromiTunesId(_ itunesId: Int, subscribe: Bool, autoDownloads: Int = 0, completion: (@Sendable (Bool, String?) -> Void)?) {
         MainServerHandler.shared.findPodcastByiTunesId(itunesId) { [weak self] podcastUuid in
             guard let uuid = podcastUuid else {
                 completion?(false, nil)
@@ -83,17 +85,19 @@ public class ServerPodcastManager: NSObject {
         }
     }
 
-    public func addFromJson(podcastUuid: String, lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {
+    public func addFromJson(podcastUuid: String, lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: (@Sendable (Bool) -> Void)?) {
+        // Handed wholesale to the subscribe queue; not touched by the caller afterwards.
+        let podcastInfo = UncheckedSendable(podcastInfo)
         subscribeQueue.addOperation { [weak self] in
             guard let strongSelf = self else { return }
 
-            let added = strongSelf.addPodcast(podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
+            let added = strongSelf.addPodcast(podcastInfo: podcastInfo.value, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
             if subscribe, added { ServerConfig.shared.syncDelegate?.subscribedToPodcast() } // addFromUuid and addFromiTunesId end up here, so just need this one analytic
             completion?(added)
         }
     }
 
-    public func addPodcastFromUpNextItem(_ upNextItem: UpNextItem, completion: ((Bool) -> Void)?) {
+    public func addPodcastFromUpNextItem(_ upNextItem: UpNextItem, completion: (@Sendable (Bool) -> Void)?) {
         if let existingPodcast = DataManager.sharedManager.findPodcast(uuid: upNextItem.podcastUuid, includeUnsubscribed: true) {
             // we have the podcast, but not the episode, so it's ok to just save it in
             addToDatabase(upNextItem: upNextItem, to: existingPodcast)

@@ -2,7 +2,10 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-public class UploadManager: NSObject {
+// @unchecked Sendable (required by its URLSession delegate conformance): the episode
+// cache and progress manager are touched from session delegate callbacks, preserved
+// pre-concurrency behavior.
+public final class UploadManager: NSObject, @unchecked Sendable {
     public static let shared = UploadManager()
 
     public var progressManager = UploadProgressManager()

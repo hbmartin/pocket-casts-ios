@@ -3,7 +3,10 @@ import PocketCastsDataModel
 import PocketCastsUtils
 
 
-public class BackgroundSyncManager: NSObject {
+// @unchecked Sendable (required by its URLSession delegate conformance): background
+// sync state is only touched from the serial syncProcessQueue and session delegate
+// callbacks, preserved pre-concurrency behavior.
+public final class BackgroundSyncManager: NSObject, @unchecked Sendable {
     public static let sessionIdPrefix = "SyncBgSession"
 
     public static let shared = BackgroundSyncManager()

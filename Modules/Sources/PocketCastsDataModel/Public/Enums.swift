@@ -1,9 +1,9 @@
 import Foundation
 
-public enum UploadedSort: Int32, CaseIterable, Codable {
+public enum UploadedSort: Int32, CaseIterable, Codable, Sendable {
     case newestToOldest = 0, oldestToNewest = 1, titleAtoZ = 2, titleZtoA = 3, shortestToLongest = 4, longestToShortest = 5
 
-    public enum Old: Int {
+    public enum Old: Int, Sendable {
         case newestToOldest = 0, oldestToNewest = 1, titleAtoZ = 2
     }
 
@@ -19,19 +19,19 @@ public enum UploadedSort: Int32, CaseIterable, Codable {
     }
 }
 
-public enum AutoDownloadStatus: Int32 {
+public enum AutoDownloadStatus: Int32, Sendable {
     case notSpecified = 0, userDeletedFile = 1, userCancelledDownload = 2, autoDownloaded = 3, playerDownloadedForStreaming = 4
 }
 
-public enum DownloadStatus: Int32 {
+public enum DownloadStatus: Int32, Sendable {
     case notDownloaded = 1, queued = 2, downloading = 3, downloadFailed = 4, downloaded = 5, waitingForWifi = 6, downloadedForStreaming = 7
 }
 
-public enum AutoDownloadSetting: Int32 {
+public enum AutoDownloadSetting: Int32, Sendable {
     case off = 0, latest = 1, all = 2
 }
 
-public enum AutoDownloadLimit: Int, CaseIterable {
+public enum AutoDownloadLimit: Int, CaseIterable, Sendable {
     case one = 1
     case two = 2
     case three = 3
@@ -39,31 +39,31 @@ public enum AutoDownloadLimit: Int, CaseIterable {
     case ten = 10
 }
 
-public enum PlayingStatus: Int32 {
+public enum PlayingStatus: Int32, Sendable {
     case notPlayed = 1, inProgress = 2, completed = 3, old = 4
 }
 
-public enum UploadStatus: Int32 {
+public enum UploadStatus: Int32, Sendable {
     case notUploaded = 1, queued = 2, uploading = 3, uploadFailed = 4, uploaded = 5, waitingForWifi = 6, missing = 7, deleteFromCloudPending = 8, deleteFromCloudAndLocalPending = 9
 }
 
-public enum PodcastGrouping: Int32, CaseIterable, Codable {
+public enum PodcastGrouping: Int32, CaseIterable, Codable, Sendable {
     case none = 0, downloaded = 1, unplayed = 2, season = 3, starred = 4
 }
 
-public enum AudioVideoFilter: Int32 {
+public enum AudioVideoFilter: Int32, Sendable {
     case all = 0, audioOnly = 1, videoOnly = 2
 }
 
-public enum AutoAddToUpNextSetting: Int32 {
+public enum AutoAddToUpNextSetting: Int32, Sendable {
     case off = 0, addLast = 1, addFirst = 2
 }
 
-public enum SyncStatus: Int32 {
+public enum SyncStatus: Int32, Sendable {
     case notSynced = 0, synced = 1, notSyncedRemove = 2
 }
 
-public enum PlaylistSort: Int32 {
+public enum PlaylistSort: Int32, Sendable {
     case newestToOldest = 0, oldestToNewest = 1, shortestToLongest = 2, longestToShortest = 3, dragAndDrop = 4
 }
 
@@ -79,19 +79,19 @@ public struct EpisodeBasicData {
     public var deselectedChapters: String?
 }
 
-public enum LibrarySort: Int32, CaseIterable, Codable {
+public enum LibrarySort: Int32, CaseIterable, Codable, Sendable {
     case dateAddedNewestToOldest = 0, titleAtoZ = 1, episodeDateNewestToOldest = 2, custom = 3, recentlyPlayed = 4
 }
 
-public enum LibraryType: Int32, Codable {
+public enum LibraryType: Int32, Codable, Sendable {
     case threeByThree = 0, fourByFour = 1, list = 2
 }
 
-public enum BadgeType: Int32, Codable {
+public enum BadgeType: Int32, Codable, Sendable {
     case off = 0, latestEpisode, allUnplayed
 }
 
-public enum PodcastEpisodeSortOrder: Int32, Codable, CaseIterable {
+public enum PodcastEpisodeSortOrder: Int32, Codable, CaseIterable, Sendable {
     case titleAtoZ
     case titleZtoA
     case oldestToNewest
@@ -100,7 +100,7 @@ public enum PodcastEpisodeSortOrder: Int32, Codable, CaseIterable {
     case longestToShortest
     case serial
 
-    public enum Old: Int32 {
+    public enum Old: Int32, Sendable {
         case newestToOldest = 1, oldestToNewest, shortestToLongest, longestToShortest, titleAtoZ, titleZtoA, serial
     }
 
@@ -143,13 +143,13 @@ public enum PodcastEpisodeSortOrder: Int32, Codable, CaseIterable {
     }
 }
 
-public enum BookmarksSort: Int32, Codable {
+public enum BookmarksSort: Int32, Codable, Sendable {
     case newestToOldest = 0
     case oldestToNewest = 1
     case timestamp = 2
 }
 
-public enum AutoArchiveAfterPlayed: Int32, Codable {
+public enum AutoArchiveAfterPlayed: Int32, Codable, Sendable {
     case never = 0
     case afterPlaying = 1
     case after24Hours = 2
@@ -157,7 +157,7 @@ public enum AutoArchiveAfterPlayed: Int32, Codable {
     case after1Week = 4
 }
 
-public enum AutoArchiveAfterInactive: Int32, Codable {
+public enum AutoArchiveAfterInactive: Int32, Codable, Sendable {
     case never = 0
     case after24Hours = 1
     case after2Days = 2
@@ -167,7 +167,7 @@ public enum AutoArchiveAfterInactive: Int32, Codable {
     case after3Months = 6
 }
 
-public enum AutoArchiveAfterTime: TimeInterval {
+public enum AutoArchiveAfterTime: TimeInterval, Sendable {
     case never = -1
     case afterPlaying = 0
     case after1Day = 86400
@@ -254,7 +254,7 @@ extension AutoArchiveAfterInactive {
     }
 }
 
-public enum TrimSilence: Int32, Codable {
+public enum TrimSilence: Int32, Codable, Sendable {
     case off = 0
     case mild = 1
     case medium = 2
@@ -292,7 +292,7 @@ public typealias ActionOption = Option<PlayerAction, String>
 
 extension ActionOption: Codable, Equatable {}
 
-public enum PlayerAction: String, Codable, Equatable, CaseIterable {
+public enum PlayerAction: String, Codable, Equatable, CaseIterable, Sendable {
     case effects = "effects"
     case sleepTimer = "sleep"
     case routePicker = "airplay"
@@ -321,7 +321,7 @@ extension Array: @retroactive RawRepresentable where Element: RawRepresentable<S
     }
 }
 
-public enum UpNextPosition: Int32, Codable {
+public enum UpNextPosition: Int32, Codable, Sendable {
     case bottom = 0
     case top = 1
 }

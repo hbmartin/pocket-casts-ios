@@ -30,7 +30,8 @@ public enum UpNextSyncError: LocalizedError {
 }
 
 class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
-    private static let processDataLock = NSObject()
+    // nonisolated(unsafe): lock token for objc_sync_enter/exit; never mutated.
+    nonisolated(unsafe) private static let processDataLock = NSObject()
 
     override func main() {
         // Skip sync when protected data is unavailable to prevent reading incorrect

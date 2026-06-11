@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsUtils
 import SwiftProtobuf
 
-public struct SuggestedFoldersResponse {
+public struct SuggestedFoldersResponse: Sendable {
     public let suggestions: [String: [String]]
 }
 

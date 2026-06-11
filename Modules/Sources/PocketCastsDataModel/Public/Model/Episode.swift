@@ -4,7 +4,10 @@ import GRDBMacros
 import PocketCastsUtils
 
 @GRDBRecord(table: "SJEpisode")
-public class Episode: NSObject, BaseEpisode {
+// @unchecked Sendable: mutable model object passed across threads by long-standing
+// convention in this codebase; consistency is maintained by database-write discipline
+// rather than by the type itself.
+public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
     private static let bonusType = "bonus"
     private static let trailerType = "trailer"
 

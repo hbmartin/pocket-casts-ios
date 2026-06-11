@@ -1,6 +1,7 @@
 import Foundation
 
-class ServerNotificationsHelper {
+// Stateless notification poster; safe to share.
+final class ServerNotificationsHelper: Sendable {
     static let shared = ServerNotificationsHelper()
 
     func firePodcastRefreshFailed() {

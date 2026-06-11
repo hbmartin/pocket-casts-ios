@@ -1,7 +1,8 @@
 import Foundation
 
 public class LocalizationHelper {
-    public static var provider: InternationalizationProvider?
+    // nonisolated(unsafe): assigned from sync results; readers tolerate a stale value.
+    nonisolated(unsafe) public static var provider: InternationalizationProvider?
 
     public static func update(userRegion: String) {
         provider = InternationalizationProvider(userRegion: userRegion)

@@ -3,7 +3,9 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import SwiftProtobuf
 
-public class ApiServerHandler {
+// @unchecked Sendable: state is an operation queue (thread-safe) plus a
+// progress-save timestamp used as an advisory throttle.
+public final class ApiServerHandler: @unchecked Sendable {
     public static let shared = ApiServerHandler()
 
     lazy var apiQueue: OperationQueue = {

@@ -1,6 +1,9 @@
 import Foundation
 
-public class PlaylistEpisode: Equatable, Hashable {
+// @unchecked Sendable: mutable model object passed across threads by long-standing
+// convention in this codebase; consistency is maintained by database-write discipline
+// rather than by the type itself.
+public final class PlaylistEpisode: Equatable, Hashable, @unchecked Sendable {
     public var id = 0 as Int64
     public var episodePosition = 0 as Int32
     public var episodeUuid = ""

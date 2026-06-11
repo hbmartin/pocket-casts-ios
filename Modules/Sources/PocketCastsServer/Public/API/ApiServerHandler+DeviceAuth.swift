@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 
 // MARK: - Device Code Authentication
-public struct DeviceAuthorizationResponse {
+public struct DeviceAuthorizationResponse: Sendable {
     public let deviceCode: String
     public let userCode: String
     public let verificationURI: String
@@ -25,7 +25,7 @@ public extension ApiServerHandler {
         }
     }
 
-    func deviceAuthorizeRequest(scope: String, completion: @escaping (Result<DeviceAuthorizationResponse, APIError>) -> Void) {
+    func deviceAuthorizeRequest(scope: String, completion: @escaping @Sendable (Result<DeviceAuthorizationResponse, APIError>) -> Void) {
         var request = Api_DeviceAuthorizeRequest()
         request.scope = scope
 
