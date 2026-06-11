@@ -89,6 +89,12 @@ public protocol EpisodeRepository: AnyObject {
     func findEpisodeAsync(uuid: String) async -> Episode?
     func findBaseEpisodeAsync(uuid: String) async -> BaseEpisode?
     func findEpisodesWhereAsync(customWhere: String, arguments: [Any]?) async -> [Episode]
+
+    // Completes only after the write has landed, so callers can safely re-read
+    // the saved record afterwards. The default implementation runs the
+    // synchronous requirement on a background queue; conformers can override
+    // with natively async writes.
+    func saveAsync(episode: BaseEpisode) async
 }
 
 public extension EpisodeRepository {
@@ -112,6 +118,10 @@ public extension EpisodeRepository {
 
     func findEpisodesWhereAsync(customWhere: String, arguments: [Any]?) async -> [Episode] {
         await runOffMainThread { self.findEpisodesWhere(customWhere: customWhere, arguments: arguments) }
+    }
+
+    func saveAsync(episode: BaseEpisode) async {
+        await runOffMainThread { self.save(episode: episode) }
     }
 }
 
