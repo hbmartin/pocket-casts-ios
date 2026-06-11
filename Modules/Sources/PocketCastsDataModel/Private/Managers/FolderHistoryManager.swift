@@ -79,19 +79,27 @@ public class FolderHistoryManager {
     }
 }
 
-public class FolderHistoryHelper {
+// @unchecked Sendable: `podcastAndFolderUuids` is guarded by `lock`.
+public final class FolderHistoryHelper: @unchecked Sendable {
     public static let shared = FolderHistoryHelper()
 
+    private let lock = NSLock()
     private var podcastAndFolderUuids: [String: String] = [:]
 
     public func add(podcastUuid: String, folderUuid: String) {
-        podcastAndFolderUuids[podcastUuid] = folderUuid
+        lock.withLock {
+            podcastAndFolderUuids[podcastUuid] = folderUuid
+        }
     }
 
     public func snapshot() {
-        if !podcastAndFolderUuids.isEmpty {
-            DataManager.sharedManager.snapshot(podcastsAndFolders: podcastAndFolderUuids)
-            podcastAndFolderUuids = [:]
+        let uuids: [String: String] = lock.withLock {
+            defer { podcastAndFolderUuids = [:] }
+            return podcastAndFolderUuids
+        }
+
+        if !uuids.isEmpty {
+            DataManager.sharedManager.snapshot(podcastsAndFolders: uuids)
         }
     }
 }

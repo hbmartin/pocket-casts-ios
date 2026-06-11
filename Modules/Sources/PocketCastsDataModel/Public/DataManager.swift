@@ -29,11 +29,15 @@ public class DataManager {
 
     let dbQueue: PCDBQueue
 
-    public internal(set) static var sharedManager = DataManager()
+    // nonisolated(unsafe): assigned once during startup; tests swap in a fresh instance
+    // from setUp before any concurrent access.
+    nonisolated(unsafe) public internal(set) static var sharedManager = DataManager()
 
-    public static var logger: ErrorLogger?
+    // nonisolated(unsafe): assigned once during app startup, before the database is used.
+    nonisolated(unsafe) public static var logger: ErrorLogger?
 
-    public static var loginAgain = false
+    // nonisolated(unsafe): legacy database-corruption recovery flag, read once at launch.
+    nonisolated(unsafe) public static var loginAgain = false
 
     /// Creates a DataManager using a queue that is persisted to a local SQLIte file
     public convenience init() {
