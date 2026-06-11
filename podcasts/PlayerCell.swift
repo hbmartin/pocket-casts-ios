@@ -162,7 +162,7 @@ class PlayerCell: ThemeableSwipeCell {
     /// Reloads the episode from the database off the main thread, then refreshes the
     /// download UI — guarding against cell reuse while the read was in flight.
     private func refreshEpisodeFromDatabase(uuid: String) {
-        Task { [weak self] in
+        Task { @MainActor [weak self] in
             guard let refreshed = await DataManager.sharedManager.findBaseEpisodeAsync(uuid: uuid) else { return }
             guard let self, self.episode?.uuid == uuid else { return }
 

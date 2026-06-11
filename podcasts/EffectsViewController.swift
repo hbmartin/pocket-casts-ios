@@ -346,12 +346,12 @@ class EffectsViewController: SimpleNotificationsViewController {
         guard let episode = PlaybackManager.shared.currentEpisode() as? Episode, let podcast = episode.parentPodcast() else { return }
 
         podcast.isEffectsOverridden = false
+        updateClearView(podcast: podcast)
         // Persist off the main thread, but only reload effects after the write
         // lands — effectsChangedExternally() re-reads the podcast from the database.
-        Task { [weak self] in
+        Task {
             await DataManager.sharedManager.saveAsync(podcast: podcast)
             PlaybackManager.shared.effectsChangedExternally()
-            self?.updateClearView()
         }
     }
 
@@ -375,12 +375,14 @@ class EffectsViewController: SimpleNotificationsViewController {
         updateClearView()
     }
 
-    private func updateClearView() {
+    private func updateClearView(podcast: Podcast? = nil) {
         // We don't need a clear view if the FF is enbaled
         if isCustomPlaybackSettingsEnabled {
             return
         }
-        guard let episode = PlaybackManager.shared.currentEpisode() as? Episode, let podcast = episode.parentPodcast() else {
+
+        let podcast = podcast ?? (PlaybackManager.shared.currentEpisode() as? Episode)?.parentPodcast()
+        guard let podcast else {
             clearForPodcastView.isHidden = true
             customEffectsToVolumeBoostConstraint.isActive = false
 

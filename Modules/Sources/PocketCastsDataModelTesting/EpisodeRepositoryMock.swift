@@ -284,11 +284,11 @@ public final class EpisodeRepositoryMock: RepositoryMock, EpisodeRepository {
     }
 
     public func bulkMarkAsPlayed(episodes: [Episode], updateSyncFlag: Bool) {
-        record("bulkMarkAsPlayed(episodes:updateSyncFlag:)")
+        record("bulkMarkAsPlayed(episodes:[Episode]:updateSyncFlag:)")
     }
 
     public func bulkMarkAsPlayed(episodes: [UserEpisode], updateSyncFlag: Bool) {
-        record("bulkMarkAsPlayed(episodes:updateSyncFlag:)")
+        record("bulkMarkAsPlayed(episodes:[UserEpisode]:updateSyncFlag:)")
     }
 
     public func bulkMarkAsUnPlayed(baseEpisodes: [BaseEpisode], updateSyncFlag: Bool) {

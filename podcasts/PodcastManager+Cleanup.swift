@@ -47,7 +47,7 @@ extension PodcastManager {
                 return
             }
 
-            uuids.append("'\(episode.uuid)'")
+            uuids.append(episode.uuid)
             deleted_count += 1
         }
 

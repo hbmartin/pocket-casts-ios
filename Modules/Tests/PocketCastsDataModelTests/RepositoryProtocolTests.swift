@@ -23,6 +23,16 @@ final class RepositoryProtocolTests: XCTestCase {
         XCTAssertNil(mock.findEpisode(uuid: "anything"))
     }
 
+    func testOverloadedMockMethodsRecordConcreteEpisodeType() {
+        let mock = EpisodeRepositoryMock()
+
+        mock.bulkMarkAsPlayed(episodes: [Episode()], updateSyncFlag: false)
+        mock.bulkMarkAsPlayed(episodes: [UserEpisode()], updateSyncFlag: false)
+
+        XCTAssertEqual(mock.callCount(of: "bulkMarkAsPlayed(episodes:[Episode]:updateSyncFlag:)"), 1)
+        XCTAssertEqual(mock.callCount(of: "bulkMarkAsPlayed(episodes:[UserEpisode]:updateSyncFlag:)"), 1)
+    }
+
     func testDefaultArgumentConveniencesForwardToFullRequirement() {
         let mock = PodcastRepositoryMock()
         let repository: any PodcastRepository = mock

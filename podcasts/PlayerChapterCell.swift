@@ -147,20 +147,22 @@ class PlayerChapterCell: UITableViewCell {
 
             currentEpisode.deselectedChaptersModified = TimeFormatter.currentUTCTimeInMillis()
 
-            Self.chapterSaveTask = Task { [previousSave = Self.chapterSaveTask] in
-                await previousSave?.value
+            Self.chapterSaveTask?.cancel()
+            Self.chapterSaveTask = Task {
+                do {
+                    try await Task.sleep(nanoseconds: 300_000_000)
+                } catch {
+                    return
+                }
+
+                guard !Task.isCancelled else { return }
                 await DataManager.sharedManager.saveAsync(episode: currentEpisode)
             }
         }
     }
 
-    /// Serializes episode saves across all chapter cells: rapid toggles (each row is
-    /// its own cell, and the toggle button has no debounce) must not produce concurrent
-    /// background saves of the shared mutable episode object. Saves run in tap order;
-    /// the last save reads the episode after all prior mutations, so the final row
-    /// always matches the final in-memory state. A tap landing mid-save can still race
-    /// a property read on the shared episode; eliminating that needs a snapshot/value-type
-    /// refactor of the model layer.
+    /// Debounces episode saves across all chapter cells: rapid toggles should persist
+    /// the final shared episode state rather than queueing every intermediate state.
     private static var chapterSaveTask: Task<Void, Never>?
 
     @objc func progressUpdated(animated: Bool = true) {
