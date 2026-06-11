@@ -1,8 +1,9 @@
 import Foundation
 
 /// Control the presentation of the storieis
-public class StoriesController {
-    public static var shared = StoriesController()
+// Stateless notification poster; safe to share.
+public final class StoriesController: Sendable {
+    public static let shared = StoriesController()
 
     public enum Notifications: String, CaseIterable {
         case replay

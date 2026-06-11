@@ -169,7 +169,8 @@ let package = Package(
                 "PocketCastsUtils",
                 .product(name: "Kingfisher", package: "Kingfisher"),
             ],
-            path: "Sources/EndOfYear"
+            path: "Sources/EndOfYear",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "Modules",
@@ -265,7 +266,8 @@ extension Target {
         .target(
             name: name.supportingName,
             dependencies: dependencies,
-            path: "Sources/XcodeSupport/\(name.replacingOccurrences(of: " ", with: "-").supportingName)"
+            path: "Sources/XcodeSupport/\(name.replacingOccurrences(of: " ", with: "-").supportingName)",
+            swiftSettings: strictConcurrencySettings
         )
     }
 }
