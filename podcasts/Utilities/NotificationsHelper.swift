@@ -241,7 +241,10 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
             return
         }
         FileLog.shared.addMessage("[Notifications] push notification received with deep link to:\(destinationURLString)")
-        let _ = UIApplication.shared.delegate?.application?(UIApplication.shared, open: url)
+        // UNUserNotificationCenterDelegate callbacks are documented to arrive on the main thread.
+        MainActor.assumeIsolated {
+            let _ = UIApplication.shared.delegate?.application?(UIApplication.shared, open: url)
+        }
         completionHandler()
     }
 }

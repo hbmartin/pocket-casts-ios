@@ -16,7 +16,7 @@ XCODE_ANALYZE_DERIVED_DATA_PATH ?= /tmp/pocketcasts-analyze-deriveddata
 SEMGREP_SWIFT_ERROR ?= 1
 SEMGREP_POCKET_CASTS_ERROR ?= 1
 
-.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts semgrep_tests xcode_static_analyzer static_checks format install_dependencies
+.PHONY: help build clean test lint lint_lenient semgrep_swift_security semgrep_pocket_casts semgrep_tests xcode_static_analyzer static_checks format install_dependencies check_concurrency_warnings
 
 define run_in_buildtools
 	@pushd BuildTools && \
@@ -115,6 +115,18 @@ build_staging: ## Builds using the StagingDebug configuration
        -configuration StagingDebug \
        -destination 'generic/platform=iOS Simulator' \
        build
+
+CONCURRENCY_WARNINGS_LOG ?= /tmp/pocketcasts-concurrency-check.log
+
+check_concurrency_warnings: ## Build and fail if strict-concurrency warnings appear under Modules/Sources
+	set -o pipefail; \
+	xcodebuild -project podcasts.xcodeproj \
+	    -scheme "Pocket Casts Staging" \
+	    -configuration StagingDebug \
+	    -destination 'generic/platform=iOS Simulator' \
+	    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+	    build 2>&1 | tee "$(CONCURRENCY_WARNINGS_LOG)" >/dev/null
+	@./scripts/ci/check-concurrency-warnings.sh "$(CONCURRENCY_WARNINGS_LOG)"
 
 test_staging: ## Build and run Unit Tests using the StagingDebug configuration
 	xcodebuild test -project podcasts.xcodeproj \

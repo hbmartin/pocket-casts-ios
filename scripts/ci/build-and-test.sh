@@ -69,3 +69,6 @@ xcodebuild test \
   -resultBundlePath build/github/results/PocketCastsTests.xcresult \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
   2>&1 | tee build/github/logs/test-staging.log
+
+echo "Check strict-concurrency warnings"
+scripts/ci/check-concurrency-warnings.sh build/github/logs/test-staging.log
