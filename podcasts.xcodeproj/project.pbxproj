@@ -5591,7 +5591,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "[ $CI ] && exit 0\nmake lint_lenient\n";
+			shellScript = "[ $CI ] && exit 0\n\"$SRCROOT\"/scripts/run-buildtools-plugin.sh swiftlint lint --working-directory .. --config .swiftlint.yml --quiet --lenient\n";
 		};
 		3F407FBC28EC30B800818E41 /* SwiftLint */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -5610,7 +5610,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "make lint\n";
+			shellScript = "\"$SRCROOT\"/scripts/run-buildtools-plugin.sh swiftlint lint --working-directory .. --config .swiftlint.yml --quiet\n";
 			showEnvVarsInLog = 0;
 		};
 		462EE0C527025346003D67DC /* GenerateCredentials */ = {
@@ -5654,7 +5654,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "make generate_code\n";
+			shellScript = "\"$SRCROOT\"/scripts/run-buildtools-plugin.sh generate-code-for-resources --config ../swiftgen.yml\n";
 		};
 		8B6D7F312EFBD00100BD0001 /* Upload Bitdrift Debug Files */ = {
 			isa = PBXShellScriptBuildPhase;

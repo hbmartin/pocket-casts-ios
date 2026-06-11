@@ -42,9 +42,9 @@ The runner needs:
 
 - Xcode compatible with `.xcode-version` or another Swift 6 capable Xcode.
 - An installed iPhone simulator runtime. Set repository variable `IOS_SIMULATOR_RUNTIME_VERSION` to pin one, for example `18.5`.
-- Ruby `3.4.9`, preferably through `rbenv`.
-- Bundler and Homebrew.
-- Semgrep. CI can install it with Homebrew if it is missing.
+- Homebrew.
+- [mise](https://mise.jdx.dev). CI installs it with Homebrew if it is missing,
+  then `mise install` provides the pinned Ruby and Semgrep from `mise.toml`.
 
 Basic CI does not need Apple signing secrets. Build, test, and static check jobs
 prepare placeholder credentials unless a trusted event provides the optional

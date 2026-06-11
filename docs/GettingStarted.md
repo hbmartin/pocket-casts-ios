@@ -10,10 +10,11 @@ new developers. For GitHub Actions self-hosted runner setup, see
 From a clean checkout:
 
 ```bash
-gem install bundler
-make install_dependencies
-make external_contributor
-make build_staging
+brew install mise        # one-time, or: curl https://mise.run | sh
+mise install             # installs the pinned Ruby and semgrep
+mise run setup:deps
+mise run setup:credentials
+mise run build:staging
 ```
 
 Then open `podcasts.xcodeproj` in Xcode, select the `Pocket Casts Staging`
@@ -22,9 +23,9 @@ scheme, choose an iPhone simulator, and run the app.
 Before opening a pull request, run:
 
 ```bash
-make format
-make static_checks
-make test_staging
+mise run format
+mise run check:static
+mise run test:staging
 ```
 
 ## Local Mac Toolchain
@@ -59,36 +60,19 @@ xcrun simctl list devices available
 xcrun simctl list runtimes
 ```
 
-The Makefile defaults to `SIMULATOR_OS=18.5` for test destinations. If your
+The test tasks default to `SIMULATOR_OS=18.5` for test destinations. If your
 installed runtime is different, pass the OS explicitly:
 
 ```bash
-make test_staging SIMULATOR_OS=18.4
+SIMULATOR_OS=18.4 mise run test:staging
 ```
 
-The repo's Ruby tooling expects the version in `.ruby-version`, currently
-`3.4.9`. Using `rbenv` keeps the repo isolated from the system Ruby:
+Tool versions are managed by [mise](https://mise.jdx.dev) from `mise.toml`,
+which pins Ruby (currently `3.4.9`, mirrored in `.ruby-version` for editors and
+rbenv users — keep the two in sync) and semgrep. Install everything with:
 
 ```bash
-brew install rbenv ruby-build
-rbenv install 3.4.9
-rbenv local 3.4.9
-rbenv exec gem install bundler
-```
-
-The Makefile runs Fastlane through:
-
-```make
-rbenv exec bundle exec fastlane
-```
-
-That means Ruby commands used by the project should work through `rbenv`.
-
-Install Homebrew if needed, then install the local command-line tools that are
-not managed by Bundler:
-
-```bash
-brew install semgrep
+mise install
 ```
 
 Protocol buffer updates need additional tools, but normal build and test work
@@ -100,18 +84,17 @@ brew install protobuf swift-protobuf
 
 ## Project Bootstrap
 
-Install Bundler and the Ruby gems used by Fastlane:
+Install the Ruby gems used by Fastlane:
 
 ```bash
-gem install bundler
-make install_dependencies
+mise run setup:deps
 ```
 
 If you are an external contributor, or if your local secrets are not available
 yet, generate placeholder credentials:
 
 ```bash
-make external_contributor
+mise run setup:credentials
 ```
 
 This creates `podcasts/Credentials/LocalApiCredentials.swift` from
@@ -123,9 +106,9 @@ API keys will be disabled or limited.
 Useful first verification commands:
 
 ```bash
-make help
-make build_staging
-make test_staging ONLY_TESTING=PocketCastsTests
+mise tasks
+mise run build:staging
+ONLY_TESTING=PocketCastsTests mise run test:staging
 ```
 
 If Swift Package Manager or Xcode indexing appears stuck after the first open,
@@ -150,45 +133,45 @@ Recommended first run in Xcode:
 
 Generated local files and derived state:
 
-- `make external_contributor` writes
+- `mise run setup:credentials` writes
   `podcasts/Credentials/LocalApiCredentials.swift`.
 - Xcode and Swift Package Manager write derived data outside the repository by
   default.
-- `make generate_code` regenerates SwiftGen-managed resources.
-- `make generate_colors` regenerates theme colors from
+- `mise run generate:code` regenerates SwiftGen-managed resources.
+- `mise run generate:colors` regenerates theme colors from
   `scripts/themes/theme.csv`.
-- `make update_proto API_PATH=/path/to/proto` regenerates protobuf Swift files.
+- `mise run generate:proto /path/to/proto` regenerates protobuf Swift files.
 
 Do not commit local credentials, exported databases, logs, derived data, or
 temporary build artifacts.
 
 ## Build, Test, And Static Checks
 
-The Makefile wraps the common local commands. Prefer these targets because they
+The mise tasks wrap the common local commands. Prefer these tasks because they
 match CI more closely than ad hoc `xcodebuild` commands.
 
 Build the staging app:
 
 ```bash
-make build_staging
+mise run build:staging
 ```
 
-The plain debug build target is also available:
+The plain debug build task is also available:
 
 ```bash
-make build
+mise run build
 ```
 
 Build and run all default staging unit tests:
 
 ```bash
-make test_staging
+mise run test:staging
 ```
 
-The plain debug test target is also available:
+The plain debug test task is also available:
 
 ```bash
-make test
+mise run test
 ```
 
 Use staging targets for normal development unless you are intentionally checking
@@ -197,25 +180,25 @@ behavior specific to the `pocketcasts` Debug scheme.
 Run a single test class, method, or module:
 
 ```bash
-make test_staging ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName
-make test_staging ONLY_TESTING=PocketCastsDataModelTests
-make test_staging ONLY_TESTING=PocketCastsServerTests
-make test_staging ONLY_TESTING=PocketCastsUtilsTests
+ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName mise run test:staging
+ONLY_TESTING=PocketCastsDataModelTests mise run test:staging
+ONLY_TESTING=PocketCastsServerTests mise run test:staging
+ONLY_TESTING=PocketCastsUtilsTests mise run test:staging
 ```
 
 Format Swift code before sending a pull request:
 
 ```bash
-make format
+mise run format
 ```
 
 Run the full local static-check suite:
 
 ```bash
-make static_checks
+mise run check:static
 ```
 
-`make static_checks` runs:
+`mise run check:static` runs:
 
 - SwiftLint through the `BuildTools` Swift Package plugin.
 - Semgrep rule tests.
@@ -226,18 +209,18 @@ make static_checks
 Run individual checks while iterating:
 
 ```bash
-make lint
-make semgrep_tests
-make semgrep_swift_security
-make semgrep_pocket_casts
-make xcode_static_analyzer
+mise run lint
+mise run semgrep:tests
+mise run semgrep:security
+mise run semgrep:pocket-casts
+mise run check:analyzer
 ```
 
 Semgrep findings fail by default. For investigation only, run report-only scans:
 
 ```bash
-SEMGREP_SWIFT_ERROR=0 make semgrep_swift_security
-SEMGREP_POCKET_CASTS_ERROR=0 make semgrep_pocket_casts
+SEMGREP_SWIFT_ERROR=0 mise run semgrep:security
+SEMGREP_POCKET_CASTS_ERROR=0 mise run semgrep:pocket-casts
 ```
 
 See [Semgrep.md](./Semgrep.md) and [SecurityScanning.md](./SecurityScanning.md)
@@ -246,7 +229,7 @@ for rule authoring and security scanning details.
 Clean build artifacts when local state looks suspect:
 
 ```bash
-make clean
+mise run clean
 ```
 
 For deeper Xcode cleanup, remove the derived data path used by a specific manual
@@ -275,7 +258,7 @@ open -a Simulator
 If local secrets are missing, prepare placeholder credentials first:
 
 ```bash
-make external_contributor
+mise run setup:credentials
 ```
 
 Build the staging app for the booted simulator with signing disabled:
@@ -410,7 +393,7 @@ For CLI builds, write logs to `/tmp` and keep `pipefail` enabled:
 
 ```bash
 set -o pipefail
-make build_staging 2>&1 | tee /tmp/pocketcasts-build.log
+mise run build:staging 2>&1 | tee /tmp/pocketcasts-build.log
 ```
 
 For the explicit simulator build flow, inspect:
@@ -425,18 +408,18 @@ summary is often less useful than the first failure above it.
 
 ### Common Setup Problems
 
-If Bundler cannot find the expected Ruby, verify `rbenv`:
+If Bundler cannot find the expected Ruby, verify the mise-managed toolchain:
 
 ```bash
-rbenv version
-rbenv exec ruby --version
-rbenv exec bundle --version
+mise doctor
+mise exec -- ruby --version
+mise exec -- bundle --version
 ```
 
-If `make build_staging` fails during credential generation, run:
+If `mise run build:staging` fails during credential generation, run:
 
 ```bash
-make external_contributor
+mise run setup:credentials
 ```
 
 If tests cannot find a simulator, list installed simulators and pass a matching
@@ -444,7 +427,7 @@ OS:
 
 ```bash
 xcrun simctl list devices available
-make test_staging SIMULATOR_OS=18.5
+SIMULATOR_OS=18.5 mise run test:staging
 ```
 
 If package resolution fails after switching branches:

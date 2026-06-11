@@ -1,0 +1,201 @@
+min_version = "2025.1.0"
+
+[tools]
+# Keep in sync with .ruby-version (still read by rbenv users and editor tooling).
+ruby = "3.4.9"
+# uv powers the pipx backend that installs semgrep (it provisions its own Python).
+uv = "0.11.20"
+semgrep = "1.151.0"
+
+# -----------------------------------------------------------------------------
+# Setup
+# -----------------------------------------------------------------------------
+[tasks."setup:deps"]
+description = "Install Ruby gem dependencies (fastlane et al.)"
+run = "bundle install"
+
+[tasks."setup:credentials"]
+description = "Generate an empty LocalApiCredentials.swift so the app builds (external contributors)"
+alias = "external-contributor"
+run = "./scripts/generate-placeholder-credentials.sh"
+
+# -----------------------------------------------------------------------------
+# Lint / format (SwiftLint via the BuildTools Swift Package plugin).
+# Explicit --config prevents SwiftLint from picking up nested configs in
+# BuildTools/.build/checkouts/ (e.g., SwiftGenPlugin's .swiftlint.yml).
+# -----------------------------------------------------------------------------
+[tasks.lint]
+description = "Lint the codebase with SwiftLint"
+run = "./scripts/run-buildtools-plugin.sh swiftlint lint --working-directory .. --config .swiftlint.yml --quiet"
+
+[tasks."lint:lenient"]
+description = "Lint with SwiftLint, treating errors as warnings"
+run = "./scripts/run-buildtools-plugin.sh swiftlint lint --working-directory .. --config .swiftlint.yml --quiet --lenient"
+
+[tasks.format]
+description = "Lint and autocorrect SwiftLint violations"
+run = "./scripts/run-buildtools-plugin.sh swiftlint lint --working-directory .. --config .swiftlint.yml --quiet --autocorrect"
+
+# -----------------------------------------------------------------------------
+# Code generation
+# -----------------------------------------------------------------------------
+[tasks."generate:code"]
+description = "Regenerate SwiftGen-managed resources (swiftgen.yml)"
+run = "./scripts/run-buildtools-plugin.sh generate-code-for-resources --config ../swiftgen.yml"
+
+[tasks."generate:colors"]
+description = "Generate colors and themes from scripts/themes/theme.csv"
+run = "ruby scripts/themes/generate_themes.rb scripts/themes/theme.csv"
+
+[tasks."generate:proto"]
+description = "Regenerate protobuf Swift files. Usage: mise run generate:proto /path/to/pocketcasts-api/api/modules/protobuf/src/main/proto"
+run = "./scripts/update_proto.sh"
+
+# -----------------------------------------------------------------------------
+# Build / test
+# -----------------------------------------------------------------------------
+[tasks.build]
+description = "Build the pocketcasts scheme (Debug) for the generic simulator"
+run = '''
+xcodebuild -project podcasts.xcodeproj \
+    -scheme pocketcasts \
+    -configuration Debug \
+    -destination 'generic/platform=iOS Simulator' \
+    build
+'''
+
+[tasks."build:staging"]
+description = "Build the 'Pocket Casts Staging' scheme (StagingDebug)"
+run = '''
+xcodebuild -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -configuration StagingDebug \
+    -destination 'generic/platform=iOS Simulator' \
+    build
+'''
+
+[tasks.clean]
+description = "Clean the build artifacts"
+run = '''
+xcodebuild -project podcasts.xcodeproj \
+    -scheme pocketcasts \
+    -configuration Debug \
+    clean
+'''
+
+[tasks.test]
+description = "Run unit tests (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
+run = '''
+SIMULATOR_NAME="${SIMULATOR_NAME:-$(xcrun simctl list devices available | grep "iPhone" | tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$//')}"
+xcodebuild test -project podcasts.xcodeproj \
+    -scheme pocketcasts \
+    -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
+    -destination "platform=iOS Simulator,name=${SIMULATOR_NAME},OS=${SIMULATOR_OS:-18.5}"
+'''
+
+[tasks."test:staging"]
+description = "Run unit tests (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
+run = '''
+SIMULATOR_NAME="${SIMULATOR_NAME:-$(xcrun simctl list devices available | grep "iPhone" | tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$//')}"
+xcodebuild test -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
+    -destination "platform=iOS Simulator,name=${SIMULATOR_NAME},OS=${SIMULATOR_OS:-18.5}"
+'''
+
+[tasks."test:scripts"]
+description = "Run tests for the repo's Ruby helper scripts (credentials generation, simulator selection)"
+alias = "test:credentials-script"
+run = [
+    "ruby scripts/tests/generate_credentials_test.rb",
+    "ruby scripts/tests/select_ios_simulator_test.rb",
+]
+
+# -----------------------------------------------------------------------------
+# Semgrep
+# -----------------------------------------------------------------------------
+[tasks."semgrep:security"]
+description = "Run akabe1 Swift/iOS Semgrep security rules (SEMGREP_SWIFT_ERROR=0 for report-only)"
+run = '''
+if [ "${SEMGREP_SWIFT_ERROR:-1}" = "1" ]; then ERROR_FLAG="--error"; else ERROR_FLAG=""; fi
+semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "**/Package.swift" --include "**/Package.resolved" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "mise.toml" --include "**/mise.toml" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $ERROR_FLAG
+'''
+
+[tasks."semgrep:pocket-casts"]
+description = "Run Pocket Casts custom Semgrep rules (SEMGREP_POCKET_CASTS_ERROR=0 for report-only)"
+run = '''
+if [ "${SEMGREP_POCKET_CASTS_ERROR:-1}" = "1" ]; then ERROR_FLAG="--error"; else ERROR_FLAG=""; fi
+semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $ERROR_FLAG
+'''
+
+[tasks."semgrep:tests"]
+description = "Run Semgrep rule tests"
+run = [
+    "semgrep test --config semgrep/pocket-casts.yml semgrep/tests/pocket-casts-web-opening.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/mise.toml",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-insecure-storage.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-pr-feedback.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-zendesk-wordpress.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-sql-interpolation.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-fire-and-forget-save.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/github-actions-security.yml",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/Main/MainTabBarController.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/ProfileViewController.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedPlusLockedInfo.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedLegacyPayment.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedUserSatisfactionSurvey.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/generate-credentials-placeholder-regex.sh",
+]
+
+# -----------------------------------------------------------------------------
+# Static analysis
+# -----------------------------------------------------------------------------
+[tasks."check:analyzer"]
+description = "Run the Xcode static analyzer for the staging app (XCODE_ANALYZE_* env overrides)"
+run = '''
+DERIVED_DATA="${XCODE_ANALYZE_DERIVED_DATA_PATH:-/tmp/pocketcasts-analyze-deriveddata}"
+if [ -n "$DERIVED_DATA" ]; then rm -rf "${DERIVED_DATA}/SDKStatCaches.noindex"; fi
+xcodebuild -quiet analyze -project podcasts.xcodeproj \
+    -scheme "${XCODE_ANALYZE_SCHEME:-Pocket Casts Staging}" \
+    -configuration "${XCODE_ANALYZE_CONFIGURATION:-StagingDebug}" \
+    -destination "${XCODE_ANALYZE_DESTINATION:-generic/platform=iOS Simulator}" \
+    -derivedDataPath "$DERIVED_DATA" \
+    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+'''
+
+[tasks."check:concurrency"]
+description = "Build staging and fail on strict-concurrency warnings under Modules/Sources"
+shell = "bash -c"
+run = '''
+set -o pipefail
+LOG="${CONCURRENCY_WARNINGS_LOG:-/tmp/pocketcasts-concurrency-check.log}"
+xcodebuild -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -configuration StagingDebug \
+    -destination 'generic/platform=iOS Simulator' \
+    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+    build 2>&1 | tee "$LOG" >/dev/null
+./scripts/ci/check-concurrency-warnings.sh "$LOG"
+'''
+
+[tasks."check:static"]
+description = "Run SwiftLint, helper script tests, Semgrep, and the Xcode static analyzer"
+alias = "static-checks"
+depends = [
+    "lint",
+    "test:scripts",
+    "semgrep:tests",
+    "semgrep:security",
+    "semgrep:pocket-casts",
+    "check:analyzer",
+]
+
+# -----------------------------------------------------------------------------
+# Misc
+# -----------------------------------------------------------------------------
+[tasks."stats:swift-percentage"]
+description = "Report Swift vs Obj-C percentage in the project"
+run = "./scripts/count.rb"

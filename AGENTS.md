@@ -1,33 +1,37 @@
+## Task Runner
+
+Tasks and tool versions (Ruby, semgrep) are managed by [mise](https://mise.jdx.dev) via `mise.toml`. One-time setup: `brew install mise && mise install`. List all tasks with `mise tasks`.
+
 ## Formatting
 
 Format all code using the formatter:
 ```bash
-make format
+mise run format
 ```
 
 ## Static Checks
 
 Run all local static checks with:
 ```bash
-make static_checks
+mise run check:static
 ```
 
 ## Building and Running
 
 ```bash
-make build_staging
+mise run build:staging
 ```
 
 ## Cleaning Build Artifacts
 
 ```bash
-make clean
+mise run clean
 ```
 
 ## Running Tests
 
 ```bash
-make test_staging
+mise run test:staging
 ```
 
 ## Security Scanning
@@ -37,20 +41,20 @@ When PR feedback, unexpected planning decisions, bug discoveries, or other imple
 ### Running a Single Test
 
 ```bash
-make test_staging ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName
+ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName mise run test:staging
 ```
 
 ### Running Module Tests
 
 ```bash
 # DataModel module tests
-make test_staging ONLY_TESTING=PocketCastsDataModelTests
+ONLY_TESTING=PocketCastsDataModelTests mise run test:staging
 
 # Server module tests
-make test_staging ONLY_TESTING=PocketCastsServerTests
+ONLY_TESTING=PocketCastsServerTests mise run test:staging
 
 # Utils module tests
-make test_staging ONLY_TESTING=PocketCastsUtilsTests
+ONLY_TESTING=PocketCastsUtilsTests mise run test:staging
 ```
 
 ## Architecture
@@ -147,7 +151,7 @@ Server objects use protobuf. To regenerate after API changes:
 
 ```bash
 brew install protobuf swift-protobuf  # One-time setup
-make update_proto API_PATH=/path/to/pocketcasts-api/api/modules/protobuf/src/main/proto
+mise run generate:proto /path/to/pocketcasts-api/api/modules/protobuf/src/main/proto
 ```
 
 ## Simulator Launch Notes
@@ -157,7 +161,7 @@ When asked to get the app running in Simulator from the CLI, use an explicit sim
 If the build fails during credential generation because local secrets are missing, run:
 
 ```bash
-make external_contributor
+mise run setup:credentials
 ```
 
 Build the staging app for the booted simulator with signing disabled:

@@ -5,16 +5,16 @@
 Run the akabe1 Swift/iOS Semgrep rules with:
 
 ```bash
-make semgrep_swift_security
+mise run semgrep:security
 ```
 
 Run Pocket Casts-specific guardrail rules with:
 
 ```bash
-make semgrep_pocket_casts
+mise run semgrep:pocket-casts
 ```
 
-The target runs the vendored Swift rules in
+The task runs the vendored Swift rules in
 `semgrep/swift-security.yml`, copied from the upstream `ios/swift`
 directory in `https://github.com/akabe1/akabe1-semgrep-rules` at
 commit `db843f16c4a740c22d97c489d176ff663c1776b6`.
@@ -27,19 +27,19 @@ Semgrep findings fail the build by default. To run a report-only scan while
 investigating a local finding:
 
 ```bash
-SEMGREP_SWIFT_ERROR=0 make semgrep_swift_security
+SEMGREP_SWIFT_ERROR=0 mise run semgrep:security
 ```
 
 The custom Pocket Casts rules flag hardcoded subscription billing state,
 direct End of Year story advancement from SwiftUI `onAppear`, and
 Chromecast reuse of existing persisted `PlayerAction` integer values.
-Use `SEMGREP_POCKET_CASTS_ERROR=0 make semgrep_pocket_casts` for a
+Use `SEMGREP_POCKET_CASTS_ERROR=0 mise run semgrep:pocket-casts` for a
 report-only local scan.
 
 Run Semgrep rule tests with:
 
 ```bash
-make semgrep_tests
+mise run semgrep:tests
 ```
 
 To write JSON locally:

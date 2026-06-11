@@ -520,7 +520,7 @@ If/when IAP is wired up, the natural home is an `api` host endpoint consuming `A
 
 ## 23. Protocol Buffers catalog
 
-Generated Swift lives in `Private/Protobuffer/api.pb.swift` (~149 message types) and `files.pb.swift` (~17 types). The proto is regenerated with `make update_proto` (see project `CLAUDE.md`).
+Generated Swift lives in `Private/Protobuffer/api.pb.swift` (~149 message types) and `files.pb.swift` (~17 types). The proto is regenerated with `mise run generate:proto` (see project `CLAUDE.md`).
 
 **`api.pb.swift` groups:** auth (`Api_UserLoginRequest/Response`, `Api_UserTokenRequest`, `Api_TokenLoginResponse`, `Api_DeviceAuthorize*`), account (`Api_RegisterRequest/Response`, `Api_UserChange*`, `Api_EmailRequest`, `Api_UserLastSyncAtResponse`), sync (`Api_SyncUpdateRequest/Response`, `Api_Record`, `Api_SyncUser{Podcast,Episode,Playlist,Folder,Device,Bookmark}`), Up Next/history/settings (`Api_UpNext*`, `Api_History*`, `Api_NamedSettings*`, `Api_ChangeableSettings`, `Api_{Bool,Int32,Double,String}Setting`), episodes (`Api_Episode(s)Response`, `Api_UpdateEpisode*`, `Api_StarredEpisode(s)Response`), podcasts/folders/playlists/bookmarks/ratings/stats, search, **commerce** (subscriptions/promotions/referrals/winback — see [§21](#21-in-app-purchases--subscriptions)), and misc (`Api_BasicRequest`, `Api_EmptyRequest/Response`, `Api_SupportFeedbackRequest`, legacy types).
 
