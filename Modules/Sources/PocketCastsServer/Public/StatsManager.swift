@@ -13,7 +13,7 @@ public final class StatsManager: @unchecked Sendable {
     private var savedAutoSkipping = -1 as TimeInterval
 
     private var isSynced = true
-    private var updateQueue = DispatchQueue(label: "au.com.pocketcasts.StatsManagerQueue")
+    private let updateQueue = DispatchQueue(label: "au.com.pocketcasts.StatsManagerQueue")
 
     public init() {
         if UserDefaults.standard.object(forKey: ServerConstants.UserDefaults.statsStartDate) as? Date == nil {
