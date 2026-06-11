@@ -17,18 +17,22 @@ extension MainTabBarController {
             return
         }
 
+        // Whether this was a "Play Next" (top) or "Play Last" (bottom) add, so
+        // the flying badge can show the matching glyph and tint.
+        let toTop = (notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool) ?? false
+
         Task { [weak self] in
             let episode = await DataManager.sharedManager.findBaseEpisodeAsync(uuid: episodeUuid)
             guard let self else { return }
             if let episode {
-                playUpNextAddedGenieAnimation(for: episode)
+                playUpNextAddedGenieAnimation(for: episode, toTop: toTop)
             } else {
                 upNextQueueDidChange()
             }
         }
     }
 
-    func playUpNextAddedGenieAnimation(for episode: BaseEpisode) {
+    func playUpNextAddedGenieAnimation(for episode: BaseEpisode, toTop: Bool) {
         // Fly the artwork into the queue's on-screen representation: the mini
         // player's now-playing artwork. Skip the animation (and just keep the
         // count current) when it isn't on screen or another genie is already
@@ -68,10 +72,11 @@ extension MainTabBarController {
         ImageManager.sharedManager.loadImage(episode: episode, imageView: artwork, size: .list)
         container.addSubview(artwork)
 
-        // A circled "+" in the top-right corner so the flying artwork clearly
-        // reads as "being added" rather than just a floating thumbnail.
-        let badge = makeUpNextAddBadge(diameter: 22)
-        badge.center = CGPoint(x: container.bounds.width - 8, y: 8)
+        // A circled "Play Next" / "Play Last" glyph perched on the top-right
+        // corner so the flying artwork clearly reads as "being added" — and as
+        // *which* add — rather than just a floating thumbnail.
+        let badge = makeUpNextAddBadge(toTop: toTop, diameter: 26)
+        badge.center = CGPoint(x: container.bounds.width - 5, y: 5)
         container.addSubview(badge)
 
         view.addSubview(container)
@@ -88,21 +93,23 @@ extension MainTabBarController {
         })
     }
 
-    /// A circled "+" badge — accent fill, white plus and ring — sized to perch
-    /// on the top-right corner of the flying artwork.
-    private func makeUpNextAddBadge(diameter: CGFloat) -> UIView {
+    /// A circled badge showing the add that just happened — a white "Play Next"
+    /// or "Play Last" glyph and ring over the matching swipe-action tint
+    /// (`support04` for Play Next, `support03` for Play Last) — sized to perch on
+    /// the top-right corner of the flying artwork.
+    private func makeUpNextAddBadge(toTop: Bool, diameter: CGFloat) -> UIView {
         let badge = UIView(frame: CGRect(x: 0, y: 0, width: diameter, height: diameter))
-        badge.backgroundColor = ThemeColor.primaryInteractive01()
+        badge.backgroundColor = toTop ? ThemeColor.support04() : ThemeColor.support03()
         badge.layer.cornerRadius = diameter / 2
         badge.layer.borderWidth = 1.5
         badge.layer.borderColor = UIColor.white.cgColor
 
-        let glyph = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: diameter * 0.5, weight: .bold))
-        let plus = UIImageView(image: glyph)
-        plus.tintColor = .white
-        plus.frame = badge.bounds
-        plus.contentMode = .center
-        badge.addSubview(plus)
+        let glyph = UIImage(named: toTop ? "list_playnext" : "list_playlast")?.withRenderingMode(.alwaysTemplate)
+        let icon = UIImageView(image: glyph)
+        icon.tintColor = .white
+        icon.contentMode = .scaleAspectFit
+        icon.frame = badge.bounds.insetBy(dx: diameter * 0.24, dy: diameter * 0.24)
+        badge.addSubview(icon)
         return badge
     }
 
