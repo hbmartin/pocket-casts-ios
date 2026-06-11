@@ -37,6 +37,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         DataManager.logger = BitdriftErrorLogger(category: "grdb")
         ServerConfig.shared.errorLogger = BitdriftErrorLogger(category: "sync")
+        ServerConfig.shared.warmProtectedDataAvailabilityCache()
 
         appInstallState = appLifecycleAnalytics.checkApplicationInstalledOrUpgraded()
 

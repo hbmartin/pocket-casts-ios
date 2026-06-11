@@ -15,11 +15,9 @@ private final class ProtectedDataAvailability: @unchecked Sendable {
     private var cachedValue: Bool?
     private var observersInstalled = false
     private var refreshScheduled = false
+    // Block-based observer tokens auto-unregister on dealloc, so they must stay retained
+    // for the lifetime of this singleton.
     private var notificationObservers = [NSObjectProtocol]()
-
-    deinit {
-        notificationObservers.forEach(NotificationCenter.default.removeObserver)
-    }
 
     func currentValue() -> Bool? {
         installObserversIfNeeded()
