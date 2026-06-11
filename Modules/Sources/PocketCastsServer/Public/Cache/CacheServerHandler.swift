@@ -1,7 +1,9 @@
 import Foundation
 import PocketCastsDataModel
 
-public class CacheServerHandler {
+// @unchecked Sendable: stored properties are caches/retrievers that are
+// internally thread-safe and configured at init.
+public final class CacheServerHandler: @unchecked Sendable {
     private static let defaultTimeout: TimeInterval = 15
 
     public static let shared = CacheServerHandler()
@@ -20,17 +22,20 @@ public class CacheServerHandler {
 
     // MARK: - Episode Artwork
 
-    public func loadPodcastColors(podcastUuid: String, allowCachedVersion: Bool, completion: @escaping ((String?, String?, String?) -> Void)) {
+    public func loadPodcastColors(podcastUuid: String, allowCachedVersion: Bool, completion: @escaping @Sendable (String?, String?, String?) -> Void) {
         let url = ServerHelper.colorUrl(podcastUuid: podcastUuid)
-        var request = URLRequest(url: url)
+        var mutableRequest = URLRequest(url: url)
         if !allowCachedVersion {
-            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            mutableRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         }
+        let request = mutableRequest
 
-        var sentResponse = false
+        let sentResponse: Bool
         if allowCachedVersion, let cachedResponse = colorsUrlsCache.cachedResponse(for: request) {
             extractCachedColors(responseData: cachedResponse.data, completion: completion)
             sentResponse = true
+        } else {
+            sentResponse = false
         }
 
         // even after returning a cached response, we still go and check if there's a newer version available and if so put that in our cache for next time
@@ -64,7 +69,7 @@ public class CacheServerHandler {
 
     // MARK: - Podcast Info
 
-    public func loadPodcastInfo(podcastUuid: String, completion: @escaping (([String: Any]?, String?) -> Void)) {
+    public func loadPodcastInfo(podcastUuid: String, completion: @escaping @Sendable ([String: Any]?, String?) -> Void) {
         let url = urlForPodcast(uuid: podcastUuid)
         var request = URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: CacheServerHandler.defaultTimeout)
         request.addLocalizationHeaders()
@@ -86,7 +91,7 @@ public class CacheServerHandler {
         }
     }
 
-    public func loadEpisodeUrl(episodeUuid: String, podcastUuid: String, completion: @escaping ((String?) -> Void)) {
+    public func loadEpisodeUrl(episodeUuid: String, podcastUuid: String, completion: @escaping @Sendable (String?) -> Void) {
         let url = ServerHelper.asUrl(ServerConstants.Urls.cache() + "mobile/episode/url/\(podcastUuid)/\(episodeUuid)")
         var request = URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: CacheServerHandler.defaultTimeout)
         request.addLocalizationHeaders()
@@ -102,7 +107,7 @@ public class CacheServerHandler {
         }
     }
 
-    public func loadPodcastIfModified(podcast: Podcast, completion: @escaping (([String: Any]?, String?) -> Void)) {
+    public func loadPodcastIfModified(podcast: Podcast, completion: @escaping @Sendable ([String: Any]?, String?) -> Void) {
         let url = urlForPodcast(uuid: podcast.uuid)
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringCacheData, timeoutInterval: CacheServerHandler.defaultTimeout)
         if let lastUpdated = podcast.lastUpdatedAt, podcast.isSubscribed() {
@@ -143,15 +148,15 @@ public class CacheServerHandler {
         }
     }
 
-    public struct EpisodeSearchResult: Codable {
+    public struct EpisodeSearchResult: Codable, Sendable {
         public let episodes: [SearchResultEpisodes]
     }
 
-    public struct SearchResultEpisodes: Codable {
+    public struct SearchResultEpisodes: Codable, Sendable {
         public let uuid: String
     }
 
-    public func searchEpisodesInPodcast(search: EpisodeSearchQuery, completion: ((EpisodeSearchResult?) -> Void)?) {
+    public func searchEpisodesInPodcast(search: EpisodeSearchQuery, completion: (@Sendable (EpisodeSearchResult?) -> Void)?) {
         let url = ServerHelper.asUrl(ServerConstants.Urls.cache() + "mobile/podcast/episode/search")
         guard let request = ServerHelper.createJsonRequest(url: url, params: search, timeout: CacheServerHandler.defaultTimeout, cachePolicy: .useProtocolCachePolicy) else {
             completion?(nil)

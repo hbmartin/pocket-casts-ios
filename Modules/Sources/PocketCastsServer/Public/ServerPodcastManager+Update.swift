@@ -10,7 +10,7 @@ extension ServerPodcastManager {
     ///   - addMissingEpisodes: if set to `true` it will add missing episodes that are not the latest ones.
     ///   Latest ones are handled by a refresh (due to auto-download/up next)
     ///   - completion: a completion block that receives a `Bool`
-    public func updatePodcastIfRequired(podcast: Podcast, addMissingEpisodes: Bool = false, completion: ((Bool) -> Void)?) {
+    public func updatePodcastIfRequired(podcast: Podcast, addMissingEpisodes: Bool = false, completion: (@Sendable (Bool) -> Void)?) {
         CacheServerHandler.shared.loadPodcastIfModified(podcast: podcast) { [weak self] podcastInfo, lastModified in
             if let podcastInfo {
                 self?.updatePodcast(podcast: podcast, lastModified: lastModified, podcastInfo: podcastInfo, addMissingEpisodes: addMissingEpisodes, completion: {
@@ -24,11 +24,13 @@ extension ServerPodcastManager {
         }
     }
 
-    private func updatePodcast(podcast: Podcast, lastModified: String?, podcastInfo: [String: Any], addMissingEpisodes: Bool, completion: (() -> Void)?) {
+    private func updatePodcast(podcast: Podcast, lastModified: String?, podcastInfo: [String: Any], addMissingEpisodes: Bool, completion: (@Sendable () -> Void)?) {
+        // Handed wholesale to the subscribe queue; not touched by the caller afterwards.
+        let podcastInfo = UncheckedSendable(podcastInfo)
         subscribeQueue.addOperation { [weak self] in
             guard let strongSelf = self else { return }
 
-            strongSelf.update(podcast: podcast, podcastInfo: podcastInfo, lastModified: lastModified, addMissingEpisodes: addMissingEpisodes)
+            strongSelf.update(podcast: podcast, podcastInfo: podcastInfo.value, lastModified: lastModified, addMissingEpisodes: addMissingEpisodes)
             completion?()
         }
     }

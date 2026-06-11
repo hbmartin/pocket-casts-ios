@@ -1,7 +1,9 @@
 import Foundation
 import PocketCastsDataModel
 
-public class ServerConfig {
+// @unchecked Sendable: delegates are assigned once during app startup, before
+// any server communication happens.
+public final class ServerConfig: @unchecked Sendable {
     public static let shared = ServerConfig()
 
     private var backgroundSessionHandler: (() -> Void)?

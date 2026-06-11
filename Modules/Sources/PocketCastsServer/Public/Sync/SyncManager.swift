@@ -73,5 +73,7 @@ public extension SyncManager {
     }
 
     /// Defines a reason why a sync is being performed
-    static var syncReason: SyncManager.SyncingReason? = nil
+    // nonisolated(unsafe): advisory flag set before a sync starts and cleared when it
+    // completes; readers tolerate a stale value.
+    nonisolated(unsafe) static var syncReason: SyncManager.SyncingReason? = nil
 }

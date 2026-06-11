@@ -1,7 +1,8 @@
 import Foundation
+import PocketCastsUtils
 
 class PodcastSearchOperation: Operation, @unchecked Sendable {
-    private let completion: (PodcastSearchResponse?) -> Void
+    private let completion: @Sendable (PodcastSearchResponse?) -> Void
     private let searchQuery: MainServerHandler.PodcastSearchQuery
 
     private let dispatchGroup: DispatchGroup = {
@@ -10,7 +11,7 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
         return dispatchGroup
     }()
 
-    init(searchQuery: MainServerHandler.PodcastSearchQuery, completionHandler: @escaping (PodcastSearchResponse?) -> Void) {
+    init(searchQuery: MainServerHandler.PodcastSearchQuery, completionHandler: @escaping @Sendable (PodcastSearchResponse?) -> Void) {
         completion = completionHandler
         self.searchQuery = searchQuery
         super.init()
@@ -53,11 +54,12 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
             return false
         }
 
-        var shouldRetry = false
+        // The dispatch-group wait establishes the happens-before edge for the boxed flag.
+        let shouldRetry = UncheckedSendableBox(false)
         dispatchGroup.enter()
         URLSession.shared.dataTask(with: request) { data, _, error in
             guard let data, error == nil else {
-                shouldRetry = true
+                shouldRetry.value = true
                 self.dispatchGroup.leave()
                 return
             }
@@ -65,9 +67,9 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
             do {
                 let searchResponse = try JSONDecoder().decode(PodcastSearchResponse.self, from: data)
                 if searchResponse.status == "poll" {
-                    shouldRetry = true
+                    shouldRetry.value = true
                 } else {
-                    shouldRetry = false
+                    shouldRetry.value = false
                     self.completion(searchResponse)
                 }
             } catch {
@@ -78,6 +80,6 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
         }.resume()
         _ = dispatchGroup.wait(timeout: .now() + 15.seconds)
 
-        return shouldRetry
+        return shouldRetry.value
     }
 }

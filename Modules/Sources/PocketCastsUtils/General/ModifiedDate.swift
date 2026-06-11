@@ -64,3 +64,5 @@ fileprivate extension Bool {
         }
     }
 }
+
+extension ModifiedDate: Sendable where Value: Sendable {}

@@ -4,7 +4,7 @@ import PocketCastsDataModel
 public class RecommendationHelper {
     public init() {}
 
-    public func recommendEpisode(completion: @escaping ((Episode?) -> Void)) {
+    public func recommendEpisode(completion: @escaping @Sendable (Episode?) -> Void) {
         if !SyncManager.isUserLoggedIn() {
             completion(nil)
 

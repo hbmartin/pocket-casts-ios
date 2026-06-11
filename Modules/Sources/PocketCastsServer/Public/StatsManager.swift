@@ -2,7 +2,8 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-public class StatsManager {
+// @unchecked Sendable: all mutable stats state is accessed through `updateQueue`.
+public final class StatsManager: @unchecked Sendable {
     public static let shared = StatsManager()
 
     private var savedDynamicSpeed = -1 as TimeInterval

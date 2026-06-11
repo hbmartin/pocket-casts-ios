@@ -13,7 +13,9 @@ protocol BaseRequest: Encodable {
     var v: String? { get set }
 }
 
-public class MainServerHandler {
+// @unchecked Sendable: stored properties are formatters and an OperationQueue,
+// configured at init and read-only afterwards.
+public final class MainServerHandler: @unchecked Sendable {
     private static let callTimeout = 60.seconds
 
     public static let shared = MainServerHandler()
@@ -96,7 +98,7 @@ public class MainServerHandler {
         }
     }
 
-    public func sendOpmlChunk(feedUrls: [String] = [], pollUuids: [String] = [], completion: @escaping (ImportOpmlResponse?) -> Void) {
+    public func sendOpmlChunk(feedUrls: [String] = [], pollUuids: [String] = [], completion: @escaping @Sendable (ImportOpmlResponse?) -> Void) {
         guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
             completion(ImportOpmlResponse.failedResponse())
             return
@@ -130,7 +132,7 @@ public class MainServerHandler {
         }.resume()
     }
 
-    public func exportPodcasts(uuids: [String], completion: @escaping (ExportPodcastsResponse?) -> Void) {
+    public func exportPodcasts(uuids: [String], completion: @escaping @Sendable (ExportPodcastsResponse?) -> Void) {
         guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
             completion(ExportPodcastsResponse.failedResponse())
             return
@@ -163,7 +165,7 @@ public class MainServerHandler {
         }.resume()
     }
 
-    public func lookupShareLink(sharePath: String, completion: @escaping (ShareListResponse?) -> Void) {
+    public func lookupShareLink(sharePath: String, completion: @escaping @Sendable (ShareListResponse?) -> Void) {
         guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
             completion(ShareListResponse.failedResponse())
             return
@@ -193,7 +195,7 @@ public class MainServerHandler {
         }.resume()
     }
 
-    public func refresh(podcasts: [Podcast], completion: @escaping (PodcastRefreshResponse?) -> Void) {
+    public func refresh(podcasts: [Podcast], completion: @escaping @Sendable (PodcastRefreshResponse?) -> Void) {
         FileLog.shared.addMessage("Refresh - Started)")
         guard let request = createRefreshRequest(podcasts: podcasts) else {
             completion(PodcastRefreshResponse.failedResponse())
@@ -249,7 +251,7 @@ public class MainServerHandler {
         return request
     }
 
-    public func podcastSearch(searchTerm: String, completion: @escaping (PodcastSearchResponse?) -> Void) {
+    public func podcastSearch(searchTerm: String, completion: @escaping @Sendable (PodcastSearchResponse?) -> Void) {
         guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
             completion(PodcastSearchResponse.failedResponse())
             return
@@ -279,7 +281,7 @@ public class MainServerHandler {
         return searchQuery
     }
 
-    public func refreshPodcastFeed(podcast: Podcast, completion: @escaping (Bool) -> Void) {
+    public func refreshPodcastFeed(podcast: Podcast, completion: @escaping @Sendable (Bool) -> Void) {
         guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
             completion(false)
 
@@ -311,7 +313,7 @@ public class MainServerHandler {
         }.resume()
     }
 
-    public func findPodcastByiTunesId(_ iTunesId: Int, completion: @escaping (String?) -> Void) {
+    public func findPodcastByiTunesId(_ iTunesId: Int, completion: @escaping @Sendable (String?) -> Void) {
         guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
             completion(nil)
             return
@@ -417,7 +419,7 @@ public class MainServerHandler {
         json["l"] = locale.language.languageCode?.identifier
         json["c"] = locale.region?.identifier
 
-            json["m"] = UIDevice.current.systemVersion
+        json["m"] = DeviceUtil.systemVersion
 
         json["dt"] = MainServerHandler.deviceType
         json["v"] = MainServerHandler.parserVersion
@@ -432,7 +434,7 @@ public class MainServerHandler {
         baseRequest.l = locale.language.languageCode?.identifier
         baseRequest.c = locale.region?.identifier
 
-            baseRequest.m = UIDevice.current.systemVersion
+        baseRequest.m = DeviceUtil.systemVersion
 
         baseRequest.dt = MainServerHandler.deviceType
         baseRequest.v = MainServerHandler.parserVersion

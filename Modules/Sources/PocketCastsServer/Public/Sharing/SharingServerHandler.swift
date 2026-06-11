@@ -1,7 +1,8 @@
 import CryptoKit
 import Foundation
 
-public class SharingServerHandler {
+// @unchecked Sendable: stateless besides constants.
+public final class SharingServerHandler: @unchecked Sendable {
     private static let timeout: TimeInterval = 20
 
     public static let shared = SharingServerHandler()
@@ -72,7 +73,7 @@ public class SharingServerHandler {
         }
     }
 
-    public func sharePodcastList(listInfo: PodcastShareInfo, completion: @escaping (_ shareUrl: String?) -> Void) {
+    public func sharePodcastList(listInfo: PodcastShareInfo, completion: @escaping @Sendable (_ shareUrl: String?) -> Void) {
         let url = ServerHelper.asUrl(ServerConstants.Urls.sharing() + "share/list")
 
         let convertedPodcasts = listInfo.podcasts.compactMap { uuid -> [String: String] in
@@ -107,7 +108,7 @@ public class SharingServerHandler {
         }.resume()
     }
 
-    public func loadList(listUrl: URL, completion: @escaping (_ podcastList: PodcastList?) -> Void) {
+    public func loadList(listUrl: URL, completion: @escaping @Sendable (_ podcastList: PodcastList?) -> Void) {
         URLSession.shared.dataTask(with: listUrl) { data, response, error in
             guard (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok, let data, error == nil else {
                 completion(nil)

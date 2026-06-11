@@ -2,7 +2,8 @@ import Foundation
 import PocketCastsDataModel
 
 /// Helper that checks for podcast existence and caches database requests.
-public final class PodcastExistsHelper {
+// @unchecked Sendable: the uuid cache and revision counter are guarded by `lock`.
+public final class PodcastExistsHelper: @unchecked Sendable {
     public static let shared = PodcastExistsHelper()
 
     private var checkedUuidsThatExist = Set<String>()

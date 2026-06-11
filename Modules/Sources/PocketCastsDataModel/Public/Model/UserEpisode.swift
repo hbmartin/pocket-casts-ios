@@ -3,7 +3,10 @@ import GRDB
 import GRDBMacros
 
 @GRDBRecord(table: "SJUserEpisode")
-public class UserEpisode: NSObject, BaseEpisode {
+// @unchecked Sendable: mutable model object passed across threads by long-standing
+// convention in this codebase; consistency is maintained by database-write discipline
+// rather than by the type itself.
+public class UserEpisode: NSObject, BaseEpisode, @unchecked Sendable {
     @objc public var id = 0 as Int64
     @objc public var addedDate: Date?
     @GRDBNullDateAsEpoch

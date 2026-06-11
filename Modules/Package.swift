@@ -11,6 +11,12 @@ let strictConcurrencySettings: [SwiftSetting] = [
     .enableUpcomingFeature("InferSendableFromCaptures"),
 ]
 
+/// Same as `strictConcurrencySettings` plus -enable-testing, pre-concatenated so the
+/// package manifest stays simple enough for the manifest type-checker.
+let strictConcurrencyTestableSettings: [SwiftSetting] = strictConcurrencySettings + [
+    .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
+]
+
 let package = Package(
     name: "Modules",
     platforms: [
@@ -110,9 +116,7 @@ let package = Package(
         .target(
             name: "PocketCastsUtils",
             path: "Sources/PocketCastsUtils",
-            swiftSettings: strictConcurrencySettings + [
-                .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
-            ]
+            swiftSettings: strictConcurrencyTestableSettings
         ),
         .testTarget(
             name: "PocketCastsUtilsTests",
@@ -129,9 +133,7 @@ let package = Package(
                 "GRDBMacros",
             ],
             path: "Sources/PocketCastsDataModel",
-            swiftSettings: strictConcurrencySettings + [
-                .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
-            ]
+            swiftSettings: strictConcurrencyTestableSettings
         ),
         .target(
             name: "PocketCastsDataModelTesting",
@@ -153,9 +155,7 @@ let package = Package(
                 "PocketCastsUtils",
             ],
             path: "Sources/PocketCastsServer",
-            swiftSettings: [
-                .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
-            ],
+            swiftSettings: strictConcurrencyTestableSettings,
             linkerSettings: [
                 .linkedFramework("CFNetwork", .when(platforms: [.iOS])),
                 .linkedFramework("AuthenticationServices", .when(platforms: [.iOS]))
@@ -168,7 +168,8 @@ let package = Package(
                 "PocketCastsServer",
             ],
             path: "Tests/PocketCastsServerTests",
-            resources: [.copy("Fixtures")]
+            resources: [.copy("Fixtures")],
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "EndOfYear",
