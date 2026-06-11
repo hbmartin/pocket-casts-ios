@@ -74,7 +74,11 @@ class UpNextNowPlayingCell: ThemeableCell {
     }
 
     func populateFrom(episode: BaseEpisode) {
-        self.episode = DataManager.sharedManager.findBaseEpisode(uuid: episode.uuid) // this is a bit hacky, but we're likely to be passed the cached version here from the player, so reload it from the database to get the latest version with the correct download stats
+        // We're likely to be passed the cached version here from the player, so render it
+        // immediately and reload from the database off the main thread to pick up the
+        // latest download stats.
+        self.episode = episode
+        refreshEpisodeFromDatabase(uuid: episode.uuid)
 
         episodeTitle.text = episode.displayableTitle()
 
@@ -215,7 +219,7 @@ class UpNextNowPlayingCell: ThemeableCell {
         guard let ourEpisode = episode, let _ = DownloadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
 
         if !ourEpisode.downloading() {
-            episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
+            refreshEpisodeFromDatabase(uuid: ourEpisode.uuid)
         }
 
         updateDownloadStatus()
@@ -226,9 +230,19 @@ class UpNextNowPlayingCell: ThemeableCell {
         guard let ourEpisode = episode, let uuid = notification.object as? String, ourEpisode.uuid == uuid else { return }
 
         // if it is, reload our episode so we get the latest status for it
-        episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
+        refreshEpisodeFromDatabase(uuid: ourEpisode.uuid)
+    }
 
-        updateDownloadStatus()
+    /// Reloads the episode from the database off the main thread, then refreshes the
+    /// download UI — guarding against cell reuse while the read was in flight.
+    private func refreshEpisodeFromDatabase(uuid: String) {
+        Task { [weak self] in
+            guard let refreshed = await DataManager.sharedManager.findBaseEpisodeAsync(uuid: uuid) else { return }
+            guard let self, self.episode?.uuid == uuid else { return }
+
+            self.episode = refreshed
+            self.updateDownloadStatus()
+        }
     }
 
     // MARK: - Dynamic Type Support

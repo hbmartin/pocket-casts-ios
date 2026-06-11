@@ -111,7 +111,7 @@ class WidgetHelper {
             filterName = topFilter.playlistName
             let query = PlaylistQueryBuilder.queryFor(filter: topFilter, episodeUuidToAdd: topFilter.episodeUuidToAddToQueries(), limit: WidgetHelper.maxFilterToPublish)
 
-            let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: nil)
+            let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query.sql, arguments: query.arguments)
             for (index, playlistEpisode) in loadedEpisodes.enumerated() {
                 if index >= WidgetHelper.maxFilterToPublish { break }
 

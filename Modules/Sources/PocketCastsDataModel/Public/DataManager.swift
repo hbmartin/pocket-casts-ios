@@ -432,12 +432,27 @@ public class DataManager {
         episodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
     }
 
+    /// Native-async variant of `findEpisode(uuid:)`; the read runs on the
+    /// database engine's reader pool instead of blocking the calling thread.
+    public func findEpisodeAsync(uuid: String) async -> Episode? {
+        await episodeManager.findByAsync(uuid: uuid, dbQueue: dbQueue)
+    }
+
     public func findBaseEpisode(uuid: String) -> BaseEpisode? {
         if let episode = userEpisodeManager.findBy(uuid: uuid, dbQueue: dbQueue) {
             return episode
         }
 
         return episodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
+    }
+
+    /// Native-async variant of `findBaseEpisode(uuid:)`.
+    public func findBaseEpisodeAsync(uuid: String) async -> BaseEpisode? {
+        if let episode = await userEpisodeManager.findByAsync(uuid: uuid, dbQueue: dbQueue) {
+            return episode
+        }
+
+        return await episodeManager.findByAsync(uuid: uuid, dbQueue: dbQueue)
     }
 
     public func findEpisodeCount(podcastId: Int64) -> Int {
@@ -833,6 +848,11 @@ public class DataManager {
         userEpisodeManager.findBy(uuid: uuid, dbQueue: dbQueue)
     }
 
+    /// Native-async variant of `findUserEpisode(uuid:)`.
+    public func findUserEpisodeAsync(uuid: String) async -> UserEpisode? {
+        await userEpisodeManager.findByAsync(uuid: uuid, dbQueue: dbQueue)
+    }
+
     public func allUserEpisodes(sortedBy: UploadedSort, limit: Int? = nil) -> [UserEpisode] {
         userEpisodeManager.findAll(sortedBy: sortedBy, limit: limit, dbQueue: dbQueue)
     }
@@ -952,7 +972,7 @@ public class DataManager {
             limit: limit,
             sortType: sortType
         )
-        return episodeManager.findPlaylistEpisodesWhere(query: query, arguments: nil, dbQueue: dbQueue)
+        return episodeManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments, dbQueue: dbQueue)
     }
 
     public func playlistFirstDistinctEpisodes(
@@ -970,7 +990,7 @@ public class DataManager {
             limit: limit,
             shouldShowArchived: shouldShowArchived
         )
-        return episodeManager.findPlaylistEpisodesWhere(query: query, arguments: nil, dbQueue: dbQueue)
+        return episodeManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments, dbQueue: dbQueue)
     }
 
     public func deleteDeletedPlaylists() {
@@ -1229,10 +1249,14 @@ public extension DataManager {
     }
 
     func deleteGhostsEpisodes(uuids: [String]) {
-        dbQueue.write { db in
-            let query = "DELETE FROM \(Self.episodeTableName) WHERE uuid IN (\(uuids.joined(separator: ",")))"
+        // The ghost-episode list is unbounded, so delete in chunks to stay below
+        // SQLite's bound-variable limit.
+        for chunk in stride(from: 0, to: uuids.count, by: 500).map({ Array(uuids[$0 ..< min($0 + 500, uuids.count)]) }) {
+            dbQueue.write { db in
+                let query = "DELETE FROM \(Self.episodeTableName) WHERE uuid IN (\(DBUtils.placeholders(amount: chunk.count)))"
 
-            try? db.executeUpdate(query, values: nil)
+                try? db.executeUpdate(query, values: chunk)
+            }
         }
     }
 }

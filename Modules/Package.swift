@@ -27,6 +27,10 @@ let package = Package(
             targets: ["PocketCastsDataModel"]
         ),
         .library(
+            name: "PocketCastsDataModelTesting",
+            targets: ["PocketCastsDataModelTesting"]
+        ),
+        .library(
             name: "PocketCastsServer",
             targets: ["PocketCastsServer"]
         ),
@@ -108,6 +112,7 @@ let package = Package(
             dependencies: [
                 .product(name: "GRDB", package: "GRDB.swift"),
                 "PocketCastsUtils",
+                "PocketCastsDependencyInjection",
                 "GRDBMacros",
             ],
             path: "Sources/PocketCastsDataModel",
@@ -115,9 +120,14 @@ let package = Package(
                 .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
             ]
         ),
+        .target(
+            name: "PocketCastsDataModelTesting",
+            dependencies: ["PocketCastsDataModel"],
+            path: "Sources/PocketCastsDataModelTesting"
+        ),
         .testTarget(
             name: "PocketCastsDataModelTests",
-            dependencies: ["PocketCastsDataModel"],
+            dependencies: ["PocketCastsDataModel", "PocketCastsDataModelTesting"],
             path: "Tests/PocketCastsDataModelTests"
         ),
         .target(

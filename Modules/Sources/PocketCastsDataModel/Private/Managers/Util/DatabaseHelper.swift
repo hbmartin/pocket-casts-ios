@@ -1,12 +1,33 @@
 import Foundation
 import PocketCastsUtils
 
+struct SchemaMigration {
+    let toVersion: Int32
+    let migrate: (PCDatabase) throws -> Void
+}
+
 class DatabaseHelper {
-    private static let currentSchemaVersion: Int32 = 73
+    static let baselineSchemaVersion: Int32 = 73
     private static let minimumMigratableSchemaVersion: Int32 = 73
+
+    /// Append future migrations here in strictly ascending version order, starting at
+    /// baselineSchemaVersion + 1. Fresh installs create the baked baseline schema and then
+    /// run every migration, so a fresh database and an upgraded one always converge.
+    static let migrations: [SchemaMigration] = []
+
+    static func currentSchemaVersion(for migrations: [SchemaMigration]) -> Int32 {
+        migrations.last?.toVersion ?? baselineSchemaVersion
+    }
 
     @discardableResult
     class func setup(queue: PCDBQueue) -> Bool {
+        setup(queue: queue, migrations: migrations)
+    }
+
+    @discardableResult
+    class func setup(queue: PCDBQueue, migrations: [SchemaMigration]) -> Bool {
+        assertMigrationsAreValid(migrations)
+
         var setupSucceeded = true
         var transactionStarted = false
 
@@ -19,7 +40,7 @@ class DatabaseHelper {
                 let startingSchemaVersion = db.pragmaUserVersion() ?? 0
 
                 var newSchemaVersion = startingSchemaVersion
-                try upgradeIfRequired(schemaVersion: &newSchemaVersion, db: db)
+                try upgradeIfRequired(schemaVersion: &newSchemaVersion, db: db, migrations: migrations)
 
                 if newSchemaVersion != startingSchemaVersion {
                     FileLog.shared.addMessage("Schema update from \(startingSchemaVersion) to \(newSchemaVersion)")
@@ -28,7 +49,6 @@ class DatabaseHelper {
             } catch {
                 rollback.pointee = true
                 setupSucceeded = false
-                assertionFailure("Failed to setup database \(db.lastErrorCode()): \(db.lastErrorMessage()) actual error: \(error)")
                 FileLog.shared.addMessage("Failed to setup database \(db.lastErrorCode()): \(db.lastErrorMessage()) actual error: \(error)")
             }
         }
@@ -40,8 +60,8 @@ class DatabaseHelper {
         return setupSucceeded && transactionStarted
     }
 
-    private class func upgradeIfRequired(schemaVersion: inout Int32, db: PCDatabase) throws {
-        guard schemaVersion < currentSchemaVersion else { return }
+    private class func upgradeIfRequired(schemaVersion: inout Int32, db: PCDatabase, migrations: [SchemaMigration]) throws {
+        guard schemaVersion < currentSchemaVersion(for: migrations) else { return }
         guard schemaVersion == 0 || schemaVersion >= minimumMigratableSchemaVersion else {
             let error = DatabaseSetupError.schemaTooOld(
                 schemaVersion: schemaVersion,
@@ -54,10 +74,9 @@ class DatabaseHelper {
         do {
             if schemaVersion == 0 {
                 try createCurrentSchema(db: db)
-                schemaVersion = currentSchemaVersion
-            } else {
-                try migrateSchema(schemaVersion: &schemaVersion, db: db)
+                schemaVersion = baselineSchemaVersion
             }
+            try migrateSchema(schemaVersion: &schemaVersion, db: db, migrations: migrations)
         } catch {
             let lastErrorCode = db.lastErrorCode()
             let lastErrorMessage = db.lastErrorMessage()
@@ -81,10 +100,22 @@ class DatabaseHelper {
         }
     }
 
-    private class func migrateSchema(schemaVersion: inout Int32, db: PCDatabase) throws {
-        _ = db
-        _ = schemaVersion
-        // Append future migrations here as currentSchemaVersion increases, updating schemaVersion after each step.
+    private class func migrateSchema(schemaVersion: inout Int32, db: PCDatabase, migrations: [SchemaMigration]) throws {
+        for migration in migrations where migration.toVersion > schemaVersion {
+            try migration.migrate(db)
+            schemaVersion = migration.toVersion
+        }
+    }
+
+    private class func assertMigrationsAreValid(_ migrations: [SchemaMigration]) {
+        var previousVersion = baselineSchemaVersion
+        for migration in migrations {
+            assert(
+                migration.toVersion > previousVersion,
+                "Schema migrations must be strictly ascending starting at \(baselineSchemaVersion + 1); found \(migration.toVersion) after \(previousVersion)"
+            )
+            previousVersion = migration.toVersion
+        }
     }
 
     private class func createCurrentSchema(db: PCDatabase) throws {

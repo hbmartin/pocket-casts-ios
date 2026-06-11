@@ -189,7 +189,7 @@ struct LivePlaybackFacade: PlaybackFacade {
     func loadTopEpisode(forFilterUuid uuid: String) -> Bool {
         guard let filter = DataManager.sharedManager.findPlaylist(uuid: uuid) else { return false }
         let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: 1)
-        guard let topEpisode = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: nil).first else { return false }
+        guard let topEpisode = DataManager.sharedManager.findEpisodesWhere(customWhere: query.sql, arguments: query.arguments).first else { return false }
         PlaybackManager.shared.load(episode: topEpisode, autoPlay: true, overrideUpNext: false)
         return true
     }

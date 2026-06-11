@@ -56,7 +56,7 @@ class PlaylistDataManager {
         dbQueue.read { db in
             do {
                 let query = PlaylistQueryBuilder.query(clause: clause, for: playlist, episodeUuidToAdd: episodeUuidToAdd, shouldShowArchived: shouldShowArchived)
-                let resultSet = try db.executeQuery(query, values: nil)
+                let resultSet = try db.executeQuery(query.sql, values: query.arguments)
                 defer { resultSet.close() }
 
                 if resultSet.next() {
@@ -241,8 +241,8 @@ class PlaylistDataManager {
         guard !episodeUuids.isEmpty else { return }
         dbQueue.write { db in
             do {
-                let inClause = DataHelper.convertArrayToInString(episodeUuids)
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? AND episodeUuid IN (\(inClause))", values: [playlist.uuid])
+                let placeholders = DBUtils.placeholders(amount: episodeUuids.count)
+                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? AND episodeUuid IN (\(placeholders))", values: [playlist.uuid] + episodeUuids)
                 let removedCount = db.changes
                 if removedCount == 0 { return }
 
@@ -268,8 +268,8 @@ class PlaylistDataManager {
         guard !episodeUuids.isEmpty else { return }
         dbQueue.write { db in
             do {
-                let inClause = DataHelper.convertArrayToInString(episodeUuids)
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? AND episodeUuid IN (\(inClause))", values: [playlist.uuid])
+                let placeholders = DBUtils.placeholders(amount: episodeUuids.count)
+                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? AND episodeUuid IN (\(placeholders))", values: [playlist.uuid] + episodeUuids)
             } catch {
                 FileLog.shared.addMessage("PlaylistDataManager.rawDeleteEpisodes error: \(error)")
             }

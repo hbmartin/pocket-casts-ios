@@ -42,6 +42,18 @@ class UserEpisodeDataManager {
         loadSingle(query: "SELECT * from \(DataManager.userEpisodeTableName) WHERE uuid = ?", values: [uuid], dbQueue: dbQueue)
     }
 
+    func findByAsync(uuid: String, dbQueue: PCDBQueue) async -> UserEpisode? {
+        let query = "SELECT * from \(DataManager.userEpisodeTableName) WHERE uuid = ?"
+        do {
+            return try await dbQueue.read { db in
+                try self.loadSingle(query: query, values: [uuid], db: db)
+            }
+        } catch {
+            FileLog.shared.addMessage("UserEpisodeDataManager.findByAsync error: \(error)")
+            return nil
+        }
+    }
+
     func findBy(downloadTaskId: String, dbQueue: PCDBQueue) -> UserEpisode? {
         loadSingle(query: "SELECT * from \(DataManager.userEpisodeTableName) WHERE downloadTaskId = ?", values: [downloadTaskId], dbQueue: dbQueue)
     }
@@ -137,18 +149,20 @@ class UserEpisodeDataManager {
         var episode: UserEpisode?
         dbQueue.read { db in
             do {
-                let resultSet = try db.executeQuery(query, values: values)
-                defer { resultSet.close() }
-
-                if resultSet.next() {
-                    episode = self.createEpisodeFrom(resultSet: resultSet)
-                }
+                episode = try self.loadSingle(query: query, values: values, db: db)
             } catch {
                 FileLog.shared.addMessage("UserEpisodeDataManager.loadSingle error: \(error)")
             }
         }
 
         return episode
+    }
+
+    private func loadSingle(query: String, values: [Any]?, db: PCDatabase) throws -> UserEpisode? {
+        let resultSet = try db.executeQuery(query, values: values)
+        defer { resultSet.close() }
+
+        return resultSet.next() ? createEpisodeFrom(resultSet: resultSet) : nil
     }
 
     func findFrameCount(episodeId: Int64, dbQueue: PCDBQueue) -> Int64 {
@@ -546,7 +560,7 @@ class UserEpisodeDataManager {
         guard !userEpisodeUuids.isEmpty else { return }
         dbQueue.write { db in
             do {
-                try db.executeUpdate("DELETE FROM \(DataManager.userEpisodeTableName) WHERE uuid IN (\(DataHelper.convertArrayToInString(userEpisodeUuids)))", values: nil)
+                try db.executeUpdate("DELETE FROM \(DataManager.userEpisodeTableName) WHERE uuid IN (\(DBUtils.placeholders(amount: userEpisodeUuids.count)))", values: userEpisodeUuids)
             } catch {
                 FileLog.shared.addMessage("UserEpisodeDataManager.delete many error: \(error)")
             }

@@ -1,0 +1,93 @@
+import PocketCastsDataModelTesting
+import PocketCastsDependencyInjection
+@testable import PocketCastsDataModel
+import XCTest
+
+final class RepositoryProtocolTests: XCTestCase {
+    func testMockStubsAndRecordsInvocations() {
+        let mock = EpisodeRepositoryMock()
+        let episode = Episode()
+        episode.uuid = "episode-uuid"
+        mock.stub("findEpisode(uuid:)", with: episode)
+
+        XCTAssertEqual(mock.findEpisode(uuid: "episode-uuid")?.uuid, "episode-uuid")
+        XCTAssertEqual(mock.callCount(of: "findEpisode(uuid:)"), 1)
+
+        // Unstubbed methods fall back to empty defaults rather than trapping.
+        XCTAssertEqual(mock.findEpisodesWhere(customWhere: "1 = 1", arguments: nil).count, 0)
+        XCTAssertNil(mock.findBaseEpisode(uuid: "missing"))
+    }
+
+    func testMockSatisfiesProtocolExistential() {
+        let mock: any EpisodeRepository = EpisodeRepositoryMock()
+        XCTAssertNil(mock.findEpisode(uuid: "anything"))
+    }
+
+    func testDefaultArgumentConveniencesForwardToFullRequirement() {
+        let mock = PodcastRepositoryMock()
+        let repository: any PodcastRepository = mock
+
+        _ = repository.allPodcasts(includeUnsubscribed: true)
+
+        XCTAssertEqual(mock.callCount(of: "allPodcasts(includeUnsubscribed:reloadFromDatabase:)"), 1)
+    }
+
+    func testContainerOverrideSwapsImplementation() {
+        let original = DefaultDependencyContainer.current.episodeRepository
+        defer { DefaultDependencyContainer.current.episodeRepository = original }
+
+        let mock = EpisodeRepositoryMock()
+        DefaultDependencyContainer.current.episodeRepository = mock
+
+        XCTAssertTrue((DefaultDependencyContainer.current.episodeRepository as AnyObject) === mock)
+    }
+
+    func testNativeAsyncFindersRoundTrip() async {
+        let dataManager = DataManager.newTestDataManager()
+
+        let podcast = Podcast()
+        podcast.uuid = UUID().uuidString.lowercased()
+        podcast.addedDate = Date()
+        dataManager.save(podcast: podcast)
+
+        let episode = Episode()
+        episode.uuid = UUID().uuidString.lowercased()
+        episode.addedDate = Date()
+        episode.podcastUuid = podcast.uuid
+        episode.podcast_id = podcast.id
+        dataManager.save(episode: episode)
+
+        let found = await dataManager.findEpisodeAsync(uuid: episode.uuid)
+        XCTAssertEqual(found?.uuid, episode.uuid)
+
+        let baseFound = await dataManager.findBaseEpisodeAsync(uuid: episode.uuid)
+        XCTAssertEqual(baseFound?.uuid, episode.uuid)
+
+        let missing = await dataManager.findEpisodeAsync(uuid: "missing-uuid")
+        XCTAssertNil(missing)
+
+        let missingUserEpisode = await dataManager.findUserEpisodeAsync(uuid: "missing-uuid")
+        XCTAssertNil(missingUserEpisode)
+    }
+
+    func testDefaultAsyncImplementationForwardsToSyncRequirement() async {
+        let mock = EpisodeRepositoryMock()
+        let repository: any EpisodeRepository = mock
+
+        _ = await repository.findEpisodeAsync(uuid: "any-uuid")
+
+        XCTAssertEqual(mock.callCount(of: "findEpisode(uuid:)"), 1)
+    }
+
+    func testDataManagerSatisfiesAllRepositoryProtocols() {
+        let dataManager = DataManager.newTestDataManager()
+
+        XCTAssertNotNil(dataManager as any UpNextRepository)
+        XCTAssertNotNil(dataManager as any PodcastRepository)
+        XCTAssertNotNil(dataManager as any EpisodeRepository)
+        XCTAssertNotNil(dataManager as any UserEpisodeRepository)
+        XCTAssertNotNil(dataManager as any PlaylistRepository)
+        XCTAssertNotNil(dataManager as any FolderRepository)
+        XCTAssertNotNil(dataManager as any DataMaintenance)
+    }
+}

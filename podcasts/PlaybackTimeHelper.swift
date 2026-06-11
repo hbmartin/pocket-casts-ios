@@ -1,9 +1,10 @@
 import PocketCastsDataModel
+import PocketCastsDependencyInjection
 
 struct PlaybackTimeHelper {
-    let dataManager: DataManager
+    let dataManager: any EpisodeRepository
 
-    init(dataManager: DataManager = DataManager.sharedManager) {
+    init(dataManager: any EpisodeRepository = DefaultDependencyContainer.current.episodeRepository) {
         self.dataManager = dataManager
     }
 

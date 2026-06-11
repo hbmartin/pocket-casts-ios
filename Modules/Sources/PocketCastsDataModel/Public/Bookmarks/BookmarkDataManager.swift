@@ -173,16 +173,15 @@ public struct BookmarkDataManager {
     /// Marks the bookmarks as deleted, but doesn't actually remove them from the database
     @discardableResult
     public func remove(bookmarks: [Bookmark], syncStatus: SyncStatus = .notSynced) async -> Bool {
-        let uuids = bookmarks.map { "'\($0.uuid)'" }.joined(separator: ",")
+        let uuids = bookmarks.map { $0.uuid }
 
         let query = """
         UPDATE \(Self.tableName)
         SET \(Column.deleted) = 1, \(Column.deletedModifiedDate) = ?, \(Column.syncStatus) = ?
-        WHERE \(Column.uuid) IN (\(uuids))
-        LIMIT \(uuids.count)
+        WHERE \(Column.uuid) IN (\(DBUtils.placeholders(amount: uuids.count)))
         """
 
-        let result = await dbQueue.executeUpdate(query, values: [Date(), syncStatus.rawValue])
+        let result = await dbQueue.executeUpdate(query, values: [Date(), syncStatus.rawValue] + uuids)
 
         switch result {
         case .success:
@@ -197,16 +196,16 @@ public struct BookmarkDataManager {
     @discardableResult
     public func permanentlyDelete(bookmarks: [Bookmark]) async -> Bool {
         await withCheckedContinuation { continuation in
-            let uuids = bookmarks.map { "'\($0.uuid)'" }.joined(separator: ",")
+            let uuids = bookmarks.map { $0.uuid }
 
             let query = """
             DELETE FROM \(Self.tableName)
-            WHERE \(Column.uuid) IN (\(uuids))
+            WHERE \(Column.uuid) IN (\(DBUtils.placeholders(amount: uuids.count)))
             """
 
             dbQueue.write { db in
                 do {
-                    try db.executeUpdate(query, values: nil)
+                    try db.executeUpdate(query, values: uuids)
                     continuation.resume(returning: true)
                 } catch {
                     FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")

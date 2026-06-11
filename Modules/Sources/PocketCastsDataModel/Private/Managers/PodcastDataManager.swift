@@ -428,7 +428,7 @@ class PodcastDataManager {
 
                 // then set all the ones that should
                 if !podcastUuids.isEmpty {
-                    try db.executeUpdate("UPDATE \(DataManager.podcastTableName) SET folderUuid = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid IN (\(DataHelper.convertArrayToInString(podcastUuids)))", values: [folderUuid])
+                    try db.executeUpdate("UPDATE \(DataManager.podcastTableName) SET folderUuid = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid IN (\(DBUtils.placeholders(amount: podcastUuids.count)))", values: [folderUuid] + podcastUuids)
                 }
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.bulkSetFolderUuid error: \(error)")
@@ -527,19 +527,19 @@ class PodcastDataManager {
 
                 if FeatureFlag.newSettingsStorage.enabled {
                     let query = """
-                    SELECT json_patch('setting', '{\"addToUpNext\": {\"value\": \(value)}}')
-                    WHERE uuid IN (\(DataHelper.convertArrayToInString(uuids)))
-                    FROM \(DataManager.podcastTableName)"
+                    UPDATE \(DataManager.podcastTableName)
+                    SET settings = json_patch(settings, '{\"addToUpNext\": {\"value\": \(value.rawValue)}}')
+                    WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """
-                    try db.executeUpdate(query, values: [value.rawValue])
+                    try db.executeUpdate(query, values: uuids)
                 }
 
                 let query = """
                 UPDATE \(DataManager.podcastTableName)
                 SET autoAddToUpNext = ?
-                AND uuid IN (\(DataHelper.convertArrayToInString(uuids)))
+                WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                 """
-                try db.executeUpdate(query, values: [value.rawValue])
+                try db.executeUpdate(query, values: [value.rawValue] + uuids)
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.setOnAllPodcasts error: \(error)")
             }
@@ -578,10 +578,10 @@ class PodcastDataManager {
                 SET settings = json_set(
                     \(DataManager.podcastTableName).settings,
                     '$.\(settingName)',
-                    json('\(jsonString)')
+                    json(?)
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 """
-                try db.executeUpdate(query, values: [])
+                try db.executeUpdate(query, values: [jsonString])
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.setOnAllPodcasts error: \(error)")
             }
@@ -665,11 +665,11 @@ class PodcastDataManager {
                 SET settings = json_set(
                     \(DataManager.podcastTableName).settings,
                     '$.notification',
-                    json('\(jsonString)')
+                    json(?)
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
-                WHERE uuid = '\(podcastUuid)'
+                WHERE uuid = ?
                 """
-                try db.executeUpdate(query, values: [])
+                try db.executeUpdate(query, values: [jsonString, podcastUuid])
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.saveSingleSetting for \(name) error: \(error)")
             }

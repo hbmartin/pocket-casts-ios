@@ -12,6 +12,12 @@ class DBUtils {
         return value
     }
 
+    /// A comma-separated list of `?` placeholders, e.g. `?,?,?` for amount 3.
+    /// Use for `IN (...)` clauses with bound arguments.
+    class func placeholders(amount: Int) -> String {
+        Array(repeating: "?", count: max(amount, 0)).joined(separator: ",")
+    }
+
     class func valuesQuestionMarks(amount: Int) -> String {
         if amount == 0 { return "" }
         if amount == 1 { return "(?)" }

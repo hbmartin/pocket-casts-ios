@@ -45,7 +45,8 @@ class DataManagerTestCase: XCTestCase {
     /// - Parameter testBlock: A closure that receives a DataManager and the implementation name.
     ///                        The implementation name is either "SQL" or "GRDB".
     func runWithBothImplementations(_ testBlock: (DataManager, String) throws -> Void) throws {
-        // Test with raw SQL query
+        // Test with raw SQL query (the flag defaults to true, so it must be forced off)
+        try featureFlagStore.override(FeatureFlag.grdbQueryInterface, withValue: false)
         let sqlDataManager = DataManager.newTestDataManager()
         try testBlock(sqlDataManager, "SQL")
 
@@ -58,7 +59,8 @@ class DataManagerTestCase: XCTestCase {
 
     /// Async version of runWithBothImplementations
     func runWithBothImplementations(_ testBlock: (DataManager, String) async throws -> Void) async throws {
-        // Test with SQL implementation
+        // Test with SQL implementation (the flag defaults to true, so it must be forced off)
+        try featureFlagStore.override(FeatureFlag.grdbQueryInterface, withValue: false)
         let sqlDataManager = DataManager.newTestDataManager()
         try await testBlock(sqlDataManager, "SQL")
 

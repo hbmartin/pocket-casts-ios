@@ -278,7 +278,7 @@ rules:
             ...
           }
       - pattern-not-inside: |
-          guard !UIAccessibility.isReduceMotionEnabled else { return }
+          guard !UIAccessibility.isReduceMotionEnabled else { ... }
           ...
 
   - id: pocketcasts.native-empty-state-action-weak-self
@@ -4103,3 +4103,56 @@ rules:
                   $XMLPARSER.parse()
                   ...
               }
+
+  - id: pocketcasts.sql-quoted-value-interpolation
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Never interpolate Swift values inside SQL string quotes; bind them with ? placeholders so quoting and escaping cannot be bypassed.
+    languages: [generic]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/**/*.swift"
+        - "**/semgrep/tests/swift-security-sql-interpolation.swift"
+    patterns:
+      - pattern-either:
+          - pattern-regex: "(?:=|\\bLIKE)\\s*'%?\\\\\\("
+          - pattern-regex: "\"'\\\\\\(\\$?[A-Za-z0-9_.]*\\)'\""
+
+  - id: pocketcasts.sql-inlist-interpolation
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Build SQL IN clauses with DBUtils.placeholders(amount:) and bound argument arrays instead of interpolating joined values into the statement.
+    languages: [generic]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/**/*.swift"
+        - "**/semgrep/tests/swift-security-sql-interpolation.swift"
+    patterns:
+      - pattern-regex: "(?i)\\bIN \\(\\\\\\((?!DBUtils\\.placeholders|placeholders\\))"
+
+  - id: pocketcasts.github-actions-no-unconditional-service-credentials
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [github-actions]
+    message: Gate POCKET_CASTS_CREDENTIALS_JSON on the triggering event instead of passing the secret unconditionally to jobs reachable from fork pull requests.
+    languages: [generic]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-regex: "POCKET_CASTS_CREDENTIALS_JSON:\\s*\\$\\{\\{\\s*secrets\\."
