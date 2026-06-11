@@ -65,7 +65,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         let completion = UncheckedSendable(completion)
         CacheServerHandler.shared.loadPodcastInfo(podcastUuid: podcastUuid) { [weak self] podcastInfo, lastModified in
             if let podcastInfo {
-                self?.addFromJson(podcastUuid: podcastUuid, lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion.value)
+                self?.addFromJson(lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion.value)
             } else {
                 completion.value?(false)
             }
@@ -86,7 +86,12 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         }
     }
 
+    @available(*, deprecated, message: "Use addFromJson(lastModified:podcastInfo:subscribe:autoDownloads:completion:) instead.")
     public func addFromJson(podcastUuid _: String, lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {
+        addFromJson(lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
+    }
+
+    public func addFromJson(lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {
         // Handed wholesale to the subscribe queue; not touched by the caller afterwards.
         let podcastInfo = UncheckedSendable(podcastInfo)
         let completion = UncheckedSendable(completion)

@@ -138,11 +138,16 @@ let package = Package(
         .target(
             name: "PocketCastsDataModelTesting",
             dependencies: ["PocketCastsDataModel"],
-            path: "Sources/PocketCastsDataModelTesting"
+            path: "Sources/PocketCastsDataModelTesting",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "PocketCastsDataModelTests",
-            dependencies: ["PocketCastsDataModel"],
+            dependencies: [
+                "PocketCastsDataModel",
+                "PocketCastsDataModelTesting",
+                "PocketCastsDependencyInjection",
+            ],
             path: "Tests/PocketCastsDataModelTests",
             swiftSettings: strictConcurrencySettings
         ),
