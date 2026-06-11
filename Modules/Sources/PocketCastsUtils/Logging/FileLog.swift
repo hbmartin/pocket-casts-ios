@@ -166,6 +166,7 @@ public final class FileLog: @unchecked Sendable {
                     try result.write(toFile: file, atomically: true, encoding: String.Encoding.utf8)
                 } catch {
                     promise.value(.failure(LogError.logGenerationFailed))
+                    return
                 }
 
                 promise.value(.success(file))

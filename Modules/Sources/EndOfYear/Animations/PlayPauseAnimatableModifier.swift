@@ -128,7 +128,7 @@ public struct PlayPauseAnimatableModifier: AnimatableModifier {
             }
         }
 
-        RunLoop.current.add(timer!, forMode: .default)
+        RunLoop.main.add(timer!, forMode: .default)
     }
 }
 

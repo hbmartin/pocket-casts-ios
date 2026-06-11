@@ -13,11 +13,11 @@ struct PlaylistCacheInvalidationCoordinatorKey: DependencyKey {
 extension DefaultDependencyContainer {
     var playlistMetadataLoader: PlaylistMetadataLoader {
         get { Self[PlaylistMetadataLoaderKey.self] }
-        set { Self[PlaylistMetadataLoaderKey.self] = newValue }
+        nonmutating set { Self[PlaylistMetadataLoaderKey.self] = newValue }
     }
 
     var playlistCacheInvalidationCoordinator: PlaylistCacheInvalidationCoordinator {
         get { Self[PlaylistCacheInvalidationCoordinatorKey.self] }
-        set { Self[PlaylistCacheInvalidationCoordinatorKey.self] = newValue }
+        nonmutating set { Self[PlaylistCacheInvalidationCoordinatorKey.self] = newValue }
     }
 }

@@ -44,7 +44,7 @@ public final class SharingServerHandler: @unchecked Sendable {
         }
     }
 
-    private lazy var securityDateFormatter: DateFormatter = {
+    private let securityDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMddHHmmss"
 

@@ -82,14 +82,14 @@ extension UploadManager: URLSessionDelegate, URLSessionDataDelegate {
         guard let uploadId = task.taskDescription else { return nil }
 
         if !forceReload {
-            if let episode = uploadingEpisodesCache[uploadId] {
+            if let episode = cachedEpisode(forTaskId: uploadId) {
                 return episode
             }
         }
 
         var episode = DataManager.sharedManager.findUserEpisode(uploadTaskId: uploadId)
         if let episode {
-            uploadingEpisodesCache[uploadId] = episode
+            cache(episode: episode, forTaskId: uploadId)
         } else {
             if includeImageTasks {
                 let imageUuid = uploadId.replacingOccurrences(of: imageTaskPrefix, with: "")
@@ -97,7 +97,7 @@ extension UploadManager: URLSessionDelegate, URLSessionDataDelegate {
                 let imageEpisode = DataManager.sharedManager.findUserEpisode(uuid: imageUuid)
                 if let imageEpisode {
                     episode = imageEpisode
-                    uploadingEpisodesCache[uploadId] = episode
+                    cache(episode: imageEpisode, forTaskId: uploadId)
                 }
             }
         }

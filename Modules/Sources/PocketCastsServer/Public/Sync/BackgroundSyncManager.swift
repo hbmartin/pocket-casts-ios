@@ -26,7 +26,7 @@ public final class BackgroundSyncManager: NSObject, @unchecked Sendable {
     // we retain these so they aren't immediately released on method exit
     var pendingTasks = [URLSessionDownloadTask]()
 
-    lazy var syncProcessQueue: OperationQueue = {
+    let syncProcessQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 
@@ -34,6 +34,13 @@ public final class BackgroundSyncManager: NSObject, @unchecked Sendable {
     }()
 
     public func performBackgroundRefresh(subscribedPodcasts: [Podcast]) {
+        let subscribedPodcasts = UncheckedSendable(subscribedPodcasts)
+        syncProcessQueue.addOperation { [weak self] in
+            self?.performBackgroundRefreshOnSyncQueue(subscribedPodcasts: subscribedPodcasts.value)
+        }
+    }
+
+    private func performBackgroundRefreshOnSyncQueue(subscribedPodcasts: [Podcast]) {
         guard DateUtil.hasEnoughTimePassed(since: lastBgSyncDate, time: 5.minutes) else { return }
         lastBgSyncDate = Date()
 

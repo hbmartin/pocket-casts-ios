@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import SwiftUI
 import UIKit
+import UserNotifications
 
 struct UnsafeStoriesView: View {
     @State private var timerSubscription: Cancellable?
@@ -92,6 +93,141 @@ final class SafePodcastExistsHelper {
         defer { lock.unlock() }
 
         checkedUuidsThatExist.insert(uuid)
+    }
+}
+
+final class UnsafeServerCredentialsConfiguration {
+    func setupSecrets() {
+        // ruleid: pocketcasts.servercredentials-use-configure-sharing
+        ServerCredentials.sharing = "secret"
+    }
+}
+
+final class SafeServerCredentialsConfiguration {
+    func setupSecrets() {
+        // ok: pocketcasts.servercredentials-use-configure-sharing
+        ServerCredentials.configureSharing("secret")
+    }
+}
+
+final class UnsafeNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func openNotificationURL(url: URL) {
+        // ruleid: pocketcasts.no-notificationdelegate-mainactor-assumeisolated
+        MainActor.assumeIsolated {
+            UIApplication.shared.open(url)
+        }
+    }
+}
+
+final class SafeNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func openNotificationURL(url: URL) {
+        Task { @MainActor in
+            // ok: pocketcasts.no-notificationdelegate-mainactor-assumeisolated
+            UIApplication.shared.open(url)
+        }
+    }
+}
+
+final class UnsafeTimerRunLoopAssumption {
+    private var timer: Timer?
+
+    func startTimer() {
+        timer = Timer(timeInterval: 1, repeats: false) { _ in
+            MainActor.assumeIsolated {
+                print("tick")
+            }
+        }
+
+        // ruleid: pocketcasts.timer-assumeisolated-requires-main-runloop
+        RunLoop.current.add(timer!, forMode: .default)
+    }
+}
+
+final class SafeTimerRunLoopAssumption {
+    private var timer: Timer?
+
+    func startTimer() {
+        timer = Timer(timeInterval: 1, repeats: false) { _ in
+            MainActor.assumeIsolated {
+                print("tick")
+            }
+        }
+
+        // ok: pocketcasts.timer-assumeisolated-requires-main-runloop
+        RunLoop.main.add(timer!, forMode: .default)
+    }
+}
+
+final class UnsafePodcastSearchWait {
+    private let dispatchGroup = DispatchGroup()
+
+    func performSearch() -> Bool {
+        // ruleid: pocketcasts.podcast-search-wait-timeout-result-required
+        _ = dispatchGroup.wait(timeout: .now() + 15)
+        return false
+    }
+}
+
+final class SafePodcastSearchWait {
+    private let dispatchGroup = DispatchGroup()
+
+    func performSearch() -> Bool {
+        let waitResult = dispatchGroup.wait(timeout: .now() + 15)
+        guard waitResult == .success else {
+            return false
+        }
+
+        // ok: pocketcasts.podcast-search-wait-timeout-result-required
+        return true
+    }
+}
+
+final class UnsafePodcastRetryBackoff {
+    func retry(nextTry: Int) {
+        // ruleid: pocketcasts.no-podcast-retry-thread-sleep
+        Thread.sleep(forTimeInterval: nextTry.pollWaitingTime)
+    }
+}
+
+final class SafePodcastRetryBackoff {
+    func retry(nextTry: Int) {
+        DispatchQueue.global().asyncAfter(deadline: .now() + nextTry.pollWaitingTime) {
+            // ok: pocketcasts.no-podcast-retry-thread-sleep
+            print("retry")
+        }
+    }
+}
+
+final class UnsafeFuturePromiseCompletion {
+    func logFileForUpload() -> AnyPublisher<String, Error> {
+        Future { promise in
+            do {
+                try "log".write(toFile: "/tmp/log.txt", atomically: true, encoding: .utf8)
+            } catch {
+                // ruleid: pocketcasts.future-promise-failure-must-return-before-success
+                promise.value(.failure(error))
+            }
+
+            promise.value(.success("/tmp/log.txt"))
+        }
+        .eraseToAnyPublisher()
+    }
+}
+
+final class SafeFuturePromiseCompletion {
+    func logFileForUpload() -> AnyPublisher<String, Error> {
+        Future { promise in
+            do {
+                try "log".write(toFile: "/tmp/log.txt", atomically: true, encoding: .utf8)
+            } catch {
+                promise.value(.failure(error))
+                return
+            }
+
+            // ok: pocketcasts.future-promise-failure-must-return-before-success
+            promise.value(.success("/tmp/log.txt"))
+        }
+        .eraseToAnyPublisher()
     }
 }
 

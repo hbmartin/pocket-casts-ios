@@ -21,10 +21,7 @@ public final class DiscoverServerHandler: DiscoverServerHandling, @unchecked Sen
         return TokenHelper(urlConnection: connection)
     }()
 
-    public private(set) lazy var discoveryCache: URLCache = {
-        let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 5 * 1024 * 1024, diskPath: "discovery")
-        return cache
-    }()
+    public let discoveryCache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 5 * 1024 * 1024, diskPath: "discovery")
 
     /**
      * Valid image sizes: 130,140,200,210,280,340,400,420,680,960

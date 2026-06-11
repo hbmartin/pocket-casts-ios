@@ -346,7 +346,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func setupSecrets() {
-        ServerCredentials.sharing = ApiCredentials.sharingServerSecret
+        ServerCredentials.configureSharing(ApiCredentials.sharingServerSecret)
     }
 
     private func setupSignOutListener() {

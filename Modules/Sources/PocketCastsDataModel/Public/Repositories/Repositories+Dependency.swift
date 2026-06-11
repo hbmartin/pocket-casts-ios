@@ -36,36 +36,36 @@ struct DataMaintenanceKey: DependencyKey {
 public extension DefaultDependencyContainer {
     var upNextRepository: any UpNextRepository {
         get { Self[UpNextRepositoryKey.self] }
-        set { Self[UpNextRepositoryKey.self] = newValue }
+        nonmutating set { Self[UpNextRepositoryKey.self] = newValue }
     }
 
     var podcastRepository: any PodcastRepository {
         get { Self[PodcastRepositoryKey.self] }
-        set { Self[PodcastRepositoryKey.self] = newValue }
+        nonmutating set { Self[PodcastRepositoryKey.self] = newValue }
     }
 
     var episodeRepository: any EpisodeRepository {
         get { Self[EpisodeRepositoryKey.self] }
-        set { Self[EpisodeRepositoryKey.self] = newValue }
+        nonmutating set { Self[EpisodeRepositoryKey.self] = newValue }
     }
 
     var userEpisodeRepository: any UserEpisodeRepository {
         get { Self[UserEpisodeRepositoryKey.self] }
-        set { Self[UserEpisodeRepositoryKey.self] = newValue }
+        nonmutating set { Self[UserEpisodeRepositoryKey.self] = newValue }
     }
 
     var playlistRepository: any PlaylistRepository {
         get { Self[PlaylistRepositoryKey.self] }
-        set { Self[PlaylistRepositoryKey.self] = newValue }
+        nonmutating set { Self[PlaylistRepositoryKey.self] = newValue }
     }
 
     var folderRepository: any FolderRepository {
         get { Self[FolderRepositoryKey.self] }
-        set { Self[FolderRepositoryKey.self] = newValue }
+        nonmutating set { Self[FolderRepositoryKey.self] = newValue }
     }
 
     var dataMaintenance: any DataMaintenance {
         get { Self[DataMaintenanceKey.self] }
-        set { Self[DataMaintenanceKey.self] = newValue }
+        nonmutating set { Self[DataMaintenanceKey.self] = newValue }
     }
 }

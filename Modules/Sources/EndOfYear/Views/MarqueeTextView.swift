@@ -65,11 +65,11 @@ public struct MarqueeTextView: View {
         self.direction = direction
     }
 
-    private func startScrolling() {
+    @MainActor private func startScrolling() {
         let speed: CGFloat = 0.1
 
-        Timer.scheduledTimer(withTimeInterval: 0.002, repeats: true) { _ in
-            // Scheduled on the main run loop, so the timer always fires on the main actor.
+        let timer = Timer(timeInterval: 0.002, repeats: true) { _ in
+            // Added to the main run loop below, so the timer always fires on the main actor.
             MainActor.assumeIsolated {
                 switch direction {
                 case .leading:
@@ -85,5 +85,7 @@ public struct MarqueeTextView: View {
                 }
             }
         }
+
+        RunLoop.main.add(timer, forMode: .default)
     }
 }

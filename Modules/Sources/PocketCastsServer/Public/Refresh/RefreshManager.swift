@@ -7,7 +7,7 @@ import UIKit
 public final class RefreshManager: @unchecked Sendable {
     public static let shared = RefreshManager()
 
-    lazy var refreshQueue: OperationQueue = {
+    let refreshQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 

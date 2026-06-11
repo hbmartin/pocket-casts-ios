@@ -25,6 +25,6 @@ struct MockSingletonKey: DependencyKey {
 extension TestDependencyContainer {
     var mockSingleton: MockSingleton {
         get { Self[MockSingletonKey.self] }
-        set { Self[MockSingletonKey.self] = newValue }
+        nonmutating set { Self[MockSingletonKey.self] = newValue }
     }
 }

@@ -4,6 +4,7 @@ import PocketCastsUtils
 class PodcastSearchOperation: Operation, @unchecked Sendable {
     private let completion: @Sendable (PodcastSearchResponse?) -> Void
     private let searchQuery: MainServerHandler.PodcastSearchQuery
+    private let state = PodcastSearchState()
 
     private let dispatchGroup: DispatchGroup = {
         let dispatchGroup = DispatchGroup()
@@ -54,32 +55,75 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
             return false
         }
 
-        // The dispatch-group wait establishes the happens-before edge for the boxed flag.
-        let shouldRetry = UncheckedSendableBox(false)
         dispatchGroup.enter()
-        URLSession.shared.dataTask(with: request) { data, _, error in
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            defer { self.dispatchGroup.leave() }
+
             guard let data, error == nil else {
-                shouldRetry.value = true
-                self.dispatchGroup.leave()
+                self.state.setShouldRetry(true)
                 return
             }
 
             do {
                 let searchResponse = try JSONDecoder().decode(PodcastSearchResponse.self, from: data)
                 if searchResponse.status == "poll" {
-                    shouldRetry.value = true
+                    self.state.setShouldRetry(true)
                 } else {
-                    shouldRetry.value = false
-                    self.completion(searchResponse)
+                    self.state.setShouldRetry(false)
+                    self.state.complete {
+                        self.completion(searchResponse)
+                    }
                 }
             } catch {
-                self.completion(PodcastSearchResponse.failedResponse())
+                self.state.setShouldRetry(false)
+                self.state.complete {
+                    self.completion(PodcastSearchResponse.failedResponse())
+                }
             }
+        }
+        task.resume()
 
-            self.dispatchGroup.leave()
-        }.resume()
-        _ = dispatchGroup.wait(timeout: .now() + 15.seconds)
+        let waitResult = dispatchGroup.wait(timeout: .now() + 15.seconds)
+        guard waitResult == .success else {
+            task.cancel()
+            state.setShouldRetry(false)
+            state.complete {
+                completion(PodcastSearchResponse.failedResponse())
+            }
+            return false
+        }
 
-        return shouldRetry.value
+        return state.shouldRetry()
+    }
+}
+
+private final class PodcastSearchState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var retry = false
+    private var completed = false
+
+    func setShouldRetry(_ shouldRetry: Bool) {
+        lock.lock()
+        retry = shouldRetry
+        lock.unlock()
+    }
+
+    func shouldRetry() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return retry
+    }
+
+    func complete(_ completion: () -> Void) {
+        lock.lock()
+        guard !completed else {
+            lock.unlock()
+            return
+        }
+        completed = true
+        lock.unlock()
+
+        completion()
     }
 }

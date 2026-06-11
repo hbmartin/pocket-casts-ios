@@ -23,14 +23,14 @@ public final class MainServerHandler: @unchecked Sendable {
     private static let parserVersion = "1.7"
     private static let deviceType = "1"
 
-    private lazy var securityDateFormatter: DateFormatter = {
+    private let securityDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMddHHmmss"
 
         return formatter
     }()
 
-    private lazy var searchQueue: OperationQueue = {
+    private let searchQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 

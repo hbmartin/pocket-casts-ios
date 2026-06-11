@@ -66,7 +66,7 @@ public final class StatsManager: @unchecked Sendable {
     // MARK: - dynamic speed
 
     public func timeSavedDynamicSpeed() -> TimeInterval {
-        savedDynamicSpeed
+        updateQueue.sync { savedDynamicSpeed }
     }
 
     public func addTimeSavedDynamicSpeed(_ seconds: TimeInterval) {
@@ -79,7 +79,7 @@ public final class StatsManager: @unchecked Sendable {
     // MARK: - variable speed
 
     public func timeSavedVariableSpeed() -> TimeInterval {
-        savedVariableSpeed
+        updateQueue.sync { savedVariableSpeed }
     }
 
     public func addTimeSavedVariableSpeed(_ seconds: TimeInterval) {
@@ -92,7 +92,7 @@ public final class StatsManager: @unchecked Sendable {
     // MARK: - total listened
 
     public func totalListeningTime() -> TimeInterval {
-        totalListenedTo
+        updateQueue.sync { totalListenedTo }
     }
 
     public func addTotalListeningTime(_ seconds: TimeInterval) {
@@ -105,7 +105,7 @@ public final class StatsManager: @unchecked Sendable {
     // MARK: - total skipped
 
     public func totalSkippedTime() -> TimeInterval {
-        totalSkipped
+        updateQueue.sync { totalSkipped }
     }
 
     public func addSkippedTime(_ seconds: TimeInterval) {
@@ -118,7 +118,7 @@ public final class StatsManager: @unchecked Sendable {
     // MARK: - total auto skipped
 
     public func totalAutoSkippedTime() -> TimeInterval {
-        savedAutoSkipping
+        updateQueue.sync { savedAutoSkipping }
     }
 
     public func addAutoSkipTime(_ seconds: TimeInterval) {
