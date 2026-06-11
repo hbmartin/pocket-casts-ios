@@ -69,16 +69,19 @@ public struct MarqueeTextView: View {
         let speed: CGFloat = 0.1
 
         Timer.scheduledTimer(withTimeInterval: 0.002, repeats: true) { _ in
-            switch direction {
-            case .leading:
-                offset -= speed
-                if -offset >= contentWidth {
-                    offset = 0
-                }
-            case .trailing:
-                offset += speed
-                if offset >= contentWidth {
-                    offset = 0
+            // Scheduled on the main run loop, so the timer always fires on the main actor.
+            MainActor.assumeIsolated {
+                switch direction {
+                case .leading:
+                    offset -= speed
+                    if -offset >= contentWidth {
+                        offset = 0
+                    }
+                case .trailing:
+                    offset += speed
+                    if offset >= contentWidth {
+                        offset = 0
+                    }
                 }
             }
         }

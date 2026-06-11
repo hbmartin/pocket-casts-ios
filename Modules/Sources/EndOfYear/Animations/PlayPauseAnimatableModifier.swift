@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 public class PlayPauseAnimationViewModel: ObservableObject {
     @Published public private(set) var paused = true
 
@@ -58,7 +59,7 @@ public struct PlayPauseAnimatableModifier: AnimatableModifier {
 
     @State private var timer: Timer?
 
-    public var animatableData: Double {
+    nonisolated public var animatableData: Double {
         get { currentValue }
         set { currentValue = newValue }
     }
@@ -119,9 +120,12 @@ public struct PlayPauseAnimatableModifier: AnimatableModifier {
 
     private func startTimer() {
         timer = Timer(fire: Date.now + after, interval: 0, repeats: false) { timer in
-            after = 0
             timer.invalidate()
-            play()
+            // Added to the main run loop below, so the timer always fires on the main actor.
+            MainActor.assumeIsolated {
+                after = 0
+                play()
+            }
         }
 
         RunLoop.current.add(timer!, forMode: .default)

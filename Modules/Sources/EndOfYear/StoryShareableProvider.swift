@@ -10,7 +10,8 @@ import PocketCastsUtils
 /// having a delay when appearing.
 public class StoryShareableProvider: UIActivityItemProvider, @unchecked Sendable {
     private static let sharedLock = NSLock()
-    private static var sharedStorage = StoryShareableProvider()
+    // nonisolated(unsafe): guarded by `sharedLock`.
+    nonisolated(unsafe) private static var sharedStorage = StoryShareableProvider()
 
     public static var shared: StoryShareableProvider {
         sharedLock.lock()
