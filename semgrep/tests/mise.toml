@@ -1,0 +1,23 @@
+[tasks."unsafe-rm-rf-shell-variable"]
+run = '''
+# ruleid: mise.unguarded-rm-rf-shell-variable
+rm -rf "${DERIVED_DATA}/SDKStatCaches.noindex"
+'''
+
+[tasks."safe-rm-rf-default-expansion"]
+run = '''
+# ok: mise.unguarded-rm-rf-shell-variable
+rm -rf "${DERIVED_DATA:-/tmp/pocketcasts-analyze-deriveddata}/SDKStatCaches.noindex"
+'''
+
+[tasks."safe-rm-rf-error-expansion"]
+run = '''
+# ok: mise.unguarded-rm-rf-shell-variable
+rm -rf "${DERIVED_DATA:?DERIVED_DATA must be set}/SDKStatCaches.noindex"
+'''
+
+[tasks."safe-rm-rf-non-empty-guard"]
+run = '''
+# ok: mise.unguarded-rm-rf-shell-variable
+if [ -n "$DERIVED_DATA" ]; then rm -rf "${DERIVED_DATA}/SDKStatCaches.noindex"; fi
+'''

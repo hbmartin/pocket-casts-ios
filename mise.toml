@@ -128,6 +128,7 @@ semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "se
 description = "Run Semgrep rule tests"
 run = [
     "semgrep test --config semgrep/pocket-casts.yml semgrep/tests/pocket-casts-web-opening.swift",
+    "semgrep test --config semgrep/swift-security.yml semgrep/tests/mise.toml",
     "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-insecure-storage.swift",
     "semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift",
     "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift",
@@ -179,13 +180,13 @@ xcodebuild -project podcasts.xcodeproj \
 [tasks."check:static"]
 description = "Run SwiftLint, credentials script tests, Semgrep, and the Xcode static analyzer"
 alias = "static-checks"
-run = [
-    "mise run lint",
-    "mise run test:credentials-script",
-    "mise run semgrep:tests",
-    "mise run semgrep:security",
-    "mise run semgrep:pocket-casts",
-    "mise run check:analyzer",
+depends = [
+    "lint",
+    "test:credentials-script",
+    "semgrep:tests",
+    "semgrep:security",
+    "semgrep:pocket-casts",
+    "check:analyzer",
 ]
 
 # -----------------------------------------------------------------------------

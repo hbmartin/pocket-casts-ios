@@ -682,7 +682,7 @@ rules:
       likelihood: LOW
       impact: MEDIUM
       technology: [mise]
-    message: Guard destructive rm -rf commands in mise task scripts so an empty shell variable cannot delete an unintended absolute path. Use a non-empty check or a ${VAR:-default} expansion.
+    message: Guard destructive rm -rf commands in mise task scripts so an empty shell variable cannot delete an unintended absolute path. Use a non-empty check, ${VAR:-default}, or ${VAR:?error} expansion.
     languages: [generic]
     paths:
       include:
@@ -690,7 +690,7 @@ rules:
         - "**/mise.toml"
     patterns:
       - pattern-regex: '^[^#\n]*\brm\s+-rf\s+"?\$\{?[A-Za-z0-9_]+[^#\n]*'
-      - pattern-not-regex: '^[^\n]*rm\s+-rf\s+"?\$\{[A-Za-z0-9_]+:-[^\n]*'
+      - pattern-not-regex: '^[^\n]*rm\s+-rf\s+"?\$\{[A-Za-z0-9_]+:[?-][^\n]*'
       - pattern-not-regex: '^\s*if\s+\[\s+-n\s+[^\n]*'
 
   - id: pocketcasts.server-constants-identical-production-url-branches
