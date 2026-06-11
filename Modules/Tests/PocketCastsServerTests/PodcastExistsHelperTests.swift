@@ -69,8 +69,7 @@ private final class PodcastLookupDataManager: DataManager {
     var beforeReturningPodcast: ((String) -> Void)?
     private(set) var findPodcastCallCount = 0
 
-    init() throws {
-        let dbPath = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")
+    init(dbPath: String = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")) throws {
         let pool = try DatabasePool(path: dbPath)
         super.init(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
     }

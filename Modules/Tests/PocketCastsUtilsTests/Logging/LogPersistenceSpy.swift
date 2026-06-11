@@ -2,7 +2,9 @@ import Foundation
 
 @testable import PocketCastsUtils
 
-final class LogPersistenceSpy: PersistentTextWriting {
+// @unchecked Sendable: test double; assertions only read state after awaiting the
+// actor-isolated work that writes it.
+final class LogPersistenceSpy: PersistentTextWriting, @unchecked Sendable {
 
     private(set) var textWrittenToLog = false
     private(set) var writeCount: UInt = 0

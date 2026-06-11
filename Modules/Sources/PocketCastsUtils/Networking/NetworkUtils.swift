@@ -1,9 +1,11 @@
 import Foundation
 import Network
 
-public class NetworkUtils {
+// @unchecked Sendable: `monitor` is configured once in `init` and NWPathMonitor is
+// internally thread-safe; no other mutable state.
+public final class NetworkUtils: @unchecked Sendable {
 
-    private lazy var monitor = NWPathMonitor()
+    private let monitor = NWPathMonitor()
 
     private init() {
         monitor.pathUpdateHandler = { path in

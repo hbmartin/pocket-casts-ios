@@ -1,44 +1,46 @@
-import UIKit
+import Foundation
 
-public class DateFormatHelper: NSObject {
+// @unchecked Sendable: every formatter is configured in its property initializer and never
+// mutated afterwards; Foundation formatters are safe for concurrent reads.
+public final class DateFormatHelper: NSObject, @unchecked Sendable {
     public static let sharedHelper = DateFormatHelper()
 
-    private lazy var shortLocalizedFormatter: DateFormatter = {
+    private let shortLocalizedFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("dd MMMM")
 
         return formatter
     }()
 
-    public lazy var justDayFormatter: DateFormatter = {
+    public let justDayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("EEEE")
 
         return formatter
     }()
 
-    private lazy var monthDayFormatter: DateFormatter = {
+    private let monthDayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("d MMMM")
 
         return formatter
     }()
 
-    public lazy var monthYearFormatter: DateFormatter = {
+    public let monthYearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
 
         return formatter
     }()
 
-    private lazy var fullDateFormatter: DateFormatter = {
+    private let fullDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("d MMMM yyyy")
 
         return formatter
     }()
 
-    private lazy var longElapsedFormatter: DateComponentsFormatter = {
+    private let longElapsedFormatter: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = .full
         formatter.zeroFormattingBehavior = .dropTrailing
@@ -47,7 +49,7 @@ public class DateFormatHelper: NSObject {
         return formatter
     }()
 
-    private lazy var singleDigitFormatter: DateComponentsFormatter = {
+    private let singleDigitFormatter: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = .full
         formatter.maximumUnitCount = 1
@@ -105,7 +107,7 @@ public class DateFormatHelper: NSObject {
 
     // MARK: - Tiny dd MMM
 
-    public lazy var tinyLocalizedFormatter: DateFormatter = {
+    public let tinyLocalizedFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMM"
         return formatter
@@ -125,7 +127,7 @@ public class DateFormatHelper: NSObject {
 
     // MARK: - JSON
 
-    public lazy var localTimeJsonDateFormatter: DateFormatter = {
+    public let localTimeJsonDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -133,7 +135,7 @@ public class DateFormatHelper: NSObject {
         return formatter
     }()
 
-    private lazy var jsonDateFormatter: DateFormatter = {
+    private let jsonDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         formatter.timeZone = TimeZone(abbreviation: "GMT")
@@ -156,7 +158,7 @@ public class DateFormatHelper: NSObject {
 
     // MARK: - HTTP
 
-    private lazy var httpDateFormatter: DateFormatter = {
+    private let httpDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
         formatter.timeZone = TimeZone(abbreviation: "GMT")

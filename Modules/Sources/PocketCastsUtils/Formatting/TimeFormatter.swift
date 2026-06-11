@@ -1,9 +1,11 @@
 import Foundation
 
-public class TimeFormatter {
+// @unchecked Sendable: formatters are configured in their property initializers and never
+// mutated afterwards; Foundation formatters are safe for concurrent reads.
+public final class TimeFormatter: @unchecked Sendable {
     public static let shared = TimeFormatter()
 
-    private lazy var colonFormatterMinutes: DateComponentsFormatter = {
+    private let colonFormatterMinutes: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = .positional
         formatter.allowedUnits = [.minute, .second]
@@ -12,7 +14,7 @@ public class TimeFormatter {
         return formatter
     }()
 
-    private lazy var colonFormatterHours: DateComponentsFormatter = {
+    private let colonFormatterHours: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = .positional
         formatter.allowedUnits = [.hour, .minute, .second]
@@ -20,48 +22,48 @@ public class TimeFormatter {
         return formatter
     }()
 
-    private lazy var shortFormatMinutes: DateComponentsFormatter = {
-        localizedFormatter(style: .abbreviated, allowedUnits: [.minute])
+    private let shortFormatMinutes: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .abbreviated, allowedUnits: [.minute])
     }()
 
-    private lazy var shortFormatHours: DateComponentsFormatter = {
-        localizedFormatter(style: .abbreviated, allowedUnits: [.hour])
+    private let shortFormatHours: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .abbreviated, allowedUnits: [.hour])
     }()
 
-    private lazy var shortTimeFormatter: DateComponentsFormatter = {
-        localizedFormatter(style: .abbreviated, allowedUnits: [.minute, .hour])
+    private let shortTimeFormatter: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .abbreviated, allowedUnits: [.minute, .hour])
     }()
 
-    private lazy var subMinuteFormatter: DateComponentsFormatter = {
-        localizedFormatter(style: .abbreviated, allowedUnits: [.second])
+    private let subMinuteFormatter: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .abbreviated, allowedUnits: [.second])
     }()
 
-    private lazy var appleFormatterSeconds: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.second])
+    private let appleFormatterSeconds: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .full, allowedUnits: [.second])
     }()
 
-    private lazy var appleFormatterMinutes: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.minute])
+    private let appleFormatterMinutes: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .full, allowedUnits: [.minute])
     }()
 
-    private lazy var appleFormatterHours: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.hour])
+    private let appleFormatterHours: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .full, allowedUnits: [.hour])
     }()
 
-    private lazy var appleFormatterDays: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.day])
+    private let appleFormatterDays: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .full, allowedUnits: [.day])
     }()
 
-    private lazy var appleFormatterYears: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.year])
+    private let appleFormatterYears: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .full, allowedUnits: [.year])
     }()
 
-    private lazy var minutesHoursFormatter: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.hour, .minute])
+    private let minutesHoursFormatter: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .full, allowedUnits: [.hour, .minute])
     }()
 
-    private lazy var minutesHoursFormatterMedium: DateComponentsFormatter = {
-        localizedFormatter(style: .short, allowedUnits: [.hour, .minute])
+    private let minutesHoursFormatterMedium: DateComponentsFormatter = {
+        TimeFormatter.localizedFormatter(style: .short, allowedUnits: [.hour, .minute])
     }()
 
     public func playTimeFormat(time: TimeInterval, showSeconds: Bool = true) -> String {
@@ -123,7 +125,7 @@ public class TimeFormatter {
         return appleFormatterMinutes.string(from: time) ?? ""
     }
 
-    private lazy var relativeFormatter = RelativeDateTimeFormatter()
+    private let relativeFormatter = RelativeDateTimeFormatter()
 
     public func appleStyleElapsedString(date: Date) -> String {
         relativeFormatter.localizedString(for: date, relativeTo: Date())
@@ -160,7 +162,7 @@ public class TimeFormatter {
         return formatter
     }
 
-    private func localizedFormatter(style: DateComponentsFormatter.UnitsStyle, allowedUnits: NSCalendar.Unit) -> DateComponentsFormatter {
+    private static func localizedFormatter(style: DateComponentsFormatter.UnitsStyle, allowedUnits: NSCalendar.Unit) -> DateComponentsFormatter {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = style
         formatter.allowedUnits = allowedUnits

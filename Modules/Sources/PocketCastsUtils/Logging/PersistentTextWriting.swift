@@ -1,11 +1,13 @@
 import Foundation
 import OSLog
 
-protocol PersistentTextWriting {
+protocol PersistentTextWriting: Sendable {
     func write(_ text: String)
 }
 
-struct LogFileWriter: PersistentTextWriting {
+// @unchecked Sendable: all stored properties are immutable; FileManager is documented
+// thread-safe (the delegate, which is not, is never used here).
+struct LogFileWriter: PersistentTextWriting, @unchecked Sendable {
 
     private let targetFilePath: String
     private let encoding: String.Encoding

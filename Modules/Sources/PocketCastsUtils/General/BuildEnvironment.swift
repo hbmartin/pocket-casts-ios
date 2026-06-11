@@ -2,7 +2,7 @@ import Foundation
 
 /// Describes the type of build environment the app is running in.
 /// Use `BuildEnvironment.current` to get the environment for the current running build.
-public enum BuildEnvironment {
+public enum BuildEnvironment: Sendable {
     /// From Xcode, or another DEBUG build
     case debug
 
@@ -13,7 +13,7 @@ public enum BuildEnvironment {
     case appStore
 
     /// Returns the `BuildEnvironment` for the current build
-    public static var current: BuildEnvironment = .determineCurrentEnvironment
+    public static let current: BuildEnvironment = .determineCurrentEnvironment
 
     /// Determines the current environment by:
     /// - If the DEBUG or STAGING preprocessor macros are set, return `.debug`
