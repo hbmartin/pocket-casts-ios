@@ -225,6 +225,24 @@ rules:
     patterns:
       - pattern-regex: '\[\[\s+-n\s+"\$\{CI:-\}"\s*\]\]'
 
+  - id: pocketcasts.ci-ios-simulator-runtime-normalize-empty
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ci]
+    message: Normalize IOS_SIMULATOR_RUNTIME_VERSION before using it; unset GitHub Actions repository variables arrive as empty strings.
+    languages: [generic]
+    paths:
+      include:
+        - "**/scripts/ci/*.sh"
+        - "**/scripts/ci/*.rb"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern-regex: 'ENV\[[''"]IOS_SIMULATOR_RUNTIME_VERSION[''"]\](?!\.to_s\.strip)'
+
   - id: pocketcasts.swiftui-connectable-timer-publisher-must-be-state
     severity: WARNING
     metadata:

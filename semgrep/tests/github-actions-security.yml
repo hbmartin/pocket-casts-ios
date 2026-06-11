@@ -132,6 +132,15 @@ script: |
     fi
   fi
 ---
+script: |
+  # ruleid: pocketcasts.ci-ios-simulator-runtime-normalize-empty
+  requested_runtime_version = ENV['IOS_SIMULATOR_RUNTIME_VERSION']
+---
+script: |
+  # ok: pocketcasts.ci-ios-simulator-runtime-normalize-empty
+  requested_runtime_version = ENV['IOS_SIMULATOR_RUNTIME_VERSION'].to_s.strip
+  requested_runtime_version = nil if requested_runtime_version.empty?
+---
 workflow_dispatch:
   inputs:
     # ruleid: pocketcasts.release-fastlane-release-version-required
