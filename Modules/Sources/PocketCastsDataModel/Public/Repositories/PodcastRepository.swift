@@ -53,6 +53,12 @@ public protocol PodcastRepository: AnyObject {
     // requirement on a background queue; conformers can override with natively
     // async reads.
     func findPodcastAsync(uuid: String, includeUnsubscribed: Bool) async -> Podcast?
+
+    // Completes only after the write has landed, so callers can safely re-read
+    // the saved record afterwards. The default implementation runs the
+    // synchronous requirement on a background queue; conformers can override
+    // with natively async writes.
+    func saveAsync(podcast: Podcast) async
 }
 
 public extension PodcastRepository {
@@ -88,6 +94,10 @@ public extension PodcastRepository {
 
     func findPodcastAsync(uuid: String) async -> Podcast? {
         await findPodcastAsync(uuid: uuid, includeUnsubscribed: false)
+    }
+
+    func saveAsync(podcast: Podcast) async {
+        await runOffMainThread { self.save(podcast: podcast) }
     }
 }
 

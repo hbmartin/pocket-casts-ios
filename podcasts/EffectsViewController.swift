@@ -346,12 +346,13 @@ class EffectsViewController: SimpleNotificationsViewController {
         guard let episode = PlaybackManager.shared.currentEpisode() as? Episode, let podcast = episode.parentPodcast() else { return }
 
         podcast.isEffectsOverridden = false
-        // Persist off the main thread; a contended write lock would otherwise hang the UI.
-        DispatchQueue.global(qos: .userInitiated).async {
-            DataManager.sharedManager.save(podcast: podcast)
+        // Persist off the main thread, but only reload effects after the write
+        // lands — effectsChangedExternally() re-reads the podcast from the database.
+        Task { [weak self] in
+            await DataManager.sharedManager.saveAsync(podcast: podcast)
+            PlaybackManager.shared.effectsChangedExternally()
+            self?.updateClearView()
         }
-        PlaybackManager.shared.effectsChangedExternally()
-        updateClearView()
     }
 
     private func trackPlaybackSpeedChanged() {

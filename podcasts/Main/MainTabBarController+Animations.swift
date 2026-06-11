@@ -17,15 +17,13 @@ extension MainTabBarController {
             return
         }
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid)
-            DispatchQueue.main.async {
-                guard let self else { return }
-                if let episode {
-                    self.playUpNextAddedGenieAnimation(for: episode)
-                } else {
-                    self.upNextQueueDidChange()
-                }
+        Task { [weak self] in
+            let episode = await DataManager.sharedManager.findBaseEpisodeAsync(uuid: episodeUuid)
+            guard let self else { return }
+            if let episode {
+                playUpNextAddedGenieAnimation(for: episode)
+            } else {
+                upNextQueueDidChange()
             }
         }
     }

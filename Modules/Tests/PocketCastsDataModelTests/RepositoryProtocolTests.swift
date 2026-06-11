@@ -79,6 +79,44 @@ final class RepositoryProtocolTests: XCTestCase {
         XCTAssertEqual(mock.callCount(of: "findEpisode(uuid:)"), 1)
     }
 
+    func testSaveAsyncDefaultsForwardToSyncRequirement() async {
+        let podcastMock = PodcastRepositoryMock()
+        let podcastRepository: any PodcastRepository = podcastMock
+        await podcastRepository.saveAsync(podcast: Podcast())
+        XCTAssertEqual(podcastMock.callCount(of: "save(podcast:)"), 1)
+
+        let episodeMock = EpisodeRepositoryMock()
+        let episodeRepository: any EpisodeRepository = episodeMock
+        await episodeRepository.saveAsync(episode: Episode())
+        XCTAssertEqual(episodeMock.callCount(of: "save(episode:)"), 1)
+    }
+
+    func testSaveAsyncRoundTrip() async {
+        let dataManager = DataManager.newTestDataManager()
+
+        let podcast = Podcast()
+        podcast.uuid = UUID().uuidString.lowercased()
+        podcast.addedDate = Date()
+        podcast.isEffectsOverridden = true
+        await dataManager.saveAsync(podcast: podcast)
+
+        let episode = Episode()
+        episode.uuid = UUID().uuidString.lowercased()
+        episode.addedDate = Date()
+        episode.podcastUuid = podcast.uuid
+        episode.podcast_id = podcast.id
+        episode.deselectedChaptersModified = 1234
+        await dataManager.saveAsync(episode: episode)
+
+        let foundPodcast = await dataManager.findPodcastAsync(uuid: podcast.uuid, includeUnsubscribed: true)
+        XCTAssertEqual(foundPodcast?.uuid, podcast.uuid)
+        XCTAssertEqual(foundPodcast?.isEffectsOverridden, true)
+
+        let foundEpisode = await dataManager.findEpisodeAsync(uuid: episode.uuid)
+        XCTAssertEqual(foundEpisode?.uuid, episode.uuid)
+        XCTAssertEqual(foundEpisode?.deselectedChaptersModified, 1234)
+    }
+
     func testDataManagerSatisfiesAllRepositoryProtocols() {
         let dataManager = DataManager.newTestDataManager()
 

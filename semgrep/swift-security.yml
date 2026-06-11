@@ -4156,3 +4156,36 @@ rules:
         - "**/semgrep/tests/github-actions-security.yml"
     patterns:
       - pattern-regex: "POCKET_CASTS_CREDENTIALS_JSON:\\s*\\$\\{\\{\\s*secrets\\."
+
+  - id: pocketcasts.no-fire-and-forget-datamanager-write
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Don't fire-and-forget DataManager writes via DispatchQueue.global().async — callers can't order follow-up reads after the write lands, and captured model objects race with main-thread mutation. Await the repository's saveAsync variant (or another awaitable write) instead.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**"
+        - "**/Modules/**"
+        - "**/semgrep/tests/swift-security-fire-and-forget-save.swift"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              DispatchQueue.global().async {
+                ...
+                DataManager.sharedManager.$WRITE(...)
+                ...
+              }
+          - pattern: |
+              DispatchQueue.global(qos: $QOS).async {
+                ...
+                DataManager.sharedManager.$WRITE(...)
+                ...
+              }
+      - metavariable-regex:
+          metavariable: $WRITE
+          regex: ^(save\w*|bulkSave\w*|bulkSet\w*|delete\w*)$
