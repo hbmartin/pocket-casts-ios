@@ -11,7 +11,9 @@ if "$SCRIPT_DIR/should-skip-job.sh" --job-type build; then
 fi
 
 cd "$REPO_ROOT"
+DERIVED_DATA_PATH="${POCKET_CASTS_CI_DERIVED_DATA_PATH:-build/github/DerivedData}"
 mkdir -p build/github/logs build/github/results
+mkdir -p "$DERIVED_DATA_PATH"
 rm -rf build/github/results/PocketCastsTests.xcresult
 
 "$SCRIPT_DIR/shared-setup.sh" --skip-gems
@@ -26,6 +28,7 @@ echo "Xcode"
 xcodebuild -version
 
 echo "Build and test staging"
+echo "Using DerivedData path: $DERIVED_DATA_PATH"
 set -o pipefail
 xcodebuild test \
   -project podcasts.xcodeproj \
@@ -33,7 +36,7 @@ xcodebuild test \
   -configuration StagingDebug \
   "-only-testing:${ONLY_TESTING:-PocketCastsTests}" \
   -destination "$DESTINATION" \
-  -derivedDataPath build/github/DerivedData \
+  -derivedDataPath "$DERIVED_DATA_PATH" \
   -resultBundlePath build/github/results/PocketCastsTests.xcresult \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
   2>&1 | tee build/github/logs/test-staging.log

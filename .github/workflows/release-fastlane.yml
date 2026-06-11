@@ -134,6 +134,8 @@ jobs:
           scripts/ci/use-bot-for-git.sh
           source scripts/ci/select-xcode.sh
           scripts/ci/checkout-release-branch.sh "$RELEASE_VERSION"
+          rm -rf artifacts
+          mkdir -p artifacts
           scripts/ci/shared-setup.sh
           bundle exec fastlane run configure_apply
           bundle exec fastlane build_app_store_connect
@@ -171,6 +173,7 @@ jobs:
       - name: Move release artifacts into Fastlane path
         run: |
           set -euo pipefail
+          rm -rf artifacts
           mkdir -p artifacts
           find downloaded-artifacts -type f \( -name "*.ipa" -o -name "*.zip" \) -exec cp {} artifacts/ \;
           find artifacts -maxdepth 1 -type f

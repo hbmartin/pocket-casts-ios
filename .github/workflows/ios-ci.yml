@@ -30,6 +30,8 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 90
+    env:
+      POCKET_CASTS_CI_DERIVED_DATA_PATH: ${{ github.workspace }}/../pocket-casts-ios-ci/DerivedData
 
     steps:
       - name: Checkout repository
