@@ -137,6 +137,27 @@ rules:
               persist-credentials: false
               ...
 
+  - id: pocketcasts.github-actions-no-unconditional-service-credentials
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [github-actions]
+    message: Gate service-credential secrets on trusted triggers (e.g. push or non-PR workflow_dispatch) instead of exposing them unconditionally to every run.
+    languages: [yaml]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern: |
+          $ENVKEY: $SECRET
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: ^\$\{\{\s*secrets\.[A-Za-z0-9_]*CREDENTIALS[A-Za-z0-9_]*\s*\}\}$
+
   - id: pocketcasts.release-fastlane-release-version-required
     severity: WARNING
     metadata:

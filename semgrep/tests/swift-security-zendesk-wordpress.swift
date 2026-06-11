@@ -19,13 +19,14 @@ final class RemovedZendeskWordPressReferences {
     let dotcom = ApiCredentials.dotcomSecret
 
     // The credential-template placeholders must not return either.
-    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration
+    // These also trip the general placeholder-literal rule.
+    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration, pocketcasts.no-hardcoded-credential-placeholder-literal
     let templateApiKey = "%{zendesk_api_key}"
-    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration
+    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration, pocketcasts.no-hardcoded-credential-placeholder-literal
     let templateUrl = "%{zendesk_url}"
-    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration
+    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration, pocketcasts.no-hardcoded-credential-placeholder-literal
     let templateNewUrl = "%{zendesk_new_url}"
-    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration
+    // ruleid: pocketcasts.no-zendesk-or-wordpress-integration, pocketcasts.no-hardcoded-credential-placeholder-literal
     let templateDotcom = "%{dotcom_secret}"
 
     // ruleid: pocketcasts.no-zendesk-or-wordpress-integration

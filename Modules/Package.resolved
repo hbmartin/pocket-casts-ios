@@ -1,5 +1,5 @@
 {
-  "originHash" : "a3f7e5fc4ab75904e68df37a30422824dc9a9ae23fbc314a315789a226e34f71",
+  "originHash" : "ee76115c2b75a14d759ab93775d3464b41f7c6fa962e71607f1836659ce112b3",
   "pins" : [
     {
       "identity" : "agrume",
@@ -80,6 +80,15 @@
       "state" : {
         "revision" : "2ef543ee21d63734e1c004ad6c870255e8716c50",
         "version" : "7.12.0"
+      }
+    },
+    {
+      "identity" : "swift-custom-dump",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-custom-dump",
+      "state" : {
+        "revision" : "b9b59eb58c946236d6f16305c576ad194c36444e",
+        "version" : "1.6.0"
       }
     },
     {
