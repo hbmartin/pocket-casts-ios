@@ -54,6 +54,7 @@ CODE_SIGNING_STORAGE_OPTIONS = {
   s3_bucket: 'a8c-fastlane-match',
   s3_region: 'us-east-2'
 }.freeze
+CI_KEYCHAIN_NAME = 'pocket-casts-ci'
 
 GITHUB_REPO = ENV.fetch('GITHUB_REPOSITORY', 'hbmartin/pocket-casts-ios')
 GITHUB_URL = "https://github.com/#{GITHUB_REPO}".freeze
@@ -139,10 +140,18 @@ SPELLCHECK_KNOWN_WORDS = %w[
 
 import 'lib/helpers.rb'
 
+def cleanup_ci_keychain
+  return unless ENV['GITHUB_ACTIONS'] == 'true'
+
+  delete_keychain(name: CI_KEYCHAIN_NAME)
+rescue StandardError => e
+  UI.important("Could not delete CI keychain #{CI_KEYCHAIN_NAME}: #{e}")
+end
+
 before_all do
   # This is necessary for 'match' to work correctly in CI. When running
   # locally, it has no effect so it's safe to run it before all lanes.
-  setup_ci
+  setup_ci(keychain_name: CI_KEYCHAIN_NAME)
 
   # Decrypt the secrets. This is redundant on dev machines most of the time,
   # but it has such a negligible overhead that it's worth running it here to
@@ -150,6 +159,14 @@ before_all do
   configure_apply
 
   Dotenv.load(USER_ENV_FILE_PATH)
+end
+
+after_all do
+  cleanup_ci_keychain
+end
+
+error do |_lane, _exception|
+  cleanup_ci_keychain
 end
 
 platform :ios do
