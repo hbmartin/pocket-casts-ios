@@ -9,7 +9,8 @@ extension DatabasePool {
         case dbFolderPathFailure
     }
 
-    static var currentDatabasePool: DatabasePool?
+    // nonisolated(unsafe): test-only handle, set and read from the test runner.
+    nonisolated(unsafe) static var currentDatabasePool: DatabasePool?
 
     static func newTestDatabase(databaseName: String? = nil) throws -> DatabasePool? {
         var config = Configuration()

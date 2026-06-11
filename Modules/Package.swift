@@ -124,14 +124,15 @@ let package = Package(
                 "GRDBMacros",
             ],
             path: "Sources/PocketCastsDataModel",
-            swiftSettings: [
+            swiftSettings: strictConcurrencySettings + [
                 .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
             ]
         ),
         .testTarget(
             name: "PocketCastsDataModelTests",
             dependencies: ["PocketCastsDataModel"],
-            path: "Tests/PocketCastsDataModelTests"
+            path: "Tests/PocketCastsDataModelTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "PocketCastsServer",
