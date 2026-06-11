@@ -66,12 +66,14 @@ let package = Package(
     targets: XcodeSupport.targets + [
         .target(
             name: "PocketCastsDependencyInjection",
-            path: "Sources/PocketCastsDependencyInjection"
+            path: "Sources/PocketCastsDependencyInjection",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "PocketCastsDependencyInjectionTests",
             dependencies: ["PocketCastsDependencyInjection"],
-            path: "Tests/PocketCastsDependencyInjectionTests"
+            path: "Tests/PocketCastsDependencyInjectionTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "GRDBMacros",
@@ -79,7 +81,8 @@ let package = Package(
                 "GRDBMacrosPlugin",
                 .product(name: "GRDB", package: "GRDB.swift"),
             ],
-            path: "Sources/GRDBMacros"
+            path: "Sources/GRDBMacros",
+            swiftSettings: strictConcurrencySettings
         ),
         .macro(
             name: "GRDBMacrosPlugin",
@@ -88,7 +91,8 @@ let package = Package(
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ],
-            path: "Sources/GRDBMacrosPlugin"
+            path: "Sources/GRDBMacrosPlugin",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "GRDBMacrosTests",
@@ -96,7 +100,8 @@ let package = Package(
                 "GRDBMacrosPlugin",
                 .product(name: "MacroTesting", package: "swift-macro-testing"),
             ],
-            path: "Tests/GRDBMacrosTests"
+            path: "Tests/GRDBMacrosTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "PocketCastsUtils",
@@ -166,12 +171,14 @@ let package = Package(
         ),
         .target(
             name: "Modules",
-            path: "Sources/Modules"
+            path: "Sources/Modules",
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "ModulesTests",
             dependencies: ["Modules"],
-            path: "Tests/ModulesTests"
+            path: "Tests/ModulesTests",
+            swiftSettings: strictConcurrencySettings
         )
     ]
 )
