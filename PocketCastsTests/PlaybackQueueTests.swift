@@ -5,10 +5,16 @@ import XCTest
 
 final class PlaybackQueueTests: XCTestCase {
 
-    let featureFlagMock = FeatureFlagMock()
+    private let featureFlagMock = FeatureFlagMock()
+    private var originalDataManager: DataManager!
+
+    override func setUp() {
+        super.setUp()
+        originalDataManager = DataManager.sharedManager
+    }
 
     func testOverrideAllEpisodesWith_shouldNotIncludeStaleEpisodesInReplace() {
-        FeatureFlagMock().set(.replaceSpecificEpisode, value: true)
+        featureFlagMock.set(.replaceSpecificEpisode, value: true)
 
         let playbackQueue = PlaybackQueue()
         let mockDataManager = MockDataManager()
@@ -32,6 +38,14 @@ final class PlaybackQueueTests: XCTestCase {
         // The replacement list should only contain the current episode (added later), not the stale one
         XCTAssertFalse(mockDataManager.savedReplaceEpisodes.contains("stale-uuid"),
                        "Should not include stale episode UUID in replacement list")
+    }
+
+    func testAddPostsToTopFlagWhenAddingToTop() throws {
+        try assertAddPostsToTopFlag(toTop: true)
+    }
+
+    func testAddPostsToTopFlagWhenAddingToBottom() throws {
+        try assertAddPostsToTopFlag(toTop: false)
     }
 
     func testRecentUserInteractionReturnsFalseWhenNoPreviousInteraction() {
@@ -65,7 +79,36 @@ final class PlaybackQueueTests: XCTestCase {
     }
 
     override func tearDown() {
+        DataManager.sharedManager = originalDataManager
         featureFlagMock.reset()
+        super.tearDown()
+    }
+
+    private func assertAddPostsToTopFlag(toTop: Bool, file: StaticString = #filePath, line: UInt = #line) throws {
+        let playbackQueue = PlaybackQueue()
+        let mockDataManager = MockDataManager()
+        DataManager.sharedManager = mockDataManager
+
+        let episode = Episode()
+        episode.uuid = "episode-\(toTop ? "top" : "bottom")"
+        episode.title = "Queue Episode"
+        episode.podcastUuid = "podcast-uuid"
+
+        let expectation = XCTNSNotificationExpectation(name: Constants.Notifications.upNextEpisodeAdded)
+        expectation.handler = { notification in
+            XCTAssertEqual(notification.object as? String, episode.uuid, file: file, line: line)
+            XCTAssertEqual(
+                notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool,
+                toTop,
+                file: file,
+                line: line
+            )
+            return true
+        }
+
+        playbackQueue.add(episode: episode, fireNotification: true, toTop: toTop)
+
+        wait(for: [expectation], timeout: 1)
     }
 }
 
@@ -74,6 +117,34 @@ fileprivate class MockDataManager: DataManager {
     var upNextEpisodes: [PlaylistEpisode] = []
     var deleteCalled = false
     var cacheManuallyDelayed = false
+
+    override func findPlaylistEpisode(uuid: String) -> PlaylistEpisode? {
+        upNextEpisodes.first { $0.episodeUuid == uuid }
+    }
+
+    override func positionForPlaylistEpisode(bottomOfList: Bool) -> Int32 {
+        if bottomOfList, let lastEpisode = upNextEpisodes.last {
+            return lastEpisode.episodePosition + 1
+        }
+
+        return 1
+    }
+
+    override func save(playlistEpisode: PlaylistEpisode) {
+        upNextEpisodes.removeAll { $0.episodeUuid == playlistEpisode.episodeUuid }
+        upNextEpisodes.append(playlistEpisode)
+        upNextEpisodes.sort { $0.episodePosition < $1.episodePosition }
+    }
+
+    override func allUpNextEpisodes() -> [BaseEpisode] {
+        upNextEpisodes.map {
+            let episode = Episode()
+            episode.uuid = $0.episodeUuid
+            episode.title = $0.title
+            episode.podcastUuid = $0.podcastUuid
+            return episode
+        }
+    }
 
     override func allUpNextPlaylistEpisodes() -> [PlaylistEpisode] {
         return upNextEpisodes
