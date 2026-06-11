@@ -6,6 +6,7 @@ devices_json = ARGV[0] ? File.read(ARGV[0]) : `xcrun simctl list devices availab
 devices_by_runtime = JSON.parse(devices_json).fetch('devices')
 requested_runtime_version = ENV['IOS_SIMULATOR_RUNTIME_VERSION'].to_s.strip
 requested_runtime_version = nil if requested_runtime_version.empty?
+requested_runtime_version_components = requested_runtime_version&.split('.')&.map(&:to_i)
 candidates = []
 available_runtime_versions = []
 
@@ -21,7 +22,10 @@ devices_by_runtime.each do |runtime, devices|
     next unless device['name'].start_with?('iPhone')
 
     runtime_has_available_iphone = true
-    next if requested_runtime_version && version_string != requested_runtime_version
+    if requested_runtime_version_components &&
+       version.take(requested_runtime_version_components.length) != requested_runtime_version_components
+      next
+    end
 
     preference = device['name'].include?(' Pro') ? 1 : 0
     candidates << [version, preference, device['name'], device['udid']]

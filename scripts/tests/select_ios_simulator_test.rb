@@ -25,6 +25,13 @@ class SelectIosSimulatorTest < Minitest::Test
   end
 
   def test_requested_runtime_uses_matching_iphone
+    stdout, stderr, status = run_script('IOS_SIMULATOR_RUNTIME_VERSION' => '18.6.1')
+
+    assert status.success?, stdout + stderr
+    assert_equal "platform=iOS Simulator,id=ios-18-pro-max\n", stdout
+  end
+
+  def test_requested_runtime_matches_available_patch_version
     stdout, stderr, status = run_script('IOS_SIMULATOR_RUNTIME_VERSION' => '18.6')
 
     assert status.success?, stdout + stderr
@@ -43,7 +50,7 @@ class SelectIosSimulatorTest < Minitest::Test
 
     refute status.success?, stdout + stderr
     assert_match(/No available iPhone simulator found for iOS 18\.5/, stderr)
-    assert_match(/Available iOS simulator runtimes: 18\.6, 26\.5/, stderr)
+    assert_match(/Available iOS simulator runtimes: 18\.6\.1, 26\.5/, stderr)
   end
 
   private
@@ -60,7 +67,7 @@ class SelectIosSimulatorTest < Minitest::Test
   def devices_json
     JSON.generate(
       'devices' => {
-        'com.apple.CoreSimulator.SimRuntime.iOS-18-6' => [
+        'com.apple.CoreSimulator.SimRuntime.iOS-18-6-1' => [
           {
             'name' => 'iPhone 16',
             'udid' => 'ios-18',
