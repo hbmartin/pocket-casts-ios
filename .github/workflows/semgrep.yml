@@ -6,7 +6,7 @@ on:
       - "**/*.swift"
       - ".github/workflows/*.yml"
       - ".github/workflows/semgrep.yml"
-      - "Makefile"
+      - "mise.toml"
       - "scripts/ci/*.sh"
       - "scripts/ci/*.rb"
       - "scripts/build-phases/*.sh"
@@ -18,7 +18,7 @@ on:
       - "**/*.swift"
       - ".github/workflows/*.yml"
       - ".github/workflows/semgrep.yml"
-      - "Makefile"
+      - "mise.toml"
       - "scripts/ci/*.sh"
       - "scripts/ci/*.rb"
       - "scripts/build-phases/*.sh"
@@ -48,7 +48,8 @@ jobs:
           persist-credentials: false
 
       - name: Run Swift Semgrep rules
-        run: semgrep scan --config semgrep/swift-security.yml --config semgrep/pocket-casts.yml --include "*.swift" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/ci/*.rb" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check --error --sarif-output semgrep-swift.sarif
+        run: |
+          semgrep scan --config semgrep/swift-security.yml --config semgrep/pocket-casts.yml --include "*.swift" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "mise.toml" --include "**/mise.toml" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check --error --sarif-output semgrep-swift.sarif
 
       - name: Upload SARIF to code scanning
         if: always() && hashFiles('semgrep-swift.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)

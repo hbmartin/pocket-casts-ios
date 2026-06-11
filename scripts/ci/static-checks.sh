@@ -12,15 +12,7 @@ cd "$REPO_ROOT"
 
 "$SCRIPT_DIR/prepare-credentials.sh"
 
-if ! command -v semgrep >/dev/null 2>&1; then
-  if command -v brew >/dev/null 2>&1; then
-    echo "Installing Semgrep"
-    brew install semgrep
-  else
-    echo "semgrep is required for make static_checks, but Homebrew is unavailable."
-    exit 1
-  fi
-fi
+source "$SCRIPT_DIR/ensure-mise.sh"
 
 echo "Static checks"
-make static_checks
+mise run check:static

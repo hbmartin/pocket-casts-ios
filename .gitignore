@@ -49,3 +49,6 @@ artifacts/*
 build/
 reviews_triage/
 triage_decisions.db
+
+# mise developer-local overrides
+mise.local.toml

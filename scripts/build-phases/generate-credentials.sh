@@ -25,7 +25,7 @@ validate_credentials() {
     if [[ -n "$placeholders" ]]; then
         echo "error: Unresolved placeholder(s) found in ${credentials_file}:" >&2
         echo "$placeholders" | sed 's/^/  /' >&2
-        echo "error: Rerun \`make external_contributor\` or regenerate credentials with \`bundle exec fastlane run configure_apply\`." >&2
+        echo "error: Rerun \`mise run setup:credentials\` or regenerate credentials with \`bundle exec fastlane run configure_apply\`." >&2
         exit 1
     fi
 }

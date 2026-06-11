@@ -27,23 +27,8 @@ done
 if [[ "$INSTALL_GEMS" -eq 1 ]]; then
   echo "Setting up Ruby tools"
 
-  if command -v rbenv >/dev/null 2>&1 && [[ -s "$REPO_ROOT/.ruby-version" ]]; then
-    RUBY_VERSION="$(tr -d '[:space:]' < "$REPO_ROOT/.ruby-version")"
-
-    if ! rbenv versions --bare | grep -qx "$RUBY_VERSION"; then
-      if command -v ruby-build >/dev/null 2>&1; then
-        rbenv install -s "$RUBY_VERSION"
-      else
-        echo "rbenv is installed, but Ruby $RUBY_VERSION is not and ruby-build is unavailable."
-        echo "Install Ruby $RUBY_VERSION on this runner or remove rbenv from the runner environment."
-        exit 1
-      fi
-    fi
-
-    export RBENV_VERSION="$RUBY_VERSION"
-    eval "$(rbenv init - bash)"
-    rbenv rehash
-  fi
+  source "$SCRIPT_DIR/ensure-mise.sh"
+  eval "$(mise env -s bash --cd "$REPO_ROOT")"
 
   if ! bundle --version >/dev/null 2>&1; then
     gem install bundler

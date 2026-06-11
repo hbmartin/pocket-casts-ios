@@ -21,23 +21,28 @@
 
 ## Setup
 
-If you don't already have it, you need to install Bundler:
+Tasks and tool versions (Ruby, semgrep) are managed by [mise](https://mise.jdx.dev). If you don't already have it, install it and then provision the pinned tools:
 
-`gem install bundler`
+```bash
+brew install mise   # or: curl https://mise.run | sh
+mise install
+```
 
-Next you'll need to install all the dependencies needed for [_fastlane_](https://docs.fastlane.tools/) using this script:
+Next you'll need to install all the dependencies needed for [_fastlane_](https://docs.fastlane.tools/):
 
-`make install_dependencies`
+`mise run setup:deps`
+
+Run `mise tasks` to see every available task.
 
 ## External contributors
 
-If you're an external contributor run `make external_contributor`. After that you should be able to build and run the project.
+If you're an external contributor run `mise run setup:credentials`. After that you should be able to build and run the project.
 
 ## Swift Formatting
 
 We use [SwiftLint](https://github.com/realm/SwiftLint) to ensure code is spaced and formatted the same way and follows the same [general conventions](https://github.com/Automattic/swiftlint-config). SwiftLint runs through the BuildTools Swift Package plugin, so no extra setup is required — just run it over the whole project with:
 
-`make format`
+`mise run format`
 
 You should do this before making a pull request.
 
@@ -47,20 +52,20 @@ Open the `.xcodeproj` file, select the Pocket Casts project and the Simulator De
 
 ## Building & Testing
 
-The `make` targets wrap the common `xcodebuild` invocations:
+The mise tasks wrap the common `xcodebuild` invocations:
 
 ```bash
-make build_staging   # Build the "Pocket Casts Staging" scheme (StagingDebug)
-make test_staging    # Build and run the unit tests
-make static_checks   # SwiftLint, Semgrep rules/tests, and the Xcode static analyzer
-make clean           # Clean the build artifacts
+mise run build:staging   # Build the "Pocket Casts Staging" scheme (StagingDebug)
+mise run test:staging    # Build and run the unit tests
+mise run check:static    # SwiftLint, Semgrep rules/tests, and the Xcode static analyzer
+mise run clean           # Clean the build artifacts
 ```
 
 Scope the tests to a single class, method, or module with `ONLY_TESTING`:
 
 ```bash
-make test_staging ONLY_TESTING=PocketCastsServerTests
-make test_staging ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName
+ONLY_TESTING=PocketCastsServerTests mise run test:staging
+ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName mise run test:staging
 ```
 
 ## Localization
@@ -83,7 +88,7 @@ To update the protobuf files you can then run:
 Replace the `{API_PATH}` with the full path to the `pocketcasts-api/api/modules/protobuf/src/main/proto` folder
 
 ```
-make update_proto API_PATH={API_PATH}
+mise run generate:proto {API_PATH}
 ```
 
 ## Debugging
