@@ -16,7 +16,7 @@ final class PodcastExistsHelperTests: XCTestCase {
         let temporaryDatabaseDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: temporaryDatabaseDirectory, withIntermediateDirectories: true)
         self.temporaryDatabaseDirectory = temporaryDatabaseDirectory
-        dataManager = try PodcastLookupDataManager.make(databaseDirectory: temporaryDatabaseDirectory)
+        dataManager = try PodcastLookupDataManager(dbPath: temporaryDatabaseDirectory.appendingPathComponent("database.sqlite").path)
         DataManager.sharedManager = dataManager
         PodcastExistsHelper.shared.invalidate(uuid: podcastUuid)
     }

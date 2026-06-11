@@ -16,6 +16,12 @@ public final class ServerConfig: @unchecked Sendable {
     /// Error logger for reporting sync errors to crash reporting services.
     public var errorLogger: ErrorLogger?
 
+    /// Call once on the main thread at launch so off-main reads of protected-data
+    /// availability have a warm cache before the first sync runs.
+    @MainActor public func warmProtectedDataAvailabilityCache() {
+        _ = UserDefaults.isProtectedDataAvailable()
+    }
+
     public func setBackgroundSessionCompletionHandler(handler: (() -> Void)?) {
         backgroundSessionHandler = handler
     }
