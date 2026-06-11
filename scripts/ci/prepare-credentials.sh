@@ -10,7 +10,7 @@ LOCAL_CREDENTIALS_PATH="$REPO_ROOT/podcasts/Credentials/LocalApiCredentials.swif
 
 generate_open_source_credentials() {
   echo "Generating open-source credentials"
-  make -C "$REPO_ROOT" external_contributor
+  "$REPO_ROOT/scripts/generate-placeholder-credentials.sh"
 }
 
 if [[ -n "${POCKET_CASTS_CREDENTIALS_JSON:-}" ]]; then
