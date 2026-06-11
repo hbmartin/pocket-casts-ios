@@ -241,7 +241,7 @@ public class PlaylistQueryBuilder {
             PlaylistQueryBuilder.removeEmptyFilterGroups(from: &stringifiedValues)
 
             if clause == .firstDistinctEpisodes {
-                let search = searchPredicate(for: searchTerm)
+                let search = andSearchPredicate(for: searchTerm)
                 let sql = smartPlaylistFirstDistinctEpisodes(
                     sortFor: sortType,
                     limit: limit,
@@ -295,7 +295,9 @@ public class PlaylistQueryBuilder {
         return "%\(escaped.uppercased())%"
     }
 
-    private static func searchPredicate(for searchTerm: String?, episodeAlias: String = "episode", podcastAlias: String = "podcast") -> (sql: String, arguments: [Any]) {
+    /// Returns a search predicate prefixed with `AND`; callers must append it after a
+    /// query fragment that already has a `WHERE` clause.
+    private static func andSearchPredicate(for searchTerm: String?, episodeAlias: String = "episode", podcastAlias: String = "podcast") -> (sql: String, arguments: [Any]) {
         guard let searchTerm else { return ("", []) }
 
         let pattern = likePattern(for: searchTerm)
@@ -477,7 +479,7 @@ public class PlaylistQueryBuilder {
         let archivedPreference = shouldShowArchived ? "1" : "0"
         let archivedPredicate = shouldShowArchived ? "" : "AND episode.archived = 0"
         let episodePositionOrderByStripped = episodePositionOrderBy.replacingOccurrences(of: "episode.", with: "")
-        let search = searchPredicate(for: searchTerm)
+        let search = andSearchPredicate(for: searchTerm)
         let arguments: [Any] = [playlistUUID] + search.arguments
         let podcastSearchJoin = search.sql.isEmpty ? "" : "LEFT JOIN \(DataManager.podcastTableName) podcast ON episode.podcast_id = podcast.id"
 

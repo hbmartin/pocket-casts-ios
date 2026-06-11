@@ -29,8 +29,8 @@ final class RepositoryProtocolTests: XCTestCase {
         mock.bulkMarkAsPlayed(episodes: [Episode()], updateSyncFlag: false)
         mock.bulkMarkAsPlayed(episodes: [UserEpisode()], updateSyncFlag: false)
 
-        XCTAssertEqual(mock.callCount(of: "bulkMarkAsPlayed(episodes:[Episode]:updateSyncFlag:)"), 1)
-        XCTAssertEqual(mock.callCount(of: "bulkMarkAsPlayed(episodes:[UserEpisode]:updateSyncFlag:)"), 1)
+        XCTAssertEqual(mock.callCount(of: "bulkMarkAsPlayed(episodes:updateSyncFlag:)_Episode"), 1)
+        XCTAssertEqual(mock.callCount(of: "bulkMarkAsPlayed(episodes:updateSyncFlag:)_UserEpisode"), 1)
     }
 
     func testDefaultArgumentConveniencesForwardToFullRequirement() {

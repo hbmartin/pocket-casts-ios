@@ -358,27 +358,13 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
 
     private func setupSearchController() {
         searchController = PCSearchBarController()
-        searchController?.searchDebounce = 0.2
 
         guard let searchController else {
             return
         }
 
-        searchController.view.translatesAutoresizingMaskIntoConstraints = false
-        addChild(searchController)
-        view.addSubview(searchController.view)
-        searchController.didMove(toParent: self)
-
-        NSLayoutConstraint.activate([
-            searchController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            searchController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            searchController.view.heightAnchor.constraint(equalToConstant: PCSearchBarController.defaultHeight),
-            searchController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
-        ])
-
+        searchController.install(in: self, attachedTo: tableView, collapses: false)
         searchController.placeholderText = L10n.playlistSearch
-        tableView.contentInset.top = PCSearchBarController.defaultHeight
-        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: -PCSearchBarController.defaultHeight), animated: false)
         searchController.searchDebounce = Settings.podcastSearchDebounceTime()
         searchController.searchDelegate = self
 

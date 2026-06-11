@@ -848,7 +848,8 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                     try SQLiteValidator.validate(sql: query.sql, values: query.arguments),
                     "Query should be valid SQL (flag=\(flagValue), sort=\(sortType)): \(query)"
                 )
-                XCTAssertEqual(query.arguments as? [String], [playlistUUID, "%P2%", "%P2%"])
+                XCTAssertEqual(try XCTUnwrap(query.arguments.first as? String), playlistUUID)
+                XCTAssertEqual(query.arguments.suffix(2).compactMap { $0 as? String }, ["%P2%", "%P2%"])
 
                 let results = try executeQuery(query, in: dbPool)
                 XCTAssertEqual(results.count, 1, "Search should limit first-distinct results to the matching podcast")

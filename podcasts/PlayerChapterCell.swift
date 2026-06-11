@@ -149,21 +149,21 @@ class PlayerChapterCell: UITableViewCell {
 
             Self.chapterSaveTask?.cancel()
             Self.chapterSaveTask = Task {
-                do {
-                    try await Task.sleep(nanoseconds: 300_000_000)
-                } catch {
-                    return
-                }
-
+                try? await Task.sleep(nanoseconds: Self.chapterSaveDelayNanoseconds)
                 guard !Task.isCancelled else { return }
+
                 await DataManager.sharedManager.saveAsync(episode: currentEpisode)
             }
         }
     }
 
     /// Debounces episode saves across all chapter cells: rapid toggles should persist
-    /// the final shared episode state rather than queueing every intermediate state.
+    /// the final shared episode state rather than queueing every intermediate state. If
+    /// the app is terminated before the delay elapses, that pending save is lost. Cancelling
+    /// a pending task also does not stop a save already in flight, so a tap landing mid-save
+    /// can still race a property read on the shared mutable episode object.
     private static var chapterSaveTask: Task<Void, Never>?
+    private static let chapterSaveDelayNanoseconds: UInt64 = 300_000_000
 
     @objc func progressUpdated(animated: Bool = true) {
         guard let chapter, chapter == PlaybackManager.shared.currentChapters().visibleChapter else { return }
