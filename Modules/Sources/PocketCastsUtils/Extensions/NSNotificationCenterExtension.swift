@@ -7,9 +7,11 @@ public extension NotificationCenter {
             return
         }
 
-        // Force the notification to be posted on the main thread
+        // Force the notification to be posted on the main thread. The payload is handed over
+        // wholesale via an unchecked wrapper; the dispatching thread does not touch it afterwards.
+        let payload = UncheckedSendable((object, userInfo))
         DispatchQueue.main.sync {
-            Self.postOnMainThread(notification: notification, object: object, userInfo: userInfo)
+            NotificationCenter.default.post(name: notification, object: payload.value.0, userInfo: payload.value.1)
         }
     }
 }

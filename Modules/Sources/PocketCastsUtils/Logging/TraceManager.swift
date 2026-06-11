@@ -1,6 +1,8 @@
 import Foundation
 
-public class TraceManager {
+// @unchecked Sendable: `traceHandler` is assigned once via `setup(handler:)` during app
+// launch, before any tracing happens, and is only read afterwards.
+public final class TraceManager: @unchecked Sendable {
     public static let shared = TraceManager()
 
     private var traceHandler: TraceHandlingProtocol?

@@ -1,6 +1,6 @@
 import Foundation
 
-public class KeychainHelper {
+public final class KeychainHelper: Sendable {
 
     public enum KeychainError: Error {
         case status(OSStatus)

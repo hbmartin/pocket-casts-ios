@@ -1,6 +1,8 @@
 import Foundation
 
-public class TimedActionHelper {
+// @unchecked Sendable: `timer` is only created/invalidated on the main thread (enforced by
+// the Thread.isMainThread checks below); preserved pre-concurrency behavior.
+public final class TimedActionHelper: @unchecked Sendable {
     private var timer: Timer?
 
     private var action: (() -> Void)?

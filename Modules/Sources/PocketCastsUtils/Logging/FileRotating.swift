@@ -1,11 +1,13 @@
 import Foundation
 import OSLog
 
-protocol FileRotating {
+protocol FileRotating: Sendable {
     func rotateFile(ifSizeExceeds: Int)
 }
 
-public struct FileRotator: FileRotating {
+// @unchecked Sendable: all stored properties are immutable; FileManager is documented
+// thread-safe (the delegate, which is not, is never used here).
+public struct FileRotator: FileRotating, @unchecked Sendable {
 
     private let fileManager: FileManager
     private let targetFilePath: String

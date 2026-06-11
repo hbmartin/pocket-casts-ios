@@ -4,6 +4,13 @@ import PackageDescription
 import CompilerPluginSupport
 import Foundation
 
+/// Strict-concurrency hardening while staying in the Swift 5 language mode:
+/// diagnostics surface as warnings, not errors. Applied target-by-target.
+let strictConcurrencySettings: [SwiftSetting] = [
+    .enableUpcomingFeature("StrictConcurrency"),
+    .enableUpcomingFeature("InferSendableFromCaptures"),
+]
+
 let package = Package(
     name: "Modules",
     platforms: [
@@ -98,14 +105,15 @@ let package = Package(
         .target(
             name: "PocketCastsUtils",
             path: "Sources/PocketCastsUtils",
-            swiftSettings: [
+            swiftSettings: strictConcurrencySettings + [
                 .unsafeFlags(["-enable-testing"], .when(configuration: .debug))
             ]
         ),
         .testTarget(
             name: "PocketCastsUtilsTests",
             dependencies: ["PocketCastsUtils"],
-            path: "Tests/PocketCastsUtilsTests"
+            path: "Tests/PocketCastsUtilsTests",
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "PocketCastsDataModel",

@@ -77,10 +77,9 @@ private final class PodcastLookupDataManager: DataManager {
     var beforeReturningPodcast: ((String) -> Void)?
     private(set) var findPodcastCallCount = 0
 
-    static func make(databaseDirectory: URL) throws -> PodcastLookupDataManager {
-        let dbURL = databaseDirectory.appendingPathComponent("\(UUID().uuidString).sqlite")
-        let pool = try DatabasePool(path: dbURL.path)
-        return PodcastLookupDataManager(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
+    init(dbPath: String = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")) throws {
+        let pool = try DatabasePool(path: dbPath)
+        super.init(dbQueue: GRDBQueue(dbPool: pool, logger: DataManager.logger))
     }
 
     override public func findPodcast(uuid: String, includeUnsubscribed: Bool = false) -> Podcast? {

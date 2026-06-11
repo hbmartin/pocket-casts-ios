@@ -82,7 +82,9 @@ actor LogBuffer {
     }
 }
 
-public final class FileLog {
+// @unchecked Sendable: `logBuffer` is an actor and `publisher` is a thread-safe Combine
+// subject; there is no other mutable state.
+public final class FileLog: @unchecked Sendable {
     public enum LogError: Error {
         case logCanceled
         case logGenerationFailed
@@ -109,7 +111,7 @@ public final class FileLog {
         )
     }()
 
-    private var logBuffer: LogBuffer
+    private let logBuffer: LogBuffer
     public let publisher = PassthroughSubject<String, Never>()
 
     init(
@@ -140,7 +142,7 @@ public final class FileLog {
         }
     }
 
-    public func loadLogFileAsString(completion: @escaping (String) -> Void) {
+    public func loadLogFileAsString(completion: @escaping @Sendable (String) -> Void) {
         Task {
             let log = await logBuffer.loadLogFileAsString()
             completion(log)
@@ -156,14 +158,17 @@ public final class FileLog {
         let file = LogFilePaths.debugUploadLog
 
         return Future { [unowned self] promise in
+            // Future's promise is not @Sendable-typed, but Combine documents it as safe to
+            // call from any thread; hand it to the completion via an unchecked wrapper.
+            let promise = UncheckedSendable(promise)
             self.loadLogFileAsString { result in
                 do {
                     try result.write(toFile: file, atomically: true, encoding: String.Encoding.utf8)
                 } catch {
-                    promise(.failure(LogError.logGenerationFailed))
+                    promise.value(.failure(LogError.logGenerationFailed))
                 }
 
-                promise(.success(file))
+                promise.value(.success(file))
             }
         }
         .eraseToAnyPublisher()

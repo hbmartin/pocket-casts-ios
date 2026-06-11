@@ -1,9 +1,8 @@
 import Foundation
-    import UIKit
 
 public enum DeviceUtil {
     // Gets the identifier from the system, such as "iPhone7,1"
-    public static var identifier: String = {
+    public static let identifier: String = {
         var systemInfo = utsname()
         uname(&systemInfo)
         let mirror = Mirror(reflecting: systemInfo.machine)
@@ -16,7 +15,12 @@ public enum DeviceUtil {
     }()
 
     // The current version of the operating system (e.g. 8.4 or 9.2).
+    // Read via ProcessInfo rather than the main actor-isolated UIDevice so it stays callable from any thread.
     public static var systemVersion: String? {
-            return UIDevice.current.systemVersion
+        let version = ProcessInfo.processInfo.operatingSystemVersion
+        if version.patchVersion > 0 {
+            return "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
+        }
+        return "\(version.majorVersion).\(version.minorVersion)"
     }
 }
