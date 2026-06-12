@@ -62,19 +62,13 @@ class DBTestCase: XCTestCase {
         // iterates all unsubscribed podcasts).
         if let episode {
             await downloadManager?.cancelTasks(for: [episode])
-            if let path = downloadManager?.pathForEpisode(episode) {
-                try? FileManager.default.removeItem(atPath: path)
-            }
-            dataManager?.delete(episodeUuid: episode.uuid)
+            removeDownloadAndRow(for: episode)
         }
         if let podcast {
             dataManager?.delete(podcast: podcast)
         }
         for episode in trackedEpisodes {
-            if let path = downloadManager?.pathForEpisode(episode) {
-                try? FileManager.default.removeItem(atPath: path)
-            }
-            dataManager?.delete(episodeUuid: episode.uuid)
+            removeDownloadAndRow(for: episode)
         }
         for podcast in trackedPodcasts {
             dataManager?.delete(podcast: podcast)
@@ -86,6 +80,14 @@ class DBTestCase: XCTestCase {
             KeychainHelper.store = previousKeychainStore
         }
         try await super.tearDown()
+    }
+
+    /// Removes an episode's downloaded file (if any) and its database row.
+    private func removeDownloadAndRow(for episode: Episode) {
+        if let path = downloadManager?.pathForEpisode(episode) {
+            try? FileManager.default.removeItem(atPath: path)
+        }
+        dataManager?.delete(episodeUuid: episode.uuid)
     }
 
     private func setupDatabase() throws -> DataManager {

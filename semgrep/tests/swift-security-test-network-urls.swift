@@ -55,6 +55,21 @@ class TestNetworkUrlsFixture {
         downloadUrl = "http://127.0.0.1@evil.com/episode.mp3"
     }
 
+    func badExamplePasswordUserinfoBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "https://example.com:pass@evil.com/episode.mp3"
+    }
+
+    func badLocalhostPasswordUserinfoBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://localhost:pw@evil.com/episode.mp3"
+    }
+
+    func badLoopbackPasswordUserinfoBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://127.0.0.1:pw@evil.com/episode.mp3"
+    }
+
     func goodReservedExampleHost() {
         // ok: pocketcasts.no-real-network-hosts-in-tests
         downloadUrl = "https://example.com/remote-podcast.mp3"
@@ -78,5 +93,15 @@ class TestNetworkUrlsFixture {
     func goodLoopbackAddressWithPort() {
         // ok: pocketcasts.no-real-network-hosts-in-tests
         downloadUrl = "http://127.0.0.1:8080/episode.mp3"
+    }
+
+    func goodAtSignInPathNotUserinfo() {
+        // ok: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "https://example.com/user@domain/episode.mp3"
+    }
+
+    func goodAtSignInQueryNotUserinfo() {
+        // ok: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "https://example.com/episode.mp3?from=@mention"
     }
 }
