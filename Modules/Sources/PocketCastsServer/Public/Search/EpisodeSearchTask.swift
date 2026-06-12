@@ -4,7 +4,7 @@ struct EpisodeSearchEnvelope: Decodable {
     public let episodes: [EpisodeSearchResult]
 }
 
-public struct EpisodeSearchResult: Codable, Hashable {
+public struct EpisodeSearchResult: Codable, Hashable, Sendable {
     public let uuid: String
     public let title: String
     public let publishedDate: Date
@@ -23,7 +23,7 @@ public struct EpisodeSearchResult: Codable, Hashable {
         self.podcastTitle = podcastTitle
     }
 
-    public enum State: Codable {
+    public enum State: Codable, Sendable {
         case normal
         case archived
         case unavailable
