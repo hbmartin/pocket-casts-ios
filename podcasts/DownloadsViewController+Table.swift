@@ -99,11 +99,11 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
             if episode.downloadFailed() {
                 let optionsPicker = OptionsPicker(title: nil)
                 let retryAction = OptionAction(label: L10n.retry, icon: nil, action: {
-                    NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
+                    NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { [downloadManager = self.downloadManager] later in
                         if later {
-                            DownloadManager.shared.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
+                            downloadManager.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
                         } else {
-                            DownloadManager.shared.addToQueue(episodeUuid: episode.uuid)
+                            downloadManager.addToQueue(episodeUuid: episode.uuid)
                         }
                     }, disallowed: nil)
                 })

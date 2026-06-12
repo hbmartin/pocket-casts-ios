@@ -115,12 +115,13 @@ let package = Package(
         ),
         .target(
             name: "PocketCastsUtils",
+            dependencies: ["PocketCastsDependencyInjection"],
             path: "Sources/PocketCastsUtils",
             swiftSettings: strictConcurrencyTestableSettings
         ),
         .testTarget(
             name: "PocketCastsUtilsTests",
-            dependencies: ["PocketCastsUtils"],
+            dependencies: ["PocketCastsUtils", "PocketCastsDependencyInjection"],
             path: "Tests/PocketCastsUtilsTests",
             swiftSettings: strictConcurrencySettings
         ),

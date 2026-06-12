@@ -1,11 +1,14 @@
 import DifferenceKit
 import SwiftUI
 import PocketCastsDataModel
+import PocketCastsDependencyInjection
 import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
 class DownloadsViewController: PCViewController {
+    @Dependency(\.downloadManager) var downloadManager: any DownloadManaging
+
     var episodes = [ArraySection<String, ListEpisode>]() {
         didSet {
             refreshContentUnavailable()
@@ -281,7 +284,7 @@ class DownloadsViewController: PCViewController {
     private func pauseAllDownloads() {
         let episodeToPause = downloadingEpisodes()
         for episode in episodeToPause {
-            DownloadManager.shared.removeFromQueue(episodeUuid: episode.uuid, fireNotification: false, userInitiated: false)
+            downloadManager.removeFromQueue(episodeUuid: episode.uuid, fireNotification: false, userInitiated: false)
         }
 
         refreshView()
@@ -296,9 +299,9 @@ class DownloadsViewController: PCViewController {
             let failedList = self.failedEpisodes()
             for episode in failedList {
                 if later {
-                    DownloadManager.shared.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .notSpecified)
+                    self.downloadManager.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .notSpecified)
                 } else {
-                    DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .notSpecified)
+                    self.downloadManager.addToQueue(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .notSpecified)
                 }
             }
 
