@@ -21,6 +21,9 @@ public final class KeychainHelper: Sendable, KeychainStoring {
     private static let shared = KeychainHelper()
 
     // nonisolated(unsafe): swapped only by tests (in-memory store in setUp, restored in tearDown); the app always uses the real keychain.
+    // The swap is unsynchronized, so background work still in flight from a previous test
+    // (download delegate callbacks, sync, analytics) can race it. If CI ever shows flaky
+    // keychain reads mid-suite, suspect this seam first.
     nonisolated(unsafe) public static var store: KeychainStoring = KeychainHelper.shared
 
     @discardableResult

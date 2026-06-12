@@ -13,6 +13,10 @@ final class InMemoryKeychainStore: KeychainStoring, @unchecked Sendable {
     func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool {
         lock.lock()
         defer { lock.unlock() }
+        guard let value else {
+            // Match the real keychain: deleting a missing key fails (errSecItemNotFound).
+            return values.removeValue(forKey: key) != nil
+        }
         values[key] = value
         return true
     }

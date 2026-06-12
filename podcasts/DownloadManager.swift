@@ -90,6 +90,12 @@ class DownloadManager: NSObject, FilePathProtocol {
         _ = cellularForegroundSession
     }
 
+    func invalidate() {
+        wifiOnlyBackgroundSession.invalidateAndCancel()
+        cellularBackgroundSession.invalidateAndCancel()
+        cellularForegroundSession.invalidateAndCancel()
+    }
+
     lazy var wifiOnlyBackgroundSession: URLSession = {
         var config = makeBaseConfiguration("au.com.shiftyjelly.PCBackgroundSession")
         if FeatureFlag.useCellularNetworkApis.enabled {

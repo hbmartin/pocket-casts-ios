@@ -4,24 +4,6 @@ import PocketCastsServer
 @testable import podcasts
 
 final class PodcastManagerTests: DBTestCase {
-    private var createdPodcasts: [Podcast] = []
-    private var createdEpisodes: [Episode] = []
-
-    override func tearDown() async throws {
-        // Remove rows and downloaded files this test created so they can't leak into
-        // later tests through the shared database and download directory.
-        for episode in createdEpisodes {
-            try? FileManager.default.removeItem(atPath: DownloadManager.shared.pathForEpisode(episode))
-            dataManager.delete(episodeUuid: episode.uuid)
-        }
-        for podcast in createdPodcasts {
-            dataManager.delete(podcast: podcast)
-        }
-        createdEpisodes = []
-        createdPodcasts = []
-        try await super.tearDown()
-    }
-
     func testTaskCancellationForUnusednDeletion() async throws {
         let (podcastManager, task) = try await setUpQueuedDownload()
 
@@ -60,7 +42,7 @@ final class PodcastManagerTests: DBTestCase {
 
         let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
         XCTAssertEqual(refreshedEpisode.episodeStatus, DownloadStatus.downloaded.rawValue)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: DownloadManager.shared.pathForEpisode(refreshedEpisode)))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: downloadManager.pathForEpisode(refreshedEpisode)))
     }
 
     func testGhostCleanupDeletesGhostEpisode() throws {
@@ -86,7 +68,7 @@ final class PodcastManagerTests: DBTestCase {
 
         let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
         XCTAssertEqual(refreshedEpisode.episodeStatus, DownloadStatus.downloaded.rawValue)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: DownloadManager.shared.pathForEpisode(refreshedEpisode)))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: downloadManager.pathForEpisode(refreshedEpisode)))
     }
 
     func testUnsubscribeRemovesDownloadsInPlaylist() throws {
@@ -103,7 +85,7 @@ final class PodcastManagerTests: DBTestCase {
 
         let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
         XCTAssertEqual(refreshedEpisode.episodeStatus, DownloadStatus.notDownloaded.rawValue)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: DownloadManager.shared.pathForEpisode(refreshedEpisode)))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: downloadManager.pathForEpisode(refreshedEpisode)))
     }
 
     func testUnsubscribeRemovesDownloadsNotInPlaylist() throws {
@@ -114,7 +96,7 @@ final class PodcastManagerTests: DBTestCase {
 
         let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
         XCTAssertEqual(refreshedEpisode.episodeStatus, DownloadStatus.notDownloaded.rawValue)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: DownloadManager.shared.pathForEpisode(refreshedEpisode)))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: downloadManager.pathForEpisode(refreshedEpisode)))
     }
 
     private func makeDownloadedPodcastAndEpisode() -> (Podcast, Episode) {
@@ -137,14 +119,14 @@ final class PodcastManagerTests: DBTestCase {
 
         createDownloadedFile(for: episode)
 
-        createdPodcasts.append(podcast)
-        createdEpisodes.append(episode)
+        track(podcast: podcast)
+        track(episode: episode)
 
         return (podcast, episode)
     }
 
     private func createDownloadedFile(for episode: Episode) {
-        let path = DownloadManager.shared.pathForEpisode(episode)
+        let path = downloadManager.pathForEpisode(episode)
         let directory = (path as NSString).deletingLastPathComponent
         try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
         FileManager.default.createFile(atPath: path, contents: Data())

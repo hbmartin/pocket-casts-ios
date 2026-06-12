@@ -19,6 +19,21 @@ class DBTestCase: XCTestCase {
 
     private var previousKeychainStore: KeychainStoring!
 
+    private var trackedPodcasts: [Podcast] = []
+    private var trackedEpisodes: [Episode] = []
+
+    /// Register a podcast a test created beyond the base fixture so `tearDown`
+    /// removes its row before the next test runs.
+    func track(podcast: Podcast) {
+        trackedPodcasts.append(podcast)
+    }
+
+    /// Register an episode a test created beyond the base fixture so `tearDown`
+    /// removes its row and any downloaded file before the next test runs.
+    func track(episode: Episode) {
+        trackedEpisodes.append(episode)
+    }
+
     override func setUp() async throws {
         try await super.setUp()
         // DB-backed tests shouldn't depend on real keychain state (which can fail
@@ -40,6 +55,18 @@ class DBTestCase: XCTestCase {
         if let podcast {
             dataManager?.delete(podcast: podcast)
         }
+        for episode in trackedEpisodes {
+            if let path = downloadManager?.pathForEpisode(episode) {
+                try? FileManager.default.removeItem(atPath: path)
+            }
+            dataManager?.delete(episodeUuid: episode.uuid)
+        }
+        for podcast in trackedPodcasts {
+            dataManager?.delete(podcast: podcast)
+        }
+        trackedEpisodes = []
+        trackedPodcasts = []
+        downloadManager?.invalidate()
         if let previousKeychainStore {
             KeychainHelper.store = previousKeychainStore
         }
@@ -52,7 +79,19 @@ class DBTestCase: XCTestCase {
 
     private func setupData() throws {
         let dataManager = Self.dataManager == nil ? try setupDatabase() : Self.dataManager!
-        let downloadManager = DownloadManager(dataManager: dataManager)
+        // Each test gets its own DownloadManager, but background sessions are keyed
+        // process-wide by identifier in nsurlsessiond. Reusing the production identifiers
+        // across tests races tearDown's invalidate(): the next test's session can be born
+        // invalidated ("Task created in a session that has been invalidated"). Unique
+        // per-instance identifiers keep the sessions background-backed (so the daemon
+        // canary tests still exercise it) without colliding.
+        let downloadManager = DownloadManager(dataManager: dataManager, makeBaseConfiguration: { identifier in
+            if let identifier {
+                URLSessionConfiguration.background(withIdentifier: "\(identifier).\(UUID().uuidString)")
+            } else {
+                URLSessionConfiguration.default
+            }
+        })
         DataManager.sharedManager = dataManager
 
         let podcast = Podcast()
