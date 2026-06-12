@@ -203,7 +203,7 @@ public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
 
     // MARK: - Metadata
 
-    public struct Metadata: Decodable {
+    public struct Metadata: Decodable, Sendable {
         public let showNotes: String?
         public let image: String?
 
@@ -213,7 +213,7 @@ public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
         /// Podcast Index chapters
         public let chaptersUrl: String?
 
-        public struct EpisodeChapter: Decodable {
+        public struct EpisodeChapter: Decodable, Sendable {
             public let startTime: TimeInterval
             public let title: String?
             public let endTime: TimeInterval?
@@ -222,7 +222,7 @@ public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
         public let transcripts: [Transcript]
         public let pocketCastsTranscripts: [Transcript]?
 
-        public struct Transcript: Decodable {
+        public struct Transcript: Decodable, Sendable {
             public let url: String
             public let type: String
             public let language: String?

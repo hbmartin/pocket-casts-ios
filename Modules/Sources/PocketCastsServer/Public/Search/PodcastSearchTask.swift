@@ -18,7 +18,7 @@ struct PodcastsSearchEnvelopeResult: Decodable {
     let pollUuid: String?
 }
 
-public struct PodcastFolderSearchResult: Codable, Hashable {
+public struct PodcastFolderSearchResult: Codable, Hashable, Sendable {
     public let uuid: String
     public let title: String?
     public let author: String?
@@ -74,7 +74,7 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
         self.isLocal = false
     }
 
-    public enum Kind: Codable {
+    public enum Kind: Codable, Sendable {
         case podcast, folder
     }
 

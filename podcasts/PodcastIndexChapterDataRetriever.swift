@@ -2,11 +2,11 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-public struct PodcastIndexEvelope: Decodable {
+public struct PodcastIndexEvelope: Decodable, Sendable {
     let chapters: [PodcastIndexChapter]
 }
 
-struct PodcastIndexChapter: Decodable {
+struct PodcastIndexChapter: Decodable, Sendable {
     let title: String?
     let number: Int?
     let endTime: TimeInterval?
