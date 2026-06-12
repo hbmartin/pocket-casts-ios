@@ -1,4 +1,3 @@
-podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: capture of 'self' with non-Sendable type 'BookmarkEditViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
 podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
@@ -11,13 +10,8 @@ podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Senda
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type 'Task<[ListEpisode], Never>' cannot exit actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type '[ListEpisode]' of nonisolated property 'value' cannot be sent to actor-isolated context; this is an error in the Swift 6 language mode
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: type 'ListEpisode' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/Podcasts/Podcast Page/PodcastFeedViewModel.swift: warning: capture of 'self' with non-Sendable type 'PodcastFeedViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsServer'
-podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: capture of 'podcastList' with non-Sendable type 'SharingServerHandler.PodcastList?' in a '@Sendable' closure
 podcasts/Ratings/RatePodcastViewModel.swift: warning: capture of 'self' with non-Sendable type 'RatePodcastViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
 podcasts/Share Profile/ShareProfileViewModel.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
 podcasts/Share Profile/ShareProfileViewModel.swift: warning: capture of 'filters' with non-Sendable type '[EpisodeFilter]' in a '@Sendable' closure; this is an error in the Swift 6 language mode
 podcasts/Share Profile/ShareProfileViewModel.swift: warning: capture of 'self' with non-Sendable type 'ShareProfileViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-podcasts/Sharing/Clip/VideoExporter.swift: warning: capture of 'block' with non-Sendable type '() async throws -> Bool' in a '@Sendable' closure
 podcasts/Sharing/ShareDestination.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
-podcasts/Sharing/ShareImageView.swift: warning: capture of 'self' with non-Sendable type 'Self' in an isolated closure

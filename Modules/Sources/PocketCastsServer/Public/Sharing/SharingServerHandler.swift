@@ -19,7 +19,7 @@ public final class SharingServerHandler: @unchecked Sendable {
         }
     }
 
-    public struct PodcastList: Decodable {
+    public struct PodcastList: Decodable, Sendable {
         public let title: String?
         public let listDescription: String?
         public let podcasts: [ListPodcast]?
@@ -30,7 +30,7 @@ public final class SharingServerHandler: @unchecked Sendable {
         }
     }
 
-    public struct ListPodcast: Decodable {
+    public struct ListPodcast: Decodable, Sendable {
         public let title: String?
         public let uuid: String?
         public let podcastDescription: String?
