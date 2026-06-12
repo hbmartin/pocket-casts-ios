@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import PocketCastsUtils
 @testable import PocketCastsServer
 
 fileprivate extension URL {
@@ -12,6 +13,20 @@ fileprivate extension URL {
 }
 
 class TokenHelperTests: XCTestCase {
+    private var previousKeychainStore: KeychainStoring!
+
+    override func setUp() {
+        super.setUp()
+        // The credentials these tests store via ServerSettings are incidental — use an
+        // in-memory keychain so the tests don't depend on real keychain state.
+        previousKeychainStore = KeychainHelper.store
+        KeychainHelper.store = InMemoryKeychainStore()
+    }
+
+    override func tearDown() {
+        KeychainHelper.store = previousKeychainStore
+        super.tearDown()
+    }
 
     /// Tests the acquirePasswordToken function
     func testAcquirePasswordToken() {

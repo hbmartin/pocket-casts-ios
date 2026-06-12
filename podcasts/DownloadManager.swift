@@ -91,7 +91,7 @@ class DownloadManager: NSObject, FilePathProtocol {
     }
 
     lazy var wifiOnlyBackgroundSession: URLSession = {
-        var config = URLSessionConfiguration.background(withIdentifier: "au.com.shiftyjelly.PCBackgroundSession")
+        var config = makeBaseConfiguration("au.com.shiftyjelly.PCBackgroundSession")
         if FeatureFlag.useCellularNetworkApis.enabled {
             config.allowsCellularAccess = false
         } else {
@@ -104,7 +104,7 @@ class DownloadManager: NSObject, FilePathProtocol {
     }()
 
     lazy var cellularBackgroundSession: URLSession = {
-        var config = URLSessionConfiguration.background(withIdentifier: DownloadManager.cellBackgroundSessionId)
+        var config = makeBaseConfiguration(DownloadManager.cellBackgroundSessionId)
         if FeatureFlag.useCellularNetworkApis.enabled {
             config.allowsCellularAccess = true
         } else {
@@ -118,7 +118,7 @@ class DownloadManager: NSObject, FilePathProtocol {
     }()
 
     lazy var cellularForegroundSession: URLSession = {
-        var config = URLSessionConfiguration.default
+        var config = makeBaseConfiguration(nil)
 
         config.allowsCellularAccess = true
         addStandardConfig(to: &config)
@@ -151,8 +151,21 @@ class DownloadManager: NSObject, FilePathProtocol {
 
     let dataManager: DataManager
 
-    init(dataManager: DataManager) {
+    /// Builds the base URLSessionConfiguration for each session; `backgroundIdentifier` is nil
+    /// for foreground sessions. Injectable so tests can use ephemeral foreground sessions when
+    /// the background-session daemon (com.apple.nsurlsessiond) isn't available or relevant.
+    private let makeBaseConfiguration: (_ backgroundIdentifier: String?) -> URLSessionConfiguration
+
+    init(dataManager: DataManager,
+         makeBaseConfiguration: @escaping (_ backgroundIdentifier: String?) -> URLSessionConfiguration = { identifier in
+             if let identifier {
+                 URLSessionConfiguration.background(withIdentifier: identifier)
+             } else {
+                 URLSessionConfiguration.default
+             }
+         }) {
         self.dataManager = dataManager
+        self.makeBaseConfiguration = makeBaseConfiguration
         super.init()
 
         setupSessions()

@@ -4,6 +4,24 @@ import PocketCastsServer
 @testable import podcasts
 
 final class PodcastManagerTests: DBTestCase {
+    private var createdPodcasts: [Podcast] = []
+    private var createdEpisodes: [Episode] = []
+
+    override func tearDown() async throws {
+        // Remove rows and downloaded files this test created so they can't leak into
+        // later tests through the shared database and download directory.
+        for episode in createdEpisodes {
+            try? FileManager.default.removeItem(atPath: DownloadManager.shared.pathForEpisode(episode))
+            dataManager.delete(episodeUuid: episode.uuid)
+        }
+        for podcast in createdPodcasts {
+            dataManager.delete(podcast: podcast)
+        }
+        createdEpisodes = []
+        createdPodcasts = []
+        try await super.tearDown()
+    }
+
     func testTaskCancellationForUnusednDeletion() async throws {
         let (podcastManager, task) = try await setUpQueuedDownload()
 
@@ -29,9 +47,6 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testCleanupKeepsDownloadsInPlaylist() async throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
         let (_, episode) = makeDownloadedPodcastAndEpisode()
         let playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
@@ -64,9 +79,6 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testCleanupKeepsDownloadsNotInPlaylist() async throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
         let (_, episode) = makeDownloadedPodcastAndEpisode()
 
         let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
@@ -78,9 +90,6 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testUnsubscribeRemovesDownloadsInPlaylist() throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
         let (podcast, episode) = makeDownloadedPodcastAndEpisode()
         let playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
@@ -89,7 +98,7 @@ final class PodcastManagerTests: DBTestCase {
         dataManager.save(playlist: playlist)
         dataManager.add(episodes: [episode], to: playlist)
 
-        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
+        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager, isLoggedIn: { true })
         podcastManager.unsubscribe(podcast: podcast)
 
         let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
@@ -98,11 +107,8 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testUnsubscribeRemovesDownloadsNotInPlaylist() throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
         let (podcast, episode) = makeDownloadedPodcastAndEpisode()
-        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
+        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager, isLoggedIn: { true })
 
         podcastManager.unsubscribe(podcast: podcast)
 
@@ -130,6 +136,9 @@ final class PodcastManagerTests: DBTestCase {
         dataManager.save(episode: episode)
 
         createDownloadedFile(for: episode)
+
+        createdPodcasts.append(podcast)
+        createdEpisodes.append(episode)
 
         return (podcast, episode)
     }

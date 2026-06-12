@@ -259,10 +259,11 @@ rules:
         - "**/scripts/**/*.sh"
         - "**/semgrep/tests/*.sh"
     patterns:
-      # Catches `sed -i ''`, the attached form `sed -i''`, and `-i ''` after
-      # other flags (e.g. `sed -e ... -i ''`). `[^|\n]*` keeps the match within
-      # one command in a pipeline.
-      - pattern-regex: "\\bsed\\s(?:[^|\\n]*\\s)?-i\\s*['\\\"]{2}"
+      # Catches `sed -i ''`, the attached form `sed -i''`, bundled short flags
+      # (e.g. `sed -ni ''`), and `-i ''` after other flags (e.g. `sed -e ... -i ''`).
+      # `[^|;&\n]*` keeps the match within one command, stopping at pipes and
+      # `;`/`&&` separators so a later command's `-i ''` is not attributed to sed.
+      - pattern-regex: "\\bsed\\s(?:[^|;&\\n]*\\s)?-\\w*i\\s*['\\\"]{2}"
 
   - id: pocketcasts.swiftui-connectable-timer-publisher-must-be-state
     severity: WARNING
@@ -4376,3 +4377,21 @@ rules:
       - metavariable-regex:
           metavariable: $WRITE
           regex: ^(save\w*|bulkSave\w*|bulkSet\w*|delete\w*)$
+
+  - id: pocketcasts.no-real-network-hosts-in-tests
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Test download URLs must not point at real internet hosts — queued download tasks can hit the network for real, making tests flaky and environment-dependent. Use an RFC 2606 reserved name (example.com, *.test, *.invalid) for inert fixture URLs, or an RFC 5737 TEST-NET address (e.g. 192.0.2.1) when the connection should hang without real traffic.
+    languages: [generic]
+    paths:
+      include:
+        - "**/PocketCastsTests/**"
+        - "**/Modules/Tests/**"
+        - "**/semgrep/tests/swift-security-test-network-urls.swift"
+    patterns:
+      - pattern-regex: "(?i)downloadUrl\\s*=\\s*\"https?://(?!([a-z0-9-]+\\.)*example\\.(com|org|net)\\b|([a-z0-9-]+\\.)+(test|invalid)\\b|localhost\\b|127\\.|192\\.0\\.2\\.|198\\.51\\.100\\.|203\\.0\\.113\\.)"

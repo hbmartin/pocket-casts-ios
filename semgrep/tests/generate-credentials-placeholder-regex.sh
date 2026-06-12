@@ -21,8 +21,14 @@ sed -i'' -e 's/%{[^}]*}//g' "$credentials_file"
 # ruleid: pocketcasts.shell-bsd-sed-in-place
 sed -e 's/%{[^}]*}//g' -i '' "$credentials_file"
 
+# ruleid: pocketcasts.shell-bsd-sed-in-place
+sed -ni '' -e 's/%{[^}]*}//g' "$credentials_file"
+
 # ok: pocketcasts.shell-bsd-sed-in-place
 sed -e 's/%{[^}]*}//g' "$credentials_file" > "$credentials_file.tmp"
 
 # ok: pocketcasts.shell-bsd-sed-in-place
 sed -i.bak -e 's/%{[^}]*}//g' "$credentials_file"
+
+# ok: pocketcasts.shell-bsd-sed-in-place
+sed -e 's/%{[^}]*}//g' "$credentials_file" > "$credentials_file.tmp"; grep -i '' "$credentials_file.tmp"
