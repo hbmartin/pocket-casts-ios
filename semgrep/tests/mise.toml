@@ -21,3 +21,15 @@ run = '''
 # ok: mise.unguarded-rm-rf-shell-variable
 if [ -n "$DERIVED_DATA" ]; then rm -rf "${DERIVED_DATA}/SDKStatCaches.noindex"; fi
 '''
+
+[tasks."safe-rm-rf-non-empty-braced-guard"]
+run = '''
+# ok: mise.unguarded-rm-rf-shell-variable
+if [ -n "${DERIVED_DATA}" ]; then rm -rf "${DERIVED_DATA}/SDKStatCaches.noindex"; fi
+'''
+
+[tasks."unsafe-rm-rf-mismatched-guard"]
+run = '''
+# ruleid: mise.unguarded-rm-rf-shell-variable
+if [ -n "$SAFE_DERIVED_DATA" ]; then rm -rf "${DERIVED_DATA}/SDKStatCaches.noindex"; fi
+'''

@@ -45,6 +45,13 @@ class SelectIosSimulatorTest < Minitest::Test
     assert_equal "platform=iOS Simulator,id=ios-18-pro-max\n", stdout
   end
 
+  def test_requested_simulator_name_can_include_parentheses
+    stdout, stderr, status = run_script('SIMULATOR_OS' => '18.6.1', 'SIMULATOR_NAME' => 'iPhone SE (3rd generation)')
+
+    assert status.success?, stdout + stderr
+    assert_equal "platform=iOS Simulator,id=ios-18-se\n", stdout
+  end
+
   def test_unavailable_requested_runtime_lists_available_versions
     stdout, stderr, status = run_script('IOS_SIMULATOR_RUNTIME_VERSION' => '18.5')
 
@@ -60,7 +67,12 @@ class SelectIosSimulatorTest < Minitest::Test
       file.write(devices_json)
       file.close
 
-      Open3.capture3({ 'IOS_SIMULATOR_RUNTIME_VERSION' => nil }.merge(env), RbConfig.ruby, SCRIPT_PATH, file.path)
+      Open3.capture3(
+        { 'IOS_SIMULATOR_RUNTIME_VERSION' => nil, 'SIMULATOR_OS' => nil, 'SIMULATOR_NAME' => nil }.merge(env),
+        RbConfig.ruby,
+        SCRIPT_PATH,
+        file.path
+      )
     end
   end
 
@@ -76,6 +88,11 @@ class SelectIosSimulatorTest < Minitest::Test
           {
             'name' => 'iPhone 16 Pro Max',
             'udid' => 'ios-18-pro-max',
+            'isAvailable' => true
+          },
+          {
+            'name' => 'iPhone SE (3rd generation)',
+            'udid' => 'ios-18-se',
             'isAvailable' => true
           }
         ],

@@ -86,21 +86,21 @@ xcodebuild -project podcasts.xcodeproj \
 [tasks.test]
 description = "Run unit tests (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
-SIMULATOR_NAME="${SIMULATOR_NAME:-$(xcrun simctl list devices available | grep "iPhone" | tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$//')}"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.5}" ruby scripts/ci/select-ios-simulator.rb)"
 xcodebuild test -project podcasts.xcodeproj \
     -scheme pocketcasts \
     -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
-    -destination "platform=iOS Simulator,name=${SIMULATOR_NAME},OS=${SIMULATOR_OS:-18.5}"
+    -destination "$DESTINATION"
 '''
 
 [tasks."test:staging"]
 description = "Run unit tests (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
-SIMULATOR_NAME="${SIMULATOR_NAME:-$(xcrun simctl list devices available | grep "iPhone" | tail -1 | sed 's/^[[:space:]]*//' | sed 's/ *(.*) *$//')}"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.5}" ruby scripts/ci/select-ios-simulator.rb)"
 xcodebuild test -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
     -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
-    -destination "platform=iOS Simulator,name=${SIMULATOR_NAME},OS=${SIMULATOR_OS:-18.5}"
+    -destination "$DESTINATION"
 '''
 
 [tasks."test:scripts"]
@@ -168,16 +168,14 @@ xcodebuild -quiet analyze -project podcasts.xcodeproj \
 
 [tasks."check:concurrency"]
 description = "Build staging and fail on strict-concurrency warnings under Modules/Sources"
-shell = "bash -c"
 run = '''
-set -o pipefail
 LOG="${CONCURRENCY_WARNINGS_LOG:-/tmp/pocketcasts-concurrency-check.log}"
 xcodebuild -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
     -configuration StagingDebug \
     -destination 'generic/platform=iOS Simulator' \
     CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-    build 2>&1 | tee "$LOG" >/dev/null
+    build > "$LOG" 2>&1
 ./scripts/ci/check-concurrency-warnings.sh "$LOG"
 '''
 
