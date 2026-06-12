@@ -164,6 +164,7 @@ struct SyncSigninView: View {
 
 // MARK: - ViewModel
 
+@MainActor
 final class SyncSigninViewModel: ObservableObject {
     // Dependencies
     private let coordinator: LoginCoordinator
@@ -254,7 +255,7 @@ final class SyncSigninViewModel: ObservableObject {
 
         // show "signing in..." spinner inline; progress HUD appears *after* success like the original
         ApiServerHandler.shared.validateLogin(username: username, password: password) { [weak self] success, userId, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self else { return }
                 if !success {
                     Analytics.track(.userSignInFailed, properties: [
