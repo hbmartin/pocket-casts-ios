@@ -7,6 +7,7 @@ public enum ServerCredentials {
     // nonisolated(unsafe): written once during app startup from generated credentials.
     nonisolated(unsafe) public private(set) static var sharing = ""
 
+    // nonisolated(unsafe): written once under `lock` during app startup, alongside `sharing`.
     nonisolated(unsafe) private static var hasConfiguredSharing = false
 
     public static func configureSharing(_ value: String) {

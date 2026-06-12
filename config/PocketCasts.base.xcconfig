@@ -2,6 +2,11 @@
 
 SWIFT_VERSION = 5.0
 
+// Strict-concurrency ratchet: warnings outside Modules/Sources are gated against
+// scripts/ci/concurrency-baseline.txt (deletion-only) by scripts/ci/check-concurrency-warnings.sh.
+// See MODERNIZATION.md. Regenerate the baseline with `mise run concurrency:baseline`.
+SWIFT_STRICT_CONCURRENCY = targeted
+
 // Map our custom version values (used by the automation tooling) to the values
 // Xcode uses
 MARKETING_VERSION = $(VERSION_SHORT)

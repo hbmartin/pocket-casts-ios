@@ -4402,3 +4402,23 @@ rules:
       # reserved host can't be used as a prefix of a real one (localhost.evil.com,
       # 127.evil.com, 192.0.2.1.evil.com).
       - pattern-regex: "(?i)downloadUrl\\s*=\\s*\"https?://(?:(?=[^/?#\"\\s]*@)|(?!([a-z0-9-]+\\.)*example\\.(com|org|net)(?![a-zA-Z0-9.-])|([a-z0-9-]+\\.)+(test|invalid)(?![a-zA-Z0-9.-])|localhost(?![a-zA-Z0-9.-])|127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(?![a-zA-Z0-9.-])|192\\.0\\.2\\.\\d{1,3}(?![a-zA-Z0-9.-])|198\\.51\\.100\\.\\d{1,3}(?![a-zA-Z0-9.-])|203\\.0\\.113\\.\\d{1,3}(?![a-zA-Z0-9.-])))"
+
+  - id: pocketcasts.nonisolated-unsafe-requires-justification
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: nonisolated(unsafe) opts out of compiler data-race checking. Prefer real isolation (@MainActor, an actor, a lock, or immutable state). If it is genuinely safe, explain why in a comment mentioning nonisolated(unsafe) on the same or an immediately preceding line, e.g. `// nonisolated(unsafe):` followed by the reason.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-concurrency-escape-hatches.swift"
+    patterns:
+      - pattern-regex: 'nonisolated\(unsafe\)'
+      # Longest alternative first: a justifying comment block must extend its match through the
+      # declaration below it, or the shorter comment-only alternative wins and fails to exempt it.
+      - pattern-not-regex: '(?://[^\n]*nonisolated\(unsafe\)[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*nonisolated\(unsafe\))|(?:nonisolated\(unsafe\)[^\n]*//[^\n]*nonisolated\(unsafe\))|(?://[^\n]*nonisolated\(unsafe\))'

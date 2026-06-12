@@ -1,0 +1,74 @@
+Modules/Sources/PocketCastsDataModel/Private/DB/MainThreadDBReporter.swift: warning: static property 'reportedCallers' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
+Modules/Sources/PocketCastsDataModel/Private/Managers/EpisodeDataManager.swift: warning: capture of 'self' with non-Sendable type 'EpisodeDataManager' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+Modules/Sources/PocketCastsDataModel/Private/Managers/UserEpisodeDataManager.swift: warning: capture of 'self' with non-Sendable type 'UserEpisodeDataManager' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+Modules/Sources/PocketCastsDataModel/Private/Managers/Util/DatabaseHelper.swift: warning: static property 'migrations' is not concurrency-safe because non-'Sendable' type '[SchemaMigration]' may have shared mutable state; this is an error in the Swift 6 language mode
+Modules/Sources/PocketCastsDataModel/Public/Repositories/Repositories+Dependency.swift: warning: static property 'currentValue' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
+Modules/Sources/PocketCastsDataModel/Public/Repositories/RepositoryAsyncSupport.swift: warning: capture of 'work' with non-Sendable type '() -> T' in a '@Sendable' closure
+Modules/Tests/PocketCastsDataModelTests/DatabaseHelperMigrationTests.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
+Modules/Tests/PocketCastsDataModelTests/DatabaseHelperMigrationTests.swift: warning: static property 'testMigrations' is not concurrency-safe because non-'Sendable' type '[SchemaMigration]' may have shared mutable state; this is an error in the Swift 6 language mode
+Modules/Tests/PocketCastsServerTests/SyncTaskManualPlaylistTests.swift: warning: static property 'requestCount' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: call to main actor-isolated instance method 'waitForExpectations(timeout:handler:)' in a synchronous nonisolated context
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: capture of 'object' with non-Sendable type 'NotificationObjectTest' in a '@Sendable' closure
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: capture of 'userInfo' with non-Sendable type '[AnyHashable : String]' in a '@Sendable' closure
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: implicit capture of 'object' requires that 'NotificationObjectTest' conforms to 'Sendable'
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: implicit capture of 'userInfo' requires that '[AnyHashable : String]' conforms to 'Sendable'
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: sending value of non-Sendable type 'NotificationMainThreadTests' risks causing data races; this is an error in the Swift 6 language mode
+Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: static property 'myAwesomeNotification' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
+PocketCastsTests/Tests/Playback/Chapters/ChapterManagerTests.swift: warning: class 'EpisodeMock' must restate inherited '@unchecked Sendable' conformance
+podcasts/AppDelegate+UrlHandling.swift: warning: call to main actor-isolated instance method 'openEpisode(_:from:timestamp:)' in a synchronous nonisolated context
+podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'convertRefreshResult(result:)' in a synchronous nonisolated context
+podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: capture of 'self' with non-Sendable type 'BookmarkEditViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/ChangeEmailViewController.swift: warning: main actor-isolated property 'delegate' can not be referenced from a Sendable closure
+podcasts/DefaultPlayer.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
+podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/Episode Info Coordinator/ShowInfoCoordinator.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
+podcasts/Episode Info Coordinator/ShowInfoCoordinator.swift: warning: non-Sendable type '([Episode.Metadata.EpisodeChapter]?, [PodcastIndexChapter]?)' cannot be returned from actor-isolated implementation to caller of protocol requirement 'loadChapters(podcastUuid:episodeUuid:)'; this is an error in the Swift 6 language mode
+podcasts/Episode Info Coordinator/ShowInfoCoordinator.swift: warning: non-Sendable type 'Episode.Metadata?' of nonisolated property 'value' cannot be sent to actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/Episode Info Coordinator/ShowInfoCoordinator.swift: warning: non-Sendable type 'ShowInfoCoordinator.EpisodeTranscriptData' (aka '(transcripts: Array<Episode.Metadata.Transcript>, hasGeneratedTranscripts: Bool, isDisplayingGeneratedTranscript: Bool)') cannot be returned from actor-isolated implementation to caller of protocol requirement 'loadTranscriptsMetadata(podcastUuid:episodeUuid:)'; this is an error in the Swift 6 language mode
+podcasts/Episode Info Coordinator/ShowInfoCoordinator.swift: warning: non-Sendable type 'Task<Episode.Metadata?, any Error>' cannot exit actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
+podcasts/Episode Info Coordinator/ShowInfoCoordinator.swift: warning: type 'Episode.Metadata' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
+podcasts/LogsView.swift: warning: capture of 'self' with non-Sendable type 'LogsViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/ManageDownloadsBannerView.swift: warning: capture of 'self' with non-Sendable type 'ManageDownloadsModel?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/MediaExporter.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
+podcasts/MediaExporter.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/New Detail/PlaylistDetailViewModel/PlaylistDetailViewModel+PlayAll.swift: warning: capture of 'self' with non-Sendable type 'PlaylistDetailViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/New Detail/PlaylistDetailViewModel/PlaylistDetailViewModel.swift: warning: capture of 'block' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/New Detail/PlaylistDetailViewModel/PlaylistDetailViewModel.swift: warning: capture of 'self' with non-Sendable type 'PlaylistDetailViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/New Search/Views/Results/LocalSearchCoordinator.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsServer'
+podcasts/New Search/Views/Results/LocalSearchCoordinator.swift: warning: non-Sendable type 'Task<[EpisodeSearchResult], Never>' cannot exit main actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
+podcasts/New Search/Views/Results/LocalSearchCoordinator.swift: warning: non-Sendable type '[EpisodeSearchResult]' of nonisolated property 'value' cannot be sent to main actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/New Search/Views/Results/LocalSearchCoordinator.swift: warning: type 'EpisodeSearchResult' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
+podcasts/New Search/Views/Results/LocalSearchViewModel.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsServer'
+podcasts/New Search/Views/Results/LocalSearchViewModel.swift: warning: non-Sendable type 'Task<[PodcastFolderSearchResult], Never>' cannot exit main actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
+podcasts/New Search/Views/Results/LocalSearchViewModel.swift: warning: non-Sendable type '[PodcastFolderSearchResult]' of nonisolated property 'value' cannot be sent to main actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/New Search/Views/Results/LocalSearchViewModel.swift: warning: type 'PodcastFolderSearchResult' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
+podcasts/Onboarding/OnboardingRecommendationsView.swift: warning: capture of 'self' with non-Sendable type 'RecommendationsViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/PlaybackManager.swift: warning: capture of 'self' with non-Sendable type 'PlaybackManager?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/PlaylistCellViewModel.swift: warning: capture of 'self' with non-Sendable type 'PlaylistCellViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type 'ImageManager' of property 'imageManager' cannot exit actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type 'Task<[ListEpisode], Never>' cannot exit actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
+podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type '[ListEpisode]' of nonisolated property 'value' cannot be sent to actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: type 'ListEpisode' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
+podcasts/PodcastIndexChapterDataRetriever.swift: warning: non-Sendable type 'PodcastIndexEvelope' of nonisolated property 'value' cannot be sent to actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/PodcastIndexChapterDataRetriever.swift: warning: non-Sendable type 'Task<PodcastIndexEvelope, any Error>' cannot exit actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
+podcasts/PodcastIndexChapterDataRetriever.swift: warning: type 'PodcastIndexEvelope' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
+podcasts/Podcasts/All Podcasts/PodcastListViewController+AddPodcast.swift: warning: call to main actor-isolated instance method 'searchAndAddPodcast(feedURLStrings:index:loadingAlert:lastErrorMessage:)' in a synchronous nonisolated context
+podcasts/Podcasts/All Podcasts/PodcastListViewController+AddPodcast.swift: warning: capture of 'loadingAlert' with non-Sendable type 'ShiftyLoadingAlert' in an isolated closure
+podcasts/Podcasts/Podcast Page/PodcastFeedViewModel.swift: warning: capture of 'self' with non-Sendable type 'PodcastFeedViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Podcasts/Podcast Page/PodcastViewController+NetworkLoad.swift: warning: call to main actor-isolated instance method 'loadLocalEpisodes(podcast:animated:)' in a synchronous nonisolated context
+podcasts/Podcasts/Podcast Page/PodcastViewController+Search.swift: warning: call to main actor-isolated instance method 'showSearchResults' in a synchronous nonisolated context
+podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsServer'
+podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: capture of 'podcastList' with non-Sendable type 'SharingServerHandler.PodcastList?' in a '@Sendable' closure
+podcasts/Ratings/PodcastRatingViewModel.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsServer'
+podcasts/Ratings/PodcastRatingViewModel.swift: warning: capture of 'rating' with non-Sendable type 'PodcastRating?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Ratings/PodcastRatingViewModel.swift: warning: capture of 'self' with non-Sendable type 'PodcastRatingViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Ratings/RatePodcastViewModel.swift: warning: capture of 'self' with non-Sendable type 'RatePodcastViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Share Profile/ShareProfileViewModel.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
+podcasts/Share Profile/ShareProfileViewModel.swift: warning: capture of 'filters' with non-Sendable type '[EpisodeFilter]' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Share Profile/ShareProfileViewModel.swift: warning: capture of 'self' with non-Sendable type 'ShareProfileViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Sharing/Clip/VideoExporter.swift: warning: capture of 'block' with non-Sendable type '() async throws -> Bool' in a '@Sendable' closure
+podcasts/Sharing/ShareDestination.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
+podcasts/Sharing/ShareImageView.swift: warning: capture of 'self' with non-Sendable type 'Self' in an isolated closure
+podcasts/Syncing/SyncSigninView.swift: warning: capture of 'self' with non-Sendable type 'SyncSigninViewModel?' in a '@Sendable' closure
+podcasts/TranscriptExcerptView.swift: warning: capture of 'self' with non-Sendable type 'MockTranscriptExcerptViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+podcasts/Utilities/NotificationsHelper.swift: warning: capture of 'action' with non-Sendable type '((any BaseEpisode)?) -> Void' in a '@Sendable' closure
