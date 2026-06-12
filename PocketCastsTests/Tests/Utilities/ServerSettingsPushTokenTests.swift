@@ -4,7 +4,7 @@ import XCTest
 /// Intentionally runs against the real keychain (no `InMemoryKeychainStore`) — this is
 /// the integration canary for keychain availability. If it fails with OSStatus -34018
 /// while other tests pass, the test host's code signing/entitlements are broken, not
-/// the code under test. See ci_improvements.md.
+/// the code under test. See docs/CIImprovements.md.
 final class ServerSettingsPushTokenTests: XCTestCase {
 
     override func setUp() {

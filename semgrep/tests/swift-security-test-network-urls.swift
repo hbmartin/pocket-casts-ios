@@ -40,6 +40,21 @@ class TestNetworkUrlsFixture {
         downloadUrl = "http://192.0.2.1.evil.com/episode.mp3"
     }
 
+    func badExampleUserinfoBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "https://example.com@evil.com/episode.mp3"
+    }
+
+    func badLocalhostUserinfoBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://localhost@evil.com/episode.mp3"
+    }
+
+    func badLoopbackUserinfoBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://127.0.0.1@evil.com/episode.mp3"
+    }
+
     func goodReservedExampleHost() {
         // ok: pocketcasts.no-real-network-hosts-in-tests
         downloadUrl = "https://example.com/remote-podcast.mp3"
