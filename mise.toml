@@ -129,26 +129,8 @@ semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "se
 '''
 
 [tasks."semgrep:tests"]
-description = "Run Semgrep rule tests"
-run = [
-    "semgrep test --config semgrep/pocket-casts.yml semgrep/tests/pocket-casts-web-opening.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/mise.toml",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-insecure-storage.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/pocket-casts-keychain.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-urlhelper.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-concurrency.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-pr-feedback.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-zendesk-wordpress.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-sql-interpolation.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/swift-security-fire-and-forget-save.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/github-actions-security.yml",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/Main/MainTabBarController.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/ProfileViewController.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedPlusLockedInfo.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedLegacyPayment.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/podcasts/RemovedUserSatisfactionSurvey.swift",
-    "semgrep test --config semgrep/swift-security.yml semgrep/tests/generate-credentials-placeholder-regex.sh",
-]
+description = "Run Semgrep rule tests (fixture list lives in scripts/ci/run-semgrep-tests.sh, shared with CI)"
+run = "./scripts/ci/run-semgrep-tests.sh"
 
 # -----------------------------------------------------------------------------
 # Static analysis

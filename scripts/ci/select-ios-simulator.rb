@@ -22,10 +22,17 @@ devices_by_runtime.each do |runtime, devices|
 
   devices.each do |device|
     next unless device['isAvailable']
-    next unless device['name'].start_with?('iPhone')
 
-    runtime_has_available_iphone = true
-    next if requested_simulator_name && device['name'] != requested_simulator_name
+    is_iphone = device['name'].start_with?('iPhone')
+    runtime_has_available_iphone = true if is_iphone
+
+    # An explicit SIMULATOR_NAME may target any device type (e.g. an iPad);
+    # without one, only iPhones are considered.
+    if requested_simulator_name
+      next unless device['name'] == requested_simulator_name
+    else
+      next unless is_iphone
+    end
 
     if requested_runtime_version_components &&
        version.take(requested_runtime_version_components.length) != requested_runtime_version_components
@@ -40,8 +47,9 @@ devices_by_runtime.each do |runtime, devices|
 end
 
 if candidates.empty?
-  message = requested_runtime_version ? "No available iPhone simulator found for iOS #{requested_runtime_version}" : 'No available iPhone simulator found'
-  message += " named #{requested_simulator_name}" if requested_simulator_name
+  device_description = requested_simulator_name ? "simulator named #{requested_simulator_name}" : 'iPhone simulator'
+  message = "No available #{device_description} found"
+  message += " for iOS #{requested_runtime_version}" if requested_runtime_version
   unless available_runtime_versions.empty?
     message += ". Available iOS simulator runtimes: #{available_runtime_versions.uniq.join(', ')}"
   end

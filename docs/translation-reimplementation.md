@@ -28,12 +28,6 @@ That GlotPress project no longer exists. As part of removing it:
   `zendeskNewUrl`, `dotcomSecret`) were removed from the credentials template and
   secrets pipeline. (Zendesk and the WordPress.com "dotcom" secret were tied to the
   same Automattic integration that hosted GlotPress.)
-- A Semgrep guard rule,
-  [`pocketcasts.no-zendesk-or-wordpress-integration`](../semgrep/swift-security.yml),
-  now fails CI if any of those credentials, a `import Zendesk*`, or a
-  `translate.wordpress.com` / `wordpress-mobile` URL is reintroduced. When you wire up
-  a replacement, **update or scope that rule** rather than deleting it, so the old
-  WordPress/Zendesk endpoints stay forbidden while the new source is allowed.
 
 ## Current state
 
@@ -87,15 +81,13 @@ working pipeline.
   [`podcasts/Credentials/ApiCredentials.tpl`](../podcasts/Credentials/ApiCredentials.tpl),
   wire it through `replace_secrets.rb`, and extend
   [`scripts/tests/generate_credentials_test.rb`](../scripts/tests/generate_credentials_test.rb).
-  **Do not** reuse the old `zendesk_*` / `dotcom_secret` key names — the Semgrep guard
-  will reject them.
+  Use new platform-specific key names instead of the old `zendesk_*` /
+  `dotcom_secret` names.
 - **Fastlane:** re-create the deleted upload/download/progress lanes (and a source-
   string export equivalent to the old `update_app_store_strings`) against the new
   source, and re-add their calls in `code_freeze`, `new_beta_release`, and
   `finalize_release`. Use the prior commit that removed them as a reference for the
   expected behavior.
-- **Semgrep:** narrow `pocketcasts.no-zendesk-or-wordpress-integration` so it still
-  blocks the old endpoints but permits the new platform's host/credentials.
 - **Docs:** update [`docs/localization.md`](./localization.md) and
   [`docs/ReleaseProcess.md`](./ReleaseProcess.md) once the pipeline is live.
 

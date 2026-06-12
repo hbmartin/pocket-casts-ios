@@ -15,5 +15,14 @@ placeholders=$(grep -E 'static let [a-zA-Z0-9_]+[^=]*=[[:space:]]*"%\{[^}]*\}"' 
 # ruleid: pocketcasts.shell-bsd-sed-in-place
 sed -i '' -e 's/%{[^}]*}//g' "$credentials_file"
 
+# ruleid: pocketcasts.shell-bsd-sed-in-place
+sed -i'' -e 's/%{[^}]*}//g' "$credentials_file"
+
+# ruleid: pocketcasts.shell-bsd-sed-in-place
+sed -e 's/%{[^}]*}//g' -i '' "$credentials_file"
+
 # ok: pocketcasts.shell-bsd-sed-in-place
 sed -e 's/%{[^}]*}//g' "$credentials_file" > "$credentials_file.tmp"
+
+# ok: pocketcasts.shell-bsd-sed-in-place
+sed -i.bak -e 's/%{[^}]*}//g' "$credentials_file"

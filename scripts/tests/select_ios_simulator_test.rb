@@ -52,6 +52,20 @@ class SelectIosSimulatorTest < Minitest::Test
     assert_equal "platform=iOS Simulator,id=ios-18-se\n", stdout
   end
 
+  def test_requested_simulator_name_can_target_non_iphone_devices
+    stdout, stderr, status = run_script('SIMULATOR_NAME' => 'iPad Pro')
+
+    assert status.success?, stdout + stderr
+    assert_equal "platform=iOS Simulator,id=ipad-26-pro\n", stdout
+  end
+
+  def test_unknown_requested_simulator_name_reports_name_in_error
+    stdout, stderr, status = run_script('SIMULATOR_NAME' => 'iPhone 99')
+
+    refute status.success?, stdout + stderr
+    assert_match(/No available simulator named iPhone 99 found/, stderr)
+  end
+
   def test_unavailable_requested_runtime_lists_available_versions
     stdout, stderr, status = run_script('IOS_SIMULATOR_RUNTIME_VERSION' => '18.5')
 
