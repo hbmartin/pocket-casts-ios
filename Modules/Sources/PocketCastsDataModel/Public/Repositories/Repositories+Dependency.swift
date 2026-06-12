@@ -6,31 +6,38 @@ import PocketCastsDependencyInjection
 // engine can be swapped in here without touching consumers.
 
 struct UpNextRepositoryKey: DependencyKey {
-    static var currentValue: any UpNextRepository = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any UpNextRepository = DataManager.sharedManager
 }
 
 struct PodcastRepositoryKey: DependencyKey {
-    static var currentValue: any PodcastRepository = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any PodcastRepository = DataManager.sharedManager
 }
 
 struct EpisodeRepositoryKey: DependencyKey {
-    static var currentValue: any EpisodeRepository = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any EpisodeRepository = DataManager.sharedManager
 }
 
 struct UserEpisodeRepositoryKey: DependencyKey {
-    static var currentValue: any UserEpisodeRepository = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any UserEpisodeRepository = DataManager.sharedManager
 }
 
 struct PlaylistRepositoryKey: DependencyKey {
-    static var currentValue: any PlaylistRepository = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any PlaylistRepository = DataManager.sharedManager
 }
 
 struct FolderRepositoryKey: DependencyKey {
-    static var currentValue: any FolderRepository = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any FolderRepository = DataManager.sharedManager
 }
 
 struct DataMaintenanceKey: DependencyKey {
-    static var currentValue: any DataMaintenance = DataManager.sharedManager
+    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
+    nonisolated(unsafe) static var currentValue: any DataMaintenance = DataManager.sharedManager
 }
 
 public extension DefaultDependencyContainer {
