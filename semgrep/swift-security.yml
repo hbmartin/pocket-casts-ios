@@ -4376,3 +4376,23 @@ rules:
       - metavariable-regex:
           metavariable: $WRITE
           regex: ^(save\w*|bulkSave\w*|bulkSet\w*|delete\w*)$
+
+  - id: pocketcasts.nonisolated-unsafe-requires-justification
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: nonisolated(unsafe) opts out of compiler data-race checking. Prefer real isolation (@MainActor, an actor, a lock, or immutable state). If it is genuinely safe, explain why in a comment mentioning nonisolated(unsafe) on the same or an immediately preceding line, e.g. `// nonisolated(unsafe):` followed by the reason.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-concurrency-escape-hatches.swift"
+    patterns:
+      - pattern-regex: 'nonisolated\(unsafe\)'
+      # Longest alternative first: a justifying comment block must extend its match through the
+      # declaration below it, or the shorter comment-only alternative wins and fails to exempt it.
+      - pattern-not-regex: '(?://[^\n]*nonisolated\(unsafe\)[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*nonisolated\(unsafe\))|(?:nonisolated\(unsafe\)[^\n]*//[^\n]*nonisolated\(unsafe\))|(?://[^\n]*nonisolated\(unsafe\))'

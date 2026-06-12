@@ -2,6 +2,7 @@ import Foundation
 
 public class LocalizationHelper {
     private static let providerLock = NSLock()
+    // nonisolated(unsafe): all access goes through `provider`, which holds providerLock.
     nonisolated(unsafe) private static var storedProvider: InternationalizationProvider?
 
     public static var provider: InternationalizationProvider? {

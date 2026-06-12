@@ -28,6 +28,7 @@ for fixture in \
   semgrep/tests/swift-security-pr-feedback.swift \
   semgrep/tests/swift-security-sql-interpolation.swift \
   semgrep/tests/swift-security-fire-and-forget-save.swift \
+  semgrep/tests/swift-security-concurrency-escape-hatches.swift \
   semgrep/tests/github-actions-security.yml \
   semgrep/tests/podcasts/Main/MainTabBarController.swift \
   semgrep/tests/podcasts/ProfileViewController.swift \
