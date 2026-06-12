@@ -30,9 +30,14 @@ class PodcastManager: NSObject {
     let dataManager: DataManager
     let downloadManager: DownloadManager
 
-    init(dataManager: DataManager, downloadManager: DownloadManager) {
+    /// Injectable so tests can declare login state directly instead of writing a keychain email
+    /// and depending on real keychain behavior.
+    let isLoggedIn: () -> Bool
+
+    init(dataManager: DataManager, downloadManager: DownloadManager, isLoggedIn: @escaping () -> Bool = SyncManager.isUserLoggedIn) {
         self.dataManager = dataManager
         self.downloadManager = downloadManager
+        self.isLoggedIn = isLoggedIn
     }
 
     // MARK: - Notifications

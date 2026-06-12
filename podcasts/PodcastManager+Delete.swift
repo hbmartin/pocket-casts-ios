@@ -7,7 +7,7 @@ extension PodcastManager {
     func unsubscribe(podcast: Podcast) {
         let savedFolderUuid = podcast.folderUuid
 
-        if SyncManager.isUserLoggedIn() {
+        if isLoggedIn() {
             let episodes = dataManager.allEpisodesForPodcast(id: podcast.id)
             for episode in episodes {
                 EpisodeManager.deleteDownloadedFiles(episode: episode)

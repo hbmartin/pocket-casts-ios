@@ -1,5 +1,6 @@
 import XCTest
 @testable import PocketCastsDataModel
+import PocketCastsUtils
 @testable import podcasts
 
 class DBTestCase: XCTestCase {
@@ -16,9 +17,33 @@ class DBTestCase: XCTestCase {
     var podcast: Podcast!
     var episode: Episode!
 
+    private var previousKeychainStore: KeychainStoring!
+
     override func setUp() async throws {
         try await super.setUp()
+        // DB-backed tests shouldn't depend on real keychain state (which can fail
+        // wholesale in CI). ServerSettingsPushTokenTests stays on the real keychain
+        // as the integration canary.
+        previousKeychainStore = KeychainHelper.store
+        KeychainHelper.store = InMemoryKeychainStore()
         try setupData()
+    }
+
+    override func tearDown() async throws {
+        // Cancel any download tasks the test queued and remove the rows it created,
+        // so leftovers can't leak into later tests (e.g. checkForUnusedPodcasts
+        // iterates all unsubscribed podcasts).
+        if let episode {
+            await downloadManager?.cancelTasks(for: [episode])
+            dataManager?.delete(episodeUuid: episode.uuid)
+        }
+        if let podcast {
+            dataManager?.delete(podcast: podcast)
+        }
+        if let previousKeychainStore {
+            KeychainHelper.store = previousKeychainStore
+        }
+        try await super.tearDown()
     }
 
     private func setupDatabase() throws -> DataManager {
@@ -43,7 +68,10 @@ class DBTestCase: XCTestCase {
         episode.podcastUuid = podcast.uuid
         episode.podcast_id = podcast.id
         episode.addedDate = podcast.addedDate
-        episode.downloadUrl = "http://google.com"
+        // RFC 5737 TEST-NET address: never routed publicly, so connection attempts hang
+        // instead of succeeding or failing fast. That keeps queued download tasks in the
+        // .running state long enough for cancellation tests, without real network traffic.
+        episode.downloadUrl = "http://192.0.2.1/episode.mp3"
         episode.playingStatus = PlayingStatus.notPlayed.rawValue
 
         dataManager.save(episode: episode)

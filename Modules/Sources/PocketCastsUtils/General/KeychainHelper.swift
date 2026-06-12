@@ -1,6 +1,16 @@
 import Foundation
 
-public final class KeychainHelper: Sendable {
+/// Abstraction over keychain storage so unit tests can substitute an in-memory store.
+/// The real implementation is `KeychainHelper`; keep at least one integration test
+/// (ServerSettingsPushTokenTests) on the real keychain to catch environment issues
+/// such as missing code-signing entitlements (-34018) in CI.
+public protocol KeychainStoring: Sendable {
+    @discardableResult
+    func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool
+    func string(for key: String) throws -> String?
+}
+
+public final class KeychainHelper: Sendable, KeychainStoring {
 
     public enum KeychainError: Error {
         case status(OSStatus)
@@ -10,26 +20,25 @@ public final class KeychainHelper: Sendable {
 
     private static let shared = KeychainHelper()
 
+    // nonisolated(unsafe): swapped only by tests (in-memory store in setUp, restored in tearDown); the app always uses the real keychain.
+    nonisolated(unsafe) public static var store: KeychainStoring = KeychainHelper.shared
+
     @discardableResult
     public class func save(string: String?, key: String, accessibility: CFTypeRef) -> Bool {
-        KeychainHelper.shared.save(value: string, key: key, accessibility: accessibility)
+        store.save(value: string, key: key, accessibility: accessibility)
     }
 
     @discardableResult
     public class func removeKey(_ key: String) -> Bool {
         // the accessibility flag is ignored on saving a nil value, so it's safe for this helper to put whatever in that field
-        KeychainHelper.shared.save(value: nil, key: key, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        store.save(value: nil, key: key, accessibility: kSecAttrAccessibleAfterFirstUnlock)
     }
 
     public class func string(for key: String) throws -> String? {
-        try KeychainHelper.shared.string(for: key)
+        try store.string(for: key)
     }
 
-    private func save(string: String?, key: String, accessibility: CFTypeRef) -> Bool {
-        save(value: string, key: key, accessibility: accessibility)
-    }
-
-    private func string(for key: String) throws -> String? {
+    public func string(for key: String) throws -> String? {
         let fullKey = prefix + key
 
         var query = createQuery()
@@ -53,7 +62,8 @@ public final class KeychainHelper: Sendable {
         return String(data: data, encoding: String.Encoding.utf8)
     }
 
-    private func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool {
+    @discardableResult
+    public func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool {
         let fullKey = prefix + key
 
         // If the value is nil, delete the item
@@ -61,6 +71,10 @@ public final class KeychainHelper: Sendable {
             var query = createService()
             query[kSecAttrService as String] = fullKey
             let status = SecItemDelete(query as CFDictionary)
+
+            if status != errSecSuccess, status != errSecItemNotFound {
+                FileLog.shared.addMessage("KeychainHelper: Failed to delete \(key) osstatus: \(status)")
+            }
 
             return status == errSecSuccess
         }
@@ -84,6 +98,10 @@ public final class KeychainHelper: Sendable {
             if status == errSecDuplicateItem {
                 status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
             }
+        }
+
+        if status != errSecSuccess {
+            FileLog.shared.addMessage("KeychainHelper: Failed to save \(key) osstatus: \(status)")
         }
 
         return status == errSecSuccess

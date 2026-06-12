@@ -18,19 +18,21 @@ devices_by_runtime.each do |runtime, devices|
 
   version = runtime.scan(/\d+/).map(&:to_i)
   version_string = version.join('.')
-  runtime_has_available_iphone = false
+  runtime_has_candidate_device = false
 
   devices.each do |device|
     next unless device['isAvailable']
 
     is_iphone = device['name'].start_with?('iPhone')
-    runtime_has_available_iphone = true if is_iphone
 
     # An explicit SIMULATOR_NAME may target any device type (e.g. an iPad);
-    # without one, only iPhones are considered.
+    # without one, only iPhones are considered. The same scope decides which
+    # runtimes the not-found error lists as available.
     if requested_simulator_name
+      runtime_has_candidate_device = true
       next unless device['name'] == requested_simulator_name
     else
+      runtime_has_candidate_device = true if is_iphone
       next unless is_iphone
     end
 
@@ -43,7 +45,7 @@ devices_by_runtime.each do |runtime, devices|
     candidates << [version, preference, device['name'], device['udid']]
   end
 
-  available_runtime_versions << version_string if runtime_has_available_iphone
+  available_runtime_versions << version_string if runtime_has_candidate_device
 end
 
 if candidates.empty?

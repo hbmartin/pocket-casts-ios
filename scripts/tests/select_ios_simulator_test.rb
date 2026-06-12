@@ -66,12 +66,20 @@ class SelectIosSimulatorTest < Minitest::Test
     assert_match(/No available simulator named iPhone 99 found/, stderr)
   end
 
+  def test_unknown_requested_simulator_name_lists_runtimes_with_any_device
+    stdout, stderr, status = run_script('SIMULATOR_NAME' => 'iPad Air 13-inch')
+
+    refute status.success?, stdout + stderr
+    assert_match(/Available iOS simulator runtimes: 17\.5, 18\.6\.1, 26\.5/, stderr)
+  end
+
   def test_unavailable_requested_runtime_lists_available_versions
     stdout, stderr, status = run_script('IOS_SIMULATOR_RUNTIME_VERSION' => '18.5')
 
     refute status.success?, stdout + stderr
     assert_match(/No available iPhone simulator found for iOS 18\.5/, stderr)
     assert_match(/Available iOS simulator runtimes: 18\.6\.1, 26\.5/, stderr)
+    refute_match(/17\.5/, stderr, 'iPad-only runtimes must not be listed for iPhone requests')
   end
 
   private
@@ -93,6 +101,13 @@ class SelectIosSimulatorTest < Minitest::Test
   def devices_json
     JSON.generate(
       'devices' => {
+        'com.apple.CoreSimulator.SimRuntime.iOS-17-5' => [
+          {
+            'name' => 'iPad mini (6th generation)',
+            'udid' => 'ipad-17-mini',
+            'isAvailable' => true
+          }
+        ],
         'com.apple.CoreSimulator.SimRuntime.iOS-18-6-1' => [
           {
             'name' => 'iPhone 16',
