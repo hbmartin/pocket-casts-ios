@@ -3,6 +3,18 @@ import XCTest
 import PocketCastsUtils
 @testable import podcasts
 
+extension DownloadManager {
+    /// Terminal: `invalidateAndCancel()` permanently kills the sessions and the lazy
+    /// vars never rebuild (they're realized in `init`). Test-only on purpose — calling
+    /// this on `DownloadManager.shared` would silently break all downloads for the
+    /// rest of the process, so it must not exist in the app target.
+    func invalidate() {
+        wifiOnlyBackgroundSession.invalidateAndCancel()
+        cellularBackgroundSession.invalidateAndCancel()
+        cellularForegroundSession.invalidateAndCancel()
+    }
+}
+
 class DBTestCase: XCTestCase {
     // We use a single DataManager instance for tests based on DBTestCase,
     // since some tests interact with the download logic.
@@ -50,6 +62,9 @@ class DBTestCase: XCTestCase {
         // iterates all unsubscribed podcasts).
         if let episode {
             await downloadManager?.cancelTasks(for: [episode])
+            if let path = downloadManager?.pathForEpisode(episode) {
+                try? FileManager.default.removeItem(atPath: path)
+            }
             dataManager?.delete(episodeUuid: episode.uuid)
         }
         if let podcast {
