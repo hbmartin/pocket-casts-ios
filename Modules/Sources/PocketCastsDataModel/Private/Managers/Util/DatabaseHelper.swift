@@ -1,9 +1,9 @@
 import Foundation
 import PocketCastsUtils
 
-struct SchemaMigration {
+struct SchemaMigration: Sendable {
     let toVersion: Int32
-    let migrate: (PCDatabase) throws -> Void
+    let migrate: @Sendable (PCDatabase) throws -> Void
 }
 
 class DatabaseHelper {

@@ -6,7 +6,8 @@ import PocketCastsUtils
 /// so offenders can be found and moved to background queues. DEBUG builds only.
 enum MainThreadDBReporter {
     private static let lock = NSLock()
-    private static var reportedCallers = Set<String>()
+    // nonisolated(unsafe): all access is guarded by `lock`.
+    nonisolated(unsafe) private static var reportedCallers = Set<String>()
 
     static func reportIfNeeded(operation: StaticString = #function) {
         guard Thread.isMainThread, FeatureFlag.logMainThreadDatabaseAccess.enabled else { return }

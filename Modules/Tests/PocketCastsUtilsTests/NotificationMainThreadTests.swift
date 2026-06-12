@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsUtils
 import XCTest
 
+@MainActor
 final class NotificationMainThreadTests: XCTestCase {
     func test_notification_posts_on_main_thread() {
         expectation(forNotification: .myAwesomeNotification, object: nil) { _ in
@@ -29,7 +30,7 @@ final class NotificationMainThreadTests: XCTestCase {
     }
 
     func test_notification_passes_user_info() {
-        let userInfo: [AnyHashable: String] = ["hello": "world"]
+        let userInfo: [String: String] = ["hello": "world"]
 
         expectation(forNotification: .myAwesomeNotification, object: nil) { notification in
             guard let notificationInfo = try? XCTUnwrap(notification.userInfo) as? [AnyHashable: String] else {
@@ -46,10 +47,10 @@ final class NotificationMainThreadTests: XCTestCase {
 }
 
 private extension Notification.Name {
-    static var myAwesomeNotification = Notification.Name("Unit.Testing.Is.Awesome")
+    static let myAwesomeNotification = Notification.Name("Unit.Testing.Is.Awesome")
 }
 
-private class NotificationObjectTest: Equatable {
+private final class NotificationObjectTest: Equatable, Sendable {
     let identifier: String
     init(identifier: String) {
         self.identifier = identifier

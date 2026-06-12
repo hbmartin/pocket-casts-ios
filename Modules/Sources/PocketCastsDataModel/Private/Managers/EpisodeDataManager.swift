@@ -2,7 +2,7 @@ import PocketCastsUtils
 import Foundation
 import GRDB
 
-class EpisodeDataManager {
+final class EpisodeDataManager: Sendable {
     /// Legacy column names for non-GRDB code path.
     let columnNames = [
         "id",
