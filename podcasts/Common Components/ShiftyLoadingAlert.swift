@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 class ShiftyLoadingAlert {
     private var titleToSet = ""
     var title = "" {

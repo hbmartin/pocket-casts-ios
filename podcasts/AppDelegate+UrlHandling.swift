@@ -451,7 +451,9 @@ extension AppDelegate {
                 openEpisode(episodeUuid, from: podcast, timestamp: timestamp)
             } else { // if we're not subscribed, than it's possible our local copy is out of date, so we'll need to update it first
                 ServerPodcastManager.shared.updatePodcastIfRequired(podcast: podcast) { _ in
-                    self.openEpisode(episodeUuid, from: podcast, timestamp: timestamp)
+                    Task { @MainActor in
+                        self.openEpisode(episodeUuid, from: podcast, timestamp: timestamp)
+                    }
                 }
             }
 

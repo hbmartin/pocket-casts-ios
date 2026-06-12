@@ -1,7 +1,4 @@
-podcasts/AppDelegate+UrlHandling.swift: warning: call to main actor-isolated instance method 'openEpisode(_:from:timestamp:)' in a synchronous nonisolated context
-podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'convertRefreshResult(result:)' in a synchronous nonisolated context
 podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: capture of 'self' with non-Sendable type 'BookmarkEditViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-podcasts/ChangeEmailViewController.swift: warning: main actor-isolated property 'delegate' can not be referenced from a Sendable closure
 podcasts/DefaultPlayer.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
 podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
@@ -14,11 +11,7 @@ podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Senda
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type 'Task<[ListEpisode], Never>' cannot exit actor-isolated context in call to nonisolated property 'value'; this is an error in the Swift 6 language mode
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: non-Sendable type '[ListEpisode]' of nonisolated property 'value' cannot be sent to actor-isolated context; this is an error in the Swift 6 language mode
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: type 'ListEpisode' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/Podcasts/All Podcasts/PodcastListViewController+AddPodcast.swift: warning: call to main actor-isolated instance method 'searchAndAddPodcast(feedURLStrings:index:loadingAlert:lastErrorMessage:)' in a synchronous nonisolated context
-podcasts/Podcasts/All Podcasts/PodcastListViewController+AddPodcast.swift: warning: capture of 'loadingAlert' with non-Sendable type 'ShiftyLoadingAlert' in an isolated closure
 podcasts/Podcasts/Podcast Page/PodcastFeedViewModel.swift: warning: capture of 'self' with non-Sendable type 'PodcastFeedViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-podcasts/Podcasts/Podcast Page/PodcastViewController+NetworkLoad.swift: warning: call to main actor-isolated instance method 'loadLocalEpisodes(podcast:animated:)' in a synchronous nonisolated context
-podcasts/Podcasts/Podcast Page/PodcastViewController+Search.swift: warning: call to main actor-isolated instance method 'showSearchResults' in a synchronous nonisolated context
 podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsServer'
 podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: capture of 'podcastList' with non-Sendable type 'SharingServerHandler.PodcastList?' in a '@Sendable' closure
 podcasts/Ratings/RatePodcastViewModel.swift: warning: capture of 'self' with non-Sendable type 'RatePodcastViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode
@@ -28,4 +21,3 @@ podcasts/Share Profile/ShareProfileViewModel.swift: warning: capture of 'self' w
 podcasts/Sharing/Clip/VideoExporter.swift: warning: capture of 'block' with non-Sendable type '() async throws -> Bool' in a '@Sendable' closure
 podcasts/Sharing/ShareDestination.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
 podcasts/Sharing/ShareImageView.swift: warning: capture of 'self' with non-Sendable type 'Self' in an isolated closure
-podcasts/Utilities/NotificationsHelper.swift: warning: capture of 'action' with non-Sendable type '((any BaseEpisode)?) -> Void' in a '@Sendable' closure

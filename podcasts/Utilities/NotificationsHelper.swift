@@ -219,14 +219,17 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         if let existingEpisode = DataManager.sharedManager.findEpisode(uuid: episodeUuid) {
             action(existingEpisode)
         } else {
+            // The refresh completion is @Sendable but the action closure is invoked exactly once,
+            // on the main queue; the unchecked box documents that single cross-thread hand-off.
+            let action = UncheckedSendable(action)
             RefreshManager.shared.refreshPodcasts(completion: { _ in
                 if let episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid) {
                     DispatchQueue.main.async {
-                        action(episode)
+                        action.value(episode)
                     }
                 } else {
                     DispatchQueue.main.async {
-                        action(nil)
+                        action.value(nil)
                     }
                 }
             })

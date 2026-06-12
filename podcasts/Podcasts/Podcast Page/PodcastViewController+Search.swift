@@ -7,7 +7,9 @@ extension PodcastViewController {
 
         let search = CacheServerHandler.EpisodeSearchQuery(podcastUuid: podcast.uuid, searchTerm: query)
         CacheServerHandler.shared.searchEpisodesInPodcast(search: search) { [weak self] results in
-            self?.showSearchResults(results)
+            Task { @MainActor in
+                self?.showSearchResults(results)
+            }
         }
     }
 
