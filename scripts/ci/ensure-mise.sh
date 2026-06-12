@@ -13,6 +13,9 @@ if ! command -v mise >/dev/null 2>&1; then
   else
     echo "mise is required but neither mise nor Homebrew is available." >&2
     echo "Install mise on this runner: https://mise.jdx.dev/getting-started.html" >&2
+    if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+      return 1
+    fi
     exit 1
   fi
 fi

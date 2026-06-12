@@ -7,8 +7,11 @@ on:
       - ".github/workflows/*.yml"
       - ".github/workflows/semgrep.yml"
       - "mise.toml"
+      - "**/mise.toml"
       - "scripts/ci/*.sh"
+      - "**/scripts/ci/*.sh"
       - "scripts/build-phases/*.sh"
+      - "**/scripts/build-phases/*.sh"
       - "semgrep/pocket-casts.yml"
       - "semgrep/swift-security.yml"
   push:
@@ -18,8 +21,11 @@ on:
       - ".github/workflows/*.yml"
       - ".github/workflows/semgrep.yml"
       - "mise.toml"
+      - "**/mise.toml"
       - "scripts/ci/*.sh"
+      - "**/scripts/ci/*.sh"
       - "scripts/build-phases/*.sh"
+      - "**/scripts/build-phases/*.sh"
       - "semgrep/pocket-casts.yml"
       - "semgrep/swift-security.yml"
   workflow_dispatch:

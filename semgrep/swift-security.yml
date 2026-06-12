@@ -243,6 +243,24 @@ rules:
     patterns:
       - pattern-regex: 'ENV\[[''"]IOS_SIMULATOR_RUNTIME_VERSION[''"]\](?!\.to_s\.strip)'
 
+  - id: pocketcasts.shell-bsd-sed-in-place
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [shell]
+    message: Avoid BSD-only `sed -i ''` in shell scripts; write to a temporary file or use a portable backup suffix so Linux runners do not fail.
+    languages: [generic]
+    paths:
+      include:
+        - "**/scripts/*.sh"
+        - "**/scripts/**/*.sh"
+        - "**/semgrep/tests/*.sh"
+    patterns:
+      - pattern-regex: "\\bsed\\s+-i\\s+['\\\"]{2}"
+
   - id: pocketcasts.swiftui-connectable-timer-publisher-must-be-state
     severity: WARNING
     metadata:
@@ -691,7 +709,7 @@ rules:
     patterns:
       - pattern-regex: '^[^#\n]*\brm\s+-rf\s+"?\$\{?[A-Za-z0-9_]+[^#\n]*'
       - pattern-not-regex: '^[^\n]*rm\s+-rf\s+"?\$\{[A-Za-z0-9_]+:[?-][^\n]*'
-      - pattern-not-regex: '^\s*if\s+\[\s+-n\s+[^\n]*'
+      - pattern-not-regex: '^\s*if\s+\[\s+-n\s+"?\$\{?([A-Za-z0-9_]+)\}?"?\s*\]\s*;\s*then\s+rm\s+-rf\s+"?\$\{?\1(?::[?-][^}]*)?\}?[^\n]*;\s*fi\s*$'
 
   - id: pocketcasts.server-constants-identical-production-url-branches
     severity: WARNING

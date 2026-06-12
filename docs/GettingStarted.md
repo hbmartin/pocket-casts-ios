@@ -68,8 +68,7 @@ SIMULATOR_OS=18.4 mise run test:staging
 ```
 
 Tool versions are managed by [mise](https://mise.jdx.dev) from `mise.toml`,
-which pins Ruby (currently `3.4.9`, mirrored in `.ruby-version` for editors and
-rbenv users — keep the two in sync) and semgrep. Install everything with:
+which pins Ruby (currently `3.4.9`) and semgrep. Install everything with:
 
 ```bash
 mise install
