@@ -15,6 +15,31 @@ class TestNetworkUrlsFixture {
         downloadUrl = "https://www.apple.com/podcast.mp3"
     }
 
+    func badExampleComCountryCodeBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "https://example.com.co/episode.mp3"
+    }
+
+    func badReservedTestCountryCodeBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "https://fixtures.test.co/episode.mp3"
+    }
+
+    func badLocalhostSubdomainBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://localhost.evil.com/episode.mp3"
+    }
+
+    func badLoopbackPrefixBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://127.evil.com/episode.mp3"
+    }
+
+    func badTestNetPrefixBypass() {
+        // ruleid: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://192.0.2.1.evil.com/episode.mp3"
+    }
+
     func goodReservedExampleHost() {
         // ok: pocketcasts.no-real-network-hosts-in-tests
         downloadUrl = "https://example.com/remote-podcast.mp3"
@@ -33,5 +58,10 @@ class TestNetworkUrlsFixture {
     func goodLocalhost() {
         // ok: pocketcasts.no-real-network-hosts-in-tests
         downloadUrl = "http://localhost:8080/episode.mp3"
+    }
+
+    func goodLoopbackAddressWithPort() {
+        // ok: pocketcasts.no-real-network-hosts-in-tests
+        downloadUrl = "http://127.0.0.1:8080/episode.mp3"
     }
 }

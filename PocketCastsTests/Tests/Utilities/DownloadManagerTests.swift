@@ -18,7 +18,10 @@ final class DownloadManagerTests: DBTestCase {
         // Verify the episode has been removed from the data manager
         XCTAssertNil(dataManager.findEpisode(uuid: episode.uuid))
 
-        await DownloadManager.shared.clearStuckDownloads()
+        // Use the instance that queued the task: with per-test background session
+        // identifiers (DBTestCase), DownloadManager.shared can no longer see tasks
+        // queued by the test's own manager through nsurlsessiond identifier aliasing.
+        await downloadManager.clearStuckDownloads()
 
         // Wait for the task to fulfill the completion expectation: that it is completed
         await fulfillment(of: [publishExpectation])
