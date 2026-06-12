@@ -64,6 +64,7 @@ class LoginCoordinator: NSObject, OnboardingModel {
         navigationController?.pushViewController(controller, animated: true)
     }
 
+    @MainActor
     func getStartedTapped() {
         OnboardingFlow.shared.updateAnalyticsSource(.onboardingRecommendations)
         let hostingController: UIViewController
@@ -86,6 +87,7 @@ class LoginCoordinator: NSObject, OnboardingModel {
         navigationController?.pushViewController(hostingController, animated: true)
     }
 
+    @MainActor
     func interestsContinueTapped(categories: [DiscoverCategory]?) {
         let configuration: RecommendationsViewModel.Configuration
         if let categories {

@@ -3,6 +3,7 @@ import PocketCastsServer
 import PocketCastsDataModel
 import PocketCastsUtils
 
+@MainActor
 class PodcastRatingViewModel: ObservableObject {
     @Published var rating: PodcastRating? = nil
     @Published var presentingGiveRatings = false
