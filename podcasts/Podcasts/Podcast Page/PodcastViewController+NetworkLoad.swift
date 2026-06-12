@@ -27,7 +27,9 @@ extension PodcastViewController {
         let addMissingEpisodes = Settings.addMissingEpisodes
         ServerPodcastManager.shared.updatePodcastIfRequired(podcast: podcast, addMissingEpisodes: addMissingEpisodes) { [weak self] updated in
             if updated {
-                self?.loadLocalEpisodes(podcast: podcast, animated: true)
+                Task { @MainActor in
+                    self?.loadLocalEpisodes(podcast: podcast, animated: true)
+                }
             }
         }
     }

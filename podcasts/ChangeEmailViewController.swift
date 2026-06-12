@@ -197,8 +197,8 @@ class ChangeEmailViewController: PCViewController, UITextFieldDelegate {
                 Analytics.track(.userEmailUpdated)
 
                 ServerSettings.setSyncingEmail(email: newEmail)
-                self.delegate?.emailChanged()
                 DispatchQueue.main.async {
+                    self.delegate?.emailChanged()
                     let updatedVC = AccountUpdatedViewController()
                     updatedVC.titleText = L10n.changeEmailConf
                     updatedVC.detailText = L10n.funnyConfMsg

@@ -40,40 +40,36 @@ extension PodcastListViewController {
 
     private func searchAndAddPodcast(feedURLStrings: [String], index: Int = 0, loadingAlert: ShiftyLoadingAlert, lastErrorMessage: String? = nil) {
         guard index < feedURLStrings.count else {
-            DispatchQueue.main.async { [weak self] in
-                loadingAlert.hideAlert(false)
-                if let self {
-                    SJUIUtils.showAlert(title: L10n.error, message: lastErrorMessage ?? L10n.errorGeneralPodcastNotFound, from: self)
-                }
-            }
+            loadingAlert.hideAlert(false)
+            SJUIUtils.showAlert(title: L10n.error, message: lastErrorMessage ?? L10n.errorGeneralPodcastNotFound, from: self)
             return
         }
 
         MainServerHandler.shared.podcastSearch(searchTerm: feedURLStrings[index]) { [weak self] response in
-            guard let self else {
-                DispatchQueue.main.async {
+            Task { @MainActor in
+                guard let self else {
                     loadingAlert.hideAlert(false)
+                    return
                 }
-                return
-            }
 
-            guard let response, response.success(), let uuid = response.result?.podcast?.uuid else {
-                self.searchAndAddPodcast(feedURLStrings: feedURLStrings,
-                                         index: index + 1,
-                                         loadingAlert: loadingAlert,
-                                         lastErrorMessage: response?.message ?? lastErrorMessage)
-                return
-            }
+                guard let response, response.success(), let uuid = response.result?.podcast?.uuid else {
+                    self.searchAndAddPodcast(feedURLStrings: feedURLStrings,
+                                             index: index + 1,
+                                             loadingAlert: loadingAlert,
+                                             lastErrorMessage: response?.message ?? lastErrorMessage)
+                    return
+                }
 
-            ServerPodcastManager.shared.addFromUuidWithRetries(podcastUuid: uuid, subscribe: false) { [weak self] success in
-                DispatchQueue.main.async {
-                    loadingAlert.hideAlert(false)
-                    guard let self else { return }
+                ServerPodcastManager.shared.addFromUuidWithRetries(podcastUuid: uuid, subscribe: false) { [weak self] success in
+                    Task { @MainActor in
+                        loadingAlert.hideAlert(false)
+                        guard let self else { return }
 
-                    if success {
-                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: uuid])
-                    } else {
-                        SJUIUtils.showAlert(title: L10n.error, message: L10n.errorGeneralPodcastNotFound, from: self)
+                        if success {
+                            NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: uuid])
+                        } else {
+                            SJUIUtils.showAlert(title: L10n.error, message: L10n.errorGeneralPodcastNotFound, from: self)
+                        }
                     }
                 }
             }
