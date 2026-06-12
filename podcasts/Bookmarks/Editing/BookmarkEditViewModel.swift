@@ -6,6 +6,7 @@ protocol BookmarkEditRouter: AnyObject {
     func dismiss()
 }
 
+@MainActor
 class BookmarkEditViewModel: ObservableObject {
     weak var router: BookmarkEditRouter?
 
