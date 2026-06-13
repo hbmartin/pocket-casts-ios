@@ -104,11 +104,12 @@ xcodebuild test -project podcasts.xcodeproj \
 '''
 
 [tasks."test:scripts"]
-description = "Run tests for the repo's Ruby helper scripts (credentials generation, simulator selection)"
+description = "Run tests for the repo's Ruby helper scripts"
 alias = "test:credentials-script"
 run = [
     "ruby scripts/tests/generate_credentials_test.rb",
     "ruby scripts/tests/select_ios_simulator_test.rb",
+    "ruby scripts/tests/swiftlint_version_sync_test.rb",
 ]
 
 # -----------------------------------------------------------------------------

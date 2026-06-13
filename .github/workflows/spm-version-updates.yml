@@ -9,7 +9,6 @@ on:
       - "BuildTools/Package.resolved"
       - ".swiftlint.yml"
       - ".github/workflows/spm-version-updates.yml"
-      - "scripts/ci/generate-spm-version-updates-project.rb"
   workflow_dispatch:
 
 permissions:
@@ -30,15 +29,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Generate SPM check project
-        run: |
-          ruby scripts/ci/generate-spm-version-updates-project.rb \
-            Modules/Package.swift \
-            BuildTools/Package.swift \
-            .spm-version-updates/PackageChecks.xcodeproj
-
       - name: Check Swift package updates
-        uses: hbmartin/github-action-spm_version_updates@bedf15f8907c3375e12919373eba4451e0db2f3c
+        # c3cbe21c807e8a99fd61dba23c0d5476725a5a18 is v1.2.0.
+        uses: hbmartin/github-action-spm_version_updates@c3cbe21c807e8a99fd61dba23c0d5476725a5a18
         with:
-          xcode-project-path: .spm-version-updates/PackageChecks.xcodeproj
+          package-manifest-paths: |
+            Modules/Package.swift
+            BuildTools/Package.swift
           report-above-maximum: true
+          allow-hosts: github.com
