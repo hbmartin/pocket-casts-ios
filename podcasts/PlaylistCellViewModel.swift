@@ -5,6 +5,7 @@ import PocketCastsDataModel
 import UIKit
 #endif
 
+@MainActor
 class PlaylistCellViewModel: ObservableObject {
     enum DisplayType {
         case count

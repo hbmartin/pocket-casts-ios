@@ -3,16 +3,14 @@ import PocketCastsDependencyInjection
 import PocketCastsUtils
 import SwiftUI
 
+@MainActor
 class LogsViewModel: ObservableObject {
     @Published var logs = ""
 
     @Dependency(\.fileLog) private var fileLog: any FileLogging
 
     func load() async {
-        let result = await fileLog.logFileAsString()
-        await MainActor.run {
-            self.logs = result
-        }
+        logs = await fileLog.logFileAsString()
     }
 
     var shareURL: URL? {

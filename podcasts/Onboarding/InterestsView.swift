@@ -111,11 +111,11 @@ struct InterestsView: View {
 
     @Environment(\.dismiss) var dismiss
 
-    let continueCallback: (([DiscoverCategory]) -> ())?
-    let notNowCallback: (() -> ())?
+    let continueCallback: (@MainActor ([DiscoverCategory]) -> ())?
+    let notNowCallback: (@MainActor () -> ())?
     let isInsideNavigation: Bool
 
-    init(continueCallback: (([DiscoverCategory]) -> ())? = nil, notNowCallback: (() -> ())? = nil, isInsideNavigation: Bool = true) {
+    init(continueCallback: (@MainActor ([DiscoverCategory]) -> ())? = nil, notNowCallback: (@MainActor () -> ())? = nil, isInsideNavigation: Bool = true) {
         self.continueCallback = continueCallback
         self.notNowCallback = notNowCallback
         self.isInsideNavigation = isInsideNavigation

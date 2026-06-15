@@ -152,16 +152,7 @@ private class MockTranscriptExcerptViewModel: TranscriptExcerptViewModeling {
     }
 
     func loadExcerptTranscript() async {
-        await MainActor.run {
-            self.loadingState = _privateLoadingState
-
-            switch self.loadingState {
-            case .idle, .loading:
-                break
-            case .failure, .success:
-                break
-            }
-        }
+        loadingState = _privateLoadingState
     }
 
     func excerptTapped() {}

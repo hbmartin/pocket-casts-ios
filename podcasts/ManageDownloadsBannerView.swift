@@ -2,6 +2,7 @@ import SwiftUI
 import PocketCastsUtils
 import Combine
 
+@MainActor
 class ManageDownloadsModel: ObservableObject {
 
     @Published var sizeOccupied: String = ""
@@ -17,7 +18,8 @@ class ManageDownloadsModel: ObservableObject {
     }
 
     func loadData() {
-        Task { [weak self] in
+        // Detached so the size calculation stays off the main actor this model now lives on.
+        Task.detached { [weak self] in
             var totalSize = UInt64(0)
             totalSize += EpisodeManager.downloadSizeOfUnplayedEpisodes(includeStarred: true)
             totalSize += EpisodeManager.downloadSizeOfInProgressEpisodes(includeStarred: true)
