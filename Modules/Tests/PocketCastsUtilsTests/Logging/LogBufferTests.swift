@@ -1,8 +1,31 @@
+import Combine
 import XCTest
 
 @testable import PocketCastsUtils
 
 final class LogBufferTests: XCTestCase {
+
+    func testAppendedMessagesArePublished() async {
+        // GIVEN a LogBuffer wired to publish into a subject we observe...
+        let subject = PassthroughSubject<String, Never>()
+        var published: [String] = []
+        let cancellable = subject.sink { published.append($0) }
+        defer { cancellable.cancel() }
+
+        let logBuffer = LogBuffer(
+            logPersistence: LogPersistenceStub(),
+            logRotator: LogRotatorStub(),
+            bufferThreshold: 100,
+            publishingTo: subject
+        )
+
+        // WHEN we append messages (below the flush threshold, so publishing is the only effect)...
+        await logBuffer.append("first", date: Date())
+        await logBuffer.append("second", date: Date())
+
+        // THEN each appended message is published, in append order.
+        XCTAssertEqual(published, ["first", "second"])
+    }
 
     func testLogFlushedWhenThresholdReached() async {
         // GIVEN that we have a FileLog with a buffer threshold of 3...

@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import UserNotifications
 
@@ -95,4 +96,78 @@ class AVFileUtil: NSObject {
 
 class TestAsset {
     func loadMetadata() async {}
+}
+
+// Combine Subject.send(_:) from inside an unstructured Task closure in an @unchecked Sendable class
+// (FileLog's shape): the class opts out of isolation checking and the Task inherits no isolation, so
+// publishing races with other Tasks and delivers on an arbitrary executor. The send belongs on an
+// actor instead.
+final class LogPublisher: @unchecked Sendable {
+    private let messageSubject = PassthroughSubject<String, Never>()
+    private let valueSubject = CurrentValueSubject<Int, Never>(0)
+
+    func appendsOffActor(_ message: String) {
+        Task {
+            await self.persist(message)
+            // ruleid: pocketcasts.no-subject-send-in-task
+            messageSubject.send(message)
+        }
+    }
+
+    func appendsOffActorWithCapture(_ message: String) {
+        Task { [weak self] in
+            // ruleid: pocketcasts.no-subject-send-in-task
+            self?.messageSubject.send(message)
+        }
+    }
+
+    func sendsValueOffActor(_ value: Int) {
+        Task {
+            // ruleid: pocketcasts.no-subject-send-in-task
+            valueSubject.send(value)
+        }
+    }
+
+    // A MainActor-isolated Task makes the send safe, but Semgrep cannot see the isolation, so the
+    // rule over-flags it. This pins that known behavior; real code suppresses it with nosemgrep.
+    func publishesOnMainActor(_ message: String) {
+        Task { @MainActor in
+            // ruleid: pocketcasts.no-subject-send-in-task
+            messageSubject.send(message)
+        }
+    }
+
+    func publishesSynchronously(_ message: String) {
+        // ok: pocketcasts.no-subject-send-in-task
+        messageSubject.send(message)
+    }
+
+    private func persist(_ message: String) async {}
+}
+
+func sendsOnNonSubjectInTask(socket: TestSocket, data: Data) {
+    Task {
+        // ok: pocketcasts.no-subject-send-in-task
+        socket.send(data)
+    }
+}
+
+struct TestSocket {
+    func send(_ data: Data) {}
+}
+
+// A `Task { }` created inside an actor method inherits the actor's isolation, so the send is
+// serialized on the actor's executor — the safe pattern. The rule must not flag it.
+actor MetadataLoader {
+    private let updatesSubject = PassthroughSubject<Int, Never>()
+
+    func load(_ value: Int) {
+        Task {
+            await self.compute(value)
+            // ok: pocketcasts.no-subject-send-in-task
+            updatesSubject.send(value)
+        }
+    }
+
+    private func compute(_ value: Int) async {}
 }

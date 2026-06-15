@@ -1278,6 +1278,59 @@ rules:
           }
       - pattern-regex: 'Task\s*\{\s*\[weak\s+self\]\s+in[\s\S]{0,500}?guard\s+let\s+self(?:\s*=\s*self)?\s+else\s*\{\s*return\s*\}[\s\S]{0,1000}?await\b'
 
+  - id: pocketcasts.no-subject-send-in-task
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      Don't call a Combine Subject's send(_:) from inside an unstructured `Task { }` in an
+      `@unchecked Sendable` class. That class has opted out of compiler isolation checking, and the
+      Task inherits no isolation, so several Tasks can call send concurrently while downstream
+      delivery runs on whichever thread each Task resumes on — PassthroughSubject/CurrentValueSubject
+      are not safe under concurrent send. Move the publish onto an actor (a `Task { }` inside an
+      `actor` inherits its isolation and serializes sends), as FileLog.LogBuffer does. If this Task
+      is isolated another way (e.g. `Task { @MainActor in ... }`) the send is safe — suppress with
+      `// nosemgrep: pocketcasts.no-subject-send-in-task`.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**"
+        - "**/Modules/**"
+        - "**/semgrep/tests/swift-security-concurrency.swift"
+    patterns:
+      # Two pattern-inside forms: Semgrep's `Task { ... }` does not match a closure that carries a
+      # capture list (`Task { [weak self] in ... }`), so the capture-list shape is matched separately.
+      - pattern-either:
+          - pattern-inside: |
+              Task {
+                ...
+              }
+          - pattern-inside: |
+              Task { [$CAP] in
+                ...
+              }
+      # Scope to `@unchecked Sendable` classes only. Semgrep's Swift parser conflates `actor` and
+      # `class`, so it cannot tell a non-isolated `Task` (unsafe) from one inside an actor that
+      # inherits isolation (safe). But a real actor is implicitly Sendable and carries no
+      # `@unchecked Sendable` clause, so requiring that clause keeps the safe actor pattern out while
+      # still catching the unsafe shape. (Under-matches `@unchecked Sendable` classes declared with
+      # additional conformances; that is the safe direction for a ratchet.)
+      - pattern-inside: |
+          class $C: @unchecked Sendable {
+            ...
+          }
+      - pattern: $SUBJECT.send($MSG)
+      # Heuristic: scope to Combine-subject-shaped receiver names (foo.messageSubject, eventRelay)
+      # so unrelated `.send(` calls (sockets, streams) are not flagged. `.*` absorbs any `self.`/
+      # optional-chain prefix.
+      - metavariable-regex:
+          metavariable: $SUBJECT
+          regex: ^.*([Ss]ubject|[Rr]elay)$
+
   - id: pocketcasts.no-queued-datamanager-save-task
     severity: WARNING
     metadata:
@@ -4453,4 +4506,9 @@ rules:
       - pattern-regex: 'nonisolated\(unsafe\)'
       # Longest alternative first: a justifying comment block must extend its match through the
       # declaration below it, or the shorter comment-only alternative wins and fails to exempt it.
-      - pattern-not-regex: '(?://[^\n]*nonisolated\(unsafe\)[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*nonisolated\(unsafe\))|(?:nonisolated\(unsafe\)[^\n]*//[^\n]*nonisolated\(unsafe\))|(?://[^\n]*nonisolated\(unsafe\))'
+      # The two justifying alternatives (preceding-line and inline) require the keyword to be
+      # followed — after an optional ':' and spaces — by a non-space char on the same line, i.e. an
+      # actual reason. A bare `// nonisolated(unsafe)` repeats the keyword without justifying the
+      # declaration, so it no longer exempts it. The final alternative stays loose so the token
+      # appearing inside any comment is not itself flagged as an unjustified declaration.
+      - pattern-not-regex: '(?://[^\n]*nonisolated\(unsafe\)[ \t]*:?[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*nonisolated\(unsafe\))|(?:nonisolated\(unsafe\)[^\n]*//[^\n]*nonisolated\(unsafe\)[ \t]*:?[ \t]*\S)|(?://[^\n]*nonisolated\(unsafe\))'

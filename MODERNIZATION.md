@@ -44,12 +44,10 @@ of `scripts/ci/check-concurrency-warnings.sh`).
   rule.
 - **Feature-flag audit.** Retirement is *not* unilaterally decidable from code: nearly every flag in
   `Modules/Sources/PocketCastsUtils/Feature Flags/FeatureFlag.swift` has a live remote kill-switch key
-  (the `remoteKey` fallthrough derives one from the case name). The deliverable is an audit table —
-  default value, release the default flipped, whether the `false` branch is a legacy path or an A/B
-  arm, whether remote config actively targets the key — reviewed with whoever owns remote config, then
-  removal PRs in batches of 3–5 related flags. Playback-adjacent flags (`playerIsReadyToPlay`,
-  `useDefaultPlayerTapCookie`, `ignoreRouteDisconnectedInterruption`, `effectsPlayerQOSUpgrade`, …) are
-  deferred to Phase 5 regardless.
+  (the `remoteKey` fallthrough derives one from the case name). The audit table lives in
+  [docs/FeatureFlagAudit.md](docs/FeatureFlagAudit.md) — 71 flags: 4 dead (zero call sites), ~36
+  retirement candidates, 18 playback-adjacent (deferred to Phase 5 regardless). Each retirement needs
+  remote-config sign-off recorded in that table, then removal PRs in batches of 3–5 related flags.
 - **Objective-C ports — bounded.** `SJCommonUtils.catchException` cannot be ported (NSException trapping
   has no Swift equivalent; 7 Swift call sites), so the bridging header keeps at least that import.
   `SJMediaMetadataHelper` is portable only by going async (its `AVAsset.commonMetadata` use is

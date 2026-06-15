@@ -124,6 +124,11 @@ public final class FileLog: @unchecked Sendable {
 
     /// Read-only stream of logged messages so consumers can capture log output without being
     /// able to inject lines via `send(_:)`; only `LogBuffer.append` publishes here.
+    ///
+    /// Values are delivered synchronously on the `LogBuffer` actor's executor (that is where the
+    /// `send(_:)` happens). Subscribers must `.receive(on:)` their own queue before doing any real
+    /// work — both to reach the main thread for UI and to avoid blocking the logging actor (and
+    /// thus delaying disk flushes) with synchronous downstream work.
     public var publisher: AnyPublisher<String, Never> { messageSubject.eraseToAnyPublisher() }
 
     init(
