@@ -49,15 +49,13 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/../.." && pwd)"
 baseline_file="${2:-$script_dir/concurrency-baseline.txt}"
 
-# Anchor the substring-prone keywords (actor, sending) to a leading word boundary so unrelated
-# diagnostics like "...value 'factor' was never used" or "...resending..." are not misclassified
-# as concurrency warnings. The rest are concurrency-specific enough to match unanchored, and we
-# never add a *trailing* boundary (that would miss "data races" or "@preconcurrency").
-# [^[:alnum:]_] is used instead of \b for portability across BSD grep (macOS CI) and GNU grep.
-# Note: the filter runs on the whole log line (path included), so a file literally named e.g.
-# Actor.swift would still match regardless of message. That over-gates rather than under-gates,
-# which is the safe direction for a ratchet, and is far narrower than the old unanchored filter.
-keyword_filter='sendable|concurrency|isolated|data race|(^|[^[:alnum:]_])(actor|sending)'
+# Anchor keyword matching after the "warning:" prefix so keywords in paths like MainActor.swift
+# or SendableHelper.swift do not cause unrelated warnings to be misclassified. Also anchor the
+# substring-prone keywords (actor, sending) to a leading word boundary so diagnostics containing
+# words like "factor" or "resending" are excluded. The rest are concurrency-specific enough to
+# match unanchored, and we never add a *trailing* boundary because that would miss "data races"
+# or "@preconcurrency". [^[:alnum:]_] is used instead of \b for BSD/GNU grep portability.
+keyword_filter='warning:.*(sendable|concurrency|isolated|data race|[^[:alnum:]_](actor|sending))'
 
 normalized="$(
   grep -E "\.swift:[0-9]+:[0-9]+: warning:" "$log_file" \

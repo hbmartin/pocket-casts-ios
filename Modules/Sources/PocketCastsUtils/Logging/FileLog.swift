@@ -16,15 +16,18 @@ actor LogBuffer {
     private let logPersistence: PersistentTextWriting
     private let logRotator: FileRotating
     private let logger: Logger?
+    private let messageSubject: PassthroughSubject<String, Never>
 
     init(logPersistence: PersistentTextWriting,
          logRotator: FileRotating,
          bufferThreshold: UInt = 100,
-         loggingTo logger: Logger? = nil) {
+         loggingTo logger: Logger? = nil,
+         publishingTo messageSubject: PassthroughSubject<String, Never> = PassthroughSubject()) {
         self.logPersistence = logPersistence
         self.logRotator = logRotator
         self.bufferThreshold = bufferThreshold
         self.logger = logger
+        self.messageSubject = messageSubject
     }
 
     private let maxFileSize = 1.megabytes
@@ -34,6 +37,10 @@ actor LogBuffer {
         logger?.log("\(message, privacy: .public)")
 
         logBuffer.append(LogEntry(message, timestamp: date))
+
+        // Publish on the actor's serialized executor so concurrent `FileLog.addMessage` calls
+        // never invoke `send(_:)` from two threads at once.
+        messageSubject.send(message)
     }
 
     func console(_ message: String) {
@@ -82,8 +89,9 @@ actor LogBuffer {
     }
 }
 
-// @unchecked Sendable: `logBuffer` is an actor and `messageSubject` is a thread-safe Combine
-// subject; there is no other mutable state.
+// @unchecked Sendable: `logBuffer` is an actor and `messageSubject` is only sent to from inside
+// that actor (see `LogBuffer.append`), so publishes are serialized on a single executor; there is
+// no other mutable state.
 public final class FileLog: @unchecked Sendable {
     public enum LogError: Error {
         case logCanceled
@@ -115,7 +123,7 @@ public final class FileLog: @unchecked Sendable {
     private let messageSubject = PassthroughSubject<String, Never>()
 
     /// Read-only stream of logged messages so consumers can capture log output without being
-    /// able to inject lines via `send(_:)`; only `FileLog` publishes here (see `addMessage`).
+    /// able to inject lines via `send(_:)`; only `LogBuffer.append` publishes here.
     public var publisher: AnyPublisher<String, Never> { messageSubject.eraseToAnyPublisher() }
 
     init(
@@ -124,13 +132,12 @@ public final class FileLog: @unchecked Sendable {
         bufferThreshold: UInt = 100,
         loggingTo logger: Logger? = nil
     ) {
-        self.logBuffer = LogBuffer(logPersistence: logPersistence, logRotator: logRotator, bufferThreshold: bufferThreshold, loggingTo: logger)
+        self.logBuffer = LogBuffer(logPersistence: logPersistence, logRotator: logRotator, bufferThreshold: bufferThreshold, loggingTo: logger, publishingTo: messageSubject)
     }
 
     public func addMessage(_ message: String, date: Date = Date()) {
         Task {
             await logBuffer.append(message, date: date)
-            messageSubject.send(message)
         }
     }
 
