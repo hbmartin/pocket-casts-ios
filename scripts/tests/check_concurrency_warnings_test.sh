@@ -69,9 +69,9 @@ echo "$repo_root/podcasts/Baz.swift:1:1: warning: 'foo()' is deprecated" > "$log
 : > "$baseline"
 assert "clean log passes" "$checker" "$log" "$baseline"
 
-# Substring false positives: unrelated warnings whose words merely *contain* a keyword
-# (factor/reactor/refactor -> "actor", resending -> "sending") must NOT be classified as
-# concurrency warnings. Leading-boundary anchoring excludes them all.
+# Substring and path false positives: unrelated warnings whose words merely *contain* a keyword
+# (factor/reactor/refactor -> "actor", resending -> "sending") or whose file paths contain
+# concurrency terms must NOT be classified as concurrency warnings.
 substr_log="$tmp_dir/substr.log"
 cat > "$substr_log" <<EOF
 $repo_root/podcasts/A.swift:1:1: warning: initialization of immutable value 'factor' was never used
@@ -79,9 +79,11 @@ $repo_root/podcasts/B.swift:2:2: warning: variable 'reactor' was never mutated; 
 $repo_root/podcasts/C.swift:3:3: warning: stored property 'refactorCount' is never used
 $repo_root/podcasts/D.swift:4:4: warning: initialization of immutable value 'resending' was never used
 $repo_root/podcasts/E.swift:5:5: warning: 'RedactorView' is deprecated
+$repo_root/podcasts/MainActor.swift:6:6: warning: 'foo()' is deprecated
+$repo_root/podcasts/SendableHelper.swift:7:7: warning: 'bar()' is deprecated
 EOF
 substr_out="$("$checker" --print-normalized "$substr_log")"
-assert "substring false positives excluded" [ -z "$substr_out" ]
+assert "substring and path false positives excluded" [ -z "$substr_out" ]
 
 # Canonical Swift concurrency phrasings must all still be classified (guards the regex against
 # narrowing too far): actor-isolated, non-Sendable/@Sendable, nonisolated global shared mutable
