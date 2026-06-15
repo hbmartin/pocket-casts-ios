@@ -116,6 +116,11 @@ public final class RefreshManager: @unchecked Sendable {
         if let result = response.result {
             let refreshOperation = RefreshOperation(result: result, completionHandler: completion)
             refreshQueue.addOperation(refreshOperation)
+        } else {
+            // Refresh succeeded but carried no result to process; report no data so the
+            // completion always fires (callers may rely on it, e.g. background-fetch and
+            // notification handlers that must call their own completion handler).
+            completion?(.noData)
         }
     }
 }
