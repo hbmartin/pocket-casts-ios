@@ -291,7 +291,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
     }
 
-    private func convertRefreshResult(result: RefreshFetchResult) -> UIBackgroundFetchResult {
+    nonisolated private func convertRefreshResult(result: RefreshFetchResult) -> UIBackgroundFetchResult {
         switch result {
         case .failed:
             return UIBackgroundFetchResult.failed
