@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-public struct PodcastIndexEvelope: Decodable, Sendable {
+public struct PodcastIndexEnvelope: Decodable, Sendable {
     let chapters: [PodcastIndexChapter]
 }
 
@@ -17,13 +17,13 @@ struct PodcastIndexChapter: Decodable, Sendable {
 public actor PodcastIndexChapterDataRetriever {
     private let podcastIndexChaptersCache: URLCache
 
-    private var dataRequestMap: [String: Task<PodcastIndexEvelope, Error>] = [:]
+    private var dataRequestMap: [String: Task<PodcastIndexEnvelope, Error>] = [:]
 
     public init() {
         podcastIndexChaptersCache = URLCache(memoryCapacity: 1.megabytes, diskCapacity: 10.megabytes, diskPath: "podcast_index_chapters")
     }
 
-    public func loadChapters(_ urlString: String) async throws -> PodcastIndexEvelope {
+    public func loadChapters(_ urlString: String) async throws -> PodcastIndexEnvelope {
         if let task = dataRequestMap[urlString] {
             return try await task.value
         }
@@ -38,7 +38,7 @@ public actor PodcastIndexChapterDataRetriever {
             return try chapters(from: cachedResponse.data)
         }
 
-        let task = Task<PodcastIndexEvelope, Error> { [weak self] in
+        let task = Task<PodcastIndexEnvelope, Error> { [weak self] in
             guard let self else { throw TaskError.nilSelf }
             let (data, response) = try await URLSession.shared.data(for: request)
             let responseToCache = CachedURLResponse(response: response, data: data)
@@ -57,10 +57,10 @@ public actor PodcastIndexChapterDataRetriever {
         dataRequestMap[urlString] = nil
     }
 
-    private func chapters(from data: Data) throws -> PodcastIndexEvelope {
+    private func chapters(from data: Data) throws -> PodcastIndexEnvelope {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(PodcastIndexEvelope.self, from: data)
+        return try decoder.decode(PodcastIndexEnvelope.self, from: data)
     }
 
     enum Errors: Error {

@@ -25,7 +25,7 @@ class ManageDownloadsModel: ObservableObject {
             totalSize += EpisodeManager.downloadSizeOfInProgressEpisodes(includeStarred: true)
             totalSize += EpisodeManager.downloadSizeOfPlayedEpisodes(includeStarred: true)
             let sizeAsStr = SizeFormatter.shared.noDecimalFormat(bytes: Int64(totalSize))
-            await MainActor.run { [weak self] in
+            await MainActor.run {
                 self?.sizeOccupied = sizeAsStr
             }
         }

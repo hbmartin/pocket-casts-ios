@@ -5,26 +5,37 @@ import XCTest
 
 final class LogBufferTests: XCTestCase {
 
-    func testAppendedMessagesArePublished() async {
-        // GIVEN a LogBuffer wired to publish into a subject we observe...
-        let subject = PassthroughSubject<String, Never>()
-        var published: [String] = []
-        let cancellable = subject.sink { published.append($0) }
-        defer { cancellable.cancel() }
-
-        let logBuffer = LogBuffer(
+    func testLoggedMessagesReachPublisher() {
+        // GIVEN a FileLog observed through its publisher (exercised via the public API so the
+        // internally-owned subject never crosses the actor boundary in test code)...
+        let fileLog = FileLog(
             logPersistence: LogPersistenceStub(),
             logRotator: LogRotatorStub(),
-            bufferThreshold: 100,
-            publishingTo: subject
+            bufferThreshold: 100
         )
+        let bothPublished = expectation(description: "both logged messages reach the publisher")
+        let lock = NSLock()
+        var published: [String] = []
+        let cancellable = fileLog.publisher.sink { message in
+            lock.lock()
+            published.append(message)
+            let count = published.count
+            lock.unlock()
+            if count == 2 { bothPublished.fulfill() }
+        }
+        defer { cancellable.cancel() }
 
-        // WHEN we append messages (below the flush threshold, so publishing is the only effect)...
-        await logBuffer.append("first", date: Date())
-        await logBuffer.append("second", date: Date())
+        // WHEN two messages are logged...
+        fileLog.addMessage("first")
+        fileLog.addMessage("second")
 
-        // THEN each appended message is published, in append order.
-        XCTAssertEqual(published, ["first", "second"])
+        // THEN both reach the publisher. `addMessage` dispatches each send onto the actor in its own
+        // task, so ordering across the two is best-effort — assert membership, not order.
+        wait(for: [bothPublished], timeout: 2)
+        lock.lock()
+        let received = Set(published)
+        lock.unlock()
+        XCTAssertEqual(received, ["first", "second"])
     }
 
     func testLogFlushedWhenThresholdReached() async {
