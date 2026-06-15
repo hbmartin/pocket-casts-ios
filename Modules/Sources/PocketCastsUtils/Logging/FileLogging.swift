@@ -5,7 +5,9 @@ import Foundation
 /// `\.fileLog` so consumers can be tested with a mock logger instead of writing to
 /// the real on-disk log.
 public protocol FileLogging: Sendable {
-    var publisher: PassthroughSubject<String, Never> { get }
+    /// Read-only stream of logged messages; consumers can observe log output but cannot publish
+    /// to it through the seam.
+    var publisher: AnyPublisher<String, Never> { get }
 
     func addMessage(_ message: String, date: Date)
     func console(_ message: String)

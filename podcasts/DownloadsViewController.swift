@@ -295,7 +295,9 @@ class DownloadsViewController: PCViewController {
     }
 
     private func retryAllFailed() {
-        NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
+        NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { [weak self] later in
+            guard let self else { return }
+
             let failedList = self.failedEpisodes()
             for episode in failedList {
                 if later {

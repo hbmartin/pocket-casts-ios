@@ -98,8 +98,8 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
 
             if episode.downloadFailed() {
                 let optionsPicker = OptionsPicker(title: nil)
-                let retryAction = OptionAction(label: L10n.retry, icon: nil, action: {
-                    NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { [downloadManager = self.downloadManager] later in
+                let retryAction = OptionAction(label: L10n.retry, icon: nil, action: { [downloadManager = self.downloadManager] in
+                    NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
                         if later {
                             downloadManager.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
                         } else {

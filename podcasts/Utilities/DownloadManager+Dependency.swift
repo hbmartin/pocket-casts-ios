@@ -6,7 +6,10 @@ import PocketCastsDependencyInjection
 /// Consumer-facing surface of `DownloadManager`, registered in the dependency container as
 /// `\.downloadManager` so consumers can be tested with a mock instead of the real download
 /// pipeline. Covers the members call sites use today; extend it as adoption grows.
-protocol DownloadManaging {
+///
+/// `Sendable` because the production conformer (`DownloadManager`) is an `@unchecked Sendable`
+/// singleton already shared across threads; mocks must take the same responsibility.
+protocol DownloadManaging: Sendable {
     var progressManager: DownloadProgressManager { get }
     var tempDownloadFolder: String { get }
 

@@ -497,6 +497,39 @@ rules:
           pattern: self.$MEMBER
       - pattern-not-regex: '(?s)\.init\s*\([^{}]*\)\s*\{\s*\[[^\]]*\bweak\s+self\b[^\]]*\]\s*(?:in\b|[^\{\}\n]*\bin\b)'
 
+  - id: pocketcasts.public-protocol-no-mutable-combine-subject
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Public protocols should expose read-only AnyPublisher streams instead of mutable Combine subjects that consumers can send into.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-regex: 'public\s+protocol\s+\w+(?::[^{]+)?\s*\{[\s\S]{0,1000}\bvar\s+\w+\s*:\s*(?:PassthroughSubject|CurrentValueSubject)\s*<[^>\n]+>\s*\{\s*get\s*\}'
+
+  - id: pocketcasts.download-episode-requested-no-strong-self
+    severity: WARNING
+    metadata:
+      category: performance
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: downloadEpisodeRequested can present asynchronously; capture self weakly or copy dependencies before passing its callback.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: 'NetworkUtils\.shared\.downloadEpisodeRequested\s*\([^,\n]+,\s*\{(?!\s*\[[^\]]*\bweak\s+self\b)(?:(?!\},\s*disallowed:)[\s\S]){0,800}\bself\.'
+
   - id: pocketcasts.content-unavailable-assigned-inside-empty-branch
     severity: ERROR
     metadata:
