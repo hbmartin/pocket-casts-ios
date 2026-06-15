@@ -9,6 +9,7 @@ enum PodcastFeedReloadNotification {
     public static let noEpisodesFound = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationNoEpisodesFound")
 }
 
+@MainActor
 class PodcastFeedViewModel {
     enum LoadingState {
         case idle
