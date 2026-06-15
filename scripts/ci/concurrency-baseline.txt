@@ -1,20 +1,3 @@
-Modules/Sources/PocketCastsDataModel/Private/DB/MainThreadDBReporter.swift: warning: static property 'reportedCallers' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-Modules/Sources/PocketCastsDataModel/Private/Managers/EpisodeDataManager.swift: warning: capture of 'self' with non-Sendable type 'EpisodeDataManager' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-Modules/Sources/PocketCastsDataModel/Private/Managers/UserEpisodeDataManager.swift: warning: capture of 'self' with non-Sendable type 'UserEpisodeDataManager' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-Modules/Sources/PocketCastsDataModel/Private/Managers/Util/DatabaseHelper.swift: warning: static property 'migrations' is not concurrency-safe because non-'Sendable' type '[SchemaMigration]' may have shared mutable state; this is an error in the Swift 6 language mode
-Modules/Sources/PocketCastsDataModel/Public/Repositories/Repositories+Dependency.swift: warning: static property 'currentValue' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-Modules/Sources/PocketCastsDataModel/Public/Repositories/RepositoryAsyncSupport.swift: warning: capture of 'work' with non-Sendable type '() -> T' in a '@Sendable' closure
-Modules/Tests/PocketCastsDataModelTests/DatabaseHelperMigrationTests.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
-Modules/Tests/PocketCastsDataModelTests/DatabaseHelperMigrationTests.swift: warning: static property 'testMigrations' is not concurrency-safe because non-'Sendable' type '[SchemaMigration]' may have shared mutable state; this is an error in the Swift 6 language mode
-Modules/Tests/PocketCastsServerTests/SyncTaskManualPlaylistTests.swift: warning: static property 'requestCount' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: call to main actor-isolated instance method 'waitForExpectations(timeout:handler:)' in a synchronous nonisolated context
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: capture of 'object' with non-Sendable type 'NotificationObjectTest' in a '@Sendable' closure
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: capture of 'userInfo' with non-Sendable type '[AnyHashable : String]' in a '@Sendable' closure
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: implicit capture of 'object' requires that 'NotificationObjectTest' conforms to 'Sendable'
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: implicit capture of 'userInfo' requires that '[AnyHashable : String]' conforms to 'Sendable'
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: sending value of non-Sendable type 'NotificationMainThreadTests' risks causing data races; this is an error in the Swift 6 language mode
-Modules/Tests/PocketCastsUtilsTests/NotificationMainThreadTests.swift: warning: static property 'myAwesomeNotification' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-PocketCastsTests/Tests/Playback/Chapters/ChapterManagerTests.swift: warning: class 'EpisodeMock' must restate inherited '@unchecked Sendable' conformance
 podcasts/AppDelegate+UrlHandling.swift: warning: call to main actor-isolated instance method 'openEpisode(_:from:timestamp:)' in a synchronous nonisolated context
 podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'convertRefreshResult(result:)' in a synchronous nonisolated context
 podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: capture of 'self' with non-Sendable type 'BookmarkEditViewModel' in a '@Sendable' closure; this is an error in the Swift 6 language mode

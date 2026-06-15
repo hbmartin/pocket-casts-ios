@@ -117,7 +117,7 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
     }
 }
 
-private class EpisodeMock: Episode {
+private final class EpisodeMock: Episode, @unchecked Sendable {
     override var downloadUrl: String? {
         get { "https://pocketcasts.com/" }
         set {}

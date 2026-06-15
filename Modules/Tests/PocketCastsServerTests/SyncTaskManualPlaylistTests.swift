@@ -135,7 +135,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
     }
 
     func testProcessServerDataAddsMissingEpisodesFromPlaylist() {
-        FailingURLProtocol.requestCount = 0
+        FailingURLProtocol.resetRequestCount()
         URLProtocol.registerClass(FailingURLProtocol.self)
         defer { URLProtocol.unregisterClass(FailingURLProtocol.self) }
 
@@ -200,7 +200,27 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
 }
 
 private final class FailingURLProtocol: URLProtocol {
-    static var requestCount = 0
+    private static let lock = NSLock()
+    // nonisolated(unsafe): incremented from URL-loading threads; guarded by `lock`.
+    nonisolated(unsafe) private static var _requestCount = 0
+
+    static var requestCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _requestCount
+    }
+
+    static func resetRequestCount() {
+        lock.lock()
+        defer { lock.unlock() }
+        _requestCount = 0
+    }
+
+    private static func incrementRequestCount() {
+        lock.lock()
+        defer { lock.unlock() }
+        _requestCount += 1
+    }
 
     override class func canInit(with request: URLRequest) -> Bool {
         true
@@ -211,7 +231,7 @@ private final class FailingURLProtocol: URLProtocol {
     }
 
     override func startLoading() {
-        FailingURLProtocol.requestCount += 1
+        FailingURLProtocol.incrementRequestCount()
         client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
     }
 
