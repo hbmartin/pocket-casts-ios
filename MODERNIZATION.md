@@ -69,6 +69,16 @@ of `scripts/ci/check-concurrency-warnings.sh`).
 - Systematically `@MainActor`-annotate view controllers, views, and coordinators in non-playback
   feature areas. This is cheap under `targeted` mode and is the main input to Phase 2's per-singleton
   isolation decisions.
+- **Main-actor hop convention.** To call main-actor-isolated code from a non-isolated or background
+  completion handler, use `Task { @MainActor in … }`. Reserve `DispatchQueue.main.async` for
+  not-yet-migrated code or where strict FIFO ordering relative to other `DispatchQueue.main.async` work
+  is required. Don't mix the two within a single function/flow. Note: under `targeted` mode (Swift 5
+  language mode) a `@MainActor`-isolated *function type* is **not** implicitly `Sendable` (SE-0434 only
+  applies in the Swift 6 language mode), so typing a delivered closure `@escaping @MainActor (…) -> Void`
+  does **not** let it cross into a `@Sendable` completion handler — a non-`Sendable` closure that must
+  cross such a boundary still needs an `UncheckedSendable` box with a justification comment. When the
+  hand-off *value* is non-`Sendable` (e.g. `BaseEpisode`), produce it *inside* the `@MainActor` closure
+  rather than capturing it across the boundary.
 
 **Exit criteria:** baseline at zero for targeted mode (playback files excepted); top-level UI types in
 non-playback features are `@MainActor`.

@@ -200,9 +200,8 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                 if let episode = episode as? Episode, let podcast = DataManager.sharedManager.findPodcast(uuid: episode.podcastUuid) {
                     self.appDelegate()?.openEpisode(episode.uuid, from: podcast)
                 } else if let podcastUuid = response.notification.request.content.userInfo["podcast_uuid"] as? String, let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) {
-                    DispatchQueue.main.async {
-                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
-                    }
+                    // `action` is delivered on the main actor, so navigate directly.
+                    NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
                 }
 
                 completionHandler()
@@ -215,24 +214,29 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound])
     }
 
+    /// Looks up the episode, refreshing from the server if it isn't found locally, then
+    /// delivers it to `action`. `action` is always invoked on the **main actor** (both
+    /// branches hop via `Task { @MainActor }`), so delivery no longer depends on which
+    /// thread the notification callback happens to run on.
+    ///
+    /// `action` is wrapped in `UncheckedSendable` because it captures the non-`Sendable`
+    /// notification completion handler and must cross into the `@Sendable` refresh
+    /// completion; it is invoked **at most once** (`RefreshManager` now always calls its
+    /// completion — see `processPodcastRefreshResponse`). The episode is fetched *inside*
+    /// the `@MainActor` closure so the non-`Sendable` `BaseEpisode` is never sent across an
+    /// isolation boundary.
     private func findEpisode(episodeUuid: String, performing action: @escaping (BaseEpisode?) -> Void) {
-        if let existingEpisode = DataManager.sharedManager.findEpisode(uuid: episodeUuid) {
-            action(existingEpisode)
-        } else {
-            // The refresh completion is @Sendable but the action closure is invoked exactly once,
-            // on the main queue; the unchecked box documents that single cross-thread hand-off.
-            let action = UncheckedSendable(action)
-            RefreshManager.shared.refreshPodcasts(completion: { _ in
-                if let episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid) {
-                    DispatchQueue.main.async {
-                        action.value(episode)
+        let action = UncheckedSendable(action)
+        Task { @MainActor in
+            if let existingEpisode = DataManager.sharedManager.findEpisode(uuid: episodeUuid) {
+                action.value(existingEpisode)
+            } else {
+                RefreshManager.shared.refreshPodcasts(completion: { _ in
+                    Task { @MainActor in
+                        action.value(DataManager.sharedManager.findEpisode(uuid: episodeUuid))
                     }
-                } else {
-                    DispatchQueue.main.async {
-                        action.value(nil)
-                    }
-                }
-            })
+                })
+            }
         }
     }
 
