@@ -65,9 +65,8 @@ class BookmarkEditViewModel: ObservableObject {
                 Analytics.track(.bookmarkUpdateTitle, source: analyticsSource)
             }
 
-            await MainActor.run {
-                router?.titleUpdated(title: title)
-            }
+            // This Task inherits the class's @MainActor isolation, so it already runs on the main actor.
+            router?.titleUpdated(title: title)
         }
     }
 

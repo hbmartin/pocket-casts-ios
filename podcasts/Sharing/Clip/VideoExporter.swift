@@ -233,8 +233,10 @@ fileprivate extension AVAssetWriterInput {
     func unsafeRequestMediaDataWhenReady(_ block: @escaping () async throws -> Bool) async throws {
         try await withCheckedThrowingContinuation { continuation in
             let writerInput = UnsafeTransfer(self)
-            // The block captures non-Sendable AVFoundation objects; it only ever runs on the
-            // serial readiness queue below, so the unchecked transfer is safe.
+            // The block captures non-Sendable AVFoundation objects. AVFoundation invokes the
+            // readiness callback serially (never re-entering until the prior call returns), and
+            // `waitForMediaDataResult` runs the block to completion before returning, so the
+            // unchecked transfer never races.
             let block = UnsafeTransfer(block)
             writerInput.wrappedValue.requestMediaDataWhenReady(on: .global(qos: .userInitiated)) {
                 switch Self.waitForMediaDataResult(block.wrappedValue) {
