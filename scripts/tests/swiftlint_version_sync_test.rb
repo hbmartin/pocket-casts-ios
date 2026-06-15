@@ -16,6 +16,8 @@ class SwiftlintVersionSyncTest < Minitest::Test
 
     refute_nil swiftlint_version, "Missing swiftlint_version in #{SWIFTLINT_CONFIG_PATH}"
     refute_nil manifest_version, "Missing SwiftLintPlugins exact version in #{BUILD_TOOLS_MANIFEST_PATH}"
-    assert_equal swiftlint_version, manifest_version
+    assert_equal swiftlint_version, manifest_version,
+                 'SwiftLint version drift between .swiftlint.yml and BuildTools/Package.swift. ' \
+                 'Run `mise run sync:swiftlint-version` to fix.'
   end
 end
