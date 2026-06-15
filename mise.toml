@@ -104,12 +104,13 @@ xcodebuild test -project podcasts.xcodeproj \
 '''
 
 [tasks."test:scripts"]
-description = "Run tests for the repo's Ruby helper scripts"
+description = "Run tests for the repo's helper scripts (credentials generation, simulator selection, SwiftLint version sync, concurrency ratchet)"
 alias = "test:credentials-script"
 run = [
     "ruby scripts/tests/generate_credentials_test.rb",
     "ruby scripts/tests/select_ios_simulator_test.rb",
     "ruby scripts/tests/swiftlint_version_sync_test.rb",
+    "./scripts/tests/check_concurrency_warnings_test.sh",
 ]
 
 # -----------------------------------------------------------------------------
@@ -150,7 +151,7 @@ xcodebuild -quiet analyze -project podcasts.xcodeproj \
 '''
 
 [tasks."check:concurrency"]
-description = "Build staging and fail on strict-concurrency warnings under Modules/Sources"
+description = "Build staging and fail on strict-concurrency warnings not in scripts/ci/concurrency-baseline.txt"
 run = '''
 LOG="${CONCURRENCY_WARNINGS_LOG:-/tmp/pocketcasts-concurrency-check.log}"
 xcodebuild -project podcasts.xcodeproj \
@@ -160,6 +161,25 @@ xcodebuild -project podcasts.xcodeproj \
     CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
     build > "$LOG" 2>&1
 ./scripts/ci/check-concurrency-warnings.sh "$LOG"
+'''
+
+[tasks."concurrency:baseline"]
+description = "Regenerate scripts/ci/concurrency-baseline.txt from a clean staging build (deletion-only ratchet; see MODERNIZATION.md)"
+run = '''
+set -eu
+DERIVED_DATA="$(mktemp -d /tmp/pocketcasts-concurrency-baseline-dd.XXXXXX)"
+LOG="${CONCURRENCY_BASELINE_LOG:-/tmp/pocketcasts-concurrency-baseline.log}"
+trap 'rm -rf "${DERIVED_DATA:?}"' EXIT
+# build-for-testing so test targets are covered too: CI runs the ratchet on the test log.
+xcodebuild -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -configuration StagingDebug \
+    -destination 'generic/platform=iOS Simulator' \
+    -derivedDataPath "$DERIVED_DATA" \
+    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+    build-for-testing > "$LOG" 2>&1
+./scripts/ci/check-concurrency-warnings.sh --print-normalized "$LOG" > scripts/ci/concurrency-baseline.txt
+echo "Wrote $(wc -l < scripts/ci/concurrency-baseline.txt | tr -d ' ') entries to scripts/ci/concurrency-baseline.txt"
 '''
 
 [tasks."check:static"]
