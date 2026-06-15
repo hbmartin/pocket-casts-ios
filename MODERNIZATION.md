@@ -32,6 +32,11 @@ of `scripts/ci/check-concurrency-warnings.sh`).
 | `nonisolated(unsafe)` without justification | Semgrep `pocketcasts.nonisolated-unsafe-requires-justification` | Active (zero findings) |
 | `@unchecked Sendable` without justification | Not yet gated — 123 legacy sites; gate after Phase 1 reduces them | Planned |
 
+> **Coverage note:** `mise run check:concurrency` builds the app target only; CI runs the same
+> ratchet on the test log (app + test + module targets). So test- and module-target baseline
+> entries are gated in CI but appear locally only as `Info:` (run with `--show-resolved` to list
+> them) — that is expected, not a stale baseline.
+
 ## Phase 0 — Foundations & cleanup (low risk)
 
 - **Ratchet tooling** (done in the first slice): app-target `targeted` strict concurrency, two-tier

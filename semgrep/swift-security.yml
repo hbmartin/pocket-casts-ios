@@ -4416,7 +4416,6 @@ rules:
     paths:
       include:
         - "**/*.swift"
-        - "**/semgrep/tests/swift-security-concurrency-escape-hatches.swift"
     patterns:
       - pattern-regex: 'nonisolated\(unsafe\)'
       # Longest alternative first: a justifying comment block must extend its match through the

@@ -19,8 +19,14 @@
 # fixed, so missing entries are reported as info instead of failing. Regenerate the baseline
 # from a clean build with `mise run concurrency:baseline`.
 #
-# Usage: check-concurrency-warnings.sh [--print-normalized] <xcodebuild-log-file> [baseline-file]
+# Coverage differs by caller: `mise run check:concurrency` builds the app target only, while CI
+# runs this script on the test log (app + test + module targets). So some baseline entries
+# (test targets, Modules/Sources files not recompiled by an app-only build) only surface in CI
+# and are reported as info locally — that is expected, not a stale baseline.
+#
+# Usage: check-concurrency-warnings.sh [--print-normalized] [--show-resolved] <xcodebuild-log-file> [baseline-file]
 #   --print-normalized  print the normalized warnings from the log and exit (baseline generation)
+#   --show-resolved     list every baseline entry absent from the log (default: a one-line count)
 
 set -euo pipefail
 
@@ -28,17 +34,27 @@ set -euo pipefail
 export LC_ALL=C
 
 print_normalized=0
-if [[ "${1:-}" == "--print-normalized" ]]; then
-  print_normalized=1
+show_resolved=0
+while [[ "${1:-}" == --* ]]; do
+  case "$1" in
+    --print-normalized) print_normalized=1 ;;
+    --show-resolved) show_resolved=1 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
   shift
-fi
+done
 
-log_file="${1:?usage: check-concurrency-warnings.sh [--print-normalized] <xcodebuild-log-file> [baseline-file]}"
+log_file="${1:?usage: check-concurrency-warnings.sh [--print-normalized] [--show-resolved] <xcodebuild-log-file> [baseline-file]}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/../.." && pwd)"
 baseline_file="${2:-$script_dir/concurrency-baseline.txt}"
 
-keyword_filter="sendable|concurrency|actor|isolated|data race|sending"
+# Anchor the substring-prone keywords (actor, sending) to a leading word boundary so unrelated
+# diagnostics like "...value 'factor' was never used" or "...resending..." are not misclassified
+# as concurrency warnings. The rest are concurrency-specific enough to match unanchored, and we
+# never add a *trailing* boundary (that would miss "data races" or "@preconcurrency").
+# [^[:alnum:]_] is used instead of \b for portability across BSD grep (macOS CI) and GNU grep.
+keyword_filter='sendable|concurrency|isolated|data race|(^|[^[:alnum:]_])(actor|sending)'
 
 normalized="$(
   grep -E "\.swift:[0-9]+:[0-9]+: warning:" "$log_file" \
@@ -77,9 +93,15 @@ if [[ -n "$baseline" ]]; then
 fi
 
 if [[ -n "$resolved" ]]; then
-  echo "Info: baseline entries not present in this log (fixed, or not recompiled in an incremental build):"
-  echo "$resolved"
-  echo "If fixed, delete them from ${baseline_file#"$repo_root"/} to ratchet down."
+  if (( show_resolved )); then
+    echo "Info: baseline entries not present in this log (fixed, or not recompiled in an incremental build):"
+    echo "$resolved"
+    echo "If verified fixed from a clean build, remove them from ${baseline_file#"$repo_root"/} to ratchet down (or run: mise run concurrency:baseline)."
+  else
+    resolved_count="$(printf '%s\n' "$resolved" | wc -l | tr -d ' ')"
+    resolved_noun="entries"; [[ "$resolved_count" == 1 ]] && resolved_noun="entry"
+    echo "Info: $resolved_count baseline $resolved_noun not present in this log (incremental builds don't recompile every file; absence does not imply fixed). Re-run with --show-resolved to list them."
+  fi
 fi
 
 if [[ -n "$new_warnings" ]]; then

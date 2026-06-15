@@ -113,6 +113,13 @@ run = [
     "./scripts/tests/check_concurrency_warnings_test.sh",
 ]
 
+[tasks."sync:swiftlint-version"]
+description = "Sync BuildTools SwiftLintPlugins pin + lock to .swiftlint.yml's swiftlint_version"
+run = [
+    "ruby scripts/sync_swiftlint_version.rb",
+    "swift package --package-path BuildTools resolve",
+]
+
 # -----------------------------------------------------------------------------
 # Semgrep
 # -----------------------------------------------------------------------------
@@ -151,7 +158,7 @@ xcodebuild -quiet analyze -project podcasts.xcodeproj \
 '''
 
 [tasks."check:concurrency"]
-description = "Build staging and fail on strict-concurrency warnings not in scripts/ci/concurrency-baseline.txt"
+description = "Build staging (app target only) and fail on strict-concurrency warnings not in scripts/ci/concurrency-baseline.txt. CI runs the same check on the test log, so test/module baseline entries surface there, not locally."
 run = '''
 LOG="${CONCURRENCY_WARNINGS_LOG:-/tmp/pocketcasts-concurrency-check.log}"
 xcodebuild -project podcasts.xcodeproj \
