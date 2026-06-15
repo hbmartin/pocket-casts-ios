@@ -11,8 +11,10 @@
 # so the writer and the drift guard agree on the same shapes.
 
 REPO_ROOT = File.expand_path('..', __dir__)
-SWIFTLINT_CONFIG_PATH = File.join(REPO_ROOT, '.swiftlint.yml')
-BUILD_TOOLS_MANIFEST_PATH = File.join(REPO_ROOT, 'BuildTools/Package.swift')
+# Paths default to the repo files; the env overrides exist so scripts/tests/sync_swiftlint_version_test.rb
+# can drive the script against temp fixtures without touching the real manifest.
+SWIFTLINT_CONFIG_PATH = ENV.fetch('SWIFTLINT_CONFIG_PATH', File.join(REPO_ROOT, '.swiftlint.yml'))
+BUILD_TOOLS_MANIFEST_PATH = ENV.fetch('BUILD_TOOLS_MANIFEST_PATH', File.join(REPO_ROOT, 'BuildTools/Package.swift'))
 
 MANIFEST_PIN_PATTERN =
   %r{(\.package\(\s*url:\s*"https://github\.com/SimplyDanny/SwiftLintPlugins"\s*,\s*exact:\s*")([^"]+)(")}m

@@ -28,7 +28,13 @@ extension Dictionary: DownloadManagerStreamAndDownloadCache where Self == Dictio
 extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where ThreadSafeDictionary == ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate> {
 }
 
-class DownloadManager: NSObject, FilePathProtocol {
+// @unchecked Sendable: `DownloadManager.shared` is a process-wide singleton already shared across
+// threads by design — its `URLSessionDelegate`/`URLSessionDownloadDelegate` callbacks run on the
+// session's background delegate queue. `@unchecked` because the compiler can't verify the ad-hoc
+// synchronization of its mutable caches (which use `ThreadSafeDictionary` when the
+// `downloadsThreadSafeCache` flag is enabled). Revisit when isolation is formalized in
+// modernization Phase 2.
+final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
     static let shared: DownloadManager = {
         let manager = DownloadManager(dataManager: DataManager.sharedManager)

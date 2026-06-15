@@ -25,9 +25,10 @@ final class FileLogDependencyTests: XCTestCase {
     }
 }
 
-// @unchecked Sendable: `messages` is guarded by `lock`; `publisher` is a thread-safe Combine subject.
+// @unchecked Sendable: `messages` is guarded by `lock`; `messageSubject` is a thread-safe Combine subject.
 private final class FileLogMock: FileLogging, @unchecked Sendable {
-    let publisher = PassthroughSubject<String, Never>()
+    private let messageSubject = PassthroughSubject<String, Never>()
+    var publisher: AnyPublisher<String, Never> { messageSubject.eraseToAnyPublisher() }
 
     private let lock = NSLock()
     private var messages: [String] = []

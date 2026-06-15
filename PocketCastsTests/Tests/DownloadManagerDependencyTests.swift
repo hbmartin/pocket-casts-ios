@@ -26,14 +26,24 @@ final class DownloadManagerDependencyTests: XCTestCase {
     }
 }
 
-private final class DownloadManagingMock: DownloadManaging {
-    private(set) var queuedEpisodeUuids: [String] = []
+// @unchecked Sendable: `queued` is guarded by `lock`; `progressManager`/`tempDownloadFolder` are immutable.
+private final class DownloadManagingMock: DownloadManaging, @unchecked Sendable {
+    private let lock = NSLock()
+    private var queued: [String] = []
 
-    var progressManager = DownloadProgressManager()
-    var tempDownloadFolder = ""
+    var queuedEpisodeUuids: [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return queued
+    }
+
+    let progressManager = DownloadProgressManager()
+    let tempDownloadFolder = ""
 
     func addToQueue(episodeUuid: String, fireNotification: Bool, autoDownloadStatus: AutoDownloadStatus) {
-        queuedEpisodeUuids.append(episodeUuid)
+        lock.lock()
+        defer { lock.unlock() }
+        queued.append(episodeUuid)
     }
 
     func addToQueueForStreaming(episodeUuid: String) { }

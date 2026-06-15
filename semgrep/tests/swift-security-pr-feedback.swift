@@ -413,6 +413,81 @@ final class SafeNativeEmptyStateActionViewController {
     func addPodcastsTapped(_ sender: Any) {}
 }
 
+// ruleid: pocketcasts.public-protocol-no-mutable-combine-subject
+public protocol UnsafeMutableSubjectLogging: Sendable {
+    var publisher: PassthroughSubject<String, Never> { get }
+}
+
+// ok: pocketcasts.public-protocol-no-mutable-combine-subject
+public protocol SafeErasedPublisherLogging: Sendable {
+    var publisher: AnyPublisher<String, Never> { get }
+}
+
+final class UnsafeDownloadsViewControllerStrongNetworkPrompt {
+    private func retryAllFailed() {
+        // ruleid: pocketcasts.download-episode-requested-no-strong-self
+        NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
+            if later {
+                self.queueForLaterDownload()
+            } else {
+                self.addToQueue()
+            }
+
+            self.refreshView()
+        }, disallowed: nil)
+    }
+
+    private func queueForLaterDownload() {}
+    private func addToQueue() {}
+    private func refreshView() {}
+}
+
+final class UnsafeDownloadsViewControllerInnerCapture {
+    private let downloadManager = DownloadManager.shared
+
+    func retry(episode: Episode) {
+        _ = OptionAction(label: "Retry", icon: nil, action: {
+            // ruleid: pocketcasts.download-episode-requested-no-strong-self
+            NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { [downloadManager = self.downloadManager] later in
+                if later {
+                    downloadManager.queueForLaterDownload(episodeUuid: episode.uuid)
+                } else {
+                    downloadManager.addToQueue(episodeUuid: episode.uuid)
+                }
+            }, disallowed: nil)
+        })
+    }
+}
+
+final class SafeDownloadsViewControllerWeakNetworkPrompt {
+    private func retryAllFailed() {
+        // ok: pocketcasts.download-episode-requested-no-strong-self
+        NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { [weak self] _ in
+            guard let self else { return }
+            self.refreshView()
+        }, disallowed: nil)
+    }
+
+    private func refreshView() {}
+}
+
+final class SafeDownloadsViewControllerCapturedDependency {
+    private let downloadManager = DownloadManager.shared
+
+    func retry(episode: Episode) {
+        _ = OptionAction(label: "Retry", icon: nil, action: { [downloadManager = self.downloadManager] in
+            // ok: pocketcasts.download-episode-requested-no-strong-self
+            NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
+                if later {
+                    downloadManager.queueForLaterDownload(episodeUuid: episode.uuid)
+                } else {
+                    downloadManager.addToQueue(episodeUuid: episode.uuid)
+                }
+            }, disallowed: nil)
+        })
+    }
+}
+
 final class UnsafeListeningHistoryEmptyStateController {
     private var episodes = [String]()
     private var contentUnavailableConfiguration: UIContentConfiguration?

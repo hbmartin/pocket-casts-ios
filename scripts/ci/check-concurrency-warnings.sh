@@ -54,6 +54,9 @@ baseline_file="${2:-$script_dir/concurrency-baseline.txt}"
 # as concurrency warnings. The rest are concurrency-specific enough to match unanchored, and we
 # never add a *trailing* boundary (that would miss "data races" or "@preconcurrency").
 # [^[:alnum:]_] is used instead of \b for portability across BSD grep (macOS CI) and GNU grep.
+# Note: the filter runs on the whole log line (path included), so a file literally named e.g.
+# Actor.swift would still match regardless of message. That over-gates rather than under-gates,
+# which is the safe direction for a ratchet, and is far narrower than the old unanchored filter.
 keyword_filter='sendable|concurrency|isolated|data race|(^|[^[:alnum:]_])(actor|sending)'
 
 normalized="$(

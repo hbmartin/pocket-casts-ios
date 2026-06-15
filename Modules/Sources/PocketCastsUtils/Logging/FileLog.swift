@@ -82,7 +82,7 @@ actor LogBuffer {
     }
 }
 
-// @unchecked Sendable: `logBuffer` is an actor and `publisher` is a thread-safe Combine
+// @unchecked Sendable: `logBuffer` is an actor and `messageSubject` is a thread-safe Combine
 // subject; there is no other mutable state.
 public final class FileLog: @unchecked Sendable {
     public enum LogError: Error {
@@ -112,7 +112,11 @@ public final class FileLog: @unchecked Sendable {
     }()
 
     private let logBuffer: LogBuffer
-    public let publisher = PassthroughSubject<String, Never>()
+    private let messageSubject = PassthroughSubject<String, Never>()
+
+    /// Read-only stream of logged messages so consumers can capture log output without being
+    /// able to inject lines via `send(_:)`; only `FileLog` publishes here (see `addMessage`).
+    public var publisher: AnyPublisher<String, Never> { messageSubject.eraseToAnyPublisher() }
 
     init(
         logPersistence: PersistentTextWriting,
@@ -126,7 +130,7 @@ public final class FileLog: @unchecked Sendable {
     public func addMessage(_ message: String, date: Date = Date()) {
         Task {
             await logBuffer.append(message, date: date)
-            publisher.send(message)
+            messageSubject.send(message)
         }
     }
 
