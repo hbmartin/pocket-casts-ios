@@ -104,7 +104,8 @@ public final class RefreshManager: @unchecked Sendable {
         refreshQueue.cancelAllOperations()
     }
 
-    private func processPodcastRefreshResponse(_ refreshResponse: PodcastRefreshResponse?, completion: ((RefreshFetchResult) -> Void)?) {
+    // `internal` (not `private`) so `RefreshManagerTests` can drive the no-result branch directly.
+    func processPodcastRefreshResponse(_ refreshResponse: PodcastRefreshResponse?, completion: ((RefreshFetchResult) -> Void)?) {
         guard let response = refreshResponse, response.success() else {
             FileLog.shared.addMessage("Podcast refresh failed with message: \(refreshResponse?.message ?? "none"). See previous log for more details.")
             ServerNotificationsHelper.shared.firePodcastRefreshFailed()
@@ -120,6 +121,7 @@ public final class RefreshManager: @unchecked Sendable {
             // Refresh succeeded but carried no result to process; report no data so the
             // completion always fires (callers may rely on it, e.g. background-fetch and
             // notification handlers that must call their own completion handler).
+            ServerNotificationsHelper.shared.firePodcastRefreshSucceeded()
             completion?(.noData)
         }
     }
