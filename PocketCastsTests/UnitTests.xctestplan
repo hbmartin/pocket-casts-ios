@@ -47,6 +47,20 @@
         "identifier" : "PocketCastsUtilsTests",
         "name" : "PocketCastsUtilsTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules",
+        "identifier" : "PocketCastsDependencyInjectionTests",
+        "name" : "PocketCastsDependencyInjectionTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules",
+        "identifier" : "ModulesTests",
+        "name" : "ModulesTests"
+      }
     }
   ],
   "version" : 1
