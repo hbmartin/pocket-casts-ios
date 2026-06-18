@@ -1,7 +1,7 @@
 import DifferenceKit
 import SwiftUI
+import Dependencies
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 import PocketCastsServer
 import PocketCastsUtils
 import UIKit

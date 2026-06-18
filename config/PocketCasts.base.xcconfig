@@ -7,6 +7,12 @@ SWIFT_VERSION = 5.0
 // See MODERNIZATION.md. Regenerate the baseline with `mise run concurrency:baseline`.
 SWIFT_STRICT_CONCURRENCY = targeted
 
+// Infer `Sendable` for closures and key paths whose captures are all `Sendable`
+// (SE-0418). Matches the `InferSendableFromCaptures` upcoming feature the SPM modules
+// already enable, and lets key-path literals like `\.fileLog` be `Sendable` so the
+// swift-dependencies `@Dependency` property wrapper is usable in `@MainActor` types.
+SWIFT_UPCOMING_FEATURE_INFER_SENDABLE_FROM_CAPTURES = YES
+
 // Map our custom version values (used by the automation tooling) to the values
 // Xcode uses
 MARKETING_VERSION = $(VERSION_SHORT)

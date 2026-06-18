@@ -1,23 +1,23 @@
-import PocketCastsDependencyInjection
+import Dependencies
 
-struct PlaylistMetadataLoaderKey: DependencyKey {
-    static var currentValue = PlaylistMetadataLoader()
+enum PlaylistMetadataLoaderKey: DependencyKey {
+    static let liveValue = PlaylistMetadataLoader()
 }
 
-struct PlaylistCacheInvalidationCoordinatorKey: DependencyKey {
-    static var currentValue = PlaylistCacheInvalidationCoordinator(
-        playlistMetadataLoader: PlaylistMetadataLoaderKey.currentValue
+enum PlaylistCacheInvalidationCoordinatorKey: DependencyKey {
+    static let liveValue = PlaylistCacheInvalidationCoordinator(
+        playlistMetadataLoader: PlaylistMetadataLoaderKey.liveValue
     )
 }
 
-extension DefaultDependencyContainer {
+extension DependencyValues {
     var playlistMetadataLoader: PlaylistMetadataLoader {
-        get { Self[PlaylistMetadataLoaderKey.self] }
-        nonmutating set { Self[PlaylistMetadataLoaderKey.self] = newValue }
+        get { self[PlaylistMetadataLoaderKey.self] }
+        set { self[PlaylistMetadataLoaderKey.self] = newValue }
     }
 
     var playlistCacheInvalidationCoordinator: PlaylistCacheInvalidationCoordinator {
-        get { Self[PlaylistCacheInvalidationCoordinatorKey.self] }
-        nonmutating set { Self[PlaylistCacheInvalidationCoordinatorKey.self] = newValue }
+        get { self[PlaylistCacheInvalidationCoordinatorKey.self] }
+        set { self[PlaylistCacheInvalidationCoordinatorKey.self] = newValue }
     }
 }

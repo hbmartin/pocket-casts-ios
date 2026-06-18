@@ -1,7 +1,7 @@
 import AVFoundation
+import Dependencies
 import Foundation
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 
 /// Consumer-facing surface of `DownloadManager`, registered in the dependency container as
 /// `\.downloadManager` so consumers can be tested with a mock instead of the real download
@@ -36,14 +36,13 @@ extension DownloadManaging {
 
 extension DownloadManager: DownloadManaging { }
 
-struct DownloadManagerKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any DownloadManaging = DownloadManager.shared
+enum DownloadManagerKey: DependencyKey {
+    static let liveValue: any DownloadManaging = DownloadManager.shared
 }
 
-extension DefaultDependencyContainer {
+extension DependencyValues {
     var downloadManager: any DownloadManaging {
-        get { Self[DownloadManagerKey.self] }
-        nonmutating set { Self[DownloadManagerKey.self] = newValue }
+        get { self[DownloadManagerKey.self] }
+        set { self[DownloadManagerKey.self] = newValue }
     }
 }

@@ -90,7 +90,7 @@ struct RatePodcastView: View {
                     .frame(width: 36, height: 36)
                     .padding(4)
                     .onTapGesture {
-                        viewModel.stars = Double(index) + 1
+                        updateStarsFromUserInteraction(to: Double(index) + 1)
                     }
                 }
             }
@@ -99,7 +99,7 @@ struct RatePodcastView: View {
                     .onChanged { gesture in
                         var starValue = (gesture.location.x * 5) / reader.size.width
                         starValue = (starValue * 2).rounded() / 2
-                        viewModel.stars = max(1, min(5, starValue.rounded()))
+                        updateStarsFromUserInteraction(to: max(1, min(5, starValue.rounded())))
                     }
             )
         }, contentSizeUpdated: { _ in
@@ -135,6 +135,12 @@ struct RatePodcastView: View {
         PodcastCover(podcastUuid: viewModel.podcast.uuid, big: true)
             .frame(width: 164, height: 164)
             .padding(.bottom, 40)
+    }
+
+    private func updateStarsFromUserInteraction(to stars: Double) {
+        guard viewModel.stars != stars else { return }
+        viewModel.stars = stars
+        HapticsHelper.triggerStarHaptic()
     }
 
     enum Constants {
