@@ -18,7 +18,7 @@ final class HomeGridItemTests: XCTestCase {
         let uuid = NSUUID().uuidString
         let podcast = PodcastBuilder().build()
         podcast.uuid = uuid
-        let folder = FolderBuilder().build()
+        var folder = FolderBuilder().build()
         folder.uuid = uuid
 
         XCTAssertNotEqual(HomeGridItem(podcast: podcast).id, HomeGridItem(folder: folder).id)

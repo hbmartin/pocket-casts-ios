@@ -6,7 +6,8 @@ import Foundation
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
 public protocol FolderRepository: AnyObject {
-    func save(folder: Folder)
+    @discardableResult
+    func save(folder: Folder) -> Folder
     func allFolders(includeDeleted: Bool) -> [Folder]
     func findFolder(uuid: String) -> Folder?
     func topPodcastsUuidInFolder(folder: Folder) -> [String]

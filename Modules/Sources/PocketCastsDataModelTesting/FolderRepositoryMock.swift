@@ -4,8 +4,10 @@ import PocketCastsDataModel
 /// Generated protocol mock for `FolderRepository`. Stub return values by selector:
 /// `mock.stub("findPodcast(uuid:includeUnsubscribed:)", with: podcast)`.
 public final class FolderRepositoryMock: RepositoryMock, FolderRepository {
-    public func save(folder: Folder) {
+    @discardableResult
+    public func save(folder: Folder) -> Folder {
         record("save(folder:)")
+        return stubs["save(folder:)"] as? Folder ?? folder
     }
 
     public func allFolders(includeDeleted: Bool) -> [Folder] {

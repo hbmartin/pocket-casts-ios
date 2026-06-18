@@ -68,7 +68,7 @@ final class FolderColumnConsistencyTests: DataManagerTestCase {
     /// Verifies that cachedUnreadCount is NOT persisted (marked with @GRDBIgnore)
     func testCachedUnreadCountNotPersisted() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let folder = Folder()
+            var folder = Folder()
             folder.uuid = UUID().uuidString.lowercased()
             folder.name = "Test Folder"
             folder.addedDate = Date()
@@ -90,7 +90,7 @@ final class FolderColumnConsistencyTests: DataManagerTestCase {
     // MARK: - Helpers
 
     private func createFullyPopulatedFolder() -> Folder {
-        let folder = Folder()
+        var folder = Folder()
         folder.uuid = UUID().uuidString.lowercased()
         folder.name = "Test Folder"
         folder.color = 3

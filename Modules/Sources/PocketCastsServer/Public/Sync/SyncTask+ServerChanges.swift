@@ -256,7 +256,7 @@ extension SyncTask {
             existingFolder = Folder()
             existingFolder?.uuid = folderUuid
         }
-        guard let folder = existingFolder else { return }
+        guard var folder = existingFolder else { return }
 
         folder.name = folderItem.name
         folder.color = folderItem.color

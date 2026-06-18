@@ -193,9 +193,9 @@ final class FolderDataManagerTests: DataManagerTestCase {
 
     func testSaveSortOrdersUpdatesSortOrders() throws {
         try runWithBothImplementations { dataManager, impl in
-            let folder1 = self.createTestFolder(name: "Folder 1", sortOrder: 1, dataManager: dataManager)
-            let folder2 = self.createTestFolder(name: "Folder 2", sortOrder: 2, dataManager: dataManager)
-            let folder3 = self.createTestFolder(name: "Folder 3", sortOrder: 3, dataManager: dataManager)
+            var folder1 = self.createTestFolder(name: "Folder 1", sortOrder: 1, dataManager: dataManager)
+            var folder2 = self.createTestFolder(name: "Folder 2", sortOrder: 2, dataManager: dataManager)
+            var folder3 = self.createTestFolder(name: "Folder 3", sortOrder: 3, dataManager: dataManager)
 
             // Update sort orders
             folder1.sortOrder = 3
@@ -270,7 +270,7 @@ final class FolderDataManagerTests: DataManagerTestCase {
 
     func testSaveInsertsNewFolderWithAllFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let folder = Folder()
+            var folder = Folder()
             folder.uuid = "save-test-uuid"
             folder.name = "Save Test Folder"
             folder.color = 5
@@ -296,7 +296,7 @@ final class FolderDataManagerTests: DataManagerTestCase {
 
     func testSaveUpdatesExistingFolder() throws {
         try runWithBothImplementations { dataManager, impl in
-            let folder = self.createTestFolder(uuid: "update-test-uuid", name: "Original Name", color: 1, dataManager: dataManager)
+            var folder = self.createTestFolder(uuid: "update-test-uuid", name: "Original Name", color: 1, dataManager: dataManager)
 
             // Update fields
             folder.name = "Updated Name"
@@ -315,23 +315,24 @@ final class FolderDataManagerTests: DataManagerTestCase {
 
     func testSaveGeneratesUuidIfEmpty() throws {
         try runWithBothImplementations { dataManager, impl in
-            let folder = Folder()
+            var folder = Folder()
             folder.uuid = "" // Empty UUID
             folder.name = "Auto UUID Folder"
             folder.addedDate = Date()
 
-            dataManager.save(folder: folder)
+            // Folder is a value type: save returns the copy with the generated uuid.
+            let saved = dataManager.save(folder: folder)
 
-            XCTAssertFalse(folder.uuid.isEmpty, "\(impl): UUID should be generated")
+            XCTAssertFalse(saved.uuid.isEmpty, "\(impl): UUID should be generated")
 
-            let found = dataManager.findFolder(uuid: folder.uuid)
+            let found = dataManager.findFolder(uuid: saved.uuid)
             XCTAssertNotNil(found, "\(impl): Should find folder with generated UUID")
         }
     }
 
     func testSavePreservesAddedDate() throws {
         try runWithBothImplementations { dataManager, impl in
-            let folder = Folder()
+            var folder = Folder()
             folder.uuid = "date-test-uuid"
             folder.name = "Date Test Folder"
             let originalDate = Date(timeIntervalSince1970: 500000)
@@ -360,7 +361,7 @@ final class FolderDataManagerTests: DataManagerTestCase {
         syncModified: Int64 = 0,
         dataManager: DataManager
     ) -> Folder {
-        let folder = Folder()
+        var folder = Folder()
         folder.uuid = uuid
         folder.name = name
         folder.color = color

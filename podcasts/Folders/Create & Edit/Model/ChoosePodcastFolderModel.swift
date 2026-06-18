@@ -10,7 +10,7 @@ class ChoosePodcastFolderModel: ObservableObject {
     @Published var currentFolder: String
 
     private var rootFolder: Folder = {
-        let folder = Folder()
+        var folder = Folder()
         folder.uuid = "root"
 
         return folder

@@ -38,16 +38,22 @@ class FolderDataManager {
         return cachedFolders.filter { $0.wasDeleted == false }
     }
 
-    func save(folder: Folder, dbQueue: PCDBQueue) {
+    /// Persists the folder, assigning a `uuid` if it has none, and returns the saved value.
+    /// Returns rather than mutating in place because `Folder` is a value type — callers that
+    /// need the generated `uuid` must use the returned folder.
+    @discardableResult
+    func save(folder: Folder, dbQueue: PCDBQueue) -> Folder {
+        var folder = folder
         if folder.uuid.isEmpty {
             folder.uuid = UUID().uuidString.lowercased()
         }
+        let folderToSave = folder
 
         if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
             // GRDB path using PersistableRecord
             do {
                 try grdbQueue.dbPool.write { db in
-                    try folder.save(db)
+                    try folderToSave.save(db)
                 }
             } catch {
                 FileLog.shared.addMessage("FolderDataManager.save error: \(error)")
@@ -56,11 +62,11 @@ class FolderDataManager {
             // Legacy path
             dbQueue.write { db in
                 do {
-                    if self.cachedFolders.contains(where: { $0.uuid == folder.uuid }) {
+                    if self.cachedFolders.contains(where: { $0.uuid == folderToSave.uuid }) {
                         let setStatement = "\(self.columnNames.joined(separator: " = ?, ")) = ?"
-                        try db.executeUpdate("UPDATE \(DataManager.folderTableName) SET \(setStatement) WHERE uuid = ?", values: self.createValuesFrom(folder, includeUuidForWhere: true))
+                        try db.executeUpdate("UPDATE \(DataManager.folderTableName) SET \(setStatement) WHERE uuid = ?", values: self.createValuesFrom(folderToSave, includeUuidForWhere: true))
                     } else {
-                        try db.executeUpdate("INSERT INTO \(DataManager.folderTableName) (\(self.columnNames.joined(separator: ","))) VALUES \(DBUtils.valuesQuestionMarks(amount: self.columnNames.count))", values: self.createValuesFrom(folder))
+                        try db.executeUpdate("INSERT INTO \(DataManager.folderTableName) (\(self.columnNames.joined(separator: ","))) VALUES \(DBUtils.valuesQuestionMarks(amount: self.columnNames.count))", values: self.createValuesFrom(folderToSave))
                     }
                 } catch {
                     FileLog.shared.addMessage("FolderDataManager.save error: \(error)")
@@ -68,6 +74,7 @@ class FolderDataManager {
             }
         }
         cacheFolders(dbQueue: dbQueue)
+        return folder
     }
 
     func delete(folderUuid: String, dbQueue: PCDBQueue) {
@@ -155,7 +162,7 @@ class FolderDataManager {
     // MARK: - Conversion
 
     private func createFrom(resultSet rs: PCDBResultSet) -> Folder {
-        let folder = Folder()
+        var folder = Folder()
 
         folder.uuid = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "uuid")
         folder.name = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "name")

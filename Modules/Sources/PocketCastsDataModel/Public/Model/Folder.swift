@@ -3,21 +3,24 @@ import GRDB
 import GRDBMacros
 
 @GRDBRecord(table: "Folder")
-public class Folder: NSObject, Identifiable {
-    @objc public var uuid = ""
-    @objc public var name = ""
-    @objc public var color: Int32 = 0
-    @objc public var addedDate: Date?
-    @objc public var sortOrder: Int32 = 0
-    @objc public var sortType: Int32 = 0
-    @objc public var wasDeleted = false
-    @objc public var syncModified: Int64 = 0
+public struct Folder: Identifiable, Equatable, Sendable {
+    public var uuid = ""
+    public var name = ""
+    public var color: Int32 = 0
+    public var addedDate: Date?
+    public var sortOrder: Int32 = 0
+    public var sortType: Int32 = 0
+    public var wasDeleted = false
+    public var syncModified: Int64 = 0
 
     // transient not saved to database
     @GRDBIgnore
     public var cachedUnreadCount = 0
 
-    override public init() {}
+    /// Stable identity is the persisted `uuid` (was `ObjectIdentifier` when this was an NSObject).
+    public var id: String { uuid }
+
+    public init() {}
 
     func folderSort() -> FolderSort {
         FolderSort(rawValue: sortType) ?? .dateAddedNewestToOldest

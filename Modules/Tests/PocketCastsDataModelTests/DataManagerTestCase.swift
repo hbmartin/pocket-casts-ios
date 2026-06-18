@@ -177,14 +177,13 @@ class DataManagerTestCase: XCTestCase {
         sortOrder: Int32 = 0,
         dataManager: DataManager
     ) -> Folder {
-        let folder = Folder()
+        var folder = Folder()
         folder.uuid = uuid
         folder.name = name
         folder.color = color
         folder.sortOrder = sortOrder
         folder.addedDate = Date()
-        dataManager.save(folder: folder)
-        return folder
+        return dataManager.save(folder: folder)
     }
 
     /// Adds an episode to the Up Next playlist at the bottom

@@ -161,7 +161,7 @@ class FoldersCoordinator: NSObject {
     }
 
     private func makeFolder(from suggestedFolder: SuggestedFolder) -> Folder {
-        let folder = Folder()
+        var folder = Folder()
         folder.name = suggestedFolder.name
         folder.color = suggestedFolder.color
         folder.addedDate = Date()
@@ -170,8 +170,8 @@ class FoldersCoordinator: NSObject {
 
         // the sort type for newly created folders defaults to the same thing the home grid is set to
         folder.sortType = Int32(Settings.homeFolderSortOrder().old.rawValue)
-        dataManager.save(folder: folder)
-        return folder
+        // Folder is a value type: return the saved copy so its persisted uuid is visible to callers.
+        return dataManager.save(folder: folder)
     }
 }
 

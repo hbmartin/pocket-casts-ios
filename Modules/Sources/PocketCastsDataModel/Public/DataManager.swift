@@ -1071,7 +1071,8 @@ public class DataManager {
 
     // MARK: - Folders
 
-    public func save(folder: Folder) {
+    @discardableResult
+    public func save(folder: Folder) -> Folder {
         folderManager.save(folder: folder, dbQueue: dbQueue)
     }
 
