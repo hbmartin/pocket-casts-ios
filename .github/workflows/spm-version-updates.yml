@@ -30,8 +30,8 @@ jobs:
           persist-credentials: false
 
       - name: Check Swift package updates
-        # c3cbe21c807e8a99fd61dba23c0d5476725a5a18 is v1.2.0.
-        uses: hbmartin/github-action-spm_version_updates@c3cbe21c807e8a99fd61dba23c0d5476725a5a18
+        # 77ecdd3798d102e93b3b5ab78130e6a740d35ed3 is v2.0.0.
+        uses: hbmartin/github-action-spm_version_updates@77ecdd3798d102e93b3b5ab78130e6a740d35ed3
         with:
           package-manifest-paths: |
             Modules/Package.swift
