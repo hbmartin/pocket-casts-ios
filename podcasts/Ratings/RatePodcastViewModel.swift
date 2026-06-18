@@ -2,6 +2,7 @@ import SwiftUI
 import PocketCastsDataModel
 import PocketCastsServer
 
+@MainActor
 class RatePodcastViewModel: ObservableObject {
     @Binding var presented: Bool
 
@@ -72,7 +73,7 @@ class RatePodcastViewModel: ObservableObject {
             "uuid": podcast.uuid,
             "stars": stars
         ])
-        Task { @MainActor [weak self] in
+        Task { [weak self] in
             guard let self else { return }
             let success = await ApiServerHandler.shared.addRating(uuid: self.podcast.uuid, rating: Int(self.stars))
             self.isSubmitting = false
@@ -95,8 +96,9 @@ class RatePodcastViewModel: ObservableObject {
         Task { [weak self] in
             guard let self else { return }
             // Some podcasts can have just one episode.
-            // Let's use the episode count to compute the requirement to rate
-            let episodeCount = self.dataManager.findEpisodeCount(podcastId: id)
+            // Let's use the episode count to compute the requirement to rate.
+            // Run the synchronous count off the main thread (the class is @MainActor).
+            let episodeCount = await self.dataManager.findEpisodeCountAsync(podcastId: id)
 
             // This shouldn't be necessary, but just in case it's empty we return
             guard episodeCount > 0 else { return }
@@ -108,17 +110,13 @@ class RatePodcastViewModel: ObservableObject {
             let userCanRate: UserCanRate = playedEpisodesCount < requirementToRate ? .disallowed : .allowed
             if userCanRate == .allowed,
                let userPodcastRating = await ApiServerHandler.shared.getRating(uuid: uuid) {
-                await MainActor.run {
-                    self.stars = Double(userPodcastRating.podcastRating)
-                    self.userPodcastRating = userPodcastRating
-                }
+                self.stars = Double(userPodcastRating.podcastRating)
+                self.userPodcastRating = userPodcastRating
             }
             let event: AnalyticsEvent = userCanRate == .allowed ? .ratingScreenShown : .notAllowedToRateScreenShown
             Analytics.track(event, properties: ["uuid": uuid])
-            await MainActor.run {
-                self.userCanRate = userCanRate
-                self.setDismissAction()
-            }
+            self.userCanRate = userCanRate
+            self.setDismissAction()
         }
     }
 

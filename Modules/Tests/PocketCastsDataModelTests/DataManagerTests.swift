@@ -334,6 +334,36 @@ final class DataManagerTests: DataManagerTestCase {
         }
     }
 
+    // MARK: - findPlayedEpisodesCount
+
+    func testFindPlayedEpisodesCountCountsEpisodesPlayedPastHalfway() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(dataManager: dataManager)
+
+            // Played past the halfway mark -> counted
+            let played1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 80, dataManager: dataManager)
+            played1.duration = 100
+            dataManager.save(episode: played1)
+            let played2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playedUpTo: 60, dataManager: dataManager)
+            played2.duration = 100
+            dataManager.save(episode: played2)
+
+            // Played less than halfway -> not counted
+            let barelyPlayed = self.createTestEpisode(uuid: "ep-3", podcast: podcast, playedUpTo: 10, dataManager: dataManager)
+            barelyPlayed.duration = 100
+            dataManager.save(episode: barelyPlayed)
+
+            // Different podcast, played past halfway -> not counted
+            let otherPodcast = self.createTestPodcast(uuid: "other-podcast", dataManager: dataManager)
+            let otherPlayed = self.createTestEpisode(uuid: "other-ep", podcast: otherPodcast, playedUpTo: 90, dataManager: dataManager)
+            otherPlayed.duration = 100
+            dataManager.save(episode: otherPlayed)
+
+            let count = await dataManager.findPlayedEpisodesCount(podcastId: podcast.id)
+            XCTAssertEqual(count, 2, "\(impl): should count only this podcast's episodes played past the halfway mark")
+        }
+    }
+
     // MARK: - playlistEpisodeCount (Up Next count)
 
     func testPlaylistEpisodeCountReturnsZeroForEmpty() throws {

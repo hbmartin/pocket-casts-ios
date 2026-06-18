@@ -88,6 +88,7 @@ public protocol EpisodeRepository: AnyObject {
     // async reads.
     func findEpisodeAsync(uuid: String) async -> Episode?
     func findBaseEpisodeAsync(uuid: String) async -> BaseEpisode?
+    func findEpisodeCountAsync(podcastId: Int64) async -> Int
     func findEpisodesWhereAsync(customWhere: String, arguments: [Any]?) async -> [Episode]
 
     // Completes only after the write has landed, so callers can safely re-read
@@ -114,6 +115,10 @@ public extension EpisodeRepository {
 
     func findBaseEpisodeAsync(uuid: String) async -> BaseEpisode? {
         await runOffMainThread { self.findBaseEpisode(uuid: uuid) }
+    }
+
+    func findEpisodeCountAsync(podcastId: Int64) async -> Int {
+        await runOffMainThread { self.findEpisodeCount(podcastId: podcastId) }
     }
 
     func findEpisodesWhereAsync(customWhere: String, arguments: [Any]?) async -> [Episode] {

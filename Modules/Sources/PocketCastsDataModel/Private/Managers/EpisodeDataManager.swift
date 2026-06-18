@@ -128,23 +128,23 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findPlayedEpisodesCount(podcastId: Int64, dbQueue: PCDBQueue) async -> Int {
-        return await withCheckedContinuation { continuation in
-            var count = 0
-            let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE podcast_id = ? AND playedUpTo > (duration / 2)"
-            dbQueue.read { db in
-                do {
-                    let resultSet = try db.executeQuery(query, values: [podcastId])
-                    defer { resultSet.close() }
+        // Uses the genuinely-async `read` (off the caller's executor) rather than the
+        // synchronous `read` wrapped in a continuation, which would block whatever thread
+        // the caller runs on — main-thread-blocking when awaited from a `@MainActor` caller.
+        let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE podcast_id = ? AND playedUpTo > (duration / 2)"
+        do {
+            return try await dbQueue.read { db in
+                let resultSet = try db.executeQuery(query, values: [podcastId])
+                defer { resultSet.close() }
 
-                    if resultSet.next() {
-                        count = Int(resultSet.int(forColumn: "Count"))
-                    }
-                    continuation.resume(returning: count)
-                } catch {
-                    FileLog.shared.addMessage("EpisodeDataManager.findPlayedEpisodesCount error: \(error)")
-                    continuation.resume(returning: 0)
+                if resultSet.next() {
+                    return Int(resultSet.int(forColumn: "Count"))
                 }
+                return 0
             }
+        } catch {
+            FileLog.shared.addMessage("EpisodeDataManager.findPlayedEpisodesCount error: \(error)")
+            return 0
         }
     }
 

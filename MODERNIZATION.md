@@ -95,6 +95,9 @@ singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.sh
   actor-backed, or lock-protected), register the existing singleton as the default value, then adopt
   `@Dependency` at call sites in feature-area batches. The existing adopters
   (`PlaylistsViewController`, `NewPlaylistCell`, `PlaylistDetailViewModel`) are the pattern template.
+  Note: for `DataManager` the seam is about *injectability and consumer isolation*, not about making
+  the records it returns `Sendable` — that record-layer decision is GRDB-7-driven and lives in Phase 3,
+  so don't try to resolve it at the `DependencyKey`.
   `PlaybackManager` gets a facade protocol + key so *consumers* decouple, but its internals stay
   untouched. Each seam PR adds at least one test overriding the new `DependencyKey` — DI makes
   previously untestable units testable.
@@ -110,7 +113,7 @@ singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.sh
 **Exit criteria:** the five core singletons injectable behind protocols; no non-playback, non-generated
 file over 1,000 lines; regression rules active.
 
-## Phase 3 — Data layer: raw SQL → GRDB query interface (medium-high risk)
+## Phase 3 — Data layer: raw SQL → GRDB query interface + record Sendability (medium-high risk)
 
 - Finish the migration the `grdbQueryInterface` flag (default-on) already started: convert the ~168 raw
   `.execute()`/SQL sites in `Modules/Sources/PocketCastsDataModel` to GRDB query interface, using the
@@ -121,11 +124,32 @@ file over 1,000 lines; regression rules active.
 - This work lives inside the SPM modules where strict concurrency is already enforced at zero warnings,
   so all new data-layer code is born clean; GRDB's async access patterns replace bespoke
   `DispatchQueue` plumbing, pre-shrinking Phase 4.
+- **Record Sendability is decided here, and GRDB 7 has already prescribed the answer.** The repo is
+  already on GRDB **7.10.0** (`Modules/Package.swift`: `from: "7.0.0"`), whose Swift-concurrency
+  guidance is explicit: `db.read`/`db.write` take `@Sendable` closures whose return values must be
+  `Sendable`; **record types should be value-type structs of `Sendable` properties**; the `Record`
+  class "is not `Sendable`, and its use is actively discouraged since GRDB 7"; and `@unchecked
+  Sendable` on a record class is called out as a footgun ("all humans and machines who read your code
+  will think the class is thread-safe"). The repo's `@GRDBRecord`-macro'd `NSObject` records
+  (`Episode`, `Podcast`, `EpisodeFilter`, `UserEpisode`, …) are exactly that anti-pattern — several
+  already carry `@unchecked Sendable`. The endorsed end-state is **struct records**, not DTO snapshots
+  layered over class records. This is the deepest refactor in the roadmap (hundreds of in-place
+  active-record mutation sites, `@objc` bridging, a class-keyed macro, `BaseEpisode`/`ListItem`
+  wrappers), so it is sized as its own sub-effort *inside* Phase 3, sequenced after the query-interface
+  conversions inform feasibility. It is **not** pulled forward into Phase 1/2 burn-down: GRDB 7 runs
+  fine under `targeted` Swift 5 mode today, so nothing forces the decision early. Where a Phase 1/2
+  baseline entry needs a record to cross an actor boundary before then, fix it *locally and
+  non-committally* (project the few displayed fields to a small `Sendable` struct at that hop; mark
+  genuinely-immutable wrappers like `ListEpisode` honestly `Sendable`) rather than ratifying a global
+  `@unchecked Sendable` contract that GRDB 7 would have us unwind.
 - **Lock-in:** Semgrep rule forbidding new raw-SQL string execution in DataModel outside a
-  deletion-only residue list (migrations and justified perf-critical bulk ops may stay raw).
+  deletion-only residue list (migrations and justified perf-critical bulk ops may stay raw). Once the
+  struct-record migration begins, a companion rule flagging new `@unchecked Sendable` on `@GRDBRecord`
+  types outside a shrinking allowlist.
 
 **Exit criteria:** `grdbQueryInterface` deleted (single code path); raw SQL only in the justified
-residue list.
+residue list; record-Sendability strategy (struct migration) documented and underway, with the
+`@unchecked Sendable` record population shrinking rather than growing.
 
 ## Phase 4 — Complete strict concurrency + async migration (medium-high risk)
 

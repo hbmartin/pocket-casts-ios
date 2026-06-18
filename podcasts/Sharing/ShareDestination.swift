@@ -1,4 +1,5 @@
 import SwiftUI
+@preconcurrency import AVFoundation
 import PocketCastsDataModel
 import Combine
 import PocketCastsUtils
