@@ -89,11 +89,25 @@ non-playback features are `@MainActor`.
 singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.shared` call sites twice
 (once for injection, once for isolation).
 
+- **DI library: pointfree [swift-dependencies](https://github.com/pointfreeco/swift-dependencies).**
+  The repo's original homegrown `PocketCastsDependencyInjection` container keyed dependencies on a
+  mutable `static var currentValue` (global mutable state — itself a concurrency smell requiring
+  `nonisolated(unsafe)`). It is being replaced by swift-dependencies, whose `DependencyKey`
+  (`liveValue`/`testValue`/`previewValue`), task-local `DependencyValues`, and scoped `withDependencies`
+  overrides are concurrency-aware and remove the global mutable state. The `@Dependency(\.key)`
+  call-site syntax is identical, so adopters only swap an import. **Migrated so far** (Sendable values,
+  clean): `\.fileLog`, `\.downloadManager`, `\.playlistMetadataLoader` (+ its cache-invalidation
+  coordinator). **Deferred:** the seven repository keys in `Repositories+Dependency.swift` default to
+  the non-`Sendable` `DataManager.sharedManager`, which fights swift-dependencies' `Sendable`
+  `DependencyValues` — they stay on the homegrown container until the Phase 3 record/`DataManager`
+  Sendability work, at which point `PocketCastsDependencyInjection` is deleted. (The two systems
+  coexist in the interim; no file imports both.)
 - **2a — Singleton seams.** For each of `DataManager.sharedManager`, `DownloadManager.shared`,
   `ServerSettings`, `Settings` (split the 1,595-line god object into focused protocol facades), and
-  `FileLog.shared`: define a protocol, add a `DependencyKey` (deciding its isolation: `@MainActor`,
-  actor-backed, or lock-protected), register the existing singleton as the default value, then adopt
-  `@Dependency` at call sites in feature-area batches. The existing adopters
+  `FileLog.shared`: define a protocol, add a swift-dependencies `DependencyKey` (deciding its isolation
+  via the value type: `@MainActor`, actor-backed, or lock-protected), expose it on `DependencyValues`
+  with the production singleton as `liveValue`, then adopt `@Dependency` at call sites in feature-area
+  batches. The existing adopters
   (`PlaylistsViewController`, `NewPlaylistCell`, `PlaylistDetailViewModel`) are the pattern template.
   Note: for `DataManager` the seam is about *injectability and consumer isolation*, not about making
   the records it returns `Sendable` — that record-layer decision is GRDB-7-driven and lives in Phase 3,

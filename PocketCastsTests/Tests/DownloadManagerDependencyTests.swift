@@ -1,28 +1,31 @@
 import AVFoundation
+import Dependencies
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 import XCTest
 
 @testable import podcasts
 
 final class DownloadManagerDependencyTests: XCTestCase {
     func testDefaultValueIsSharedDownloadManager() {
-        let downloadManager = DefaultDependencyContainer.current.downloadManager
-
-        XCTAssertTrue((downloadManager as AnyObject) === DownloadManager.shared)
+        withDependencies {
+            $0.context = .live
+        } operation: {
+            @Dependency(\.downloadManager) var downloadManager
+            XCTAssertTrue((downloadManager as AnyObject) === DownloadManager.shared)
+        }
     }
 
     func testOverridingWithMockInterceptsQueueing() {
-        let original = DefaultDependencyContainer.current.downloadManager
-        defer { DefaultDependencyContainer.current.downloadManager = original }
-
         let mock = DownloadManagingMock()
-        DefaultDependencyContainer.current.downloadManager = mock
+        withDependencies {
+            $0.downloadManager = mock
+        } operation: {
+            @Dependency(\.downloadManager) var downloadManager
+            downloadManager.addToQueue(episodeUuid: "episode-uuid")
 
-        DefaultDependencyContainer.current.downloadManager.addToQueue(episodeUuid: "episode-uuid")
-
-        XCTAssertEqual(mock.queuedEpisodeUuids, ["episode-uuid"])
-        XCTAssertTrue((DefaultDependencyContainer.current.downloadManager as AnyObject) === mock)
+            XCTAssertEqual(mock.queuedEpisodeUuids, ["episode-uuid"])
+            XCTAssertTrue((downloadManager as AnyObject) === mock)
+        }
     }
 }
 

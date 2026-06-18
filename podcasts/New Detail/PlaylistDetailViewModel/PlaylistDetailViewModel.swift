@@ -2,8 +2,8 @@ import Foundation
 import Combine
 import PocketCastsDataModel
 import PocketCastsUtils
+import Dependencies
 import DifferenceKit
-import PocketCastsDependencyInjection
 
 class PlaylistDetailViewModel: ObservableObject {
     @Dependency(\.playlistMetadataLoader) var playlistMetadataLoader: PlaylistMetadataLoader

@@ -1,8 +1,8 @@
 import SwiftUI
 import DifferenceKit
 import UIKit
+import Dependencies
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 import PocketCastsServer
 import PocketCastsUtils
 import Combine

@@ -1,5 +1,5 @@
+import Dependencies
 import Foundation
-import PocketCastsDependencyInjection
 import PocketCastsUtils
 import SwiftUI
 

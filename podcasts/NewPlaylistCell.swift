@@ -1,8 +1,8 @@
 import Combine
 import UIKit
 import SwiftUI
+import Dependencies
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 import PocketCastsUtils
 
 class NewPlaylistCell: ThemeableCell {

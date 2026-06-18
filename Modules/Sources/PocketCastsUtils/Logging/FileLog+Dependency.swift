@@ -1,13 +1,12 @@
-import PocketCastsDependencyInjection
+import Dependencies
 
-struct FileLogKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any FileLogging = FileLog.shared
+enum FileLogKey: DependencyKey {
+    static let liveValue: any FileLogging = FileLog.shared
 }
 
-public extension DefaultDependencyContainer {
+public extension DependencyValues {
     var fileLog: any FileLogging {
-        get { Self[FileLogKey.self] }
-        nonmutating set { Self[FileLogKey.self] = newValue }
+        get { self[FileLogKey.self] }
+        set { self[FileLogKey.self] = newValue }
     }
 }

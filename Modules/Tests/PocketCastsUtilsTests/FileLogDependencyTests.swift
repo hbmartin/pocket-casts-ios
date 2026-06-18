@@ -1,27 +1,30 @@
 import Combine
+import Dependencies
 import Foundation
-import PocketCastsDependencyInjection
 import XCTest
 @testable import PocketCastsUtils
 
 final class FileLogDependencyTests: XCTestCase {
     func testDefaultValueIsSharedFileLog() {
-        let fileLog = DefaultDependencyContainer.current.fileLog
-
-        XCTAssertTrue((fileLog as AnyObject) === FileLog.shared)
+        withDependencies {
+            $0.context = .live
+        } operation: {
+            @Dependency(\.fileLog) var fileLog
+            XCTAssertTrue((fileLog as AnyObject) === FileLog.shared)
+        }
     }
 
     func testOverridingWithMockCapturesMessages() {
-        let original = DefaultDependencyContainer.current.fileLog
-        defer { DefaultDependencyContainer.current.fileLog = original }
-
         let mock = FileLogMock()
-        DefaultDependencyContainer.current.fileLog = mock
+        withDependencies {
+            $0.fileLog = mock
+        } operation: {
+            @Dependency(\.fileLog) var fileLog
+            fileLog.addMessage("captured by mock")
 
-        DefaultDependencyContainer.current.fileLog.addMessage("captured by mock")
-
-        XCTAssertEqual(mock.recordedMessages, ["captured by mock"])
-        XCTAssertTrue((DefaultDependencyContainer.current.fileLog as AnyObject) === mock)
+            XCTAssertEqual(mock.recordedMessages, ["captured by mock"])
+            XCTAssertTrue((fileLog as AnyObject) === mock)
+        }
     }
 }
 
