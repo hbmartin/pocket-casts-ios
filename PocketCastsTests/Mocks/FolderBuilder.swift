@@ -4,7 +4,7 @@ import Foundation
 
 /// Creates a Folder with a random `uuid`
 class FolderBuilder {
-    let folder: Folder
+    var folder: Folder
 
     init() {
         folder = Folder()

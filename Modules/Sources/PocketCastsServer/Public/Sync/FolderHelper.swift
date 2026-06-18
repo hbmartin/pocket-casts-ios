@@ -10,7 +10,7 @@ class FolderHelper {
         }
 
         FileLog.shared.addMessage("Adding folder \(folder.name) (\(folder.uuid))")
-        let localFolder = Folder()
+        var localFolder = Folder()
         localFolder.uuid = folder.uuid
         localFolder.name = folder.name
         localFolder.sortType = Int32(ServerConverter.convertToClientSortType(serverType: folder.sortType))

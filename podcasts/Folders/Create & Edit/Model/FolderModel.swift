@@ -21,7 +21,7 @@ class FolderModel: ObservableObject {
         didSet {
             guard let folderUuid, saveOnChange else { return }
 
-            if let folder = DataManager.sharedManager.findFolder(uuid: folderUuid) {
+            if var folder = DataManager.sharedManager.findFolder(uuid: folderUuid) {
                 folder.name = nameForFolder()
                 folder.syncModified = TimeFormatter.currentUTCTimeInMillis()
                 DataManager.sharedManager.save(folder: folder)
@@ -64,7 +64,7 @@ class FolderModel: ObservableObject {
 
     func createFolder() -> String {
         // create and save the folder
-        let folder = Folder()
+        var folder = Folder()
         folder.name = nameForFolder()
         folder.color = Int32(colorInt)
         folder.addedDate = Date()
@@ -73,7 +73,8 @@ class FolderModel: ObservableObject {
 
         // the sort type for newly created folders defaults to the same thing the home grid is set to
         folder.sortType = Int32(Settings.homeFolderSortOrder().old.rawValue)
-        DataManager.sharedManager.save(folder: folder)
+        // Folder is a value type: capture the saved copy so `folder.uuid` is the persisted one.
+        folder = DataManager.sharedManager.save(folder: folder)
 
         // if needed update other folders we might have moved podcasts out of
         updateFoldersBasedOnSelection()

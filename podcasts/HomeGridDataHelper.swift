@@ -67,11 +67,12 @@ class HomeGridDataHelper {
                     } else if let folder = gridItem.folder {
                         // for a folder, it's badge count is a sum of all the ones for all the podcasts inside it
                         let allPodcastsInFolder = allPodcasts.filter { $0.folderUuid == folder.uuid }
-                        folder.cachedUnreadCount = 0
+                        var count = 0
                         for podcast in allPodcastsInFolder {
-                            folder.cachedUnreadCount += Int(podcastCounts[podcast.uuid] ?? 0)
+                            count += Int(podcastCounts[podcast.uuid] ?? 0)
                         }
-                        gridItem.frozenBadgeCount = folder.cachedUnreadCount
+                        // Folder is a value type; carry the badge count on the (mutable) grid item.
+                        gridItem.frozenBadgeCount = count
                     }
                 }
             } else if badgeType == .latestEpisode {
@@ -93,8 +94,7 @@ class HomeGridDataHelper {
                                 break
                             }
                         }
-                        folder.cachedUnreadCount = shouldShowUnplayedBadge ? 1 : 0
-                        gridItem.frozenBadgeCount = folder.cachedUnreadCount
+                        gridItem.frozenBadgeCount = shouldShowUnplayedBadge ? 1 : 0
                     }
                 }
             }
