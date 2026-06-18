@@ -37,6 +37,40 @@ jobs:
       - name: Setup Ruby tools
         run: scripts/ci/shared-setup.sh --skip-swiftpm
 
+      - name: Log Ruby environment
+        run: |
+          set +e
+
+          echo "Ruby command resolution"
+          echo "PATH=$PATH"
+          echo "ruby=$(command -v ruby || true)"
+          ruby -v
+          echo "bundle=$(command -v bundle || true)"
+          bundle -v
+          echo "mise=$(command -v mise || true)"
+          mise current ruby
+          mise which ruby
+
+          echo "Bundler environment"
+          env | sort | grep -E '^(BUNDLE|GEM|MISE|PATH|RBENV|RUBY|rvm_)=' || true
+          bundle config list
+          bundle info json --path
+
+          echo "Ruby build configuration"
+          ruby -rrbconfig -e 'puts "RbConfig.ruby=#{RbConfig.ruby}"; puts "ruby_version=#{RbConfig::CONFIG["ruby_version"]}"; puts "sitearch=#{RbConfig::CONFIG["sitearch"]}"; puts "libdir=#{RbConfig::CONFIG["libdir"]}"; puts "LIBRUBY=#{RbConfig::CONFIG["LIBRUBY"]}"; puts "LIBRUBYARG_SHARED=#{RbConfig::CONFIG["LIBRUBYARG_SHARED"]}"'
+
+          echo "json native extension linkage"
+          parser_bundle="$(find vendor/bundle/ruby -path '*/gems/json-*/lib/json/ext/parser.bundle' -print -quit 2>/dev/null || true)"
+          if [[ -n "$parser_bundle" ]]; then
+            echo "parser_bundle=$parser_bundle"
+            file "$parser_bundle"
+            otool -L "$parser_bundle"
+          else
+            echo "parser_bundle not found"
+          fi
+
+          exit 0
+
       - name: Run Danger
         env:
           DANGER_GITHUB_API_TOKEN: ${{ github.token }}
