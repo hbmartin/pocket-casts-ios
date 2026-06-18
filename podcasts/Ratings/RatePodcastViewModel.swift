@@ -18,13 +18,7 @@ class RatePodcastViewModel: ObservableObject {
 
     @Published var anErrorOccurred: Bool = false
 
-    @Published var stars: Double = 0 {
-        didSet {
-            if oldValue != stars {
-                HapticsHelper.triggerStarHaptic()
-            }
-        }
-    }
+    @Published var stars: Double = 0
 
     let podcast: Podcast
 
@@ -69,6 +63,7 @@ class RatePodcastViewModel: ObservableObject {
 
     func submit() {
         isSubmitting = true
+        anErrorOccurred = false
         Analytics.track(.ratingScreenSubmitTapped, properties: [
             "uuid": podcast.uuid,
             "stars": stars
@@ -81,6 +76,8 @@ class RatePodcastViewModel: ObservableObject {
                 self.onRate()
                 self.dismiss(trackingEvent: false)
                 Toast.show(L10n.ratingThankYou)
+            } else {
+                self.anErrorOccurred = true
             }
         }
     }
