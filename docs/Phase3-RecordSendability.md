@@ -127,6 +127,36 @@ leaf-first, with GRDB round-trip + behaviour-parity tests landed *before* each r
 - **C — Hybrid.** Snapshots/confinement now (unblock Swift 6), full struct migration deferred to its own
   later epic with a dedicated test-coverage investment first.
 
+## Progress
+
+- **Record 1 — `Folder`: DONE** (Sendable struct; first production `@GRDBRecord` struct, proving the
+  macro's struct path end-to-end). Validated: DataModel 448 / Server 40 / app 259, 0 failures.
+
+## Record 2 — `EpisodeFilter` (survey complete; not yet started)
+
+Far heavier than `Folder` — sized as its own multi-session effort. Survey findings:
+
+- **~80 property-mutation sites** + the mutating methods `setTitle` / `addPodcast` / `removePodcast`
+  (become `mutating func`; their `let`/parameter call sites need `var`).
+- **~40 `save(playlist:)` call sites.** `PlaylistDataManager.save` back-mutates `id`
+  (`DBUtils.generateUniqueId()` when `id == 0`) and `playlistUpdateDate` — same return-the-saved-value
+  refactor as `Folder.save`, but ×40 callers, across `DataManager` + the `PlaylistRepository` protocol +
+  its mock.
+- **~40 `NotificationCenter` posts** pass the filter as `object:` (e.g. `playlistChanged`). Boxing a
+  value type works and `notification.object as? EpisodeFilter` still reads it, but every receiver that
+  assumes a shared/reference object must be checked — a risk class `Folder` did not have.
+- **`Set<EpisodeFilter>`** (`ManualPlaylistsChooserViewController`) + the current `isEqual`-by-`uuid` /
+  `hash`-by-`id` (an inconsistent pairing). Replace with a uuid-consistent `Equatable`/`Hashable`.
+- **`@objc`/KVC risk:** the filter-edit overlays are XIB-based; storyboard/KVC bindings to `@objc`
+  properties fail at *runtime*, not compile time, so the existing unit suites may not catch them —
+  needs manual verification of the filter-editing flows.
+- **200+ test instances** across 15+ files need `let`→`var`.
+
+Sequencing note: because `EpisodeFilter` alone is this large — and `Podcast` (143 refs) and
+`Episode`/`UserEpisode` (~200+ each, gated on de-`@objc`-ing `BaseEpisode`) are larger still — revisit
+whether Strategy B remains the right call for the *heavy* records, or whether the confine+snapshot
+fallback (Strategy A) should cover them while only the leaves go struct. Decide with this evidence.
+
 ## Exit criteria
 
 - ✅ Reference-semantics spike answered: **rewrite, not rename** (above).
