@@ -4,6 +4,9 @@ source 'https://rubygems.org'
 
 gem 'commonmarker'
 gem 'danger-dangermattic', '~> 1.0'
+gem 'danger-slather', '~> 0.0'
+gem 'danger-xcode_summary', '~> 1.5'
+gem 'danger-xcprofiler', '~> 0.5'
 gem 'fastlane', '~> 2.233'
 gem 'fastlane-plugin-wpmreleasetoolkit', '~> 14.3'
 # To avoid errors like:
@@ -13,6 +16,7 @@ gem 'fastlane-plugin-wpmreleasetoolkit', '~> 14.3'
 # See https://github.com/ruby/openssl/issues/949
 gem 'openssl', '~> 4.0'
 gem 'rubocop', '~> 1.60'
+gem 'slather', '~> 2.8'
 gem 'watchbuild'
 
 # At some point, the Rake gem end up at version 13.x. At the time of writing,

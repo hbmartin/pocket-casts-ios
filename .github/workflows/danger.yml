@@ -21,7 +21,7 @@ jobs:
     name: Danger
     if: ${{ github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, macOS, ARM64]
-    timeout-minutes: 30
+    timeout-minutes: 90
     permissions:
       contents: read
       issues: write
@@ -36,6 +36,13 @@ jobs:
 
       - name: Setup Ruby tools
         run: scripts/ci/shared-setup.sh --skip-swiftpm
+
+      - name: Build and test for Danger reports
+        id: build_and_test
+        continue-on-error: true
+        env:
+          POCKET_CASTS_CI_OTHER_SWIFT_FLAGS: "$(inherited) -Xfrontend -debug-time-function-bodies"
+        run: scripts/ci/build-and-test.sh
 
       - name: Log Ruby environment
         run: |
@@ -81,3 +88,7 @@ jobs:
           eval "$(mise env -s bash --cd "$PWD")"
 
           bundle exec danger
+
+      - name: Propagate build and test failure
+        if: ${{ steps.build_and_test.outcome == 'failure' }}
+        run: exit 1

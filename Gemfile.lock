@@ -3,6 +3,19 @@ GEM
   specs:
     CFPropertyList (3.0.8)
     abbrev (0.1.2)
+    activesupport (8.1.3)
+      base64
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.3.1)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      json
+      logger (>= 1.4.2)
+      minitest (>= 5.1)
+      securerandom (>= 0.3)
+      tzinfo (~> 2.0, >= 2.0.5)
+      uri (>= 0.13.1)
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     artifactory (3.0.17)
@@ -39,12 +52,15 @@ GEM
       cork
       nap
       open4 (~> 1.3)
+    clamp (1.5.2)
     colored (1.2)
     colored2 (3.1.2)
     commander (4.6.0)
       highline (~> 2.0.0)
     commonmarker (1.1.5)
       rb_sys (~> 0.9)
+    concurrent-ruby (1.3.7)
+    connection_pool (3.0.2)
     cork (0.3.0)
       colored2 (~> 3.1)
     csv (3.3.5)
@@ -70,12 +86,22 @@ GEM
     danger-rubocop (0.13.0)
       danger
       rubocop (~> 1.0)
+    danger-slather (0.0.6)
+      danger-plugin-api (~> 1.0)
+      slather (~> 2.3)
+    danger-xcode_summary (1.5.0)
+      danger-plugin-api (~> 1.0)
+      xcresult (~> 0.2.2)
+    danger-xcprofiler (0.5.0)
+      danger-plugin-api (~> 1.0)
+      xcprofiler
     declarative (0.0.20)
     diffy (3.4.4)
     digest-crc (0.7.0)
       rake (>= 12.0.0, < 14.0.0)
     domain_name (0.6.20240107)
     dotenv (2.8.1)
+    drb (2.2.3)
     emoji_regex (3.2.3)
     erubi (1.13.1)
     excon (0.112.0)
@@ -232,6 +258,8 @@ GEM
       domain_name (~> 0.5)
     httpclient (2.9.0)
       mutex_m
+    i18n (1.15.1)
+      concurrent-ruby (~> 1.0)
     java-properties (0.3.0)
     jmespath (1.6.2)
     json (2.19.2)
@@ -248,6 +276,9 @@ GEM
     mini_magick (4.13.2)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
     multi_json (1.18.0)
     multipart-post (2.4.1)
     mutex_m (0.3.0)
@@ -275,6 +306,7 @@ GEM
     prime (0.1.4)
       forwardable
       singleton
+    prism (1.9.0)
     progress_bar (1.3.4)
       highline (>= 1.6)
       options (~> 2.3.0)
@@ -312,6 +344,7 @@ GEM
     sawyer (0.9.3)
       addressable (>= 2.3.5)
       faraday (>= 0.17.3, < 3)
+    securerandom (0.4.1)
     security (0.1.5)
     signet (0.21.0)
       addressable (~> 2.8)
@@ -322,6 +355,12 @@ GEM
       CFPropertyList
       naturally
     singleton (0.3.0)
+    slather (2.8.5)
+      CFPropertyList (>= 2.2, < 4)
+      activesupport
+      clamp (~> 1.3)
+      nokogiri (>= 1.14.3)
+      xcodeproj (~> 1.27)
     terminal-notifier (2.0.0)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
@@ -331,8 +370,11 @@ GEM
     tty-screen (0.8.2)
     tty-spinner (0.9.3)
       tty-cursor (~> 0.7)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
     uber (0.1.0)
     unicode-display_width (2.6.0)
+    uri (1.1.1)
     watchbuild (0.5.0)
       fastlane (>= 2.0.0, < 3.0.0)
       terminal-notifier
@@ -348,6 +390,10 @@ GEM
       rouge (~> 3.28.0)
     xcpretty-travis-formatter (1.0.1)
       xcpretty (~> 0.2, >= 0.0.7)
+    xcprofiler (0.6.3)
+      colored2
+      terminal-table
+    xcresult (0.2.5)
 
 PLATFORMS
   ruby
@@ -355,11 +401,15 @@ PLATFORMS
 DEPENDENCIES
   commonmarker
   danger-dangermattic (~> 1.0)
+  danger-slather (~> 0.0)
+  danger-xcode_summary (~> 1.5)
+  danger-xcprofiler (~> 0.5)
   fastlane (~> 2.233)
   fastlane-plugin-wpmreleasetoolkit (~> 14.3)
   openssl (~> 4.0)
   rake (>= 12.0, < 14.0)
   rubocop (~> 1.60)
+  slather (~> 2.8)
   watchbuild
 
 BUNDLED WITH

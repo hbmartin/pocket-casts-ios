@@ -29,16 +29,25 @@ xcodebuild -version
 
 echo "Build and test staging"
 echo "Using DerivedData path: $DERIVED_DATA_PATH"
+XCODEBUILD_ARGS=(
+  test
+  -project podcasts.xcodeproj
+  -scheme "Pocket Casts Staging"
+  -configuration StagingDebug
+  "-only-testing:${ONLY_TESTING:-PocketCastsTests}"
+  -destination "$DESTINATION"
+  -derivedDataPath "$DERIVED_DATA_PATH"
+  -resultBundlePath build/github/results/PocketCastsTests.xcresult
+  CODE_SIGNING_ALLOWED=NO
+  CODE_SIGNING_REQUIRED=NO
+)
+
+if [[ -n "${POCKET_CASTS_CI_OTHER_SWIFT_FLAGS:-}" ]]; then
+  XCODEBUILD_ARGS+=(OTHER_SWIFT_FLAGS="${POCKET_CASTS_CI_OTHER_SWIFT_FLAGS}")
+fi
+
 set -o pipefail
-xcodebuild test \
-  -project podcasts.xcodeproj \
-  -scheme "Pocket Casts Staging" \
-  -configuration StagingDebug \
-  "-only-testing:${ONLY_TESTING:-PocketCastsTests}" \
-  -destination "$DESTINATION" \
-  -derivedDataPath "$DERIVED_DATA_PATH" \
-  -resultBundlePath build/github/results/PocketCastsTests.xcresult \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+xcodebuild "${XCODEBUILD_ARGS[@]}" \
   2>&1 | tee build/github/logs/test-staging.log
 
 echo "Check strict-concurrency warnings"
