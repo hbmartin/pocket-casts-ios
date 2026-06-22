@@ -213,6 +213,9 @@ public enum FeatureFlag: String, CaseIterable {
     /// Log database access performed on the main thread (DEBUG builds only)
     case logMainThreadDatabaseAccess
 
+    /// Enable the Up Next sort button
+    case upNextSort
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -365,6 +368,8 @@ public enum FeatureFlag: String, CaseIterable {
             BuildEnvironment.current == .debug
         case .logMainThreadDatabaseAccess:
             true
+        case .upNextSort:
+            BuildEnvironment.current == .debug
         }
     }
 
