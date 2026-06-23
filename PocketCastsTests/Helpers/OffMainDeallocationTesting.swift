@@ -22,7 +22,7 @@ extension XCTestCase {
         timeout: TimeInterval = 5,
         file: StaticString = #filePath,
         line: UInt = #line,
-        _ make: @escaping () -> T
+        _ make: @escaping @Sendable () -> T
     ) {
         let finished = expectation(description: "off-main deallocation")
         let queue = DispatchQueue(label: "com.pocketcasts.tests.offMainDealloc")

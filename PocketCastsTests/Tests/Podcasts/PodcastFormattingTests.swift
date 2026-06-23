@@ -44,8 +44,8 @@ final class PodcastFormattingTests: XCTestCase {
         let podcast = Podcast()
         podcast.licensing = PodcastLicensing.deleteEpisodesAfterExpiry.rawValue
 
-        let future = Date().addingTimeInterval(60 * 60 * 24 * 30)
-        let past = Date().addingTimeInterval(-60 * 60 * 24 * 30)
+        let future = Date().addingTimeInterval(30.days)
+        let past = Date().addingTimeInterval(-30.days)
         let futureStr = DateFormatHelper.sharedHelper.longLocalizedFormat(future)
         let pastStr = DateFormatHelper.sharedHelper.longLocalizedFormat(past)
 
@@ -57,7 +57,7 @@ final class PodcastFormattingTests: XCTestCase {
         let podcast = Podcast()
         podcast.licensing = PodcastLicensing.keepEpisodesAfterExpiry.rawValue
 
-        let future = Date().addingTimeInterval(60 * 60 * 24 * 30)
+        let future = Date().addingTimeInterval(30.days)
         let futureStr = DateFormatHelper.sharedHelper.longLocalizedFormat(future)
 
         XCTAssertEqual(podcast.displayableExpiryLanguage(expiryDate: future), L10n.podcastUpdatesEnds(futureStr))
