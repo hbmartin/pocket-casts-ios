@@ -109,6 +109,7 @@ class DBTestCase: XCTestCase {
                 URLSessionConfiguration.default
             }
         })
+        downloadManager.automaticallyStartDownloads = false
         DataManager.sharedManager = dataManager
 
         let podcast = Podcast()
@@ -139,12 +140,16 @@ class DBTestCase: XCTestCase {
 
     func setUpQueuedDownload() async throws -> (PodcastManager, URLSessionTask) {
         let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
+        episode.downloadUrl = "http://10.255.255.1/episode.mp3"
+        dataManager.save(episode: episode)
 
         // Verify the podcast and episode exist in the data manager after being added in `setUp`
         XCTAssertEqual(dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true), podcast)
         XCTAssertEqual(dataManager.findEpisode(uuid: episode.uuid), episode)
 
         // Add the episode to the download queue
+        downloadManager.useForegroundSessionForDownloads = true
+        downloadManager.automaticallyStartDownloads = true
         await downloadManager.performAddToQueue(
             episode: episode,
             url: episode.downloadUrl ?? "",
@@ -152,6 +157,8 @@ class DBTestCase: XCTestCase {
             fireNotification: false,
             autoDownloadStatus: .notSpecified
         )
+        downloadManager.automaticallyStartDownloads = false
+        downloadManager.useForegroundSessionForDownloads = false
 
         // Retrieve the download tasks for the episode
         let tasks = await downloadManager.tasks(for: [episode])
@@ -159,7 +166,7 @@ class DBTestCase: XCTestCase {
         // Ensure there is a task for the episode
         let task = try XCTUnwrap(tasks.first)
 
-        // Check that the task is running to ensure it wasn't already cancelled somehow
+        // Check that the task is running to ensure it wasn't already cancelled somehow.
         XCTAssertEqual(task.state, URLSessionTask.State.running)
 
         return (podcastManager, task)

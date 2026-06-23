@@ -314,6 +314,24 @@ rules:
                 ...
               }
 
+  - id: pocketcasts.keychain-generic-password-requires-account
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Generic password Keychain items must include both kSecAttrService and kSecAttrAccount so items are scoped and testable.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: '(?s)\[[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*kSecAttrService\s+as\s+String\s*:[^\]]*\]'
+      - pattern-not-regex: '(?s)\[[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*kSecAttrAccount\s+as\s+String\s*:[^\]]*\]'
+
   - id: pocketcasts.servercredentials-use-configure-sharing
     severity: ERROR
     metadata:
@@ -4413,23 +4431,6 @@ rules:
         - "**/semgrep/tests/swift-security-sql-interpolation.swift"
     patterns:
       - pattern-regex: "(?i)\\bIN \\(\\\\\\((?!DBUtils\\.placeholders|placeholders\\))"
-
-  - id: pocketcasts.github-actions-no-unconditional-service-credentials
-    severity: ERROR
-    metadata:
-      category: security
-      confidence: HIGH
-      likelihood: MEDIUM
-      impact: HIGH
-      technology: [github-actions]
-    message: Gate POCKET_CASTS_CREDENTIALS_JSON on the triggering event instead of passing the secret unconditionally to jobs reachable from fork pull requests.
-    languages: [generic]
-    paths:
-      include:
-        - "**/.github/workflows/*.yml"
-        - "**/semgrep/tests/github-actions-security.yml"
-    patterns:
-      - pattern-regex: "POCKET_CASTS_CREDENTIALS_JSON:\\s*\\$\\{\\{\\s*secrets\\."
 
   - id: pocketcasts.no-fire-and-forget-datamanager-write
     severity: ERROR

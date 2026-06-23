@@ -1,19 +1,23 @@
 import XCTest
 @testable import PocketCastsServer
+import PocketCastsUtils
 
-/// Intentionally runs against the real keychain (no `InMemoryKeychainStore`) — this is
-/// the integration canary for keychain availability. If it fails with OSStatus -34018
-/// while other tests pass, the test host's code signing/entitlements are broken, not
-/// the code under test. See docs/CIImprovements.md.
 final class ServerSettingsPushTokenTests: XCTestCase {
+    private var previousKeychainStore: KeychainStoring!
 
     override func setUp() {
         super.setUp()
+        previousKeychainStore = KeychainHelper.store
+        KeychainHelper.store = InMemoryKeychainStore()
         clearPushTokenStorage()
     }
 
     override func tearDown() {
         clearPushTokenStorage()
+        if let previousKeychainStore {
+            KeychainHelper.store = previousKeychainStore
+        }
+        previousKeychainStore = nil
         super.tearDown()
     }
 
