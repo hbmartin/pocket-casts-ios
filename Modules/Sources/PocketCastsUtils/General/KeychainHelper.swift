@@ -16,7 +16,8 @@ public final class KeychainHelper: Sendable, KeychainStoring {
         case status(OSStatus)
     }
 
-    private let prefix = "au.com.shiftyjelly.podcasts."
+    private let service = "au.com.shiftyjelly.podcasts"
+    private let legacyServicePrefix = "au.com.shiftyjelly.podcasts."
 
     private static let shared = KeychainHelper()
 
@@ -42,21 +43,24 @@ public final class KeychainHelper: Sendable, KeychainStoring {
     }
 
     public func string(for key: String) throws -> String? {
-        let fullKey = prefix + key
+        let scopedResult = try string(for: createQuery(key: key))
+        if scopedResult != nil {
+            return scopedResult
+        }
 
-        var query = createQuery()
-        query[kSecAttrService as String] = fullKey
+        return try string(for: createLegacyQuery(key: key))
+    }
 
+    private func string(for query: [String: Any]) throws -> String? {
         var queryResult: AnyObject?
         let status = withUnsafeMutablePointer(to: &queryResult) {
             SecItemCopyMatching(query as CFDictionary, $0)
         }
-
         switch status {
         case errSecItemNotFound, errSecSuccess:
             ()
         default:
-            FileLog.shared.addMessage("KeychainHelper: Failed to fetch \(key) osstatus: \(status)")
+            FileLog.shared.addMessage("KeychainHelper: Failed to fetch keychain item osstatus: \(status)")
             throw KeychainError.status(status)
         }
 
@@ -67,40 +71,37 @@ public final class KeychainHelper: Sendable, KeychainStoring {
 
     @discardableResult
     public func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool {
-        let fullKey = prefix + key
-
         // If the value is nil, delete the item
         guard let value else {
-            var query = createService()
-            query[kSecAttrService as String] = fullKey
-            let status = SecItemDelete(query as CFDictionary)
+            let scopedStatus = SecItemDelete(createService(key: key) as CFDictionary)
+            let legacyStatus = SecItemDelete(createLegacyService(key: key) as CFDictionary)
 
-            if status != errSecSuccess, status != errSecItemNotFound {
+            for status in [scopedStatus, legacyStatus] where status != errSecSuccess && status != errSecItemNotFound {
                 FileLog.shared.addMessage("KeychainHelper: Failed to delete \(key) osstatus: \(status)")
             }
 
-            return status == errSecSuccess
+            return [scopedStatus, legacyStatus].allSatisfy { $0 == errSecSuccess || $0 == errSecItemNotFound }
         }
 
         guard let data = value.data(using: String.Encoding.utf8) else { return false }
 
-        var query = createService()
-        query[kSecAttrService as String] = fullKey
+        let query = createService(key: key)
 
         let attributesToUpdate: [String: Any] = [
             kSecAttrAccessible as String: accessibility,
             kSecValueData as String: data
         ]
 
-        var status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
-        if status == errSecItemNotFound {
-            var saveParams = query
-            saveParams.merge(attributesToUpdate) { _, new in new }
+        var saveParams = query
+        saveParams.merge(attributesToUpdate) { _, new in new }
 
-            status = SecItemAdd(saveParams as CFDictionary, nil)
-            if status == errSecDuplicateItem {
-                status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
-            }
+        var status = SecItemAdd(saveParams as CFDictionary, nil)
+        if status == errSecDuplicateItem {
+            status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
+        }
+
+        if status == errSecSuccess {
+            SecItemDelete(createLegacyService(key: key) as CFDictionary)
         }
 
         if status != errSecSuccess {
@@ -110,12 +111,38 @@ public final class KeychainHelper: Sendable, KeychainStoring {
         return status == errSecSuccess
     }
 
-    private func createQuery() -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecReturnData as String: kCFBooleanTrue as Any]
+    private func createQuery(key: String) -> [String: Any] {
+        var query = createService(key: key)
+        query[kSecReturnData as String] = kCFBooleanTrue as Any
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        return query
     }
 
-    private func createService() -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword]
+    private func createService(key: String) -> [String: Any] {
+        var query = baseQuery()
+        query[kSecAttrService as String] = service
+        query[kSecAttrAccount as String] = key
+        return query
+    }
+
+    private func createLegacyQuery(key: String) -> [String: Any] {
+        var query = createLegacyService(key: key)
+        query[kSecReturnData as String] = kCFBooleanTrue as Any
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        return query
+    }
+
+    private func createLegacyService(key: String) -> [String: Any] {
+        var query = baseQuery()
+        query[kSecAttrService as String] = legacyServicePrefix + key
+        return query
+    }
+
+    private func baseQuery() -> [String: Any] {
+        var query: [String: Any] = [kSecClass as String: kSecClassGenericPassword]
+        #if os(macOS)
+        query[kSecUseDataProtectionKeychain as String] = true
+        #endif
+        return query
     }
 }

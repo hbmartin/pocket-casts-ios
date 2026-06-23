@@ -45,6 +45,8 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     static let cellBackgroundSessionId = "au.com.shiftyjelly.PCManualSession"
 
     var progressManager = DownloadProgressManager()
+    var automaticallyStartDownloads = true
+    var useForegroundSessionForDownloads = false
 
     var downloadingEpisodesCache: DownloadManagerEpisodesCache = {
         if FeatureFlag.downloadsThreadSafeCache.enabled {
@@ -540,7 +542,12 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         let mobileDataAllowed = autoDownloadStatus == .autoDownloaded ? Settings.autoDownloadMobileDataAllowed() : Settings.mobileDataAllowed()
         let useCellularSession = (mobileDataAllowed || (!NetworkUtils.shared.isConnectedToUnexpensiveConnection() && autoDownloadStatus != .autoDownloaded)) // allow cellular downloads if not on WiFi and not auto downloaded, because it means the user said yes to a confirmation prompt
 
-            let sessionToUse = useCellularSession ? cellularBackgroundSession : wifiOnlyBackgroundSession
+        let sessionToUse: URLSession
+        if useForegroundSessionForDownloads {
+            sessionToUse = cellularForegroundSession
+        } else {
+            sessionToUse = useCellularSession ? cellularBackgroundSession : wifiOnlyBackgroundSession
+        }
 
         if FeatureFlag.streamAndCachePlayingEpisode.enabled, downloadAndStreamEpisodes[episode.uuid] != nil {
             return
@@ -750,7 +757,9 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             downloadAttempts[task.taskIdentifier] = attempt
         }
 
-        downloadTask?.resume()
+        if automaticallyStartDownloads {
+            downloadTask?.resume()
+        }
     }
 
     func startAllQueued() {
