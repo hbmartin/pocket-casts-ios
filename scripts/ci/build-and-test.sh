@@ -38,7 +38,7 @@ XCODEBUILD_ARGS=(
   -destination "$DESTINATION"
   -derivedDataPath "$DERIVED_DATA_PATH"
   -resultBundlePath build/github/results/PocketCastsTests.xcresult
-  CODE_SIGNING_ALLOWED=NO
+  CODE_SIGN_IDENTITY=-
   CODE_SIGNING_REQUIRED=NO
 )
 
