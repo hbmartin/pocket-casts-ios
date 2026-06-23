@@ -27,9 +27,15 @@ final class OffMainDeallocationTests: XCTestCase {
         assertDeallocatesOffMain {
             AVFileUtil(
                 fileURL: url,
-                durationHandler: { _ in },
-                titleHandler: { _ in },
-                artworkHandler: { _ in }
+                durationHandler: { _ in
+                    // Intentionally no-op: deallocation harness only.
+                },
+                titleHandler: { _ in
+                    // Intentionally no-op: deallocation harness only.
+                },
+                artworkHandler: { _ in
+                    // Intentionally no-op: deallocation harness only.
+                }
             )
         }
     }
@@ -38,6 +44,7 @@ final class OffMainDeallocationTests: XCTestCase {
         // The class that exposed the migration risk: a file-handle wrapper released off-main.
         let path = (NSTemporaryDirectory() as NSString)
             .appendingPathComponent(UUID().uuidString + "_offmain.media")
+        defer { try? FileManager.default.removeItem(atPath: path) }
         assertDeallocatesOffMain { MediaFileHandle(filePath: path) }
     }
 

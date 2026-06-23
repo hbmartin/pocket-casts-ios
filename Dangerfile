@@ -29,7 +29,7 @@ if File.directory?(derived_data_path)
     slather.configure(
       'podcasts.xcodeproj',
       'Pocket Casts Staging',
-      options: {
+      {
         build_directory: derived_data_path,
         configuration: 'StagingDebug',
         coverage_service: :terminal,
@@ -50,6 +50,10 @@ if File.directory?(derived_data_path)
       '**/Modules/.build/**',
       '**/Pods/**'
     ]
-    xcprofiler.report(nil, nil, activity_log)
+    begin
+      xcprofiler.report(nil, nil, activity_log)
+    rescue StandardError => e
+      warn("Xcode build-time report could not be generated: #{e.message}")
+    end
   end
 end
