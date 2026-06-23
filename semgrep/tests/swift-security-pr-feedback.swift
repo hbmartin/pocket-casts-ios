@@ -107,6 +107,17 @@ final class UnsafeKeychainGenericPasswordHelper {
     }
 }
 
+final class UnsafeReorderedKeychainGenericPasswordHelper {
+    func query() -> [String: Any] {
+        // ruleid: pocketcasts.keychain-generic-password-requires-account
+        [
+            kSecAttrService as String: "au.com.shiftyjelly.podcasts.SJPushToken",
+            kSecClass as String: kSecClassGenericPassword,
+            kSecReturnData as String: kCFBooleanTrue as Any
+        ]
+    }
+}
+
 final class SafeKeychainGenericPasswordHelper {
     func query() -> [String: Any] {
         // ok: pocketcasts.keychain-generic-password-requires-account
@@ -114,6 +125,18 @@ final class SafeKeychainGenericPasswordHelper {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "au.com.shiftyjelly.podcasts",
             kSecAttrAccount as String: "SJPushToken",
+            kSecReturnData as String: kCFBooleanTrue as Any
+        ]
+    }
+}
+
+final class SafeReorderedKeychainGenericPasswordHelper {
+    func query() -> [String: Any] {
+        // ok: pocketcasts.keychain-generic-password-requires-account
+        [
+            kSecAttrService as String: "au.com.shiftyjelly.podcasts",
+            kSecAttrAccount as String: "SJPushToken",
+            kSecClass as String: kSecClassGenericPassword,
             kSecReturnData as String: kCFBooleanTrue as Any
         ]
     }

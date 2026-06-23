@@ -45,8 +45,33 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     static let cellBackgroundSessionId = "au.com.shiftyjelly.PCManualSession"
 
     var progressManager = DownloadProgressManager()
-    var automaticallyStartDownloads = true
-    var useForegroundSessionForDownloads = false
+    private let downloadControlLock = NSLock()
+    private var automaticallyStartDownloadsValue = true
+    private var useForegroundSessionForDownloadsValue = false
+    var automaticallyStartDownloads: Bool {
+        get {
+            downloadControlLock.lock()
+            defer { downloadControlLock.unlock() }
+            return automaticallyStartDownloadsValue
+        }
+        set {
+            downloadControlLock.lock()
+            automaticallyStartDownloadsValue = newValue
+            downloadControlLock.unlock()
+        }
+    }
+    var useForegroundSessionForDownloads: Bool {
+        get {
+            downloadControlLock.lock()
+            defer { downloadControlLock.unlock() }
+            return useForegroundSessionForDownloadsValue
+        }
+        set {
+            downloadControlLock.lock()
+            useForegroundSessionForDownloadsValue = newValue
+            downloadControlLock.unlock()
+        }
+    }
 
     var downloadingEpisodesCache: DownloadManagerEpisodesCache = {
         if FeatureFlag.downloadsThreadSafeCache.enabled {
@@ -595,6 +620,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         let uniquedDownloadId = episode.downloadTaskId
         cancelTaskId(uniquedDownloadId, episode: episode, session: wifiOnlyBackgroundSession)
         cancelTaskId(uniquedDownloadId, episode: episode, session: cellularBackgroundSession)
+        cancelTaskId(uniquedDownloadId, episode: episode, session: cellularForegroundSession)
 
         removeEpisodeFromCache(episode)
 

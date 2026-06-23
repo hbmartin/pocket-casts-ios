@@ -1,0 +1,4 @@
+# swift-snapshot-testing writes reference images into per-test-class subdirectories here.
+# This placeholder keeps the directory present so the `exclude: ["__Snapshots__"]` entry in
+# Modules/Package.swift resolves before any baselines have been recorded. It can be removed once
+# real reference images are committed. See docs/snapshot-testing.md.

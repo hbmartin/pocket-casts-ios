@@ -1,9 +1,9 @@
 import Foundation
 
 /// Abstraction over keychain storage so unit tests can substitute an in-memory store.
-/// The real implementation is `KeychainHelper`; keep at least one integration test
-/// (ServerSettingsPushTokenTests) on the real keychain to catch environment issues
-/// such as missing code-signing entitlements (-34018) in CI.
+/// The real implementation is `KeychainHelper`; keep a focused integration test
+/// on the real keychain to catch environment issues such as missing code-signing
+/// entitlements (-34018) in CI.
 public protocol KeychainStoring: Sendable {
     @discardableResult
     func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool
@@ -43,15 +43,15 @@ public final class KeychainHelper: Sendable, KeychainStoring {
     }
 
     public func string(for key: String) throws -> String? {
-        let scopedResult = try string(for: createQuery(key: key))
+        let scopedResult = try string(for: createQuery(key: key), key: key)
         if scopedResult != nil {
             return scopedResult
         }
 
-        return try string(for: createLegacyQuery(key: key))
+        return try string(for: createLegacyQuery(key: key), key: key)
     }
 
-    private func string(for query: [String: Any]) throws -> String? {
+    private func string(for query: [String: Any], key: String) throws -> String? {
         var queryResult: AnyObject?
         let status = withUnsafeMutablePointer(to: &queryResult) {
             SecItemCopyMatching(query as CFDictionary, $0)
@@ -60,7 +60,7 @@ public final class KeychainHelper: Sendable, KeychainStoring {
         case errSecItemNotFound, errSecSuccess:
             ()
         default:
-            FileLog.shared.addMessage("KeychainHelper: Failed to fetch keychain item osstatus: \(status)")
+            FileLog.shared.addMessage("KeychainHelper: Failed to fetch \(key) osstatus: \(status)")
             throw KeychainError.status(status)
         }
 
@@ -101,7 +101,10 @@ public final class KeychainHelper: Sendable, KeychainStoring {
         }
 
         if status == errSecSuccess {
-            SecItemDelete(createLegacyService(key: key) as CFDictionary)
+            let legacyDeleteStatus = SecItemDelete(createLegacyService(key: key) as CFDictionary)
+            if legacyDeleteStatus != errSecSuccess && legacyDeleteStatus != errSecItemNotFound {
+                FileLog.shared.addMessage("KeychainHelper: Failed to delete legacy \(key) osstatus: \(legacyDeleteStatus)")
+            }
         }
 
         if status != errSecSuccess {
