@@ -49,8 +49,8 @@ class DBTestCase: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         // DB-backed tests shouldn't depend on real keychain state (which can fail
-        // wholesale in CI). ServerSettingsPushTokenTests stays on the real keychain
-        // as the integration canary.
+        // wholesale in CI). KeychainHelperIntegrationTests keeps the real-keychain
+        // canary coverage focused and isolated.
         previousKeychainStore = KeychainHelper.store
         KeychainHelper.store = InMemoryKeychainStore()
         try setupData()
@@ -140,7 +140,7 @@ class DBTestCase: XCTestCase {
 
     func setUpQueuedDownload() async throws -> (PodcastManager, URLSessionTask) {
         let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
-        episode.downloadUrl = "http://10.255.255.1/episode.mp3"
+        episode.downloadUrl = "http://192.0.2.1/episode.mp3"
         dataManager.save(episode: episode)
 
         // Verify the podcast and episode exist in the data manager after being added in `setUp`

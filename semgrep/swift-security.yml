@@ -329,8 +329,10 @@ rules:
         - "**/*.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-regex: '(?s)\[[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*kSecAttrService\s+as\s+String\s*:[^\]]*\]'
-      - pattern-not-regex: '(?s)\[[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*kSecAttrAccount\s+as\s+String\s*:[^\]]*\]'
+      - pattern-either:
+          - pattern-regex: '(?s)\[[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*kSecAttrService\s+as\s+String\s*:[^\]]*\]'
+          - pattern-regex: '(?s)\[[^\]]*kSecAttrService\s+as\s+String\s*:[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*\]'
+      - pattern-not-regex: '(?s)\[[^\]]*kSecAttrAccount\s+as\s+String\s*:[^\]]*\]'
 
   - id: pocketcasts.servercredentials-use-configure-sharing
     severity: ERROR
