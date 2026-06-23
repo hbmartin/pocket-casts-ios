@@ -4,6 +4,9 @@ swiftlint_version: 0.63.3
 #
 excluded:
   - BuildTools/.build
+  # Coverage builds put DerivedData here (see .slather.yml `build_directory`); never lint build output,
+  # otherwise SwiftLint scans the SPM checkouts under it (e.g. GRDB demo apps) and fails the build.
+  - build
   - DerivedData
   - fastlane
   # Enumerate without pattern because it makes SwiftLint resolved faster

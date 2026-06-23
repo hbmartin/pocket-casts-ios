@@ -1,0 +1,26 @@
+coverage_service: terminal
+xcodeproj: podcasts.xcodeproj
+scheme: Pocket Casts Staging
+configuration: StagingDebug
+build_directory: build/github/DerivedData
+input_format: profdata
+# Xcode's Debug Dylib Support (Debug-style configs) puts the app's code — and the coverage
+# instrumentation — in `podcasts.app/podcasts.debug.dylib`, not the thin `podcasts` launcher stub.
+# Point Slather at the dylib explicitly; `binary_basename: podcasts` otherwise substring-matches the
+# `PodcastsIntents` extension and reports 0/0. Path matches scheme/configuration above (StagingDebug,
+# iphonesimulator) and build_directory below.
+binary_file:
+  - build/github/DerivedData/Build/Products/StagingDebug-iphonesimulator/podcasts.app/podcasts.debug.dylib
+decimals: 2
+source_files:
+  - podcasts/**/*.swift
+  - Modules/Sources/**/*.swift
+ignore:
+  - BuildTools/**/*
+  - Modules/.build/**/*
+  - Modules/Tests/**/*
+  - PocketCastsTests/**/*
+  - fastlane/**/*
+  - Pods/**/*
+  - podcasts/Strings+Generated.swift
+  - Modules/Sources/PocketCastsServer/Private/Protobuffer/*.pb.swift
