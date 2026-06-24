@@ -44,6 +44,17 @@ jobs:
           POCKET_CASTS_CI_OTHER_SWIFT_FLAGS: "$(inherited) -Xfrontend -debug-time-function-bodies"
         run: scripts/ci/build-and-test.sh
 
+      - name: Upload build logs and results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: danger-build-and-test-${{ github.run_id }}
+          path: |
+            build/github/logs/**/*.log
+            build/github/results/PocketCastsTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Log Ruby environment
         run: |
           set +e
