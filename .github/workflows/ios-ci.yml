@@ -61,7 +61,7 @@ jobs:
           name: build-and-test-${{ github.run_id }}
           path: |
             build/github/logs/**/*.log
-            build/github/results/**/*
+            build/github/results/PocketCastsTests.xcresult
           if-no-files-found: ignore
           retention-days: 14
 
