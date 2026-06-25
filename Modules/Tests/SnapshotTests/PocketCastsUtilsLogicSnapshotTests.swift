@@ -5,6 +5,7 @@ import PocketCastsUtils
 
 final class PocketCastsUtilsLogicSnapshotTests: XCTestCase {
     func testSignificantDigitsFormatStyleMatrix() {
+        let locale = Locale(identifier: "en_US_POSIX")
         let values: [TimeInterval] = [
             0,
             0.012345,
@@ -16,7 +17,7 @@ final class PocketCastsUtilsLogicSnapshotTests: XCTestCase {
 
         let snapshot = [2, 3, 5]
             .map { digits -> String in
-                let formatter = SignificantDigitsFormatStyle(significantDigits: digits)
+                let formatter = SignificantDigitsFormatStyle(significantDigits: digits, locale: locale)
                 let formattedValues = values
                     .map { value in "\(value) -> \(formatter.format(value))" }
                     .joined(separator: "\n")
