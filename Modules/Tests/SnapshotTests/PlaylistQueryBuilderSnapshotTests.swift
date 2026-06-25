@@ -82,44 +82,56 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
             describeManualQuery(
                 named: "optimized episode count hidden",
                 playlist: playlist,
-                clause: .episodeCount,
-                optimized: true,
-                shouldShowArchived: false
+                options: ManualQueryOptions(
+                    clause: .episodeCount,
+                    optimized: true,
+                    shouldShowArchived: false
+                )
             ),
             describeManualQuery(
                 named: "optimized episode count shown",
                 playlist: playlist,
-                clause: .episodeCount,
-                optimized: true,
-                shouldShowArchived: true
+                options: ManualQueryOptions(
+                    clause: .episodeCount,
+                    optimized: true,
+                    shouldShowArchived: true
+                )
             ),
             describeManualQuery(
                 named: "optimized all episode count hidden",
                 playlist: playlist,
-                clause: .allEpisodeCount,
-                optimized: true,
-                shouldShowArchived: false
+                options: ManualQueryOptions(
+                    clause: .allEpisodeCount,
+                    optimized: true,
+                    shouldShowArchived: false
+                )
             ),
             describeManualQuery(
                 named: "optimized all episode count shown",
                 playlist: playlist,
-                clause: .allEpisodeCount,
-                optimized: true,
-                shouldShowArchived: true
+                options: ManualQueryOptions(
+                    clause: .allEpisodeCount,
+                    optimized: true,
+                    shouldShowArchived: true
+                )
             ),
             describeManualQuery(
                 named: "legacy episode count hidden",
                 playlist: playlist,
-                clause: .episodeCount,
-                optimized: false,
-                shouldShowArchived: false
+                options: ManualQueryOptions(
+                    clause: .episodeCount,
+                    optimized: false,
+                    shouldShowArchived: false
+                )
             ),
             describeManualQuery(
                 named: "legacy all episode count shown",
                 playlist: playlist,
-                clause: .allEpisodeCount,
-                optimized: false,
-                shouldShowArchived: true
+                options: ManualQueryOptions(
+                    clause: .allEpisodeCount,
+                    optimized: false,
+                    shouldShowArchived: true
+                )
             ),
         ].joined(separator: "\n\n---\n\n")
 
@@ -135,41 +147,49 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
             describeManualQuery(
                 named: "optimized custom order hidden with search",
                 playlist: playlist,
-                clause: .firstDistinctEpisodes,
-                optimized: true,
-                searchTerm: "daily_mix",
-                limit: 15,
-                shouldShowArchived: false,
-                sortType: .dragAndDrop
+                options: ManualQueryOptions(
+                    clause: .firstDistinctEpisodes,
+                    optimized: true,
+                    searchTerm: "daily_mix",
+                    limit: 15,
+                    shouldShowArchived: false,
+                    sortType: .dragAndDrop
+                )
             ),
             describeManualQuery(
                 named: "optimized newest shown with search",
                 playlist: playlist,
-                clause: .firstDistinctEpisodes,
-                optimized: true,
-                searchTerm: "daily_mix",
-                limit: 15,
-                shouldShowArchived: true,
-                sortType: .newestToOldest
+                options: ManualQueryOptions(
+                    clause: .firstDistinctEpisodes,
+                    optimized: true,
+                    searchTerm: "daily_mix",
+                    limit: 15,
+                    shouldShowArchived: true,
+                    sortType: .newestToOldest
+                )
             ),
             describeManualQuery(
                 named: "legacy custom order hidden with search",
                 playlist: playlist,
-                clause: .firstDistinctEpisodes,
-                optimized: false,
-                searchTerm: "daily_mix",
-                limit: 15,
-                shouldShowArchived: false,
-                sortType: .dragAndDrop
+                options: ManualQueryOptions(
+                    clause: .firstDistinctEpisodes,
+                    optimized: false,
+                    searchTerm: "daily_mix",
+                    limit: 15,
+                    shouldShowArchived: false,
+                    sortType: .dragAndDrop
+                )
             ),
             describeManualQuery(
                 named: "legacy shortest shown",
                 playlist: playlist,
-                clause: .firstDistinctEpisodes,
-                optimized: false,
-                limit: 15,
-                shouldShowArchived: true,
-                sortType: .shortestToLongest
+                options: ManualQueryOptions(
+                    clause: .firstDistinctEpisodes,
+                    optimized: false,
+                    limit: 15,
+                    shouldShowArchived: true,
+                    sortType: .shortestToLongest
+                )
             ),
         ].joined(separator: "\n\n---\n\n")
 
@@ -289,27 +309,47 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
         """
     }
 
+    private struct ManualQueryOptions {
+        let clause: PlaylistQueryBuilder.SelectClause
+        let optimized: Bool
+        let searchTerm: String?
+        let limit: Int
+        let shouldShowArchived: Bool
+        let sortType: PlaylistSort?
+
+        init(
+            clause: PlaylistQueryBuilder.SelectClause,
+            optimized: Bool,
+            searchTerm: String? = nil,
+            limit: Int = 0,
+            shouldShowArchived: Bool,
+            sortType: PlaylistSort? = nil
+        ) {
+            self.clause = clause
+            self.optimized = optimized
+            self.searchTerm = searchTerm
+            self.limit = limit
+            self.shouldShowArchived = shouldShowArchived
+            self.sortType = sortType
+        }
+    }
+
     private func describeManualQuery(
         named name: String,
         playlist: EpisodeFilter,
-        clause: PlaylistQueryBuilder.SelectClause,
-        optimized: Bool,
-        searchTerm: String? = nil,
-        limit: Int = 0,
-        shouldShowArchived: Bool,
-        sortType: PlaylistSort? = nil
+        options: ManualQueryOptions
     ) throws -> String {
-        try featureFlagStore.override(FeatureFlag.optimizeManualPlaylistQueries, withValue: optimized)
+        try featureFlagStore.override(FeatureFlag.optimizeManualPlaylistQueries, withValue: options.optimized)
 
         return Self.describe(
             named: name,
             PlaylistQueryBuilder.query(
-                clause: clause,
+                clause: options.clause,
                 for: playlist,
-                searchTerm: searchTerm,
-                limit: limit,
-                shouldShowArchived: shouldShowArchived,
-                sortType: sortType
+                searchTerm: options.searchTerm,
+                limit: options.limit,
+                shouldShowArchived: options.shouldShowArchived,
+                sortType: options.sortType
             )
         )
     }
@@ -325,11 +365,6 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     private static func normalize(_ sql: String) -> String {
         trimTrailingWhitespace(
             sql.replacingOccurrences(
-                of: #"episode\.publishedDate > -?\d+(?:\.\d+)?"#,
-                with: "episode.publishedDate > <relative-time>",
-                options: .regularExpression
-            )
-            .replacingOccurrences(
                 of: #"publishedDate > -?\d+(?:\.\d+)?"#,
                 with: "publishedDate > <relative-time>",
                 options: .regularExpression

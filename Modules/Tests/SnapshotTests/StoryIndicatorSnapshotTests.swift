@@ -18,31 +18,33 @@ final class StoryIndicatorSnapshotTests: XCTestCase {
 
     @MainActor
     func testUpcomingStoryProgress() {
-        StoriesProgressModel.shared.progress = 0.35
-
-        assertThemedSnapshots(
-            of: storyIndicator(index: 1),
-            layout: layout
-        )
+        assertStoryProgress(0.35)
     }
 
     @MainActor
     func testCurrentStoryProgress() {
-        StoriesProgressModel.shared.progress = 1.35
-
-        assertThemedSnapshots(
-            of: storyIndicator(index: 1),
-            layout: layout
-        )
+        assertStoryProgress(1.35)
     }
 
     @MainActor
     func testCompletedStoryProgress() {
-        StoriesProgressModel.shared.progress = 2.1
+        assertStoryProgress(2.1)
+    }
+
+    @MainActor
+    private func assertStoryProgress(_ progress: Double, testName: String = #function, line: UInt = #line) {
+        let previousProgress = StoriesProgressModel.shared.progress
+        defer {
+            StoriesProgressModel.shared.progress = previousProgress
+        }
+
+        StoriesProgressModel.shared.progress = progress
 
         assertThemedSnapshots(
             of: storyIndicator(index: 1),
-            layout: layout
+            layout: layout,
+            testName: testName,
+            line: line
         )
     }
 
