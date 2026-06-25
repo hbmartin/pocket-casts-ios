@@ -10,6 +10,7 @@ class PlayerCell: ThemeableSwipeCell {
             episodeInfo.themeOverride = themeOverride
             dayName.themeOverride = themeOverride
             dividerView.themeOverride = themeOverride
+            starIndicator?.image = PlayerCell.starIndicatorImage(for: themeOverride ?? Theme.sharedTheme.activeTheme)
         }
     }
 
@@ -29,6 +30,24 @@ class PlayerCell: ThemeableSwipeCell {
     }
 
     @IBOutlet var downloadedIndicator: UIImageView!
+
+    @IBOutlet var starIndicator: UIImageView! {
+        didSet {
+            starIndicator.image = PlayerCell.starIndicatorImage(for: themeOverride ?? Theme.sharedTheme.activeTheme)
+        }
+    }
+
+    private static var starIndicatorImageCache: [Theme.ThemeType: UIImage] = [:]
+
+    private static func starIndicatorImage(for theme: Theme.ThemeType) -> UIImage? {
+        if let cached = starIndicatorImageCache[theme] {
+            return cached
+        }
+        let image = UIImage(named: "list_starred")?.tintedImage(ThemeColor.support10(for: theme))
+        starIndicatorImageCache[theme] = image
+        return image
+    }
+
     @IBOutlet var dayName: ThemeableLabel! {
         didSet {
             dayName.style = .primaryText02
@@ -85,6 +104,7 @@ class PlayerCell: ThemeableSwipeCell {
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadProgressChange), name: Constants.Notifications.downloadProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadStatusChange(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadStatusChange(_:)), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateCellForStarredChange(_:)), name: Constants.Notifications.episodeStarredChanged, object: nil)
 
         updateSize()
     }
@@ -119,9 +139,14 @@ class PlayerCell: ThemeableSwipeCell {
             podcastImage.setUserEpisode(uuid: episode.uuid, size: .list)
         }
         updateDownloadStatus()
+        updateStarStatus()
 
         EpisodeDateHelper.setDate(episode: episode, on: dayName, tintColor: ThemeColor.primaryText01(for: themeOverride))
         accessibilityLabel = labelForAccessibility(episode: episode)
+    }
+
+    private func updateStarStatus() {
+        starIndicator.isHidden = !(episode?.keepEpisode ?? false)
     }
 
     private func labelForAccessibility(episode: BaseEpisode?) -> String {
@@ -132,6 +157,9 @@ class PlayerCell: ThemeableSwipeCell {
         let info = episodeInfo.text ?? ""
 
         var desc = [heading, subtitle, title, info]
+        if episode.keepEpisode {
+            desc.append(L10n.statusStarred)
+        }
         if episode.downloaded(pathFinder: DownloadManager.shared) {
             desc.append(L10n.statusDownloaded)
         } else if let playbackError = episode.playbackErrorDetails {
@@ -169,6 +197,16 @@ class PlayerCell: ThemeableSwipeCell {
             self.episode = refreshed
             self.updateDownloadStatus()
         }
+    }
+
+    @objc private func updateCellForStarredChange(_ notification: Notification) {
+        // make sure this event is related to our episode
+        guard let ourEpisode = episode, let uuid = notification.object as? String, ourEpisode.uuid == uuid else { return }
+
+        // reload our episode so we get the latest starred status for it
+        episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
+
+        updateStarStatus()
     }
 
     func updateDownloadStatus() {
@@ -258,6 +296,7 @@ class PlayerCell: ThemeableSwipeCell {
         downloadingIndicator.color = AppTheme.colorForStyle(.primaryIcon01, themeOverride: themeOverride)
         // Update the reorder control color
         let activeTheme = themeOverride ?? Theme.sharedTheme.activeTheme
+        starIndicator.image = PlayerCell.starIndicatorImage(for: activeTheme)
         overrideUserInterfaceStyle = activeTheme.isDark ? .dark : .light
     }
 
@@ -269,6 +308,7 @@ class PlayerCell: ThemeableSwipeCell {
         let iconSize = max(16, metric.scaledValue(for: 16))
         downloadedIndicator.updateSizeConstraints(to: iconSize)
         downloadingIndicator.updateSizeConstraints(to: iconSize)
+        starIndicator.updateSizeConstraints(to: iconSize)
 
         let tickSize = max(24, metric.scaledValue(for: 24))
         selectTickImageView.updateSizeConstraints(to: tickSize)
