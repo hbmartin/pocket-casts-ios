@@ -778,7 +778,7 @@ class Settings: NSObject {
 
     private static let multiSelectActionsKey = "MultiSelectActions"
     class func multiSelectActions() -> [MultiSelectAction] {
-        let defaultActions: [MultiSelectAction] = [.playNext, .playLast, .addToPlaylist, .download, .archive, .share, .markAsPlayed, .star]
+        let defaultActions: [MultiSelectAction] = [.playNext, .playLast, .removeFromUpNext, .addToPlaylist, .download, .archive, .share, .markAsPlayed, .star]
         guard let savedInts = UserDefaults.standard.object(forKey: Settings.multiSelectActionsKey) as? [Int32] else {
             return defaultActions
         }
@@ -796,7 +796,7 @@ class Settings: NSObject {
 
     private static let listeningHistoryMultiSelectActionsKey = "ListeningHistoryMultiSelectActions"
     class func listeningHistoryMultiSelectActions() -> [MultiSelectAction] {
-        let defaultActions: [MultiSelectAction] = [.playNext, .playLast, .download, .archive, .share, .removeListeningHistory, .markAsPlayed, .star]
+        let defaultActions: [MultiSelectAction] = [.playNext, .playLast, .removeFromUpNext, .download, .archive, .share, .removeListeningHistory, .markAsPlayed, .star]
         guard let savedInts = UserDefaults.standard.object(forKey: Settings.listeningHistoryMultiSelectActionsKey) as? [Int32] else {
             return defaultActions
         }
