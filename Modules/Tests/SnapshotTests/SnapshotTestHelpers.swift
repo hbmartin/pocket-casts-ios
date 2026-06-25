@@ -36,10 +36,10 @@ func assertThemedSnapshots<V: SwiftUI.View>(
 ) {
     for style in colorSchemes {
         for sizeCategory in sizeCategories {
-            let traits = UITraitCollection(traitsFrom: [
-                UITraitCollection(userInterfaceStyle: style),
-                UITraitCollection(preferredContentSizeCategory: sizeCategory),
-            ])
+            let traits = UITraitCollection(mutations: { traits in
+                traits.userInterfaceStyle = style
+                traits.preferredContentSizeCategory = sizeCategory
+            })
 
             assertSnapshot(
                 of: view(),

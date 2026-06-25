@@ -17,6 +17,7 @@ import EndOfYear
 final class CircularProgressViewSnapshotTests: XCTestCase {
     private let layout = SwiftUISnapshotLayout.fixed(width: 120, height: 120)
 
+    @MainActor
     func testCountUpPartialProgress() {
         assertThemedSnapshots(
             of: CircularProgressView(value: 0.67, stroke: Color.blue, strokeWidth: 12),
@@ -24,6 +25,7 @@ final class CircularProgressViewSnapshotTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testCountDownProgress() {
         assertThemedSnapshots(
             of: CircularProgressView(value: 0.25, stroke: Color.red, strokeWidth: 8, direction: .down),
@@ -31,9 +33,26 @@ final class CircularProgressViewSnapshotTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testFullProgress() {
         assertThemedSnapshots(
             of: CircularProgressView(value: 1.0, stroke: Color.green, strokeWidth: 16),
+            layout: layout
+        )
+    }
+
+    @MainActor
+    func testNegativeProgressClampsToEmpty() {
+        assertThemedSnapshots(
+            of: CircularProgressView(value: -0.25, stroke: Color.orange, strokeWidth: 12),
+            layout: layout
+        )
+    }
+
+    @MainActor
+    func testOverflowProgressClampsToFull() {
+        assertThemedSnapshots(
+            of: CircularProgressView(value: 1.4, stroke: Color.purple, strokeWidth: 12),
             layout: layout
         )
     }

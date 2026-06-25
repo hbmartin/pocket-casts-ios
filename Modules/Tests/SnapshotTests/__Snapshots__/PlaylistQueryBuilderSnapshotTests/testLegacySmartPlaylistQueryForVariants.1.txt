@@ -1,0 +1,19 @@
+filtered legacy query with pinned episode
+
+SQL:
+archived = 0 AND ((uuid = ?) OR ((playingStatus = 2 ) AND fileType LIKE 'audio%' AND (episodeStatus = 5 OR episodeStatus = 2 OR episodeStatus = 3 ) AND (duration >= 720 AND duration <= 2459) AND keepEpisode = 1 AND  podcastUuid in (?,?) AND publishedDate > <relative-time> )) ORDER BY duration ASC, addedDate ASC LIMIT 30
+
+Arguments:
+1. legacy-pinned
+2. podcast-alpha
+3. podcast-beta
+
+---
+
+empty legacy query without pinned episode
+
+SQL:
+archived = 0 AND ((episodeStatus = 2 OR episodeStatus = 3 ) ) ORDER BY duration DESC, addedDate DESC
+
+Arguments:
+[]

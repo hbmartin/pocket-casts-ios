@@ -1,0 +1,196 @@
+optimized custom order hidden with search
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS episodePosition
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.archived = 0 AND episode.episodeStatus = 1 THEN 0
+                  WHEN episode.archived = 0 THEN 1
+                  WHEN episode.episodeStatus = 1 THEN 2
+                  ELSE 3 END,
+             episode.id ASC
+         ) AS uuid_rn
+  FROM SJEpisode episode
+  LEFT JOIN SJPodcast podcast ON episode.podcast_id = podcast.id
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+  AND (UPPER(episode.title) LIKE ? ESCAPE '\' OR UPPER(podcast.title) LIKE ? ESCAPE '\')
+),
+playlist_rows AS (
+  SELECT de.id,
+         de.podcast_id,
+         p.episodePosition AS playlist_position
+  FROM deduped_episode de
+  JOIN playlist p
+    ON de.uuid = p.episodeUuid
+  WHERE de.uuid_rn = 1
+  AND de.archived = 0
+  LIMIT 1000
+),
+first_per_podcast AS (
+  SELECT podcast_id, MIN(playlist_position) AS min_pos
+  FROM playlist_rows
+  GROUP BY podcast_id
+),
+chosen_ids AS (
+  SELECT pr.id, pr.playlist_position
+  FROM playlist_rows pr
+  JOIN first_per_podcast f
+    ON pr.podcast_id = f.podcast_id
+   AND pr.playlist_position = f.min_pos
+)
+SELECT episode.*
+FROM SJEpisode episode
+JOIN chosen_ids c
+  ON episode.id = c.id
+ORDER BY c.playlist_position ASC
+LIMIT 15
+
+Arguments:
+1. manual-first-distinct
+2. %DAILY\_MIX%
+3. %DAILY\_MIX%
+
+---
+
+optimized newest shown with search
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS episodePosition
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.archived = 1 AND episode.episodeStatus = 1 THEN 0
+                  WHEN episode.archived = 1 THEN 1
+                  WHEN episode.episodeStatus = 1 THEN 2
+                  ELSE 3 END,
+             episode.id ASC
+         ) AS uuid_rn
+  FROM SJEpisode episode
+  LEFT JOIN SJPodcast podcast ON episode.podcast_id = podcast.id
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+  AND (UPPER(episode.title) LIKE ? ESCAPE '\' OR UPPER(podcast.title) LIKE ? ESCAPE '\')
+),
+ordered_episodes AS (
+  SELECT de.id,
+         de.podcast_id,
+         p.episodePosition AS playlist_position,
+         ROW_NUMBER() OVER (
+           PARTITION BY de.podcast_id
+           ORDER BY publishedDate DESC, addedDate DESC
+         ) AS podcast_rn
+  FROM deduped_episode de
+  JOIN playlist p
+    ON de.uuid = p.episodeUuid
+  WHERE de.uuid_rn = 1
+
+  LIMIT 1000
+)
+SELECT episode.*
+FROM ordered_episodes oe
+JOIN SJEpisode episode
+  ON episode.id = oe.id
+WHERE oe.podcast_rn = 1
+ORDER BY publishedDate DESC, addedDate DESC
+LIMIT 15
+
+Arguments:
+1. manual-first-distinct
+2. %DAILY\_MIX%
+3. %DAILY\_MIX%
+
+---
+
+legacy custom order hidden with search
+
+SQL:
+WITH playlist_rows AS (
+  SELECT episode.id,
+         episode.podcast_id,
+         playlist.episodePosition AS playlist_position
+  FROM SJEpisode episode
+  JOIN SJPlaylistEpisode playlist
+    ON episode.uuid = playlist.episodeUuid
+  LEFT JOIN SJPodcast podcast ON episode.podcast_id = podcast.id
+  WHERE playlist.playlist_uuid = ?
+  AND episode.archived = 0
+  AND (UPPER(episode.title) LIKE ? ESCAPE '\' OR UPPER(podcast.title) LIKE ? ESCAPE '\')
+  LIMIT 1000
+),
+first_per_podcast AS (
+  SELECT podcast_id, MIN(playlist_position) AS min_pos
+  FROM playlist_rows
+  GROUP BY podcast_id
+),
+chosen_ids AS (
+  SELECT pr.id, pr.playlist_position
+  FROM playlist_rows pr
+  JOIN first_per_podcast f
+    ON pr.podcast_id = f.podcast_id
+   AND pr.playlist_position = f.min_pos
+)
+SELECT episode.*
+FROM SJEpisode episode
+JOIN chosen_ids c
+  ON episode.id = c.id
+ORDER BY c.playlist_position ASC
+LIMIT 15
+
+Arguments:
+1. manual-first-distinct
+2. %DAILY\_MIX%
+3. %DAILY\_MIX%
+
+---
+
+legacy shortest shown
+
+SQL:
+WITH ordered_episodes AS (
+  SELECT episode.id,
+         episode.podcast_id,
+         playlist.episodePosition AS playlist_position,
+         episode.publishedDate,
+         episode.addedDate,
+         episode.duration
+  FROM SJEpisode episode
+  JOIN SJPlaylistEpisode playlist
+    ON episode.uuid = playlist.episodeUuid
+
+  WHERE playlist.playlist_uuid = ?
+
+
+  LIMIT 1000
+),
+numbered AS (
+  SELECT *,
+         ROW_NUMBER() OVER (
+           PARTITION BY podcast_id
+           ORDER BY duration ASC, addedDate ASC
+         ) AS rn
+  FROM ordered_episodes
+)
+SELECT episode.*
+FROM numbered n
+JOIN SJEpisode episode
+  ON episode.id = n.id
+WHERE n.rn = 1
+ORDER BY duration ASC, addedDate ASC
+LIMIT 15
+
+Arguments:
+1. manual-first-distinct

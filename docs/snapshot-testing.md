@@ -14,13 +14,18 @@ This document covers the pilot setup, the recording workflow, and how to extend 
   no new package is fetched — the declaration just exposes the `SnapshotTesting` product to test
   targets.
 - **Target**: a `SnapshotTests` SwiftPM test target (`Modules/Tests/SnapshotTests`) depending on
-  `EndOfYear` and `SnapshotTesting`.
+  `EndOfYear`, `PocketCastsDataModel`, `PocketCastsUtils`, and `SnapshotTesting`.
 - **Helper**: `assertThemedSnapshots(...)` renders a view across a matrix of appearance
   (`light`/`dark`) and Dynamic Type sizes, writing one suffixed reference image per combination.
 - **Pilot**: `CircularProgressViewSnapshotTests` snapshots the real `EndOfYear/CircularProgressView`
   — a deterministic, dependency-light view — in light and dark.
+- **Expanded UI coverage**: `StoryIndicatorSnapshotTests` and `ImageViewSnapshotTests` cover
+  deterministic EndOfYear views with stable inputs and no network/image-loading side effects.
+- **Logic snapshots**: `PlaylistQueryBuilderSnapshotTests` snapshots high-risk SQL generation as
+  `.lines` text files, so query shape and bound arguments are reviewed together without adding
+  binary fixtures.
 - **Reference images**: live in `Modules/Tests/SnapshotTests/__Snapshots__/` and are excluded from
-  the SwiftPM target so they are not treated as build resources.
+  the SwiftPM target so they are not treated as build resources. Text snapshots live there too.
 
 ## Where snapshots run
 
@@ -43,9 +48,8 @@ reference image, then **review the image diff and commit the results**:
 ```bash
 SNAPSHOT_TESTING_RECORD=all xcodebuild test \
   -project podcasts.xcodeproj \
-  -scheme "Pocket Casts Staging" \
-  -configuration StagingDebug \
-  -only-testing:SnapshotTests \
+  -scheme SnapshotTests \
+  -configuration Debug \
   -destination 'platform=iOS Simulator,id=<SIMULATOR_UDID>' \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 ```
@@ -68,14 +72,41 @@ Reference images are binary and live forever in history, so be deliberate:
 - Prefer `.fixed`/`.sizeThatFits` layouts over full-device snapshots unless device chrome matters.
 - For non-visual output (formatted strings, accessibility trees, model dumps), prefer **textual or
   inline** snapshots (`InlineSnapshotTesting`, also vendored via swift-macro-testing) — no binaries.
+- Logic snapshots should include both the value under test and the inputs that make the output
+  meaningful, such as bound SQL arguments. Normalize only incidental noise; keep semantic structure
+  visible in the snapshot.
 
-## Running in CI (one-time Xcode wiring)
+## Coverage goals
 
-`SnapshotTests` is a SwiftPM test target and is not yet part of any Xcode scheme's Test action, so
-`-only-testing:SnapshotTests` will not find it until it is added. In Xcode, edit the **Pocket Casts
+Use snapshots where they cover behavior ordinary assertions miss:
+
+- **UI**: target stable, deterministic SwiftUI/UIKit surfaces first: controls, empty/loading/error
+  states, themed components, Dynamic Type-sensitive views, and share/export renderers.
+- **Logic**: target broad structured outputs: SQL generation, URL requests, encoders, formatters, and
+  accessibility descriptions. Prefer `.lines` or `.json` over image snapshots for these.
+- **Threshold**: the long-term goal is >90% useful coverage for both UI states and logic branches
+  that benefit from snapshots. Do not count every view or function equally; count the meaningful
+  state matrix and branch matrix for a feature, then add conventional unit tests for logic that is
+  better asserted directly.
+
+The `SnapshotTests` scheme links full modules, so its raw target coverage includes source files that
+are intentionally outside this snapshot pilot. Gate the focused coverage set with:
+
+```bash
+xcrun xccov view --report --json <SnapshotTests.xcresult> > /tmp/snapshot-coverage.json
+ruby scripts/ci/check-snapshot-coverage.rb --json /tmp/snapshot-coverage.json
+```
+
+The checker fails if either the snapshot-owned UI group or logic group drops below 90%, while still
+printing the full linked-target coverage as a non-gating context number.
+
+## Running in CI
+
+`SnapshotTests` has its own Xcode scheme, so local verification can run the scheme directly as shown
+above. If CI should fold snapshots into the existing staging test job, edit the **Pocket Casts
 Staging** scheme → Test → add the `SnapshotTests` target (or add it to `PocketCastsTests/UnitTests.xctestplan`).
-This step is intentionally left to be done in the IDE so the project file is updated by Xcode rather
-than hand-edited. Once wired, CI can run it via `make test_staging ONLY_TESTING=SnapshotTests`.
+Once wired into that job, CI can run it via `make test_staging ONLY_TESTING=SnapshotTests`; otherwise
+run the `SnapshotTests` scheme as a separate simulator test step.
 
 ## Extending to app-level themed views
 

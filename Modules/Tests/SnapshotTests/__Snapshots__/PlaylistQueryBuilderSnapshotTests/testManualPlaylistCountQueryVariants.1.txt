@@ -1,0 +1,200 @@
+optimized episode count hidden
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS pos
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.episodeStatus = 1 THEN 0 ELSE 1 END,
+             episode.id ASC
+         ) AS rn
+  FROM SJEpisode episode
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+)
+SELECT COUNT(*)
+FROM playlist p
+JOIN deduped_episode episode
+  ON episode.uuid = p.episodeUuid
+  AND episode.rn = 1
+LEFT JOIN SJPodcast podcast
+  ON episode.podcast_id = podcast.id
+WHERE episode.archived = 0
+
+Arguments:
+1. manual-counts
+
+---
+
+optimized episode count shown
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS pos
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.episodeStatus = 1 THEN 0 ELSE 1 END,
+             episode.id ASC
+         ) AS rn
+  FROM SJEpisode episode
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+)
+SELECT COUNT(*)
+FROM playlist p
+JOIN deduped_episode episode
+  ON episode.uuid = p.episodeUuid
+  AND episode.rn = 1
+LEFT JOIN SJPodcast podcast
+  ON episode.podcast_id = podcast.id
+WHERE episode.archived = 1
+
+Arguments:
+1. manual-counts
+
+---
+
+optimized all episode count hidden
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS pos
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.episodeStatus = 1 THEN 0 ELSE 1 END,
+             episode.id ASC
+         ) AS rn
+  FROM SJEpisode episode
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+)
+SELECT COUNT(*)
+FROM playlist p
+JOIN deduped_episode episode
+  ON episode.uuid = p.episodeUuid
+  AND episode.rn = 1
+LEFT JOIN SJPodcast podcast
+  ON episode.podcast_id = podcast.id
+WHERE episode.archived = 0
+
+Arguments:
+1. manual-counts
+
+---
+
+optimized all episode count shown
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS pos
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.episodeStatus = 1 THEN 0 ELSE 1 END,
+             episode.id ASC
+         ) AS rn
+  FROM SJEpisode episode
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+)
+SELECT COUNT(*)
+FROM playlist p
+JOIN deduped_episode episode
+  ON episode.uuid = p.episodeUuid
+  AND episode.rn = 1
+LEFT JOIN SJPodcast podcast
+  ON episode.podcast_id = podcast.id
+
+Arguments:
+1. manual-counts
+
+---
+
+legacy episode count hidden
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_uuid AS (
+  SELECT uuid
+  FROM (
+    SELECT episode.uuid AS uuid,
+           episode.archived AS archived,
+           ROW_NUMBER() OVER (
+             PARTITION BY episode.uuid
+             ORDER BY
+               CASE WHEN episode.episodeStatus = 1 THEN 0 ELSE 1 END,
+               episode.id ASC
+           ) AS rn
+    FROM SJEpisode episode
+  ) t
+  WHERE t.rn = 1 AND t.archived = 0
+)
+SELECT COUNT(*)
+FROM playlist p
+JOIN deduped_uuid d
+  ON d.uuid = p.episodeUuid
+
+Arguments:
+1. manual-counts
+
+---
+
+legacy all episode count shown
+
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_uuid AS (
+  SELECT uuid
+  FROM (
+    SELECT episode.uuid AS uuid,
+           episode.archived AS archived,
+           ROW_NUMBER() OVER (
+             PARTITION BY episode.uuid
+             ORDER BY
+               CASE WHEN episode.episodeStatus = 1 THEN 0 ELSE 1 END,
+               episode.id ASC
+           ) AS rn
+    FROM SJEpisode episode
+  ) t
+  WHERE t.rn = 1
+)
+SELECT COUNT(*)
+FROM playlist p
+JOIN deduped_uuid d
+  ON d.uuid = p.episodeUuid
+
+Arguments:
+1. manual-counts
