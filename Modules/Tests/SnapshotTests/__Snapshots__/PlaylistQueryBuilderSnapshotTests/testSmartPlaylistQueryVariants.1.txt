@@ -1,0 +1,115 @@
+filtered episode query
+
+SQL:
+SELECT episode.* FROM SJEpisode episode LEFT JOIN SJPodcast podcast ON episode.podcast_id = podcast.id WHERE episode.archived = 0 AND ((episode.uuid = ?) OR ( (episode.playingStatus = 2 OR episode.playingStatus = 3) AND episode.fileType LIKE 'video%' AND (episode.episodeStatus = 2 OR episode.episodeStatus = 3 OR episode.episodeStatus = 1 OR episode.episodeStatus = 4 OR episode.episodeStatus = 6 ) AND (episode.duration >= 300 AND episode.duration <= 5459) AND episode.keepEpisode = 1 AND  episode.podcastUuid in (?,?) AND episode.publishedDate > <relative-time>)) AND (UPPER(episode.title) LIKE ? ESCAPE '\' OR UPPER(podcast.title) LIKE ?  ESCAPE '\') ORDER BY episode.publishedDate ASC, episode.addedDate ASC  LIMIT 20
+
+Arguments:
+1. pinned-episode
+2. podcast-red
+3. podcast-blue
+4. %NEWS\\NIGHTLY%
+5. %NEWS\\NIGHTLY%
+
+---
+
+filtered episode count hidden
+
+SQL:
+WITH filtered AS (
+  SELECT episode.uuid,
+         episode.archived,
+         episode.episodeStatus,
+         episode.id
+  FROM SJEpisode episode
+  LEFT JOIN SJPodcast podcast
+    ON episode.podcast_id = podcast.id
+  WHERE 1 = 1 AND episode.archived = 0 AND ( (episode.playingStatus = 2 OR episode.playingStatus = 3) AND episode.fileType LIKE 'video%' AND (episode.episodeStatus = 2 OR episode.episodeStatus = 3 OR episode.episodeStatus = 1 OR episode.episodeStatus = 4 OR episode.episodeStatus = 6 ) AND (episode.duration >= 300 AND episode.duration <= 5459) AND episode.keepEpisode = 1 AND  episode.podcastUuid in (?,?) AND episode.publishedDate > <relative-time>)
+),
+deduped AS (
+  SELECT uuid
+  FROM (
+    SELECT f.uuid,
+           ROW_NUMBER() OVER (
+             PARTITION BY f.uuid
+             ORDER BY
+               CASE WHEN f.episodeStatus = 1 THEN 0 ELSE 1 END,
+               f.id ASC
+           ) AS rn
+    FROM filtered f
+  ) t
+  WHERE rn = 1
+)
+SELECT COUNT(*) FROM deduped
+
+Arguments:
+1. podcast-red
+2. podcast-blue
+
+---
+
+filtered all episode count shown
+
+SQL:
+WITH filtered AS (
+  SELECT episode.uuid,
+         episode.archived,
+         episode.episodeStatus,
+         episode.id
+  FROM SJEpisode episode
+  LEFT JOIN SJPodcast podcast
+    ON episode.podcast_id = podcast.id
+  WHERE 1 = 1  AND ( (episode.playingStatus = 2 OR episode.playingStatus = 3) AND episode.fileType LIKE 'video%' AND (episode.episodeStatus = 2 OR episode.episodeStatus = 3 OR episode.episodeStatus = 1 OR episode.episodeStatus = 4 OR episode.episodeStatus = 6 ) AND (episode.duration >= 300 AND episode.duration <= 5459) AND episode.keepEpisode = 1 AND  episode.podcastUuid in (?,?) AND episode.publishedDate > <relative-time>)
+),
+deduped AS (
+  SELECT uuid
+  FROM (
+    SELECT f.uuid,
+           ROW_NUMBER() OVER (
+             PARTITION BY f.uuid
+             ORDER BY
+               CASE WHEN f.episodeStatus = 1 THEN 0 ELSE 1 END,
+               f.id ASC
+           ) AS rn
+    FROM filtered f
+  ) t
+  WHERE rn = 1
+)
+SELECT COUNT(*) FROM deduped
+
+Arguments:
+1. podcast-red
+2. podcast-blue
+
+---
+
+empty episode count
+
+SQL:
+WITH filtered AS (
+  SELECT episode.uuid,
+         episode.archived,
+         episode.episodeStatus,
+         episode.id
+  FROM SJEpisode episode
+  LEFT JOIN SJPodcast podcast
+    ON episode.podcast_id = podcast.id
+  WHERE 1 = 1 AND episode.archived = 0 AND ( (episode.episodeStatus = 2 OR episode.episodeStatus = 3 ))
+),
+deduped AS (
+  SELECT uuid
+  FROM (
+    SELECT f.uuid,
+           ROW_NUMBER() OVER (
+             PARTITION BY f.uuid
+             ORDER BY
+               CASE WHEN f.episodeStatus = 1 THEN 0 ELSE 1 END,
+               f.id ASC
+           ) AS rn
+    FROM filtered f
+  ) t
+  WHERE rn = 1
+)
+SELECT COUNT(*) FROM deduped
+
+Arguments:
+[]

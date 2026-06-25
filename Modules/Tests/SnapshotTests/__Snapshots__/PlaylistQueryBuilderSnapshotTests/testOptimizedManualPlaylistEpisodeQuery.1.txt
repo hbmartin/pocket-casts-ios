@@ -1,0 +1,34 @@
+SQL:
+WITH playlist AS (
+  SELECT episodeUuid, MIN(episodePosition) AS pos
+  FROM SJPlaylistEpisode
+  WHERE playlist_uuid = ?
+  GROUP BY episodeUuid
+),
+deduped_episode AS (
+  SELECT episode.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY episode.uuid
+           ORDER BY
+             CASE WHEN episode.archived = 0 AND episode.episodeStatus = 1 THEN 0
+                  WHEN episode.archived = 0 THEN 1
+                  WHEN episode.episodeStatus = 1 THEN 2
+                  ELSE 3 END,
+             episode.id ASC
+         ) AS rn
+  FROM SJEpisode episode
+  WHERE episode.uuid IN (SELECT episodeUuid FROM playlist)
+)
+SELECT episode.*
+FROM playlist p
+JOIN deduped_episode episode
+  ON episode.uuid = p.episodeUuid
+  AND episode.rn = 1
+LEFT JOIN SJPodcast podcast
+  ON episode.podcast_id = podcast.id
+WHERE episode.archived = 0 AND (UPPER(episode.title) LIKE ? ESCAPE '\' OR UPPER(podcast.title) LIKE ?  ESCAPE '\') ORDER BY p.pos ASC  LIMIT 25
+
+Arguments:
+1. manual-playlist
+2. %CHAPTER\_50\%\\BONUS%
+3. %CHAPTER\_50\%\\BONUS%

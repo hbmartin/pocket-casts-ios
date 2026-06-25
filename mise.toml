@@ -109,6 +109,7 @@ alias = "test:credentials-script"
 run = [
     "ruby scripts/tests/generate_credentials_test.rb",
     "ruby scripts/tests/select_ios_simulator_test.rb",
+    "ruby scripts/tests/check_snapshot_coverage_test.rb",
     "ruby scripts/tests/swiftlint_version_sync_test.rb",
     "ruby scripts/tests/sync_swiftlint_version_test.rb",
     "./scripts/tests/check_concurrency_warnings_test.sh",

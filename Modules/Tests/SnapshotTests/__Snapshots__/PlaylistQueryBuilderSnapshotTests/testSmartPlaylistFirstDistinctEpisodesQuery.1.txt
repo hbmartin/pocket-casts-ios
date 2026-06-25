@@ -1,0 +1,39 @@
+SQL:
+WITH limited_episodes AS (
+    SELECT * FROM (
+        SELECT episode.id,
+               episode.podcast_id,
+               episode.publishedDate,
+               episode.addedDate,
+               episode.duration
+        FROM SJEpisode episode
+        LEFT JOIN SJPodcast podcast
+          ON episode.podcast_id = podcast.id
+        WHERE episode.archived = 0 AND ((episode.uuid = ?) OR ( (episode.playingStatus = 1 ) AND episode.fileType LIKE 'audio%' AND (episode.episodeStatus = 5 OR episode.episodeStatus = 2 OR episode.episodeStatus = 3 ) AND (episode.duration >= 600 AND episode.duration <= 2759) AND episode.keepEpisode = 1 AND  episode.podcastUuid in (?,?)))
+        AND (UPPER(episode.title) LIKE ? ESCAPE '\' OR UPPER(podcast.title) LIKE ? ESCAPE '\')
+        ORDER BY episode.duration DESC, episode.addedDate DESC
+        LIMIT 1000
+    )
+),
+numbered_episodes AS (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY podcast_id
+               ORDER BY  duration DESC, addedDate DESC
+           ) AS rn
+    FROM limited_episodes
+)
+SELECT episode.*
+FROM numbered_episodes ne
+JOIN SJEpisode episode
+  ON episode.id = ne.id
+WHERE ne.rn = 1
+ORDER BY  duration DESC, addedDate DESC
+LIMIT 50
+
+Arguments:
+1. now-playing
+2. podcast-a
+3. podcast-b
+4. %SCIENCE\_FICTION\%MIX%
+5. %SCIENCE\_FICTION\%MIX%

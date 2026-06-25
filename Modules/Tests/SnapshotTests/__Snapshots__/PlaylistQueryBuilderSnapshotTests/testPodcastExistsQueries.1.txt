@@ -1,0 +1,5 @@
+excluding deleted:
+SELECT 1 FROM SJPlaylistEpisode WHERE podcastUuid = ? AND wasDeleted = 0 LIMIT 1
+
+including deleted:
+SELECT 1 FROM SJPlaylistEpisode WHERE podcastUuid = ? LIMIT 1
