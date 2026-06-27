@@ -177,8 +177,12 @@ boundary crossings that touch `Episode` use the per-hop `Sendable`-projection es
 
 - **Record 1 — `Folder`: DONE** (Sendable struct; first production `@GRDBRecord` struct, proving the
   macro's struct path end-to-end). Validated: DataModel 448 / Server 40 / app 259, 0 failures.
-- **Record 2 — `EpisodeFilter`: IN PROGRESS** (2026-06-27). Leaf record, no cache, no `@objc` protocol
-  burden — confirmed GO by the spike.
+- **Record 2 — `EpisodeFilter`: DONE** (2026-06-27, branch `modernization-slice14-episodefilter-struct`).
+  Now `struct EpisodeFilter: Equatable, Hashable, Sendable`. Full app + module compile clean; entire
+  `mise run test:staging` suite green (incl. the parity net). Notable: dropping `@objc` broke nothing
+  at runtime (no KVC/XIB bindings, as the spike predicted), and the four data-layer mutators
+  (`updatePosition`/`moveEpisode`/`deleteEpisodes`/`deleteAllEpisodes`) no longer back-mutate the
+  caller's in-memory filter — audited safe (no caller re-saves the stale copy).
 - **Record 3 — `Podcast`: GO after cache refactor** (the `cachedPodcasts` identity-map must hand out
   fresh copies; sort-order flows reuse the Folder "collect mutated copies" fix).
 - **Records 4/5 — `Episode`/`UserEpisode`: deferred to Phase 5** (gated on de-`@objc` `BaseEpisode` +
@@ -224,11 +228,14 @@ broad, and `@objc` removal is only runtime-verifiable), in this order:
      uuid equality/hash + `Set` dedup, `addPodcast`/`removePodcast`/`setTitle`, removal-rule helpers,
      and `save`-returns-value round-trip parity across both DB code paths. Assertions read the *returned*
      value and use `==`/`hashValue`/`Set`, so they validate the struct conformances unchanged.
-  3. ⏭ `class: NSObject` → `struct`, drop `@objc`, add `Sendable` + custom uuid `Equatable`/`Hashable`;
+  3. ✅ `class: NSObject` → `struct`, dropped `@objc`, added `Sendable` + custom uuid `Equatable`/`Hashable`;
      `setTitle`/`addPodcast`/`removePodcast` → `mutating func`.
-  4. ⏭ Compiler-driven `let`→`var` sweep at the ~28 app callers + 200+ test instances.
-  5. ⏭ **Verification gate:** full `mise run test:staging` + manual QA of create/edit/delete filter flows
-     (the only check that exercises the dropped `@objc` surface).
+  4. ✅ Compiler-driven `let`→`var` sweep (93 construction sites bulk-converted; data-layer/sync/app
+     callback bindings hand-fixed with local `var` copies; `PlaylistPreviewViewModel.newPlaylist` dropped
+     `private(set)` for the SwiftUI editor).
+  5. ✅ **Verification:** full `mise run test:staging` green across all targets. Manual QA of
+     create/edit/delete filter flows still advisable before merge (belt-and-suspenders for the dropped
+     `@objc` surface, though compilation + the absence of KVC/XIB bindings make runtime breakage unlikely).
 
 Sequencing note — **resolved** by the heavy-record spike above: Strategy B covers the leaves
 (`EpisodeFilter`, then `Podcast`); `Episode`/`UserEpisode` are reclassified to Phase 5. EpisodeFilter
