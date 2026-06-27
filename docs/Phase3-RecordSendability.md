@@ -102,13 +102,19 @@ test-light subsystem with no UI tests — for *every* record, since the leaf is 
 That is a much larger, higher-risk effort than the slice-9 roadmap note assumed (which was written from
 GRDB's guidance, before this evidence).
 
-## Decision: **Strategy B — full struct migration**
+## Decision: **Strategy B for the leaves; heavy episodes deferred to Phase 5**
 
-Chosen despite the higher cost: records become value-type structs (the GRDB-7 north star), which means
-first rewriting the shared-cache / active-record / in-place-mutation model that the spike exposed. To
-contain the regression risk on a UI-test-light subsystem, this proceeds **refactor-then-convert,
-leaf-first, with GRDB round-trip + behaviour-parity tests landed *before* each record flips to a struct**
-(extending the DataModel suite, which has the strongest coverage in the repo). Sequence below.
+Records become value-type structs (the GRDB-7 north star), which means first rewriting the
+shared-cache / active-record / in-place-mutation model the Folder spike exposed. To contain regression
+risk on a UI-test-light subsystem, this proceeds **refactor-then-convert, leaf-first, with GRDB
+round-trip + behaviour-parity tests landed *before* each record flips to a struct** (extending the
+DataModel suite, which has the strongest coverage in the repo).
+
+**Scope refined by the heavy-record spike (2026-06-27, below):** Strategy B applies to the *leaf*
+records — `Folder` (done), `EpisodeFilter`, `Podcast`. `Episode`/`UserEpisode` are **reclassified out
+of Phase 3 and coupled to Phase 5**: their only shared-mutation reliance lives in the playback engine
+(deferred) and behind the `@objc BaseEpisode` protocol (a hard structural blocker). See the verdict
+section. Sequence below.
 
 ## Revised strategy options (considered)
 
@@ -127,40 +133,111 @@ leaf-first, with GRDB round-trip + behaviour-parity tests landed *before* each r
 - **C — Hybrid.** Snapshots/confinement now (unblock Swift 6), full struct migration deferred to its own
   later epic with a dedicated test-coverage investment first.
 
+## Heavy-record go/no-go (reference-semantics spike, 2026-06-27)
+
+The line-155 sequencing note asked whether Strategy B should extend to the heavy records or whether
+they should fall back to confine+snapshot. A four-part read-only spike (playback layer, DataManager
+caching/identity, app-wide episode mutation, Podcast) answered it. The decisive questions were
+*(1) does a load even hand out a shared instance?* and *(2) does anything mutate a held instance and
+expect other holders to see it?*
+
+| Record | Load returns | Identity reliance (`===`, Set/dict keys, KVO) | Verdict |
+|---|---|---|---|
+| **EpisodeFilter** | fresh per call (no cache) | none; convert `isEqual`/`hash` to uuid-consistent synthesis | ✅ **GO** — leaf struct (Strategy B) |
+| **Podcast** | ⚠️ **shared cached instance** (`PodcastDataManager.cachedPodcasts: [String: Podcast]`) | none; `PodcastSettings` already a `Sendable` struct | 🟡 **GO after cache refactor** — same shape as the Folder `cachedFolders` fix, medium effort |
+| **Episode / UserEpisode** | fresh per call | none outside playback | ❌ **NO-GO in Phase 3 — reclassified to Phase 5** |
+
+**Cross-cutting positive:** outside the playback engine there is **zero reference-identity reliance** —
+no `===`, no `ObjectIdentifier`, no records as Set/dict keys by identity, no KVO/`@objc dynamic`
+observation. `isEqual`/`hash` are already value-based (uuid). The scariest struct-migration failure
+class is simply absent.
+
+**Why Episode/UserEpisode are NO-GO for Phase 3** — the shared-mutation reliance that *does* exist is
+localized to exactly the two areas the roadmap already isolates:
+
+1. **Playback engine (Phase 5).** `PlaybackQueue` caches `topEpisode` and
+   `PlaybackManager.progressTimerFired` mutates `episode.playedUpTo` in place **~once per second**,
+   relying on that held instance persisting (`PlaybackManager.swift:1503`, `PlaybackQueue.swift:314`,
+   plus the `EpisodeDataManager.saveEpisode` side-effect mutation of the passed-in episode). Value
+   semantics silently breaks this — a playback-position-tracking *redesign*, not a rename.
+2. **`@objc BaseEpisode` protocol** (~116 existential sites, mostly function params). An `@objc`
+   protocol requires class conformers, so `Episode`/`UserEpisode` cannot become structs until
+   `BaseEpisode` is de-`@objc`'d — a standalone prerequisite PR.
+
+The non-playback app layer is otherwise ~95% local `load→mutate→save` (struct-safe); the one app-layer
+exception (`PlayerChapterCell` mutating the shared current episode) is itself playback-adjacent.
+
+**The insight that unblocks the sequence:** the 10 baseline entries Phase 3 must clear
+(`ShareProfileViewModel`, `PlaylistDetailViewModel`, `PlaylistMetadataLoader`) hang off **`EpisodeFilter`
+and `ListEpisode`, not `Episode`**. So the full Phase 1 baseline payoff comes from the *leaf* records,
+and the hard playback-coupled episode conversion defers to Phase 5 without blocking anything. Interim
+boundary crossings that touch `Episode` use the per-hop `Sendable`-projection escape hatch.
+
 ## Progress
 
 - **Record 1 — `Folder`: DONE** (Sendable struct; first production `@GRDBRecord` struct, proving the
   macro's struct path end-to-end). Validated: DataModel 448 / Server 40 / app 259, 0 failures.
+- **Record 2 — `EpisodeFilter`: IN PROGRESS** (2026-06-27). Leaf record, no cache, no `@objc` protocol
+  burden — confirmed GO by the spike.
+- **Record 3 — `Podcast`: GO after cache refactor** (the `cachedPodcasts` identity-map must hand out
+  fresh copies; sort-order flows reuse the Folder "collect mutated copies" fix).
+- **Records 4/5 — `Episode`/`UserEpisode`: deferred to Phase 5** (gated on de-`@objc` `BaseEpisode` +
+  playback position-tracking redesign).
 
-## Record 2 — `EpisodeFilter` (survey complete; not yet started)
+## Record 2 — `EpisodeFilter` (in progress)
 
 Far heavier than `Folder` — sized as its own multi-session effort. Survey findings:
 
 - **~80 property-mutation sites** + the mutating methods `setTitle` / `addPodcast` / `removePodcast`
   (become `mutating func`; their `let`/parameter call sites need `var`).
-- **~40 `save(playlist:)` call sites.** `PlaylistDataManager.save` back-mutates `id`
-  (`DBUtils.generateUniqueId()` when `id == 0`) and `playlistUpdateDate` — same return-the-saved-value
-  refactor as `Folder.save`, but ×40 callers, across `DataManager` + the `PlaylistRepository` protocol +
-  its mock.
-- **~40 `NotificationCenter` posts** pass the filter as `object:` (e.g. `playlistChanged`). Boxing a
-  value type works and `notification.object as? EpisodeFilter` still reads it, but every receiver that
-  assumes a shared/reference object must be checked — a risk class `Folder` did not have.
-- **`Set<EpisodeFilter>`** (`ManualPlaylistsChooserViewController`) + the current `isEqual`-by-`uuid` /
-  `hash`-by-`id` (an inconsistent pairing). Replace with a uuid-consistent `Equatable`/`Hashable`.
-- **`@objc`/KVC risk:** the filter-edit overlays are XIB-based; storyboard/KVC bindings to `@objc`
-  properties fail at *runtime*, not compile time, so the existing unit suites may not catch them —
-  needs manual verification of the filter-editing flows.
+- **`save(playlist:)` call sites — verified 28 in the app + the rest in tests.** `PlaylistDataManager.save`
+  back-mutates `id` (`DBUtils.generateUniqueId()` when `id == 0`) and `playlistUpdateDate` — but a grep
+  for read-back (`= …save(playlist`) found **zero** sites that consume the result. So the out-param
+  back-mutation reliance that `Folder` had is **absent here**: the return-the-saved-value refactor across
+  `DataManager` + `PlaylistRepository` + its mock can be additive (`@discardableResult`) with no caller
+  edits.
+- **`NotificationCenter` object-passing — not found.** A grep for `post(name:…)` passing a filter/playlist
+  as `object:` returned nothing, contrary to the survey's ~40 estimate. Lower risk than feared; still
+  spot-check receivers during the flip.
+- **`Set<EpisodeFilter>`** at `ManualPlaylistsChooserViewController:180`. The old `isEqual`-by-`uuid` /
+  `hash`-by-`id` pairing was inconsistent (Hashable-contract violation). **✅ Fixed 2026-06-27**: `hash`
+  now keys on `uuid`, consistent with `isEqual` — a correctness fix independent of the flip, and the
+  semantics the struct's `Equatable`/`Hashable` will carry.
+- **`@objc`/KVC/XIB risk — did NOT materialize.** No `.xib`/`.storyboard` references `EpisodeFilter`/
+  `SJFilteredPlaylist`, and no KVC (`value(forKey:)`/`setValue(forKey:)`) targets a filter property. The
+  overlays hold a plain Swift `filter` property. `@objc` removal is still *mandatory* for the struct
+  (Swift structs can't expose `@objc` members), so re-verify the create/edit/delete filter flows once
+  flipped — but there is no hidden KVC binding to break.
 - **200+ test instances** across 15+ files need `let`→`var`.
 
-Sequencing note: because `EpisodeFilter` alone is this large — and `Podcast` (143 refs) and
-`Episode`/`UserEpisode` (~200+ each, gated on de-`@objc`-ing `BaseEpisode`) are larger still — revisit
-whether Strategy B remains the right call for the *heavy* records, or whether the confine+snapshot
-fallback (Strategy A) should cover them while only the leaves go struct. Decide with this evidence.
+### Landed vs staged (2026-06-27)
+
+- ✅ **`isEqual`/`hash` uuid-consistency** — landed (`EpisodeFilter.swift`). Self-contained correctness
+  fix; directly repairs the `ManualPlaylistsChooserViewController` `Set` dedup. No flip yet.
+- ⏭ **The struct flip itself is staged as its own PR** (mechanical but broad, and `@objc` removal is only
+  runtime-verifiable), in this order:
+  1. `PlaylistDataManager.save(playlist:)` → `@discardableResult` returning the saved `EpisodeFilter`,
+     threaded through `DataManager` + `PlaylistRepository` + mock (additive — no caller reads it back).
+  2. `class: NSObject` → `struct`, drop `@objc`, add `Sendable` + custom uuid `Equatable`/`Hashable`;
+     `setTitle`/`addPodcast`/`removePodcast` → `mutating func`.
+  3. Compiler-driven `let`→`var` sweep at the ~28 app callers + 200+ test instances.
+  4. GRDB round-trip + behaviour-parity test (extend `PlaylistDataManagerTests`), landed before/with the flip.
+  5. **Verification gate:** full `mise run test:staging` + manual QA of create/edit/delete filter flows
+     (the only check that exercises the dropped `@objc` surface).
+
+Sequencing note — **resolved** by the heavy-record spike above: Strategy B covers the leaves
+(`EpisodeFilter`, then `Podcast`); `Episode`/`UserEpisode` are reclassified to Phase 5. EpisodeFilter
+itself is unaffected by that split and proceeds now.
 
 ## Exit criteria
 
 - ✅ Reference-semantics spike answered: **rewrite, not rename** (above).
-- Strategy A/B/C chosen and recorded; MODERNIZATION.md Phase 3 reconciled with the choice.
-- Under A/C: `EpisodeFilter`/`Folder` `Sendable` with confinement contract; the snapshot hops that clear
-  the 10 baseline entries + 7 repository keys identified and ticketed.
-- Under B: the cache/mutation refactor landed with parity tests before any record becomes a struct.
+- ✅ Strategy chosen and recorded: **B for the leaves** (`Folder`✓ → `EpisodeFilter` → `Podcast`),
+  **`Episode`/`UserEpisode` deferred to Phase 5** (heavy-record spike, 2026-06-27).
+- Leaf records (`Folder`✓, `EpisodeFilter`, `Podcast`) are `Sendable` structs with GRDB round-trip +
+  behaviour-parity tests landed *before* each flip; `save(...)` returns the saved value (no out-param
+  back-mutation); shared caches hand out copies.
+- The 10 baseline entries + the playlist repository key clear once `EpisodeFilter` (+ honest-`Sendable`
+  `ListEpisode`) land; Episode-touching boundary crossings use the per-hop `Sendable`-projection hatch
+  until Phase 5.
+- MODERNIZATION.md Phase 3 reconciled: heavy-record migration moves under the Phase 5 umbrella.

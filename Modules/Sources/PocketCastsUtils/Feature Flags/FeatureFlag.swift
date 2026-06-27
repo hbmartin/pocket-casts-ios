@@ -37,11 +37,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// See: https://github.com/Automattic/pocket-casts-ios/issues/2049
     case ignoreRouteDisconnectedInterruption
 
-    /// When accessing Stats, it checks if the local stats are behind remote
-    /// If it is, it updates it
-    /// This is meant to fix an issue for users that were losing stats
-    case syncStats
-
     /// Uses the `isReadyToPlay` function to decide what logic to use when skipping.
     /// There's some scenario when the Default player switched to the Effects player when the stream is paused.
     /// This makes the skip unusable as the player doesn't have its task set yet.
@@ -112,12 +107,6 @@ public enum FeatureFlag: String, CaseIterable {
     /// Improves configuration for the streaming requet download session
     case streamingCustomSessionConfiguration
 
-    /// Guest List and Network Highligh Redesign
-    case guestListsNetworkHighlightsRedesign
-
-    /// Adds Discover category user recommendations
-    case smartCategories
-
     /// Enabled the attributed text view in the Data Usage warning Sheet
     case useDescriptiveActionAttributedTextView
 
@@ -156,9 +145,6 @@ public enum FeatureFlag: String, CaseIterable {
 
     /// Upgrades the Effects Player's AudioReadTask to a QOS level of "userInitiated" from "default"
     case effectsPlayerQOSUpgrade
-
-    /// Refreshes by listening to notifications for podcast subscribe/unsubscribe
-    case refreshPlaylistOnSubscriptions
 
     /// Uses the PlaylistMetadataLoader cache before running the query (the query will update when it's done)
     case playlistDataCacheBeforeQuery
@@ -263,8 +249,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .ignoreRouteDisconnectedInterruption:
             true
-        case .syncStats:
-            true
         case .playerIsReadyToPlay:
             true
         case .listeningHistorySearch:
@@ -309,10 +293,6 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .streamingCustomSessionConfiguration:
             true
-        case .guestListsNetworkHighlightsRedesign:
-            true
-        case .smartCategories:
-            true
         case .useDescriptiveActionAttributedTextView:
             true
         case .retryWithoutUserAgent:
@@ -338,8 +318,6 @@ public enum FeatureFlag: String, CaseIterable {
         case .enableLocalizationHeaders:
             true
         case .effectsPlayerQOSUpgrade:
-            true
-        case .refreshPlaylistOnSubscriptions:
             true
         case .playlistDataCacheBeforeQuery:
             true
