@@ -144,8 +144,9 @@ class DataManagerTestCase: XCTestCase {
         playlist.sortPosition = sortPosition
         playlist.syncStatus = syncStatus
         playlist.wasDeleted = wasDeleted
-        dataManager.save(playlist: playlist)
-        return playlist
+        // Return the saved value (mirrors createTestFolder) so callers see the assigned id and stay
+        // correct once EpisodeFilter becomes a value-type struct.
+        return dataManager.save(playlist: playlist)
     }
 
     /// Creates a test user episode with the given properties

@@ -212,17 +212,22 @@ Far heavier than `Folder` — sized as its own multi-session effort. Survey find
 
 ### Landed vs staged (2026-06-27)
 
-- ✅ **`isEqual`/`hash` uuid-consistency** — landed (`EpisodeFilter.swift`). Self-contained correctness
-  fix; directly repairs the `ManualPlaylistsChooserViewController` `Set` dedup. No flip yet.
-- ⏭ **The struct flip itself is staged as its own PR** (mechanical but broad, and `@objc` removal is only
-  runtime-verifiable), in this order:
-  1. `PlaylistDataManager.save(playlist:)` → `@discardableResult` returning the saved `EpisodeFilter`,
-     threaded through `DataManager` + `PlaylistRepository` + mock (additive — no caller reads it back).
-  2. `class: NSObject` → `struct`, drop `@objc`, add `Sendable` + custom uuid `Equatable`/`Hashable`;
+- ✅ **`isEqual`/`hash` uuid-consistency** — landed (`EpisodeFilter.swift`, PR #111). Self-contained
+  correctness fix; directly repairs the `ManualPlaylistsChooserViewController` `Set` dedup.
+
+The struct flip itself is staged on branch `modernization-slice14-episodefilter-struct` (mechanical but
+broad, and `@objc` removal is only runtime-verifiable), in this order:
+  1. ✅ **`save(playlist:)` returns the saved value** — landed. `@discardableResult` returning the saved
+     `EpisodeFilter`, threaded through `PlaylistDataManager` + `DataManager` + `PlaylistRepository` +
+     mock. Written forward-compatibly (local `var` copy); additive — no caller reads it back today.
+  2. ✅ **Behaviour-parity tests** — landed ahead of the flip (`EpisodeFilterBehaviorTests.swift`):
+     uuid equality/hash + `Set` dedup, `addPodcast`/`removePodcast`/`setTitle`, removal-rule helpers,
+     and `save`-returns-value round-trip parity across both DB code paths. Assertions read the *returned*
+     value and use `==`/`hashValue`/`Set`, so they validate the struct conformances unchanged.
+  3. ⏭ `class: NSObject` → `struct`, drop `@objc`, add `Sendable` + custom uuid `Equatable`/`Hashable`;
      `setTitle`/`addPodcast`/`removePodcast` → `mutating func`.
-  3. Compiler-driven `let`→`var` sweep at the ~28 app callers + 200+ test instances.
-  4. GRDB round-trip + behaviour-parity test (extend `PlaylistDataManagerTests`), landed before/with the flip.
-  5. **Verification gate:** full `mise run test:staging` + manual QA of create/edit/delete filter flows
+  4. ⏭ Compiler-driven `let`→`var` sweep at the ~28 app callers + 200+ test instances.
+  5. ⏭ **Verification gate:** full `mise run test:staging` + manual QA of create/edit/delete filter flows
      (the only check that exercises the dropped `@objc` surface).
 
 Sequencing note — **resolved** by the heavy-record spike above: Strategy B covers the leaves
