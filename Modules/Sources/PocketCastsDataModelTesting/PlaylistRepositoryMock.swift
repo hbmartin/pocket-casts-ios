@@ -83,8 +83,10 @@ public final class PlaylistRepositoryMock: RepositoryMock, PlaylistRepository {
         return stubs["allUnsyncedPlaylists()"] as? [EpisodeFilter] ?? []
     }
 
-    public func save(playlist: EpisodeFilter) {
+    @discardableResult
+    public func save(playlist: EpisodeFilter) -> EpisodeFilter {
         record("save(playlist:)")
+        return playlist
     }
 
     public func updatePlaylistUpdateDate(for playlist: EpisodeFilter, to date: Date) {

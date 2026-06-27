@@ -293,7 +293,13 @@ class PlaylistDataManager {
         }
     }
 
-    func save(playlist: EpisodeFilter, dbQueue: PCDBQueue) {
+    // Returns the saved playlist with `id`/`playlistUpdateDate` populated. Callers should prefer the
+    // return value over the argument: a local `var` copy is mutated and persisted so this stays correct
+    // when `EpisodeFilter` becomes a value-type struct (today, as a class, the copy aliases the same
+    // instance, preserving the existing back-mutation behaviour).
+    @discardableResult
+    func save(playlist: EpisodeFilter, dbQueue: PCDBQueue) -> EpisodeFilter {
+        var playlist = playlist
         let isInsert = playlist.id == 0
         if isInsert {
             playlist.id = DBUtils.generateUniqueId()
@@ -324,6 +330,8 @@ class PlaylistDataManager {
                 }
             }
         }
+
+        return playlist
     }
 
     /// Update the playlistUpdateDate for a specific playlist to the given date (defaults to now)
