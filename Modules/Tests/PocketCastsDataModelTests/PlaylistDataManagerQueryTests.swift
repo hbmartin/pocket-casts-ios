@@ -83,6 +83,29 @@ final class PlaylistDataManagerQueryTests: DataManagerTestCase {
         }
     }
 
+    // MARK: - Regression: save + add must not duplicate the playlist row
+
+    func testSaveThenAddDoesNotDuplicatePlaylist() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(uuid: "pod-D", dataManager: dataManager)
+            let episode = self.createTestEpisode(uuid: "ep-D", podcast: podcast, dataManager: dataManager)
+
+            var filter = EpisodeFilter()
+            filter.uuid = "dup-test"
+            filter.playlistName = "Dup"
+            filter.manual = true
+            dataManager.save(playlist: filter)
+            // Value-type save does not back-mutate id, so `filter` is still the stale id == 0 instance
+            // that callers historically re-used; add(...) must not insert a second row for it.
+            XCTAssertEqual(filter.id, 0, "\(impl): value-type save does not back-mutate the argument")
+
+            XCTAssertTrue(dataManager.add(episodes: [episode], to: filter), "\(impl): add succeeds")
+
+            let matches = dataManager.allPlaylists(includeDeleted: true).filter { $0.uuid == "dup-test" }
+            XCTAssertEqual(matches.count, 1, "\(impl): save + add must not create a duplicate playlist row")
+        }
+    }
+
     // MARK: - Helper
 
     private func assertPlaylistOrder(dataManager: DataManager, playlistUuid: String, expected: [String], impl: String) throws {

@@ -304,6 +304,13 @@ class PlaylistDataManager {
     @discardableResult
     func save(playlist: EpisodeFilter, dbQueue: PCDBQueue) -> EpisodeFilter {
         var playlist = playlist
+        // Resolve insert-vs-update by uuid (the stable identity), not by the local row id: value-type
+        // callers don't get the assigned id back, so a re-save of an already-persisted filter still
+        // arrives with id == 0. Keying on id alone would insert a duplicate row for the same uuid
+        // (e.g. `save(filter)` then `add(episodes:to:filter)`, whose internal save still sees id == 0).
+        if playlist.id == 0, !playlist.uuid.isEmpty, let existingId = existingPlaylistId(uuid: playlist.uuid, dbQueue: dbQueue) {
+            playlist.id = existingId
+        }
         let isInsert = playlist.id == 0
         if isInsert {
             playlist.id = DBUtils.generateUniqueId()
@@ -336,6 +343,23 @@ class PlaylistDataManager {
         }
 
         return playlist
+    }
+
+    /// The persisted row id for the playlist with this uuid, or nil if it isn't saved yet.
+    private func existingPlaylistId(uuid: String, dbQueue: PCDBQueue) -> Int64? {
+        var id: Int64?
+        dbQueue.read { db in
+            do {
+                let rs = try db.executeQuery("SELECT id FROM \(DataManager.playlistsTableName) WHERE uuid = ? LIMIT 1", values: [uuid])
+                defer { rs.close() }
+                if rs.next() {
+                    id = rs.longLongInt(forColumn: "id")
+                }
+            } catch {
+                FileLog.shared.addMessage("PlaylistDataManager.existingPlaylistId error: \(error)")
+            }
+        }
+        return id
     }
 
     /// Update the playlistUpdateDate for a specific playlist to the given date (defaults to now)
@@ -456,14 +480,16 @@ class PlaylistDataManager {
 
     /// Returns a value indicating whether the episodes were added. If `false`, the playlist is full.
     func add(episodes: [Episode], to playlist: EpisodeFilter, dbQueue: PCDBQueue) -> Bool {
+        var playlist = playlist
         // If the episodes are empty or already larger than our max size, bail
         if episodes.isEmpty || episodes.count > EpisodeDataManager.Constants.Limits.maxPlaylistItems {
             return false
         }
 
-        // Ensure the filter exists and has a valid id before inserting playlist items
+        // Ensure the filter exists and has a valid id before inserting playlist items. Capture the
+        // saved value: as a value-type, `playlist` here keeps id == 0 otherwise (see save()).
         if playlist.id == 0 {
-            save(playlist: playlist, dbQueue: dbQueue)
+            playlist = save(playlist: playlist, dbQueue: dbQueue)
         }
 
         // Check that the current episode count + new episodes wouldn't overflow, otherwise bail.
