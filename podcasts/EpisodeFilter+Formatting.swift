@@ -45,13 +45,13 @@ extension EpisodeFilter {
     }
     #endif
 
-    class func imageForPlaylistIcon(icon: PlaylistIcon) -> UIImage? {
+    static func imageForPlaylistIcon(icon: PlaylistIcon) -> UIImage? {
         guard let name = imageName(forPlaylistIcon: icon) else { return nil }
 
         return UIImage(named: name)
     }
 
-    class func imageName(forPlaylistIcon icon: PlaylistIcon) -> String? {
+    static func imageName(forPlaylistIcon icon: PlaylistIcon) -> String? {
         if icon == .redPlaylist || icon == .bluePlaylist || icon == .greenPlaylist || icon == .purplePlaylist || icon == .yellowPlaylist {
             return "filter_list"
         } else if icon == .redmostPlayed || icon == .bluemostPlayed || icon == .greenmostPlayed || icon == .purplemostPlayed || icon == .yellowmostPlayed {

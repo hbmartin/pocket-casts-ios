@@ -11,7 +11,10 @@ class PlaylistPreviewViewModel: ObservableObject {
     @Published var newPlaylistHasChanged: Bool = false
 
     @Published private(set) var isInPreview: Bool = false
-    @Published private(set) var newPlaylist: EpisodeFilter
+    // Settable across files: the preview VC and the SwiftUI rules editor mutate the draft filter's
+    // fields directly. As a value-type struct, that requires the setter (a class instance was mutated
+    // through the getter); mutating a @Published struct also correctly drives objectWillChange.
+    @Published var newPlaylist: EpisodeFilter
     @Published private(set) var enabledRules: [SmartPlaylistRuleInfo] = []
     @Published private(set) var availableRules: [SmartPlaylistRuleInfo] = []
     @Published private(set) var episodes = [ListEpisode]()

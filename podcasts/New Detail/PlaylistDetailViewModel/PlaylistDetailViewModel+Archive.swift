@@ -21,7 +21,9 @@ extension PlaylistDetailViewModel {
     }
 
     func updateShowArchivedEpisodes(show: Bool) {
+        var playlist = playlist
         playlist.showArchivedEpisodes = show
+        update(playlist: playlist)
         dataManager.save(playlist: playlist)
     }
 }

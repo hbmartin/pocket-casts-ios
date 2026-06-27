@@ -183,6 +183,7 @@ class PlaylistDataManager {
     }
 
     func updatePosition(playlist: EpisodeFilter, newPosition: Int32, dbQueue: PCDBQueue) {
+        var playlist = playlist
         playlist.sortPosition = newPosition
         playlist.syncStatus = SyncStatus.notSynced.rawValue
         dbQueue.write { db in
@@ -196,6 +197,7 @@ class PlaylistDataManager {
 
     /// Reorder a specific episode within a manual playlist to a new index
     func moveEpisode(_ episodeUuid: String, in playlist: EpisodeFilter, to newIndex: Int, dbQueue: PCDBQueue) {
+        var playlist = playlist
         dbQueue.write { db in
             do {
                 // Load existing order (id + episodeUuid) for this playlist
@@ -239,6 +241,7 @@ class PlaylistDataManager {
     /// Delete specific episodes from a manual playlist and reindex remaining items
     func deleteEpisodes(_ episodeUuids: [String], from playlist: EpisodeFilter, dbQueue: PCDBQueue) {
         guard !episodeUuids.isEmpty else { return }
+        var playlist = playlist
         dbQueue.write { db in
             do {
                 let placeholders = DBUtils.placeholders(amount: episodeUuids.count)
@@ -278,6 +281,7 @@ class PlaylistDataManager {
 
     /// Delete all playlist-episode relationships for the given playlist
     func deleteAllEpisodes(in playlist: EpisodeFilter, dbQueue: PCDBQueue) {
+        var playlist = playlist
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? OR playlist_id = ?", values: [playlist.uuid, playlist.id])
@@ -293,7 +297,13 @@ class PlaylistDataManager {
         }
     }
 
-    func save(playlist: EpisodeFilter, dbQueue: PCDBQueue) {
+    // Returns the saved playlist with `id`/`playlistUpdateDate` populated. Callers should prefer the
+    // return value over the argument: a local `var` copy is mutated and persisted so this stays correct
+    // when `EpisodeFilter` becomes a value-type struct (today, as a class, the copy aliases the same
+    // instance, preserving the existing back-mutation behaviour).
+    @discardableResult
+    func save(playlist: EpisodeFilter, dbQueue: PCDBQueue) -> EpisodeFilter {
+        var playlist = playlist
         let isInsert = playlist.id == 0
         if isInsert {
             playlist.id = DBUtils.generateUniqueId()
@@ -324,6 +334,8 @@ class PlaylistDataManager {
                 }
             }
         }
+
+        return playlist
     }
 
     /// Update the playlistUpdateDate for a specific playlist to the given date (defaults to now)
@@ -514,7 +526,7 @@ class PlaylistDataManager {
     // MARK: - Conversion
 
     private func createPlaylistFrom(resultSet rs: PCDBResultSet) -> EpisodeFilter {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.id = rs.longLongInt(forColumn: "id")
         playlist.autoDownloadEpisodes = rs.bool(forColumn: "autoDownloadEpisodes")
         playlist.customIcon = rs.int(forColumn: "customIcon")

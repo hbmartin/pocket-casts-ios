@@ -209,7 +209,7 @@ fileprivate extension View {
         }
 
         private func model() -> EpisodeFilter {
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.playlistName = "New Releases"
             filter.podcastSmartRuleApplied = true
             return filter

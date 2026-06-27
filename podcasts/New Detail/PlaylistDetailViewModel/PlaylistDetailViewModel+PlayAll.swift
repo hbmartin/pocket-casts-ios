@@ -66,7 +66,7 @@ extension PlaylistDetailViewModel {
         if index > 1 {
             playlistName += " (\(index))"
         }
-        let playlist = PlaylistManager.createNewPlaylist()
+        var playlist = PlaylistManager.createNewPlaylist()
         playlist.setTitle(playlistName, defaultTitle: L10n.playlistsDefaultNewPlaylist.localizedCapitalized)
         playlist.manual = true
         playlist.syncStatus = SyncStatus.notSynced.rawValue

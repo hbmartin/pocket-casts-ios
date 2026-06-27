@@ -203,6 +203,7 @@ class ManualPlaylistsChooserViewController: PCViewController {
         }
 
         changedPlaylists.forEach { playlist in
+            var playlist = playlist
             playlist.syncStatus = SyncStatus.notSynced.rawValue
             dataManager.save(playlist: playlist)
         }

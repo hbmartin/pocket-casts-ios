@@ -22,7 +22,8 @@ public protocol PlaylistRepository: AnyObject {
     func playlistFirstDistinctEpisodes(for playlist: EpisodeFilter, limit: Int, shouldShowArchived: Bool, search: String?, episodeUuidToAdd: String?) -> [Episode]
     func deleteDeletedPlaylists()
     func allUnsyncedPlaylists() -> [EpisodeFilter]
-    func save(playlist: EpisodeFilter)
+    @discardableResult
+    func save(playlist: EpisodeFilter) -> EpisodeFilter
     func updatePlaylistUpdateDate(for playlist: EpisodeFilter, to date: Date)
     @discardableResult
     func add(episodes: [Episode], to playlist: EpisodeFilter) -> Bool

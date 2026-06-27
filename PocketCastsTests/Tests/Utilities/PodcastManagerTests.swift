@@ -30,7 +30,7 @@ final class PodcastManagerTests: DBTestCase {
 
     func testCleanupKeepsDownloadsInPlaylist() async throws {
         let (_, episode) = makeDownloadedPodcastAndEpisode()
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
         playlist.playlistName = "Keep Downloads"
         playlist.manual = true
@@ -73,7 +73,7 @@ final class PodcastManagerTests: DBTestCase {
 
     func testUnsubscribeRemovesDownloadsInPlaylist() throws {
         let (podcast, episode) = makeDownloadedPodcastAndEpisode()
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
         playlist.playlistName = "Keep Downloads"
         playlist.manual = true

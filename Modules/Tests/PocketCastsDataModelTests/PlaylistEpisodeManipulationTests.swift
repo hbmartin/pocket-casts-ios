@@ -30,7 +30,7 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
 
     func testMoveEpisodeMarksPlaylistDirty() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = makeManualPlaylist(uuid: "pl-move", name: "Manual")
+            var playlist = makeManualPlaylist(uuid: "pl-move", name: "Manual")
             playlist.syncStatus = SyncStatus.synced.rawValue
             dataManager.save(playlist: playlist)
 
@@ -40,7 +40,9 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
 
             dataManager.moveEpisode(e1.uuid, in: playlist, to: 1)
 
-            XCTAssertEqual(playlist.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): playlist should be marked dirty")
+            // moveEpisode persists the dirty flag to the database; the in-memory value-type copy is
+            // intentionally not mutated (EpisodeFilter is a struct), so dirtiness is asserted via reload.
+            XCTAssertEqual(playlist.syncStatus, SyncStatus.synced.rawValue, "\(impl): in-memory copy unchanged (value semantics)")
             let reloaded = try XCTUnwrap(dataManager.findPlaylist(uuid: playlist.uuid), "\(impl): playlist should reload")
             XCTAssertEqual(reloaded.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): persisted playlist should be dirty")
         }
@@ -48,7 +50,7 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
 
     func testDeleteEpisodesMarksPlaylistDirty() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = makeManualPlaylist(uuid: "pl-delete", name: "Manual")
+            var playlist = makeManualPlaylist(uuid: "pl-delete", name: "Manual")
             playlist.syncStatus = SyncStatus.synced.rawValue
             dataManager.save(playlist: playlist)
 
@@ -58,7 +60,9 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
 
             dataManager.deleteEpisodes([e1.uuid], from: playlist)
 
-            XCTAssertEqual(playlist.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): playlist should be marked dirty")
+            // deleteEpisodes persists the dirty flag to the database; the in-memory value-type copy is
+            // intentionally not mutated (EpisodeFilter is a struct), so dirtiness is asserted via reload.
+            XCTAssertEqual(playlist.syncStatus, SyncStatus.synced.rawValue, "\(impl): in-memory copy unchanged (value semantics)")
             let reloaded = try XCTUnwrap(dataManager.findPlaylist(uuid: playlist.uuid), "\(impl): playlist should reload")
             XCTAssertEqual(reloaded.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): persisted playlist should be dirty")
         }
@@ -75,7 +79,7 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
     }
 
     private func makeManualPlaylist(uuid: String, name: String) -> EpisodeFilter {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.manual = true
         playlist.uuid = uuid
         playlist.playlistName = name

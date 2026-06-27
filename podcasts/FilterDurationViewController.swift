@@ -3,7 +3,7 @@ import PocketCastsUtils
 import UIKit
 
 class FilterDurationViewController: PCViewController {
-    private let filter: EpisodeFilter
+    private var filter: EpisodeFilter
 
     @IBOutlet var longerThanLabel: ThemeableLabel! {
         didSet {

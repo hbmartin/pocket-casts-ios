@@ -42,7 +42,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
         dataManager.save(episode: e2)
 
         // Add a manual playlist with the seeded episodes
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.uuid = "playlist-1"
         filter.playlistName = "Manual"
         filter.manual = true
@@ -95,7 +95,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
         newer.publishedDate = Date(timeIntervalSince1970: 2)
         dataManager.save(episode: newer)
 
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = "manual-sort-override"
         playlist.playlistName = "Manual Needs Override"
         playlist.manual = true

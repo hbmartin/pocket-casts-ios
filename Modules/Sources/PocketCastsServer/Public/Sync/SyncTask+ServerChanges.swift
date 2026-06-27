@@ -285,7 +285,7 @@ extension SyncTask {
             existingPlaylist?.uuid = playlistUuid
         }
 
-        guard let playlist = existingPlaylist else { return }
+        guard var playlist = existingPlaylist else { return }
 
         playlist.syncStatus = SyncStatus.synced.rawValue
         if playlistItem.hasTitle {

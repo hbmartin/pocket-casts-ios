@@ -16,7 +16,7 @@ class PlaylistManager {
         var existingUuid = DefaultUUIDs.newReleases
         var existingFilter = DataManager.sharedManager.findPlaylist(uuid: existingUuid)
         if existingFilter == nil {
-            let newReleases = EpisodeFilter()
+            var newReleases = EpisodeFilter()
             newReleases.filterUnplayed = true
             newReleases.filterPartiallyPlayed = true
             newReleases.filterAudioVideoType = AudioVideoFilter.all.rawValue
@@ -44,7 +44,7 @@ class PlaylistManager {
         existingUuid = DefaultUUIDs.inProgress
         existingFilter = DataManager.sharedManager.findPlaylist(uuid: existingUuid)
         if existingFilter == nil {
-            let inProgress = EpisodeFilter()
+            var inProgress = EpisodeFilter()
             inProgress.filterAllPodcasts = true
             inProgress.filterAudioVideoType = AudioVideoFilter.all.rawValue
             inProgress.sortPosition = 2
@@ -65,7 +65,7 @@ class PlaylistManager {
     }
 
     class func delete(playlist: EpisodeFilter?, fireEvent: Bool) {
-        guard let playlist else { return }
+        guard var playlist else { return }
 
         if SyncManager.isUserLoggedIn() {
             playlist.wasDeleted = true
@@ -81,7 +81,7 @@ class PlaylistManager {
     }
 
     class func createNewPlaylist() -> EpisodeFilter {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
         playlist.playlistName = L10n.filtersDefaultNewFilter
         playlist.syncStatus = SyncStatus.notSynced.rawValue
@@ -129,6 +129,7 @@ class PlaylistManager {
 
         for playlist in playlists {
             guard !playlist.filterAllPodcasts, !playlist.podcastUuids.isEmpty else { continue }
+            var playlist = playlist
 
             var podcastUuids = playlist.podcastUuids.components(separatedBy: ",")
             guard let indexOfUuid = podcastUuids.firstIndex(of: podcastUuid) else { continue }

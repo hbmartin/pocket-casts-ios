@@ -137,15 +137,16 @@ class DataManagerTestCase: XCTestCase {
         wasDeleted: Bool = false,
         dataManager: DataManager
     ) -> EpisodeFilter {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = uuid
         playlist.playlistName = name
         playlist.manual = manual
         playlist.sortPosition = sortPosition
         playlist.syncStatus = syncStatus
         playlist.wasDeleted = wasDeleted
-        dataManager.save(playlist: playlist)
-        return playlist
+        // Return the saved value (mirrors createTestFolder) so callers see the assigned id and stay
+        // correct once EpisodeFilter becomes a value-type struct.
+        return dataManager.save(playlist: playlist)
     }
 
     /// Creates a test user episode with the given properties

@@ -85,7 +85,7 @@ final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
     /// Verifies that filterDownloading is NOT persisted (marked with @GRDBIgnore)
     func testFilterDownloadingNotPersisted() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.uuid = UUID().uuidString.lowercased()
             filter.playlistName = "Test Filter"
             // filterDownloading is a let constant set to true, can't change it
@@ -106,7 +106,7 @@ final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
     /// Verifies that internal tracking properties are NOT persisted (marked with @GRDBIgnore)
     func testInternalTrackingPropertiesNotPersisted() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.uuid = UUID().uuidString.lowercased()
             filter.playlistName = "Test Filter"
             filter.isNew = true
@@ -137,7 +137,7 @@ final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
     // MARK: - Helpers
 
     private func createFullyPopulatedEpisodeFilter() -> EpisodeFilter {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.uuid = UUID().uuidString.lowercased()
         filter.playlistName = "Test Filter"
         filter.customIcon = 3

@@ -1007,7 +1007,8 @@ public class DataManager {
         playlistManager.allUnsyncedPlaylists(dbQueue: dbQueue)
     }
 
-    public func save(playlist: EpisodeFilter) {
+    @discardableResult
+    public func save(playlist: EpisodeFilter) -> EpisodeFilter {
         playlistManager.save(playlist: playlist, dbQueue: dbQueue)
     }
 

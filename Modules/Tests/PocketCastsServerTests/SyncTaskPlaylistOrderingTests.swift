@@ -60,7 +60,7 @@ final class SyncTaskPlaylistOrderingTests: XCTestCase {
     // MARK: - Helpers
 
     private func makePlaylist(uuid: String) -> EpisodeFilter {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = uuid
         playlist.playlistName = "Playlist-\(uuid)"
         playlist.manual = false
@@ -107,8 +107,10 @@ private final class CapturingDataManager: DataManager {
         addedEpisodes.removeValue(forKey: playlist.uuid)
     }
 
-    override func save(playlist: EpisodeFilter) {
+    @discardableResult
+    override func save(playlist: EpisodeFilter) -> EpisodeFilter {
         storedPlaylists[playlist.uuid] = playlist
+        return playlist
     }
 
     override func add(episodes: [Episode], to playlist: EpisodeFilter) -> Bool {
