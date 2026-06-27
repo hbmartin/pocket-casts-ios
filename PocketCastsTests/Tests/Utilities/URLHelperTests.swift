@@ -16,6 +16,15 @@ final class URLHelperTests: XCTestCase {
         XCTAssertEqual(URLHelper.inAppBrowserDecision(for: url, context: .trustedDocumentation), .blocked)
     }
 
+    func testTrustedDocumentationRejectsUserinfoHostConfusion() {
+        let url = URL(
+            string: "https://support.pocketcasts.com@\(URLFixture.untrustedHost)\(URLFixture.supportPath)"
+        )!
+
+        XCTAssertFalse(URLHelper.isTrustedDocumentationURL(url))
+        XCTAssertEqual(URLHelper.inAppBrowserDecision(for: url, context: .trustedDocumentation), .blocked)
+    }
+
     func testTrustedDocumentationRejectsInsecureSupportURL() {
         let url = webURL(scheme: URLFixture.httpScheme, host: URLFixture.supportHost, path: URLFixture.supportPath)
 
@@ -99,7 +108,12 @@ final class URLHelperTests: XCTestCase {
             .appendingPathComponent(URLFixture.embeddedContentFileName)
 
         XCTAssertTrue(URLHelper.isAllowedEmbeddedContentNavigationURL(nil))
-        XCTAssertTrue(URLHelper.isAllowedEmbeddedContentNavigationURL(customURL(scheme: URLFixture.aboutScheme, path: URLFixture.blankPath)))
+        XCTAssertTrue(
+            URLHelper.isAllowedEmbeddedContentNavigationURL(
+                customURL(scheme: URLFixture.aboutScheme, path: URLFixture.blankPath)
+            )
+        )
+        XCTAssertTrue(URLHelper.isAllowedEmbeddedContentNavigationURL(URL(string: "\(URLFixture.appleWebDataScheme)://embedded-content")!))
         XCTAssertTrue(URLHelper.isAllowedEmbeddedContentNavigationURL(bundleURL))
     }
 
@@ -137,6 +151,33 @@ final class URLHelperTests: XCTestCase {
         }
     }
 
+    func testShowNotesTimestampValueRejectsUserinfoPortAndQuery() {
+        var userinfoComponents = URLComponents()
+        userinfoComponents.scheme = URLFixture.showNotesTimestampScheme
+        userinfoComponents.user = URLFixture.listenerUser
+        userinfoComponents.password = URLFixture.placeholderPassword
+        userinfoComponents.host = URLFixture.showNotesTimestampHost
+        userinfoComponents.path = URLFixture.rootPath
+        userinfoComponents.fragment = [
+            URLFixture.showNotesTimestampFragmentName,
+            URLFixture.showNotesTimestamp
+        ].joined(separator: URLFixture.fragmentSeparator)
+
+        let urls = [
+            userinfoComponents.url!,
+            showNotesTimestampURL(port: URLFixture.localhostPort),
+            showNotesTimestampURL(
+                queryItems: [
+                    URLQueryItem(name: URLFixture.redirectQueryName, value: URLFixture.redirectQueryValue)
+                ]
+            )
+        ]
+
+        urls.forEach {
+            XCTAssertNil(URLHelper.showNotesTimestampValue(from: $0))
+        }
+    }
+
     private func webURL(scheme: String = URLFixture.httpsScheme, host: String, path: String) -> URL {
         var components = URLComponents()
         components.scheme = scheme
@@ -163,6 +204,8 @@ final class URLHelperTests: XCTestCase {
         scheme: String = URLFixture.showNotesTimestampScheme,
         host: String = URLFixture.showNotesTimestampHost,
         path: String = URLFixture.rootPath,
+        port: Int? = nil,
+        queryItems: [URLQueryItem]? = nil,
         fragmentName: String = URLFixture.showNotesTimestampFragmentName,
         timestamp: String = URLFixture.showNotesTimestamp
     ) -> URL {
@@ -170,6 +213,8 @@ final class URLHelperTests: XCTestCase {
         components.scheme = scheme
         components.host = host
         components.path = path
+        components.port = port
+        components.queryItems = queryItems
         components.fragment = [fragmentName, timestamp].joined(separator: URLFixture.fragmentSeparator)
         return components.url!
     }
@@ -182,6 +227,7 @@ private enum URLFixture {
     static let appScheme = "pocketcasts"
     static let mailtoScheme = "mailto"
     static let aboutScheme = "about"
+    static let appleWebDataScheme = "applewebdata"
     static let supportHost = "support.pocketcasts.com"
     static let stagingSupportHost = "support.pocketcasts.net"
     static let untrustedHost = "example.com"
@@ -206,6 +252,11 @@ private enum URLFixture {
     static let showNotesTimestampHost = "localhost"
     static let showNotesTimestampFragmentName = "playerJumpTo"
     static let redirectFragmentName = "redirect"
+    static let redirectQueryName = "redirect"
+    static let redirectQueryValue = "1"
+    static let listenerUser = "listener"
+    static let placeholderPassword = "placeholder"
+    static let localhostPort = 8080
     static let showNotesTimestamp = "57:00"
     static let fragmentSeparator = "="
 

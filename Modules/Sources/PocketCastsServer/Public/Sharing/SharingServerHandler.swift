@@ -84,7 +84,7 @@ public final class SharingServerHandler: @unchecked Sendable {
         // add security params
         let dateStr = securityDateFormatter.string(from: Date())
         shareRequest.datetime = dateStr
-        shareRequest.h = legacySharingServerSignature(for: dateStr)
+        shareRequest.h = Self.legacySharingServerSignature(for: dateStr)
 
         guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
             completion(nil)
@@ -125,12 +125,14 @@ public final class SharingServerHandler: @unchecked Sendable {
         }.resume()
     }
 
-    private func legacySharingServerSignature(for dateString: String) -> String {
+    static func legacySharingServerSignature(for dateString: String, credential: String = ServerCredentials.sharing) -> String {
         // The legacy sharing endpoint validates SHA-1 signatures built from the
         // request timestamp and shared credential.
         // This is protocol compatibility only; do not reuse it for password hashing or local integrity checks.
-        let signatureInput = "\(dateString)\(ServerCredentials.sharing)"
-        let hashDigest = CryptoKit.Insecure.SHA1.hash(data: Data(signatureInput.utf8)) // NOSONAR - Required by the legacy sharing server signature protocol.
+        let signatureInput = "\(dateString)\(credential)"
+        let hashDigest = CryptoKit.Insecure.SHA1.hash( // NOSONAR - Required by the legacy sharing server signature protocol.
+            data: Data(signatureInput.utf8)
+        )
         return hashDigest.compactMap { String(format: "%02hhx", $0) }.joined()
     }
 }
