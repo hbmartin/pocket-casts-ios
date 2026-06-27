@@ -190,7 +190,7 @@ class PodcastFilterOverlayController: PodcastChooserViewController, PodcastSelec
         filterToEdit.podcastSmartRuleApplied = true
 
         filterToEdit.syncStatus = SyncStatus.notSynced.rawValue
-        DataManager.sharedManager.save(playlist: filterToEdit)
+        filterToEdit = DataManager.sharedManager.save(playlist: filterToEdit)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filterToEdit)
         navigationController?.popViewController(animated: true)
 

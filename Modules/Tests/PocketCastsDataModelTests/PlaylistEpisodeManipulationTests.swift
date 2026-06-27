@@ -28,6 +28,20 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
         }
     }
 
+    func testAddEpisodesToUnsavedManualPlaylistUsesAssignedPlaylistId() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let playlist = makeManualPlaylist(uuid: "pl-unsaved", name: "Unsaved")
+            let episode = makeEpisode(uuid: "unsaved-episode")
+
+            XCTAssertEqual(playlist.id, 0, "\(impl): unsaved playlist should start without a row id")
+            XCTAssertTrue(dataManager.add(episodes: [episode], to: playlist), "\(impl): should add episode")
+
+            let reloaded = try XCTUnwrap(dataManager.findPlaylist(uuid: playlist.uuid), "\(impl): playlist should be saved before adding episodes")
+            XCTAssertNotEqual(reloaded.id, 0, "\(impl): saving during add should assign a playlist id")
+            XCTAssertEqual(playlistIdsForEntries(dataManager: dataManager, playlistUuid: playlist.uuid), [reloaded.id], "\(impl): playlist entries should reference the assigned playlist id")
+        }
+    }
+
     func testMoveEpisodeMarksPlaylistDirty() throws {
         try runWithBothImplementations { dataManager, impl in
             var playlist = makeManualPlaylist(uuid: "pl-move", name: "Manual")
@@ -122,5 +136,24 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
             }
         }
         return count
+    }
+
+    private func playlistIdsForEntries(dataManager: DataManager, playlistUuid: String) -> [Int64] {
+        var playlistIds = [Int64]()
+        dataManager.testDbQueue.read { db in
+            do {
+                let rs = try db.executeQuery(
+                    "SELECT playlist_id FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? ORDER BY episodePosition ASC",
+                    values: [playlistUuid]
+                )
+                defer { rs.close() }
+                while rs.next() {
+                    playlistIds.append(rs.longLongInt(forColumn: "playlist_id"))
+                }
+            } catch {
+                XCTFail("query failed \(error)")
+            }
+        }
+        return playlistIds
     }
 }

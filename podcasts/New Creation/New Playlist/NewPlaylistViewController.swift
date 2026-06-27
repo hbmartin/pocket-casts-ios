@@ -235,7 +235,7 @@ class NewPlaylistViewController: PCViewController {
         playlist.syncStatus = SyncStatus.notSynced.rawValue
         playlist.isNew = false
         playlist.sortType = PlaylistSort.dragAndDrop.rawValue
-        DataManager.sharedManager.save(playlist: playlist)
+        playlist = DataManager.sharedManager.save(playlist: playlist)
         if creationType == .default {
             UserDefaults.standard.set(playlist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
             delegate?.filterCreated(newFilter: playlist)

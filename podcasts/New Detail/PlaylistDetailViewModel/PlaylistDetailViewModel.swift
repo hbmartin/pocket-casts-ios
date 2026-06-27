@@ -208,7 +208,7 @@ class PlaylistDetailViewModel: ObservableObject {
         if playlist.sortType == type.rawValue { return }
         playlist.syncStatus = SyncStatus.notSynced.rawValue
         playlist.sortType = type.rawValue
-        dataManager.save(playlist: playlist)
+        playlist = dataManager.save(playlist: playlist)
     }
 
     private func buildChangeSet(

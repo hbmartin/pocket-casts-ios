@@ -54,8 +54,9 @@ extension PlaylistDetailViewModel {
         let firstSortPosition = max(0, DataManager.sharedManager.firstSortPositionForPlaylist())
         DataManager.sharedManager.bumpSortPositionForAllPlaylists(adding: batches.count)
         for (index, batch) in batches.enumerated() {
-            let playlist = newManualPlaylist(index: index + 1, sortPosition: firstSortPosition + index)
-            DataManager.sharedManager.save(playlist: playlist)
+            let playlist = DataManager.sharedManager.save(
+                playlist: newManualPlaylist(index: index + 1, sortPosition: firstSortPosition + index)
+            )
             DataManager.sharedManager.add(episodes: batch, to: playlist)
         }
         return true
