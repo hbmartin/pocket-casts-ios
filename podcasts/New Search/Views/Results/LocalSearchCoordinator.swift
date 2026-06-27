@@ -10,7 +10,7 @@ final class LocalSearchCoordinator {
     @Published private(set) var isSearchInFlight = false
     @Published private(set) var addedEpisodeCount = 0
 
-    private let playlist: EpisodeFilter
+    private var playlist: EpisodeFilter
     private let dataManager: DataManager
 
     private var playlistEpisodeUUIDs = Set<String>()
@@ -139,6 +139,7 @@ final class LocalSearchCoordinator {
 
         Task {
             let result = await Task.detached { [dataManager, playlist, episodeUUID] in
+                var playlist = playlist
                 guard let episode = dataManager.findEpisode(uuid: episodeUUID) else {
                     return (didAdd: false, episode: nil as Episode?, isFull: false)
                 }

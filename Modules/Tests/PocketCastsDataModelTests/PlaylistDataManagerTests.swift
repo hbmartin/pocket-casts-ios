@@ -379,7 +379,7 @@ final class PlaylistDataManagerTests: DataManagerTestCase {
 
     func testSaveInsertsNewPlaylistWithAllFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = EpisodeFilter()
+            var playlist = EpisodeFilter()
             playlist.uuid = "save-test-uuid"
             playlist.playlistName = "Save Test Playlist"
             playlist.manual = true
@@ -418,7 +418,7 @@ final class PlaylistDataManagerTests: DataManagerTestCase {
 
     func testSaveUpdatesExistingPlaylist() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = self.createTestPlaylist(uuid: "update-test-uuid", name: "Original Name", manual: false, dataManager: dataManager)
+            var playlist = self.createTestPlaylist(uuid: "update-test-uuid", name: "Original Name", manual: false, dataManager: dataManager)
 
             // Update fields
             playlist.playlistName = "Updated Name"
@@ -439,14 +439,14 @@ final class PlaylistDataManagerTests: DataManagerTestCase {
 
     func testSaveGeneratesIdIfZero() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = EpisodeFilter()
+            var playlist = EpisodeFilter()
             playlist.uuid = "id-test-uuid"
             playlist.playlistName = "ID Test Playlist"
             playlist.id = 0
 
-            dataManager.save(playlist: playlist)
+            let saved = dataManager.save(playlist: playlist)
 
-            XCTAssertNotEqual(playlist.id, 0, "\(impl): ID should be generated")
+            XCTAssertNotEqual(saved.id, 0, "\(impl): save should return a playlist with a generated ID")
 
             let found = dataManager.findPlaylist(uuid: "id-test-uuid")
             XCTAssertNotNil(found, "\(impl): Should find playlist with generated ID")
@@ -456,7 +456,7 @@ final class PlaylistDataManagerTests: DataManagerTestCase {
 
     func testSaveUpdatesPlaylistUpdateDate() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = EpisodeFilter()
+            var playlist = EpisodeFilter()
             playlist.uuid = "date-test-uuid"
             playlist.playlistName = "Date Test Playlist"
 
@@ -473,7 +473,7 @@ final class PlaylistDataManagerTests: DataManagerTestCase {
 
     func testSavePreservesFilterSettings() throws {
         try runWithBothImplementations { dataManager, impl in
-            let playlist = EpisodeFilter()
+            var playlist = EpisodeFilter()
             playlist.uuid = "filter-test-uuid"
             playlist.playlistName = "Filter Test Playlist"
             playlist.filterAudioVideoType = 2

@@ -21,7 +21,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     }
 
     func testOptimizedManualPlaylistEpisodeQuery() {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.manual = true
         playlist.uuid = "manual-playlist"
         playlist.sortType = PlaylistSort.dragAndDrop.rawValue
@@ -38,7 +38,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     }
 
     func testSmartPlaylistFirstDistinctEpisodesQuery() {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = "smart-playlist"
         playlist.filterAudioVideoType = AudioVideoFilter.audioOnly.rawValue
         playlist.filterDownloaded = true
@@ -74,7 +74,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     }
 
     func testManualPlaylistCountQueryVariants() throws {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.manual = true
         playlist.uuid = "manual-counts"
 
@@ -139,7 +139,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     }
 
     func testManualPlaylistFirstDistinctQueryVariants() throws {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.manual = true
         playlist.uuid = "manual-first-distinct"
 
@@ -197,7 +197,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     }
 
     func testSmartPlaylistQueryVariants() {
-        let filteredPlaylist = EpisodeFilter()
+        var filteredPlaylist = EpisodeFilter()
         filteredPlaylist.uuid = "smart-filtered"
         filteredPlaylist.filterAudioVideoType = AudioVideoFilter.videoOnly.rawValue
         filteredPlaylist.filterDuration = true
@@ -211,7 +211,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
         filteredPlaylist.podcastUuids = "podcast-red,podcast-blue"
         filteredPlaylist.sortType = PlaylistSort.oldestToNewest.rawValue
 
-        let emptyPlaylist = EpisodeFilter()
+        var emptyPlaylist = EpisodeFilter()
         emptyPlaylist.uuid = "smart-empty"
 
         let snapshot = [
@@ -254,7 +254,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     }
 
     func testLegacySmartPlaylistQueryForVariants() {
-        let filteredPlaylist = EpisodeFilter()
+        var filteredPlaylist = EpisodeFilter()
         filteredPlaylist.filterAudioVideoType = AudioVideoFilter.audioOnly.rawValue
         filteredPlaylist.filterDownloaded = true
         filteredPlaylist.filterDuration = true
@@ -266,7 +266,7 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
         filteredPlaylist.podcastUuids = "podcast-alpha,podcast-beta"
         filteredPlaylist.sortType = PlaylistSort.shortestToLongest.rawValue
 
-        let noFilterPlaylist = EpisodeFilter()
+        var noFilterPlaylist = EpisodeFilter()
         noFilterPlaylist.sortType = PlaylistSort.longestToShortest.rawValue
 
         let snapshot = [

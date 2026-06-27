@@ -50,7 +50,7 @@ class RetrievePlaylistsTask: ApiBaseTask, @unchecked Sendable {
     }
 
     private func convertFromProto(_ protoFilter: Api_PlaylistSyncResponse) -> EpisodeFilter {
-        let converted = EpisodeFilter()
+        var converted = EpisodeFilter()
         converted.customIcon = protoFilter.iconID.value
         converted.filterAllPodcasts = protoFilter.allPodcasts.value
         converted.filterAudioVideoType = protoFilter.audioVideo.value

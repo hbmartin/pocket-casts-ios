@@ -137,7 +137,7 @@ class DataManagerTestCase: XCTestCase {
         wasDeleted: Bool = false,
         dataManager: DataManager
     ) -> EpisodeFilter {
-        let playlist = EpisodeFilter()
+        var playlist = EpisodeFilter()
         playlist.uuid = uuid
         playlist.playlistName = name
         playlist.manual = manual

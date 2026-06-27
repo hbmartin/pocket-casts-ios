@@ -173,7 +173,7 @@ struct SmartPlaylistRulesSectionView: View {
                 }
             },
             set: { newValue in
-                let filter = viewModel.newPlaylist
+                var filter = viewModel.newPlaylist
                 switch newValue {
                 case .all:
                     filter.filterDownloaded = true
@@ -186,6 +186,7 @@ struct SmartPlaylistRulesSectionView: View {
                     filter.filterNotDownloaded = true
                 }
                 filter.downloadStatusSmartRuleApplied = true
+                viewModel.newPlaylist = filter
                 viewModel.saveFilter(analyticsGroup: "download_status")
             }
         )) {

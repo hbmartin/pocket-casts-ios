@@ -3,35 +3,35 @@ import GRDB
 import GRDBMacros
 
 @GRDBRecord(table: "SJFilteredPlaylist")
-public class EpisodeFilter: NSObject {
-    @objc public var id = 0 as Int64
-    @objc public var autoDownloadEpisodes = false
-    @objc public var customIcon = 0 as Int32
-    @objc public var filterAllPodcasts = false
-    @objc public var filterAudioVideoType = 0 as Int32
-    @objc public var filterDownloaded = false
+public struct EpisodeFilter: Equatable, Hashable, Sendable {
+    public var id = 0 as Int64
+    public var autoDownloadEpisodes = false
+    public var customIcon = 0 as Int32
+    public var filterAllPodcasts = false
+    public var filterAudioVideoType = 0 as Int32
+    public var filterDownloaded = false
     @GRDBIgnore
-    @objc public let filterDownloading = true // we no longer let the user change this, it's just always true
-    @objc public var filterFinished = false
-    @objc public var filterNotDownloaded = false
-    @objc public var filterPartiallyPlayed = false
-    @objc public var filterStarred = false
-    @objc public var filterUnplayed = false
-    @objc public var filterHours = 0 as Int32
-    @objc public var playlistName = ""
-    @objc public var sortPosition = 0 as Int32
-    @objc public var sortType = 0 as Int32
-    @objc public var uuid = ""
-    @objc public var podcastUuids = ""
-    @objc public var autoDownloadLimit = 0 as Int32
-    @objc public var filterDuration = false
-    @objc public var longerThan = 0 as Int32
-    @objc public var shorterThan = 0 as Int32
-    @objc public var syncStatus = 0 as Int32
-    @objc public var wasDeleted = false
-    @objc public var manual: Bool = false
-    @objc public var showArchivedEpisodes: Bool = false
-    @objc public var playlistUpdateDate: Date?
+    public let filterDownloading = true // we no longer let the user change this, it's just always true
+    public var filterFinished = false
+    public var filterNotDownloaded = false
+    public var filterPartiallyPlayed = false
+    public var filterStarred = false
+    public var filterUnplayed = false
+    public var filterHours = 0 as Int32
+    public var playlistName = ""
+    public var sortPosition = 0 as Int32
+    public var sortType = 0 as Int32
+    public var uuid = ""
+    public var podcastUuids = ""
+    public var autoDownloadLimit = 0 as Int32
+    public var filterDuration = false
+    public var longerThan = 0 as Int32
+    public var shorterThan = 0 as Int32
+    public var syncStatus = 0 as Int32
+    public var wasDeleted = false
+    public var manual: Bool = false
+    public var showArchivedEpisodes: Bool = false
+    public var playlistUpdateDate: Date?
 
     // Internal tracking
     @GRDBIgnore
@@ -47,9 +47,9 @@ public class EpisodeFilter: NSObject {
     @GRDBIgnore
     public var downloadStatusSmartRuleApplied: Bool = false
 
-    override public init() {}
+    public init() {}
 
-    public func setTitle(_ title: String?, defaultTitle: String) {
+    public mutating func setTitle(_ title: String?, defaultTitle: String) {
         guard let title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             playlistName = defaultTitle
 
@@ -71,7 +71,7 @@ public class EpisodeFilter: NSObject {
         !filterDownloaded
     }
 
-    public func addPodcast(podcastUuid: String) {
+    public mutating func addPodcast(podcastUuid: String) {
         if podcastUuids.isEmpty {
             filterAllPodcasts = false
             podcastUuids = podcastUuid
@@ -82,7 +82,7 @@ public class EpisodeFilter: NSObject {
         syncStatus = SyncStatus.notSynced.rawValue
     }
 
-    public func removePodcast(podcastUuid: String) {
+    public mutating func removePodcast(podcastUuid: String) {
         var podcasts = podcastUuids.components(separatedBy: ",")
         podcasts.removeAll(where: { uuid -> Bool in
             podcastUuid == uuid
@@ -96,18 +96,15 @@ public class EpisodeFilter: NSObject {
         }
     }
 
-    // Equality and hashing are both keyed on `uuid` (the stable sync identity). `hash` previously
-    // keyed on `id` (the local row id, which is 0 until first saved); that violated the Hashable
-    // contract because two filters equal by `uuid` but with different `id`s hashed differently,
-    // silently breaking `Set<EpisodeFilter>` membership/dedup. Keeping both on `uuid` also matches
-    // the semantics the planned struct migration will carry (uuid-consistent Equatable/Hashable).
-    override public func isEqual(_ object: Any?) -> Bool {
-        guard let otherFilter = object as? EpisodeFilter else { return false }
-
-        return otherFilter.uuid == uuid
+    // Equality and hashing are both keyed on `uuid` (the stable sync identity), preserving the semantics
+    // the NSObject `isEqual`/`hash` carried after the uuid-consistency fix. Not synthesized (which would
+    // compare every field): two rows with the same uuid are the same playlist regardless of local id or
+    // transient tracking flags, and `Set<EpisodeFilter>` dedup relies on that.
+    public static func == (lhs: EpisodeFilter, rhs: EpisodeFilter) -> Bool {
+        lhs.uuid == rhs.uuid
     }
 
-    override public var hash: Int {
-        uuid.hashValue
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(uuid)
     }
 }

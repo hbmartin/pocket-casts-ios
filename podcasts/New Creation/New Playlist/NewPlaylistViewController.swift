@@ -227,7 +227,7 @@ class NewPlaylistViewController: PCViewController {
         DataManager.sharedManager.bumpSortPositionForAllPlaylists()
 
         let playlistName = self.playlistName.isEmpty ? L10n.playlistsDefaultNewPlaylist : self.playlistName
-        let playlist = PlaylistManager.createNewPlaylist()
+        var playlist = PlaylistManager.createNewPlaylist()
         let firstSortPosition = max(0, DataManager.sharedManager.firstSortPositionForPlaylist() - 1)
         playlist.sortPosition = Int32(firstSortPosition)
         playlist.setTitle(playlistName, defaultTitle: L10n.playlistsDefaultNewPlaylist.localizedCapitalized)

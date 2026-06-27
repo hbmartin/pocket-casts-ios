@@ -7,7 +7,7 @@ class PlaylistCell: ThemeableCell {
 
     static let reuseIdentifier = "PlaylistCell"
     static let cellHeight = 81.0
-    static let emptyPlaylist = EpisodeFilter()
+    static var emptyPlaylist = EpisodeFilter()
 
     lazy var separatorView: UIView = {
         let view = UIView()

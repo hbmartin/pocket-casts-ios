@@ -228,7 +228,7 @@ struct PlaylistCellView: View {
         }
 
         private func model() -> EpisodeFilter {
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.playlistName = "New Releases"
             return filter
         }

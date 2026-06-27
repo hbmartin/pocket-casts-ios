@@ -175,7 +175,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testQueryIncludesManualEpisodeUuids() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "manual-playlist"
 
@@ -190,7 +190,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testQueryDoesNotIncludeEpisodesForSmartPlaylist() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = false
 
         let query = PlaylistQueryBuilder.query(clause: .episode, for: filter)
@@ -200,7 +200,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testManualPodcastQuery() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "manual-podcast"
 
@@ -210,7 +210,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testEmptyManualPlaylistDoesNotProduceInvalidInClause() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "empty-manual"
 
@@ -220,7 +220,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testSmartPlaylistFirstDistinctEpisodesRemovesEmptyFilterGroups() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = false
         filter.uuid = "smart-playlist"
         filter.filterUnplayed = true
@@ -260,7 +260,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-playlist-episodes"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -287,7 +287,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-playlist-count"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -315,7 +315,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-playlist-allcount"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -361,7 +361,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-playlist-archived"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -393,7 +393,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     // MARK: - Feature Flag Optimization Tests
 
     func testManualEpisodeQueryValidWithBothFeatureFlagStates() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "test-playlist"
 
@@ -407,7 +407,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testManualEpisodeCountValidWithBothFeatureFlagStates() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "test-playlist"
 
@@ -421,7 +421,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testManualAllEpisodeCountValidWithBothFeatureFlagStates() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "test-playlist"
 
@@ -435,7 +435,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testManualFirstDistinctEpisodesValidWithBothFeatureFlagStates() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "test-playlist"
 
@@ -469,7 +469,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testArchivedEpisodeHandlingValidWithBothFeatureFlagStates() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "test-playlist"
 
@@ -510,7 +510,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-archived-count-false"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -540,7 +540,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-archived-count-true"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -568,7 +568,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-all-archived-count-false"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -595,7 +595,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-all-archived-count-true"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -622,7 +622,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-episode-archived-false"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -653,7 +653,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-episode-archived-true"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -675,7 +675,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-distinct-archived-false"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -708,7 +708,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-distinct-archived-true"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -740,7 +740,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     // MARK: - Search Term Tests
 
     func testSearchTermProducesValidSQLForManualPlaylist_archivedHidden() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "search-archived-hidden"
 
@@ -765,7 +765,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testSearchTermProducesValidSQLForManualPlaylist_archivedShown() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "search-archived-shown"
 
@@ -790,7 +790,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testSearchTermWithSingleQuoteProducesValidSQL() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = "search-single-quote"
 
@@ -809,7 +809,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
     }
 
     func testSearchTermWithSingleQuoteProducesValidSQL_smartPlaylist() throws {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = false
         filter.uuid = "search-smart-single-quote"
 
@@ -827,7 +827,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "search-manual-first-distinct"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -869,7 +869,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "search-smart-first-distinct"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = false
         filter.filterDownloaded = true
         filter.filterNotDownloaded = true
@@ -909,7 +909,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                 """, arguments: ["ep-quote", playlistUUID])
         }
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -935,7 +935,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
                 """, arguments: ["ep-percent", playlistUUID])
         }
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 
@@ -958,7 +958,7 @@ final class PlaylistQueryBuilderTests: XCTestCase {
         let playlistUUID = "test-consistency"
         try insertTestData(in: dbPool, playlistUUID: playlistUUID)
 
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.manual = true
         filter.uuid = playlistUUID
 

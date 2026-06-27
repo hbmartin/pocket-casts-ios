@@ -17,9 +17,9 @@ final class EpisodeFilterLogicTests: XCTestCase {
     // MARK: - Equality & hashing (keyed on uuid)
 
     func testEqualWhenUuidMatches() {
-        let a = EpisodeFilter()
+        var a = EpisodeFilter()
         a.uuid = "shared-uuid"
-        let b = EpisodeFilter()
+        var b = EpisodeFilter()
         b.uuid = "shared-uuid"
 
         XCTAssertEqual(a, b)
@@ -29,11 +29,11 @@ final class EpisodeFilterLogicTests: XCTestCase {
     /// Regression test for the `isEqual`-by-`uuid` / `hash`-by-`id` inconsistency: two filters equal by
     /// uuid must also hash equally even when their local row `id`s differ (e.g. unsaved vs saved).
     func testEqualAndHashConsistentWhenUuidMatchesButIdDiffers() {
-        let unsaved = EpisodeFilter()
+        var unsaved = EpisodeFilter()
         unsaved.uuid = "shared-uuid"
         unsaved.id = 0
 
-        let saved = EpisodeFilter()
+        var saved = EpisodeFilter()
         saved.uuid = "shared-uuid"
         saved.id = 4242
 
@@ -42,9 +42,9 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testNotEqualWhenUuidDiffers() {
-        let a = EpisodeFilter()
+        var a = EpisodeFilter()
         a.uuid = "uuid-a"
-        let b = EpisodeFilter()
+        var b = EpisodeFilter()
         b.uuid = "uuid-b"
 
         XCTAssertNotEqual(a, b)
@@ -53,15 +53,15 @@ final class EpisodeFilterLogicTests: XCTestCase {
     /// The `ManualPlaylistsChooserViewController` scenario: a `Set<EpisodeFilter>` must dedupe by uuid
     /// even when members carry different `id`s. Before the hash fix this set would have held 3 elements.
     func testSetDedupesByUuidIgnoringId() {
-        let first = EpisodeFilter()
+        var first = EpisodeFilter()
         first.uuid = "same"
         first.id = 1
 
-        let duplicate = EpisodeFilter()
+        var duplicate = EpisodeFilter()
         duplicate.uuid = "same"
         duplicate.id = 999
 
-        let other = EpisodeFilter()
+        var other = EpisodeFilter()
         other.uuid = "different"
 
         let set: Set<EpisodeFilter> = [first, duplicate, other]
@@ -74,7 +74,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     // MARK: - addPodcast / removePodcast
 
     func testAddPodcastToEmptyFilterSetsUuidAndClearsAllPodcasts() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.filterAllPodcasts = true
         filter.podcastUuids = ""
         filter.syncStatus = SyncStatus.synced.rawValue
@@ -87,7 +87,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testAddPodcastAppendsCommaSeparated() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.podcastUuids = "podcast-1"
 
         filter.addPodcast(podcastUuid: "podcast-2")
@@ -96,7 +96,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testRemovePodcastLeavesRemaining() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.podcastUuids = "podcast-1,podcast-2,podcast-3"
 
         filter.removePodcast(podcastUuid: "podcast-2")
@@ -105,7 +105,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testRemovingLastPodcastReenablesAllPodcasts() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.filterAllPodcasts = false
         filter.podcastUuids = "podcast-1"
 
@@ -116,7 +116,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testRemovePodcastNotPresentIsNoOp() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.podcastUuids = "podcast-1,podcast-2"
 
         filter.removePodcast(podcastUuid: "podcast-3")
@@ -127,7 +127,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     // MARK: - setTitle
 
     func testSetTitleWithValueUsesValue() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.playlistName = "old"
 
         filter.setTitle("My Filter", defaultTitle: "New Filter")
@@ -136,7 +136,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testSetTitleWithNilUsesDefault() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.playlistName = "old"
 
         filter.setTitle(nil, defaultTitle: "New Filter")
@@ -145,7 +145,7 @@ final class EpisodeFilterLogicTests: XCTestCase {
     }
 
     func testSetTitleWithWhitespaceOnlyUsesDefault() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.playlistName = "old"
 
         filter.setTitle("   \n ", defaultTitle: "New Filter")
@@ -156,31 +156,31 @@ final class EpisodeFilterLogicTests: XCTestCase {
     // MARK: - Removal-rule helpers
 
     func testMarkingAsPlayedRemovesItemMirrorsFilterFinished() {
-        let removes = EpisodeFilter()
+        var removes = EpisodeFilter()
         removes.filterFinished = false
         XCTAssertTrue(removes.markingAsPlayedRemovesItem())
 
-        let keeps = EpisodeFilter()
+        var keeps = EpisodeFilter()
         keeps.filterFinished = true
         XCTAssertFalse(keeps.markingAsPlayedRemovesItem())
     }
 
     func testMarkingAsUnplayedRemovesItemMirrorsFilterUnplayed() {
-        let removes = EpisodeFilter()
+        var removes = EpisodeFilter()
         removes.filterUnplayed = false
         XCTAssertTrue(removes.markingAsUnplayedRemovesItem())
 
-        let keeps = EpisodeFilter()
+        var keeps = EpisodeFilter()
         keeps.filterUnplayed = true
         XCTAssertFalse(keeps.markingAsUnplayedRemovesItem())
     }
 
     func testDeletingFileRemovesItemMirrorsFilterDownloaded() {
-        let removes = EpisodeFilter()
+        var removes = EpisodeFilter()
         removes.filterDownloaded = false
         XCTAssertTrue(removes.deletingFileRemovesItem())
 
-        let keeps = EpisodeFilter()
+        var keeps = EpisodeFilter()
         keeps.filterDownloaded = true
         XCTAssertFalse(keeps.deletingFileRemovesItem())
     }
@@ -193,7 +193,7 @@ final class EpisodeFilterPersistenceTests: DataManagerTestCase {
 
     func testSaveReturnsValueWithAssignedIdAndUpdateDate() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.uuid = UUID().uuidString.lowercased()
             filter.playlistName = "Returns id"
             XCTAssertEqual(filter.id, 0, "\(implementationName): a new filter has no id yet")
@@ -208,7 +208,7 @@ final class EpisodeFilterPersistenceTests: DataManagerTestCase {
 
     func testSavedReturnValueMatchesReloaded() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.uuid = UUID().uuidString.lowercased()
             filter.playlistName = "Round trip"
             filter.podcastUuids = "p1,p2"
@@ -250,7 +250,7 @@ final class EpisodeFilterPersistenceTests: DataManagerTestCase {
 
     func testAddAndRemovePodcastPersistThroughSave() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.uuid = UUID().uuidString.lowercased()
             filter.playlistName = "Membership"
             filter.filterAllPodcasts = true

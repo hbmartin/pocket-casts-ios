@@ -24,7 +24,7 @@ final class EpisodeFilterFormattingTests: XCTestCase {
     // MARK: - iconImageName / iconImageNameLarge
 
     func testIconImageName_derivesFromCustomIcon() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.customIcon = PlaylistIcon.redPlaylist.rawValue
         XCTAssertEqual(filter.iconImageName(), "filter_list")
         XCTAssertEqual(filter.iconImageNameLarge(), "filter_list_large")
@@ -34,7 +34,7 @@ final class EpisodeFilterFormattingTests: XCTestCase {
 
     func testPlaylistStyle_mapsColorFamilyToThemeStyle() {
         func style(for icon: PlaylistIcon) -> ThemeStyle {
-            let filter = EpisodeFilter()
+            var filter = EpisodeFilter()
             filter.customIcon = icon.rawValue
             return filter.playlistStyle()
         }
@@ -48,13 +48,13 @@ final class EpisodeFilterFormattingTests: XCTestCase {
     // MARK: - maxAutoDownloadEpisodes
 
     func testMaxAutoDownloadEpisodes_usesDefaultWhenZero() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.autoDownloadLimit = 0
         XCTAssertEqual(filter.maxAutoDownloadEpisodes(), Constants.Values.defaultPlaylistDownloadLimit)
     }
 
     func testMaxAutoDownloadEpisodes_usesConfiguredLimit() {
-        let filter = EpisodeFilter()
+        var filter = EpisodeFilter()
         filter.autoDownloadLimit = 25
         XCTAssertEqual(filter.maxAutoDownloadEpisodes(), 25)
     }

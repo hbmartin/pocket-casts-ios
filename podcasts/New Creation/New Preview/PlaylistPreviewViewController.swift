@@ -74,7 +74,7 @@ class PlaylistPreviewViewController: PCViewController {
     }
 
     private func createNewPlaylist() {
-        let playlist: EpisodeFilter
+        var playlist: EpisodeFilter
 
         switch mode {
             case .creation:
