@@ -40,20 +40,4 @@ if File.directory?(derived_data_path)
   rescue StandardError => e
     warn("Slather coverage report could not be generated: #{e.message}")
   end
-
-  activity_log = Dir[File.join(derived_data_path, 'Logs/Build/*.xcactivitylog')].max_by { |path| File.mtime(path) }
-  if activity_log
-    xcprofiler.inline_mode = true
-    xcprofiler.thresholds = { warn: 1_000, fail: 10_000 }
-    xcprofiler.ignored_files = [
-      '**/BuildTools/.build/**',
-      '**/Modules/.build/**',
-      '**/Pods/**'
-    ]
-    begin
-      xcprofiler.report(nil, nil, activity_log)
-    rescue StandardError => e
-      warn("Xcode build-time report could not be generated: #{e.message}")
-    end
-  end
 end

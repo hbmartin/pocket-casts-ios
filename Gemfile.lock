@@ -94,9 +94,6 @@ GEM
     danger-xcode_summary (1.5.0)
       danger-plugin-api (~> 1.0)
       xcresult (~> 0.2.2)
-    danger-xcprofiler (0.5.0)
-      danger-plugin-api (~> 1.0)
-      xcprofiler
     declarative (0.0.20)
     diffy (3.4.4)
     digest-crc (0.7.0)
@@ -393,9 +390,6 @@ GEM
       rouge (~> 3.28.0)
     xcpretty-travis-formatter (1.0.1)
       xcpretty (~> 0.2, >= 0.0.7)
-    xcprofiler (0.6.3)
-      colored2
-      terminal-table
     xcresult (0.2.5)
 
 PLATFORMS
@@ -406,7 +400,6 @@ DEPENDENCIES
   danger-dangermattic (~> 1.0)
   danger-slather (~> 0.0)
   danger-xcode_summary (~> 1.5)
-  danger-xcprofiler (~> 0.5)
   fastlane (~> 2.233)
   fastlane-plugin-wpmreleasetoolkit (~> 14.3)
   openssl (~> 4.0)
