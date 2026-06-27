@@ -96,6 +96,11 @@ public class EpisodeFilter: NSObject {
         }
     }
 
+    // Equality and hashing are both keyed on `uuid` (the stable sync identity). `hash` previously
+    // keyed on `id` (the local row id, which is 0 until first saved); that violated the Hashable
+    // contract because two filters equal by `uuid` but with different `id`s hashed differently,
+    // silently breaking `Set<EpisodeFilter>` membership/dedup. Keeping both on `uuid` also matches
+    // the semantics the planned struct migration will carry (uuid-consistent Equatable/Hashable).
     override public func isEqual(_ object: Any?) -> Bool {
         guard let otherFilter = object as? EpisodeFilter else { return false }
 
@@ -103,6 +108,6 @@ public class EpisodeFilter: NSObject {
     }
 
     override public var hash: Int {
-        Int(truncatingIfNeeded: id)
+        uuid.hashValue
     }
 }
