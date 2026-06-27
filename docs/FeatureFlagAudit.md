@@ -25,10 +25,10 @@ Assessment meanings:
 
 | Flag | Default | Usages | Used in | Assessment | Sign-off |
 |---|---|---|---|---|---|
-| `guestListsNetworkHighlightsRedesign` | true | 0 | — | dead — remove enum case | |
-| `refreshPlaylistOnSubscriptions` | true | 0 | — | dead — remove enum case | |
-| `smartCategories` | true | 0 | — | dead — remove enum case | |
-| `syncStats` | true | 0 | — | dead — remove enum case | |
+| ~~`guestListsNetworkHighlightsRedesign`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
+| ~~`refreshPlaylistOnSubscriptions`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
+| ~~`smartCategories`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
+| ~~`syncStats`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
 | `activateAudioSessionForRoutePicker` | true | 1 | NowPlayingPlayerItemViewController+Shelf.swift | candidate | |
 | `checkProtectedDataBeforeMigration` | true | 1 | AppDelegate+Defaults.swift | candidate | |
 | `detectTruncatedBackgroundSyncDownloads` | true | 1 | BackgroundSyncManager+URLSession.swift | candidate | |
