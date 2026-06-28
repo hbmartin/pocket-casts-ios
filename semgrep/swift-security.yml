@@ -4540,3 +4540,30 @@ rules:
       # declaration, so it no longer exempts it. The final alternative stays loose so the token
       # appearing inside any comment is not itself flagged as an unjustified declaration.
       - pattern-not-regex: '(?://[^\n]*nonisolated\(unsafe\)[ \t]*:?[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*nonisolated\(unsafe\))|(?:nonisolated\(unsafe\)[^\n]*//[^\n]*nonisolated\(unsafe\)[ \t]*:?[ \t]*\S)|(?://[^\n]*nonisolated\(unsafe\))'
+
+  - id: pocketcasts.grdb-record-no-unchecked-sendable-class
+    severity: ERROR
+    metadata:
+      category: concurrency
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      @GRDBRecord types should be Sendable value-type structs (the GRDB 7 north star), not classes
+      ratified with @unchecked Sendable. Folder, EpisodeFilter and Podcast are already structs; convert
+      new records the same way (custom uuid Equatable/Hashable, mutating funcs, save() returns the saved
+      value). Episode/UserEpisode stay classes only until Phase 5 (de-@objc BaseEpisode + playback
+      position-tracking redesign) and are the sole allowed exceptions. See docs/Phase3-RecordSendability.md.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/**/*.swift"
+      exclude:
+        - "**/Model/Episode.swift"
+        - "**/Model/UserEpisode.swift"
+    patterns:
+      # A @GRDBRecord macro application whose declared type, within the next few lines, is a `class`
+      # carrying `@unchecked Sendable`. re2 (no backreferences) — the bounded [\s\S] span covers any
+      # doc-comment block between the macro and the declaration.
+      - pattern-regex: '@GRDBRecord\([^\n]*\)[\s\S]{0,600}?\bclass\b[^\n]*@unchecked[ \t]+Sendable'

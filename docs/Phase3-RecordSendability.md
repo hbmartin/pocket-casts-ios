@@ -183,10 +183,35 @@ boundary crossings that touch `Episode` use the per-hop `Sendable`-projection es
   at runtime (no KVC/XIB bindings, as the spike predicted), and the four data-layer mutators
   (`updatePosition`/`moveEpisode`/`deleteEpisodes`/`deleteAllEpisodes`) no longer back-mutate the
   caller's in-memory filter — audited safe (no caller re-saves the stale copy).
-- **Record 3 — `Podcast`: GO after cache refactor** (the `cachedPodcasts` identity-map must hand out
-  fresh copies; sort-order flows reuse the Folder "collect mutated copies" fix).
+- **Record 3 — `Podcast`: DONE** (2026-06-28, branch `modernization-slice16-podcast-struct`). Now
+  `struct Podcast: Identifiable, Equatable, Hashable, Sendable`; dropped `@objc`/NSObject/`@unchecked`,
+  custom uuid-only `==`/`hash` (preserves `Set<Podcast>` dedup), `setAutoAddToUpNext`/the `Api_PodcastSettings`
+  `processSettings` → `mutating func`. The `cachedPodcasts` identity-map hands out copies automatically
+  once the element type is a value; sort-order flows reuse the Folder "collect mutated copies" fix and
+  the badge flows reuse the `frozenBadgeCount` pattern. `save(podcast:)` now returns the saved value
+  (`@discardableResult -> Podcast`, threaded through DataManager/`PodcastRepository`/mock) with a
+  uuid-resolved duplicate-row guard. Validated: DataModel 493 / Server 51 / app 318, 0 failures
+  (`SIMULATOR_OS=18.6`). **This completes the Phase 3 leaf records** (Folder ✓, EpisodeFilter ✓, Podcast ✓).
 - **Records 4/5 — `Episode`/`UserEpisode`: deferred to Phase 5** (gated on de-`@objc` `BaseEpisode` +
   playback position-tracking redesign).
+
+  ### Record 3 — `Podcast` flip notes (for the eventual heavy records)
+
+  - The reference-semantics audit found **only 9 true break sites**, all transient-state
+    (`cachedUnreadCount`, `forceRefreshEpisodeFrom`) — **zero** identity/KVC/XIB/subclass/NSObject-API
+    reliance, exactly as the spike predicted. `@objc` removal broke nothing at runtime.
+  - **The most error-prone class was `podcast.id` read after `save(podcast:)`**: a value-type save no
+    longer back-populates the caller's id, so `createTestPodcast`/`DBTestCase`/`ServerPodcastManager.addPodcast`
+    silently produced id-0 podcasts that broke podcast↔episode linkage. The fix is to return-and-reassign
+    the saved value everywhere; the uuid-resolved duplicate guard in `save` is the backstop.
+  - Two server-sync helpers (`SyncTask.importItem`, `SyncTask+FullSync.processSettings`) mutated a
+    passed-in podcast the caller then saved → converted to **return the mutated copy** rather than a
+    no-op `var podcast = podcast`.
+  - `PodcastViewController.subscribe()/toggleShowArchived()/folder-remove` mutate a local copy and save;
+    to keep synchronous reads of the stored `self.podcast` correct (the class mutated in place), write the
+    saved value back to `self.podcast`.
+  - Test-only `DataManagerMock` needed a `save(podcast:)` override writing back into its in-memory
+    `podcastsToReturn`, since callers that mutate-and-save a copy no longer touch the stored instance.
 
 ## Record 2 — `EpisodeFilter` (in progress)
 
@@ -246,9 +271,9 @@ itself is unaffected by that split and proceeds now.
 - ✅ Reference-semantics spike answered: **rewrite, not rename** (above).
 - ✅ Strategy chosen and recorded: **B for the leaves** (`Folder`✓ → `EpisodeFilter` → `Podcast`),
   **`Episode`/`UserEpisode` deferred to Phase 5** (heavy-record spike, 2026-06-27).
-- Leaf records (`Folder`✓, `EpisodeFilter`, `Podcast`) are `Sendable` structs with GRDB round-trip +
+- ✅ Leaf records (`Folder`✓, `EpisodeFilter`✓, `Podcast`✓) are `Sendable` structs with GRDB round-trip +
   behaviour-parity tests landed *before* each flip; `save(...)` returns the saved value (no out-param
-  back-mutation); shared caches hand out copies.
+  back-mutation); shared caches hand out copies. **All three leaf records done (2026-06-28).**
 - The 10 baseline entries + the playlist repository key clear once `EpisodeFilter` (+ honest-`Sendable`
   `ListEpisode`) land; Episode-touching boundary crossings use the per-hop `Sendable`-projection hatch
   until Phase 5.
