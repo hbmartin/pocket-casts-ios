@@ -68,8 +68,9 @@ extension FolderViewController: UICollectionViewDelegate, UICollectionViewDataSo
     }
 
     private func saveSortOrder() {
-        for (index, podcast) in podcasts.enumerated() {
-            podcast.sortOrder = Int32(index)
+        // Podcast is a value type; mutate the VC-owned array in place before persisting.
+        for index in podcasts.indices {
+            podcasts[index].sortOrder = Int32(index)
         }
 
         DataManager.sharedManager.saveSortOrders(podcasts: podcasts)

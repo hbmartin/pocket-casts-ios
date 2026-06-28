@@ -34,6 +34,7 @@ class FolderHistoryModel: ObservableObject {
 
     func restore() {
         podcastsAndFolders.forEach { podcast, folder in
+            var podcast = podcast
             podcast.folderUuid = folder.uuid
             podcast.syncStatus = SyncStatus.notSynced.rawValue
             dataManager.save(podcast: podcast)

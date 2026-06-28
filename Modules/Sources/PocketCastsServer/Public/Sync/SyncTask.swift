@@ -120,7 +120,7 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
                 let serverReturnsSortPosition: Bool = podcasts.compactMap { $0.sortPosition }.map { Int($0) }.reduce(0, +) > 0
 
                 for podcast in podcasts {
-                    guard let uuid = podcast.uuid, let localPodcast = DataManager.sharedManager.findPodcast(uuid: uuid) else { continue }
+                    guard let uuid = podcast.uuid, var localPodcast = DataManager.sharedManager.findPodcast(uuid: uuid) else { continue }
 
                     // If server's folderUuid is `nil` then we don't change
                     if podcast.folderUuid?.isEmpty == false {

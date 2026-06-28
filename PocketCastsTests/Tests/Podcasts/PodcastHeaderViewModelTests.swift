@@ -9,9 +9,9 @@ import PocketCastsDataModel
 @MainActor
 final class PodcastHeaderViewModelTests: XCTestCase {
 
-    private func makeViewModel(configure: (Podcast) -> Void) -> PodcastHeaderViewModel {
-        let podcast = Podcast()
-        configure(podcast)
+    private func makeViewModel(configure: (inout Podcast) -> Void) -> PodcastHeaderViewModel {
+        var podcast = Podcast()
+        configure(&podcast)
         return PodcastHeaderViewModel(podcast: podcast)
     }
 

@@ -330,7 +330,7 @@ struct PodcastHeaderView_Previews: PreviewProvider {
         @EnvironmentObject var theme: Theme
 
         static func makePodcast() -> Podcast {
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.title = "Test Podcast"
             podcast.podcastCategory = "Test"
             podcast.author = "Test Author"

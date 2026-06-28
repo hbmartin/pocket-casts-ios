@@ -140,6 +140,7 @@ class AutoAddToUpNextViewController: PCViewController, UITableViewDelegate, UITa
     }
 
     private func addActionForPodcast(podcast: Podcast, setting: AutoAddToUpNextSetting, label: String, to: OptionsPicker) {
+        var podcast = podcast
         let action = OptionAction(label: label, selected: podcast.autoAddToUpNextSetting() == setting) { [weak self] in
             podcast.setAutoAddToUpNext(setting: setting)
             DataManager.sharedManager.save(podcast: podcast)

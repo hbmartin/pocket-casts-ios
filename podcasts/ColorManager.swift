@@ -159,7 +159,7 @@ class ColorManager {
                     return
                 }
 
-                if let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
+                if var podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
                     podcast.backgroundColor = backgroundColor
                     podcast.primaryColor = lightThemeTint
                     podcast.secondaryColor = darkThemeTint
@@ -183,7 +183,7 @@ class ColorManager {
     }
 
     private func handleDownloadError(podcastUuid: String) {
-        if let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
+        if var podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
             podcast.lastColorDownloadDate = Date()
             DataManager.sharedManager.save(podcast: podcast)
         }

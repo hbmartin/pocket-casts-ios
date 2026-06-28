@@ -100,7 +100,7 @@ extension SyncTask {
     private func importPodcast(_ podcastItem: Api_SyncUserPodcast) {
         let existingPodcast = DataManager.sharedManager.findPodcast(uuid: podcastItem.uuid, includeUnsubscribed: true)
         if podcastItem.hasIsDeleted, podcastItem.isDeleted.value {
-            if let podcast = existingPodcast {
+            if var podcast = existingPodcast {
                 podcast.autoDownloadSetting = AutoDownloadSetting.off.rawValue
                 podcast.isPushEnabled = false
                 podcast.autoArchiveEpisodeLimit = 0
@@ -113,8 +113,8 @@ extension SyncTask {
 
                 DataManager.sharedManager.save(podcast: podcast)
             }
-        } else if let podcast = existingPodcast {
-            importItem(podcastItem: podcastItem, into: podcast, checkIsDeleted: true)
+        } else if var podcast = existingPodcast {
+            podcast = importItem(podcastItem: podcastItem, into: podcast, checkIsDeleted: true)
             DataManager.sharedManager.save(podcast: podcast)
 
             ServerConfig.shared.syncDelegate?.podcastUpdated(podcastUuid: podcast.uuid)
@@ -123,9 +123,9 @@ extension SyncTask {
 
             ServerPodcastManager.shared.addFromUuid(podcastUuid: podcastItem.uuid, subscribe: true, completion: { success in
                 if success {
-                    if let podcast = DataManager.sharedManager.findPodcast(uuid: podcastItem.uuid, includeUnsubscribed: true) {
+                    if var podcast = DataManager.sharedManager.findPodcast(uuid: podcastItem.uuid, includeUnsubscribed: true) {
                         podcast.syncStatus = SyncStatus.synced.rawValue
-                        self.importItem(podcastItem: podcastItem, into: podcast, checkIsDeleted: false)
+                        podcast = self.importItem(podcastItem: podcastItem, into: podcast, checkIsDeleted: false)
 
                         DataManager.sharedManager.save(podcast: podcast)
                     }
@@ -139,7 +139,8 @@ extension SyncTask {
         postPodcastImportProgressThenIncrement()
     }
 
-    private func importItem(podcastItem: Api_SyncUserPodcast, into podcast: Podcast, checkIsDeleted: Bool) {
+    private func importItem(podcastItem: Api_SyncUserPodcast, into podcast: Podcast, checkIsDeleted: Bool) -> Podcast {
+        var podcast = podcast
         if podcastItem.hasAutoStartFrom {
             podcast.startFrom = podcastItem.autoStartFrom.value
         }
@@ -167,6 +168,7 @@ extension SyncTask {
         if FeatureFlag.settingsSync.enabled {
             podcast.processSettings(podcastItem.settings)
         }
+        return podcast
     }
 
     private func importEpisode(_ episodeItem: Api_SyncUserEpisode) {
@@ -491,7 +493,7 @@ private extension Api_SyncUserBookmark {
 }
 
 extension Podcast {
-    func processSettings(_ settings: Api_PodcastSettings) {
+    mutating func processSettings(_ settings: Api_PodcastSettings) {
         let oldSettings = self.settings
         self.settings.$customEffects.update(setting: settings.playbackEffects)
         self.settings.$autoStartFrom.update(setting: settings.autoStartFrom)

@@ -142,7 +142,7 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
     /// Verifies that cachedUnreadCount is NOT persisted (marked with @GRDBIgnore)
     func testCachedUnreadCountNotPersisted() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = UUID().uuidString.lowercased()
             podcast.title = "Test Podcast"
             podcast.addedDate = Date()
@@ -164,7 +164,7 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
     /// Verifies that forceRefreshEpisodeFrom is NOT persisted (marked with @GRDBIgnore)
     func testForceRefreshEpisodeFromNotPersisted() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = UUID().uuidString.lowercased()
             podcast.title = "Test Podcast"
             podcast.addedDate = Date()
@@ -186,7 +186,7 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
     // MARK: - Helpers
 
     private func createFullyPopulatedPodcast() -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = UUID().uuidString.lowercased()
         podcast.title = "Test Podcast Title"
         podcast.author = "Test Author"

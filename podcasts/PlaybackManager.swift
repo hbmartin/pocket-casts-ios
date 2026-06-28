@@ -809,7 +809,7 @@ class PlaybackManager: ServerPlaybackDelegate {
                 UserDefaults.standard.set(effects.volumeBoost, forKey: Constants.UserDefaults.globalVolumeBoost)
                 UserDefaults.standard.set(effects.playbackSpeed, forKey: Constants.UserDefaults.globalPlaybackSpeed)
             }
-        } else if let episode = episode as? Episode, let podcast = episode.parentPodcast() {
+        } else if let episode = episode as? Episode, var podcast = episode.parentPodcast() {
             if FeatureFlag.newSettingsStorage.enabled {
                 podcast.settings.trimSilence = TrimSilence(amount: effects.trimSilence)
                 podcast.settings.playbackSpeed = effects.playbackSpeed
@@ -866,6 +866,7 @@ class PlaybackManager: ServerPlaybackDelegate {
     }
 
     func overrideEffectsToggled(applyLocalSettings: Bool, for podcast: Podcast) {
+        var podcast = podcast
         podcast.isEffectsOverridden = applyLocalSettings
 
         DataManager.sharedManager.save(podcast: podcast)

@@ -2,7 +2,7 @@ import Foundation
 
 extension Podcast {
     public static func from(podcastJson: [String: Any], podcastInfo: [String: Any], uuid: String, subscribe: Bool, autoDownloads: Int, lastModified: String?, isoFormatter: ISO8601DateFormatter) -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = uuid
         podcast.subscribed = subscribe ? 1 : 0
         // if we're adding a new podcast but not subscribing don't mark it as needing to be synced

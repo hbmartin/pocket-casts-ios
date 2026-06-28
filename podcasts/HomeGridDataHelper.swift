@@ -62,8 +62,9 @@ class HomeGridDataHelper {
                 let podcastCounts = DataManager.sharedManager.podcastUnfinishedCounts()
                 for gridItem in gridItems {
                     if let podcast = gridItem.podcast {
-                        podcast.cachedUnreadCount = Int(podcastCounts[podcast.uuid] ?? 0)
-                        gridItem.frozenBadgeCount = podcast.cachedUnreadCount
+                        // Podcast is a value type; carry the badge count on the (mutable) grid item, as
+                        // the folder branch does. willDisplay copies it onto the cell's local podcast.
+                        gridItem.frozenBadgeCount = Int(podcastCounts[podcast.uuid] ?? 0)
                     } else if let folder = gridItem.folder {
                         // for a folder, it's badge count is a sum of all the ones for all the podcasts inside it
                         let allPodcastsInFolder = allPodcasts.filter { $0.folderUuid == folder.uuid }
@@ -79,11 +80,10 @@ class HomeGridDataHelper {
                 for gridItem in gridItems {
                     if let podcast = gridItem.podcast {
                         if let latestEpisode = DataManager.sharedManager.findLatestEpisode(podcast: podcast) {
-                            podcast.cachedUnreadCount = latestEpisode.unplayed() && !latestEpisode.archived ? 1 : 0
+                            gridItem.frozenBadgeCount = latestEpisode.unplayed() && !latestEpisode.archived ? 1 : 0
                         } else {
-                            podcast.cachedUnreadCount = 0
+                            gridItem.frozenBadgeCount = 0
                         }
-                        gridItem.frozenBadgeCount = podcast.cachedUnreadCount
                     } else if let folder = gridItem.folder {
                         // for a folder, we show a latest episode badge if any of the podcasts inside it should have one
                         let allPodcastsInFolder = allPodcasts.filter { $0.folderUuid == folder.uuid }

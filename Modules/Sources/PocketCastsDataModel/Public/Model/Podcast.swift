@@ -4,64 +4,65 @@ import GRDBMacros
 import PocketCastsUtils
 
 @GRDBRecord(table: "SJPodcast")
-// @unchecked Sendable: mutable model object passed across threads by long-standing
-// convention in this codebase; consistency is maintained by database-write discipline
-// rather than by the type itself.
-public class Podcast: NSObject, Identifiable, @unchecked Sendable {
-    @objc public var id = 0 as Int64
-    @objc public var addedDate: Date?
-    @objc public var autoDownloadSetting = 0 as Int32
-    @objc public var autoAddToUpNext = 0 as Int32
+// Value-type record (GRDB-7 north star). Sendable is honest: a copy crosses task
+// boundaries by value, and write consistency is maintained on the DataManager write
+// path. Equality/hashing key on `uuid` (see below), matching the prior NSObject
+// `isEqual`/`hash` semantics callers rely on (e.g. `Set<Podcast>`).
+public struct Podcast: Identifiable, Equatable, Hashable, Sendable {
+    public var id = 0 as Int64
+    public var addedDate: Date?
+    public var autoDownloadSetting = 0 as Int32
+    public var autoAddToUpNext = 0 as Int32
     @GRDBColumn("episodeKeepSetting")
-    @objc public var autoArchiveEpisodeLimit = 0 as Int32
-    @objc public var backgroundColor: String?
-    @objc public var detailColor: String? // dark artwork overlay
-    @objc public var primaryColor: String? // light tint
-    @objc public var secondaryColor: String? // dark tint
-    @objc public var lastColorDownloadDate: Date?
-    @objc public var imageURL: String?
-    @objc public var latestEpisodeUuid: String?
-    @objc public var latestEpisodeDate: Date?
-    @objc public var mediaType: String?
-    @objc public var lastThumbnailDownloadDate: Date?
-    @objc public var thumbnailStatus = 1 as Int32
-    @objc public var podcastUrl: String?
-    @objc public var author: String?
-    @objc public var overrideGlobalEffects = false
-    @objc public var playbackSpeed = 1 as Double
-    @objc public var boostVolume = false
-    @objc public var trimSilenceAmount = 0 as Int32
-    @objc public var podcastCategory: String?
-    @objc public var podcastDescription: String?
-    @objc public var podcastHTMLDescription: String?
-    @objc public var sortOrder = 0 as Int32
-    @objc public var startFrom = 0 as Int32
-    @objc public var skipLast = 0 as Int32
-    @objc public var subscribed = 1 as Int32
-    @objc public var title: String?
-    @objc public var uuid = ""
-    @objc public var syncStatus = 0 as Int32
-    @objc public var colorVersion = 1 as Int32
-    @objc public var pushEnabled = false
-    @objc public var episodeSortOrder = 1 as Int32
-    @objc public var episodeGrouping = 0 as Int32
-    @objc public var showType: String?
-    @objc public var estimatedNextEpisode: Date?
-    @objc public var episodeFrequency: String?
-    @objc public var lastUpdatedAt: String?
-    @objc public var excludeFromAutoArchive = false // we no longer use this setting, but it's here for migrations, etc
-    @objc public var overrideGlobalArchive = false
-    @objc public var autoArchivePlayedAfter = 0 as Double
-    @objc public var autoArchiveInactiveAfter = 0 as Double
-    @objc public var isPaid = false
-    @objc public var licensing = 0 as Int32
-    @objc public var fullSyncLastSyncAt: String?
-    @objc public var showArchived = false
-    @objc public var refreshAvailable = false
-    @objc public var folderUuid: String?
-    @objc public var usedCustomEffectsBefore = false
-    @objc public var isPrivate = false
-    @objc public var fundingURL: String?
+    public var autoArchiveEpisodeLimit = 0 as Int32
+    public var backgroundColor: String?
+    public var detailColor: String? // dark artwork overlay
+    public var primaryColor: String? // light tint
+    public var secondaryColor: String? // dark tint
+    public var lastColorDownloadDate: Date?
+    public var imageURL: String?
+    public var latestEpisodeUuid: String?
+    public var latestEpisodeDate: Date?
+    public var mediaType: String?
+    public var lastThumbnailDownloadDate: Date?
+    public var thumbnailStatus = 1 as Int32
+    public var podcastUrl: String?
+    public var author: String?
+    public var overrideGlobalEffects = false
+    public var playbackSpeed = 1 as Double
+    public var boostVolume = false
+    public var trimSilenceAmount = 0 as Int32
+    public var podcastCategory: String?
+    public var podcastDescription: String?
+    public var podcastHTMLDescription: String?
+    public var sortOrder = 0 as Int32
+    public var startFrom = 0 as Int32
+    public var skipLast = 0 as Int32
+    public var subscribed = 1 as Int32
+    public var title: String?
+    public var uuid = ""
+    public var syncStatus = 0 as Int32
+    public var colorVersion = 1 as Int32
+    public var pushEnabled = false
+    public var episodeSortOrder = 1 as Int32
+    public var episodeGrouping = 0 as Int32
+    public var showType: String?
+    public var estimatedNextEpisode: Date?
+    public var episodeFrequency: String?
+    public var lastUpdatedAt: String?
+    public var excludeFromAutoArchive = false // we no longer use this setting, but it's here for migrations, etc
+    public var overrideGlobalArchive = false
+    public var autoArchivePlayedAfter = 0 as Double
+    public var autoArchiveInactiveAfter = 0 as Double
+    public var isPaid = false
+    public var licensing = 0 as Int32
+    public var fullSyncLastSyncAt: String?
+    public var showArchived = false
+    public var refreshAvailable = false
+    public var folderUuid: String?
+    public var usedCustomEffectsBefore = false
+    public var isPrivate = false
+    public var fundingURL: String?
 
     @GRDBIgnore
     public var settings = PodcastSettings.defaults
@@ -75,7 +76,7 @@ public class Podcast: NSObject, Identifiable, @unchecked Sendable {
     @GRDBIgnore
     public var forceRefreshEpisodeFrom: String? = nil
 
-    override public init() {}
+    public init() {}
 
     public func autoDownloadOn() -> Bool {
         autoDownloadSetting == AutoDownloadSetting.latest.rawValue
@@ -106,7 +107,7 @@ public class Podcast: NSObject, Identifiable, @unchecked Sendable {
         }
     }
 
-    public func setAutoAddToUpNext(setting: AutoAddToUpNextSetting) {
+    public mutating func setAutoAddToUpNext(setting: AutoAddToUpNextSetting) {
         if FeatureFlag.newSettingsStorage.enabled {
             settings.addToUpNext = setting != .off
             settings.addToUpNextPosition = setting == .addFirst ? .top : .bottom
@@ -126,23 +127,20 @@ public class Podcast: NSObject, Identifiable, @unchecked Sendable {
         subscribed != 0
     }
 
-    override public func isEqual(_ object: Any?) -> Bool {
-        guard let otherPodcast = object as? Podcast else { return false }
-
-        return otherPodcast.uuid == uuid
+    // Identity is the persisted `uuid` (was NSObject `isEqual`/`hash`). Keyed on uuid only —
+    // NOT memberwise — so two podcasts with the same uuid but differing transient/row fields
+    // (e.g. an unsaved id == 0 copy vs the saved row) remain equal and hash equally, preserving
+    // the prior class semantics and the `Set<Podcast>` dedup behaviour.
+    public static func == (lhs: Podcast, rhs: Podcast) -> Bool {
+        lhs.uuid == rhs.uuid
     }
 
-    override public var hash: Int {
-        // Key on uuid so hash is consistent with isEqual (which compares uuid).
-        // Keying on id violated the Hashable contract: two instances equal by
-        // uuid but differing in id (e.g. an unsaved id == 0 copy vs the saved
-        // row) hashed differently. This mirrors the EpisodeFilter fix (PR #111)
-        // and is the value-based semantics the struct's Hashable will carry.
-        uuid.hashValue
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(uuid)
     }
 
     public static func previewPodcast() -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.title = "The Greatest Podcast In The History Of Podcasts"
         podcast.author = "John Citizen Network Productions"
         podcast.uuid = "8a778760-a1de-0138-e66a-0acc26574db2"
@@ -183,8 +181,8 @@ extension TrimSilence {
     }
 }
 
-extension Podcast {
-    override public var debugDescription: String {
+extension Podcast: CustomDebugStringConvertible {
+    public var debugDescription: String {
         "Podcast: \(uuid) - \(title ?? "missing title")"
     }
 }

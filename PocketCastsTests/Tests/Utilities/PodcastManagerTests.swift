@@ -100,7 +100,7 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     private func makeDownloadedPodcastAndEpisode() -> (Podcast, Episode) {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = UUID().uuidString
         podcast.subscribed = 0
         podcast.addedDate = Date().addingTimeInterval(-2.weeks)

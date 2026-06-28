@@ -861,7 +861,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     func testSaveInsertsNewPodcastWithAllFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = "save-test-uuid"
             podcast.title = "Save Test Podcast"
             podcast.author = "Test Author"
@@ -902,7 +902,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     func testSaveUpdatesExistingPodcast() throws {
         try runWithBothImplementations { dataManager, impl in
-            let podcast = self.createTestPodcast(uuid: "update-test-uuid", title: "Original Title", author: "Original Author", dataManager: dataManager)
+            var podcast = self.createTestPodcast(uuid: "update-test-uuid", title: "Original Title", author: "Original Author", dataManager: dataManager)
 
             // Update fields
             podcast.title = "Updated Title"
@@ -923,15 +923,15 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     func testSaveGeneratesIdIfZero() throws {
         try runWithBothImplementations { dataManager, impl in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = "id-test-uuid"
             podcast.title = "ID Test Podcast"
             podcast.addedDate = Date()
             podcast.id = 0
 
-            dataManager.save(podcast: podcast)
+            let saved = dataManager.save(podcast: podcast)
 
-            XCTAssertNotEqual(podcast.id, 0, "\(impl): ID should be generated")
+            XCTAssertNotEqual(saved.id, 0, "\(impl): ID should be generated")
 
             let found = dataManager.findPodcast(uuid: "id-test-uuid")
             XCTAssertNotNil(found, "\(impl): Should find podcast with generated ID")
@@ -941,7 +941,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     func testSavePreservesOptionalFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = "optional-test-uuid"
             podcast.title = "Optional Fields Test"
             podcast.addedDate = Date()
@@ -964,7 +964,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let folder = self.createTestFolder(uuid: "folder-for-podcast", name: "Test Folder", dataManager: dataManager)
 
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = "folder-podcast-uuid"
             podcast.title = "Podcast in Folder"
             podcast.addedDate = Date()
@@ -1020,7 +1020,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         autoArchiveEpisodeLimit: Int32 = 0,
         dataManager: DataManager
     ) -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = uuid
         podcast.title = title
         podcast.author = author
@@ -1037,7 +1037,8 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         podcast.autoAddToUpNext = autoAddToUpNext
         podcast.autoDownloadSetting = autoDownloadSetting
         podcast.autoArchiveEpisodeLimit = autoArchiveEpisodeLimit
-        dataManager.save(podcast: podcast)
-        return podcast
+        // Value-type Podcast: save no longer back-mutates the caller's id, so return the saved copy
+        // (which carries the generated row id) for callers that rely on it.
+        return dataManager.save(podcast: podcast)
     }
 }

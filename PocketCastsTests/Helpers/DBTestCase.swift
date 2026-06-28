@@ -112,13 +112,15 @@ class DBTestCase: XCTestCase {
         downloadManager.automaticallyStartDownloads = false
         DataManager.sharedManager = dataManager
 
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = UUID().uuidString
         podcast.subscribed = 0
         podcast.addedDate = Date().addingTimeInterval(-1.week)
         podcast.syncStatus = SyncStatus.synced.rawValue
 
-        dataManager.save(podcast: podcast)
+        // Value-type Podcast: save returns the saved copy carrying the generated row id; capture it so
+        // the episode below is linked via the real podcast_id (a discarded save would leave id == 0).
+        podcast = dataManager.save(podcast: podcast)
 
         let episode = Episode()
         episode.uuid = UUID().uuidString

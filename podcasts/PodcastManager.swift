@@ -44,6 +44,7 @@ class PodcastManager: NSObject {
 
     #if !APPCLIP && !os(tvOS)
         func setNotificationsEnabled(podcast: Podcast, enabled: Bool) {
+            var podcast = podcast
             if enabled {
                 if !NotificationsGroup.newEpisodes.isEnabled {
                     // this is the first podcast to enable push, to work around the fact that we defaulted that to on at the data layer, turn it off for every podcast

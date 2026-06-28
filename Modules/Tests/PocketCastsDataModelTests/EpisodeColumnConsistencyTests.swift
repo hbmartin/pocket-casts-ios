@@ -67,7 +67,7 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
     func testSaveAndLoadPreservesAllFields() throws {
         try runWithBothImplementations { dataManager, implementationName in
             // Create a podcast first since episodes require a parent podcast
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = UUID().uuidString.lowercased()
             podcast.title = "Test Podcast"
             podcast.addedDate = Date()
@@ -135,7 +135,7 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
     func testHasOnlyUuidNotPersisted() throws {
         try runWithBothImplementations { dataManager, implementationName in
             // Create a podcast first
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = UUID().uuidString.lowercased()
             podcast.title = "Test Podcast"
             podcast.addedDate = Date()

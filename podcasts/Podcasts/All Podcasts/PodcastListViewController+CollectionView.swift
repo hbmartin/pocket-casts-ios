@@ -77,7 +77,8 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
         let badgeType = Settings.podcastBadgeType()
 
         if libraryType == .list {
-            if let podcast = item.podcast {
+            if var podcast = item.podcast {
+                podcast.cachedUnreadCount = max(0, item.frozenBadgeCount)
                 let castCell = cell as! PodcastListCell
                 castCell.populateFrom(podcast, badgeType: badgeType)
             } else if var folder = item.folder {
@@ -86,7 +87,8 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
                 castCell.populateFrom(folder: folder, badgeType: badgeType)
             }
         } else {
-            if let podcast = item.podcast {
+            if var podcast = item.podcast {
+                podcast.cachedUnreadCount = max(0, item.frozenBadgeCount)
                 let castCell = cell as! PodcastGridCell
                 castCell.populateFrom(podcast: podcast, badgeType: badgeType, libraryType: libraryType)
             } else if var folder = item.folder {
@@ -126,19 +128,19 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
     // MARK: - Re-ordering
 
     func saveSortOrder() {
-        // Folder is a value type, so collect the mutated copies to persist rather than
-        // relying on in-place mutation of `listItem.folder` (a get-only computed value).
+        // Podcast and Folder are value types, so collect the mutated copies to persist rather than
+        // relying on in-place mutation of `listItem.podcast`/`listItem.folder` (get-only values).
+        var allPodcasts: [Podcast] = []
         var allFolders: [Folder] = []
         for (index, listItem) in gridItems.enumerated() {
-            if let podcast = listItem.podcast {
+            if var podcast = listItem.podcast {
                 podcast.sortOrder = Int32(index)
+                allPodcasts.append(podcast)
             } else if var folder = listItem.folder {
                 folder.sortOrder = Int32(index)
                 allFolders.append(folder)
             }
         }
-
-        let allPodcasts = gridItems.compactMap(\.podcast)
 
         DataManager.sharedManager.saveSortOrders(podcasts: allPodcasts)
         DataManager.sharedManager.saveSortOrders(folders: allFolders, syncModified: TimeFormatter.currentUTCTimeInMillis())

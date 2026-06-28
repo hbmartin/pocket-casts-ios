@@ -6,6 +6,7 @@ extension DataManager {
         let podcasts = allPodcasts(includeUnsubscribed: true)
 
         podcasts.forEach { podcast in
+            var podcast = podcast
             podcast.settings.$autoStartFrom = ModifiedDate<Int32>(wrappedValue: podcast.startFrom)
             podcast.settings.$autoSkipLast = ModifiedDate<Int32>(wrappedValue: podcast.skipLast)
             podcast.settings.$playbackSpeed = ModifiedDate<Double>(wrappedValue: podcast.playbackSpeed)
