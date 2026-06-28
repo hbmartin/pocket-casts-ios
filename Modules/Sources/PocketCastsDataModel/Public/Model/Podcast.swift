@@ -133,7 +133,12 @@ public class Podcast: NSObject, Identifiable, @unchecked Sendable {
     }
 
     override public var hash: Int {
-        Int(truncatingIfNeeded: id)
+        // Key on uuid so hash is consistent with isEqual (which compares uuid).
+        // Keying on id violated the Hashable contract: two instances equal by
+        // uuid but differing in id (e.g. an unsaved id == 0 copy vs the saved
+        // row) hashed differently. This mirrors the EpisodeFilter fix (PR #111)
+        // and is the value-based semantics the struct's Hashable will carry.
+        uuid.hashValue
     }
 
     public static func previewPodcast() -> Podcast {
