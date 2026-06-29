@@ -167,8 +167,7 @@ class PlaylistCellViewModel: ObservableObject {
                 let episodeUuid = episodeIdentifier.episodeUuid
                 group.addTask {
                     if includingEpisodeArtwork,
-                       let imageUrl = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid),
-                       let url = URL(string: imageUrl) {
+                       let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
                         return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
                     let url = imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)

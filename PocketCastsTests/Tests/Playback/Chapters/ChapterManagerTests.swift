@@ -104,7 +104,7 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
         ""
     }
 
-    func loadEpisodeArtworkUrl(podcastUuid: String, episodeUuid: String) async throws -> String? {
+    func loadEpisodeArtworkUrl(podcastUuid: String, episodeUuid: String) async throws -> URL? {
         nil
     }
 
