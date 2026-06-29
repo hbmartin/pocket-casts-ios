@@ -35,7 +35,7 @@ final class PodcastExistsHelperTests: XCTestCase {
     }
 
     func testPositiveLookupIsCachedUntilInvalidated() {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = podcastUuid
         dataManager.podcasts[podcastUuid] = podcast
 
@@ -54,7 +54,7 @@ final class PodcastExistsHelperTests: XCTestCase {
     }
 
     func testLookupDoesNotCacheResultWhenInvalidatedDuringDatabaseLookup() {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = podcastUuid
         dataManager.podcasts[podcastUuid] = podcast
         dataManager.beforeReturningPodcast = { [weak dataManager] uuid in

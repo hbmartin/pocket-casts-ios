@@ -7,8 +7,9 @@ class HomeGridDataHelperTests: XCTestCase {
     // Given a folder and a podcast without a folder, sort them
     // based on `sortedPodcasts` order
     func testLatestEpisodeSort() {
-        let podcastInFolder = PodcastBuilder().build()
-        let folder = FolderBuilder().with(podcasts: [podcastInFolder]).build()
+        var podcastInFolder = PodcastBuilder().build()
+        let folder = FolderBuilder().build()
+        podcastInFolder.folderUuid = folder.uuid
         let podcastNotInAFolder = PodcastBuilder().build()
         let sortedPodcasts = [podcastInFolder, podcastNotInAFolder]
         var gridItems = [HomeGridItem(podcast: podcastNotInAFolder), HomeGridItem(folder: folder)]
@@ -22,8 +23,9 @@ class HomeGridDataHelperTests: XCTestCase {
     // Given a folder, a podcast without a folder, and an empty folder
     // sort the empty folder on the end
     func testLatestEpisodeSortWithEmptyFolders() {
-        let podcastInFolder = PodcastBuilder().build()
-        let folder = FolderBuilder().with(podcasts: [podcastInFolder]).build()
+        var podcastInFolder = PodcastBuilder().build()
+        let folder = FolderBuilder().build()
+        podcastInFolder.folderUuid = folder.uuid
         let podcastNotInAFolder = PodcastBuilder().build()
         let sortedPodcasts = [podcastInFolder, podcastNotInAFolder]
         let emptyFolder = FolderBuilder().build()
@@ -53,8 +55,9 @@ class HomeGridDataHelperTests: XCTestCase {
             "🔛🔛🔛",
             "😀"
         ]
-        let podcastInFolder = PodcastBuilder().build()
-        let folder = FolderBuilder().with(podcasts: [podcastInFolder]).build()
+        var podcastInFolder = PodcastBuilder().build()
+        let folder = FolderBuilder().build()
+        podcastInFolder.folderUuid = folder.uuid
         let podcastNotInAFolder = PodcastBuilder().build()
         let sortedPodcasts = [podcastInFolder, podcastNotInAFolder]
         var gridItems = [

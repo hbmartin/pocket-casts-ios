@@ -82,15 +82,16 @@ class DataManagerTestCase: XCTestCase {
         folderUuid: String? = nil,
         dataManager: DataManager
     ) -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = uuid
         podcast.title = title
         podcast.subscribed = subscribed
         podcast.sortOrder = sortOrder
         podcast.folderUuid = folderUuid
         podcast.addedDate = Date()
-        dataManager.save(podcast: podcast)
-        return podcast
+        // Return the saved value (mirrors createTestFolder/createTestPlaylist) so callers see the
+        // assigned id and stay correct once Podcast becomes a value-type struct.
+        return dataManager.save(podcast: podcast)
     }
 
     /// Creates a test episode with the given properties

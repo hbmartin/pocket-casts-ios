@@ -3,7 +3,7 @@ import PocketCastsUtils
 
 extension Podcast {
     static func from(resultSet rs: PCDBResultSet) -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.id = rs.longLongInt(forColumn: "id")
         podcast.addedDate = DBUtils.convertDate(value: rs.double(forColumn: "addedDate"))
         podcast.autoDownloadSetting = rs.int(forColumn: "autoDownloadSetting")

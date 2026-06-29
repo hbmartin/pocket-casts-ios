@@ -36,6 +36,7 @@ extension ServerPodcastManager {
     }
 
     private func update(podcast: Podcast, podcastInfo: [String: Any], lastModified: String?, addMissingEpisodes: Bool) {
+        var podcast = podcast
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any], let episodesJson = podcastJson["episodes"] as? [[String: Any]] else { return }
 
         podcast.lastUpdatedAt = lastModified
@@ -214,6 +215,7 @@ extension ServerPodcastManager {
     }
 
     public func updateLatestEpisodeInfo(podcast: Podcast, setDefaults: Bool, autoDownloadLimit: Int = 1) {
+        var podcast = podcast
         let latestEpisodes = podcast.latestEpisodes(limit: max(autoDownloadLimit, 1))
         guard let latestEpisode = latestEpisodes.first else { return }
 
@@ -230,6 +232,7 @@ extension ServerPodcastManager {
     }
 
     private func setDefaultsAndLoadMetadataForNewlyAddedPodcast(_ podcast: Podcast, latestEpisodes: [Episode], autoDownload: Bool) {
+        var podcast = podcast
         // if all the podcasts the user currently has are auto download, set this one to be as well
         let autoDownloadQuery = "SELECT COUNT(*) FROM \(DataManager.podcastTableName) WHERE subscribed = 1 AND autoDownloadSetting = 1"
         let totalQuery = "SELECT COUNT(*) FROM \(DataManager.podcastTableName) WHERE subscribed = 1"

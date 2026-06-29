@@ -240,17 +240,19 @@ class FolderViewController: PCViewController, UIGestureRecognizerDelegate {
 
         let badgeType = Settings.podcastBadgeType()
         // load the required badge information if the supplied badge type needs it
+        // Podcast is a value type; mutate the badge count in place on the VC-owned array so the cells
+        // (which read podcast.cachedUnreadCount) render the right value.
         if badgeType == .allUnplayed {
             let podcastCounts = DataManager.sharedManager.podcastUnfinishedCounts()
-            for podcast in podcasts {
-                podcast.cachedUnreadCount = Int(podcastCounts[podcast.uuid] ?? 0)
+            for index in podcasts.indices {
+                podcasts[index].cachedUnreadCount = Int(podcastCounts[podcasts[index].uuid] ?? 0)
             }
         } else if badgeType == .latestEpisode {
-            for podcast in podcasts {
-                if let latestEpisode = DataManager.sharedManager.findLatestEpisode(podcast: podcast) {
-                    podcast.cachedUnreadCount = latestEpisode.unplayed() && !latestEpisode.archived ? 1 : 0
+            for index in podcasts.indices {
+                if let latestEpisode = DataManager.sharedManager.findLatestEpisode(podcast: podcasts[index]) {
+                    podcasts[index].cachedUnreadCount = latestEpisode.unplayed() && !latestEpisode.archived ? 1 : 0
                 } else {
-                    podcast.cachedUnreadCount = 0
+                    podcasts[index].cachedUnreadCount = 0
                 }
             }
         }

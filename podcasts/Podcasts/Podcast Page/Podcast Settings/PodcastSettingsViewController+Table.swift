@@ -112,7 +112,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             cell.configureWithImage(imageName: "settings-skipintros", tintColor: podcast.iconTintColor())
 
             cell.onValueChanged = { [weak self] value in
-                guard let podcast = self?.podcast else { return }
+                guard var podcast = self?.podcast else { return }
 
                 podcast.autoStartFrom = Int32(value)
                 podcast.syncStatus = SyncStatus.notSynced.rawValue
@@ -138,7 +138,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             cell.configureWithImage(imageName: "settings-skipoutros", tintColor: podcast.iconTintColor())
 
             cell.onValueChanged = { [weak self] value in
-                guard let podcast = self?.podcast else { return }
+                guard var podcast = self?.podcast else { return }
 
                 podcast.autoSkipLast = Int32(value)
                 podcast.syncStatus = SyncStatus.notSynced.rawValue

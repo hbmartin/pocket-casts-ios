@@ -111,8 +111,10 @@ public final class PodcastRepositoryMock: RepositoryMock, PodcastRepository {
         record("delete(podcast:)")
     }
 
-    public func save(podcast: Podcast) {
+    @discardableResult
+    public func save(podcast: Podcast) -> Podcast {
         record("save(podcast:)")
+        return podcast
     }
 
     public func savePushSetting(podcast: Podcast, pushEnabled: Bool) {

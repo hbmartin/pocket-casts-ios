@@ -86,7 +86,7 @@ extension SyncTask {
                 return
             }
 
-            guard let localPodcast = DataManager.sharedManager.findPodcast(uuid: uuid) else { return }
+            guard var localPodcast = DataManager.sharedManager.findPodcast(uuid: uuid) else { return }
 
             // we have added the podcast locally so add the synced info for it
             if let startFrom = podcast.autoStartFrom {
@@ -109,7 +109,7 @@ extension SyncTask {
             }
 
             if let settings = podcast.settings {
-                self.processSettings(settings, to: localPodcast)
+                localPodcast = self.processSettings(settings, to: localPodcast)
             }
 
             // now grab the sync info for the episodes
@@ -183,7 +183,8 @@ private extension BookmarkDataManager {
 // MARK: - Settings
 
 private extension SyncTask {
-    func processSettings(_ settings: PodcastSettings, to podcast: Podcast) {
+    func processSettings(_ settings: PodcastSettings, to podcast: Podcast) -> Podcast {
+        var podcast = podcast
         let oldSettings = podcast.settings
         podcast.settings.$customEffects = settings.$customEffects
         podcast.settings.$autoStartFrom = settings.$autoStartFrom
@@ -202,5 +203,6 @@ private extension SyncTask {
         podcast.settings.$episodeGrouping = settings.$episodeGrouping
         podcast.settings.$showArchived = settings.$showArchived
         oldSettings.printDiff(from: podcast.settings, withIdentifier: podcast.uuid)
+        return podcast
     }
 }

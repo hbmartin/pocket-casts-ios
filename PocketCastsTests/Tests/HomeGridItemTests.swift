@@ -16,7 +16,7 @@ final class HomeGridItemTests: XCTestCase {
 
     func testSameUUIDAcrossKindsYieldsDistinctIDs() {
         let uuid = NSUUID().uuidString
-        let podcast = PodcastBuilder().build()
+        var podcast = PodcastBuilder().build()
         podcast.uuid = uuid
         var folder = FolderBuilder().build()
         folder.uuid = uuid

@@ -55,7 +55,7 @@ final class RepositoryProtocolTests: XCTestCase {
     func testNativeAsyncFindersRoundTrip() async {
         let dataManager = DataManager.newTestDataManager()
 
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = UUID().uuidString.lowercased()
         podcast.addedDate = Date()
         dataManager.save(podcast: podcast)
@@ -104,7 +104,7 @@ final class RepositoryProtocolTests: XCTestCase {
     func testSaveAsyncRoundTrip() async {
         let dataManager = DataManager.newTestDataManager()
 
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = UUID().uuidString.lowercased()
         podcast.addedDate = Date()
         podcast.isEffectsOverridden = true

@@ -17,7 +17,7 @@ class PodcastSettingsImportUserDefaultsTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.trimSilenceAmount = newTrimSilence.rawValue
         podcast.boostVolume = newBoostVolume
         podcast.autoArchivePlayedAfter = newArchivePlayedAfter.rawValue

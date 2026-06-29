@@ -374,7 +374,8 @@ public class DataManager {
         podcastManager.delete(podcast: podcast, dbQueue: dbQueue)
     }
 
-    public func save(podcast: Podcast) {
+    @discardableResult
+    public func save(podcast: Podcast) -> Podcast {
         podcastManager.save(podcast: podcast, dbQueue: dbQueue)
     }
 
@@ -1197,6 +1198,7 @@ public class DataManager {
     // MARK: - Push Notification
 
     public func setPushDefaultForNewPodcast(_ podcast: Podcast) {
+        var podcast = podcast
         // if all the podcasts the user currently has are auto download, set this one to be as well
         let pushOnQuery = "SELECT COUNT(*) FROM \(DataManager.podcastTableName) WHERE subscribed = 1 AND pushEnabled = 1"
         let totalQuery = "SELECT COUNT(*) FROM \(DataManager.podcastTableName) WHERE subscribed = 1"

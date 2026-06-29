@@ -11,12 +11,6 @@ class FolderBuilder {
         folder.uuid = NSUUID().uuidString
     }
 
-    /// Add the given list of podcasts to this folder
-    func with(podcasts: [Podcast]) -> FolderBuilder {
-        podcasts.forEach { $0.folderUuid = folder.uuid }
-        return self
-    }
-
     func with(name: String) -> Self {
         folder.name = name
         return self

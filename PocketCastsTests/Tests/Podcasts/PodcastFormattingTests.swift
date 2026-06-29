@@ -9,7 +9,7 @@ import PocketCastsUtils
 final class PodcastFormattingTests: XCTestCase {
 
     private func podcast(frequency: String?) -> Podcast {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.episodeFrequency = frequency
         return podcast
     }
@@ -41,7 +41,7 @@ final class PodcastFormattingTests: XCTestCase {
     // MARK: - displayableExpiryLanguage
 
     func testDisplayableExpiryLanguage_deleteAfterExpiry() {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.licensing = PodcastLicensing.deleteEpisodesAfterExpiry.rawValue
 
         let future = Date().addingTimeInterval(30.days)
@@ -54,7 +54,7 @@ final class PodcastFormattingTests: XCTestCase {
     }
 
     func testDisplayableExpiryLanguage_keepEpisodes() {
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.licensing = PodcastLicensing.keepEpisodesAfterExpiry.rawValue
 
         let future = Date().addingTimeInterval(30.days)

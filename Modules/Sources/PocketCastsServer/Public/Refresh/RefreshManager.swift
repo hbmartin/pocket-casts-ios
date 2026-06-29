@@ -30,18 +30,22 @@ public final class RefreshManager: @unchecked Sendable {
     /// Note that this will force all the episodes to be updated.
     /// - Parameter podcast: a `Podcast` object
     public func refresh(podcast: Podcast, from episodeUuid: String) {
+        // Podcast is a value type: carry the transient force-refresh flag on the copy handed to the
+        // refresh pipeline. (The old post-refresh `forceRefreshEpisodeFrom = nil` reset was a no-op on
+        // a transient field of an instance the pipeline had already consumed, so it is dropped.)
+        var podcast = podcast
         podcast.forceRefreshEpisodeFrom = episodeUuid
         refresh(podcasts: [podcast]) {
             if SyncManager.isUserLoggedIn() {
                 guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
 
                 DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-                podcast.forceRefreshEpisodeFrom = nil
             }
         }
     }
 
     public func refresh(podcast: Podcast, from episodeUuid: String) async {
+        var podcast = podcast
         podcast.forceRefreshEpisodeFrom = episodeUuid
         await withCheckedContinuation { continuation in
             refresh(podcasts: [podcast]) {
@@ -49,7 +53,6 @@ public final class RefreshManager: @unchecked Sendable {
                     guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
 
                     DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-                    podcast.forceRefreshEpisodeFrom = nil
                 }
                 continuation.resume()
             }

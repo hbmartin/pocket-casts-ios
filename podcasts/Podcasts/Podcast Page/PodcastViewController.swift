@@ -802,12 +802,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func subscribe() {
-        guard let podcast else { return }
+        guard var podcast else { return }
 
         podcast.subscribed = 1
         podcast.syncStatus = SyncStatus.notSynced.rawValue
         podcast.autoDownloadSetting = (FeatureFlag.autoDownloadOnSubscribe.enabled && Settings.autoDownloadEnabled() && Settings.autoDownloadOnFollow() ? AutoDownloadSetting.latest : AutoDownloadSetting.off).rawValue
-        DataManager.sharedManager.save(podcast: podcast)
+        // Podcast is a value type: write the saved copy back to the stored property so synchronous
+        // reads (subscription state, etc.) reflect the change immediately, as the class version did.
+        podcast = DataManager.sharedManager.save(podcast: podcast)
+        self.podcast = podcast
         ServerPodcastManager.shared.updateLatestEpisodeInfo(podcast: podcast, setDefaults: true, autoDownloadLimit: Settings.autoDownloadOnFollow() ? Settings.autoDownloadLimits().rawValue : 0)
         loadLocalEpisodes(podcast: podcast, animated: true)
 
@@ -982,10 +985,12 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func toggleShowArchived() {
-        guard let podcast else { return }
+        guard var podcast else { return }
 
         podcast.shouldShowArchived = !podcast.shouldShowArchived
-        DataManager.sharedManager.save(podcast: podcast)
+        // Write the saved copy back so showingArchived() (a synchronous read of self.podcast) is correct.
+        podcast = DataManager.sharedManager.save(podcast: podcast)
+        self.podcast = podcast
         loadLocalEpisodes(podcast: podcast, animated: true)
 
         Analytics.track(.podcastScreenToggleArchived, properties: ["show_archived": podcast.shouldShowArchived])
@@ -1319,14 +1324,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     private func showPodcastFolderMoveOptions(currentFolderUuid: String) {
-        guard let podcast, let folder = DataManager.sharedManager.findFolder(uuid: currentFolderUuid) else { return }
+        guard var podcast, let folder = DataManager.sharedManager.findFolder(uuid: currentFolderUuid) else { return }
 
         let optionsPicker = OptionsPicker(title: folder.name.localizedUppercase)
         let removeAction = OptionAction(label: L10n.folderRemoveFrom.localizedCapitalized, icon: "folder-remove") {
             podcast.sortOrder = ServerPodcastManager.shared.highestSortOrderForHomeGrid() + 1
             podcast.folderUuid = nil
             podcast.syncStatus = SyncStatus.notSynced.rawValue
-            DataManager.sharedManager.save(podcast: podcast)
+            podcast = DataManager.sharedManager.save(podcast: podcast)
+            self.podcast = podcast
 
             DataManager.sharedManager.updateFolderSyncModified(folderUuid: currentFolderUuid, syncModified: TimeFormatter.currentUTCTimeInMillis())
 

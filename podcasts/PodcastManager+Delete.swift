@@ -5,6 +5,7 @@ import PocketCastsUtils
 
 extension PodcastManager {
     func unsubscribe(podcast: Podcast) {
+        var podcast = podcast
         let savedFolderUuid = podcast.folderUuid
 
         if isLoggedIn() {

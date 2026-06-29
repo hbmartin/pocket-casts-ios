@@ -22,7 +22,7 @@ final class AutoAddCandidatesDataManagerTests: XCTestCase {
         let dataManager = try setupDatabase()
         let newUpNextSetting = AutoAddToUpNextSetting.addFirst
 
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = "1234"
         podcast.addedDate = Date()
         podcast.setAutoAddToUpNext(setting: newUpNextSetting)
@@ -52,7 +52,7 @@ final class AutoAddCandidatesDataManagerTests: XCTestCase {
         let dataManager = try setupDatabase()
         let newUpNextSetting = AutoAddToUpNextSetting.addFirst
 
-        let podcast = Podcast()
+        var podcast = Podcast()
         podcast.uuid = "1234"
         podcast.addedDate = Date()
         podcast.setAutoAddToUpNext(setting: newUpNextSetting)
@@ -84,7 +84,7 @@ final class AutoAddCandidatesDataManagerTests: XCTestCase {
         let podcastCount = 500
         let episodeCount = 50
         (0...podcastCount).forEach { _ in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = UUID().uuidString
             podcast.addedDate = Date()
             podcast.setAutoAddToUpNext(setting: newUpNextSetting)
@@ -117,7 +117,7 @@ final class AutoAddCandidatesDataManagerTests: XCTestCase {
         let podcastCount = 500
         let episodeCount = 50
         (0...podcastCount).forEach { _ in
-            let podcast = Podcast()
+            var podcast = Podcast()
             podcast.uuid = UUID().uuidString
             podcast.addedDate = Date()
             podcast.setAutoAddToUpNext(setting: newUpNextSetting)

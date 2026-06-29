@@ -387,9 +387,17 @@ class PodcastDataManager {
 
     // MARK: - Updates
 
-    func save(podcast: Podcast, dbQueue: PCDBQueue) {
-        let isInsert = podcast.id == 0
-        if isInsert {
+    @discardableResult
+    func save(podcast: Podcast, dbQueue: PCDBQueue) -> Podcast {
+        var podcast = podcast
+        var isInsert = podcast.id == 0
+        if isInsert, let existingId = existingPodcastId(uuid: podcast.uuid) {
+            // A value-type save no longer back-mutates the caller's id, so a caller that re-saves a copy
+            // whose id is still 0 must update the existing row (resolved by uuid) rather than insert a
+            // duplicate. Mirrors the EpisodeFilter save-then-add fix (PR #113).
+            podcast.id = existingId
+            isInsert = false
+        } else if isInsert {
             podcast.id = DBUtils.generateUniqueId()
         }
 
@@ -418,6 +426,15 @@ class PodcastDataManager {
             }
         }
         cachePodcasts(dbQueue: dbQueue)
+        return podcast
+    }
+
+    /// Resolves the persisted row id for a uuid from the in-memory cache (a complete mirror of the
+    /// table). Used by `save` to update-by-uuid instead of inserting a duplicate when the caller's
+    /// value-type copy has lost its id.
+    private func existingPodcastId(uuid: String) -> Int64? {
+        guard !uuid.isEmpty else { return nil }
+        return cachedPodcastsQueue.sync { cachedPodcasts[uuid]?.id }
     }
 
     func bulkSetFolderUuid(folderUuid: String, podcastUuids: [String], dbQueue: PCDBQueue) {
@@ -443,6 +460,7 @@ class PodcastDataManager {
     }
 
     func savePushSetting(podcast: Podcast, pushEnabled: Bool, dbQueue: PCDBQueue) {
+        var podcast = podcast
         podcast.isPushEnabled = pushEnabled
         savePushSetting(podcastUuid: podcast.uuid, pushEnabled: pushEnabled, dbQueue: dbQueue)
     }
@@ -456,7 +474,7 @@ class PodcastDataManager {
 
     func saveAutoAddToUpNext(podcastUuid: String, autoAddToUpNext: Int32, dbQueue: PCDBQueue) {
         if FeatureFlag.newSettingsStorage.enabled {
-            if let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) {
+            if var podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) {
                 if let setting = AutoAddToUpNextSetting(rawValue: autoAddToUpNext) {
                     podcast.setAutoAddToUpNext(setting: setting)
                     podcast.syncStatus = SyncStatus.notSynced.rawValue
@@ -481,6 +499,7 @@ class PodcastDataManager {
     }
 
     func saveAutoArchiveLimit(podcast: Podcast, limit: Int32, dbQueue: PCDBQueue) {
+        var podcast = podcast
         podcast.autoArchiveEpisodeLimitCount = limit
         podcast.settings.autoArchiveEpisodeLimit = limit
         saveSingleValue(name: "episodeKeepSetting", value: limit, podcastUuid: podcast.uuid, dbQueue: dbQueue)

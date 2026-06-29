@@ -4,7 +4,7 @@ import Foundation
 
 /// Creates a Podcast with a random `id` and `uuid`
 class PodcastBuilder {
-    let podcast: Podcast
+    var podcast: Podcast
 
     init() {
         podcast = Podcast()

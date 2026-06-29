@@ -219,7 +219,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any], let podcastUuid = podcastJson["uuid"] as? String else { return false }
 
         // check if we already have this podcast, and if we do treat it differently
-        if let existingPodcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
+        if var existingPodcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
             if existingPodcast.isSubscribed(), subscribe {
                 PodcastExistsHelper.shared.markExists(uuid: podcastUuid)
                 return true
@@ -240,7 +240,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
             return true
         }
 
-        let podcast = Podcast.from(podcastJson: podcastJson, podcastInfo: podcastInfo, uuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified, isoFormatter: isoFormatter)
+        var podcast = Podcast.from(podcastJson: podcastJson, podcastInfo: podcastInfo, uuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified, isoFormatter: isoFormatter)
 
         podcast.sortOrder = highestSortOrderForHomeGrid() + 1
 
@@ -248,7 +248,8 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         guard let episodesJson = podcastJson["episodes"] as? [[String: Any]] else { return false }
 
         // save the podcast so that it gets and ID
-        DataManager.sharedManager.save(podcast: podcast)
+        // (value-type Podcast: capture the saved copy so podcast.id is populated for the episodes below)
+        podcast = DataManager.sharedManager.save(podcast: podcast)
 
         var episodes = [Episode]()
         for episodeJson in episodesJson {

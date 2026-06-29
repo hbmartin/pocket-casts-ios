@@ -29,7 +29,8 @@ public protocol PodcastRepository: AnyObject {
     func setDownloadSettingForAllPodcasts(setting: AutoDownloadSetting)
     func allUnsyncedPodcasts() -> [Podcast]
     func delete(podcast: Podcast)
-    func save(podcast: Podcast)
+    @discardableResult
+    func save(podcast: Podcast) -> Podcast
     func savePushSetting(podcast: Podcast, pushEnabled: Bool)
     func savePushSetting(podcastUuid: String, pushEnabled: Bool)
     func saveAutoAddToUpNext(podcastUuid: String, autoAddToUpNext: Int32)
@@ -48,17 +49,18 @@ public protocol PodcastRepository: AnyObject {
 
     // MARK: Async variants
 
-    // The returned models are mutable reference types: treat them as owned by
-    // the awaiting task. The default implementations run the synchronous
-    // requirement on a background queue; conformers can override with natively
-    // async reads.
+    // The returned models are `Sendable` value types, so they are safe to hand
+    // across the awaiting task boundary. The default implementations run the
+    // synchronous requirement on a background queue; conformers can override
+    // with natively async reads.
     func findPodcastAsync(uuid: String, includeUnsubscribed: Bool) async -> Podcast?
 
-    // Completes only after the write has landed, so callers can safely re-read
-    // the saved record afterwards. The default implementation runs the
-    // synchronous requirement on a background queue; conformers can override
-    // with natively async writes.
-    func saveAsync(podcast: Podcast) async
+    // Completes only after the write has landed and returns the saved value
+    // (with its assigned row id), so callers can use the result directly. The
+    // default implementation runs the synchronous requirement on a background
+    // queue; conformers can override with natively async writes.
+    @discardableResult
+    func saveAsync(podcast: Podcast) async -> Podcast
 }
 
 public extension PodcastRepository {
@@ -96,7 +98,8 @@ public extension PodcastRepository {
         await findPodcastAsync(uuid: uuid, includeUnsubscribed: false)
     }
 
-    func saveAsync(podcast: Podcast) async {
+    @discardableResult
+    func saveAsync(podcast: Podcast) async -> Podcast {
         await runOffMainThread { self.save(podcast: podcast) }
     }
 }

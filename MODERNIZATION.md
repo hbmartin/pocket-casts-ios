@@ -161,9 +161,19 @@ file over 1,000 lines; regression rules active.
   struct-record migration begins, a companion rule flagging new `@unchecked Sendable` on `@GRDBRecord`
   types outside a shrinking allowlist.
 
+**Status (2026-06):** Record-Sendability strategy resolved and the leaf-record migration **complete** —
+see [docs/Phase3-RecordSendability.md](docs/Phase3-RecordSendability.md). A reference-semantics spike
+established **Strategy B (struct records) for the leaves** — `Folder` ✓, `EpisodeFilter` ✓, `Podcast` ✓
+(2026-06-28) are now `Sendable` value-type structs — while **`Episode`/`UserEpisode` are reclassified
+out of Phase 3 and coupled to Phase 5**: their only shared-mutation reliance lives in the playback
+engine (deferred) and behind the `@objc BaseEpisode` protocol (a hard structural blocker needing a
+standalone de-`@objc` PR). The raw-SQL → query-interface conversion + `grdbQueryInterface` deletion
+remains the outstanding Phase 3 thread.
+
 **Exit criteria:** `grdbQueryInterface` deleted (single code path); raw SQL only in the justified
 residue list; record-Sendability strategy (struct migration) documented and underway, with the
-`@unchecked Sendable` record population shrinking rather than growing.
+`@unchecked Sendable` record population shrinking rather than growing. _(Leaf records done; heavy
+episodes moved under the Phase 5 umbrella.)_
 
 ## Phase 4 — Complete strict concurrency + async migration (medium-high risk)
 

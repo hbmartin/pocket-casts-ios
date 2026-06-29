@@ -140,7 +140,7 @@ class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendable {
             importQueue.addOperation {
                 // check to see if we already have this podcast
                 let existingPodcast = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true)
-                if let podcast = existingPodcast {
+                if var podcast = existingPodcast {
                     if !podcast.isSubscribed() {
                         podcast.subscribed = 1
                         podcast.syncStatus = SyncStatus.notSynced.rawValue

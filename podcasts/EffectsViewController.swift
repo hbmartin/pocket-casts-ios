@@ -343,7 +343,7 @@ class EffectsViewController: SimpleNotificationsViewController {
     }
 
     @IBAction func clearForPodcastTapped(_ sender: Any) {
-        guard let episode = PlaybackManager.shared.currentEpisode() as? Episode, let podcast = episode.parentPodcast() else { return }
+        guard let episode = PlaybackManager.shared.currentEpisode() as? Episode, var podcast = episode.parentPodcast() else { return }
 
         podcast.isEffectsOverridden = false
         updateClearView(podcast: podcast)
