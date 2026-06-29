@@ -58,7 +58,7 @@ final class RepositoryProtocolTests: XCTestCase {
         var podcast = Podcast()
         podcast.uuid = UUID().uuidString.lowercased()
         podcast.addedDate = Date()
-        dataManager.save(podcast: podcast)
+        podcast = dataManager.save(podcast: podcast)
 
         let episode = Episode()
         episode.uuid = UUID().uuidString.lowercased()
@@ -108,7 +108,7 @@ final class RepositoryProtocolTests: XCTestCase {
         podcast.uuid = UUID().uuidString.lowercased()
         podcast.addedDate = Date()
         podcast.isEffectsOverridden = true
-        await dataManager.saveAsync(podcast: podcast)
+        podcast = await dataManager.saveAsync(podcast: podcast)
 
         let episode = Episode()
         episode.uuid = UUID().uuidString.lowercased()

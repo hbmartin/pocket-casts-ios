@@ -116,7 +116,8 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
                 podcast.autoStartFrom = Int32(value)
                 podcast.syncStatus = SyncStatus.notSynced.rawValue
-                DataManager.sharedManager.save(podcast: podcast)
+                podcast = DataManager.sharedManager.save(podcast: podcast)
+                self?.podcast = podcast
                 cell.cellSecondaryLabel.text = L10n.timeShorthand(Int(podcast.autoStartFrom))
 
                 self?.debounce.call {
@@ -142,7 +143,8 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
                 podcast.autoSkipLast = Int32(value)
                 podcast.syncStatus = SyncStatus.notSynced.rawValue
-                DataManager.sharedManager.save(podcast: podcast)
+                podcast = DataManager.sharedManager.save(podcast: podcast)
+                self?.podcast = podcast
                 cell.cellSecondaryLabel.text = L10n.timeShorthand(Int(podcast.autoSkipLast))
 
                 self?.debounce.call {
@@ -383,8 +385,8 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
                 sender.isOn = false
                 return
             }
-            PodcastManager.shared.setNotificationsEnabled(podcast: self.podcast, enabled: sender.isOn)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+            self.podcast = PodcastManager.shared.setNotificationsEnabled(podcast: self.podcast, enabled: sender.isOn)
+            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: self.podcast.uuid)
         }
     }
 

@@ -20,12 +20,19 @@ class DataManagerMock: DataManager {
     /// value back into the in-memory store so `allPodcasts` reflects it.
     @discardableResult
     override func save(podcast: Podcast) -> Podcast {
+        var saved = podcast
         if let index = podcastsToReturn.firstIndex(where: { $0.uuid == podcast.uuid }) {
-            podcastsToReturn[index] = podcast
+            if saved.id == 0 {
+                saved.id = podcastsToReturn[index].id
+            }
+            podcastsToReturn[index] = saved
         } else {
-            podcastsToReturn.append(podcast)
+            if saved.id == 0 {
+                saved.id = Int64((podcastsToReturn.map(\.id).max() ?? 0) + 1)
+            }
+            podcastsToReturn.append(saved)
         }
-        return podcast
+        return saved
     }
 
     override func dailyListeningTime(forLast days: Int = 365) -> [String: Double] {

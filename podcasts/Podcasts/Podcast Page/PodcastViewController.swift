@@ -959,7 +959,9 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         }
         let newValue = !podcast.isPushEnabled
         Analytics.track(.podcastScreenNotificationsTapped, properties: ["enabled": newValue])
-        NotificationsHelper.shared.setNotificationsEnabled(newValue, for: podcast)
+        NotificationsHelper.shared.setNotificationsEnabled(newValue, for: podcast) { [weak self] savedPodcast in
+            self?.podcast = savedPodcast
+        }
     }
 
     func categoryTapped(_ category: String) {

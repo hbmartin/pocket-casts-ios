@@ -145,6 +145,7 @@ class AutoAddToUpNextViewController: PCViewController, UITableViewDelegate, UITa
             podcast.setAutoAddToUpNext(setting: setting)
             DataManager.sharedManager.save(podcast: podcast)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+            self?.reloadDownloadedPodcasts()
             self?.mainTable.reloadData()
             Settings.trackValueChanged(.settingsAutoAddUpNextPodcastPositionOptionChanged, value: setting)
         }

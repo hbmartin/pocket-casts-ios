@@ -4564,6 +4564,6 @@ rules:
         - "**/Model/UserEpisode.swift"
     patterns:
       # A @GRDBRecord macro application whose declared type, within the next few lines, is a `class`
-      # carrying `@unchecked Sendable`. re2 (no backreferences) — the bounded [\s\S] span covers any
-      # doc-comment block between the macro and the declaration.
-      - pattern-regex: '@GRDBRecord\([^\n]*\)[\s\S]{0,600}?\bclass\b[^\n]*@unchecked[ \t]+Sendable'
+      # carrying `@unchecked Sendable`. re2 (no backreferences) — the bounded [\s\S] spans cover
+      # comments and wrapped conformance lists between the macro, declaration, and Sendable marker.
+      - pattern-regex: '@GRDBRecord\([^\n]*\)[\s\S]{0,600}?\bclass\b[\s\S]{0,300}?@unchecked\s+Sendable'

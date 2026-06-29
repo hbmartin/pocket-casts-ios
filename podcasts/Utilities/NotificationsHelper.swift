@@ -60,7 +60,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
     }
 
     /// Handles a user-initiated change to per-podcast push notifications: requests permission if needed, persists the change, notifies observers, and shows a confirmation toast. Callers are responsible for tracking their own analytics event.
-    func setNotificationsEnabled(_ enabled: Bool, for podcast: Podcast) {
+    func setNotificationsEnabled(_ enabled: Bool, for podcast: Podcast, completion: ((Podcast) -> Void)? = nil) {
         registerForPushNotifications { granted in
             guard granted || !enabled else {
                 Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
@@ -69,10 +69,11 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                 })])
                 return
             }
-            PodcastManager.shared.setNotificationsEnabled(podcast: podcast, enabled: enabled)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+            let savedPodcast = PodcastManager.shared.setNotificationsEnabled(podcast: podcast, enabled: enabled)
+            completion?(savedPodcast)
+            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: savedPodcast.uuid)
             var message = enabled ? L10n.notificationsOn : L10n.notificationsOff
-            if let title = podcast.title, enabled {
+            if let title = savedPodcast.title, enabled {
                 message = L10n.notificationsOnForPodcast(title)
             }
             Toast.show(message)
