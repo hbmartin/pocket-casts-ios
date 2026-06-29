@@ -765,6 +765,44 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testSaveAutoArchiveLimitUpdatesNewSettingsStorage() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(uuid: "podcast-1", title: "Podcast", autoArchiveEpisodeLimit: 0, dataManager: dataManager)
+
+            dataManager.saveAutoArchiveLimit(podcast: podcast, limit: 10)
+
+            let found = dataManager.findPodcast(uuid: podcast.uuid)
+            XCTAssertEqual(found?.settings.autoArchiveEpisodeLimit, 10, "\(impl): Auto archive limit setting should be updated")
+            XCTAssertEqual(found?.autoArchiveEpisodeLimitCount, 10, "\(impl): Auto archive limit should read from settings")
+        }
+    }
+
+    func testSavePersistsNewSettingsStoragePayload() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        try runWithBothImplementations { dataManager, impl in
+            var podcast = self.createTestPodcast(uuid: "podcast-settings", title: "Podcast", dataManager: dataManager)
+            podcast.settings.episodesSortOrder = .oldestToNewest
+            podcast.settings.episodeGrouping = .season
+            podcast.settings.notification = true
+            podcast.settings.autoArchiveEpisodeLimit = 15
+
+            dataManager.save(podcast: podcast)
+
+            let found = dataManager.findPodcast(uuid: podcast.uuid)
+            XCTAssertEqual(found?.settings.episodesSortOrder, .oldestToNewest, "\(impl): Episode sort setting should be persisted")
+            XCTAssertEqual(found?.settings.episodeGrouping, .season, "\(impl): Episode grouping setting should be persisted")
+            XCTAssertEqual(found?.settings.notification, true, "\(impl): Notification setting should be persisted")
+            XCTAssertEqual(found?.settings.autoArchiveEpisodeLimit, 15, "\(impl): Auto archive limit setting should be persisted")
+        }
+    }
+
     // MARK: - setPodcastImageVersion Tests
 
     func testSetPodcastImageVersionDoesNotCrash() throws {

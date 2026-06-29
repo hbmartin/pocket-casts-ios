@@ -105,7 +105,7 @@ final class PodcastManagerTests: DBTestCase {
         podcast.subscribed = 0
         podcast.addedDate = Date().addingTimeInterval(-2.weeks)
         podcast.syncStatus = SyncStatus.synced.rawValue
-        dataManager.save(podcast: podcast)
+        podcast = dataManager.save(podcast: podcast)
 
         let episode = Episode()
         episode.uuid = UUID().uuidString

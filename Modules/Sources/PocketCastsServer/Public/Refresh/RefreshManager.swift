@@ -35,9 +35,12 @@ public final class RefreshManager: @unchecked Sendable {
         // a transient field of an instance the pipeline had already consumed, so it is dropped.)
         var podcast = podcast
         podcast.forceRefreshEpisodeFrom = episodeUuid
-        refresh(podcasts: [podcast]) {
+        let podcastToRefresh = podcast
+        let podcastUuid = podcast.uuid
+
+        refresh(podcasts: [podcastToRefresh]) {
             if SyncManager.isUserLoggedIn() {
-                guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
+                guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcastUuid) else { return }
 
                 DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
             }
@@ -47,14 +50,17 @@ public final class RefreshManager: @unchecked Sendable {
     public func refresh(podcast: Podcast, from episodeUuid: String) async {
         var podcast = podcast
         podcast.forceRefreshEpisodeFrom = episodeUuid
-        await withCheckedContinuation { continuation in
-            refresh(podcasts: [podcast]) {
+        let podcastToRefresh = podcast
+        let podcastUuid = podcast.uuid
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            refresh(podcasts: [podcastToRefresh]) {
+                defer { continuation.resume() }
                 if SyncManager.isUserLoggedIn() {
-                    guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
+                    guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcastUuid) else { return }
 
                     DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
                 }
-                continuation.resume()
             }
         }
     }

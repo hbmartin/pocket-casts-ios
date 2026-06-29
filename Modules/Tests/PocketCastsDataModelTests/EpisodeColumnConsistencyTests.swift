@@ -71,7 +71,7 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
             podcast.uuid = UUID().uuidString.lowercased()
             podcast.title = "Test Podcast"
             podcast.addedDate = Date()
-            dataManager.save(podcast: podcast)
+            podcast = dataManager.save(podcast: podcast)
 
             let original = self.createFullyPopulatedEpisode(podcastUuid: podcast.uuid, podcastId: podcast.id)
 

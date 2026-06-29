@@ -86,6 +86,7 @@ extension SyncTask {
                 return
             }
 
+            defer { dispatchGroup.leave() }
             guard var localPodcast = DataManager.sharedManager.findPodcast(uuid: uuid) else { return }
 
             // we have added the podcast locally so add the synced info for it
@@ -122,7 +123,6 @@ extension SyncTask {
                 DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
             }
             retrieveEpisodesTask.runTaskSynchronously()
-            dispatchGroup.leave()
         }
 
         _ = dispatchGroup.wait(timeout: .now() + 30.seconds)

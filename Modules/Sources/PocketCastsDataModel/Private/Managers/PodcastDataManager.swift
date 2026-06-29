@@ -425,6 +425,9 @@ class PodcastDataManager {
                 }
             }
         }
+        if FeatureFlag.newSettingsStorage.enabled {
+            saveSettings(podcast: podcast, dbQueue: dbQueue)
+        }
         cachePodcasts(dbQueue: dbQueue)
         return podcast
     }
@@ -501,7 +504,9 @@ class PodcastDataManager {
     func saveAutoArchiveLimit(podcast: Podcast, limit: Int32, dbQueue: PCDBQueue) {
         var podcast = podcast
         podcast.autoArchiveEpisodeLimitCount = limit
-        podcast.settings.autoArchiveEpisodeLimit = limit
+        if FeatureFlag.newSettingsStorage.enabled {
+            saveSingleSetting("autoArchiveEpisodeLimit", value: limit, podcastUuid: podcast.uuid, dbQueue: dbQueue)
+        }
         saveSingleValue(name: "episodeKeepSetting", value: limit, podcastUuid: podcast.uuid, dbQueue: dbQueue)
     }
 
@@ -670,6 +675,16 @@ class PodcastDataManager {
         cachePodcasts(dbQueue: dbQueue)
     }
 
+    private func saveSettings(podcast: Podcast, dbQueue: PCDBQueue) {
+        guard let json = podcast.settings.jsonData,
+              let jsonString = String(data: json, encoding: .utf8) else {
+            FileLog.shared.addMessage("PodcastDataManager.saveSettings failed to encode settings for \(podcast.uuid)")
+            return
+        }
+
+        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET settings = ? WHERE uuid = ?", values: [jsonString, podcast.uuid], methodName: "PodcastDataManager.saveSettings", onQueue: dbQueue)
+    }
+
     private func saveSingleSetting<Value: Codable & Equatable>(_ name: String, value: Value, podcastUuid: String, dbQueue: PCDBQueue) {
         dbQueue.write { db in
             do {
@@ -683,7 +698,7 @@ class PodcastDataManager {
                 UPDATE \(DataManager.podcastTableName)
                 SET settings = json_set(
                     \(DataManager.podcastTableName).settings,
-                    '$.notification',
+                    '$.\(name)',
                     json(?)
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 WHERE uuid = ?

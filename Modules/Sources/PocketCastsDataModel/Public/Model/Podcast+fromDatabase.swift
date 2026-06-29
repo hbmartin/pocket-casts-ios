@@ -54,6 +54,12 @@ extension Podcast {
         podcast.showArchived = rs.bool(forColumn: "showArchived")
         podcast.refreshAvailable = rs.bool(forColumn: "refreshAvailable")
         podcast.folderUuid = rs.string(forColumn: "folderUuid")
+        if let settingsString = rs.string(forColumn: "settings"),
+           !settingsString.isEmpty,
+           let settingsData = settingsString.data(using: .utf8),
+           let settings = try? JSONDecoder().decode(PodcastSettings.self, from: settingsData) {
+            podcast.settings = settings
+        }
         podcast.usedCustomEffectsBefore = rs.bool(forColumn: "usedCustomEffectsBefore")
         podcast.isPrivate = rs.bool(forColumn: "isPrivate")
         podcast.fundingURL = rs.string(forColumn: "fundingURL")

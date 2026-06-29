@@ -94,10 +94,10 @@ final class PodcastLogicTests: XCTestCase {
 
     // MARK: - autoAddToUpNext (legacy storage path)
 
-    func testAutoAddToUpNextOnLegacyStorage() {
+    func testAutoAddToUpNextOnLegacyStorage() throws {
         let store = FeatureFlagOverrideStore()
         defer { store.resetOverrides() }
-        try? store.override(FeatureFlag.newSettingsStorage, withValue: false)
+        try store.override(FeatureFlag.newSettingsStorage, withValue: false)
 
         var addLast = Podcast()
         addLast.autoAddToUpNext = AutoAddToUpNextSetting.addLast.rawValue

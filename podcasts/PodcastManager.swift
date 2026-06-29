@@ -43,7 +43,8 @@ class PodcastManager: NSObject {
     // MARK: - Notifications
 
     #if !APPCLIP && !os(tvOS)
-        func setNotificationsEnabled(podcast: Podcast, enabled: Bool) {
+        @discardableResult
+        func setNotificationsEnabled(podcast: Podcast, enabled: Bool) -> Podcast {
             var podcast = podcast
             if enabled {
                 if !NotificationsGroup.newEpisodes.isEnabled {
@@ -65,13 +66,13 @@ class PodcastManager: NSObject {
                 }
             }
 
+            podcast.isPushEnabled = enabled
             if FeatureFlag.newSettingsStorage.enabled {
-                podcast.settings.notification = enabled
-                podcast.syncStatus = SyncStatus.notSynced.rawValue
-                dataManager.save(podcast: podcast)
+                podcast = dataManager.save(podcast: podcast)
             } else {
                 dataManager.savePushSetting(podcast: podcast, pushEnabled: enabled)
             }
+            return podcast
         }
     #endif
 
