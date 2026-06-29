@@ -64,6 +64,15 @@ extension DataManager {
         try! DataManager(dbQueue: GRDBQueue(dbPool: DatabasePool.newTestDatabase()!))
     }
 
+    func setPodcastSettingsForTest(podcastUuid: String, settings: String, syncStatus: Int32 = SyncStatus.synced.rawValue) throws {
+        try testDbQueue.dbPool.write { db in
+            try db.execute(
+                sql: "UPDATE \(DataManager.podcastTableName) SET settings = ?, syncStatus = ? WHERE uuid = ?",
+                arguments: [settings, syncStatus, podcastUuid]
+            )
+        }
+    }
+
     /// Test-only accessor for the database queue. Used for low-level GRDB Record type tests.
     var testDbQueue: GRDBQueue {
         dbQueue as! GRDBQueue

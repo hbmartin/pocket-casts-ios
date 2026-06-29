@@ -679,9 +679,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(uuid: "podcast-1", title: "Podcast", syncStatus: SyncStatus.synced.rawValue, pushEnabled: false, dataManager: dataManager)
-            try dataManager.testDbQueue.dbPool.write { db in
-                try db.execute(sql: "UPDATE \(DataManager.podcastTableName) SET settings = '', syncStatus = \(SyncStatus.synced.rawValue) WHERE uuid = ?", arguments: [podcast.uuid])
-            }
+            try dataManager.setPodcastSettingsForTest(podcastUuid: podcast.uuid, settings: "")
 
             dataManager.savePushSetting(podcastUuid: podcast.uuid, pushEnabled: true)
 
@@ -689,6 +687,30 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             XCTAssertTrue(found.pushEnabled, "\(impl): Push should be enabled")
             XCTAssertTrue(found.settings.notification, "\(impl): Notification setting should be enabled")
             XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): Podcast should be marked unsynced")
+        }
+    }
+
+    func testSetPushForAllPodcastsUpdatesNewSettingsStoragePayloadFromEmptySettings() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        try runWithBothImplementations { dataManager, impl in
+            let podcast1 = self.createTestPodcast(uuid: "podcast-1", title: "Podcast 1", syncStatus: SyncStatus.synced.rawValue, pushEnabled: false, dataManager: dataManager)
+            let podcast2 = self.createTestPodcast(uuid: "podcast-2", title: "Podcast 2", syncStatus: SyncStatus.synced.rawValue, pushEnabled: false, dataManager: dataManager)
+            try dataManager.setPodcastSettingsForTest(podcastUuid: podcast1.uuid, settings: "")
+            try dataManager.setPodcastSettingsForTest(podcastUuid: podcast2.uuid, settings: "")
+
+            dataManager.setPushForAllPodcasts(pushEnabled: true)
+
+            let found1 = try XCTUnwrap(dataManager.findPodcast(uuid: podcast1.uuid), "\(impl): First podcast should still be readable")
+            let found2 = try XCTUnwrap(dataManager.findPodcast(uuid: podcast2.uuid), "\(impl): Second podcast should still be readable")
+            XCTAssertTrue(found1.pushEnabled, "\(impl): First podcast push should be enabled")
+            XCTAssertTrue(found1.settings.notification, "\(impl): First podcast notification setting should be enabled")
+            XCTAssertEqual(found1.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): First podcast should be marked unsynced")
+            XCTAssertTrue(found2.pushEnabled, "\(impl): Second podcast push should be enabled")
+            XCTAssertTrue(found2.settings.notification, "\(impl): Second podcast notification setting should be enabled")
+            XCTAssertEqual(found2.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): Second podcast should be marked unsynced")
         }
     }
 

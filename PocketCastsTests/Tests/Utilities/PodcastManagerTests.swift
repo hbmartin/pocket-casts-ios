@@ -11,7 +11,11 @@ final class PodcastManagerTests: DBTestCase {
         try store.override(FeatureFlag.newSettingsStorage, withValue: true)
 
         var podcast = self.podcast!
+        let persistedTitle = "Persisted title"
+        podcast.title = persistedTitle
+        podcast = dataManager.save(podcast: podcast)
         podcast.pushEnabled = true
+        podcast.title = "Stale local title"
         podcast.settings.notification = true
         podcast.syncStatus = SyncStatus.synced.rawValue
 
@@ -25,6 +29,7 @@ final class PodcastManagerTests: DBTestCase {
         XCTAssertFalse(reloadedPodcast.pushEnabled)
         XCTAssertFalse(reloadedPodcast.settings.notification)
         XCTAssertEqual(reloadedPodcast.syncStatus, SyncStatus.notSynced.rawValue)
+        XCTAssertEqual(reloadedPodcast.title, persistedTitle)
     }
 
     func testTaskCancellationForUnusednDeletion() async throws {
