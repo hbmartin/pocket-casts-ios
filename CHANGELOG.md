@@ -10,6 +10,8 @@
 8.15
 -----
 - Tag Ask AI widget tickets for dedicated inbox routing [#4227](https://github.com/Automattic/pocket-casts-ios/pull/4227)
+- Fix a rare crash when leaving a podcast page while it's still scrolling [#4623](https://github.com/Automattic/pocket-casts-ios/pull/4623)
+- Fix "Download All" on a season not warning before using cellular data [#4523](https://github.com/Automattic/pocket-casts-ios/pull/4523)
 - Fix Share swipe action not dismissing on episode cells [#4522](https://github.com/Automattic/pocket-casts-ios/pull/4522)
 - Fix the Filters search header popping back when few episodes match [#4527](https://github.com/Automattic/pocket-casts-ios/pull/4527)
 - Drop iOS 16 and watchOS 9 [#4521](https://github.com/Automattic/pocket-casts-ios/issues/4521)
