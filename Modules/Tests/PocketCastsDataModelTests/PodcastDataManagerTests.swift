@@ -672,6 +672,26 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testSavePushSettingUpdatesNewSettingsStoragePayloadFromEmptySettings() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(uuid: "podcast-1", title: "Podcast", syncStatus: SyncStatus.synced.rawValue, pushEnabled: false, dataManager: dataManager)
+            try dataManager.testDbQueue.dbPool.write { db in
+                try db.execute(sql: "UPDATE \(DataManager.podcastTableName) SET settings = '', syncStatus = \(SyncStatus.synced.rawValue) WHERE uuid = ?", arguments: [podcast.uuid])
+            }
+
+            dataManager.savePushSetting(podcastUuid: podcast.uuid, pushEnabled: true)
+
+            let found = try XCTUnwrap(dataManager.findPodcast(uuid: podcast.uuid), "\(impl): Podcast should still be readable")
+            XCTAssertTrue(found.pushEnabled, "\(impl): Push should be enabled")
+            XCTAssertTrue(found.settings.notification, "\(impl): Notification setting should be enabled")
+            XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): Podcast should be marked unsynced")
+        }
+    }
+
     // MARK: - setPushForAllPodcasts Tests
 
     func testSetPushForAllPodcastsEnablesPushForAll() throws {
@@ -792,6 +812,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             podcast.settings.episodeGrouping = .season
             podcast.settings.notification = true
             podcast.settings.autoArchiveEpisodeLimit = 15
+            podcast.syncStatus = SyncStatus.synced.rawValue
 
             dataManager.save(podcast: podcast)
 
@@ -800,6 +821,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             XCTAssertEqual(found?.settings.episodeGrouping, .season, "\(impl): Episode grouping setting should be persisted")
             XCTAssertEqual(found?.settings.notification, true, "\(impl): Notification setting should be persisted")
             XCTAssertEqual(found?.settings.autoArchiveEpisodeLimit, 15, "\(impl): Auto archive limit setting should be persisted")
+            XCTAssertEqual(found?.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): Settings save should mark podcast unsynced")
         }
     }
 
