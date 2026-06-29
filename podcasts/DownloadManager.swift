@@ -109,9 +109,8 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     var downloadAttempts: [Int: DownloadAttempt] = [:]
 
 
-         private lazy var episodeArtwork: EpisodeArtwork = {
-             EpisodeArtwork()
-         }()
+    @MainActor
+    private lazy var episodeArtwork = EpisodeArtwork()
 
     /// Eagerly initializes all URLSessions to avoid race conditions.
     /// Swift lazy properties are not thread-safe: if multiple threads access an
@@ -298,7 +297,11 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         ShowNotesUpdater.updateShowNotesInBackground(podcastUuid: episode.parentIdentifier(), episodeUuid: episode.uuid)
 
         // try and cache the episode embedded artwork
-        episodeArtwork.loadEmbeddedImage(asset: nil, podcastUuid: episode.parentIdentifier(), episodeUuid: episode.uuid)
+        let artworkPodcastUuid = episode.parentIdentifier()
+        let artworkEpisodeUuid = episode.uuid
+        Task { @MainActor in
+            episodeArtwork.loadEmbeddedImage(asset: nil, podcastUuid: artworkPodcastUuid, episodeUuid: artworkEpisodeUuid)
+        }
 
         // download requested for something we already have buferred, just move it
         if episode.bufferedForStreaming(), autoDownloadStatus != AutoDownloadStatus.playerDownloadedForStreaming {

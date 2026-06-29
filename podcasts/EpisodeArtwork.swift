@@ -6,7 +6,8 @@ import PocketCastsUtils
 import AVFoundation
 
 /// Extracts artwork from a streaming episode (if there's any)
-class EpisodeArtwork {
+@MainActor
+final class EpisodeArtwork {
     private let imageManager: ImageManager
 
     /// Track in-progress artwork load tasks by episode UUID to prevent redundant requests and allow cancellation
