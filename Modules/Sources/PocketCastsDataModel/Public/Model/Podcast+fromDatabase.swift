@@ -56,9 +56,12 @@ extension Podcast {
         podcast.folderUuid = rs.string(forColumn: "folderUuid")
         if let settingsString = rs.string(forColumn: "settings"),
            !settingsString.isEmpty,
-           let settingsData = settingsString.data(using: .utf8),
-           let settings = try? JSONDecoder().decode(PodcastSettings.self, from: settingsData) {
-            podcast.settings = settings
+           let settingsData = settingsString.data(using: .utf8) {
+            do {
+                podcast.settings = try JSONDecoder().decode(PodcastSettings.self, from: settingsData)
+            } catch {
+                FileLog.shared.addMessage("Podcast.from failed to decode settings for \(podcast.uuid): \(error)")
+            }
         }
         podcast.usedCustomEffectsBefore = rs.bool(forColumn: "usedCustomEffectsBefore")
         podcast.isPrivate = rs.bool(forColumn: "isPrivate")

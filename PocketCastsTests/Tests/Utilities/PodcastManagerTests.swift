@@ -1,9 +1,32 @@
 import XCTest
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsUtils
 @testable import podcasts
 
 final class PodcastManagerTests: DBTestCase {
+    func testSetNotificationsEnabledUpdatesNewSettingsStoragePayload() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        var podcast = self.podcast!
+        podcast.pushEnabled = true
+        podcast.settings.notification = true
+        podcast.syncStatus = SyncStatus.synced.rawValue
+
+        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
+        let savedPodcast = podcastManager.setNotificationsEnabled(podcast: podcast, enabled: false)
+        let reloadedPodcast = try XCTUnwrap(dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true))
+
+        XCTAssertFalse(savedPodcast.pushEnabled)
+        XCTAssertFalse(savedPodcast.settings.notification)
+        XCTAssertEqual(savedPodcast.syncStatus, SyncStatus.notSynced.rawValue)
+        XCTAssertFalse(reloadedPodcast.pushEnabled)
+        XCTAssertFalse(reloadedPodcast.settings.notification)
+        XCTAssertEqual(reloadedPodcast.syncStatus, SyncStatus.notSynced.rawValue)
+    }
+
     func testTaskCancellationForUnusednDeletion() async throws {
         let (podcastManager, task) = try await setUpQueuedDownload()
 

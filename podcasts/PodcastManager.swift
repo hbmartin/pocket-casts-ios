@@ -68,6 +68,8 @@ class PodcastManager: NSObject {
 
             podcast.isPushEnabled = enabled
             if FeatureFlag.newSettingsStorage.enabled {
+                podcast.settings.notification = enabled
+                podcast.syncStatus = SyncStatus.notSynced.rawValue
                 podcast = dataManager.save(podcast: podcast)
             } else {
                 dataManager.savePushSetting(podcast: podcast, pushEnabled: enabled)

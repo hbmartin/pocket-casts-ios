@@ -470,9 +470,10 @@ class PodcastDataManager {
 
     func savePushSetting(podcastUuid: String, pushEnabled: Bool, dbQueue: PCDBQueue) {
         if FeatureFlag.newSettingsStorage.enabled {
-            saveSingleSetting("notification", value: pushEnabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
+            savePushSettingWithNewSettingsStorage(podcastUuid: podcastUuid, pushEnabled: pushEnabled, dbQueue: dbQueue)
+        } else {
+            saveSingleValue(name: "pushEnabled", value: pushEnabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
         }
-        saveSingleValue(name: "pushEnabled", value: pushEnabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
     func saveAutoAddToUpNext(podcastUuid: String, autoAddToUpNext: Int32, dbQueue: PCDBQueue) {
@@ -682,7 +683,39 @@ class PodcastDataManager {
             return
         }
 
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET settings = ? WHERE uuid = ?", values: [jsonString, podcast.uuid], methodName: "PodcastDataManager.saveSettings", onQueue: dbQueue)
+        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET settings = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?", values: [jsonString, podcast.uuid], methodName: "PodcastDataManager.saveSettings", onQueue: dbQueue)
+    }
+
+    private func savePushSettingWithNewSettingsStorage(podcastUuid: String, pushEnabled: Bool, dbQueue: PCDBQueue) {
+        dbQueue.write { db in
+            do {
+                let modified = ModifiedDate(wrappedValue: pushEnabled, modifiedAt: Date())
+                let json = try JSONEncoder().encode(modified)
+                guard let jsonString = String(data: json, encoding: .utf8) else {
+                    throw JSONError.failedStringConvert("notification", json)
+                }
+                let defaultSettingsJson = try JSONEncoder().encode(PodcastSettings.defaults)
+                guard let defaultSettingsJsonString = String(data: defaultSettingsJson, encoding: .utf8) else {
+                    throw JSONError.failedStringConvert("settings", defaultSettingsJson)
+                }
+
+                let query = """
+                UPDATE \(DataManager.podcastTableName)
+                SET pushEnabled = ?,
+                    settings = json_set(
+                        coalesce(nullif(settings, ''), json(?)),
+                        '$.notification',
+                        json(?)
+                    ),
+                    syncStatus = \(SyncStatus.notSynced.rawValue)
+                WHERE uuid = ?
+                """
+                try db.executeUpdate(query, values: [pushEnabled, defaultSettingsJsonString, jsonString, podcastUuid])
+            } catch {
+                FileLog.shared.addMessage("PodcastDataManager.savePushSetting for notification error: \(error)")
+            }
+        }
+        cachePodcasts(dbQueue: dbQueue)
     }
 
     private func saveSingleSetting<Value: Codable & Equatable>(_ name: String, value: Value, podcastUuid: String, dbQueue: PCDBQueue) {
@@ -693,17 +726,21 @@ class PodcastDataManager {
                 guard let jsonString = String(data: json, encoding: .utf8) else {
                     throw JSONError.failedStringConvert(name, json)
                 }
+                let defaultSettingsJson = try JSONEncoder().encode(PodcastSettings.defaults)
+                guard let defaultSettingsJsonString = String(data: defaultSettingsJson, encoding: .utf8) else {
+                    throw JSONError.failedStringConvert("settings", defaultSettingsJson)
+                }
 
                 let query = """
                 UPDATE \(DataManager.podcastTableName)
                 SET settings = json_set(
-                    \(DataManager.podcastTableName).settings,
+                    coalesce(nullif(settings, ''), json(?)),
                     '$.\(name)',
                     json(?)
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 WHERE uuid = ?
                 """
-                try db.executeUpdate(query, values: [jsonString, podcastUuid])
+                try db.executeUpdate(query, values: [defaultSettingsJsonString, jsonString, podcastUuid])
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.saveSingleSetting for \(name) error: \(error)")
             }
