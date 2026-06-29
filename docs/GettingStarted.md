@@ -60,11 +60,11 @@ xcrun simctl list devices available
 xcrun simctl list runtimes
 ```
 
-The test tasks default to `SIMULATOR_OS=18.5` for test destinations. If your
-installed runtime is different, pass the OS explicitly:
+The test tasks default to `SIMULATOR_OS=18.6` for test destinations. If you
+need a different installed runtime, pass the OS explicitly:
 
 ```bash
-SIMULATOR_OS=18.4 mise run test:staging
+SIMULATOR_OS=26.5 mise run test:staging
 ```
 
 Tool versions are managed by [mise](https://mise.jdx.dev) from `mise.toml`,
@@ -426,7 +426,7 @@ OS:
 
 ```bash
 xcrun simctl list devices available
-SIMULATOR_OS=18.5 mise run test:staging
+SIMULATOR_OS=18.6 mise run test:staging
 ```
 
 If package resolution fails after switching branches:

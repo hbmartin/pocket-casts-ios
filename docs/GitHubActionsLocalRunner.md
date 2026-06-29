@@ -41,7 +41,7 @@ that display sleep, system sleep, or network sleep can interrupt a job.
 The runner needs:
 
 - Xcode compatible with `.xcode-version` or another Swift 6 capable Xcode.
-- An installed iPhone simulator runtime. Set repository variable `IOS_SIMULATOR_RUNTIME_VERSION` to pin one, for example `18.5`.
+- An installed iPhone simulator runtime. Set repository variable `IOS_SIMULATOR_RUNTIME_VERSION` to pin one, for example `18.6`.
 - Homebrew.
 - [mise](https://mise.jdx.dev). CI installs it with Homebrew if it is missing,
   then `mise install` provides the pinned Ruby and Semgrep from `mise.toml`.

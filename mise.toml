@@ -86,7 +86,7 @@ xcodebuild -project podcasts.xcodeproj \
 [tasks.test]
 description = "Run unit tests (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
-DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.5}" ruby scripts/ci/select-ios-simulator.rb)"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
 xcodebuild test -project podcasts.xcodeproj \
     -scheme pocketcasts \
     -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
@@ -96,7 +96,7 @@ xcodebuild test -project podcasts.xcodeproj \
 [tasks."test:staging"]
 description = "Run unit tests (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
-DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.5}" ruby scripts/ci/select-ios-simulator.rb)"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
 xcodebuild test -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
     -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
