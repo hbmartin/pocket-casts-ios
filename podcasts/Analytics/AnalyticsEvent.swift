@@ -427,6 +427,7 @@ enum AnalyticsEvent: String {
     case upNextQueueReordered
     case upNextDismissed
     case upNextShuffleEnabled
+    case upNextSort
     case upNextDiscoverButtonTapped
     case upNextGoToPodcastsTapped
 
@@ -447,6 +448,7 @@ enum AnalyticsEvent: String {
     case deselectChaptersChapterDeselected
     case deselectChaptersToggledOn
     case deselectChaptersToggledOff
+    case chapterLinkClicked
 
     case playerTabSelected
     case playerShowNotesLinkTapped

@@ -1854,6 +1854,9 @@
 /* Confirmation message that appears alongside the various bulk archive prompts. */
 "podcast_archive_prompt_msg" = "You should only do this if you don't want to see them anymore.";
 
+/* Accessibility label for the explicit content badge displayed on podcasts with explicit content. */
+"podcast_explicit_content" = "Explicit content";
+
 /* Indicates that the episode has been archived. */
 "podcast_archived" = "Archived";
 
@@ -3108,6 +3111,12 @@
 
 /* Siri shortcut title for increasing the sleep timer by a specified amount. '%1$@' is the placeholder for the time specified amount or time. */
 "siri_shortcut_extend_sleep_timer" = "Set sleep timer to %1$@";
+
+/* Siri shortcut title for marking the current episode as played */
+"siri_shortcut_mark_as_played_title" = "Mark Current Episode as Played";
+
+/* Siri shortcut invocation phrase for marking the current episode as played */
+"siri_shortcut_mark_as_played_phrase" = "Mark as Played";
 
 /* Siri shortcut title and phrase for having siri skip to the next chapter of a podcast */
 "siri_shortcut_next_chapter" = "Next chapter";
@@ -4831,6 +4840,21 @@
 /* Toast message displayed when the user enables the Up Next Shuffle option */
 "up_next_shuffle_toast_message" = "Shuffle is on. Episodes will play in random order.";
 
+/* Title shown at the top of the Up Next sort options picker */
+"up_next_sort_title" = "Sort Up Next";
+
+/* Up Next sort option that orders episodes by release date, newest first */
+"up_next_sort_newest_to_oldest" = "Newest to oldest";
+
+/* Up Next sort option that orders episodes by release date, oldest first */
+"up_next_sort_oldest_to_newest" = "Oldest to newest";
+
+/* Up Next sort option that orders episodes by time remaining, shortest first */
+"up_next_sort_shortest_to_longest" = "Shortest to longest";
+
+/* Up Next sort option that orders episodes by time remaining, longest first */
+"up_next_sort_longest_to_shortest" = "Longest to shortest";
+
 /* Title for manage downloads file space usage banner and modal */
 "manage_downloads_title" = "Need to free up space?";
 
@@ -6026,3 +6050,6 @@
 
 /* tv home Video section title */
 "tv_home_video_section_title" = "Made for TV";
+
+/* Warning message shown for automatically generated episode chapters */
+"chapters_generated_warning_message" = "These chapters are automatically generated and may not be perfectly accurate.";

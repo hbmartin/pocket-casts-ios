@@ -1,5 +1,35 @@
+8.16
+-----
+- Add a "Remove from Up Next" multi-select action outside the Up Next screen [#4606](https://github.com/Automattic/pocket-casts-ios/pull/4606)
+- Add a Star Episodes action to Up Next multi-select and show a star indicator on Up Next cells [#4605](https://github.com/Automattic/pocket-casts-ios/pull/4605)
+- Fix the Files navigation bar not being transparent [#4604](https://github.com/Automattic/pocket-casts-ios/pull/4604)
+- Fix Control Center timeline continuing to advance while playback is paused [#4530](https://github.com/Automattic/pocket-casts-ios/pull/4530)
+- Fix a rare crash when loading embedded episode artwork [#4619](https://github.com/Automattic/pocket-casts-ios/pull/4619)
+- Show episode artwork on the episode details page [#4616](https://github.com/Automattic/pocket-casts-ios/pull/4616)
+- Add support for generated chapters on episodes [#4630](https://github.com/Automattic/pocket-casts-ios/pull/4630)
+
+8.15
+-----
+- Tag Ask AI widget tickets for dedicated inbox routing [#4227](https://github.com/Automattic/pocket-casts-ios/pull/4227)
+- Fix a rare crash when leaving a podcast page while it's still scrolling [#4623](https://github.com/Automattic/pocket-casts-ios/pull/4623)
+- Fix "Download All" on a season not warning before using cellular data [#4523](https://github.com/Automattic/pocket-casts-ios/pull/4523)
+- Fix Share swipe action not dismissing on episode cells [#4522](https://github.com/Automattic/pocket-casts-ios/pull/4522)
+- Fix the Filters search header popping back when few episodes match [#4527](https://github.com/Automattic/pocket-casts-ios/pull/4527)
+- Drop iOS 16 and watchOS 9 [#4521](https://github.com/Automattic/pocket-casts-ios/issues/4521)
+- Fix incorrect section heading when opening an episode on the Apple Watch [#4528](https://github.com/Automattic/pocket-casts-ios/pull/4528)
+- Make the mini player controls larger [#4566](https://github.com/Automattic/pocket-casts-ios/pull/4566)
+- Add a soft blur edge to the bottom of the podcast grid under Liquid Glass [#4567](https://github.com/Automattic/pocket-casts-ios/pull/4567)
+- Add a Siri shortcut to mark the current episode as played [#4591](https://github.com/Automattic/pocket-casts-ios/pull/4591)
+- Add context menus and Edit-mode reordering to the Folder screen [#4590](https://github.com/Automattic/pocket-casts-ios/pull/4590)
+- Add Up Next queue sorting [#4550](https://github.com/Automattic/pocket-casts-ios/pull/4550)
+- Fix the Playlists tab background in dark mode [#4593](https://github.com/Automattic/pocket-casts-ios/pull/4593)
+- Show chapter artwork on the lock screen, Control Center, and CarPlay [#4596](https://github.com/Automattic/pocket-casts-ios/pull/4596)
+
 8.14
 -----
+- Fix swipe action animations when adding episodes to Up Next [#4366](https://github.com/Automattic/pocket-casts-ios/pull/4366)
+- Add explicit content badge to discover and search [#4427](https://github.com/Automattic/pocket-casts-ios/pull/4427)
+- Added highlighted transcripts for recent episodes [#4458](https://github.com/Automattic/pocket-casts-ios/pull/4458)
 - Fix swipe action animations when adding episodes to Up Next [#4366](https://github.com/Automattic/pocket-casts-ios/pull/4366)
 - Update remaining menus to use sheet presentation [#4426](https://github.com/Automattic/pocket-casts-ios/pull/4426)
 - Fix rare crash in Stats [#4445](https://github.com/Automattic/pocket-casts-ios/pull/4445)

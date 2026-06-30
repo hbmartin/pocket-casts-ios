@@ -207,11 +207,20 @@ public enum FeatureFlag: String, CaseIterable {
     /// Enable the Liquid Glass UI redesign
     case liquidGlass
 
+    /// Show explicit content badges on podcasts
+    case showExplicitBadges
+
     /// Enable the Share Profile feature
     case shareProfile
 
     /// Log database access performed on the main thread (DEBUG builds only)
     case logMainThreadDatabaseAccess
+
+    /// Enable the Up Next sort button
+    case upNextSort
+
+    /// Enable Generated Chapters
+    case generatedChapters
 
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
@@ -361,10 +370,16 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .liquidGlass:
             true
+        case .showExplicitBadges:
+            false
         case .shareProfile:
             BuildEnvironment.current == .debug
         case .logMainThreadDatabaseAccess:
             true
+        case .upNextSort:
+            BuildEnvironment.current == .debug
+        case .generatedChapters:
+            BuildEnvironment.current == .debug
         }
     }
 

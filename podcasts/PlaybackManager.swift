@@ -95,6 +95,7 @@ class PlaybackManager: ServerPlaybackDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(refreshRemoteCommands), name: Constants.Notifications.remoteCommandSettingsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateNowPlayingInfo), name: Constants.Notifications.userEpisodeUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: .episodeEmbeddedArtworkLoaded, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentlyPlayingEpisodeUpdated), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
 
         // run these on a background queue because some of them might call our singleton instance back, causing a crash because PlaybackManager.shared is called from the init method
@@ -367,6 +368,10 @@ class PlaybackManager: ServerPlaybackDelegate {
         onlyPlayable ? chapterManager.playableChapterCount() : chapterManager.visibleChapterCount()
     }
 
+    var chaptersAreGenerated: Bool {
+        return chapterManager.chaptersOrigin == .generated
+    }
+
     func index(for chapter: Chapters) -> Int? {
         chapterManager.index(for: chapter)
     }
@@ -403,7 +408,7 @@ class PlaybackManager: ServerPlaybackDelegate {
                 trackChapterSkipped()
             } else {
                 fireChapterChangeNotification()
-                updateNowPlayingInfo()
+                updateAllNowPlayingData()
             }
         }
     }
@@ -1555,13 +1560,24 @@ class PlaybackManager: ServerPlaybackDelegate {
 
     // MARK: - Now Playing Info
 
+    /// The playback rate to report to the system Now Playing info center.
+    ///
+    /// When paused, the players still return their configured speed (e.g. `1.0`) from
+    /// `playbackRate()`, so reporting that to the system makes Control Center / the Lock
+    /// Screen extrapolate elapsed time and keep the timeline ticking even though playback
+    /// is stopped. Reporting `nil` here is interpreted as a rate of `0`, which holds the
+    /// timeline in place while paused. See PCIOS-274.
+    private var nowPlayingPlaybackRate: Double? {
+        playing() ? player?.playbackRate() : nil
+    }
+
     @objc private func updateNowPlayingInfo() {
         guard let episode = currentEpisode() else {
                 NowPlayingHelper.clearNowPlayingInfo()
 
             return
         }
-            NowPlayingHelper.updateNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
+            NowPlayingHelper.updateNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: nowPlayingPlaybackRate)
     }
 
     func forceUpdateChapterInfo() {
@@ -1584,7 +1600,7 @@ class PlaybackManager: ServerPlaybackDelegate {
             return
         }
 
-            NowPlayingHelper.setAllNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: player?.playbackRate())
+            NowPlayingHelper.setAllNowPlayingInfo(for: episode, currentChapters: currentChapters(), duration: duration(), upTo: currentTime(), playbackRate: nowPlayingPlaybackRate)
     }
 
     // MARK: - Sleep Timer
@@ -2252,7 +2268,15 @@ extension PlaybackManager {
     // MARK: - Analytics
 
     private func trackChapterSkipped() {
-        analyticsPlaybackHelper.chapterSkipped()
+        analyticsPlaybackHelper.chapterSkipped(properties: chapterManager.chaptersAnalyticsProperties)
+    }
+
+    func trackChapterEvent(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
+        var baseProperties = chapterManager.chaptersAnalyticsProperties
+        if let extraProperties = properties {
+            baseProperties = baseProperties.merging(extraProperties, uniquingKeysWith: { current, _ in return current})
+        }
+        analyticsPlaybackHelper.track(event, properties: baseProperties)
     }
 }
 

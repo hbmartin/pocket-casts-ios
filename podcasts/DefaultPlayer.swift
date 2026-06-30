@@ -45,20 +45,19 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private var cellularTracker: StreamingCellularTracker?
 #endif
 
-        private lazy var episodeArtwork: EpisodeArtwork = {
-            EpisodeArtwork()
-        }()
+    @MainActor
+    private lazy var episodeArtwork = EpisodeArtwork()
 
-        private var peakLimiter: AudioUnit?
-        private var highPassFilter: AudioUnit?
-        private var sampleCount: Float64 = 0
-        private var backgroundTaskId: UIBackgroundTaskIdentifier
-        private var voiceBoostNState: OpaquePointer?
-        private var cachedSampleRate: Double = 0
+    private var peakLimiter: AudioUnit?
+    private var highPassFilter: AudioUnit?
+    private var sampleCount: Float64 = 0
+    private var backgroundTaskId: UIBackgroundTaskIdentifier
+    private var voiceBoostNState: OpaquePointer?
+    private var cachedSampleRate: Double = 0
 
     init() {
-            backgroundTaskId = .invalid
-            NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        backgroundTaskId = .invalid
+        NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
     }
 
     func loadEpisode(_ episode: BaseEpisode) {
@@ -939,7 +938,9 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
             return
         }
 
-        episodeArtwork.loadEmbeddedImage(asset: asset, podcastUuid: podcastUuid, episodeUuid: episodeUuid)
+        Task { @MainActor in
+            episodeArtwork.loadEmbeddedImage(asset: asset, podcastUuid: podcastUuid, episodeUuid: episodeUuid)
+        }
     }
 
     // MARK: - Volume

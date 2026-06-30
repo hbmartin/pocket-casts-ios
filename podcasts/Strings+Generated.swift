@@ -528,6 +528,8 @@ internal enum L10n {
   internal static var changePasswordLengthError: String { return L10n.tr("Localizable", "change_password_length_error", fallback: "Must be at least 6 characters") }
   /// A common string used throughout the app. Often refers to the Chapters list or Chapters tab in the player.
   internal static var chapters: String { return L10n.tr("Localizable", "chapters", fallback: "Chapters") }
+  /// Warning message shown for automatically generated episode chapters
+  internal static var chaptersGeneratedWarningMessage: String { return L10n.tr("Localizable", "chapters_generated_warning_message", fallback: "These chapters are automatically generated and may not be perfectly accurate.") }
   /// A description and call to action to check your internet connection state when content has failed to load.
   internal static var checkInternetConnection: String { return L10n.tr("Localizable", "check_internet_connection", fallback: "Please check your Internet connection") }
   /// A common string used throughout the app. Informs the user how many podcasts have been chosen. '%1$@' is a placeholder for the number of podcasts, this will be more than one.
@@ -2819,6 +2821,8 @@ internal enum L10n {
   internal static var podcastErrorMessage: String { return L10n.tr("Localizable", "podcast_error_message", fallback: "Unable to load podcast details :(") }
   /// Title for a generic error used when a podcast fails to load without a more detailed reason why. Meant to be a fun cultural reference.
   internal static var podcastErrorTitle: String { return L10n.tr("Localizable", "podcast_error_title", fallback: "Literally Can't Even") }
+  /// Accessibility label for the explicit content badge displayed on podcasts with explicit content.
+  internal static var podcastExplicitContent: String { return L10n.tr("Localizable", "podcast_explicit_content", fallback: "Explicit content") }
   /// Name for group of episodes that don't have a season defined when sorting in serial mode
   internal static var podcastExtras: String { return L10n.tr("Localizable", "podcast_extras", fallback: "Extras") }
   /// Indicates that a file has failed to download.
