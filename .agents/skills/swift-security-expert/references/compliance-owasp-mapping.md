@@ -73,6 +73,14 @@ import Security
 /// iOS 8.0+ (SecAccessControlCreateWithFlags), iOS 11.3+ (.biometryCurrentSet)
 func storeCredential(account: String, secret: Data, service: String) throws {
     // ✅ CORRECT — secrets are persisted in Keychain with explicit access control
+    // Delete existing item first to avoid errSecDuplicateItem
+    let deleteQuery: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrAccount as String: account,
+        kSecAttrService as String: service
+    ]
+    SecItemDelete(deleteQuery as CFDictionary)
+
     var error: Unmanaged<CFError>?
     guard let accessControl = SecAccessControlCreateWithFlags(
         kCFAllocatorDefault,
@@ -86,25 +94,12 @@ func storeCredential(account: String, secret: Data, service: String) throws {
     let query: [String: Any] = [
         kSecClass as String: kSecClassGenericPassword,
         kSecAttrAccount as String: account,
-        kSecAttrService as String: service
-    ]
-
-    let attributesToUpdate: [String: Any] = [
+        kSecAttrService as String: service,
         kSecAttrAccessControl as String: accessControl,
         kSecValueData as String: secret
     ]
 
-    var status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
-    if status == errSecItemNotFound {
-        var addQuery = query
-        addQuery.merge(attributesToUpdate) { _, new in new }
-
-        status = SecItemAdd(addQuery as CFDictionary, nil)
-        if status == errSecDuplicateItem {
-            status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
-        }
-    }
-
+    let status = SecItemAdd(query as CFDictionary, nil)
     guard status == errSecSuccess else {
         throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
     }
@@ -120,7 +115,7 @@ func storeCredential(account: String, secret: Data, service: String) throws {
 UserDefaults.standard.set(apiToken, forKey: "auth_token")
 
 // ❌ WRONG — Hardcoded API key in source (found in 71% of iOS apps)
-let stripeKey = "..."
+let stripeKey = "dummy"
 
 // ❌ WRONG — Secret in Info.plist (plaintext in IPA archive)
 // <key>API_SECRET</key><string>my-secret-key-12345</string>
