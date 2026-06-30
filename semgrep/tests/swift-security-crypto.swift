@@ -21,10 +21,10 @@ func goodSHA256Digest(data: Data) {
     _ = SHA256.hash(data: data)
 }
 
-enum SharingServerHandler {
+enum CopiedSharingServerHandler {
     static func legacySharingServerSignature(for dateString: String, credential: String) -> String {
-        // ok: pocketcasts.no-insecure-cryptokit-hashes
+        // ruleid: pocketcasts.no-insecure-cryptokit-hashes
         let hashDigest = CryptoKit.Insecure.SHA1.hash(data: Data("\(dateString)\(credential)".utf8))
-        return hashDigest.compactMap { String(format: "%02hhx", $0) }.joined()
+        return hashDigest.map { String(format: "%02hhx", $0) }.joined()
     }
 }

@@ -188,15 +188,15 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
                 Analytics.track(.filterAutoDownloadUpdated, properties: ["enabled": true, "source": AnalyticsSource.autoDownloadSettings])
                 playlist.autoDownloadEpisodes = true
                 playlist.autoDownloadLimit = playlist.maxAutoDownloadEpisodes()
-                DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+                let savedPlaylist = DataManager.sharedManager.save(playlist: playlist)
+                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
             }
             playlistSelectionViewController.playlistUnselected = { playlist in
                 var playlist = playlist
                 Analytics.track(.filterAutoDownloadUpdated, properties: ["enabled": false, "source": AnalyticsSource.autoDownloadSettings])
                 playlist.autoDownloadEpisodes = false
-                DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+                let savedPlaylist = DataManager.sharedManager.save(playlist: playlist)
+                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
             }
             playlistSelectionViewController.didChangePlaylist = {
                 Analytics.track(.settingsAutoDownloadFiltersChanged)

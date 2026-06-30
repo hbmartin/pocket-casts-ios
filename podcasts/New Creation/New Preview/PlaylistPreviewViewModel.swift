@@ -48,7 +48,7 @@ class PlaylistPreviewViewModel: ObservableObject {
 
     func saveFilter(analyticsGroup: String? = nil) {
         newPlaylist.syncStatus = SyncStatus.notSynced.rawValue
-        DataManager.sharedManager.save(playlist: newPlaylist)
+        newPlaylist = DataManager.sharedManager.save(playlist: newPlaylist)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: newPlaylist)
 
         if !newPlaylist.isNew, let group = analyticsGroup {

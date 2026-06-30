@@ -234,10 +234,10 @@ class PlaylistPreviewViewController: PCViewController {
         viewModel.newPlaylist.syncStatus = SyncStatus.notSynced.rawValue
         viewModel.newPlaylist.isNew = false
         viewModel.removeObserver()
-        DataManager.sharedManager.save(playlist: viewModel.newPlaylist)
-        UserDefaults.standard.set(viewModel.newPlaylist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
-        delegate?.filterCreated(newFilter: viewModel.newPlaylist)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: viewModel.newPlaylist)
+        let savedPlaylist = DataManager.sharedManager.save(playlist: viewModel.newPlaylist)
+        UserDefaults.standard.set(savedPlaylist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
+        delegate?.filterCreated(newFilter: savedPlaylist)
+        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
 
         if Settings.firstTimePlaylistCreated {
             Settings.shouldShowDragAndDropTip = true

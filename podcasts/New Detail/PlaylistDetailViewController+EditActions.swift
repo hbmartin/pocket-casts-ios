@@ -89,9 +89,9 @@ extension PlaylistDetailViewController {
     private func savePlaylist() {
         var playlist = self.viewModel.playlist
         playlist.syncStatus = SyncStatus.notSynced.rawValue
-        viewModel.update(playlist: playlist)
-        DataManager.sharedManager.save(playlist: viewModel.playlist)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: viewModel.playlist)
+        let savedPlaylist = DataManager.sharedManager.save(playlist: playlist)
+        viewModel.update(playlist: savedPlaylist)
+        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
     }
 
     // MARK: - Edit Episodes order
