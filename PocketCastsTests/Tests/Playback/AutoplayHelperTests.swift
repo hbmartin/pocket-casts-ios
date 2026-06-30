@@ -7,8 +7,11 @@ class AutoplayHelperTests: XCTestCase {
     var autoplayHelper: AutoplayHelper!
     var userDefaults: UserDefaults!
     var suiteName: String!
+    var previousAppSettings: SettingsStore<AppSettings>!
 
     override func setUp() {
+        super.setUp()
+        previousAppSettings = SettingsStore.appSettings
         suiteName = "AutoplayHelperTests-\(UUID().uuidString)"
         userDefaults = UserDefaults(suiteName: suiteName)!
         userDefaults.removePersistentDomain(forName: suiteName)
@@ -20,8 +23,10 @@ class AutoplayHelperTests: XCTestCase {
 
     override func tearDown() {
         userDefaults.removePersistentDomain(forName: suiteName)
+        SettingsStore.appSettings = previousAppSettings
         autoplayHelper = nil
         userDefaults = nil
+        previousAppSettings = nil
         suiteName = nil
         super.tearDown()
     }

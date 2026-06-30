@@ -564,7 +564,8 @@ class PodcastDataManager {
                     SET settings = json_patch(
                         coalesce(nullif(settings, ''), json(?)),
                         '{\"addToUpNext\": {\"value\": \(value.rawValue)}}'
-                    )
+                    ),
+                    syncStatus = \(SyncStatus.notSynced.rawValue)
                     WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """
                     try db.executeUpdate(query, values: [Self.defaultSettingsJsonString] + uuids)
@@ -572,7 +573,8 @@ class PodcastDataManager {
 
                 let query = """
                 UPDATE \(DataManager.podcastTableName)
-                SET autoAddToUpNext = ?
+                SET autoAddToUpNext = ?,
+                    syncStatus = \(SyncStatus.notSynced.rawValue)
                 WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                 """
                 try db.executeUpdate(query, values: [value.rawValue] + uuids)
