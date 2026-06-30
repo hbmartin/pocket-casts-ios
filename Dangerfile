@@ -29,7 +29,7 @@ if File.directory?(derived_data_path)
     slather.configure(
       'podcasts.xcodeproj',
       'Pocket Casts Staging',
-      {
+      options: {
         build_directory: derived_data_path,
         configuration: 'StagingDebug',
         coverage_service: :terminal,

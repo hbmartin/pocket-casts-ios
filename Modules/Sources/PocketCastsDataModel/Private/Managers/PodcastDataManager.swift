@@ -13,6 +13,14 @@ extension Podcast: Sortable {
 }
 
 class PodcastDataManager {
+    private static let defaultSettingsJsonString: String = {
+        guard let json = PodcastSettings.defaults.jsonData,
+              let jsonString = String(data: json, encoding: .utf8) else {
+            preconditionFailure("PodcastSettings.defaults must encode to JSON")
+        }
+        return jsonString
+    }()
+
     private var cachedPodcasts = [String: Podcast]()
     private lazy var cachedPodcastsQueue: DispatchQueue = {
         let queue = DispatchQueue(label: "au.com.pocketcasts.PodcastDataQueue")
@@ -553,10 +561,13 @@ class PodcastDataManager {
                 if FeatureFlag.newSettingsStorage.enabled {
                     let query = """
                     UPDATE \(DataManager.podcastTableName)
-                    SET settings = json_patch(settings, '{\"addToUpNext\": {\"value\": \(value.rawValue)}}')
+                    SET settings = json_patch(
+                        coalesce(nullif(settings, ''), json(?)),
+                        '{\"addToUpNext\": {\"value\": \(value.rawValue)}}'
+                    )
                     WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """
-                    try db.executeUpdate(query, values: uuids)
+                    try db.executeUpdate(query, values: [Self.defaultSettingsJsonString] + uuids)
                 }
 
                 let query = """
@@ -601,12 +612,13 @@ class PodcastDataManager {
                 let query = """
                 UPDATE \(DataManager.podcastTableName)
                 SET settings = json_set(
-                    \(DataManager.podcastTableName).settings,
+                    coalesce(nullif(settings, ''), json(?)),
                     '$.\(settingName)',
                     json(?)
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 """
-                try db.executeUpdate(query, values: [jsonString])
+                let queryWithWhere = subscribedOnly ? "\(query) WHERE subscribed = 1" : query
+                try db.executeUpdate(queryWithWhere, values: [Self.defaultSettingsJsonString, jsonString])
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.setOnAllPodcasts error: \(error)")
             }
@@ -694,10 +706,6 @@ class PodcastDataManager {
                 guard let jsonString = String(data: json, encoding: .utf8) else {
                     throw JSONError.failedStringConvert("notification", json)
                 }
-                let defaultSettingsJson = try JSONEncoder().encode(PodcastSettings.defaults)
-                guard let defaultSettingsJsonString = String(data: defaultSettingsJson, encoding: .utf8) else {
-                    throw JSONError.failedStringConvert("settings", defaultSettingsJson)
-                }
 
                 let query = """
                 UPDATE \(DataManager.podcastTableName)
@@ -710,7 +718,7 @@ class PodcastDataManager {
                     syncStatus = \(SyncStatus.notSynced.rawValue)
                 WHERE uuid = ?
                 """
-                try db.executeUpdate(query, values: [pushEnabled, defaultSettingsJsonString, jsonString, podcastUuid])
+                try db.executeUpdate(query, values: [pushEnabled, Self.defaultSettingsJsonString, jsonString, podcastUuid])
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.savePushSetting for notification error: \(error)")
             }
@@ -726,10 +734,6 @@ class PodcastDataManager {
                 guard let jsonString = String(data: json, encoding: .utf8) else {
                     throw JSONError.failedStringConvert(name, json)
                 }
-                let defaultSettingsJson = try JSONEncoder().encode(PodcastSettings.defaults)
-                guard let defaultSettingsJsonString = String(data: defaultSettingsJson, encoding: .utf8) else {
-                    throw JSONError.failedStringConvert("settings", defaultSettingsJson)
-                }
 
                 let query = """
                 UPDATE \(DataManager.podcastTableName)
@@ -740,7 +744,7 @@ class PodcastDataManager {
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 WHERE uuid = ?
                 """
-                try db.executeUpdate(query, values: [defaultSettingsJsonString, jsonString, podcastUuid])
+                try db.executeUpdate(query, values: [Self.defaultSettingsJsonString, jsonString, podcastUuid])
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.saveSingleSetting for \(name) error: \(error)")
             }
