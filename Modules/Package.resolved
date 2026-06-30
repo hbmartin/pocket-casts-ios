@@ -1,5 +1,5 @@
 {
-  "originHash" : "41db5859bafbc20c6a5f15a1539a0cd40eed31cce7ab735a1ae7c7a13dbdb95d",
+  "originHash" : "89c1d4ce534147707cbe2dea583eac7495045521cc782ba7a1452f525b96ab4a",
   "pins" : [
     {
       "identity" : "agrume",
@@ -89,6 +89,15 @@
       "state" : {
         "revision" : "2ef543ee21d63734e1c004ad6c870255e8716c50",
         "version" : "7.12.0"
+      }
+    },
+    {
+      "identity" : "pocket-casts-ios-fingerprint",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Automattic/pocket-casts-ios-fingerprint",
+      "state" : {
+        "branch" : "trunk",
+        "revision" : "b696bd9a4a495604532b1b7a484ab140c144eccc"
       }
     },
     {

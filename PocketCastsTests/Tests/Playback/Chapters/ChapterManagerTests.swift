@@ -108,8 +108,8 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
         nil
     }
 
-    func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> ([PocketCastsDataModel.Episode.Metadata.EpisodeChapter]?, [podcasts.PodcastIndexChapter]?, [GeneratedChapter]?) {
-        (nil, nil, nil)
+    func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> (metadata: [PocketCastsDataModel.Episode.Metadata.EpisodeChapter]?, podcastIndex: [podcasts.PodcastIndexChapter]?, generated: [GeneratedChapter]?) {
+        (metadata: nil, podcastIndex: nil, generated: nil)
     }
 
     func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {

@@ -1,22 +1,41 @@
 import SwiftUI
+import Foundation
 import PocketCastsUtils
 
 enum ExplicitBadgeHelper {
     static let badgeSize: CGFloat = 11
 
+    private static let imageCacheLock = NSLock()
     private static var imageCache: [Theme.ThemeType: UIImage] = [:]
 
     static func badgeImage(for theme: Theme.ThemeType? = nil) -> UIImage {
         let resolvedTheme = theme ?? Theme.sharedTheme.activeTheme
+        imageCacheLock.lock()
         if let cached = imageCache[resolvedTheme] {
+            imageCacheLock.unlock()
             return cached
         }
+        imageCacheLock.unlock()
+
         let image = renderBadgeImage(for: resolvedTheme)
+
+        imageCacheLock.lock()
         imageCache[resolvedTheme] = image
+        imageCacheLock.unlock()
+
         return image
     }
 
     private static func renderBadgeImage(for theme: Theme.ThemeType) -> UIImage {
+        if Thread.isMainThread {
+            return makeBadgeImage(for: theme)
+        }
+        return DispatchQueue.main.sync {
+            makeBadgeImage(for: theme)
+        }
+    }
+
+    private static func makeBadgeImage(for theme: Theme.ThemeType) -> UIImage {
         let bgColor = ThemeColor.primaryIcon03(for: theme)
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: badgeSize, height: badgeSize))
         return renderer.image { _ in

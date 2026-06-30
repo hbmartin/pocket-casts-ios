@@ -37,7 +37,10 @@ class ChaptersHeader: UIView {
         label.adjustsFontForContentSizeCategory = true
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = L10n.chaptersGeneratedWarningMessage
+        label.isHidden = true
         generatedHeightConstraint = label.heightAnchor.constraint(equalToConstant: 0)
+        generatedHeightConstraint?.priority = .defaultHigh
+        generatedHeightConstraint?.isActive = true
         return label
     }()
 
@@ -91,6 +94,7 @@ class ChaptersHeader: UIView {
         updateButtonLabel()
         updateButtonIcon()
         generatedHeightConstraint?.isActive = !PlaybackManager.shared.chaptersAreGenerated
+        generatedWarningLabel.isHidden = !PlaybackManager.shared.chaptersAreGenerated
     }
 
     private func configure() {
@@ -135,7 +139,7 @@ class ChaptersHeader: UIView {
 
             chaptersLabel.leadingAnchor.constraint(equalTo: container.layoutMarginsGuide.leadingAnchor),
             chaptersLabel.topAnchor.constraint(equalTo: container.layoutMarginsGuide.topAnchor),
-            chaptersLabel.trailingAnchor.constraint(greaterThanOrEqualTo: toggleButton.leadingAnchor, constant: 8),
+            chaptersLabel.trailingAnchor.constraint(lessThanOrEqualTo: toggleButton.leadingAnchor, constant: -8),
             chaptersLabel.widthAnchor.constraint(equalTo: container.widthAnchor, multiplier: 0.40),
 
             toggleButton.trailingAnchor.constraint(equalTo: container.layoutMarginsGuide.trailingAnchor),
@@ -155,7 +159,7 @@ class ChaptersHeader: UIView {
 
         chaptersLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         toggleButton.setContentCompressionResistancePriority(.required, for: .vertical)
-        generatedWarningLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        generatedWarningLabel.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
     }
 }
 

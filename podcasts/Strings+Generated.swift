@@ -3869,6 +3869,10 @@ internal enum L10n {
   }
   /// Siri shortcut phrase for increasing the sleep timer by a specified amount.
   internal static var siriShortcutExtendSleepTimerFiveMin: String { return L10n.tr("Localizable", "siri_shortcut_extend_sleep_timer_five_min", fallback: "Extend sleep timer by 5 minutes") }
+  /// Siri shortcut invocation phrase for marking the current episode as played
+  internal static var siriShortcutMarkAsPlayedPhrase: String { return L10n.tr("Localizable", "siri_shortcut_mark_as_played_phrase", fallback: "Mark as Played") }
+  /// Siri shortcut title for marking the current episode as played
+  internal static var siriShortcutMarkAsPlayedTitle: String { return L10n.tr("Localizable", "siri_shortcut_mark_as_played_title", fallback: "Mark Current Episode as Played") }
   /// Siri shortcut title and phrase for having siri skip to the next chapter of a podcast
   internal static var siriShortcutNextChapter: String { return L10n.tr("Localizable", "siri_shortcut_next_chapter", fallback: "Next chapter") }
   /// Siri shortcut invocation phrase for opening a specified filter. '%1$@' is the placeholder for the specified filter.
@@ -4407,6 +4411,16 @@ internal enum L10n {
   internal static var upNextShuffleAnnouncementTitle: String { return L10n.tr("Localizable", "up_next_shuffle_announcement_title", fallback: "Introducing Shuffle") }
   /// Toast message displayed when the user enables the Up Next Shuffle option
   internal static var upNextShuffleToastMessage: String { return L10n.tr("Localizable", "up_next_shuffle_toast_message", fallback: "Shuffle is on. Episodes will play in random order.") }
+  /// Up Next sort option that orders episodes by time remaining, longest first
+  internal static var upNextSortLongestToShortest: String { return L10n.tr("Localizable", "up_next_sort_longest_to_shortest", fallback: "Longest to shortest") }
+  /// Up Next sort option that orders episodes by release date, newest first
+  internal static var upNextSortNewestToOldest: String { return L10n.tr("Localizable", "up_next_sort_newest_to_oldest", fallback: "Newest to oldest") }
+  /// Up Next sort option that orders episodes by release date, oldest first
+  internal static var upNextSortOldestToNewest: String { return L10n.tr("Localizable", "up_next_sort_oldest_to_newest", fallback: "Oldest to newest") }
+  /// Up Next sort option that orders episodes by time remaining, shortest first
+  internal static var upNextSortShortestToLongest: String { return L10n.tr("Localizable", "up_next_sort_shortest_to_longest", fallback: "Shortest to longest") }
+  /// Title shown at the top of the Up Next sort options picker
+  internal static var upNextSortTitle: String { return L10n.tr("Localizable", "up_next_sort_title", fallback: "Sort Up Next") }
   /// Label of a button that informs the user they can upgrade their account. .
   internal static var upgradeAccount: String { return L10n.tr("Localizable", "upgrade_account", fallback: "Upgrade Account") }
   /// Upgrade account information for onboarding banner

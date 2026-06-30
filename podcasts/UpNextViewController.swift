@@ -130,7 +130,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             clearQueueButton.isEnabled = PlaybackManager.shared.queue.upNextCount() > 0
         }
         if FeatureFlag.upNextSort.enabled {
-            sortButton.isHidden = PlaybackManager.shared.queue.upNextCount() == 0
+            sortButton.isHidden = PlaybackManager.shared.queue.upNextCount() < 2
         }
         updateSize()
         return headerView
@@ -366,6 +366,8 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc private func sortButtonTapped() {
+        guard PlaybackManager.shared.queue.upNextCount() >= 2 else { return }
+
         let optionsPicker = makeSortOptionsPicker()
         optionsPicker.present(from: self)
     }

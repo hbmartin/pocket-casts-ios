@@ -207,6 +207,7 @@ class PlayerCell: ThemeableSwipeCell {
         episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
 
         updateStarStatus()
+        accessibilityLabel = labelForAccessibility(episode: episode)
     }
 
     func updateDownloadStatus() {

@@ -146,13 +146,15 @@ class ChapterManager {
         // Parse chapters from the file and request external chapters
         async let fileChaptersAsync = loadChapters(for: episode, duration: duration)
 
-        async let (podloveChaptersAsync, podcastIndexChaptersAsync, generatedChaptersAsync) = await
-        showInfoCoordinator.loadChapters(podcastUuid: episode.parentIdentifier(), episodeUuid: episode.uuid)
+        async let externalChaptersAsync = await showInfoCoordinator.loadChapters(
+            podcastUuid: episode.parentIdentifier(),
+            episodeUuid: episode.uuid
+        )
 
         var chapters: [ChapterInfo]
 
         do {
-            let (fileChapters, podloveChapters, podcastIndexChapters, generatedChapters) = try await (fileChaptersAsync, podloveChaptersAsync, podcastIndexChaptersAsync, generatedChaptersAsync)
+            let (fileChapters, externalChaptersResult) = try await (fileChaptersAsync, externalChaptersAsync)
 
             // Prioritize embedded chapters, given for some shows it will take
             // into account dynamic ads
@@ -160,7 +162,7 @@ class ChapterManager {
                 chapters = fileChapters
                 FileLog.shared.addMessage("ChapterManager: using file chapters")
                 chaptersOrigin = .nativeMedia
-            } else if let externalChapters = parseExternalChapters(podlove: podloveChapters, podcastIndex: podcastIndexChapters, generated: generatedChapters, duration: duration) {
+            } else if let externalChapters = parseExternalChapters(podlove: externalChaptersResult.metadata, podcastIndex: externalChaptersResult.podcastIndex, generated: externalChaptersResult.generated, duration: duration) {
                 chapters = externalChapters
                 FileLog.shared.addMessage("ChapterManager: using external chapters")
             } else {
@@ -169,6 +171,7 @@ class ChapterManager {
             }
         } catch {
             chapters = await fileChaptersAsync
+            chaptersOrigin = chapters.isEmpty ? .unknown : .nativeMedia
             FileLog.shared.addMessage("ChapterManager: using file chapters because there was an error retrieving external sources")
         }
 
@@ -211,6 +214,7 @@ class ChapterManager {
         lastEpisodeUuid = ""
         chapters.removeAll()
         currentChapters = Chapters()
+        chaptersOrigin = .unknown
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastChaptersDidUpdate)
     }

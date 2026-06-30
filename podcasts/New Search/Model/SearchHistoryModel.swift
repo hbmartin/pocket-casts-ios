@@ -24,7 +24,7 @@ class SearchHistoryModel: ObservableObject {
 
         self.entries = userDefaults.data(forKey: Constants.UserDefaults.searchHistoryEntries).flatMap {
             try? JSONDecoder().decode([SearchHistoryEntry].self, from: $0)
-        } ?? []
+        }?.map { $0.resolvingExplicitStatus() } ?? []
 
         addNotificationObservers()
         updateFolders()
@@ -100,6 +100,7 @@ class SearchHistoryModel: ObservableObject {
     }
 
     private func add(entry: SearchHistoryEntry) {
+        let entry = entry.resolvingExplicitStatus()
         entries.removeAll(where: { $0 == entry })
         entries.insert(entry, at: 0)
 
@@ -114,5 +115,13 @@ class SearchHistoryModel: ObservableObject {
             defaults.set(encoded, forKey: Constants.UserDefaults.searchHistoryEntries)
             entries = updatedEntries
         }
+    }
+}
+
+private extension SearchHistoryEntry {
+    func resolvingExplicitStatus() -> SearchHistoryEntry {
+        var entry = self
+        entry.podcast = entry.podcast?.resolvingExplicitStatus()
+        return entry
     }
 }
