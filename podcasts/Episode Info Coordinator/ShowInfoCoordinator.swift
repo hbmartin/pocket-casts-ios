@@ -48,25 +48,25 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
     public func loadChapters(
         podcastUuid: String,
         episodeUuid: String
-    ) async throws -> ([Episode.Metadata.EpisodeChapter]?, [PodcastIndexChapter]?, [GeneratedChapter]?) {
+    ) async throws -> (metadata: [Episode.Metadata.EpisodeChapter]?, podcastIndex: [PodcastIndexChapter]?, generated: [GeneratedChapter]?) {
         let metadata = try await loadShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
 
         if let podcastIndexChapterUrl = metadata?.chaptersUrl,
            let chapters = try? await podcastIndexChapterRetriever.loadChapters(podcastIndexChapterUrl) {
-            return (nil, chapters.chapters, nil)
+            return (metadata: nil, podcastIndex: chapters.chapters, generated: nil)
         }
 
         if let chapters = metadata?.chapters, !chapters.isEmpty {
-            return (chapters, nil, nil)
+            return (metadata: chapters, podcastIndex: nil, generated: nil)
         }
 
         if FeatureFlag.generatedChapters.enabled,
            let chapters = try? await generatedEpisodeMetadataRetriever.loadMetadata(podcastUuid: podcastUuid, episodeUuid: episodeUuid).chapters,
            !chapters.isEmpty {
-            return (nil, nil, chapters)
+            return (metadata: nil, podcastIndex: nil, generated: chapters)
         }
 
-        return (nil, nil, nil)
+        return (metadata: nil, podcastIndex: nil, generated: nil)
     }
 
     private func buildGeneratedTranscript(podcastUuid: String, episodeUuid: String) -> Episode.Metadata.Transcript {

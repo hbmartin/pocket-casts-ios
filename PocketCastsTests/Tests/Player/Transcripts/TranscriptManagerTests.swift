@@ -13,8 +13,8 @@ final class TranscriptManagerTests: XCTestCase {
             return nil
         }
 
-        func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> ([Episode.Metadata.EpisodeChapter]?, [podcasts.PodcastIndexChapter]?, [GeneratedChapter]?) {
-            return (nil, nil, nil)
+        func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> (metadata: [Episode.Metadata.EpisodeChapter]?, podcastIndex: [podcasts.PodcastIndexChapter]?, generated: [GeneratedChapter]?) {
+            return (metadata: nil, podcastIndex: nil, generated: nil)
         }
 
         func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {

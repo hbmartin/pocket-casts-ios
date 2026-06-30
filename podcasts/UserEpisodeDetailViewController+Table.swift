@@ -125,11 +125,12 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
                 addToUpNextPicker.addAction(action: playLastAction)
 
                 let presentingVC = presentingViewController
-                close()
-                if let presentingVC {
-                    addToUpNextPicker.present(from: presentingVC)
-                } else {
-                    assertionFailure("Missing presenting view controller")
+                close {
+                    if let presentingVC {
+                        addToUpNextPicker.present(from: presentingVC)
+                    } else {
+                        assertionFailure("Missing presenting view controller")
+                    }
                 }
             }
         case .markAsPlayed:

@@ -2,12 +2,12 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-public struct GeneratedMetadataEnvelope: Decodable {
+public struct GeneratedMetadataEnvelope: Decodable, Sendable {
     let summary: String?
     let chapters: [GeneratedChapter]?
 }
 
-struct GeneratedChapter: Decodable {
+struct GeneratedChapter: Decodable, Sendable {
     let title: String
     let timestamp: String
     let startTime: TimeInterval
@@ -49,20 +49,24 @@ public actor GeneratedEpisodeMetadataRetriever {
             dataRequestMap[urlString] = nil
         }
 
+        let cache = cache
         let task = Task<GeneratedMetadataEnvelope, Error> { [weak self] in
             guard let self else { throw TaskError.nilSelf }
             let (data, response) = try await URLSession.shared.data(for: request)
-            let responseToCache = CachedURLResponse(response: response, data: data)
-            cache.storeCachedResponse(responseToCache, for: request)
+            if let httpResponse = response as? HTTPURLResponse,
+               (200..<300).contains(httpResponse.statusCode) {
+                let responseToCache = CachedURLResponse(response: response, data: data)
+                cache.storeCachedResponse(responseToCache, for: request)
+            }
 
-            return try await metadata(from: data)
+            return try metadata(from: data)
         }
         dataRequestMap[urlString] = task
 
         return try await task.value
     }
 
-    private func metadata(from data: Data) throws -> GeneratedMetadataEnvelope {
+    nonisolated private func metadata(from data: Data) throws -> GeneratedMetadataEnvelope {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode(GeneratedMetadataEnvelope.self, from: data)

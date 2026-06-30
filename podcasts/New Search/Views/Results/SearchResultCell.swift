@@ -248,10 +248,17 @@ extension PodcastFolderSearchResult {
     }
 
     var resolvedIsExplicit: Bool {
-        if let explicit {
-            return explicit
+        explicit ?? false
+    }
+
+    func resolvingExplicitStatus() -> PodcastFolderSearchResult {
+        guard kind == .podcast, explicit == nil else {
+            return self
         }
-        return DataManager.sharedManager.findPodcast(uuid: uuid)?.isExplicit ?? false
+
+        var result = self
+        result.explicit = DataManager.sharedManager.findPodcast(uuid: uuid)?.isExplicit ?? false
+        return result
     }
 }
 

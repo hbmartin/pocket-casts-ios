@@ -12,7 +12,8 @@ extension PlaylistDetailViewController: PCSearchBarDelegate {
         // rubber-bands back to the top and the header pops back into view (PCIOS-609). Mirrors
         // PodcastViewController.didActivateSearch(); 335 is the PlaylistHeaderViewCell height.
         let tableBounds = tableView.bounds
-        let footer = UIView(frame: CGRect(x: 0, y: 0, width: tableBounds.width, height: tableBounds.height - 335))
+        let footerHeight = max(0, tableBounds.height - 335)
+        let footer = UIView(frame: CGRect(x: 0, y: 0, width: tableBounds.width, height: footerHeight))
         footer.backgroundColor = .clear
         tableView.tableFooterView = footer
 

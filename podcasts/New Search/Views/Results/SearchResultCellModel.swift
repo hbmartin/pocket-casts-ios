@@ -13,7 +13,7 @@ class SearchResultCellModel: ObservableObject, MainEpisodeActionViewDelegate {
 
     init(episode: EpisodeSearchResult?, podcastFolder: PodcastFolderSearchResult?) {
         self.episode = episode
-        self.podcastFolder = podcastFolder
+        self.podcastFolder = podcastFolder?.resolvingExplicitStatus()
         setupObservers()
     }
 

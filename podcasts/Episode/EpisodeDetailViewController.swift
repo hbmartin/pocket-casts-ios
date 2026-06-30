@@ -425,14 +425,10 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
     }
 
     private func updateArtwork() {
-        // While episode artwork is enabled but not yet resolved, show a placeholder. Once resolved,
-        // show the episode's own artwork, falling back to the podcast artwork when there is none.
-        if Settings.loadEmbeddedImages, !didResolveEpisodeArtwork {
-            podcastImage.setPlaceholder(size: .page)
-        } else if let episodeArtworkURL {
+        if let episodeArtworkURL {
             podcastImage.setEpisodeArtwork(url: episodeArtworkURL, size: .page)
-        } else if let uuid = episode.parentPodcast()?.uuid {
-            podcastImage.setPodcast(uuid: uuid, size: .page)
+        } else {
+            podcastImage.setPodcast(uuid: podcast.uuid, size: .page)
         }
     }
 

@@ -319,8 +319,10 @@ class UserEpisodeDetailViewController: UIViewController {
     /// than rely on a fixed value.
     private func contentDetent() -> UISheetPresentationController.Detent {
         .custom(identifier: .userEpisodeDetail) { [weak self] context in
-            guard let self else { return context.maximumDetentValue }
-            let fittingHeight = self.containerView.systemLayoutSizeFitting(
+            guard let self, let containerView else {
+                return context.maximumDetentValue
+            }
+            let fittingHeight = containerView.systemLayoutSizeFitting(
                 CGSize(width: self.view.bounds.width, height: 0),
                 withHorizontalFittingPriority: .required,
                 verticalFittingPriority: .fittingSizeLevel
