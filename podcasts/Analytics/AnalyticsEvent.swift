@@ -448,6 +448,7 @@ enum AnalyticsEvent: String {
     case deselectChaptersChapterDeselected
     case deselectChaptersToggledOn
     case deselectChaptersToggledOff
+    case chapterLinkClicked
 
     case playerTabSelected
     case playerShowNotesLinkTapped

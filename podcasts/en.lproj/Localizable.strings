@@ -6047,3 +6047,6 @@
 
 /* tv home Video section title */
 "tv_home_video_section_title" = "Made for TV";
+
+/* Warning message shown for automatically generated episode chapters */
+"chapters_generated_warning_message" = "These chapters are automatically generated and may not be perfectly accurate.";

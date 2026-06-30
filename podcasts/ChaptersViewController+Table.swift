@@ -66,7 +66,7 @@ extension ChaptersViewController: UITableViewDataSource, UITableViewDelegate, UI
                 containerDelegate?.scrollToNowPlaying()
             } else {
                 PlaybackManager.shared.skipToChapter(chapter, startPlaybackAfterSkip: true)
-                Analytics.track(.playerChapterSelected)
+                PlaybackManager.shared.trackChapterEvent(.playerChapterSelected)
             }
         }
     }
@@ -103,10 +103,10 @@ extension ChaptersViewController: ChaptersHeaderDelegate {
 
         if isTogglingChapters {
             numberOfDeselectedChapters = playbackManager.chapterCount(onlyPlayable: true)
-            Analytics.track(.deselectChaptersToggledOn)
+            PlaybackManager.shared.trackChapterEvent(.deselectChaptersToggledOn)
         } else {
             numberOfDeselectedChapters -= playbackManager.chapterCount(onlyPlayable: true)
-            Analytics.track(.deselectChaptersToggledOff, properties: ["number_of_deselected_chapters": numberOfDeselectedChapters])
+            PlaybackManager.shared.trackChapterEvent(.deselectChaptersToggledOff, properties: ["number_of_deselected_chapters": numberOfDeselectedChapters])
         }
     }
 }

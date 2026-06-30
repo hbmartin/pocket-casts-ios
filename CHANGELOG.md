@@ -6,6 +6,7 @@
 - Fix Control Center timeline continuing to advance while playback is paused [#4530](https://github.com/Automattic/pocket-casts-ios/pull/4530)
 - Fix a rare crash when loading embedded episode artwork [#4619](https://github.com/Automattic/pocket-casts-ios/pull/4619)
 - Show episode artwork on the episode details page [#4616](https://github.com/Automattic/pocket-casts-ios/pull/4616)
+- Add support for generated chapters on episodes [#4630](https://github.com/Automattic/pocket-casts-ios/pull/4630)
 
 8.15
 -----

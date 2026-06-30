@@ -216,6 +216,9 @@ public enum FeatureFlag: String, CaseIterable {
     /// Enable the Up Next sort button
     case upNextSort
 
+    /// Enable Generated Chapters
+    case generatedChapters
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -369,6 +372,8 @@ public enum FeatureFlag: String, CaseIterable {
         case .logMainThreadDatabaseAccess:
             true
         case .upNextSort:
+            BuildEnvironment.current == .debug
+        case .generatedChapters:
             BuildEnvironment.current == .debug
         }
     }
