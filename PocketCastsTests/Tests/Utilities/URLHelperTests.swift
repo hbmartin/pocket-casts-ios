@@ -155,7 +155,6 @@ final class URLHelperTests: XCTestCase {
         var userinfoComponents = URLComponents()
         userinfoComponents.scheme = URLFixture.showNotesTimestampScheme
         userinfoComponents.user = URLFixture.listenerUser
-        userinfoComponents.password = URLFixture.placeholderPassword
         userinfoComponents.host = URLFixture.showNotesTimestampHost
         userinfoComponents.path = URLFixture.rootPath
         userinfoComponents.fragment = [
@@ -255,7 +254,6 @@ private enum URLFixture {
     static let redirectQueryName = "redirect"
     static let redirectQueryValue = "1"
     static let listenerUser = "listener"
-    static let placeholderPassword = "placeholder"
     static let localhostPort = 8080
     static let showNotesTimestamp = "57:00"
     static let fragmentSeparator = "="

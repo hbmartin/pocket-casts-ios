@@ -130,9 +130,9 @@ public final class SharingServerHandler: @unchecked Sendable {
         // request timestamp and shared credential.
         // This is protocol compatibility only; do not reuse it for password hashing or local integrity checks.
         let signatureInput = "\(dateString)\(credential)"
-        let hashDigest = CryptoKit.Insecure.SHA1.hash( // NOSONAR - Required by the legacy sharing server signature protocol.
+        let hashDigest = CryptoKit.Insecure.SHA1.hash( // nosemgrep: pocketcasts.no-insecure-cryptokit-hashes - Required by the legacy sharing server signature protocol. NOSONAR
             data: Data(signatureInput.utf8)
         )
-        return hashDigest.compactMap { String(format: "%02hhx", $0) }.joined()
+        return hashDigest.map { String(format: "%02hhx", $0) }.joined()
     }
 }

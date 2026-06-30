@@ -312,10 +312,10 @@ final class PlaylistQueryBuilderSnapshotTests: XCTestCase {
     private struct ManualQueryOptions {
         let clause: PlaylistQueryBuilder.SelectClause
         let optimized: Bool
-        var searchTerm: String? = nil
-        var limit = 0
+        let searchTerm: String? = nil
+        let limit = 0
         let shouldShowArchived: Bool
-        var sortType: PlaylistSort? = nil
+        let sortType: PlaylistSort? = nil
     }
 
     private func describeManualQuery(

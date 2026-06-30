@@ -216,7 +216,7 @@ rules:
       likelihood: MEDIUM
       impact: HIGH
       technology: [ios]
-    message: Do not use CryptoKit Insecure.MD5 or Insecure.SHA1 outside the documented legacy sharing-server signature helper; use SHA256/HMAC/SHA3 as appropriate.
+    message: Do not use CryptoKit Insecure.MD5 or Insecure.SHA1 without a line-level suppression documenting a legacy compatibility requirement; use SHA256/HMAC/SHA3 as appropriate.
     languages: [swift]
     paths:
       include:
@@ -228,10 +228,6 @@ rules:
           - pattern: CryptoKit.Insecure.SHA1.hash(...)
           - pattern: Insecure.MD5.hash(...)
           - pattern: Insecure.SHA1.hash(...)
-      - pattern-not-inside: |
-          static func legacySharingServerSignature(...) -> String {
-            ...
-          }
 
   - id: pocketcasts.bitdrift-gate-on-github-actions
     severity: WARNING
