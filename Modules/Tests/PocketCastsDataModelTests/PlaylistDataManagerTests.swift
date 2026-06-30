@@ -454,6 +454,30 @@ final class PlaylistDataManagerTests: DataManagerTestCase {
         }
     }
 
+    /// Value-type regression: a caller that discards the `id`-bearing return value of `save(playlist:)`
+    /// and re-saves the ORIGINAL copy (still `id == 0`) must update the existing row by `uuid`, not insert
+    /// a duplicate. This is the `EpisodeFilter` struct footgun the uuid-resolution branch in `save()`
+    /// guards against, exercised in production by `SyncTask+ServerChanges` (save → add(episodes:) → save).
+    func testResaveOfIdZeroCopyUpdatesByUuidWithoutDuplicating() throws {
+        try runWithBothImplementations { dataManager, impl in
+            var playlist = EpisodeFilter()
+            playlist.uuid = "resave-id-zero-uuid"
+            playlist.playlistName = "First name"
+
+            // First save: return value (with assigned id) is intentionally discarded, mimicking the
+            // value-type callers that keep mutating the original `id == 0` struct.
+            dataManager.save(playlist: playlist)
+            XCTAssertEqual(playlist.id, 0, "\(impl): the caller's copy never receives the assigned id")
+
+            playlist.playlistName = "Second name"
+            dataManager.save(playlist: playlist)
+
+            let matching = dataManager.allPlaylists(includeDeleted: true).filter { $0.uuid == playlist.uuid }
+            XCTAssertEqual(matching.count, 1, "\(impl): re-saving an id == 0 copy must not insert a duplicate row")
+            XCTAssertEqual(matching.first?.playlistName, "Second name", "\(impl): the existing row was updated in place")
+        }
+    }
+
     func testSaveUpdatesPlaylistUpdateDate() throws {
         try runWithBothImplementations { dataManager, impl in
             var playlist = EpisodeFilter()
