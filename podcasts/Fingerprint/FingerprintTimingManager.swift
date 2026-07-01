@@ -64,6 +64,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         let downloadedPath: String
         let tempPath: String
         let streamingBufferPath: String
+        let isDownloaded: Bool
         let isStreamDownloaded: Bool
 
         init(episode: BaseEpisode, downloadManager: DownloadManager = .shared) {
@@ -73,6 +74,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
             downloadedPath = downloadManager.pathForEpisode(episode)
             tempPath = downloadManager.tempPathForEpisode(episode)
             streamingBufferPath = downloadManager.streamingBufferPathForEpisode(episode)
+            isDownloaded = episode.downloaded(pathFinder: downloadManager)
             isStreamDownloaded = (episode as? Episode)?.streamDownloaded(pathFinder: downloadManager) ?? false
         }
     }
@@ -1233,7 +1235,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     private func resolveAudioSource(for episode: EpisodeSnapshot) -> AudioSource {
         let downloadPath = episode.downloadedPath
-        if FileManager.default.fileExists(atPath: downloadPath) {
+        if episode.isDownloaded, FileManager.default.fileExists(atPath: downloadPath) {
             return .downloaded(URL(fileURLWithPath: downloadPath))
         }
         // A stream-downloaded episode keeps a complete file at the streaming

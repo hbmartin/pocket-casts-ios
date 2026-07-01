@@ -76,7 +76,7 @@ rules:
         - "**/Package.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern: '.package(url: $URL, branch: $BRANCH)'
+      - pattern: '.package(..., branch: $BRANCH, ...)'
 
   - id: pocketcasts.github-actions-pin-actions-to-sha
     severity: ERROR
@@ -367,10 +367,18 @@ rules:
         - "**/*.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern: UnsafeTransfer($VALUE)
-      - metavariable-regex:
-          metavariable: $VALUE
-          regex: (?i).*episode.*
+      - pattern-either:
+          - patterns:
+              - pattern: UnsafeTransfer($VALUE)
+              - metavariable-regex:
+                  metavariable: $VALUE
+                  regex: (?i).*episode.*
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC(..., $VALUE: BaseEpisode, ...) {
+                    ...
+                  }
+              - pattern: UnsafeTransfer($VALUE)
 
   - id: pocketcasts.cadisplaylink-no-self-target
     severity: ERROR

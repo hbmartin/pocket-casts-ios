@@ -7,7 +7,9 @@ import UserNotifications
 
 let unsafePackageDependencies: [Package.Dependency] = [
     // ruleid: pocketcasts.spm-no-branch-dependencies
-    .package(url: "https://example.com/mutable.git", branch: "main")
+    .package(url: "https://example.com/mutable.git", branch: "main"),
+    // ruleid: pocketcasts.spm-no-branch-dependencies
+    .package(name: "NamedMutable", url: "https://example.com/named-mutable.git", branch: "main")
 ]
 
 let safePackageDependencies: [Package.Dependency] = [
@@ -116,6 +118,13 @@ final class UnsafeEpisodeTransferHelper {
     }
 }
 
+final class UnsafeGenericEpisodeTransferHelper {
+    func prepare(item: BaseEpisode) {
+        // ruleid: pocketcasts.no-unsafe-transfer-episode
+        _ = UnsafeTransfer(item)
+    }
+}
+
 final class SafeEpisodeSnapshotHelper {
     func prepare(episode: BaseEpisode) {
         // ok: pocketcasts.no-unsafe-transfer-episode
@@ -149,11 +158,12 @@ final class SafeDisplayLinkOwner {
     }
 }
 
-private final class DisplayLinkTarget {
+private final class DisplayLinkTarget: NSObject {
     private let onTick: () -> Void
 
     init(onTick: @escaping () -> Void) {
         self.onTick = onTick
+        super.init()
     }
 
     @objc func tick(_: CADisplayLink) {
