@@ -1327,11 +1327,12 @@ fileprivate class RoundPlayPauseButton: RoundButton {
     }
 }
 
-private final class WeakDisplayLinkTarget {
+private final class WeakDisplayLinkTarget: NSObject {
     private let onTick: () -> Void
 
     init(onTick: @escaping () -> Void) {
         self.onTick = onTick
+        super.init()
     }
 
     @objc func tick(_: CADisplayLink) {
