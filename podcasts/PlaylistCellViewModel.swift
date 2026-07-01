@@ -53,14 +53,13 @@ class PlaylistCellViewModel: ObservableObject {
     static func gridArtworkItems<T>(
         from episodes: [T],
         limit: Int,
-        imageManager: ImageManager = .sharedManager,
         podcastUuid: (T) -> String
     ) -> [PlaylistArtworkView.ImageItem] {
         let distinctEpisodes = distinctPodcasts(from: episodes, limit: limit, podcastUuid: podcastUuid)
 
         return distinctEpisodes.map { episode in
             let uuid = podcastUuid(episode)
-            let url = imageManager.podcastUrl(imageSize: .grid, uuid: uuid)
+            let url = ImageManager.podcastUrl(imageSize: .grid, uuid: uuid)
             return PlaylistArtworkView.ImageItem(id: uuid, url: url)
         }
     }
@@ -158,7 +157,6 @@ class PlaylistCellViewModel: ObservableObject {
     }
 
     private func loadImagesURLs(episodes: [Episode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
-        let imageManager = self.imageManager
         let episodeIdentifiers = episodes.map { (podcastUuid: $0.podcastUuid, episodeUuid: $0.uuid) }
 
         return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
@@ -170,7 +168,7 @@ class PlaylistCellViewModel: ObservableObject {
                        let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
                         return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    let url = ImageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }

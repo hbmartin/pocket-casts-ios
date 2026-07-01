@@ -194,6 +194,18 @@ boundary crossings that touch `Episode` use the per-hop `Sendable`-projection es
   (`SIMULATOR_OS=18.6`). **This completes the Phase 3 leaf records** (Folder ✓, EpisodeFilter ✓, Podcast ✓).
 - **Records 4/5 — `Episode`/`UserEpisode`: deferred to Phase 5** (gated on de-`@objc` `BaseEpisode` +
   playback position-tracking redesign).
+- **Baseline unblock — DONE** (2026-07-01, branch `modernization-slice17-gated-baseline`). With the
+  leaf records landed, the 10 non-playback strict-concurrency baseline entries were cleared, taking the
+  ratchet from **13 → 3** (only the permanent `DefaultPlayer`/`PlaybackManager` playback entries remain).
+  The three gated files were resolved thus: `ListEpisode` marked honestly `@unchecked Sendable` (an
+  immutable `let`-only wrapper over `@unchecked Sendable` `Episode` + `Sendable` `UIColor`), which also
+  cleared `PlaylistMetadataLoader`'s `Task<[ListEpisode]>`/`[ListEpisode]` crossings;
+  `ImageManager.podcastUrl` made a `static` pure function so the non-Sendable `ImageManager` instance
+  no longer crosses actor boundaries (its stored property was dropped from `PlaylistMetadataLoader`);
+  and `ShareProfileViewModel` + `PlaylistDetailViewModel` annotated `@MainActor` with their synchronous
+  DataManager work moved to `Task.detached`/`nonisolated` helpers (search routed through
+  `PlaylistDetailFetchOperation` so no DB runs on main). Validated: clean-build baseline regenerated to
+  3 entries; `check:static` clean; app test target green.
 
   ### Record 3 — `Podcast` flip notes (for the eventual heavy records)
 
@@ -274,7 +286,9 @@ itself is unaffected by that split and proceeds now.
 - ✅ Leaf records (`Folder`✓, `EpisodeFilter`✓, `Podcast`✓) are `Sendable` structs with GRDB round-trip +
   behaviour-parity tests landed *before* each flip; `save(...)` returns the saved value (no out-param
   back-mutation); shared caches hand out copies. **All three leaf records done (2026-06-28).**
-- The 10 baseline entries + the playlist repository key clear once `EpisodeFilter` (+ honest-`Sendable`
-  `ListEpisode`) land; Episode-touching boundary crossings use the per-hop `Sendable`-projection hatch
-  until Phase 5.
+- ✅ The 10 baseline entries clear once `EpisodeFilter` (+ honest-`Sendable` `ListEpisode`) land —
+  **done 2026-07-01** (ratchet 13 → 3, playback-only floor). Episode-touching boundary crossings use
+  the per-hop `Sendable`-projection hatch until Phase 5. (The seven repository `DependencyKey`s remain
+  on the homegrown container; migrating them to swift-dependencies is now unblocked but tracked
+  separately.)
 - MODERNIZATION.md Phase 3 reconciled: heavy-record migration moves under the Phase 5 umbrella.

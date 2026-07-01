@@ -111,31 +111,27 @@ actor PlaylistMetadataLoader {
     private var imagesTasks: [String: Task<[PlaylistArtworkView.ImageItem], Never>] = [:]
 
     private let dataManager: DataManager
-    private let imageManager: ImageManager
     private let episodesDataManager: EpisodesDataManager
 
     static func gridArtworkItems<T>(
         from episodes: [T],
         limit: Int,
-        imageManager: ImageManager = .sharedManager,
         podcastUuid: (T) -> String
     ) -> [PlaylistArtworkView.ImageItem] {
         let distinctEpisodes = distinctPodcasts(from: episodes, limit: limit, podcastUuid: podcastUuid)
 
         return distinctEpisodes.map { episode in
             let uuid = podcastUuid(episode)
-            let url = imageManager.podcastUrl(imageSize: .grid, uuid: uuid)
+            let url = ImageManager.podcastUrl(imageSize: .grid, uuid: uuid)
             return PlaylistArtworkView.ImageItem(id: uuid, url: url)
         }
     }
 
     init(
         dataManager: DataManager = .sharedManager,
-        imageManager: ImageManager = .sharedManager,
         episodesDataManager: EpisodesDataManager = .init()
     ) {
         self.dataManager = dataManager
-        self.imageManager = imageManager
         self.episodesDataManager = episodesDataManager
     }
 
@@ -347,13 +343,15 @@ actor PlaylistMetadataLoader {
     private func loadImagesURLs(episodes: [ListEpisode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
         try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
+                let podcastUuid = episode.episode.podcastUuid
+                let episodeUuid = episode.episode.uuid
                 group.addTask {
                     if includingEpisodeArtwork,
-                       let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: episode.episode.podcastUuid, episodeUuid: episode.episode.uuid) {
-                        return PlaylistArtworkView.ImageItem(id: episode.episode.uuid, url: url)
+                       let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
+                        return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: episode.episode.podcastUuid)
-                    return PlaylistArtworkView.ImageItem(id: episode.episode.podcastUuid, url: url)
+                    let url = ImageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
             var results: [PlaylistArtworkView.ImageItem] = []

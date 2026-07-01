@@ -28,7 +28,7 @@ of `scripts/ci/check-concurrency-warnings.sh`).
 
 | Ratchet | Mechanism | Status |
 |---|---|---|
-| Strict-concurrency warnings (app + modules + tests) | `check-concurrency-warnings.sh` + `scripts/ci/concurrency-baseline.txt`; app target builds with `SWIFT_STRICT_CONCURRENCY = targeted`, modules with the `StrictConcurrency` upcoming feature | Active (Phase 1 burn-down; baseline includes a handful of pre-existing module/test warnings that CI's incremental builds never surfaced) |
+| Strict-concurrency warnings (app + modules + tests) | `check-concurrency-warnings.sh` + `scripts/ci/concurrency-baseline.txt`; app target builds with `SWIFT_STRICT_CONCURRENCY = targeted`, modules with the `StrictConcurrency` upcoming feature | Active (baseline at **3** as of 2026-07-01 — the permanent `DefaultPlayer`/`PlaybackManager` playback floor; the non-playback targeted-mode burn-down is complete) |
 | `nonisolated(unsafe)` without justification | Semgrep `pocketcasts.nonisolated-unsafe-requires-justification` | Active (zero findings) |
 | `@unchecked Sendable` without justification | Not yet gated — 123 legacy sites; gate after Phase 1 reduces them | Planned |
 
