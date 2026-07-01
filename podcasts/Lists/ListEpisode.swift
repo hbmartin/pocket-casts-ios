@@ -1,7 +1,10 @@
 import Foundation
 import PocketCastsDataModel
 
-class ListEpisode: ListItem {
+// Immutable wrapper: both stored properties are `let` and Sendable (Episode is @unchecked Sendable,
+// UIColor is Sendable); the ListItem base holds no stored state. Safe to treat as Sendable, which
+// lets `[ListEpisode]` cross actor boundaries (e.g. out of PlaylistMetadataLoader).
+final class ListEpisode: ListItem, @unchecked Sendable {
     let episode: Episode
     let tintColor: UIColor
 

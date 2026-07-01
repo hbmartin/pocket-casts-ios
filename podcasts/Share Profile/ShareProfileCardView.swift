@@ -39,11 +39,9 @@ struct ShareProfileCardView: View {
 
 // MARK: - Preview
 
-struct ShareProfileCardView_Previews: PreviewProvider {
-    static var previews: some View {
-        ShareProfileCardView(viewModel: ShareProfileViewModel())
-            .frame(width: 340, height: 400)
-            .previewLayout(.sizeThatFits)
-            .setupDefaultEnvironment()
-    }
+#Preview {
+    ShareProfileCardView(viewModel: ShareProfileViewModel())
+        .frame(width: 340, height: 400)
+        .previewLayout(.sizeThatFits)
+        .setupDefaultEnvironment()
 }

@@ -39,10 +39,10 @@ class ImageManager {
     }()
 
     public var biggestPodcastImageSize: Int {
-        availablePodcastImageSizes.max()!
+        Self.availablePodcastImageSizes.max()!
     }
 
-    private let availablePodcastImageSizes = [130, 210, 280, 340, 400, 420, 680, 960]
+    private static let availablePodcastImageSizes = [130, 210, 280, 340, 400, 420, 680, 960]
 
     // we store failed embed lookups in memory, just to stop us constantly parsing a file with no artwork for artwork
     private var failedEmbeddedLookups = [] as [String]
@@ -151,7 +151,7 @@ class ImageManager {
     // MARK: - Subscribed Podcast Images
 
     func loadImage(podcastUuid: String, imageView: UIImageView, size: PodcastThumbnailSize, showPlaceHolder: Bool) {
-        let url = podcastUrl(imageSize: size, uuid: podcastUuid)
+        let url = Self.podcastUrl(imageSize: size, uuid: podcastUuid)
         let placeholderImage = showPlaceHolder ? placeHolderImage(size) : nil
         let processor = DefaultImageProcessor.default
         imageView.kf.setImage(with: url, placeholder: placeholderImage, options: [.processor(processor), .targetCache(subscribedPodcastsCache), .transition(.fade(Constants.Animation.defaultAnimationTime))])
@@ -166,7 +166,7 @@ class ImageManager {
         if let userEpisode = episode as? UserEpisode {
             loadUserEpisodeImage(uuid: userEpisode.uuid, imageView: imageView, size: size, completionHandler: nil)
         } else {
-            let url = podcastUrl(imageSize: size, uuid: episode.parentIdentifier())
+            let url = Self.podcastUrl(imageSize: size, uuid: episode.parentIdentifier())
             // for larger images, avoid really obvious reload flashes by keeping whatever image is there currently while loading a new one
             let placeholder = (imageView.image != nil && size == .page) ? imageView.image : placeHolderImage(size)
             let processor = DefaultImageProcessor.default
@@ -183,12 +183,12 @@ class ImageManager {
     }
 
     func hasCachedImage(for uuid: String, size: PodcastThumbnailSize) -> Bool {
-        let url = podcastUrl(imageSize: size, uuid: uuid)
+        let url = Self.podcastUrl(imageSize: size, uuid: uuid)
         return subscribedPodcastsCache.isCached(forKey: url.absoluteString)
     }
 
     func cachedImageFor(podcastUuid: String, size: PodcastThumbnailSize) -> UIImage? {
-        let url = podcastUrl(imageSize: size, uuid: podcastUuid)
+        let url = Self.podcastUrl(imageSize: size, uuid: podcastUuid)
 
         return retrieveImageFromCache(url: url, cache: subscribedPodcastsCache, fetchIfMissing: true)
     }
@@ -246,7 +246,7 @@ class ImageManager {
             imageURL = userEpisode.urlForImage()
             imageCache = userEpisodeCache
         } else if let episode = episode as? Episode, let parentPodcast = episode.parentPodcast() {
-            imageURL = podcastUrl(imageSize: size, uuid: parentPodcast.uuid)
+            imageURL = Self.podcastUrl(imageSize: size, uuid: parentPodcast.uuid)
             imageCache = subscribedPodcastsCache
         } else {
             completionHandler(nil)
@@ -415,9 +415,9 @@ class ImageManager {
 
     private func allUrlsFor(podcastUuid: String) -> [URL] {
         var urls = [URL]()
-        urls.append(podcastUrl(imageSize: .list, uuid: podcastUuid))
-        urls.append(podcastUrl(imageSize: .grid, uuid: podcastUuid))
-        urls.append(podcastUrl(imageSize: .page, uuid: podcastUuid))
+        urls.append(Self.podcastUrl(imageSize: .list, uuid: podcastUuid))
+        urls.append(Self.podcastUrl(imageSize: .grid, uuid: podcastUuid))
+        urls.append(Self.podcastUrl(imageSize: .page, uuid: podcastUuid))
 
         return urls
     }
@@ -446,13 +446,13 @@ class ImageManager {
         NotificationCenter.default.post(name: Constants.Notifications.podcastUpdated, object: podcastUuid)
 
         // list and card are the same image, so card is not in the list below
-        let listUrl = podcastUrl(imageSize: .list, uuid: podcastUuid)
+        let listUrl = Self.podcastUrl(imageSize: .list, uuid: podcastUuid)
         subscribedPodcastsCache.removeImage(forKey: listUrl.cacheKey)
 
-        let gridUrl = podcastUrl(imageSize: .grid, uuid: podcastUuid)
+        let gridUrl = Self.podcastUrl(imageSize: .grid, uuid: podcastUuid)
         subscribedPodcastsCache.removeImage(forKey: gridUrl.cacheKey)
 
-        let pageUrl = podcastUrl(imageSize: .page, uuid: podcastUuid)
+        let pageUrl = Self.podcastUrl(imageSize: .page, uuid: podcastUuid)
         subscribedPodcastsCache.removeImage(forKey: pageUrl.cacheKey, completionHandler: { [weak self] in
             guard let strongSelf = self else { return }
 
@@ -539,14 +539,16 @@ class ImageManager {
         return image
     }
 
-    func podcastUrl(imageSize: PodcastThumbnailSize, uuid: String) -> URL {
+    // Pure URL builder (reads only a constant table + static helpers), so it is `static`/`nonisolated`
+    // and can be called across actor boundaries without the non-Sendable ImageManager instance crossing.
+    static func podcastUrl(imageSize: PodcastThumbnailSize, uuid: String) -> URL {
         let sizeRequired = ImageManager.sizeFor(imageSize: imageSize)
         let closestSize = closestImageSize(sizeRequired: sizeRequired)
 
         return ServerHelper.imageUrl(podcastUuid: uuid, size: closestSize)
     }
 
-    private func closestImageSize(sizeRequired: Int) -> Int {
+    private static func closestImageSize(sizeRequired: Int) -> Int {
         var closeness = 999
         var closestIndex = 0
         for (index, value) in availablePodcastImageSizes.enumerated() {

@@ -31,9 +31,11 @@ extension PlaylistDetailViewModel {
         }
     }
 
-    private func batchedUpNextEpisodes(batchSize: Int = Constants.Limits.maxFilterItems) async -> [[Episode]] {
-        let uuids = dataManager.allUpNextEpisodeUuids().compactMap(\.uuid)
-        let allEpisodes = dataManager.allUpNextEpisodes(from: uuids)
+    // nonisolated so the synchronous Up Next DB reads run off the main actor (the class is @MainActor);
+    // uses the global DataManager rather than capturing the non-Sendable instance. Returns Sendable [[Episode]].
+    nonisolated private func batchedUpNextEpisodes(batchSize: Int = Constants.Limits.maxFilterItems) async -> [[Episode]] {
+        let uuids = DataManager.sharedManager.allUpNextEpisodeUuids().compactMap(\.uuid)
+        let allEpisodes = DataManager.sharedManager.allUpNextEpisodes(from: uuids)
 
         guard !allEpisodes.isEmpty else { return [] }
         guard allEpisodes.count > batchSize else { return [allEpisodes] }
@@ -50,7 +52,7 @@ extension PlaylistDetailViewModel {
         return result
     }
 
-    private func createPlaylists(from batches: [[Episode]]) async -> Bool {
+    nonisolated private func createPlaylists(from batches: [[Episode]]) async -> Bool {
         let firstSortPosition = max(0, DataManager.sharedManager.firstSortPositionForPlaylist())
         DataManager.sharedManager.bumpSortPositionForAllPlaylists(adding: batches.count)
         for (index, batch) in batches.enumerated() {
@@ -62,7 +64,7 @@ extension PlaylistDetailViewModel {
         return true
     }
 
-    private func newManualPlaylist(index: Int, sortPosition: Int) -> EpisodeFilter {
+    nonisolated private func newManualPlaylist(index: Int, sortPosition: Int) -> EpisodeFilter {
         var playlistName = "\(L10n.upNext) - \(Date().monthDayString())"
         if index > 1 {
             playlistName += " (\(index))"

@@ -6,8 +6,12 @@ commit with the full test suite (`mise run test:staging`), static checks (`mise 
 and the new concurrency gate (`mise run check:concurrency`).
 
 **Headline metric:** the strict-concurrency warning baseline went from **74 entries at creation to
-13**, and a CI ratchet guarantees it can only shrink. The remaining 13 are all design-gated on the
-DataManager/record Sendability decision (Phase 3), not mechanical fixes.
+13**, and a CI ratchet guarantees it can only shrink. The remaining 13 were all design-gated on the
+DataManager/record Sendability decision (Phase 3), not mechanical fixes. _(Update 2026-07-01: with the
+Phase 3 leaf records landed, a follow-on slice cleared the 10 non-playback entries — `ListEpisode`
+honest-`Sendable`, `ImageManager.podcastUrl` → `static`, and `@MainActor` on `ShareProfileViewModel` /
+`PlaylistDetailViewModel` — taking the ratchet to **3**, the permanent `DefaultPlayer`/`PlaybackManager`
+playback floor. See [Phase3-RecordSendability.md](Phase3-RecordSendability.md).)_
 
 ## Starting state
 
@@ -180,9 +184,9 @@ coverage is ~15% overall (~3.7% for the app target) — instrumentation only; no
 
 ## Roadmap for future phases
 
-Current ratchet state: **13 baseline entries**, all gated on the DataManager/record Sendability
-decision rather than mechanical fixes. The full phase definitions live in `MODERNIZATION.md`; this is
-the forward plan with what each step is waiting on.
+Current ratchet state: **3 baseline entries** (down from 13 on 2026-07-01), all in the permanent
+`DefaultPlayer`/`PlaybackManager` playback subsystem deferred to Phase 5. The full phase definitions
+live in `MODERNIZATION.md`; this is the forward plan with what each step is waiting on.
 
 ### Near-term slices (no new design needed, in rough order)
 

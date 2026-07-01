@@ -5,6 +5,7 @@ import PocketCastsUtils
 import Dependencies
 import DifferenceKit
 
+@MainActor
 class PlaylistDetailViewModel: ObservableObject {
     @Dependency(\.playlistMetadataLoader) var playlistMetadataLoader: PlaylistMetadataLoader
 
@@ -62,7 +63,6 @@ class PlaylistDetailViewModel: ObservableObject {
 
     private var searchTerm: String = ""
     private var artworkLoadingTask: Task<Void, Never>?
-    private let imageManager: ImageManager
     private let onChange: (StagedChangeset<DataSourceValue>, Bool, Bool) -> Void
     private var tempEpisodes: [ListEpisode] = []
     private let artworkImagesLimit = 4
@@ -76,14 +76,12 @@ class PlaylistDetailViewModel: ObservableObject {
     init(
         playlist: EpisodeFilter,
         dataManager: DataManager = .sharedManager,
-        imageManager: ImageManager = .sharedManager,
         episodesDataManager: EpisodesDataManager = .init(),
         onChange: @escaping (StagedChangeset<DataSourceValue>, Bool, Bool) -> Void,
         onButtonTapped: @escaping (ButtonTag) -> Void
     ) {
         self.playlist = playlist
         self.dataManager = dataManager
-        self.imageManager = imageManager
         self.episodesDataManager = episodesDataManager
         self.onChange = onChange
         self.onButtonTapped = onButtonTapped
@@ -136,16 +134,19 @@ class PlaylistDetailViewModel: ObservableObject {
             searchEpisodes(for: searchTerm)
             return
         }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Run the synchronous playlist reload off the main actor (the class is @MainActor), then hop
+        // back to update isolated state. `uuid` and the returned EpisodeFilter are Sendable.
+        let uuid = playlist.uuid
+        Task.detached { [weak self] in
             guard let self else { return }
-            if let reloadedPlaylist = DataManager.sharedManager.findPlaylist(uuid: playlist.uuid) {
-                playlist = reloadedPlaylist
-
-                DispatchQueue.main.async { [weak self] in
-                    self?.playlistName = reloadedPlaylist.playlistName
+            let reloadedPlaylist = DataManager.sharedManager.findPlaylist(uuid: uuid)
+            await MainActor.run {
+                if let reloadedPlaylist {
+                    self.playlist = reloadedPlaylist
+                    self.playlistName = reloadedPlaylist.playlistName
                 }
+                self.reloadEpisodeList(animated: true)
             }
-            reloadEpisodeList(animated: true)
         }
     }
 
@@ -163,7 +164,9 @@ class PlaylistDetailViewModel: ObservableObject {
             shouldShowArchived: playlist.showArchivedEpisodes
         ) { [weak self] newData, archivedEpisodeCount in
             guard let self else { return }
-            DispatchQueue.main.async {
+            // The operation invokes this completion via `DispatchQueue.main.sync`, so we are already
+            // on the main thread and can assume the main-actor isolation of `self`.
+            MainActor.assumeIsolated {
                 self.archivedEpisodesCount = archivedEpisodeCount
                 let isFirstReload = self.firstTimeLoading
                 self.firstTimeLoading = false
@@ -276,13 +279,15 @@ class PlaylistDetailViewModel: ObservableObject {
     private func loadImagesURLs(episodes: [ListEpisode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
         try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
+                let podcastUuid = episode.episode.podcastUuid
+                let episodeUuid = episode.episode.uuid
                 group.addTask {
                     if includingEpisodeArtwork,
-                       let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: episode.episode.podcastUuid, episodeUuid: episode.episode.uuid) {
-                        return PlaylistArtworkView.ImageItem(id: episode.episode.uuid, url: url)
+                       let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
+                        return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = self.imageManager.podcastUrl(imageSize: .detail, uuid: episode.episode.podcastUuid)
-                    return PlaylistArtworkView.ImageItem(id: episode.episode.podcastUuid, url: url)
+                    let url = ImageManager.podcastUrl(imageSize: .detail, uuid: podcastUuid)
+                    return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
             var results: [PlaylistArtworkView.ImageItem] = []
@@ -351,7 +356,9 @@ extension PlaylistDetailViewModel {
 
         let changeSetTuple = buildChangeSet(source: episodes, newData: episodes)
         DispatchQueue.main.async { [weak self] in
-            self?.onChange(changeSetTuple.1, false, changeSetTuple.0)
+            MainActor.assumeIsolated {
+                self?.onChange(changeSetTuple.1, false, changeSetTuple.0)
+            }
         }
     }
 
@@ -361,11 +368,24 @@ extension PlaylistDetailViewModel {
         }
         self.searchTerm = searchTerm
         let escapedSearch = searchTerm.escapeLike(escapeChar: "\\")
-        let newData = episodesDataManager.playlistEpisodes(for: playlist, limit: 0, shouldShowArchived: true, search: escapedSearch)
-        let changeSetTuple = buildChangeSet(source: episodes, newData: newData)
-        DispatchQueue.main.async { [weak self] in
-            // Avoid animation as long we use the current diffable framework
-            self?.onChange(changeSetTuple.1, false, changeSetTuple.0)
+        operationQueue.cancelAllOperations()
+
+        // Route the search DB fetch through the same operation as reloadEpisodeList so the
+        // synchronous query runs off the main actor; results marshal back via the operation's
+        // `DispatchQueue.main.sync` (its sanctioned @unchecked Sendable hand-off of [ListEpisode]).
+        let searchOperation = PlaylistDetailFetchOperation(
+            dataManager: dataManager,
+            episodesDataManager: episodesDataManager,
+            playlist: playlist,
+            searchTerm: escapedSearch
+        ) { [weak self] newData, _ in
+            guard let self else { return }
+            MainActor.assumeIsolated {
+                let changeSetTuple = self.buildChangeSet(source: self.episodes, newData: newData)
+                // Avoid animation as long we use the current diffable framework
+                self.onChange(changeSetTuple.1, false, changeSetTuple.0)
+            }
         }
+        operationQueue.addOperation(searchOperation)
     }
 }

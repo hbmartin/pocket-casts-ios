@@ -171,10 +171,8 @@ extension PlaylistDetailViewController {
     }
 
     private func start(action: ActionType, forAllEpisodes episodes: [ListEpisode]) {
-        DispatchQueue.global().async { [weak self] in
-            guard let self else { return }
-
-            if self.viewModel.episodes.isEmpty { return }
+        DispatchQueue.global().async {
+            if episodes.isEmpty { return }
 
             var queuedEpisodes = 0
             for listEpisode in episodes {

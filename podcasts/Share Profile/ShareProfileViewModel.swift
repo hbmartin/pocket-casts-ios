@@ -4,6 +4,7 @@ import PocketCastsServer
 import SwiftUI
 import PhotosUI
 
+@MainActor
 class ShareProfileViewModel: ObservableObject {
     @Published var displayName: String = "" {
         didSet { Self.saveDisplayName(displayName) }
@@ -49,14 +50,16 @@ class ShareProfileViewModel: ObservableObject {
     }
 
     private func loadData() {
-        Task {
+        // Run the synchronous DataManager reads off the main actor (the class is @MainActor), then
+        // hop back to assign the @Published state. All three result types are Sendable.
+        Task.detached { [weak self] in
             let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
             let episodes = DataManager.sharedManager.episodesWithListenHistory(limit: 10)
             let filters = DataManager.sharedManager.allPlaylists(includeDeleted: false)
             await MainActor.run {
-                self.followedPodcasts = podcasts
-                self.recentEpisodes = episodes
-                self.playlists = filters
+                self?.followedPodcasts = podcasts
+                self?.recentEpisodes = episodes
+                self?.playlists = filters
             }
         }
     }
@@ -70,7 +73,7 @@ class ShareProfileViewModel: ObservableObject {
         selectedPhotoItem = nil
     }
 
-    func podcastName(for episode: Episode) -> String? {
+    nonisolated func podcastName(for episode: Episode) -> String? {
         DataManager.sharedManager.findPodcast(uuid: episode.podcastUuid, includeUnsubscribed: true)?.title
     }
 
@@ -86,8 +89,10 @@ class ShareProfileViewModel: ObservableObject {
         guard let item = selectedPhotoItem else { return }
         item.loadTransferable(type: Data.self) { [weak self] result in
             DispatchQueue.main.async {
-                if case .success(let data) = result, let data, let image = UIImage(data: data) {
-                    self?.profilePhoto = image
+                MainActor.assumeIsolated {
+                    if case .success(let data) = result, let data, let image = UIImage(data: data) {
+                        self?.profilePhoto = image
+                    }
                 }
             }
         }
@@ -95,24 +100,27 @@ class ShareProfileViewModel: ObservableObject {
 
     // MARK: - Persistence
 
-    private static let displayNameKey = "ShareProfileDisplayName"
+    nonisolated private static let displayNameKey = "ShareProfileDisplayName"
 
-    private static func saveDisplayName(_ name: String) {
+    // These persistence helpers touch only UserDefaults/FileManager (no isolated state) and are called
+    // from `didSet`, from the @MainActor init, and from outside (SubscriptionProfileImage's `.task`),
+    // so they stay `nonisolated` to keep disk I/O off the main actor once the class is @MainActor.
+    nonisolated private static func saveDisplayName(_ name: String) {
         UserDefaults.standard.set(name, forKey: displayNameKey)
     }
 
-    private static func loadDisplayName() -> String? {
+    nonisolated private static func loadDisplayName() -> String? {
         UserDefaults.standard.string(forKey: displayNameKey)
     }
 
-    private static var photoURL: URL {
+    nonisolated private static var photoURL: URL {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return documentsPath.appendingPathComponent("share_profile_photo.jpg")
     }
 
-    static let photoDidChangeNotification = Notification.Name("ShareProfilePhotoDidChange")
+    nonisolated static let photoDidChangeNotification = Notification.Name("ShareProfilePhotoDidChange")
 
-    private static func saveProfilePhoto(_ image: UIImage?) {
+    nonisolated private static func saveProfilePhoto(_ image: UIImage?) {
         guard let image, let data = image.jpegData(compressionQuality: 0.85) else {
             try? FileManager.default.removeItem(at: photoURL)
             NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
@@ -122,11 +130,11 @@ class ShareProfileViewModel: ObservableObject {
         NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
     }
 
-    private static func loadProfilePhoto() -> UIImage? {
+    nonisolated private static func loadProfilePhoto() -> UIImage? {
         loadSavedProfilePhoto()
     }
 
-    static func loadSavedProfilePhoto() -> UIImage? {
+    nonisolated static func loadSavedProfilePhoto() -> UIImage? {
         guard FileManager.default.fileExists(atPath: photoURL.path) else { return nil }
         guard let data = try? Data(contentsOf: photoURL) else { return nil }
         return UIImage(data: data)
