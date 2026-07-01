@@ -139,6 +139,30 @@ final class FingerprintTimingManagerTests: XCTestCase {
         XCTAssertEqual(result, 45.0, accuracy: 0.001)
     }
 
+    // MARK: - Streaming start resolution
+
+    func testResolvedStartPositionClampsBeyondEOFToLastFrame() {
+        let result = FingerprintTimingManager.resolvedStartPosition(
+            requestedSeconds: 10,
+            sampleRate: 10,
+            audioLength: 42
+        )
+
+        XCTAssertEqual(result.frame, 41)
+        XCTAssertEqual(result.seconds, 4.1, accuracy: 0.001)
+    }
+
+    func testResolvedStartPositionClampsNegativeTimeToZero() {
+        let result = FingerprintTimingManager.resolvedStartPosition(
+            requestedSeconds: -5,
+            sampleRate: 10,
+            audioLength: 42
+        )
+
+        XCTAssertEqual(result.frame, 0)
+        XCTAssertEqual(result.seconds, 0, accuracy: 0.001)
+    }
+
     // MARK: - Drift filter
 
     func testDriftFilterSequentialStreamInsertsAllInOrder() throws {

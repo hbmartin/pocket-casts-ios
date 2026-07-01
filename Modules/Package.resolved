@@ -1,5 +1,5 @@
 {
-  "originHash" : "89c1d4ce534147707cbe2dea583eac7495045521cc782ba7a1452f525b96ab4a",
+  "originHash" : "7ad8b2a81a220e256c56a2c05348b76e45e7b2050514ef643f9b8331b0caac2f",
   "pins" : [
     {
       "identity" : "agrume",
@@ -96,7 +96,6 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Automattic/pocket-casts-ios-fingerprint",
       "state" : {
-        "branch" : "trunk",
         "revision" : "b696bd9a4a495604532b1b7a484ab140c144eccc"
       }
     },
@@ -213,7 +212,6 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/danielebogo/Swime",
       "state" : {
-        "branch" : "master",
         "revision" : "6a507c6480de4603bc5b6f178d4b1855b9c05a8c"
       }
     },

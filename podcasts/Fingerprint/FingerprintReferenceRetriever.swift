@@ -23,11 +23,7 @@ actor FingerprintReferenceRetriever {
 
         inFlightRequests[key] = task
         defer { inFlightRequests[key] = nil }
-        return await withTaskCancellationHandler {
-            try? await task.value
-        } onCancel: {
-            task.cancel()
-        }
+        return try? await task.value
     }
 
     private func performFetch(podcastUuid: String, episodeUuid: String) async throws -> Data? {
