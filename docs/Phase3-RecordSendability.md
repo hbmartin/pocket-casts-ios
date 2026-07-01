@@ -291,4 +291,8 @@ itself is unaffected by that split and proceeds now.
   the per-hop `Sendable`-projection hatch until Phase 5. (The seven repository `DependencyKey`s remain
   on the homegrown container; migrating them to swift-dependencies is now unblocked but tracked
   separately.)
-- MODERNIZATION.md Phase 3 reconciled: heavy-record migration moves under the Phase 5 umbrella.
+- ✅ MODERNIZATION.md Phase 3 reconciled: heavy-record migration moves under the Phase 5 umbrella
+  (record-Sendability sub-effort complete for the leaves).
+- ⏳ **Still open (the other Phase 3 thread, not record-Sendability):** the raw-SQL → GRDB
+  query-interface conversion in `PocketCastsDataModel` + deletion of the `grdbQueryInterface` flag. This
+  is independent of the record-struct work and remains the outstanding Phase 3 deliverable.

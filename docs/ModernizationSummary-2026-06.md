@@ -190,17 +190,22 @@ live in `MODERNIZATION.md`; this is the forward plan with what each step is wait
 
 ### Near-term slices (no new design needed, in rough order)
 
-1. **Flag retirement, batch 1** — *waiting on*: remote-config sign-off recorded in
-   `docs/FeatureFlagAudit.md` (still **zero** sign-offs filled in — this is the open Phase 0 exit
-   criterion). Start with the 4 dead flags (pure enum-case deletion), then batches of 3–5 low-usage
-   candidates. One PR per batch.
+1. **Flag retirement, candidate batches** — the 4 dead (zero-call-site) flags were removed 2026-06-27
+   (`guestListsNetworkHighlightsRedesign`, `refreshPlaylistOnSubscriptions`, `smartCategories`,
+   `syncStats`; 71 → 67 cases). The ~36 live candidates are still *waiting on* remote-config sign-off
+   recorded in `docs/FeatureFlagAudit.md` (only the 4 dead sign-offs filled so far — the remaining Phase
+   0 exit criterion). Retire in batches of 3–5, one PR per batch.
 2. **DI call-site adoption batches** — migrate remaining `FileLog.shared` (~640 sites) and
    `DownloadManager.shared` (~110 sites) call sites to `@Dependency`, grouped by feature area.
    Mechanical now that the seams exist and the swift-dependencies substrate (slice 10) is in place.
-3. **Phase 3 record migration, record 2+** — `EpisodeFilter` is surveyed and sized
-   (`docs/Phase3-RecordSendability.md`); it is the next record after `Folder` and the decision that
-   clears most of the remaining 13 baseline entries. Strategy B (struct) vs confine-and-snapshot for
-   the heavy records is still open.
+   The seven repository `DependencyKey`s (still on the homegrown container) are now unblocked too, since
+   the leaf records are `Sendable`.
+3. ~~**Phase 3 record migration, record 2+**~~ — **done.** `EpisodeFilter` (slice 14) and `Podcast`
+   (slice 16) shipped as `Sendable` structs, completing the Phase 3 **leaf** records (Folder ✓,
+   EpisodeFilter ✓, Podcast ✓); `Episode`/`UserEpisode` were reclassified to Phase 5. Slice 17 then
+   cleared the 10 baseline entries these unblocked (ratchet 13 → 3). The **outstanding Phase 3 thread**
+   is now the raw-SQL → GRDB query-interface conversion + `grdbQueryInterface` flag deletion (see the
+   Phase 3 section below).
 
 > The slice-9 **AVAsset** sharing-domain migration is **done** (`@preconcurrency`); the only
 > remaining `AVAsset` baseline entry is in `DefaultPlayer` and is intentionally deferred to Phase 5.
