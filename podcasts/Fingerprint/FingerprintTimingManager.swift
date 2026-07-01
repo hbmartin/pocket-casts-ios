@@ -37,6 +37,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     // MARK: - Internal Types
 
     private struct GenerationContext {
+        let generationID: UUID
         let episodeUuid: String
         let audioFileURL: URL
         /// True when `audioFileURL` points at a streaming buffer that may still be
@@ -250,6 +251,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         cancellationFlag = CancellationFlag()
         let flag = cancellationFlag
         let newContext = GenerationContext(
+            generationID: UUID(),
             episodeUuid: ctx.episodeUuid,
             audioFileURL: ctx.audioFileURL,
             isStreaming: ctx.isStreaming,
@@ -285,6 +287,43 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
                 in: referenceToPlayback,
                 keyPath: \.referenceTime,
                 valuePath: \.playbackTime
+            )
+        }
+    }
+
+    /// Whether `playbackTime` sits on confidently-matched content — bracketed by
+    /// committed anchors no more than `highlightMaxGapSeconds` apart.
+    ///
+    /// Highlighting keys off this so it only ever runs while we're sure where we
+    /// are. Real content commits anchors every second or two, so a sparse "quick
+    /// red" gap stays under the bound and still counts as matched. A dynamic ad
+    /// (absent from the reference fingerprint, so no anchors commit across it)
+    /// opens a wide gap — or leaves no committed anchor ahead of the play-head at
+    /// all — so the instant playback crosses the last matched anchor this returns
+    /// false and highlighting stops, with no ad-detection step to lag behind.
+    func isWithinMatchedContent(forPlaybackTime playbackTime: Double) -> Bool {
+        dispatchPrecondition(condition: .notOnQueue(queue))
+        return queue.sync {
+            Self.isWithinMatchedContent(forPlaybackTime: playbackTime, in: playbackToReference)
+        }
+    }
+
+    /// The reference time for `playbackTime`, but only when it's on matched content
+    /// (see `isWithinMatchedContent`). Combines the gate and the interpolation into
+    /// a single `queue.sync` so the highlight tick — driven by the display link at
+    /// ~60Hz — pays one lock per frame and can't see the two disagree if the mapping
+    /// mutates between them.
+    func matchedReferenceTime(forPlaybackTime playbackTime: Double) -> Double? {
+        dispatchPrecondition(condition: .notOnQueue(queue))
+        return queue.sync {
+            guard Self.isWithinMatchedContent(forPlaybackTime: playbackTime, in: playbackToReference) else {
+                return nil
+            }
+            return Self.interpolate(
+                time: playbackTime,
+                in: playbackToReference,
+                keyPath: \.playbackTime,
+                valuePath: \.referenceTime
             )
         }
     }
@@ -332,6 +371,12 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     private func resetFilterState() {
         filterLastTrusted = nil
         filterCandidatePool.removeAll()
+    }
+
+    private func isCurrent(_ ctx: GenerationContext) -> Bool {
+        guard let current = context else { return false }
+        return current.generationID == ctx.generationID
+            && current.episodeUuid == ctx.episodeUuid
     }
 
     private func track(_ event: AnalyticsEvent, properties: [String: Sendable] = [:]) {
@@ -438,7 +483,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         }
 
         let matcher = CheckpointMatcher()
-        let duration_s = reference.checkpointDurationSeconds
+        let durationSeconds = reference.checkpointDurationSeconds
         let rawCheckpointCount = reference.checkpoints.count
         let libraryCheckpoints = reference.libraryCheckpoints()
 
@@ -469,13 +514,14 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
             matcher.add(
                 timestamp: checkpoint.timestampSeconds,
                 hashes: checkpoint.hashes,
-                duration: duration_s
+                duration: durationSeconds
             )
         }
 
         let flag = cancellationFlag
         let refPath = referencePath(for: episode)
         let newContext = GenerationContext(
+            generationID: UUID(),
             episodeUuid: uuid,
             audioFileURL: audioFileURL,
             isStreaming: isStreaming,
@@ -503,51 +549,70 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
             "FingerprintTimingManager: preparing for \(uuid) (\(libraryCheckpoints.count) checkpoints)"
         )
 
-        // Capture once so the range check, log, and stream start all use the same position.
-        let currentTime = PlaybackManager.shared.currentTime()
+        loadMappingCacheThenStartStreamIfNeeded(context: newContext)
+    }
 
-        // All-or-nothing cache: only short-circuit the stream if a previous
-        // session persisted a mapping that covers the whole reference timeline
-        // for this exact audio file + reference. Partial caches are ignored
-        // (the failed branch's `inRange` short-circuit on partial coverage was
-        // what trapped the manager in `.preparing`).
-        if !isStreaming,
-           let cached = FingerprintMappingCache.load(
-               audioFilePath: audioFileURL.path,
-               referenceFilePath: refPath,
-               referenceData: referenceData
-           ) {
-            // The cache is produced from `playbackToReference` (already sorted
-            // by `playbackTime`), so assign it directly and sort once for the
-            // reference-keyed view — avoids the O(n²) cost of routing every
-            // entry through `insertMapping`'s per-entry `Array.insert`.
-            playbackToReference = cached.entries
-            referenceToPlayback = cached.entries.sorted { $0.referenceTime < $1.referenceTime }
-
-            if isWithinMappedRange(currentTime) {
-                filterLastTrusted = cached.entries.last
-                let coverage = cached.entries.count
-                updateState(.active(coverage: coverage))
-                if !hasReachedActive {
-                    hasReachedActive = true
-                    track(.syncedTranscriptPreparationCompleted, properties: [
-                        "duration_ms": preparationDurationMs,
-                        "is_streaming": isStreaming
-                    ])
-                }
-                FileLog.shared.addMessage(
-                    "FingerprintTimingManager: skipping stream — full mapping loaded from cache for \(uuid)"
-                )
-                return
-            }
-
-            FileLog.shared.addMessage(
-                "FingerprintTimingManager: cache loaded for \(uuid) but playback at "
-                    + "\(String(format: "%.1f", currentTime))s is outside cached range — starting stream"
-            )
+    private func loadMappingCacheThenStartStreamIfNeeded(context ctx: GenerationContext) {
+        guard !ctx.isStreaming else {
+            let currentTime = PlaybackManager.shared.currentTime()
+            startStream(context: ctx, fromPosition: currentTime)
+            return
         }
 
-        startStream(context: newContext, fromPosition: currentTime)
+        generationQueue.async { [weak self] in
+            guard let self else { return }
+            let cached = FingerprintMappingCache.load(
+                audioFilePath: ctx.audioFileURL.path,
+                referenceFilePath: ctx.referenceFilePath,
+                referenceData: ctx.referenceData
+            )
+
+            self.queue.async { [weak self] in
+                guard let self, self.isCurrent(ctx) else { return }
+
+                // Capture once so the range check, log, and stream start all use
+                // the same playback position after the off-queue cache load.
+                let currentTime = PlaybackManager.shared.currentTime()
+
+                // All-or-nothing cache: only short-circuit the stream if a previous
+                // session persisted a mapping that covers the whole reference timeline
+                // for this exact audio file + reference. Partial caches are ignored
+                // (the failed branch's `inRange` short-circuit on partial coverage was
+                // what trapped the manager in `.preparing`).
+                if let cached {
+                    // The cache is produced from `playbackToReference` (already sorted
+                    // by `playbackTime`), so assign it directly and sort once for the
+                    // reference-keyed view — avoids the O(n²) cost of routing every
+                    // entry through `insertMapping`'s per-entry `Array.insert`.
+                    self.playbackToReference = cached.entries
+                    self.referenceToPlayback = cached.entries.sorted { $0.referenceTime < $1.referenceTime }
+
+                    if self.isWithinMappedRange(currentTime) {
+                        self.filterLastTrusted = cached.entries.last
+                        let coverage = cached.entries.count
+                        self.updateState(.active(coverage: coverage))
+                        if !self.hasReachedActive {
+                            self.hasReachedActive = true
+                            self.track(.syncedTranscriptPreparationCompleted, properties: [
+                                "duration_ms": self.preparationDurationMs,
+                                "is_streaming": ctx.isStreaming
+                            ])
+                        }
+                        FileLog.shared.addMessage(
+                            "FingerprintTimingManager: skipping stream — full mapping loaded from cache for \(ctx.episodeUuid)"
+                        )
+                        return
+                    }
+
+                    FileLog.shared.addMessage(
+                        "FingerprintTimingManager: cache loaded for \(ctx.episodeUuid) but playback at "
+                            + "\(String(format: "%.1f", currentTime))s is outside cached range — starting stream"
+                    )
+                }
+
+                self.startStream(context: ctx, fromPosition: currentTime)
+            }
+        }
     }
 
     // MARK: - Streaming Fingerprint Processing
@@ -594,7 +659,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     /// abandoned context would clobber a healthy state.
     private func finishIfStillPreparing(terminalState: State, context ctx: GenerationContext) {
         queue.async { [weak self] in
-            guard let self, self.context?.episodeUuid == ctx.episodeUuid else { return }
+            guard let self, self.isCurrent(ctx) else { return }
             let durationMs = self.preparationDurationMs
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -622,15 +687,32 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Snap a playback time to the window-interval grid so that the windows we
-    /// emit align with the reference checkpoint timestamps. The reference is
-    /// produced with the same `windowIntervalMs` stride starting at 0, so any
-    /// off-grid start would yield windows whose audio content is shifted
-    /// relative to the reference and would fail to match.
+    /// Snap a playback time to the window-interval grid so emitted window
+    /// timestamps are deterministic (stable across restarts and cache reuse).
+    /// Windows are emitted every `windowIntervalMs`, finer than the reference's
+    /// 2s checkpoint grid, so a correctly-phased window exists for any dynamic-ad
+    /// offset rather than relying on a single phase happening to line up.
     private static func alignToWindowGrid(_ time: Double) -> Double {
         let stride = Double(FingerprintConstants.windowIntervalMs) / 1000.0
         guard stride > 0 else { return max(0, time) }
         return max(0, floor(time / stride) * stride)
+    }
+
+    static func resolvedStartPosition(
+        requestedSeconds: Double,
+        sampleRate: Double,
+        audioLength: AVAudioFramePosition
+    ) -> (frame: AVAudioFramePosition, seconds: Double) {
+        guard requestedSeconds.isFinite, sampleRate > 0 else {
+            return (0, 0)
+        }
+        let requestedFrameValue = requestedSeconds * sampleRate
+        let requestedFrame = requestedFrameValue.isFinite
+            ? AVAudioFramePosition(requestedFrameValue)
+            : audioLength
+        let lastFrame = max(AVAudioFramePosition(0), audioLength - 1)
+        let frame = min(max(AVAudioFramePosition(0), requestedFrame), lastFrame)
+        return (frame, Double(frame) / sampleRate)
     }
 
     private func streamFingerprint(context ctx: GenerationContext, startingAt startSeconds: Double) throws {
@@ -645,10 +727,12 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         let sampleRate = UInt32(format.sampleRate)
         let channels = UInt16(format.channelCount)
 
-        let startFrame = AVAudioFramePosition(startSeconds * format.sampleRate)
-        if startFrame > 0, startFrame < audioFile.length {
-            audioFile.framePosition = startFrame
-        }
+        let start = Self.resolvedStartPosition(
+            requestedSeconds: startSeconds,
+            sampleRate: format.sampleRate,
+            audioLength: audioFile.length
+        )
+        audioFile.framePosition = start.frame
 
         let streamer = StreamingWindowedFingerprinter(
             sampleRate: sampleRate,
@@ -672,14 +756,14 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
             let interleaved = Self.interleavedSamples(from: buffer)
             let windows = streamer.pushSamplesF32(samples: interleaved, channels: channels)
             if !windows.isEmpty {
-                dispatchProcessMatches(windows: windows, startOffset: startSeconds, context: ctx)
+                dispatchProcessMatches(windows: windows, startOffset: start.seconds, context: ctx)
             }
         }
 
         if ctx.isCancelled() { throw StreamError.cancelled }
         let tail = streamer.flush()
         if !tail.isEmpty {
-            dispatchProcessMatches(windows: tail, startOffset: startSeconds, context: ctx)
+            dispatchProcessMatches(windows: tail, startOffset: start.seconds, context: ctx)
         }
     }
 
@@ -704,6 +788,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         var announcedFileAppeared = false
         var totalFramesRead: AVAudioFramePosition = 0
         var windowsEmitted = 0
+        var actualStartSeconds = startSeconds
 
         FileLog.shared.addMessage(
             "FingerprintTimingManager: streaming grow-loop starting at \(String(format: "%.1f", startSeconds))s "
@@ -778,6 +863,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
                 }
                 buffer = b
                 lastProcessedFrame = desiredStartFrame
+                actualStartSeconds = Double(desiredStartFrame) / fmt.sampleRate
             }
 
             guard let fmt = format, let str = streamer, let buf = buffer else { break }
@@ -824,7 +910,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
             let windows = str.pushSamplesF32(samples: interleaved, channels: UInt16(fmt.channelCount))
             if !windows.isEmpty {
                 windowsEmitted += windows.count
-                dispatchProcessMatches(windows: windows, startOffset: startSeconds, context: ctx)
+                dispatchProcessMatches(windows: windows, startOffset: actualStartSeconds, context: ctx)
             }
         }
 
@@ -833,7 +919,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
             let tail = str.flush()
             if !tail.isEmpty {
                 windowsEmitted += tail.count
-                dispatchProcessMatches(windows: tail, startOffset: startSeconds, context: ctx)
+                dispatchProcessMatches(windows: tail, startOffset: actualStartSeconds, context: ctx)
             }
         }
 
@@ -859,7 +945,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     private func persistMappingCacheIfFull(context ctx: GenerationContext) {
         guard !ctx.isStreaming else { return }
         queue.async { [weak self] in
-            guard let self, self.context?.episodeUuid == ctx.episodeUuid else { return }
+            guard let self, self.isCurrent(ctx) else { return }
             let snapshot = self.playbackToReference
             self.generationQueue.async {
                 FingerprintMappingCache.save(
@@ -914,7 +1000,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         context ctx: GenerationContext
     ) {
         queue.async { [weak self] in
-            guard let self, self.context?.episodeUuid == ctx.episodeUuid else { return }
+            guard let self, self.isCurrent(ctx) else { return }
             self.processMatches(windows: windows, startOffset: startOffset, context: ctx)
         }
     }
@@ -1197,6 +1283,33 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
         let fraction = (t1 > t0) ? (time - t0) / (t1 - t0) : 0
         return v0 + fraction * (v1 - v0)
+    }
+
+    /// Whether `playbackTime` is bracketed by two committed anchors no further
+    /// apart than `highlightMaxGapSeconds`. See `isWithinMatchedContent(forPlaybackTime:)`.
+    static func isWithinMatchedContent(
+        forPlaybackTime playbackTime: Double,
+        in entries: [TimeMappingEntry]
+    ) -> Bool {
+        // Binary search for the anchors bracketing `playbackTime`. `hi` is the
+        // first anchor strictly after it; `hi - 1` the last at or before it.
+        var lo = 0
+        var hi = entries.count
+        while lo < hi {
+            let mid = (lo + hi) / 2
+            if entries[mid].playbackTime <= playbackTime {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
+        }
+
+        // Need a committed anchor on each side: before the first or past the last
+        // we aren't confidently on matched content, so don't highlight.
+        guard hi - 1 >= 0, hi < entries.count else { return false }
+
+        let gap = entries[hi].playbackTime - entries[hi - 1].playbackTime
+        return gap <= FingerprintConstants.highlightMaxGapSeconds
     }
 
     // MARK: - Helpers

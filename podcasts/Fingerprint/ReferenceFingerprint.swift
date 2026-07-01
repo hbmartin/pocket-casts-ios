@@ -69,19 +69,14 @@ struct ReferenceFingerprint: Decodable {
             accumulated += checkpoint.delta
             guard let payload = Data(base64Encoded: checkpoint.data) else { continue }
             guard payload.count % 4 == 0 else { continue }
-            // Decode as little-endian UInt32s via byte-shift arithmetic — `Data`'s
-            // underlying storage isn't guaranteed to be 4-byte aligned, so directly
-            // binding/reinterpreting as `UInt32` can trap on misaligned access.
             let count = payload.count / 4
             var hashes = [UInt32](repeating: 0, count: count)
             payload.withUnsafeBytes { rawBuffer in
                 guard let base = rawBuffer.baseAddress else { return }
                 for i in 0..<count {
-                    let b0 = UInt32(base.load(fromByteOffset: i * 4, as: UInt8.self))
-                    let b1 = UInt32(base.load(fromByteOffset: i * 4 + 1, as: UInt8.self))
-                    let b2 = UInt32(base.load(fromByteOffset: i * 4 + 2, as: UInt8.self))
-                    let b3 = UInt32(base.load(fromByteOffset: i * 4 + 3, as: UInt8.self))
-                    hashes[i] = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
+                    hashes[i] = base
+                        .loadUnaligned(fromByteOffset: i * MemoryLayout<UInt32>.size, as: UInt32.self)
+                        .littleEndian
                 }
             }
             let timestamp = Float(accumulated) * Float(timestampQuantum)

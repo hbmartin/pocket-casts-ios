@@ -186,8 +186,8 @@ enum FingerprintMappingCache {
     private static func contentSampleHash(at path: String) -> String? {
         guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
         defer { try? handle.close() }
-        let data = handle.readData(ofLength: contentSampleSize)
-        guard !data.isEmpty else { return nil }
+        guard let data = try? handle.read(upToCount: contentSampleSize),
+              !data.isEmpty else { return nil }
         return sha256(data)
     }
 }
