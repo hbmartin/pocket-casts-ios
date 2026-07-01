@@ -33,6 +33,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     // The cue-equality guard inside updateTranscriptPosition makes each tick
     // effectively free when nothing has changed.
     private var highlightDisplayLink: CADisplayLink?
+    private var highlightDisplayLinkTarget: WeakDisplayLinkTarget?
 
     // Cursor into `transcript.cues` used by `currentCue(at:)` to avoid an O(n)
     // linear scan on every display-link tick. Valid while the active cue is at
@@ -111,16 +112,20 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
     deinit {
         autoScrollBackWorkItem?.cancel()
-        highlightDisplayLink?.invalidate()
+        stopHighlightDisplayLink()
     }
 
     private func startHighlightDisplayLink() {
         guard FeatureFlag.syncedTranscripts.enabled else { return }
         stopHighlightDisplayLink()
-        let link = CADisplayLink(target: self, selector: #selector(highlightTick))
+        let target = WeakDisplayLinkTarget { [weak self] in
+            self?.highlightTick()
+        }
+        let link = CADisplayLink(target: target, selector: #selector(WeakDisplayLinkTarget.tick(_:)))
         link.add(to: .main, forMode: .common)
         link.isPaused = !playbackManager.isPlayingEpisode
         highlightDisplayLink = link
+        highlightDisplayLinkTarget = target
         // Opening the transcript while paused leaves the link paused, so
         // `playbackProgress` won't fire and the initial highlight wouldn't
         // appear. Force one position update so the current cue is shown even
@@ -131,6 +136,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private func stopHighlightDisplayLink() {
         highlightDisplayLink?.invalidate()
         highlightDisplayLink = nil
+        highlightDisplayLinkTarget = nil
     }
 
     /// Toggle the highlight display link based purely on whether playback is
@@ -1318,5 +1324,17 @@ fileprivate class RoundPlayPauseButton: RoundButton {
 
     private func updatePlayingState() {
         buttonState = playbackManager?.isPlayingEpisode == true ? .pause : .play
+    }
+}
+
+private final class WeakDisplayLinkTarget {
+    private let onTick: () -> Void
+
+    init(onTick: @escaping () -> Void) {
+        self.onTick = onTick
+    }
+
+    @objc func tick(_: CADisplayLink) {
+        onTick()
     }
 }

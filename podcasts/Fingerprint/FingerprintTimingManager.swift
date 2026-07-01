@@ -57,6 +57,26 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         let isCancelled: () -> Bool
     }
 
+    private struct EpisodeSnapshot {
+        let uuid: String
+        let podcastUuid: String
+        let duration: Double
+        let downloadedPath: String
+        let tempPath: String
+        let streamingBufferPath: String
+        let isStreamDownloaded: Bool
+
+        init(episode: BaseEpisode, downloadManager: DownloadManager = .shared) {
+            uuid = episode.uuid
+            podcastUuid = episode.parentIdentifier()
+            duration = episode.duration
+            downloadedPath = downloadManager.pathForEpisode(episode)
+            tempPath = downloadManager.tempPathForEpisode(episode)
+            streamingBufferPath = downloadManager.streamingBufferPathForEpisode(episode)
+            isStreamDownloaded = (episode as? Episode)?.streamDownloaded(pathFinder: downloadManager) ?? false
+        }
+    }
+
     struct TimeMappingEntry {
         let playbackTime: Double
         let referenceTime: Double
@@ -121,12 +141,12 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     // MARK: - Public API
 
     func prepareForCurrentEpisode() {
-        let episode = PlaybackManager.shared.currentEpisode()
+        let episodeSnapshot = PlaybackManager.shared.currentEpisode().map { EpisodeSnapshot(episode: $0) }
 
         queue.async { [weak self] in
             guard let self else { return }
             self.resetState()
-            self.prepareForEpisode(episode)
+            self.prepareForEpisode(episodeSnapshot)
         }
     }
 
@@ -333,7 +353,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     // MARK: - Track Preparation
 
-    private func prepareForEpisode(_ episode: BaseEpisode?) {
+    private func prepareForEpisode(_ episode: EpisodeSnapshot?) {
         updateState(.idle)
 
         guard FeatureFlag.syncedTranscripts.enabled else {
@@ -365,19 +385,16 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         FileLog.shared.addMessage("FingerprintTimingManager: fetching reference from server for \(uuid)")
 
         let flag = cancellationFlag
-        let transferredEpisode = UnsafeTransfer(episode)
-        let podcastUuid = episode.parentIdentifier()
         fetchTask = Task { [weak self] in
             guard !flag.isCancelled else { return }
 
             let data = await FingerprintReferenceRetriever.shared.fetchReferenceData(
-                podcastUuid: podcastUuid,
+                podcastUuid: episode.podcastUuid,
                 episodeUuid: uuid
             )
 
             self?.queue.async { [weak self] in
                 guard let self, !flag.isCancelled else { return }
-                let episode = transferredEpisode.wrappedValue
 
                 guard let data, let reference = ReferenceFingerprint.decode(from: data) else {
                     self.updateState(.unavailable)
@@ -395,7 +412,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     private func configureForReference(
         _ reference: ReferenceFingerprint,
         referenceData: Data,
-        episode: BaseEpisode
+        episode: EpisodeSnapshot
     ) {
         let uuid = episode.uuid
 
@@ -1182,19 +1199,18 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     // MARK: - Helpers
 
-    private func loadReference(for episode: BaseEpisode) -> (data: Data, reference: ReferenceFingerprint)? {
+    private func loadReference(for episode: EpisodeSnapshot) -> (data: Data, reference: ReferenceFingerprint)? {
         let path = referencePath(for: episode)
         guard let data = FileManager.default.contents(atPath: path),
               let reference = ReferenceFingerprint.decode(from: data) else { return nil }
         return (data, reference)
     }
 
-    private func referencePath(for episode: BaseEpisode) -> String {
-        let audioPath = DownloadManager.shared.pathForEpisode(episode)
-        return (audioPath as NSString).deletingPathExtension + ".ref.fp.json"
+    private func referencePath(for episode: EpisodeSnapshot) -> String {
+        (episode.downloadedPath as NSString).deletingPathExtension + ".ref.fp.json"
     }
 
-    private func saveReferenceData(_ data: Data, for episode: BaseEpisode) {
+    private func saveReferenceData(_ data: Data, for episode: EpisodeSnapshot) {
         let path = referencePath(for: episode)
         do {
             try data.write(to: URL(fileURLWithPath: path), options: .atomic)
@@ -1215,17 +1231,16 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         case streaming(URL)
     }
 
-    private func resolveAudioSource(for episode: BaseEpisode) -> AudioSource {
-        let downloadPath = DownloadManager.shared.pathForEpisode(episode)
+    private func resolveAudioSource(for episode: EpisodeSnapshot) -> AudioSource {
+        let downloadPath = episode.downloadedPath
         if FileManager.default.fileExists(atPath: downloadPath) {
             return .downloaded(URL(fileURLWithPath: downloadPath))
         }
         // A stream-downloaded episode keeps a complete file at the streaming
         // buffer path. It isn't growing, so route it through the one-shot
         // fingerprint path instead of the grow-loop — same path trunk took.
-        if let episode = episode as? Episode,
-           episode.streamDownloaded(pathFinder: DownloadManager.shared) {
-            let streamingPath = DownloadManager.shared.streamingBufferPathForEpisode(episode)
+        if episode.isStreamDownloaded {
+            let streamingPath = episode.streamingBufferPath
             if FileManager.default.fileExists(atPath: streamingPath) {
                 return .downloaded(URL(fileURLWithPath: streamingPath))
             }
@@ -1235,8 +1250,8 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         // writes to `tempPathForEpisode`, while the legacy URLSession path writes
         // to `streamingBufferPathForEpisode`. Prefer whichever file already
         // exists; otherwise pick the one the active feature flag selects.
-        let tempPath = DownloadManager.shared.tempPathForEpisode(episode)
-        let streamingPath = DownloadManager.shared.streamingBufferPathForEpisode(episode)
+        let tempPath = episode.tempPath
+        let streamingPath = episode.streamingBufferPath
         if FileManager.default.fileExists(atPath: tempPath) {
             return .streaming(URL(fileURLWithPath: tempPath))
         }

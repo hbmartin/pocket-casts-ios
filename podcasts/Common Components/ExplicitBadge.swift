@@ -27,12 +27,7 @@ enum ExplicitBadgeHelper {
     }
 
     private static func renderBadgeImage(for theme: Theme.ThemeType) -> UIImage {
-        if Thread.isMainThread {
-            return makeBadgeImage(for: theme)
-        }
-        return DispatchQueue.main.sync {
-            makeBadgeImage(for: theme)
-        }
+        makeBadgeImage(for: theme)
     }
 
     private static func makeBadgeImage(for theme: Theme.ThemeType) -> UIImage {

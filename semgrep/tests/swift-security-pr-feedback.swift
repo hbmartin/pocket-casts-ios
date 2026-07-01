@@ -1,8 +1,21 @@
 import Combine
 import Foundation
+import PackageDescription
 import SwiftUI
 import UIKit
 import UserNotifications
+
+let unsafePackageDependencies: [Package.Dependency] = [
+    // ruleid: pocketcasts.spm-no-branch-dependencies
+    .package(url: "https://example.com/mutable.git", branch: "main")
+]
+
+let safePackageDependencies: [Package.Dependency] = [
+    // ok: pocketcasts.spm-no-branch-dependencies
+    .package(url: "https://example.com/pinned.git", revision: "0123456789abcdef0123456789abcdef01234567"),
+    // ok: pocketcasts.spm-no-branch-dependencies
+    .package(url: "https://example.com/released.git", from: "1.0.0")
+]
 
 struct UnsafeStoriesView: View {
     @State private var timerSubscription: Cancellable?
@@ -93,6 +106,58 @@ final class SafePodcastExistsHelper {
         defer { lock.unlock() }
 
         checkedUuidsThatExist.insert(uuid)
+    }
+}
+
+final class UnsafeEpisodeTransferHelper {
+    func prepare(episode: BaseEpisode) {
+        // ruleid: pocketcasts.no-unsafe-transfer-episode
+        _ = UnsafeTransfer(episode)
+    }
+}
+
+final class SafeEpisodeSnapshotHelper {
+    func prepare(episode: BaseEpisode) {
+        // ok: pocketcasts.no-unsafe-transfer-episode
+        _ = EpisodeSnapshot(uuid: episode.uuid, duration: episode.duration)
+    }
+
+    private struct EpisodeSnapshot {
+        let uuid: String
+        let duration: Double
+    }
+}
+
+final class UnsafeDisplayLinkOwner {
+    private var displayLink: CADisplayLink?
+
+    func start() {
+        // ruleid: pocketcasts.cadisplaylink-no-self-target
+        displayLink = CADisplayLink(target: self, selector: #selector(tick))
+    }
+
+    @objc private func tick() {}
+}
+
+final class SafeDisplayLinkOwner {
+    private var displayLink: CADisplayLink?
+
+    func start() {
+        let target = DisplayLinkTarget {}
+        // ok: pocketcasts.cadisplaylink-no-self-target
+        displayLink = CADisplayLink(target: target, selector: #selector(DisplayLinkTarget.tick(_:)))
+    }
+}
+
+private final class DisplayLinkTarget {
+    private let onTick: () -> Void
+
+    init(onTick: @escaping () -> Void) {
+        self.onTick = onTick
+    }
+
+    @objc func tick(_: CADisplayLink) {
+        onTick()
     }
 }
 

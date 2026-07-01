@@ -66,7 +66,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.17.4"),
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.0.0"),
-        .package(url: "https://github.com/danielebogo/Swime", branch: "master"),
+        .package(url: "https://github.com/danielebogo/Swime", revision: "6a507c6480de4603bc5b6f178d4b1855b9c05a8c"),
         .package(url: "https://github.com/ra1028/DifferenceKit", from: "1.2.0"),
         .package(url: "https://github.com/krisk/fuse-swift", from: "1.4.0"),
         .package(url: "https://github.com/shiftyjelly/SwipeCellKit", from: "2.7.6"),
@@ -77,7 +77,7 @@ let package = Package(
         .package(url: "https://github.com/dagronf/SwiftSubtitles", from: "1.8.3"),
         .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0"),
         .package(url: "https://github.com/ksemianov/WrappingHStack", from: "0.2.0"),
-        .package(url: "https://github.com/Automattic/pocket-casts-ios-fingerprint", branch: "trunk"),
+        .package(url: "https://github.com/Automattic/pocket-casts-ios-fingerprint", revision: "b696bd9a4a495604532b1b7a484ab140c144eccc"),
     ],
     targets: XcodeSupport.targets + [
         .target(

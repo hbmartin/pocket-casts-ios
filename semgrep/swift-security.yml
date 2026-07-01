@@ -61,6 +61,23 @@ rules:
     patterns:
       - pattern-regex: '\b(import\s+(Sentry|AutomatticTracks|AutomatticTracksEvents|AutomatticTracksModel|AutomatticRemoteLogging)|sentry-cocoa|Automattic-Tracks-iOS|SENTRY_AUTH_TOKEN|sentry-cli)\b'
 
+  - id: pocketcasts.spm-no-branch-dependencies
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [swiftpm]
+    message: Pin Swift Package Manager dependencies to immutable revisions or released versions instead of mutable branches.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Package.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: '.package(url: $URL, branch: $BRANCH)'
+
   - id: pocketcasts.github-actions-pin-actions-to-sha
     severity: ERROR
     metadata:
@@ -334,6 +351,43 @@ rules:
                 DataManager.sharedManager.$METHOD(...)
                 ...
               }
+
+  - id: pocketcasts.no-unsafe-transfer-episode
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Do not use UnsafeTransfer for episode managed objects; snapshot primitive values and paths before crossing queues.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: UnsafeTransfer($VALUE)
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: (?i).*episode.*
+
+  - id: pocketcasts.cadisplaylink-no-self-target
+    severity: ERROR
+    metadata:
+      category: performance
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: CADisplayLink retains its target; use a weak target proxy instead of targeting self.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: 'CADisplayLink(target: self, selector: $SELECTOR)'
 
   - id: pocketcasts.keychain-generic-password-requires-account
     severity: ERROR
