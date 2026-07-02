@@ -111,6 +111,14 @@ singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.sh
   references; thread safety delegated to GRDB's pool and the sub-managers' private queues), so the
   keys satisfy swift-dependencies' `Sendable` `DependencyValues`. The homegrown
   `PocketCastsDependencyInjection` module is **deleted**.
+  **Next steps for this thread, in order:** (1) call-site adoption batches — `FileLog.shared` (~640
+  sites) and `DownloadManager.shared` (~110 sites) to `@Dependency`, one feature area per PR, plus
+  repository-key adoption in new `DataManager` consumers (`ArchiveHelper`/`PlaybackTimeHelper` are the
+  template: method-local `@Dependency` reads, or an optional init parameter resolved from an init-local
+  `@Dependency` — default arguments cannot read `DependencyValues`); (2) the remaining seams —
+  `Settings`/`ServerSettings` protocol facades and the `PlaybackManager` consumer facade (2a below);
+  (3) once a singleton's call sites are fully migrated, add the Semgrep `.shared`-access lock-in rule
+  for it (see Lock-in below).
 - **2a — Singleton seams.** For each of `DataManager.sharedManager`, `DownloadManager.shared`,
   `ServerSettings`, `Settings` (split the 1,595-line god object into focused protocol facades), and
   `FileLog.shared`: define a protocol, add a swift-dependencies `DependencyKey` (deciding its isolation

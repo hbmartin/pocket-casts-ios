@@ -11,7 +11,10 @@ DataManager/record Sendability decision (Phase 3), not mechanical fixes. _(Updat
 Phase 3 leaf records landed, a follow-on slice cleared the 10 non-playback entries — `ListEpisode`
 honest-`Sendable`, `ImageManager.podcastUrl` → `static`, and `@MainActor` on `ShareProfileViewModel` /
 `PlaylistDetailViewModel` — taking the ratchet to **3**, the permanent `DefaultPlayer`/`PlaybackManager`
-playback floor. See [Phase3-RecordSendability.md](Phase3-RecordSendability.md).)_
+playback floor. See [Phase3-RecordSendability.md](Phase3-RecordSendability.md).)_ _(Update 2026-07-02,
+slice 18: DI is now a single system — the seven repository `DependencyKey`s moved to swift-dependencies
+and the homegrown `PocketCastsDependencyInjection` module was deleted. The repository protocols are
+`Sendable`, with `DataManager` `@unchecked Sendable` behind a documented delegation contract.)_
 
 ## Starting state
 
@@ -190,22 +193,31 @@ live in `MODERNIZATION.md`; this is the forward plan with what each step is wait
 
 ### Near-term slices (no new design needed, in rough order)
 
-1. **Flag retirement, candidate batches** — the 4 dead (zero-call-site) flags were removed 2026-06-27
+0. **Repo-health fix first (found 2026-07-02):** two DataModel tests fail on trunk independently of
+   modernization work — `DatabaseHelperBaselineTests` still asserts schema version 73 after upstream
+   merge #4427 added migration 74, and
+   `testUpdateAutoAddToUpNextUpdatesNewSettingsStoragePayloadFromEmptySettings` fails its
+   "marked unsynced" assertions from the recent `newSettingsStorage` work. Fix in a standalone PR so
+   every later slice validates against a green base. (Also: the PR #128 test fix lives on
+   `pr-128-followups`, which must land for the app test target to compile.)
+1. **DI call-site adoption batches** — migrate remaining `FileLog.shared` (~640 sites) and
+   `DownloadManager.shared` (~110 sites) call sites to `@Dependency`, grouped by feature area.
+   Mechanical now that the seams exist and everything is on one substrate: slice 18 (2026-07-02) moved
+   the seven repository `DependencyKey`s to swift-dependencies and **deleted the homegrown
+   `PocketCastsDependencyInjection` container**. New consumers of `DataManager` surface area should
+   inject `@Dependency(\.episodeRepository)` etc. rather than reaching for `sharedManager`
+   (`ArchiveHelper`/`PlaybackTimeHelper` are the adoption template).
+2. **Flag retirement, candidate batches** — the 4 dead (zero-call-site) flags were removed 2026-06-27
    (`guestListsNetworkHighlightsRedesign`, `refreshPlaylistOnSubscriptions`, `smartCategories`,
    `syncStats`; 71 → 67 cases). The ~36 live candidates are still *waiting on* remote-config sign-off
    recorded in `docs/FeatureFlagAudit.md` (only the 4 dead sign-offs filled so far — the remaining Phase
    0 exit criterion). Retire in batches of 3–5, one PR per batch.
-2. **DI call-site adoption batches** — migrate remaining `FileLog.shared` (~640 sites) and
-   `DownloadManager.shared` (~110 sites) call sites to `@Dependency`, grouped by feature area.
-   Mechanical now that the seams exist and the swift-dependencies substrate (slice 10) is in place.
-   The seven repository `DependencyKey`s moved to swift-dependencies on 2026-07-02 (slice 18) and the
-   homegrown `PocketCastsDependencyInjection` container is deleted — all DI now goes through one system.
-3. ~~**Phase 3 record migration, record 2+**~~ — **done.** `EpisodeFilter` (slice 14) and `Podcast`
-   (slice 16) shipped as `Sendable` structs, completing the Phase 3 **leaf** records (Folder ✓,
-   EpisodeFilter ✓, Podcast ✓); `Episode`/`UserEpisode` were reclassified to Phase 5. Slice 17 then
-   cleared the 10 baseline entries these unblocked (ratchet 13 → 3). The **outstanding Phase 3 thread**
-   is now the raw-SQL → GRDB query-interface conversion + `grdbQueryInterface` flag deletion (see the
-   Phase 3 section below).
+3. **Phase 3, outstanding thread: raw SQL → GRDB query interface** — the record-Sendability sub-effort
+   is **done** (`Folder`/`EpisodeFilter`/`Podcast` shipped as `Sendable` structs; `Episode`/`UserEpisode`
+   reclassified to Phase 5; slice 17 cleared the 10 gated baseline entries, ratchet 13 → 3). What
+   remains is converting the ~168 raw-SQL sites in `PocketCastsDataModel` one DAO/table per PR with
+   parity tests, then **deleting the `grdbQueryInterface` flag and legacy paths** (see the Phase 3
+   section below).
 
 > The slice-9 **AVAsset** sharing-domain migration is **done** (`@preconcurrency`); the only
 > remaining `AVAsset` baseline entry is in `DefaultPlayer` and is intentionally deferred to Phase 5.
