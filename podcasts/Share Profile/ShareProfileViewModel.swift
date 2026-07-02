@@ -87,13 +87,14 @@ class ShareProfileViewModel: ObservableObject {
 
     private func loadPhoto() {
         guard let item = selectedPhotoItem else { return }
-        item.loadTransferable(type: Data.self) { [weak self] result in
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated {
-                    if case .success(let data) = result, let data, let image = UIImage(data: data) {
-                        self?.profilePhoto = image
-                    }
+        Task { [weak self, item] in
+            do {
+                if let data = try await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    self?.profilePhoto = image
                 }
+            } catch {
+                return
             }
         }
     }
@@ -121,13 +122,19 @@ class ShareProfileViewModel: ObservableObject {
     nonisolated static let photoDidChangeNotification = Notification.Name("ShareProfilePhotoDidChange")
 
     nonisolated private static func saveProfilePhoto(_ image: UIImage?) {
-        guard let image, let data = image.jpegData(compressionQuality: 0.85) else {
-            try? FileManager.default.removeItem(at: photoURL)
-            NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
-            return
+        Task.detached(priority: .background) {
+            guard let image, let data = image.jpegData(compressionQuality: 0.85) else {
+                try? FileManager.default.removeItem(at: photoURL)
+                await MainActor.run {
+                    NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
+                }
+                return
+            }
+            try? data.write(to: photoURL)
+            await MainActor.run {
+                NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
+            }
         }
-        try? data.write(to: photoURL)
-        NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
     }
 
     nonisolated private static func loadProfilePhoto() -> UIImage? {

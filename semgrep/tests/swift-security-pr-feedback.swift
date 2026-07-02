@@ -111,6 +111,34 @@ final class SafePodcastExistsHelper {
     }
 }
 
+final class UnsafePlaylistSearchEscapingHelper {
+    func operationSearch(searchTerm: String, playlist: EpisodeFilter) {
+        // ruleid: pocketcasts.playlist-search-no-preescaped-like
+        let escapedSearch = searchTerm.escapeLike(escapeChar: "\\")
+
+        _ = PlaylistDetailFetchOperation(playlist: playlist, searchTerm: escapedSearch) { _, _ in }
+    }
+
+    func directSearch(searchTerm: String, playlist: EpisodeFilter, episodesDataManager: EpisodesDataManager) {
+        // ruleid: pocketcasts.playlist-search-no-preescaped-like
+        let escapedSearch = searchTerm.escapeLike(escapeChar: "\\")
+
+        _ = episodesDataManager.playlistEpisodes(for: playlist, search: escapedSearch)
+    }
+}
+
+final class SafePlaylistSearchEscapingHelper {
+    func operationSearch(searchTerm: String, playlist: EpisodeFilter) {
+        // ok: pocketcasts.playlist-search-no-preescaped-like
+        _ = PlaylistDetailFetchOperation(playlist: playlist, searchTerm: searchTerm) { _, _ in }
+    }
+
+    func escapedForLegacyQuery(searchTerm: String) -> String {
+        // ok: pocketcasts.playlist-search-no-preescaped-like
+        searchTerm.escapeLike(escapeChar: "\\")
+    }
+}
+
 final class UnsafeEpisodeTransferHelper {
     func prepare(episode: BaseEpisode) {
         // ruleid: pocketcasts.no-unsafe-transfer-episode

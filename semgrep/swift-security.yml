@@ -352,6 +352,31 @@ rules:
                 ...
               }
 
+  - id: pocketcasts.playlist-search-no-preescaped-like
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: PlaylistQueryBuilder already escapes LIKE search terms; pass raw playlist search text instead of a value pre-escaped with escapeLike.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              let $ESCAPED = $TERM.escapeLike(escapeChar: "\\")
+              ...
+              PlaylistDetailFetchOperation(..., searchTerm: $ESCAPED, ...)
+          - pattern: |
+              let $ESCAPED = $TERM.escapeLike(escapeChar: "\\")
+              ...
+              $MANAGER.playlistEpisodes(..., search: $ESCAPED, ...)
+
   - id: pocketcasts.no-unsafe-transfer-episode
     severity: ERROR
     metadata:

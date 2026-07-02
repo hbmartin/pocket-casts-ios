@@ -113,20 +113,6 @@ actor PlaylistMetadataLoader {
     private let dataManager: DataManager
     private let episodesDataManager: EpisodesDataManager
 
-    static func gridArtworkItems<T>(
-        from episodes: [T],
-        limit: Int,
-        podcastUuid: (T) -> String
-    ) -> [PlaylistArtworkView.ImageItem] {
-        let distinctEpisodes = distinctPodcasts(from: episodes, limit: limit, podcastUuid: podcastUuid)
-
-        return distinctEpisodes.map { episode in
-            let uuid = podcastUuid(episode)
-            let url = ImageManager.podcastUrl(imageSize: .grid, uuid: uuid)
-            return PlaylistArtworkView.ImageItem(id: uuid, url: url)
-        }
-    }
-
     init(
         dataManager: DataManager = .sharedManager,
         episodesDataManager: EpisodesDataManager = .init()
@@ -341,7 +327,11 @@ actor PlaylistMetadataLoader {
     }
 
     private func loadImagesURLs(episodes: [ListEpisode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
-        try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+        let fallbackImageSize = await MainActor.run {
+            ImageManager.sizeFor(imageSize: .grid)
+        }
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
                 let podcastUuid = episode.episode.podcastUuid
                 let episodeUuid = episode.episode.uuid
@@ -350,7 +340,7 @@ actor PlaylistMetadataLoader {
                        let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
                         return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = ImageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    let url = ImageManager.podcastUrl(sizeRequired: fallbackImageSize, uuid: podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
@@ -374,29 +364,6 @@ actor PlaylistMetadataLoader {
         from episodes: [ListEpisode],
         limit: Int = 4
     ) -> [ListEpisode] {
-        Self.distinctPodcasts(from: episodes, limit: limit) { $0.episode.podcastUuid }
-    }
-
-    private static func distinctPodcasts<T>(
-        from episodes: [T],
-        limit: Int,
-        podcastUuid: (T) -> String
-    ) -> [T] {
-        var seen = Set<String>()
-        var results: [T] = []
-
-        for episode in episodes {
-            if seen.insert(podcastUuid(episode)).inserted {
-                results.append(episode)
-
-                if results.count == limit {
-                    break
-                }
-            }
-        }
-        if !results.isEmpty, results.count < limit {
-            return Array(results.prefix(1))
-        }
-        return results
+        PlaylistArtworkHelper.distinctPodcasts(from: episodes, limit: limit) { $0.episode.podcastUuid }
     }
 }

@@ -48,6 +48,8 @@ class PlaylistDetailFetchOperation: Operation, @unchecked Sendable {
                 )
             }
 
+            if self.isCancelled { return }
+
             DispatchQueue.main.sync { [weak self] in
                 guard let strongSelf = self else { return }
                 strongSelf.completion(newData, archivedEpisodesCount)

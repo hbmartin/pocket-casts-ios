@@ -138,9 +138,9 @@ class PlaylistDetailViewModel: ObservableObject {
         // back to update isolated state. `uuid` and the returned EpisodeFilter are Sendable.
         let uuid = playlist.uuid
         Task.detached { [weak self] in
-            guard let self else { return }
             let reloadedPlaylist = DataManager.sharedManager.findPlaylist(uuid: uuid)
-            await MainActor.run {
+            await MainActor.run { [weak self] in
+                guard let self else { return }
                 if let reloadedPlaylist {
                     self.playlist = reloadedPlaylist
                     self.playlistName = reloadedPlaylist.playlistName
@@ -277,7 +277,9 @@ class PlaylistDetailViewModel: ObservableObject {
     }
 
     private func loadImagesURLs(episodes: [ListEpisode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
-        try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
+        let fallbackImageSize = ImageManager.sizeFor(imageSize: .detail)
+
+        return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episode in episodes {
                 let podcastUuid = episode.episode.podcastUuid
                 let episodeUuid = episode.episode.uuid
@@ -286,7 +288,7 @@ class PlaylistDetailViewModel: ObservableObject {
                        let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
                         return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = ImageManager.podcastUrl(imageSize: .detail, uuid: podcastUuid)
+                    let url = ImageManager.podcastUrl(sizeRequired: fallbackImageSize, uuid: podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
@@ -307,22 +309,7 @@ class PlaylistDetailViewModel: ObservableObject {
     }
 
     private func firstDistinctPodcasts(from episodes: [ListEpisode], limit: Int) -> [ListEpisode] {
-        var seen = Set<String>()
-        var list: [ListEpisode] = []
-
-        for episode in episodes {
-            if seen.insert(episode.episode.podcastUuid).inserted {
-                list.append(episode)
-                if list.count == limit {
-                    break
-                }
-            }
-        }
-
-        if !list.isEmpty, list.count < limit {
-            return Array(list.prefix(1))
-        }
-        return list
+        PlaylistArtworkHelper.distinctPodcasts(from: episodes, limit: limit) { $0.episode.podcastUuid }
     }
 }
 
@@ -367,7 +354,6 @@ extension PlaylistDetailViewModel {
             return
         }
         self.searchTerm = searchTerm
-        let escapedSearch = searchTerm.escapeLike(escapeChar: "\\")
         operationQueue.cancelAllOperations()
 
         // Route the search DB fetch through the same operation as reloadEpisodeList so the
@@ -377,10 +363,11 @@ extension PlaylistDetailViewModel {
             dataManager: dataManager,
             episodesDataManager: episodesDataManager,
             playlist: playlist,
-            searchTerm: escapedSearch
+            searchTerm: searchTerm
         ) { [weak self] newData, _ in
             guard let self else { return }
             MainActor.assumeIsolated {
+                guard self.isSearching, self.searchTerm == searchTerm else { return }
                 let changeSetTuple = self.buildChangeSet(source: self.episodes, newData: newData)
                 // Avoid animation as long we use the current diffable framework
                 self.onChange(changeSetTuple.1, false, changeSetTuple.0)

@@ -539,10 +539,13 @@ class ImageManager {
         return image
     }
 
-    // Pure URL builder (reads only a constant table + static helpers), so it is `static`/`nonisolated`
-    // and can be called across actor boundaries without the non-Sendable ImageManager instance crossing.
     static func podcastUrl(imageSize: PodcastThumbnailSize, uuid: String) -> URL {
         let sizeRequired = ImageManager.sizeFor(imageSize: imageSize)
+        return podcastUrl(sizeRequired: sizeRequired, uuid: uuid)
+    }
+
+    // Pure URL builder for concurrent call sites that precompute screen-dependent sizes.
+    static func podcastUrl(sizeRequired: Int, uuid: String) -> URL {
         let closestSize = closestImageSize(sizeRequired: sizeRequired)
 
         return ServerHelper.imageUrl(podcastUuid: uuid, size: closestSize)

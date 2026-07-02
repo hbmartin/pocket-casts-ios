@@ -36,7 +36,7 @@ extension EpisodeFilter {
     @MainActor func grid() -> UIImage {
         let episodes = DataManager.sharedManager.playlistEpisodes(for: self)
 
-        let items = PlaylistCellViewModel.gridArtworkItems(from: episodes, limit: 4) { $0.podcastUuid }
+        let items = PlaylistArtworkHelper.gridArtworkItems(from: episodes, limit: 4) { $0.podcastUuid }
 
         return PlaylistArtworkView(items: items)
             .frame(width: 56.0, height: 56.0)

@@ -27,43 +27,6 @@ class PlaylistCellViewModel: ObservableObject {
 #endif
     }
 
-    static func distinctPodcasts<T>(
-        from episodes: [T],
-        limit: Int,
-        podcastUuid: (T) -> String
-    ) -> [T] {
-        var seen = Set<String>()
-        var results: [T] = []
-
-        for episode in episodes {
-            if seen.insert(podcastUuid(episode)).inserted {
-                results.append(episode)
-
-                if results.count == limit {
-                    break
-                }
-            }
-        }
-        if !results.isEmpty, results.count < limit {
-            return Array(results.prefix(1))
-        }
-        return results
-    }
-
-    static func gridArtworkItems<T>(
-        from episodes: [T],
-        limit: Int,
-        podcastUuid: (T) -> String
-    ) -> [PlaylistArtworkView.ImageItem] {
-        let distinctEpisodes = distinctPodcasts(from: episodes, limit: limit, podcastUuid: podcastUuid)
-
-        return distinctEpisodes.map { episode in
-            let uuid = podcastUuid(episode)
-            let url = ImageManager.podcastUrl(imageSize: .grid, uuid: uuid)
-            return PlaylistArtworkView.ImageItem(id: uuid, url: url)
-        }
-    }
-
     private var playlist: EpisodeFilter
     private var isLoadingCount: Bool = false
     private var isLoadingImages: Bool = false
@@ -158,6 +121,7 @@ class PlaylistCellViewModel: ObservableObject {
 
     private func loadImagesURLs(episodes: [Episode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
         let episodeIdentifiers = episodes.map { (podcastUuid: $0.podcastUuid, episodeUuid: $0.uuid) }
+        let fallbackImageSize = ImageManager.sizeFor(imageSize: .grid)
 
         return try await withThrowingTaskGroup(of: PlaylistArtworkView.ImageItem.self) { group in
             for episodeIdentifier in episodeIdentifiers {
@@ -168,7 +132,7 @@ class PlaylistCellViewModel: ObservableObject {
                        let url = try await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(podcastUuid: podcastUuid, episodeUuid: episodeUuid) {
                         return PlaylistArtworkView.ImageItem(id: episodeUuid, url: url)
                     }
-                    let url = ImageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
+                    let url = ImageManager.podcastUrl(sizeRequired: fallbackImageSize, uuid: podcastUuid)
                     return PlaylistArtworkView.ImageItem(id: podcastUuid, url: url)
                 }
             }
@@ -205,6 +169,6 @@ class PlaylistCellViewModel: ObservableObject {
     }
 
     private func firstDistinctPodcasts(from episodes: [Episode], limit: Int) -> [Episode] {
-        Self.distinctPodcasts(from: episodes, limit: limit) { $0.podcastUuid }
+        PlaylistArtworkHelper.distinctPodcasts(from: episodes, limit: limit) { $0.podcastUuid }
     }
 }
