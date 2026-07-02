@@ -66,3 +66,43 @@ struct PlaylistArtworkView: View {
         .accessibilityLabel(L10n.accessibilityPlaylistImage)
     }
 }
+
+enum PlaylistArtworkHelper {
+    static func distinctPodcasts<T>(
+        from episodes: [T],
+        limit: Int,
+        podcastUuid: (T) -> String
+    ) -> [T] {
+        var seen = Set<String>()
+        var results: [T] = []
+
+        for episode in episodes {
+            if seen.insert(podcastUuid(episode)).inserted {
+                results.append(episode)
+
+                if results.count == limit {
+                    break
+                }
+            }
+        }
+        if !results.isEmpty, results.count < limit {
+            return Array(results.prefix(1))
+        }
+        return results
+    }
+
+    @MainActor
+    static func gridArtworkItems<T>(
+        from episodes: [T],
+        limit: Int,
+        podcastUuid: (T) -> String
+    ) -> [PlaylistArtworkView.ImageItem] {
+        let distinctEpisodes = distinctPodcasts(from: episodes, limit: limit, podcastUuid: podcastUuid)
+
+        return distinctEpisodes.map { episode in
+            let uuid = podcastUuid(episode)
+            let url = ImageManager.podcastUrl(imageSize: .grid, uuid: uuid)
+            return PlaylistArtworkView.ImageItem(id: uuid, url: url)
+        }
+    }
+}
