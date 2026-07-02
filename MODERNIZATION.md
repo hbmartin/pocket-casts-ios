@@ -83,6 +83,15 @@ of `scripts/ci/check-concurrency-warnings.sh`).
 **Exit criteria:** baseline at zero for targeted mode (playback files excepted); top-level UI types in
 non-playback features are `@MainActor`.
 
+**Status (2026-07): met.** The targeted-mode baseline is at its playback-only floor of **3** entries
+(`DefaultPlayer` ×2, `PlaybackManager` ×1 — deferred to Phase 5); every non-playback entry has been
+burned down. The final 10 (`PlaylistDetailViewModel`, `PlaylistMetadataLoader`/`ListEpisode`,
+`ShareProfileViewModel`) were design-gated on the Phase 3 leaf-record Sendability work and cleared once
+those landed — `ListEpisode` marked honestly `Sendable`, `ImageManager.podcastUrl` made a `static` pure
+function, and the two view models annotated `@MainActor` with their synchronous DataManager work moved
+off the main actor (slice 17, ratchet 13 → 3). View-controller/view `@MainActor` annotation continues
+opportunistically as an input to Phase 2.
+
 ## Phase 2 — DI adoption & view-controller decomposition (medium risk)
 
 **Sequencing rationale:** DI comes *before* complete-mode concurrency so the isolation decision for each
@@ -167,8 +176,15 @@ established **Strategy B (struct records) for the leaves** — `Folder` ✓, `Ep
 (2026-06-28) are now `Sendable` value-type structs — while **`Episode`/`UserEpisode` are reclassified
 out of Phase 3 and coupled to Phase 5**: their only shared-mutation reliance lives in the playback
 engine (deferred) and behind the `@objc BaseEpisode` protocol (a hard structural blocker needing a
-standalone de-`@objc` PR). The raw-SQL → query-interface conversion + `grdbQueryInterface` deletion
-remains the outstanding Phase 3 thread.
+standalone de-`@objc` PR).
+
+**Update (2026-07):** the baseline payoff from the leaf records has now been realized — slice 17 cleared
+the 10 non-playback baseline entries that hung off `EpisodeFilter`/`ListEpisode` (`ListEpisode` marked
+honestly `Sendable`; the `PlaylistDetailViewModel`/`PlaylistMetadataLoader`/`ShareProfileViewModel`
+consumers moved to `@MainActor`/off-main), taking the ratchet from 13 → 3. The **raw-SQL →
+query-interface conversion + `grdbQueryInterface` deletion remains the outstanding Phase 3 thread**, as
+does migrating the seven repository `DependencyKey`s off the homegrown DI container (now unblocked since
+the leaf records are `Sendable`).
 
 **Exit criteria:** `grdbQueryInterface` deleted (single code path); raw SQL only in the justified
 residue list; record-Sendability strategy (struct migration) documented and underway, with the
