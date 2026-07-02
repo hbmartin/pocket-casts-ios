@@ -3,7 +3,11 @@ import Foundation
 import PocketCastsUtils
 import SQLite3
 
-public class DataManager {
+// @unchecked Sendable: the facade's stored properties are all immutable references set at init.
+// Thread safety is delegated: `dbQueue` is GRDB's thread-safe pool, and the sub-managers serialize
+// their mutable caches on private dispatch queues. (Test subclasses like `DataManagerMock` inherit
+// the conformance and are exercised single-threaded.)
+public class DataManager: @unchecked Sendable {
     public static let podcastTableName = "SJPodcast"
     public static let episodeTableName = "SJEpisode"
     public static let userEpisodeTableName = "SJUserEpisode"
@@ -19,8 +23,8 @@ public class DataManager {
     private let episodeManager = EpisodeDataManager()
     private let userEpisodeManager = UserEpisodeDataManager()
     private let folderManager = FolderDataManager()
-    private lazy var upNextHistoryManager = UpNextHistoryManager()
-    private lazy var folderHistoryManager = FolderHistoryManager()
+    private let upNextHistoryManager = UpNextHistoryManager()
+    private let folderHistoryManager = FolderHistoryManager()
 
     public let autoAddCandidates: AutoAddCandidatesDataManager
     public let bookmarks: BookmarkDataManager

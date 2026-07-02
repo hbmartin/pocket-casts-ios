@@ -104,13 +104,13 @@ singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.sh
   `nonisolated(unsafe)`). It is being replaced by swift-dependencies, whose `DependencyKey`
   (`liveValue`/`testValue`/`previewValue`), task-local `DependencyValues`, and scoped `withDependencies`
   overrides are concurrency-aware and remove the global mutable state. The `@Dependency(\.key)`
-  call-site syntax is identical, so adopters only swap an import. **Migrated so far** (Sendable values,
-  clean): `\.fileLog`, `\.downloadManager`, `\.playlistMetadataLoader` (+ its cache-invalidation
-  coordinator). **Deferred:** the seven repository keys in `Repositories+Dependency.swift` default to
-  the non-`Sendable` `DataManager.sharedManager`, which fights swift-dependencies' `Sendable`
-  `DependencyValues` — they stay on the homegrown container until the Phase 3 record/`DataManager`
-  Sendability work, at which point `PocketCastsDependencyInjection` is deleted. (The two systems
-  coexist in the interim; no file imports both.)
+  call-site syntax is identical, so adopters only swap an import. **Migration complete (2026-07-02,
+  slice 18):** `\.fileLog`, `\.downloadManager`, `\.playlistMetadataLoader` (+ its cache-invalidation
+  coordinator), and the seven repository keys in `Repositories+Dependency.swift`. The repository
+  protocols are now `Sendable` (with `DataManager` `@unchecked Sendable` — immutable stored
+  references; thread safety delegated to GRDB's pool and the sub-managers' private queues), so the
+  keys satisfy swift-dependencies' `Sendable` `DependencyValues`. The homegrown
+  `PocketCastsDependencyInjection` module is **deleted**.
 - **2a — Singleton seams.** For each of `DataManager.sharedManager`, `DownloadManager.shared`,
   `ServerSettings`, `Settings` (split the 1,595-line god object into focused protocol facades), and
   `FileLog.shared`: define a protocol, add a swift-dependencies `DependencyKey` (deciding its isolation
@@ -181,10 +181,10 @@ standalone de-`@objc` PR).
 **Update (2026-07):** the baseline payoff from the leaf records has now been realized — slice 17 cleared
 the 10 non-playback baseline entries that hung off `EpisodeFilter`/`ListEpisode` (`ListEpisode` marked
 honestly `Sendable`; the `PlaylistDetailViewModel`/`PlaylistMetadataLoader`/`ShareProfileViewModel`
-consumers moved to `@MainActor`/off-main), taking the ratchet from 13 → 3. The **raw-SQL →
-query-interface conversion + `grdbQueryInterface` deletion remains the outstanding Phase 3 thread**, as
-does migrating the seven repository `DependencyKey`s off the homegrown DI container (now unblocked since
-the leaf records are `Sendable`).
+consumers moved to `@MainActor`/off-main), taking the ratchet from 13 → 3. The seven repository
+`DependencyKey`s moved to swift-dependencies and the homegrown DI container was deleted on 2026-07-02
+(slice 18). The **raw-SQL → query-interface conversion + `grdbQueryInterface` deletion remains the
+outstanding Phase 3 thread**.
 
 **Exit criteria:** `grdbQueryInterface` deleted (single code path); raw SQL only in the justified
 residue list; record-Sendability strategy (struct migration) documented and underway, with the

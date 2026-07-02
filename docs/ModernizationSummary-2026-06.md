@@ -198,8 +198,8 @@ live in `MODERNIZATION.md`; this is the forward plan with what each step is wait
 2. **DI call-site adoption batches** — migrate remaining `FileLog.shared` (~640 sites) and
    `DownloadManager.shared` (~110 sites) call sites to `@Dependency`, grouped by feature area.
    Mechanical now that the seams exist and the swift-dependencies substrate (slice 10) is in place.
-   The seven repository `DependencyKey`s (still on the homegrown container) are now unblocked too, since
-   the leaf records are `Sendable`.
+   The seven repository `DependencyKey`s moved to swift-dependencies on 2026-07-02 (slice 18) and the
+   homegrown `PocketCastsDependencyInjection` container is deleted — all DI now goes through one system.
 3. ~~**Phase 3 record migration, record 2+**~~ — **done.** `EpisodeFilter` (slice 14) and `Podcast`
    (slice 16) shipped as `Sendable` structs, completing the Phase 3 **leaf** records (Folder ✓,
    EpisodeFilter ✓, Podcast ✓); `Episode`/`UserEpisode` were reclassified to Phase 5. Slice 17 then

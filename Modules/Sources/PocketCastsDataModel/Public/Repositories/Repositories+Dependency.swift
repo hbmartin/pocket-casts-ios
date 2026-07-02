@@ -1,78 +1,85 @@
-import PocketCastsDependencyInjection
+import Dependencies
 
-// Dependency-container registrations for the repository protocols. All keys
-// default to the production `DataManager.sharedManager`; tests override them
-// with mocks (see PocketCastsDataModelTesting), and a future persistence
-// engine can be swapped in here without touching consumers.
+// swift-dependencies registrations for the repository protocols. All keys
+// default to the production `DataManager.sharedManager`; consumer tests
+// override them with mocks (see PocketCastsDataModelTesting) via
+// `withDependencies`, and a future persistence engine can be swapped in here
+// without touching consumers.
+//
+// `testValue` mirrors `liveValue` deliberately: the app test suite swaps a
+// fresh test `DataManager` into `sharedManager` and exercises these paths
+// against it (the retired homegrown container behaved the same way), so an
+// unimplemented-dependency failure here would be a behavior change, not a
+// safety win.
 
-struct UpNextRepositoryKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any UpNextRepository = DataManager.sharedManager
+enum UpNextRepositoryKey: DependencyKey {
+    static var liveValue: any UpNextRepository { DataManager.sharedManager }
+    static var testValue: any UpNextRepository { DataManager.sharedManager }
 }
 
-struct PodcastRepositoryKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any PodcastRepository = DataManager.sharedManager
+enum PodcastRepositoryKey: DependencyKey {
+    static var liveValue: any PodcastRepository { DataManager.sharedManager }
+    static var testValue: any PodcastRepository { DataManager.sharedManager }
 }
 
-struct EpisodeRepositoryKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any EpisodeRepository = DataManager.sharedManager
+enum EpisodeRepositoryKey: DependencyKey {
+    static var liveValue: any EpisodeRepository { DataManager.sharedManager }
+    static var testValue: any EpisodeRepository { DataManager.sharedManager }
 }
 
-struct UserEpisodeRepositoryKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any UserEpisodeRepository = DataManager.sharedManager
+enum UserEpisodeRepositoryKey: DependencyKey {
+    static var liveValue: any UserEpisodeRepository { DataManager.sharedManager }
+    static var testValue: any UserEpisodeRepository { DataManager.sharedManager }
 }
 
-struct PlaylistRepositoryKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any PlaylistRepository = DataManager.sharedManager
+enum PlaylistRepositoryKey: DependencyKey {
+    static var liveValue: any PlaylistRepository { DataManager.sharedManager }
+    static var testValue: any PlaylistRepository { DataManager.sharedManager }
 }
 
-struct FolderRepositoryKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any FolderRepository = DataManager.sharedManager
+enum FolderRepositoryKey: DependencyKey {
+    static var liveValue: any FolderRepository { DataManager.sharedManager }
+    static var testValue: any FolderRepository { DataManager.sharedManager }
 }
 
-struct DataMaintenanceKey: DependencyKey {
-    // nonisolated(unsafe): assigned only by tests to inject a mock; production never mutates it.
-    nonisolated(unsafe) static var currentValue: any DataMaintenance = DataManager.sharedManager
+enum DataMaintenanceKey: DependencyKey {
+    static var liveValue: any DataMaintenance { DataManager.sharedManager }
+    static var testValue: any DataMaintenance { DataManager.sharedManager }
 }
 
-public extension DefaultDependencyContainer {
+public extension DependencyValues {
     var upNextRepository: any UpNextRepository {
-        get { Self[UpNextRepositoryKey.self] }
-        nonmutating set { Self[UpNextRepositoryKey.self] = newValue }
+        get { self[UpNextRepositoryKey.self] }
+        set { self[UpNextRepositoryKey.self] = newValue }
     }
 
     var podcastRepository: any PodcastRepository {
-        get { Self[PodcastRepositoryKey.self] }
-        nonmutating set { Self[PodcastRepositoryKey.self] = newValue }
+        get { self[PodcastRepositoryKey.self] }
+        set { self[PodcastRepositoryKey.self] = newValue }
     }
 
     var episodeRepository: any EpisodeRepository {
-        get { Self[EpisodeRepositoryKey.self] }
-        nonmutating set { Self[EpisodeRepositoryKey.self] = newValue }
+        get { self[EpisodeRepositoryKey.self] }
+        set { self[EpisodeRepositoryKey.self] = newValue }
     }
 
     var userEpisodeRepository: any UserEpisodeRepository {
-        get { Self[UserEpisodeRepositoryKey.self] }
-        nonmutating set { Self[UserEpisodeRepositoryKey.self] = newValue }
+        get { self[UserEpisodeRepositoryKey.self] }
+        set { self[UserEpisodeRepositoryKey.self] = newValue }
     }
 
     var playlistRepository: any PlaylistRepository {
-        get { Self[PlaylistRepositoryKey.self] }
-        nonmutating set { Self[PlaylistRepositoryKey.self] = newValue }
+        get { self[PlaylistRepositoryKey.self] }
+        set { self[PlaylistRepositoryKey.self] = newValue }
     }
 
     var folderRepository: any FolderRepository {
-        get { Self[FolderRepositoryKey.self] }
-        nonmutating set { Self[FolderRepositoryKey.self] = newValue }
+        get { self[FolderRepositoryKey.self] }
+        set { self[FolderRepositoryKey.self] = newValue }
     }
 
     var dataMaintenance: any DataMaintenance {
-        get { Self[DataMaintenanceKey.self] }
-        nonmutating set { Self[DataMaintenanceKey.self] = newValue }
+        get { self[DataMaintenanceKey.self] }
+        set { self[DataMaintenanceKey.self] = newValue }
     }
 }

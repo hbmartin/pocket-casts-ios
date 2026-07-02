@@ -1,11 +1,12 @@
+import Dependencies
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 
 struct PlaybackTimeHelper {
     let dataManager: any EpisodeRepository
 
-    init(dataManager: any EpisodeRepository = DefaultDependencyContainer.current.episodeRepository) {
-        self.dataManager = dataManager
+    init(dataManager: (any EpisodeRepository)? = nil) {
+        @Dependency(\.episodeRepository) var episodeRepository
+        self.dataManager = dataManager ?? episodeRepository
     }
 
     /// This returns the total seconds of `playedUpTo` for episodes played in the last 7 days

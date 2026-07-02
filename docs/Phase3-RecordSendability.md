@@ -288,9 +288,9 @@ itself is unaffected by that split and proceeds now.
   back-mutation); shared caches hand out copies. **All three leaf records done (2026-06-28).**
 - ✅ The 10 baseline entries clear once `EpisodeFilter` (+ honest-`Sendable` `ListEpisode`) land —
   **done 2026-07-01** (ratchet 13 → 3, playback-only floor). Episode-touching boundary crossings use
-  the per-hop `Sendable`-projection hatch until Phase 5. (The seven repository `DependencyKey`s remain
-  on the homegrown container; migrating them to swift-dependencies is now unblocked but tracked
-  separately.)
+  the per-hop `Sendable`-projection hatch until Phase 5. (The seven repository `DependencyKey`s moved
+  to swift-dependencies on 2026-07-02 — repository protocols now `Sendable`, `DataManager`
+  `@unchecked Sendable` — and the homegrown `PocketCastsDependencyInjection` container is deleted.)
 - ✅ MODERNIZATION.md Phase 3 reconciled: heavy-record migration moves under the Phase 5 umbrella
   (record-Sendability sub-effort complete for the leaves).
 - ⏳ **Still open (the other Phase 3 thread, not record-Sendability):** the raw-SQL → GRDB

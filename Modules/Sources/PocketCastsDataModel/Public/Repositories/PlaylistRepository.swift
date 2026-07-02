@@ -5,7 +5,7 @@ import Foundation
 /// `DataManager` is the production conformer; inject `any PlaylistRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
-public protocol PlaylistRepository: AnyObject {
+public protocol PlaylistRepository: AnyObject, Sendable {
     func allPlaylists(includeDeleted: Bool) -> [EpisodeFilter]
     func allSmartPlaylists(includeDeleted: Bool) -> [EpisodeFilter]
     func allManualPlaylists(includeDeleted: Bool) -> [EpisodeFilter]
