@@ -137,7 +137,7 @@ class PlaylistDetailViewModel: ObservableObject {
         // Run the synchronous playlist reload off the main actor (the class is @MainActor), then hop
         // back to update isolated state. `uuid` and the returned EpisodeFilter are Sendable.
         let uuid = playlist.uuid
-        Task.detached { [weak self] in
+        Task.detached {
             let reloadedPlaylist = DataManager.sharedManager.findPlaylist(uuid: uuid)
             await MainActor.run { [weak self] in
                 guard let self else { return }

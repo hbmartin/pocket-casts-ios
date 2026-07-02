@@ -8,31 +8,31 @@ final class PlaylistCellViewModelTests: XCTestCase {
     // fewer distinct podcasts than the limit (but at least one), it collapses to just the first.
 
     func testReturnsLimitWhenMoreDistinctThanLimit() {
-        let result = PlaylistCellViewModel.distinctPodcasts(from: ["A", "B", "C", "D", "E"], limit: 4) { $0 }
+        let result = PlaylistArtworkHelper.distinctPodcasts(from: ["A", "B", "C", "D", "E"], limit: 4) { $0 }
         XCTAssertEqual(result, ["A", "B", "C", "D"])
     }
 
     func testReturnsAllWhenExactlyLimitDistinct() {
-        let result = PlaylistCellViewModel.distinctPodcasts(from: ["A", "B", "C", "D"], limit: 4) { $0 }
+        let result = PlaylistArtworkHelper.distinctPodcasts(from: ["A", "B", "C", "D"], limit: 4) { $0 }
         XCTAssertEqual(result, ["A", "B", "C", "D"])
     }
 
     func testDeduplicatesKeepingFirstOccurrence() {
-        let result = PlaylistCellViewModel.distinctPodcasts(from: ["A", "A", "B", "C", "D", "E"], limit: 4) { $0 }
+        let result = PlaylistArtworkHelper.distinctPodcasts(from: ["A", "A", "B", "C", "D", "E"], limit: 4) { $0 }
         XCTAssertEqual(result, ["A", "B", "C", "D"], "duplicates collapse, first occurrence wins")
     }
 
     func testCollapsesToFirstWhenFewerDistinctThanLimit() {
-        XCTAssertEqual(PlaylistCellViewModel.distinctPodcasts(from: ["A", "A", "B"], limit: 4) { $0 }, ["A"])
-        XCTAssertEqual(PlaylistCellViewModel.distinctPodcasts(from: ["A", "B", "C"], limit: 4) { $0 }, ["A"])
+        XCTAssertEqual(PlaylistArtworkHelper.distinctPodcasts(from: ["A", "A", "B"], limit: 4) { $0 }, ["A"])
+        XCTAssertEqual(PlaylistArtworkHelper.distinctPodcasts(from: ["A", "B", "C"], limit: 4) { $0 }, ["A"])
     }
 
     func testEmptyReturnsEmpty() {
-        XCTAssertEqual(PlaylistCellViewModel.distinctPodcasts(from: [String](), limit: 4) { $0 }, [])
+        XCTAssertEqual(PlaylistArtworkHelper.distinctPodcasts(from: [String](), limit: 4) { $0 }, [])
     }
 
     func testLimitOfOne() {
-        XCTAssertEqual(PlaylistCellViewModel.distinctPodcasts(from: ["A", "B"], limit: 1) { $0 }, ["A"])
+        XCTAssertEqual(PlaylistArtworkHelper.distinctPodcasts(from: ["A", "B"], limit: 1) { $0 }, ["A"])
     }
 
     func testUsesPodcastUuidKeyForCustomType() {
@@ -45,7 +45,7 @@ final class PlaylistCellViewModelTests: XCTestCase {
             Ep(id: "e5", podcast: "P4"),
             Ep(id: "e6", podcast: "P5"),
         ]
-        let result = PlaylistCellViewModel.distinctPodcasts(from: episodes, limit: 4) { $0.podcast }
+        let result = PlaylistArtworkHelper.distinctPodcasts(from: episodes, limit: 4) { $0.podcast }
         XCTAssertEqual(result.map(\.id), ["e1", "e3", "e4", "e5"], "first episode of each of the first 4 distinct podcasts")
     }
 }
