@@ -373,7 +373,15 @@ rules:
               ...
               PlaylistDetailFetchOperation(..., searchTerm: $ESCAPED, ...)
           - pattern: |
+              var $ESCAPED = $TERM.escapeLike(escapeChar: "\\")
+              ...
+              PlaylistDetailFetchOperation(..., searchTerm: $ESCAPED, ...)
+          - pattern: |
               let $ESCAPED = $TERM.escapeLike(escapeChar: "\\")
+              ...
+              $MANAGER.playlistEpisodes(..., search: $ESCAPED, ...)
+          - pattern: |
+              var $ESCAPED = $TERM.escapeLike(escapeChar: "\\")
               ...
               $MANAGER.playlistEpisodes(..., search: $ESCAPED, ...)
 

@@ -125,6 +125,20 @@ final class UnsafePlaylistSearchEscapingHelper {
 
         _ = episodesDataManager.playlistEpisodes(for: playlist, search: escapedSearch)
     }
+
+    func operationSearchWithVar(searchTerm: String, playlist: EpisodeFilter) {
+        // ruleid: pocketcasts.playlist-search-no-preescaped-like
+        var escapedSearch = searchTerm.escapeLike(escapeChar: "\\")
+
+        _ = PlaylistDetailFetchOperation(playlist: playlist, searchTerm: escapedSearch) { _, _ in }
+    }
+
+    func directSearchWithVar(searchTerm: String, playlist: EpisodeFilter, episodesDataManager: EpisodesDataManager) {
+        // ruleid: pocketcasts.playlist-search-no-preescaped-like
+        var escapedSearch = searchTerm.escapeLike(escapeChar: "\\")
+
+        _ = episodesDataManager.playlistEpisodes(for: playlist, search: escapedSearch)
+    }
 }
 
 final class SafePlaylistSearchEscapingHelper {

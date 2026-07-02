@@ -52,14 +52,15 @@ class ShareProfileViewModel: ObservableObject {
     private func loadData() {
         // Run the synchronous DataManager reads off the main actor (the class is @MainActor), then
         // hop back to assign the @Published state. All three result types are Sendable.
-        Task.detached { [weak self] in
+        Task.detached {
             let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
             let episodes = DataManager.sharedManager.episodesWithListenHistory(limit: 10)
             let filters = DataManager.sharedManager.allPlaylists(includeDeleted: false)
-            await MainActor.run {
-                self?.followedPodcasts = podcasts
-                self?.recentEpisodes = episodes
-                self?.playlists = filters
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.followedPodcasts = podcasts
+                self.recentEpisodes = episodes
+                self.playlists = filters
             }
         }
     }
@@ -121,17 +122,16 @@ class ShareProfileViewModel: ObservableObject {
 
     nonisolated static let photoDidChangeNotification = Notification.Name("ShareProfilePhotoDidChange")
 
+    nonisolated private static let photoIOQueue = DispatchQueue(label: "au.com.pocketcasts.shareprofile.photo-io", qos: .background)
+
     nonisolated private static func saveProfilePhoto(_ image: UIImage?) {
-        Task.detached(priority: .background) {
-            guard let image, let data = image.jpegData(compressionQuality: 0.85) else {
+        photoIOQueue.async {
+            if let image, let data = image.jpegData(compressionQuality: 0.85) {
+                try? data.write(to: photoURL)
+            } else {
                 try? FileManager.default.removeItem(at: photoURL)
-                await MainActor.run {
-                    NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
-                }
-                return
             }
-            try? data.write(to: photoURL)
-            await MainActor.run {
+            DispatchQueue.main.async {
                 NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
             }
         }
