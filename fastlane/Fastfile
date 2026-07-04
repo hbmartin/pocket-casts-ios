@@ -4,6 +4,8 @@ require 'dotenv'
 require 'json'
 require 'net/http'
 require 'open3'
+require 'shellwords'
+require 'tmpdir'
 require 'uri'
 
 fastlane_version '2.0'
@@ -36,6 +38,10 @@ EXTERNAL_BETA_TESTER_GROUPS = [
   'Stable Slack',
   'Trusted Preview Testers'
 ].freeze
+
+PERSONAL_BUILD_OUTPUT_NAME = 'pocket-casts-personal'
+PERSONAL_XCARCHIVE_PATH = File.join(ARTIFACTS_FOLDER, "#{PERSONAL_BUILD_OUTPUT_NAME}.xcarchive")
+PERSONAL_BUILD_IPA_PATH = File.join(ARTIFACTS_FOLDER, "#{PERSONAL_BUILD_OUTPUT_NAME}.ipa")
 
 APP_STORE_CONNECT_BUILD_OUTPUT_NAME = 'pocket-casts'
 APP_STORE_CONNECT_XCARCHIVE_PATH = File.join(ARTIFACTS_FOLDER, "#{APP_STORE_CONNECT_BUILD_OUTPUT_NAME}.xcarchive")
@@ -107,6 +113,15 @@ ASC_API_KEY_ENV_VARS = %w[
   APP_STORE_CONNECT_API_KEY_KEY
 ].freeze
 
+# Environment expected by the `personal_testflight` lane, which distributes the
+# fork under the fork owner's own Apple Developer team instead of the Pocket
+# Casts release infrastructure. See docs/testflight.md.
+PERSONAL_TESTFLIGHT_ENV_VARS = (%w[
+  PERSONAL_APPLE_TEAM_ID
+  PERSONAL_BUNDLE_ID_ROOT
+  PERSONAL_APP_GROUP_ID
+] + ASC_API_KEY_ENV_VARS).freeze
+
 EN_LPROJ_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'podcasts', 'en.lproj')
 
 # List of `.strings` files manually maintained by developers (as opposed to
@@ -156,7 +171,15 @@ before_all do
   # Decrypt the secrets. This is redundant on dev machines most of the time,
   # but it has such a negligible overhead that it's worth running it here to
   # keep the individual lanes cleaner.
-  configure_apply
+  #
+  # Personal fork builds don't have the Automattic `configure` encryption key,
+  # so they opt out via SKIP_CONFIGURE_APPLY (set by the TestFlight Personal
+  # workflow). See docs/testflight.md.
+  if ENV['SKIP_CONFIGURE_APPLY'] == 'true'
+    UI.message('Skipping configure_apply because SKIP_CONFIGURE_APPLY=true.')
+  else
+    configure_apply
+  end
 
   Dotenv.load(USER_ENV_FILE_PATH)
 end
@@ -730,6 +753,103 @@ platform :ios do
   end
 
 
+  # Builds the app under the fork owner's own Apple Developer team and uploads it
+  # to TestFlight for internal testing. Unlike the Automattic release lanes, this
+  # uses Xcode automatic signing with App Store Connect API cloud signing, so it
+  # needs no fastlane match storage, no `configure` secrets, and no Slack/Bitdrift
+  # credentials. See docs/testflight.md for the full setup guide.
+  #
+  # Required environment variables (see PERSONAL_TESTFLIGHT_ENV_VARS):
+  # - PERSONAL_APPLE_TEAM_ID:  Developer Portal team ID of the fork owner
+  # - PERSONAL_BUNDLE_ID_ROOT: root bundle identifier owned by that team;
+  #                            extension identifiers are derived from it
+  # - PERSONAL_APP_GROUP_ID:   App Group owned by that team (must start with "group.")
+  # - APP_STORE_CONNECT_API_KEY_KEY_ID / _ISSUER_ID / _KEY: an App Store Connect
+  #   API key with the Admin role (cloud signing needs to manage certificates)
+  #
+  # Optional environment variables:
+  # - PERSONAL_BUILD_NUMBER: overrides VERSION_LONG for this build. Each upload
+  #   for the same version must use a unique build number.
+  #
+  # @param skip_upload [Boolean] If true, builds and exports the IPA but does not upload to TestFlight
+  #
+  lane :personal_testflight do |skip_upload: false|
+    require_env_vars!(*PERSONAL_TESTFLIGHT_ENV_VARS)
+
+    team_id = get_required_env!('PERSONAL_APPLE_TEAM_ID')
+    bundle_id_root = get_required_env!('PERSONAL_BUNDLE_ID_ROOT')
+    app_group_id = get_required_env!('PERSONAL_APP_GROUP_ID')
+
+    if team_id == TEAM_ID_APP_STORE || team_id == TEAM_ID_ENTERPRISE
+      UI.user_error!("PERSONAL_APPLE_TEAM_ID must be your own team, not the Pocket Casts team (#{team_id}). Use the release lanes for official builds.")
+    end
+    if bundle_id_root == APP_BUNDLE_IDENTIFIER_APP_STORE || bundle_id_root.start_with?("#{APP_BUNDLE_IDENTIFIER_APP_STORE}.")
+      UI.user_error!("PERSONAL_BUNDLE_ID_ROOT must be an identifier you own, not #{APP_BUNDLE_IDENTIFIER_APP_STORE}.")
+    end
+    UI.user_error!("PERSONAL_APP_GROUP_ID must start with 'group.' (got: #{app_group_id})") unless app_group_id.start_with?('group.')
+
+    # The App Store Connect API key doubles as the xcodebuild cloud-signing
+    # credential, which must be provided as a .p8 file on disk.
+    api_key = app_store_connect_api_key
+    auth_key_path = write_asc_auth_key_file
+
+    cloud_signing_args = [
+      '-allowProvisioningUpdates',
+      "-authenticationKeyPath #{auth_key_path.shellescape}",
+      "-authenticationKeyID #{get_required_env!('APP_STORE_CONNECT_API_KEY_KEY_ID').shellescape}",
+      "-authenticationKeyIssuerID #{get_required_env!('APP_STORE_CONNECT_API_KEY_ISSUER_ID').shellescape}"
+    ].join(' ')
+
+    build_settings = {
+      'CODE_SIGN_STYLE' => 'Automatic',
+      'CODE_SIGN_IDENTITY' => 'Apple Development',
+      'DEVELOPMENT_TEAM' => team_id,
+      'PRODUCT_BUNDLE_IDENTIFIER_ROOT' => bundle_id_root,
+      'APP_GROUP_IDENTIFIER' => app_group_id,
+      # Clear the `match AppStore …` specifiers from the Release xcconfig so
+      # automatic signing can pick (or create) profiles for the personal team.
+      'PROVISIONING_PROFILE_SPECIFIER' => ''
+    }
+    build_number = ENV.fetch('PERSONAL_BUILD_NUMBER', '')
+    build_settings['VERSION_LONG'] = build_number unless build_number.empty?
+
+    xcargs = build_settings.map { |setting, value| "#{setting}=#{value.shellescape}" }.join(' ')
+
+    build_app(
+      scheme: SCHEME,
+      clean: true,
+      include_bitcode: false,
+      include_symbols: true,
+      xcargs: "#{xcargs} #{cloud_signing_args}",
+      export_options: {
+        method: 'app-store',
+        signingStyle: 'automatic',
+        teamID: team_id,
+        manageAppVersionAndBuildNumber: false
+      },
+      export_xcargs: cloud_signing_args,
+      archive_path: PERSONAL_XCARCHIVE_PATH,
+      output_directory: ARTIFACTS_FOLDER,
+      output_name: PERSONAL_BUILD_OUTPUT_NAME
+    )
+
+    if skip_upload
+      UI.important("skip_upload is set; the IPA was exported to #{PERSONAL_BUILD_IPA_PATH} but not uploaded.")
+      next
+    end
+
+    upload_to_testflight(
+      ipa: PERSONAL_BUILD_IPA_PATH,
+      app_identifier: bundle_id_root,
+      api_key: api_key,
+      distribute_external: false,
+      skip_submission: true,
+      # Don't block CI on App Store Connect processing; internal groups with
+      # automatic distribution enabled receive the build once processing ends.
+      skip_waiting_for_build_processing: true
+    )
+  end
+
   # Create a GitHub Release for a beta or final build
   #
   # @param beta_release [Boolean] If true, the GitHub Release is for a beta and will be marked as prerelease and published immediately.
@@ -963,6 +1083,20 @@ platform :ios do
   #####################################################################################
   # Helper Functions
   #####################################################################################
+
+  # Writes the App Store Connect API key content to a .p8 file so xcodebuild's
+  # cloud signing options (-authenticationKeyPath) can use it. Returns the path.
+  #
+  # Mirrors fastlane's own handling of APP_STORE_CONNECT_API_KEY_KEY: literal
+  # "\n" sequences are converted to newlines for keys stored single-line.
+  #
+  def write_asc_auth_key_file
+    key_content = get_required_env!('APP_STORE_CONNECT_API_KEY_KEY').gsub('\n', "\n")
+    key_path = File.join(Dir.mktmpdir('pocket-casts-asc-key'), 'AuthKey.p8')
+    File.write(key_path, key_content)
+    File.chmod(0o600, key_path)
+    key_path
+  end
 
   # Name of the `release/` branch for the current version
   #

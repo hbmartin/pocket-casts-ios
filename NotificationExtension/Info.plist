@@ -27,5 +27,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).NotificationService</string>
 	</dict>
+	<key>PCAppGroupIdentifier</key>
+	<string>$(APP_GROUP_IDENTIFIER)</string>
 </dict>
 </plist>

@@ -1,6 +1,16 @@
+import Foundation
+
 enum SharedConstants {
     enum GroupUserDefaults {
-        public static let groupContainerId = "group.au.com.shiftyjelly.pocketcasts"
+        /// Resolved from the PCAppGroupIdentifier Info.plist key, which every app and
+        /// extension target maps to the APP_GROUP_IDENTIFIER build setting. Keep the
+        /// fallback in sync with APP_GROUP_IDENTIFIER in config/PocketCasts.base.xcconfig.
+        public static let groupContainerId: String = {
+            if let identifier = Bundle.main.object(forInfoDictionaryKey: "PCAppGroupIdentifier") as? String, !identifier.isEmpty {
+                return identifier
+            }
+            return "group.au.com.shiftyjelly.pocketcasts"
+        }()
         public static let upNextItems = "upNextItems"
         public static let upNextItemsCount = "upNextItemsCount"
         public static let siriSearchItems = "siriSearchItems"

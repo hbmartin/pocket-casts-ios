@@ -8,6 +8,13 @@ if [[ "${CONFIGURATION}" != "Release" ]]; then
 fi
 
 if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
+    # Personal fork builds (docs/testflight.md) have no Bitdrift account;
+    # they opt out explicitly so official release CI still fails loudly.
+    if [[ "${POCKET_CASTS_SKIP_BITDRIFT_UPLOAD:-0}" == "1" ]]; then
+        echo "warning: POCKET_CASTS_SKIP_BITDRIFT_UPLOAD=1; skipping Bitdrift debug file upload."
+        exit 0
+    fi
+
     if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
         echo "error: BITDRIFT_API_KEY is required to upload Release dSYMs to Bitdrift."
         exit 1

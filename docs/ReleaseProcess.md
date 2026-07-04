@@ -8,6 +8,11 @@ This document covers the release surfaces that are easy to confuse:
 versioning, branch creation, code signing, TestFlight upload, App Store
 metadata, dSYM handling, GitHub release creation, and release-lane access.
 
+> **Shipping this fork to your own TestFlight?** The pipeline below requires
+> Automattic's team, secrets, and signing storage. Fork owners should use the
+> separate `TestFlight Personal` workflow instead — see
+> [testflight.md](./testflight.md).
+
 ## Release Entry Points
 
 Use the manual GitHub Actions workflow for normal release work:
