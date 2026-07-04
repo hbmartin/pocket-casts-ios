@@ -963,7 +963,76 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testAllPodcastsOrderedByNewestEpisodesExcludesFinishedAndArchivedEpisodes() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let podcast1 = self.createTestPodcast(uuid: "podcast-1", title: "Podcast 1", dataManager: dataManager)
+            let podcast2 = self.createTestPodcast(uuid: "podcast-2", title: "Podcast 2", dataManager: dataManager)
+
+            // podcast1's only unfinished episode is old; its newest episodes don't count (played / archived)
+            _ = self.createTestEpisode(podcast: podcast1, publishedDate: Date(timeIntervalSinceNow: -86400 * 5), dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: podcast1, publishedDate: Date(), playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: podcast1, publishedDate: Date(), archived: true, dataManager: dataManager)
+
+            _ = self.createTestEpisode(podcast: podcast2, publishedDate: Date(timeIntervalSinceNow: -86400), dataManager: dataManager)
+
+            let podcasts = dataManager.allPodcastsOrderedByNewestEpisodes()
+
+            XCTAssertEqual(podcasts.map(\.uuid), [podcast2.uuid, podcast1.uuid], "\(impl): Finished and archived episodes should not count towards recency")
+        }
+    }
+
+    func testAllPodcastsOrderedByNewestEpisodesPutsPodcastsWithoutEpisodesLast() throws {
+        try runWithBothImplementations { dataManager, impl in
+            var noEpisodes = Podcast()
+            noEpisodes.uuid = "podcast-empty"
+            noEpisodes.title = "Empty"
+            noEpisodes.subscribed = 1
+            noEpisodes.addedDate = Date()
+            noEpisodes.latestEpisodeDate = Date()
+            noEpisodes = dataManager.save(podcast: noEpisodes)
+
+            let withEpisode = self.createTestPodcast(uuid: "podcast-full", title: "Full", dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: withEpisode, publishedDate: Date(timeIntervalSinceNow: -86400 * 30), dataManager: dataManager)
+
+            let podcasts = dataManager.allPodcastsOrderedByNewestEpisodes()
+
+            XCTAssertEqual(podcasts.map(\.uuid), [withEpisode.uuid, noEpisodes.uuid], "\(impl): Podcasts without qualifying episodes should sort last")
+        }
+    }
+
+    func testAllPodcastsOrderedByNewestEpisodesFiltersByFolder() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let folder = self.createTestFolder(uuid: "folder-1", dataManager: dataManager)
+            let inFolder = self.createTestPodcast(uuid: "podcast-in", title: "In", folderUuid: folder.uuid, dataManager: dataManager)
+            let outside = self.createTestPodcast(uuid: "podcast-out", title: "Out", dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: inFolder, publishedDate: Date(timeIntervalSinceNow: -86400 * 8), dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: outside, publishedDate: Date(), dataManager: dataManager)
+
+            var updatedFolder = folder
+            updatedFolder.sortType = FolderSort.episodeDateNewestToOldest.rawValue
+            updatedFolder = dataManager.save(folder: updatedFolder)
+
+            let podcasts = dataManager.allPodcastsInFolder(folder: updatedFolder)
+
+            XCTAssertEqual(podcasts.map(\.uuid), [inFolder.uuid], "\(impl): Only podcasts in the folder should be returned")
+        }
+    }
+
     // MARK: - allPodcastsOrderedByLastPlayedEpisodes Tests
+
+    func testAllPodcastsOrderedByLastPlayedEpisodesPutsNeverPlayedLast() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let neverPlayed = self.createTestPodcast(uuid: "podcast-never", title: "Never", dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: neverPlayed, dataManager: dataManager)
+
+            let played = self.createTestPodcast(uuid: "podcast-played", title: "Played", dataManager: dataManager)
+            _ = self.createTestEpisode(podcast: played, lastPlaybackInteractionDate: Date(timeIntervalSinceNow: -86400 * 60), dataManager: dataManager)
+
+            let podcasts = dataManager.allPodcastsOrderedByLastPlayedEpisodes()
+
+            XCTAssertEqual(podcasts.map(\.uuid), [played.uuid, neverPlayed.uuid], "\(impl): Never-played podcasts should sort last")
+        }
+    }
 
     func testAllPodcastsOrderedByLastPlayedEpisodesReturnsSortedByLastPlayed() throws {
         try runWithBothImplementations { dataManager, impl in
