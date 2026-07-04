@@ -24,18 +24,21 @@ public struct NetworkDataUsageManager {
         sessionType: SessionType? = nil,
         timestamp: Date = Date()
     ) -> Bool {
-        var success = false
-        dbQueue.write { db in
-            do {
-                try db.insert(
-                    into: Self.tableName,
-                    columns: ["timestamp", "episode_uuid", "podcast_uuid", "bytes_downloaded", "bytes_streamed", "bytes_uploaded", "operation_type", "connection_type", "session_type"],
-                    values: [timestamp.timeIntervalSince1970, episodeUuid, podcastUuid, bytesDownloaded, bytesStreamed, bytesUploaded, operationType.rawValue, connectionType.rawValue, sessionType?.rawValue]
-                )
-                success = true
-            } catch {}
+        var record = NetworkDataUsageRecord()
+        record.timestamp = timestamp.timeIntervalSince1970
+        record.episodeUuid = episodeUuid
+        record.podcastUuid = podcastUuid
+        record.bytesDownloaded = bytesDownloaded
+        record.bytesStreamed = bytesStreamed
+        record.bytesUploaded = bytesUploaded
+        record.operationType = operationType.rawValue
+        record.connectionType = Int32(connectionType.rawValue)
+        record.sessionType = sessionType?.rawValue
+        let recordToSave = record
+
+        return dbQueue.write { db in
+            try recordToSave.insert(db)
         }
-        return success
     }
 
     // MARK: - Cleanup
