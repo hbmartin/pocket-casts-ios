@@ -3,7 +3,8 @@ import PocketCastsDataModel
 
 /// Generated protocol mock for `UpNextRepository`. Stub return values by selector:
 /// `mock.stub("findPodcast(uuid:includeUnsubscribed:)", with: podcast)`.
-public final class UpNextRepositoryMock: RepositoryMock, UpNextRepository {
+// @unchecked Sendable: restates RepositoryMock's conformance, as Swift requires of subclasses; state stays lock-guarded in the base class.
+public final class UpNextRepositoryMock: RepositoryMock, UpNextRepository, @unchecked Sendable {
     public func allUpNextPlaylistEpisodes() -> [PlaylistEpisode] {
         record("allUpNextPlaylistEpisodes()")
         return stubs["allUpNextPlaylistEpisodes()"] as? [PlaylistEpisode] ?? []

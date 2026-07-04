@@ -3,7 +3,8 @@ import PocketCastsDataModel
 
 /// Generated protocol mock for `EpisodeRepository`. Stub return values by selector:
 /// `mock.stub("findPodcast(uuid:includeUnsubscribed:)", with: podcast)`.
-public final class EpisodeRepositoryMock: RepositoryMock, EpisodeRepository {
+// @unchecked Sendable: restates RepositoryMock's conformance, as Swift requires of subclasses; state stays lock-guarded in the base class.
+public final class EpisodeRepositoryMock: RepositoryMock, EpisodeRepository, @unchecked Sendable {
     public func findEpisode(uuid: String) -> Episode? {
         record("findEpisode(uuid:)")
         return stubs["findEpisode(uuid:)"] as? Episode

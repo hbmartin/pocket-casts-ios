@@ -72,7 +72,8 @@ final class PodcastExistsHelperTests: XCTestCase {
     }
 }
 
-private final class PodcastLookupDataManager: DataManager {
+// @unchecked Sendable: restates DataManager's conformance, as Swift requires of subclasses; test-only stub state.
+private final class PodcastLookupDataManager: DataManager, @unchecked Sendable {
     var podcasts: [String: Podcast] = [:]
     var beforeReturningPodcast: ((String) -> Void)?
     private(set) var findPodcastCallCount = 0
