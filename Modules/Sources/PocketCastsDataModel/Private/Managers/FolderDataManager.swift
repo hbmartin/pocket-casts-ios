@@ -88,7 +88,7 @@ class FolderDataManager {
 
     func deleteAllFolders(dbQueue: PCDBQueue) {
         if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
-            grdbQueue.write { db in
+            _ = grdbQueue.write { db in
                 try Folder.deleteAll(db)
             }
         } else {
@@ -158,7 +158,7 @@ class FolderDataManager {
 
     func markAllFoldersSynced(dbQueue: PCDBQueue) {
         if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
-            grdbQueue.write { db in
+            _ = grdbQueue.write { db in
                 try Folder.updateAll(db, Folder.Columns.syncModified.set(to: 0))
             }
         } else {
@@ -178,7 +178,7 @@ class FolderDataManager {
 
     func markAllFolderAsDeleted(syncModified: Int64, dbQueue: PCDBQueue) {
         if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
-            grdbQueue.write { db in
+            _ = grdbQueue.write { db in
                 try Folder.updateAll(db, Folder.Columns.syncModified.set(to: syncModified), Folder.Columns.wasDeleted.set(to: true))
             }
         } else {
@@ -189,7 +189,10 @@ class FolderDataManager {
 
     private func cacheFolders(dbQueue: PCDBQueue) {
         if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
-            let newFolders = grdbQueue.fetchAll(Folder.self)
+            guard let newFolders = grdbQueue.read({ db in
+                try Folder.fetchAll(db)
+            }) else { return }
+
             cachedFolderQueue.sync {
                 cachedFolders = newFolders
             }
