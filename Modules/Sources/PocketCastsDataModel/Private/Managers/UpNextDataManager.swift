@@ -1,5 +1,41 @@
 import PocketCastsUtils
 import Foundation
+import GRDB
+import GRDBMacros
+
+/// Row record for the `SJPlaylistEpisode` table covering exactly the six columns this manager
+/// maintains — the legacy INSERT/UPDATE touch the same six, leaving the rest (e.g. `wasDeleted`)
+/// on their schema defaults. Do not add further columns: a record UPDATE writes every declared
+/// column, so including `wasDeleted` would reset flags the legacy path leaves untouched.
+@GRDBRecord(table: "SJPlaylistEpisode")
+struct PlaylistEpisodeRow: Equatable, Sendable {
+    var id: Int64 = 0
+    var episodePosition: Int32 = 0
+    var episodeUuid = ""
+    @GRDBColumn("playlist_id")
+    var playlistId: Int64 = 0
+    var title = ""
+    var podcastUuid = ""
+
+    init(playlistEpisode: PlaylistEpisode) {
+        id = playlistEpisode.id
+        episodePosition = playlistEpisode.episodePosition
+        episodeUuid = playlistEpisode.episodeUuid
+        playlistId = Int64(UpNextDataManager.upNextPlaylistId)
+        title = playlistEpisode.title
+        podcastUuid = playlistEpisode.podcastUuid
+    }
+
+    func asPlaylistEpisode() -> PlaylistEpisode {
+        let episode = PlaylistEpisode()
+        episode.id = id
+        episode.episodePosition = episodePosition
+        episode.episodeUuid = episodeUuid
+        episode.title = title
+        episode.podcastUuid = podcastUuid
+        return episode
+    }
+}
 
 class UpNextDataManager {
     static let upNextPlaylistId = 1
@@ -78,6 +114,29 @@ class UpNextDataManager {
     // MARK: - Updates
 
     func save(playlistEpisode: PlaylistEpisode, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                // move every episode after this one down one, if there are any
+                try PlaylistEpisodeRow
+                    .filter(PlaylistEpisodeRow.Columns.episodePosition >= playlistEpisode.episodePosition)
+                    .filter(PlaylistEpisodeRow.Columns.episodeUuid != playlistEpisode.episodeUuid)
+                    .filter(Column("wasDeleted") == false)
+                    .filter(PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId)
+                    .updateAll(db, PlaylistEpisodeRow.Columns.episodePosition.set(to: PlaylistEpisodeRow.Columns.episodePosition + 1))
+
+                if playlistEpisode.id == 0 {
+                    playlistEpisode.id = DBUtils.generateUniqueId()
+                    try PlaylistEpisodeRow(playlistEpisode: playlistEpisode).insert(db)
+                } else {
+                    // catch recordNotFound: the legacy UPDATE ... WHERE id silently no-ops on a missing row
+                    try? PlaylistEpisodeRow(playlistEpisode: playlistEpisode).update(db)
+                }
+            }
+            saveOrdering(dbQueue: dbQueue)
+            cacheEpisodes(dbQueue: dbQueue)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 // move every episode after this one down one, if there are any
@@ -109,6 +168,34 @@ class UpNextDataManager {
     }
 
     func save(playlistEpisodes: [PlaylistEpisode], dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                let topPosition = playlistEpisodes[0].episodePosition
+                let uuids = playlistEpisodes.map(\.episodeUuid)
+
+                // move every episode after this one down, if there are any
+                try PlaylistEpisodeRow
+                    .filter(PlaylistEpisodeRow.Columns.episodePosition >= topPosition)
+                    .filter(Column("wasDeleted") == false)
+                    .filter(PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId)
+                    .filter(!uuids.contains(PlaylistEpisodeRow.Columns.episodeUuid))
+                    .updateAll(db, PlaylistEpisodeRow.Columns.episodePosition.set(to: PlaylistEpisodeRow.Columns.episodePosition + playlistEpisodes.count))
+
+                for playlistEpisode in playlistEpisodes {
+                    if playlistEpisode.id == 0 {
+                        playlistEpisode.id = DBUtils.generateUniqueId()
+                        try PlaylistEpisodeRow(playlistEpisode: playlistEpisode).insert(db)
+                    } else {
+                        // catch recordNotFound: the legacy UPDATE ... WHERE id silently no-ops on a missing row
+                        try? PlaylistEpisodeRow(playlistEpisode: playlistEpisode).update(db)
+                    }
+                }
+            }
+            saveOrdering(dbQueue: dbQueue)
+            cacheEpisodes(dbQueue: dbQueue)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 let topPosition = playlistEpisodes[0].episodePosition
@@ -147,11 +234,18 @@ class UpNextDataManager {
     }
 
     func delete(playlistEpisode: PlaylistEpisode, dbQueue: PCDBQueue) {
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE id = ? AND playlist_id = ?", values: [playlistEpisode.id, UpNextDataManager.upNextPlaylistId])
-            } catch {
-                FileLog.shared.addMessage("UpNextDataManager.delete error: \(error)")
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(
+                PlaylistEpisodeRow.self,
+                filter: PlaylistEpisodeRow.Columns.id == playlistEpisode.id && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
+            )
+        } else {
+            dbQueue.write { db in
+                do {
+                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE id = ? AND playlist_id = ?", values: [playlistEpisode.id, UpNextDataManager.upNextPlaylistId])
+                } catch {
+                    FileLog.shared.addMessage("UpNextDataManager.delete error: \(error)")
+                }
             }
         }
 
@@ -160,11 +254,18 @@ class UpNextDataManager {
     }
 
     func deleteAllUpNextEpisodes(dbQueue: PCDBQueue) {
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_id = ?", values: [UpNextDataManager.upNextPlaylistId])
-            } catch {
-                FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodes error: \(error)")
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(
+                PlaylistEpisodeRow.self,
+                filter: PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
+            )
+        } else {
+            dbQueue.write { db in
+                do {
+                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_id = ?", values: [UpNextDataManager.upNextPlaylistId])
+                } catch {
+                    FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodes error: \(error)")
+                }
             }
         }
 
@@ -172,11 +273,18 @@ class UpNextDataManager {
     }
 
     func deleteAllUpNextEpisodesExcept(episodeUuid: String, dbQueue: PCDBQueue) {
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid <> ? AND playlist_id = ?", values: [episodeUuid, UpNextDataManager.upNextPlaylistId])
-            } catch {
-                FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesExcept error: \(error)")
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(
+                PlaylistEpisodeRow.self,
+                filter: PlaylistEpisodeRow.Columns.episodeUuid != episodeUuid && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
+            )
+        } else {
+            dbQueue.write { db in
+                do {
+                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid <> ? AND playlist_id = ?", values: [episodeUuid, UpNextDataManager.upNextPlaylistId])
+                } catch {
+                    FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesExcept error: \(error)")
+                }
             }
         }
 
@@ -184,6 +292,22 @@ class UpNextDataManager {
     }
 
     func deleteAllUpNextEpisodesNotIn(uuids: [String], dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            if uuids.isEmpty {
+                grdbQueue.deleteAll(
+                    PlaylistEpisodeRow.self,
+                    filter: PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
+                )
+            } else {
+                grdbQueue.deleteAll(
+                    PlaylistEpisodeRow.self,
+                    filter: !uuids.contains(PlaylistEpisodeRow.Columns.episodeUuid) && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
+                )
+            }
+            cacheEpisodes(dbQueue: dbQueue)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 if uuids.isEmpty {
@@ -204,11 +328,19 @@ class UpNextDataManager {
 
     func deleteAllUpNextEpisodesIn(uuids: [String], dbQueue: PCDBQueue) {
         guard !uuids.isEmpty else { return }
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid IN (\(DBUtils.placeholders(amount: uuids.count))) AND playlist_id = ?", values: uuids + [UpNextDataManager.upNextPlaylistId])
-            } catch {
-                FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesNotIn error: \(error)")
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(
+                PlaylistEpisodeRow.self,
+                filter: uuids.contains(PlaylistEpisodeRow.Columns.episodeUuid) && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
+            )
+        } else {
+            dbQueue.write { db in
+                do {
+                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid IN (\(DBUtils.placeholders(amount: uuids.count))) AND playlist_id = ?", values: uuids + [UpNextDataManager.upNextPlaylistId])
+                } catch {
+                    FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesNotIn error: \(error)")
+                }
             }
         }
         saveOrdering(dbQueue: dbQueue)
@@ -231,15 +363,7 @@ class UpNextDataManager {
         }
 
         // persist index changes
-        dbQueue.write { db in
-            do {
-                for (index, episode) in resortedItems.enumerated() {
-                    try db.executeUpdate("UPDATE \(DataManager.playlistEpisodeTableName) SET episodePosition = ? WHERE id = ?", values: [index, episode.id])
-                }
-            } catch {
-                FileLog.shared.addMessage("UpNextDataManager.movePlaylistEpisode error: \(error)")
-            }
-        }
+        persistOrdering(of: resortedItems, dbQueue: dbQueue, logContext: "movePlaylistEpisode")
         cacheEpisodes(dbQueue: dbQueue)
     }
 
@@ -252,6 +376,21 @@ class UpNextDataManager {
     // MARK: - Caching
 
     private func cacheEpisodes(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let rows = grdbQueue.fetchAll(
+                PlaylistEpisodeRow
+                    .filter(PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId)
+                    .order(PlaylistEpisodeRow.Columns.episodePosition)
+            )
+
+            let newItems = rows.map { $0.asPlaylistEpisode() }
+            cachedItemsQueue.sync {
+                cachedItems = newItems
+                allUuids = Set(newItems.map(\.episodeUuid))
+            }
+            return
+        }
+
         dbQueue.read { db in
             do {
                 let resultSet = try db.executeQuery("SELECT * from \(DataManager.playlistEpisodeTableName) WHERE playlist_id = ? ORDER by episodePosition", values: [UpNextDataManager.upNextPlaylistId])
@@ -279,13 +418,29 @@ class UpNextDataManager {
     private func saveOrdering(dbQueue: PCDBQueue) {
         cacheEpisodes(dbQueue: dbQueue)
         let sortedItems = cachedItems
+        persistOrdering(of: sortedItems, dbQueue: dbQueue, logContext: "saveOrdering")
+    }
+
+    /// Writes each episode's index in `items` back as its `episodePosition`
+    private func persistOrdering(of items: [PlaylistEpisode], dbQueue: PCDBQueue, logContext: String) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                for (index, episode) in items.enumerated() {
+                    try PlaylistEpisodeRow
+                        .filter(PlaylistEpisodeRow.Columns.id == episode.id)
+                        .updateAll(db, PlaylistEpisodeRow.Columns.episodePosition.set(to: index))
+                }
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
-                for (index, episode) in sortedItems.enumerated() {
+                for (index, episode) in items.enumerated() {
                     try db.executeUpdate("UPDATE \(DataManager.playlistEpisodeTableName) SET episodePosition = ? WHERE id = ?", values: [index, episode.id])
                 }
             } catch {
-                FileLog.shared.addMessage("UpNextDataManager.saveOrdering error: \(error)")
+                FileLog.shared.addMessage("UpNextDataManager.\(logContext) error: \(error)")
             }
         }
     }
