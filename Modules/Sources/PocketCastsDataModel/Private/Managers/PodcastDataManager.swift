@@ -564,7 +564,7 @@ class PodcastDataManager {
                     SET settings = json_patch(
                         coalesce(nullif(settings, ''), json(?)),
                         '{\"addToUpNext\": {\"value\": \(value.rawValue)}}'
-                    )
+                    ), syncStatus = \(SyncStatus.notSynced.rawValue)
                     WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """
                     try db.executeUpdate(query, values: [Self.defaultSettingsJsonString] + uuids)

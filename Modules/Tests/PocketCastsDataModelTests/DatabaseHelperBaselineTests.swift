@@ -8,7 +8,12 @@ final class DatabaseHelperBaselineTests: XCTestCase {
         let dbPool = dataManager.testDbQueue.dbPool
 
         try dbPool.read { db in
-            XCTAssertEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 73)
+            // Fresh installs create the baked baseline then run every registered migration,
+            // so the resulting version tracks the migration registry, not the baseline.
+            XCTAssertEqual(
+                try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1,
+                Int(DatabaseHelper.currentSchemaVersion(for: DatabaseHelper.migrations))
+            )
 
             let tables = Set(try String.fetchAll(
                 db,
