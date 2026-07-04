@@ -67,7 +67,7 @@ extension DownloadManager {
                     ])
 
         let url = metrics.transactionMetrics.last?.request.url?.absoluteString ?? "unknown"
-        FileLog.shared.addMessage("DownloadManager: Failed download \(episode.uuid) \(url) statusCode:\(String(describing: statusCode)) isCell:\(isCellular) isProxy: \(isProxy) errorCode:\(String(describing: errorCode)) errorDomain:\(String(describing: errorDomain))")
+        fileLog.addMessage("DownloadManager: Failed download \(episode.uuid) \(url) statusCode:\(String(describing: statusCode)) isCell:\(isCellular) isProxy: \(isProxy) errorCode:\(String(describing: errorCode)) errorDomain:\(String(describing: errorDomain))")
     }
 }
 

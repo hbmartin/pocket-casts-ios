@@ -1,8 +1,9 @@
+import AVKit
+import Dependencies
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
-import AVKit
 
 protocol DownloadManagerEpisodesCache {
     subscript(index: String) -> BaseEpisode? { get set }
@@ -43,6 +44,9 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     }()
 
     static let cellBackgroundSessionId = "au.com.shiftyjelly.PCManualSession"
+
+    // Internal (not private) because DownloadManager+URLSessionDelegate.swift logs through it too.
+    @Dependency(\.fileLog) var fileLog: any FileLogging
 
     var progressManager = DownloadProgressManager()
     private let downloadControlLock = NSLock()
@@ -264,7 +268,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         dataManager.saveEpisode(downloadStatus: .waitingForWifi, lastDownloadAttemptDate: Date(), autoDownloadStatus: autoDownloadStatus, episode: episode)
 
         let networkState = NetworkUtils.shared.isConnectedToUnexpensiveConnection() ? "on unexpensive connection" : "on expensive connection"
-        FileLog.shared.addMessage("DownloadManager: Queued episode \(episode.displayableTitle()) for later download (waitingForWifi), autoDownloadStatus: \(autoDownloadStatus), currently \(networkState)")
+        fileLog.addMessage("DownloadManager: Queued episode \(episode.displayableTitle()) for later download (waitingForWifi), autoDownloadStatus: \(autoDownloadStatus), currently \(networkState)")
 
         if fireNotification {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
@@ -356,7 +360,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             dataManager.saveEpisode(downloadStatus: .downloaded, sizeInBytes: fileSize, downloadTaskId: nil, episode: episode)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloaded, object: episode.uuid)
         } catch {
-            FileLog.shared.addMessage("DownloadManager: failed to move streaming file for \(episode.uuid) to new location -> \(error)")
+            fileLog.addMessage("DownloadManager: failed to move streaming file for \(episode.uuid) to new location -> \(error)")
             dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorTryAgain, downloadTaskId: nil, episode: episode)
         }
 
@@ -402,7 +406,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         #if !APPCLIP && !os(tvOS)
         if let customDelegate = downloadAndStreamEpisodes[episode.uuid] {
             // We are already downloading this episode for streaming
-            FileLog.shared.addMessage("DownloadManager stream and download: skipping because we are already exporting: \(episode.uuid)")
+            fileLog.addMessage("DownloadManager stream and download: skipping because we are already exporting: \(episode.uuid)")
             let customURL = URL(string: "custom-\(urlAsset.url.absoluteString)")!
             let newAsset = AVURLAsset(url: customURL)
             newAsset.resourceLoader.setDelegate(customDelegate, queue: .global(qos: .default))
@@ -419,7 +423,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         if episode.downloading() || episode.queued() {
             wasDownloadingBefore = true
             let previousStatus = episode.autoDownloadStatus
-            FileLog.shared.addMessage("DownloadManager stream and download: cancelling existing download for: \(episode.uuid) with status:\(previousStatus)")
+            fileLog.addMessage("DownloadManager stream and download: cancelling existing download for: \(episode.uuid) with status:\(previousStatus)")
             self.removeFromQueue(episodeUuid: episode.uuid, fireNotification: false, userInitiated: false)
             episode.autoDownloadStatus = previousStatus
         } else {
@@ -428,7 +432,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
         let downloadTaskUUID = episode.uuid
         if downloadTaskUUID.isEmpty {
-            FileLog.shared.addMessage("DownloadManager stream and download: episode uuid is empty")
+            fileLog.addMessage("DownloadManager stream and download: episode uuid is empty")
             return playbackItem
         }
         downloadingEpisodesCache[downloadTaskUUID] = episode
@@ -438,7 +442,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
 
         let outputURL = URL(fileURLWithPath: tempPathForEpisode(episode), isDirectory: false)
-        FileLog.shared.addMessage("DownloadManager stream and download: start downloading \(episode.uuid)")
+        fileLog.addMessage("DownloadManager stream and download: start downloading \(episode.uuid)")
         let exportPath = outputURL.pathComponents.joined(separator: "/")
         let exportStatus =  ExportStatus()
         let originalSizeInBytes = episode.sizeInBytes
@@ -487,10 +491,10 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
                 return
             }
             if exportStatus.error == nil {
-                FileLog.shared.addMessage("DownloadManager stream and download: end downloading \(episode.uuid) successfully")
+                fileLog.addMessage("DownloadManager stream and download: end downloading \(episode.uuid) successfully")
                 processEpisode(episode, downloadedFile: outputURL, reportedContentType: exportStatus.reportedType, copyFile: true)
             } else {
-                FileLog.shared.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(exportStatus.error?.localizedDescription ?? "")")
+                fileLog.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(exportStatus.error?.localizedDescription ?? "")")
                 wasDownloadingBefore = episode.downloading()
                 DataManager.sharedManager.saveEpisode(downloadStatus: .notDownloaded, downloadError: exportStatus.error?.localizedDescription, downloadTaskId: nil, episode: episode)
                 DataManager.sharedManager.saveEpisode(autoDownloadStatus: .notSpecified, episode: episode)
@@ -508,7 +512,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         var episodeModified = false
 
         if episode.played() {
-            FileLog.shared.addMessage("Marking episode as unplayed because it's getting added to the download queue: \(episode.displayableTitle())")
+            fileLog.addMessage("Marking episode as unplayed because it's getting added to the download queue: \(episode.displayableTitle())")
             episode.playingStatus = PlayingStatus.notPlayed.rawValue
             episode.playingStatusModified = TimeFormatter.currentUTCTimeInMillis()
             episode.playedUpTo = 0
@@ -517,7 +521,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             episodeModified = true
         }
         if episode.archived, let episode = episode as? Episode {
-            FileLog.shared.addMessage("Un-archiving episode because it's getting added to the download queue: \(episode.displayableTitle())")
+            fileLog.addMessage("Un-archiving episode because it's getting added to the download queue: \(episode.displayableTitle())")
             episode.archived = false
             episode.archivedModified = TimeFormatter.currentUTCTimeInMillis()
             episode.lastArchiveInteractionDate = Date()
@@ -582,7 +586,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         }
 
         if await shouldSkipExistingTask(for: episode, in: sessionToUse, matching: request) {
-            FileLog.shared.addMessage("DownloadManager: Download skipped task for episode: \(episode.uuid)")
+            fileLog.addMessage("DownloadManager: Download skipped task for episode: \(episode.uuid)")
             return
         }
 
@@ -590,7 +594,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         let sessionDescription = useCellularSession ? "cellular (allowsExpensiveNetworkAccess=true)" : "wifi-only (allowsExpensiveNetworkAccess=false)"
         let isOnUnexpensiveConnection = NetworkUtils.shared.isConnectedToUnexpensiveConnection()
         let networkDescription = isOnUnexpensiveConnection ? "unexpensive connection" : "expensive connection"
-        FileLog.shared.addMessage("DownloadManager: Downloading episode \(episode.displayableTitle()), autoDownloadStatus: \(autoDownloadStatus), previousDownloadFailed: \(previousDownloadFailed), \(userAgentDescription), session: \(sessionDescription), network: \(networkDescription)")
+        fileLog.addMessage("DownloadManager: Downloading episode \(episode.displayableTitle()), autoDownloadStatus: \(autoDownloadStatus), previousDownloadFailed: \(previousDownloadFailed), \(userAgentDescription), session: \(sessionDescription), network: \(networkDescription)")
         resumeDownload(tempFilePath: tempFilePath, session: sessionToUse, request: request, previousDownloadFailed: previousDownloadFailed, taskId: episode.uuid, estimatedBytes: episode.sizeInBytes, retryWithoutUserAgent: retryWithoutUserAgent)
 
         if fireNotification { NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid) }
@@ -738,7 +742,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
                 do {
                     try data.write(to: URL(fileURLWithPath: tempFilePath), options: .atomic)
                 } catch {
-                    FileLog.shared.addMessage("Failed to save resume data \(error.localizedDescription)")
+                    self?.fileLog.addMessage("Failed to save resume data \(error.localizedDescription)")
                 }
             }
         }

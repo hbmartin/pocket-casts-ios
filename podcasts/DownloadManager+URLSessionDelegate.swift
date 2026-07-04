@@ -92,7 +92,7 @@ extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
         switch error.code {
         case NSURLErrorCancelled:
             let reason = error.userInfo[NSURLErrorBackgroundTaskCancelledReasonKey] as? Int
-            FileLog.shared.addMessage("DownloadManager: Download cancelled for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription), reason: \(reason ?? -1)")
+            fileLog.addMessage("DownloadManager: Download cancelled for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription), reason: \(reason ?? -1)")
 
             if !episode.downloadFailed() {
                 // we already handled this error, since we failed the download ourselves
@@ -109,15 +109,15 @@ extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
 
             return
         case NSURLErrorTimedOut:
-            FileLog.shared.addMessage("DownloadManager: Download timed out for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription)")
+            fileLog.addMessage("DownloadManager: Download timed out for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription)")
             taskFailure[episode.uuid] = .connectionTimeout
         case NSURLErrorCannotConnectToHost:
-            FileLog.shared.addMessage("DownloadManager: Cannot connect to host for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription)")
+            fileLog.addMessage("DownloadManager: Cannot connect to host for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription)")
             taskFailure[episode.uuid] = .unknownHost
         case NSURLErrorNotConnectedToInternet:
-            FileLog.shared.addMessage("DownloadManager: Not connected to internet for episode \(episode.displayableTitle()), session: \(sessionType)")
+            fileLog.addMessage("DownloadManager: Not connected to internet for episode \(episode.displayableTitle()), session: \(sessionType)")
         default:
-            FileLog.shared.addMessage("DownloadManager: Download error for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription), error code: \(error.code), description: \(error.localizedDescription)")
+            fileLog.addMessage("DownloadManager: Download error for episode \(episode.displayableTitle()), session: \(sessionType), network: \(networkDescription), error code: \(error.code), description: \(error.localizedDescription)")
         }
 
         downloadAttempts.removeValue(forKey: downloadTask.taskIdentifier)
@@ -143,7 +143,7 @@ extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
 
         if response.statusCode >= 400, response.statusCode < 600 {
             if shouldRetryWithoutUserAgent(task: downloadTask), FeatureFlag.retryWithoutUserAgent.enabled {
-                FileLog.shared.addMessage("DownloadManager: Retrying download without User-Agent for episode: \(episode.uuid), status code: \(response.statusCode)")
+                fileLog.addMessage("DownloadManager: Retrying download without User-Agent for episode: \(episode.uuid), status code: \(response.statusCode)")
                 Task {
                     await retryDownloadWithoutUserAgent(episode: episode)
                 }
@@ -206,7 +206,7 @@ extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
                 // Lets try remove the file so we don't have a pending file on the tmp folder
                 StorageManager.removeItem(at: location)
             }
-            FileLog.shared.addMessage("DownloadManager: Failed to copy downloaded file from location: \(location.absoluteString) to destination:  \(destinationPath) error: \(error)")
+            fileLog.addMessage("DownloadManager: Failed to copy downloaded file from location: \(location.absoluteString) to destination:  \(destinationPath) error: \(error)")
             markEpisode(episode, asFailedWithMessage: L10n.downloadErrorNotEnoughSpace, reason: .badResponse)
         }
     }
@@ -334,11 +334,11 @@ extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
 
     private func retryDownloadWithoutUserAgent(episode: BaseEpisode) async {
         guard let downloadUrl = episode.downloadUrl else {
-            FileLog.shared.addMessage("DownloadManager: Cannot retry download without User-Agent: no download URL for episode \(episode.uuid)")
+            fileLog.addMessage("DownloadManager: Cannot retry download without User-Agent: no download URL for episode \(episode.uuid)")
             return
         }
 
-        FileLog.shared.addMessage("DownloadManager: Retrying download without User-Agent for episode: \(episode.uuid) at URL: \(downloadUrl)")
+        fileLog.addMessage("DownloadManager: Retrying download without User-Agent for episode: \(episode.uuid) at URL: \(downloadUrl)")
 
         let autoDownloadStatus = AutoDownloadStatus(rawValue: episode.autoDownloadStatus) ?? .notSpecified
 
