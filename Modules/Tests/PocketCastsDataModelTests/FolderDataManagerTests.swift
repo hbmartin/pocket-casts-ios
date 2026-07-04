@@ -66,6 +66,23 @@ final class FolderDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testCacheFoldersPreservesCachedFoldersWhenGRDBReadFails() throws {
+        let store = FeatureFlagOverrideStore()
+        try store.override(FeatureFlag.grdbQueryInterface, withValue: true)
+        defer { store.resetOverrides() }
+
+        let dataManager = DataManager.newTestDataManager()
+        let folder = createTestFolder(uuid: "cached-folder", name: "Cached Folder", dataManager: dataManager)
+        try dataManager.testDbQueue.dbPool.write { db in
+            try db.execute(sql: "DROP TABLE \(DataManager.folderTableName)")
+        }
+
+        dataManager.markAllFoldersSynced()
+
+        let folders = dataManager.allFolders(includeDeleted: true)
+        XCTAssertEqual(folders.map(\.uuid), [folder.uuid], "GRDB: Should keep the last successful cache when refresh fails")
+    }
+
     // MARK: - delete Tests
 
     func testDeleteFolderRemovesFolder() throws {
