@@ -29,6 +29,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - App Lifecycle
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        ImageManager.refreshScreenMetrics()
         configureBitdrift()
         configureTelemetryDeck()
         setupSecrets()
@@ -168,6 +169,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didChangeStatusBarFrame oldStatusBarFrame: CGRect) {
+        ImageManager.refreshScreenMetrics()
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.statusBarHeightChanged)
     }
 

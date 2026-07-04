@@ -1,8 +1,11 @@
 import UIKit
+@testable import podcasts
 
 @objc(TestingAppDelegate)
 final class TestingAppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        ImageManager.refreshScreenMetrics()
+
         // Uses a private API to ensure that `configurationForConnecting` is called thus
         // using TestingSceneDelegate when running unit tests.
         for sceneSession in application.openSessions {

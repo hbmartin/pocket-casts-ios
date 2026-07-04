@@ -181,6 +181,7 @@ extension SharingModal.Option {
         }
     }
 
+    @MainActor
     func imageInfo(episodeArtworkUrl: URL? = nil) -> ShareImageInfo {
         let gradient = Gradient(colors: [
             Color(uiColor: ColorManager.lightThemeTintForPodcast(podcast)),

@@ -127,7 +127,7 @@ class ShareProfileViewModel: ObservableObject {
     nonisolated private static func saveProfilePhoto(_ image: UIImage?) {
         photoIOQueue.async {
             if let image, let data = image.jpegData(compressionQuality: 0.85) {
-                try? data.write(to: photoURL)
+                try? data.write(to: photoURL, options: .atomic)
             } else {
                 try? FileManager.default.removeItem(at: photoURL)
             }
