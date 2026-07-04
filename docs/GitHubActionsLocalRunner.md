@@ -511,7 +511,9 @@ If a malicious or suspicious job may have run:
 ## Release Workflows
 
 Release automation runs through `.github/workflows/release-fastlane.yml` on the
-same Mac runner. The workflow supports these manual tasks:
+same Mac runner. Personal TestFlight distribution for this fork runs through
+`.github/workflows/testflight-personal.yml` instead and needs only App Store
+Connect credentials — see [testflight.md](./testflight.md). The workflow supports these manual tasks:
 
 - `code_freeze`
 - `new_hotfix_release`

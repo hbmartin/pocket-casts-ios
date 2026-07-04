@@ -21,4 +21,10 @@ CURRENT_PROJECT_VERSION = $(VERSION_LONG)
 // Define a root bundle identifier so that extensions can append to it
 PRODUCT_BUNDLE_IDENTIFIER_ROOT = au.com.shiftyjelly.podcasts
 
+// App Group shared by the app and its extensions. Entitlements files and the
+// runtime constant (SharedConstants.GroupUserDefaults.groupContainerId, via the
+// PCAppGroupIdentifier Info.plist key) both resolve this build setting, so a
+// fork can rebrand the group with a single override (see docs/testflight.md).
+APP_GROUP_IDENTIFIER = group.au.com.shiftyjelly.pocketcasts
+
 DEVELOPMENT_TEAM = PZYM8XX95Q // Automattic, Inc. (Company)

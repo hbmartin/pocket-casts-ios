@@ -39,5 +39,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.intents-ui-service</string>
 	</dict>
+	<key>PCAppGroupIdentifier</key>
+	<string>$(APP_GROUP_IDENTIFIER)</string>
 </dict>
 </plist>

@@ -1,0 +1,104 @@
+name: TestFlight Personal
+
+# Builds the app under the fork owner's own Apple Developer team and uploads it
+# to TestFlight for internal testing. This is entirely separate from the
+# Automattic release pipeline (release-fastlane.yml): it needs no `configure`
+# secrets, no fastlane match storage, and no Slack/Bitdrift credentials.
+#
+# Setup guide: docs/testflight.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: "Optional VERSION_LONG override, e.g. 8.13.0.90. Each TestFlight upload needs a unique build number."
+        required: false
+        type: string
+      skip_upload:
+        description: "Build and export the IPA but skip the TestFlight upload."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight-personal
+  cancel-in-progress: false
+
+jobs:
+  build_and_upload:
+    name: Build and Upload to TestFlight
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate personal signing configuration
+        env:
+          PERSONAL_APPLE_TEAM_ID: ${{ vars.PERSONAL_APPLE_TEAM_ID }}
+          PERSONAL_BUNDLE_ID_ROOT: ${{ vars.PERSONAL_BUNDLE_ID_ROOT }}
+          PERSONAL_APP_GROUP_ID: ${{ vars.PERSONAL_APP_GROUP_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+        run: |
+          set -euo pipefail
+
+          missing=()
+          [[ -n "${PERSONAL_APPLE_TEAM_ID}" ]] || missing+=("repository variable PERSONAL_APPLE_TEAM_ID")
+          [[ -n "${PERSONAL_BUNDLE_ID_ROOT}" ]] || missing+=("repository variable PERSONAL_BUNDLE_ID_ROOT")
+          [[ -n "${PERSONAL_APP_GROUP_ID}" ]] || missing+=("repository variable PERSONAL_APP_GROUP_ID")
+          [[ -n "${ASC_KEY_ID}" ]] || missing+=("repository secret APP_STORE_CONNECT_API_KEY_KEY_ID")
+          [[ -n "${ASC_ISSUER_ID}" ]] || missing+=("repository secret APP_STORE_CONNECT_API_KEY_ISSUER_ID")
+          [[ -n "${ASC_KEY}" ]] || missing+=("repository secret APP_STORE_CONNECT_API_KEY_KEY")
+
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "Missing configuration required by this workflow (see docs/testflight.md):"
+            printf ' - %s\n' "${missing[@]}"
+            exit 1
+          fi
+
+      - name: Build and upload to TestFlight
+        env:
+          SKIP_CONFIGURE_APPLY: "true"
+          PERSONAL_APPLE_TEAM_ID: ${{ vars.PERSONAL_APPLE_TEAM_ID }}
+          PERSONAL_BUNDLE_ID_ROOT: ${{ vars.PERSONAL_BUNDLE_ID_ROOT }}
+          PERSONAL_APP_GROUP_ID: ${{ vars.PERSONAL_APP_GROUP_ID }}
+          PERSONAL_BUILD_NUMBER: ${{ inputs.build_number }}
+          SKIP_UPLOAD: ${{ inputs.skip_upload }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+          # Optional: real service credentials for support/telemetry integrations.
+          # When unset, placeholder credentials are generated and those
+          # integrations are disabled in the build.
+          POCKET_CASTS_CREDENTIALS_JSON: ${{ github.event_name == 'workflow_dispatch' && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
+          # Optional: dSYM upload to Bitdrift. Skipped when the secret is unset.
+          BITDRIFT_API_KEY: ${{ secrets.BITDRIFT_API_KEY }}
+          POCKET_CASTS_SKIP_BITDRIFT_UPLOAD: ${{ secrets.BITDRIFT_API_KEY == '' && '1' || '0' }}
+        run: |
+          set -euo pipefail
+
+          source scripts/ci/select-xcode.sh
+          rm -rf artifacts
+          scripts/ci/shared-setup.sh
+          scripts/ci/prepare-credentials.sh
+          bundle exec fastlane personal_testflight skip_upload:"${SKIP_UPLOAD}"
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: testflight-personal-artifacts
+          path: |
+            artifacts/*.ipa
+            artifacts/*.app.dSYM.zip
+          if-no-files-found: ignore
+          retention-days: 14

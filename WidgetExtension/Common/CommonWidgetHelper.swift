@@ -3,7 +3,7 @@ import PocketCastsUtils
 import UIKit
 
 class CommonWidgetHelper {
-    static let appGroupId = "group.au.com.shiftyjelly.pocketcasts"
+    static let appGroupId = SharedConstants.GroupUserDefaults.groupContainerId
     static let iconSize: CGFloat = 28
 
     class func loadAppIconName() -> String {

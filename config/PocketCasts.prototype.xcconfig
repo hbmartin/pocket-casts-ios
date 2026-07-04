@@ -5,6 +5,8 @@
 PRODUCT_BUNDLE_IDENTIFIER_ROOT = au.com.shiftyjelly.podcasts.prototype
 PRODUCT_BUNDLE_IDENTIFIER = $(PRODUCT_BUNDLE_IDENTIFIER_ROOT)
 
+APP_GROUP_IDENTIFIER = group.au.com.shiftyjelly.pocketcasts.prototype
+
 DEVELOPMENT_TEAM = 99KV9Z6BKV // Automattic, Inc. (Enterprise)
 
 // Notice that because currently all extensions use this xcconfig for the Prototype bulid configuration,
