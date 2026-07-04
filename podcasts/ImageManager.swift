@@ -8,6 +8,38 @@ import PocketCastsUtils
 class ImageManager {
     static let sharedManager = ImageManager()
 
+    private struct ScreenMetrics: Sendable {
+        let scale: CGFloat
+        let shortestSide: CGFloat
+
+        @MainActor
+        static var current: ScreenMetrics {
+            let bounds = UIScreen.main.bounds
+            return ScreenMetrics(scale: UIScreen.main.scale, shortestSide: min(bounds.width, bounds.height))
+        }
+
+        static let fallback = ScreenMetrics(scale: 2, shortestSide: 390)
+    }
+
+    // Safety: value is only read or written while holding lock.
+    private final class ScreenMetricsCache: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = ScreenMetrics.fallback
+
+        func update(_ value: ScreenMetrics) {
+            lock.lock()
+            defer { lock.unlock() }
+            self.value = value
+        }
+
+        func snapshot() -> ScreenMetrics {
+            lock.lock()
+            defer { lock.unlock() }
+            let value = self.value
+            return value
+        }
+    }
+
     // cache for network images
     private var networkImageCache = ImageCache(name: "networkImageCache")
 
@@ -38,6 +70,8 @@ class ImageManager {
         return cache
     }()
 
+    private static let screenMetricsCache = ScreenMetricsCache()
+
     public var biggestPodcastImageSize: Int {
         Self.availablePodcastImageSizes.max()!
     }
@@ -63,6 +97,11 @@ class ImageManager {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+
+    @MainActor
+    static func refreshScreenMetrics() {
+        screenMetricsCache.update(.current)
     }
 
     // MARK: - Discover Images
@@ -569,17 +608,15 @@ class ImageManager {
     }
 
     class func sizeFor(imageSize: PodcastThumbnailSize) -> Int {
+        let screenMetrics = screenMetricsCache.snapshot()
+
         switch imageSize {
         case .list:
-            return Int(65.0 * UIScreen.main.scale)
+            return Int(65.0 * screenMetrics.scale)
         case .grid:
-            let screenWidth = UIScreen.main.bounds.width
-            let screenHeight = UIScreen.main.bounds.height
-            let shortestSide = screenHeight > screenWidth ? screenWidth : screenHeight
-
-            return Int(round(shortestSide * UIScreen.main.scale / 3.0))
+            return Int(round(screenMetrics.shortestSide * screenMetrics.scale / 3.0))
         case .page, .detail:
-            return Int(320.0 * UIScreen.main.scale)
+            return Int(320.0 * screenMetrics.scale)
         }
     }
 }

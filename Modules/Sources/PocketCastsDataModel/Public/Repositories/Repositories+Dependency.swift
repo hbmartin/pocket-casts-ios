@@ -12,39 +12,46 @@ import Dependencies
 // unimplemented-dependency failure here would be a behavior change, not a
 // safety win.
 
-enum UpNextRepositoryKey: DependencyKey {
+// @unchecked Sendable: repository dependency values must be Sendable. The
+// production `DataManager` facade delegates storage to GRDB's thread-safe queue
+// and sub-managers that serialize their mutable caches. Keep the unchecked
+// promise here at the repository boundary instead of on the class declaration;
+// subclasses that add mutable state must still avoid crossing concurrency
+// domains unless they provide their own synchronization.
+extension DataManager: @unchecked Sendable {}
+
+protocol MirroredTestDependencyKey: DependencyKey {}
+
+extension MirroredTestDependencyKey {
+    static var testValue: Value { liveValue }
+}
+
+enum UpNextRepositoryKey: MirroredTestDependencyKey {
     static var liveValue: any UpNextRepository { DataManager.sharedManager }
-    static var testValue: any UpNextRepository { DataManager.sharedManager }
 }
 
-enum PodcastRepositoryKey: DependencyKey {
+enum PodcastRepositoryKey: MirroredTestDependencyKey {
     static var liveValue: any PodcastRepository { DataManager.sharedManager }
-    static var testValue: any PodcastRepository { DataManager.sharedManager }
 }
 
-enum EpisodeRepositoryKey: DependencyKey {
+enum EpisodeRepositoryKey: MirroredTestDependencyKey {
     static var liveValue: any EpisodeRepository { DataManager.sharedManager }
-    static var testValue: any EpisodeRepository { DataManager.sharedManager }
 }
 
-enum UserEpisodeRepositoryKey: DependencyKey {
+enum UserEpisodeRepositoryKey: MirroredTestDependencyKey {
     static var liveValue: any UserEpisodeRepository { DataManager.sharedManager }
-    static var testValue: any UserEpisodeRepository { DataManager.sharedManager }
 }
 
-enum PlaylistRepositoryKey: DependencyKey {
+enum PlaylistRepositoryKey: MirroredTestDependencyKey {
     static var liveValue: any PlaylistRepository { DataManager.sharedManager }
-    static var testValue: any PlaylistRepository { DataManager.sharedManager }
 }
 
-enum FolderRepositoryKey: DependencyKey {
+enum FolderRepositoryKey: MirroredTestDependencyKey {
     static var liveValue: any FolderRepository { DataManager.sharedManager }
-    static var testValue: any FolderRepository { DataManager.sharedManager }
 }
 
-enum DataMaintenanceKey: DependencyKey {
+enum DataMaintenanceKey: MirroredTestDependencyKey {
     static var liveValue: any DataMaintenance { DataManager.sharedManager }
-    static var testValue: any DataMaintenance { DataManager.sharedManager }
 }
 
 public extension DependencyValues {
