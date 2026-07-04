@@ -63,7 +63,7 @@ extension DownloadManager {
 
             let downloadStatus: DownloadStatus = episode.downloaded(pathFinder: self) ? .downloaded : .notDownloaded
             dataManager.saveEpisode(downloadStatus: downloadStatus, downloadTaskId: nil, episode: episode)
-            FileLog.shared.addMessage("Clearing download status on an episode that isn't downloading anymore: \(episode.displayableTitle())")
+            fileLog.addMessage("Clearing download status on an episode that isn't downloading anymore: \(episode.displayableTitle())")
         }
     }
 }
