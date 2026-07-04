@@ -33,7 +33,9 @@ open class RepositoryMock: @unchecked Sendable {
     }
 
     public func callCount(of selector: String) -> Int {
-        invocations.filter { $0 == selector }.count
+        lock.lock()
+        defer { lock.unlock() }
+        return recordedInvocations.filter { $0 == selector }.count
     }
 
     public func record(_ selector: String) {
