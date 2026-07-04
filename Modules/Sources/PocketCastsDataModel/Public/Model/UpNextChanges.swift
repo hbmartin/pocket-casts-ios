@@ -1,6 +1,9 @@
 import Foundation
+import GRDB
+import GRDBMacros
 
-public class UpNextChanges {
+@GRDBRecord(table: "UpNextChanges")
+public struct UpNextChanges: Equatable, Sendable {
     public enum Actions: Int32 {
         case playNow = 1, playNext = 2, playLast = 3, remove = 4, replace = 5
     }
@@ -10,4 +13,6 @@ public class UpNextChanges {
     public var uuid: String?
     public var uuids: String?
     public var utcTime: Int64 = 0
+
+    public init() {}
 }
