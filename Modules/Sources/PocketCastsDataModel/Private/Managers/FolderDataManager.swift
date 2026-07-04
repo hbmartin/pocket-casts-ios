@@ -78,40 +78,72 @@ class FolderDataManager {
     }
 
     func delete(folderUuid: String, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "DELETE FROM \(DataManager.folderTableName) WHERE uuid = ?", values: [folderUuid], methodName: "FolderDataManager.delete", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(Folder.self, filter: Folder.Columns.uuid == folderUuid)
+        } else {
+            DataHelper.run(query: "DELETE FROM \(DataManager.folderTableName) WHERE uuid = ?", values: [folderUuid], methodName: "FolderDataManager.delete", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func deleteAllFolders(dbQueue: PCDBQueue) {
-        DataHelper.run(query: "DELETE FROM \(DataManager.folderTableName)", values: nil, methodName: "FolderDataManager.deleteAllFolders", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try Folder.deleteAll(db)
+            }
+        } else {
+            DataHelper.run(query: "DELETE FROM \(DataManager.folderTableName)", values: nil, methodName: "FolderDataManager.deleteAllFolders", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func saveSortOrders(folders: [Folder], syncModified: Int64, dbQueue: PCDBQueue) {
-        dbQueue.write { db in
-            do {
-                for folders in folders {
-                    try db.executeUpdate("UPDATE \(DataManager.folderTableName) SET sortOrder = ?, syncModified = ? WHERE uuid = ?", values: [folders.sortOrder, syncModified, folders.uuid])
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                for folder in folders {
+                    try Folder
+                        .filter(Folder.Columns.uuid == folder.uuid)
+                        .updateAll(db, Folder.Columns.sortOrder.set(to: folder.sortOrder), Folder.Columns.syncModified.set(to: syncModified))
                 }
-            } catch {
-                FileLog.shared.addMessage("FolderDataManager.saveSortOrders error: \(error)")
+            }
+        } else {
+            dbQueue.write { db in
+                do {
+                    for folders in folders {
+                        try db.executeUpdate("UPDATE \(DataManager.folderTableName) SET sortOrder = ?, syncModified = ? WHERE uuid = ?", values: [folders.sortOrder, syncModified, folders.uuid])
+                    }
+                } catch {
+                    FileLog.shared.addMessage("FolderDataManager.saveSortOrders error: \(error)")
+                }
             }
         }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func updateFolderColor(folderUuid: String, color: Int32, syncModified: Int64, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET color = ?, syncModified = ? WHERE uuid = ?", values: [color, syncModified, folderUuid], methodName: "FolderDataManager.updateFolderColor", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(Folder.self, filter: Folder.Columns.uuid == folderUuid, Folder.Columns.color.set(to: color), Folder.Columns.syncModified.set(to: syncModified))
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET color = ?, syncModified = ? WHERE uuid = ?", values: [color, syncModified, folderUuid], methodName: "FolderDataManager.updateFolderColor", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func updateFolderSyncModified(folderUuid: String, syncModified: Int64, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ? WHERE uuid = ?", values: [syncModified, folderUuid], methodName: "FolderDataManager.updateFolderSyncModified", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(Folder.self, filter: Folder.Columns.uuid == folderUuid, Folder.Columns.syncModified.set(to: syncModified))
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ? WHERE uuid = ?", values: [syncModified, folderUuid], methodName: "FolderDataManager.updateFolderSyncModified", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func bulkSetSyncModified(_ syncModified: Int64, onFolders folderUuids: [String], dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ? WHERE uuid IN (\(DBUtils.placeholders(amount: folderUuids.count)))", values: [syncModified] + folderUuids, methodName: "FolderDataManager.bulkSetSyncModified", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(Folder.self, filter: folderUuids.contains(Folder.Columns.uuid), Folder.Columns.syncModified.set(to: syncModified))
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ? WHERE uuid IN (\(DBUtils.placeholders(amount: folderUuids.count)))", values: [syncModified] + folderUuids, methodName: "FolderDataManager.bulkSetSyncModified", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
@@ -125,21 +157,45 @@ class FolderDataManager {
     }
 
     func markAllFoldersSynced(dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = 0", values: nil, methodName: "FolderDataManager.markAllFoldersSynced", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try Folder.updateAll(db, Folder.Columns.syncModified.set(to: 0))
+            }
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = 0", values: nil, methodName: "FolderDataManager.markAllFoldersSynced", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func markFolderAsDeleted(folderUuid: String, syncModified: Int64, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ?, wasDeleted = 1 WHERE uuid = ?", values: [syncModified, folderUuid], methodName: "FolderDataManager.markFolderAsDeleted", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(Folder.self, filter: Folder.Columns.uuid == folderUuid, Folder.Columns.syncModified.set(to: syncModified), Folder.Columns.wasDeleted.set(to: true))
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ?, wasDeleted = 1 WHERE uuid = ?", values: [syncModified, folderUuid], methodName: "FolderDataManager.markFolderAsDeleted", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     func markAllFolderAsDeleted(syncModified: Int64, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ?, wasDeleted = 1", values: [syncModified], methodName: "FolderDataManager.markAllFolderAsDeleted", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try Folder.updateAll(db, Folder.Columns.syncModified.set(to: syncModified), Folder.Columns.wasDeleted.set(to: true))
+            }
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ?, wasDeleted = 1", values: [syncModified], methodName: "FolderDataManager.markAllFolderAsDeleted", onQueue: dbQueue)
+        }
         cacheFolders(dbQueue: dbQueue)
     }
 
     private func cacheFolders(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let newFolders = grdbQueue.fetchAll(Folder.self)
+            cachedFolderQueue.sync {
+                cachedFolders = newFolders
+            }
+            return
+        }
+
         dbQueue.read { db in
             do {
                 let resultSet = try db.executeQuery("SELECT * from \(DataManager.folderTableName)", values: nil)
