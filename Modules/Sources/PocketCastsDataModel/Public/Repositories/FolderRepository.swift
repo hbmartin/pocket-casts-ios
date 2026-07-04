@@ -5,7 +5,7 @@ import Foundation
 /// `DataManager` is the production conformer; inject `any FolderRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
-public protocol FolderRepository: AnyObject {
+public protocol FolderRepository: AnyObject, Sendable {
     @discardableResult
     func save(folder: Folder) -> Folder
     func allFolders(includeDeleted: Bool) -> [Folder]

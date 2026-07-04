@@ -24,10 +24,6 @@ let package = Package(
     ],
     products: XcodeSupport.products + [
         .library(
-            name: "PocketCastsDependencyInjection",
-            targets: ["PocketCastsDependencyInjection"]
-        ),
-        .library(
             name: "GRDBMacros",
             targets: ["GRDBMacros"]
         ),
@@ -81,17 +77,6 @@ let package = Package(
     ],
     targets: XcodeSupport.targets + [
         .target(
-            name: "PocketCastsDependencyInjection",
-            path: "Sources/PocketCastsDependencyInjection",
-            swiftSettings: strictConcurrencySettings
-        ),
-        .testTarget(
-            name: "PocketCastsDependencyInjectionTests",
-            dependencies: ["PocketCastsDependencyInjection"],
-            path: "Tests/PocketCastsDependencyInjectionTests",
-            swiftSettings: strictConcurrencySettings
-        ),
-        .target(
             name: "GRDBMacros",
             dependencies: [
                 "GRDBMacrosPlugin",
@@ -122,7 +107,6 @@ let package = Package(
         .target(
             name: "PocketCastsUtils",
             dependencies: [
-                "PocketCastsDependencyInjection",
                 .product(name: "Dependencies", package: "swift-dependencies"),
             ],
             path: "Sources/PocketCastsUtils",
@@ -132,7 +116,6 @@ let package = Package(
             name: "PocketCastsUtilsTests",
             dependencies: [
                 "PocketCastsUtils",
-                "PocketCastsDependencyInjection",
                 .product(name: "Dependencies", package: "swift-dependencies"),
             ],
             path: "Tests/PocketCastsUtilsTests",
@@ -143,7 +126,7 @@ let package = Package(
             dependencies: [
                 .product(name: "GRDB", package: "GRDB.swift"),
                 "PocketCastsUtils",
-                "PocketCastsDependencyInjection",
+                .product(name: "Dependencies", package: "swift-dependencies"),
                 "GRDBMacros",
             ],
             path: "Sources/PocketCastsDataModel",
@@ -160,7 +143,7 @@ let package = Package(
             dependencies: [
                 "PocketCastsDataModel",
                 "PocketCastsDataModelTesting",
-                "PocketCastsDependencyInjection",
+                .product(name: "Dependencies", package: "swift-dependencies"),
             ],
             path: "Tests/PocketCastsDataModelTests",
             swiftSettings: strictConcurrencySettings
@@ -261,7 +244,6 @@ enum XcodeSupport {
                     "PocketCastsDataModel",
                     "PocketCastsServer",
                     "PocketCastsUtils",
-                    "PocketCastsDependencyInjection",
                     .product(name: "Dependencies", package: "swift-dependencies"),
                     .product(name: "DifferenceKit", package: "DifferenceKit"),
                     .product(name: "Fuse", package: "fuse-swift"),

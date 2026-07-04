@@ -5,7 +5,7 @@ import Foundation
 /// `DataManager` is the production conformer; inject `any UpNextRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
-public protocol UpNextRepository: AnyObject {
+public protocol UpNextRepository: AnyObject, Sendable {
     func allUpNextPlaylistEpisodes() -> [PlaylistEpisode]
     func upNextPlayListContains(episodeUuid: String) -> Bool
     func allUpNextEpisodes(from uuids: [String]) -> [Episode]

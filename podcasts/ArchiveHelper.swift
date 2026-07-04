@@ -1,6 +1,6 @@
+import Dependencies
 import Foundation
 import PocketCastsDataModel
-import PocketCastsDependencyInjection
 import PocketCastsUtils
 
 class ArchiveHelper {
@@ -55,7 +55,8 @@ class ArchiveHelper {
 
         if episodeLimit > 0 {
             let currentlyPlayingUuid = PlaybackManager.shared.playing() ? PlaybackManager.shared.currentEpisode()?.uuid : nil
-            let episodes = DefaultDependencyContainer.current.episodeRepository.findEpisodesWhere(customWhere: "podcast_id = ? ORDER BY publishedDate DESC, addedDate DESC", arguments: [podcast.id])
+            @Dependency(\.episodeRepository) var episodeRepository
+            let episodes = episodeRepository.findEpisodesWhere(customWhere: "podcast_id = ? ORDER BY publishedDate DESC, addedDate DESC", arguments: [podcast.id])
             for (index, episode) in episodes.enumerated() {
                 if index < episodeLimit { continue }
 
@@ -68,7 +69,8 @@ class ArchiveHelper {
     }
 
     private class func removeEpisodesMatchingQuery(_ query: String, arguments: [Any]) {
-        let removableEpisodes = DefaultDependencyContainer.current.episodeRepository.findEpisodesWhere(customWhere: query, arguments: arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let removableEpisodes = episodeRepository.findEpisodesWhere(customWhere: query, arguments: arguments)
         for episode in removableEpisodes {
             EpisodeManager.archiveEpisode(episode: episode, fireNotification: false, userInitiated: false)
         }

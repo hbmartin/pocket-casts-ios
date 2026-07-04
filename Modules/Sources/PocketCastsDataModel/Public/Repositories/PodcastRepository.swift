@@ -5,7 +5,7 @@ import Foundation
 /// `DataManager` is the production conformer; inject `any PodcastRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
-public protocol PodcastRepository: AnyObject {
+public protocol PodcastRepository: AnyObject, Sendable {
     func allPodcasts(includeUnsubscribed: Bool, reloadFromDatabase: Bool) -> [Podcast]
     func searchPodcasts(term: String) -> [Podcast]
     func allPodcastsOrderedByTitle(reloadFromDatabase: Bool) -> [Podcast]

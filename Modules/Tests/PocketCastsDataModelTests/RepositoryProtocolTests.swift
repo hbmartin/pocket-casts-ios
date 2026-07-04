@@ -1,5 +1,5 @@
+import Dependencies
 import PocketCastsDataModelTesting
-import PocketCastsDependencyInjection
 @testable import PocketCastsDataModel
 import XCTest
 
@@ -42,14 +42,15 @@ final class RepositoryProtocolTests: XCTestCase {
         XCTAssertEqual(mock.callCount(of: "allPodcasts(includeUnsubscribed:reloadFromDatabase:)"), 1)
     }
 
-    func testContainerOverrideSwapsImplementation() {
-        let original = DefaultDependencyContainer.current.episodeRepository
-        defer { DefaultDependencyContainer.current.episodeRepository = original }
-
+    func testDependencyOverrideSwapsImplementation() {
         let mock = EpisodeRepositoryMock()
-        DefaultDependencyContainer.current.episodeRepository = mock
 
-        XCTAssertTrue((DefaultDependencyContainer.current.episodeRepository as AnyObject) === mock)
+        withDependencies {
+            $0.episodeRepository = mock
+        } operation: {
+            @Dependency(\.episodeRepository) var episodeRepository
+            XCTAssertTrue((episodeRepository as AnyObject) === mock)
+        }
     }
 
     func testNativeAsyncFindersRoundTrip() async {

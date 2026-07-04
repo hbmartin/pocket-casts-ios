@@ -5,7 +5,7 @@ import Foundation
 /// `DataManager` is the production conformer; inject `any EpisodeRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
-public protocol EpisodeRepository: AnyObject {
+public protocol EpisodeRepository: AnyObject, Sendable {
     func findEpisode(uuid: String) -> Episode?
     func findBaseEpisode(uuid: String) -> BaseEpisode?
     func findEpisodeCount(podcastId: Int64) -> Int

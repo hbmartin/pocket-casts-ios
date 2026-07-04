@@ -5,7 +5,7 @@ import Foundation
 /// `DataManager` is the production conformer; inject `any UserEpisodeRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
 /// future persistence engine can ship as a second conformer.
-public protocol UserEpisodeRepository: AnyObject {
+public protocol UserEpisodeRepository: AnyObject, Sendable {
     func findUserEpisode(uuid: String) -> UserEpisode?
     func allUserEpisodes(sortedBy: UploadedSort, limit: Int?) -> [UserEpisode]
     func allUserEpisodesDownloaded(sortedBy: UploadedSort, limit: Int?) -> [UserEpisode]
