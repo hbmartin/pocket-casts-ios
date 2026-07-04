@@ -1,6 +1,8 @@
+import GRDB
 import PocketCastsUtils
 
 class UpNextChangesDataManager {
+    /// Legacy column names for non-GRDB code path.
     private let columnNames = [
         "id",
         "type",
@@ -12,6 +14,10 @@ class UpNextChangesDataManager {
     // MARK: - Query
 
     func findReplaceAction(dbQueue: PCDBQueue) -> UpNextChanges? {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(UpNextChanges.filter(UpNextChanges.Columns.type == UpNextChanges.Actions.replace.rawValue))
+        }
+
         var replaceAction: UpNextChanges?
         dbQueue.read { db in
             do {
@@ -30,6 +36,10 @@ class UpNextChangesDataManager {
     }
 
     func findUpdateActions(dbQueue: PCDBQueue) -> [UpNextChanges] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(UpNextChanges.filter(UpNextChanges.Columns.type != UpNextChanges.Actions.replace.rawValue))
+        }
+
         var allUpdateActions = [UpNextChanges]()
         dbQueue.read { db in
             do {
@@ -67,17 +77,27 @@ class UpNextChangesDataManager {
     }
 
     func saveReplace(episodeList: [String], dbQueue: PCDBQueue) {
+        var replaceChange = UpNextChanges()
+        replaceChange.id = DBUtils.generateUniqueId()
+        replaceChange.type = UpNextChanges.Actions.replace.rawValue
+        replaceChange.uuids = episodeList.joined(separator: ",")
+        replaceChange.utcTime = DBUtils.currentUTCTimeInMillis()
+        let changeToSave = replaceChange
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                // a replace literally replaces everything that came before it, so empty the table out
+                try UpNextChanges.deleteAll(db)
+                try changeToSave.insert(db)
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 // a replace literally replaces everything that came before it, so empty the table out
                 try db.executeUpdate("DELETE FROM \(DataManager.upNextChangesTableName)", values: nil)
-
-                let upNextRemove = UpNextChanges()
-                upNextRemove.id = DBUtils.generateUniqueId()
-                upNextRemove.type = UpNextChanges.Actions.replace.rawValue
-                upNextRemove.uuids = episodeList.joined(separator: ",")
-                upNextRemove.utcTime = DBUtils.currentUTCTimeInMillis()
-                try db.executeUpdate("INSERT INTO \(DataManager.upNextChangesTableName) (\(self.columnNames.joined(separator: ","))) VALUES \(DBUtils.valuesQuestionMarks(amount: self.columnNames.count))", values: self.createValuesFrom(upNextChanges: upNextRemove))
+                try db.executeUpdate("INSERT INTO \(DataManager.upNextChangesTableName) (\(self.columnNames.joined(separator: ","))) VALUES \(DBUtils.valuesQuestionMarks(amount: self.columnNames.count))", values: self.createValuesFrom(upNextChanges: changeToSave))
             } catch {
                 FileLog.shared.addMessage("UpNextChangesDataManager.saveReplace error: \(error)")
             }
@@ -85,17 +105,27 @@ class UpNextChangesDataManager {
     }
 
     private func saveUpdate(action: UpNextChanges.Actions, episodeUuid: String, dbQueue: PCDBQueue) {
+        var updateChange = UpNextChanges()
+        updateChange.id = DBUtils.generateUniqueId()
+        updateChange.type = action.rawValue
+        updateChange.uuid = episodeUuid
+        updateChange.utcTime = DBUtils.currentUTCTimeInMillis()
+        let changeToSave = updateChange
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                // an update replaces any other update that is for the same episode, so delete any that might exist
+                try UpNextChanges.filter(UpNextChanges.Columns.uuid == episodeUuid).deleteAll(db)
+                try changeToSave.insert(db)
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 // an update replaces any other update that is for the same episode, so delete any that might exist
                 try db.executeUpdate("DELETE FROM \(DataManager.upNextChangesTableName) WHERE uuid = ?", values: [episodeUuid])
-
-                let upNextRemove = UpNextChanges()
-                upNextRemove.id = DBUtils.generateUniqueId()
-                upNextRemove.type = action.rawValue
-                upNextRemove.uuid = episodeUuid
-                upNextRemove.utcTime = DBUtils.currentUTCTimeInMillis()
-                try db.executeUpdate("INSERT INTO \(DataManager.upNextChangesTableName) (\(self.columnNames.joined(separator: ","))) VALUES \(DBUtils.valuesQuestionMarks(amount: self.columnNames.count))", values: self.createValuesFrom(upNextChanges: upNextRemove))
+                try db.executeUpdate("INSERT INTO \(DataManager.upNextChangesTableName) (\(self.columnNames.joined(separator: ","))) VALUES \(DBUtils.valuesQuestionMarks(amount: self.columnNames.count))", values: self.createValuesFrom(upNextChanges: changeToSave))
             } catch {
                 FileLog.shared.addMessage("UpNextChangesDataManager.saveUpdate error: \(error)")
             }
@@ -105,6 +135,11 @@ class UpNextChangesDataManager {
     // MARK: - Delete
 
     func deleteChangesOlderThan(utcTime: Int64, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(UpNextChanges.self, filter: UpNextChanges.Columns.utcTime <= utcTime)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.upNextChangesTableName) where utcTime <= ?", values: [utcTime])
@@ -117,7 +152,7 @@ class UpNextChangesDataManager {
     // MARK: - Conversion
 
     private func createFrom(resultSet rs: PCDBResultSet) -> UpNextChanges {
-        let changes = UpNextChanges()
+        var changes = UpNextChanges()
 
         changes.id = rs.longLongInt(forColumn: "id")
         changes.type = rs.int(forColumn: "type")

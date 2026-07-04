@@ -125,6 +125,35 @@ final class UpNextChangesDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testSaveUpdateStoresEpisodeUuidAndType() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(dataManager: dataManager)
+            let episode = self.createTestEpisode(uuid: "update-uuid-episode", podcast: podcast, dataManager: dataManager)
+
+            dataManager.saveUpNextAddToTop(episodeUuid: episode.uuid)
+
+            let changes = dataManager.findUpdateActions()
+            XCTAssertEqual(changes.count, 1, "\(impl): Should store exactly one change")
+            XCTAssertEqual(changes.first?.uuid, episode.uuid, "\(impl): Change should store the episode uuid")
+            XCTAssertEqual(changes.first?.type, UpNextChanges.Actions.playNext.rawValue, "\(impl): Add to top should store a playNext change")
+            XCTAssertGreaterThan(changes.first?.utcTime ?? 0, 0, "\(impl): Change should store a utc timestamp")
+        }
+    }
+
+    func testSaveUpdateReplacesExistingChangeForSameEpisode() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(dataManager: dataManager)
+            let episode = self.createTestEpisode(uuid: "replaced-change-episode", podcast: podcast, dataManager: dataManager)
+
+            dataManager.saveUpNextAddToTop(episodeUuid: episode.uuid)
+            dataManager.saveUpNextRemove(episodeUuid: episode.uuid)
+
+            let changes = dataManager.findUpdateActions()
+            XCTAssertEqual(changes.count, 1, "\(impl): A new change should replace the previous change for the same episode")
+            XCTAssertEqual(changes.first?.type, UpNextChanges.Actions.remove.rawValue, "\(impl): The latest change should win")
+        }
+    }
+
     // MARK: - Multiple Actions Tests
 
     func testMultipleActionsCreateMultipleChanges() throws {
