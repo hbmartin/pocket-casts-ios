@@ -147,10 +147,7 @@ final class FolderHistoryManagerTests: DataManagerTestCase {
     func testDatabaseTableColumnsMatchRecord() throws {
         let dataManager = DataManager.newTestDataManager()
 
-        guard let grdbQueue = dataManager.dbQueue as? GRDBQueue else {
-            XCTFail("Expected GRDBQueue for database introspection")
-            return
-        }
+        let grdbQueue = dataManager.dbQueue
 
         let tableColumns = try grdbQueue.dbPool.read { db -> [String] in
             try db.columns(in: PodcastFolderHistoryRow.databaseTableName).map { $0.name }

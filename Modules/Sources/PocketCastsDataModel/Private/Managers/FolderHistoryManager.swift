@@ -23,93 +23,33 @@ public class FolderHistoryManager {
 
     /// Saves a list of podcast UUID and folders UUID so it can be
     /// restored later
-    func snapshot(podcastsAndFolders: [String: String], dbQueue: PCDBQueue) {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let date = Date().timeIntervalSince1970
-            let cutoff = Date().addingTimeInterval(-periodOfSnapshot).timeIntervalSince1970
-            grdbQueue.write { db in
-                for (podcastUuid, folderUuid) in podcastsAndFolders {
-                    try PodcastFolderHistoryRow(podcastUuid: podcastUuid, folderUuid: folderUuid, date: date).insert(db)
-                }
-                try PodcastFolderHistoryRow.filter(PodcastFolderHistoryRow.Columns.date <= cutoff).deleteAll(db)
-            }
-            return
-        }
-
+    func snapshot(podcastsAndFolders: [String: String], dbQueue: GRDBQueue) {
+        let date = Date().timeIntervalSince1970
+        let cutoff = Date().addingTimeInterval(-periodOfSnapshot).timeIntervalSince1970
         dbQueue.write { db in
-            do {
-                db.beginTransaction()
-
-                let date = Date()
-                try podcastsAndFolders.forEach {
-                    try db.executeUpdate("INSERT INTO PodcastFoldersHistory VALUES (?, ?, ?)", values: [$0.key, $0.value, date])
-                }
-                try db.executeUpdate("DELETE FROM PodcastFoldersHistory WHERE date <= ?", values: [Date().addingTimeInterval(-periodOfSnapshot)])
-
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("FolderHistoryManager.snapshot error: \(error)")
+            for (podcastUuid, folderUuid) in podcastsAndFolders {
+                try PodcastFolderHistoryRow(podcastUuid: podcastUuid, folderUuid: folderUuid, date: date).insert(db)
             }
+            try PodcastFolderHistoryRow.filter(PodcastFolderHistoryRow.Columns.date <= cutoff).deleteAll(db)
         }
     }
 
     /// Return all the available Up Next entries
-    func entries(dbQueue: PCDBQueue) -> [PodcastFoldersHistoryEntry] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let counts = grdbQueue.read { db in
-                try PodcastFolderHistoryRow
-                    .select(PodcastFolderHistoryRow.Columns.date, count(PodcastFolderHistoryRow.Columns.date).forKey("count"), as: HistoryDateCount.self)
-                    .group(PodcastFolderHistoryRow.Columns.date)
-                    .order(PodcastFolderHistoryRow.Columns.date.desc)
-                    .fetchAll(db)
-            } ?? []
+    func entries(dbQueue: GRDBQueue) -> [PodcastFoldersHistoryEntry] {
+        let counts = dbQueue.read { db in
+            try PodcastFolderHistoryRow
+                .select(PodcastFolderHistoryRow.Columns.date, count(PodcastFolderHistoryRow.Columns.date).forKey("count"), as: HistoryDateCount.self)
+                .group(PodcastFolderHistoryRow.Columns.date)
+                .order(PodcastFolderHistoryRow.Columns.date.desc)
+                .fetchAll(db)
+        } ?? []
 
-            return counts.map { PodcastFoldersHistoryEntry(date: Date(timeIntervalSince1970: $0.date), changesCount: $0.count) }
-        }
-
-        var entries: [PodcastFoldersHistoryEntry] = []
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery("SELECT COUNT(*) as count, date FROM PodcastFoldersHistory GROUP BY (date) ORDER BY date DESC", values: nil)
-                defer { resultSet.close() }
-
-                while resultSet.next() {
-                    if let date = resultSet.date(forColumn: "date") {
-                        entries.append(PodcastFoldersHistoryEntry(date: date, changesCount: Int(resultSet.int(forColumn: "count"))))
-                    }
-                }
-            } catch {
-                FileLog.shared.addMessage("FolderHistoryManager.entries error: \(error)")
-            }
-        }
-
-        return entries
+        return counts.map { PodcastFoldersHistoryEntry(date: Date(timeIntervalSince1970: $0.date), changesCount: $0.count) }
     }
 
-    func podcastsAndFolders(entry: Date, dbQueue: PCDBQueue) -> [String: String] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let rows = grdbQueue.fetchAll(PodcastFolderHistoryRow.filter(PodcastFolderHistoryRow.Columns.date == entry.timeIntervalSince1970))
-            return Dictionary(rows.map { ($0.podcastUuid, $0.folderUuid) }, uniquingKeysWith: { _, last in last })
-        }
-
-        var podcastsAndFolders: [String: String] = [:]
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery("SELECT podcastUuid, folderUuid FROM PodcastFoldersHistory WHERE date = ?", values: [entry])
-                defer { resultSet.close() }
-
-                while resultSet.next() {
-                    if let podcastUuid = resultSet.string(forColumn: "podcastUuid"),
-                       let folderUuid = resultSet.string(forColumn: "folderUuid") {
-                        podcastsAndFolders[podcastUuid] = folderUuid
-                    }
-                }
-            } catch {
-                FileLog.shared.addMessage("FolderHistoryManager.podcastsAndFolders error: \(error)")
-            }
-        }
-
-        return podcastsAndFolders
+    func podcastsAndFolders(entry: Date, dbQueue: GRDBQueue) -> [String: String] {
+        let rows = dbQueue.fetchAll(PodcastFolderHistoryRow.filter(PodcastFolderHistoryRow.Columns.date == entry.timeIntervalSince1970))
+        return Dictionary(rows.map { ($0.podcastUuid, $0.folderUuid) }, uniquingKeysWith: { _, last in last })
     }
 
     /// Decodes the aggregate `(date, COUNT(date))` rows produced by `entries(dbQueue:)`.

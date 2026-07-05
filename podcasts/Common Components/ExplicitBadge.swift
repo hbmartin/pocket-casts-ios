@@ -6,7 +6,7 @@ enum ExplicitBadgeHelper {
     static let badgeSize: CGFloat = 11
 
     private static let imageCacheLock = NSLock()
-    // Guarded by imageCacheLock
+    // nonisolated(unsafe): guarded by imageCacheLock
     nonisolated(unsafe) private static var imageCache: [Theme.ThemeType: UIImage] = [:]
 
     static func badgeImage(for theme: Theme.ThemeType? = nil) -> UIImage {

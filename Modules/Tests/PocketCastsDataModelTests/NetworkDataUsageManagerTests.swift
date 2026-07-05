@@ -109,7 +109,7 @@ final class NetworkDataUsageManagerTests: XCTestCase {
     // MARK: - Helpers
 
     private func fetchRecords() -> [NetworkDataUsageRecord] {
-        guard let grdbQueue = dataManager.dbQueue as? GRDBQueue else { return [] }
+        let grdbQueue = dataManager.dbQueue
         return grdbQueue.fetchAll(NetworkDataUsageRecord.order(NetworkDataUsageRecord.Columns.id.asc))
     }
 

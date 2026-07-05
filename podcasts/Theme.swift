@@ -112,7 +112,7 @@ class Theme: ObservableObject {
         activeThemeSnapshot.value
     }
 
-    /// Combine subjects are thread-safe; writes go through `activeTheme`'s side effects.
+    // nonisolated(unsafe): / Combine subjects are thread-safe; writes go through `activeTheme`'s side effects.
     nonisolated(unsafe) private let themeSubject: CurrentValueSubject<ThemeType, Never>
 
     /// Publisher for theme changes.

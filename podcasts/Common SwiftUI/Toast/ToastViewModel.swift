@@ -15,7 +15,7 @@ class ToastViewModel: ObservableObject {
     weak var coordinator: ToastDelegate?
 
     private var frame: CGRect? = nil
-    // Cleanup-only unchecked access: deinit may run off the main actor
+    // nonisolated(unsafe): cleanup-only unchecked access: deinit may run off the main actor
     nonisolated(unsafe) private var autoDismissTimer: Timer? = nil
 
     let title: String

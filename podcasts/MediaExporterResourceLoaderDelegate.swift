@@ -8,14 +8,14 @@ import PocketCastsUtils
 /// MediaExporterItemConfiguration global configuration.
 // The mutable statics are test knobs: production only reads them; tests set and restore them.
 enum MediaExporterItemConfiguration {
-    /// How much data is allowed to be read in memory at a time.
+    // nonisolated(unsafe): / How much data is allowed to be read in memory at a time.
     nonisolated(unsafe) public static var readDataLimit: Int = 20.MB
 
-    /// Flag for deciding whether an error should be thrown when URLResponse's expectedContentLength is not equal with the downloaded media file bytes count. Defaults to `false`.
+    // nonisolated(unsafe): / Flag for deciding whether an error should be thrown when URLResponse's expectedContentLength is not equal with the downloaded media file bytes count. Defaults to `false`.
     nonisolated(unsafe) public static var shouldVerifyDownloadedFileSize: Bool = false
 
     /// If set greater than 0, the set value will be compared with the downloaded media size. If the size of the downloaded media is lower, an error will be thrown. Useful when `expectedContentLength` is unavailable.
-    /// Default value is `DownloadManager.badEpisodeSize` (10KB).
+    // nonisolated(unsafe): / Default value is `DownloadManager.badEpisodeSize` (10KB).
     nonisolated(unsafe) public static var minimumExpectedFileSize: Int = DownloadManager.badEpisodeSize
 }
 

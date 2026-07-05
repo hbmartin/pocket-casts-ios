@@ -1,9 +1,18 @@
 import Foundation
+import GRDB
 
 @testable import PocketCastsDataModel
 
 // @unchecked Sendable: restates DataManager's conformance, as Swift requires of subclasses; test-only stub state.
 class DataManagerMock: DataManager, @unchecked Sendable {
+    /// Unique throwaway database per instance (must NOT touch the shared
+    /// newTestDatabase() pool, which DBTestCase suites keep open); also needed
+    /// because the internal designated init is no longer inherited cross-module.
+    convenience init() {
+        let dbPath = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")
+        self.init(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: dbPath)))
+    }
+
     var podcastsToReturn: [Podcast] = []
     var episodesToReturn: [Episode] = []
     var dailyListeningTimeToReturn: [String: Double] = [:]

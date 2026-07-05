@@ -1,0 +1,32 @@
+rules:
+  # Scoped to the DataModel managers via `paths`, and kept in its own config so the
+  # swift-security.yml fixtures (which legitimately exercise raw executeQuery/executeUpdate
+  # shapes for the SQL-interpolation and schema-reset rules) aren't flagged by this rule
+  # during `semgrep test`.
+  - id: pocketcasts.no-new-raw-sql-in-data-managers
+    severity: ERROR
+    metadata:
+      category: maintainability
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >
+      New raw SQL in the DataModel managers is not allowed: use the GRDB query
+      interface (Columns + requests), as established when the grdbQueryInterface
+      flag was deleted. If this site is genuinely justified residue (schema
+      DDL/migrations, caller-supplied-SQL APIs, PlaylistQueryBuilder generated
+      queries, or Podcast's json_set/json_patch settings writers), annotate it
+      with a nosemgrep comment stating the reason.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/Private/Managers/*.swift"
+        - "**/Modules/Sources/PocketCastsDataModel/Public/Bookmarks/*.swift"
+      exclude:
+        - "**/Modules/Sources/PocketCastsDataModel/Private/Managers/DataHelper.swift"
+    patterns:
+      - pattern-either:
+          - pattern: 'DataHelper.run(query: $Q, ...)'
+          - pattern: '$DB.executeUpdate(...)'
+          - pattern: '$DB.executeQuery(...)'

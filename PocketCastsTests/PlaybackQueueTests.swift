@@ -1,3 +1,4 @@
+import GRDB
 import XCTest
 @testable import podcasts
 @testable import PocketCastsDataModel
@@ -167,6 +168,14 @@ final class PlaybackQueueTests: XCTestCase {
 
 // @unchecked Sendable: restates DataManager's conformance, as Swift requires of subclasses; test-only stub state.
 fileprivate class MockDataManager: DataManager, @unchecked Sendable {
+    /// Unique throwaway database per instance (must NOT touch the shared
+    /// newTestDatabase() pool, which DBTestCase suites keep open); also needed
+    /// because the internal designated init is no longer inherited cross-module.
+    convenience init() {
+        let dbPath = NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite")
+        self.init(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: dbPath)))
+    }
+
     var savedReplaceEpisodes: [String] = []
     var savedPlaylistEpisodes: [PlaylistEpisode] = []
     var upNextEpisodes: [PlaylistEpisode] = []

@@ -19,10 +19,7 @@ final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
         let dataManager = DataManager.newTestDataManager()
 
         // Get actual database columns using GRDB introspection
-        guard let grdbQueue = dataManager.dbQueue as? GRDBQueue else {
-            XCTFail("Expected GRDBQueue for database introspection")
-            return
-        }
+        let grdbQueue = dataManager.dbQueue
 
         let tableColumns = try grdbQueue.dbPool.read { db -> Set<String> in
             let columns = try db.columns(in: DataManager.playlistsTableName)
