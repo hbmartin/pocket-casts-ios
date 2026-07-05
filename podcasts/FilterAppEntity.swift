@@ -7,7 +7,7 @@ struct FilterAppEntity: AppEntity {
         TypeDisplayRepresentation(name: "Filter")
     }
 
-    static var defaultQuery = FilterEntityQuery()
+    static let defaultQuery = FilterEntityQuery()
 
     var id: String
     var name: String
@@ -42,7 +42,7 @@ struct FilterEntityQuery: EntityQuery {
 }
 
 struct PlayFilterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Play Filter"
+    static let title: LocalizedStringResource = "Play Filter"
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Filter")
@@ -64,7 +64,7 @@ struct PlayFilterIntent: AudioPlaybackIntent {
 }
 
 struct PlayAllInFilterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Play All in Filter"
+    static let title: LocalizedStringResource = "Play All in Filter"
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Filter")
@@ -86,7 +86,7 @@ struct PlayAllInFilterIntent: AudioPlaybackIntent {
 }
 
 struct OpenFilterIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Filter"
+    static let title: LocalizedStringResource = "Open Filter"
     static var openAppWhenRun: Bool { true }
 
     @Parameter(title: "Filter")

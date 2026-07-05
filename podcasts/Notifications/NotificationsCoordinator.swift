@@ -214,7 +214,8 @@ enum NotificationsGroup: CaseIterable {
     }
 
     // Variable to be used only in debugging/testing to accelarate notifications schedule
-    static var speedUpNotifications: Bool = false
+    // Developer-menu debug knob; written only from the debug UI
+    nonisolated(unsafe) static var speedUpNotifications: Bool = false
 
     var timeIntervalStep: TimeInterval {
         switch self {
@@ -392,10 +393,12 @@ final class NotificationsCoordinator: @unchecked Sendable {
 
         let request = UNNotificationRequest(identifier: type.identifier, content: content, trigger: trigger)
 
-        // Schedule the request with the system.
+        // Schedule the request with the system. The request is freshly built and
+        // handed over wholesale.
+        let boxedRequest = PocketCastsUtils.UncheckedSendable(request)
         Task {
             do {
-                try await notificationCenter.add(request)
+                try await notificationCenter.add(boxedRequest.value)
             } catch {
                 // Handle errors that may occur during add.
                 FileLog.shared.addMessage("[Notifications Coordinator] Error adding notification: \(error)")
