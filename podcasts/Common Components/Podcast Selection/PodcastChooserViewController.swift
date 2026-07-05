@@ -1,6 +1,7 @@
 import PocketCastsDataModel
 import UIKit
 
+@MainActor
 @objc protocol PodcastSelectionDelegate: AnyObject {
     func bulkSelectionChange(selected: Bool)
     func podcastSelected(podcast: String)

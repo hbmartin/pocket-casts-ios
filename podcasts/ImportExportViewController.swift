@@ -3,7 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
-class ImportExportViewController: PCViewController, UIDocumentInteractionControllerDelegate {
+class ImportExportViewController: PCViewController, @preconcurrency UIDocumentInteractionControllerDelegate {
     private var loadingAlert: ShiftyLoadingAlert?
 
     private var opmlShareController: UIDocumentInteractionController?

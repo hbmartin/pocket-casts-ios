@@ -22,6 +22,7 @@
 
 import UIKit
 
+@MainActor
 protocol GridLayoutDelegate: AnyObject {
     func scaleForItem(inCollectionView collectionView: UICollectionView, withLayout layout: UICollectionViewLayout, atIndexPath indexPath: IndexPath) -> UInt
 

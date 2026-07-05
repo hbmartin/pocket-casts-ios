@@ -1,6 +1,7 @@
 import PocketCastsServer
 import UIKit
 
+@MainActor
 protocol ChangeEmailDelegate: AnyObject {
     func emailChanged()
 }

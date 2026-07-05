@@ -40,6 +40,7 @@ struct ActionBarOverlayView<Content: View, Style: ActionBarStyle>: View {
 // MARK: - ActionBarStyle
 
 /// Allows parent views to customize the colors of the action bar
+@MainActor
 protocol ActionBarStyle {
     var backgroundTint: Color { get }
     var buttonColor: Color { get }

@@ -167,7 +167,7 @@ class ConfettiView: UIView {
 }
 
 // MARK: - Animation Delegate
-extension ConfettiView: CAAnimationDelegate {
+extension ConfettiView: @preconcurrency CAAnimationDelegate {
     func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         guard let layer = anim.value(forKey: Constants.animationLayerKey) as? ParticleEmitterLayer else {
             return

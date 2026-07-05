@@ -4,7 +4,7 @@ import PocketCastsUtils
 import SafariServices
 import WebKit
 
-extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControllerDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
+extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFSafariViewControllerDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
     func setupWebView() {
         showNotesWebView = WKWebView()
 

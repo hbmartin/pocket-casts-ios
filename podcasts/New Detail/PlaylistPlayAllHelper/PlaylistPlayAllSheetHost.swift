@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 protocol PlaylistPlayAllSheetHostDelegate: AnyObject {
     func onTapSaveAndReplace()
 }
