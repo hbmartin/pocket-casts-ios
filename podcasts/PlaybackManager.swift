@@ -6,7 +6,10 @@ import PocketCastsUtils
 import UIKit
 import Combine
 
-class PlaybackManager: ServerPlaybackDelegate {
+/// Long-lived audio coordinator with internal queue/lock/atomic synchronization;
+/// its API is called from UI, the remote command center, intents, and audio
+/// callbacks by design.
+final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
     static let shared = PlaybackManager()
 
     private let updatesPerSave = 30 // save the users progress every 30 seconds
@@ -1331,11 +1334,12 @@ class PlaybackManager: ServerPlaybackDelegate {
             playerCleanupQueue.sync {
                 playersToCleanUp.append(player)
             }
+            let boxedPlayer = PocketCastsUtils.UncheckedSendable(player)
             playerCleanupQueue.asyncAfter(deadline: .now() + 5.seconds) { [weak self] in
                 guard let self else { return }
 
                 let index = self.playersToCleanUp.firstIndex(where: { listPlayer -> Bool in
-                    listPlayer == player
+                    listPlayer == boxedPlayer.value
                 })
                 if let index {
                     self.playersToCleanUp.remove(at: index)
@@ -1355,12 +1359,13 @@ class PlaybackManager: ServerPlaybackDelegate {
 
         if FeatureFlag.activateAudioSessionInBackground.enabled {
             // Perform audio session activation on a background queue to avoid blocking the main thread
+            let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self else {
-                    completion?(false)
+                    boxedCompletion.value?(false)
                     return
                 }
-                self.activateSession(completion: completion)
+                self.activateSession(completion: boxedCompletion.value)
             }
         } else {
             self.activateSession(completion: completion)
@@ -1555,7 +1560,14 @@ class PlaybackManager: ServerPlaybackDelegate {
     }
 
     private func isBackgrounded() -> Bool {
-            return UIApplication.shared.applicationState == .background
+        // Playback code asks this from its own queues; bridge the UIKit read
+        if Thread.isMainThread {
+            return MainActor.assumeIsolated { UIApplication.shared.applicationState == .background }
+        } else {
+            return DispatchQueue.main.sync {
+                MainActor.assumeIsolated { UIApplication.shared.applicationState == .background }
+            }
+        }
     }
 
     // MARK: - Now Playing Info
@@ -2028,20 +2040,30 @@ class PlaybackManager: ServerPlaybackDelegate {
     // MARK: - Background Handling
 
     private func startBackgroundTask() {
-            if backgroundTask != UIBackgroundTaskIdentifier.invalid { return } // already started
+        if backgroundTask != UIBackgroundTaskIdentifier.invalid { return } // already started
 
-            backgroundTask = UIApplication.shared.beginBackgroundTask(expirationHandler: { [weak self] in
-                guard let strongSelf = self else { return }
-
-                strongSelf.endBackgroundTask()
-            })
+        // Playback calls this from its own queues; bridge the UIKit call
+        let begin: @Sendable () -> UIBackgroundTaskIdentifier = { [weak self] in
+            MainActor.assumeIsolated {
+                UIApplication.shared.beginBackgroundTask(expirationHandler: {
+                    self?.endBackgroundTask()
+                })
+            }
+        }
+        backgroundTask = Thread.isMainThread ? begin() : DispatchQueue.main.sync(execute: begin)
     }
 
     private func endBackgroundTask() {
-            if backgroundTask == .invalid { return } // already cancelled
+        if backgroundTask == .invalid { return } // already cancelled
 
-            UIApplication.shared.endBackgroundTask(backgroundTask)
-            backgroundTask = UIBackgroundTaskIdentifier.invalid
+        let task = backgroundTask
+        backgroundTask = UIBackgroundTaskIdentifier.invalid
+        let end: @Sendable () -> Void = {
+            MainActor.assumeIsolated {
+                UIApplication.shared.endBackgroundTask(task)
+            }
+        }
+        if Thread.isMainThread { end() } else { DispatchQueue.main.sync(execute: end) }
     }
 
     // MARK: - Starred changed externally
