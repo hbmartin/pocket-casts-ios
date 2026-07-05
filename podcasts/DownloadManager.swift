@@ -1,7 +1,7 @@
 import AVKit
 import Dependencies
 import Foundation
-import PocketCastsDataModel
+@preconcurrency import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -724,12 +724,13 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     private func cancelTaskId(_ taskId: String?, episode: BaseEpisode, session: URLSession) {
         guard let taskId else { return }
 
+        let boxedEpisode = PocketCastsUtils.UncheckedSendable(episode)
         session.getTasksWithCompletionHandler { [weak self] _, _, downloadTasks in
             if downloadTasks.isEmpty { return }
 
             for task in downloadTasks {
                 if let taskDescription = task.taskDescription, taskId == taskDescription {
-                    self?.cancelTask(task, for: episode)
+                    self?.cancelTask(task, for: boxedEpisode.value)
                     return
                 }
             }
@@ -737,8 +738,9 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     }
 
     private func cancelTask(_ task: URLSessionDownloadTask, for episode: BaseEpisode) {
+        let boxedEpisode = PocketCastsUtils.UncheckedSendable(episode)
         task.cancel { [weak self] data in
-            if let data, !data.isEmpty, let tempFilePath = self?.tempPathForEpisode(episode) {
+            if let data, !data.isEmpty, let tempFilePath = self?.tempPathForEpisode(boxedEpisode.value) {
                 do {
                     try data.write(to: URL(fileURLWithPath: tempFilePath), options: .atomic)
                 } catch {
