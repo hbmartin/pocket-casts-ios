@@ -43,6 +43,7 @@ protocol SwipeHandler: AnyObject {
     func removeFromManualPlaylist(episode: Episode, at: IndexPath)
 }
 
+@MainActor
 enum SwipeActionsHelper {
     // Contrast themes prioritise readability; the green `support02` background
     // doesn't pass against the white "+" icon, so fall back to `support06` (the

@@ -1,6 +1,7 @@
 import Foundation
 import SwipeCellKit
 
+@MainActor
 class TableSwipeActions {
     private var actions = [TableSwipeAction]()
 
@@ -53,6 +54,7 @@ class TableSwipeActions {
     }
 }
 
+@MainActor
 struct TableSwipeAction {
     let indexPath: IndexPath
     let title: String?
