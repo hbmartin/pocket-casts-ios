@@ -110,6 +110,7 @@ enum SharingModal {
         optionPicker.show(statusBarStyle: AppTheme.defaultStatusBarStyle())
     }
 
+    @MainActor
     static func show(option: Option, from source: AnalyticsSource, in viewController: UIViewController) {
 
         if option.podcast.isPrivate {

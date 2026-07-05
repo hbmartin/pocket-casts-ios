@@ -459,27 +459,8 @@ podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'adaptor' risks caus
 podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'parameters' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'view' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/ShareDestination.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated initializer 'init(_:dismissAction:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated initializer 'init(destinations:selectedOption:selectedStyle:source:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated initializer 'init(rootView:theme:background:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: sending 'option' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingModal.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingView.swift: warning: sending value of non-Sendable type 'SharingModal.Option' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/SharingHelper.swift: warning: call to main actor-isolated initializer 'init(activityItems:applicationActivities:)' in a synchronous nonisolated context
-podcasts/SharingHelper.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'barButtonItem' can not be mutated from a nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'completionWithItemsHandler' can not be mutated from a nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'popoverPresentationController' can not be mutated from a nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'sourceRect' can not be mutated from a nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'sourceView' can not be mutated from a nonisolated context
-podcasts/SharingHelper.swift: warning: main actor-isolated property 'view' can not be referenced from a nonisolated context
-podcasts/SharingHelper.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/SharingHelper.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SharingHelper' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/SharingHelper+swipeButton.swift: warning: call to main actor-isolated instance method 'swipeButton(forLabel:at:)' in a synchronous nonisolated context
-podcasts/SharingHelper+swipeButton.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
 podcasts/ShelfActionsViewController.swift: warning: conformance of 'ShelfActionsViewController' to protocol 'CheckTranscriptAvailability' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ShortcutManager.swift: warning: capture of 'self' with non-Sendable type 'ShortcutManager?' in a '@Sendable' closure
 podcasts/ShortcutManager.swift: warning: capture of 'shortcutItems' with non-Sendable type '[UIMutableApplicationShortcutItem]' in a '@Sendable' closure
