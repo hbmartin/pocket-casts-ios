@@ -258,10 +258,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         timeLeftHost.alpha = timeLeftMaxX > buttonSkipMinX + 12 ? 0 : 1
     }
 
-    deinit {
-        removeAllCustomObservers()
-    }
-
     /// Resets the scrolling title marquee to the beginning of its pause-then-scroll
     /// cycle.
     func resetScrollingTitleAnimation() {

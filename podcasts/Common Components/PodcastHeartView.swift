@@ -38,7 +38,9 @@ class PodcastHeartView: UIView {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        setupViews()
+        MainActor.assumeIsolated {
+            setupViews()
+        }
     }
 
     private func setupViews() {
