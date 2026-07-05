@@ -4,6 +4,7 @@ import UIKit
 import PocketCastsDataModel
 import PocketCastsUtils
 
+@MainActor
 protocol NowPlayingActionsDelegate: AnyObject {
     func starEpisodeTapped()
     func effectsTapped()
@@ -552,7 +553,7 @@ extension NowPlayingPlayerItemViewController {
     }
 }
 
-extension NowPlayingPlayerItemViewController: AVRoutePickerViewDelegate {
+extension NowPlayingPlayerItemViewController: @preconcurrency AVRoutePickerViewDelegate {
     func routePickerViewWillBeginPresentingRoutes(_ routePickerView: AVRoutePickerView) {
 
         // This prepares routing options without activating the session

@@ -4,7 +4,9 @@ import PocketCastsDataModel
 /// Coordinates playlist cache invalidation in response to episode changes.
 /// Subscribes to episode change notifications, determines which playlists are affected,
 /// and triggers stale marking with debounced refresh.
-final class PlaylistCacheInvalidationCoordinator {
+/// Pending changes are guarded by pendingChangesLock; observers/cancellable are
+/// configured once at start-up.
+final class PlaylistCacheInvalidationCoordinator: @unchecked Sendable {
 
     private let playlistMetadataLoader: PlaylistMetadataLoader
     private let dataManager: DataManager

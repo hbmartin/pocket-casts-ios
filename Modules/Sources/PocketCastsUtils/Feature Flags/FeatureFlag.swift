@@ -1,6 +1,6 @@
 import Foundation
 
-public enum FeatureFlag: String, CaseIterable {
+public enum FeatureFlag: String, CaseIterable, Sendable {
 
     /// Whether logging of analytics events in console are enabled
     case analyticsLogging
