@@ -149,7 +149,6 @@ podcasts/Common Components/MultiSelect/MultiSelectActionCell.swift: warning: cal
 podcasts/Common Components/MultiSelect/MultiSelectActionCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/Common Components/MultiSelect/MultiSelectFooterView.swift: warning: conformance of 'MultiSelectFooterView' to protocol 'MultiSelectActionOrderDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/MultiSelect/MultiSelectHelper.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Common Components/Options Picker/OptionsPickerHelper.swift: warning: sending 'confirmAction' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/Podcast Selection/PodcastChooserCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
 podcasts/Common Components/Podcast Selection/PodcastChooserCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
 podcasts/Common Components/Podcast Selection/PodcastChooserCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
@@ -243,7 +242,6 @@ podcasts/EpisodeManager.swift: warning: static property 'analyticsHelper' is not
 podcasts/Extensions/AnyPublisher+Async.swift: warning: sending 'value' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Extensions/CMTimeScale+Common.swift: warning: static property 'audio' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Extensions/CMTimeScale+Common.swift: warning: static property 'video' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Extensions/NetworkUtils+Helpers.swift: warning: sending 'allowed' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Extensions/NSObject+AppDelegate.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
 podcasts/Extensions/NSObject+AppDelegate.swift: warning: main actor-isolated property 'delegate' can not be referenced from a nonisolated context
 podcasts/FadeOutManager.swift: warning: capture of 'self' with non-Sendable type 'FadeOutManager?' in a '@Sendable' closure
@@ -427,34 +425,6 @@ podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: non-Sendable 'some 
 podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: sending 'viewModel' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/OnlineSupportController.swift: warning: main actor-isolated property 'navigationDelegate' can not be mutated from a nonisolated context
 podcasts/OnlineSupportController.swift: warning: sending value of non-Sendable type 'DatabaseExport' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'aboutToPresentOptions(bottomPadding:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'addAction(action:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'addAttributedDescriptiveActions(title:message:icon:actions:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'addDescriptiveActions(title:message:icon:actions:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'addSegmentedAction(name:icon:actions:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'animateIn()' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'configureForSheetPresentation()' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'makeKeyAndVisible()' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'preferredSheetHeight(limitedTo:traitCollection:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'resignKey()' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated instance method 'setup(title:themeOverride:iconTintStyle:colors:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: call to main actor-isolated static method 'custom(identifier:resolver:)' in a synchronous nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'containerTraitCollection' can not be referenced from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'detents' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'maximumDetentValue' can not be referenced from a nonisolated autoclosure
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'maximumDetentValue' can not be referenced from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'modalPresentationStyle' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'overrideStatusBarStyle' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'portraitOnly' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'rootViewController' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'safeAreaInsets' can not be referenced from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'sheetPresentationController' can not be referenced from a nonisolated context
-podcasts/OptionsPicker.swift: warning: main actor-isolated property 'windowLevel' can not be mutated from a nonisolated context
-podcasts/OptionsPicker.swift: warning: sending 'action' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/OptionsPicker.swift: warning: sending 'actions' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/PlaybackControlIntent.swift: warning: static property 'isDiscoverable' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PlaybackControlIntent.swift: warning: static property 'title' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PlaybackIntentActionHandler.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PlaybackIntentActionHandler' may have shared mutable state; this is an error in the Swift 6 language mode
@@ -589,9 +559,7 @@ podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated initia
 podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated initializer 'init(destinations:selectedOption:selectedStyle:source:)' in a synchronous nonisolated context
 podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated initializer 'init(rootView:theme:background:)' in a synchronous nonisolated context
 podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated instance method 'episodeFileAction(from:)' in a synchronous nonisolated context
 podcasts/Sharing/SharingModal.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/Sharing/SharingModal.swift: warning: non-Sendable 'OptionAction?'-typed result can not be returned from main actor-isolated instance method 'episodeFileAction(from:)' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingModal.swift: warning: sending 'option' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingModal.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingView.swift: warning: sending value of non-Sendable type 'SharingModal.Option' risks causing data races; this is an error in the Swift 6 language mode
