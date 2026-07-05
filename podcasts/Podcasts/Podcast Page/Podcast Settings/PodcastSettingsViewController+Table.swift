@@ -380,17 +380,24 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
     @objc private func notificationChanged(_ sender: UISwitch) {
         Analytics.track(.podcastSettingsNotificationsToggled, properties: ["enabled": sender.isOn])
+        let isOn = sender.isOn
+        let senderBox = PocketCastsUtils.UncheckedSendable(sender)
         NotificationsHelper.shared.registerForPushNotifications() { [weak self] granted in
-            guard let self, granted || !sender.isOn else {
-                Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
-                    Analytics.track(.notificationsPermissionsOpenSystemSettings)
-                    UIApplication.shared.openNotificationSettings()
-                })])
-                sender.isOn = false
-                return
+            Task { @MainActor [weak self] in
+                let sender = senderBox.value
+                guard let self, granted || !isOn else {
+                    Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
+                        Analytics.track(.notificationsPermissionsOpenSystemSettings)
+                        Task { @MainActor in
+                            UIApplication.shared.openNotificationSettings()
+                        }
+                    })])
+                    sender.isOn = false
+                    return
+                }
+                self.podcast = PodcastManager.shared.setNotificationsEnabled(podcast: self.podcast, enabled: isOn)
+                NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: self.podcast.uuid)
             }
-            self.podcast = PodcastManager.shared.setNotificationsEnabled(podcast: self.podcast, enabled: sender.isOn)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: self.podcast.uuid)
         }
     }
 

@@ -304,11 +304,12 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
 
     @objc private func checkNotificationsPermissionBanner() {
         NotificationsHelper.shared.checkNotificationsDenied() { [weak self] notificationsDenied in
-            guard let self, self.notificationsDenied != notificationsDenied else { return }
+            // The settings callback arrives off-main; state and table both belong to the main actor
+            Task { @MainActor [weak self] in
+                guard let self, self.notificationsDenied != notificationsDenied else { return }
 
-            self.notificationsDenied = notificationsDenied
-            DispatchQueue.main.async { [weak self] in
-                self?.settingsTable.reloadData()
+                self.notificationsDenied = notificationsDenied
+                self.settingsTable.reloadData()
             }
         }
     }

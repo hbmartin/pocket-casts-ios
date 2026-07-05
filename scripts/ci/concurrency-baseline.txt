@@ -183,7 +183,6 @@ podcasts/New Search/Helpers/SearchAnalyticsHelper.swift: warning: type 'any Anal
 podcasts/New Search/Model/SearchHistoryModel.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SearchHistoryModel' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/New Search/SearchResultsViewController.swift: warning: conformance of 'SearchResultsViewController' to protocol 'SearchResultsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Notifications/NotificationsCoordinator.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'NotificationsCoordinator' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: static property 'speedUpNotifications' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/NotificationsViewController.swift: warning: call to main actor-isolated instance method 'openNotificationSettings()' in a synchronous nonisolated context
 podcasts/NotificationsViewController.swift: warning: conformance of 'NotificationsViewController' to protocol 'PodcastSelectionDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -314,20 +313,6 @@ podcasts/Utilities/AVFileUtil.swift: warning: passing closure as a 'sending' par
 podcasts/Utilities/BlurEffectView.swift: warning: call to main actor-isolated instance method 'stopAnimation' in a synchronous nonisolated context
 podcasts/Utilities/ModalMessageViewController.swift: warning: call to main actor-isolated initializer 'init(icon:title:message:destructive:actionTitle:action:)' in a synchronous nonisolated context
 podcasts/Utilities/ModalMessageViewController.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'UserNotifications'
-podcasts/Utilities/NotificationsHelper.swift: warning: call to main actor-isolated instance method 'openNotificationSettings()' in a synchronous nonisolated context
-podcasts/Utilities/NotificationsHelper.swift: warning: capture of 'completion' with non-Sendable type '((Bool) -> ())?' in a '@Sendable' closure
-podcasts/Utilities/NotificationsHelper.swift: warning: capture of 'completion' with non-Sendable type '(Bool) -> ()' in a '@Sendable' closure
-podcasts/Utilities/NotificationsHelper.swift: warning: capture of 'notificationCenter' with non-Sendable type 'UNUserNotificationCenter' in a '@Sendable' closure
-podcasts/Utilities/NotificationsHelper.swift: warning: capture of 'settings' with non-Sendable type 'UNNotificationSettings' in a '@Sendable' closure
-podcasts/Utilities/NotificationsHelper.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/Utilities/NotificationsHelper.swift: warning: sending 'completion' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: sending 'completionHandler' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: sending 'response' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: sending 'settings' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'NotificationsHelper' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Utilities/NotificationsHelper.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Utilities/SwiftUI/Confetti.swift: warning: conformance of 'ConfettiView' to protocol 'CAAnimationDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/SwiftUI/EmptyStateView.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
 podcasts/Utilities/SwiftUI/EmptyStateView.swift: warning: sending 'action' risks causing data races; this is an error in the Swift 6 language mode
