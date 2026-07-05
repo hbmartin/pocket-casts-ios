@@ -6,7 +6,7 @@ import XCTest
 class AnalyticsAppThemeProviderTests: XCTestCase {
     private var analytics = MockAnalytics()
 
-    override func setUp() {
+    override func setUp() async throws {
         analytics.analyticsAppThemeProvider = MockAnalyticsAppThemeProvider()
     }
 

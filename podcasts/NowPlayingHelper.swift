@@ -24,7 +24,7 @@ class NowPlayingHelper {
     }
 
     class func setAllNowPlayingInfo(for episode: BaseEpisode, currentChapters: Chapters, duration: TimeInterval, upTo: TimeInterval, playbackRate: Double?) {
-        let playingInfo = nowPlayingInfo(for: episode, currentChapters: currentChapters)
+        let playingInfo = nowPlayingInfo(for: episode, currentChapters: currentChapters, upTo: upTo)
         var nowPlayingInfoWithProgress = NowPlayingHelper.addUpToInformationToNowPlaying(playingInfo, duration: duration, upTo: upTo, playbackRate: playbackRate)
 
         if let chapterArtwork = currentChapters.artwork {
@@ -64,7 +64,7 @@ class NowPlayingHelper {
         return episode.displayableTitle()
     }
 
-    private class func nowPlayingInfo(for episode: BaseEpisode, currentChapters: Chapters) -> [String: AnyObject] {
+    private class func nowPlayingInfo(for episode: BaseEpisode, currentChapters: Chapters, upTo: TimeInterval) -> [String: AnyObject] {
         var nowPlayingInfo = [String: AnyObject]()
 
         nowPlayingInfo[MPMediaItemPropertyMediaType] = NSNumber(value: MPMediaType.podcast.rawValue)
@@ -83,7 +83,7 @@ class NowPlayingHelper {
         // duration
         if episode.duration > 0 {
             nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = NSNumber(value: episode.duration)
-            nowPlayingInfo[MPMediaItemPropertyBookmarkTime] = NSNumber(value: episode.playedUpTo)
+            nowPlayingInfo[MPMediaItemPropertyBookmarkTime] = NSNumber(value: upTo)
         }
 
         if let episode = episode as? Episode, let parentPodcast = episode.parentPodcast() {

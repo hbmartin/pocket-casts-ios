@@ -4,7 +4,7 @@ import PocketCastsUtils
 import PocketCastsServer
 
 struct PlaybackCatchUpHelper {
-    func adjustStartTimeIfNeeded(for episode: BaseEpisode) -> TimeInterval {
+    func adjustStartTimeIfNeeded(for episode: BaseEpisode, playedUpTo: TimeInterval) -> TimeInterval {
         // if it's a different episode, or not still at the time it was at when it was last paused, just play from where it's up to
         let intelligentPlaybackResumption: Bool
         if FeatureFlag.newSettingsStorage.enabled {
@@ -12,29 +12,29 @@ struct PlaybackCatchUpHelper {
         } else {
             intelligentPlaybackResumption = UserDefaults.standard.bool(forKey: Constants.UserDefaults.intelligentPlaybackResumption)
         }
-        if !intelligentPlaybackResumption || episode.uuid != lastPausedEpisodeUuid() || episode.playedUpTo != lastPausedAt() { return episode.playedUpTo }
+        if !intelligentPlaybackResumption || episode.uuid != lastPausedEpisodeUuid() || playedUpTo != lastPausedAt() { return playedUpTo }
 
-        guard let lastPauseTime = lastPauseTime() else { return episode.playedUpTo }
+        guard let lastPauseTime = lastPauseTime() else { return playedUpTo }
 
         if DateUtil.hasEnoughTimePassed(since: lastPauseTime, time: 24.hours) {
             FileLog.shared.addMessage("More than 24 hours since this episode was paused, jumping back 30 seconds")
-            return max(0, episode.playedUpTo - 30.seconds)
+            return max(0, playedUpTo - 30.seconds)
         } else if DateUtil.hasEnoughTimePassed(since: lastPauseTime, time: 1.hour) {
             FileLog.shared.addMessage("More than 1 hour since this episode was paused, jumping back 15 seconds")
-            return max(0, episode.playedUpTo - 15.seconds)
+            return max(0, playedUpTo - 15.seconds)
         } else if DateUtil.hasEnoughTimePassed(since: lastPauseTime, time: 5.minutes) {
             FileLog.shared.addMessage("More than 5 minutes since this episode was paused, jumping back 10 seconds")
-            return max(0, episode.playedUpTo - 10.seconds)
+            return max(0, playedUpTo - 10.seconds)
         }
 
         FileLog.shared.addMessage("Not enough time passed since this episode was last paused, no time adjustment required")
-        return episode.playedUpTo
+        return playedUpTo
     }
 
-    func playbackDidPause(of episode: BaseEpisode) {
+    func playbackDidPause(of episode: BaseEpisode, playedUpTo: TimeInterval) {
         setLastPauseTimeToNow()
         setLastPausedEpisodeUuid(episode.uuid)
-        setLastPausedAt(episode.playedUpTo)
+        setLastPausedAt(playedUpTo)
     }
 
     // MARK: - Pause Time
