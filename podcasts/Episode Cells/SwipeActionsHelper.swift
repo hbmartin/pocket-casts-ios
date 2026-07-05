@@ -31,6 +31,7 @@ enum SwipeSourceType {
     }
 }
 
+@MainActor
 protocol SwipeHandler: AnyObject {
     var swipeSource: String { get }
     var swipeSourceType: SwipeSourceType { get }
@@ -171,7 +172,7 @@ enum SwipeActionsHelper {
 
     fileprivate static func performAction(_ action: SwipeActions, handler: SwipeHandler, willBeRemoved: Bool) {
         let source = handler.swipeSource
-        var properties = ["action": action, "source": source] as [String: Any]
+        var properties = ["action": action, "source": source] as [String: any Sendable]
         let playlistSourceType = switch handler.swipeSourceType {
         case .manualPlaylistDetail:
             "manual"

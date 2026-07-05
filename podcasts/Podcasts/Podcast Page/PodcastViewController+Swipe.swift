@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import SwipeCellKit
 
-extension PodcastViewController: SwipeTableViewCellDelegate, SwipeHandler {
+extension PodcastViewController: @preconcurrency SwipeTableViewCellDelegate, SwipeHandler {
     // MARK: - SwipeTableViewCellDelegate
 
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {

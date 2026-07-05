@@ -132,15 +132,12 @@ podcasts/DownloadManager.swift: warning: capture of 'episode' with non-Sendable 
 podcasts/DownloadManager.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
 podcasts/DownloadManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/DownloadSettingsViewController.swift: warning: conformance of 'DownloadSettingsViewController' to protocol 'PodcastSelectionDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/DownloadsViewController+Swipe.swift: warning: conformance of 'DownloadsViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/DownloadsViewController+Swipe.swift: warning: conformance of 'DownloadsViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/DownloadsViewController.swift: warning: main actor-isolated property 'episodesDataManager' can not be referenced from a Sendable closure
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in an isolated closure
 podcasts/EffectsPlayer.swift: warning: capture of 'readOperation' with non-Sendable type 'AudioReadTask' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: capture of 'self' with non-Sendable type 'EffectsPlayer?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Episode Cells/SwipeActionsHelper.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Episode/EpisodeDetailViewController+ShowNotes.swift: warning: conformance of 'EpisodeDetailViewController' to protocol 'SFSafariViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/EpisodeDateHelper.swift: warning: main actor-isolated property 'attributedText' can not be mutated from a nonisolated context
 podcasts/EpisodeDateHelper.swift: warning: main actor-isolated property 'text' can not be mutated from a nonisolated context
@@ -162,8 +159,6 @@ podcasts/Folders/Create & Edit/Views/SuggestedFoldersView.swift: warning: static
 podcasts/GridLayout.swift: warning: conformance of 'GridLayout' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/IconSelectorCell.swift: warning: conformance of 'IconSelectorCell' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ImportExportViewController.swift: warning: conformance of 'ImportExportViewController' to protocol 'UIDocumentInteractionControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Lists/HomeGridListItem.swift: warning: static property 'empty' is not concurrency-safe because non-'Sendable' type 'HomeGridListItem' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Main/MainTabBarController.swift: warning: call to main actor-isolated instance method 'dismissLoader()' in a synchronous nonisolated context
 podcasts/Main/MainTabBarController.swift: warning: call to main actor-isolated instance method 'presentLoader()' in a synchronous nonisolated context
@@ -177,8 +172,6 @@ podcasts/MiniPlayerViewController.swift: warning: call to main actor-isolated in
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: capture of 'self' with non-Sendable type 'PlaylistPreviewViewModel?' in a '@Sendable' closure
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/New Detail/PlaylistDetailViewController+PlayAll.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'PlaylistPlayAllSheetHostDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/New Detail/PlaylistDetailViewController+Swipe.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/New Detail/PlaylistDetailViewController+Swipe.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Search/Helpers/SearchAnalyticsHelper.swift: warning: type 'any AnalyticsSearchResultItem' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/New Search/Model/SearchHistoryModel.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SearchHistoryModel' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/New Search/SearchResultsViewController.swift: warning: conformance of 'SearchResultsViewController' to protocol 'SearchResultsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -230,8 +223,6 @@ podcasts/PodcastFilterOverlayController.swift: warning: conformance of 'PodcastF
 podcasts/PodcastManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PodcastManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/Cells/EpisodeLimitCell.swift: warning: main actor-isolated property 'style' can not be mutated from a nonisolated context
 podcasts/Podcasts/Podcast Page/EpisodeListSearchController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
-podcasts/Podcasts/Podcast Page/PodcastViewController+Swipe.swift: warning: conformance of 'PodcastViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Podcasts/Podcast Page/PodcastViewController+Swipe.swift: warning: conformance of 'PodcastViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/PodcastViewController+TableData.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: call to main actor-isolated instance method 'downloadItems(allObjects:)' in a synchronous nonisolated context
 podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: call to main actor-isolated instance method 'episodesForSeason' in a synchronous nonisolated context
@@ -259,16 +250,10 @@ podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'view' risks causing
 podcasts/Sharing/ShareDestination.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingModal.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingView.swift: warning: sending value of non-Sendable type 'SharingModal.Option' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/ShortcutManager.swift: warning: capture of 'self' with non-Sendable type 'ShortcutManager?' in a '@Sendable' closure
-podcasts/ShortcutManager.swift: warning: capture of 'shortcutItems' with non-Sendable type '[UIMutableApplicationShortcutItem]' in a '@Sendable' closure
 podcasts/ShowNotesPlayerItemViewController.swift: warning: conformance of 'ShowNotesPlayerItemViewController' to protocol 'SFSafariViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ShowNotesPlayerItemViewController.swift: warning: main actor-isolated property 'navigationDelegate' can not be mutated from a nonisolated context
 podcasts/SiriShortcutsManager.swift: warning: capture of 'completion' with non-Sendable type '(INVoiceShortcut?) -> Void' in a '@Sendable' closure
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/SocialsHelper.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
-podcasts/SocialsHelper.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/StarredViewController+Swipe.swift: warning: conformance of 'StarredViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/StarredViewController+Swipe.swift: warning: conformance of 'StarredViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/StorageManager.swift: warning: static property 'defaultAttributes' is not concurrency-safe because non-'Sendable' type 'StorageManager.Attributes' (aka 'Dictionary<FileAttributeKey, Any>') may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/StorageManager.swift: warning: static property 'fileManager' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker' in a '@Sendable' closure
@@ -285,16 +270,11 @@ podcasts/Theme/Themable Views/ThemeableTextView.swift: warning: call to main act
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeLoadingIndicator.swift: warning: call to main actor-isolated instance method 'setThemeColor()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryButton.swift: warning: call to main actor-isolated instance method 'setTintColorForTheme()' in a synchronous nonisolated context
 podcasts/TranscriptExcerptView.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/TranscriptFilter.swift: warning: static property 'htmlFilter' is not concurrency-safe because non-'Sendable' type 'ComposeFilter' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/TranscriptFilter.swift: warning: static property 'transcriptFilter' is not concurrency-safe because non-'Sendable' type 'ComposeFilter' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/TranscriptFormat.swift: warning: static property 'supportedFormats' is not concurrency-safe because non-'Sendable' type '[TranscriptFormat]' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/TranscriptModel.swift: warning: static property 'transcriptSpeaker' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/TranscriptViewController.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Up Next History/UpNextHistoryModel.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/UpNextViewController+Swipe.swift: warning: conformance of 'UpNextViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/UpNextViewController.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/UploadedViewController+Swipe.swift: warning: conformance of 'UploadedViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/UploadedViewController+Swipe.swift: warning: conformance of 'UploadedViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/AVFileUtil.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Utilities/BlurEffectView.swift: warning: call to main actor-isolated instance method 'stopAnimation' in a synchronous nonisolated context
 podcasts/Utilities/SwiftUI/Confetti.swift: warning: conformance of 'ConfettiView' to protocol 'CAAnimationDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode

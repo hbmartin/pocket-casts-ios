@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import SwipeCellKit
 
-extension UpNextViewController: SwipeTableViewCellDelegate {
+extension UpNextViewController: @preconcurrency SwipeTableViewCellDelegate {
     func swipeCurrentlyAllowed() -> Bool {
         return isReorderInProgress == false
     }

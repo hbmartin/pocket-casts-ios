@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import SwipeCellKit
 import PocketCastsUtils
 
-extension DownloadsViewController: SwipeTableViewCellDelegate, SwipeHandler {
+extension DownloadsViewController: @preconcurrency SwipeTableViewCellDelegate, SwipeHandler {
     // MARK: - SwipeTableViewCellDelegate
 
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {

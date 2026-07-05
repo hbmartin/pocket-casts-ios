@@ -1,6 +1,6 @@
 import Foundation
 
-protocol TranscriptFilter {
+protocol TranscriptFilter: Sendable {
     func filter(_ input: String) -> String
 }
 

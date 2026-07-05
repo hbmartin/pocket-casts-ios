@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import SwipeCellKit
 
-extension ListeningHistoryViewController: SwipeTableViewCellDelegate, SwipeHandler {
+extension ListeningHistoryViewController: @preconcurrency SwipeTableViewCellDelegate, SwipeHandler {
     // MARK: - SwipeTableViewCellDelegate
 
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {

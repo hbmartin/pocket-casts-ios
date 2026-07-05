@@ -1,6 +1,7 @@
 
 import Foundation
 
+@MainActor
 class SocialsHelper {
     class func openTwitter() {
         let urls = ["tweetbot:///user_profile/pocketcasts", "twitterrific:///profile?screen_name=pocketcasts", "twitter://user?screen_name=pocketcasts", "https://x.com/pocketcasts"]
