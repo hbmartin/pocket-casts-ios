@@ -5,7 +5,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
-class VideoViewController: SimpleNotificationsViewController, AVPictureInPictureControllerDelegate, UIGestureRecognizerDelegate {
+class VideoViewController: SimpleNotificationsViewController, @preconcurrency AVPictureInPictureControllerDelegate, UIGestureRecognizerDelegate {
     var willAttachPlayer: (() -> Void)?
     var willDeattachPlayer: (() -> Void)?
 
@@ -101,10 +101,6 @@ class VideoViewController: SimpleNotificationsViewController, AVPictureInPicture
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(videoViewTapped))
             controlsOverlay.addGestureRecognizer(tapGesture)
         }
-    }
-
-    deinit {
-        teardownPictureInPicturePlayback()
     }
 
     override var prefersStatusBarHidden: Bool {

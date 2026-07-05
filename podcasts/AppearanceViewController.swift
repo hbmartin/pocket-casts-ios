@@ -45,10 +45,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         }
     }
 
-    deinit {
-        removeAllCustomObservers()
-    }
-
     override func handleThemeChanged() {
         updateTableAndData()
     }

@@ -1,6 +1,7 @@
 import PocketCastsServer
 import UIKit
 
+@MainActor
 protocol IconSelectorCellDelegate: AnyObject {
     func changeIcon(icon: IconType)
     func iconSelectorPresentingVC() -> UIViewController
