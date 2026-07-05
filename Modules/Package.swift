@@ -1,14 +1,13 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 
 import PackageDescription
 import CompilerPluginSupport
 import Foundation
 
-/// Strict-concurrency hardening while staying in the Swift 5 language mode:
-/// diagnostics surface as warnings, not errors. Applied target-by-target.
+/// Swift 6 language mode: data-race safety enforced as errors. Applied
+/// target-by-target (the package default stays v5 via `swiftLanguageModes`).
 let strictConcurrencySettings: [SwiftSetting] = [
-    .enableUpcomingFeature("StrictConcurrency"),
-    .enableUpcomingFeature("InferSendableFromCaptures"),
+    .swiftLanguageMode(.v6)
 ]
 
 /// Same as `strictConcurrencySettings` plus -enable-testing, pre-concatenated so the
