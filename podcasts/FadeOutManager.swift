@@ -25,19 +25,22 @@ final class FadeOutManager {
         currentChange = 0
         totalNumberOfVolumeChanges = fadeDuration * volumeChangesPerSecond
         timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(timerDelay), repeats: true) { [weak self] _ in
-            guard let self,
-                  currentChange < totalNumberOfVolumeChanges else {
-                self?.timer?.invalidate()
-                return
+            // scheduled from the main actor, so the timer fires on the main run loop
+            MainActor.assumeIsolated {
+                guard let self,
+                      self.currentChange < self.totalNumberOfVolumeChanges else {
+                    self?.timer?.invalidate()
+                    return
+                }
+
+                let normalizedTime = (self.currentChange / self.totalNumberOfVolumeChanges).betweenZeroAndOne
+                let volumeMultiplier = pow(M_E, -self.fadeVelocity * normalizedTime) * (1 - normalizedTime)
+                let newVolume = self.toVolume - (self.toVolume - self.fromVolume) * volumeMultiplier
+
+                self.player?.playing() == true ? self.player?.setVolume(Float(newVolume)) : self.timer?.invalidate()
+
+                self.currentChange += 1
             }
-
-            let normalizedTime = (currentChange / totalNumberOfVolumeChanges).betweenZeroAndOne
-            let volumeMultiplier = pow(M_E, -fadeVelocity * normalizedTime) * (1 - normalizedTime)
-            let newVolume = toVolume - (toVolume - fromVolume) * volumeMultiplier
-
-            player?.playing() == true ? player?.setVolume(Float(newVolume)) : timer?.invalidate()
-
-            currentChange += 1
         }
     }
 }
