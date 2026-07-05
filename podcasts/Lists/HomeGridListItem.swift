@@ -26,7 +26,7 @@ class HomeGridListItem: ListItem {
         super.init()
     }
 
-    // Immutable sentinel; never mutated after creation
+    // nonisolated(unsafe): immutable sentinel; never mutated after creation
     nonisolated(unsafe) static let empty = HomeGridListItem(gridItem: nil, badgeType: .off, theme: Theme.sharedTheme.nonisolatedActiveTheme)
 
     override var differenceIdentifier: String {

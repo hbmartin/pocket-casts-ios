@@ -43,101 +43,53 @@ public class UpNextHistoryManager {
 
     /// Saves the current Up Next state into another table
     /// So it can be reverted later in case of wrong syncs
-    func snapshot(dbQueue: PCDBQueue) {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let date = Date().timeIntervalSince1970
-            let cutoff = Date().addingTimeInterval(-periodOfSnapshot).timeIntervalSince1970
-            grdbQueue.write { db in
-                let upNextRows = try Row.fetchAll(
-                    db,
-                    Table(DataManager.playlistEpisodeTableName).filter(Column("playlist_id") == UpNextDataManager.upNextPlaylistId)
-                )
-                for row in upNextRows {
-                    try PlaylistEpisodeHistoryRow(
-                        id: row["id"],
-                        episodePosition: row["episodePosition"],
-                        episodeUuid: row["episodeUuid"],
-                        playlistId: row["playlist_id"],
-                        upcoming: row["upcoming"],
-                        timeModified: row["timeModified"],
-                        wasDeleted: row["wasDeleted"],
-                        title: row["title"],
-                        podcastUuid: row["podcastUuid"],
-                        date: date
-                    ).insert(db)
-                }
-                try PlaylistEpisodeHistoryRow.filter(PlaylistEpisodeHistoryRow.Columns.date <= cutoff).deleteAll(db)
-            }
-            return
-        }
-
+    func snapshot(dbQueue: GRDBQueue) {
+        let date = Date().timeIntervalSince1970
+        let cutoff = Date().addingTimeInterval(-periodOfSnapshot).timeIntervalSince1970
         dbQueue.write { db in
-            do {
-                try db.executeUpdate("INSERT INTO PlaylistEpisodeHistory SELECT \(self.columnNames.joined(separator: ",")), ? as 'date' FROM SJPlaylistEpisode WHERE playlist_id = ?", values: [Date(), UpNextDataManager.upNextPlaylistId])
-                try db.executeUpdate("DELETE FROM PlaylistEpisodeHistory WHERE date <= ?", values: [Date().addingTimeInterval(-self.periodOfSnapshot)])
-            } catch {
-                FileLog.shared.addMessage("UpNextHistoryManager.snapshot error: \(error)")
+            let upNextRows = try Row.fetchAll(
+                db,
+                Table(DataManager.playlistEpisodeTableName).filter(Column("playlist_id") == UpNextDataManager.upNextPlaylistId)
+            )
+            for row in upNextRows {
+                try PlaylistEpisodeHistoryRow(
+                    id: row["id"],
+                    episodePosition: row["episodePosition"],
+                    episodeUuid: row["episodeUuid"],
+                    playlistId: row["playlist_id"],
+                    upcoming: row["upcoming"],
+                    timeModified: row["timeModified"],
+                    wasDeleted: row["wasDeleted"],
+                    title: row["title"],
+                    podcastUuid: row["podcastUuid"],
+                    date: date
+                ).insert(db)
             }
+            try PlaylistEpisodeHistoryRow.filter(PlaylistEpisodeHistoryRow.Columns.date <= cutoff).deleteAll(db)
         }
     }
 
     /// Return all the available Up Next entries
-    func entries(dbQueue: PCDBQueue) -> [UpNextHistoryEntry] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let counts = grdbQueue.read { db in
-                try PlaylistEpisodeHistoryRow
-                    .select(PlaylistEpisodeHistoryRow.Columns.date, count(PlaylistEpisodeHistoryRow.Columns.date).forKey("count"), as: HistoryDateCount.self)
-                    .group(PlaylistEpisodeHistoryRow.Columns.date)
-                    .order(PlaylistEpisodeHistoryRow.Columns.date.desc)
-                    .fetchAll(db)
-            } ?? []
+    func entries(dbQueue: GRDBQueue) -> [UpNextHistoryEntry] {
+        let counts = dbQueue.read { db in
+            try PlaylistEpisodeHistoryRow
+                .select(PlaylistEpisodeHistoryRow.Columns.date, count(PlaylistEpisodeHistoryRow.Columns.date).forKey("count"), as: HistoryDateCount.self)
+                .group(PlaylistEpisodeHistoryRow.Columns.date)
+                .order(PlaylistEpisodeHistoryRow.Columns.date.desc)
+                .fetchAll(db)
+        } ?? []
 
-            return counts.map { UpNextHistoryEntry(date: Date(timeIntervalSince1970: $0.date), episodeCount: $0.count) }
-        }
-
-        var entries: [UpNextHistoryEntry] = []
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery("SELECT COUNT(*) as count, date FROM PlaylistEpisodeHistory GROUP BY (date) ORDER BY date DESC", values: nil)
-                defer { resultSet.close() }
-
-                while resultSet.next(), let date = resultSet.date(forColumn: "date") {
-                    entries.append(UpNextHistoryEntry(date: date, episodeCount: Int(resultSet.int(forColumn: "count"))))
-                }
-            } catch {
-                FileLog.shared.addMessage("UpNextHistoryManager.entries error: \(error)")
-            }
-        }
-
-        return entries
+        return counts.map { UpNextHistoryEntry(date: Date(timeIntervalSince1970: $0.date), episodeCount: $0.count) }
     }
 
-    func episodes(entry: Date, dbQueue: PCDBQueue) -> [String] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbQueue.read { db in
-                try PlaylistEpisodeHistoryRow
-                    .filter(PlaylistEpisodeHistoryRow.Columns.date == entry.timeIntervalSince1970)
-                    .order(PlaylistEpisodeHistoryRow.Columns.episodePosition.asc)
-                    .select(PlaylistEpisodeHistoryRow.Columns.episodeUuid, as: String.self)
-                    .fetchAll(db)
-            } ?? []
-        }
-
-        var episodesUuid: [String] = []
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery("SELECT episodeUuid FROM PlaylistEpisodeHistory WHERE date = ? ORDER BY episodePosition ASC", values: [entry])
-                defer { resultSet.close() }
-
-                while resultSet.next(), let episodeUuid = resultSet.string(forColumn: "episodeUuid") {
-                    episodesUuid.append(episodeUuid)
-                }
-            } catch {
-                FileLog.shared.addMessage("UpNextHistoryManager.episodes error: \(error)")
-            }
-        }
-
-        return episodesUuid
+    func episodes(entry: Date, dbQueue: GRDBQueue) -> [String] {
+        return dbQueue.read { db in
+            try PlaylistEpisodeHistoryRow
+                .filter(PlaylistEpisodeHistoryRow.Columns.date == entry.timeIntervalSince1970)
+                .order(PlaylistEpisodeHistoryRow.Columns.episodePosition.asc)
+                .select(PlaylistEpisodeHistoryRow.Columns.episodeUuid, as: String.self)
+                .fetchAll(db)
+        } ?? []
     }
 
     public struct UpNextHistoryEntry: Hashable, Identifiable {

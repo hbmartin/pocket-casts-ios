@@ -50,25 +50,19 @@ struct BookmarkRow: Equatable, Sendable {
 
 public struct BookmarkDataManager {
     static let tableName = "Bookmark"
-    private let dbQueue: PCDBQueue
+    private let dbQueue: GRDBQueue
 
-    init(dbQueue: PCDBQueue) {
+    init(dbQueue: GRDBQueue) {
         self.dbQueue = dbQueue
     }
 
     /// Looks for any existing bookmarks in an episode that have the same start time
     public func existingBookmark(forEpisode episodeUuid: String, time: TimeInterval) -> Bookmark? {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbSelectBookmarks(
-                in: grdbQueue,
-                filters: [BookmarkRow.Columns.episodeUuid == episodeUuid, BookmarkRow.Columns.time == time],
-                limit: 1
-            ).first
-        }
-
-        return selectBookmarks(where: [.episode, .time],
-                               values: [episodeUuid, time],
-                               limit: 1).first
+        return grdbSelectBookmarks(
+            in: dbQueue,
+            filters: [BookmarkRow.Columns.episodeUuid == episodeUuid, BookmarkRow.Columns.time == time],
+            limit: 1
+        ).first
     }
 
     // MARK: - Adding
@@ -81,112 +75,49 @@ public struct BookmarkDataManager {
     ///   - transcription: A transcription of the clip if available
     @discardableResult
     public func add(uuid: String? = nil, episodeUuid: String, podcastUuid: String?, title: String, time: TimeInterval, dateCreated: Date = Date(), syncStatus: SyncStatus = .notSynced) -> String? {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            var row = BookmarkRow()
-            row.uuid = uuid ?? UUID().uuidString.lowercased()
-            row.title = title
-            row.time = time
-            row.dateAdded = dateCreated.timeIntervalSince1970
-            row.titleModifiedDate = dateCreated.timeIntervalSince1970
-            row.episodeUuid = episodeUuid
-            row.podcastUuid = podcastUuid
-            row.syncStatus = syncStatus.rawValue
-            let rowToSave = row
+        var row = BookmarkRow()
+        row.uuid = uuid ?? UUID().uuidString.lowercased()
+        row.title = title
+        row.time = time
+        row.dateAdded = dateCreated.timeIntervalSince1970
+        row.titleModifiedDate = dateCreated.timeIntervalSince1970
+        row.episodeUuid = episodeUuid
+        row.podcastUuid = podcastUuid
+        row.syncStatus = syncStatus.rawValue
+        let rowToSave = row
 
-            let success = grdbQueue.write { db in
-                try rowToSave.insert(db)
-            }
-            return success ? rowToSave.uuid : nil
+        let success = dbQueue.write { db in
+            try rowToSave.insert(db)
         }
-
-        var bookmarkUuid: String? = nil
-
-        dbQueue.write { db in
-            do {
-                let uuid = uuid ?? UUID().uuidString.lowercased()
-                let created = dateCreated.timeIntervalSince1970
-
-                let columns: [Column] = [
-                    .uuid, .title, .time,
-                    .createdDate, .titleModifiedDate,
-                    .episode, .podcast, .syncStatus
-                ]
-
-                let values: [Any?] = [uuid, title, time, created, created, episodeUuid, podcastUuid, syncStatus.rawValue]
-
-                try db.insert(into: Self.tableName, columns: columns.map { $0.rawValue }, values: values)
-
-                bookmarkUuid = uuid
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.add failed: \(error)")
-            }
-        }
-
-        return bookmarkUuid
+        return success ? rowToSave.uuid : nil
     }
 
     // MARK: - Updating
     @discardableResult
     public func update(bookmark: Bookmark, title: String, time: TimeInterval? = nil, created: Date? = nil, modified: Date? = Date(), syncStatus: SyncStatus = .notSynced) async -> Bool {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let uuid = bookmark.uuid
-            let timeValue = time
-            let createdInterval = created?.timeIntervalSince1970
-            let modifiedInterval = (modified ?? Date()).timeIntervalSince1970
-            let syncStatusValue = syncStatus.rawValue
+        let uuid = bookmark.uuid
+        let timeValue = time
+        let createdInterval = created?.timeIntervalSince1970
+        let modifiedInterval = (modified ?? Date()).timeIntervalSince1970
+        let syncStatusValue = syncStatus.rawValue
 
-            do {
-                try await grdbQueue.write { db in
-                    var assignments: [ColumnAssignment] = [BookmarkRow.Columns.title.set(to: title)]
-                    if let timeValue {
-                        assignments.append(BookmarkRow.Columns.time.set(to: timeValue))
-                    }
-                    if let createdInterval {
-                        assignments.append(BookmarkRow.Columns.dateAdded.set(to: createdInterval))
-                    }
-                    assignments.append(BookmarkRow.Columns.titleModifiedDate.set(to: modifiedInterval))
-                    assignments.append(BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-
-                    try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
+        do {
+            try await dbQueue.write { db in
+                var assignments: [ColumnAssignment] = [BookmarkRow.Columns.title.set(to: title)]
+                if let timeValue {
+                    assignments.append(BookmarkRow.Columns.time.set(to: timeValue))
                 }
-                return true
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.update failed: \(error)")
-                return false
+                if let createdInterval {
+                    assignments.append(BookmarkRow.Columns.dateAdded.set(to: createdInterval))
+                }
+                assignments.append(BookmarkRow.Columns.titleModifiedDate.set(to: modifiedInterval))
+                assignments.append(BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+
+                try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
             }
-        }
-
-        let updateColumns = [
-            "\(Column.title) = ?",
-            time.map { _ in "\(Column.time) = ?" },
-            created.map { _ in "\(Column.createdDate) = ?" },
-            "\(Column.titleModifiedDate) = ?",
-            "\(Column.syncStatus) = ?",
-        ].compactMap { $0 }
-
-        let values: [Any?] = [
-            title,
-            time,
-            created,
-            modified ?? Date(),
-            syncStatus.rawValue,
-            bookmark.uuid
-        ]
-
-        let query = """
-                UPDATE \(Self.tableName)
-                SET \(updateColumns.columnString)
-                WHERE \(Column.uuid) = ?
-                LIMIT 1
-                """
-
-        let result = await dbQueue.executeUpdate(query, values: values.compactMap { $0 })
-
-        switch result {
-        case .success:
             return true
-        case .failure(let failure):
-            FileLog.shared.addMessage("BookmarkManager.update failed: \(failure)")
+        } catch {
+            FileLog.shared.addMessage("BookmarkManager.update failed: \(error)")
             return false
         }
     }
@@ -195,129 +126,62 @@ public struct BookmarkDataManager {
 
     /// Retrieves a single Bookmark for the given UUID
     public func bookmark(for uuid: String, allowDeleted: Bool = false) -> Bookmark? {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbSelectBookmarks(in: grdbQueue,
-                                       filters: [BookmarkRow.Columns.uuid == uuid],
-                                       limit: 1,
-                                       allowDeleted: allowDeleted).first
-        }
-
-        return selectBookmarks(where: [.uuid], values: [uuid], limit: 1, allowDeleted: allowDeleted).first
+        return grdbSelectBookmarks(in: dbQueue,
+                                   filters: [BookmarkRow.Columns.uuid == uuid],
+                                   limit: 1,
+                                   allowDeleted: allowDeleted).first
     }
 
     /// Retrieves all the Bookmarks for an episode
     public func bookmarks(forEpisode episodeUuid: String, sorted: SortOption = .newestToOldest) -> [Bookmark] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbSelectBookmarks(in: grdbQueue,
-                                       filters: [BookmarkRow.Columns.episodeUuid == episodeUuid],
-                                       sorted: sorted)
-        }
-
-        return selectBookmarks(where: [.episode], values: [episodeUuid], sorted: sorted)
+        return grdbSelectBookmarks(in: dbQueue,
+                                   filters: [BookmarkRow.Columns.episodeUuid == episodeUuid],
+                                   sorted: sorted)
     }
 
     /// Retrieves all the bookmarks for a podcast, and optionally a specific episode of that podcast
     public func bookmarks(forPodcast podcastUuid: String, episodeUuid: String? = nil, sorted: SortOption = .newestToOldest) -> [Bookmark] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            var filters: [any SQLSpecificExpressible] = [BookmarkRow.Columns.podcastUuid == podcastUuid]
-            if let episodeUuid {
-                filters.append(BookmarkRow.Columns.episodeUuid == episodeUuid)
-            }
-            return grdbSelectBookmarks(in: grdbQueue, filters: filters, sorted: sorted)
-        }
-
-        var values = [podcastUuid]
-        var whereColumns = [Column.podcast]
-
+        var filters: [any SQLSpecificExpressible] = [BookmarkRow.Columns.podcastUuid == podcastUuid]
         if let episodeUuid {
-            whereColumns.append(.episode)
-            values.append(episodeUuid)
+            filters.append(BookmarkRow.Columns.episodeUuid == episodeUuid)
         }
-
-        return selectBookmarks(where: whereColumns, values: values, sorted: sorted)
+        return grdbSelectBookmarks(in: dbQueue, filters: filters, sorted: sorted)
     }
 
     /// Returns all the bookmarks in the database and optionally can also return deleted items
     public func allBookmarks(includeDeleted: Bool = false, sorted: SortOption = .newestToOldest) -> [Bookmark] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbSelectBookmarks(in: grdbQueue, sorted: sorted, allowDeleted: includeDeleted)
-        }
-
-        return selectBookmarks(sorted: sorted, allowDeleted: includeDeleted)
+        return grdbSelectBookmarks(in: dbQueue, sorted: sorted, allowDeleted: includeDeleted)
     }
 
     /// Returns the number of bookmarks for the given episode and can optionally include deleted items in the count
     public func bookmarkCount(forEpisode episodeUuid: String, includeDeleted: Bool = false) -> Int {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            var request = BookmarkRow.filter(BookmarkRow.Columns.episodeUuid == episodeUuid)
-            if !includeDeleted {
-                request = request.filter(BookmarkRow.Columns.deleted == false)
-            }
-            let bookmarkRequest = request
-            return grdbQueue.read { db in
-                try bookmarkRequest.fetchCount(db)
-            } ?? 0
+        var request = BookmarkRow.filter(BookmarkRow.Columns.episodeUuid == episodeUuid)
+        if !includeDeleted {
+            request = request.filter(BookmarkRow.Columns.deleted == false)
         }
-
-        let deletedWhere: String? = includeDeleted ? nil : "\(Column.deleted) = 0"
-
-        let whereString = [deletedWhere, "\(Column.episode) = ?"]
-            .compactMap { $0 }.joined(separator: " AND ")
-
-        let query = "SELECT COUNT(*) FROM \(Self.tableName) WHERE \(whereString)"
-
-        var count = 0
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery(query, values: [episodeUuid])
-                _ = resultSet.next()
-                count = resultSet.long(forColumnIndex: 0)
-                resultSet.close()
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.bookmarkCount failed: \(error)")
-            }
-        }
-
-        return count
+        let bookmarkRequest = request
+        return dbQueue.read { db in
+            try bookmarkRequest.fetchCount(db)
+        } ?? 0
     }
 
     // MARK: - Syncing
 
     /// Returns all the bookmarks in the database that have the syncStatus of `notSynced`
     public func bookmarksToSync() -> [Bookmark] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbSelectBookmarks(in: grdbQueue,
-                                       filters: [BookmarkRow.Columns.syncStatus == SyncStatus.notSynced.rawValue],
-                                       allowDeleted: true)
-        }
-
-        return selectBookmarks(where: [.syncStatus], values: [SyncStatus.notSynced.rawValue], allowDeleted: true)
+        return grdbSelectBookmarks(in: dbQueue,
+                                   filters: [BookmarkRow.Columns.syncStatus == SyncStatus.notSynced.rawValue],
+                                   allowDeleted: true)
     }
 
     @discardableResult
     public func markAllBookmarksAsSynced() async -> Bool {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            do {
-                try await grdbQueue.write { db in
-                    try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
-                }
-                return true
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.markAllBookmarksAsSynced failed: \(error)")
-                return false
+        do {
+            try await dbQueue.write { db in
+                try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
             }
-        }
-
-        let query = """
-        UPDATE \(Self.tableName)
-        SET \(Column.syncStatus) = ?
-        """
-
-        let result = await dbQueue.executeUpdate(query, values: [SyncStatus.synced.rawValue])
-        switch result {
-        case .success:
             return true
-        case .failure(let error):
+        } catch {
             FileLog.shared.addMessage("BookmarkManager.markAllBookmarksAsSynced failed: \(error)")
             return false
         }
@@ -328,41 +192,21 @@ public struct BookmarkDataManager {
     /// Marks the bookmarks as deleted, but doesn't actually remove them from the database
     @discardableResult
     public func remove(bookmarks: [Bookmark], syncStatus: SyncStatus = .notSynced) async -> Bool {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let uuids = bookmarks.map { $0.uuid }
-            let deletedModifiedInterval = Date().timeIntervalSince1970
-            let syncStatusValue = syncStatus.rawValue
-
-            do {
-                try await grdbQueue.write { db in
-                    try BookmarkRow
-                        .filter(uuids.contains(BookmarkRow.Columns.uuid))
-                        .updateAll(db,
-                                   BookmarkRow.Columns.deleted.set(to: true),
-                                   BookmarkRow.Columns.deletedModifiedDate.set(to: deletedModifiedInterval),
-                                   BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-                }
-                return true
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
-                return false
-            }
-        }
-
         let uuids = bookmarks.map { $0.uuid }
+        let deletedModifiedInterval = Date().timeIntervalSince1970
+        let syncStatusValue = syncStatus.rawValue
 
-        let query = """
-        UPDATE \(Self.tableName)
-        SET \(Column.deleted) = 1, \(Column.deletedModifiedDate) = ?, \(Column.syncStatus) = ?
-        WHERE \(Column.uuid) IN (\(DBUtils.placeholders(amount: uuids.count)))
-        """
-
-        let result = await dbQueue.executeUpdate(query, values: [Date(), syncStatus.rawValue] + uuids)
-
-        switch result {
-        case .success:
+        do {
+            try await dbQueue.write { db in
+                try BookmarkRow
+                    .filter(uuids.contains(BookmarkRow.Columns.uuid))
+                    .updateAll(db,
+                               BookmarkRow.Columns.deleted.set(to: true),
+                               BookmarkRow.Columns.deletedModifiedDate.set(to: deletedModifiedInterval),
+                               BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+            }
             return true
-        case .failure(let error):
+        } catch {
             FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
             return false
         }
@@ -371,37 +215,16 @@ public struct BookmarkDataManager {
     /// Permanently removes the bookmarks from the database
     @discardableResult
     public func permanentlyDelete(bookmarks: [Bookmark]) async -> Bool {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            let uuids = bookmarks.map { $0.uuid }
+        let uuids = bookmarks.map { $0.uuid }
 
-            do {
-                try await grdbQueue.write { db in
-                    try BookmarkRow.filter(uuids.contains(BookmarkRow.Columns.uuid)).deleteAll(db)
-                }
-                return true
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
-                return false
+        do {
+            try await dbQueue.write { db in
+                try BookmarkRow.filter(uuids.contains(BookmarkRow.Columns.uuid)).deleteAll(db)
             }
-        }
-
-        return await withCheckedContinuation { continuation in
-            let uuids = bookmarks.map { $0.uuid }
-
-            let query = """
-            DELETE FROM \(Self.tableName)
-            WHERE \(Column.uuid) IN (\(DBUtils.placeholders(amount: uuids.count)))
-            """
-
-            dbQueue.write { db in
-                do {
-                    try db.executeUpdate(query, values: uuids)
-                    continuation.resume(returning: true)
-                } catch {
-                    FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
-                    continuation.resume(returning: false)
-                }
-            }
+            return true
+        } catch {
+            FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
+            return false
         }
     }
 
@@ -446,7 +269,7 @@ public struct BookmarkDataManager {
 
 private extension BookmarkDataManager {
     /// GRDB query-interface twin of `selectBookmarks(where:values:limit:sorted:allowDeleted:)`
-    func grdbSelectBookmarks(in grdbQueue: GRDBQueue, filters: [any SQLSpecificExpressible] = [], sorted: SortOption = .newestToOldest, limit: Int = 0, allowDeleted: Bool = false) -> [Bookmark] {
+    func grdbSelectBookmarks(in dbQueue: GRDBQueue, filters: [any SQLSpecificExpressible] = [], sorted: SortOption = .newestToOldest, limit: Int = 0, allowDeleted: Bool = false) -> [Bookmark] {
         var request = BookmarkRow.all()
 
         for filter in filters {
@@ -471,55 +294,14 @@ private extension BookmarkDataManager {
             request = request.limit(limit)
         }
 
-        return grdbQueue.fetchAll(request).map(\.asBookmark)
-    }
-
-    func selectBookmarks(where whereColumns: [Column] = [], values: [Any] = [], limit: Int = 0, sorted: SortOption = .newestToOldest, allowDeleted: Bool = false) -> [Bookmark] {
-        let limitQuery = limit != 0 ? "LIMIT \(limit)" : ""
-
-        let selectColumns = Column.allCases.map { $0.rawValue }
-
-        // If the deleted column isn't specified, then by default exclude deleted items
-        let deleteString = allowDeleted ? "" : "\(Column.deleted) = 0"
-
-        let whereValues = (whereColumns.map { "\($0.rawValue) = ?" } + [deleteString])
-            .filter { !$0.isEmpty }
-            .joined(separator: " AND ")
-
-        let whereString = whereValues.isEmpty ? "" : "WHERE \(whereValues)"
-
-        var results: [Bookmark] = []
-
-        dbQueue.read { db in
-            do {
-                let query = """
-                    SELECT \(selectColumns.columnString)
-                    FROM \(Self.tableName)
-                    \(whereString)
-                    \(sorted.queryString)
-                    \(limitQuery)
-                """
-
-                let resultSet = try db.executeQuery(query, values: values)
-                defer { resultSet.close() }
-
-                while resultSet.next() {
-                    if let bookmark = Bookmark(from: resultSet) {
-                        results.append(bookmark)
-                    }
-                }
-            } catch {
-                FileLog.shared.addMessage("BookmarkManager.selectBookmarks where (\(whereString) failed: \(error)")
-            }
-        }
-
-        return results
+        return dbQueue.fetchAll(request).map(\.asBookmark)
     }
 }
 
 // MARK: - Schema Creation
 extension BookmarkDataManager {
     static func createTable(in db: PCDatabase) throws {
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - schema DDL (createTable)
         try db.executeUpdate("""
             CREATE TABLE IF NOT EXISTS \(Self.tableName) (
                 \(Column.uuid) varchar(40) NOT NULL,
@@ -536,10 +318,10 @@ extension BookmarkDataManager {
             );
         """, values: nil)
 
-        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_uuid ON \(Self.tableName) (\(Column.uuid));", values: nil)
-        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_episode ON \(Self.tableName) (\(Column.episode));", values: nil)
-        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_podcast ON \(Self.tableName) (\(Column.podcast));", values: nil)
-        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_deleted ON \(Self.tableName) (\(Column.deleted));", values: nil)
+        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_uuid ON \(Self.tableName) (\(Column.uuid));", values: nil) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - schema DDL (index creation)
+        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_episode ON \(Self.tableName) (\(Column.episode));", values: nil) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - schema DDL (index creation)
+        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_podcast ON \(Self.tableName) (\(Column.podcast));", values: nil) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - schema DDL (index creation)
+        try db.executeUpdate("CREATE INDEX IF NOT EXISTS bookmark_deleted ON \(Self.tableName) (\(Column.deleted));", values: nil) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - schema DDL (index creation)
     }
 }
 

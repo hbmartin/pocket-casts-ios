@@ -136,7 +136,7 @@ semgrep scan --config semgrep/swift-security.yml --include "*.swift" --include "
 description = "Run Pocket Casts custom Semgrep rules (SEMGREP_POCKET_CASTS_ERROR=0 for report-only)"
 run = '''
 if [ "${SEMGREP_POCKET_CASTS_ERROR:-1}" = "1" ]; then ERROR_FLAG="--error"; else ERROR_FLAG=""; fi
-semgrep scan --config semgrep/pocket-casts.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $ERROR_FLAG
+semgrep scan --config semgrep/pocket-casts.yml --config semgrep/swift-datamodel-sql.yml --include "*.swift" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check $ERROR_FLAG
 '''
 
 [tasks."semgrep:tests"]

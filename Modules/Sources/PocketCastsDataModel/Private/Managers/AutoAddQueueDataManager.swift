@@ -16,149 +16,58 @@ struct AutoAddCandidateRow: Equatable, Sendable {
 }
 
 public struct AutoAddCandidatesDataManager {
-    private let dbQueue: PCDBQueue
+    private let dbQueue: GRDBQueue
 
-    init(dbQueue: PCDBQueue) {
+    init(dbQueue: GRDBQueue) {
         self.dbQueue = dbQueue
     }
 
     /// Adds a new auto add candidate to the database
     public func add(podcastUUID: String, episodeUUID: String) {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            grdbQueue.write { db in
-                try AutoAddCandidateRow(id: nil, episodeUuid: episodeUUID, podcastUuid: podcastUUID).insert(db)
-            }
-            return
-        }
-
         dbQueue.write { db in
-            do {
-                try db.executeUpdate("INSERT INTO \(Constants.tableName) (episode_uuid, podcast_uuid) VALUES (?, ?)", values: [episodeUUID, podcastUUID])
-            } catch {
-                FileLog.shared.addMessage("AutoAddCandidatesDataManager.add error: \(error)")
-            }
+            try AutoAddCandidateRow(id: nil, episodeUuid: episodeUUID, podcastUuid: podcastUUID).insert(db)
         }
     }
 
     /// Removes a single candidate from the DB
     public func remove(_ candidate: AutoAddCandidate) {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            grdbQueue.deleteAll(AutoAddCandidateRow.self, filter: AutoAddCandidateRow.Columns.id == candidate.id)
-            return
-        }
-
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("""
-                DELETE FROM \(Constants.tableName) WHERE id = ? LIMIT 1
-                """, values: [candidate.id])
-            } catch {
-                FileLog.shared.addMessage("AutoAddCandidatesDataManager.remove error: \(error)")
-            }
-        }
+        dbQueue.deleteAll(AutoAddCandidateRow.self, filter: AutoAddCandidateRow.Columns.id == candidate.id)
     }
 
     /// Reset the the entire candidates table
     public func clearAll() {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            _ = grdbQueue.write { db in
-                try AutoAddCandidateRow.deleteAll(db)
-            }
-            return
-        }
-
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("DELETE FROM \(Constants.tableName)", values: nil)
-            } catch {
-                FileLog.shared.addMessage("AutoAddCandidatesDataManager.clearAll error: \(error)")
-            }
+        _ = dbQueue.write { db in
+            try AutoAddCandidateRow.deleteAll(db)
         }
     }
 
     /// Returns the auto add up next candidates
     /// Each candidate contains the
     public func candidates() -> [AutoAddCandidate] {
-        if let grdbQueue = dbQueue as? GRDBQueue {
-            return grdbQueue.read { db in
-                // Process the oldest items first, like the legacy ORDER BY queue.id ASC
-                let rows = try AutoAddCandidateRow.order(AutoAddCandidateRow.Columns.id.asc).fetchAll(db)
-                guard !rows.isEmpty else { return [] }
+        return dbQueue.read { db in
+            // Process the oldest items first, like the legacy ORDER BY queue.id ASC
+            let rows = try AutoAddCandidateRow.order(AutoAddCandidateRow.Columns.id.asc).fetchAll(db)
+            guard !rows.isEmpty else { return [] }
 
-                // The podcast's auto-add setting, read the same way the legacy JOIN does:
-                // json_extract of the settings payload when newSettingsStorage is enabled,
-                // the autoAddToUpNext column otherwise.
-                let settingSelection: any SQLSelectable = FeatureFlag.newSettingsStorage.enabled
-                    ? JSONColumn(Constants.settingsColumnName).jsonExtract(atPath: "$.addToUpNextPosition.value").forKey(Constants.settingKey)
-                    : Podcast.Columns.autoAddToUpNext.forKey(Constants.settingKey)
+            // The podcast's auto-add setting, read the same way the legacy JOIN does:
+            // json_extract of the settings payload when newSettingsStorage is enabled,
+            // the autoAddToUpNext column otherwise.
+            let settingSelection: any SQLSelectable = FeatureFlag.newSettingsStorage.enabled
+                ? JSONColumn(Constants.settingsColumnName).jsonExtract(atPath: "$.addToUpNextPosition.value").forKey(Constants.settingKey)
+                : Podcast.Columns.autoAddToUpNext.forKey(Constants.settingKey)
 
-                let settings = try Podcast
-                    .filter(rows.map(\.podcastUuid).contains(Podcast.Columns.uuid))
-                    .select([Podcast.Columns.uuid, settingSelection], as: PodcastAutoAddSetting.self)
-                    .fetchAll(db)
-                let settingByUuid = Dictionary(settings.map { ($0.uuid, $0.setting) }, uniquingKeysWith: { first, _ in first })
+            let settings = try Podcast
+                .filter(rows.map(\.podcastUuid).contains(Podcast.Columns.uuid))
+                .select([Podcast.Columns.uuid, settingSelection], as: PodcastAutoAddSetting.self)
+                .fetchAll(db)
+            let settingByUuid = Dictionary(settings.map { ($0.uuid, $0.setting) }, uniquingKeysWith: { first, _ in first })
 
-                return rows.compactMap { row -> AutoAddCandidate? in
-                    // A candidate without a matching podcast is dropped, like the legacy INNER JOIN
-                    guard let id = row.id, let setting = settingByUuid[row.podcastUuid] else { return nil }
-                    return AutoAddCandidate(id: Int(id), episodeUuid: row.episodeUuid, podcastSettingValue: setting)
-                }
-            } ?? []
-        }
-
-        var results: [AutoAddCandidate] = []
-
-        dbQueue.read { db in
-            do {
-
-                let query: String
-
-                if FeatureFlag.newSettingsStorage.enabled {
-                    query = """
-                    SELECT
-                        -- Get the Podcast Auto Add Setting
-                        json_extract(podcast.settings, '$.addToUpNextPosition.value') AS \(Constants.autoAddSettingColumnName),
-
-                        -- Get the episode UUID
-                        queue.id AS \(Constants.idColumnName),
-                        queue.episode_uuid AS \(Constants.episodeColumnName)
-                    FROM
-                        \(Constants.tableName) AS queue
-                        JOIN \(DataManager.podcastTableName) AS podcast ON podcast.uuid = queue.podcast_uuid
-                    -- Process the oldest items first
-                    ORDER BY queue.id ASC
-                    """
-                } else {
-                    query = """
-                    SELECT
-                        -- Get the Podcast Auto Add Setting
-                        podcast.autoAddToUpNext AS \(Constants.autoAddSettingColumnName),
-
-                        -- Get the episode UUID
-                        queue.id AS \(Constants.idColumnName),
-                        queue.episode_uuid AS \(Constants.episodeColumnName)
-                    FROM
-                        \(Constants.tableName) AS queue
-                        JOIN \(DataManager.podcastTableName) AS podcast ON podcast.uuid = queue.podcast_uuid
-                    -- Process the oldest items first
-                    ORDER BY queue.id ASC
-                    """
-                }
-
-                let resultSet = try db.executeQuery(query, values: nil)
-
-                defer { resultSet.close() }
-                while resultSet.next() {
-                    if let result = AutoAddCandidate(from: resultSet) {
-                        results.append(result)
-                    }
-                }
-            } catch {
-                FileLog.shared.addMessage("candidates error: \(error)")
+            return rows.compactMap { row -> AutoAddCandidate? in
+                // A candidate without a matching podcast is dropped, like the legacy INNER JOIN
+                guard let id = row.id, let setting = settingByUuid[row.podcastUuid] else { return nil }
+                return AutoAddCandidate(id: Int(id), episodeUuid: row.episodeUuid, podcastSettingValue: setting)
             }
-        }
-
-        return results
+        } ?? []
     }
 
     // MARK: - Model

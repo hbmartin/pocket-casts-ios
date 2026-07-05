@@ -4,7 +4,7 @@ import PocketCastsUtils
 struct StorageManager {
     typealias Attributes = [FileAttributeKey: Any]
 
-    // FileManager.default is a thread-safe Apple singleton
+    // nonisolated(unsafe): fileManager.default is a thread-safe Apple singleton
     nonisolated(unsafe) private static let fileManager: FileManager = .default
 
     @discardableResult

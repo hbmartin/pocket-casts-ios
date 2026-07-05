@@ -75,6 +75,6 @@ extension DataManager {
 
     /// Test-only accessor for the database queue. Used for low-level GRDB Record type tests.
     var testDbQueue: GRDBQueue {
-        dbQueue as! GRDBQueue
+        dbQueue
     }
 }

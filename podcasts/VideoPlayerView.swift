@@ -28,7 +28,7 @@ class VideoPlayerView: UIView {
         listenForVideoSize()
     }
 
-    // Cleanup-only reference for deinit, which may run off the main actor
+    // nonisolated(unsafe): cleanup-only reference for deinit, which may run off the main actor
     nonisolated(unsafe) private var observedLayer: AVPlayerLayer?
 
     private func listenForVideoSize() {

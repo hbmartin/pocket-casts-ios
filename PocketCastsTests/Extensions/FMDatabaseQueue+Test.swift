@@ -9,7 +9,7 @@ extension DatabasePool {
         case dbFolderPathFailure
     }
 
-    // Test infrastructure; suites execute serially
+    // nonisolated(unsafe): test infrastructure; suites execute serially
     nonisolated(unsafe) static var currentDatabasePool: DatabasePool?
 
     static func newTestDatabase(databaseName: String? = nil) throws -> DatabasePool? {

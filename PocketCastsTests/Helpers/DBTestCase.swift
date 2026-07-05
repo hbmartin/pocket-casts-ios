@@ -21,7 +21,7 @@ class DBTestCase: XCTestCase {
     // Creating multiple DataManager instances cause the app delegate
     // to reference an outdated one with a closed database.
     // This issue is silently ignored when using FMDB, but GRDB surfaces an error.
-    // Test infrastructure; suites execute serially
+    // nonisolated(unsafe): test infrastructure; suites execute serially
     nonisolated(unsafe) static var dataManager: DataManager!
     var dataManager: DataManager! {
         Self.dataManager

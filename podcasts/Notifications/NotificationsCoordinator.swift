@@ -214,7 +214,7 @@ enum NotificationsGroup: CaseIterable {
     }
 
     // Variable to be used only in debugging/testing to accelarate notifications schedule
-    // Developer-menu debug knob; written only from the debug UI
+    // nonisolated(unsafe): developer-menu debug knob; written only from the debug UI
     nonisolated(unsafe) static var speedUpNotifications: Bool = false
 
     var timeIntervalStep: TimeInterval {

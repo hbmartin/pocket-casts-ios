@@ -27,7 +27,7 @@ public class DataManager {
     public let ratings: RatingsDataManager
     public let networkDataUsageManager: NetworkDataUsageManager
 
-    let dbQueue: PCDBQueue
+    let dbQueue: GRDBQueue
 
     // nonisolated(unsafe): assigned once during startup; tests swap in a fresh instance
     // from setUp before any concurrent access.
@@ -81,8 +81,8 @@ public class DataManager {
         return isDatabaseCorrupted
     }
 
-    /// Creates a DataManager using the given `PCDBQueue`.
-    public init(dbQueue: PCDBQueue) {
+    /// Creates a DataManager using the given `GRDBQueue`.
+    init(dbQueue: GRDBQueue) {
         self.dbQueue = dbQueue
 
         guard DatabaseHelper.setup(queue: dbQueue) else {
@@ -97,8 +97,7 @@ public class DataManager {
         autoAddCandidates = AutoAddCandidatesDataManager(dbQueue: dbQueue)
         bookmarks = BookmarkDataManager(dbQueue: dbQueue)
         ratings = RatingsDataManager()
-        // Force unwrap is safe here as dbQueue is always a GRDBQueue at runtime
-        networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue as! GRDBQueue)
+        networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
     }
 
     private var databaseSize: String? {
@@ -1298,7 +1297,7 @@ extension DataManager {
             return
         }
 
-        let destinationDbQueue = (dbQueue as? GRDBQueue)!.dbPool
+        let destinationDbQueue = dbQueue.dbPool
 
         // Fetch all table names (excluding SQLite internal tables and SJEpisode)
         let tableNames: [String]? = try? sourceDbQueue.read { db in

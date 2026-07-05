@@ -6,7 +6,7 @@ import PocketCastsUtils
 
 class Settings: NSObject {
 
-    // Developer-menu debug knob; written only from the debug UI
+    // nonisolated(unsafe): developer-menu debug knob; written only from the debug UI
     nonisolated(unsafe) static var debugPlaylistsLimit = Constants.Limits.maxFilterItems
 
     static var isLockScreenScrubbingDisabled: Bool {
@@ -42,6 +42,7 @@ class Settings: NSObject {
     // written from settings UI on main; each access is lock-guarded.
     private static let cacheLock = NSLock()
 
+    // nonisolated(unsafe): backing storage only ever accessed through the cacheLock-guarded computed twin below
     nonisolated(unsafe) private static var _cachedlibrarySortType: LibraryType?
     private static var cachedlibrarySortType: LibraryType? {
         get { cacheLock.withLock { _cachedlibrarySortType } }
@@ -223,6 +224,7 @@ class Settings: NSObject {
     // MARK: - Primary Row Action
 
     static let primaryRowActionKey = "SJRowAction"
+    // nonisolated(unsafe): backing storage only ever accessed through the cacheLock-guarded computed twin below
     nonisolated(unsafe) private static var _cachedPrimaryRowAction: PrimaryRowAction?
     private static var cachedPrimaryRowAction: PrimaryRowAction? {
         get { cacheLock.withLock { _cachedPrimaryRowAction } }
@@ -277,6 +279,7 @@ class Settings: NSObject {
     // MARK: - Podcast Grouping Default
 
     static let podcastGroupingDefaultKey = "SJDefaultPodcastGrouping"
+    // nonisolated(unsafe): backing storage only ever accessed through the cacheLock-guarded computed twin below
     nonisolated(unsafe) private static var _cachedPodcastGrouping: PodcastGrouping?
     private static var cachedPodcastGrouping: PodcastGrouping? {
         get { cacheLock.withLock { _cachedPodcastGrouping } }
@@ -309,6 +312,7 @@ class Settings: NSObject {
     // MARK: - Primary Up Next Swipe Action
 
     static let primaryUpNextSwipeActionKey = "SJUpNextSwipe"
+    // nonisolated(unsafe): backing storage only ever accessed through the cacheLock-guarded computed twin below
     nonisolated(unsafe) private static var _cachedPrimaryUpNextSwipeAction: PrimaryUpNextSwipeAction?
     private static var cachedPrimaryUpNextSwipeAction: PrimaryUpNextSwipeAction? {
         get { cacheLock.withLock { _cachedPrimaryUpNextSwipeAction } }

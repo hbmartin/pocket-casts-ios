@@ -7,7 +7,7 @@ struct MediaExporter {
 
     typealias ProgressCallback = (Float, Int64) -> ()
 
-    // Single export flow at a time, driven from the clip-sharing UI
+    // nonisolated(unsafe): single export flow at a time, driven from the clip-sharing UI
     nonisolated(unsafe) private static var currentExporter: AVAssetExportSession?
 
     private static func reportProgress(session: AVAssetExportSession, progressCallback: ProgressCallback? = nil) async {

@@ -18,6 +18,7 @@ run_fixture() {
 }
 
 run_fixture semgrep/pocket-casts.yml semgrep/tests/pocket-casts-web-opening.swift
+run_fixture semgrep/swift-datamodel-sql.yml semgrep/tests/swift-datamodel-sql.swift
 
 for fixture in \
   semgrep/tests/mise.toml \
