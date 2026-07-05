@@ -213,12 +213,14 @@ class DownloadsViewController: PCViewController {
     }
 
     func reloadEpisodes() {
+        let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
         operationQueue.addOperation { [weak self] in
-            guard let self else { return }
+            let newDataBox = PocketCastsUtils.UncheckedSendable(dataManager.value.downloadedEpisodes())
 
-            let newData = self.episodesDataManager.downloadedEpisodes()
+            Task { @MainActor in
+                guard let self else { return }
 
-            DispatchQueue.main.sync {
+                let newData = newDataBox.value
                 self.downloadsTable.isHidden = (newData.isEmpty)
                 self.episodes = newData
                 self.downloadsTable.reloadData()

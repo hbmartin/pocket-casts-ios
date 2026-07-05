@@ -242,7 +242,9 @@ class MultiSelectHelper {
     }
 
     private class func downloadEpisodes(_ episodes: [BaseEpisode], actionDelegate: MultiSelectActionDelegate) {
+        let boxedEpisodes = PocketCastsUtils.UncheckedSendable(episodes)
         Task.detached {
+            let episodes = boxedEpisodes.value
             var queuedEpisodes = 0
             for episode in episodes {
                 DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
@@ -258,7 +260,9 @@ class MultiSelectHelper {
     }
 
     private class func queueEpisodes(_ episodes: [BaseEpisode], actionDelegate: MultiSelectActionDelegate) {
+        let boxedEpisodes = PocketCastsUtils.UncheckedSendable(episodes)
         Task.detached {
+            let episodes = boxedEpisodes.value
             var queuedEpisodes = 0
             for episode in episodes {
                 DownloadManager.shared.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .notSpecified)
