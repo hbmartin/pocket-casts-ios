@@ -10,11 +10,13 @@ enum ToastViewDismissPolicy {
     case interval(TimeInterval)
 }
 
+@MainActor
 class ToastViewModel: ObservableObject {
     weak var coordinator: ToastDelegate?
 
     private var frame: CGRect? = nil
-    private var autoDismissTimer: Timer? = nil
+    // Cleanup-only unchecked access: deinit may run off the main actor
+    nonisolated(unsafe) private var autoDismissTimer: Timer? = nil
 
     let title: String
     let actions: [Toast.Action]
@@ -57,9 +59,14 @@ class ToastViewModel: ObservableObject {
         case .never:
             return
         case .interval(let dismissTime):
-            autoDismissTimer = Timer.scheduledTimer(withTimeInterval: dismissTime, repeats: false, block: { [weak self] _ in
-                self?.handleAutoDismiss()
+            let timer = Timer(timeInterval: dismissTime, repeats: false, block: { [weak self] _ in
+                // Scheduled on the main run loop below
+                MainActor.assumeIsolated {
+                    self?.handleAutoDismiss()
+                }
             })
+            RunLoop.main.add(timer, forMode: .common)
+            autoDismissTimer = timer
         }
     }
 

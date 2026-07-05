@@ -11,7 +11,10 @@ class EpisodeFileSizeUpdater {
         let url = URL(fileURLWithPath: fileLocation)
         let asset = AVURLAsset(url: url)
 
+        // The episode and asset are handed to the task wholesale
+        let boxed = PocketCastsUtils.UncheckedSendable((episode, asset))
         Task {
+            let (episode, asset) = boxed.value
             guard let duration = try? await asset.load(.duration) else {
                 return
             }
