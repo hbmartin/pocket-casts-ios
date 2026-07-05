@@ -10,8 +10,8 @@ final class PlaybackQueueTests: XCTestCase {
     private let featureFlagMock = FeatureFlagMock()
     private var originalDataManager: DataManager!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         originalDataManager = DataManager.sharedManager
     }
 
@@ -133,10 +133,10 @@ final class PlaybackQueueTests: XCTestCase {
         XCTAssertFalse(playbackQueue.recentUserInteraction(now: interactionTime.addingTimeInterval(11)))
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         DataManager.sharedManager = originalDataManager
         featureFlagMock.reset()
-        super.tearDown()
+        try await super.tearDown()
     }
 
     private func assertAddPostsToTopFlag(toTop: Bool, file: StaticString = #filePath, line: UInt = #line) throws {
