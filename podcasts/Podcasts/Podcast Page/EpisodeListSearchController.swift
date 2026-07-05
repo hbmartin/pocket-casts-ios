@@ -71,10 +71,6 @@ class EpisodeListSearchController: SimpleNotificationsViewController, UISearchBa
         addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(themeChanged))
     }
 
-    deinit {
-        removeAllCustomObservers()
-    }
-
     @objc private func textFieldDidChange() {
         handleTextFieldDidChange()
     }

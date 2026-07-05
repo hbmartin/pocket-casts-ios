@@ -1,5 +1,7 @@
 import SwiftUI
+import PocketCastsUtils
 
+@MainActor
 protocol TranscriptExcerptViewModeling: ObservableObject {
     var loadingState: TranscriptExcerptLoadingState { get set }
     var isGeneratedTranscript: Bool { get }
@@ -22,7 +24,12 @@ class TranscriptExcerptViewModel: ObservableObject, TranscriptExcerptViewModelin
     @Published var loadingState: TranscriptExcerptLoadingState = .success
 
     let isGeneratedTranscript: Bool
-    private let manager: TranscriptManager
+    // Boxed: loadTranscript() runs off the main actor by design
+    private let manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
+
+    nonisolated private static func load(_ manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>) async throws -> TranscriptModel {
+        try await manager.value.loadTranscript()
+    }
     private let tapAction: () -> Void
     private let episodeUUID: String
     private let podcastUUID: String
@@ -37,12 +44,12 @@ class TranscriptExcerptViewModel: ObservableObject, TranscriptExcerptViewModelin
         self.podcastUUID = podcastUUID
         self.isGeneratedTranscript = isGeneratedTranscript
         self.tapAction = tapAction
-        self.manager = TranscriptManager(episodeUUID: episodeUUID, podcastUUID: podcastUUID)
+        self.manager = PocketCastsUtils.UncheckedSendable(TranscriptManager(episodeUUID: episodeUUID, podcastUUID: podcastUUID))
     }
 
     @discardableResult
     func loadTranscript() async throws -> TranscriptModel {
-        try await manager.loadTranscript()
+        try await Self.load(manager)
     }
 
     func loadExcerptTranscript() async {

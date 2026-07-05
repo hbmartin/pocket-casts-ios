@@ -11,7 +11,9 @@ class EpisodeLimitCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        style = .primaryUi04
+        MainActor.assumeIsolated {
+            style = .primaryUi04
+        }
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {}
