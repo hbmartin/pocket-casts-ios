@@ -219,13 +219,14 @@ episodes moved under the Phase 5 umbrella.)_
 **Exit criteria:** complete-mode baseline contains only playback files; non-playback completion-handler
 APIs converted or explicitly kept with rationale.
 
-## Phase 5 — Deferred: playback/audio
+## Phase 5 — OPEN: playback/audio
 
-`PlaybackManager` (2,355 lines), `DefaultPlayer` (950), `EffectsPlayer`, the `VoiceBoostN` C/ObjC code,
-their feature flags, and their baseline entries. Phases 1–4 create the preconditions: a facade protocol
-and `DependencyKey` already exist (Phase 2), the rest of the app is isolation-clean (Phase 4), and the
-ratchet localizes remaining debt to this subsystem. Sizing and approach to be planned when this phase
-opens.
+`PlaybackManager` (2,400 lines), `DefaultPlayer` (980), `EffectsPlayer`, the `VoiceBoostN` C/ObjC code,
+their feature flags, and their baseline entries. Phases 1–4 created the preconditions: the rest of the
+app is isolation-clean and on Swift 6 language mode (Phase 4, baseline empty), and the data layer is
+GRDB-unconditional (Phase 3 exited). **Opened 2026-07-05 — the sizing, isolation design (honest
+`@MainActor` PlaybackManager above a preserved real-time engine boundary), position-tracking redesign,
+and the 11-slice sequence live in `docs/Phase5-PlaybackModernization.md`.**
 
 ## Sizing & dependency summary
 
