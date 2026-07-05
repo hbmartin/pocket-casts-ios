@@ -36,7 +36,7 @@ public struct CombinedSearchResult: Decodable, Hashable {
     }
 }
 
-public class CombinedSearchTask {
+public final class CombinedSearchTask: Sendable {
     private let session: URLSession
 
     public init(session: URLSession = .shared) {

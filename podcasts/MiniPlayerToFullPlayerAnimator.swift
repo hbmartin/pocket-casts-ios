@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 class MiniPlayerToFullPlayerAnimator: NSObject, UIViewControllerAnimatedTransitioning {
     private let fromViewController: UIViewController
     private let toViewController: UIViewController
@@ -318,6 +319,7 @@ class MiniPlayerToFullPlayerAnimator: NSObject, UIViewControllerAnimatedTransiti
 }
 
 extension CALayer {
+    @MainActor
     func drawTopBorder() {
         let border = CALayer()
         border.frame = CGRect(x: 0, y: 0, width: frame.width, height: 1.0 / UIScreen.main.scale)

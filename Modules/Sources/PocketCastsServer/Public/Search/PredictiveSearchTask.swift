@@ -47,7 +47,7 @@ public struct PredictiveSearchResult: Decodable, Hashable {
     }
 }
 
-public class PredictiveSearchTask {
+public final class PredictiveSearchTask: Sendable {
     private let session: URLSession
 
     public init(session: URLSession = .shared) {

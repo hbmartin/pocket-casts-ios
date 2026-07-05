@@ -39,7 +39,7 @@ public struct EpisodeSearchResult: Codable, Hashable, Sendable {
     }
 }
 
-public class EpisodeSearchTask {
+public final class EpisodeSearchTask: Sendable {
     private let session: URLSession
 
     public init(session: URLSession = .shared) {
