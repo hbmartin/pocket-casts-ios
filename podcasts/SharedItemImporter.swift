@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsServer
+import PocketCastsUtils
 
 class SharedItemImporter: Operation, @unchecked Sendable {
     private let urlToImport: String
@@ -42,8 +43,10 @@ class SharedItemImporter: Operation, @unchecked Sendable {
     }
 
     private func sendResponse(item: IncomingShareItem? = nil) {
+        // The item is freshly parsed and handed over wholesale to the main-thread completion
+        let boxed = PocketCastsUtils.UncheckedSendable(item)
         DispatchQueue.main.sync { [weak self] in
-            self?.completion(item)
+            self?.completion(boxed.value)
         }
         dispatchGroup.leave()
     }

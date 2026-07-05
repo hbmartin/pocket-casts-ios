@@ -1,7 +1,9 @@
 import Foundation
 import SwiftUI
 
-class WidgetData: ObservableObject {
+/// Reloaded and read synchronously inside each timeline-provider callback;
+/// WidgetKit serializes those per provider, so access is effectively serial.
+final class WidgetData: ObservableObject, @unchecked Sendable {
     static let shared = WidgetData()
 
     @Published var nowPlayingEpisode: WidgetEpisode?
