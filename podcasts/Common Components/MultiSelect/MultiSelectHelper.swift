@@ -293,7 +293,7 @@ class MultiSelectHelper {
             actionDelegate.multiSelectActionCompleted()
             return
         }
-        PlaybackManager.shared.queue.bulkMove(selectedPlayListEpisodes, toTop: true)
+        PlaybackManager.shared.bulkMoveUpNext(selectedPlayListEpisodes, toTop: true)
         actionDelegate.multiSelectActionCompleted()
     }
 
@@ -302,7 +302,7 @@ class MultiSelectHelper {
             actionDelegate.multiSelectActionCompleted()
             return
         }
-        PlaybackManager.shared.queue.bulkMove(selectedPlayListEpisodes, toTop: false)
+        PlaybackManager.shared.bulkMoveUpNext(selectedPlayListEpisodes, toTop: false)
         actionDelegate.multiSelectActionCompleted()
     }
 

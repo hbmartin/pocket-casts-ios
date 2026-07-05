@@ -193,7 +193,7 @@ class VideoViewController: SimpleNotificationsViewController, @preconcurrency AV
         }
         options.addAction(action: markPlayedOption)
 
-        if PlaybackManager.shared.queue.upNextCount() > 0 {
+        if PlaybackManager.shared.upNextCount() > 0 {
             let skipToNextAction = OptionAction(label: L10n.nextEpisode, icon: nil) {
                 let currentlyPlayingEpisode = PlaybackManager.shared.currentEpisode()
                 PlaybackManager.shared.removeIfPlayingOrQueued(episode: currentlyPlayingEpisode, fireNotification: true, userInitiated: true)

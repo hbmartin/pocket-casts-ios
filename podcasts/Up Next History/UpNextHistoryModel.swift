@@ -40,8 +40,8 @@ class UpNextHistoryModel: ObservableObject {
                     PlaybackManager.shared.addToUpNext(episode: episode, ignoringQueueLimit: true, userInitiated: false)
                 }
             }
-            PlaybackManager.shared.queue.bulkOperationDidComplete()
-            PlaybackManager.shared.queue.refreshList(checkForAutoDownload: false)
+            PlaybackManager.shared.upNextBulkOperationDidComplete()
+            PlaybackManager.shared.refreshUpNextList(checkForAutoDownload: false)
 
             let upNextQueueCount = PlaybackManager.shared.upNextQueueCount()
             FileLog.shared.addMessage("UpNextHistory: Restored Up Next Queue to \(upNextQueueCount) episodes")

@@ -4,7 +4,7 @@ import UIKit
 @MainActor
 class OptionsPickerHelper {
     class func playAllWarning(episodeCount: Int, confirmAction: @escaping () -> Void) {
-        if PlaybackManager.shared.queue.upNextCount() == 0 {
+        if PlaybackManager.shared.upNextCount() == 0 {
             // there's nothing to over-write, so nothing to confirm either
             confirmAction()
             return

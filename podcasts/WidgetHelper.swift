@@ -32,7 +32,7 @@ final class WidgetHelper: Sendable {
             if widgets.contains(where: { $0.kind == "Now_Playing_Widget" }) {
                 self.publishAppIcon()
             }
-            if widgets.contains(where: { $0.kind == "Up_Next_Widget" }), PlaybackManager.shared.currentEpisode() == nil, PlaybackManager.shared.queue.upNextCount() == 0 {
+            if widgets.contains(where: { $0.kind == "Up_Next_Widget" }), PlaybackManager.shared.currentEpisode() == nil, PlaybackManager.shared.upNextCount() == 0 {
                 self.publishTopFilterInfo()
             }
             WidgetCenter.shared.reloadAllTimelines()

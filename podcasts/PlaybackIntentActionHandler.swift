@@ -151,7 +151,7 @@ struct LivePlaybackFacade: PlaybackFacade {
 
     func hasCurrentEpisode() -> Bool { PlaybackManager.shared.currentEpisode() != nil }
 
-    func upNextCount() -> Int { PlaybackManager.shared.queue.upNextCount() }
+    func upNextCount() -> Int { PlaybackManager.shared.upNextCount() }
 
     func play() { PlaybackManager.shared.play() }
 
