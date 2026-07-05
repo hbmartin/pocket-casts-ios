@@ -354,14 +354,45 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findLatestEpisode(podcast: Podcast, dbQueue: PCDBQueue) -> Episode? {
-        loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT 1", values: [podcast.id], dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(latestEpisodesRequest(podcastId: podcast.id).limit(1))
+        }
+
+        return loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT 1", values: [podcast.id], dbQueue: dbQueue)
     }
 
     func findLatestEpisodes(podcast: Podcast, limit: Int, dbQueue: PCDBQueue) -> [Episode] {
-        loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT ?", values: [podcast.id, limit], dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(latestEpisodesRequest(podcastId: podcast.id).limit(limit))
+        }
+
+        return loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT ?", values: [podcast.id, limit], dbQueue: dbQueue)
+    }
+
+    private func latestEpisodesRequest(podcastId: Int64) -> QueryInterfaceRequest<Episode> {
+        Episode
+            .filter(Episode.Columns.podcast_id == podcastId)
+            .filter(Episode.Columns.wasDeleted == false)
+            .order(Episode.Columns.publishedDate.desc, Episode.Columns.addedDate.desc)
     }
 
     func allUpNextEpisodes(dbQueue: PCDBQueue) -> [Episode] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> [Episode] in
+                // Two-step equivalent of the legacy INNER JOIN, ordered by queue position
+                let queueRows = try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("playlist_id") == UpNextDataManager.upNextPlaylistId)
+                    .order(Column("episodePosition").asc)
+                    .fetchAll(db)
+                let uuids = queueRows.map { $0["episodeUuid"] as String }
+
+                let episodes = try Episode.filter(uuids.contains(Episode.Columns.uuid)).fetchAll(db)
+                let episodesByUuid = Dictionary(episodes.map { ($0.uuid, $0) }, uniquingKeysWith: { first, _ in first })
+
+                return uuids.compactMap { episodesByUuid[$0] }
+            } ?? []
+        }
+
         let upNextTableName = DataManager.playlistEpisodeTableName
         let episodeTableName = DataManager.episodeTableName
 
@@ -380,6 +411,30 @@ final class EpisodeDataManager: Sendable {
     }
 
     func allUpNextEpisodes(from uuids: [String], dbQueue: PCDBQueue) -> [Episode] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> [Episode] in
+                // Two-step equivalent of the legacy DISTINCT INNER JOIN: queue order, first
+                // occurrence wins, only uuids present in both the queue and the episode table
+                let queueRows = try Table(DataManager.playlistEpisodeTableName)
+                    .filter(uuids.contains(Column("episodeUuid")))
+                    .order(Column("episodePosition").asc)
+                    .fetchAll(db)
+
+                let episodes = try Episode.filter(uuids.contains(Episode.Columns.uuid)).fetchAll(db)
+                let episodesByUuid = Dictionary(episodes.map { ($0.uuid, $0) }, uniquingKeysWith: { first, _ in first })
+
+                var seen = Set<String>()
+                var results = [Episode]()
+                for row in queueRows {
+                    let uuid: String = row["episodeUuid"]
+                    guard !seen.contains(uuid), let episode = episodesByUuid[uuid] else { continue }
+                    seen.insert(uuid)
+                    results.append(episode)
+                }
+                return results
+            } ?? []
+        }
+
         let placeholders = DBUtils.placeholders(amount: uuids.count)
         let upNextTableName = DataManager.playlistEpisodeTableName
         let episodeTableName = DataManager.episodeTableName
@@ -438,6 +493,10 @@ final class EpisodeDataManager: Sendable {
     }
 
     func downloadedEpisodeCount(dbQueue: PCDBQueue) -> Int {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.count(Episode.self, filter: Episode.Columns.episodeStatus == DownloadStatus.downloaded.rawValue)
+        }
+
         var count = 0
         let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE episodeStatus = \(DownloadStatus.downloaded.rawValue)"
         dbQueue.read { db in
@@ -457,6 +516,10 @@ final class EpisodeDataManager: Sendable {
     }
 
     func failedDownloadEpisodeCount(dbQueue: PCDBQueue) -> Int {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.count(Episode.self, filter: Episode.Columns.episodeStatus == DownloadStatus.downloadFailed.rawValue)
+        }
+
         var count = 0
         let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE episodeStatus = \(DownloadStatus.downloadFailed.rawValue)"
         dbQueue.read { db in
@@ -476,6 +539,16 @@ final class EpisodeDataManager: Sendable {
     }
 
     func failedDownloadFirstDate(dbQueue: PCDBQueue, sortOrder: SortOrder) -> Date? {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            var request = Episode
+                .filter(Episode.Columns.episodeStatus == DownloadStatus.downloadFailed.rawValue)
+                .filter(Episode.Columns.lastDownloadAttemptDate != nil)
+            request = sortOrder == .forward
+                ? request.order(Episode.Columns.lastDownloadAttemptDate.desc)
+                : request.order(Episode.Columns.lastDownloadAttemptDate.asc)
+            return grdbQueue.fetchOne(request)?.lastDownloadAttemptDate
+        }
+
         let orderDirection = sortOrder == .forward ? "DESC" : "ASC"
         var date: Date?
         let query = "SELECT * from \(DataManager.episodeTableName) WHERE episodeStatus = \(DownloadStatus.downloadFailed.rawValue) AND lastDownloadAttemptDate IS NOT NULL ORDER BY lastDownloadAttemptDate \(orderDirection) LIMIT 1"
@@ -736,6 +809,10 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findFrameCount(episodeId: Int64, dbQueue: PCDBQueue) -> Int64 {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(Episode.filter(Episode.Columns.id == episodeId))?.cachedFrameCount ?? 0
+        }
+
         var frameCount = 0 as Int64
 
         dbQueue.read { db in
@@ -794,6 +871,13 @@ final class EpisodeDataManager: Sendable {
     }
 
     func markAllEpisodePlaybackHistorySynced(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            _ = grdbQueue.write { db in
+                try Episode.updateAll(db, Episode.Columns.lastPlaybackInteractionSyncStatus.set(to: SyncStatus.synced.rawValue))
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET lastPlaybackInteractionSyncStatus = ?", values: [SyncStatus.synced.rawValue])
@@ -804,6 +888,15 @@ final class EpisodeDataManager: Sendable {
     }
 
     func clearEpisodePlaybackInteractionDatesBefore(date: Date, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Episode.self,
+                filter: Episode.Columns.lastPlaybackInteractionDate <= date.timeIntervalSince1970,
+                Episode.Columns.lastPlaybackInteractionDate.set(to: nil as Double?)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET lastPlaybackInteractionDate = NULL WHERE lastPlaybackInteractionDate <= ?", values: [date])
@@ -814,6 +907,15 @@ final class EpisodeDataManager: Sendable {
     }
 
     func clearAllEpisodePlaybackInteractions(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Episode.self,
+                filter: Episode.Columns.lastPlaybackInteractionDate > 0,
+                Episode.Columns.lastPlaybackInteractionDate.set(to: nil as Double?)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET lastPlaybackInteractionDate = NULL WHERE lastPlaybackInteractionDate > 0", values: [])
@@ -972,6 +1074,11 @@ final class EpisodeDataManager: Sendable {
     }
 
     func delete(episodeUuid: String, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(Episode.self, filter: Episode.Columns.uuid == episodeUuid)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.episodeTableName) WHERE uuid = ?", values: [episodeUuid])
@@ -982,6 +1089,11 @@ final class EpisodeDataManager: Sendable {
     }
 
     func deleteAllEpisodesInPodcast(podcastId: Int64, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(Episode.self, filter: Episode.Columns.podcast_id == podcastId)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.episodeTableName) WHERE podcast_id = ?", values: [podcastId])
@@ -1037,6 +1149,15 @@ final class EpisodeDataManager: Sendable {
     }
 
     func markAllUnarchivedForPodcast(id: Int64, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Episode.self,
+                filter: Episode.Columns.podcast_id == id,
+                Episode.Columns.archived.set(to: false)
+            )
+            return
+        }
+
         updateAll(fields: ["archived"], values: [false, id], whereClause: "podcast_id = ?", dbQueue: dbQueue)
     }
 
@@ -1191,7 +1312,36 @@ final class EpisodeDataManager: Sendable {
         }
     }
 
+    /// Converts legacy `[Any]` binding values for the GRDB path, matching the legacy shim's
+    /// conversions: `Date` binds as `timeIntervalSince1970` and `NSNull` as NULL.
+    private static func databaseValue(from value: Any) -> DatabaseValue {
+        if let date = value as? Date {
+            return date.timeIntervalSince1970.databaseValue
+        }
+        if value is NSNull {
+            return .null
+        }
+        return DatabaseValue(value: value) ?? .null
+    }
+
     private func save(fields: [String], values: [Any], useId: Bool = true, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            // The last value is the id/uuid used by the WHERE clause, mirroring the legacy layout
+            guard values.count == fields.count + 1, let identifier = values.last else { return }
+
+            grdbQueue.write { db in
+                let assignments = zip(fields, values).map { field, value in
+                    Column(field).set(to: Self.databaseValue(from: value))
+                }
+                let filter: SQLSpecificExpressible = useId
+                    ? Episode.Columns.id == Self.databaseValue(from: identifier)
+                    : Episode.Columns.uuid == Self.databaseValue(from: identifier)
+
+                try Episode.filter(filter).updateAll(db, assignments)
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
@@ -1205,6 +1355,15 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try Episode
+                    .filter(Episode.Columns.id == episodeId)
+                    .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET \(fieldName) = ? WHERE id = ?", values: [value, episodeId])
@@ -1215,6 +1374,15 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeUuid: String, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try Episode
+                    .filter(Episode.Columns.uuid == episodeUuid)
+                    .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET \(fieldName) = ? WHERE uuid = ?", values: [value, episodeUuid])
@@ -1225,6 +1393,16 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func saveFieldIfNotModified(fieldName: String, modifiedFieldName: String, value: Any, episodeUuid: String, dbQueue: PCDBQueue) -> Bool {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let updated = grdbQueue.write { (db: Database) -> Int in
+                try Episode
+                    .filter(Episode.Columns.uuid == episodeUuid)
+                    .filter(Column(modifiedFieldName) == 0)
+                    .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
+            }
+            return (updated ?? 0) > 0
+        }
+
         var saved = false
         dbQueue.write { db in
             do {
@@ -1239,6 +1417,16 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func saveFieldIfNotModified(fieldName: String, modifiedFieldName: String, value: Any, remoteModified: Int64, episodeUuid: String, dbQueue: PCDBQueue) -> Bool {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let updated = grdbQueue.write { (db: Database) -> Int in
+                try Episode
+                    .filter(Episode.Columns.uuid == episodeUuid)
+                    .filter(Column(modifiedFieldName) < remoteModified)
+                    .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
+            }
+            return (updated ?? 0) > 0
+        }
+
         var saved = false
         dbQueue.write { db in
             do {
