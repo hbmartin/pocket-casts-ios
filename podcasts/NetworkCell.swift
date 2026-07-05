@@ -18,11 +18,14 @@ class NetworkCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        shadowView.layer.shadowColor = UIColor.black.cgColor
-        shadowView.layer.shadowOffset = CGSize(width: 0, height: 1)
-        shadowView.layer.shadowOpacity = 0.1
-        shadowView.layer.shadowRadius = 2
-        shadowView.layer.cornerRadius = 4
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            shadowView.layer.shadowColor = UIColor.black.cgColor
+            shadowView.layer.shadowOffset = CGSize(width: 0, height: 1)
+            shadowView.layer.shadowOpacity = 0.1
+            shadowView.layer.shadowRadius = 2
+            shadowView.layer.cornerRadius = 4
+        }
     }
 
     override var isHighlighted: Bool {

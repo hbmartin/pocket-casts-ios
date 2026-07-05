@@ -69,8 +69,11 @@ class ThemeAbstractCell: UICollectionViewCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        contentView.clipsToBounds = false
-        clipsToBounds = false
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            contentView.clipsToBounds = false
+            clipsToBounds = false
+        }
     }
 
     var isCellSelected = false {

@@ -33,9 +33,6 @@ PocketCastsTests/Tests/Utilities/DownloadManagerRetryTests.swift: warning: passi
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateErrorHandlingTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/AccountActionCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/AccountActionCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/AccountActionCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/AccountViewController.swift: warning: conformance of 'AccountViewController' to protocol 'ChangeEmailDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/AddCustomViewController.swift: warning: call to main actor-isolated instance method 'cancelMetadataLoading()' in a synchronous nonisolated context
 podcasts/AddCustomViewController+CollectionView.swift: warning: conformance of 'AddCustomViewController' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -85,8 +82,6 @@ podcasts/BackgroundSignOutListener.swift: warning: call to main actor-isolated i
 podcasts/BackgroundSignOutListener.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
 podcasts/BackgroundSignOutListener.swift: warning: capture of 'self' with non-Sendable type 'BackgroundSignOutListener?' in a '@Sendable' closure
 podcasts/BackgroundSignOutListener.swift: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/BasePlayPauseButton.swift: warning: call to main actor-isolated instance method 'place(icon:)' in a synchronous nonisolated context
-podcasts/BasePlayPauseButton.swift: warning: main actor-isolated property 'iconView' can not be referenced from a nonisolated context
 podcasts/Beta/BetaMenu.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsUtils'
 podcasts/Beta/BetaMenu.swift: warning: capture of 'self' with non-Sendable type 'FeatureFlag' in a '@Sendable' closure
 podcasts/Bookmarks/BookmarksTheme.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
@@ -212,9 +207,6 @@ podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property '
 podcasts/DefaultPlayer.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: sending 'asset' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/DiscoverPodcastTableCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/DiscoverPodcastTableCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/DiscoverPodcastTableCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/DownloadedFilesViewController.swift: warning: call to main actor-isolated instance method 'performRefresh()' in a synchronous nonisolated context
 podcasts/DownloadedFilesViewController.swift: warning: main actor-isolated property 'deleteInProgress' can not be referenced from a Sendable closure
 podcasts/DownloadedFilesViewController.swift: warning: main actor-isolated property 'deletePlayed' can not be referenced from a Sendable closure
@@ -248,9 +240,6 @@ podcasts/EpisodeDateHelper.swift: warning: main actor-isolated property 'attribu
 podcasts/EpisodeDateHelper.swift: warning: main actor-isolated property 'text' can not be mutated from a nonisolated context
 podcasts/EpisodeFileSizeUpdater.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/EpisodeManager.swift: warning: static property 'analyticsHelper' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/EpisodePreviewCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/EpisodePreviewCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/EpisodePreviewCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/Extensions/AnyPublisher+Async.swift: warning: sending 'value' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Extensions/CMTimeScale+Common.swift: warning: static property 'audio' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Extensions/CMTimeScale+Common.swift: warning: static property 'video' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
@@ -326,8 +315,6 @@ podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: main actor-isolated prop
 podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: main actor-isolated property 'shadowColor' can not be referenced from a nonisolated context
 podcasts/MiniPlayerViewController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
 podcasts/MiniPlayerViewController.swift: warning: conformance of 'MiniPlayerViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/NetworkCell.swift: warning: main actor-isolated property 'layer' can not be mutated from a nonisolated context
-podcasts/NetworkCell.swift: warning: main actor-isolated property 'shadowView' can not be referenced from a nonisolated context
 podcasts/New Creation/New Preview/PlaylistPreviewViewController.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Combine'
 podcasts/New Creation/New Preview/PlaylistPreviewViewController.swift: warning: cannot access property 'cancellables' with a non-Sendable type 'Set<AnyCancellable>' from nonisolated deinit; this is an error in the Swift 6 language mode
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: capture of 'self' with non-Sendable type 'PlaylistPreviewViewModel?' in a '@Sendable' closure
@@ -350,9 +337,6 @@ podcasts/New Search/Model/SearchResultsModel.swift: warning: sending 'self.predi
 podcasts/New Search/SearchResultsViewController.swift: warning: conformance of 'SearchResultsViewController' to protocol 'SearchResultsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/NewEmailViewController.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/NewEmailViewController.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/NewsletterCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/NewsletterCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/NewsletterCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'NotificationsCoordinator' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: static property 'speedUpNotifications' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
@@ -489,9 +473,6 @@ podcasts/PlaybackQueue.swift: warning: capture of 'self' with non-Sendable type 
 podcasts/PlaybackQueue.swift: warning: sending 'scheduleTimer' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/PlayEpisodeIntent.swift: warning: static property 'isDiscoverable' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PlayEpisodeIntent.swift: warning: static property 'title' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/PlayerCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/PlayerCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/PlayerCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/PlayerChapterCell.swift: warning: main actor-isolated property 'backgroundColor' can not be mutated from a nonisolated context
 podcasts/PlayerChapterCell.swift: warning: main actor-isolated property 'contentView' can not be mutated from a nonisolated context
 podcasts/PlayerChapterCell.swift: warning: sending 'currentEpisode' risks causing data races; this is an error in the Swift 6 language mode
@@ -569,9 +550,6 @@ podcasts/Podcasts/Podcast Page/PodcastViewController+TableData.swift: warning: t
 podcasts/Podcasts/Share Podcast List/Collection View Cells/SelectedPodcastCell.swift: warning: main actor-isolated property 'contentView' can not be mutated from a nonisolated context
 podcasts/Podcasts/Share Podcast List/Collection View Cells/SelectedPodcastCell.swift: warning: main actor-isolated property 'layer' can not be mutated from a nonisolated context
 podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: warning: conformance of 'IncomingShareListViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/PodcastSupporterCell.swift: warning: call to main actor-isolated initializer 'init(image:)' in a synchronous nonisolated context
-podcasts/PodcastSupporterCell.swift: warning: call to main actor-isolated instance method 'updateColor()' in a synchronous nonisolated context
-podcasts/PodcastSupporterCell.swift: warning: main actor-isolated property 'accessoryView' can not be mutated from a nonisolated context
 podcasts/Profile - SwiftUI/Account/ListeningHeatmapViewModel.swift: warning: capture of 'self' with non-Sendable type 'ListeningHeatmapViewModel' in a '@Sendable' closure
 podcasts/Profile - SwiftUI/Account/ListeningHeatmapViewModel.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Profile - SwiftUI/View Models/ProfileHeaderViewModel.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
@@ -588,9 +566,6 @@ podcasts/Profile - SwiftUI/View Models/ProfileHeaderViewModel.swift: warning: ma
 podcasts/Profile - SwiftUI/View Models/ProfileHeaderViewModel.swift: warning: main actor-isolated property 'view' can not be referenced from a nonisolated context
 podcasts/Profile - SwiftUI/View Models/ProfileHeaderViewModel.swift: warning: sending 'items' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Profile - SwiftUI/View Models/ProfileHeaderViewModel.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/RadioButtonCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/RadioButtonCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/RadioButtonCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/ServerSyncManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/ServerSyncManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'ServerSyncManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Settings.swift: warning: static property 'cachedlibrarySortType' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
@@ -634,7 +609,6 @@ podcasts/SharingHelper.swift: warning: static property 'shared' is not concurren
 podcasts/SharingHelper+swipeButton.swift: warning: call to main actor-isolated instance method 'swipeButton(forLabel:at:)' in a synchronous nonisolated context
 podcasts/SharingHelper+swipeButton.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
 podcasts/ShelfActionsViewController.swift: warning: conformance of 'ShelfActionsViewController' to protocol 'CheckTranscriptAvailability' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ShiftyRoundButton.swift: warning: call to main actor-isolated instance method 'setup()' in a synchronous nonisolated context
 podcasts/ShortcutManager.swift: warning: capture of 'self' with non-Sendable type 'ShortcutManager?' in a '@Sendable' closure
 podcasts/ShortcutManager.swift: warning: capture of 'shortcutItems' with non-Sendable type '[UIMutableApplicationShortcutItem]' in a '@Sendable' closure
 podcasts/ShowNotesPlayerItemViewController.swift: warning: conformance of 'ShowNotesPlayerItemViewController' to protocol 'SFSafariViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -644,14 +618,8 @@ podcasts/SiriSettingsViewController.swift: warning: conformance of 'SiriSettings
 podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'enabledShortcuts' can not be mutated from a Sendable closure
 podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'enabledShortcuts' can not be referenced from a Sendable closure
 podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'suggestedShortcuts' can not be mutated from a Sendable closure
-podcasts/SiriShortcutAddCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/SiriShortcutAddCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/SiriShortcutAddCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/SiriShortcutsManager.swift: warning: capture of 'completion' with non-Sendable type '(INVoiceShortcut?) -> Void' in a '@Sendable' closure
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/SiriShortcutSuggestedCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/SiriShortcutSuggestedCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/SiriShortcutSuggestedCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/SJUIUtils.swift: warning: call to main actor-isolated initializer 'init(rootViewController:navStyle:titleStyle:iconStyle:themeOverride:)' in a synchronous nonisolated context
 podcasts/SJUIUtils.swift: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context
 podcasts/SJUIUtils.swift: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context
@@ -663,11 +631,6 @@ podcasts/SJUIUtils.swift: warning: sending 'completion' risks causing data races
 podcasts/SJUIUtils.swift: warning: sending 'themeOverride' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/SJUIUtils.swift: warning: sending value of non-Sendable type '(() -> Void)?' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/SkipButton.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
-podcasts/SkipButton.swift: warning: call to main actor-isolated instance method 'setupViews()' in a synchronous nonisolated context
-podcasts/SleepTimerButton.swift: warning: call to main actor-isolated instance method 'setupAnimation()' in a synchronous nonisolated context
-podcasts/SmallListCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/SmallListCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/SmallListCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/SocialsHelper.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
 podcasts/SocialsHelper.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
 podcasts/StarredViewController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
@@ -677,9 +640,6 @@ podcasts/StarredViewController.swift: warning: main actor-isolated property 'epi
 podcasts/StarredViewController.swift: warning: main actor-isolated property 'episodesDataManager' can not be referenced from a Sendable closure
 podcasts/StarredViewController+Swipe.swift: warning: conformance of 'StarredViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/StarredViewController+Swipe.swift: warning: conformance of 'StarredViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/StatsCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
-podcasts/StatsCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
-podcasts/StatsCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
 podcasts/StorageManager.swift: warning: static property 'defaultAttributes' is not concurrency-safe because non-'Sendable' type 'StorageManager.Attributes' (aka 'Dictionary<FileAttributeKey, Any>') may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/StorageManager.swift: warning: static property 'fileManager' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure
@@ -723,10 +683,6 @@ podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main a
 podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'rootViewController' can not be mutated from a nonisolated context
 podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'userInterfaceIdiom' can not be referenced from a nonisolated context
 podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'windowLevel' can not be mutated from a nonisolated context
-podcasts/ThemeableLabel.swift: warning: call to main actor-isolated instance method 'updateTextColor()' in a synchronous nonisolated context
-podcasts/ThemeableUIButton.swift: warning: call to main actor-isolated instance method 'updateColors()' in a synchronous nonisolated context
-podcasts/ThemeAbstractCell.swift: warning: main actor-isolated property 'clipsToBounds' can not be mutated from a nonisolated context
-podcasts/ThemeAbstractCell.swift: warning: main actor-isolated property 'contentView' can not be mutated from a nonisolated context
 podcasts/TimeStepperCell.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/TranscriptContainerViewController.swift: warning: conformance of 'TranscriptContainerViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/TranscriptContainerViewController.swift: warning: conformance of 'TranscriptContainerViewController' to protocol 'PlayerItemContainerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode

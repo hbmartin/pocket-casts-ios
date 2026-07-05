@@ -64,7 +64,10 @@ class SkipButton: UIButton {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        setupViews()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            setupViews()
+        }
     }
 
     func setupViews() {

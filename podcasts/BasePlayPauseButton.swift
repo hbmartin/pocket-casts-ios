@@ -43,7 +43,10 @@ class BasePlayPauseButton: UIButton {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        place(icon: iconView)
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            place(icon: iconView)
+        }
     }
 
     func animationCenter() -> CGPoint {
