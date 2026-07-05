@@ -5,6 +5,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
+@MainActor
 class PodcastHeaderViewModel: NSObject, ObservableObject {
 
     @Published var podcast: Podcast

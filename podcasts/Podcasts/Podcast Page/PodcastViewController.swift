@@ -21,6 +21,7 @@ enum PodcastFeedReloadSource {
     }
 }
 
+@MainActor
 protocol PodcastActionsDelegate: AnyObject {
     var hasSimilarShowsPublisher: AnyPublisher<Bool, Never> { get }
     var currentViewModePublisher: AnyPublisher<PodcastViewController.ViewMode, Never> { get }
@@ -1009,11 +1010,12 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     func unarchiveAllTapped() {
         guard let podcast else { return }
 
+        let episodeCount = episodeCount()
         DispatchQueue.global().async {
             DataManager.sharedManager.markAllUnarchivedForPodcast(id: podcast.id)
 
             AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
-            AnalyticsEpisodeHelper.shared.bulkUnarchiveEpisodes(count: self.episodeCount())
+            AnalyticsEpisodeHelper.shared.bulkUnarchiveEpisodes(count: episodeCount)
 
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
@@ -1025,16 +1027,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
     func archiveAll(playedOnly: Bool = false) {
         guard let podcast else { return }
+        guard let allObjects = episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
+        let episodes = allObjects.compactMap { ($0 as? ListEpisode)?.episode }
 
         DispatchQueue.global().async { [weak self] in
-            guard let allObjects = self?.episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
-
             var count = 0
-            for object in allObjects {
-                guard let listEpisode = object as? ListEpisode else { continue }
-                if listEpisode.episode.archived || (playedOnly && !listEpisode.episode.played()) { continue }
+            for episode in episodes {
+                if episode.archived || (playedOnly && !episode.played()) { continue }
 
-                EpisodeManager.archiveEpisode(episode: listEpisode.episode, fireNotification: false, userInitiated: false)
+                EpisodeManager.archiveEpisode(episode: episode, fireNotification: false, userInitiated: false)
                 count += 1
             }
 
@@ -1050,15 +1051,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func downloadAllTapped() {
-        DispatchQueue.global().async { [weak self] in
-            guard let self, let allObjects = self.episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
+        guard let allObjects = episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
 
-            let episodes = allObjects.compactMap { ($0 as? ListEpisode)?.episode }
+        let episodes = allObjects.compactMap { ($0 as? ListEpisode)?.episode }
+        DispatchQueue.global().async {
             AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
             AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
-
-            self.downloadItems(allObjects: allObjects)
         }
+
+        downloadItems(allObjects: allObjects)
     }
 
     func showOptionsFor(season: Int) {
@@ -1191,10 +1192,8 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func queueAllTapped() {
-        DispatchQueue.global().async { [weak self] in
-            guard let self, let allObjects = self.episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
-            self.queueItems(allObjects: allObjects)
-        }
+        guard let allObjects = episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
+        queueItems(allObjects: allObjects)
     }
 
     func queueItems(allObjects: [ListItem]) {
@@ -1725,7 +1724,7 @@ extension PodcastViewController: UIPopoverPresentationControllerDelegate {
     }
 }
 
-extension PodcastViewController: SFSafariViewControllerDelegate {
+extension PodcastViewController: @preconcurrency SFSafariViewControllerDelegate {
     func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
         controller.delegate = nil
     }
