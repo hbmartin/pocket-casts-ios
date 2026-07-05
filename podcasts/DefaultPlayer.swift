@@ -1,10 +1,12 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreAudioTypes
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-class DefaultPlayer: PlaybackProtocol, Hashable {
+/// AVPlayer wrapper driven by PlaybackManager's queues plus KVO/main callbacks;
+/// mutable state is confined to that flow by design.
+final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private var audioMix: AVAudioMix?
     private var assetTrack: AVAssetTrack?
     private var assetTrackLoadTask: Task<Void, Never>?
@@ -88,8 +90,14 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         // MediaExporterResourceLoaderDelegate handles its own tracking for cache+stream,
         // but for direct AVPlayer streaming we use StreamingCellularTracker
         #if !APPCLIP && !os(tvOS)
+        // AVPlayerItem.asset is main-actor in current SDKs; bridge the read
+        let boxedAsset: PocketCastsUtils.UncheckedSendable<AVURLAsset?> = if Thread.isMainThread {
+            MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playerItem.asset as? AVURLAsset) }
+        } else {
+            DispatchQueue.main.sync { MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playerItem.asset as? AVURLAsset) } }
+        }
         if FeatureFlag.trackNetworkDataUsage.enabled,
-           let urlAsset = playerItem.asset as? AVURLAsset,
+           let urlAsset = boxedAsset.value,
            !urlAsset.url.isFileURL,
            !(urlAsset.url.scheme?.hasPrefix(MediaExporterResourceLoaderDelegate.schemePrefix) ?? false) {
             cellularTracker = StreamingCellularTracker()
@@ -176,12 +184,13 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         let timeToSeekTo = CMTimeMake(value: Int64(adjustedTime * 100), timescale: 100)
         let tolerance = CMTime.zero // in testing setting this to 1 second wasn't honoured and it would sometimes be 10 seconds out. So go for accuracy over seek speed here
 
+        let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
         player?.seek(to: timeToSeekTo, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { finished in
             if finished {
                 if !self.playing(), self.shouldKeepPlaying {
                     self.play(completion: nil)
                 }
-                completion?()
+                boxedCompletion.value?()
             }
         })
     }
@@ -324,7 +333,8 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
             }
 
             do {
-                let tracks = try await currentItem.asset.load(.tracks)
+                let boxedTrackAsset = await MainActor.run { PocketCastsUtils.UncheckedSendable(currentItem.asset) }
+                let tracks = try await boxedTrackAsset.value.load(.tracks)
                 try Task.checkCancellation()
                 await self.applyLoadedTracks(currentItem: currentItem, tracks: tracks)
             } catch is CancellationError {
@@ -718,9 +728,15 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private func startBackgroundTask() {
             guard backgroundTaskId == .invalid else { return } // already started
 
-            backgroundTaskId = UIApplication.shared.beginBackgroundTask(expirationHandler: { [weak self] in
-                self?.endBackgroundTask()
-            })
+            // Playback calls this from its own queues; bridge the UIKit call
+            let begin: @Sendable () -> UIBackgroundTaskIdentifier = { [weak self] in
+                MainActor.assumeIsolated {
+                    UIApplication.shared.beginBackgroundTask(expirationHandler: {
+                        self?.endBackgroundTask()
+                    })
+                }
+            }
+            backgroundTaskId = Thread.isMainThread ? begin() : DispatchQueue.main.sync(execute: begin)
 
             // schedule a timer to cancel the background task as soon as bufferring is done or we don't need to play anymore
             // do this on the main thread because timers require run loops
@@ -742,8 +758,14 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private func endBackgroundTask() {
             if backgroundTaskId == .invalid { return } // already cancelled
 
-            UIApplication.shared.endBackgroundTask(backgroundTaskId)
+            let task = backgroundTaskId
             backgroundTaskId = .invalid
+            let end: @Sendable () -> Void = {
+                MainActor.assumeIsolated {
+                    UIApplication.shared.endBackgroundTask(task)
+                }
+            }
+            if Thread.isMainThread { end() } else { DispatchQueue.main.sync(execute: end) }
     }
 
     // MARK: - Error Handling
@@ -897,7 +919,10 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         assetTrackLoadTask?.cancel()
         assetTrackLoadTask = nil
         loadingPlayerItem = nil
-        player?.currentItem?.audioMix = nil
+        // AVPlayerItem.audioMix is main-actor in current SDKs; bridge the clear
+        let boxedItem = PocketCastsUtils.UncheckedSendable(player?.currentItem)
+        let clearMix: @Sendable () -> Void = { MainActor.assumeIsolated { boxedItem.value?.audioMix = nil } }
+        if Thread.isMainThread { clearMix() } else { DispatchQueue.main.sync(execute: clearMix) }
         audioMix = nil
         assetTrack = nil
         durationObserver = nil
@@ -934,11 +959,15 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     }
 
     func loadEmbeddedImage(for currentItem: AVPlayerItem? = nil) {
-        guard let asset = currentItem?.asset ?? player?.currentItem?.asset, let episodeUuid, let podcastUuid else {
+        guard let episodeUuid, let podcastUuid else {
             return
         }
 
+        // Resolve the asset on the main actor, where AVPlayerItem.asset lives
+        let boxedItem = PocketCastsUtils.UncheckedSendable((currentItem, player?.currentItem))
         Task { @MainActor in
+            let (explicitItem, playerItem) = boxedItem.value
+            guard let asset = explicitItem?.asset ?? playerItem?.asset else { return }
             episodeArtwork.loadEmbeddedImage(asset: asset, podcastUuid: podcastUuid, episodeUuid: episodeUuid)
         }
     }
