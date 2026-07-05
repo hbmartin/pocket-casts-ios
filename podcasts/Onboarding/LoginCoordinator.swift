@@ -4,6 +4,7 @@ import SwiftUI
 import PocketCastsDataModel
 import PocketCastsUtils
 
+@MainActor
 class LoginCoordinator: NSObject, OnboardingModel {
     weak var navigationController: UINavigationController? = nil
     let headerImages: [LoginHeaderImage]

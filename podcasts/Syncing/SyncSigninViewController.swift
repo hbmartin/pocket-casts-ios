@@ -3,6 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
+@MainActor
 protocol SyncSigninDelegate: AnyObject {
     func signingProcessCompleted()
 }

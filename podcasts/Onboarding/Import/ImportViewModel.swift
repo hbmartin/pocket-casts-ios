@@ -189,7 +189,7 @@ extension ImportViewModel {
         task.resume()
     }
 
-    func importPodcastsFromOPML(url: URL) {
+    nonisolated func importPodcastsFromOPML(url: URL) {
         PodcastManager.shared.importPodcastsFromOpml(url)
     }
 }
