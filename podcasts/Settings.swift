@@ -6,7 +6,8 @@ import PocketCastsUtils
 
 class Settings: NSObject {
 
-    static var debugPlaylistsLimit = Constants.Limits.maxFilterItems
+    // Developer-menu debug knob; written only from the debug UI
+    nonisolated(unsafe) static var debugPlaylistsLimit = Constants.Limits.maxFilterItems
 
     static var isLockScreenScrubbingDisabled: Bool {
         set {
@@ -37,7 +38,15 @@ class Settings: NSObject {
     // MARK: - Library Type
 
     static let podcastLibraryGridTypeKey = "SJPodcastLibraryGridType"
-    private static var cachedlibrarySortType: LibraryType?
+    // The caches below are read from list-building code on background queues and
+    // written from settings UI on main; each access is lock-guarded.
+    private static let cacheLock = NSLock()
+
+    nonisolated(unsafe) private static var _cachedlibrarySortType: LibraryType?
+    private static var cachedlibrarySortType: LibraryType? {
+        get { cacheLock.withLock { _cachedlibrarySortType } }
+        set { cacheLock.withLock { _cachedlibrarySortType = newValue } }
+    }
     class func setLibraryType(_ type: LibraryType) {
         if FeatureFlag.newSettingsStorage.enabled {
             SettingsStore.appSettings.gridLayout = type
@@ -214,7 +223,11 @@ class Settings: NSObject {
     // MARK: - Primary Row Action
 
     static let primaryRowActionKey = "SJRowAction"
-    private static var cachedPrimaryRowAction: PrimaryRowAction? // we cache this because it's used in lists
+    nonisolated(unsafe) private static var _cachedPrimaryRowAction: PrimaryRowAction?
+    private static var cachedPrimaryRowAction: PrimaryRowAction? {
+        get { cacheLock.withLock { _cachedPrimaryRowAction } }
+        set { cacheLock.withLock { _cachedPrimaryRowAction = newValue } }
+    }
     class func primaryRowAction() -> PrimaryRowAction {
         if FeatureFlag.newSettingsStorage.enabled {
             return SettingsStore.appSettings.rowAction
@@ -264,7 +277,11 @@ class Settings: NSObject {
     // MARK: - Podcast Grouping Default
 
     static let podcastGroupingDefaultKey = "SJDefaultPodcastGrouping"
-    private static var cachedPodcastGrouping: PodcastGrouping?
+    nonisolated(unsafe) private static var _cachedPodcastGrouping: PodcastGrouping?
+    private static var cachedPodcastGrouping: PodcastGrouping? {
+        get { cacheLock.withLock { _cachedPodcastGrouping } }
+        set { cacheLock.withLock { _cachedPodcastGrouping = newValue } }
+    }
     class func defaultPodcastGrouping() -> PodcastGrouping {
         guard FeatureFlag.newSettingsStorage.enabled == false else {
             return SettingsStore.appSettings.episodeGrouping
@@ -292,7 +309,11 @@ class Settings: NSObject {
     // MARK: - Primary Up Next Swipe Action
 
     static let primaryUpNextSwipeActionKey = "SJUpNextSwipe"
-    private static var cachedPrimaryUpNextSwipeAction: PrimaryUpNextSwipeAction? // we cache this because it's used in lists
+    nonisolated(unsafe) private static var _cachedPrimaryUpNextSwipeAction: PrimaryUpNextSwipeAction?
+    private static var cachedPrimaryUpNextSwipeAction: PrimaryUpNextSwipeAction? {
+        get { cacheLock.withLock { _cachedPrimaryUpNextSwipeAction } }
+        set { cacheLock.withLock { _cachedPrimaryUpNextSwipeAction = newValue } }
+    }
     class func primaryUpNextSwipeAction() -> PrimaryUpNextSwipeAction {
         guard FeatureFlag.newSettingsStorage.enabled == false else {
             return SettingsStore.appSettings.upNextSwipe
@@ -1530,7 +1551,15 @@ class Settings: NSObject {
 
 extension Settings {
     static func trackValueChanged(_ event: AnalyticsEvent, value: Any) {
-        Analytics.track(event, properties: ["value": value])
+        let promoted: any Sendable = switch value {
+        case let v as String: v
+        case let v as Int: v
+        case let v as Double: v
+        case let v as Bool: v
+        case let v as AnalyticsDescribable: v.analyticsDescription
+        default: String(describing: value)
+        }
+        Analytics.track(event, properties: ["value": promoted])
     }
 
     static func trackValueToggled(_ event: AnalyticsEvent, enabled: Bool) {
