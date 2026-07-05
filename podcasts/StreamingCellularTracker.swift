@@ -13,7 +13,9 @@ import PocketCastsUtils
 ///
 /// DB writes happen only on connection type changes and when tracking stops (not during streaming).
 /// An access log observer keeps an in-memory byte count up to date so that flushes are accurate.
-class StreamingCellularTracker {
+/// Byte counters and connection state are confined to `monitorQueue`
+/// (the path handler runs there and the access-log observer hops to it).
+final class StreamingCellularTracker: @unchecked Sendable {
     private var monitor: NWPathMonitor?
     private let monitorQueue = DispatchQueue(label: "com.pocketcasts.StreamingCellularTracker")
 

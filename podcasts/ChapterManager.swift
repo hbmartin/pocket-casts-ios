@@ -130,8 +130,12 @@ class ChapterManager {
     }
 
     func parseChapters(episode: BaseEpisode, duration: TimeInterval) {
-        Task.detached { [weak self] in
-            await self?.parseChapters(episode: episode, duration: duration)
+        // The manager and episode cross into the parse task boxed; parsing is
+        // bounded, so briefly retaining the manager is harmless
+        let boxed = PocketCastsUtils.UncheckedSendable((self, episode))
+        Task.detached {
+            let (manager, episode) = boxed.value
+            await manager.parseChapters(episode: episode, duration: duration)
         }
     }
 
@@ -143,12 +147,19 @@ class ChapterManager {
     }
 
     private func parseLocalAndRemoteChapters(for episode: BaseEpisode, duration: TimeInterval) async throws {
-        // Parse chapters from the file and request external chapters
-        async let fileChaptersAsync = loadChapters(for: episode, duration: duration)
+        // Parse chapters from the file and request external chapters. The child
+        // tasks take their non-Sendable inputs boxed
+        let boxed = PocketCastsUtils.UncheckedSendable((self, episode))
+        let boxedCoordinator = PocketCastsUtils.UncheckedSendable(showInfoCoordinator)
+        let podcastUuid = episode.parentIdentifier()
+        let episodeUuid = episode.uuid
 
-        async let externalChaptersAsync = await showInfoCoordinator.loadChapters(
-            podcastUuid: episode.parentIdentifier(),
-            episodeUuid: episode.uuid
+        async let fileChaptersAsync = Self.loadFileChapters(boxed, duration: duration)
+
+        async let externalChaptersAsync = Self.loadExternalChapters(
+            boxedCoordinator,
+            podcastUuid: podcastUuid,
+            episodeUuid: episodeUuid
         )
 
         var chapters: [ChapterInfo]
@@ -178,6 +189,18 @@ class ChapterManager {
         if lastEpisodeUuid == episode.uuid {
             handleChaptersLoaded(chapters, for: episode)
         }
+    }
+
+    nonisolated private static func loadFileChapters(_ boxed: PocketCastsUtils.UncheckedSendable<(ChapterManager, BaseEpisode)>, duration: TimeInterval) async -> [ChapterInfo] {
+        let (manager, episode) = boxed.value
+        return await manager.loadChapters(for: episode, duration: duration)
+    }
+
+    nonisolated private static func loadExternalChapters(_ boxedCoordinator: PocketCastsUtils.UncheckedSendable<any ShowInfoCoordinating>, podcastUuid: String, episodeUuid: String) async throws -> (metadata: [Episode.Metadata.EpisodeChapter]?, podcastIndex: [PodcastIndexChapter]?, generated: [GeneratedChapter]?) {
+        try await boxedCoordinator.value.loadChapters(
+            podcastUuid: podcastUuid,
+            episodeUuid: episodeUuid
+        )
     }
 
     private func loadChapters(for episode: BaseEpisode, duration: TimeInterval) async -> [ChapterInfo] {
