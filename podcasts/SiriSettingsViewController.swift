@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-class SiriSettingsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource, INUIAddVoiceShortcutViewControllerDelegate, INUIEditVoiceShortcutViewControllerDelegate {
+class SiriSettingsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource, @preconcurrency INUIAddVoiceShortcutViewControllerDelegate, @preconcurrency INUIEditVoiceShortcutViewControllerDelegate {
     @IBOutlet var tableView: UITableView! {
         didSet {
             tableView.register(UINib(nibName: "SiriShortcutEnabledCell", bundle: nil), forCellReuseIdentifier: enabledCellId)
@@ -191,26 +191,30 @@ class SiriSettingsViewController: PCViewController, UITableViewDelegate, UITable
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
         INVoiceShortcutCenter.shared.getAllVoiceShortcuts { allVoiceShortcuts, error in
+            // The completion arrives off-main; the shortcut list is handed over wholesale and
+            // all state mutation happens on the main actor
+            let shortcuts = UncheckedSendable(allVoiceShortcuts)
+            let fetchError = UncheckedSendable(error)
+            Task { @MainActor in
+                let allVoiceShortcuts = shortcuts.value
+                let error = fetchError.value
 
-            if allVoiceShortcuts != nil, error == nil {
-                self.enabledShortcuts = allVoiceShortcuts
-                for voiceShortcut in self.enabledShortcuts {
-                    if SiriShortcutsManager.shared.isDefaultSuggestion(voiceShortcut: voiceShortcut) {
-                        self.suggestedShortcuts.removeAll(where: { $0.intent?.suggestedInvocationPhrase == voiceShortcut.shortcut.intent?.suggestedInvocationPhrase })
+                if allVoiceShortcuts != nil, error == nil {
+                    self.enabledShortcuts = allVoiceShortcuts
+                    for voiceShortcut in self.enabledShortcuts {
+                        if SiriShortcutsManager.shared.isDefaultSuggestion(voiceShortcut: voiceShortcut) {
+                            self.suggestedShortcuts.removeAll(where: { $0.intent?.suggestedInvocationPhrase == voiceShortcut.shortcut.intent?.suggestedInvocationPhrase })
+                        }
                     }
-                }
-                DispatchQueue.main.async {
                     self.activityIndicator.stopAnimating()
                     self.reloadData()
                     self.errorView.isHidden = true
-                }
-            } else {
-                DispatchQueue.main.async {
+                } else {
                     self.activityIndicator.stopAnimating()
                     self.errorView.isHidden = false
-                }
-                if let error {
-                    FileLog.shared.addMessage("Failed INVoiceShortcutCenter.getAllVoiceShortcuts with error \(error.localizedDescription)")
+                    if let error {
+                        FileLog.shared.addMessage("Failed INVoiceShortcutCenter.getAllVoiceShortcuts with error \(error.localizedDescription)")
+                    }
                 }
             }
         }

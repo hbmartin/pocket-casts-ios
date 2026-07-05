@@ -205,48 +205,51 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
             loadingIndicator.startAnimating()
         }
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Snapshot main-actor state before hopping to the background queue; the
+        // playlist arrays cross back boxed because ListPlaylist is not Sendable
+        let oldDataBox = PocketCastsUtils.UncheckedSendable(listPlaylistItems)
+        let isFirstLoad = firstTimeLoading
+
+        Task { [weak self] in
+            let newDataBox = await Self.loadListPlaylists()
             guard let self else { return }
 
-            let newData = DataManager.sharedManager.allPlaylists(includeDeleted: false).map { ListPlaylist(playlist: $0) }
+            let oldData = oldDataBox.value
+            let newData = newDataBox.value
 
-            let oldData = self.listPlaylistItems
-            let isFirstLoad = self.firstTimeLoading
+            self.newFilterButton.isHidden = false
+            self.loadingIndicator.stopAnimating()
 
             if oldData.isContentEqual(to: newData) {
-                DispatchQueue.main.async {
-                    self.newFilterButton.isHidden = false
-                    self.loadingIndicator.stopAnimating()
-                    self.firstTimeLoading = false
-                }
+                self.firstTimeLoading = false
                 return
             }
 
-            DispatchQueue.main.async {
-                self.newFilterButton.isHidden = false
-                self.loadingIndicator.stopAnimating()
-
-                if isFirstLoad {
-                    self.listPlaylistItems = newData
-                    self.filtersTable.reloadData()
-                    self.firstTimeLoading = false
-                } else {
-                    let changeSet = StagedChangeset(source: oldData, target: newData)
-                    do {
-                        try SJCommonUtils.catchException { [weak self] in
-                            self?.filtersTable.reload(using: changeSet, with: .fade) { [weak self] newData in
-                                self?.listPlaylistItems = newData
-                            }
+            if isFirstLoad {
+                self.listPlaylistItems = newData
+                self.filtersTable.reloadData()
+                self.firstTimeLoading = false
+            } else {
+                let changeSet = StagedChangeset(source: oldData, target: newData)
+                do {
+                    try SJCommonUtils.catchException { [weak self] in
+                        self?.filtersTable.reload(using: changeSet, with: .fade) { [weak self] newData in
+                            self?.listPlaylistItems = newData
                         }
-                    } catch {
-                        if let data = changeSet.last?.data {
-                            self.listPlaylistItems = data
-                        }
-                        self.filtersTable.reloadData()
                     }
+                } catch {
+                    if let data = changeSet.last?.data {
+                        self.listPlaylistItems = data
+                    }
+                    self.filtersTable.reloadData()
                 }
             }
         }
+    }
+
+    nonisolated private static func loadListPlaylists() async -> PocketCastsUtils.UncheckedSendable<[ListPlaylist]> {
+        let playlists = DataManager.sharedManager.allPlaylists(includeDeleted: false)
+        return PocketCastsUtils.UncheckedSendable(playlists.map { ListPlaylist(playlist: $0) })
     }
 
     private func showOnboardingScreenIfNeeded() {

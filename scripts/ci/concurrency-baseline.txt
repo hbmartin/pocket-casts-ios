@@ -113,11 +113,6 @@ podcasts/Common Components/ExpandableLabel.swift: warning: main actor-isolated p
 podcasts/Common Components/ExpandableLabel.swift: warning: main actor-isolated property 'numberOfTouchesRequired' can not be mutated from a nonisolated context
 podcasts/Common Components/ExplicitBadge.swift: warning: static property 'imageCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Common Components/Feature Tour/TourViewController.swift: warning: conformance of 'TourViewController' to protocol 'TourDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Common Components/FullSyncRefreshController.swift: warning: call to main actor-isolated instance method 'set(text:)' in a synchronous nonisolated context
-podcasts/Common Components/FullSyncRefreshController.swift: warning: capture of 'self' with non-Sendable type 'FullSyncRefreshController?' in a '@Sendable' closure
-podcasts/Common Components/FullSyncRefreshController.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Common Components/FullSyncRefreshController.swift: warning: main actor-isolated property 'perform' can not be mutated from a nonisolated context
-podcasts/Common Components/FullSyncRefreshController.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/MultiSelect/MultiSelectActionCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
 podcasts/Common Components/MultiSelect/MultiSelectActionCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
 podcasts/Common Components/MultiSelect/MultiSelectActionCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
@@ -137,11 +132,6 @@ podcasts/Common Components/SmartInvertImageView.swift: warning: main actor-isola
 podcasts/Common Components/TinyPageControl.swift: warning: call to main actor-isolated instance method 'updateForTheme()' in a synchronous nonisolated context
 podcasts/Common Components/TinyPageControl.swift: warning: main actor-isolated property 'accessibilityTraits' can not be mutated from a nonisolated context
 podcasts/Common Components/TinyPageControl.swift: warning: main actor-isolated property 'isAccessibilityElement' can not be mutated from a nonisolated context
-podcasts/Common Components/UploadedFilesRefreshController.swift: warning: call to main actor-isolated instance method 'set(text:)' in a synchronous nonisolated context
-podcasts/Common Components/UploadedFilesRefreshController.swift: warning: capture of 'self' with non-Sendable type 'UploadedFilesRefreshController?' in a '@Sendable' closure
-podcasts/Common Components/UploadedFilesRefreshController.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Common Components/UploadedFilesRefreshController.swift: warning: main actor-isolated property 'perform' can not be mutated from a nonisolated context
-podcasts/Common Components/UploadedFilesRefreshController.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/View Controllers/InsetAdjuster.swift: warning: call to main actor-isolated instance method 'updateContentInset(multiSelectEnabled:ignoreMiniPlayer:)' in a synchronous nonisolated context
 podcasts/Common Components/View Controllers/PCTableViewController.swift: warning: call to main actor-isolated initializer 'init(nibName:bundle:)' in a synchronous nonisolated context
 podcasts/Common Components/View Controllers/PCViewController.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
@@ -326,11 +316,6 @@ podcasts/PlaylistMetadataLoader/PlaylistCacheInvalidationCoordinator.swift: warn
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: warning: passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader+Dependency.swift: warning: static property 'liveValue' is not concurrency-safe because non-'Sendable' type 'PlaylistCacheInvalidationCoordinator' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader+Dependency.swift: warning: type 'PlaylistCacheInvalidationCoordinator' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/PlaylistsViewController.swift: warning: capture of 'newData' with non-Sendable type '[ListPlaylist]' in a '@Sendable' closure
-podcasts/PlaylistsViewController.swift: warning: capture of 'oldData' with non-Sendable type '[ListPlaylist]' in a '@Sendable' closure
-podcasts/PlaylistsViewController.swift: warning: conformance of 'PlaylistsViewController' to protocol 'FilterCreatedDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/PlaylistsViewController.swift: warning: main actor-isolated property 'firstTimeLoading' can not be referenced from a Sendable closure
-podcasts/PlaylistsViewController.swift: warning: main actor-isolated property 'listPlaylistItems' can not be referenced from a Sendable closure
 podcasts/PocketCastsAppIntents.swift: warning: static property 'title' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PodcastAppEntity.swift: warning: static property 'defaultQuery' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PodcastAppEntity.swift: warning: static property 'title' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
@@ -393,11 +378,6 @@ podcasts/ShortcutManager.swift: warning: capture of 'self' with non-Sendable typ
 podcasts/ShortcutManager.swift: warning: capture of 'shortcutItems' with non-Sendable type '[UIMutableApplicationShortcutItem]' in a '@Sendable' closure
 podcasts/ShowNotesPlayerItemViewController.swift: warning: conformance of 'ShowNotesPlayerItemViewController' to protocol 'SFSafariViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ShowNotesPlayerItemViewController.swift: warning: main actor-isolated property 'navigationDelegate' can not be mutated from a nonisolated context
-podcasts/SiriSettingsViewController.swift: warning: conformance of 'SiriSettingsViewController' to protocol 'INUIAddVoiceShortcutViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/SiriSettingsViewController.swift: warning: conformance of 'SiriSettingsViewController' to protocol 'INUIEditVoiceShortcutViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'enabledShortcuts' can not be mutated from a Sendable closure
-podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'enabledShortcuts' can not be referenced from a Sendable closure
-podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'suggestedShortcuts' can not be mutated from a Sendable closure
 podcasts/SiriShortcutsManager.swift: warning: capture of 'completion' with non-Sendable type '(INVoiceShortcut?) -> Void' in a '@Sendable' closure
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/SocialsHelper.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context

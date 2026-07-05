@@ -7,6 +7,7 @@ import PocketCastsServer
 /// dismiss the control when the sync finishes.
 ///
 /// The owner is responsible for assigning `refreshControl` to a scroll view.
+@MainActor
 final class FullSyncRefreshController {
     let refreshControl = CustomRefreshControl()
 

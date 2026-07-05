@@ -8,6 +8,7 @@ import PocketCastsServer
 ///
 /// The owner is responsible for assigning `refreshControl` to a scroll view
 /// and customising its appearance.
+@MainActor
 final class UploadedFilesRefreshController {
     let refreshControl = CustomRefreshControl()
 
