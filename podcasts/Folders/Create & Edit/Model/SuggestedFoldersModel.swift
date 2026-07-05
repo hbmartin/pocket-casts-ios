@@ -12,6 +12,7 @@ struct SuggestedFolder: Identifiable, Codable {
     let podcastUuids: [String]
 }
 
+@MainActor
 class SuggestedFoldersModel: ObservableObject {
 
     @Published var folders: [SuggestedFolder] = []
