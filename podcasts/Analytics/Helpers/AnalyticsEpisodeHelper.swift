@@ -2,8 +2,8 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-class AnalyticsEpisodeHelper: AnalyticsCoordinator {
-    static var shared = AnalyticsEpisodeHelper()
+class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
+    static let shared = AnalyticsEpisodeHelper()
 
     // Internally track the episode UUIDs that the user is downloading or uploadiung
     private var episodeDownloadQueue: Set<String> = []

@@ -62,7 +62,7 @@ extension AppLifecycleAnalytics {
     }
 
     func didEnterBackground() {
-        var properties: [String: Any] = [:]
+        var properties: [String: any Sendable] = [:]
 
         // Calculate how long the app was opened for
         if let openTime = applicationOpenedTime {
@@ -85,6 +85,7 @@ extension AppLifecycleAnalytics {
     }
 
     /// Checks whether we need to track an app install or app update
+    @MainActor
     func checkApplicationInstalledOrUpgraded() -> AppInstallState? {
         // Don't check for install or upgrade if protected data isn't available yet
         //

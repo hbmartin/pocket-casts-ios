@@ -121,12 +121,12 @@ class AnalyticsHelper {
     }
 
     class func adTapped(categoryName: String, region: String, podcastUUID: String, categoryID: Int) {
-        let properties: [String: Any] = ["name": categoryName, "region": region, "id": categoryID, "podcast_id": podcastUUID]
+        let properties: [String: any Sendable] = ["name": categoryName, "region": region, "id": categoryID, "podcast_id": podcastUUID]
         Analytics.track(.discoverAdCategoryTapped, properties: properties)
     }
 
     class func adSubscribed(categoryName: String, region: String, podcastUUID: String, categoryID: Int) {
-        let properties: [String: Any] = ["name": categoryName, "region": region, "id": categoryID, "podcast_id": podcastUUID]
+        let properties: [String: any Sendable] = ["name": categoryName, "region": region, "id": categoryID, "podcast_id": podcastUUID]
         Analytics.track(.discoverAdCategorySubscribed, properties: properties)
     }
 

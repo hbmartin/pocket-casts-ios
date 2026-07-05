@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import PocketCastsDataModel
+import PocketCastsUtils
 
 @MainActor
 protocol AnalyticsSourceProvider {
@@ -64,9 +65,16 @@ enum AnalyticsSource: String, AnalyticsDescribable {
     var analyticsDescription: String { rawValue }
 }
 
-class AnalyticsCoordinator {
+/// Events fire from any thread; the one-shot source hint is lock-guarded.
+class AnalyticsCoordinator: @unchecked Sendable {
     /// Sometimes the playback source can't be inferred, just inform it here
-    var currentSource: AnalyticsSource?
+    var currentSource: AnalyticsSource? {
+        get { currentSourceLock.withLock { _currentSource } }
+        set { currentSourceLock.withLock { _currentSource = newValue } }
+    }
+
+    private let currentSourceLock = NSLock()
+    private var _currentSource: AnalyticsSource?
 
     private var currentEpisodeIsVideo: Bool {
         PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false
@@ -97,14 +105,26 @@ class AnalyticsCoordinator {
     func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
         // Only dispatch async on the main thread if needed
         guard Thread.isMainThread else {
+            let boxed = PocketCastsUtils.UncheckedSendable(properties)
             DispatchQueue.main.async {
-                self.track(event, properties: properties)
+                self.track(event, properties: boxed.value)
             }
             return
         }
 
-        let defaultProperties: [String: Any] = ["source": currentAnalyticsSource, "content_type": currentEpisodeIsVideo ? "video" : "audio"]
-        let mergedProperties = defaultProperties.merging(properties ?? [:]) { current, _ in current }
+        // Default keys win, matching the original merging behaviour; values are
+        // strings/numbers/AnalyticsDescribable in practice, with a string fallback
+        var mergedProperties: [String: any Sendable] = ["source": currentAnalyticsSource, "content_type": currentEpisodeIsVideo ? "video" : "audio"]
+        for (key, value) in properties ?? [:] where mergedProperties[key] == nil {
+            switch value {
+            case let v as String: mergedProperties[key] = v
+            case let v as Int: mergedProperties[key] = v
+            case let v as Double: mergedProperties[key] = v
+            case let v as Bool: mergedProperties[key] = v
+            case let v as AnalyticsDescribable: mergedProperties[key] = v.analyticsDescription
+            default: mergedProperties[key] = String(describing: value)
+            }
+        }
         Analytics.track(event, properties: mergedProperties)
     }
 
