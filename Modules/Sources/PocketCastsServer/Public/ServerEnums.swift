@@ -48,7 +48,7 @@ public enum HeadphoneControl: Int32, Codable {
 }
 
 /// Android uses different numeric values for these, thus the specific numbers specified here. See `Old` for the original values we used.
-public enum ThemeType: Int32, CaseIterable, Codable {
+public enum ThemeType: Int32, CaseIterable, Codable, Sendable {
     case light = 0
     case dark = 1
     case extraDark = 2

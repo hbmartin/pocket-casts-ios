@@ -33,14 +33,6 @@ PocketCastsTests/Tests/Utilities/DownloadManagerRetryTests.swift: warning: passi
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateErrorHandlingTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/AppDelegate.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'BackgroundTasks'
-podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkDefaults()' in a synchronous nonisolated context
-podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkIfRestoreCleanupRequired()' in a synchronous nonisolated context
-podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'logActiveDownloadTasks()' in a synchronous nonisolated context
-podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'logStaleDownloads()' in a synchronous nonisolated context
-podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'postLaunchSetup()' in a synchronous nonisolated context
-podcasts/AppDelegate.swift: warning: capture of 'completionHandler' with non-Sendable type '(UIBackgroundFetchResult) -> Void' in a '@Sendable' closure
-podcasts/AppDelegate.swift: warning: capture of 'task' with non-Sendable type 'BGTask' in a '@Sendable' closure
 podcasts/AudioPlayTask.swift: warning: capture of 'self' with non-Sendable type 'AudioPlayTask?' in a '@Sendable' closure
 podcasts/AudioReadTask.swift: warning: capture of 'completion' with non-Sendable type '((Bool) -> Void)?' in a '@Sendable' closure
 podcasts/AudioReadTask.swift: warning: capture of 'self' with non-Sendable type 'AudioReadTask' in a '@Sendable' closure

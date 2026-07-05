@@ -1,4 +1,4 @@
-import BackgroundTasks
+@preconcurrency import BackgroundTasks
 import Capture
 import Foundation
 import PocketCastsDataModel
@@ -152,8 +152,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // This method will be invoked even if the application was launched or resumed because of the remote notification. The respective delegate methods will be invoked first. Note that this behavior is in contrast to application:didReceiveRemoteNotification:, which is not called in those cases, and which will not be invoked if this method is implemented.
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        let handler = PocketCastsUtils.UncheckedSendable(completionHandler)
         RefreshManager.shared.refreshPodcasts(completion: { refreshFetchResult in
-            completionHandler(self.convertRefreshResult(result: refreshFetchResult))
+            handler.value(self.convertRefreshResult(result: refreshFetchResult))
         })
         badgeHelper.updateBadge()
     }
@@ -233,7 +234,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func setupBackgroundRefresh() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: Constants.Values.refreshTaskId, using: nil) { task in
             FileLog.shared.addMessage("Background refresh called")
-            self.handleAppRefresh(task: task)
+            let boxedTask = PocketCastsUtils.UncheckedSendable(task)
+            Task { @MainActor in
+                self.handleAppRefresh(task: boxedTask.value)
+            }
         }
     }
 
@@ -255,13 +259,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             FileLog.shared.addMessage("Background refresh timed out")
         }
 
+        let boxedTask = PocketCastsUtils.UncheckedSendable(task)
         RefreshManager.shared.refreshPodcasts(completion: { refreshFetchResult in
-            task.setTaskCompleted(success: refreshFetchResult != .failed)
+            boxedTask.value.setTaskCompleted(success: refreshFetchResult != .failed)
         })
         badgeHelper.updateBadge()
     }
 
-    private func postLaunchSetup() {
+    nonisolated private func postLaunchSetup() {
         if !UserDefaults.standard.bool(forKey: "CreatedDefPlaylistsV2") {
             PlaylistManager.createDefaultPlaylists()
             UserDefaults.standard.set(true, forKey: "CreatedDefPlaylistsV2")
@@ -271,7 +276,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
     }
 
-    private func checkIfRestoreCleanupRequired() {
+    nonisolated private func checkIfRestoreCleanupRequired() {
         let dataManager = DataManager.sharedManager
 
         // find the oldest episode in our database listed as being downloaded

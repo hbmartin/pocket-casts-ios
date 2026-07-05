@@ -4,7 +4,7 @@ import PocketCastsServer
 import PocketCastsUtils
 
 extension AppDelegate {
-    func checkDefaults() {
+    nonisolated func checkDefaults() {
         let defaults = UserDefaults.standard
         let dataManager = DataManager.sharedManager
 
@@ -12,7 +12,13 @@ extension AppDelegate {
         // This prevents the v5Run migration from incorrectly clearing tokens when the app
         // launches in the background before the device has been unlocked after a reboot.
         if FeatureFlag.checkProtectedDataBeforeMigration.enabled {
-            guard UIApplication.shared.isProtectedDataAvailable else {
+            // This runs off-main during launch; bridge the UIKit read
+            let protectedDataAvailable = if Thread.isMainThread {
+                MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable }
+            } else {
+                DispatchQueue.main.sync { MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable } }
+            }
+            guard protectedDataAvailable else {
                 FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
                 return
             }
@@ -90,7 +96,14 @@ extension AppDelegate {
             // we didn't previously need a default value for this key, but due to changes in this release we do, otherwise it will default to the first item in the ThemeType enum
             let preferredDarkTheme = Theme.preferredDarkTheme()
             if preferredDarkTheme.rawValue == 0 {
-                Theme.setPreferredDarkTheme(.dark, systemIsDark: false)
+                // Theme writes are main-actor; this migration can run off-main during launch
+                if Thread.isMainThread {
+                    MainActor.assumeIsolated { Theme.setPreferredDarkTheme(.dark, systemIsDark: false) }
+                } else {
+                    DispatchQueue.main.sync {
+                        MainActor.assumeIsolated { Theme.setPreferredDarkTheme(.dark, systemIsDark: false) }
+                    }
+                }
             }
         }
         performUpdateIfRequired(updateKey: "FoldersInitialRun") {
@@ -146,7 +159,7 @@ extension AppDelegate {
         defaults.synchronize()
     }
 
-    private func performUpdateIfRequired(updateKey: String, update: () -> Void) {
+    nonisolated private func performUpdateIfRequired(updateKey: String, update: () -> Void) {
         if UserDefaults.standard.bool(forKey: updateKey) { return } // already performed this update
 
         update()
