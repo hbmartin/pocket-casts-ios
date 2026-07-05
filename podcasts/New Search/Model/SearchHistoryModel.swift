@@ -3,7 +3,7 @@ import PocketCastsServer
 import PocketCastsDataModel
 import Combine
 
-struct SearchHistoryEntry: Codable, Hashable {
+struct SearchHistoryEntry: Codable, Hashable, Sendable {
     var searchTerm: String?
     var episode: EpisodeSearchResult?
     var podcast: PodcastFolderSearchResult?

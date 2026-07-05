@@ -75,7 +75,7 @@ class SearchAnalyticsHelper: ObservableObject {
     }
 }
 
-protocol AnalyticsSearchResultItem: AnalyticsDescribable {
+protocol AnalyticsSearchResultItem: AnalyticsDescribable, Sendable {
     var uuid: String { get }
 }
 
