@@ -61,17 +61,6 @@ podcasts/EffectsPlayer.swift: warning: capture of 'readOperation' with non-Senda
 podcasts/EffectsPlayer.swift: warning: capture of 'self' with non-Sendable type 'EffectsPlayer?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/FadeOutManager.swift: warning: capture of 'self' with non-Sendable type 'FadeOutManager?' in a '@Sendable' closure
-podcasts/PlaybackManager.swift: warning: capture of 'completion' with non-Sendable type '((Bool) -> Void)?' in a '@Sendable' closure
-podcasts/PlaybackManager.swift: warning: capture of 'player' with non-Sendable type 'AnyHashable' in a '@Sendable' closure
-podcasts/PlaybackManager.swift: warning: capture of 'player' with non-Sendable type 'AnyHashable' in an isolated closure
-podcasts/PlaybackManager.swift: warning: capture of 'self' with non-Sendable type 'PlaybackManager' in a '@Sendable' closure
-podcasts/PlaybackManager.swift: warning: capture of 'self' with non-Sendable type 'PlaybackManager?' in a '@Sendable' closure
-podcasts/PlaybackManager.swift: warning: capture of 'self' with non-Sendable type 'PlaybackManager?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-podcasts/PlaybackManager.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/PlaybackManager.swift: warning: main actor-isolated property 'applicationState' can not be referenced from a nonisolated context
-podcasts/PlaybackManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/PlaybackManager.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/PlaybackManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PlaybackManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'avPlayer' can not be referenced from a Sendable closure
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'clipTime' can not be referenced from a Sendable closure
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'currentTime' can not be mutated from a Sendable closure
