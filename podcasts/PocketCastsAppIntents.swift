@@ -34,7 +34,7 @@ func requireValidSleepTimerDuration(_ minutes: Int) throws {
 }
 
 struct ResumePlaybackIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Resume"
+    static let title: LocalizedStringResource = "Resume"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
@@ -45,7 +45,7 @@ struct ResumePlaybackIntent: AudioPlaybackIntent {
 }
 
 struct PausePlaybackIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Pause"
+    static let title: LocalizedStringResource = "Pause"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
@@ -56,7 +56,7 @@ struct PausePlaybackIntent: AudioPlaybackIntent {
 }
 
 struct PlayUpNextIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Play Up Next"
+    static let title: LocalizedStringResource = "Play Up Next"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
@@ -67,7 +67,7 @@ struct PlayUpNextIntent: AudioPlaybackIntent {
 }
 
 struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Play a Suggested Episode"
+    static let title: LocalizedStringResource = "Play a Suggested Episode"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
@@ -78,7 +78,7 @@ struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
 }
 
 struct NextChapterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Next Chapter"
+    static let title: LocalizedStringResource = "Next Chapter"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
@@ -89,7 +89,7 @@ struct NextChapterIntent: AudioPlaybackIntent {
 }
 
 struct PreviousChapterIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Previous Chapter"
+    static let title: LocalizedStringResource = "Previous Chapter"
     static var openAppWhenRun: Bool { false }
 
     @MainActor
@@ -100,7 +100,7 @@ struct PreviousChapterIntent: AudioPlaybackIntent {
 }
 
 struct SetSleepTimerIntent: AppIntent {
-    static var title: LocalizedStringResource = "Set Sleep Timer"
+    static let title: LocalizedStringResource = "Set Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Minutes", inclusiveRange: (lowerBound: 1, upperBound: 300))
@@ -123,7 +123,7 @@ struct SetSleepTimerIntent: AppIntent {
 }
 
 struct ExtendSleepTimerIntent: AppIntent {
-    static var title: LocalizedStringResource = "Extend Sleep Timer"
+    static let title: LocalizedStringResource = "Extend Sleep Timer"
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Minutes", default: 5, inclusiveRange: (lowerBound: 1, upperBound: 300))

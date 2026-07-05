@@ -113,5 +113,5 @@ struct TranscriptModel: Sendable {
 
 extension NSAttributedString.Key {
 
-    static var transcriptSpeaker = NSAttributedString.Key("TranscriptSpeaker")
+    static let transcriptSpeaker = NSAttributedString.Key("TranscriptSpeaker")
 }
