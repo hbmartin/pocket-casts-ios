@@ -3,6 +3,7 @@ import PocketCastsUtils
 import SafariServices
 import UIKit
 
+@MainActor
 struct URLHelper {
     enum InAppBrowserContext: Equatable {
         case trustedDocumentation
