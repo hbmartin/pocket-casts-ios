@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 
 /// Class to adjust scroll insets and scroll indicator depending of mini-player visibility and multi-select being enabled
+@MainActor
 class InsetAdjuster {
 
     let ignoreMiniPlayer: Bool

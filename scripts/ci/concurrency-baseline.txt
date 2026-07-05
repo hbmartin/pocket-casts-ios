@@ -52,8 +52,6 @@ podcasts/ChapterManager.swift: warning: passing closure as a 'sending' parameter
 podcasts/ChapterManager.swift: warning: sending 'episode' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/MultiSelect/MultiSelectHelper.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Common Components/View Controllers/InsetAdjuster.swift: warning: call to main actor-isolated instance method 'updateContentInset(multiSelectEnabled:ignoreMiniPlayer:)' in a synchronous nonisolated context
-podcasts/Common Components/View Controllers/PCTableViewController.swift: warning: call to main actor-isolated initializer 'init(nibName:bundle:)' in a synchronous nonisolated context
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: capture of non-Sendable type 'Style.Type' in an isolated closure; this is an error in the Swift 6 language mode
 podcasts/Common SwiftUI/Toast/ToastViewModel.swift: warning: capture of 'self' with non-Sendable type 'ToastViewModel?' in a '@Sendable' closure
 podcasts/Debounce.swift: warning: capture of 'callback' with non-Sendable type '() -> Void' in a '@Sendable' closure

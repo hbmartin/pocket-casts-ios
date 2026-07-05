@@ -6,6 +6,7 @@ import UIKit
 ///
 protocol ReusableTableCell {
     static var reuseIdentifier: String { get }
+    @MainActor
     static var nib: UINib? { get }
 }
 
@@ -14,6 +15,7 @@ extension ReusableTableCell {
         String(describing: Self.self)
     }
 
+    @MainActor
     static var nib: UINib? {
         .init(nibName: reuseIdentifier, bundle: nil)
     }
