@@ -47,7 +47,7 @@ class AnalyticsPlaybackHelperTests: XCTestCase {
 
 // MARK: - AnalyticsPlaybackHelper Mock
 
-private class AnalyticsPlaybackHelperMock: AnalyticsPlaybackHelper {
+private class AnalyticsPlaybackHelperMock: AnalyticsPlaybackHelper, @unchecked Sendable {
     var lastEvent: TrackEvent?
 
     override func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {

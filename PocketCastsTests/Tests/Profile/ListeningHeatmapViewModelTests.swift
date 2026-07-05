@@ -4,11 +4,16 @@ import Combine
 @testable import PocketCastsDataModel
 @testable import podcasts
 
+@MainActor
 final class ListeningHeatmapViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable> = []
 
     override func tearDown() {
-        cancellables.removeAll()
+        // tearDown overrides the nonisolated XCTestCase method, but runs on the
+        // main thread for a @MainActor test class
+        MainActor.assumeIsolated {
+            cancellables.removeAll()
+        }
         super.tearDown()
     }
 

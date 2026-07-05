@@ -6,7 +6,7 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
 
     /// Records calls and returns scripted results so the handler logic can be
     /// verified without touching `PlaybackManager`/`DataManager`.
-    private final class FakePlaybackFacade: PlaybackFacade {
+    private final class FakePlaybackFacade: PlaybackFacade, @unchecked Sendable {
         var playing = false
         var currentEpisode = false
         var upNext = 0

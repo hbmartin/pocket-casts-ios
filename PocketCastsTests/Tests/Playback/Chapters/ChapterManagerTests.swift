@@ -87,7 +87,7 @@ class ChapterManagerTests: XCTestCase {
     }
 }
 
-class PodcastChapterParserMock: PodcastChapterParser {
+class PodcastChapterParserMock: PodcastChapterParser, @unchecked Sendable {
     var chapters: [ChapterInfo] = []
 
     override func parseRemoteFile(_ remoteUrl: String, episodeDuration: TimeInterval, completion: @escaping (([ChapterInfo]) -> Void)) {

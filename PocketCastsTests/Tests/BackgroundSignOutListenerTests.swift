@@ -1,6 +1,7 @@
 @testable import podcasts
 import XCTest
 
+@MainActor
 final class BackgroundSignOutListenerTests: XCTestCase {
     private var signOutListener: BackgroundSignOutListener!
     private var notificationCenter: NotificationCenter!
@@ -8,13 +9,17 @@ final class BackgroundSignOutListenerTests: XCTestCase {
     private var navigationManager: MockNavigationManager!
 
     override func setUp() {
-        notificationCenter = NotificationCenter()
-        presentingController = MockPresentingViewController()
-        navigationManager = MockNavigationManager()
+        // setUp overrides the nonisolated XCTestCase method, but runs on the main
+        // thread for a @MainActor test class
+        MainActor.assumeIsolated {
+            notificationCenter = NotificationCenter()
+            presentingController = MockPresentingViewController()
+            navigationManager = MockNavigationManager()
 
-        signOutListener = BackgroundSignOutListener(notificationCenter: notificationCenter,
-                                                    navigationManager: navigationManager,
-                                                    presentingViewController: self.presentingController)
+            signOutListener = BackgroundSignOutListener(notificationCenter: notificationCenter,
+                                                        navigationManager: navigationManager,
+                                                        presentingViewController: self.presentingController)
+        }
     }
 
     func testSignOutAlertShowsWhenNotUserInitiated() {

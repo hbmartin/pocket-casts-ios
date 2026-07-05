@@ -4,7 +4,8 @@ import PocketCastsServer
 import PocketCastsUtils
 import PocketCastsDataModel
 
-final class PodcastChapterParser: Sendable {
+/// Stateless; subclassed by test mocks, hence @unchecked on a non-final class.
+class PodcastChapterParser: @unchecked Sendable {
     func parseLocalFile(_ path: String, episodeDuration: TimeInterval, completion: @escaping @Sendable ([ChapterInfo]) -> Void) {
         parseChapters(url: URL(fileURLWithPath: path), episodeDuration: episodeDuration, completion: completion)
     }
