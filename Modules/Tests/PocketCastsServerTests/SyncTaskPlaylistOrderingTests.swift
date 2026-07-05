@@ -76,7 +76,8 @@ final class SyncTaskPlaylistOrderingTests: XCTestCase {
     }
 }
 
-private final class CapturingDataManager: DataManager {
+// @unchecked Sendable: restates DataManager's conformance, as Swift requires of subclasses; test-only stub state.
+private final class CapturingDataManager: DataManager, @unchecked Sendable {
     var stubbedPlaylistEpisodes: [String: [Episode]] = [:]
     var addedEpisodes: [String: [Episode]] = [:]
     private var storedPlaylists: [String: EpisodeFilter] = [:]

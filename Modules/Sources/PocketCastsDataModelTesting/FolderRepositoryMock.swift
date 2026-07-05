@@ -3,7 +3,8 @@ import PocketCastsDataModel
 
 /// Generated protocol mock for `FolderRepository`. Stub return values by selector:
 /// `mock.stub("findPodcast(uuid:includeUnsubscribed:)", with: podcast)`.
-public final class FolderRepositoryMock: RepositoryMock, FolderRepository {
+// @unchecked Sendable: restates RepositoryMock's conformance, as Swift requires of subclasses; state stays lock-guarded in the base class.
+public final class FolderRepositoryMock: RepositoryMock, FolderRepository, @unchecked Sendable {
     @discardableResult
     public func save(folder: Folder) -> Folder {
         record("save(folder:)")

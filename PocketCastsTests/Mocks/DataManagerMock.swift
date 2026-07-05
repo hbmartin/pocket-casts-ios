@@ -2,7 +2,8 @@ import Foundation
 
 @testable import PocketCastsDataModel
 
-class DataManagerMock: DataManager {
+// @unchecked Sendable: restates DataManager's conformance, as Swift requires of subclasses; test-only stub state.
+class DataManagerMock: DataManager, @unchecked Sendable {
     var podcastsToReturn: [Podcast] = []
     var episodesToReturn: [Episode] = []
     var dailyListeningTimeToReturn: [String: Double] = [:]

@@ -165,7 +165,8 @@ final class PlaybackQueueTests: XCTestCase {
     }
 }
 
-fileprivate class MockDataManager: DataManager {
+// @unchecked Sendable: restates DataManager's conformance, as Swift requires of subclasses; test-only stub state.
+fileprivate class MockDataManager: DataManager, @unchecked Sendable {
     var savedReplaceEpisodes: [String] = []
     var savedPlaylistEpisodes: [PlaylistEpisode] = []
     var upNextEpisodes: [PlaylistEpisode] = []
