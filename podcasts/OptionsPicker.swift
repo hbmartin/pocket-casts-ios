@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 class OptionsPicker {
     private var title: String?
     private var window: UIWindow?
