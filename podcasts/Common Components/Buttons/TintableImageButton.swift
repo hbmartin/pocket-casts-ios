@@ -5,11 +5,13 @@ class TintableImageButton: UIButton {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        let defaultImage = image(for: .normal)?.withRenderingMode(.alwaysTemplate)
-        super.setImage(defaultImage, for: .normal)
+        MainActor.assumeIsolated {
+            let defaultImage = image(for: .normal)?.withRenderingMode(.alwaysTemplate)
+            super.setImage(defaultImage, for: .normal)
 
-        let selectedImage = image(for: .selected)?.withRenderingMode(.alwaysTemplate)
-        super.setImage(selectedImage, for: .selected)
+            let selectedImage = image(for: .selected)?.withRenderingMode(.alwaysTemplate)
+            super.setImage(selectedImage, for: .selected)
+        }
     }
 
     override var tintColor: UIColor! {

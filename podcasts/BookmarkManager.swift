@@ -4,7 +4,9 @@ import Combine
 import PocketCastsDataModel
 import PocketCastsUtils
 
-class BookmarkManager {
+/// Immutable references + thread-safe Combine subjects; the async API is
+/// designed to be called across executors.
+final class BookmarkManager: @unchecked Sendable {
     private let dataManager: BookmarkDataManager
     private let generalManager: DataManager
     private let playbackManager: PlaybackManager

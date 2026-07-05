@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
+@MainActor
 class PlaylistPreviewViewModel: ObservableObject {
     enum PlaylistMode {
         case creation
@@ -26,10 +27,6 @@ class PlaylistPreviewViewModel: ObservableObject {
 
     let playlistMode: PlaylistMode
     let action: (SmartPlaylistRule) -> Void
-
-    deinit {
-        removeObserver()
-    }
 
     init(newPlaylist: EpisodeFilter, playlistMode: PlaylistMode, action: @escaping (SmartPlaylistRule) -> Void) {
         self.newPlaylist = newPlaylist

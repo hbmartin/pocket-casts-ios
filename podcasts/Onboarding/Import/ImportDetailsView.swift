@@ -107,13 +107,17 @@ struct ImportDetailsView: View {
                 return
             }
             opmlURLImportResult = .none
-            NotificationCenter.default.addObserver(forName: Notification.Name("SJOpmlImportCompleted"), object: nil, queue: nil) { _ in
-                opmlURLImportResult = .success
-                opmlImportInProgress = false
+            NotificationCenter.default.addObserver(forName: Notification.Name("SJOpmlImportCompleted"), object: nil, queue: .main) { _ in
+                Task { @MainActor in
+                    opmlURLImportResult = .success
+                    opmlImportInProgress = false
+                }
             }
-            NotificationCenter.default.addObserver(forName: Notification.Name("SJOpmlImportFailed"), object: nil, queue: nil) { _ in
-                opmlURLImportResult = .failure
-                opmlImportInProgress = false
+            NotificationCenter.default.addObserver(forName: Notification.Name("SJOpmlImportFailed"), object: nil, queue: .main) { _ in
+                Task { @MainActor in
+                    opmlURLImportResult = .failure
+                    opmlImportInProgress = false
+                }
             }
 
             guard let url = URL(string: opmlURLText) else {
@@ -124,7 +128,8 @@ struct ImportDetailsView: View {
 
             opmlImportInProgress = true
             viewModel.importFromURL(url) { success in
-                if !success {
+                Task { @MainActor in
+                    guard !success else { return }
                     opmlURLImportResult = .failure
                     opmlImportInProgress = false
                 }
