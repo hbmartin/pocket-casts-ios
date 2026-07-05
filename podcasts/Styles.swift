@@ -70,12 +70,13 @@ struct RequiredFieldStyle: TextFieldStyle {
     @EnvironmentObject var theme: Theme
 
     func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
+        let activeTheme = theme.nonisolatedActiveTheme
+        return configuration
             .colorScheme(Theme.isDarkTheme() ? .dark : .light)
-            .foregroundColor(ThemeColor.primaryText01(for: theme.activeTheme).color)
+            .foregroundColor(ThemeColor.primaryText01(for: activeTheme).color)
             .padding(6)
             .required(hasErrored)
-            .background(ThemeColor.primaryUi02(for: theme.activeTheme).color.cornerRadius(ViewConstants.cornerRadius))
+            .background(ThemeColor.primaryUi02(for: activeTheme).color.cornerRadius(ViewConstants.cornerRadius))
     }
 }
 

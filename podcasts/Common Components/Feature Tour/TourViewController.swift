@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 protocol TourDelegate: AnyObject {
     func endTourTapped()
     func nextTapped()

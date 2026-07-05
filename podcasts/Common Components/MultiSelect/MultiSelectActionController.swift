@@ -1,6 +1,7 @@
 import PocketCastsDataModel
 import UIKit
 
+@MainActor
 protocol MultiSelectActionOrderDelegate: AnyObject {
     func actionOrderChanged()
 }

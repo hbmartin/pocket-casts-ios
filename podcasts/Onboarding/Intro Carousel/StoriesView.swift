@@ -33,6 +33,7 @@ extension StoriesDataSource {
 
 typealias StoryView = Story & View
 
+@MainActor
 protocol Story {
     var duration: TimeInterval { get }
     var identifier: String { get }

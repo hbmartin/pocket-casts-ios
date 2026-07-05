@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
+@MainActor
 protocol BookmarkEditRouter: AnyObject {
     func titleUpdated(title: String)
     func dismiss()
