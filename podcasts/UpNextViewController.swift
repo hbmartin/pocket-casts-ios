@@ -538,8 +538,18 @@ extension UpNextViewController {
 
 extension UpNextViewController {
     func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
-        let defaultProperties: [String: Any] = ["source": source]
-        let props = defaultProperties.merging(properties ?? [:]) { current, _ in current }
+        // Default keys win, matching the previous merging behaviour
+        var props: [String: any Sendable] = ["source": source]
+        for (key, value) in properties ?? [:] where props[key] == nil {
+            switch value {
+            case let v as String: props[key] = v
+            case let v as Int: props[key] = v
+            case let v as Double: props[key] = v
+            case let v as Bool: props[key] = v
+            case let v as AnalyticsDescribable: props[key] = v.analyticsDescription
+            default: props[key] = String(describing: value)
+            }
+        }
 
         Analytics.track(event, properties: props)
     }

@@ -91,7 +91,7 @@ extension ShareDestination {
             return
         }
 
-        var properties: Dictionary<String, Any> = [:]
+        var properties: [String: any Sendable] = [:]
 
         properties["episode_uuid"] = episode.uuid
         properties["podcast_uuid"] = episode.parentPodcast()?.uuid ?? "unknown"
@@ -154,7 +154,7 @@ extension ShareDestination {
     }
 
     private static func logPodcastShared(style: ShareImageStyle, option: SharingModal.Option, destination: Self, source: AnalyticsSource) {
-        let properties: [String: Any] = [
+        let properties: [String: any Sendable] = [
             "type": type(style: style, option: option, destination: destination),
             "action": destination.analyticsDescription,
             "card_type": cardType(style: style)

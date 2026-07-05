@@ -33,7 +33,6 @@ PocketCastsTests/Tests/Utilities/DownloadManagerRetryTests.swift: warning: passi
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateErrorHandlingTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-WidgetExtension/Data/WidgetData.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WidgetData' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/AddCustomViewController.swift: warning: call to main actor-isolated instance method 'cancelMetadataLoading()' in a synchronous nonisolated context
 podcasts/AppDelegate.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'BackgroundTasks'
 podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkDefaults()' in a synchronous nonisolated context
@@ -137,7 +136,6 @@ podcasts/Settings.swift: warning: static property 'cachedPrimaryUpNextSwipeActio
 podcasts/Settings.swift: warning: static property 'cachedlibrarySortType' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Settings.swift: warning: static property 'debugPlaylistsLimit' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Settings.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/SharedItemImporter.swift: warning: sending 'item' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'avPlayer' can not be referenced from a Sendable closure
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'clipTime' can not be referenced from a Sendable closure
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'currentTime' can not be mutated from a Sendable closure
@@ -147,7 +145,6 @@ podcasts/Sharing/Clip/VideoExporter.swift: warning: passing closure as a 'sendin
 podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'adaptor' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'parameters' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'view' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Sharing/ShareDestination.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingModal.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingView.swift: warning: sending value of non-Sendable type 'SharingModal.Option' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
@@ -160,6 +157,5 @@ podcasts/Theme.swift: warning: main actor-isolated default value in a nonisolate
 podcasts/TranscriptExcerptView.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/TranscriptViewController.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Up Next History/UpNextHistoryModel.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/UpNextViewController.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Utilities/AVFileUtil.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Utilities/UnsafeWait.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
