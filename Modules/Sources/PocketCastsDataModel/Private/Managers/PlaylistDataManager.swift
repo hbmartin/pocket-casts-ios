@@ -34,6 +34,13 @@ class PlaylistDataManager {
     ]
 
     func count(includeDeleted: Bool, dbQueue: PCDBQueue) -> Int {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            if includeDeleted {
+                return grdbQueue.count(EpisodeFilter.self)
+            }
+            return grdbQueue.count(EpisodeFilter.self, filter: EpisodeFilter.Columns.wasDeleted == false)
+        }
+
         var count = 0
         dbQueue.read { db in
             do {
@@ -87,22 +94,51 @@ class PlaylistDataManager {
         return exists
     }
 
+    /// The GRDB twin of the raw `SELECT *` playlist list queries: optional manual/deleted filters,
+    /// ordered by sortPosition ascending like every legacy variant.
+    private func grdbAllPlaylists(manual: Bool? = nil, includeDeleted: Bool, in grdbQueue: GRDBQueue) -> [EpisodeFilter] {
+        var request = EpisodeFilter.order(EpisodeFilter.Columns.sortPosition.asc)
+        if let manual {
+            request = request.filter(EpisodeFilter.Columns.manual == manual)
+        }
+        if !includeDeleted {
+            request = request.filter(EpisodeFilter.Columns.wasDeleted == false)
+        }
+        return grdbQueue.fetchAll(request)
+    }
+
     func allPlaylists(includeDeleted: Bool, dbQueue: PCDBQueue) -> [EpisodeFilter] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbAllPlaylists(includeDeleted: includeDeleted, in: grdbQueue)
+        }
+
         let query = includeDeleted ? "SELECT * from \(DataManager.playlistsTableName) ORDER BY sortPosition ASC" : "SELECT * from \(DataManager.playlistsTableName) WHERE wasDeleted = 0 ORDER BY sortPosition ASC"
         return allPlaylists(query: query, values: nil, dbQueue: dbQueue)
     }
 
     func allSmartPlaylists(includeDeleted: Bool, dbQueue: PCDBQueue) -> [EpisodeFilter] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbAllPlaylists(manual: false, includeDeleted: includeDeleted, in: grdbQueue)
+        }
+
         let query = includeDeleted ? "SELECT * from \(DataManager.playlistsTableName) WHERE manual = 0 ORDER BY sortPosition ASC" : "SELECT * from \(DataManager.playlistsTableName) WHERE manual = 0 AND wasDeleted = 0 ORDER BY sortPosition ASC"
         return allPlaylists(query: query, values: nil, dbQueue: dbQueue)
     }
 
     func allManualPlaylists(includeDeleted: Bool, dbQueue: PCDBQueue) -> [EpisodeFilter] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbAllPlaylists(manual: true, includeDeleted: includeDeleted, in: grdbQueue)
+        }
+
         let query = includeDeleted ? "SELECT * from \(DataManager.playlistsTableName) WHERE manual = 1 ORDER BY sortPosition ASC" : "SELECT * from \(DataManager.playlistsTableName) WHERE manual = 1 AND wasDeleted = 0 ORDER BY sortPosition ASC"
         return allPlaylists(query: query, values: nil, dbQueue: dbQueue)
     }
 
     func findBy(uuid: String, dbQueue: PCDBQueue) -> EpisodeFilter? {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(EpisodeFilter.filter(EpisodeFilter.Columns.uuid == uuid))
+        }
+
         var playlist: EpisodeFilter?
         dbQueue.read { db in
             do {
@@ -121,6 +157,11 @@ class PlaylistDataManager {
     }
 
     func deleteDeletedPlaylists(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(EpisodeFilter.self, filter: EpisodeFilter.Columns.wasDeleted == true)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.playlistsTableName) WHERE wasDeleted = 1", values: nil)
@@ -131,10 +172,30 @@ class PlaylistDataManager {
     }
 
     func allUnsyncedPlaylists(dbQueue: PCDBQueue) -> [EpisodeFilter] {
-        allPlaylists(query: "SELECT * from \(DataManager.playlistsTableName) WHERE syncStatus = ? ORDER BY sortPosition ASC", values: [SyncStatus.notSynced.rawValue], dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(
+                EpisodeFilter
+                    .filter(EpisodeFilter.Columns.syncStatus == SyncStatus.notSynced.rawValue)
+                    .order(EpisodeFilter.Columns.sortPosition.asc)
+            )
+        }
+
+        return allPlaylists(query: "SELECT * from \(DataManager.playlistsTableName) WHERE syncStatus = ? ORDER BY sortPosition ASC", values: [SyncStatus.notSynced.rawValue], dbQueue: dbQueue)
     }
 
     func playlistContainsEpisode(episodeUuid: String, includeDeleted: Bool, dbQueue: PCDBQueue) -> Bool {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> Bool in
+                var request = Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("episodeUuid") == episodeUuid)
+                    .filter(Column("playlist_uuid") != nil)
+                if !includeDeleted {
+                    request = request.filter(Column("wasDeleted") == false)
+                }
+                return try !request.isEmpty(db)
+            } ?? false
+        }
+
         var exists = false
         dbQueue.read { db in
             do {
@@ -158,6 +219,19 @@ class PlaylistDataManager {
     }
 
     func manualPlaylistUUIDs(for episodeUUID: String, dbQueue: PCDBQueue) -> [String] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            // DISTINCT over the nullable column matches the legacy GROUP BY; NULLs drop out like
+            // the legacy `if let` did
+            let uuids = grdbQueue.read { (db: Database) -> [String?] in
+                try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("episodeUuid") == episodeUUID)
+                    .select([Column("playlist_uuid")], as: String?.self)
+                    .distinct()
+                    .fetchAll(db)
+            } ?? []
+            return uuids.compactMap { $0 }
+        }
+
         var uuids: [String] = []
         dbQueue.read { db in
             do {
@@ -186,6 +260,18 @@ class PlaylistDataManager {
         var playlist = playlist
         playlist.sortPosition = newPosition
         playlist.syncStatus = SyncStatus.notSynced.rawValue
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                EpisodeFilter.self,
+                filter: EpisodeFilter.Columns.uuid == playlist.uuid,
+                EpisodeFilter.Columns.sortPosition.set(to: playlist.sortPosition),
+                EpisodeFilter.Columns.syncStatus.set(to: playlist.syncStatus),
+                EpisodeFilter.Columns.playlistUpdateDate.set(to: Date.now.timeIntervalSince1970)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.playlistsTableName) SET sortPosition = ?, syncStatus = ?, playlistUpdateDate = ? WHERE uuid = ?", values: [playlist.sortPosition, playlist.syncStatus, Date.now, playlist.uuid])
@@ -347,6 +433,10 @@ class PlaylistDataManager {
 
     /// The persisted row id for the playlist with this uuid, or nil if it isn't saved yet.
     private func existingPlaylistId(uuid: String, dbQueue: PCDBQueue) -> Int64? {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(EpisodeFilter.filter(EpisodeFilter.Columns.uuid == uuid))?.id
+        }
+
         var id: Int64?
         dbQueue.read { db in
             do {
@@ -364,6 +454,15 @@ class PlaylistDataManager {
 
     /// Update the playlistUpdateDate for a specific playlist to the given date (defaults to now)
     func updatePlaylistUpdateDate(for playlist: EpisodeFilter, to date: Date, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                EpisodeFilter.self,
+                filter: EpisodeFilter.Columns.uuid == playlist.uuid,
+                EpisodeFilter.Columns.playlistUpdateDate.set(to: date.timeIntervalSince1970)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate(
@@ -377,6 +476,16 @@ class PlaylistDataManager {
     }
 
     func delete(playlist: EpisodeFilter, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try EpisodeFilter.filter(EpisodeFilter.Columns.uuid == playlist.uuid).deleteAll(db)
+                try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("playlist_uuid") == playlist.uuid || Column("playlist_id") == playlist.id)
+                    .deleteAll(db)
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.playlistsTableName) WHERE uuid = ?", values: [playlist.uuid])
@@ -388,6 +497,15 @@ class PlaylistDataManager {
     }
 
     func markAllSynced(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                EpisodeFilter.self,
+                filter: EpisodeFilter.Columns.syncStatus == SyncStatus.notSynced.rawValue,
+                EpisodeFilter.Columns.syncStatus.set(to: SyncStatus.synced.rawValue)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.playlistsTableName) SET syncStatus = ? WHERE syncStatus = ?", values: [SyncStatus.synced.rawValue, SyncStatus.notSynced.rawValue])
@@ -398,6 +516,15 @@ class PlaylistDataManager {
     }
 
     func markAllUnsynced(dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                EpisodeFilter.self,
+                filter: EpisodeFilter.Columns.syncStatus == SyncStatus.synced.rawValue,
+                EpisodeFilter.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("UPDATE \(DataManager.playlistsTableName) SET syncStatus = ? WHERE syncStatus = ?", values: [SyncStatus.notSynced.rawValue, SyncStatus.synced.rawValue])
@@ -426,6 +553,13 @@ class PlaylistDataManager {
     }
 
     func nextSortPositionForPlaylist(dbQueue: PCDBQueue) -> Int {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let highest = grdbQueue.read { (db: Database) -> Int? in
+                try Int.fetchOne(db, EpisodeFilter.select(max(EpisodeFilter.Columns.sortPosition)))
+            }
+            return (highest.flatMap { $0 } ?? 0) + 1
+        }
+
         var highestPosition = 0
         dbQueue.read { db in
             do {
@@ -445,6 +579,13 @@ class PlaylistDataManager {
     }
 
     func firstSortPositionForPlaylist(dbQueue: PCDBQueue) -> Int {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let lowest = grdbQueue.read { (db: Database) -> Int? in
+                try Int.fetchOne(db, EpisodeFilter.select(min(EpisodeFilter.Columns.sortPosition)))
+            }
+            return lowest.flatMap { $0 } ?? 0
+        }
+
         var lowestPosition = 0
         dbQueue.read { db in
             do {
@@ -464,6 +605,16 @@ class PlaylistDataManager {
     }
 
     func bumpSortPositionForAllPlaylists(adding value: Int, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                EpisodeFilter.self,
+                filter: EpisodeFilter.Columns.wasDeleted == false,
+                EpisodeFilter.Columns.sortPosition.set(to: EpisodeFilter.Columns.sortPosition + value),
+                EpisodeFilter.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("""
