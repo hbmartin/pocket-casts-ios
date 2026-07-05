@@ -199,6 +199,7 @@ extension SharingModal.Option {
         return imageInfo
     }
 
+    @MainActor
     func loadEpisodeArtworkUrl() async -> URL? {
         guard Settings.loadEmbeddedImages, let episode else { return nil }
         return try? await ShowInfoCoordinator.shared.loadEpisodeArtworkUrl(

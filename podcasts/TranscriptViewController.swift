@@ -647,8 +647,8 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
         setupLoadingState()
 
-        Task.detached { [weak self, transcriptManager] in
-            guard let self, let transcriptManager else {
+        Task.detached { [weak self, boxedManager = PocketCastsUtils.UncheckedSendable(transcriptManager)] in
+            guard let self, let transcriptManager = boxedManager.value else {
                 return
             }
 
