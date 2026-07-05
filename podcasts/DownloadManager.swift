@@ -393,10 +393,16 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             return nil
         }
 
+        // AVPlayerItem.asset is main-actor in current SDKs; bridge the read
+        let boxedAsset: PocketCastsUtils.UncheckedSendable<AVURLAsset?> = if Thread.isMainThread {
+            MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playbackItem.asset as? AVURLAsset) }
+        } else {
+            DispatchQueue.main.sync { MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playbackItem.asset as? AVURLAsset) } }
+        }
         guard FeatureFlag.streamAndCachePlayingEpisode.enabled,
               !episode.videoPodcast(),
               !episode.isUserEpisode,
-              let urlAsset = playbackItem.asset as? AVURLAsset,
+              let urlAsset = boxedAsset.value,
               !urlAsset.url.isFileURL, // only  start download if it's a remote file that we are playing
               (FileManager.deviceRemainingFreeSpaceInBytes ?? 0) > episode.sizeInBytes
         else {

@@ -3,9 +3,10 @@ import PocketCastsDataModel
 import Combine
 import SwiftUI
 
+@MainActor
 class ClipPlaybackManager: ObservableObject {
 
-    static var shared = ClipPlaybackManager()
+    static let shared = ClipPlaybackManager()
 
     @Published var isPlaying: Bool = false
     @Published var currentTime: TimeInterval?
@@ -73,7 +74,9 @@ class ClipPlaybackManager: ObservableObject {
     func seek(to time: CMTime) {
         isSeeking = true
         avPlayer?.seek(to: time) { [weak self] _ in
-            self?.isSeeking = false
+            Task { @MainActor in
+                self?.isSeeking = false
+            }
         }
     }
 
@@ -88,25 +91,30 @@ class ClipPlaybackManager: ObservableObject {
     private func setupTimeObserver() {
         let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         timeObserverToken = avPlayer?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            guard let self else {
-                return
-            }
-            // Loops back to the beginning at end of clip range
-            guard time.seconds < clipTime.end else {
-                isSeeking = true
-                avPlayer?.seek(to: CMTime(seconds: clipTime.start, preferredTimescale: .audio)) { [weak self] _ in
-                    guard let self else {
-                        return
-                    }
-                    isSeeking = false
-                    avPlayer?.pause()
-                    currentTime = clipTime.start
+            // Delivered on the main queue per the observer's queue parameter
+            MainActor.assumeIsolated {
+                guard let self else {
+                    return
                 }
-                return
-            }
+                // Loops back to the beginning at end of clip range
+                guard time.seconds < self.clipTime.end else {
+                    self.isSeeking = true
+                    self.avPlayer?.seek(to: CMTime(seconds: self.clipTime.start, preferredTimescale: .audio)) { [weak self] _ in
+                        Task { @MainActor in
+                            guard let self else {
+                                return
+                            }
+                            self.isSeeking = false
+                            self.avPlayer?.pause()
+                            self.currentTime = self.clipTime.start
+                        }
+                    }
+                    return
+                }
 
-            if !isSeeking {
-                currentTime = time.seconds
+                if !self.isSeeking {
+                    self.currentTime = time.seconds
+                }
             }
         }
     }

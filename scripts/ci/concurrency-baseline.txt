@@ -33,18 +33,9 @@ PocketCastsTests/Tests/Utilities/DownloadManagerRetryTests.swift: warning: passi
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateErrorHandlingTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/BackgroundShakeObserver.swift: warning: capture of 'self' with non-Sendable type 'BackgroundShakeObserver?' in a '@Sendable' closure
 podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: sending 'self.bookmark' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/List/BookmarkListViewModel.swift: warning: sending 'items' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: capture of non-Sendable type 'Style.Type' in an isolated closure; this is an error in the Swift 6 language mode
-podcasts/Debounce.swift: warning: capture of 'callback' with non-Sendable type '() -> Void' in a '@Sendable' closure
-podcasts/DownloadManager.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
-podcasts/FadeOutManager.swift: warning: capture of 'self' with non-Sendable type 'FadeOutManager?' in a '@Sendable' closure
-podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'avPlayer' can not be referenced from a Sendable closure
-podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'clipTime' can not be referenced from a Sendable closure
-podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'currentTime' can not be mutated from a Sendable closure
-podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'isSeeking' can not be mutated from a Sendable closure
-podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'isSeeking' can not be referenced from a Sendable closure
 podcasts/Styles.swift: warning: conformance of 'RequiredFieldStyle' to protocol 'TextFieldStyle' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Theme.swift: warning: 'nonisolated(unsafe)' is unnecessary for a constant with 'Sendable' type 'Theme', consider removing it
 podcasts/Theme.swift: warning: main actor-isolated default value in a nonisolated(unsafe) context; this is an error in the Swift 6 language mode

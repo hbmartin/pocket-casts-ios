@@ -1,6 +1,8 @@
 import CoreMotion
 
-class BackgroundShakeObserver {
+/// Motion updates are delivered to the main queue; the debounce timer is only
+/// touched from that handler.
+final class BackgroundShakeObserver: @unchecked Sendable {
     private let manager = CMMotionManager()
     private let motionUpdateInterval: Double = 0.05
     private var debounceTimer: Timer?
