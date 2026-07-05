@@ -190,7 +190,12 @@ class FolderDataManager {
     private func cacheFolders(dbQueue: PCDBQueue) {
         if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
             guard let newFolders = grdbQueue.read({ db in
-                try Folder.fetchAll(db)
+                do {
+                    return try Folder.fetchAll(db)
+                } catch {
+                    FileLog.shared.addMessage("FolderDataManager.cacheFolders error: \(error)")
+                    throw error
+                }
             }) else { return }
 
             cachedFolderQueue.sync {

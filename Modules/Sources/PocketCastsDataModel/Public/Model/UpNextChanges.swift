@@ -14,5 +14,17 @@ public struct UpNextChanges: Equatable, Sendable {
     public var uuids: String?
     public var utcTime: Int64 = 0
 
-    public init() {}
+    public init(
+        id: Int64 = 0,
+        type: Int32 = 0,
+        uuid: String? = nil,
+        uuids: String? = nil,
+        utcTime: Int64 = 0
+    ) {
+        self.id = id
+        self.type = type
+        self.uuid = uuid
+        self.uuids = uuids
+        self.utcTime = utcTime
+    }
 }
