@@ -33,11 +33,13 @@ class GRDBResultSet: PCDBResultSet {
     }
 
     func int(forColumn: String) -> Int32 {
-        row[forColumn]
+        // NULL reads as 0 (FMDB's intForColumn semantics); the non-optional subscript traps on NULL
+        row[forColumn] ?? 0
     }
 
     func long(forColumn: String) -> Int {
-        row[forColumn]
+        // NULL reads as 0 (FMDB's longForColumn semantics); the non-optional subscript traps on NULL
+        row[forColumn] ?? 0
     }
 
     func long(forColumnIndex: Int32) -> Int {
