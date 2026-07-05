@@ -1,7 +1,9 @@
 import Foundation
 import PocketCastsUtils
 
-class Analytics {
+/// Adapters are registered once at startup (or cleared on sign-out) and read by
+/// track(); events fire from any thread by design.
+final class Analytics: @unchecked Sendable {
     static let shared = Analytics()
     private var adapters: [AnalyticsAdapter]?
 #if !APPCLIP && !os(tvOS)
@@ -129,7 +131,7 @@ protocol AnalyticsDescribable {
 }
 
 /// Classes can implement this to determine their own logic on how to handle each event
-protocol AnalyticsAdapter {
+protocol AnalyticsAdapter: Sendable {
     func track(name: String, properties: [String: Sendable]) async
 }
 

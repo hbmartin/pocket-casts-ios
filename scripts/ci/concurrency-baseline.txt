@@ -35,20 +35,6 @@ PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.s
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 WidgetExtension/Data/WidgetData.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WidgetData' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/AddCustomViewController.swift: warning: call to main actor-isolated instance method 'cancelMetadataLoading()' in a synchronous nonisolated context
-podcasts/Analytics/Analytics.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Analytics/Analytics.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'Analytics' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Analytics/AppLifecyleAnalytics.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/Analytics/AppLifecyleAnalytics.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/Analytics/Helpers/AnalyticsCoordinator.swift: warning: capture of 'properties' with non-Sendable type '[String : Any]?' in a '@Sendable' closure
-podcasts/Analytics/Helpers/AnalyticsCoordinator.swift: warning: capture of 'self' with non-Sendable type 'AnalyticsCoordinator' in a '@Sendable' closure
-podcasts/Analytics/Helpers/AnalyticsCoordinator.swift: warning: sending 'properties' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Analytics/Helpers/AnalyticsCoordinator.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Analytics/Helpers/AnalyticsCoordinator.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/Analytics/Helpers/AnalyticsEpisodeHelper.swift: warning: capture of 'self' with non-Sendable type 'AnalyticsEpisodeHelper' in a '@Sendable' closure
-podcasts/Analytics/Helpers/AnalyticsEpisodeHelper.swift: warning: static property 'shared' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Analytics/Helpers/AnalyticsPlaybackHelper.swift: warning: static property 'shared' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/AnalyticsHelper.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/AppDelegate+Analytics.swift: warning: call to main actor-isolated instance method 'setupAnalytics()' in a synchronous nonisolated context
 podcasts/AppDelegate.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'BackgroundTasks'
 podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkDefaults()' in a synchronous nonisolated context
 podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkIfRestoreCleanupRequired()' in a synchronous nonisolated context

@@ -71,7 +71,9 @@ extension AppDelegate {
         }
 
         NotificationCenter.default.addObserver(forName: UIApplication.protectedDataDidBecomeAvailableNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.setupAnalytics()
+            Task { @MainActor [weak self] in
+                self?.setupAnalytics()
+            }
         }
     }
 
