@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class GridHelper {
     private static let bigDevicePortraitWidth: CGFloat = 600
     private static let bigDeviceLandscapeWidth: CGFloat = 900
