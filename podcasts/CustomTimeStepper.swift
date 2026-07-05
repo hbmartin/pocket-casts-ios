@@ -96,11 +96,16 @@ class CustomTimeStepper: UIControl {
         holdTimer?.invalidate()
 
         holdTimer = Timer.scheduledTimer(withTimeInterval: CustomTimeStepper.initialHoldTime, repeats: false, block: { [weak self] _ in
-            if self?.currentValue == self?.minimumValue { return }
+            // Scheduled from a UIControl action on the main run loop
+            MainActor.assumeIsolated {
+                if self?.currentValue == self?.minimumValue { return }
 
-            self?.holdTimer = Timer.scheduledTimer(withTimeInterval: CustomTimeStepper.holdRepetition, repeats: true, block: { _ in
-                self?.performHoldLessDown()
-            })
+                self?.holdTimer = Timer.scheduledTimer(withTimeInterval: CustomTimeStepper.holdRepetition, repeats: true, block: { _ in
+                    MainActor.assumeIsolated {
+                        self?.performHoldLessDown()
+                    }
+                })
+            }
         })
     }
 
@@ -119,11 +124,16 @@ class CustomTimeStepper: UIControl {
         holdTimer?.invalidate()
 
         holdTimer = Timer.scheduledTimer(withTimeInterval: CustomTimeStepper.initialHoldTime, repeats: false, block: { [weak self] _ in
-            if self?.currentValue == self?.maximumValue { return }
+            // Scheduled from a UIControl action on the main run loop
+            MainActor.assumeIsolated {
+                if self?.currentValue == self?.maximumValue { return }
 
-            self?.holdTimer = Timer.scheduledTimer(withTimeInterval: CustomTimeStepper.holdRepetition, repeats: true, block: { _ in
-                self?.performHoldMoreDown()
-            })
+                self?.holdTimer = Timer.scheduledTimer(withTimeInterval: CustomTimeStepper.holdRepetition, repeats: true, block: { _ in
+                    MainActor.assumeIsolated {
+                        self?.performHoldMoreDown()
+                    }
+                })
+            }
         })
     }
 
