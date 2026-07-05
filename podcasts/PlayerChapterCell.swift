@@ -53,10 +53,12 @@ class PlayerChapterCell: UITableViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.playbackProgress, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
-        contentView.backgroundColor = UIColor.clear
-        backgroundColor = UIColor.clear
+        MainActor.assumeIsolated {
+            NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.playbackProgress, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
+            contentView.backgroundColor = UIColor.clear
+            backgroundColor = UIColor.clear
+        }
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
@@ -148,11 +150,12 @@ class PlayerChapterCell: UITableViewCell {
             currentEpisode.deselectedChaptersModified = TimeFormatter.currentUTCTimeInMillis()
 
             Self.chapterSaveTask?.cancel()
+            let boxedEpisode = PocketCastsUtils.UncheckedSendable(currentEpisode)
             Self.chapterSaveTask = Task {
                 try? await Task.sleep(nanoseconds: Self.chapterSaveDelayNanoseconds)
                 guard !Task.isCancelled else { return }
 
-                await DataManager.sharedManager.saveAsync(episode: currentEpisode)
+                await DataManager.sharedManager.saveAsync(episode: boxedEpisode.value)
             }
         }
     }

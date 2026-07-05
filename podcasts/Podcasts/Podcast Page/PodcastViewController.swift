@@ -1149,17 +1149,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func downloadSeasonTapped(season: Int) {
-        DispatchQueue.global().async { [weak self] in
-            guard let self else { return }
+        // The season list and download prompt are main-actor state; queueing the
+        // downloads only enqueues work, so nothing heavy runs here
+        let listEpisodesForSeason = episodesForSeason(season)
+        let episodes = listEpisodesForSeason.map { $0.episode }
 
-            let listEpisodesForSeason = episodesForSeason(season)
-            let episodes = listEpisodesForSeason.map { $0.episode }
+        AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
+        AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
 
-            AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
-            AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
-
-            self.downloadItems(allObjects: listEpisodesForSeason)
-        }
+        downloadItems(allObjects: listEpisodesForSeason)
     }
 
     func archiveAllSeasonTapped(season: Int) {
@@ -1591,8 +1589,12 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     func archiveAll(startingAt: Episode) {
         guard let podcast else { return }
 
+        // Snapshot the on-screen list on the main actor; the heavy archive loop
+        // stays off-main with everything it needs boxed across
+        let boxed = PocketCastsUtils.UncheckedSendable((episodeInfo[safe: 1]?.elements ?? [], startingAt, podcast))
         DispatchQueue.global().async { [weak self] in
-            guard let allObjects = self?.episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
+            let (allObjects, startingAt, podcast) = boxed.value
+            guard !allObjects.isEmpty else { return }
 
             var haveFoundFirst = false
             for object in allObjects {
@@ -1606,7 +1608,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
                 EpisodeManager.archiveEpisode(episode: listEpisode.episode, fireNotification: false)
             }
 
-            DispatchQueue.main.async { [weak self] in
+            Task { @MainActor in
                 guard let strongSelf = self else { return }
 
                 strongSelf.loadLocalEpisodes(podcast: podcast, animated: false)
