@@ -7,11 +7,13 @@ class SelectedPodcastCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        contentView.layer.cornerRadius = 4
-        contentView.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1.0).cgColor
-        contentView.layer.shadowOffset = CGSize(width: 0, height: 1)
-        contentView.layer.shadowOpacity = 0.1
-        contentView.layer.shadowRadius = 2
+        MainActor.assumeIsolated {
+            contentView.layer.cornerRadius = 4
+            contentView.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1.0).cgColor
+            contentView.layer.shadowOffset = CGSize(width: 0, height: 1)
+            contentView.layer.shadowOpacity = 0.1
+            contentView.layer.shadowRadius = 2
+        }
     }
 
     override var bounds: CGRect {

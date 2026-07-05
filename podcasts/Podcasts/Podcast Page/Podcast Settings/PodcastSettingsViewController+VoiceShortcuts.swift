@@ -2,7 +2,7 @@ import Foundation
 import IntentsUI
 import UIKit
 
-extension PodcastSettingsViewController: INUIEditVoiceShortcutViewControllerDelegate, INUIAddVoiceShortcutViewControllerDelegate {
+extension PodcastSettingsViewController: @preconcurrency INUIEditVoiceShortcutViewControllerDelegate, @preconcurrency INUIAddVoiceShortcutViewControllerDelegate {
     func editVoiceShortcutViewController(_ controller: INUIEditVoiceShortcutViewController, didUpdate voiceShortcut: INVoiceShortcut?, error: Error?) {
         updateExistingSortcutData()
         controller.dismiss(animated: true, completion: nil)

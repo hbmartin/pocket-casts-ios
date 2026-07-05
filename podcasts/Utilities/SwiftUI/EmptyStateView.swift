@@ -12,6 +12,7 @@ struct EmptyStateAction: Identifiable {
     let id: String
     let view: AnyView
 
+    @MainActor
     init<Style: ButtonStyle>(
         title: String,
         style: Style = RoundedButtonStyle(theme: .sharedTheme),
@@ -109,6 +110,7 @@ private enum EmptyConstants {
 }
 
 extension EmptyStateView where Title == Text {
+    @MainActor
     init(title: String,
          message: String?,
          icon: (() -> Image)? = nil,
