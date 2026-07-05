@@ -253,22 +253,7 @@ podcasts/Fingerprint/FingerprintTimingManager.swift: warning: add '@preconcurren
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: capture of 'ctx' with non-Sendable type 'FingerprintTimingManager.GenerationContext' in a '@Sendable' closure
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: capture of 'windows' with non-Sendable type '[WindowedFingerprint]' in a '@Sendable' closure
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: sending 'ctx' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Folders/Create & Edit/Model/SuggestedFoldersModel.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Folders/Create & Edit/Views/SuggestedFoldersView.swift: warning: sending 'self.model' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Folders/Create & Edit/Views/SuggestedFoldersView.swift: warning: static property 'margin' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Folders/FoldersCoordinator.swift: warning: call to main actor-isolated initializer 'init(model:source:onCompletion:)' in a synchronous nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: call to main actor-isolated initializer 'init(rootView:)' in a synchronous nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: call to main actor-isolated initializer 'init(rootView:theme:background:)' in a synchronous nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: call to main actor-isolated initializer 'init(theme:isInsideNavigation:dismissAction:preselectPodcastUuid:)' in a synchronous nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: main actor-isolated property 'sheetPresentationController' can not be mutated from a nonisolated context
-podcasts/Folders/FoldersCoordinator.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Folders/FoldersCoordinator.swift: warning: sending 'self.suggestedFoldersModel' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Folders/FoldersCoordinator.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Folders/FoldersCoordinator.swift: warning: sending value of non-Sendable type '(String?) -> Void' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Folders/FoldersCoordinator.swift: warning: sending value of non-Sendable type '(SuggestedFoldersResult) -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/GridLayout.swift: warning: conformance of 'GridLayout' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/HapticsHelper.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
 podcasts/HapticsHelper.swift: warning: call to main actor-isolated initializer 'init(style:)' in a synchronous nonisolated context
