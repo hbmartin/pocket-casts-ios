@@ -42,18 +42,6 @@ podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: sending 'self.b
 podcasts/Bookmarks/List/BookmarkListViewModel.swift: warning: sending 'items' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: capture of non-Sendable type 'Style.Type' in an isolated closure; this is an error in the Swift 6 language mode
 podcasts/Debounce.swift: warning: capture of 'callback' with non-Sendable type '() -> Void' in a '@Sendable' closure
-podcasts/DefaultPlayer.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
-podcasts/DefaultPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure
-podcasts/DefaultPlayer.swift: warning: capture of 'self' with non-Sendable type 'DefaultPlayer' in a '@Sendable' closure
-podcasts/DefaultPlayer.swift: warning: capture of 'self' with non-Sendable type 'DefaultPlayer?' in a '@Sendable' closure
-podcasts/DefaultPlayer.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/DefaultPlayer.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated autoclosure
-podcasts/DefaultPlayer.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
-podcasts/DefaultPlayer.swift: warning: main actor-isolated property 'audioMix' can not be mutated from a nonisolated context
-podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property 'asset' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode
-podcasts/DefaultPlayer.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/DefaultPlayer.swift: warning: sending 'asset' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/DefaultPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/DownloadManager.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in an isolated closure
