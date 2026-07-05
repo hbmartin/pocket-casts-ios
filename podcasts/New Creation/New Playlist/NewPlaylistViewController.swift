@@ -2,6 +2,7 @@ import UIKit
 import SwiftUI
 import PocketCastsDataModel
 
+@MainActor
 protocol FilterCreatedDelegate: AnyObject {
     func filterCreated(newFilter: EpisodeFilter)
     var presentingPlaylistDetail: Bool { get set }
