@@ -58,10 +58,25 @@ final class EpisodeDataManager: Sendable {
     // MARK: - Query
 
     func findBy(uuid: String, dbQueue: PCDBQueue) -> Episode? {
-        loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE uuid = ?", values: [uuid], dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(Episode.filter(Episode.Columns.uuid == uuid))
+        }
+
+        return loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE uuid = ?", values: [uuid], dbQueue: dbQueue)
     }
 
     func findByAsync(uuid: String, dbQueue: PCDBQueue) async -> Episode? {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            do {
+                return try await grdbQueue.dbPool.read { db in
+                    try Episode.filter(Episode.Columns.uuid == uuid).fetchOne(db)
+                }
+            } catch {
+                FileLog.shared.addMessage("EpisodeDataManager.findByAsync error: \(error)")
+                return nil
+            }
+        }
+
         let query = "SELECT * from \(DataManager.episodeTableName) WHERE uuid = ?"
         do {
             return try await dbQueue.read { db in
@@ -78,6 +93,17 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findPlayedEpisodes(uuids: [String], dbQueue: PCDBQueue) -> [String] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> [String] in
+                try Episode
+                    .filter(uuids.contains(Episode.Columns.uuid))
+                    .filter(Episode.Columns.playingStatus == PlayingStatus.completed.rawValue)
+                    .limit(uuids.count)
+                    .select(Episode.Columns.uuid, as: String.self)
+                    .fetchAll(db)
+            } ?? []
+        }
+
         let query = """
         SELECT * from \(DataManager.episodeTableName)
         WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
@@ -103,6 +129,16 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findMatchingEpisodes(uuids: [String], dbQueue: PCDBQueue) -> [String] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> [String] in
+                try Episode
+                    .filter(uuids.contains(Episode.Columns.uuid))
+                    .limit(uuids.count)
+                    .select(Episode.Columns.uuid, as: String.self)
+                    .fetchAll(db)
+            } ?? []
+        }
+
         let query = """
         SELECT uuid from \(DataManager.episodeTableName)
         WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
@@ -131,6 +167,20 @@ final class EpisodeDataManager: Sendable {
         // Uses the genuinely-async `read` (off the caller's executor) rather than the
         // synchronous `read` wrapped in a continuation, which would block whatever thread
         // the caller runs on — main-thread-blocking when awaited from a `@MainActor` caller.
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            do {
+                return try await grdbQueue.dbPool.read { db in
+                    try Episode
+                        .filter(Episode.Columns.podcast_id == podcastId)
+                        .filter(Episode.Columns.playedUpTo > Episode.Columns.duration / 2)
+                        .fetchCount(db)
+                }
+            } catch {
+                FileLog.shared.addMessage("EpisodeDataManager.findPlayedEpisodesCount error: \(error)")
+                return 0
+            }
+        }
+
         let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE podcast_id = ? AND playedUpTo > (duration / 2)"
         do {
             return try await dbQueue.read { db in
@@ -149,6 +199,13 @@ final class EpisodeDataManager: Sendable {
     }
 
     func downloadedEpisodeExists(uuid: String, dbQueue: PCDBQueue) -> Bool {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.count(
+                Episode.self,
+                filter: Episode.Columns.episodeStatus == DownloadStatus.downloaded.rawValue && Episode.Columns.uuid == uuid
+            ) > 0
+        }
+
         var found = false
         dbQueue.read { db in
             do {
@@ -167,11 +224,19 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findBy(downloadTaskId: String, dbQueue: PCDBQueue) -> Episode? {
-        loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE downloadTaskId = ?", values: [downloadTaskId], dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchOne(Episode.filter(Episode.Columns.downloadTaskId == downloadTaskId))
+        }
+
+        return loadSingle(query: "SELECT * from \(DataManager.episodeTableName) WHERE downloadTaskId = ?", values: [downloadTaskId], dbQueue: dbQueue)
     }
 
     func findWhereNotNull(columnName: String, dbQueue: PCDBQueue) -> [Episode] {
-        loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE \(columnName) IS NOT NULL", values: nil, dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(Episode.filter(Column(columnName) != nil))
+        }
+
+        return loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE \(columnName) IS NOT NULL", values: nil, dbQueue: dbQueue)
     }
 
     func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool, dbQueue: PCDBQueue) -> [Episode] {
@@ -212,15 +277,48 @@ final class EpisodeDataManager: Sendable {
     }
 
     func unsyncedEpisodes(limit: Int, dbQueue: PCDBQueue) -> [Episode] {
-        loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE playingStatusModified > 0 OR playedUpToModified > 0 OR durationModified > 0 OR keepEpisodeModified > 0 OR archivedModified > 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT \(limit)", values: nil, dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(
+                Episode
+                    .filter(
+                        Episode.Columns.playingStatusModified > 0
+                            || Episode.Columns.playedUpToModified > 0
+                            || Episode.Columns.durationModified > 0
+                            || Episode.Columns.keepEpisodeModified > 0
+                            || Episode.Columns.archivedModified > 0
+                    )
+                    .order(Episode.Columns.publishedDate.desc, Episode.Columns.addedDate.desc)
+                    .limit(limit)
+            )
+        }
+
+        return loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE playingStatusModified > 0 OR playedUpToModified > 0 OR durationModified > 0 OR keepEpisodeModified > 0 OR archivedModified > 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT \(limit)", values: nil, dbQueue: dbQueue)
     }
 
     func allEpisodesForPodcast(id: Int64, dbQueue: PCDBQueue) -> [Episode] {
-        loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0", values: [id], dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(
+                Episode
+                    .filter(Episode.Columns.podcast_id == id)
+                    .filter(Episode.Columns.wasDeleted == false)
+            )
+        }
+
+        return loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0", values: [id], dbQueue: dbQueue)
     }
 
     func episodesWithListenHistory(limit: Int, dbQueue: PCDBQueue) -> [Episode] {
-        loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE lastPlaybackInteractionDate IS NOT NULL AND lastPlaybackInteractionDate > 0 ORDER BY lastPlaybackInteractionDate DESC LIMIT \(limit)", values: nil, dbQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(
+                Episode
+                    .filter(Episode.Columns.lastPlaybackInteractionDate != nil)
+                    .filter(Episode.Columns.lastPlaybackInteractionDate > 0)
+                    .order(Episode.Columns.lastPlaybackInteractionDate.desc)
+                    .limit(limit)
+            )
+        }
+
+        return loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE lastPlaybackInteractionDate IS NOT NULL AND lastPlaybackInteractionDate > 0 ORDER BY lastPlaybackInteractionDate DESC LIMIT \(limit)", values: nil, dbQueue: dbQueue)
     }
 
     /// Returns daily listening totals as `[dateString: totalSeconds]` for the past N days.
