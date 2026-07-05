@@ -111,10 +111,6 @@ podcasts/Common Components/MultiSelect/MultiSelectHelper.swift: warning: passing
 podcasts/Common Components/Podcast Selection/PodcastChooserCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
 podcasts/Common Components/Podcast Selection/PodcastChooserCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
 podcasts/Common Components/Podcast Selection/PodcastChooserCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Common Components/PodcastFeedRefreshController.swift: warning: call to main actor-isolated instance method 'endRefreshing()' in a synchronous nonisolated context
-podcasts/Common Components/PodcastFeedRefreshController.swift: warning: call to main actor-isolated instance method 'set(text:)' in a synchronous nonisolated context
-podcasts/Common Components/PodcastFeedRefreshController.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Common Components/PodcastFeedRefreshController.swift: warning: main actor-isolated property 'perform' can not be mutated from a nonisolated context
 podcasts/Common Components/PodcastHeartView.swift: warning: call to main actor-isolated instance method 'setupViews()' in a synchronous nonisolated context
 podcasts/Common Components/RichExpandableDescriptionView.swift: warning: call to main actor-isolated instance method 'commonInit()' in a synchronous nonisolated context
 podcasts/Common Components/SmartInvertImageView.swift: warning: main actor-isolated property 'accessibilityIgnoresInvertColors' can not be mutated from a nonisolated context
@@ -189,10 +185,6 @@ podcasts/Fingerprint/FingerprintTimingManager.swift: warning: sending 'ctx' risk
 podcasts/Folders/Create & Edit/Views/SuggestedFoldersView.swift: warning: static property 'margin' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/GridLayout.swift: warning: conformance of 'GridLayout' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/IconSelectorCell.swift: warning: conformance of 'IconSelectorCell' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ImageManager.swift: warning: main actor-isolated property 'backgroundColor' can not be mutated from a nonisolated context
-podcasts/ImageManager.swift: warning: main actor-isolated property 'image' can not be mutated from a nonisolated context
-podcasts/ImageManager.swift: warning: main actor-isolated property 'image' can not be referenced from a nonisolated context
-podcasts/ImageManager.swift: warning: static property 'sharedManager' is not concurrency-safe because non-'Sendable' type 'ImageManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/ImportExportViewController.swift: warning: conformance of 'ImportExportViewController' to protocol 'UIDocumentInteractionControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/LiquidGlass.swift: warning: static property 'systemIsDark' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/ListeningHistoryViewController.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -207,11 +199,6 @@ podcasts/Main/NavigationManager.swift: warning: main actor-isolated property 'us
 podcasts/Main/NavigationManager.swift: warning: static property 'sharedManager' is not concurrency-safe because non-'Sendable' type 'NavigationManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: static property 'currentExporter' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/MediaExporterResourceLoaderDelegate.swift: warning: non-final class 'MediaExporterResourceLoaderDelegate' cannot conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/MediaExporterResourceLoaderDelegate.swift: warning: static property 'minimumExpectedFileSize' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/MediaExporterResourceLoaderDelegate.swift: warning: static property 'readDataLimit' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/MediaExporterResourceLoaderDelegate.swift: warning: static property 'shouldVerifyDownloadedFileSize' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/MediaExporterResourceLoaderDelegate.swift: warning: stored property 'fileHandle' of 'Sendable'-conforming class 'MediaExporterResourceLoaderDelegate' is mutable
 podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
 podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: main actor-isolated class property 'main' can not be referenced from a nonisolated context
 podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: main actor-isolated property 'scale' can not be referenced from a nonisolated context
@@ -404,11 +391,6 @@ podcasts/UpNextViewController+UserEpisode.swift: warning: conformance of 'UpNext
 podcasts/UserEpisodeDetailViewController.swift: warning: call to main actor-isolated initializer 'init(episode:displayMode:bookmarkManager:playbackManager:themeOverride:)' in a synchronous nonisolated context
 podcasts/UserEpisodeDetailViewController.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
 podcasts/UserEpisodeDetailViewController.swift: warning: conformance of 'UserEpisodeDetailViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/UserEpisodeManager.swift: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context
-podcasts/UserEpisodeManager.swift: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context
-podcasts/UserEpisodeManager.swift: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context
-podcasts/UserEpisodeManager.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/UserEpisodeManager.swift: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/AVFileUtil.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Utilities/BlurEffectView.swift: warning: call to main actor-isolated instance method 'stopAnimation' in a synchronous nonisolated context
 podcasts/Utilities/ModalMessageViewController.swift: warning: call to main actor-isolated initializer 'init(icon:title:message:destructive:actionTitle:action:)' in a synchronous nonisolated context
