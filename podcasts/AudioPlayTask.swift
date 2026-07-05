@@ -67,7 +67,7 @@ final class AudioPlayTask: @unchecked Sendable {
                     bufferManager.haveNotifiedPlayer.value = true
 
                     FileLog.shared.addMessage("EffectsPlayer got to end of episode, calling finished playing")
-                    PlaybackManager.shared.playerDidFinishPlayingEpisode()
+                    Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
                 }
                 shutdown()
 
@@ -75,7 +75,7 @@ final class AudioPlayTask: @unchecked Sendable {
             }
 
             if bufferManager.readErrorOccurred.value {
-                PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: "Buffer read error occurred"))
+                Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: "Buffer read error occurred")) }
                 shutdown()
 
                 return
