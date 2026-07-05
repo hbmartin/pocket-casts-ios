@@ -89,6 +89,42 @@ class PodcastDataManager {
         cachePodcasts(dbQueue: dbQueue)
     }
 
+    // MARK: - GRDB Fetching
+
+    /// Materializes a fetched row, backfilling the `@GRDBIgnore`d `settings` payload the same way
+    /// the legacy read path does: defaults when empty, log-and-defaults when undecodable.
+    private static func podcastWithSettings(from row: Row) throws -> Podcast {
+        var podcast = try Podcast(row: row)
+        if let settingsString: String = row["settings"],
+           !settingsString.isEmpty,
+           let settingsData = settingsString.data(using: .utf8) {
+            do {
+                podcast.settings = try JSONDecoder().decode(PodcastSettings.self, from: settingsData)
+            } catch {
+                FileLog.shared.addMessage("Podcast.from failed to decode settings for \(podcast.uuid): \(error)")
+            }
+        }
+        return podcast
+    }
+
+    /// Converts legacy `[Any]` binding values for the GRDB path, matching the legacy shim's
+    /// conversions: `Date` binds as `timeIntervalSince1970` and `NSNull` as NULL.
+    private static func databaseValue(from value: Any) -> DatabaseValue {
+        if let date = value as? Date {
+            return date.timeIntervalSince1970.databaseValue
+        }
+        if value is NSNull {
+            return .null
+        }
+        return DatabaseValue(value: value) ?? .null
+    }
+
+    /// Decodes the aggregate `(podcast_id, COUNT(id))` rows fetched by `unfinishedCounts`.
+    private struct PodcastUnfinishedCount: Decodable, FetchableRecord {
+        let podcastId: Int64
+        let count: Int32
+    }
+
     // MARK: - Queries
 
     func allPodcasts(includeUnsubscribed: Bool, reloadFromDatabase: Bool, dbQueue: PCDBQueue) -> [Podcast] {
@@ -198,6 +234,13 @@ class PodcastDataManager {
     /// Returns 5 random podcasts from the DB
     /// This is here for development purposes.
     func randomPodcasts(dbQueue: PCDBQueue) -> [Podcast] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let podcasts = grdbQueue.read { db in
+                try Row.fetchAll(db, Podcast.all().asRequest(of: Row.self)).map(Self.podcastWithSettings(from:))
+            } ?? []
+            return Array(podcasts.shuffled().prefix(5))
+        }
+
         var allPodcasts = [Podcast]()
         dbQueue.read { db in
             do {
@@ -372,6 +415,30 @@ class PodcastDataManager {
     }
 
     func unfinishedCounts(dbQueue: PCDBQueue) -> [String: Int32] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { db in
+                // Two-step equivalent of the legacy episodes-podcasts JOIN: aggregate per
+                // podcast_id, then key by uuid (episodes without a podcast row drop out)
+                let episodeCounts = try Table(DataManager.episodeTableName)
+                    .filter(Column("playingStatus") != PlayingStatus.completed.rawValue)
+                    .filter(Column("archived") == false)
+                    .select([Column("podcast_id").forKey("podcastId"), GRDB.count(Column("id")).forKey("count")], as: PodcastUnfinishedCount.self)
+                    .group(Column("podcast_id"))
+                    .fetchAll(db)
+
+                let podcastRows = try Row.fetchAll(db, Podcast.select([Podcast.Columns.id, Podcast.Columns.uuid]).asRequest(of: Row.self))
+                let uuidById = Dictionary(podcastRows.map { ($0["id"] as Int64, $0["uuid"] as String) }, uniquingKeysWith: { first, _ in first })
+
+                var counts = [String: Int32]()
+                for episodeCount in episodeCounts {
+                    if let uuid = uuidById[episodeCount.podcastId] {
+                        counts[uuid] = episodeCount.count
+                    }
+                }
+                return counts
+            } ?? [:]
+        }
+
         var counts = [String: Int32]()
         dbQueue.read { db in
             do {
@@ -449,6 +516,24 @@ class PodcastDataManager {
     }
 
     func bulkSetFolderUuid(folderUuid: String, podcastUuids: [String], dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                // clear out any that shouldn't be in this folder
+                try Podcast
+                    .filter(Podcast.Columns.folderUuid == folderUuid)
+                    .updateAll(db, Podcast.Columns.folderUuid.set(to: nil as String?), Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue))
+
+                // then set all the ones that should
+                if !podcastUuids.isEmpty {
+                    try Podcast
+                        .filter(podcastUuids.contains(Podcast.Columns.uuid))
+                        .updateAll(db, Podcast.Columns.folderUuid.set(to: folderUuid), Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue))
+                }
+            }
+            cachePodcasts(dbQueue: dbQueue)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 // clear out any that shouldn't be in this folder
@@ -466,7 +551,17 @@ class PodcastDataManager {
     }
 
     func updatePodcastFolder(podcastUuid: String, sortOrder: Int32, folderUuid: String?, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = ?, sortOrder = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?", values: [folderUuid ?? NSNull(), sortOrder, podcastUuid], methodName: "PodcastDataManager.updatePodcastFolder", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Podcast.self,
+                filter: Podcast.Columns.uuid == podcastUuid,
+                Podcast.Columns.folderUuid.set(to: folderUuid),
+                Podcast.Columns.sortOrder.set(to: sortOrder),
+                Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+            )
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = ?, sortOrder = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?", values: [folderUuid ?? NSNull(), sortOrder, podcastUuid], methodName: "PodcastDataManager.updatePodcastFolder", onQueue: dbQueue)
+        }
         cachePodcasts(dbQueue: dbQueue)
     }
 
@@ -520,7 +615,11 @@ class PodcastDataManager {
     }
 
     func delete(podcast: Podcast, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "DELETE FROM \(DataManager.podcastTableName) WHERE uuid = ?", values: [podcast.uuid], methodName: "PodcastDataManager.delete", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.deleteAll(Podcast.self, filter: Podcast.Columns.uuid == podcast.uuid)
+        } else {
+            DataHelper.run(query: "DELETE FROM \(DataManager.podcastTableName) WHERE uuid = ?", values: [podcast.uuid], methodName: "PodcastDataManager.delete", onQueue: dbQueue)
+        }
         cachePodcasts(dbQueue: dbQueue)
     }
 
@@ -533,8 +632,16 @@ class PodcastDataManager {
     }
 
     func markAllUnsyncedWhereLastSyncAtNot(_ lastSyncAt: String, dbQueue: PCDBQueue) {
-        let query = "UPDATE \(DataManager.podcastTableName) SET syncStatus = \(SyncStatus.notSynced.rawValue) WHERE subscribed = 1 AND fullSyncLastSyncAt <> ?"
-        DataHelper.run(query: query, values: [lastSyncAt], methodName: "PodcastDataManager.markAllUnsyncedWhereLastSyncAtNot", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Podcast.self,
+                filter: Podcast.Columns.subscribed == 1 && Podcast.Columns.fullSyncLastSyncAt != lastSyncAt,
+                Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+            )
+        } else {
+            let query = "UPDATE \(DataManager.podcastTableName) SET syncStatus = \(SyncStatus.notSynced.rawValue) WHERE subscribed = 1 AND fullSyncLastSyncAt <> ?"
+            DataHelper.run(query: query, values: [lastSyncAt], methodName: "PodcastDataManager.markAllUnsyncedWhereLastSyncAtNot", onQueue: dbQueue)
+        }
 
         cachePodcasts(dbQueue: dbQueue)
     }
@@ -628,6 +735,18 @@ class PodcastDataManager {
     }
 
     func setOnAllPodcasts(value: Any, propertyName: String, subscribedOnly: Bool, dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                var request = Podcast.all()
+                if subscribedOnly {
+                    request = request.filter(Podcast.Columns.subscribed == 1)
+                }
+                try request.updateAll(db, Column(propertyName).set(to: Self.databaseValue(from: value)))
+            }
+            cachePodcasts(dbQueue: dbQueue)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 var query = "UPDATE \(DataManager.podcastTableName) SET \(propertyName) = ?"
@@ -644,6 +763,18 @@ class PodcastDataManager {
     }
 
     func saveSortOrders(podcasts: [Podcast], dbQueue: PCDBQueue) {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                for podcast in podcasts {
+                    try Podcast
+                        .filter(Podcast.Columns.id == podcast.id)
+                        .updateAll(db, Podcast.Columns.sortOrder.set(to: podcast.sortOrder), Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue))
+                }
+            }
+            cachePodcasts(dbQueue: dbQueue)
+            return
+        }
+
         dbQueue.write { db in
             do {
                 for podcast in podcasts {
@@ -658,13 +789,28 @@ class PodcastDataManager {
     }
 
     func removeAllPodcastsFromFolder(folderUuid: String, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = NULL, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE folderUuid = ?", values: [folderUuid], methodName: "PodcastDataManager.removeAllPodcastsFromFolder", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Podcast.self,
+                filter: Podcast.Columns.folderUuid == folderUuid,
+                Podcast.Columns.folderUuid.set(to: nil as String?),
+                Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+            )
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = NULL, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE folderUuid = ?", values: [folderUuid], methodName: "PodcastDataManager.removeAllPodcastsFromFolder", onQueue: dbQueue)
+        }
 
         cachePodcasts(dbQueue: dbQueue)
     }
 
     func removeAllPodcastsFromAllFolders(dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = NULL", values: nil, methodName: "PodcastDataManager.removeAllPodcastsFromAllFolders", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            _ = grdbQueue.write { db in
+                try Podcast.updateAll(db, Podcast.Columns.folderUuid.set(to: nil as String?))
+            }
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = NULL", values: nil, methodName: "PodcastDataManager.removeAllPodcastsFromAllFolders", onQueue: dbQueue)
+        }
 
         cachePodcasts(dbQueue: dbQueue)
     }
@@ -683,7 +829,15 @@ class PodcastDataManager {
     }
 
     private func saveSingleValue(name: String, value: Any?, podcastUuid: String, dbQueue: PCDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET \(name) = ? WHERE uuid = ?", values: [value ?? NSNull(), podcastUuid], methodName: "PodcastDataManager.saveSingleValue", onQueue: dbQueue)
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.updateAll(
+                Podcast.self,
+                filter: Podcast.Columns.uuid == podcastUuid,
+                Column(name).set(to: Self.databaseValue(from: value ?? NSNull()))
+            )
+        } else {
+            DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET \(name) = ? WHERE uuid = ?", values: [value ?? NSNull(), podcastUuid], methodName: "PodcastDataManager.saveSingleValue", onQueue: dbQueue)
+        }
 
         cachePodcasts(dbQueue: dbQueue)
     }
@@ -757,6 +911,17 @@ class PodcastDataManager {
     private func cachePodcasts(dbQueue: PCDBQueue) {
         let trace = TraceManager.shared.beginTracing(eventName: "DATABASE_PODCAST_CACHE")
         defer { TraceManager.shared.endTracing(trace: trace) }
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            guard let podcasts = grdbQueue.read({ db in
+                try Row.fetchAll(db, Podcast.all().asRequest(of: Row.self)).map(Self.podcastWithSettings(from:))
+            }) else { return }
+
+            cachedPodcastsQueue.sync {
+                cachedPodcasts = Dictionary(podcasts.map { ($0.uuid, $0) }, uniquingKeysWith: { _, last in last })
+            }
+            return
+        }
 
         dbQueue.read { db in
             do {
