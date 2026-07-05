@@ -481,12 +481,13 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             }
             activeLoaderDelegate = customLoaderDelegate
         }
+        let boxedEpisode = PocketCastsUtils.UncheckedSendable(episode)
         Task {
             while !exportStatus.completed {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
             downloadingEpisodesCache[downloadTaskUUID] = nil
-            removeEpisodeFromCache(episode)
+            removeEpisodeFromCache(boxedEpisode.value)
             if FeatureFlag.releaseMediaExporterWhenNoLongerActive.enabled,
                let mediaExporterDelegate = downloadAndStreamEpisodes[downloadTaskUUID] as? MediaExporterResourceLoaderDelegate,
                mediaExporterDelegate != activeLoaderDelegate as? MediaExporterResourceLoaderDelegate {

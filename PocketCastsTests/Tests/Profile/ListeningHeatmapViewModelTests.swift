@@ -8,13 +8,9 @@ import Combine
 final class ListeningHeatmapViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable> = []
 
-    override func tearDown() {
-        // tearDown overrides the nonisolated XCTestCase method, but runs on the
-        // main thread for a @MainActor test class
-        MainActor.assumeIsolated {
-            cancellables.removeAll()
-        }
-        super.tearDown()
+    override func tearDown() async throws {
+        cancellables.removeAll()
+        try await super.tearDown()
     }
 
     // MARK: - Week alignment (English locale)

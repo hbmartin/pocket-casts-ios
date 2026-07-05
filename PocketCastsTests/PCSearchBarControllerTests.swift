@@ -2,6 +2,7 @@ import UIKit
 import XCTest
 @testable import podcasts
 
+@MainActor
 final class PCSearchBarControllerTests: XCTestCase {
 
     func testInstallWithCollapsingBarExposesScrollableHeightConstraint() throws {
