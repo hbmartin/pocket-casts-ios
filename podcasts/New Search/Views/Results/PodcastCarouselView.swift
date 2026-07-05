@@ -209,6 +209,7 @@ struct PodcastResultCell: View {
 }
 
 extension PodcastFolderSearchResult {
+    @MainActor
     func navigateTo() {
         switch kind {
         case .folder:
