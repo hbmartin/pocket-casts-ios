@@ -8,10 +8,12 @@ class SearchHistoryModelTests: XCTestCase {
     private var model: SearchHistoryModel!
 
     override func setUp() {
-        userDefaults = UserDefaults(suiteName: "SearchHistoryModelTests")
-        userDefaults.removePersistentDomain(forName: "SearchHistoryModelTests")
+        MainActor.assumeIsolated {
+            userDefaults = UserDefaults(suiteName: "SearchHistoryModelTests")
+            userDefaults.removePersistentDomain(forName: "SearchHistoryModelTests")
 
-        model = SearchHistoryModel(userDefaults: userDefaults)
+            model = SearchHistoryModel(userDefaults: userDefaults)
+        }
     }
 
     // MARK: - Add entries
