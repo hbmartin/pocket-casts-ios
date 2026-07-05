@@ -390,11 +390,12 @@ class PlaybackQueue: NSObject {
     private func checkAllForAutoDownload() {
         if !Settings.downloadUpNextEpisodes() { return }
 
-        DispatchQueue.global().async { [weak self] in
-            guard let self else { return }
-            let episodes = self.allEpisodes(includeNowPlaying: !FeatureFlag.streamAndCachePlayingEpisode.enabled)
+        let boxedSelf = PocketCastsUtils.UncheckedSendable(self)
+        DispatchQueue.global().async {
+            let queue = boxedSelf.value
+            let episodes = queue.allEpisodes(includeNowPlaying: !FeatureFlag.streamAndCachePlayingEpisode.enabled)
             for episode in episodes {
-                self.autoDownloadIfRequired(episode: episode)
+                queue.autoDownloadIfRequired(episode: episode)
             }
         }
     }
@@ -468,8 +469,9 @@ class PlaybackQueue: NSObject {
         if Thread.isMainThread {
             scheduleTimer()
         } else {
+            let boxed = PocketCastsUtils.UncheckedSendable(scheduleTimer)
             DispatchQueue.main.sync {
-                scheduleTimer()
+                boxed.value()
             }
         }
     }
