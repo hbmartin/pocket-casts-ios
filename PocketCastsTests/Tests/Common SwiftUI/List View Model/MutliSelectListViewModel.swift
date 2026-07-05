@@ -11,7 +11,7 @@ final class MultiSelectListViewModelTests: XCTestCase {
         .init(title: "three")
     ]
 
-    override func setUp() {
+    override func setUp() async throws {
         viewModel = MultiSelectListViewModel(items: testItems)
     }
 

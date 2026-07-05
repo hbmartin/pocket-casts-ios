@@ -73,6 +73,7 @@ final class PlaybackManager {
     private var seekingTo: TimeInterval = PlaybackManager.notSeeking
 
     private let chapterManager = ChapterManager()
+    private let positionTracker = PlaybackPositionTracker()
 
     var sleepTimeRemaining = -1 as TimeInterval
 
@@ -257,7 +258,7 @@ final class PlaybackManager {
 
         // Played and unplayed episodes should always start from 0
         if episode.played() || episode.unplayed() {
-            episode.playedUpTo = 0
+            positionTracker.overridePosition(0, episodeUuid: episode.uuid)
             DataManager.sharedManager.saveEpisode(playedUpTo: 0, episode: episode, updateSyncFlag: false)
             queue.refreshList(checkForAutoDownload: false)
         }
@@ -343,7 +344,7 @@ final class PlaybackManager {
         }
         updateNowPlayingInfo()
 
-        catchUpHelper.playbackDidPause(of: episode)
+        catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
         cancelUpdateTimer()
         deactiveAudioSession()
@@ -503,7 +504,7 @@ final class PlaybackManager {
             DataManager.sharedManager.saveEpisode(playingStatus: .inProgress, episode: playingEpisode, updateSyncFlag: SyncManager.isUserLoggedIn())
         }
 
-        let currentTime = playingEpisode.playedUpTo
+        let currentTime = positionTracker.playedUpTo(for: playingEpisode)
         seekingTo = time
         FileLog.shared.addMessage("seek to \(time) startPlaybackAfterSeek \(startPlaybackAfterSeek)")
 
@@ -525,7 +526,7 @@ final class PlaybackManager {
             })
         } else {
             // the player isn't currently initialised, so just set this time directly on the episode, as long as it's not past the duration
-            if time >= 0, time <= playingEpisode.duration, time != playingEpisode.playedUpTo {
+            if time >= 0, time <= playingEpisode.duration, time != positionTracker.playedUpTo(for: playingEpisode) {
                 DataManager.sharedManager.saveEpisode(playedUpTo: time, episode: playingEpisode, updateSyncFlag: syncChanges)
 
                 seekingTo = PlaybackManager.notSeeking
@@ -575,7 +576,8 @@ final class PlaybackManager {
 
         if playerTime <= 0 {
             let startFromTime = startFromTimeForCurrentEpisode()
-            return episode.playedUpTo < 1 ? startFromTime : episode.playedUpTo
+            let storedUpTo = positionTracker.playedUpTo(for: episode)
+            return storedUpTo < 1 ? startFromTime : storedUpTo
         }
 
         return playerTime
@@ -715,7 +717,7 @@ final class PlaybackManager {
 
         // Played and unplayed episodes should always start from 0
         if nextEpisode.played() || nextEpisode.unplayed() {
-            nextEpisode.playedUpTo = 0
+            positionTracker.overridePosition(0, episodeUuid: nextEpisode.uuid)
         }
         DataManager.sharedManager.saveEpisode(playbackError: nil, episode: nextEpisode)
         activeError = nil
@@ -1004,8 +1006,9 @@ final class PlaybackManager {
         }
 
         if Int(episode.playingStatus) == PlayingStatus.inProgress.rawValue {
-            if episode.playedUpTo > 0 {
-                return catchUpHelper.adjustStartTimeIfNeeded(for: episode)
+            let storedUpTo = positionTracker.playedUpTo(for: episode)
+            if storedUpTo > 0 {
+                return catchUpHelper.adjustStartTimeIfNeeded(for: episode, playedUpTo: storedUpTo)
             }
         } else {
             DataManager.sharedManager.saveEpisode(playingStatus: PlayingStatus.inProgress, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
@@ -1141,7 +1144,8 @@ final class PlaybackManager {
         // - Is where we are up to close to the duration?
         // - Is the duration actually reasonable?
         // if either of these is false, flag it as an error, otherwise we got close enough to the end
-        if episode.playedUpTo < 1.minutes || episode.duration <= 0 || ((episode.playedUpTo + 3.minutes) < episode.duration) {
+        let finishedUpTo = positionTracker.playedUpTo(for: episode)
+        if finishedUpTo < 1.minutes || episode.duration <= 0 || ((finishedUpTo + 3.minutes) < episode.duration) {
             let previousSource = AnalyticsPlaybackHelper.shared.currentSource
             AnalyticsPlaybackHelper.shared.currentSource = .playbackFailed
             pause(userInitiated: false)
@@ -1580,7 +1584,7 @@ final class PlaybackManager {
         } else {
             let upTo = currentTime()
             if upTo > 0 {
-                episode.playedUpTo = upTo
+                positionTracker.tick(upTo: upTo, episodeUuid: episode.uuid)
             }
             updateCount += 1
         }
@@ -2094,7 +2098,7 @@ final class PlaybackManager {
             }
 
             if let episode = currentEpisode() {
-                catchUpHelper.playbackDidPause(of: episode)
+                catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
             }
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
         }
