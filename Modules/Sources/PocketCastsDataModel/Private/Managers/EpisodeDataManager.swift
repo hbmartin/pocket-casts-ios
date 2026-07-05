@@ -239,7 +239,39 @@ final class EpisodeDataManager: Sendable {
         return loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE \(columnName) IS NOT NULL", values: nil, dbQueue: dbQueue)
     }
 
+    /// SQLite's UPPER() only folds ASCII letters; the GRDB search paths must uppercase bound
+    /// terms the same way to keep LIKE matching identical to the legacy `UPPER(?)` binding.
+    private static func sqliteUppercased(_ term: String) -> String {
+        String(term.map { $0.isASCII ? Character($0.uppercased()) : $0 })
+    }
+
     func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool, dbQueue: PCDBQueue) -> [Episode] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> [Episode] in
+                // Two-step equivalent of the legacy LEFT JOIN: matching podcast ids first, then
+                // episodes whose own title matches or whose podcast matched
+                let pattern = "%\(Self.sqliteUppercased(customWhere))%"
+                let matchingPodcastIds = try Podcast
+                    .filter(Podcast.Columns.title.uppercased.like(pattern, escape: "\\"))
+                    .select(Podcast.Columns.id, as: Int64.self)
+                    .fetchAll(db)
+
+                var request = Episode.filter(
+                    Episode.Columns.title.uppercased.like(pattern, escape: "\\")
+                        || matchingPodcastIds.contains(Episode.Columns.podcast_id)
+                )
+                if listenedTo {
+                    request = request
+                        .filter(Episode.Columns.lastPlaybackInteractionDate != nil)
+                        .filter(Episode.Columns.lastPlaybackInteractionDate > 0)
+                }
+                return try request
+                    .order(Episode.Columns.lastPlaybackInteractionDate.desc)
+                    .limit(1000)
+                    .fetchAll(db)
+            } ?? []
+        }
+
         let listenedToQuery: String = """
         lastPlaybackInteractionDate IS NOT NULL
         AND lastPlaybackInteractionDate > 0
@@ -263,6 +295,17 @@ final class EpisodeDataManager: Sendable {
 
     func findEpisodes(with term: String, podcastUUID: String, dbQueue: PCDBQueue) -> [Episode] {
         let escapedSearch = term.escapeLike(escapeChar: "\\")
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.fetchAll(
+                Episode
+                    .filter(Episode.Columns.title.uppercased.like("%\(Self.sqliteUppercased(escapedSearch))%", escape: "\\"))
+                    .filter(Episode.Columns.podcastUuid == podcastUUID)
+                    .filter(Episode.Columns.wasDeleted == false)
+                    .order(Episode.Columns.publishedDate.desc, Episode.Columns.addedDate.desc)
+            )
+        }
+
         let query = """
         (UPPER(title) LIKE '%' || UPPER(?) || '%'  ESCAPE '\\' AND
         podcastUuid = ? AND wasDeleted = 0)
@@ -324,6 +367,35 @@ final class EpisodeDataManager: Sendable {
     /// Returns daily listening totals as `[dateString: totalSeconds]` for the past N days.
     /// Date strings are formatted as "yyyy-MM-dd" in the device's local timezone.
     func dailyListeningTime(forLast days: Int, dbQueue: PCDBQueue) -> [String: Double] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            // strftime('%s','now','-N days') subtracts exact days from UTC epoch seconds, i.e.
+            // now - N*86400; the per-day bucketing replicates date(x,'unixepoch','localtime')
+            let cutoff = Date().timeIntervalSince1970 - Double(days) * 86400
+            let rows = grdbQueue.read { (db: Database) -> [Row] in
+                try Row.fetchAll(
+                    db,
+                    Episode
+                        .filter(Episode.Columns.lastPlaybackInteractionDate != nil)
+                        .filter(Episode.Columns.lastPlaybackInteractionDate >= cutoff)
+                        .select([Episode.Columns.lastPlaybackInteractionDate, Episode.Columns.playedUpTo])
+                        .asRequest(of: Row.self)
+                )
+            } ?? []
+
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+
+            var result: [String: Double] = [:]
+            for row in rows {
+                guard let interval: Double = row["lastPlaybackInteractionDate"] else { continue }
+                let day = formatter.string(from: Date(timeIntervalSince1970: interval))
+                let playedUpTo: Double = row["playedUpTo"] ?? 0
+                result[day, default: 0] += playedUpTo
+            }
+            return result
+        }
+
         var result: [String: Double] = [:]
 
         dbQueue.read { db in
@@ -1501,6 +1573,24 @@ final class EpisodeDataManager: Sendable {
 
 extension EpisodeDataManager {
     func findGhostEpisodes(_ dbQueue: PCDBQueue) -> [Episode] {
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return grdbQueue.read { (db: Database) -> [Episode] in
+                // Anti-join equivalent of the legacy LEFT JOIN ... IS NULL pairs: episodes whose
+                // podcast row is gone and that aren't referenced by a live playlist entry
+                let podcastUuids = try Podcast.select(Podcast.Columns.uuid, as: String.self).fetchAll(db)
+                let playlistEpisodeUuids = try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("wasDeleted") == false)
+                    .filter(Column("playlist_uuid") != nil)
+                    .select([Column("episodeUuid")], as: String.self)
+                    .fetchAll(db)
+
+                return try Episode
+                    .filter(!podcastUuids.contains(Episode.Columns.podcastUuid))
+                    .filter(!playlistEpisodeUuids.contains(Episode.Columns.uuid))
+                    .fetchAll(db)
+            } ?? []
+        }
+
         let playlistTable = DataManager.playlistEpisodeTableName
         let query = """
         SELECT SJEpisode.*
