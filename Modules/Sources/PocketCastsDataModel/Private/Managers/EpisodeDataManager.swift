@@ -58,7 +58,7 @@ final class EpisodeDataManager: Sendable {
     // MARK: - Query
 
     func findBy(uuid: String, dbQueue: PCDBQueue) -> Episode? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchOne(Episode.filter(Episode.Columns.uuid == uuid))
         }
 
@@ -66,7 +66,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findByAsync(uuid: String, dbQueue: PCDBQueue) async -> Episode? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             do {
                 return try await grdbQueue.dbPool.read { db in
                     try Episode.filter(Episode.Columns.uuid == uuid).fetchOne(db)
@@ -93,7 +93,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findPlayedEpisodes(uuids: [String], dbQueue: PCDBQueue) -> [String] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { (db: Database) -> [String] in
                 try Episode
                     .filter(uuids.contains(Episode.Columns.uuid))
@@ -129,7 +129,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findMatchingEpisodes(uuids: [String], dbQueue: PCDBQueue) -> [String] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { (db: Database) -> [String] in
                 try Episode
                     .filter(uuids.contains(Episode.Columns.uuid))
@@ -167,7 +167,7 @@ final class EpisodeDataManager: Sendable {
         // Uses the genuinely-async `read` (off the caller's executor) rather than the
         // synchronous `read` wrapped in a continuation, which would block whatever thread
         // the caller runs on — main-thread-blocking when awaited from a `@MainActor` caller.
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             do {
                 return try await grdbQueue.dbPool.read { db in
                     try Episode
@@ -199,7 +199,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func downloadedEpisodeExists(uuid: String, dbQueue: PCDBQueue) -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.count(
                 Episode.self,
                 filter: Episode.Columns.episodeStatus == DownloadStatus.downloaded.rawValue && Episode.Columns.uuid == uuid
@@ -224,7 +224,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findBy(downloadTaskId: String, dbQueue: PCDBQueue) -> Episode? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchOne(Episode.filter(Episode.Columns.downloadTaskId == downloadTaskId))
         }
 
@@ -232,7 +232,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findWhereNotNull(columnName: String, dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(Episode.filter(Column(columnName) != nil))
         }
 
@@ -246,7 +246,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool, dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { (db: Database) -> [Episode] in
                 // Two-step equivalent of the legacy LEFT JOIN: matching podcast ids first, then
                 // episodes whose own title matches or whose podcast matched
@@ -296,7 +296,7 @@ final class EpisodeDataManager: Sendable {
     func findEpisodes(with term: String, podcastUUID: String, dbQueue: PCDBQueue) -> [Episode] {
         let escapedSearch = term.escapeLike(escapeChar: "\\")
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(
                 Episode
                     .filter(Episode.Columns.title.uppercased.like("%\(Self.sqliteUppercased(escapedSearch))%", escape: "\\"))
@@ -320,7 +320,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func unsyncedEpisodes(limit: Int, dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(
                 Episode
                     .filter(
@@ -339,7 +339,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func allEpisodesForPodcast(id: Int64, dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(
                 Episode
                     .filter(Episode.Columns.podcast_id == id)
@@ -351,7 +351,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func episodesWithListenHistory(limit: Int, dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(
                 Episode
                     .filter(Episode.Columns.lastPlaybackInteractionDate != nil)
@@ -367,7 +367,7 @@ final class EpisodeDataManager: Sendable {
     /// Returns daily listening totals as `[dateString: totalSeconds]` for the past N days.
     /// Date strings are formatted as "yyyy-MM-dd" in the device's local timezone.
     func dailyListeningTime(forLast days: Int, dbQueue: PCDBQueue) -> [String: Double] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // strftime('%s','now','-N days') subtracts exact days from UTC epoch seconds, i.e.
             // now - N*86400; the per-day bucketing replicates date(x,'unixepoch','localtime')
             let cutoff = Date().timeIntervalSince1970 - Double(days) * 86400
@@ -426,7 +426,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findLatestEpisode(podcast: Podcast, dbQueue: PCDBQueue) -> Episode? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchOne(latestEpisodesRequest(podcastId: podcast.id).limit(1))
         }
 
@@ -434,7 +434,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findLatestEpisodes(podcast: Podcast, limit: Int, dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(latestEpisodesRequest(podcastId: podcast.id).limit(limit))
         }
 
@@ -449,7 +449,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func allUpNextEpisodes(dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { (db: Database) -> [Episode] in
                 // Two-step equivalent of the legacy INNER JOIN, ordered by queue position
                 let queueRows = try Table(DataManager.playlistEpisodeTableName)
@@ -483,7 +483,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func allUpNextEpisodes(from uuids: [String], dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { (db: Database) -> [Episode] in
                 // Two-step equivalent of the legacy DISTINCT INNER JOIN: queue order, first
                 // occurrence wins, only uuids present in both the queue and the episode table
@@ -565,7 +565,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func downloadedEpisodeCount(dbQueue: PCDBQueue) -> Int {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.count(Episode.self, filter: Episode.Columns.episodeStatus == DownloadStatus.downloaded.rawValue)
         }
 
@@ -588,7 +588,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func failedDownloadEpisodeCount(dbQueue: PCDBQueue) -> Int {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.count(Episode.self, filter: Episode.Columns.episodeStatus == DownloadStatus.downloadFailed.rawValue)
         }
 
@@ -611,7 +611,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func failedDownloadFirstDate(dbQueue: PCDBQueue, sortOrder: SortOrder) -> Date? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             var request = Episode
                 .filter(Episode.Columns.episodeStatus == DownloadStatus.downloadFailed.rawValue)
                 .filter(Episode.Columns.lastDownloadAttemptDate != nil)
@@ -671,7 +671,7 @@ final class EpisodeDataManager: Sendable {
             episode.id = DBUtils.generateUniqueId()
         }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // GRDB path using PersistableRecord
             do {
                 try grdbQueue.dbPool.write { db in
@@ -698,7 +698,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func bulkSave(episodes: [Episode], dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // GRDB path using PersistableRecord
             do {
                 try grdbQueue.dbPool.write { db in
@@ -745,7 +745,7 @@ final class EpisodeDataManager: Sendable {
     private func performBulkUpdates(_ updates: [(fields: [String], values: [Any], uuid: String)], methodName: String, dbQueue: PCDBQueue) {
         if updates.isEmpty { return }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 for update in updates {
                     let assignments = zip(update.fields, update.values).map { field, value in
@@ -876,7 +876,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func findFrameCount(episodeId: Int64, dbQueue: PCDBQueue) -> Int64 {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchOne(Episode.filter(Episode.Columns.id == episodeId))?.cachedFrameCount ?? 0
         }
 
@@ -938,7 +938,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func markAllEpisodePlaybackHistorySynced(dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             _ = grdbQueue.write { db in
                 try Episode.updateAll(db, Episode.Columns.lastPlaybackInteractionSyncStatus.set(to: SyncStatus.synced.rawValue))
             }
@@ -955,7 +955,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func clearEpisodePlaybackInteractionDatesBefore(date: Date, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Episode.self,
                 filter: Episode.Columns.lastPlaybackInteractionDate <= date.timeIntervalSince1970,
@@ -974,7 +974,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func clearAllEpisodePlaybackInteractions(dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Episode.self,
                 filter: Episode.Columns.lastPlaybackInteractionDate > 0,
@@ -1141,7 +1141,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func delete(episodeUuid: String, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(Episode.self, filter: Episode.Columns.uuid == episodeUuid)
             return
         }
@@ -1156,7 +1156,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func deleteAllEpisodesInPodcast(podcastId: Int64, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(Episode.self, filter: Episode.Columns.podcast_id == podcastId)
             return
         }
@@ -1175,7 +1175,7 @@ final class EpisodeDataManager: Sendable {
             return
         }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // Single IN-statement form; equivalent to both legacy sub-branches
             let ids = episodes.map(\.id)
             grdbQueue.updateAll(
@@ -1213,7 +1213,7 @@ final class EpisodeDataManager: Sendable {
             return
         }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // Single IN-statement form; equivalent to both legacy sub-branches
             grdbQueue.updateAll(
                 Episode.self,
@@ -1245,7 +1245,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     func markAllUnarchivedForPodcast(id: Int64, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Episode.self,
                 filter: Episode.Columns.podcast_id == id,
@@ -1379,7 +1379,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fields: [String], values: [Any], useId: Bool = true, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // The last value is the id/uuid used by the WHERE clause, mirroring the legacy layout
             guard values.count == fields.count + 1, let identifier = values.last else { return }
 
@@ -1409,7 +1409,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 try Episode
                     .filter(Episode.Columns.id == episodeId)
@@ -1428,7 +1428,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeUuid: String, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 try Episode
                     .filter(Episode.Columns.uuid == episodeUuid)
@@ -1447,7 +1447,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func saveFieldIfNotModified(fieldName: String, modifiedFieldName: String, value: Any, episodeUuid: String, dbQueue: PCDBQueue) -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let updated = grdbQueue.write { (db: Database) -> Int in
                 try Episode
                     .filter(Episode.Columns.uuid == episodeUuid)
@@ -1471,7 +1471,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func saveFieldIfNotModified(fieldName: String, modifiedFieldName: String, value: Any, remoteModified: Int64, episodeUuid: String, dbQueue: PCDBQueue) -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let updated = grdbQueue.write { (db: Database) -> Int in
                 try Episode
                     .filter(Episode.Columns.uuid == episodeUuid)
@@ -1573,7 +1573,7 @@ final class EpisodeDataManager: Sendable {
 
 extension EpisodeDataManager {
     func findGhostEpisodes(_ dbQueue: PCDBQueue) -> [Episode] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { (db: Database) -> [Episode] in
                 // Anti-join equivalent of the legacy LEFT JOIN ... IS NULL pairs: episodes whose
                 // podcast row is gone and that aren't referenced by a live playlist entry

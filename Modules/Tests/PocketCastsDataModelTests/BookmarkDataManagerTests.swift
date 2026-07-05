@@ -3,7 +3,7 @@
 import XCTest
 
 /// Coverage for BookmarkDataManager that now runs against both SQL and GRDB
-/// implementations via the FeatureFlag.grdbQueryInterface toggle.
+/// implementation (raw-SQL paths were deleted with the grdbQueryInterface flag).
 final class BookmarkDataManagerTests: DataManagerTestCase {
 
     // MARK: - Adding

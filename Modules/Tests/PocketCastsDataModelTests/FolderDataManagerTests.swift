@@ -67,10 +67,6 @@ final class FolderDataManagerTests: DataManagerTestCase {
     }
 
     func testCacheFoldersPreservesCachedFoldersWhenGRDBReadFails() throws {
-        let store = FeatureFlagOverrideStore()
-        try store.override(FeatureFlag.grdbQueryInterface, withValue: true)
-        defer { store.resetOverrides() }
-
         let dataManager = DataManager.newTestDataManager()
         let folder = createTestFolder(uuid: "cached-folder", name: "Cached Folder", dataManager: dataManager)
         try dataManager.testDbQueue.dbPool.write { db in

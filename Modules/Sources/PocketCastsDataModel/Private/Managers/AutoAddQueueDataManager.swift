@@ -24,7 +24,7 @@ public struct AutoAddCandidatesDataManager {
 
     /// Adds a new auto add candidate to the database
     public func add(podcastUUID: String, episodeUUID: String) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 try AutoAddCandidateRow(id: nil, episodeUuid: episodeUUID, podcastUuid: podcastUUID).insert(db)
             }
@@ -42,7 +42,7 @@ public struct AutoAddCandidatesDataManager {
 
     /// Removes a single candidate from the DB
     public func remove(_ candidate: AutoAddCandidate) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(AutoAddCandidateRow.self, filter: AutoAddCandidateRow.Columns.id == candidate.id)
             return
         }
@@ -60,7 +60,7 @@ public struct AutoAddCandidatesDataManager {
 
     /// Reset the the entire candidates table
     public func clearAll() {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             _ = grdbQueue.write { db in
                 try AutoAddCandidateRow.deleteAll(db)
             }
@@ -79,7 +79,7 @@ public struct AutoAddCandidatesDataManager {
     /// Returns the auto add up next candidates
     /// Each candidate contains the
     public func candidates() -> [AutoAddCandidate] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { db in
                 // Process the oldest items first, like the legacy ORDER BY queue.id ASC
                 let rows = try AutoAddCandidateRow.order(AutoAddCandidateRow.Columns.id.asc).fetchAll(db)

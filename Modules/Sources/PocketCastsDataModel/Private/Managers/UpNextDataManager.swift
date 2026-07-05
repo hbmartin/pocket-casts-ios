@@ -114,7 +114,7 @@ class UpNextDataManager {
     // MARK: - Updates
 
     func save(playlistEpisode: PlaylistEpisode, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 // move every episode after this one down one, if there are any
                 try PlaylistEpisodeRow
@@ -168,7 +168,7 @@ class UpNextDataManager {
     }
 
     func save(playlistEpisodes: [PlaylistEpisode], dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 let topPosition = playlistEpisodes[0].episodePosition
                 let uuids = playlistEpisodes.map(\.episodeUuid)
@@ -234,7 +234,7 @@ class UpNextDataManager {
     }
 
     func delete(playlistEpisode: PlaylistEpisode, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(
                 PlaylistEpisodeRow.self,
                 filter: PlaylistEpisodeRow.Columns.id == playlistEpisode.id && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
@@ -254,7 +254,7 @@ class UpNextDataManager {
     }
 
     func deleteAllUpNextEpisodes(dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(
                 PlaylistEpisodeRow.self,
                 filter: PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
@@ -273,7 +273,7 @@ class UpNextDataManager {
     }
 
     func deleteAllUpNextEpisodesExcept(episodeUuid: String, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(
                 PlaylistEpisodeRow.self,
                 filter: PlaylistEpisodeRow.Columns.episodeUuid != episodeUuid && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
@@ -292,7 +292,7 @@ class UpNextDataManager {
     }
 
     func deleteAllUpNextEpisodesNotIn(uuids: [String], dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             if uuids.isEmpty {
                 grdbQueue.deleteAll(
                     PlaylistEpisodeRow.self,
@@ -329,7 +329,7 @@ class UpNextDataManager {
     func deleteAllUpNextEpisodesIn(uuids: [String], dbQueue: PCDBQueue) {
         guard !uuids.isEmpty else { return }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(
                 PlaylistEpisodeRow.self,
                 filter: uuids.contains(PlaylistEpisodeRow.Columns.episodeUuid) && PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId
@@ -376,7 +376,7 @@ class UpNextDataManager {
     // MARK: - Caching
 
     private func cacheEpisodes(dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let rows = grdbQueue.fetchAll(
                 PlaylistEpisodeRow
                     .filter(PlaylistEpisodeRow.Columns.playlistId == UpNextDataManager.upNextPlaylistId)
@@ -423,7 +423,7 @@ class UpNextDataManager {
 
     /// Writes each episode's index in `items` back as its `episodePosition`
     private func persistOrdering(of items: [PlaylistEpisode], dbQueue: PCDBQueue, logContext: String) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 for (index, episode) in items.enumerated() {
                     try PlaylistEpisodeRow
