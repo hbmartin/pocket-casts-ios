@@ -132,7 +132,8 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 }
             } catch {
                 strongSelf.playerLock.unlock()
-                PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: error.localizedDescription), fallbackToDefaultPlayer: true)
+                let message = error.localizedDescription
+                Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: message), fallbackToDefaultPlayer: true) }
                 return
             }
 
@@ -167,14 +168,15 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 try strongSelf.engine?.start()
             } catch {
                 strongSelf.playerLock.unlock()
-                PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: error.localizedDescription))
+                let message = error.localizedDescription
+                Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: message)) }
                 return
             }
             // there seem to be cases where the above call succeeds but the engine isn't actually started. Handle that here
             if !(strongSelf.engine?.isRunning ?? false) {
                 strongSelf.playerLock.unlock()
                 FileLog.shared.addMessage("EffectsPlayer: engine reported not running, calling playbackDidFail")
-                PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: "AVAudioEngine reported not running"))
+                Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: .fileCorrupted(logMessage: "AVAudioEngine reported not running")) }
                 return
             }
 
@@ -187,7 +189,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             if strongSelf.haveFiredDurationNotification == false {
                 strongSelf.haveFiredDurationNotification = true
 
-                PlaybackManager.shared.playerDidCalculateDuration()
+                Task { @MainActor in PlaybackManager.shared.playerDidCalculateDuration() }
             }
 
             self?.aboutToPlay.value = false
@@ -205,7 +207,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
         } catch {
             FileLog.shared.addMessage("EffectsPlayer: failed to start playback: \(error)")
             self.playerLock.unlock()
-            PlaybackManager.shared.pause(userInitiated: false)
+            Task { @MainActor in PlaybackManager.shared.pause(userInitiated: false) }
         }
     }
 
@@ -213,7 +215,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
         shouldKeepPlaying.value = false
         aboutToPlay.value = false
 
-        PlaybackManager.shared.playerDidRequestTermination()
+        Task { @MainActor in PlaybackManager.shared.playerDidRequestTermination() }
     }
 
     func playbackRate() -> Double {
@@ -243,7 +245,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 } else if !(self?.playBufferManager?.haveNotifiedPlayer.value ?? false) {
                     self?.playBufferManager?.haveNotifiedPlayer.value = true
                     FileLog.shared.addMessage("EffectsPlayer seeked passed end of episode, calling finished playing")
-                    PlaybackManager.shared.playerDidFinishPlayingEpisode()
+                    Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
                 }
 
                 self?.seeking = false
@@ -361,11 +363,14 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
 
         // when this is called, the engine has detected an interruption like a route change. Because this happens on things like bluetooth connect, and not just disconnect, we deal with it here.
         // The audio engine has shut down at this point, so we call pause to destroy all our current state and play to restore it all if we should still be playing
-        if shouldKeepPlaying.value, !PlaybackManager.shared.interruptionInProgress() {
-            PlaybackManager.shared.pause(userInitiated: false)
-            PlaybackManager.shared.play(userInitiated: false)
-        } else if !shouldKeepPlaying.value {
-            PlaybackManager.shared.pause(userInitiated: false)
+        let keepPlaying = shouldKeepPlaying.value
+        Task { @MainActor in
+            if keepPlaying, !PlaybackManager.shared.interruptionInProgress() {
+                PlaybackManager.shared.pause(userInitiated: false)
+                PlaybackManager.shared.play(userInitiated: false)
+            } else if !keepPlaying {
+                PlaybackManager.shared.pause(userInitiated: false)
+            }
         }
     }
 

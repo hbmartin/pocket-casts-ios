@@ -257,7 +257,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
 
     func routeDidChange(shouldPause: Bool) {
         if shouldPause {
-            PlaybackManager.shared.pause(userInitiated: false)
+            Task { @MainActor in PlaybackManager.shared.pause(userInitiated: false) }
         }
     }
 
@@ -304,7 +304,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 error = .episodeNotAvailable(errorCode: playerNSError.code, logMessage: logMessage)
             }
         }
-        PlaybackManager.shared.playbackDidFail(error: error)
+        Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: error) }
 
         return true
     }
@@ -321,7 +321,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             loadAssetTrack(for: currentItem)
         }
 
-        PlaybackManager.shared.playerDidChangeNowPlayingInfo()
+        Task { @MainActor in PlaybackManager.shared.playerDidChangeNowPlayingInfo() }
     }
 
     private func loadAssetTrack(for currentItem: AVPlayerItem) {
@@ -369,7 +369,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             currentItem.audioMix = audioMix
 
         isWaitingForInitialPlayback = false
-        PlaybackManager.shared.playerDidChangeNowPlayingInfo()
+        Task { @MainActor in PlaybackManager.shared.playerDidChangeNowPlayingInfo() }
     }
 
     // MARK: - Audio Mix
@@ -774,7 +774,8 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
         // only reports errors if we're meant to be playing
         if shouldKeepPlaying {
             shouldKeepPlaying = false
-            PlaybackManager.shared.playbackDidFail(error: .playbackError(logMessage: message, isLocalFile: isPlayingLocalFile))
+            let error = PlaybackManager.PlaybackError.playbackError(logMessage: message, isLocalFile: isPlayingLocalFile)
+            Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: error) }
         }
     }
 
@@ -784,7 +785,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             player?.allowsExternalPlayback = videoPodcast
 
         durationObserver = player?.currentItem?.observe(\.duration) { _, _ in
-            PlaybackManager.shared.playerDidCalculateDuration()
+            Task { @MainActor in PlaybackManager.shared.playerDidCalculateDuration() }
         }
 
         // Listen for changes to the timeControlStatus to determine if the system has decided to pause the playback
@@ -840,7 +841,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 }
             }
 
-            PlaybackManager.shared.playerDidChangeNowPlayingInfo()
+            Task { @MainActor in PlaybackManager.shared.playerDidChangeNowPlayingInfo() }
         }
 
         playerStatusObserver = player?.observe(\.status) { [weak self] _, _ in
@@ -892,7 +893,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 self.shouldKeepPlaying = false
             }
 
-            PlaybackManager.shared.playerDidFinishPlayingEpisode()
+            Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
         }
 
         playFailedObserver = nc.addObserver(forName: NSNotification.Name.AVPlayerItemFailedToPlayToEndTime, object: nil, queue: nil) { [weak self] notification in
@@ -902,7 +903,8 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
 
             let error = notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? Error
             let errorMessage = error?.localizedDescription ?? "Unknown item did fail to finish error"
-            PlaybackManager.shared.playbackDidFail(error: .playbackError(logMessage: errorMessage, isLocalFile: isPlayingLocalFile))
+            let playbackError = PlaybackManager.PlaybackError.playbackError(logMessage: errorMessage, isLocalFile: isPlayingLocalFile)
+            Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: playbackError) }
         }
 
         playStalledObserver = nc.addObserver(forName: NSNotification.Name.AVPlayerItemPlaybackStalled, object: nil, queue: nil) { [weak self] _ in
