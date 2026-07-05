@@ -668,70 +668,74 @@ final class EpisodeDataManager: Sendable {
         }
     }
 
-    func bulkSetStarred(starred: Bool, episodes: [Episode], updateSyncFlag: Bool, dbQueue: PCDBQueue) {
-        if episodes.isEmpty { return }
+    /// Applies one `(fields, values)` update per episode uuid inside a single transaction on
+    /// either path — the shared execution for the bulk mutation methods below.
+    private func performBulkUpdates(_ updates: [(fields: [String], values: [Any], uuid: String)], methodName: String, dbQueue: PCDBQueue) {
+        if updates.isEmpty { return }
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                for update in updates {
+                    let assignments = zip(update.fields, update.values).map { field, value in
+                        Column(field).set(to: Self.databaseValue(from: value))
+                    }
+                    try Episode.filter(Episode.Columns.uuid == update.uuid).updateAll(db, assignments)
+                }
+            }
+            return
+        }
 
         dbQueue.write { db in
             do {
                 db.beginTransaction()
-
-                let firstModified = DBUtils.currentUTCTimeInMillis() + Int64(episodes.count) - 1
-                for (index, episode) in episodes.enumerated() {
-                    if episode.keepEpisode == starred { continue }
-
-                    var fields = [String]()
-                    var values = [Any]()
-
-                    fields.append("keepEpisode")
-                    values.append(starred)
-                    if updateSyncFlag {
-                        fields.append("keepEpisodeModified")
-                        values.append(firstModified - Int64(index))
-                    }
-
-                    let starredModifiedValue = starred ? (firstModified - Int64(index)) : 0
-                    fields.append("starredModified")
-                    values.append(starredModifiedValue)
-
-                    values.append(episode.uuid)
-
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
+                for update in updates {
+                    let setStatement = "SET \(update.fields.joined(separator: " = ?, ")) = ?"
+                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: update.values + [update.uuid])
                 }
                 db.commit()
             } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.bulkSetStarred error: \(error)")
+                FileLog.shared.addMessage("EpisodeDataManager.\(methodName) error: \(error)")
             }
         }
+    }
+
+    func bulkSetStarred(starred: Bool, episodes: [Episode], updateSyncFlag: Bool, dbQueue: PCDBQueue) {
+        if episodes.isEmpty { return }
+
+        var updates = [(fields: [String], values: [Any], uuid: String)]()
+        let firstModified = DBUtils.currentUTCTimeInMillis() + Int64(episodes.count) - 1
+        for (index, episode) in episodes.enumerated() {
+            if episode.keepEpisode == starred { continue }
+
+            var fields = ["keepEpisode"]
+            var values: [Any] = [starred]
+            if updateSyncFlag {
+                fields.append("keepEpisodeModified")
+                values.append(firstModified - Int64(index))
+            }
+
+            let starredModifiedValue = starred ? (firstModified - Int64(index)) : 0
+            fields.append("starredModified")
+            values.append(starredModifiedValue)
+
+            updates.append((fields, values, episode.uuid))
+        }
+
+        performBulkUpdates(updates, methodName: "bulkSetStarred", dbQueue: dbQueue)
     }
 
     func bulkUserFileDelete(episodes: [Episode], dbQueue: PCDBQueue) {
         if episodes.isEmpty { return }
 
-        dbQueue.write { db in
-            do {
-                db.beginTransaction()
-
-                for episode in episodes {
-                    var fields = [String]()
-                    var values = [Any]()
-
-                    fields.append("episodeStatus")
-                    values.append(DownloadStatus.notDownloaded.rawValue)
-                    fields.append("autoDownloadStatus")
-                    values.append(AutoDownloadStatus.userDeletedFile.rawValue)
-                    fields.append("cachedFrameCount")
-                    values.append(0)
-                    values.append(episode.uuid)
-
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
-                }
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.bulkUserFileDelete error: \(error)")
-            }
+        let updates = episodes.map { episode -> (fields: [String], values: [Any], uuid: String) in
+            (
+                fields: ["episodeStatus", "autoDownloadStatus", "cachedFrameCount"],
+                values: [DownloadStatus.notDownloaded.rawValue, AutoDownloadStatus.userDeletedFile.rawValue, 0],
+                uuid: episode.uuid
+            )
         }
+
+        performBulkUpdates(updates, methodName: "bulkUserFileDelete", dbQueue: dbQueue)
     }
 
     func saveFileType(episode: Episode, fileType: String, dbQueue: PCDBQueue) {
@@ -752,56 +756,47 @@ final class EpisodeDataManager: Sendable {
     func saveBulkEpisodeSyncInfo(episodes: [EpisodeBasicData], dbQueue: PCDBQueue) {
         if episodes.isEmpty { return }
 
-        dbQueue.write { db in
-            do {
-                db.beginTransaction()
+        var updates = [(fields: [String], values: [Any], uuid: String)]()
+        for episode in episodes {
+            guard let uuid = episode.uuid else { continue }
 
-                for episode in episodes {
-                    guard let uuid = episode.uuid else { continue }
-
-                    var fields = [String]()
-                    var values = [Any]()
-                    if let duration = episode.duration, duration > 0 {
-                        fields.append("duration")
-                        values.append(duration)
-                    }
-
-                    if let playingStatus = episode.playingStatus {
-                        let actualStatus = PlayingStatus(rawValue: Int32(playingStatus))?.rawValue ?? PlayingStatus.notPlayed.rawValue
-                        fields.append("playingStatus")
-                        values.append(actualStatus)
-                    }
-
-                    if let playedUpTo = episode.playedUpTo, playedUpTo > 0 {
-                        fields.append("playedUpTo")
-                        values.append(playedUpTo)
-                    }
-                    if let isArchived = episode.isArchived {
-                        fields.append("archived")
-                        values.append(isArchived)
-
-                        fields.append("lastArchiveInteractionDate")
-                        values.append(Date())
-                    }
-                    if let starred = episode.starred {
-                        fields.append("keepEpisode")
-                        values.append(starred)
-                    }
-                    if let deselectedChapters = episode.deselectedChapters {
-                        fields.append("deselectedChapters")
-                        values.append(deselectedChapters)
-                    }
-                    values.append(uuid)
-
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
-                }
-
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.saveBulkEpisodeSyncInfo error: \(error)")
+            var fields = [String]()
+            var values = [Any]()
+            if let duration = episode.duration, duration > 0 {
+                fields.append("duration")
+                values.append(duration)
             }
+
+            if let playingStatus = episode.playingStatus {
+                let actualStatus = PlayingStatus(rawValue: Int32(playingStatus))?.rawValue ?? PlayingStatus.notPlayed.rawValue
+                fields.append("playingStatus")
+                values.append(actualStatus)
+            }
+
+            if let playedUpTo = episode.playedUpTo, playedUpTo > 0 {
+                fields.append("playedUpTo")
+                values.append(playedUpTo)
+            }
+            if let isArchived = episode.isArchived {
+                fields.append("archived")
+                values.append(isArchived)
+
+                fields.append("lastArchiveInteractionDate")
+                values.append(Date())
+            }
+            if let starred = episode.starred {
+                fields.append("keepEpisode")
+                values.append(starred)
+            }
+            if let deselectedChapters = episode.deselectedChapters {
+                fields.append("deselectedChapters")
+                values.append(deselectedChapters)
+            }
+
+            updates.append((fields, values, uuid))
         }
+
+        performBulkUpdates(updates, methodName: "saveBulkEpisodeSyncInfo", dbQueue: dbQueue)
     }
 
     func saveFrameCount(episodeId: Int64, frameCount: Int64, dbQueue: PCDBQueue) {
@@ -1108,6 +1103,21 @@ final class EpisodeDataManager: Sendable {
             return
         }
 
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            // Single IN-statement form; equivalent to both legacy sub-branches
+            let ids = episodes.map(\.id)
+            grdbQueue.updateAll(
+                Episode.self,
+                filter: ids.contains(Episode.Columns.id),
+                Episode.Columns.playingStatusModified.set(to: 0),
+                Episode.Columns.playedUpToModified.set(to: 0),
+                Episode.Columns.durationModified.set(to: 0),
+                Episode.Columns.keepEpisodeModified.set(to: 0),
+                Episode.Columns.archivedModified.set(to: 0)
+            )
+            return
+        }
+
         dbQueue.write { db in
             do {
                 db.beginTransaction()
@@ -1128,6 +1138,20 @@ final class EpisodeDataManager: Sendable {
 
     func markAllSynced(episodeIDs ids: [String], dbQueue: PCDBQueue) {
         if ids.isEmpty {
+            return
+        }
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            // Single IN-statement form; equivalent to both legacy sub-branches
+            grdbQueue.updateAll(
+                Episode.self,
+                filter: ids.contains(Episode.Columns.uuid),
+                Episode.Columns.playingStatusModified.set(to: 0),
+                Episode.Columns.playedUpToModified.set(to: 0),
+                Episode.Columns.durationModified.set(to: 0),
+                Episode.Columns.keepEpisodeModified.set(to: 0),
+                Episode.Columns.archivedModified.set(to: 0)
+            )
             return
         }
 
@@ -1164,152 +1188,110 @@ final class EpisodeDataManager: Sendable {
     func bulkMarkAsPlayed(episodes: [Episode], updateSyncFlag: Bool, dbQueue: PCDBQueue) {
         if episodes.isEmpty { return }
 
-        dbQueue.write { db in
-            do {
-                db.beginTransaction()
+        var updates = [(fields: [String], values: [Any], uuid: String)]()
+        for episode in episodes {
+            if episode.playingStatus == PlayingStatus.completed.rawValue { continue }
 
-                for episode in episodes {
-                    if episode.playingStatus == PlayingStatus.completed.rawValue { continue }
+            var fields = ["playingStatus"]
+            var values: [Any] = [PlayingStatus.completed.rawValue]
 
-                    var fields = [String]()
-                    var values = [Any]()
-
-                    fields.append("playingStatus")
-                    values.append(PlayingStatus.completed.rawValue)
-
-                    if updateSyncFlag {
-                        fields.append("playingStatusModified")
-                        values.append(DBUtils.currentUTCTimeInMillis())
-                    }
-
-                    values.append(episode.uuid)
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
-                }
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.bulkMarkAsPlayed error: \(error)")
+            if updateSyncFlag {
+                fields.append("playingStatusModified")
+                values.append(DBUtils.currentUTCTimeInMillis())
             }
+
+            updates.append((fields, values, episode.uuid))
         }
+
+        performBulkUpdates(updates, methodName: "bulkMarkAsPlayed", dbQueue: dbQueue)
     }
 
     func bulkMarkAsUnPlayed(episodes: [Episode], updateSyncFlag: Bool, dbQueue: PCDBQueue) {
         if episodes.isEmpty { return }
 
-        dbQueue.write { db in
-            do {
-                db.beginTransaction()
+        var updates = [(fields: [String], values: [Any], uuid: String)]()
+        for episode in episodes {
+            if episode.playingStatus == PlayingStatus.notPlayed.rawValue { continue }
 
-                for episode in episodes {
-                    if episode.playingStatus == PlayingStatus.notPlayed.rawValue { continue }
+            var fields = ["playingStatus", "playedUpTo"]
+            var values: [Any] = [PlayingStatus.notPlayed.rawValue, 0]
 
-                    var fields = [String]()
-                    var values = [Any]()
-
-                    fields.append("playingStatus")
-                    values.append(PlayingStatus.notPlayed.rawValue)
-                    fields.append("playedUpTo")
-                    values.append(0)
-                    if updateSyncFlag {
-                        fields.append("playingStatusModified")
-                        values.append(DBUtils.currentUTCTimeInMillis())
-                    }
-
-                    values.append(episode.uuid)
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
-                }
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.bulkMarkAsUnPlayed error: \(error)")
+            if updateSyncFlag {
+                fields.append("playingStatusModified")
+                values.append(DBUtils.currentUTCTimeInMillis())
             }
+
+            updates.append((fields, values, episode.uuid))
         }
+
+        performBulkUpdates(updates, methodName: "bulkMarkAsUnPlayed", dbQueue: dbQueue)
     }
 
     func bulkArchive(episodes: [Episode], markAsNotDownloaded: Bool, markAsPlayed: Bool, updateSyncFlag: Bool, dbQueue: PCDBQueue) {
         if episodes.isEmpty { return }
 
-        dbQueue.write { db in
-            do {
-                db.beginTransaction()
+        var updates = [(fields: [String], values: [Any], uuid: String)]()
+        for episode in episodes {
+            var fields = [String]()
+            var values = [Any]()
+            if !episode.archived {
+                fields.append("archived")
+                values.append(true)
 
-                for episode in episodes {
-                    var fields = [String]()
-                    var values = [Any]()
-                    if !episode.archived {
-                        fields.append("archived")
-                        values.append(true)
-
-                        if updateSyncFlag {
-                            fields.append("archivedModified")
-                            values.append(DBUtils.currentUTCTimeInMillis())
-                        }
-                    }
-                    if markAsNotDownloaded, episode.episodeStatus != DownloadStatus.notDownloaded.rawValue {
-                        fields.append("episodeStatus")
-                        values.append(DownloadStatus.notDownloaded.rawValue)
-                        fields.append("autoDownloadStatus")
-                        values.append(AutoDownloadStatus.userDeletedFile.rawValue)
-                        fields.append("cachedFrameCount")
-                        values.append(0)
-                    }
-                    if markAsPlayed, episode.playingStatus != PlayingStatus.completed.rawValue {
-                        fields.append("playingStatus")
-                        values.append(PlayingStatus.completed.rawValue)
-
-                        if updateSyncFlag {
-                            fields.append("playingStatusModified")
-                            values.append(DBUtils.currentUTCTimeInMillis())
-                        }
-                    }
-                    if fields.isEmpty { continue }
-
-                    values.append(episode.uuid)
-
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
+                if updateSyncFlag {
+                    fields.append("archivedModified")
+                    values.append(DBUtils.currentUTCTimeInMillis())
                 }
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.bulkArchive error: \(error)")
             }
+            if markAsNotDownloaded, episode.episodeStatus != DownloadStatus.notDownloaded.rawValue {
+                fields.append("episodeStatus")
+                values.append(DownloadStatus.notDownloaded.rawValue)
+                fields.append("autoDownloadStatus")
+                values.append(AutoDownloadStatus.userDeletedFile.rawValue)
+                fields.append("cachedFrameCount")
+                values.append(0)
+            }
+            if markAsPlayed, episode.playingStatus != PlayingStatus.completed.rawValue {
+                fields.append("playingStatus")
+                values.append(PlayingStatus.completed.rawValue)
+
+                if updateSyncFlag {
+                    fields.append("playingStatusModified")
+                    values.append(DBUtils.currentUTCTimeInMillis())
+                }
+            }
+            if fields.isEmpty { continue }
+
+            updates.append((fields, values, episode.uuid))
         }
+
+        performBulkUpdates(updates, methodName: "bulkArchive", dbQueue: dbQueue)
     }
 
     func bulkUnarchive(episodes: [Episode], updateSyncFlag: Bool, dbQueue: PCDBQueue) {
         if episodes.isEmpty { return }
 
-        dbQueue.write { db in
-            do {
-                db.beginTransaction()
+        var updates = [(fields: [String], values: [Any], uuid: String)]()
+        for episode in episodes {
+            if !episode.archived { continue }
 
-                for episode in episodes {
-                    if !episode.archived { continue }
+            var fields = ["archived"]
+            var values: [Any] = [false]
 
-                    var fields = [String]()
-                    var values = [Any]()
-
-                    fields.append("archived")
-                    values.append(false)
-
-                    if updateSyncFlag {
-                        fields.append("archivedModified")
-                        values.append(DBUtils.currentUTCTimeInMillis())
-                    }
-
-                    if let podcastAutoArchiveLimit = episode.parentPodcast()?.autoArchiveEpisodeLimitCount, podcastAutoArchiveLimit > 0 {
-                        fields.append("excludeFromEpisodeLimit")
-                        values.append(true)
-                    }
-                    values.append(episode.uuid)
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
-                }
-                db.commit()
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.bulkUnarchive error: \(error)")
+            if updateSyncFlag {
+                fields.append("archivedModified")
+                values.append(DBUtils.currentUTCTimeInMillis())
             }
+
+            if let podcastAutoArchiveLimit = episode.parentPodcast()?.autoArchiveEpisodeLimitCount, podcastAutoArchiveLimit > 0 {
+                fields.append("excludeFromEpisodeLimit")
+                values.append(true)
+            }
+
+            updates.append((fields, values, episode.uuid))
         }
+
+        performBulkUpdates(updates, methodName: "bulkUnarchive", dbQueue: dbQueue)
     }
 
     /// Converts legacy `[Any]` binding values for the GRDB path, matching the legacy shim's
