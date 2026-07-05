@@ -1,4 +1,5 @@
 import AVFoundation
+import PocketCastsUtils
 import UIKit
 
 class AVFileUtil: NSObject {
@@ -41,8 +42,10 @@ class AVFileUtil: NSObject {
     func loadMetaData() {
         cancelLoading()
 
-        metadataTask = Task { [weak self] in
-            guard let asset = self?.asset, let titleHandler = self?.titleHandler, let artworkHandler = self?.artworkHandler else { return }
+        // The asset and handlers are captured by value; the task is cancelled on
+        // reload/deinit, so nothing outlives its owner meaningfully
+        metadataTask = Task { [boxed = PocketCastsUtils.UncheckedSendable((asset, titleHandler, artworkHandler))] in
+            let (asset, titleHandler, artworkHandler) = boxed.value
             let metadataItems: [AVMetadataItem]
             do {
                 metadataItems = try await asset.load(.commonMetadata)
@@ -70,8 +73,8 @@ class AVFileUtil: NSObject {
         }
 
         // Load duration separately as it can take longer than basic metadata.
-        durationTask = Task { [weak self] in
-            guard let asset = self?.asset, let durationHandler = self?.durationHandler else { return }
+        durationTask = Task { [boxed = PocketCastsUtils.UncheckedSendable((asset, durationHandler))] in
+            let (asset, durationHandler) = boxed.value
             do {
                 let duration = try await asset.load(.duration)
                 try Task.checkCancellation()

@@ -43,7 +43,6 @@ podcasts/Bookmarks/List/BookmarkListViewModel.swift: warning: sending 'items' ri
 podcasts/ChapterManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'episode' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Common Components/MultiSelect/MultiSelectHelper.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: capture of non-Sendable type 'Style.Type' in an isolated closure; this is an error in the Swift 6 language mode
 podcasts/Debounce.swift: warning: capture of 'callback' with non-Sendable type '() -> Void' in a '@Sendable' closure
 podcasts/DefaultPlayer.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
@@ -62,7 +61,6 @@ podcasts/DownloadManager.swift: warning: add '@preconcurrency' to suppress 'Send
 podcasts/DownloadManager.swift: warning: capture of 'episode' with non-Sendable type 'any BaseEpisode' in a '@Sendable' closure
 podcasts/DownloadManager.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
 podcasts/DownloadManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/DownloadsViewController.swift: warning: main actor-isolated property 'episodesDataManager' can not be referenced from a Sendable closure
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in an isolated closure
 podcasts/EffectsPlayer.swift: warning: capture of 'readOperation' with non-Sendable type 'AudioReadTask' in a '@Sendable' closure
@@ -125,4 +123,3 @@ podcasts/Styles.swift: warning: conformance of 'RequiredFieldStyle' to protocol 
 podcasts/Theme.swift: warning: 'nonisolated(unsafe)' is unnecessary for a constant with 'Sendable' type 'Theme', consider removing it
 podcasts/Theme.swift: warning: main actor-isolated default value in a nonisolated(unsafe) context; this is an error in the Swift 6 language mode
 podcasts/TranscriptViewController.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Utilities/AVFileUtil.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
