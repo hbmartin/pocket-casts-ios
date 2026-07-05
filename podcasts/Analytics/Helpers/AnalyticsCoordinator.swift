@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import PocketCastsDataModel
 
+@MainActor
 protocol AnalyticsSourceProvider {
     /// Used to define the source view for the various analytics actions
     var analyticsSource: AnalyticsSource { get }
@@ -78,7 +79,15 @@ class AnalyticsCoordinator {
         }
 
         #if !APPCLIP
-        return topAnalyticsSourceProvider()?.analyticsSource ?? .unknown
+        // Walking the view-controller hierarchy is main-actor work; analytics
+        // events can originate off-main, so bridge synchronously when needed
+        if Thread.isMainThread {
+            return MainActor.assumeIsolated { topAnalyticsSourceProvider()?.analyticsSource } ?? .unknown
+        } else {
+            return DispatchQueue.main.sync {
+                MainActor.assumeIsolated { topAnalyticsSourceProvider()?.analyticsSource } ?? .unknown
+            }
+        }
         #else
         return .unknown
         #endif
@@ -99,6 +108,7 @@ class AnalyticsCoordinator {
         Analytics.track(event, properties: mergedProperties)
     }
 
+    @MainActor
     func getTopViewController(base: UIViewController? = SceneHelper.rootViewController()) -> UIViewController? {
         guard UIApplication.shared.applicationState == .active else {
             return nil
@@ -114,6 +124,7 @@ class AnalyticsCoordinator {
         return base
     }
 
+    @MainActor
     func topAnalyticsSourceProvider() -> AnalyticsSourceProvider? {
         guard let topViewController = getTopViewController() else { return nil }
 
