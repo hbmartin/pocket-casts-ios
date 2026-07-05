@@ -229,7 +229,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     }
 
     func effectsDidChange() {
-        let effects = PlaybackManager.shared.effects()
+        let effects = PlaybackManager.engineState.effects
 
         setPlaybackRate(effects.playbackSpeed)
         volumeBoostEnabled = effects.volumeBoost
@@ -285,12 +285,11 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
         let playerError: Error? = (player.currentItem?.error ?? player.error)
         let playerNSError = playerError as? NSError
 
+        var retryUuid: String?
         if FeatureFlag.whenPlayingOnlyUpdateEpisodeIfPlaybackFails.enabled,
            let playerNSError, playerNSError.domain == NSURLErrorDomain, playerNSError.code != NSURLErrorNotConnectedToInternet,
            let episodeUuid {
-            if PlaybackManager.shared.retryUrlLoad(for: episodeUuid) {
-                return false
-            }
+            retryUuid = episodeUuid
         }
         let logMessage = "AVPlayerItemStatusFailed on currentItem: \(playerErrorMessage) - \(playerItemErrorMessage)"
         var error: PlaybackManager.PlaybackError = .playbackError(logMessage: logMessage, isLocalFile: isPlayingLocalFile)
@@ -304,7 +303,12 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
                 error = .episodeNotAvailable(errorCode: playerNSError.code, logMessage: logMessage)
             }
         }
-        Task { @MainActor in PlaybackManager.shared.playbackDidFail(error: error) }
+        let failure = error
+        Task { @MainActor in
+            // a successful URL retry supersedes the failure report; the retried load fires its own updates
+            if let retryUuid, PlaybackManager.shared.retryUrlLoad(for: retryUuid) { return }
+            PlaybackManager.shared.playbackDidFail(error: failure)
+        }
 
         return true
     }
@@ -714,15 +718,18 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     }
 
     private func jumpToStartingPosition() {
-        let startingTime = PlaybackManager.shared.requiredStartingPosition()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let startingTime = PlaybackManager.shared.requiredStartingPosition()
 
-        // there's a bug that when playing over AirPlay to a HomePod, seeking in stream that's already where you are up to sometimes doesn't work, this is a weird workaround for that case
-        // https://github.com/shiftyjelly/pocketcasts-ios/issues/1936 is worth a read if you ever come here thinking you want to change this code
-        if round(startingTime) != round(currentTime()) {
-            seekTo(startingTime, completion: nil)
+            // there's a bug that when playing over AirPlay to a HomePod, seeking in stream that's already where you are up to sometimes doesn't work, this is a weird workaround for that case
+            // https://github.com/shiftyjelly/pocketcasts-ios/issues/1936 is worth a read if you ever come here thinking you want to change this code
+            if round(startingTime) != round(self.currentTime()) {
+                self.seekTo(startingTime, completion: nil)
+            }
+
+            PlaybackManager.shared.playerDidFinishPreparing()
         }
-
-        PlaybackManager.shared.playerDidFinishPreparing()
     }
 
     private func startBackgroundTask() {
@@ -796,7 +803,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             // We're going to be very explicit about the trigger for this to prevent triggering it when we don't want to
 
             // Only apply the logic when playing over AirPlay
-            guard PlaybackManager.shared.playingOverAirplay(), let self else { return }
+            guard PlaybackManager.isPlayingOverAirplay(), let self else { return }
 
             // We'll keep track of the previous statuses and compare against them in the check below
             defer {
@@ -826,7 +833,7 @@ final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             if player.rate == 1 {
                 // there's a bug where playback can be resumed from outside our app, and Apple sets the wrong playback rate, fix that here
                 // the easiest way to repeat this is to play a video at 2x, and press pause once it's in picture in picture mode
-                let requiredSpeed = PlaybackManager.shared.effects().playbackSpeed
+                let requiredSpeed = PlaybackManager.engineState.effects.playbackSpeed
                 if requiredSpeed != 1 {
                     self.performSetPlaybackRate()
                 }

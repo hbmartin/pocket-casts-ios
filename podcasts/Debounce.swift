@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsUtils
 
+@MainActor
 class Debounce {
     private let delay: Double
     private weak var timer: Timer?

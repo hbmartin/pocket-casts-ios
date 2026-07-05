@@ -145,7 +145,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     // MARK: - Public API
 
     func prepareForCurrentEpisode() {
-        let episodeSnapshot = PlaybackManager.shared.currentEpisode().map { EpisodeSnapshot(episode: $0) }
+        let episodeSnapshot = PlaybackManager.onMainSync { $0.currentEpisode() }.map { EpisodeSnapshot(episode: $0) }
 
         queue.async { [weak self] in
             guard let self else { return }
@@ -172,7 +172,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     /// processing a partial streaming buffer, we now have a complete file to fingerprint.
     @objc private func handleEpisodeDownloaded(_ notification: Notification) {
         guard let downloadedUuid = notification.object as? String,
-              let currentUuid = PlaybackManager.shared.currentEpisode()?.uuid,
+              let currentUuid = PlaybackManager.onMainSync({ $0.currentEpisode() })?.uuid,
               currentUuid == downloadedUuid else { return }
 
         DispatchQueue.main.async { [weak self] in
@@ -189,10 +189,10 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
     /// jumps suddenly (seek/skip), or drifts beyond the mapped range, restart the
     /// stream from the new position so coverage stays close to what's playing.
     @objc private func handlePlaybackProgress() {
-        let playbackTime = PlaybackManager.shared.currentTime()
+        let playbackTime = PlaybackManager.onMainSync { $0.currentTime() }
         guard playbackTime >= 0 else { return }
 
-        let episodeUuid = PlaybackManager.shared.currentEpisode()?.uuid
+        let episodeUuid = PlaybackManager.onMainSync { $0.currentEpisode() }?.uuid
         queue.async { [weak self] in
             self?.processProgress(playbackTime: playbackTime, episodeUuid: episodeUuid)
         }
@@ -555,7 +555,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     private func loadMappingCacheThenStartStreamIfNeeded(context ctx: GenerationContext) {
         guard !ctx.isStreaming else {
-            let currentTime = PlaybackManager.shared.currentTime()
+            let currentTime = PlaybackManager.onMainSync { $0.currentTime() }
             startStream(context: ctx, fromPosition: currentTime)
             return
         }
@@ -573,7 +573,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
                 // Capture once so the range check, log, and stream start all use
                 // the same playback position after the off-queue cache load.
-                let currentTime = PlaybackManager.shared.currentTime()
+                let currentTime = PlaybackManager.onMainSync { $0.currentTime() }
 
                 // All-or-nothing cache: only short-circuit the stream if a previous
                 // session persisted a mapping that covers the whole reference timeline
@@ -971,7 +971,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         nextChunkStartSeconds: Double,
         context ctx: GenerationContext
     ) throws {
-        let currentPlayback = PlaybackManager.shared.currentTime()
+        let currentPlayback = PlaybackManager.onMainSync { $0.currentTime() }
         let lead = nextChunkStartSeconds - currentPlayback
         guard lead > FingerprintConstants.lookaheadSeconds else { return }
         try sleepWithCancellation(

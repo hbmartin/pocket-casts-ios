@@ -1,7 +1,8 @@
 import Foundation
 
 /// Volume fade driven by a repeating timer; owned and driven by the sleep timer flow.
-final class FadeOutManager: @unchecked Sendable {
+@MainActor
+final class FadeOutManager {
     weak var player: PlaybackProtocol?
 
     private var timer: Timer?

@@ -90,7 +90,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
             strongSelf.player = AVAudioPlayerNode()
             strongSelf.engine?.attach(strongSelf.player!)
 
-            strongSelf.effects = PlaybackManager.shared.effects()
+            strongSelf.effects = PlaybackManager.engineState.effects
             strongSelf.playBufferManager = PlayBufferManager()
 
             // Set useVoiceBoostN before setVolumeBoostSettings so bypass is configured correctly
@@ -282,7 +282,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     }
 
     func effectsDidChange() {
-        effects = PlaybackManager.shared.effects()
+        effects = PlaybackManager.engineState.effects
 
         audioReadTask?.setTrimSilence(effects.trimSilence)
         playbackSpeed = effects.playbackSpeed
@@ -382,14 +382,14 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
         audioPlayTask?.shutdown()
 
         guard let audioFile, let player, let playBufferManager else { return }
-        let requiredStartTime = PlaybackManager.shared.requiredStartingPosition()
+        let requiredStartTime = PlaybackManager.engineState.consumePendingStartingPosition() ?? 0
         audioReadTask = AudioReadTask(trimSilence: effects.trimSilence, audioFile: audioFile, outputFormat: audioFile.processingFormat, bufferManager: playBufferManager, playPositionHint: requiredStartTime, frameCount: cachedFrameCount, useVoiceBoostN: useVoiceBoostN, sampleRate: audioFileSampleRate)
         audioPlayTask = AudioPlayTask(player: player, bufferManager: playBufferManager)
 
         audioReadTask?.startup()
         audioPlayTask?.startup()
 
-        PlaybackManager.shared.playerDidFinishPreparing()
+        Task { @MainActor in PlaybackManager.shared.playerDidFinishPreparing() }
     }
 
     private func setVolumeBoostSettings() {

@@ -4,6 +4,7 @@ import XCTest
 @testable import PocketCastsDataModel
 @testable import PocketCastsUtils
 
+@MainActor
 final class PlaybackQueueTests: XCTestCase {
 
     private let featureFlagMock = FeatureFlagMock()

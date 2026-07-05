@@ -26,6 +26,7 @@ enum ChapterOrigin {
     }
 }
 
+@MainActor
 class ChapterManager {
     private var chapterParser = PodcastChapterParser()
     private var showInfoCoordinator: ShowInfoCoordinating
@@ -203,7 +204,7 @@ class ChapterManager {
         )
     }
 
-    private func loadChapters(for episode: BaseEpisode, duration: TimeInterval) async -> [ChapterInfo] {
+    nonisolated private func loadChapters(for episode: BaseEpisode, duration: TimeInterval) async -> [ChapterInfo] {
         if episode.downloaded(pathFinder: DownloadManager.shared) {
             return await chapterParser.parseLocalFile(episode.pathToDownloadedFile(pathFinder: DownloadManager.shared), episodeDuration: duration)
         } else if let url = EpisodeManager.urlForEpisode(episode) {

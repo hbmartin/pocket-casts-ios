@@ -770,6 +770,7 @@
 		BDF0507D1FBA65ED00194D68 /* ListeningHistoryViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = BDF0507B1FBA65ED00194D68 /* ListeningHistoryViewController.xib */; };
 		BDF09F041E669E16009E9845 /* BasePlayPauseButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF09F031E669E16009E9845 /* BasePlayPauseButton.swift */; };
 		BDF15A3E1B54E053000EC323 /* PlaybackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */; };
+		7A5B116E20260705AD450002 /* PlaybackServerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450001 /* PlaybackServerAdapter.swift */; };
 		BDF15A401B54E064000EC323 /* PlaybackQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A3F1B54E064000EC323 /* PlaybackQueue.swift */; };
 		BDF15A421B54E088000EC323 /* EffectsPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A411B54E088000EC323 /* EffectsPlayer.swift */; };
 		BDF15A441B54E155000EC323 /* PlaybackProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A431B54E155000EC323 /* PlaybackProtocol.swift */; };
@@ -1862,6 +1863,7 @@
 		BDF0507B1FBA65ED00194D68 /* ListeningHistoryViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ListeningHistoryViewController.xib; sourceTree = "<group>"; };
 		BDF09F031E669E16009E9845 /* BasePlayPauseButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasePlayPauseButton.swift; sourceTree = "<group>"; };
 		BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackManager.swift; sourceTree = "<group>"; };
+		7A5B116E20260705AD450001 /* PlaybackServerAdapter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackServerAdapter.swift; sourceTree = "<group>"; };
 		BDF15A3F1B54E064000EC323 /* PlaybackQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackQueue.swift; sourceTree = "<group>"; };
 		BDF15A411B54E088000EC323 /* EffectsPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EffectsPlayer.swift; sourceTree = "<group>"; };
 		BDF15A431B54E155000EC323 /* PlaybackProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackProtocol.swift; sourceTree = "<group>"; };
@@ -3385,6 +3387,7 @@
 				BD3E3CD5170426AC0066AE3D /* Chapters */,
 				BDF15A491B54E386000EC323 /* Players */,
 				BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */,
+				7A5B116E20260705AD450001 /* PlaybackServerAdapter.swift */,
 				BDF15A3F1B54E064000EC323 /* PlaybackQueue.swift */,
 				BDF15A451B54E21B000EC323 /* PlaybackEffects.swift */,
 				8BB4AA622BD17EC10091480A /* FadeOutManager.swift */,
@@ -6078,6 +6081,7 @@
 				BD03DF881CACD9AB005A127E /* DownloadedFilesViewController.swift in Sources */,
 				BD7BCF111F6A4F110006E008 /* SharingHelper.swift in Sources */,
 				BDF15A3E1B54E053000EC323 /* PlaybackManager.swift in Sources */,
+				7A5B116E20260705AD450002 /* PlaybackServerAdapter.swift in Sources */,
 				BD40987C1B9ED731007F36BD /* SynchronizedAudioStack.swift in Sources */,
 				BD8032D32123EAD600BFBB03 /* EffectsButton.swift in Sources */,
 				BD86D94F217EB81C0010FA1B /* FilterDownloadCell.swift in Sources */,

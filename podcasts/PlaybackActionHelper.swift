@@ -3,6 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
+@MainActor
 class PlaybackActionHelper {
     class func play(episode: BaseEpisode, playlistUuid: String? = nil, podcastUuid: String? = nil, playlist: AutoplayHelper.Playlist? = nil) {
         HapticsHelper.triggerPlayPauseHaptic()
@@ -91,7 +92,9 @@ class PlaybackActionHelper {
                 ServerPodcastManager.shared.updatePodcastIfRequired(podcast: podcast) { wasUpdated in
                     guard let updatedEpisode = wasUpdated ? DataManager.sharedManager.findEpisode(uuid: episode.uuid) : episode else { return }
 
-                    PlaybackManager.shared.load(episode: updatedEpisode, autoPlay: true, overrideUpNext: false)
+                    Task { @MainActor in
+                        PlaybackManager.shared.load(episode: updatedEpisode, autoPlay: true, overrideUpNext: false)
+                    }
                 }
             } else {
                 PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)

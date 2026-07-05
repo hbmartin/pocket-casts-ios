@@ -11,17 +11,19 @@ extension PlayEpisodeIntent {
         }
 
         AnalyticsPlaybackHelper.shared.currentSource = .interactiveWidget
-        let current = PlaybackManager.shared.currentEpisode()
+        PlaybackManager.onMainSync { playbackManager in
+            let current = playbackManager.currentEpisode()
 
-        if current?.uuid == podcastEpisode.uuid {
-            Analytics.track(.widgetInteraction, properties: ["action": PlaybackManager.shared.playing() ? "pause" : "play"])
-            PlaybackActionHelper.playPause()
-        } else {
-            // Ideally we should use PlaybackActionHelper here
-            // However this can potentially trigger an UI and does a lot of other checks
-            // that is not as performant as this call.
-            PlaybackManager.shared.load(episode: podcastEpisode, autoPlay: true, overrideUpNext: false)
-            Analytics.track(.widgetInteraction, properties: ["action": "play"])
+            if current?.uuid == podcastEpisode.uuid {
+                Analytics.track(.widgetInteraction, properties: ["action": playbackManager.playing() ? "pause" : "play"])
+                PlaybackActionHelper.playPause()
+            } else {
+                // Ideally we should use PlaybackActionHelper here
+                // However this can potentially trigger an UI and does a lot of other checks
+                // that is not as performant as this call.
+                playbackManager.load(episode: podcastEpisode, autoPlay: true, overrideUpNext: false)
+                Analytics.track(.widgetInteraction, properties: ["action": "play"])
+            }
         }
     }
 }

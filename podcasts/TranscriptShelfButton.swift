@@ -39,12 +39,12 @@ extension CheckTranscriptAvailability where Self: Sendable {
         NotificationCenter.default.addObserver(forName: Constants.Notifications.episodeTranscriptAvailabilityChanged, object: nil, queue: .main) { [weak self] notification in
             guard let episodeUuid = notification.userInfo?["episodeUuid"] as? String,
                   let isAvailable = notification.userInfo?["isAvailable"] as? Bool,
-                  let hasGeneratedTranscripts = notification.userInfo?["hasGeneratedTranscripts"] as? Bool,
-                  episodeUuid == PlaybackManager.shared.currentEpisode()?.uuid else {
+                  let hasGeneratedTranscripts = notification.userInfo?["hasGeneratedTranscripts"] as? Bool else {
                 return
             }
 
             Task { @MainActor [weak self] in
+                guard episodeUuid == PlaybackManager.shared.currentEpisode()?.uuid else { return }
                 self?.isTranscriptEnabled = isAvailable
                 self?.hasGeneratedTranscripts = hasGeneratedTranscripts
             }

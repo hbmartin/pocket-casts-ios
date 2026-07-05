@@ -2,7 +2,8 @@ import CoreMotion
 
 /// Motion updates are delivered to the main queue; the debounce timer is only
 /// touched from that handler.
-final class BackgroundShakeObserver: @unchecked Sendable {
+@MainActor
+final class BackgroundShakeObserver {
     private let manager = CMMotionManager()
     private let motionUpdateInterval: Double = 0.05
     private var debounceTimer: Timer?
@@ -46,7 +47,8 @@ final class BackgroundShakeObserver: @unchecked Sendable {
                     && abs(data.userAcceleration.z) < 0.2 {
                     self?.debounceTimer?.invalidate()
                     self?.debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { _ in
-                        self?.whenShook?()
+                        // fires on the main run loop (scheduled from the main-queue motion handler)
+                        MainActor.assumeIsolated { self?.whenShook?() }
                     }
                 }
             }

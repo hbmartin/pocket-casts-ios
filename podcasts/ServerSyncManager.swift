@@ -42,8 +42,11 @@ final class ServerSyncManager: ServerSyncDelegate, Sendable {
     // MARK: - Episode functions
 
     func episodeStarredChanged(episode: Episode) {
-        if PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episode.uuid) {
-            PlaybackManager.shared.nowPlayingStarredChanged()
+        let episodeUuid = episode.uuid
+        Task { @MainActor in
+            if PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episodeUuid) {
+                PlaybackManager.shared.nowPlayingStarredChanged()
+            }
         }
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeStarredChanged, object: episode.uuid)
     }
@@ -57,7 +60,7 @@ final class ServerSyncManager: ServerSyncDelegate, Sendable {
     }
 
     func deselectedChaptersChanged() {
-        PlaybackManager.shared.forceUpdateChapterInfo()
+        Task { @MainActor in PlaybackManager.shared.forceUpdateChapterInfo() }
     }
 
     func cleanupAllUnusedEpisodeBuffers() {

@@ -155,8 +155,9 @@ class MultiSelectHelper {
             let status = selectedEpisodes.count == 1 ? L10n.multiSelectAddingEpisodesSingular : L10n.multiSelectAddingEpisodesPluralFormat(selectedEpisodes.count.localized())
             actionDelegate.multiSelectActionBegan(status: status)
         }
+        let boxedEpisodes = PocketCastsUtils.UncheckedSendable(episodesToAdd)
         Task.detached {
-            PlaybackManager.shared.bulkAdd(episodesToAdd, toTop: toTop)
+            await PlaybackManager.shared.bulkAdd(boxedEpisodes.value, toTop: toTop)
             if showDelayedCompletionMessage {
                 let timeSinceStatusDisplayed = 0 - statusTime.timeIntervalSinceNow
                 if timeSinceStatusDisplayed < Constants.Animation.multiSelectStatusDelayTime {

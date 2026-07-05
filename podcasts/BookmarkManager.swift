@@ -20,7 +20,7 @@ final class BookmarkManager: @unchecked Sendable {
     /// Called when a value of the bookmark changes
     let onBookmarkChanged = PassthroughSubject<Event.Changed, Never>()
 
-    init(dataManager: BookmarkDataManager = DataManager.sharedManager.bookmarks,
+    @MainActor init(dataManager: BookmarkDataManager = DataManager.sharedManager.bookmarks,
          generalManager: DataManager = .sharedManager,
          playbackManager: PlaybackManager = .shared) {
         self.dataManager = dataManager

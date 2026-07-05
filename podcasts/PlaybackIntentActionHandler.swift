@@ -147,39 +147,41 @@ extension PlaybackControlIntent {
 /// Live facade backed by `PlaybackManager`/`DataManager`. The implementations
 /// mirror the behaviour previously exposed through `SiriShortcutsManager`.
 struct LivePlaybackFacade: PlaybackFacade {
-    func isPlaying() -> Bool { PlaybackManager.shared.playing() }
+    func isPlaying() -> Bool { PlaybackManager.onMainSync { $0.playing() } }
 
-    func hasCurrentEpisode() -> Bool { PlaybackManager.shared.currentEpisode() != nil }
+    func hasCurrentEpisode() -> Bool { PlaybackManager.onMainSync { $0.currentEpisode() != nil } }
 
-    func upNextCount() -> Int { PlaybackManager.shared.upNextCount() }
+    func upNextCount() -> Int { PlaybackManager.onMainSync { $0.upNextCount() } }
 
-    func play() { PlaybackManager.shared.play() }
+    func play() { PlaybackManager.onMainSync { $0.play() } }
 
-    func pause() { PlaybackManager.shared.pause() }
+    func pause() { PlaybackManager.onMainSync { $0.pause() } }
 
-    func playPause() { PlaybackManager.shared.playPause() }
+    func playPause() { PlaybackManager.onMainSync { $0.playPause() } }
 
-    func skipBack() { PlaybackManager.shared.skipBack() }
+    func skipBack() { PlaybackManager.onMainSync { $0.skipBack() } }
 
-    func skipForward() { PlaybackManager.shared.skipForward() }
+    func skipForward() { PlaybackManager.onMainSync { $0.skipForward() } }
 
-    func skipToNextChapter() { PlaybackManager.shared.skipToNextChapter(startPlaybackAfterSkip: true) }
+    func skipToNextChapter() { PlaybackManager.onMainSync { $0.skipToNextChapter(startPlaybackAfterSkip: true) } }
 
-    func skipToPreviousChapter() { PlaybackManager.shared.skipToPreviousChapter(startPlaybackAfterSkip: true) }
+    func skipToPreviousChapter() { PlaybackManager.onMainSync { $0.skipToPreviousChapter(startPlaybackAfterSkip: true) } }
 
     func removeCurrentEpisodeFromUpNext() {
-        guard let current = PlaybackManager.shared.currentEpisode() else { return }
-        PlaybackManager.shared.removeIfPlayingOrQueued(episode: current, fireNotification: true, userInitiated: true)
+        PlaybackManager.onMainSync { playbackManager in
+            guard let current = playbackManager.currentEpisode() else { return }
+            playbackManager.removeIfPlayingOrQueued(episode: current, fireNotification: true, userInitiated: true)
+        }
     }
 
     func loadSuggestedEpisode() -> Bool {
         guard let suggested = RecommendationHelper().recommendEpisode() else { return false }
         if let episode = DataManager.sharedManager.findEpisode(uuid: suggested.uuid) {
-            PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
+            PlaybackManager.onMainSync { $0.load(episode: episode, autoPlay: true, overrideUpNext: false) }
         } else {
             ServerPodcastManager.shared.addFromUuid(podcastUuid: suggested.podcastUuid, subscribe: false) { success in
                 if success, let episode = DataManager.sharedManager.findEpisode(uuid: suggested.uuid) {
-                    PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
+                    Task { @MainActor in PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false) }
                 }
             }
         }
@@ -190,13 +192,13 @@ struct LivePlaybackFacade: PlaybackFacade {
         guard let filter = DataManager.sharedManager.findPlaylist(uuid: uuid) else { return false }
         let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: 1)
         guard let topEpisode = DataManager.sharedManager.findEpisodesWhere(customWhere: query.sql, arguments: query.arguments).first else { return false }
-        PlaybackManager.shared.load(episode: topEpisode, autoPlay: true, overrideUpNext: false)
+        PlaybackManager.onMainSync { $0.load(episode: topEpisode, autoPlay: true, overrideUpNext: false) }
         return true
     }
 
     func playAllEpisodes(forFilterUuid uuid: String) -> Bool {
         guard let filter = DataManager.sharedManager.findPlaylist(uuid: uuid) else { return false }
-        PlaybackManager.shared.play(playlist: filter)
+        PlaybackManager.onMainSync { $0.play(playlist: filter) }
         return true
     }
 
@@ -205,22 +207,22 @@ struct LivePlaybackFacade: PlaybackFacade {
         let sortStr = PodcastEpisodeSortOrder.newestToOldest == podcast.podcastSortOrder ? "DESC" : "ASC"
         let query = "podcast_id = \(podcast.id) AND playingStatus <> \(PlayingStatus.completed.rawValue) AND archived = 0 ORDER BY publishedDate \(sortStr), addedDate \(sortStr) LIMIT 1"
         guard let topEpisode = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: nil).first else { return false }
-        PlaybackManager.shared.load(episode: topEpisode, autoPlay: true, overrideUpNext: false)
+        PlaybackManager.onMainSync { $0.load(episode: topEpisode, autoPlay: true, overrideUpNext: false) }
         return true
     }
 
     func setSleepTimer(seconds: TimeInterval) {
-        PlaybackManager.shared.setSleepTimerInterval(seconds)
+        PlaybackManager.onMainSync { $0.setSleepTimerInterval(seconds) }
     }
 
     func extendSleepTimer(bySeconds seconds: TimeInterval) {
-        PlaybackManager.shared.sleepTimeRemaining += seconds
+        PlaybackManager.onMainSync { $0.sleepTimeRemaining += seconds }
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
     }
 
     func refreshWidgets() {
         if let defaults = UserDefaults(suiteName: SharedConstants.GroupUserDefaults.groupContainerId) {
-            defaults.set(PlaybackManager.shared.playing(), forKey: SharedConstants.GroupUserDefaults.isPlaying)
+            defaults.set(PlaybackManager.onMainSync { $0.playing() }, forKey: SharedConstants.GroupUserDefaults.isPlaying)
         }
         WidgetCenter.shared.reloadAllTimelines()
         ControlCenter.shared.reloadControls(ofKind: PlaybackControlKind.playPause)

@@ -19,14 +19,14 @@ extension Episode {
     }
 
     func userHasInteractedWithEpisode() -> Bool {
-        keepEpisode || archived || downloaded(pathFinder: DownloadManager.shared) || !unplayed() || PlaybackManager.shared.inUpNext(episode: self) || lastPlaybackInteractionDate != nil
+        keepEpisode || archived || downloaded(pathFinder: DownloadManager.shared) || !unplayed() || PlaybackManager.episodeIsInUpNext(uuid: uuid) || lastPlaybackInteractionDate != nil
     }
 
     func episodeCanBeCleanedUp() -> Bool {
         !keepEpisode &&
         !downloaded(pathFinder: DownloadManager.shared) &&
         !inProgress() &&
-        !PlaybackManager.shared.inUpNext(episode: self) &&
+        !PlaybackManager.episodeIsInUpNext(uuid: uuid) &&
         !DataManager.sharedManager.playlistContainsEpisode(episodeUuid: uuid)
     }
 

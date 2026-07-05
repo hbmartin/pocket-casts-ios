@@ -32,7 +32,7 @@ final class WidgetHelper: Sendable {
             if widgets.contains(where: { $0.kind == "Now_Playing_Widget" }) {
                 self.publishAppIcon()
             }
-            if widgets.contains(where: { $0.kind == "Up_Next_Widget" }), PlaybackManager.shared.currentEpisode() == nil, PlaybackManager.shared.upNextCount() == 0 {
+            if widgets.contains(where: { $0.kind == "Up_Next_Widget" }), PlaybackManager.onMainSync({ $0.currentEpisode() }) == nil, PlaybackManager.onMainSync({ $0.upNextCount() }) == 0 {
                 self.publishTopFilterInfo()
             }
             WidgetCenter.shared.reloadAllTimelines()
@@ -66,7 +66,7 @@ final class WidgetHelper: Sendable {
     }
 
     @objc func handleFilterChanged() {
-        guard PlaybackManager.shared.currentEpisode() == nil else {
+        guard PlaybackManager.onMainSync({ $0.currentEpisode() }) == nil else {
             return
         }
         updateSharedUpNext()
@@ -93,7 +93,7 @@ final class WidgetHelper: Sendable {
             sharedDefaults.set(max(allUpNextPlaylistEpisodes.count - 1, 0), forKey: SharedConstants.GroupUserDefaults.upNextItemsCount)
             sharedDefaults.removeObject(forKey: SharedConstants.GroupUserDefaults.topFilterItems)
             sharedDefaults.removeObject(forKey: SharedConstants.GroupUserDefaults.topFilterName)
-            let playingStatus = PlaybackManager.shared.playing()
+            let playingStatus = PlaybackManager.onMainSync { $0.playing() }
             sharedDefaults.set(playingStatus, forKey: SharedConstants.GroupUserDefaults.isPlaying)
 
             sharedDefaults.synchronize()
@@ -136,11 +136,11 @@ final class WidgetHelper: Sendable {
         let episodeTitle = episode.title ?? ""
         var duration = episode.duration
         var isPlaying = false
-        let currentTime = PlaybackManager.shared.currentTime()
+        let currentTime = PlaybackManager.onMainSync { $0.currentTime() }
 
-        if episode.uuid == PlaybackManager.shared.currentEpisode()?.uuid, currentTime.isFinite {
+        if episode.uuid == PlaybackManager.onMainSync({ $0.currentEpisode() })?.uuid, currentTime.isFinite {
             duration = duration - currentTime
-            isPlaying = PlaybackManager.shared.playing()
+            isPlaying = PlaybackManager.onMainSync { $0.playing() }
         }
         let podcastColor: UIColor = ColorManager.backgroundColorForPodcastUuid(episode.parentIdentifier())
         var imageUrl = ""
@@ -170,7 +170,7 @@ final class WidgetHelper: Sendable {
     }
 
     func updateCustomImage(userEpisode: UserEpisode) {
-        guard PlaybackManager.shared.inUpNext(episode: userEpisode), userEpisode.urlForImage().isFileURL, let sharedPath = sharedWidgetImagePathFor(userEpisode) else { return }
+        guard PlaybackManager.episodeIsInUpNext(uuid: userEpisode.uuid), userEpisode.urlForImage().isFileURL, let sharedPath = sharedWidgetImagePathFor(userEpisode) else { return }
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: sharedPath.path) {
             do {
@@ -226,7 +226,7 @@ final class WidgetHelper: Sendable {
 
         do {
             var upNextUuids = [String]()
-            let upNextEpisodes = PlaybackManager.shared.allEpisodesInQueue(includeNowPlaying: true)
+            let upNextEpisodes = PlaybackManager.onMainSync { $0.allEpisodesInQueue(includeNowPlaying: true) }
             if !upNextEpisodes.isEmpty {
                 let numUpNextUuids = max(0, min(WidgetHelper.maxUpNextToPublish, upNextEpisodes.count - 1))
                 upNextUuids = upNextEpisodes[0 ... numUpNextUuids].map(\.uuid)

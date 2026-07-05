@@ -621,7 +621,7 @@ enum MultiSelectAction: Int32, CaseIterable, AnalyticsDescribable {
 
         case .removeFromUpNext:
             // Only relevant when at least one selected episode is currently in Up Next
-            return episodes.contains { PlaybackManager.shared.inUpNext(episode: $0) }
+            return episodes.contains { PlaybackManager.episodeIsInUpNext(uuid: $0.uuid) }
 
         default:
             return true

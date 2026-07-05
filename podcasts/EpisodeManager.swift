@@ -12,7 +12,8 @@ class EpisodeManager: NSObject {
 
         // if the episode is currently playing then we should probably kill that
         // we always fire the episode removed notification here. It's a bit dodgy but the boolean applies to the episode meta data update
-        PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true)
+        let boxed = PocketCastsUtils.UncheckedSendable(episode)
+        PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: boxed.value, fireNotification: true) }
 
         DataManager.sharedManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
 
@@ -49,7 +50,7 @@ class EpisodeManager: NSObject {
         var episodesMinusCurrent = episodes
         var currentEpisodeToMarkAsPlayed: BaseEpisode?
 
-        if let currentEpisode = PlaybackManager.shared.currentEpisode(), let index = episodes.firstIndex(where: { $0.uuid == currentEpisode.uuid }) {
+        if let currentEpisode = PlaybackManager.onMainSync({ $0.currentEpisode() }), let index = episodes.firstIndex(where: { $0.uuid == currentEpisode.uuid }) {
             episodesMinusCurrent.remove(at: index)
             currentEpisodeToMarkAsPlayed = currentEpisode
         }
@@ -70,7 +71,7 @@ class EpisodeManager: NSObject {
             }
         }
         let uuids = episodesMinusCurrent.map(\.uuid)
-        PlaybackManager.shared.bulkRemoveQueued(uuids: uuids)
+        PlaybackManager.onMainSync { $0.bulkRemoveQueued(uuids: uuids) }
 
         if !episodesToArchive.isEmpty {
             DataManager.sharedManager.bulkArchive(episodes: episodesToArchive, markAsNotDownloaded: true, markAsPlayed: true, updateSyncFlag: updateSyncFlag)
@@ -124,7 +125,8 @@ class EpisodeManager: NSObject {
 
         // if the episode is currently playing then we should probably kill that
         // we always fire the episode removed notification here. It's a bit dodgy but the boolean applies to the episode meta data update
-        PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true, saveCurrentEpisode: false)
+        let boxed = PocketCastsUtils.UncheckedSendable(episode)
+        PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: boxed.value, fireNotification: true, saveCurrentEpisode: false) }
         DataManager.sharedManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: false)
 
         if episode.shouldArchiveOnCompletion(), !episode.archived {
@@ -164,7 +166,8 @@ class EpisodeManager: NSObject {
 
         if removeFromPlayer {
             // we always fire the episode removed notification here. It's a bit dodgy but the boolean applies to the episode meta data update
-            PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true)
+            let boxed = PocketCastsUtils.UncheckedSendable(episode)
+            PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: boxed.value, fireNotification: true) }
         }
 
         DataManager.sharedManager.saveEpisode(archived: true, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
@@ -184,7 +187,8 @@ class EpisodeManager: NSObject {
 
     class func archiveEpisodeExternal(_ episode: Episode) {
         DownloadManager.shared.removeFromQueue(episodeUuid: episode.uuid, fireNotification: false, userInitiated: false)
-        PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true, saveCurrentEpisode: false)
+        let boxed = PocketCastsUtils.UncheckedSendable(episode)
+        PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: boxed.value, fireNotification: true, saveCurrentEpisode: false) }
 
         DataManager.sharedManager.saveEpisode(archived: true, episode: episode, updateSyncFlag: false)
         if let latestEpisode = DataManager.sharedManager.findEpisode(uuid: episode.uuid) {
@@ -203,7 +207,7 @@ class EpisodeManager: NSObject {
 
         if removeFromPlayer {
             let uuids = episodes.map(\.uuid)
-            PlaybackManager.shared.bulkRemoveQueued(uuids: uuids)
+            PlaybackManager.onMainSync { $0.bulkRemoveQueued(uuids: uuids) }
         }
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
 
@@ -253,7 +257,8 @@ class EpisodeManager: NSObject {
 
         // make sure all the episodes are removed from the playback and download queues, as well as have their files deleted
         for episode in episodes {
-            PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: false)
+            let boxed = PocketCastsUtils.UncheckedSendable(episode)
+            PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: boxed.value, fireNotification: false) }
 
             DownloadManager.shared.removeFromQueue(episode: episode, fireNotification: false, userInitiated: false)
             deleteFilesForEpisode(episode)
@@ -270,8 +275,8 @@ class EpisodeManager: NSObject {
 
         // special case if the starred status of the now playing episode is changed, tell the player to update it
         // we do this before sending notifications so that other parts of the app that grab the now playing episode get the one with the right star status
-        if PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episode.uuid) {
-            PlaybackManager.shared.nowPlayingStarredChanged()
+        if PlaybackManager.onMainSync { $0.isNowPlayingEpisode(episodeUuid: episode.uuid) } {
+            PlaybackManager.onMainSync { $0.nowPlayingStarredChanged() }
         }
 
         if updateSyncStatus {
@@ -289,8 +294,8 @@ class EpisodeManager: NSObject {
 
     class func bulkSetStarred(_ starred: Bool, episodes: [Episode], updateSyncStatus: Bool) {
         DataManager.sharedManager.bulkSetStarred(starred: starred, episodes: episodes, updateSyncStatus: updateSyncStatus)
-        if let currentEpisode = PlaybackManager.shared.currentEpisode() as? Episode, episodes.contains(currentEpisode) {
-            PlaybackManager.shared.nowPlayingStarredChanged()
+        if let currentEpisode = PlaybackManager.onMainSync({ $0.currentEpisode() }) as? Episode, episodes.contains(currentEpisode) {
+            PlaybackManager.onMainSync { $0.nowPlayingStarredChanged() }
         }
         if updateSyncStatus {
             RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
@@ -367,14 +372,14 @@ class EpisodeManager: NSObject {
             }
 
             // we don't want a huge number of these so if we're over 5, blow the oldest ones away
-            if index >= 5, !PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episode.uuid) {
+            if index >= 5, !PlaybackManager.onMainSync { $0.isNowPlayingEpisode(episodeUuid: episode.uuid) } {
                 deleteDownloadedFiles(episode: episode)
 
                 continue
             }
 
             // delete episodes older than a week that we're not currently playing
-            if fabs(lastPlaybackDate.timeIntervalSinceNow) > 1.week, !PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episode.uuid) {
+            if fabs(lastPlaybackDate.timeIntervalSinceNow) > 1.week, !PlaybackManager.onMainSync { $0.isNowPlayingEpisode(episodeUuid: episode.uuid) } {
                 deleteDownloadedFiles(episode: episode)
             }
         }
@@ -528,12 +533,13 @@ class EpisodeManager: NSObject {
 
     class func removeDownloadForEpisodes(_ episodes: [BaseEpisode]) {
         var episodesToRemoveFromQueue = episodes
-        if let currentEpisode = PlaybackManager.shared.currentEpisode(), let index = episodes.firstIndex(where: { $0.uuid == currentEpisode.uuid }) {
-            PlaybackManager.shared.removeIfPlayingOrQueued(episode: currentEpisode, fireNotification: true, saveCurrentEpisode: true)
+        if let currentEpisode = PlaybackManager.onMainSync({ $0.currentEpisode() }), let index = episodes.firstIndex(where: { $0.uuid == currentEpisode.uuid }) {
+            let boxed = PocketCastsUtils.UncheckedSendable(currentEpisode)
+            PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: boxed.value, fireNotification: true, saveCurrentEpisode: true) }
             episodesToRemoveFromQueue.remove(at: index)
         }
         let uuids = episodesToRemoveFromQueue.map(\.uuid)
-        PlaybackManager.shared.bulkRemoveQueued(uuids: uuids)
+        PlaybackManager.onMainSync { $0.bulkRemoveQueued(uuids: uuids) }
         var userEpisodeUuidsToDelete = [String]()
         var episodesToMarkAsNotDownloaded = [BaseEpisode]()
         for episode in episodes {
