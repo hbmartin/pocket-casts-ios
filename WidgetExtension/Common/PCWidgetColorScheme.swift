@@ -113,7 +113,7 @@ struct PCWidgetColorScheme {
 }
 
 struct WidgetColorScheme: EnvironmentKey {
-    static var defaultValue: PCWidgetColorScheme = .bold
+    static let defaultValue: PCWidgetColorScheme = .bold
 }
 
 extension EnvironmentValues {

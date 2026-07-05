@@ -12,9 +12,9 @@ struct MediaTrimBar: View {
     private let playbackManager = ClipPlaybackManager.shared
 
     private enum Constants {
-        static var trimBorderColor = Color(hex: "6B6B6B").opacity(0.28)
-        static var borderRadius: CGFloat = 12
-        static var height: CGFloat = 70
+        static let trimBorderColor = Color(hex: "6B6B6B").opacity(0.28)
+        static let borderRadius: CGFloat = 12
+        static let height: CGFloat = 70
     }
 
     init(clipTime: ClipTime, episode: Episode, clipUUID: String, analyticsSource: AnalyticsSource) {

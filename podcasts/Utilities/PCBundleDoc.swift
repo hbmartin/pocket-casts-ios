@@ -3,15 +3,15 @@ import SwiftUI
 import PocketCastsUtils
 
 extension UTType {
-    static var pcasts = UTType(filenameExtension: "pcasts", conformingTo: .package)!
+    static let pcasts = UTType(filenameExtension: "pcasts", conformingTo: .package)!
 }
 
 struct PCBundleDoc: FileDocument {
-    static var readableContentTypes = [UTType.pcasts]
+    static let readableContentTypes = [UTType.pcasts]
 
     enum Constants {
         static let databaseFilename = "database.sqlite3"
-        static var databaseWalSuffix = "-wal"
+        static let databaseWalSuffix = "-wal"
         static let preferencesFilename = "preferences.plist"
     }
 
