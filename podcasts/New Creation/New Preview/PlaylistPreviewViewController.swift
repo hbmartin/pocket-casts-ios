@@ -55,10 +55,6 @@ class PlaylistPreviewViewController: PCViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    deinit {
-        cancellables.removeAll()
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
 

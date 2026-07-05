@@ -57,10 +57,6 @@ class SkipButton: UIButton {
         addGestureRecognizer(longPressGesture)
     }
 
-    deinit {
-        removeTarget(self, action: #selector(playAnimation), for: .touchUpInside)
-    }
-
     override func awakeFromNib() {
         super.awakeFromNib()
 
