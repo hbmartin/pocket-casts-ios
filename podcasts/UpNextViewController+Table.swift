@@ -16,7 +16,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
         case .nowPlayingSection:
             return 1
         case .upNextSection:
-            let count = PlaybackManager.shared.queue.upNextCount()
+            let count = PlaybackManager.shared.upNextCount()
             return count == 0 ? 1 : count
         }
     }
@@ -31,14 +31,14 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
 
         if FeatureFlag.upNextShuffle.enabled {
             clearQueueButton.isHidden = true
-            shuffleButton.isHidden = PlaybackManager.shared.queue.upNextCount() == 0
+            shuffleButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         } else {
             clearQueueButton.isHidden = false
             shuffleButton.isHidden = true
-            clearQueueButton.isEnabled = PlaybackManager.shared.queue.upNextCount() > 0
+            clearQueueButton.isEnabled = PlaybackManager.shared.upNextCount() > 0
         }
         if FeatureFlag.upNextSort.enabled {
-            sortButton.isHidden = PlaybackManager.shared.queue.upNextCount() == 0
+            sortButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         }
         return headerView
     }
@@ -67,7 +67,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
             return nowPlayingCell
         }
 
-        if PlaybackManager.shared.queue.upNextCount() == 0 {
+        if PlaybackManager.shared.upNextCount() == 0 {
             let emptyCell = tableView.dequeueReusableCell(withIdentifier: UpNextViewController.emptyStateCell, for: indexPath) as! EmptyStateCell
             emptyCell.configure(title: L10n.upNextEmptyTitle,
                                 message: L10n.upNextEmptyDescription,
@@ -86,7 +86,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
         playerCell.shouldShowSelect(show: isMultiSelectEnabled, animate: false)
         playerCell.delegate = self
 
-        if let episode = PlaybackManager.shared.queue.episodeAt(index: indexPath.row) {
+        if let episode = PlaybackManager.shared.episodeInUpNextAt(index: indexPath.row) {
             playerCell.populateFrom(episode: episode)
             playerCell.showTick = selectedEpisodesContains(uuid: episode.uuid)
         }
@@ -143,7 +143,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
                 return
             }
 
-            guard let episode = PlaybackManager.shared.queue.episodeAt(index: indexPath.row) else { return }
+            guard let episode = PlaybackManager.shared.episodeInUpNextAt(index: indexPath.row) else { return }
 
             let playOnTap = Settings.playUpNextOnTap()
 
@@ -173,7 +173,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
         let section = tableData[indexPath.section]
         if section == .nowPlayingSection {
             return false
-        } else if section == .upNextSection, PlaybackManager.shared.queue.upNextCount() == 0 {
+        } else if section == .upNextSection, PlaybackManager.shared.upNextCount() == 0 {
             return false
         }
         return true
@@ -182,9 +182,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
         if sourceIndexPath == destinationIndexPath { return }
 
-        let playQueue = PlaybackManager.shared.queue
-
-        playQueue.moveEpisode(from: sourceIndexPath.row, to: destinationIndexPath.row)
+        PlaybackManager.shared.moveUpNextEpisode(from: sourceIndexPath.row, to: destinationIndexPath.row)
 
         // This logic is reversed because the lower the row number the higher it is in the queue
         let didMoveUp = destinationIndexPath.row < sourceIndexPath.row
@@ -223,14 +221,14 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         let section = tableData[indexPath.section]
         if section == .nowPlayingSection { return UpNextViewController.nowPlayingRowHeight }
-        if PlaybackManager.shared.queue.upNextCount() == 0 { return UpNextViewController.emptyStateRowHeight }
+        if PlaybackManager.shared.upNextCount() == 0 { return UpNextViewController.emptyStateRowHeight }
         return UpNextViewController.upNextRowHeight
     }
 
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         let section = tableData[indexPath.section]
         if section == .nowPlayingSection { return UpNextViewController.nowPlayingRowHeight }
-        if PlaybackManager.shared.queue.upNextCount() == 0 { return UpNextViewController.emptyStateRowHeight }
+        if PlaybackManager.shared.upNextCount() == 0 { return UpNextViewController.emptyStateRowHeight }
         return UpNextViewController.upNextRowHeight
     }
 
@@ -304,7 +302,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func tableLongPressed(_ sender: UILongPressGestureRecognizer) {
         let touchPoint = sender.location(in: upNextTable)
         guard let indexPath = upNextTable.indexPathForRow(at: touchPoint), tableData[indexPath.section] == .upNextSection,
-              let episode = PlaybackManager.shared.queue.episodeAt(index: indexPath.row) else { return }
+              let episode = PlaybackManager.shared.episodeInUpNextAt(index: indexPath.row) else { return }
 
         if sender.state == .began {
             if isMultiSelectEnabled {

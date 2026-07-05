@@ -104,7 +104,7 @@ class UpNextButton: UIButton {
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         context.clear(rect)
-        let upNextCount = min(999, PlaybackManager.shared.queue.upNextCount())
+        let upNextCount = min(999, PlaybackManager.shared.upNextCount())
         if upNextCount <= 0 {
             let bgImage = UIImage(named: "upnext")?.tintedImage(iconColor)
             let imageFrame = CGRect(x: 10, y: 10, width: 24, height: 24)

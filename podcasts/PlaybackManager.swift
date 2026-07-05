@@ -14,7 +14,7 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
 
     private let updatesPerSave = 30 // save the users progress every 30 seconds
 
-    var queue: PlaybackQueue
+    private var queue: PlaybackQueue
     var uuidOfPlayingList = ""
 
     private static let notSeeking: TimeInterval = -1
@@ -2400,3 +2400,54 @@ extension PlaybackManager {
     }
 }
 #endif
+
+// MARK: - Up Next queue forwarding
+
+/// The Up Next queue is an implementation detail of the playback subsystem
+/// (Phase 5, docs/Phase5-PlaybackModernization.md D6): external callers use these
+/// forwarders instead of reaching into PlaybackQueue directly.
+extension PlaybackManager {
+    func upNextCount() -> Int {
+        queue.upNextCount()
+    }
+
+    func episodeInUpNextAt(index: Int) -> BaseEpisode? {
+        queue.episodeAt(index: index)
+    }
+
+    func upNextTotalDuration(includePlayingEpisode: Bool) -> TimeInterval {
+        queue.upNextTotalDuration(includePlayingEpisode: includePlayingEpisode)
+    }
+
+    func moveUpNextEpisode(_ episode: BaseEpisode, to: Int, fireNotification: Bool = true) {
+        queue.move(episode: episode, to: to, fireNotification: fireNotification)
+    }
+
+    func bulkMoveUpNext(_ playlistEpisodes: [PlaylistEpisode], toTop: Bool) {
+        queue.bulkMove(playlistEpisodes, toTop: toTop)
+    }
+
+    func clearUpNextList() {
+        queue.clearUpNextList()
+    }
+
+    func refreshUpNextList(checkForAutoDownload: Bool) {
+        queue.refreshList(checkForAutoDownload: checkForAutoDownload)
+    }
+
+    func upNextBulkOperationDidComplete() {
+        queue.bulkOperationDidComplete()
+    }
+
+    func allUpNextEpisodes(includeNowPlaying: Bool = true) -> [BaseEpisode] {
+        queue.allEpisodes(includeNowPlaying: includeNowPlaying)
+    }
+
+    func reorderUpNext(sortedEpisodes: [BaseEpisode]) {
+        queue.reorderUpNext(sortedEpisodes: sortedEpisodes)
+    }
+
+    func moveUpNextEpisode(from: Int, to: Int) {
+        queue.moveEpisode(from: from, to: to)
+    }
+}

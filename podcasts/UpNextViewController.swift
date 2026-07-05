@@ -124,13 +124,13 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 
         if FeatureFlag.upNextShuffle.enabled {
             clearQueueButton.isHidden = true
-            shuffleButton.isHidden = PlaybackManager.shared.queue.upNextCount() == 0
+            shuffleButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         } else {
             shuffleButton.isHidden = true
-            clearQueueButton.isEnabled = PlaybackManager.shared.queue.upNextCount() > 0
+            clearQueueButton.isEnabled = PlaybackManager.shared.upNextCount() > 0
         }
         if FeatureFlag.upNextSort.enabled {
-            sortButton.isHidden = PlaybackManager.shared.queue.upNextCount() < 2
+            sortButton.isHidden = PlaybackManager.shared.upNextCount() < 2
         }
         updateSize()
         return headerView
@@ -259,7 +259,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc func clearQueueTapped() {
-        let queueCount = PlaybackManager.shared.queue.upNextCount()
+        let queueCount = PlaybackManager.shared.upNextCount()
 
         if queueCount <= Constants.Limits.upNextClearWithoutWarning && !FeatureFlag.upNextShuffle.enabled {
             performClearAll()
@@ -366,7 +366,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc private func sortButtonTapped() {
-        guard PlaybackManager.shared.queue.upNextCount() >= 2 else { return }
+        guard PlaybackManager.shared.upNextCount() >= 2 else { return }
 
         let optionsPicker = makeSortOptionsPicker()
         optionsPicker.present(from: self)
@@ -376,8 +376,8 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         let optionsPicker = OptionsPicker(title: L10n.upNextSortTitle.localizedUppercase, themeOverride: themeOverride)
         for option in UpNextSortOption.allCases {
             let action = OptionAction(label: option.description) { [weak self] in
-                let queue = PlaybackManager.shared.queue
-                queue.reorderUpNext(sortedEpisodes: option.sort(queue.allEpisodes(includeNowPlaying: false)))
+                let playbackManager = PlaybackManager.shared
+                playbackManager.reorderUpNext(sortedEpisodes: option.sort(playbackManager.allUpNextEpisodes(includeNowPlaying: false)))
                 self?.reloadTable()
                 self?.track(.upNextSort, properties: ["sort_type": option.analyticsDescription])
             }
@@ -398,7 +398,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     private func performClearAll() {
-        PlaybackManager.shared.queue.clearUpNextList()
+        PlaybackManager.shared.clearUpNextList()
         reloadTable()
         track(.upNextQueueCleared)
     }
@@ -422,7 +422,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     @objc func updateTimeRemainingLabel() {
-        var totalDuration = PlaybackManager.shared.queue.upNextTotalDuration(includePlayingEpisode: false)
+        var totalDuration = PlaybackManager.shared.upNextTotalDuration(includePlayingEpisode: false)
         if let episode = PlaybackManager.shared.currentEpisode() {
             totalDuration += episode.duration.seconds - PlaybackManager.shared.currentTime()
         }
@@ -472,16 +472,16 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         let rightButton: UIBarButtonItem?
 
         if isMultiSelectEnabled {
-            if MultiSelectHelper.shouldSelectAll(onCount: selectedPlayListEpisodes.count, totalCount: PlaybackManager.shared.queue.upNextCount()) {
+            if MultiSelectHelper.shouldSelectAll(onCount: selectedPlayListEpisodes.count, totalCount: PlaybackManager.shared.upNextCount()) {
                 rightButton = UIBarButtonItem(title: L10n.selectAll, style: .plain, target: self, action: #selector(selectAllTapped))
             } else {
                 rightButton = UIBarButtonItem(title: L10n.deselectAll, style: .plain, target: self, action: #selector(deselectAllTapped))
             }
             leftButton = UIBarButtonItem(title: L10n.cancel, style: .plain, target: self, action: #selector(cancelTapped))
-        } else if !isMultiSelectEnabled, PlaybackManager.shared.queue.upNextCount() > 0 {
+        } else if !isMultiSelectEnabled, PlaybackManager.shared.upNextCount() > 0 {
             rightButton = UIBarButtonItem(title: L10n.select, style: .plain, target: self, action: #selector(selectTapped))
             if showingInTab {
-                if FeatureFlag.upNextShuffle.enabled, PlaybackManager.shared.queue.upNextCount() > 0 {
+                if FeatureFlag.upNextShuffle.enabled, PlaybackManager.shared.upNextCount() > 0 {
                     leftButton = UIBarButtonItem(title: L10n.clear, style: .plain, target: self, action: #selector(clearQueueTapped))
                 } else {
                     leftButton = nil

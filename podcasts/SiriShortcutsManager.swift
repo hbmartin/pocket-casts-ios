@@ -380,7 +380,7 @@ final class SiriShortcutsManager: CustomObserver, @unchecked Sendable {
     func playUpNext() -> INPlayMediaIntentResponseCode {
         AnalyticsHelper.siriUpNext()
         // unlike when the user taps an episode in Up Next, their intention here is probably to remove the currently playing episode, and go to the next one if it exists
-        guard let currentEpisode = PlaybackManager.shared.currentEpisode(), PlaybackManager.shared.queue.upNextCount() > 0 else {
+        guard let currentEpisode = PlaybackManager.shared.currentEpisode(), PlaybackManager.shared.upNextCount() > 0 else {
             return INPlayMediaIntentResponseCode.failureNoUnplayedContent
         }
         PlaybackManager.shared.removeIfPlayingOrQueued(episode: currentEpisode, fireNotification: true, userInitiated: true)

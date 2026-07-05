@@ -987,7 +987,7 @@ extension MainTabBarController {
     @objc func upNextQueueDidChange() {
         guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
 
-        let count = PlaybackManager.shared.queue.upNextCount()
+        let count = PlaybackManager.shared.upNextCount()
         let previous = previousUpNextCount
         previousUpNextCount = count
 

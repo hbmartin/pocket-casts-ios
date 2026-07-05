@@ -11,7 +11,7 @@ extension PlaylistDetailViewController: UISheetPresentationControllerDelegate, P
             guard let self else { return }
             let hasDifferencesWithUpNext = await self.checkDifferencesWithUpNext()
             if hasDifferencesWithUpNext {
-                if PlaybackManager.shared.queue.upNextCount() == 0 {
+                if PlaybackManager.shared.upNextCount() == 0 {
                     // there's nothing to over-write, so nothing to confirm either
                     await MainActor.run {
                         self.viewModel.playAllEpisodes()
