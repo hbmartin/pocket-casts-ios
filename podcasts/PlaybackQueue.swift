@@ -368,7 +368,7 @@ class PlaybackQueue: NSObject {
 
         guard let playlistEpisode = DataManager.sharedManager.playlistEpisodeAt(index: actualIndex) else { return nil }
 
-        let missingEpisode = UserEpisode()
+        var missingEpisode = UserEpisode()
         missingEpisode.title = playlistEpisode.title
         missingEpisode.uuid = playlistEpisode.episodeUuid
         missingEpisode.uploadStatus = UploadStatus.missing.rawValue

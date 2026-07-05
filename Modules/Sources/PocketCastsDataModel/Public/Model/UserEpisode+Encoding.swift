@@ -29,7 +29,7 @@ public extension UserEpisode {
         return episodeMap
     }
 
-    func populateFromMap(_ episodeMap: [String: String]) {
+    mutating func populateFromMap(_ episodeMap: [String: String]) {
         addedDate = decodeDateFromString(date: episodeMap["addedDate"])
         downloadUrl = episodeMap["downloadUrl"]
         episodeStatus = decodeInt32FromString(value: episodeMap["episodeStatus"])

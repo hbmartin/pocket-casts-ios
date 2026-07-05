@@ -39,10 +39,10 @@ final class UserEpisodeColumnConsistencyTests: DataManagerTestCase {
 
     func testSaveAndLoadPreservesAllFields() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let original = self.createFullyPopulatedUserEpisode()
+            var original = self.createFullyPopulatedUserEpisode()
 
             // Save using the current implementation (respects feature flag)
-            dataManager.save(episode: original)
+            original = dataManager.save(episode: original)
 
             // Load it back
             guard let loaded = dataManager.findUserEpisode(uuid: original.uuid) else {
@@ -84,13 +84,13 @@ final class UserEpisodeColumnConsistencyTests: DataManagerTestCase {
     /// Verifies that contentType is NOT persisted by save() but IS persisted by saveContentType()
     func testContentTypeNotPersistedBySave() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.uuid = UUID().uuidString
             episode.title = "ContentType Test"
             episode.addedDate = Date()
             episode.contentType = "audio/mpeg"  // Set contentType
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             // Load it back - contentType should NOT be saved by save()
             guard let loaded = dataManager.findUserEpisode(uuid: episode.uuid) else {
@@ -105,11 +105,11 @@ final class UserEpisodeColumnConsistencyTests: DataManagerTestCase {
 
     func testContentTypePersistedBySaveContentType() throws {
         try runWithBothImplementations { dataManager, implementationName in
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.uuid = UUID().uuidString
             episode.title = "ContentType Test"
             episode.addedDate = Date()
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             // Use the dedicated method to save contentType
             dataManager.saveEpisode(contentType: "audio/mpeg", episode: episode)
@@ -154,7 +154,7 @@ final class UserEpisodeColumnConsistencyTests: DataManagerTestCase {
     }
 
     private func createFullyPopulatedUserEpisode() -> UserEpisode {
-        let episode = UserEpisode()
+        var episode = UserEpisode()
         episode.uuid = UUID().uuidString
         episode.title = "Test Episode Title"
         episode.addedDate = Date()

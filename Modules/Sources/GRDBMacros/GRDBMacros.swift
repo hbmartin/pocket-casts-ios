@@ -49,7 +49,7 @@ import GRDB
 /// @objc public var autoArchiveEpisodeLimit = 0 as Int32
 /// ```
 @attached(member, names: named(CodingKeys), named(init(from:)), named(encode(to:)), named(Columns), named(databaseTableName))
-@attached(extension, conformances: Codable, FetchableRecord, PersistableRecord, TableRecord, Decodable)
+@attached(extension, conformances: Codable, FetchableRecord, PersistableRecord, TableRecord, Decodable, names: named(init(from:)), named(encode(to:)))
 public macro GRDBRecord(table: String? = nil) = #externalMacro(module: "GRDBMacrosPlugin", type: "GRDBRecordMacro")
 
 /// Specifies a custom database column name for a property.

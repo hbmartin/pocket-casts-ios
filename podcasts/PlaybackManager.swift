@@ -1204,7 +1204,7 @@ final class PlaybackManager {
         chapterManager.clearChapterInfo()
 
         // handle the episode that just finished, marking it as played, etc
-        if let episode = currentEpisode() {
+        if var episode = currentEpisode() {
             autoplayIfNeeded()
 
             FileLog.shared.addMessage("Finished playing \(episode.displayableTitle())")

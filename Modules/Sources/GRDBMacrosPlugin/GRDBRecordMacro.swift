@@ -38,9 +38,27 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
             return [extensionDecl]
         } else {
             // For Codable structs/classes: add Codable, FetchableRecord, PersistableRecord, TableRecord conformances
-            // TableRecord is required by PersistableRecord
-            // This is harmless if already declared, as Swift allows redundant conformance declarations
-            let extensionDecl = try ExtensionDeclSyntax("extension \(type.trimmed): Codable, FetchableRecord, PersistableRecord, TableRecord {}")
+            // TableRecord is required by PersistableRecord.
+            // The custom decode/encode pair lives in the extension (so the type keeps
+            // its implicit initializers) and stores date columns as epoch doubles,
+            // honouring @GRDBNullDateAsEpoch — synthesized Codable would store
+            // datetime strings and NULLs.
+            let properties = extractAllStoredProperties(from: declaration)
+            let isPublic = declaration.modifiers.contains { modifier in
+                modifier.name.tokenKind == .keyword(.public)
+            }
+            let accessModifier = isPublic ? "public " : ""
+            let decodableInit = generateStructDecodableInit(properties: properties, accessModifier: accessModifier)
+            let encodeFunc = generateEncodableEncode(properties: properties, accessModifier: accessModifier)
+            let extensionDecl = try ExtensionDeclSyntax(
+                """
+                extension \(type.trimmed): Codable, FetchableRecord, PersistableRecord, TableRecord {
+                    \(decodableInit)
+
+                    \(encodeFunc)
+                }
+                """
+            )
             return [extensionDecl]
         }
     }
@@ -90,7 +108,10 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
             // 5. Generate Columns enum
             members.append(generateColumns(properties: properties, accessModifier: accessModifier))
         } else {
-            // For Codable structs/classes: generate CodingKeys and Columns
+            // For Codable structs/classes: generate CodingKeys and Columns here; the
+            // custom Codable decode/encode pair is generated in the conformance
+            // extension (see the ExtensionMacro expansion) so the type keeps its
+            // implicit initializers.
             let properties = extractAllStoredProperties(from: declaration)
 
             // 2. Generate CodingKeys enum (needed for custom column names)
@@ -348,6 +369,32 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
             """
     }
 
+    /// Generate init(from decoder:) for struct records (no super.init/required)
+    private static func generateStructDecodableInit(properties: [PropertyInfo], accessModifier: String) -> DeclSyntax {
+        var assignments: [String] = []
+
+        for prop in properties {
+            let decoder: String
+            if prop.isOptional {
+                decoder = "try container.decodeIfPresent(\(prop.type).self, forKey: .\(prop.name))"
+            } else if let defaultValue = prop.defaultValue {
+                decoder = "try container.decodeIfPresent(\(prop.type).self, forKey: .\(prop.name)) ?? \(defaultValue)"
+            } else {
+                decoder = "try container.decode(\(prop.type).self, forKey: .\(prop.name))"
+            }
+            assignments.append("\(prop.name) = \(decoder)")
+        }
+
+        let assignmentsCode = assignments.joined(separator: "\n        ")
+
+        return """
+            \(raw: accessModifier)init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                \(raw: assignmentsCode)
+            }
+            """
+    }
+
     /// Generate encode(to:) for EncodableRecord conformance (GRDB-specific)
     private static func generateEncodableEncode(properties: [PropertyInfo], accessModifier: String) -> DeclSyntax {
         var encodes: [String] = []
@@ -438,14 +485,68 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
                 // Check for @GRDBColumn attribute
                 let columnName = extractGRDBColumnName(from: varDecl)
 
+                // Check for @GRDBNullDateAsEpoch attribute
+                let nullDateAsEpoch = hasGRDBNullDateAsEpoch(varDecl)
+
+                // Get type info (needed for the generated Codable init)
+                var typeString = "Any"
+                var isOptional = false
+                var isDate = false
+
+                if let typeAnnotation = binding.typeAnnotation {
+                    let type = typeAnnotation.type
+                    typeString = type.trimmedDescription
+
+                    if let optionalType = type.as(OptionalTypeSyntax.self) {
+                        isOptional = true
+                        let wrappedType = optionalType.wrappedType.trimmedDescription
+                        isDate = wrappedType == "Date"
+                        typeString = wrappedType
+                    } else {
+                        isDate = typeString == "Date"
+                    }
+                } else if let initializer = binding.initializer {
+                    // Infer type from initializer
+                    let initExpr = initializer.value.trimmedDescription
+                    if initExpr.contains("as Int64") || initExpr.contains(": Int64") {
+                        typeString = "Int64"
+                    } else if initExpr.contains("as Int32") || initExpr.contains(": Int32") {
+                        typeString = "Int32"
+                    } else if initExpr.contains("as Double") || initExpr.contains(": Double") {
+                        typeString = "Double"
+                    } else if initExpr.contains("false") || initExpr.contains("true") {
+                        typeString = "Bool"
+                    } else if initExpr.contains("\"") {
+                        typeString = "String"
+                    } else if initExpr.contains("Date()") {
+                        typeString = "Date"
+                        isDate = true
+                    } else if initExpr.contains(".") && !initExpr.contains("\"") {
+                        typeString = "Double"
+                    } else {
+                        typeString = "Int64"
+                    }
+                }
+
+                // Get default value
+                var defaultValue: String? = nil
+                if let initializer = binding.initializer {
+                    let expr = initializer.value.trimmedDescription
+                    if expr.contains(" as ") {
+                        defaultValue = expr.components(separatedBy: " as ").first?.trimmingCharacters(in: .whitespaces)
+                    } else {
+                        defaultValue = expr
+                    }
+                }
+
                 properties.append(PropertyInfo(
                     name: name,
-                    type: "Any", // Not needed for Columns generation
-                    isOptional: false,
-                    isDate: false,
-                    defaultValue: nil,
+                    type: typeString,
+                    isOptional: isOptional,
+                    isDate: isDate,
+                    defaultValue: defaultValue,
                     columnName: columnName,
-                    nullDateAsEpoch: false
+                    nullDateAsEpoch: nullDateAsEpoch
                 ))
             }
         }

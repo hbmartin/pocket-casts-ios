@@ -28,7 +28,7 @@ final class PlaybackQueueTests: XCTestCase {
         mockDataManager.upNextEpisodes = [staleEpisode]
         mockDataManager.delayCacheClearUntilManuallyCalled()
 
-        let newEpisode = UserEpisode()
+        var newEpisode = UserEpisode()
         newEpisode.uuid = "current-uuid"
         newEpisode.title = "Current Episode"
 

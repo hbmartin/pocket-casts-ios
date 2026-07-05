@@ -580,6 +580,12 @@ public class DataManager {
         }
     }
 
+    /// Value-type UserEpisode: returns the saved copy carrying the generated row id.
+    @discardableResult
+    public func save(episode: UserEpisode) -> UserEpisode {
+        userEpisodeManager.save(episode: episode, dbQueue: dbQueue)
+    }
+
     public func bulkSave(episodes: [Episode]) {
         episodeManager.bulkSave(episodes: episodes, dbQueue: dbQueue)
     }
