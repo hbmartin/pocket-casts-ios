@@ -29,13 +29,19 @@ class HapticsHelper {
         triggerImpactOccurredHaptic(style: .heavy)
     }
 
+    // Haptics can be triggered from playback code off the main thread; the
+    // feedback generators are main-actor UIKit objects, so hop before touching them
     private class func triggerImpactOccurredHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let feedbackGenerator = UIImpactFeedbackGenerator(style: style)
-        feedbackGenerator.impactOccurred()
+        Task { @MainActor in
+            let feedbackGenerator = UIImpactFeedbackGenerator(style: style)
+            feedbackGenerator.impactOccurred()
+        }
     }
 
     private class func triggerSuccessHaptic() {
-        let feedbackGenerator = UINotificationFeedbackGenerator()
-        feedbackGenerator.notificationOccurred(.success)
+        Task { @MainActor in
+            let feedbackGenerator = UINotificationFeedbackGenerator()
+            feedbackGenerator.notificationOccurred(.success)
+        }
     }
 }

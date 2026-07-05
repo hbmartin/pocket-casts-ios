@@ -25,11 +25,13 @@ class ExpandableLabel: ThemeableLabel {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        isUserInteractionEnabled = true
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(labelTapped))
-        tapGesture.numberOfTapsRequired = 1
-        tapGesture.numberOfTouchesRequired = 1
-        addGestureRecognizer(tapGesture)
+        MainActor.assumeIsolated {
+            isUserInteractionEnabled = true
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(labelTapped))
+            tapGesture.numberOfTapsRequired = 1
+            tapGesture.numberOfTouchesRequired = 1
+            addGestureRecognizer(tapGesture)
+        }
     }
 
     func setTextKeepingExistingAttributes(text: String?) {
