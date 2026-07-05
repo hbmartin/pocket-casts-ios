@@ -177,7 +177,7 @@ struct HighlightedText: View {
 // MARK: - Custom Markdown Format Attributes
 private enum HighlightAttribute: CodableAttributedStringKey, MarkdownDecodableAttributedStringKey {
     typealias Value = Bool
-    static var name: String = "highlight"
+    static let name: String = "highlight"
 }
 
 private extension AttributeScopes {

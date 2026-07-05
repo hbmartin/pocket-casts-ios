@@ -22,7 +22,7 @@ struct MediaTrimView: View {
     }
 
     private enum Colors {
-        static var trimBorderColor = Color(hex: "6B6B6B").opacity(0.28)
+        static let trimBorderColor = Color(hex: "6B6B6B").opacity(0.28)
     }
 
     var body: some View {

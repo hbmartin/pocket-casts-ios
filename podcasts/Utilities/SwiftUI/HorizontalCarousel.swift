@@ -278,7 +278,7 @@ struct CarouselEqualHeightsView<Content: View>: View {
 private struct CarouselEqualHeightsKey: PreferenceKey {
     typealias Value = [CGFloat]
 
-    static var defaultValue: [CGFloat] = []
+    static let defaultValue: [CGFloat] = []
     static func reduce(value: inout [CGFloat], nextValue: () -> [CGFloat]) {
         value.append(contentsOf: nextValue())
     }
