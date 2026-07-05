@@ -1,8 +1,10 @@
 import Foundation
+import PocketCastsUtils
 import PocketCastsServer
 
 /// Listens for the user sign out notification and if it was not user initiated then we'll show
 /// and alert to the user asking them to sign in again
+@MainActor
 class BackgroundSignOutListener {
     private let notificationCenter: NotificationCenter
     private let navigationManager: NavigationManager
@@ -21,10 +23,6 @@ class BackgroundSignOutListener {
         addNotificationObservers()
     }
 
-    deinit {
-        removeNotificationObservers()
-    }
-
     func showSignIn() {
         canShowSignOut = true
         navigationManager.navigateTo(NavigationManager.onboardingFlow, data: ["flow": OnboardingFlow.Flow.forcedLoggedOut])
@@ -34,13 +32,14 @@ class BackgroundSignOutListener {
 // MARK: - Private: Notifications
 
 private extension BackgroundSignOutListener {
-    func removeNotificationObservers() {
-        notificationCenter.removeObserver(self, name: .serverUserWillBeSignedOut, object: nil)
-    }
-
     func addNotificationObservers() {
         notificationCenter.addObserver(forName: .serverUserWillBeSignedOut, object: nil, queue: .main) { [weak self] notification in
-            self?.handleSignOutNotification(notification)
+            // Delivered on the main queue per the observer registration; the notification is
+            // handed over wholesale
+            let note = UncheckedSendable(notification)
+            MainActor.assumeIsolated {
+                self?.handleSignOutNotification(note.value)
+            }
         }
     }
 

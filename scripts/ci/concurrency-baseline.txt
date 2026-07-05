@@ -76,12 +76,6 @@ podcasts/AudioReadTask.swift: warning: capture of 'self' with non-Sendable type 
 podcasts/AutoAddToUpNextViewController+PodcastSelect.swift: warning: conformance of 'AutoAddToUpNextViewController' to protocol 'PodcastSelectionDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/AutoplayHelper.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'AutoplayHelper' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/BackgroundShakeObserver.swift: warning: capture of 'self' with non-Sendable type 'BackgroundShakeObserver?' in a '@Sendable' closure
-podcasts/BackgroundSignOutListener.swift: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context
-podcasts/BackgroundSignOutListener.swift: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context
-podcasts/BackgroundSignOutListener.swift: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context
-podcasts/BackgroundSignOutListener.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/BackgroundSignOutListener.swift: warning: capture of 'self' with non-Sendable type 'BackgroundSignOutListener?' in a '@Sendable' closure
-podcasts/BackgroundSignOutListener.swift: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Beta/BetaMenu.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsUtils'
 podcasts/Beta/BetaMenu.swift: warning: capture of 'self' with non-Sendable type 'FeatureFlag' in a '@Sendable' closure
 podcasts/Bookmarks/BookmarksTheme.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
@@ -238,12 +232,6 @@ podcasts/ListeningHistoryViewController.swift: warning: main actor-isolated prop
 podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Lists/HomeGridListItem.swift: warning: static property 'empty' is not concurrency-safe because non-'Sendable' type 'HomeGridListItem' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Lists/TableSwipeActions.swift: warning: call to main actor-isolated initializer 'init(actions:)' in a synchronous nonisolated context
-podcasts/Lists/TableSwipeActions.swift: warning: call to main actor-isolated initializer 'init(style:title:handler:)' in a synchronous nonisolated context
-podcasts/Lists/TableSwipeActions.swift: warning: main actor-isolated property 'accessibilityLabel' can not be mutated from a nonisolated context
-podcasts/Lists/TableSwipeActions.swift: warning: main actor-isolated property 'backgroundColor' can not be mutated from a nonisolated context
-podcasts/Lists/TableSwipeActions.swift: warning: main actor-isolated property 'image' can not be mutated from a nonisolated context
-podcasts/Lists/TableSwipeActions.swift: warning: sending value of non-Sendable type '(UIContextualAction, UIView, @escaping (Bool) -> Void) -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Main/MainTabBarController.swift: warning: call to main actor-isolated instance method 'dismissLoader()' in a synchronous nonisolated context
 podcasts/Main/MainTabBarController.swift: warning: call to main actor-isolated instance method 'presentLoader()' in a synchronous nonisolated context
 podcasts/Main/MainTabBarController.swift: warning: conformance of 'MainTabBarController' to protocol 'NavigationProtocol' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -292,12 +280,6 @@ podcasts/NotificationsViewController.swift: warning: main actor-isolated class p
 podcasts/NowPlayingPlayerItemViewController+Seek.swift: warning: conformance of 'NowPlayingPlayerItemViewController' to protocol 'TimeSliderDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/NowPlayingPlayerItemViewController+Shelf.swift: warning: conformance of 'NowPlayingPlayerItemViewController' to protocol 'AVRoutePickerViewDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/NowPlayingPlayerItemViewController+Shelf.swift: warning: conformance of 'NowPlayingPlayerItemViewController' to protocol 'NowPlayingActionsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: call to main actor-isolated initializer 'init(frame:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: call to main actor-isolated initializer 'init(model:edgeInsets:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: call to main actor-isolated instance method 'addSubview' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: call to main actor-isolated instance method 'anchorToAllSidesOf(view:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: main actor-isolated property 'themedUIView' can not be referenced from a nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: sending value of non-Sendable type 'InformationalBannerViewModel' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated property 'opmlImportInProgress' can not be mutated from a Sendable closure
 podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated property 'opmlURLImportResult' can not be mutated from a Sendable closure
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
