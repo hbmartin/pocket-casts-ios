@@ -136,7 +136,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
 // MARK: - Test Helper Classes
 
 /// Simple test adapter to verify registration behavior
-private class TestAnalyticsAdapter: AnalyticsAdapter {
+private final class TestAnalyticsAdapter: AnalyticsAdapter, @unchecked Sendable {
     var trackCallCount = 0
     var lastTrackedEvent: String?
     var lastTrackedProperties: [String: Sendable]?

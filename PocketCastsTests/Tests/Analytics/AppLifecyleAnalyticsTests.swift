@@ -8,11 +8,13 @@ class AppLifecycleAnalyticsTests: XCTestCase {
     private var analytics: MockAnalytics!
 
     override func setUp() {
-        userDefaults = UserDefaults(suiteName: "AppLifecycleAnalyticsTests")
-        userDefaults.removePersistentDomain(forName: "AppLifecycleAnalyticsTests")
+        MainActor.assumeIsolated {
+            userDefaults = UserDefaults(suiteName: "AppLifecycleAnalyticsTests")
+            userDefaults.removePersistentDomain(forName: "AppLifecycleAnalyticsTests")
 
-        analytics = MockAnalytics()
-        appLifecyleAnalytics = AppLifecycleAnalytics(userDefaults: userDefaults, analytics: analytics)
+            analytics = MockAnalytics()
+            appLifecyleAnalytics = AppLifecycleAnalytics(userDefaults: userDefaults, analytics: analytics)
+        }
     }
 
     // MARK: - Application Installed
