@@ -4,7 +4,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import WidgetKit
 
-class WidgetHelper {
+final class WidgetHelper: Sendable {
     static let shared = WidgetHelper()
     static let appGroupId = SharedConstants.GroupUserDefaults.groupContainerId
     static let maxUpNextToPublish = 10
@@ -157,12 +157,14 @@ class WidgetHelper {
     func publishAppIcon() {
         guard let sharedDefaults = UserDefaults(suiteName: SharedConstants.GroupUserDefaults.groupContainerId) else { return }
         let sharedAppIcon = sharedDefaults.object(forKey: SharedConstants.GroupUserDefaults.appIcon) as? String
-        DispatchQueue.main.async {
+        // UserDefaults is thread-safe; boxed so the main-actor hop can write back
+        let boxedDefaults = PocketCastsUtils.UncheckedSendable(sharedDefaults)
+        Task { @MainActor in
             let currentAppIcon = UIApplication.shared.alternateIconName
 
             if currentAppIcon != sharedAppIcon {
-                sharedDefaults.set(currentAppIcon, forKey: SharedConstants.GroupUserDefaults.appIcon)
-                sharedDefaults.synchronize()
+                boxedDefaults.value.set(currentAppIcon, forKey: SharedConstants.GroupUserDefaults.appIcon)
+                boxedDefaults.value.synchronize()
             }
         }
     }
