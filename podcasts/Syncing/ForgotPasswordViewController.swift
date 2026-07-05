@@ -69,11 +69,6 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
         Analytics.track(.forgotPasswordShown)
     }
 
-    deinit {
-        emailField?.delegate = nil
-        emailField?.removeTarget(self, action: #selector(ForgotPasswordViewController.emailFieldDidChange), for: UIControl.Event.editingChanged)
-    }
-
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         updateButtonState()

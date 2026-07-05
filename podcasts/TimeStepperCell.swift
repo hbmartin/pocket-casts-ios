@@ -41,10 +41,6 @@ class TimeStepperCell: ThemeableCell {
         onValueChanged = nil
     }
 
-    deinit {
-        timeStepper.removeTarget(nil, action: nil, for: .valueChanged)
-    }
-
     func configureWithImage(imageName: String, tintColor: UIColor) {
         cellTextToImageConstraint.isActive = true
         cellTextToMarginConstraint.isActive = false

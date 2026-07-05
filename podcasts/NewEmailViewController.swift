@@ -134,11 +134,6 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     deinit {
-        emailField?.removeTarget(self, action: #selector(emailFieldDidChange), for: UIControl.Event.editingChanged)
-        emailField?.delegate = nil
-        passwordField?.removeTarget(self, action: #selector(passwordFieldDidChange), for: .editingChanged)
-        passwordField?.delegate = nil
-
         NotificationCenter.default.removeObserver(self)
     }
 

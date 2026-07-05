@@ -96,9 +96,6 @@ podcasts/Bookmarks/Player/ActionBarStyles.swift: warning: call to main actor-iso
 podcasts/Bookmarks/Player/ActionBarStyles.swift: warning: conformance of 'PlayerActionBarStyle' to protocol 'ActionBarStyle' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/Player/ActionBarStyles.swift: warning: conformance of 'ThemedActionBarStyle' to protocol 'ActionBarStyle' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/Player/BookmarksPlayerTabController.swift: warning: sending 'self.bookmarkManager' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/ChangeEmailViewController.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
-podcasts/ChangeEmailViewController.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/ChangePasswordViewController.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/ChapterManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'episode' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
@@ -266,8 +263,6 @@ podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: main actor-isolated prop
 podcasts/MiniPlayerToFullPlayerAnimator.swift: warning: main actor-isolated property 'shadowColor' can not be referenced from a nonisolated context
 podcasts/MiniPlayerViewController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
 podcasts/MiniPlayerViewController.swift: warning: conformance of 'MiniPlayerViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/New Creation/New Preview/PlaylistPreviewViewController.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Combine'
-podcasts/New Creation/New Preview/PlaylistPreviewViewController.swift: warning: cannot access property 'cancellables' with a non-Sendable type 'Set<AnyCancellable>' from nonisolated deinit; this is an error in the Swift 6 language mode
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: capture of 'self' with non-Sendable type 'PlaylistPreviewViewModel?' in a '@Sendable' closure
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/New Detail/Episode Add/ManualPlaylistsChooserViewController.swift: warning: conformance of 'ManualPlaylistsChooserViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -283,8 +278,6 @@ podcasts/New Search/Model/SearchResultsModel.swift: warning: sending 'self.episo
 podcasts/New Search/Model/SearchResultsModel.swift: warning: sending 'self.podcastSearch' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/New Search/Model/SearchResultsModel.swift: warning: sending 'self.predictiveSearch' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/New Search/SearchResultsViewController.swift: warning: conformance of 'SearchResultsViewController' to protocol 'SearchResultsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/NewEmailViewController.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
-podcasts/NewEmailViewController.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
 podcasts/Notifications/NotificationsCoordinator.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'NotificationsCoordinator' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Notifications/NotificationsCoordinator.swift: warning: static property 'speedUpNotifications' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
@@ -425,7 +418,6 @@ podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property
 podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'suggestedShortcuts' can not be mutated from a Sendable closure
 podcasts/SiriShortcutsManager.swift: warning: capture of 'completion' with non-Sendable type '(INVoiceShortcut?) -> Void' in a '@Sendable' closure
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/SkipButton.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/SocialsHelper.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
 podcasts/SocialsHelper.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
 podcasts/StarredViewController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
@@ -441,10 +433,6 @@ podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sen
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker' in a '@Sendable' closure
 podcasts/Styles.swift: warning: conformance of 'RequiredFieldStyle' to protocol 'TextFieldStyle' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Syncing/ForgotPasswordViewController.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
-podcasts/Syncing/ForgotPasswordViewController.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/Syncing/SyncSigninViewController.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
-podcasts/Syncing/SyncSigninViewController.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
 podcasts/Theme.swift: warning: call to main actor-isolated instance method 'addSubview' in a synchronous nonisolated context
 podcasts/Theme.swift: warning: call to main actor-isolated instance method 'anchorToAllSidesOf(view:)' in a synchronous nonisolated context
 podcasts/Theme.swift: warning: call to main actor-isolated instance method 'convert(_:from:)' in a synchronous nonisolated context
@@ -471,7 +459,6 @@ podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryButton.s
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: call to main actor-isolated instance method 'setTintColorForTheme()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: main actor-isolated property 'image' can not be referenced from a nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: main actor-isolated property 'originalImage' can not be mutated from a nonisolated context
-podcasts/TimeStepperCell.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/TranscriptContainerViewController.swift: warning: conformance of 'TranscriptContainerViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/TranscriptContainerViewController.swift: warning: conformance of 'TranscriptContainerViewController' to protocol 'PlayerItemContainerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/TranscriptExcerptView.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
