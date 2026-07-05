@@ -5,7 +5,9 @@ SWIFT_VERSION = 5.0
 // Strict-concurrency ratchet: warnings outside Modules/Sources are gated against
 // scripts/ci/concurrency-baseline.txt (deletion-only) by scripts/ci/check-concurrency-warnings.sh.
 // See MODERNIZATION.md. Regenerate the baseline with `mise run concurrency:baseline`.
-SWIFT_STRICT_CONCURRENCY = targeted
+// Phase 4: `complete` checks all code, not just code that already adopts concurrency; the
+// baseline captured the full warning set on flip day and only ever shrinks from here.
+SWIFT_STRICT_CONCURRENCY = complete
 
 // Infer `Sendable` for closures and key paths whose captures are all `Sendable`
 // (SE-0418). Matches the `InferSendableFromCaptures` upcoming feature the SPM modules
