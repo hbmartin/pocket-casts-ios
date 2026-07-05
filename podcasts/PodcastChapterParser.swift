@@ -4,36 +4,40 @@ import PocketCastsServer
 import PocketCastsUtils
 import PocketCastsDataModel
 
-class PodcastChapterParser {
-    func parseLocalFile(_ path: String, episodeDuration: TimeInterval, completion: @escaping (([ChapterInfo]) -> Void)) {
+final class PodcastChapterParser: Sendable {
+    func parseLocalFile(_ path: String, episodeDuration: TimeInterval, completion: @escaping @Sendable ([ChapterInfo]) -> Void) {
         parseChapters(url: URL(fileURLWithPath: path), episodeDuration: episodeDuration, completion: completion)
     }
 
-    func parseRemoteFile(_ remoteUrl: String, episodeDuration: TimeInterval, completion: @escaping (([ChapterInfo]) -> Void)) {
+    func parseRemoteFile(_ remoteUrl: String, episodeDuration: TimeInterval, completion: @escaping @Sendable ([ChapterInfo]) -> Void) {
         guard let url = URL(string: remoteUrl) else { return }
 
         parseChapters(url: url, episodeDuration: episodeDuration, completion: completion)
     }
 
     func parseLocalFile(_ path: String, episodeDuration: TimeInterval) async -> [ChapterInfo] {
-        await withCheckedContinuation { continuation in
+        // The parsed chapters are freshly built by parseChapters and handed over
+        // wholesale, so boxing them across the continuation is safe
+        let boxed: PocketCastsUtils.UncheckedSendable<[ChapterInfo]> = await withCheckedContinuation { continuation in
             parseChapters(url: URL(fileURLWithPath: path), episodeDuration: episodeDuration) {
-                continuation.resume(returning: $0)
+                continuation.resume(returning: PocketCastsUtils.UncheckedSendable($0))
             }
         }
+        return boxed.value
     }
 
     func parseRemoteFile(_ remoteUrl: String, episodeDuration: TimeInterval) async -> [ChapterInfo] {
-        await withCheckedContinuation { continuation in
+        let boxed: PocketCastsUtils.UncheckedSendable<[ChapterInfo]> = await withCheckedContinuation { continuation in
             guard let url = URL(string: remoteUrl) else {
-                continuation.resume(returning: [])
+                continuation.resume(returning: PocketCastsUtils.UncheckedSendable([]))
                 return
             }
 
             parseChapters(url: url, episodeDuration: episodeDuration) {
-                continuation.resume(returning: $0)
+                continuation.resume(returning: PocketCastsUtils.UncheckedSendable($0))
             }
         }
+        return boxed.value
     }
 
     func parsePodloveChapters(_ podloveChapters: [Episode.Metadata.EpisodeChapter], episodeDuration: TimeInterval) -> [ChapterInfo] {
@@ -90,7 +94,7 @@ class PodcastChapterParser {
         }
     }
 
-    private func parseChapters(url: URL, episodeDuration: TimeInterval, completion: @escaping (([ChapterInfo]) -> Void)) {
+    private func parseChapters(url: URL, episodeDuration: TimeInterval, completion: @escaping @Sendable ([ChapterInfo]) -> Void) {
         DispatchQueue.global().async { [weak self] in
             guard let strongSelf = self else {
                 completion([])

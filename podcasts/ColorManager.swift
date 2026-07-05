@@ -3,7 +3,9 @@ import PocketCastsDataModel
 import PocketCastsServer
 import UIKit
 
-class ColorManager {
+/// Mutable state (`downloadingPodcasts`) is guarded by `lock`; everything else is
+/// immutable, so the shared instance is safe to use across isolation domains.
+final class ColorManager: @unchecked Sendable {
     private let defaultBackgroundColor = UIColor(hex: "#3D3D3D")
     private let defaultLightTintColor = UIColor(hex: "#1E1F1E")
     private let defaultDarkTintColor = UIColor(hex: "#FFFFFF")
@@ -42,7 +44,7 @@ class ColorManager {
         return ColorManager.sharedManager.backgroundColorForPodcast(podcast)
     }
 
-    class func darkThemeTintColorForPodcastUuid(_ uuid: String, completion: @escaping ((UIColor) -> Void)) {
+    class func darkThemeTintColorForPodcastUuid(_ uuid: String, completion: @escaping @Sendable (UIColor) -> Void) {
         CacheServerHandler.shared.loadPodcastColors(podcastUuid: uuid, allowCachedVersion: true, completion: { _, _, darkThemeTint in
             guard let darkThemeTint else {
                 completion(ColorManager.sharedManager.defaultDarkTintColor)

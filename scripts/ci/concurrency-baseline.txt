@@ -94,10 +94,6 @@ podcasts/ChapterManager.swift: warning: passing closure as a 'sending' parameter
 podcasts/ChapterManager.swift: warning: sending 'episode' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/ChaptersViewController+Table.swift: warning: conformance of 'ChaptersViewController' to protocol 'ChaptersHeaderDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ColorManager.swift: warning: capture of 'completion' with non-Sendable type '(UIColor) -> Void' in a '@Sendable' closure; this is an error in the Swift 6 language mode
-podcasts/ColorManager.swift: warning: capture of 'self' with non-Sendable type 'ColorManager?' in a '@Sendable' closure
-podcasts/ColorManager.swift: warning: capture of 'strongSelf' with non-Sendable type 'ColorManager' in a '@Sendable' closure
-podcasts/ColorManager.swift: warning: static property 'sharedManager' is not concurrency-safe because non-'Sendable' type 'ColorManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Common Components/Buttons/FakeNavBarButton.swift: warning: conformance of 'FakeNavBarButton' to protocol 'FakeNavBarStylable' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/Buttons/TintableImageButton.swift: warning: call to main actor-isolated instance method 'image(for:)' in a synchronous nonisolated context
 podcasts/Common Components/Buttons/TintableImageButton.swift: warning: call to main actor-isolated instance method 'setImage(_:for:)' in a synchronous nonisolated context
@@ -264,10 +260,6 @@ podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader+Dependency.swift: warning
 podcasts/PocketCastsAppIntents.swift: warning: static property 'title' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PodcastAppEntity.swift: warning: static property 'defaultQuery' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PodcastAppEntity.swift: warning: static property 'title' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/PodcastChapterParser.swift: warning: capture of 'completion' with non-Sendable type '([ChapterInfo]) -> Void' in a '@Sendable' closure
-podcasts/PodcastChapterParser.swift: warning: capture of 'completion' with non-Sendable type '([ChapterInfo]) -> Void' in an isolated closure
-podcasts/PodcastChapterParser.swift: warning: capture of 'self' with non-Sendable type 'PodcastChapterParser?' in a '@Sendable' closure
-podcasts/PodcastChapterParser.swift: warning: sending '$0' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/PodcastFilterOverlayController.swift: warning: conformance of 'PodcastFilterOverlayController' to protocol 'PodcastSelectionDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/PodcastManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PodcastManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conformance of 'PodcastListViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -420,9 +412,6 @@ podcasts/VideoViewController.swift: warning: call to main actor-isolated instanc
 podcasts/VideoViewController.swift: warning: conformance of 'VideoViewController' to protocol 'AVPictureInPictureControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/VideoViewController+Controls.swift: warning: call to main actor-isolated instance method 'hideVideoControls()' in a synchronous nonisolated context
 podcasts/VideoViewController+Seek.swift: warning: conformance of 'VideoViewController' to protocol 'TimeSliderDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/WidgetHelper.swift: warning: capture of 'self' with non-Sendable type 'WidgetHelper' in a '@Sendable' closure
-podcasts/WidgetHelper.swift: warning: capture of 'sharedDefaults' with non-Sendable type 'UserDefaults' in a '@Sendable' closure
-podcasts/WidgetHelper.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WidgetHelper' may have shared mutable state; this is an error in the Swift 6 language mode
 Share Extension/ShareViewController.swift: warning: call to main actor-isolated instance method 'close()' in a synchronous nonisolated context
 Share Extension/ShareViewController.swift: warning: call to main actor-isolated instance method 'redirectToHostApp' in a synchronous nonisolated context
 WidgetExtension/Data/WidgetData.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WidgetData' may have shared mutable state; this is an error in the Swift 6 language mode
