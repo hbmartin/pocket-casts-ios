@@ -1,6 +1,6 @@
 #include "Version.xcconfig"
 
-SWIFT_VERSION = 5.0
+SWIFT_VERSION = 6.0
 
 // Strict-concurrency ratchet: warnings outside Modules/Sources are gated against
 // scripts/ci/concurrency-baseline.txt (deletion-only) by scripts/ci/check-concurrency-warnings.sh.

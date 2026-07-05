@@ -2,6 +2,7 @@ import XCTest
 
 @testable import podcasts
 
+@MainActor
 class AnalyticsPlaybackHelperTests: XCTestCase {
     func testCurrentSourceIsRemovedAfterEventIsTriggered() {
         AnalyticsPlaybackHelper.shared.currentSource = .unknown

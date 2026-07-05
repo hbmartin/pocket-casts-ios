@@ -18,6 +18,7 @@ extension XCTestCase {
     ///   - timeout: amount of time in seconds to wait before executing the
     ///              closure.
     ///   - closure: a closure to execute when `timeout` seconds has passed
+    @MainActor
     func eventually(timeout: TimeInterval = 0.01, closure: @escaping () -> Void) {
         let expectation = self.expectation(description: "")
         expectation.fulfillAfter(timeout)

@@ -1,6 +1,7 @@
 import XCTest
 @testable import podcasts
 import PocketCastsDataModel
+import PocketCastsUtils
 
 final class DownloadManagerRetryTests: DBTestCase {
 
@@ -108,7 +109,9 @@ final class DownloadManagerRetryTests: DBTestCase {
         // Use runBlocking to wait for async cleanup to complete
         let semaphore = DispatchSemaphore(value: 0)
 
+        let boxedManager = PocketCastsUtils.UncheckedSendable(downloadManager)
         Task {
+            guard let downloadManager = boxedManager.value else { semaphore.signal(); return }
             await downloadManager.cancelAllTasks()
             downloadManager.clearDownloadAttempts()
             downloadManager.clearEpisodeCache()

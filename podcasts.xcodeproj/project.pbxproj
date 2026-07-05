@@ -6419,7 +6419,6 @@
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -6462,7 +6461,6 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Prototype;
@@ -6505,7 +6503,6 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -6571,7 +6568,6 @@
 		3FD6E0552BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcastsDebug.entitlements;
@@ -6596,7 +6592,6 @@
 		3FD6E0562BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -6624,7 +6619,6 @@
 		3FD6E0572BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -6652,7 +6646,6 @@
 		3FD6E0592BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -6689,7 +6682,6 @@
 		3FD6E05A2BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -6725,7 +6717,6 @@
 		3FD6E05B2BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -6875,7 +6866,6 @@
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = StagingDebug;
@@ -6883,7 +6873,6 @@
 		403B5B2A21813FFB00821A54 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -6919,7 +6908,6 @@
 		403B5B2B21813FFB00821A54 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -6955,7 +6943,6 @@
 		403B5B2D21813FFB00821A54 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -6992,7 +6979,6 @@
 		403B5B2E21813FFB00821A54 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -7029,7 +7015,6 @@
 		4090975C25235DFC00CED68C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -7068,7 +7053,6 @@
 		4090975D25235DFC00CED68C /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -7109,7 +7093,6 @@
 		4090975E25235DFC00CED68C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -7393,7 +7376,6 @@
 		BD3A21151E6CFC2400F42241 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -7421,7 +7403,6 @@
 		BD3A21161E6CFC2400F42241 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -7508,7 +7489,6 @@
 		BD69A01A2266A9E400168459 /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconPrototype;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcasts.prototype.entitlements;
@@ -7532,7 +7512,6 @@
 		BD69A01C2266A9E400168459 /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -7559,7 +7538,6 @@
 		BD69A01D2266A9E400168459 /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -7586,7 +7564,6 @@
 		BD69A0202266A9E400168459 /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -7622,7 +7599,6 @@
 		BD69A0212266A9E400168459 /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -7766,7 +7742,6 @@
 		BDBD540F17019B2A0048C8C5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcastsDebug.entitlements;
@@ -7791,7 +7766,6 @@
 		BDBD541017019B2A0048C8C5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcasts.entitlements;
@@ -7815,7 +7789,6 @@
 		BDEFBA221E6D3C2300B9024B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -7843,7 +7816,6 @@
 		BDEFBA231E6D3C2300B9024B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SWIFT_VERSION = 6.0;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;

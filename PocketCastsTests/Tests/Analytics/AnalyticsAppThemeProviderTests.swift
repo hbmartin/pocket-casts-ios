@@ -2,6 +2,7 @@ import XCTest
 
 @testable import podcasts
 
+@MainActor
 class AnalyticsAppThemeProviderTests: XCTestCase {
     private var analytics = MockAnalytics()
 
