@@ -39,12 +39,15 @@ class PodcastFilterSelectionCell: ThemeableCell {
     @IBOutlet var selectedImageView: UIImageView!
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        let tickImage = UIImage(named: "tick")
-        tickImageView.image = tickImage
-        tickImageView.tintColor = ThemeColor.primaryInteractive02()
-        style = .primaryUi01
-        updateSize()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            let tickImage = UIImage(named: "tick")
+            tickImageView.image = tickImage
+            tickImageView.tintColor = ThemeColor.primaryInteractive02()
+            style = .primaryUi01
+            updateSize()
+        }
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {

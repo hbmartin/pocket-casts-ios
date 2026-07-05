@@ -20,11 +20,14 @@ class ShelfCell: UITableViewCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
-        setHighlightedState(false)
-        overrideUserInterfaceStyle = .dark
-        updateSize()
+            setHighlightedState(false)
+            overrideUserInterfaceStyle = .dark
+            updateSize()
+        }
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
