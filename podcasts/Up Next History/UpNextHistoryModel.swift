@@ -2,24 +2,26 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
+@MainActor
 class UpNextHistoryModel: ObservableObject {
     @Published var historyEntries: [UpNextHistoryManager.UpNextHistoryEntry] = []
     @Published var episodes: [BaseEpisode] = []
 
-    private let dataManager: DataManager
+    // Boxed so the nonisolated restore path can read it off the main actor
+    private let dataManagerBox: PocketCastsUtils.UncheckedSendable<DataManager>
+
+    private var dataManager: DataManager { dataManagerBox.value }
 
     init(dataManager: DataManager = DataManager.sharedManager) {
-        self.dataManager = dataManager
+        self.dataManagerBox = PocketCastsUtils.UncheckedSendable(dataManager)
     }
 
-    @MainActor
     func loadEntries() {
         Task {
             historyEntries = dataManager.upNextHistoryEntries()
         }
     }
 
-    @MainActor
     func loadEpisodes(for entry: Date) {
         Task {
             let episodesUuid = dataManager.upNextHistoryEpisodes(entry: entry)
@@ -27,8 +29,10 @@ class UpNextHistoryModel: ObservableObject {
         }
     }
 
-    func reAddMissingItems(entry: Date) {
+    nonisolated func reAddMissingItems(entry: Date) {
+        let dataManagerBox = self.dataManagerBox
         Task {
+            let dataManager = dataManagerBox.value
             let episodesUuid = dataManager.upNextHistoryEpisodes(entry: entry)
             FileLog.shared.addMessage("UpNextHistory: Restoring entries from \(entry) with episodes: [\(episodesUuid.joined(separator: ","))]")
             episodesUuid.forEach { episodeUuid in

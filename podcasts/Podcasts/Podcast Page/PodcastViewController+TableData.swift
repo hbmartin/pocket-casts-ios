@@ -345,7 +345,7 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                 break // Do nothing for these state cells
             case .podroll:
                 guard let selectedPodcast = recommendations?.podroll?[indexPath.row] else { return }
-                var properties: [String: Any] = [:]
+                var properties: [String: any Sendable] = [:]
                 if let uuid = selectedPodcast.uuid {
                     properties["podcast_uuid"] = uuid
                 }
@@ -355,7 +355,7 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                 navigationController?.pushViewController(podcastController, animated: true)
             case .podcasts:
                 guard let selectedPodcast = recommendations?.podcasts?[indexPath.row] else { return }
-                var properties: [String: Any] = [:]
+                var properties: [String: any Sendable] = [:]
                 if let datetime = recommendations?.datetime {
                     properties["list_datetime"] = datetime
                 }
