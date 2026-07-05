@@ -1,6 +1,24 @@
 import PocketCastsUtils
 import Foundation
 import GRDB
+import GRDBMacros
+
+/// Row record for manual-playlist entries in `SJPlaylistEpisode`, covering exactly the seven
+/// columns the legacy manual-playlist INSERT writes. Up Next rows use `PlaylistEpisodeRow`'s
+/// six-column shape; the two must stay separate so each path's record UPDATE only writes the
+/// columns its legacy SQL wrote.
+@GRDBRecord(table: "SJPlaylistEpisode")
+struct ManualPlaylistEpisodeRow: Equatable, Sendable {
+    var id: Int64 = 0
+    var episodePosition: Int32 = 0
+    var episodeUuid = ""
+    @GRDBColumn("playlist_id")
+    var playlistId: Int64 = 0
+    var title = ""
+    var podcastUuid = ""
+    @GRDBColumn("playlist_uuid")
+    var playlistUuid: String?
+}
 
 class PlaylistDataManager {
     /// Legacy column names for non-GRDB code path.
@@ -284,6 +302,47 @@ class PlaylistDataManager {
     /// Reorder a specific episode within a manual playlist to a new index
     func moveEpisode(_ episodeUuid: String, in playlist: EpisodeFilter, to newIndex: Int, dbQueue: PCDBQueue) {
         var playlist = playlist
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            playlist.syncStatus = SyncStatus.notSynced.rawValue
+            let syncStatus = playlist.syncStatus
+            let playlistUuid = playlist.uuid
+
+            grdbQueue.write { db in
+                // Load existing order (id + episodeUuid) for this playlist
+                let items = try Row.fetchAll(
+                    db,
+                    Table(DataManager.playlistEpisodeTableName)
+                        .filter(Column("playlist_uuid") == playlistUuid)
+                        .order(Column("episodePosition").asc)
+                        .select([Column("id"), Column("episodeUuid")])
+                        .asRequest(of: Row.self)
+                ).map { (id: $0["id"] as Int64, uuid: $0["episodeUuid"] as String) }
+
+                guard let currentIndex = items.firstIndex(where: { $0.uuid == episodeUuid }) else { return }
+
+                let clampedTargetIndex = newIndex.clamped(to: 0...max(items.count - 1, 0))
+                if clampedTargetIndex == currentIndex { return }
+
+                var reordered = items
+                let element = reordered.remove(at: currentIndex)
+                let clampedIndex = newIndex.clamped(to: 0...reordered.count)
+                reordered.insert(element, at: clampedIndex)
+
+                // Persist new positions
+                for (index, item) in reordered.enumerated() {
+                    try Table(DataManager.playlistEpisodeTableName)
+                        .filter(Column("id") == item.id)
+                        .updateAll(db, Column("episodePosition").set(to: index))
+                }
+
+                try EpisodeFilter
+                    .filter(EpisodeFilter.Columns.uuid == playlistUuid)
+                    .updateAll(db, EpisodeFilter.Columns.syncStatus.set(to: syncStatus), EpisodeFilter.Columns.playlistUpdateDate.set(to: Date.now.timeIntervalSince1970))
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 // Load existing order (id + episodeUuid) for this playlist
@@ -328,6 +387,41 @@ class PlaylistDataManager {
     func deleteEpisodes(_ episodeUuids: [String], from playlist: EpisodeFilter, dbQueue: PCDBQueue) {
         guard !episodeUuids.isEmpty else { return }
         var playlist = playlist
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            playlist.syncStatus = SyncStatus.notSynced.rawValue
+            let syncStatus = playlist.syncStatus
+            let playlistUuid = playlist.uuid
+
+            grdbQueue.write { db in
+                let removedCount = try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("playlist_uuid") == playlistUuid)
+                    .filter(episodeUuids.contains(Column("episodeUuid")))
+                    .deleteAll(db)
+                if removedCount == 0 { return }
+
+                // Reindex remaining
+                let ids = try Row.fetchAll(
+                    db,
+                    Table(DataManager.playlistEpisodeTableName)
+                        .filter(Column("playlist_uuid") == playlistUuid)
+                        .order(Column("episodePosition").asc)
+                        .select([Column("id")])
+                        .asRequest(of: Row.self)
+                ).map { $0["id"] as Int64 }
+                for (index, id) in ids.enumerated() {
+                    try Table(DataManager.playlistEpisodeTableName)
+                        .filter(Column("id") == id)
+                        .updateAll(db, Column("episodePosition").set(to: index))
+                }
+
+                try EpisodeFilter
+                    .filter(EpisodeFilter.Columns.uuid == playlistUuid)
+                    .updateAll(db, EpisodeFilter.Columns.syncStatus.set(to: syncStatus), EpisodeFilter.Columns.playlistUpdateDate.set(to: Date.now.timeIntervalSince1970))
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 let placeholders = DBUtils.placeholders(amount: episodeUuids.count)
@@ -355,6 +449,17 @@ class PlaylistDataManager {
     /// Just delete episodes from a playlist and nothing more
     func rawDeleteEpisodes(_ episodeUuids: [String], from playlist: EpisodeFilter, dbQueue: PCDBQueue) {
         guard !episodeUuids.isEmpty else { return }
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            grdbQueue.write { db in
+                try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("playlist_uuid") == playlist.uuid)
+                    .filter(episodeUuids.contains(Column("episodeUuid")))
+                    .deleteAll(db)
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 let placeholders = DBUtils.placeholders(amount: episodeUuids.count)
@@ -368,6 +473,27 @@ class PlaylistDataManager {
     /// Delete all playlist-episode relationships for the given playlist
     func deleteAllEpisodes(in playlist: EpisodeFilter, dbQueue: PCDBQueue) {
         var playlist = playlist
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            playlist.syncStatus = SyncStatus.notSynced.rawValue
+            let syncStatus = playlist.syncStatus
+            let playlistUuid = playlist.uuid
+            let playlistId = playlist.id
+
+            grdbQueue.write { db in
+                let removedCount = try Table(DataManager.playlistEpisodeTableName)
+                    .filter(Column("playlist_uuid") == playlistUuid || Column("playlist_id") == playlistId)
+                    .deleteAll(db)
+
+                if removedCount > 0 {
+                    try EpisodeFilter
+                        .filter(EpisodeFilter.Columns.uuid == playlistUuid)
+                        .updateAll(db, EpisodeFilter.Columns.syncStatus.set(to: syncStatus), EpisodeFilter.Columns.playlistUpdateDate.set(to: Date.now.timeIntervalSince1970))
+                }
+            }
+            return
+        }
+
         dbQueue.write { db in
             do {
                 try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_uuid = ? OR playlist_id = ?", values: [playlist.uuid, playlist.id])
@@ -649,6 +775,45 @@ class PlaylistDataManager {
         let isFull = playlistCount + episodes.count > EpisodeDataManager.Constants.Limits.maxPlaylistItems
 
         if isFull { return false }
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            let playlistUuid = playlist.uuid
+            let playlistId = playlist.id
+
+            grdbQueue.write { db in
+                // Find current max position for this playlist (by playlist_uuid)
+                let startPosition = try Int32.fetchOne(
+                    db,
+                    Table(DataManager.playlistEpisodeTableName)
+                        .filter(Column("playlist_uuid") == playlistUuid)
+                        .select([max(Column("episodePosition"))], as: Int32.self)
+                ) ?? 0
+
+                var nextPosition = startPosition
+
+                // Insert each episode, avoiding duplicates for this playlist
+                for episode in episodes {
+                    // Ensure uniqueness within this playlist
+                    try Table(DataManager.playlistEpisodeTableName)
+                        .filter(Column("playlist_uuid") == playlistUuid)
+                        .filter(Column("episodeUuid") == episode.uuid)
+                        .deleteAll(db)
+
+                    nextPosition += 1
+                    try ManualPlaylistEpisodeRow(
+                        id: DBUtils.generateUniqueId(),
+                        episodePosition: nextPosition,
+                        episodeUuid: episode.uuid,
+                        playlistId: playlistId,
+                        title: episode.displayableTitle(),
+                        podcastUuid: episode.podcastUuid,
+                        playlistUuid: playlistUuid
+                    ).insert(db)
+                }
+            }
+
+            return true
+        }
 
         dbQueue.write { db in
             do {
