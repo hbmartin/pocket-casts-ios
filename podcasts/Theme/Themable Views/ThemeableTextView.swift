@@ -16,7 +16,9 @@ class ThemeableTextView: UITextView {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        setup()
+        MainActor.assumeIsolated {
+            setup()
+        }
     }
 
     deinit {

@@ -25,7 +25,9 @@ class ThemeableTable: UITableView {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        commonInit()
+        MainActor.assumeIsolated {
+            commonInit()
+        }
     }
 
     func commonInit() {
