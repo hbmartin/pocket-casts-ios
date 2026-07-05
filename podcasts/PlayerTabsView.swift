@@ -1,6 +1,7 @@
 import PocketCastsUtils
 import UIKit
 
+@MainActor
 protocol PlayerTabDelegate: AnyObject {
     func didSwitchToTab(index: Int)
 }

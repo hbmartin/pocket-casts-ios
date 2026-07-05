@@ -25,6 +25,7 @@ class TranscriptShelfButton: UIButton, CheckTranscriptAvailability {
     }
 }
 
+@MainActor
 protocol CheckTranscriptAvailability: AnyObject {
     var isTranscriptEnabled: Bool { get set }
     var hasGeneratedTranscripts: Bool { get set }
@@ -33,7 +34,7 @@ protocol CheckTranscriptAvailability: AnyObject {
     func checkTranscriptAvailability()
 }
 
-extension CheckTranscriptAvailability {
+extension CheckTranscriptAvailability where Self: Sendable {
     func addTranscriptObservers() {
         NotificationCenter.default.addObserver(forName: Constants.Notifications.episodeTranscriptAvailabilityChanged, object: nil, queue: .main) { [weak self] notification in
             guard let episodeUuid = notification.userInfo?["episodeUuid"] as? String,
@@ -43,12 +44,16 @@ extension CheckTranscriptAvailability {
                 return
             }
 
-            self?.isTranscriptEnabled = isAvailable
-            self?.hasGeneratedTranscripts = hasGeneratedTranscripts
+            Task { @MainActor [weak self] in
+                self?.isTranscriptEnabled = isAvailable
+                self?.hasGeneratedTranscripts = hasGeneratedTranscripts
+            }
         }
 
         NotificationCenter.default.addObserver(forName: Constants.Notifications.playbackTrackChanged, object: nil, queue: .main) { [weak self] _ in
-            self?.checkTranscriptAvailability()
+            Task { @MainActor [weak self] in
+                self?.checkTranscriptAvailability()
+            }
         }
     }
 

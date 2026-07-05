@@ -2,6 +2,7 @@ import PocketCastsDataModel
 import UIKit
 import PocketCastsUtils
 
+@MainActor
 protocol ShareListDelegate: AnyObject {
     func shareUrlAvailable(_ shareUrl: String, listName: String)
 }
