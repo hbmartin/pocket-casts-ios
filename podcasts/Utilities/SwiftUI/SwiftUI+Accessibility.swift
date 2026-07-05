@@ -19,6 +19,7 @@ extension View {
 /// A drop in replacement for `withAnimation` to automatically support the reduced animation accessibility setting
 /// If the user has the setting enabled, the animation will be set to none
 ///
+@MainActor
 public func withAccessibilityAnimation<Result>(_ animation: Animation? = .default, _ body: () throws -> Result) rethrows -> Result {
     return try withAnimation(UIAccessibility.isReduceMotionEnabled ? .none : animation, body)
 }

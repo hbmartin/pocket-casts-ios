@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-public enum TranscriptFormat: String, CaseIterable {
+public enum TranscriptFormat: String, CaseIterable, Sendable {
 
     case srt = "application/srt"
     case vtt = "text/vtt"

@@ -1,11 +1,13 @@
+import PocketCastsUtils
 import UIKit
 
 class BlurEffectView: UIVisualEffectView {
     private let blurIntensity: Double
-    private let animator = UIViewPropertyAnimator(duration: 1, curve: .linear)
+    private let animator: UIViewPropertyAnimator
 
     init(blurIntensity: Double) {
         self.blurIntensity = blurIntensity
+        self.animator = UIViewPropertyAnimator(duration: 1, curve: .linear)
         super.init(effect: nil)
         animator.pausesOnCompletion = true
     }
@@ -32,6 +34,10 @@ class BlurEffectView: UIVisualEffectView {
     }
 
     deinit {
-        animator.stopAnimation(true)
+        // Stop on the main actor; the box keeps the animator alive until then
+        let boxed = PocketCastsUtils.UncheckedSendable(animator)
+        Task { @MainActor in
+            boxed.value.stopAnimation(true)
+        }
     }
 }
