@@ -3,7 +3,9 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-class AudioReadTask {
+/// Audio pipeline reader; state is confined to its dispatch queue and the
+/// semaphore-coordinated buffer hand-off.
+final class AudioReadTask: @unchecked Sendable {
     private let maxSilenceAmountToSave = 1000
 
     private var minRMS = 0.005 as Float32
@@ -134,10 +136,11 @@ class AudioReadTask {
     }
 
     func seekTo(_ time: TimeInterval, completion: ((Bool) -> Void)?) {
+        let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
         DispatchQueue.global(qos: .default).async { () in
             let seekResult = self.performSeek(time)
             self.bufferManager.bufferSemaphore.signal()
-            completion?(seekResult)
+            boxedCompletion.value?(seekResult)
         }
     }
 

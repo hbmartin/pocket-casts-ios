@@ -4,7 +4,9 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-class EffectsPlayer: PlaybackProtocol, Hashable {
+/// AVAudioEngine effects pipeline driven by PlaybackManager; state is guarded
+/// by playerLock and the serial seek queue.
+final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private static let targetVolumeDbGain = 15.0 as Float
 
     private var engine: AVAudioEngine?
@@ -75,6 +77,7 @@ class EffectsPlayer: PlaybackProtocol, Hashable {
     }
 
     func play(completion: (() -> Void)?) {
+        let completion = PocketCastsUtils.UncheckedSendable(completion)
         aboutToPlay.value = true
         shouldKeepPlaying.value = true
 
@@ -179,7 +182,7 @@ class EffectsPlayer: PlaybackProtocol, Hashable {
 
             strongSelf.playerLock.unlock()
 
-            completion?()
+            completion.value?()
 
             if strongSelf.haveFiredDurationNotification == false {
                 strongSelf.haveFiredDurationNotification = true
@@ -227,9 +230,11 @@ class EffectsPlayer: PlaybackProtocol, Hashable {
     func seekTo(_ time: TimeInterval, completion: (() -> Void)?) {
         guard let readOperation = audioReadTask else { return }
 
+        let boxed = PocketCastsUtils.UncheckedSendable((readOperation, completion))
         serialSeekQueue.async { [weak self] in
             guard let self else { return }
 
+            let (readOperation, completion) = boxed.value
             lastSeekTime = max(0.1, time)
             seeking = true
             readOperation.seekTo(time, completion: { [weak self] seekedToEnd in
