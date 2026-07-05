@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Allows customization of the Toast message colors
 @MainActor
-protocol ToastTheme: ObservableObject {
+protocol ToastTheme: ObservableObject, Sendable {
     var background: Color { get }
     var title: Color { get }
     var button: Color { get }
