@@ -76,20 +76,23 @@ class TimeSlider: UIView {
     // MARK: - View Methods
 
     override func awakeFromNib() {
-        let tLayer = timeLayer()
-        tLayer.contentsScale = UIScreen.main.scale
-        tLayer.leftColor = leftColor.cgColor
-        tLayer.rightColor = rightColor.cgColor
-        tLayer.animationColor = animationColor.cgColor
-        tLayer.circleColor = circleColor.cgColor
-        tLayer.popupColor = popupColor
-        tLayer.popupTextColor = popupTextColor
-        tLayer.popupScale = 0
-        textStyle.alignment = NSTextAlignment.center
-        tLayer.textStyle = textStyle
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            let tLayer = timeLayer()
+            tLayer.contentsScale = UIScreen.main.scale
+            tLayer.leftColor = leftColor.cgColor
+            tLayer.rightColor = rightColor.cgColor
+            tLayer.animationColor = animationColor.cgColor
+            tLayer.circleColor = circleColor.cgColor
+            tLayer.popupColor = popupColor
+            tLayer.popupTextColor = popupTextColor
+            tLayer.popupScale = 0
+            textStyle.alignment = NSTextAlignment.center
+            tLayer.textStyle = textStyle
 
-        backgroundColor = UIColor.clear
-        tLayer.backgroundColor = UIColor.clear.cgColor
+            backgroundColor = UIColor.clear
+            tLayer.backgroundColor = UIColor.clear.cgColor
+        }
     }
 
     override func layoutSubviews() {
@@ -99,9 +102,12 @@ class TimeSlider: UIView {
     }
 
     override func prepareForInterfaceBuilder() {
-        draggingKnob = true
-        timeLayer().popupScale = 1.0
-        timeLayer().popupValue = "12:42"
+        // prepareForInterfaceBuilder is nonisolated in its ObjC declaration but runs on the main thread
+        MainActor.assumeIsolated {
+            draggingKnob = true
+            timeLayer().popupScale = 1.0
+            timeLayer().popupValue = "12:42"
+        }
         awakeFromNib()
     }
 
@@ -219,7 +225,9 @@ class TimeSlider: UIView {
 
 private extension TimeInterval {
     /// Base value is the number of seconds which should be skipped from a given track length
-    private static let secondsToSkipConverter = UnitConverterLinear(coefficient: 0.075, constant: 12)
+    // nonisolated(unsafe): UnitConverterLinear is immutable after init and its conversion
+    // methods are pure; the reference itself is a constant.
+    nonisolated(unsafe) private static let secondsToSkipConverter = UnitConverterLinear(coefficient: 0.075, constant: 12)
 
     /// Calculates the skip time for a given total time in a track
     /// This is a linear equation which increases as time scales

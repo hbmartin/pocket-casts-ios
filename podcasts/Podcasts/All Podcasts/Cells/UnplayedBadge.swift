@@ -19,17 +19,20 @@ class UnplayedBadge: UIView {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        clipsToBounds = true
-        layer.cornerRadius = bounds.height / 2
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            clipsToBounds = true
+            layer.cornerRadius = bounds.height / 2
 
-        unplayedLabel = UILabel(frame: bounds)
-        addSubview(unplayedLabel)
-        unplayedLabel.anchorToAllSidesOf(view: self)
-        unplayedLabel.font = UIFont.font(ofSize: 13, scalingWith: .footnote)
-        unplayedLabel.adjustsFontForContentSizeCategory = true
-        unplayedLabel.textAlignment = .center
+            unplayedLabel = UILabel(frame: bounds)
+            addSubview(unplayedLabel)
+            unplayedLabel.anchorToAllSidesOf(view: self)
+            unplayedLabel.font = UIFont.font(ofSize: 13, scalingWith: .footnote)
+            unplayedLabel.adjustsFontForContentSizeCategory = true
+            unplayedLabel.textAlignment = .center
 
-        updateColors()
+            updateColors()
+        }
     }
 
     override func layoutSubviews() {

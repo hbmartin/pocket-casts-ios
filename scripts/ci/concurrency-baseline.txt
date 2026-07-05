@@ -599,18 +599,6 @@ podcasts/Podcasts/All Podcasts/Cells/FolderListCell.swift: warning: call to main
 podcasts/Podcasts/All Podcasts/Cells/FolderListCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
 podcasts/Podcasts/All Podcasts/Cells/FolderListCell.swift: warning: main actor-isolated property 'isAccessibilityElement' can not be mutated from a nonisolated context
 podcasts/Podcasts/All Podcasts/Cells/FolderListCell.swift: warning: non-Sendable 'any UITraitChangeRegistration'-typed result can not be returned from main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: call to main actor-isolated initializer 'init(frame:)' in a synchronous nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: call to main actor-isolated instance method 'addSubview' in a synchronous nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: call to main actor-isolated instance method 'anchorToAllSidesOf(view:)' in a synchronous nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: call to main actor-isolated instance method 'updateColors()' in a synchronous nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'adjustsFontForContentSizeCategory' can not be mutated from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'clipsToBounds' can not be mutated from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'font' can not be mutated from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'layer' can not be mutated from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'textAlignment' can not be mutated from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'unplayedLabel' can not be mutated from a nonisolated context
-podcasts/Podcasts/All Podcasts/Cells/UnplayedBadge.swift: warning: main actor-isolated property 'unplayedLabel' can not be referenced from a nonisolated context
 podcasts/Podcasts/All Podcasts/PodcastListViewController+Search.swift: warning: conformance of 'PodcastListViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conformance of 'PodcastListViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conformance of 'PodcastListViewController' to protocol 'ShareListDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -815,21 +803,6 @@ podcasts/ThemeAbstractCell.swift: warning: main actor-isolated property 'clipsTo
 podcasts/ThemeAbstractCell.swift: warning: main actor-isolated property 'contentView' can not be mutated from a nonisolated context
 podcasts/ThemeableLabel.swift: warning: call to main actor-isolated instance method 'updateTextColor()' in a synchronous nonisolated context
 podcasts/ThemeableUIButton.swift: warning: call to main actor-isolated instance method 'updateColors()' in a synchronous nonisolated context
-podcasts/TimeSlider.swift: warning: call to main actor-isolated instance method 'timeLayer()' in a synchronous nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated class property 'main' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'animationColor' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'backgroundColor' can not be mutated from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'circleColor' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'draggingKnob' can not be mutated from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'leftColor' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'popupColor' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'popupTextColor' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'rightColor' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'scale' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'textStyle' can not be mutated from a nonisolated context
-podcasts/TimeSlider.swift: warning: main actor-isolated property 'textStyle' can not be referenced from a nonisolated context
-podcasts/TimeSlider.swift: warning: non-Sendable 'TimeSliderLayer'-typed result can not be returned from main actor-isolated instance method 'timeLayer()' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/TimeSlider.swift: warning: static property 'secondsToSkipConverter' is not concurrency-safe because non-'Sendable' type 'UnitConverterLinear' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/TimeStepperCell.swift: warning: call to main actor-isolated instance method 'addTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/TimeStepperCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
 podcasts/TimeStepperCell.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
