@@ -7,7 +7,7 @@ struct PodcastAppEntity: AppEntity {
         TypeDisplayRepresentation(name: "Podcast")
     }
 
-    static var defaultQuery = PodcastEntityQuery()
+    static let defaultQuery = PodcastEntityQuery()
 
     var id: String
     var title: String
@@ -42,7 +42,7 @@ struct PodcastEntityQuery: EntityQuery {
 }
 
 struct PlayPodcastIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Play Podcast"
+    static let title: LocalizedStringResource = "Play Podcast"
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Podcast")

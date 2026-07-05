@@ -33,8 +33,8 @@ enum PlaybackControlKind {
 /// the real work lives in `performPlaybackControlAction(_:)` (app target) while
 /// the widget extension links only a stub — mirroring `PlayEpisodeIntent`.
 struct PlaybackControlIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Control Playback"
-    static var isDiscoverable = false
+    static let title: LocalizedStringResource = "Control Playback"
+    static let isDiscoverable = false
 
     @Parameter(title: "Action")
     var action: PlaybackControlAction

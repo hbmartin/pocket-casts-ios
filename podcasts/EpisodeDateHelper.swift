@@ -9,6 +9,7 @@ struct EpisodeDateHelper {
         seasonNumber > 0 ? L10n.episodeIndicatorSeasonTrailer(seasonNumber.localized()) : L10n.episodeIndicatorTrailer
     }
 
+        @MainActor
         static func setDate(episode: BaseEpisode, on label: UILabel, tintColor: UIColor?) {
             let episodeDate = DateFormatHelper.sharedHelper.tinyLocalizedFormat(episode.publishedDate).localizedUppercase
 
@@ -55,6 +56,7 @@ struct EpisodeDateHelper {
             return "\(indicatorText) • \(dateText)"
         }
 
+        @MainActor
         private static func setRowTitle(dateText: String, episode: Episode, label: UILabel, tintColor: UIColor?, indicatorText: String? = nil) {
             guard let indicatorText, let tintColor else {
                 if episode.episodeNumber < 1 {

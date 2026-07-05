@@ -3,8 +3,8 @@ import WidgetKit
 import PocketCastsUtils
 
 struct PlayEpisodeIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Play episode"
-    static var isDiscoverable = false // for now only to be used in the Now Playing widget
+    static let title: LocalizedStringResource = "Play episode"
+    static let isDiscoverable = false // for now only to be used in the Now Playing widget
 
     @Parameter(title: "EpisodeUUID")
     var episodeUuid: String
