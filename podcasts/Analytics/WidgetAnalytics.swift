@@ -13,11 +13,14 @@ final class WidgetAnalytics: @unchecked Sendable {
     }
 
     func track() {
-        var previousWidgets = userDefaults.dictionary(forKey: "installed-widgets") as? [String: Bool] ?? [String: Bool]()
-        var currentWidgets: [String] = []
+        let initialWidgets = userDefaults.dictionary(forKey: "installed-widgets") as? [String: Bool] ?? [String: Bool]()
 
         WidgetCenter.shared.getCurrentConfigurations { [self] widgetInfos in
             guard case .success(let infos) = widgetInfos else { return }
+
+            // Local to the callback so nothing mutable crosses into concurrent code
+            var previousWidgets = initialWidgets
+            var currentWidgets: [String] = []
 
             // Track installed widgets
             infos.forEach { widget in
