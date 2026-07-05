@@ -51,15 +51,25 @@ struct OnboardingFlow: AnalyticsSourceProvider {
     }
 
     func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
-        var defaultProperties: [String: Any] = ["flow": currentFlow]
+        // Default keys win, matching the previous merging behaviour
+        var props: [String: any Sendable] = ["flow": currentFlow]
 
         // Append the source, only if it's set because not every event needs a source
         if let source {
-            defaultProperties["source"] = source.rawValue
+            props["source"] = source.rawValue
         }
 
-        let mergedProperties = defaultProperties.merging(properties ?? [:]) { current, _ in current }
-        Analytics.track(event, properties: mergedProperties)
+        for (key, value) in properties ?? [:] where props[key] == nil {
+            switch value {
+            case let v as String: props[key] = v
+            case let v as Int: props[key] = v
+            case let v as Double: props[key] = v
+            case let v as Bool: props[key] = v
+            case let v as AnalyticsDescribable: props[key] = v.analyticsDescription
+            default: props[key] = String(describing: value)
+            }
+        }
+        Analytics.track(event, properties: props)
     }
 
     // MARK: - Flow
