@@ -1157,6 +1157,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     private enum Colors {
+        @MainActor
         static var gradientColor: UIColor {
             PlayerColorHelper.playerBackgroundColor01()
         }

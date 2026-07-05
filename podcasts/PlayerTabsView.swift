@@ -196,12 +196,14 @@ private extension PlayerTabsView {
         fadeTrailing.opacity = (contentOffset.x + bounds.width) < contentSize.width ? 1 : 0
     }
 
+    @MainActor
     private class FadeOutLayer: CAGradientLayer {
         enum FadePosition {
             case leading, trailing
         }
 
-        var fadePosition: FadePosition = .leading
+        // Read by init(layer:) when Core Animation makes presentation copies off-main
+        let fadePosition: FadePosition
 
         init(fadePosition: FadePosition) {
             self.fadePosition = fadePosition
@@ -231,9 +233,7 @@ private extension PlayerTabsView {
         }
 
         override init(layer: Any) {
-            if let layer = layer as? Self {
-                fadePosition = layer.fadePosition
-            }
+            fadePosition = (layer as? FadeOutLayer)?.fadePosition ?? .leading
 
             super.init(layer: layer)
         }

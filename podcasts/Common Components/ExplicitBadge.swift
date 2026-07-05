@@ -9,7 +9,7 @@ enum ExplicitBadgeHelper {
     private static var imageCache: [Theme.ThemeType: UIImage] = [:]
 
     static func badgeImage(for theme: Theme.ThemeType? = nil) -> UIImage {
-        let resolvedTheme = theme ?? Theme.sharedTheme.activeTheme
+        let resolvedTheme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         imageCacheLock.lock()
         if let cached = imageCache[resolvedTheme] {
             imageCacheLock.unlock()

@@ -2,6 +2,7 @@ import Combine
 import EndOfYear
 import SwiftUI
 
+@MainActor
 protocol StoriesDataSource {
     var numberOfStories: Int { get }
 

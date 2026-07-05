@@ -11,6 +11,7 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
             self.background = background
         }
 
+        @MainActor
         init(theme: Theme.ThemeType) {
             title = ThemeColor.support01(for: theme)
             background = AppTheme.optionPickerBackgroundColor(for: theme)
