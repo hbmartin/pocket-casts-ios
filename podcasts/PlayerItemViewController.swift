@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 protocol PlayerItemContainerDelegate: AnyObject {
     func scrollToCurrentChapter()
     func scrollToNowPlaying()

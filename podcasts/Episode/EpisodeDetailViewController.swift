@@ -6,7 +6,7 @@ import SafariServices
 import UIKit
 import WebKit
 
-class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionControllerDelegate {
+class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocumentInteractionControllerDelegate {
     @IBOutlet var containerScrollView: PagedUIScrollView!
 
     private var cancellables = Set<AnyCancellable>()
@@ -205,11 +205,6 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    deinit {
-        mainScrollView?.delegate = nil
-        showNotesWebView?.navigationDelegate = nil
     }
 
     // MARK: - View

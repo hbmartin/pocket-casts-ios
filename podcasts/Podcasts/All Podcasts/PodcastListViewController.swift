@@ -235,9 +235,6 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     @objc func refreshGridItems() {
         refreshQueue.addOperation { [weak self] in
-            guard let strongSelf = self else { return }
-
-            let oldData = strongSelf.gridItems
             let sortOption: LibrarySort
             if !FeatureFlag.podcastsSortChanges.enabled, Settings.homeFolderSortOrder() == .recentlyPlayed {
                 Settings.setHomeFolderSortOrder(order: .dateAddedNewestToOldest)
@@ -251,7 +248,14 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
                 newData = [HomeGridListItem.empty]
             }
 
-            DispatchQueue.main.sync {
+            // The grid items cross back boxed; the currently-displayed data is read
+            // on the main actor at apply time so the diff source is always current
+            let newDataBox = PocketCastsUtils.UncheckedSendable(newData)
+            Task { @MainActor in
+                guard let strongSelf = self else { return }
+
+                let oldData = strongSelf.gridItems
+                let newData = newDataBox.value
                 if strongSelf.gridLayout != Settings.libraryType() {
                     strongSelf.podcastsCollectionView.reloadData()
                     strongSelf.gridLayout = Settings.libraryType()
