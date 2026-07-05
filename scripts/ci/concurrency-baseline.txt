@@ -482,11 +482,6 @@ podcasts/TranscriptModel.swift: warning: static property 'transcriptSpeaker' is 
 podcasts/TranscriptShelfButton.swift: warning: capture of 'self' with non-Sendable type 'Self?' in a '@Sendable' closure
 podcasts/TranscriptShelfButton.swift: warning: capture of non-Sendable type 'Self.Type' in an isolated closure
 podcasts/TranscriptShelfButton.swift: warning: conformance of 'TranscriptShelfButton' to protocol 'CheckTranscriptAvailability' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/TranscriptViewController.swift: warning: call to main actor-isolated instance method 'stopHighlightDisplayLink()' in a synchronous nonisolated context
-podcasts/TranscriptViewController.swift: warning: call to main actor-isolated instance method 'update()' in a synchronous nonisolated context
-podcasts/TranscriptViewController.swift: warning: cannot access property 'autoScrollBackWorkItem' with a non-Sendable type 'DispatchWorkItem?' from nonisolated deinit; this is an error in the Swift 6 language mode
-podcasts/TranscriptViewController.swift: warning: conformance of 'TranscriptViewController' to protocol 'TranscriptSearchAccessoryViewDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/TranscriptViewController.swift: warning: main actor-isolated property 'debugOverlay' can not be referenced from a Sendable closure
 podcasts/TranscriptViewController.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Up Next History/UpNextHistoryModel.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/UploadedViewController.swift: warning: conformance of 'UploadedViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode

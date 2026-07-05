@@ -1,6 +1,7 @@
 import UIKit
 import PocketCastsUtils
 
+@MainActor
 protocol TranscriptSearchAccessoryViewDelegate: AnyObject {
     // When "Done" is tapped on this view
     func doneTapped()

@@ -25,7 +25,8 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     // instant the drag ends, so without this, the next playback tick would
     // snap the view back to the highlight before the 5s return fires.
     private var isAutoScrollSuppressed = false
-    private var autoScrollBackWorkItem: DispatchWorkItem?
+    // nonisolated(unsafe): touched from deinit for cancel-only cleanup; DispatchWorkItem.cancel() is thread-safe
+    nonisolated(unsafe) private var autoScrollBackWorkItem: DispatchWorkItem?
     private static let autoScrollBackDelay: TimeInterval = 5.0
 
     // Position the active cue ~30% from the top of the visible area so a few
@@ -37,7 +38,8 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     // refresh instead so transitions land within one frame (~16ms at 60Hz).
     // The cue-equality guard inside updateTranscriptPosition makes each tick
     // effectively free when nothing has changed.
-    private var highlightDisplayLink: CADisplayLink?
+    // nonisolated(unsafe): touched from deinit for invalidate-only cleanup of a main-runloop link
+    nonisolated(unsafe) private var highlightDisplayLink: CADisplayLink?
     private var highlightDisplayLinkTarget: WeakDisplayLinkTarget?
 
     // Cursor into `transcript.cues` used by `currentCue(at:)` to avoid an O(n)
@@ -116,8 +118,10 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     deinit {
+        // Cleanup-only: cancel is thread-safe, and invalidating the main-runloop display link
+        // here mirrors what stopHighlightDisplayLink() does without touching isolated state
         autoScrollBackWorkItem?.cancel()
-        stopHighlightDisplayLink()
+        highlightDisplayLink?.invalidate()
     }
 
     private func startHighlightDisplayLink() {
@@ -550,7 +554,10 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         transcriptView.delegate = self
         #if DEBUG
         let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
-            self?.debugOverlay?.update()
+            // Added to RunLoop.main below
+            MainActor.assumeIsolated {
+                self?.debugOverlay?.update()
+            }
         }
         RunLoop.main.add(timer, forMode: .common)
         debugTimer = timer
