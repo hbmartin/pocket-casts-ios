@@ -5,10 +5,13 @@ class ThemeSecondaryIcon: UIImageView {
     var originalImage: UIImage?
 
     override func awakeFromNib() {
-        originalImage = image
+        super.awakeFromNib()
+        MainActor.assumeIsolated {
+            originalImage = image
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        setTintColorForTheme()
+            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            setTintColorForTheme()
+        }
     }
 
     deinit {
