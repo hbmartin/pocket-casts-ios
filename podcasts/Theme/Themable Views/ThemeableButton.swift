@@ -38,11 +38,10 @@ class ThemeableButton: UIView {
     private var lastCGRectRendered = CGRect.zero
 
     override func prepareForInterfaceBuilder() {
-        setup()
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+        super.prepareForInterfaceBuilder()
+        MainActor.assumeIsolated {
+            setup()
+        }
     }
 
     // MARK: - View Methods
@@ -50,7 +49,9 @@ class ThemeableButton: UIView {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        setup()
+        MainActor.assumeIsolated {
+            setup()
+        }
     }
 
     override func layoutSubviews() {

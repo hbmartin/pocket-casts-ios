@@ -2,8 +2,11 @@ import UIKit
 
 class ThemeSecondaryButton: UIButton {
     override func awakeFromNib() {
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        setTintColorForTheme()
+        super.awakeFromNib()
+        MainActor.assumeIsolated {
+            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            setTintColorForTheme()
+        }
     }
 
     deinit {
