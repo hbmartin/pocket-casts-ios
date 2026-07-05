@@ -18,7 +18,8 @@ private func widgetPlaceholderImage(accented: Bool) -> UIImage {
 /// Caches the result of converting podcast artwork into a luminance-based template,
 /// so the expensive pixel pass doesn't run on every SwiftUI body recomputation.
 private enum WidgetArtworkCache {
-    private static let cache: NSCache<NSData, UIImage> = {
+    // nonisolated(unsafe): NSCache is documented thread-safe; the reference itself is immutable.
+    nonisolated(unsafe) private static let cache: NSCache<NSData, UIImage> = {
         let cache = NSCache<NSData, UIImage>()
         cache.countLimit = 32
         return cache
