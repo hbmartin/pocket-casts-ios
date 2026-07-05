@@ -32,8 +32,10 @@ class MultiSelectActionCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        updateSize()
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            updateSize()
+        }
     }
 
     private func updateSize() {

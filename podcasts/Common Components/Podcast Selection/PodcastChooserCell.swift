@@ -14,8 +14,10 @@ class PodcastChooserCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        updateSize()
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            updateSize()
+        }
     }
 
     override func handleThemeDidChange() {
