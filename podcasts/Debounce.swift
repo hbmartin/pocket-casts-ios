@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsUtils
 
 class Debounce {
     private let delay: Double
@@ -10,8 +11,9 @@ class Debounce {
 
     func call(_ callback: @escaping (() -> Void)) {
         timer?.invalidate()
+        let boxed = PocketCastsUtils.UncheckedSendable(callback)
         timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-            callback()
+            boxed.value()
         }
     }
 
