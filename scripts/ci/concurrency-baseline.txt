@@ -57,10 +57,7 @@ podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property '
 podcasts/DefaultPlayer.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: sending 'asset' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/DownloadManager.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
-podcasts/DownloadManager.swift: warning: capture of 'episode' with non-Sendable type 'any BaseEpisode' in a '@Sendable' closure
 podcasts/DownloadManager.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
-podcasts/DownloadManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in an isolated closure
 podcasts/EffectsPlayer.swift: warning: capture of 'readOperation' with non-Sendable type 'AudioReadTask' in a '@Sendable' closure
@@ -99,10 +96,6 @@ podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated pr
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'currentTime' can not be mutated from a Sendable closure
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'isSeeking' can not be mutated from a Sendable closure
 podcasts/Sharing/Clip/ClipPlaybackManager.swift: warning: main actor-isolated property 'isSeeking' can not be referenced from a Sendable closure
-podcasts/Sharing/Clip/VideoExporter.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'adaptor' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'parameters' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'view' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker' in a '@Sendable' closure
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure; this is an error in the Swift 6 language mode

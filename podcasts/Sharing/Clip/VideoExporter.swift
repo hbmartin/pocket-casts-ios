@@ -3,14 +3,14 @@ import AVFoundation
 import UIKit
 import PocketCastsUtils
 
-protocol AnimatableContent: View {
+protocol AnimatableContent: View, Sendable {
     @MainActor
     func update(for progress: Double)
 }
 
 enum VideoExporter {
 
-    struct Parameters {
+    struct Parameters: @unchecked Sendable {
         let duration: TimeInterval
         let size: CGSize
         let scale: CGFloat
@@ -109,7 +109,7 @@ enum VideoExporter {
                 let frameProgress = Double(await counter.count) / Double(frameCount)
                 await view.update(for: frameProgress)
 
-                let buffer = try await self.pixelBuffer(for: view, size: size, scale: scale, with: adaptor)
+                let buffer = try await self.pixelBuffer(for: view, size: size, scale: scale)
                 let frameTime = CMTime(seconds: Double(await counter.count) / Double(fps), preferredTimescale: CMTimeScale(NSEC_PER_SEC))
                 if videoWriterInput.isReadyForMoreMediaData {
                     adaptor.append(buffer.wrappedValue, withPresentationTime: frameTime)
@@ -130,7 +130,7 @@ enum VideoExporter {
     }
 
     @MainActor
-    private static func pixelBuffer(for view: some View, size: CGSize, scale: CGFloat, with adaptor: AVAssetWriterInputPixelBufferAdaptor) throws -> UnsafeTransfer<CVPixelBuffer> {
+    private static func pixelBuffer(for view: some View, size: CGSize, scale: CGFloat) throws -> UnsafeTransfer<CVPixelBuffer> {
         try UnsafeTransfer(view.frame(width: size.width, height: size.height).pixelBuffer(size: CGSize(width: size.width * scale, height: size.height * scale), scale: scale))
     }
 
@@ -253,25 +253,30 @@ fileprivate extension AVAssetWriterInput {
     }
 
     private static func waitForMediaDataResult(_ block: @escaping () async throws -> Bool) -> Result<Bool, Error> {
-        let semaphore = DispatchSemaphore(value: 0)
-        let lock = NSLock()
-        var result: Result<Bool, Error>?
+        final class ResultBox: @unchecked Sendable {
+            let lock = NSLock()
+            var result: Result<Bool, Error>?
+        }
 
+        let semaphore = DispatchSemaphore(value: 0)
+        let box = ResultBox()
+
+        let boxedBlock = PocketCastsUtils.UncheckedSendable(block)
         Task {
             let taskResult: Result<Bool, Error>
             do {
-                taskResult = .success(try await block())
+                taskResult = .success(try await boxedBlock.value())
             } catch {
                 taskResult = .failure(error)
             }
 
-            lock.withLock {
-                result = taskResult
+            box.lock.withLock {
+                box.result = taskResult
             }
             semaphore.signal()
         }
 
         semaphore.wait()
-        return lock.withLock { result } ?? .success(false)
+        return box.lock.withLock { box.result } ?? .success(false)
     }
 }
