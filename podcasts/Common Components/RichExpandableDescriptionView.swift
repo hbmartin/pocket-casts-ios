@@ -42,7 +42,9 @@ class RichExpandableLabel: WKWebView {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        commonInit()
+        MainActor.assumeIsolated {
+            commonInit()
+        }
     }
 
     private func commonInit() {

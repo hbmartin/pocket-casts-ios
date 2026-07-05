@@ -9,7 +9,7 @@ enum SuggestedFoldersResult {
 struct SuggestedFoldersView: View {
 
     enum Constants {
-        static var margin: CGFloat = 16
+        static let margin: CGFloat = 16
     }
 
     @EnvironmentObject var theme: Theme

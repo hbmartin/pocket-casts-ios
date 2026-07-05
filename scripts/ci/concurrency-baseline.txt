@@ -33,7 +33,6 @@ PocketCastsTests/Tests/Utilities/DownloadManagerRetryTests.swift: warning: passi
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateErrorHandlingTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.swift: warning: reference to static property 'minimumExpectedFileSize' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/AddCustomViewController.swift: warning: call to main actor-isolated instance method 'cancelMetadataLoading()' in a synchronous nonisolated context
 podcasts/AppDelegate.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'BackgroundTasks'
 podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkDefaults()' in a synchronous nonisolated context
 podcasts/AppDelegate.swift: warning: call to main actor-isolated instance method 'checkIfRestoreCleanupRequired()' in a synchronous nonisolated context
@@ -53,11 +52,7 @@ podcasts/Bookmarks/List/BookmarkListViewModel.swift: warning: sending 'items' ri
 podcasts/ChapterManager.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'episode' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/ChapterManager.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Common Components/ExplicitBadge.swift: warning: static property 'imageCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Common Components/MultiSelect/MultiSelectHelper.swift: warning: passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/Common Components/PodcastHeartView.swift: warning: call to main actor-isolated instance method 'setupViews()' in a synchronous nonisolated context
-podcasts/Common Components/RichExpandableDescriptionView.swift: warning: call to main actor-isolated instance method 'commonInit()' in a synchronous nonisolated context
-podcasts/Common Components/SmartInvertImageView.swift: warning: main actor-isolated property 'accessibilityIgnoresInvertColors' can not be mutated from a nonisolated context
 podcasts/Common Components/View Controllers/InsetAdjuster.swift: warning: call to main actor-isolated instance method 'updateContentInset(multiSelectEnabled:ignoreMiniPlayer:)' in a synchronous nonisolated context
 podcasts/Common Components/View Controllers/PCTableViewController.swift: warning: call to main actor-isolated initializer 'init(nibName:bundle:)' in a synchronous nonisolated context
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: capture of non-Sendable type 'Style.Type' in an isolated closure; this is an error in the Swift 6 language mode
@@ -86,22 +81,18 @@ podcasts/EffectsPlayer.swift: warning: capture of 'readOperation' with non-Senda
 podcasts/EffectsPlayer.swift: warning: capture of 'self' with non-Sendable type 'EffectsPlayer?' in a '@Sendable' closure
 podcasts/EffectsPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/EpisodeFileSizeUpdater.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/EpisodeManager.swift: warning: static property 'analyticsHelper' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Extensions/AnyPublisher+Async.swift: warning: sending 'value' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/FadeOutManager.swift: warning: capture of 'self' with non-Sendable type 'FadeOutManager?' in a '@Sendable' closure
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Fingerprint'
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: capture of 'ctx' with non-Sendable type 'FingerprintTimingManager.GenerationContext' in a '@Sendable' closure
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: capture of 'windows' with non-Sendable type '[WindowedFingerprint]' in a '@Sendable' closure
 podcasts/Fingerprint/FingerprintTimingManager.swift: warning: sending 'ctx' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Folders/Create & Edit/Views/SuggestedFoldersView.swift: warning: static property 'margin' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Lists/HomeGridListItem.swift: warning: static property 'empty' is not concurrency-safe because non-'Sendable' type 'HomeGridListItem' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Main/MainTabBarController.swift: warning: conformance of 'MainTabBarController' to protocol 'NavigationProtocol' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Main/NavigationManager.swift: warning: main actor-isolated class property 'current' can not be referenced from a nonisolated context
 podcasts/Main/NavigationManager.swift: warning: main actor-isolated property 'userInterfaceIdiom' can not be referenced from a nonisolated context
 podcasts/Main/NavigationManager.swift: warning: static property 'sharedManager' is not concurrency-safe because non-'Sendable' type 'NavigationManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: static property 'currentExporter' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/MiniPlayerViewController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
 podcasts/New Search/Helpers/SearchAnalyticsHelper.swift: warning: type 'any AnalyticsSearchResultItem' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/New Search/Model/SearchHistoryModel.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SearchHistoryModel' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingFlow.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode

@@ -251,10 +251,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    deinit {
-        cancelMetadataLoading()
-    }
-
     // MARK: Private helpers
 
     private func setupScrollViewOffset() {
