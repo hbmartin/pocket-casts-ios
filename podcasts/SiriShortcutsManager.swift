@@ -4,7 +4,8 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-class SiriShortcutsManager: CustomObserver {
+/// Observers are registered once at init; Siri callbacks arrive on intent queues.
+final class SiriShortcutsManager: CustomObserver, @unchecked Sendable {
     static let shared = SiriShortcutsManager()
 
     var analyticsSource: AnalyticsSource {

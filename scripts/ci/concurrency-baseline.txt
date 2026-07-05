@@ -45,7 +45,6 @@ podcasts/AudioPlayTask.swift: warning: capture of 'self' with non-Sendable type 
 podcasts/AudioReadTask.swift: warning: capture of 'completion' with non-Sendable type '((Bool) -> Void)?' in a '@Sendable' closure
 podcasts/AudioReadTask.swift: warning: capture of 'self' with non-Sendable type 'AudioReadTask' in a '@Sendable' closure
 podcasts/AudioReadTask.swift: warning: capture of 'self' with non-Sendable type 'AudioReadTask?' in a '@Sendable' closure
-podcasts/AutoplayHelper.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'AutoplayHelper' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/BackgroundShakeObserver.swift: warning: capture of 'self' with non-Sendable type 'BackgroundShakeObserver?' in a '@Sendable' closure
 podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: sending 'self.bookmark' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/List/BookmarkListViewModel.swift: warning: sending 'items' risks causing data races; this is an error in the Swift 6 language mode
@@ -94,9 +93,7 @@ podcasts/Main/NavigationManager.swift: warning: static property 'sharedManager' 
 podcasts/MediaExporter.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/MediaExporter.swift: warning: static property 'currentExporter' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/New Search/Helpers/SearchAnalyticsHelper.swift: warning: type 'any AnalyticsSearchResultItem' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/New Search/Model/SearchHistoryModel.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SearchHistoryModel' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingFlow.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
-podcasts/PlaybackIntentActionHandler.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PlaybackIntentActionHandler' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/PlaybackManager.swift: warning: capture of 'completion' with non-Sendable type '((Bool) -> Void)?' in a '@Sendable' closure
 podcasts/PlaybackManager.swift: warning: capture of 'player' with non-Sendable type 'AnyHashable' in a '@Sendable' closure
 podcasts/PlaybackManager.swift: warning: capture of 'player' with non-Sendable type 'AnyHashable' in an isolated closure
@@ -135,7 +132,6 @@ podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'parameters' risks c
 podcasts/Sharing/Clip/VideoExporter.swift: warning: sending 'view' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingModal.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Sharing/SharingView.swift: warning: sending value of non-Sendable type 'SharingModal.Option' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker' in a '@Sendable' closure
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
