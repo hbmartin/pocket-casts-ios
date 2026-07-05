@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsUtils
 import PocketCastsDataModel
 
+@MainActor
 protocol PlaylistTypeTrackerProvider {
     var analyticsSourceType: String { get }
     func track(_ event: AnalyticsEvent, properties: [String: Sendable]?)

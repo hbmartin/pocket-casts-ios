@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-class PlaylistShortcutsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource, INUIAddVoiceShortcutViewControllerDelegate, INUIEditVoiceShortcutViewControllerDelegate {
+class PlaylistShortcutsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource, @preconcurrency INUIAddVoiceShortcutViewControllerDelegate, @preconcurrency INUIEditVoiceShortcutViewControllerDelegate {
     @IBOutlet var tableView: ThemeableTable!
     @IBOutlet var errorView: UIStackView!
 
@@ -146,6 +146,13 @@ class PlaylistShortcutsViewController: PCViewController, UITableViewDelegate, UI
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
         INVoiceShortcutCenter.shared.getAllVoiceShortcuts { allVoiceShortcuts, error in
+            // The completion arrives off-main; the shortcut list is handed over wholesale and
+            // all state mutation happens on the main actor
+            let shortcuts = UncheckedSendable(allVoiceShortcuts)
+            let fetchError = UncheckedSendable(error)
+            Task { @MainActor in
+                let allVoiceShortcuts = shortcuts.value
+                let error = fetchError.value
             self.enabledShortcuts = []
             self.availableRows = [.playTopEpisode, .playAll, .openPlaylist]
 
@@ -177,14 +184,13 @@ class PlaylistShortcutsViewController: PCViewController, UITableViewDelegate, UI
                 }
             }
 
-            DispatchQueue.main.async {
-                self.activityIndicator.stopAnimating()
-                if let error {
-                    FileLog.shared.addMessage("Failed INVoiceShortcutCenter.getAllVoiceShortcuts with error \(error.localizedDescription)")
-                    self.errorView.isHidden = false
-                } else {
-                    self.reloadData()
-                }
+            self.activityIndicator.stopAnimating()
+            if let error {
+                FileLog.shared.addMessage("Failed INVoiceShortcutCenter.getAllVoiceShortcuts with error \(error.localizedDescription)")
+                self.errorView.isHidden = false
+            } else {
+                self.reloadData()
+            }
             }
         }
     }
