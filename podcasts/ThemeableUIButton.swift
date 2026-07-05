@@ -23,7 +23,10 @@ class ThemeableUIButton: UIButton {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        updateColors()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            updateColors()
+        }
     }
 
     deinit {

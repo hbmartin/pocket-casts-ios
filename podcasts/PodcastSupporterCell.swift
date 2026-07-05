@@ -44,8 +44,11 @@ class PodcastSupporterCell: ThemeableCell {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        accessoryView = TintableImageView(image: UIImage(named: "chevron"))
-        updateColor()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            accessoryView = TintableImageView(image: UIImage(named: "chevron"))
+            updateColor()
+        }
     }
 
     var isLoading = false {

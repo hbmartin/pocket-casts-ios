@@ -12,8 +12,11 @@ class StatsCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        updateSize()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            updateSize()
+        }
     }
 
     @IBOutlet var leadingSpaceToIcon: NSLayoutConstraint!

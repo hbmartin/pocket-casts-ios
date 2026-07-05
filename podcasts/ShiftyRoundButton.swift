@@ -85,7 +85,10 @@ class ShiftyRoundButton: UIView {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        setup()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            setup()
+        }
     }
 
     override func layoutSubviews() {

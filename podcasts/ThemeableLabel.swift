@@ -29,7 +29,10 @@ class ThemeableLabel: UILabel {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        updateTextColor()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            updateTextColor()
+        }
     }
 
     deinit {
