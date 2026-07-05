@@ -3,7 +3,9 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-class PodcastManager: NSObject {
+/// State is configured-once lazy formatters/queues (created during startup);
+/// the manager's API is called across queues by design.
+final class PodcastManager: NSObject, @unchecked Sendable {
     private static let maxAutoDownloadSeperationTime = 12.hours
 
     @objc static let shared = PodcastManager(dataManager: DataManager.sharedManager, downloadManager: DownloadManager.shared)

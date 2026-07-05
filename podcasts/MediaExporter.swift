@@ -7,7 +7,8 @@ struct MediaExporter {
 
     typealias ProgressCallback = (Float, Int64) -> ()
 
-    private static var currentExporter: AVAssetExportSession?
+    // Single export flow at a time, driven from the clip-sharing UI
+    nonisolated(unsafe) private static var currentExporter: AVAssetExportSession?
 
     private static func reportProgress(session: AVAssetExportSession, progressCallback: ProgressCallback? = nil) async {
         let size = (try? await session.estimatedOutputFileLengthInBytes) ?? 0
@@ -57,7 +58,9 @@ struct MediaExporter {
             }
         }
         do {
+            let boxed = PocketCastsUtils.UncheckedSendable((exporter, progressCallback))
             let progressTask = Task {
+                let (exporter, progressCallback) = boxed.value
                 await reportProgress(session: exporter, progressCallback: progressCallback)
             }
             defer {

@@ -316,14 +316,17 @@ actor PlaylistMetadataLoader {
     }
 
     private func loadListEpisodes(for playlist: EpisodeFilter) async -> [ListEpisode] {
-        let playlist = playlist
-        let episodesDataManager = self.episodesDataManager
-        return await Task(priority: FeatureFlag.playlistDataCacheBeforeQuery.enabled ? .medium : .userInitiated) {
-            episodesDataManager.playlistFirstDistinctEpisodes(
+        // The playlist and data manager cross into the worker task boxed; the fresh
+        // list crosses back the same way
+        let boxed = PocketCastsUtils.UncheckedSendable((playlist, episodesDataManager))
+        let resultBox: PocketCastsUtils.UncheckedSendable<[ListEpisode]> = await Task(priority: FeatureFlag.playlistDataCacheBeforeQuery.enabled ? .medium : .userInitiated) {
+            let (playlist, episodesDataManager) = boxed.value
+            return PocketCastsUtils.UncheckedSendable(episodesDataManager.playlistFirstDistinctEpisodes(
                 for: playlist,
                 shouldShowArchived: playlist.showArchivedEpisodes
-            )
+            ))
         }.value
+        return resultBox.value
     }
 
     private func loadImagesURLs(episodes: [ListEpisode], includingEpisodeArtwork: Bool = false) async throws -> [PlaylistArtworkView.ImageItem] {
