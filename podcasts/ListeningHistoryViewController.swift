@@ -134,13 +134,16 @@ class ListeningHistoryViewController: PCViewController {
     }
 
     func refreshEpisodes(animated: Bool) {
+        let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
         operationQueue.addOperation { [weak self] in
-            guard let self else { return }
+            let newDataBox = PocketCastsUtils.UncheckedSendable(dataManager.value.listeningHistoryEpisodes())
 
-            let oldData = self.episodes
-            let newData = self.episodesDataManager.listeningHistoryEpisodes()
+            Task { @MainActor in
+                guard let self else { return }
 
-            DispatchQueue.main.sync {
+                let oldData = self.episodes
+                let newData = newDataBox.value
+
                 if animated {
                     let changeSet = StagedChangeset(source: oldData, target: newData)
                     self.listeningHistoryTable.reload(using: changeSet, with: .none, setData: { data in

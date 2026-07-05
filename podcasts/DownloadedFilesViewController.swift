@@ -183,31 +183,41 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
         let formattedTmpFilesSize = SizeFormatter.shared.noDecimalFormat(bytes: Int64(tmpFilesSize))
         FileLog.shared.addMessage("[DownloadedFilesViewController] space being used:\n - Unplayed: \(formattedUnplayedSize)\n - InProgress: \(formattedInProgressSize)\n - Played: \(formattedPlayedSize)\n - Temporary: \(formattedTmpFilesSize)")
 
-        DispatchQueue.global(qos: .default).async { () in
-            EpisodeManager.deleteAllDownloadedFiles(unplayed: self.deleteUnplayed, inProgress: self.deleteInProgress, played: self.deletePlayed, includeStarred: self.includeStarred)
-            if FeatureFlag.cleanUpTmpFiles.enabled {
-                // Remove any lingering files in the temporary folder that were not removed above, those should be orphan files
-                EpisodeManager.cleanUpTmpFolder()
-            }
-            self.performRefresh()
+        let unplayed = deleteUnplayed, inProgress = deleteInProgress, played = deletePlayed, starred = includeStarred
+        Task { [weak self] in
+            await Self.deleteDownloadedFiles(unplayed: unplayed, inProgress: inProgress, played: played, includeStarred: starred)
+            await self?.performRefresh()
         }
     }
 
     private func reloadFileSizes() {
-        DispatchQueue.global(qos: .default).async { () in
-            self.performRefresh()
+        Task { [weak self] in
+            await self?.performRefresh()
         }
     }
 
-    private func performRefresh() {
-        unplayedSize = EpisodeManager.downloadSizeOfUnplayedEpisodes(includeStarred: includeStarred)
-        inProgressSize = EpisodeManager.downloadSizeOfInProgressEpisodes(includeStarred: includeStarred)
-        playedSize = EpisodeManager.downloadSizeOfPlayedEpisodes(includeStarred: includeStarred)
-        tmpFilesSize = FeatureFlag.cleanUpTmpFiles.enabled ? EpisodeManager.tmpFolderSize() : 0
-
-        DispatchQueue.main.async { () in
-            self.settingsTable.reloadData()
+    nonisolated private static func deleteDownloadedFiles(unplayed: Bool, inProgress: Bool, played: Bool, includeStarred: Bool) async {
+        EpisodeManager.deleteAllDownloadedFiles(unplayed: unplayed, inProgress: inProgress, played: played, includeStarred: includeStarred)
+        if FeatureFlag.cleanUpTmpFiles.enabled {
+            // Remove any lingering files in the temporary folder that were not removed above, those should be orphan files
+            EpisodeManager.cleanUpTmpFolder()
         }
+    }
+
+    private func performRefresh() async {
+        let (unplayedSize, inProgressSize, playedSize, tmpFilesSize) = await Self.computeFileSizes(includeStarred: includeStarred)
+        self.unplayedSize = unplayedSize
+        self.inProgressSize = inProgressSize
+        self.playedSize = playedSize
+        self.tmpFilesSize = tmpFilesSize
+        settingsTable.reloadData()
+    }
+
+    nonisolated private static func computeFileSizes(includeStarred: Bool) async -> (UInt64, UInt64, UInt64, UInt64) {
+        (EpisodeManager.downloadSizeOfUnplayedEpisodes(includeStarred: includeStarred),
+         EpisodeManager.downloadSizeOfInProgressEpisodes(includeStarred: includeStarred),
+         EpisodeManager.downloadSizeOfPlayedEpisodes(includeStarred: includeStarred),
+         FeatureFlag.cleanUpTmpFiles.enabled ? EpisodeManager.tmpFolderSize() : 0)
     }
 
     private func totalDeleteSize() -> UInt64 {
