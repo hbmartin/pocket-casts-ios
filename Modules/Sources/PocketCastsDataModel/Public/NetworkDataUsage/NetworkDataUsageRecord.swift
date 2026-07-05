@@ -3,36 +3,35 @@ import GRDB
 import GRDBMacros
 
 @GRDBRecord(table: "NetworkDataUsage")
-public class NetworkDataUsageRecord: NSObject {
-    @objc public var id = 0 as Int64
+public struct NetworkDataUsageRecord: Equatable, Sendable {
+    /// `nil` encodes as NULL on insert so SQLite assigns the AUTOINCREMENT primary key.
+    public var id: Int64?
 
-    @objc public var timestamp = 0.0 as Double
+    public var timestamp: Double = 0
 
     @GRDBColumn("episode_uuid")
-    @objc public var episodeUuid: String?
+    public var episodeUuid: String?
 
     @GRDBColumn("podcast_uuid")
-    @objc public var podcastUuid: String?
+    public var podcastUuid: String?
 
     @GRDBColumn("bytes_downloaded")
-    @objc public var bytesDownloaded = 0 as Int64
+    public var bytesDownloaded: Int64 = 0
 
     @GRDBColumn("bytes_streamed")
-    @objc public var bytesStreamed = 0 as Int64
+    public var bytesStreamed: Int64 = 0
 
     @GRDBColumn("bytes_uploaded")
-    @objc public var bytesUploaded = 0 as Int64
+    public var bytesUploaded: Int64 = 0
 
     @GRDBColumn("operation_type")
-    @objc public var operationType = ""
+    public var operationType = ""
 
     @GRDBColumn("connection_type")
-    @objc public var connectionType = 0 as Int32
+    public var connectionType: Int32 = 0
 
     @GRDBColumn("session_type")
-    @objc public var sessionType: String?
+    public var sessionType: String?
 
-    override public init() {
-        super.init()
-    }
+    public init() {}
 }
