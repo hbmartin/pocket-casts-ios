@@ -63,11 +63,6 @@ class PCViewController: SimpleNotificationsViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
     }
 
-    deinit {
-        navigationController?.delegate = nil
-        NotificationCenter.default.removeObserver(self)
-    }
-
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
