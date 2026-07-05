@@ -3,6 +3,7 @@ import SwiftUI
 import PocketCastsDataModel
 import PocketCastsServer
 import UIKit
+import PocketCastsUtils
 
 class StarredViewController: PCViewController {
     private let episodesDataManager = EpisodesDataManager()
@@ -88,32 +89,27 @@ class StarredViewController: PCViewController {
         loadingIndicator.startAnimating()
         refreshQueue.addOperation {
             ApiServerHandler.shared.retrieveStarred { episodes in
-                guard let episodes else {
-                    DispatchQueue.main.sync {
-                        self.loadingIndicator.stopAnimating()
-                    }
+                // The completion arrives off-main; hand the episodes to the main actor
+                // and do all state reads and mutations there
+                let episodesBox = PocketCastsUtils.UncheckedSendable(episodes)
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
 
-                    return
-                }
+                    self.loadingIndicator.stopAnimating()
+                    guard let episodes = episodesBox.value else { return }
 
-                let oldData = self.episodes
-                var newData = [ListEpisode]()
-                for episode in episodes {
-                    newData.append(ListEpisode(episode: episode, tintColor: AppTheme.appTintColor()))
-                }
+                    let oldData = self.episodes
+                    let newData = episodes.map { ListEpisode(episode: $0, tintColor: AppTheme.appTintColor()) }
 
-                DispatchQueue.main.sync { [weak self] in
-                    guard let strongSelf = self else { return }
-                    strongSelf.loadingIndicator.stopAnimating()
-                    strongSelf.starredTable.isHidden = (newData.isEmpty)
+                    self.starredTable.isHidden = (newData.isEmpty)
                     if animated {
                         let changeSet = StagedChangeset(source: oldData, target: newData)
-                        strongSelf.starredTable.reload(using: changeSet, with: .none, setData: { data in
-                            strongSelf.episodes = data
+                        self.starredTable.reload(using: changeSet, with: .none, setData: { data in
+                            self.episodes = data
                         })
                     } else {
-                        strongSelf.episodes = newData
-                        strongSelf.starredTable.reloadData()
+                        self.episodes = newData
+                        self.starredTable.reloadData()
                     }
                 }
             }
@@ -121,12 +117,16 @@ class StarredViewController: PCViewController {
     }
 
     func refreshEpisodesFromDatabase(animated: Bool) {
+        let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
         refreshQueue.addOperation { [weak self] in
-            guard let self else { return }
-            let oldData = self.episodes
-            let newData = self.episodesDataManager.starredEpisodes()
+            let newDataBox = PocketCastsUtils.UncheckedSendable(dataManager.value.starredEpisodes())
 
-            DispatchQueue.main.sync {
+            Task { @MainActor in
+                guard let self else { return }
+
+                let oldData = self.episodes
+                let newData = newDataBox.value
+
                 self.starredTable.isHidden = (newData.isEmpty)
                 if animated {
                     let changeSet = StagedChangeset(source: oldData, target: newData)
@@ -152,10 +152,6 @@ class StarredViewController: PCViewController {
 
     @objc private func refreshEpisodesFromNotification(notification: Notification) {
         refreshEpisodesFromDatabase(animated: true)
-    }
-
-    deinit {
-        removeAllCustomObservers()
     }
 
     func setupNavBar() {

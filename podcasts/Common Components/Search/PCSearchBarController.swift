@@ -1,6 +1,7 @@
 import UIKit
 import PocketCastsUtils
 
+@MainActor
 protocol PCSearchBarDelegate: AnyObject {
     func searchDidBegin()
     func searchDidEnd()

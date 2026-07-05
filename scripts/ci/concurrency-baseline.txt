@@ -127,7 +127,6 @@ podcasts/Common Components/PodcastFeedRefreshController.swift: warning: main act
 podcasts/Common Components/PodcastFeedRefreshController.swift: warning: main actor-isolated property 'perform' can not be mutated from a nonisolated context
 podcasts/Common Components/PodcastHeartView.swift: warning: call to main actor-isolated instance method 'setupViews()' in a synchronous nonisolated context
 podcasts/Common Components/RichExpandableDescriptionView.swift: warning: call to main actor-isolated instance method 'commonInit()' in a synchronous nonisolated context
-podcasts/Common Components/Search/PCSearchView.swift: warning: main actor-isolated property 'searchTerm' can not be mutated from a nonisolated context
 podcasts/Common Components/SmartInvertImageView.swift: warning: main actor-isolated property 'accessibilityIgnoresInvertColors' can not be mutated from a nonisolated context
 podcasts/Common Components/TinyPageControl.swift: warning: call to main actor-isolated instance method 'updateForTheme()' in a synchronous nonisolated context
 podcasts/Common Components/TinyPageControl.swift: warning: main actor-isolated property 'accessibilityTraits' can not be mutated from a nonisolated context
@@ -156,11 +155,6 @@ podcasts/DefaultPlayer.swift: warning: non-Sendable type 'AVAsset' of property '
 podcasts/DefaultPlayer.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: sending 'asset' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/DefaultPlayer.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/DownloadedFilesViewController.swift: warning: call to main actor-isolated instance method 'performRefresh()' in a synchronous nonisolated context
-podcasts/DownloadedFilesViewController.swift: warning: main actor-isolated property 'deleteInProgress' can not be referenced from a Sendable closure
-podcasts/DownloadedFilesViewController.swift: warning: main actor-isolated property 'deletePlayed' can not be referenced from a Sendable closure
-podcasts/DownloadedFilesViewController.swift: warning: main actor-isolated property 'deleteUnplayed' can not be referenced from a Sendable closure
-podcasts/DownloadedFilesViewController.swift: warning: main actor-isolated property 'includeStarred' can not be referenced from a Sendable closure
 podcasts/DownloadManager.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsDataModel'
 podcasts/DownloadManager.swift: warning: capture of 'episode' with non-Sendable type 'any BaseEpisode' in a '@Sendable' closure
 podcasts/DownloadManager.swift: warning: main actor-isolated property 'asset' can not be referenced from a nonisolated context
@@ -216,9 +210,6 @@ podcasts/ImageManager.swift: warning: static property 'sharedManager' is not con
 podcasts/ImportExportViewController.swift: warning: conformance of 'ImportExportViewController' to protocol 'UIDocumentInteractionControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/LiquidGlass.swift: warning: static property 'systemIsDark' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/ListeningHistoryViewController.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ListeningHistoryViewController.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/ListeningHistoryViewController.swift: warning: main actor-isolated property 'episodes' can not be referenced from a Sendable closure
-podcasts/ListeningHistoryViewController.swift: warning: main actor-isolated property 'episodesDataManager' can not be referenced from a Sendable closure
 podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Lists/HomeGridListItem.swift: warning: static property 'empty' is not concurrency-safe because non-'Sendable' type 'HomeGridListItem' may have shared mutable state; this is an error in the Swift 6 language mode
@@ -243,10 +234,8 @@ podcasts/MiniPlayerViewController.swift: warning: call to main actor-isolated in
 podcasts/MiniPlayerViewController.swift: warning: conformance of 'MiniPlayerViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: capture of 'self' with non-Sendable type 'PlaylistPreviewViewModel?' in a '@Sendable' closure
 podcasts/New Creation/New Preview/PlaylistPreviewViewModel.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/New Detail/Episode Add/ManualPlaylistsChooserViewController.swift: warning: conformance of 'ManualPlaylistsChooserViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Detail/PlaylistDetailViewController+Analytics.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Detail/PlaylistDetailViewController+PlayAll.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'PlaylistPlayAllSheetHostDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/New Detail/PlaylistDetailViewController+Search.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Detail/PlaylistDetailViewController+Swipe.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Detail/PlaylistDetailViewController+Swipe.swift: warning: conformance of 'PlaylistDetailViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/New Search/Helpers/SearchAnalyticsHelper.swift: warning: type 'any AnalyticsSearchResultItem' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
@@ -323,7 +312,6 @@ podcasts/PodcastChapterParser.swift: warning: capture of 'completion' with non-S
 podcasts/PodcastChapterParser.swift: warning: capture of 'completion' with non-Sendable type '([ChapterInfo]) -> Void' in an isolated closure
 podcasts/PodcastChapterParser.swift: warning: capture of 'self' with non-Sendable type 'PodcastChapterParser?' in a '@Sendable' closure
 podcasts/PodcastChapterParser.swift: warning: sending '$0' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/PodcastFilterOverlayController.swift: warning: conformance of 'PodcastFilterOverlayController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/PodcastFilterOverlayController.swift: warning: conformance of 'PodcastFilterOverlayController' to protocol 'PodcastSelectionDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/PodcastManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PodcastManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/Cells/FolderListCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
@@ -333,7 +321,6 @@ podcasts/Podcasts/All Podcasts/Cells/FolderListCell.swift: warning: non-Sendable
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conformance of 'PodcastListViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conformance of 'PodcastListViewController' to protocol 'ShareListDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: main actor-isolated property 'gridItems' can not be referenced from a Sendable closure
-podcasts/Podcasts/All Podcasts/PodcastListViewController+Search.swift: warning: conformance of 'PodcastListViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/Cells/EpisodeLimitCell.swift: warning: main actor-isolated property 'style' can not be mutated from a nonisolated context
 podcasts/Podcasts/Podcast Page/EpisodeListSearchController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
 podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastEffectsViewController.swift: warning: conformance of 'PodcastEffectsViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
@@ -382,11 +369,7 @@ podcasts/SiriShortcutsManager.swift: warning: capture of 'completion' with non-S
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/SocialsHelper.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
 podcasts/SocialsHelper.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/StarredViewController.swift: warning: call to main actor-isolated instance method 'removeAllCustomObservers()' in a synchronous nonisolated context
 podcasts/StarredViewController.swift: warning: conformance of 'StarredViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/StarredViewController.swift: warning: main actor-isolated property 'episodes' can not be referenced from a nonisolated context
-podcasts/StarredViewController.swift: warning: main actor-isolated property 'episodes' can not be referenced from a Sendable closure
-podcasts/StarredViewController.swift: warning: main actor-isolated property 'episodesDataManager' can not be referenced from a Sendable closure
 podcasts/StarredViewController+Swipe.swift: warning: conformance of 'StarredViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/StarredViewController+Swipe.swift: warning: conformance of 'StarredViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/StorageManager.swift: warning: static property 'defaultAttributes' is not concurrency-safe because non-'Sendable' type 'StorageManager.Attributes' (aka 'Dictionary<FileAttributeKey, Any>') may have shared mutable state; this is an error in the Swift 6 language mode
