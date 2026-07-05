@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class LenticularFilter {
     private var window: UIWindow?
     private var rootController: LenticularViewController?

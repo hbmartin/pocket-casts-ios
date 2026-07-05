@@ -404,17 +404,6 @@ podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conform
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: conformance of 'PodcastListViewController' to protocol 'ShareListDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/All Podcasts/PodcastListViewController.swift: warning: main actor-isolated property 'gridItems' can not be referenced from a Sendable closure
 podcasts/Podcasts/All Podcasts/PodcastListViewController+Search.swift: warning: conformance of 'PodcastListViewController' to protocol 'PCSearchBarDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'alphaOnPickup' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'collectionViewLayout' can not be referenced from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'contentInset' can not be referenced from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'contentSize' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'growOffset' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'growScale' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'minimumInteritemSpacing' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'minimumLineSpacing' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'sectionInset' can not be mutated from a nonisolated context
-podcasts/Podcasts/Helpers/GridHelper.swift: warning: main actor-isolated property 'traitCollection' can not be referenced from a nonisolated context
 podcasts/Podcasts/Podcast Page/Cells/EpisodeLimitCell.swift: warning: main actor-isolated property 'style' can not be mutated from a nonisolated context
 podcasts/Podcasts/Podcast Page/Cells/PodcastHeaderModel.swift: warning: call to main actor-isolated instance method 'beginUpdates()' in a synchronous nonisolated context
 podcasts/Podcasts/Podcast Page/Cells/PodcastHeaderModel.swift: warning: call to main actor-isolated instance method 'endUpdates()' in a synchronous nonisolated context
@@ -473,16 +462,6 @@ podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property
 podcasts/SiriSettingsViewController.swift: warning: main actor-isolated property 'suggestedShortcuts' can not be mutated from a Sendable closure
 podcasts/SiriShortcutsManager.swift: warning: capture of 'completion' with non-Sendable type '(INVoiceShortcut?) -> Void' in a '@Sendable' closure
 podcasts/SiriShortcutsManager.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SiriShortcutsManager' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/SJUIUtils.swift: warning: call to main actor-isolated initializer 'init(rootViewController:navStyle:titleStyle:iconStyle:themeOverride:)' in a synchronous nonisolated context
-podcasts/SJUIUtils.swift: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context
-podcasts/SJUIUtils.swift: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context
-podcasts/SJUIUtils.swift: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context
-podcasts/SJUIUtils.swift: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context
-podcasts/SJUIUtils.swift: warning: capture of 'completion' with non-Sendable type '(() -> Void)?' in a '@Sendable' closure
-podcasts/SJUIUtils.swift: warning: main actor-isolated property 'modalPresentationStyle' can not be mutated from a nonisolated context
-podcasts/SJUIUtils.swift: warning: sending 'completion' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/SJUIUtils.swift: warning: sending 'themeOverride' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/SJUIUtils.swift: warning: sending value of non-Sendable type '(() -> Void)?' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/SkipButton.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/SocialsHelper.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
 podcasts/SocialsHelper.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
@@ -529,13 +508,6 @@ podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryButton.s
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: call to main actor-isolated instance method 'setTintColorForTheme()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: main actor-isolated property 'image' can not be referenced from a nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: main actor-isolated property 'originalImage' can not be mutated from a nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated class property 'current' can not be referenced from a nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'isHidden' can not be mutated from a nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'isUserInteractionEnabled' can not be mutated from a nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'rootViewController' can not be mutated from a nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'userInterfaceIdiom' can not be referenced from a nonisolated context
-podcasts/Theme/Theme Specific Components/LenticularFilter.swift: warning: main actor-isolated property 'windowLevel' can not be mutated from a nonisolated context
 podcasts/TimeStepperCell.swift: warning: call to main actor-isolated instance method 'removeTarget(_:action:for:)' in a synchronous nonisolated context
 podcasts/TranscriptContainerViewController.swift: warning: conformance of 'TranscriptContainerViewController' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/TranscriptContainerViewController.swift: warning: conformance of 'TranscriptContainerViewController' to protocol 'PlayerItemContainerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode

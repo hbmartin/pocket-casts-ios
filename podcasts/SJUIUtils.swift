@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class SJUIUtils {
     class func showAlert(title: String, message: String?, from: UIViewController?, completion: (() -> Void)? = nil) {
         guard let controller = from else { return }

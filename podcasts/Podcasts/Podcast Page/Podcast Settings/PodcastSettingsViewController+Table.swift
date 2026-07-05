@@ -222,10 +222,14 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
                 MainServerHandler.shared.refreshPodcastFeed(podcast: self.podcast) { success in
                     if success {
                         Analytics.track(.podcastSettingsFeedErrorFixSucceeded)
-                        SJUIUtils.showAlert(title: L10n.settingsFeedFixRefreshSuccessTitle, message: L10n.settingsFeedFixRefreshSuccessMsg, from: self)
+                        Task { @MainActor in
+                            SJUIUtils.showAlert(title: L10n.settingsFeedFixRefreshSuccessTitle, message: L10n.settingsFeedFixRefreshSuccessMsg, from: self)
+                        }
                     } else {
                         Analytics.track(.podcastSettingsFeedErrorFixFailed)
-                        SJUIUtils.showAlert(title: L10n.settingsFeedFixRefreshFailedTitle, message: L10n.settingsFeedFixRefreshFailedMsg, from: self)
+                        Task { @MainActor in
+                            SJUIUtils.showAlert(title: L10n.settingsFeedFixRefreshFailedTitle, message: L10n.settingsFeedFixRefreshFailedMsg, from: self)
+                        }
                     }
                 }
             }
