@@ -3,14 +3,15 @@ import GRDB
 @testable import PocketCastsDataModel
 @testable import PocketCastsUtils
 
-/// Base test class for DataManager tests that automatically runs tests with both
-/// GRDB API and raw SQL implementations
+/// Base test class for DataManager tests. Historically this ran each test twice
+/// (raw SQL and GRDB); the raw-SQL paths were deleted with the grdbQueryInterface
+/// flag, so `runWithBothImplementations` keeps its name for the 500+ call sites
+/// but now runs once against the GRDB implementation.
 ///
 /// Subclasses should:
 /// 1. Override `setUpWithDataManager(_:)` to set up test data
 /// 2. Override `tearDownWithDataManager(_:)` if additional cleanup is needed
-/// 3. Call `runWithBothImplementations { ... }` in test methods to run assertions
-///    against both implementations
+/// 3. Call `runWithBothImplementations { ... }` in test methods
 ///
 /// Example:
 /// ```
@@ -26,49 +27,19 @@ import GRDB
 /// }
 /// ```
 class DataManagerTestCase: XCTestCase {
-    private var featureFlagStore: FeatureFlagOverrideStore!
-
-    override func setUp() async throws {
-        try await super.setUp()
-        featureFlagStore = FeatureFlagOverrideStore()
-    }
-
-    override func tearDown() async throws {
-        // Reset the feature flag override
-        featureFlagStore.resetOverrides()
-        featureFlagStore = nil
-        try await super.tearDown()
-    }
-
-    /// Runs the provided test block with both SQL and GRDB API implementations.
+    /// Runs the provided test block against the GRDB implementation.
     ///
-    /// - Parameter testBlock: A closure that receives a DataManager and the implementation name.
-    ///                        The implementation name is either "SQL" or "GRDB".
+    /// - Parameter testBlock: A closure that receives a fresh DataManager and the
+    ///                        implementation name ("GRDB").
     func runWithBothImplementations(_ testBlock: (DataManager, String) throws -> Void) throws {
-        // Test with raw SQL query (the flag defaults to true, so it must be forced off)
-        try featureFlagStore.override(FeatureFlag.grdbQueryInterface, withValue: false)
-        let sqlDataManager = DataManager.newTestDataManager()
-        try testBlock(sqlDataManager, "SQL")
-
-        // Test with GRDB implementation
-        try featureFlagStore.override(FeatureFlag.grdbQueryInterface, withValue: true)
         let grdbDataManager = DataManager.newTestDataManager()
         try testBlock(grdbDataManager, "GRDB")
-        featureFlagStore.resetOverrides()
     }
 
     /// Async version of runWithBothImplementations
     func runWithBothImplementations(_ testBlock: (DataManager, String) async throws -> Void) async throws {
-        // Test with SQL implementation (the flag defaults to true, so it must be forced off)
-        try featureFlagStore.override(FeatureFlag.grdbQueryInterface, withValue: false)
-        let sqlDataManager = DataManager.newTestDataManager()
-        try await testBlock(sqlDataManager, "SQL")
-
-        // Test with GRDB implementation
-        try featureFlagStore.override(FeatureFlag.grdbQueryInterface, withValue: true)
         let grdbDataManager = DataManager.newTestDataManager()
         try await testBlock(grdbDataManager, "GRDB")
-        featureFlagStore.resetOverrides()
     }
 
     // MARK: - Common Test Helpers

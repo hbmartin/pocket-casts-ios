@@ -225,7 +225,7 @@ class PodcastDataManager {
     func allPodcastsOrderedByNewestEpisodes(reloadFromDatabase: Bool, inFolderUuid: String? = nil, dbQueue: PCDBQueue) -> [Podcast] {
         if reloadFromDatabase { cachePodcasts(dbQueue: dbQueue) }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // MAX(publishedDate) over unfinished, unarchived episodes is equivalent to the legacy
             // correlated subquery that picks the newest such episode per podcast
             return podcastsOrdered(
@@ -268,7 +268,7 @@ class PodcastDataManager {
     func allPodcastsOrderedByLastPlayedEpisodes(reloadFromDatabase: Bool, inFolderUuid: String? = nil, dbQueue: PCDBQueue) -> [Podcast] {
         if reloadFromDatabase { cachePodcasts(dbQueue: dbQueue) }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return podcastsOrdered(
                 byMaxOf: "lastPlaybackInteractionDate",
                 episodeFilters: [],
@@ -306,7 +306,7 @@ class PodcastDataManager {
     /// Returns 5 random podcasts from the DB
     /// This is here for development purposes.
     func randomPodcasts(dbQueue: PCDBQueue) -> [Podcast] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let podcasts = grdbQueue.read { db in
                 try Row.fetchAll(db, Podcast.all().asRequest(of: Row.self)).map(Self.podcastWithSettings(from:))
             } ?? []
@@ -487,7 +487,7 @@ class PodcastDataManager {
     }
 
     func unfinishedCounts(dbQueue: PCDBQueue) -> [String: Int32] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { db in
                 // Two-step equivalent of the legacy episodes-podcasts JOIN: aggregate per
                 // podcast_id, then key by uuid (episodes without a podcast row drop out)
@@ -548,7 +548,7 @@ class PodcastDataManager {
             podcast.id = DBUtils.generateUniqueId()
         }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             // GRDB path using PersistableRecord
             do {
                 try grdbQueue.dbPool.write { db in
@@ -588,7 +588,7 @@ class PodcastDataManager {
     }
 
     func bulkSetFolderUuid(folderUuid: String, podcastUuids: [String], dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 // clear out any that shouldn't be in this folder
                 try Podcast
@@ -623,7 +623,7 @@ class PodcastDataManager {
     }
 
     func updatePodcastFolder(podcastUuid: String, sortOrder: Int32, folderUuid: String?, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Podcast.self,
                 filter: Podcast.Columns.uuid == podcastUuid,
@@ -687,7 +687,7 @@ class PodcastDataManager {
     }
 
     func delete(podcast: Podcast, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(Podcast.self, filter: Podcast.Columns.uuid == podcast.uuid)
         } else {
             DataHelper.run(query: "DELETE FROM \(DataManager.podcastTableName) WHERE uuid = ?", values: [podcast.uuid], methodName: "PodcastDataManager.delete", onQueue: dbQueue)
@@ -704,7 +704,7 @@ class PodcastDataManager {
     }
 
     func markAllUnsyncedWhereLastSyncAtNot(_ lastSyncAt: String, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Podcast.self,
                 filter: Podcast.Columns.subscribed == 1 && Podcast.Columns.fullSyncLastSyncAt != lastSyncAt,
@@ -783,7 +783,7 @@ class PodcastDataManager {
     // updateAutoAddToUpNext) stay raw SQL deliberately: SQLite's JSON functions surgically patch
     // one key while preserving any fields the client doesn't model, which a Swift decode/re-encode
     // round trip would drop, and GRDB's query interface has no nullif/json_patch equivalents for
-    // the empty-payload seeding. They are residue candidates for the grdbQueryInterface flag
+    // the empty-payload seeding. They are residue kept when the grdbQueryInterface flag was deleted
     // deletion's allowlist.
     func setOnAllPodcasts<Value: Codable & Equatable>(value: Value, settingName: String, subscribedOnly: Bool, dbQueue: PCDBQueue) {
         dbQueue.write { db in
@@ -814,7 +814,7 @@ class PodcastDataManager {
     }
 
     func setOnAllPodcasts(value: Any, propertyName: String, subscribedOnly: Bool, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 var request = Podcast.all()
                 if subscribedOnly {
@@ -842,7 +842,7 @@ class PodcastDataManager {
     }
 
     func saveSortOrders(podcasts: [Podcast], dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 for podcast in podcasts {
                     try Podcast
@@ -868,7 +868,7 @@ class PodcastDataManager {
     }
 
     func removeAllPodcastsFromFolder(folderUuid: String, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Podcast.self,
                 filter: Podcast.Columns.folderUuid == folderUuid,
@@ -883,7 +883,7 @@ class PodcastDataManager {
     }
 
     func removeAllPodcastsFromAllFolders(dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             _ = grdbQueue.write { db in
                 try Podcast.updateAll(db, Podcast.Columns.folderUuid.set(to: nil as String?))
             }
@@ -908,7 +908,7 @@ class PodcastDataManager {
     }
 
     private func saveSingleValue(name: String, value: Any?, podcastUuid: String, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.updateAll(
                 Podcast.self,
                 filter: Podcast.Columns.uuid == podcastUuid,
@@ -991,7 +991,7 @@ class PodcastDataManager {
         let trace = TraceManager.shared.beginTracing(eventName: "DATABASE_PODCAST_CACHE")
         defer { TraceManager.shared.endTracing(trace: trace) }
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             guard let podcasts = grdbQueue.read({ db in
                 try Row.fetchAll(db, Podcast.all().asRequest(of: Row.self)).map(Self.podcastWithSettings(from:))
             }) else { return }

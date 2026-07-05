@@ -44,7 +44,7 @@ public class UpNextHistoryManager {
     /// Saves the current Up Next state into another table
     /// So it can be reverted later in case of wrong syncs
     func snapshot(dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let date = Date().timeIntervalSince1970
             let cutoff = Date().addingTimeInterval(-periodOfSnapshot).timeIntervalSince1970
             grdbQueue.write { db in
@@ -83,7 +83,7 @@ public class UpNextHistoryManager {
 
     /// Return all the available Up Next entries
     func entries(dbQueue: PCDBQueue) -> [UpNextHistoryEntry] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let counts = grdbQueue.read { db in
                 try PlaylistEpisodeHistoryRow
                     .select(PlaylistEpisodeHistoryRow.Columns.date, count(PlaylistEpisodeHistoryRow.Columns.date).forKey("count"), as: HistoryDateCount.self)
@@ -113,7 +113,7 @@ public class UpNextHistoryManager {
     }
 
     func episodes(entry: Date, dbQueue: PCDBQueue) -> [String] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.read { db in
                 try PlaylistEpisodeHistoryRow
                     .filter(PlaylistEpisodeHistoryRow.Columns.date == entry.timeIntervalSince1970)

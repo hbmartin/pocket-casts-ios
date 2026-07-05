@@ -14,7 +14,7 @@ class UpNextChangesDataManager {
     // MARK: - Query
 
     func findReplaceAction(dbQueue: PCDBQueue) -> UpNextChanges? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchOne(UpNextChanges.filter(UpNextChanges.Columns.type == UpNextChanges.Actions.replace.rawValue))
         }
 
@@ -36,7 +36,7 @@ class UpNextChangesDataManager {
     }
 
     func findUpdateActions(dbQueue: PCDBQueue) -> [UpNextChanges] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbQueue.fetchAll(UpNextChanges.filter(UpNextChanges.Columns.type != UpNextChanges.Actions.replace.rawValue))
         }
 
@@ -84,7 +84,7 @@ class UpNextChangesDataManager {
         replaceChange.utcTime = DBUtils.currentUTCTimeInMillis()
         let changeToSave = replaceChange
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 // a replace literally replaces everything that came before it, so empty the table out
                 try UpNextChanges.deleteAll(db)
@@ -112,7 +112,7 @@ class UpNextChangesDataManager {
         updateChange.utcTime = DBUtils.currentUTCTimeInMillis()
         let changeToSave = updateChange
 
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.write { db in
                 // an update replaces any other update that is for the same episode, so delete any that might exist
                 try UpNextChanges.filter(UpNextChanges.Columns.uuid == episodeUuid).deleteAll(db)
@@ -135,7 +135,7 @@ class UpNextChangesDataManager {
     // MARK: - Delete
 
     func deleteChangesOlderThan(utcTime: Int64, dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             grdbQueue.deleteAll(UpNextChanges.self, filter: UpNextChanges.Columns.utcTime <= utcTime)
             return
         }

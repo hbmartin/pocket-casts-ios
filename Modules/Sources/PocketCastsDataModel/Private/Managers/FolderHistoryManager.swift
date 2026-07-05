@@ -24,7 +24,7 @@ public class FolderHistoryManager {
     /// Saves a list of podcast UUID and folders UUID so it can be
     /// restored later
     func snapshot(podcastsAndFolders: [String: String], dbQueue: PCDBQueue) {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let date = Date().timeIntervalSince1970
             let cutoff = Date().addingTimeInterval(-periodOfSnapshot).timeIntervalSince1970
             grdbQueue.write { db in
@@ -55,7 +55,7 @@ public class FolderHistoryManager {
 
     /// Return all the available Up Next entries
     func entries(dbQueue: PCDBQueue) -> [PodcastFoldersHistoryEntry] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let counts = grdbQueue.read { db in
                 try PodcastFolderHistoryRow
                     .select(PodcastFolderHistoryRow.Columns.date, count(PodcastFolderHistoryRow.Columns.date).forKey("count"), as: HistoryDateCount.self)
@@ -87,7 +87,7 @@ public class FolderHistoryManager {
     }
 
     func podcastsAndFolders(entry: Date, dbQueue: PCDBQueue) -> [String: String] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let rows = grdbQueue.fetchAll(PodcastFolderHistoryRow.filter(PodcastFolderHistoryRow.Columns.date == entry.timeIntervalSince1970))
             return Dictionary(rows.map { ($0.podcastUuid, $0.folderUuid) }, uniquingKeysWith: { _, last in last })
         }

@@ -58,7 +58,7 @@ public struct BookmarkDataManager {
 
     /// Looks for any existing bookmarks in an episode that have the same start time
     public func existingBookmark(forEpisode episodeUuid: String, time: TimeInterval) -> Bookmark? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbSelectBookmarks(
                 in: grdbQueue,
                 filters: [BookmarkRow.Columns.episodeUuid == episodeUuid, BookmarkRow.Columns.time == time],
@@ -81,7 +81,7 @@ public struct BookmarkDataManager {
     ///   - transcription: A transcription of the clip if available
     @discardableResult
     public func add(uuid: String? = nil, episodeUuid: String, podcastUuid: String?, title: String, time: TimeInterval, dateCreated: Date = Date(), syncStatus: SyncStatus = .notSynced) -> String? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             var row = BookmarkRow()
             row.uuid = uuid ?? UUID().uuidString.lowercased()
             row.title = title
@@ -128,7 +128,7 @@ public struct BookmarkDataManager {
     // MARK: - Updating
     @discardableResult
     public func update(bookmark: Bookmark, title: String, time: TimeInterval? = nil, created: Date? = nil, modified: Date? = Date(), syncStatus: SyncStatus = .notSynced) async -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let uuid = bookmark.uuid
             let timeValue = time
             let createdInterval = created?.timeIntervalSince1970
@@ -195,7 +195,7 @@ public struct BookmarkDataManager {
 
     /// Retrieves a single Bookmark for the given UUID
     public func bookmark(for uuid: String, allowDeleted: Bool = false) -> Bookmark? {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbSelectBookmarks(in: grdbQueue,
                                        filters: [BookmarkRow.Columns.uuid == uuid],
                                        limit: 1,
@@ -207,7 +207,7 @@ public struct BookmarkDataManager {
 
     /// Retrieves all the Bookmarks for an episode
     public func bookmarks(forEpisode episodeUuid: String, sorted: SortOption = .newestToOldest) -> [Bookmark] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbSelectBookmarks(in: grdbQueue,
                                        filters: [BookmarkRow.Columns.episodeUuid == episodeUuid],
                                        sorted: sorted)
@@ -218,7 +218,7 @@ public struct BookmarkDataManager {
 
     /// Retrieves all the bookmarks for a podcast, and optionally a specific episode of that podcast
     public func bookmarks(forPodcast podcastUuid: String, episodeUuid: String? = nil, sorted: SortOption = .newestToOldest) -> [Bookmark] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             var filters: [any SQLSpecificExpressible] = [BookmarkRow.Columns.podcastUuid == podcastUuid]
             if let episodeUuid {
                 filters.append(BookmarkRow.Columns.episodeUuid == episodeUuid)
@@ -239,7 +239,7 @@ public struct BookmarkDataManager {
 
     /// Returns all the bookmarks in the database and optionally can also return deleted items
     public func allBookmarks(includeDeleted: Bool = false, sorted: SortOption = .newestToOldest) -> [Bookmark] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbSelectBookmarks(in: grdbQueue, sorted: sorted, allowDeleted: includeDeleted)
         }
 
@@ -248,7 +248,7 @@ public struct BookmarkDataManager {
 
     /// Returns the number of bookmarks for the given episode and can optionally include deleted items in the count
     public func bookmarkCount(forEpisode episodeUuid: String, includeDeleted: Bool = false) -> Int {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             var request = BookmarkRow.filter(BookmarkRow.Columns.episodeUuid == episodeUuid)
             if !includeDeleted {
                 request = request.filter(BookmarkRow.Columns.deleted == false)
@@ -285,7 +285,7 @@ public struct BookmarkDataManager {
 
     /// Returns all the bookmarks in the database that have the syncStatus of `notSynced`
     public func bookmarksToSync() -> [Bookmark] {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             return grdbSelectBookmarks(in: grdbQueue,
                                        filters: [BookmarkRow.Columns.syncStatus == SyncStatus.notSynced.rawValue],
                                        allowDeleted: true)
@@ -296,7 +296,7 @@ public struct BookmarkDataManager {
 
     @discardableResult
     public func markAllBookmarksAsSynced() async -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             do {
                 try await grdbQueue.write { db in
                     try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
@@ -328,7 +328,7 @@ public struct BookmarkDataManager {
     /// Marks the bookmarks as deleted, but doesn't actually remove them from the database
     @discardableResult
     public func remove(bookmarks: [Bookmark], syncStatus: SyncStatus = .notSynced) async -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let uuids = bookmarks.map { $0.uuid }
             let deletedModifiedInterval = Date().timeIntervalSince1970
             let syncStatusValue = syncStatus.rawValue
@@ -371,7 +371,7 @@ public struct BookmarkDataManager {
     /// Permanently removes the bookmarks from the database
     @discardableResult
     public func permanentlyDelete(bookmarks: [Bookmark]) async -> Bool {
-        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+        if let grdbQueue = dbQueue as? GRDBQueue {
             let uuids = bookmarks.map { $0.uuid }
 
             do {
