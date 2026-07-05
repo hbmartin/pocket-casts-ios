@@ -125,6 +125,53 @@ class PodcastDataManager {
         let count: Int32
     }
 
+    /// Decodes the aggregate `(podcast_id, MAX(<date column>))` rows for the ordered fetches.
+    private struct PodcastLatestDate: Decodable, FetchableRecord {
+        let podcastId: Int64
+        let latest: Double?
+    }
+
+    /// Two-step query-interface equivalent of the legacy correlated-subquery orderings: fetch the
+    /// subscribed podcasts, aggregate each podcast's newest matching episode date, then sort with
+    /// the legacy ORDER BY semantics — dated podcasts first (newest date descending), NULL-date
+    /// podcasts last, optionally tiebroken by `latestEpisodeDate` descending.
+    private func podcastsOrdered(byMaxOf dateColumn: String, episodeFilters: [any SQLSpecificExpressible], tiebreakOnLatestEpisodeDate: Bool, inFolderUuid: String?, in grdbQueue: GRDBQueue) -> [Podcast] {
+        grdbQueue.read { (db: Database) -> [Podcast] in
+            var podcastRequest = Podcast.filter(Podcast.Columns.subscribed == 1)
+            if let inFolderUuid {
+                podcastRequest = podcastRequest.filter(Podcast.Columns.folderUuid == inFolderUuid)
+            }
+            let podcasts = try Row.fetchAll(db, podcastRequest.asRequest(of: Row.self)).map(Self.podcastWithSettings(from:))
+
+            var episodeRequest = Table(DataManager.episodeTableName).all()
+            for episodeFilter in episodeFilters {
+                episodeRequest = episodeRequest.filter(episodeFilter)
+            }
+            let latestRows = try episodeRequest
+                .select([Column("podcast_id").forKey("podcastId"), max(Column(dateColumn)).forKey("latest")], as: PodcastLatestDate.self)
+                .group(Column("podcast_id"))
+                .fetchAll(db)
+            let latestById = Dictionary(latestRows.map { ($0.podcastId, $0.latest) }, uniquingKeysWith: { first, _ in first })
+
+            return podcasts.sorted { (lhs: Podcast, rhs: Podcast) -> Bool in
+                let lhsLatest = latestById[lhs.id].flatMap { $0 }
+                let rhsLatest = latestById[rhs.id].flatMap { $0 }
+                switch (lhsLatest, rhsLatest) {
+                case let (lhsDate?, rhsDate?):
+                    if lhsDate != rhsDate { return lhsDate > rhsDate }
+                case (.some, nil):
+                    return true
+                case (nil, .some):
+                    return false
+                case (nil, nil):
+                    break
+                }
+                guard tiebreakOnLatestEpisodeDate else { return false }
+                return (lhs.latestEpisodeDate ?? .distantPast) > (rhs.latestEpisodeDate ?? .distantPast)
+            }
+        } ?? []
+    }
+
     // MARK: - Queries
 
     func allPodcasts(includeUnsubscribed: Bool, reloadFromDatabase: Bool, dbQueue: PCDBQueue) -> [Podcast] {
@@ -178,6 +225,21 @@ class PodcastDataManager {
     func allPodcastsOrderedByNewestEpisodes(reloadFromDatabase: Bool, inFolderUuid: String? = nil, dbQueue: PCDBQueue) -> [Podcast] {
         if reloadFromDatabase { cachePodcasts(dbQueue: dbQueue) }
 
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            // MAX(publishedDate) over unfinished, unarchived episodes is equivalent to the legacy
+            // correlated subquery that picks the newest such episode per podcast
+            return podcastsOrdered(
+                byMaxOf: "publishedDate",
+                episodeFilters: [
+                    Column("playingStatus") != PlayingStatus.completed.rawValue,
+                    Column("archived") == false
+                ],
+                tiebreakOnLatestEpisodeDate: true,
+                inFolderUuid: inFolderUuid,
+                in: grdbQueue
+            )
+        }
+
         var allPodcasts = [Podcast]()
         dbQueue.read { db in
             do {
@@ -205,6 +267,16 @@ class PodcastDataManager {
 
     func allPodcastsOrderedByLastPlayedEpisodes(reloadFromDatabase: Bool, inFolderUuid: String? = nil, dbQueue: PCDBQueue) -> [Podcast] {
         if reloadFromDatabase { cachePodcasts(dbQueue: dbQueue) }
+
+        if FeatureFlag.grdbQueryInterface.enabled, let grdbQueue = dbQueue as? GRDBQueue {
+            return podcastsOrdered(
+                byMaxOf: "lastPlaybackInteractionDate",
+                episodeFilters: [],
+                tiebreakOnLatestEpisodeDate: false,
+                inFolderUuid: inFolderUuid,
+                in: grdbQueue
+            )
+        }
 
         var allPodcasts = [Podcast]()
         dbQueue.read { db in
@@ -706,6 +778,13 @@ class PodcastDataManager {
         }
     }
 
+    // NOTE: the json_set/json_patch settings writers below (setOnAllPodcasts(settingName:),
+    // savePushSettingWithNewSettingsStorage, saveSingleSetting, and the settings half of
+    // updateAutoAddToUpNext) stay raw SQL deliberately: SQLite's JSON functions surgically patch
+    // one key while preserving any fields the client doesn't model, which a Swift decode/re-encode
+    // round trip would drop, and GRDB's query interface has no nullif/json_patch equivalents for
+    // the empty-payload seeding. They are residue candidates for the grdbQueryInterface flag
+    // deletion's allowlist.
     func setOnAllPodcasts<Value: Codable & Equatable>(value: Value, settingName: String, subscribedOnly: Bool, dbQueue: PCDBQueue) {
         dbQueue.write { db in
             do {
