@@ -46,7 +46,6 @@ PocketCastsTests/Tests/Utilities/MediaExporterResourceLoaderDelegateRetryTests.s
 PocketCastsTests/Tests/Utilities/ThreadSafeDictionaryTests.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 Share Extension/ShareViewController.swift: warning: call to main actor-isolated instance method 'close()' in a synchronous nonisolated context
 Share Extension/ShareViewController.swift: warning: call to main actor-isolated instance method 'redirectToHostApp' in a synchronous nonisolated context
-WidgetExtension/Common/ArtworkViews.swift: warning: static property 'cache' is not concurrency-safe because non-'Sendable' type 'NSCache<NSData, UIImage>' may have shared mutable state; this is an error in the Swift 6 language mode
 WidgetExtension/Data/WidgetData.swift: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WidgetData' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/AccountActionCell.swift: warning: call to main actor-isolated instance method 'registerForPreferredContentSizeCategoryChanges' in a synchronous nonisolated context
 podcasts/AccountActionCell.swift: warning: call to main actor-isolated instance method 'updateSize()' in a synchronous nonisolated context
@@ -219,15 +218,6 @@ podcasts/Common SwiftUI/Toast/Toast.swift: warning: call to main actor-isolated 
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: sending 'viewModel' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Common SwiftUI/Toast/Toast.swift: warning: static property 'shared' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Common SwiftUI/Toast/ToastViewModel.swift: warning: capture of 'self' with non-Sendable type 'ToastViewModel?' in a '@Sendable' closure
-podcasts/Constants.swift: warning: static property 'creationSound' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<Bool>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'darkUpNextTheme' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<Bool>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'episodeSort' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<BookmarkSortOption>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'nextAction' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<HeadphoneControlAction>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'playerSort' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<BookmarkSortOption>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'podcastSort' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<BookmarkSortOption>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'previousAction' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<HeadphoneControlAction>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'profileSort' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<BookmarkSortOption>' may have shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Constants.swift: warning: static property 'tabBarMinimizingEnabled' is not concurrency-safe because non-'Sendable' type 'Constants.SettingValue<Bool>' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/CustomStepper.swift: warning: call to main actor-isolated instance method 'performHoldLessDown()' in a synchronous nonisolated context
 podcasts/CustomStepper.swift: warning: call to main actor-isolated instance method 'performHoldMoreDown()' in a synchronous nonisolated context
 podcasts/CustomStepper.swift: warning: main actor-isolated property 'currentValue' can not be referenced from a Sendable closure
