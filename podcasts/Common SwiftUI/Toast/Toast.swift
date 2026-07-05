@@ -23,7 +23,16 @@ class Toast {
     /// Display the toast message with the given title and actions.
     /// Callable from any thread (playback code shows toasts off-main); the window
     /// work hops to the main actor, so presentation is next-runloop.
-    static func show<Style: ToastTheme>(_ title: String, actions: [Action]? = nil, dismissAfter: ToastViewDismissPolicy = .interval(5.0), theme: Style = .defaultTheme, aboveMiniPlayer: Bool = false) {
+    static func show(_ title: String, actions: [Action]? = nil, dismissAfter: ToastViewDismissPolicy = .interval(5.0), aboveMiniPlayer: Bool = false) {
+        let box = PocketCastsUtils.UncheckedSendable(actions)
+        Task { @MainActor in
+            showOnMain(title, actions: box.value, dismissAfter: dismissAfter, theme: .defaultTheme, aboveMiniPlayer: aboveMiniPlayer)
+        }
+    }
+
+    /// Variant with an explicit theme. Also callable from any thread; the theme
+    /// object crosses to the main actor boxed.
+    static func show<Style: ToastTheme>(_ title: String, actions: [Action]? = nil, dismissAfter: ToastViewDismissPolicy = .interval(5.0), theme: Style, aboveMiniPlayer: Bool = false) {
         let box = PocketCastsUtils.UncheckedSendable((actions, theme))
         Task { @MainActor in
             showOnMain(title, actions: box.value.0, dismissAfter: dismissAfter, theme: box.value.1, aboveMiniPlayer: aboveMiniPlayer)

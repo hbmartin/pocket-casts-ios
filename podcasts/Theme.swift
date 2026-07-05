@@ -91,13 +91,28 @@ extension ThemeType: AnalyticsDescribable {
     }
 }
 
+@MainActor
 class Theme: ObservableObject {
-    static let themeKey = "theme"
-    static let preferredDarkThemeKey = "preferredDarkTheme"
-    static let preferredLightThemeKey = "preferredLightTheme"
-    static let sharedTheme = Theme()
+    nonisolated static let themeKey = "theme"
+    nonisolated static let preferredDarkThemeKey = "preferredDarkTheme"
+    nonisolated static let preferredLightThemeKey = "preferredLightTheme"
+    // nonisolated(unsafe): the singleton must be reachable from nonisolated code
+    // (generated ThemeColor accessors, data helpers). Initialization is
+    // dispatch_once-guarded, property observers do not fire during init, and the
+    // init touches only thread-safe state; isolated members remain checked at use.
+    nonisolated(unsafe) static let sharedTheme = Theme()
 
     typealias ThemeType = PocketCastsServer.ThemeType
+
+    /// Lock-guarded mirror of `activeTheme` so nonisolated code (including the
+    /// generated ThemeColor accessors) can read the current theme without hopping
+    /// to the main actor. Written only from `activeTheme`'s observers on main.
+    nonisolated private let activeThemeSnapshot = ThemeSnapshotBox()
+
+    /// The current theme, readable from any thread.
+    nonisolated var nonisolatedActiveTheme: ThemeType {
+        activeThemeSnapshot.value
+    }
 
     @Published var activeTheme: ThemeType {
         willSet {
@@ -108,6 +123,8 @@ class Theme: ObservableObject {
             }
         }
         didSet {
+            activeThemeSnapshot.value = activeTheme
+
             if FeatureFlag.newSettingsStorage.enabled {
                 SettingsStore.appSettings.theme = activeTheme
             }
@@ -130,12 +147,14 @@ class Theme: ObservableObject {
             }
             activeTheme = ThemeType(old: ThemeType.Old(rawValue: savedTheme) ?? .light)
         }
+        activeThemeSnapshot.value = activeTheme
 
         NotificationCenter.default.addObserver(self, selector: #selector(systemThemeDidChange(_:)), name: Constants.Notifications.systemThemeMayHaveChanged, object: nil)
     }
 
     init(previewTheme: ThemeType) {
         activeTheme = previewTheme
+        activeThemeSnapshot.value = previewTheme
     }
 
     deinit {
@@ -148,8 +167,8 @@ class Theme: ObservableObject {
         }
     }
 
-    class func isDarkTheme() -> Bool {
-        Theme.sharedTheme.activeTheme.isDark
+    nonisolated class func isDarkTheme() -> Bool {
+        Theme.sharedTheme.nonisolatedActiveTheme.isDark
     }
 
     class func preferredDarkTheme() -> ThemeType {
@@ -286,5 +305,16 @@ class Theme: ObservableObject {
         let circleRect = CGRect(x: originViewFrame.origin.x - xOffset, y: originViewFrame.origin.y - yOffset, width: size, height: size)
 
         return UIBezierPath(roundedRect: circleRect, cornerRadius: size / 2.0)
+    }
+}
+
+/// A minimal lock-guarded box for mirroring the active theme to nonisolated readers.
+private final class ThemeSnapshotBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: Theme.ThemeType = .light
+
+    var value: Theme.ThemeType {
+        get { lock.withLock { storage } }
+        set { lock.withLock { storage = newValue } }
     }
 }

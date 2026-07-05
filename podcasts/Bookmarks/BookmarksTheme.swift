@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 
+@MainActor
 protocol BookmarksStyle: ObservableObject {
     associatedtype ActionStyle: ActionBarStyle
     associatedtype EmptyStyle: EmptyStateViewStyle
@@ -24,6 +25,7 @@ protocol BookmarksStyle: ObservableObject {
 
 // MARK: - ThemeObserver
 
+@MainActor
 class ThemeObserver: ObservableObject {
     let theme: Theme = .sharedTheme
     private var cancellables = Set<AnyCancellable>()

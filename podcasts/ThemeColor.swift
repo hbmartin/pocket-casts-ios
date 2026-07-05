@@ -2342,7 +2342,7 @@ struct ThemeColor {
 
 
     static func primaryUi01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi01Light
@@ -2366,7 +2366,7 @@ struct ThemeColor {
     }
 
     static func primaryUi01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi01ActiveLight
@@ -2390,7 +2390,7 @@ struct ThemeColor {
     }
 
     static func primaryUi02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi02Light
@@ -2414,7 +2414,7 @@ struct ThemeColor {
     }
 
     static func primaryUi02Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi02SelectedLight
@@ -2438,7 +2438,7 @@ struct ThemeColor {
     }
 
     static func primaryUi02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi02ActiveLight
@@ -2462,7 +2462,7 @@ struct ThemeColor {
     }
 
     static func primaryUi03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi03Light
@@ -2486,7 +2486,7 @@ struct ThemeColor {
     }
 
     static func primaryUi04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi04Light
@@ -2510,7 +2510,7 @@ struct ThemeColor {
     }
 
     static func primaryUi05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi05Light
@@ -2534,7 +2534,7 @@ struct ThemeColor {
     }
 
     static func primaryUi05Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi05SelectedLight
@@ -2558,7 +2558,7 @@ struct ThemeColor {
     }
 
     static func primaryUi06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryUi06Light
@@ -2582,7 +2582,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon01Light
@@ -2606,7 +2606,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon01ActiveLight
@@ -2630,7 +2630,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon02Light
@@ -2654,7 +2654,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon02Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon02SelectedLight
@@ -2678,7 +2678,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon02ActiveLight
@@ -2702,7 +2702,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon03Light
@@ -2726,7 +2726,7 @@ struct ThemeColor {
     }
 
     static func primaryIcon03Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryIcon03ActiveLight
@@ -2750,7 +2750,7 @@ struct ThemeColor {
     }
 
     static func primaryText01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryText01Light
@@ -2774,7 +2774,7 @@ struct ThemeColor {
     }
 
     static func primaryText02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryText02Light
@@ -2798,7 +2798,7 @@ struct ThemeColor {
     }
 
     static func primaryText02Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryText02SelectedLight
@@ -2822,7 +2822,7 @@ struct ThemeColor {
     }
 
     static func primaryField01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryField01Light
@@ -2846,7 +2846,7 @@ struct ThemeColor {
     }
 
     static func primaryField01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryField01ActiveLight
@@ -2870,7 +2870,7 @@ struct ThemeColor {
     }
 
     static func primaryField02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryField02Light
@@ -2894,7 +2894,7 @@ struct ThemeColor {
     }
 
     static func primaryField02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryField02ActiveLight
@@ -2918,7 +2918,7 @@ struct ThemeColor {
     }
 
     static func primaryField03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryField03Light
@@ -2942,7 +2942,7 @@ struct ThemeColor {
     }
 
     static func primaryField03Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryField03ActiveLight
@@ -2966,7 +2966,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive01Light
@@ -2990,7 +2990,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive01Hover(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive01HoverLight
@@ -3014,7 +3014,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive01ActiveLight
@@ -3038,7 +3038,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive01Disabled(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive01DisabledLight
@@ -3062,7 +3062,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive02Light
@@ -3086,7 +3086,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive02Hover(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive02HoverLight
@@ -3110,7 +3110,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive02ActiveLight
@@ -3134,7 +3134,7 @@ struct ThemeColor {
     }
 
     static func primaryInteractive03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.primaryInteractive03Light
@@ -3158,7 +3158,7 @@ struct ThemeColor {
     }
 
     static func secondaryUi01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryUi01Light
@@ -3182,7 +3182,7 @@ struct ThemeColor {
     }
 
     static func secondaryUi02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryUi02Light
@@ -3206,7 +3206,7 @@ struct ThemeColor {
     }
 
     static func secondaryIcon01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryIcon01Light
@@ -3230,7 +3230,7 @@ struct ThemeColor {
     }
 
     static func secondaryIcon02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryIcon02Light
@@ -3254,7 +3254,7 @@ struct ThemeColor {
     }
 
     static func secondaryText01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryText01Light
@@ -3278,7 +3278,7 @@ struct ThemeColor {
     }
 
     static func secondaryText02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryText02Light
@@ -3302,7 +3302,7 @@ struct ThemeColor {
     }
 
     static func secondaryField01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryField01Light
@@ -3326,7 +3326,7 @@ struct ThemeColor {
     }
 
     static func secondaryField01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryField01ActiveLight
@@ -3350,7 +3350,7 @@ struct ThemeColor {
     }
 
     static func secondaryInteractive01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryInteractive01Light
@@ -3374,7 +3374,7 @@ struct ThemeColor {
     }
 
     static func secondaryInteractive01Hover(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryInteractive01HoverLight
@@ -3398,7 +3398,7 @@ struct ThemeColor {
     }
 
     static func secondaryInteractive01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.secondaryInteractive01ActiveLight
@@ -3422,7 +3422,7 @@ struct ThemeColor {
     }
 
     static func podcastUi01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastUi01Light(podcastColor: podcastColor)
@@ -3446,7 +3446,7 @@ struct ThemeColor {
     }
 
     static func podcastUi02(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastUi02Light(podcastColor: podcastColor)
@@ -3470,7 +3470,7 @@ struct ThemeColor {
     }
 
     static func podcastUi03(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastUi03Light(podcastColor: podcastColor)
@@ -3494,7 +3494,7 @@ struct ThemeColor {
     }
 
     static func podcastUi04(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastUi04Light(podcastColor: podcastColor)
@@ -3518,7 +3518,7 @@ struct ThemeColor {
     }
 
     static func podcastUi05(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastUi05Light(podcastColor: podcastColor)
@@ -3542,7 +3542,7 @@ struct ThemeColor {
     }
 
     static func podcastUi06(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastUi06Light(podcastColor: podcastColor)
@@ -3566,7 +3566,7 @@ struct ThemeColor {
     }
 
     static func podcastIcon01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastIcon01Light(podcastColor: podcastColor)
@@ -3590,7 +3590,7 @@ struct ThemeColor {
     }
 
     static func podcastIcon02(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastIcon02Light(podcastColor: podcastColor)
@@ -3614,7 +3614,7 @@ struct ThemeColor {
     }
 
     static func podcastIcon03(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastIcon03Light(podcastColor: podcastColor)
@@ -3638,7 +3638,7 @@ struct ThemeColor {
     }
 
     static func podcastText01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastText01Light(podcastColor: podcastColor)
@@ -3662,7 +3662,7 @@ struct ThemeColor {
     }
 
     static func podcastText02(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastText02Light(podcastColor: podcastColor)
@@ -3686,7 +3686,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive01Light(podcastColor: podcastColor)
@@ -3710,7 +3710,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive01Active(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive01ActiveLight(podcastColor: podcastColor)
@@ -3734,7 +3734,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive02(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive02Light(podcastColor: podcastColor)
@@ -3758,7 +3758,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive03(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive03Light(podcastColor: podcastColor)
@@ -3782,7 +3782,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive03Active(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive03ActiveLight(podcastColor: podcastColor)
@@ -3806,7 +3806,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive04(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive04Light(podcastColor: podcastColor)
@@ -3830,7 +3830,7 @@ struct ThemeColor {
     }
 
     static func podcastInteractive05(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastInteractive05Light(podcastColor: podcastColor)
@@ -3854,7 +3854,7 @@ struct ThemeColor {
     }
 
     static func podcastOndark(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastOndarkLight(podcastColor: podcastColor)
@@ -3878,7 +3878,7 @@ struct ThemeColor {
     }
 
     static func podcastOnlight(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.podcastOnlightLight(podcastColor: podcastColor)
@@ -3902,7 +3902,7 @@ struct ThemeColor {
     }
 
     static func filterUi01(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterUi01Light(filterColor: filterColor)
@@ -3926,7 +3926,7 @@ struct ThemeColor {
     }
 
     static func filterUi02(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterUi02Light(filterColor: filterColor)
@@ -3950,7 +3950,7 @@ struct ThemeColor {
     }
 
     static func filterUi03(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterUi03Light(filterColor: filterColor)
@@ -3974,7 +3974,7 @@ struct ThemeColor {
     }
 
     static func filterUi04(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterUi04Light(filterColor: filterColor)
@@ -3998,7 +3998,7 @@ struct ThemeColor {
     }
 
     static func filterIcon01(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterIcon01Light(filterColor: filterColor)
@@ -4022,7 +4022,7 @@ struct ThemeColor {
     }
 
     static func filterIcon02(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterIcon02Light(filterColor: filterColor)
@@ -4046,7 +4046,7 @@ struct ThemeColor {
     }
 
     static func filterText01(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterText01Light(filterColor: filterColor)
@@ -4070,7 +4070,7 @@ struct ThemeColor {
     }
 
     static func filterText02(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterText02Light(filterColor: filterColor)
@@ -4094,7 +4094,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive01(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive01Light(filterColor: filterColor)
@@ -4118,7 +4118,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive01Active(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive01ActiveLight(filterColor: filterColor)
@@ -4142,7 +4142,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive02(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive02Light(filterColor: filterColor)
@@ -4166,7 +4166,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive03(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive03Light(filterColor: filterColor)
@@ -4190,7 +4190,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive03Active(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive03ActiveLight(filterColor: filterColor)
@@ -4214,7 +4214,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive04(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive04Light(filterColor: filterColor)
@@ -4238,7 +4238,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive05(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive05Light(filterColor: filterColor)
@@ -4262,7 +4262,7 @@ struct ThemeColor {
     }
 
     static func filterInteractive06(filterColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filterInteractive06Light(filterColor: filterColor)
@@ -4286,7 +4286,7 @@ struct ThemeColor {
     }
 
     static func support01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support01Light
@@ -4310,7 +4310,7 @@ struct ThemeColor {
     }
 
     static func support02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support02Light
@@ -4334,7 +4334,7 @@ struct ThemeColor {
     }
 
     static func support03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support03Light
@@ -4358,7 +4358,7 @@ struct ThemeColor {
     }
 
     static func support04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support04Light
@@ -4382,7 +4382,7 @@ struct ThemeColor {
     }
 
     static func support05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support05Light
@@ -4406,7 +4406,7 @@ struct ThemeColor {
     }
 
     static func support06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support06Light
@@ -4430,7 +4430,7 @@ struct ThemeColor {
     }
 
     static func support07(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support07Light
@@ -4454,7 +4454,7 @@ struct ThemeColor {
     }
 
     static func support08(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support08Light
@@ -4478,7 +4478,7 @@ struct ThemeColor {
     }
 
     static func support09(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support09Light
@@ -4502,7 +4502,7 @@ struct ThemeColor {
     }
 
     static func support10(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.support10Light
@@ -4526,7 +4526,7 @@ struct ThemeColor {
     }
 
     static func playerBackground01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerBackground01Light(podcastColor: podcastColor)
@@ -4550,7 +4550,7 @@ struct ThemeColor {
     }
 
     static func playerBackground02(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerBackground02Light(podcastColor: podcastColor)
@@ -4574,7 +4574,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight01Light(podcastColor: podcastColor)
@@ -4598,7 +4598,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight02(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight02Light(podcastColor: podcastColor)
@@ -4622,7 +4622,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight03(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight03Light(podcastColor: podcastColor)
@@ -4646,7 +4646,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight04(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight04Light(podcastColor: podcastColor)
@@ -4670,7 +4670,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight05(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight05Light(podcastColor: podcastColor)
@@ -4694,7 +4694,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight06(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight06Light(podcastColor: podcastColor)
@@ -4718,7 +4718,7 @@ struct ThemeColor {
     }
 
     static func playerHighlight07(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerHighlight07Light(podcastColor: podcastColor)
@@ -4742,7 +4742,7 @@ struct ThemeColor {
     }
 
     static func playerContrast01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerContrast01Light
@@ -4766,7 +4766,7 @@ struct ThemeColor {
     }
 
     static func playerContrast02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerContrast02Light
@@ -4790,7 +4790,7 @@ struct ThemeColor {
     }
 
     static func playerContrast03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerContrast03Light
@@ -4814,7 +4814,7 @@ struct ThemeColor {
     }
 
     static func playerContrast04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerContrast04Light
@@ -4838,7 +4838,7 @@ struct ThemeColor {
     }
 
     static func playerContrast05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerContrast05Light
@@ -4862,7 +4862,7 @@ struct ThemeColor {
     }
 
     static func playerContrast06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.playerContrast06Light
@@ -4886,7 +4886,7 @@ struct ThemeColor {
     }
 
     static func contrast01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.contrast01Light
@@ -4910,7 +4910,7 @@ struct ThemeColor {
     }
 
     static func contrast02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.contrast02Light
@@ -4934,7 +4934,7 @@ struct ThemeColor {
     }
 
     static func contrast03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.contrast03Light
@@ -4958,7 +4958,7 @@ struct ThemeColor {
     }
 
     static func contrast04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.contrast04Light
@@ -4982,7 +4982,7 @@ struct ThemeColor {
     }
 
     static func filter01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter01Light
@@ -5006,7 +5006,7 @@ struct ThemeColor {
     }
 
     static func filter02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter02Light
@@ -5030,7 +5030,7 @@ struct ThemeColor {
     }
 
     static func filter03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter03Light
@@ -5054,7 +5054,7 @@ struct ThemeColor {
     }
 
     static func filter04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter04Light
@@ -5078,7 +5078,7 @@ struct ThemeColor {
     }
 
     static func filter05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter05Light
@@ -5102,7 +5102,7 @@ struct ThemeColor {
     }
 
     static func filter06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter06Light
@@ -5126,7 +5126,7 @@ struct ThemeColor {
     }
 
     static func filter07(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter07Light
@@ -5150,7 +5150,7 @@ struct ThemeColor {
     }
 
     static func filter08(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter08Light
@@ -5174,7 +5174,7 @@ struct ThemeColor {
     }
 
     static func filter09(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter09Light
@@ -5198,7 +5198,7 @@ struct ThemeColor {
     }
 
     static func filter10(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter10Light
@@ -5222,7 +5222,7 @@ struct ThemeColor {
     }
 
     static func filter11(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter11Light
@@ -5246,7 +5246,7 @@ struct ThemeColor {
     }
 
     static func filter12(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.filter12Light
@@ -5270,7 +5270,7 @@ struct ThemeColor {
     }
 
     static func veil(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.veilLight
@@ -5294,7 +5294,7 @@ struct ThemeColor {
     }
 
     static func gradient01A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient01ALight
@@ -5318,7 +5318,7 @@ struct ThemeColor {
     }
 
     static func gradient01E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient01ELight
@@ -5342,7 +5342,7 @@ struct ThemeColor {
     }
 
     static func gradient02A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient02ALight
@@ -5366,7 +5366,7 @@ struct ThemeColor {
     }
 
     static func gradient02E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient02ELight
@@ -5390,7 +5390,7 @@ struct ThemeColor {
     }
 
     static func gradient03A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient03ALight
@@ -5414,7 +5414,7 @@ struct ThemeColor {
     }
 
     static func gradient03E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient03ELight
@@ -5438,7 +5438,7 @@ struct ThemeColor {
     }
 
     static func gradient04A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient04ALight
@@ -5462,7 +5462,7 @@ struct ThemeColor {
     }
 
     static func gradient04E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient04ELight
@@ -5486,7 +5486,7 @@ struct ThemeColor {
     }
 
     static func gradient05A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient05ALight
@@ -5510,7 +5510,7 @@ struct ThemeColor {
     }
 
     static func gradient05E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.gradient05ELight
@@ -5534,7 +5534,7 @@ struct ThemeColor {
     }
 
     static func imageFilter01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.imageFilter01Light
@@ -5558,7 +5558,7 @@ struct ThemeColor {
     }
 
     static func imageFilter02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.imageFilter02Light
@@ -5582,7 +5582,7 @@ struct ThemeColor {
     }
 
     static func imageFilter03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.imageFilter03Light
@@ -5606,7 +5606,7 @@ struct ThemeColor {
     }
 
     static func imageFilter04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.imageFilter04Light
@@ -5630,7 +5630,7 @@ struct ThemeColor {
     }
 
     static func category01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category01Light
@@ -5654,7 +5654,7 @@ struct ThemeColor {
     }
 
     static func category02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category02Light
@@ -5678,7 +5678,7 @@ struct ThemeColor {
     }
 
     static func category03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category03Light
@@ -5702,7 +5702,7 @@ struct ThemeColor {
     }
 
     static func category04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category04Light
@@ -5726,7 +5726,7 @@ struct ThemeColor {
     }
 
     static func category05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category05Light
@@ -5750,7 +5750,7 @@ struct ThemeColor {
     }
 
     static func category06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category06Light
@@ -5774,7 +5774,7 @@ struct ThemeColor {
     }
 
     static func category07(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category07Light
@@ -5798,7 +5798,7 @@ struct ThemeColor {
     }
 
     static func category08(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category08Light
@@ -5822,7 +5822,7 @@ struct ThemeColor {
     }
 
     static func category09(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category09Light
@@ -5846,7 +5846,7 @@ struct ThemeColor {
     }
 
     static func category10(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category10Light
@@ -5870,7 +5870,7 @@ struct ThemeColor {
     }
 
     static func category11(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category11Light
@@ -5894,7 +5894,7 @@ struct ThemeColor {
     }
 
     static func category12(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category12Light
@@ -5918,7 +5918,7 @@ struct ThemeColor {
     }
 
     static func category13(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category13Light
@@ -5942,7 +5942,7 @@ struct ThemeColor {
     }
 
     static func category14(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category14Light
@@ -5966,7 +5966,7 @@ struct ThemeColor {
     }
 
     static func category15(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category15Light
@@ -5990,7 +5990,7 @@ struct ThemeColor {
     }
 
     static func category16(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category16Light
@@ -6014,7 +6014,7 @@ struct ThemeColor {
     }
 
     static func category17(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category17Light
@@ -6038,7 +6038,7 @@ struct ThemeColor {
     }
 
     static func category18(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category18Light
@@ -6062,7 +6062,7 @@ struct ThemeColor {
     }
 
     static func category19(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.activeTheme
+        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
         switch theme {
         case .light:
             return ThemeColor.category19Light

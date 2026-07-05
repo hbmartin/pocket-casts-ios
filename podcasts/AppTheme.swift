@@ -3,10 +3,11 @@ import SwiftUI
 import PocketCastsUtils
 import PocketCastsServer
 
+@MainActor
 class AppTheme {
-    private static let tintColor = UIColor(hex: "#F44336")
+    nonisolated private static let tintColor = UIColor(hex: "#F44336")
 
-    class func appTintColor() -> UIColor {
+    nonisolated class func appTintColor() -> UIColor {
         AppTheme.tintColor
     }
 
@@ -72,7 +73,7 @@ class AppTheme {
         (theme?.isDark ?? Theme.isDarkTheme()) ? UIColor(hex: "#3A3A3B") : UIColor(hex: "#FBFBFB")
     }
 
-    class func switchDarkThemeDefaultColor() -> UIColor {
+    nonisolated class func switchDarkThemeDefaultColor() -> UIColor {
         UIColor(hex: "#CCCCCC")
     }
 
@@ -534,12 +535,12 @@ class AppTheme {
     // MARK: - Getting Colors from ThemeStyles
 
     /// Returns a SwiftUI color for the theme style
-    static func color(for style: ThemeStyle, theme: Theme? = nil) -> Color {
-        return colorForStyle(style, themeOverride: theme?.activeTheme).color
+    nonisolated static func color(for style: ThemeStyle, theme: Theme? = nil) -> Color {
+        return colorForStyle(style, themeOverride: theme?.nonisolatedActiveTheme).color
     }
 
     // TODO: there probably is a more elegant way to do this...
-    class func colorForStyle(_ style: ThemeStyle, themeOverride: Theme.ThemeType? = nil) -> UIColor {
+    nonisolated class func colorForStyle(_ style: ThemeStyle, themeOverride: Theme.ThemeType? = nil) -> UIColor {
         switch style {
         case .primaryText01: return ThemeColor.primaryText01(for: themeOverride)
         case .primaryText02: return ThemeColor.primaryText02(for: themeOverride)

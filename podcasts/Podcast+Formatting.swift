@@ -61,14 +61,14 @@ extension Podcast {
     }
 
         func iconTintColor(for theme: Theme.ThemeType? = nil) -> UIColor {
-            let theme = theme ?? Theme.sharedTheme.activeTheme
+            let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
             let podcastColor = theme.isDark ? ColorManager.darkThemeTintForPodcast(self) : ColorManager.lightThemeTintForPodcast(self)
 
             return ThemeColor.podcastIcon02(podcastColor: podcastColor, for: theme)
         }
 
         func navigationBarTintColor(for theme: Theme.ThemeType? = nil) -> UIColor {
-            let theme = theme ?? Theme.sharedTheme.activeTheme
+            let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
             let podcastColor = theme.isDark ? ColorManager.darkThemeTintForPodcast(self) : ColorManager.lightThemeTintForPodcast(self)
 
             return ThemeColor.podcastUi01(podcastColor: podcastColor, for: theme)

@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import UIKit
 
+@MainActor
 struct PlayerColorHelper {
     static func playerBackgroundColor01(for theme: Theme.ThemeType = Theme.sharedTheme.activeTheme,
                                         episode: BaseEpisode? = PlaybackManager.shared.currentEpisode()) -> UIColor {

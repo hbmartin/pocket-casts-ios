@@ -74,7 +74,6 @@ podcasts/AutoplayHelper.swift: warning: static property 'shared' is not concurre
 podcasts/BackgroundShakeObserver.swift: warning: capture of 'self' with non-Sendable type 'BackgroundShakeObserver?' in a '@Sendable' closure
 podcasts/Beta/BetaMenu.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'PocketCastsUtils'
 podcasts/Beta/BetaMenu.swift: warning: capture of 'self' with non-Sendable type 'FeatureFlag' in a '@Sendable' closure
-podcasts/Bookmarks/BookmarksTheme.swift: warning: main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/Editing/BookmarkEditTitleViewController.swift: warning: conformance of 'BookmarkEditTitleViewController' to protocol 'BookmarkEditRouter' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: sending 'self.bookmark' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Bookmarks/Editing/BookmarkEditViewModel.swift: warning: sending 'self.bookmarkManager' risks causing data races; this is an error in the Swift 6 language mode
@@ -163,7 +162,6 @@ podcasts/Folders/Create & Edit/Views/SuggestedFoldersView.swift: warning: static
 podcasts/GridLayout.swift: warning: conformance of 'GridLayout' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/IconSelectorCell.swift: warning: conformance of 'IconSelectorCell' to protocol 'GridLayoutDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ImportExportViewController.swift: warning: conformance of 'ImportExportViewController' to protocol 'UIDocumentInteractionControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/LiquidGlass.swift: warning: static property 'systemIsDark' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/ListeningHistoryViewController+Swipe.swift: warning: conformance of 'ListeningHistoryViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Lists/HomeGridListItem.swift: warning: static property 'empty' is not concurrency-safe because non-'Sendable' type 'HomeGridListItem' may have shared mutable state; this is an error in the Swift 6 language mode
@@ -198,11 +196,7 @@ podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: capture of 'completion' with non-Sendable type '(Bool) -> Void' in a '@Sendable' closure
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/Onboarding/Intro Carousel/IntroCarouselDataSource.swift: warning: call to main actor-isolated initializer 'init(item:theme:)' in a synchronous nonisolated context
-podcasts/Onboarding/Intro Carousel/IntroCarouselDataSource.swift: warning: sending 'self.theme' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Intro Carousel/IntroCarouselDataSource.swift: warning: sending value of non-Sendable type 'CarouselItem' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Intro Carousel/IntroCarouselStory.swift: warning: conformance of 'IntroCarouselStory' to protocol 'Story' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Intro Carousel/StoriesView.swift: warning: sending 'self.dataSource' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingFlow.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/OnlineSupportController.swift: warning: main actor-isolated property 'navigationDelegate' can not be mutated from a nonisolated context
 podcasts/OnlineSupportController.swift: warning: sending value of non-Sendable type 'DatabaseExport' risks causing data races; this is an error in the Swift 6 language mode
@@ -289,18 +283,8 @@ podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sen
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure
 podcasts/StreamingCellularTracker.swift: warning: capture of 'self' with non-Sendable type 'StreamingCellularTracker?' in a '@Sendable' closure; this is an error in the Swift 6 language mode
 podcasts/Styles.swift: warning: conformance of 'RequiredFieldStyle' to protocol 'TextFieldStyle' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Theme.swift: warning: call to main actor-isolated instance method 'addSubview' in a synchronous nonisolated context
-podcasts/Theme.swift: warning: call to main actor-isolated instance method 'anchorToAllSidesOf(view:)' in a synchronous nonisolated context
-podcasts/Theme.swift: warning: call to main actor-isolated instance method 'convert(_:from:)' in a synchronous nonisolated context
-podcasts/Theme.swift: warning: call to main actor-isolated instance method 'removeFromSuperview()' in a synchronous nonisolated context
-podcasts/Theme.swift: warning: call to main actor-isolated instance method 'sj_snapshot(afterScreenUpdate:opaque:)' in a synchronous nonisolated context
-podcasts/Theme.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/Theme.swift: warning: main actor-isolated property 'applicationState' can not be referenced from a nonisolated context
-podcasts/Theme.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
-podcasts/Theme.swift: warning: main actor-isolated property 'frame' can not be referenced from a nonisolated context
-podcasts/Theme.swift: warning: main actor-isolated property 'layer' can not be mutated from a nonisolated context
-podcasts/Theme.swift: warning: main actor-isolated property 'superview' can not be referenced from a nonisolated context
-podcasts/Theme.swift: warning: static property 'sharedTheme' is not concurrency-safe because non-'Sendable' type 'Theme' may have shared mutable state; this is an error in the Swift 6 language mode
+podcasts/Theme.swift: warning: 'nonisolated(unsafe)' is unnecessary for a constant with 'Sendable' type 'Theme', consider removing it
+podcasts/Theme.swift: warning: main actor-isolated default value in a nonisolated(unsafe) context; this is an error in the Swift 6 language mode
 podcasts/Theme/Themable Views/ThemeableButton.swift: warning: call to main actor-isolated instance method 'setup()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/ThemeableCell.swift: warning: call to main actor-isolated instance method 'updateColor()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/ThemeableCollectionCell.swift: warning: call to main actor-isolated instance method 'updateColor' in a synchronous nonisolated context
