@@ -182,11 +182,12 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         Settings.lastAppVersionThatRunVacuum = appVersion
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
+            // The loader is UI; the main actor's FIFO ordering guarantees present-then-dismiss
             if DataManager.sharedManager.podcastCount() > 100 {
-                presentLoader()
+                Task { @MainActor in self.presentLoader() }
             }
             DataManager.sharedManager.vacuumDatabase()
-            dismissLoader()
+            Task { @MainActor in self.dismissLoader() }
         }
     }
 

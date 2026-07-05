@@ -21,9 +21,14 @@ extension VideoViewController {
 
         stopHideControlsTimer()
 
-        showHideTimer = Timer.scheduledTimer(withTimeInterval: VideoViewController.controlHideTime, repeats: false, block: { [weak self] _ in
-            self?.hideVideoControls()
+        let timer = Timer(timeInterval: VideoViewController.controlHideTime, repeats: false, block: { [weak self] _ in
+            // Scheduled on the main run loop below, so the callback is main-actor
+            MainActor.assumeIsolated {
+                self?.hideVideoControls()
+            }
         })
+        RunLoop.main.add(timer, forMode: .common)
+        showHideTimer = timer
     }
 
     func stopHideControlsTimer() {
