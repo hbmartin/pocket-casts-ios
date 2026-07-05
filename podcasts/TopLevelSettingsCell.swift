@@ -27,12 +27,15 @@ class TopLevelSettingsCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
-        setupDisclosureImageView()
-        settingsLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        updateColor()
-        updateSize()
+            setupDisclosureImageView()
+            settingsLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+            updateColor()
+            updateSize()
+        }
     }
 
     private func setupDisclosureImageView() {

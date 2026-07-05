@@ -31,9 +31,12 @@ class SwitchCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        accessoryView = cellSwitch
-        setNoImage()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            accessoryView = cellSwitch
+            setNoImage()
+        }
     }
 
     override func handleThemeDidChange() {

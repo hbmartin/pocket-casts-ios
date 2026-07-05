@@ -16,7 +16,10 @@ class TintableImageView: UIImageView {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        super.image = image?.tintedImage(tintColor)
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            super.image = image?.tintedImage(tintColor)
+        }
     }
 
     override var tintColor: UIColor! {

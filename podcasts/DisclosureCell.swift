@@ -23,12 +23,15 @@ class DisclosureCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        // Ensure label can expand vertically
-        cellLabel.setContentCompressionResistancePriority(.required, for: .vertical)
-        cellLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
-        setImage(imageName: nil)
-        updateSize()
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            // Ensure label can expand vertically
+            cellLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+            cellLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
+            setImage(imageName: nil)
+            updateSize()
+        }
     }
 
     override func prepareForReuse() {

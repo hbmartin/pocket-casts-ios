@@ -24,12 +24,15 @@ class CheckboxCell: ThemeableCell {
     private var tickImageView: UIImageView!
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        let tickImage = UIImage(named: "tick")
-        tickImageView = UIImageView(frame: CGRect(x: 2, y: 2, width: 20, height: 20))
-        tickImageView.image = tickImage
-        tickImageView.tintColor = ThemeColor.primaryInteractive02()
-        selectButton.imageView?.addSubview(tickImageView)
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            let tickImage = UIImage(named: "tick")
+            tickImageView = UIImageView(frame: CGRect(x: 2, y: 2, width: 20, height: 20))
+            tickImageView.image = tickImage
+            tickImageView.tintColor = ThemeColor.primaryInteractive02()
+            selectButton.imageView?.addSubview(tickImageView)
+        }
     }
 
     func setSelectedState(_ selected: Bool) {

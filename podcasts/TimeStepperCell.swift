@@ -24,12 +24,15 @@ class TimeStepperCell: ThemeableCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
-        cellTextToImageConstraint.isActive = false
-        cellTextToMarginConstraint.isActive = true
+            cellTextToImageConstraint.isActive = false
+            cellTextToMarginConstraint.isActive = true
 
-        timeStepper.addTarget(self, action: #selector(stepperChanged(_:)), for: .valueChanged)
+            timeStepper.addTarget(self, action: #selector(stepperChanged(_:)), for: .valueChanged)
+        }
     }
 
     override func prepareForReuse() {

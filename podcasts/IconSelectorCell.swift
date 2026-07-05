@@ -212,13 +212,16 @@ class IconSelectorCell: ThemeableCell, UICollectionViewDataSource, UICollectionV
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        selectedIcon = IconType(iconName: UIApplication.shared.alternateIconName ?? "AppIcon-Default")
+        // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
+        MainActor.assumeIsolated {
+            selectedIcon = IconType(iconName: UIApplication.shared.alternateIconName ?? "AppIcon-Default")
 
-        if let gridLayout = collectionView.collectionViewLayout as? GridLayout {
-            gridLayout.delegate = self
-            gridLayout.numberOfRowsOrColumns = 1
-            gridLayout.scrollDirection = .horizontal
-            gridLayout.itemSpacing = itemSpacing
+            if let gridLayout = collectionView.collectionViewLayout as? GridLayout {
+                gridLayout.delegate = self
+                gridLayout.numberOfRowsOrColumns = 1
+                gridLayout.scrollDirection = .horizontal
+                gridLayout.itemSpacing = itemSpacing
+            }
         }
     }
 
