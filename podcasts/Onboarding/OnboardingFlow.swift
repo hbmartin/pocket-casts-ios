@@ -11,6 +11,7 @@ struct OnboardingFlow: AnalyticsSourceProvider {
 
     private(set) var accountCreated: ((Bool)->())?
 
+    @MainActor
     mutating func begin(flow: Flow, in controller: UIViewController? = nil, source: OnboardingFlowSource, context: Context? = nil, customTitle: String? = nil, accountCreated: ((Bool)->())? = nil) -> UIViewController {
         self.currentFlow = flow
         self.source = source

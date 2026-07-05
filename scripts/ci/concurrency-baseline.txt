@@ -355,74 +355,20 @@ podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoo
 podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: call to main actor-isolated instance method 'anchorToAllSidesOf(view:)' in a synchronous nonisolated context
 podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: main actor-isolated property 'themedUIView' can not be referenced from a nonisolated context
 podcasts/Onboarding/Encourage Account Creation/Banner/InformationalBannerViewCoordinator.swift: warning: sending value of non-Sendable type 'InformationalBannerViewModel' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated initializer 'init(rootView:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated initializer 'init(rootViewController:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated initializer 'init(theme:currentIndex:viewModel:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated instance method 'isiPad()' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated instance method 'pushViewController(_:animated:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: call to main actor-isolated instance method 'setupDefaultEnvironment(theme:)' in a synchronous nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: main actor-isolated class property 'current' can not be referenced from a nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: main actor-isolated property 'modalPresentationStyle' can not be mutated from a nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: main actor-isolated property 'viewModel' can not be mutated from a nonisolated context
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: non-Sendable 'some View'-typed result can not be returned from main actor-isolated instance method 'setupDefaultEnvironment(theme:)' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: sending 'viewModel' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Encourage Account Creation/Modal/InformationalModalViewModel.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated property 'opmlImportInProgress' can not be mutated from a Sendable closure
 podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated property 'opmlURLImportResult' can not be mutated from a Sendable closure
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated initializer 'init(rootView:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated initializer 'init(rootViewController:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated initializer 'init(theme:presentationMode:opmlURLText:opmlURLImportResult:opmlImportInProgress:opmlButtonTitle:importSource:viewModel:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated initializer 'init(theme:viewModel:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'pushViewController(_:animated:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'setupDefaultEnvironment(theme:)' in a synchronous nonisolated context
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: capture of 'completion' with non-Sendable type '(Bool) -> Void' in a '@Sendable' closure
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: capture of 'self' with non-Sendable type 'ImportViewModel' in a '@Sendable' closure
 podcasts/Onboarding/Import/ImportViewModel.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: main actor-isolated property 'viewModel' can not be mutated from a nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: non-Sendable 'some View'-typed result can not be returned from main actor-isolated instance method 'setupDefaultEnvironment(theme:)' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: sending 'viewModel' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Intro Carousel/IntroCarouselDataSource.swift: warning: call to main actor-isolated initializer 'init(item:theme:)' in a synchronous nonisolated context
 podcasts/Onboarding/Intro Carousel/IntroCarouselDataSource.swift: warning: sending 'self.theme' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Intro Carousel/IntroCarouselDataSource.swift: warning: sending value of non-Sendable type 'CarouselItem' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Intro Carousel/IntroCarouselStory.swift: warning: conformance of 'IntroCarouselStory' to protocol 'Story' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Intro Carousel/StoriesView.swift: warning: sending 'self.dataSource' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated initializer 'init(coordinator:loginAgain:onCompleted:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated initializer 'init(rootView:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated initializer 'init(rootViewController:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated initializer 'init(theme:coordinator:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated initializer 'init(theme:coordinator:fullScreenMode:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated instance method 'isiPad()' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated instance method 'pushViewController(_:animated:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: call to main actor-isolated instance method 'setupDefaultEnvironment(theme:)' in a synchronous nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: main actor-isolated class property 'current' can not be referenced from a nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: main actor-isolated property 'modalPresentationStyle' can not be mutated from a nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: main actor-isolated property 'presentingViewController' can not be referenced from a nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: main actor-isolated property 'viewModel' can not be mutated from a nonisolated context
-podcasts/Onboarding/LoginCoordinator.swift: warning: non-Sendable 'some View'-typed result can not be returned from main actor-isolated instance method 'setupDefaultEnvironment(theme:)' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Onboarding/LoginCoordinator.swift: warning: sending 'coordinator' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/LoginCoordinator.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/LoginCoordinator.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingFlow.swift: warning: static property 'shared' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingFlow.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingHostingViewController.swift: warning: conformance of 'OnboardingHostingViewController<Content>' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingHostingViewController.swift: warning: conformance of 'OnboardingModalHostingViewController<Content>' to protocol 'AnalyticsSourceProvider' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: call to main actor-isolated initializer 'init(rootView:)' in a synchronous nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: call to main actor-isolated initializer 'init(rootViewController:)' in a synchronous nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: call to main actor-isolated initializer 'init(theme:viewModel:)' in a synchronous nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: call to main actor-isolated instance method 'pushViewController(_:animated:)' in a synchronous nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: call to main actor-isolated instance method 'setupDefaultEnvironment(theme:)' in a synchronous nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: main actor-isolated property 'navBarIsHidden' can not be mutated from a nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: main actor-isolated property 'viewModel' can not be mutated from a nonisolated context
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: non-Sendable 'some View'-typed result can not be returned from main actor-isolated instance method 'setupDefaultEnvironment(theme:)' to nonisolated context; this is an error in the Swift 6 language mode
-podcasts/Onboarding/Welcome/WelcomeViewModel.swift: warning: sending 'viewModel' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/OnlineSupportController.swift: warning: main actor-isolated property 'navigationDelegate' can not be mutated from a nonisolated context
 podcasts/OnlineSupportController.swift: warning: sending value of non-Sendable type 'DatabaseExport' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/PlaybackControlIntent.swift: warning: static property 'isDiscoverable' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
@@ -512,7 +458,6 @@ podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: conformance
 podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: conformance of 'PodcastViewController' to protocol 'BookmarkListRouter' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: conformance of 'PodcastViewController' to protocol 'PodcastActionsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: conformance of 'PodcastViewController' to protocol 'SFSafariViewControllerDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
-podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: conformance of 'PodcastViewController' to protocol 'SyncSigninDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/PodcastViewController.swift: warning: main actor-isolated property 'episodeInfo' can not be referenced from a Sendable closure
 podcasts/Podcasts/Podcast Page/PodcastViewController+Swipe.swift: warning: conformance of 'PodcastViewController' to protocol 'SwipeHandler' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Podcasts/Podcast Page/PodcastViewController+Swipe.swift: warning: conformance of 'PodcastViewController' to protocol 'SwipeTableViewCellDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
