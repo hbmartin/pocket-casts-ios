@@ -68,6 +68,7 @@ class ImportViewModel: OnboardingModel {
         let displayName: String
         let steps: String
 
+        @MainActor
         var isSourceAvailable: Bool {
             #if targetEnvironment(simulator)
             return true
@@ -96,6 +97,7 @@ class ImportViewModel: OnboardingModel {
             }
         }
 
+        @MainActor
         func openApp() {
             guard let url else { return }
 
@@ -115,8 +117,8 @@ class ImportViewModel: OnboardingModel {
             return URL(string: string)
         }
 
-        var debugDescription: String {
-            return "\(displayName): \(isSourceAvailable ? "Yes" : "No")"
+        nonisolated var debugDescription: String {
+            return displayName
         }
     }
 }
@@ -165,7 +167,7 @@ extension ImportViewModel {
 
 // MARK: - OPML from URL
 extension ImportViewModel {
-    func importFromURL(_ url: URL, completion: @escaping ((Bool) -> Void)) {
+    func importFromURL(_ url: URL, completion: @escaping @Sendable (Bool) -> Void) {
         let task = URLSession.shared.dataTask(with: url) { data, _, error in
             guard let data else {
                 print("Error downloading data: \(error?.localizedDescription ?? "Unknown error")")

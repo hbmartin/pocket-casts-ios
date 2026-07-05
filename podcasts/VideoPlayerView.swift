@@ -28,19 +28,26 @@ class VideoPlayerView: UIView {
         listenForVideoSize()
     }
 
+    // Cleanup-only reference for deinit, which may run off the main actor
+    nonisolated(unsafe) private var observedLayer: AVPlayerLayer?
+
     private func listenForVideoSize() {
-        playerLayer.addObserver(self, forKeyPath: "videoRect", options: .new, context: nil)
+        let layer = playerLayer
+        observedLayer = layer
+        layer.addObserver(self, forKeyPath: "videoRect", options: .new, context: nil)
     }
 
     deinit {
-        playerLayer.removeObserver(self, forKeyPath: "videoRect")
+        observedLayer?.removeObserver(self, forKeyPath: "videoRect")
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
-        guard keyPath == "videoRect", playerLayer.videoRect.size != CGSize.zero else { return }
+        Task { @MainActor [weak self] in
+            guard let self, keyPath == "videoRect", self.playerLayer.videoRect.size != CGSize.zero else { return }
 
-        if let videoSizeKnown, player != nil {
-            videoSizeKnown(playerLayer.videoRect.size)
+            if let videoSizeKnown = self.videoSizeKnown, self.player != nil {
+                videoSizeKnown(self.playerLayer.videoRect.size)
+            }
         }
     }
 

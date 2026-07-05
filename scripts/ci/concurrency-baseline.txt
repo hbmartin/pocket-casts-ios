@@ -192,9 +192,6 @@ podcasts/NowPlayingPlayerItemViewController+Shelf.swift: warning: conformance of
 podcasts/NowPlayingPlayerItemViewController+Shelf.swift: warning: conformance of 'NowPlayingPlayerItemViewController' to protocol 'NowPlayingActionsDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated property 'opmlImportInProgress' can not be mutated from a Sendable closure
 podcasts/Onboarding/Import/ImportDetailsView.swift: warning: main actor-isolated property 'opmlURLImportResult' can not be mutated from a Sendable closure
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: call to main actor-isolated instance method 'open(_:options:completionHandler:)' in a synchronous nonisolated context
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: capture of 'completion' with non-Sendable type '(Bool) -> Void' in a '@Sendable' closure
-podcasts/Onboarding/Import/ImportViewModel.swift: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
 podcasts/Onboarding/Intro Carousel/IntroCarouselStory.swift: warning: conformance of 'IntroCarouselStory' to protocol 'Story' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Onboarding/OnboardingFlow.swift: warning: type 'Any' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode
 podcasts/OnlineSupportController.swift: warning: main actor-isolated property 'navigationDelegate' can not be mutated from a nonisolated context
@@ -295,9 +292,6 @@ podcasts/Theme/Themable Views/ThemeableTable.swift: warning: call to main actor-
 podcasts/Theme/Themable Views/ThemeableTextView.swift: warning: call to main actor-isolated instance method 'setup()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeLoadingIndicator.swift: warning: call to main actor-isolated instance method 'setThemeColor()' in a synchronous nonisolated context
 podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryButton.swift: warning: call to main actor-isolated instance method 'setTintColorForTheme()' in a synchronous nonisolated context
-podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: call to main actor-isolated instance method 'setTintColorForTheme()' in a synchronous nonisolated context
-podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: main actor-isolated property 'image' can not be referenced from a nonisolated context
-podcasts/Theme/Themable Views/Themed but not configurable/ThemeSecondaryIcon.swift: warning: main actor-isolated property 'originalImage' can not be mutated from a nonisolated context
 podcasts/TranscriptExcerptView.swift: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/TranscriptFilter.swift: warning: static property 'htmlFilter' is not concurrency-safe because non-'Sendable' type 'ComposeFilter' may have shared mutable state; this is an error in the Swift 6 language mode
 podcasts/TranscriptFilter.swift: warning: static property 'transcriptFilter' is not concurrency-safe because non-'Sendable' type 'ComposeFilter' may have shared mutable state; this is an error in the Swift 6 language mode
@@ -318,9 +312,6 @@ podcasts/Utilities/SwiftUI/EmptyStateView.swift: warning: main actor-isolated de
 podcasts/Utilities/SwiftUI/EmptyStateView.swift: warning: sending 'action' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/SwiftUI/SwiftUI+Accessibility.swift: warning: main actor-isolated static property 'isReduceMotionEnabled' can not be referenced from a nonisolated context
 podcasts/Utilities/UnsafeWait.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
-podcasts/VideoPlayerView.swift: warning: main actor-isolated property 'player' can not be referenced from a nonisolated context
-podcasts/VideoPlayerView.swift: warning: main actor-isolated property 'playerLayer' can not be referenced from a nonisolated context
-podcasts/VideoPlayerView.swift: warning: main actor-isolated property 'videoSizeKnown' can not be referenced from a nonisolated context
 podcasts/VideoViewController+Controls.swift: warning: call to main actor-isolated instance method 'hideVideoControls()' in a synchronous nonisolated context
 podcasts/VideoViewController+Seek.swift: warning: conformance of 'VideoViewController' to protocol 'TimeSliderDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/VideoViewController.swift: warning: call to main actor-isolated instance method 'teardownPictureInPicturePlayback()' in a synchronous nonisolated context
