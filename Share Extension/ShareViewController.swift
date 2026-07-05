@@ -58,10 +58,14 @@ class ShareViewController: UIViewController {
 
             do { try FileManager.default.copyItem(at: url, to: destURL) } catch { }
 
-            self?.close()
+            // The item-provider callback is off-main; UI/extension work belongs on the main actor
+            let destination = destURL.absoluteString
+            Task { @MainActor [weak self] in
+                self?.close()
 
-            // Redirect to Pocket Casts to handle the file
-            self?.redirectToHostApp(destURL.absoluteString)
+                // Redirect to Pocket Casts to handle the file
+                self?.redirectToHostApp(destination)
+            }
         }
     }
 

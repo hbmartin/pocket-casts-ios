@@ -5,7 +5,7 @@ import SafariServices
 import UIKit
 import WebKit
 
-class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewControllerDelegate, WKNavigationDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
+class ShowNotesPlayerItemViewController: PlayerItemViewController, @preconcurrency SFSafariViewControllerDelegate, WKNavigationDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
     @IBOutlet var episodeTitle: UILabel! {
         didSet {
             episodeTitle.font = UIFont.font(ofSize: 22, weight: .bold, scalingWith: .title2)
@@ -83,10 +83,6 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, SFSafariViewC
         showNotesWebView.isOpaque = false
         showNotesWebView.backgroundColor = UIColor.clear
         showNotesWebView.scrollView.backgroundColor = UIColor.clear
-    }
-
-    deinit {
-        showNotesWebView?.navigationDelegate = nil
     }
 
     override func willBeAddedToPlayer() {
