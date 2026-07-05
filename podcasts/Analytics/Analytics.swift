@@ -3,7 +3,7 @@ import PocketCastsUtils
 
 /// Adapters are registered once at startup (or cleared on sign-out) and read by
 /// track(); events fire from any thread by design.
-final class Analytics: @unchecked Sendable {
+class Analytics: @unchecked Sendable {
     static let shared = Analytics()
     private var adapters: [AnalyticsAdapter]?
 #if !APPCLIP && !os(tvOS)

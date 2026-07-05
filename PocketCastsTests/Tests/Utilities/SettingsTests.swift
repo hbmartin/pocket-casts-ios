@@ -4,6 +4,7 @@ import XCTest
 import PocketCastsDataModel
 import PocketCastsUtils
 
+@MainActor
 final class SettingsTests: XCTestCase {
 
     private let userDefaultsSuiteName = "PocketCasts-SettingsTests"

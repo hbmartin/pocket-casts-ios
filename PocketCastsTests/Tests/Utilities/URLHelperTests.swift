@@ -1,6 +1,7 @@
 @testable import podcasts
 import XCTest
 
+@MainActor
 final class URLHelperTests: XCTestCase {
     func testTrustedDocumentationAllowsPocketCastsSupportURL() {
         let supportURL = webURL(host: URLFixture.supportHost, path: URLFixture.supportPath)

@@ -1,6 +1,7 @@
 @testable import podcasts
 import XCTest
 
+@MainActor
 class AppLifecycleAnalyticsTests: XCTestCase {
     private var userDefaults: UserDefaults!
     private var appLifecyleAnalytics: AppLifecycleAnalytics!
@@ -294,7 +295,7 @@ class AppLifecycleAnalyticsTests: XCTestCase {
     }
 }
 
-private class MockAnalytics: Analytics {
+private class MockAnalytics: Analytics, @unchecked Sendable {
     var didTrack: ((_ event: AnalyticsEvent, _ properties: [String: Sendable]?) -> Void)?
 
     override func track(_ event: AnalyticsEvent, properties: [String: Sendable]? = nil) {
