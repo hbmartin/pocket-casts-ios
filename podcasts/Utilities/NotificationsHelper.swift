@@ -2,10 +2,12 @@
 import PocketCastsDataModel
 import PocketCastsServer
 import UIKit
-import UserNotifications
+@preconcurrency import UserNotifications
 import PocketCastsUtils
 
-class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
+/// Stateless (constants only); UN-delegate callbacks arrive on arbitrary queues,
+/// so the instance crosses isolation domains by contract.
+final class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate, Sendable {
     private let downloadEpisodeActionId = "SJEpDownload"
     private let playNowActionid = "SJPlayNow"
     private let addToQueueFirstActionId = "SJEpAddQueueFirst"
@@ -20,7 +22,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         case podcasts = "po"
     }
 
-    func checkNotificationsDenied(completion: @escaping (Bool) -> ()) {
+    func checkNotificationsDenied(completion: @escaping @Sendable (Bool) -> ()) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             completion(settings.authorizationStatus == .denied)
         }
@@ -61,14 +63,20 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
 
     /// Handles a user-initiated change to per-podcast push notifications: requests permission if needed, persists the change, notifies observers, and shows a confirmation toast. Callers are responsible for tracking their own analytics event.
     func setNotificationsEnabled(_ enabled: Bool, for podcast: Podcast, completion: ((Podcast) -> Void)? = nil) {
+        // The permission callback is @Sendable; the podcast and completion cross in
+        // boxed and are used exactly once
+        let box = PocketCastsUtils.UncheckedSendable((podcast, completion))
         registerForPushNotifications { granted in
             guard granted || !enabled else {
                 Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
                     Analytics.track(.notificationsPermissionsOpenSystemSettings)
-                    UIApplication.shared.openNotificationSettings()
+                    Task { @MainActor in
+                        UIApplication.shared.openNotificationSettings()
+                    }
                 })])
                 return
             }
+            let (podcast, completion) = box.value
             let savedPodcast = PodcastManager.shared.setNotificationsEnabled(podcast: podcast, enabled: enabled)
             completion?(savedPodcast)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: savedPodcast.uuid)
@@ -80,7 +88,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func registerForPushNotifications(completion: ((Bool) -> ())? = nil) {
+    func registerForPushNotifications(completion: (@Sendable (Bool) -> ())? = nil) {
         let downloadAction = UNNotificationAction(identifier: downloadEpisodeActionId, title: L10n.download, options: [])
         let playNowAction = UNNotificationAction(identifier: playNowActionid, title: L10n.notificationsPlayNow, options: [])
         let addQueueFirstAction = UNNotificationAction(identifier: addToQueueFirstActionId, title: L10n.playNext, options: [])
@@ -101,8 +109,9 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
 
         notificationCenter.getNotificationSettings { settings in
             guard settings.authorizationStatus == .notDetermined else {
-                DispatchQueue.main.async {
-                    completion?(settings.authorizationStatus != .denied)
+                let authorized = settings.authorizationStatus != .denied
+                Task { @MainActor in
+                    completion?(authorized)
                     UIApplication.shared.registerForRemoteNotifications()
                 }
                 return
@@ -111,13 +120,13 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
             notificationCenter.requestAuthorization(options: [.alert, .badge, .sound], completionHandler: { granted, _ in
                 if granted {
                     Analytics.track(.notificationsOptInAllowed)
-                    DispatchQueue.main.async {
-                        UIApplication.shared.registerForRemoteNotifications()
-                    }
                 } else {
                     Analytics.track(.notificationsOptInDenied)
                 }
-                DispatchQueue.main.async {
+                Task { @MainActor in
+                    if granted {
+                        UIApplication.shared.registerForRemoteNotifications()
+                    }
                     completion?(granted)
                 }
             })
@@ -132,7 +141,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         let categoryIdentifier = response.notification.request.content.categoryIdentifier
         let category = NotificationsCategory(rawValue: categoryIdentifier)
 
-        var properties: [String: Any] = ["category": categoryIdentifier]
+        var properties: [String: String] = ["category": categoryIdentifier]
         let identifier = response.notification.request.identifier
         if let type = NotificationType(rawValue: identifier) {
             properties["type"] = type.rawValue
@@ -148,10 +157,12 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    private func handleEpisodeNotification(response: UNNotificationResponse, completionHandler: @escaping () -> Void) {
+    private func handleEpisodeNotification(response: UNNotificationResponse, completionHandler rawCompletionHandler: @escaping () -> Void) {
+        // Boxed: each branch below hands it to a main-actor closure and calls it exactly once
+        let completionHandler = PocketCastsUtils.UncheckedSendable(rawCompletionHandler)
 
         guard let episodeUuid = response.notification.request.content.userInfo["eu"] as? String, !episodeUuid.isEmpty else {
-            completionHandler()
+            completionHandler.value()
             return
         }
 
@@ -162,7 +173,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                     DownloadManager.shared.addToQueue(episodeUuid: episode.uuid)
                 }
 
-                completionHandler()
+                completionHandler.value()
             }
         } else if addToQueueFirstActionId == response.actionIdentifier || addToQueueLastActionId == response.actionIdentifier {
             let playFirst = addToQueueFirstActionId == response.actionIdentifier
@@ -173,7 +184,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                     PlaybackManager.shared.addToUpNext(episode: episode, ignoringQueueLimit: true, toTop: playFirst, userInitiated: true)
                 }
 
-                completionHandler()
+                completionHandler.value()
             }
         } else if playNowActionid == response.actionIdentifier {
             AnalyticsHelper.playNowFromNotification()
@@ -182,7 +193,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                     PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
                 }
 
-                completionHandler()
+                completionHandler.value()
             }
         } else if archiveActionId == response.actionIdentifier {
             AnalyticsHelper.archiveFromNotification()
@@ -191,7 +202,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                     EpisodeManager.archiveEpisode(episode: episode, fireNotification: false)
                 }
 
-                completionHandler()
+                completionHandler.value()
             }
         } else {
             // none of the actions where 3D Touched, the user just wants to open this episode if there is one
@@ -205,7 +216,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                     NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
                 }
 
-                completionHandler()
+                completionHandler.value()
             }
         }
     }

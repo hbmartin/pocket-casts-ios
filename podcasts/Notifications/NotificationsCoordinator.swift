@@ -299,7 +299,9 @@ enum NotificationsGroup: CaseIterable {
     }
 }
 
-class NotificationsCoordinator {
+/// State is an immutable (thread-safe) UNUserNotificationCenter plus a debug toggle
+/// only flipped from the developer menu.
+final class NotificationsCoordinator: @unchecked Sendable {
 
     static let shared = NotificationsCoordinator()
 
