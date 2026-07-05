@@ -96,11 +96,9 @@ class Theme: ObservableObject {
     nonisolated static let themeKey = "theme"
     nonisolated static let preferredDarkThemeKey = "preferredDarkTheme"
     nonisolated static let preferredLightThemeKey = "preferredLightTheme"
-    // nonisolated(unsafe): the singleton must be reachable from nonisolated code
-    // (generated ThemeColor accessors, data helpers). Initialization is
-    // dispatch_once-guarded, property observers do not fire during init, and the
-    // init touches only thread-safe state; isolated members remain checked at use.
-    nonisolated(unsafe) static let sharedTheme = Theme()
+    // The singleton must be reachable from nonisolated code (generated ThemeColor
+    // accessors, data helpers); init is nonisolated and touches only thread-safe state.
+    nonisolated static let sharedTheme = Theme()
 
     typealias ThemeType = PocketCastsServer.ThemeType
 
@@ -114,21 +112,31 @@ class Theme: ObservableObject {
         activeThemeSnapshot.value
     }
 
-    @Published var activeTheme: ThemeType {
-        willSet {
+    /// Combine subjects are thread-safe; writes go through `activeTheme`'s side effects.
+    nonisolated(unsafe) private let themeSubject: CurrentValueSubject<ThemeType, Never>
+
+    /// Publisher for theme changes.
+    nonisolated var activeThemePublisher: AnyPublisher<ThemeType, Never> {
+        themeSubject.eraseToAnyPublisher()
+    }
+
+    var activeTheme: ThemeType {
+        get { activeThemeSnapshot.value }
+        set {
+            objectWillChange.send()
             // There's a SwiftUI bug (last checked in SwiftUI 3, iOS 15.4) where if this variable changes while the app is backgrounded, the events aren't correctly sent so here we manually fire a will change if our app isn't active
             // before removing this, test for the bug in this issue: https://github.com/shiftyjelly/pocketcasts-ios/issues/3969
             if UIApplication.shared.applicationState != .active {
                 objectWillChange.send()
             }
-        }
-        didSet {
-            activeThemeSnapshot.value = activeTheme
+
+            activeThemeSnapshot.value = newValue
+            themeSubject.send(newValue)
 
             if FeatureFlag.newSettingsStorage.enabled {
-                SettingsStore.appSettings.theme = activeTheme
+                SettingsStore.appSettings.theme = newValue
             }
-            UserDefaults.standard.set(activeTheme.old.rawValue, forKey: Theme.themeKey)
+            UserDefaults.standard.set(newValue.old.rawValue, forKey: Theme.themeKey)
 
             // if the user is changing from or to the radioactive theme, we need to clear our memory cache because processing is applied to these images
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastImageReCacheRequired)
@@ -137,23 +145,25 @@ class Theme: ObservableObject {
         }
     }
 
-    init() {
+    nonisolated init() {
+        let initialTheme: ThemeType
         if FeatureFlag.newSettingsStorage.enabled {
-            activeTheme = SettingsStore.appSettings.theme
+            initialTheme = SettingsStore.appSettings.theme
         } else {
             let savedTheme = UserDefaults.standard.integer(forKey: Theme.themeKey)
             if savedTheme == 0 && UserDefaults.standard.object(forKey: Constants.UserDefaults.shouldFollowSystemThemeKey) == nil {
                 Settings.setShouldFollowSystemTheme(true)
             }
-            activeTheme = ThemeType(old: ThemeType.Old(rawValue: savedTheme) ?? .light)
+            initialTheme = ThemeType(old: ThemeType.Old(rawValue: savedTheme) ?? .light)
         }
-        activeThemeSnapshot.value = activeTheme
+        themeSubject = CurrentValueSubject(initialTheme)
+        activeThemeSnapshot.value = initialTheme
 
         NotificationCenter.default.addObserver(self, selector: #selector(systemThemeDidChange(_:)), name: Constants.Notifications.systemThemeMayHaveChanged, object: nil)
     }
 
-    init(previewTheme: ThemeType) {
-        activeTheme = previewTheme
+    nonisolated init(previewTheme: ThemeType) {
+        themeSubject = CurrentValueSubject(previewTheme)
         activeThemeSnapshot.value = previewTheme
     }
 

@@ -65,20 +65,6 @@ extension View {
     }
 }
 
-struct RequiredFieldStyle: TextFieldStyle {
-    let hasErrored: Bool
-    @EnvironmentObject var theme: Theme
-
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        let activeTheme = theme.nonisolatedActiveTheme
-        return configuration
-            .colorScheme(Theme.isDarkTheme() ? .dark : .light)
-            .foregroundColor(ThemeColor.primaryText01(for: activeTheme).color)
-            .padding(6)
-            .required(hasErrored)
-            .background(ThemeColor.primaryUi02(for: activeTheme).color.cornerRadius(ViewConstants.cornerRadius))
-    }
-}
 
 struct RequiredInput: ViewModifier {
     @EnvironmentObject var theme: Theme

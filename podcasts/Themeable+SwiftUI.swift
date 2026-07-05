@@ -24,7 +24,14 @@ extension View {
     }
 
     func requiredStyle(_ hasErrored: Bool) -> some View {
-        textFieldStyle(RequiredFieldStyle(hasErrored: hasErrored))
+        // Applies the same treatment RequiredFieldStyle used to; a TextFieldStyle
+        // conformance can't cross into main-actor theme state under Swift 6
+        let activeTheme = Theme.sharedTheme.nonisolatedActiveTheme
+        return colorScheme(Theme.isDarkTheme() ? .dark : .light)
+            .foregroundColor(ThemeColor.primaryText01(for: activeTheme).color)
+            .padding(6)
+            .required(hasErrored)
+            .background(ThemeColor.primaryUi02(for: activeTheme).color.cornerRadius(ViewConstants.cornerRadius))
     }
 
     func navThemed() -> some View {
