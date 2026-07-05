@@ -331,7 +331,9 @@ extension BannerModel {
                            iconName: "settings_notifications",
                            onActionTap: {
             Analytics.track(.notificationsPermissionsOpenSystemSettings)
-            UIApplication.shared.openNotificationSettings()
+            Task { @MainActor in
+                UIApplication.shared.openNotificationSettings()
+            }
         })
     }
 }

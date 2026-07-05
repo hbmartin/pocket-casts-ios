@@ -33,10 +33,13 @@ class TinyPageControl: UIControl {
     }
 
     override func awakeFromNib() {
-        isAccessibilityElement = true
-        accessibilityTraits = UIAccessibilityTraits.button
-        NotificationCenter.default.addObserver(self, selector: #selector(updateForTheme), name: Constants.Notifications.themeChanged, object: nil)
-        updateForTheme()
+        super.awakeFromNib()
+        MainActor.assumeIsolated {
+            isAccessibilityElement = true
+            accessibilityTraits = UIAccessibilityTraits.button
+            NotificationCenter.default.addObserver(self, selector: #selector(updateForTheme), name: Constants.Notifications.themeChanged, object: nil)
+            updateForTheme()
+        }
     }
 
     deinit {
