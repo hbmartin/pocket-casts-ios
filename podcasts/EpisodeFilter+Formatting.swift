@@ -99,10 +99,11 @@ extension EpisodeFilter {
     }
 
     func episodeUuidToAddToQueries() -> String? {
-        if let playingEpisode = PlaybackManager.shared.currentEpisode(), PlaybackManager.shared.uuidOfPlayingList == uuid {
-            return playingEpisode.uuid
+        let filterUuid = uuid
+        // Playlist query building can run off-main; bridge to the main-actor playback state
+        return PlaybackManager.onMainSync { playbackManager in
+            guard playbackManager.uuidOfPlayingList == filterUuid else { return nil }
+            return playbackManager.currentEpisode()?.uuid
         }
-
-        return nil
     }
 }

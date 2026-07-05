@@ -37,7 +37,7 @@ struct UserEpisodeManager {
             }
 
             if Settings.userEpisodeAutoAddToUpNext() {
-                PlaybackManager.shared.addToUpNext(episode: episode, userInitiated: false)
+                PlaybackManager.onMainSync { $0.addToUpNext(episode: episode, userInitiated: false) }
             }
 
             return episode
@@ -94,7 +94,7 @@ struct UserEpisodeManager {
     static func deleteFromDevice(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) {
         DownloadManager.shared.removeFromQueue(episodeUuid: userEpisode.uuid, fireNotification: false, userInitiated: true)
         if removeFromPlaybackQueue {
-            PlaybackManager.shared.removeIfPlayingOrQueued(episode: userEpisode, fireNotification: true)
+            PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: userEpisode, fireNotification: true) }
         }
         EpisodeManager.deleteDownloadedFiles(episode: userEpisode)
 
@@ -112,7 +112,7 @@ struct UserEpisodeManager {
         NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: userEpisode.uuid)
 
         if removeFromPlaybackQueue {
-            PlaybackManager.shared.removeIfPlayingOrQueued(episode: userEpisode, fireNotification: true)
+            PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: userEpisode, fireNotification: true) }
         }
 
         ApiServerHandler.shared.uploadFileDelete(episode: userEpisode, completion: { success in
@@ -241,7 +241,7 @@ struct UserEpisodeManager {
                 }
             } else {
                 DownloadManager.shared.removeFromQueue(episodeUuid: episode.uuid, fireNotification: false, userInitiated: true)
-                PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true)
+                PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: episode, fireNotification: true) }
                 DataManager.sharedManager.delete(userEpisodeUuid: episode.uuid)
             }
         }

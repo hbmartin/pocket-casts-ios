@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsUtils
 import AVKit
 
+@MainActor
 class SleepTimerManager {
     private var restartSleepTimerIfPlayingAgainWithin: TimeInterval = 5.minutes
 

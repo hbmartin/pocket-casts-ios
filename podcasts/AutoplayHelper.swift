@@ -34,7 +34,6 @@ final class AutoplayHelper: @unchecked Sendable {
     private let userDefaults: UserDefaults
     private let userDefaultsKey = "playlist"
     private let episodesDataManager: EpisodesDataManager
-    private let upNextQueue: PlaybackQueue
 
     /// Returns the latest playlist that the user played an episode from
     var lastPlaylist: Playlist? {
@@ -72,11 +71,9 @@ final class AutoplayHelper: @unchecked Sendable {
     }
 
     init(userDefaults: UserDefaults = UserDefaults.standard,
-         episodesDataManager: EpisodesDataManager = EpisodesDataManager(),
-         queue: PlaybackQueue = PlaybackQueue()) {
+         episodesDataManager: EpisodesDataManager = EpisodesDataManager()) {
         self.userDefaults = userDefaults
         self.episodesDataManager = episodesDataManager
-        self.upNextQueue = queue
     }
 
     /// Saves the current playlist
@@ -85,7 +82,7 @@ final class AutoplayHelper: @unchecked Sendable {
 
         // We always save the playlist no matter if Up Next is empty or not
         // However this event should be fired only if the Up Next is empty.
-        if Settings.autoplay && upNextQueue.upNextCount() == 0 {
+        if Settings.autoplay && PlaybackQueue.currentUpNextCount() == 0 {
             Analytics.track(.autoplayStarted, properties: ["source": playlist ?? "unknown"])
         }
     }

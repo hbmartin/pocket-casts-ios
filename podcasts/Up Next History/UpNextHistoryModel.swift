@@ -31,7 +31,7 @@ class UpNextHistoryModel: ObservableObject {
 
     nonisolated func reAddMissingItems(entry: Date) {
         let dataManagerBox = self.dataManagerBox
-        Task {
+        Task { @MainActor in
             let dataManager = dataManagerBox.value
             let episodesUuid = dataManager.upNextHistoryEpisodes(entry: entry)
             FileLog.shared.addMessage("UpNextHistory: Restoring entries from \(entry) with episodes: [\(episodesUuid.joined(separator: ","))]")

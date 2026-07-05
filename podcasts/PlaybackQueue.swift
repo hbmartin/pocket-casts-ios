@@ -3,6 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
+@MainActor
 class PlaybackQueue: NSObject {
     // we get asked for this a lot, so might as well cache it
     private var topEpisode: BaseEpisode?
@@ -319,6 +320,11 @@ class PlaybackQueue: NSObject {
     }
 
     func allEpisodes(includeNowPlaying: Bool = true) -> [BaseEpisode] {
+        Self.allUpNextEpisodesFromDatabase(includeNowPlaying: includeNowPlaying)
+    }
+
+    /// Pure DB query; nonisolated for the background auto-download sweep.
+    nonisolated static func allUpNextEpisodesFromDatabase(includeNowPlaying: Bool) -> [BaseEpisode] {
         if includeNowPlaying { return DataManager.sharedManager.allUpNextEpisodes() }
 
         var episodes = DataManager.sharedManager.allUpNextEpisodes()
@@ -343,6 +349,11 @@ class PlaybackQueue: NSObject {
     }
 
     func upNextCount() -> Int {
+        Self.currentUpNextCount()
+    }
+
+    /// Pure DB query; nonisolated so background callers (autoplay) can read the count.
+    nonisolated static func currentUpNextCount() -> Int {
         // the data manager counts the current episode, so we remove it here, since we don't expose that info to the rest of the app
         max(0, DataManager.sharedManager.playlistEpisodeCount() - 1)
     }
@@ -390,17 +401,15 @@ class PlaybackQueue: NSObject {
     private func checkAllForAutoDownload() {
         if !Settings.downloadUpNextEpisodes() { return }
 
-        let boxedSelf = PocketCastsUtils.UncheckedSendable(self)
         DispatchQueue.global().async {
-            let queue = boxedSelf.value
-            let episodes = queue.allEpisodes(includeNowPlaying: !FeatureFlag.streamAndCachePlayingEpisode.enabled)
+            let episodes = Self.allUpNextEpisodesFromDatabase(includeNowPlaying: !FeatureFlag.streamAndCachePlayingEpisode.enabled)
             for episode in episodes {
-                queue.autoDownloadIfRequired(episode: episode)
+                Self.autoDownloadIfRequired(episode: episode)
             }
         }
     }
 
-    private func autoDownloadIfRequired(episode: BaseEpisode) {
+    nonisolated private static func autoDownloadIfRequired(episode: BaseEpisode) {
         if !Settings.downloadUpNextEpisodes() || episode.queued() || episode.downloaded(pathFinder: DownloadManager.shared) { return }
 
         if Settings.autoDownloadMobileDataAllowed() || NetworkUtils.shared.isConnectedToUnexpensiveConnection() {

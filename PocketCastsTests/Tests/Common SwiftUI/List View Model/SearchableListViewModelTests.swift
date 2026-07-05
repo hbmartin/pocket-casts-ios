@@ -12,7 +12,7 @@ final class SearchableListViewModelTests: XCTestCase {
 
     private var viewModel: SearchableListViewModel<TestableModel> = .init()
 
-    override func setUp() {
+    override func setUp() async throws {
         viewModel = SearchableListViewModel(items: testItems)
     }
 

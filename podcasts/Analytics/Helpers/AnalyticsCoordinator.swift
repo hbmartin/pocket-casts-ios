@@ -77,7 +77,14 @@ class AnalyticsCoordinator: @unchecked Sendable {
     private var _currentSource: AnalyticsSource?
 
     private var currentEpisodeIsVideo: Bool {
-        PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false
+        // Analytics events can originate off-main; bridge to the main-actor PlaybackManager
+        if Thread.isMainThread {
+            MainActor.assumeIsolated { PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false }
+        } else {
+            DispatchQueue.main.sync {
+                MainActor.assumeIsolated { PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false }
+            }
+        }
     }
 
     var currentAnalyticsSource: AnalyticsSource {

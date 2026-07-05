@@ -80,7 +80,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
 
             ServerConfig.shared.syncDelegate = ServerSyncManager.shared
-            ServerConfig.shared.playbackDelegate = PlaybackManager.shared
+            ServerConfig.shared.playbackDelegate = PlaybackServerAdapter()
             checkDefaults()
 
             logActiveDownloadTasks()

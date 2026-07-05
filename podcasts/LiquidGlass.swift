@@ -32,7 +32,7 @@ extension Theme {
 }
 
 extension Constants {
-    static var effectiveMiniPlayerOffset: CGFloat {
+    @MainActor static var effectiveMiniPlayerOffset: CGFloat {
         if LiquidGlass.isEnabled {
             // The player is shown using `UITabAccessory`, so it automatically gets
             // added to bottom safe area.
@@ -41,7 +41,7 @@ extension Constants {
         return PlaybackManager.shared.currentEpisode() == nil ? 0 : Constants.Values.miniPlayerOffset
     }
 
-    static var effectiveFooterViewPadding: CGFloat {
+    @MainActor static var effectiveFooterViewPadding: CGFloat {
         Constants.effectiveMiniPlayerOffset + (LiquidGlass.isEnabled ? 4 : 16)
     }
 }

@@ -63,9 +63,10 @@ class ShortcutManager: CustomObserver {
             )
         }
 
-        if let currentEpisode = PlaybackManager.shared.currentEpisode() {
+        let playbackSnapshot = PlaybackManager.onMainSync { ($0.currentEpisode(), $0.playing()) }
+        if let currentEpisode = playbackSnapshot.0 {
             // add a play/pause shortcut
-            if PlaybackManager.shared.playing() {
+            if playbackSnapshot.1 {
                 shortcutItems.append(
                     UIMutableApplicationShortcutItem(
                         type: "au.com.shiftyjelly.podcasts",

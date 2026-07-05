@@ -6,11 +6,63 @@ import PocketCastsUtils
 import UIKit
 import Combine
 
-/// Long-lived audio coordinator with internal queue/lock/atomic synchronization;
-/// its API is called from UI, the remote command center, intents, and audio
-/// callbacks by design.
-final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
+/// Long-lived audio coordinator, isolated to the main actor (Phase 5,
+/// docs/Phase5-PlaybackModernization.md D2). Engine callbacks hop in per-event;
+/// real-time audio code stays below this boundary.
+@MainActor
+final class PlaybackManager {
     static let shared = PlaybackManager()
+
+    /// Lock-guarded mirror of state the audio engines read synchronously from
+    /// non-main contexts (Phase 5 D1: real-time-adjacent code can't await).
+    /// PlaybackManager updates it on the main actor whenever effects change.
+    final class EngineStateMirror: Sendable {
+        private let lock = NSLock()
+        // nonisolated(unsafe): only ever accessed through the lock below
+        nonisolated(unsafe) private var _effects = PlaybackEffects()
+
+        var effects: PlaybackEffects {
+            get { lock.withLock { _effects } }
+            set { lock.withLock { _effects = newValue } }
+        }
+
+        // nonisolated(unsafe): only ever accessed through the lock below
+        nonisolated(unsafe) private var _pendingStartingPosition: TimeInterval?
+
+        /// One-shot starting position for EffectsPlayer, captured on the main actor at
+        /// play-dispatch time because its locked setup flow can't call back to main
+        /// (a main.sync there deadlocks against endPlayback holding playerLock).
+        var pendingStartingPosition: TimeInterval? {
+            get { lock.withLock { _pendingStartingPosition } }
+            set { lock.withLock { _pendingStartingPosition = newValue } }
+        }
+
+        func consumePendingStartingPosition() -> TimeInterval? {
+            lock.withLock {
+                defer { _pendingStartingPosition = nil }
+                return _pendingStartingPosition
+            }
+        }
+    }
+
+    /// Static so the engines can reach it without touching the main-actor-isolated `shared`.
+    nonisolated static let engineState = EngineStateMirror()
+
+    /// Runs `body` synchronously on the main actor. For legacy nonisolated call paths
+    /// (delete/upload flows, playlist query building) where the caller needs the
+    /// playback mutation or read to complete before continuing. Callers must never
+    /// hold a resource the main actor blocks on.
+    nonisolated static func onMainSync<T>(_ body: @MainActor (PlaybackManager) -> T) -> T {
+        // assumeIsolated requires a Sendable result; the value never actually crosses
+        // threads here (sync execution), so box it through
+        if Thread.isMainThread {
+            return MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(body(shared)) }.value
+        } else {
+            return DispatchQueue.main.sync {
+                MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(body(shared)) }
+            }.value
+        }
+    }
 
     private let updatesPerSave = 30 // save the users progress every 30 seconds
 
@@ -55,7 +107,6 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         private var backgroundTask = UIBackgroundTaskIdentifier.invalid
 
     private var playersToCleanUp = [AnyHashable]()
-    private let playerCleanupQueue: DispatchQueue
 
     private let catchUpHelper = PlaybackCatchUpHelper()
 
@@ -83,7 +134,6 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         queue = PlaybackQueue()
         queue.loadPersistedQueue()
 
-        playerCleanupQueue = DispatchQueue(label: "PlayerCleanupQueue")
 
         setupRemoteControlSupport()
 
@@ -101,8 +151,10 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentlyPlayingEpisodeUpdated), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
 
-        // run these on a background queue because some of them might call our singleton instance back, causing a crash because PlaybackManager.shared is called from the init method
-        DispatchQueue.global().async {
+        // deferred because some of these call our singleton instance back, which would
+        // crash if run inside init (PlaybackManager.shared re-entry); the task only
+        // runs after init returns
+        Task { @MainActor in
             self.updateAllNowPlayingData()
             self.updateChapterInfo()
             self.queue.updateUpNextInfo()
@@ -248,6 +300,10 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
                 return
             }
 
+            if self.player is EffectsPlayer {
+                // EffectsPlayer consumes this in startReadAndPlayThreads; see EngineStateMirror
+                Self.engineState.pendingStartingPosition = self.requiredStartingPosition()
+            }
             self.player?.play {
                 completion?()
             }
@@ -539,12 +595,18 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
 
     // MARK: - Up Next
     func inUpNext(episode: BaseEpisode?) -> Bool {
+        guard let episode else { return false }
+
+        return Self.episodeIsInUpNext(uuid: episode.uuid)
+    }
+
+    /// Pure DB query; static + nonisolated so background callers (episode cleanup,
+    /// formatting helpers) can check Up Next membership without hopping to main.
+    nonisolated static func episodeIsInUpNext(uuid: String) -> Bool {
         #if APPCLIP
         return false
         #else
-        guard let episode else { return false }
-
-        return queue.contains(episode: episode)
+        return DataManager.sharedManager.upNextPlayListContains(episodeUuid: uuid)
         #endif
     }
 
@@ -774,6 +836,11 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
     }
 
     func playingOverAirplay() -> Bool {
+        Self.isPlayingOverAirplay()
+    }
+
+    /// Pure AVAudioSession read; static + nonisolated so the engines' KVO callbacks can call it.
+    nonisolated static func isPlayingOverAirplay() -> Bool {
         let currentRoute = AVAudioSession.sharedInstance().currentRoute
 
         if currentRoute.outputs.isEmpty { return false }
@@ -792,6 +859,7 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         }
         let effects = loadEffects()
         currentEffects = effects
+        Self.engineState.effects = effects
         return effects
     }
 
@@ -833,6 +901,7 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         }
 
         currentEffects = effects
+        Self.engineState.effects = effects
         handlePlaybackEffectsChanged(effects: effects)
     }
 
@@ -862,6 +931,7 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
     func effectsChangedExternally() {
         let newEffects = loadEffects()
         currentEffects = newEffects
+        Self.engineState.effects = newEffects
         handlePlaybackEffectsChanged(effects: newEffects)
     }
 
@@ -1331,11 +1401,10 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         // DefaultPlayer and EffectsPlayer both have issues if you discard them immediately after stopping them. DefaultPlayer will crash while trying to render more audio and EffectsPlayer has internal issues as well.
         // This fix isn't ideal, but removing it before fixing these two issues will cause more crashing
         if let player = player as? AnyHashable {
-            playerCleanupQueue.sync {
-                playersToCleanUp.append(player)
-            }
+            playersToCleanUp.append(player)
             let boxedPlayer = PocketCastsUtils.UncheckedSendable(player)
-            playerCleanupQueue.asyncAfter(deadline: .now() + 5.seconds) { [weak self] in
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(5))
                 guard let self else { return }
 
                 let index = self.playersToCleanUp.firstIndex(where: { listPlayer -> Bool in
@@ -1372,9 +1441,9 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         }
     }
 
-    private func activateSession(completion: ((Bool) -> Void)?) {
+    nonisolated private func activateSession(completion: ((Bool) -> Void)?) {
         do {
-            try self.setAudioSessionProperties()
+            try Self.setAudioSessionProperties()
             try AVAudioSession.sharedInstance().setActive(true)
             FileLog.shared.addMessage("activating audio session succeeded")
             completion?(true)
@@ -1384,7 +1453,7 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
         }
     }
 
-    private func setAudioSessionProperties() throws {
+    nonisolated private static func setAudioSessionProperties() throws {
         let audioSession = AVAudioSession.sharedInstance()
         try audioSession.setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio)
     }
@@ -2226,7 +2295,9 @@ final class PlaybackManager: ServerPlaybackDelegate, @unchecked Sendable {
 
                 FileLog.shared.addMessage("PlaybackManager: Episode\(wasUpdated ? " " : " not") updated, trying to play again.")
 
-                load(episode: updatedEpisode, autoPlay: true, overrideUpNext: false)
+                Task { @MainActor in
+                    self.load(episode: updatedEpisode, autoPlay: true, overrideUpNext: false)
+                }
             }
         }
         return true

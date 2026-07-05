@@ -5,6 +5,7 @@ import XCTest
 @testable import PocketCastsServer
 @testable import PocketCastsUtils
 
+@MainActor
 class ChapterManagerTests: XCTestCase {
     let featureFlagMock = FeatureFlagMock()
     var previousSubscriptionPaidStatus: Int!
@@ -12,7 +13,7 @@ class ChapterManagerTests: XCTestCase {
     override func setUp() {
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         featureFlagMock.reset()
     }
 
