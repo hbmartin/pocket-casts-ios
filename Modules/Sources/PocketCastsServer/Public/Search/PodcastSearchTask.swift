@@ -99,7 +99,7 @@ extension PodcastFolderSearchResult: Identifiable {
     }
 }
 
-public class PodcastSearchTask {
+public final class PodcastSearchTask: Sendable {
     private let session: URLSession
 
     public init(session: URLSession = .shared) {
