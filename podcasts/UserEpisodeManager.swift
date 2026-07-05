@@ -249,6 +249,7 @@ struct UserEpisodeManager {
     }
 
     #if !os(tvOS)
+    @MainActor
     static func presentDeleteOptions(episode: UserEpisode, from presenter: UIViewController, dismissCallback: (() -> ())? = nil, actionCallback: ((Bool, Bool) -> Void)? = nil) {
         let cancelAction = UIAlertAction(title: L10n.cancel, style: .cancel) { _ in
             dismissCallback?()

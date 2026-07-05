@@ -6,16 +6,17 @@ import PocketCastsServer
 import PocketCastsUtils
 
 /// MediaExporterItemConfiguration global configuration.
+// The mutable statics are test knobs: production only reads them; tests set and restore them.
 enum MediaExporterItemConfiguration {
     /// How much data is allowed to be read in memory at a time.
-    public static var readDataLimit: Int = 20.MB
+    nonisolated(unsafe) public static var readDataLimit: Int = 20.MB
 
     /// Flag for deciding whether an error should be thrown when URLResponse's expectedContentLength is not equal with the downloaded media file bytes count. Defaults to `false`.
-    public static var shouldVerifyDownloadedFileSize: Bool = false
+    nonisolated(unsafe) public static var shouldVerifyDownloadedFileSize: Bool = false
 
     /// If set greater than 0, the set value will be compared with the downloaded media size. If the size of the downloaded media is lower, an error will be thrown. Useful when `expectedContentLength` is unavailable.
     /// Default value is `DownloadManager.badEpisodeSize` (10KB).
-    public static var minimumExpectedFileSize: Int = DownloadManager.badEpisodeSize
+    nonisolated(unsafe) public static var minimumExpectedFileSize: Int = DownloadManager.badEpisodeSize
 }
 
 fileprivate extension Int {
@@ -24,7 +25,9 @@ fileprivate extension Int {
 }
 
 /// Responsible for downloading media data and providing the requested data parts.
-class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate {
+/// `URLSessionDelegate` requires `Sendable`; instances are handed to URLSession and
+/// AVAssetResourceLoader queues by design, with mutable state guarded by `lock`.
+final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate, @unchecked Sendable {
     private let lock = NSLock()
 
     private let readDataLimit = MediaExporterItemConfiguration.readDataLimit

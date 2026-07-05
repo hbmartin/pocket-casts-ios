@@ -6,6 +6,7 @@ import Foundation
 /// control when the reload finishes.
 ///
 /// The owner is responsible for assigning `refreshControl` to a scroll view.
+@MainActor
 final class PodcastFeedRefreshController {
     let refreshControl = CustomRefreshControl()
 

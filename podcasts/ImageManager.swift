@@ -5,7 +5,9 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-class ImageManager {
+/// State is Kingfisher caches (thread-safe) and a lock-guarded metrics cache,
+/// so the shared instance is safe to hand across isolation domains.
+final class ImageManager: @unchecked Sendable {
     static let sharedManager = ImageManager()
 
     private struct ScreenMetrics: Sendable {
@@ -196,6 +198,7 @@ class ImageManager {
         imageView.kf.setImage(with: url, placeholder: placeholderImage, options: [.processor(processor), .targetCache(subscribedPodcastsCache), .transition(.fade(Constants.Animation.defaultAnimationTime))])
     }
 
+    @MainActor
     func loadImage(episode: BaseEpisode, imageView: UIImageView, size: PodcastThumbnailSize) {
         if loadEmbeddedImageIfRequired(in: episode, into: imageView) {
             return
@@ -318,7 +321,7 @@ class ImageManager {
         // loading episode artwork from downloaded files can be an expensive operation, so check to see if it's previously failed for this episode
         if episode.downloaded(pathFinder: DownloadManager.shared), !failedEmbeddedLookups.contains(episode.uuid) {
             if let embeddedImage = SJMediaMetadataHelper.embeddedImageForFile(atPath: episode.pathToDownloadedFile(pathFinder: DownloadManager.shared)) {
-                imageView?.image = embeddedImage
+                setImageOnMain(embeddedImage, on: imageView)
                 completion?(embeddedImage)
                 return true
             } else {
@@ -334,7 +337,7 @@ class ImageManager {
         subscribedPodcastsCache.retrieveImage(forKey: key, options: .none) { result in
             switch result {
             case .success(let imageCache):
-                imageView?.image = imageCache.image
+                self.setImageOnMain(imageCache.image, on: imageView)
                 completion?(imageCache.image)
             default:
                 break
@@ -342,8 +345,20 @@ class ImageManager {
         }
     }
 
+    /// Embedded-artwork lookups can run off-main (e.g. Now Playing); the target
+    /// view is only ever supplied by main-thread callers, so hop before touching it.
+    private func setImageOnMain(_ image: UIImage?, on imageView: UIImageView?) {
+        guard let imageView else { return }
+        let boxedView = PocketCastsUtils.UncheckedSendable(imageView)
+        let boxedImage = PocketCastsUtils.UncheckedSendable(image)
+        Task { @MainActor in
+            boxedView.value.image = boxedImage.value
+        }
+    }
+
     // MARK: - UserEpisode Images
 
+    @MainActor
     func loadUserEpisodeImage(uuid: String, imageView: UIImageView, size: PodcastThumbnailSize, completionHandler: ((Bool) -> Void)?) {
         imageView.image = nil
 
@@ -372,6 +387,7 @@ class ImageManager {
         }
     }
 
+    @MainActor
     func imageForUserEpisodeColor(color: Int, imageView: UIImageView, size: PodcastThumbnailSize, completionHandler: ((Bool) -> Void)?) {
         imageView.image = nil
         let imageSize = size == .page ? 960 : 280
