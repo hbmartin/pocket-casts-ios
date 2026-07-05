@@ -9,7 +9,7 @@ import WidgetKit
 /// handler logic can be unit-tested with a fake. The live implementation drives
 /// `PlaybackManager`/`DataManager`, matching the behaviour previously provided
 /// by `SiriShortcutsManager`.
-protocol PlaybackFacade {
+protocol PlaybackFacade: Sendable {
     func isPlaying() -> Bool
     func hasCurrentEpisode() -> Bool
     func upNextCount() -> Int
