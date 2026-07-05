@@ -85,10 +85,6 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
         supportWebView.scrollView.backgroundColor = UIColor.white
     }
 
-    deinit {
-        supportWebView.navigationDelegate = nil
-    }
-
     @objc private func doneTapped() {
         dismiss(animated: true, completion: didDismiss)
     }
@@ -217,7 +213,7 @@ private extension OnlineSupportController {
 
         loadingAlert = ShiftyLoadingAlert(title: L10n.exportingDatabase)
         loadingAlert?.showAlert(self, hasProgress: false, completion: { [weak self] in
-            Task {
+            Task { @MainActor in
                 let url = await self?.databaseExport?.export()
                 self?.shareExport(url: url, sender: sender)
             }

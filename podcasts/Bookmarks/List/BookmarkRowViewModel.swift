@@ -3,6 +3,7 @@ import PocketCastsUtils
 import PocketCastsDataModel
 import PocketCastsServer
 
+@MainActor
 class BookmarkRowViewModel: ObservableObject {
     @Published var heading: String?
     let title: String
