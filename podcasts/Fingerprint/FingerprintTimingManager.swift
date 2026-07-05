@@ -1,6 +1,6 @@
 import AVFoundation
 import Foundation
-import Fingerprint
+@preconcurrency import Fingerprint
 import PocketCastsDataModel
 import PocketCastsUtils
 
@@ -36,7 +36,8 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     // MARK: - Internal Types
 
-    private struct GenerationContext {
+    // @unchecked: all-let value; the matcher is a thread-safe UniFFI handle
+    private struct GenerationContext: @unchecked Sendable {
         let generationID: UUID
         let episodeUuid: String
         let audioFileURL: URL
