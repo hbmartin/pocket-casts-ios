@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsUtils
 
 /// 🍞 Toast - A lightweight way to display informative overlay messages
 ///
@@ -13,13 +14,24 @@ import Foundation
 ///     })])
 ///
 class Toast {
+    @MainActor
     private static var shared = Toast()
 
     /// Retain the visible window
     private var window: UIWindow? = nil
 
-    /// Display the toast message with the given title and actions
+    /// Display the toast message with the given title and actions.
+    /// Callable from any thread (playback code shows toasts off-main); the window
+    /// work hops to the main actor, so presentation is next-runloop.
     static func show<Style: ToastTheme>(_ title: String, actions: [Action]? = nil, dismissAfter: ToastViewDismissPolicy = .interval(5.0), theme: Style = .defaultTheme, aboveMiniPlayer: Bool = false) {
+        let box = PocketCastsUtils.UncheckedSendable((actions, theme))
+        Task { @MainActor in
+            showOnMain(title, actions: box.value.0, dismissAfter: dismissAfter, theme: box.value.1, aboveMiniPlayer: aboveMiniPlayer)
+        }
+    }
+
+    @MainActor
+    private static func showOnMain<Style: ToastTheme>(_ title: String, actions: [Action]?, dismissAfter: ToastViewDismissPolicy, theme: Style, aboveMiniPlayer: Bool) {
         // Hide any active toasts
         shared.toastDismissed()
 
@@ -35,10 +47,12 @@ class Toast {
         shared.window = window
     }
 
-    /// Dismisses any visible toasts
+    /// Dismisses any visible toasts. Callable from any thread.
     static func dismiss() {
-        shared.window?.resignKey()
-        shared.window = nil
+        Task { @MainActor in
+            shared.window?.resignKey()
+            shared.window = nil
+        }
     }
 
     struct Action: Identifiable {
