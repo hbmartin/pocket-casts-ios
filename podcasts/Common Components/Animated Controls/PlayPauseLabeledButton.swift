@@ -42,26 +42,28 @@ class PlayPauseLabeledButton: BasePlayPauseButton {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        layer.borderWidth = 1.5
-        backgroundColor = .clear
+        MainActor.assumeIsolated {
+            layer.borderWidth = 1.5
+            backgroundColor = .clear
 
-        Theme.sharedTheme.$activeTheme
+            Theme.sharedTheme.$activeTheme
+                .receive(on: RunLoop.main)
+                .sink(receiveValue: { [unowned self] _ in
+                    self.updateTheme()
+                })
+                .store(in: &cancellables)
+
+            Publishers.Merge3(
+                NotificationCenter.default.publisher(for: Constants.Notifications.playbackStarted),
+                NotificationCenter.default.publisher(for: Constants.Notifications.playbackPaused),
+                NotificationCenter.default.publisher(for: Constants.Notifications.playbackEnded)
+            )
             .receive(on: RunLoop.main)
-            .sink(receiveValue: { [unowned self] _ in
-                self.updateTheme()
-            })
+            .sink { [unowned self] _ in
+                self.updatePlayingState()
+            }
             .store(in: &cancellables)
-
-        Publishers.Merge3(
-            NotificationCenter.default.publisher(for: Constants.Notifications.playbackStarted),
-            NotificationCenter.default.publisher(for: Constants.Notifications.playbackPaused),
-            NotificationCenter.default.publisher(for: Constants.Notifications.playbackEnded)
-        )
-        .receive(on: RunLoop.main)
-        .sink { [unowned self] _ in
-            self.updatePlayingState()
         }
-        .store(in: &cancellables)
     }
 
     private func updatePlayingState() {

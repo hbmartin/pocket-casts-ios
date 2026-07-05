@@ -30,9 +30,11 @@ class FolderListCell: ThemeableCollectionCell {
 
     override func awakeFromNib() {
         super.awakeFromNib()
-        registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
-        isAccessibilityElement = true
-        updateSize()
+        MainActor.assumeIsolated {
+            registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
+            isAccessibilityElement = true
+            updateSize()
+        }
     }
 
     func populateFrom(folder: Folder, badgeType: BadgeType) {
