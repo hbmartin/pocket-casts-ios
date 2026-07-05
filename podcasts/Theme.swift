@@ -171,7 +171,7 @@ class Theme: ObservableObject {
         Theme.sharedTheme.nonisolatedActiveTheme.isDark
     }
 
-    class func preferredDarkTheme() -> ThemeType {
+    nonisolated class func preferredDarkTheme() -> ThemeType {
         if FeatureFlag.newSettingsStorage.enabled {
             return SettingsStore.appSettings.darkThemePreference
         }
@@ -201,7 +201,7 @@ class Theme: ObservableObject {
         Settings.trackValueChanged(.settingsAppearanceDarkThemeChanged, value: preferredType)
     }
 
-    class func preferredLightTheme() -> ThemeType {
+    nonisolated class func preferredLightTheme() -> ThemeType {
 
         if FeatureFlag.newSettingsStorage.enabled {
             return SettingsStore.appSettings.lightThemePreference

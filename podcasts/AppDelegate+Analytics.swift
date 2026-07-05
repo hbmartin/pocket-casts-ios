@@ -33,7 +33,7 @@ extension AppDelegate {
         Analytics.add(analyticsAppThemeProvider: AnalyticsAppThemeProvider())
     }
 
-    func logActiveDownloadTasks() {
+    nonisolated func logActiveDownloadTasks() {
         Task {
             let tasks = await DownloadManager.shared.allTasks()
 
@@ -43,7 +43,7 @@ extension AppDelegate {
         }
     }
 
-    func logStaleDownloads() {
+    nonisolated func logStaleDownloads() {
         let failedDownloadCount = DataManager.sharedManager.failedDownloadedEpisodesCount()
 
         guard failedDownloadCount > 0 else {
@@ -79,7 +79,7 @@ extension AppDelegate {
 
     /// Checks if we're missing the userId saved in the defaults, and retrieves it from the server if needed
     /// This should only need to be ran once.
-    func retrieveUserIdIfNeeded() {
+    nonisolated func retrieveUserIdIfNeeded() {
         guard
             let username = ServerSettings.syncingEmail(),
             let password = ServerSettings.syncingPassword(),
