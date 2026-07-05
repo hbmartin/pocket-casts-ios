@@ -73,8 +73,10 @@ class RetrieveCustomFilesTask: ApiBaseTask, @unchecked Sendable {
         }
 
         var autodownloadEpisodes = [UserEpisode]()
+        var mergedEpisodes = [UserEpisode]()
         var updatedNowPlayingTime: TimeInterval = -1
         for episode in episodes {
+            var episode = episode
             if let localEpisode = DataManager.sharedManager.findUserEpisode(uuid: episode.uuid) {
                 episode.id = localEpisode.id
                 episode.addedDate = localEpisode.addedDate
@@ -105,9 +107,10 @@ class RetrieveCustomFilesTask: ApiBaseTask, @unchecked Sendable {
                     autodownloadEpisodes.append(episode)
                 }
             }
+            mergedEpisodes.append(episode)
         }
 
-        DataManager.sharedManager.bulkSave(episodes: episodes)
+        DataManager.sharedManager.bulkSave(episodes: mergedEpisodes)
 
         // if the currently playing episode was modified, make sure we seek to the correct time for it
         if let playbackDelegate = ServerConfig.shared.playbackDelegate, updatedNowPlayingTime >= 0 {
@@ -122,7 +125,7 @@ class RetrieveCustomFilesTask: ApiBaseTask, @unchecked Sendable {
     }
 
     private func convertFromProto(_ protoEpisode: Files_File) -> UserEpisode {
-        let episode = UserEpisode()
+        var episode = UserEpisode()
         episode.uuid = protoEpisode.uuid
         episode.title = protoEpisode.title
         episode.fileType = protoEpisode.contentType

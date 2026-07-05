@@ -131,14 +131,14 @@ class DataManagerTestCase: XCTestCase {
         duration: Double = 3600,
         dataManager: DataManager
     ) -> UserEpisode {
-        let episode = UserEpisode()
+        var episode = UserEpisode()
         episode.uuid = uuid
         episode.title = title
         episode.episodeStatus = episodeStatus
         episode.uploadStatus = uploadStatus
         episode.addedDate = addedDate
         episode.duration = duration
-        dataManager.save(episode: episode)
+        episode = dataManager.save(episode: episode)
         return episode
     }
 

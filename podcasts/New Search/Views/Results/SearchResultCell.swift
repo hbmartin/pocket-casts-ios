@@ -278,12 +278,11 @@ struct EpisodeActionButton: UIViewRepresentable {
         guard let episodeUUID = model.episode?.uuid else {
             return
         }
-        let episode: BaseEpisode
+        var episode: BaseEpisode
         if let realEpisode = model.realEpisode {
             episode = realEpisode
         } else {
             episode = Episode()
-            episode.uuid = episodeUUID
         }
         episode.uuid = episodeUUID
         view.delegate = model

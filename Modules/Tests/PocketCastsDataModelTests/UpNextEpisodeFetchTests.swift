@@ -45,12 +45,12 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
 
     func testUserEpisodeDataManagerFiltersNonUpNextPlaylists() throws {
         try runWithBothImplementations { dataManager, impl in
-            let upNextUserEpisode = UserEpisode()
+            var upNextUserEpisode = UserEpisode()
             upNextUserEpisode.uuid = "user-ep-upnext"
             upNextUserEpisode.title = "Up Next User Episode"
             upNextUserEpisode.addedDate = Date()
 
-            let otherUserEpisode = UserEpisode()
+            var otherUserEpisode = UserEpisode()
             otherUserEpisode.uuid = "user-ep-other"
             otherUserEpisode.title = "Other Playlist User Episode"
             otherUserEpisode.addedDate = Date()

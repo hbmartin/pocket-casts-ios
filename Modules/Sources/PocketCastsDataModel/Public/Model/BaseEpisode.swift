@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol BaseEpisode: AnyObject {
+public protocol BaseEpisode {
     // MARK: - Properties
 
     var uuid: String { get set }

@@ -72,12 +72,12 @@ public final class UploadManager: NSObject, @unchecked Sendable {
         // if this episode is already uploading, ignore it
         if !shouldAddUpload(episodeUuid) { return }
 
-        guard let episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) else { return }
+        guard var episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) else { return }
 
         let previousUploadFailed = episode.uploadFailed()
         episode.uploadStatus = UploadStatus.queued.rawValue
         episode.uploadTaskId = episode.uuid
-        DataManager.sharedManager.save(episode: episode)
+        episode = DataManager.sharedManager.save(episode: episode)
 
         progressManager.updateStatusForEpisode(episode.uuid, status: .queued)
 
@@ -102,6 +102,7 @@ public final class UploadManager: NSObject, @unchecked Sendable {
     }
 
     public func removeFromQueue(episode: UserEpisode, fireNotification: Bool) {
+        var episode = episode
         guard let uploadId = episode.uploadTaskId else { return }
 
         cancelTaskId(uploadId, episode: episode, session: wifiOnlyBackgroundSession)

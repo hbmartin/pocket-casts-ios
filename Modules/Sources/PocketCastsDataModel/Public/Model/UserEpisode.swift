@@ -3,52 +3,51 @@ import GRDB
 import GRDBMacros
 
 @GRDBRecord(table: "SJUserEpisode")
-// @unchecked Sendable: mutable model object passed across threads by long-standing
-// convention in this codebase; consistency is maintained by database-write discipline
-// rather than by the type itself.
-public class UserEpisode: NSObject, BaseEpisode, @unchecked Sendable {
-    @objc public var id = 0 as Int64
-    @objc public var addedDate: Date?
+public struct UserEpisode: BaseEpisode, Identifiable, Equatable, Hashable, Sendable {
+    public init() {}
+
+    public var id = 0 as Int64
+    public var addedDate: Date?
     @GRDBNullDateAsEpoch
-    @objc public var lastDownloadAttemptDate: Date?
-    @objc public var downloadErrorDetails: String?
-    @objc public var downloadTaskId: String?
-    @objc public var downloadUrl: String?
-    @objc public var episodeStatus = 0 as Int32
-    @objc public var fileType: String?
+    public var lastDownloadAttemptDate: Date?
+    public var downloadErrorDetails: String?
+    public var downloadTaskId: String?
+    public var downloadUrl: String?
+    public var episodeStatus = 0 as Int32
+    public var fileType: String?
     // Note: contentType is saved separately via saveContentType() method.
     // The legacy SQL code doesn't include it in columnNames, so we ignore it for GRDB compatibility.
     @GRDBIgnore
-    @objc public var contentType: String?
-    @objc public var playedUpTo: Double = 0
-    @objc public var duration: Double = 0
-    @objc public var durationModified = 0 as Int64
-    @objc public var playingStatus = 1 as Int32
-    @objc public var autoDownloadStatus = 0 as Int32
-    @objc public var publishedDate: Date?
-    @objc public var sizeInBytes = 0 as Int64
-    @objc public var playingStatusModified = 0 as Int64
-    @objc public var playedUpToModified = 0 as Int64
-    @objc public var title: String?
-    @objc public var titleModified = 0 as Int64
-    @objc public var uuid = ""
-    @objc public var playbackErrorDetails: String?
-    @objc public var cachedFrameCount = 0 as Int64
-    @objc public var uploadStatus = 0 as Int32
-    @objc public var uploadTaskId: String?
-    @objc public var imageUrl: String?
-    @objc public var imageModified = 0 as Int64
-    @objc public var imageColor = 0 as Int32
-    @objc public var imageColorModified = 0 as Int64
-    @objc public var hasCustomImage = false
+    public var contentType: String?
+    public var playedUpTo: Double = 0
+    public var duration: Double = 0
+    public var durationModified = 0 as Int64
+    public var playingStatus = 1 as Int32
+    public var autoDownloadStatus = 0 as Int32
+    public var publishedDate: Date?
+    public var sizeInBytes = 0 as Int64
+    public var playingStatusModified = 0 as Int64
+    public var playedUpToModified = 0 as Int64
+    public var title: String?
+    public var titleModified = 0 as Int64
+    public var uuid = ""
+    public var playbackErrorDetails: String?
+    public var cachedFrameCount = 0 as Int64
+    public var uploadStatus = 0 as Int32
+    public var uploadTaskId: String?
+    public var imageUrl: String?
+    public var imageModified = 0 as Int64
+    public var imageColor = 0 as Int32
+    public var imageColorModified = 0 as Int64
+    public var hasCustomImage = false
     @GRDBIgnore
-    @objc public var hasOnlyUuid = false
+    public var hasOnlyUuid = false
     // Note: These properties exist on the model but were never added to the SJUserEpisode table.
     // The legacy SQL code doesn't persist them, so we ignore them for GRDB compatibility.
     @GRDBIgnore
-    @objc public var deselectedChapters: String?
+    public var deselectedChapters: String?
     @GRDBIgnore
-    @objc public var deselectedChaptersModified = 0 as Int64
+    public var deselectedChaptersModified = 0 as Int64
 
     // UserEpisode's are never archived or starred
     @GRDBIgnore
@@ -65,8 +64,6 @@ public class UserEpisode: NSObject, BaseEpisode, @unchecked Sendable {
     public var isUserEpisode: Bool {
         true
     }
-
-    override public init() {}
 
     public func displayableTitle() -> String {
         title ?? ""
@@ -144,7 +141,7 @@ public class UserEpisode: NSObject, BaseEpisode, @unchecked Sendable {
         playbackErrorDetails != nil
     }
 
-    @objc public func videoPodcast() -> Bool {
+    public func videoPodcast() -> Bool {
         if let fileType, fileType.startsWith(string: "video/") {
             return true
         }
@@ -162,14 +159,13 @@ public class UserEpisode: NSObject, BaseEpisode, @unchecked Sendable {
         Int(truncatingIfNeeded: id)
     }
 
-    override public func isEqual(_ object: Any?) -> Bool {
-        guard let otherEpisode = object as? Episode else { return false }
-
-        return otherEpisode.uuid == uuid
+    // Equality/hashing are uuid-consistent, matching the other struct records
+    public static func == (lhs: UserEpisode, rhs: UserEpisode) -> Bool {
+        lhs.uuid == rhs.uuid
     }
 
-    override public var hash: Int {
-        taggableId()
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(uuid)
     }
 
     public func uploaded() -> Bool {

@@ -105,6 +105,7 @@ class EpisodeManager: NSObject {
     }
 
     class func deleteDownloadedFiles(episode: BaseEpisode, userInitated: Bool = false) {
+        var episode = episode
         deleteFilesForEpisode(episode)
 
         if episode.episodeStatus != DownloadStatus.notDownloaded.rawValue {

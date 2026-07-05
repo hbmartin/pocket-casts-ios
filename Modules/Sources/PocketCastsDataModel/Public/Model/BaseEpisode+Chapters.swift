@@ -5,7 +5,7 @@ extension BaseEpisode {
         deselectedChapters?.split(separator: ",") ?? []
     }
 
-    public func select(chapterIndex index: Int) {
+    public mutating func select(chapterIndex index: Int) {
         guard let elementIndex = deselectedChaptersList.firstIndex(of: "\(index)") else {
             return
         }
@@ -15,7 +15,7 @@ extension BaseEpisode {
         deselectedChapters = deselectedChaptersList.joined(separator: ",")
     }
 
-    public func deselect(chapterIndex index: Int) {
+    public mutating func deselect(chapterIndex index: Int) {
         guard !deselectedChaptersList.contains("\(index)") else {
             return
         }

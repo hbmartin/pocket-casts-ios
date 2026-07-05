@@ -138,7 +138,7 @@ class PlayerChapterCell: UITableViewCell {
 
         setColors(dim: chapter?.isPlayable() == false)
 
-        if let currentEpisode = PlaybackManager.shared.currentEpisode(), let index = chapter?.index {
+        if var currentEpisode = PlaybackManager.shared.currentEpisode(), let index = chapter?.index {
             if chapter?.shouldPlay == true {
                 currentEpisode.select(chapterIndex: index)
                 track(.deselectChaptersChapterSelected)
@@ -156,6 +156,8 @@ class PlayerChapterCell: UITableViewCell {
                 guard !Task.isCancelled else { return }
 
                 await DataManager.sharedManager.saveAsync(episode: boxedEpisode.value)
+                // value-type episodes: refresh playback's copy of the deselected chapters
+                await MainActor.run { PlaybackManager.shared.forceUpdateChapterInfo() }
             }
         }
     }

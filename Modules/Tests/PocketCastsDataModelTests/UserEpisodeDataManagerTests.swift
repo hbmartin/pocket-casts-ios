@@ -11,7 +11,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testFindUserEpisodeByUuidReturnsUserEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "test-user-episode-uuid", title: "Test Episode", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "test-user-episode-uuid", title: "Test Episode", dataManager: dataManager)
 
             let found = dataManager.findUserEpisode(uuid: "test-user-episode-uuid")
 
@@ -33,7 +33,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testFindUserEpisodeByUploadTaskIdReturnsUserEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uploadTaskId: "upload-task-123", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uploadTaskId: "upload-task-123", dataManager: dataManager)
 
             let found = dataManager.findUserEpisode(uploadTaskId: "upload-task-123")
 
@@ -54,7 +54,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testFindBaseEpisodeByDownloadTaskIdReturnsUserEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(downloadTaskId: "download-task-123", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(downloadTaskId: "download-task-123", dataManager: dataManager)
 
             let found = dataManager.findBaseEpisode(downloadTaskId: "download-task-123")
 
@@ -254,7 +254,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveAndFindFrameCount() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(title: "Episode with frames", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(title: "Episode with frames", dataManager: dataManager)
 
             dataManager.saveFrameCount(episode: episode, frameCount: 12345)
 
@@ -265,7 +265,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testFindFrameCountReturnsZeroForNonExistent() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(title: "Episode", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(title: "Episode", dataManager: dataManager)
 
             // Don't set frame count
             let frameCount = dataManager.findFrameCount(episode: episode)
@@ -328,7 +328,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testDeleteRemovesUserEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(title: "To Delete", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(title: "To Delete", dataManager: dataManager)
 
             dataManager.delete(userEpisodeUuid: episode.uuid)
 
@@ -339,8 +339,8 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testDeleteUserEpisodesRemovesMultipleEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode1 = self.createTestUserEpisode(title: "To Delete 1", dataManager: dataManager)
-            let episode2 = self.createTestUserEpisode(title: "To Delete 2", dataManager: dataManager)
+            var episode1 = self.createTestUserEpisode(title: "To Delete 1", dataManager: dataManager)
+            var episode2 = self.createTestUserEpisode(title: "To Delete 2", dataManager: dataManager)
             let episode3 = self.createTestUserEpisode(title: "To Keep", dataManager: dataManager)
 
             dataManager.deleteUserEpisodes(userEpisodeUuids: [episode1.uuid, episode2.uuid])
@@ -355,7 +355,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testClearDownloadTaskIdClearsTaskId() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(downloadTaskId: "task-123", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(downloadTaskId: "task-123", dataManager: dataManager)
 
             dataManager.clearDownloadTaskId(episode: episode)
 
@@ -368,7 +368,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testClearUploadTaskIdClearsTaskId() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uploadTaskId: "task-123", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uploadTaskId: "task-123", dataManager: dataManager)
 
             dataManager.clearUploadTaskId(episode: episode)
 
@@ -405,7 +405,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveInsertsNewUserEpisodeWithAllFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.uuid = "save-test-uuid"
             episode.title = "Save Test Episode"
             episode.addedDate = Date(timeIntervalSince1970: 1000000)
@@ -420,7 +420,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
             episode.hasCustomImage = true
             episode.imageColor = 5
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findUserEpisode(uuid: "save-test-uuid")
             XCTAssertNotNil(found, "\(impl): Should find saved user episode")
@@ -441,7 +441,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveUpdatesExistingUserEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "update-test-uuid", title: "Original Title", duration: 3600, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "update-test-uuid", title: "Original Title", duration: 3600, dataManager: dataManager)
 
             // Update fields
             episode.title = "Updated Title"
@@ -449,7 +449,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
             episode.playedUpTo = 500.0
             episode.playingStatus = PlayingStatus.completed.rawValue
             episode.episodeStatus = DownloadStatus.downloaded.rawValue
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findUserEpisode(uuid: "update-test-uuid")
             XCTAssertEqual(found?.title, "Updated Title", "\(impl): Title should be updated")
@@ -462,13 +462,13 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveGeneratesIdIfZero() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.uuid = "id-test-uuid"
             episode.title = "ID Test Episode"
             episode.addedDate = Date()
             episode.id = 0
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             XCTAssertNotEqual(episode.id, 0, "\(impl): ID should be generated")
 
@@ -480,7 +480,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSavePreservesModifiedFlags() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.uuid = "modified-test-uuid"
             episode.title = "Modified Flags Test"
             episode.addedDate = Date()
@@ -491,7 +491,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
             episode.imageModified = 33333
             episode.imageColorModified = 44444
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findUserEpisode(uuid: "modified-test-uuid")
             XCTAssertEqual(found?.playingStatusModified, 12345, "\(impl): playingStatusModified should be preserved")
@@ -505,7 +505,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSavePreservesOptionalStrings() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.uuid = "optional-test-uuid"
             episode.title = "Optional Strings Test"
             episode.addedDate = Date()
@@ -516,7 +516,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
             episode.downloadErrorDetails = "Test error"
             episode.playbackErrorDetails = "Playback error"
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findUserEpisode(uuid: "optional-test-uuid")
             XCTAssertEqual(found?.downloadUrl, "https://example.com/episode.mp3", "\(impl): downloadUrl should be preserved")
@@ -532,8 +532,8 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testBulkSaveUpdatesExistingUserEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode1 = self.createTestUserEpisode(uuid: "bulk-update-1", title: "Episode 1", dataManager: dataManager)
-            let episode2 = self.createTestUserEpisode(uuid: "bulk-update-2", title: "Episode 2", dataManager: dataManager)
+            var episode1 = self.createTestUserEpisode(uuid: "bulk-update-1", title: "Episode 1", dataManager: dataManager)
+            var episode2 = self.createTestUserEpisode(uuid: "bulk-update-2", title: "Episode 2", dataManager: dataManager)
 
             // Update the episodes
             episode1.title = "Episode 1 Updated"
@@ -556,10 +556,10 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
     func testBulkSaveMixedInsertAndUpdate() throws {
         try runWithBothImplementations { dataManager, impl in
             // Create one existing episode
-            let existingEpisode = self.createTestUserEpisode(uuid: "existing-uuid", title: "Existing Episode", dataManager: dataManager)
+            var existingEpisode = self.createTestUserEpisode(uuid: "existing-uuid", title: "Existing Episode", dataManager: dataManager)
 
             // Create a new episode
-            let newEpisode = UserEpisode()
+            var newEpisode = UserEpisode()
             newEpisode.uuid = "new-uuid"
             newEpisode.title = "New Episode"
             newEpisode.addedDate = Date()
@@ -582,7 +582,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             var episodes = [UserEpisode]()
             for i in 0..<5 {
-                let episode = UserEpisode()
+                var episode = UserEpisode()
                 episode.uuid = "bulk-user-\(i)"
                 episode.title = "Bulk Episode \(i)"
                 episode.addedDate = Date()
@@ -603,8 +603,8 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testBulkMarkAsPlayedMarksUserEpisodesAsPlayed() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode1 = self.createTestUserEpisode(uuid: "user-ep-1", title: "Episode 1", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
-            let episode2 = self.createTestUserEpisode(uuid: "user-ep-2", title: "Episode 2", playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
+            var episode1 = self.createTestUserEpisode(uuid: "user-ep-1", title: "Episode 1", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode2 = self.createTestUserEpisode(uuid: "user-ep-2", title: "Episode 2", playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
 
             dataManager.bulkMarkAsPlayed(episodes: [episode1, episode2], updateSyncFlag: false)
 
@@ -618,7 +618,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testBulkMarkAsPlayedSkipsAlreadyPlayedEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "already-played", title: "Already Played", playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "already-played", title: "Already Played", playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
 
             // Should not crash or cause issues
             dataManager.bulkMarkAsPlayed(episodes: [episode], updateSyncFlag: false)
@@ -632,8 +632,8 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testBulkMarkAsUnPlayedMarksUserEpisodesAsNotPlayed() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode1 = self.createTestUserEpisode(uuid: "user-ep-1", title: "Episode 1", playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
-            let episode2 = self.createTestUserEpisode(uuid: "user-ep-2", title: "Episode 2", playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
+            var episode1 = self.createTestUserEpisode(uuid: "user-ep-1", title: "Episode 1", playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
+            var episode2 = self.createTestUserEpisode(uuid: "user-ep-2", title: "Episode 2", playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
 
             dataManager.bulkMarkAsUnPlayed(baseEpisodes: [episode1, episode2], updateSyncFlag: false)
 
@@ -647,7 +647,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testBulkMarkAsUnPlayedResetsPlayedUpTo() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "user-ep-1", title: "Episode 1", playingStatus: PlayingStatus.inProgress.rawValue, playedUpTo: 300.0, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "user-ep-1", title: "Episode 1", playingStatus: PlayingStatus.inProgress.rawValue, playedUpTo: 300.0, dataManager: dataManager)
 
             dataManager.bulkMarkAsUnPlayed(baseEpisodes: [episode], updateSyncFlag: false)
 
@@ -660,7 +660,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodePlayingStatusUpdatesStatus() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "status-ep", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "status-ep", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             dataManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: false)
 
@@ -671,7 +671,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodePlayingStatusUpdatesSyncFlag() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "status-ep", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "status-ep", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             dataManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: true)
 
@@ -684,7 +684,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodePlayedUpToUpdatesPosition() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "played-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "played-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(playedUpTo: 150.5, episode: episode, updateSyncFlag: false)
 
@@ -697,7 +697,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeUploadStatusUpdatesStatus() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "upload-ep", uploadStatus: UploadStatus.notUploaded.rawValue, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "upload-ep", uploadStatus: UploadStatus.notUploaded.rawValue, dataManager: dataManager)
 
             dataManager.saveEpisode(uploadStatus: .uploaded, episode: episode)
 
@@ -710,7 +710,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeDownloadStatusUpdatesStatus() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "download-ep", episodeStatus: DownloadStatus.notDownloaded.rawValue, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "download-ep", episodeStatus: DownloadStatus.notDownloaded.rawValue, dataManager: dataManager)
 
             dataManager.saveEpisode(downloadStatus: .downloaded, downloadTaskId: nil, episode: episode)
 
@@ -721,7 +721,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeDownloadStatusWithSizeUpdates() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "download-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "download-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(downloadStatus: .downloaded, sizeInBytes: 1024000, episode: episode)
 
@@ -735,7 +735,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeDurationUpdatesDuration() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "duration-ep", duration: 3600, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "duration-ep", duration: 3600, dataManager: dataManager)
 
             dataManager.saveEpisode(duration: 7200, episode: episode, updateSyncFlag: false)
 
@@ -748,7 +748,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeAutoDownloadStatusUpdatesStatus() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "auto-download-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "auto-download-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(autoDownloadStatus: .autoDownloaded, episode: episode)
 
@@ -761,7 +761,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeDownloadStatusWithErrorUpdatesFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "error-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "error-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: "Network error", downloadTaskId: nil, episode: episode)
 
@@ -775,7 +775,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeUploadStatusWithTaskIdUpdatesFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "upload-task-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "upload-task-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(uploadStatus: .uploading, uploadTaskId: "task-456", episode: episode)
 
@@ -788,7 +788,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeUploadStatusWithErrorUpdatesFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "upload-error-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "upload-error-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(uploadStatus: .uploadFailed, uploadError: "Upload failed", uploadTaskId: nil, episode: episode)
 
@@ -801,7 +801,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeDownloadStatusWithAttemptDateUpdatesFields() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "attempt-date-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "attempt-date-ep", dataManager: dataManager)
             let attemptDate = Date()
 
             dataManager.saveEpisode(downloadStatus: .downloadFailed, lastDownloadAttemptDate: attemptDate, autoDownloadStatus: .userDeletedFile, episode: episode)
@@ -817,7 +817,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodePlaybackErrorUpdatesField() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "playback-error-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "playback-error-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(playbackError: "Codec not supported", episode: episode)
 
@@ -828,7 +828,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodePlaybackErrorClearsWhenNil() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "clear-error-ep", playbackError: "Some error", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "clear-error-ep", playbackError: "Some error", dataManager: dataManager)
 
             dataManager.saveEpisode(playbackError: nil, episode: episode)
 
@@ -841,7 +841,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testMarkImageUploadedClearsImageModifiedAndUrl() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "image-upload-ep", imageModified: 12345, imageUrl: "http://example.com/image.jpg", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "image-upload-ep", imageModified: 12345, imageUrl: "http://example.com/image.jpg", dataManager: dataManager)
 
             dataManager.markImageUploaded(episode: episode)
 
@@ -855,7 +855,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testBulkUserFileDeleteUpdatesStatus() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "bulk-delete-ep", episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "bulk-delete-ep", episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
 
             dataManager.bulkUserFileDelete(baseEpisodes: [episode])
 
@@ -869,7 +869,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
 
     func testSaveEpisodeContentTypeUpdatesContentType() throws {
         try runWithBothImplementations { dataManager, impl in
-            let episode = self.createTestUserEpisode(uuid: "content-type-ep", dataManager: dataManager)
+            var episode = self.createTestUserEpisode(uuid: "content-type-ep", dataManager: dataManager)
 
             dataManager.saveEpisode(contentType: "audio/mpeg", episode: episode)
 
@@ -928,7 +928,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
         imageUrl: String? = nil,
         dataManager: DataManager
     ) -> UserEpisode {
-        let episode = UserEpisode()
+        var episode = UserEpisode()
         episode.uuid = uuid
         episode.title = title
         episode.episodeStatus = episodeStatus
@@ -944,7 +944,7 @@ final class UserEpisodeDataManagerTests: DataManagerTestCase {
         episode.playbackErrorDetails = playbackError
         episode.imageModified = imageModified
         episode.imageUrl = imageUrl
-        dataManager.save(episode: episode)
+        episode = dataManager.save(episode: episode)
         return episode
     }
 }

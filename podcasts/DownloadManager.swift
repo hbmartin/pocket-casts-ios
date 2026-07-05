@@ -262,9 +262,9 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     }
 
     func queueForLaterDownload(episodeUuid: String, fireNotification: Bool, autoDownloadStatus: AutoDownloadStatus) {
-        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid), !episode.downloaded(pathFinder: DownloadManager.shared) else { return }
+        guard var episode = dataManager.findBaseEpisode(uuid: episodeUuid), !episode.downloaded(pathFinder: DownloadManager.shared) else { return }
 
-        markUnplayedAndUnarchiveIfRequired(episode: episode, saveChanges: true)
+        markUnplayedAndUnarchiveIfRequired(episode: &episode, saveChanges: true)
         dataManager.saveEpisode(downloadStatus: .waitingForWifi, lastDownloadAttemptDate: Date(), autoDownloadStatus: autoDownloadStatus, episode: episode)
 
         let networkState = NetworkUtils.shared.isConnectedToUnexpensiveConnection() ? "on unexpensive connection" : "on expensive connection"
@@ -287,7 +287,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         // if this episode is already downloading, ignore it
         if !shouldAddDownload(episodeUuid, autoDownloadStatus: autoDownloadStatus) { return }
 
-        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid) else { return }
+        guard var episode = dataManager.findBaseEpisode(uuid: episodeUuid) else { return }
 
         let downloadingToStream = autoDownloadStatus == AutoDownloadStatus.playerDownloadedForStreaming
 
@@ -318,7 +318,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         episode.autoDownloadStatus = autoDownloadStatus.rawValue
         episode.downloadErrorDetails = nil
         episode.playbackErrorDetails = nil
-        markUnplayedAndUnarchiveIfRequired(episode: episode, saveChanges: false)
+        markUnplayedAndUnarchiveIfRequired(episode: &episode, saveChanges: false)
         episode.downloadTaskId = episode.uuid
         episode.lastDownloadAttemptDate = Date()
         dataManager.save(episode: episode)
@@ -425,12 +425,15 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             }
             return newItem
         }
+        var episode = episode
         var wasDownloadingBefore = false
         if episode.downloading() || episode.queued() {
             wasDownloadingBefore = true
             let previousStatus = episode.autoDownloadStatus
             fileLog.addMessage("DownloadManager stream and download: cancelling existing download for: \(episode.uuid) with status:\(previousStatus)")
             self.removeFromQueue(episodeUuid: episode.uuid, fireNotification: false, userInitiated: false)
+            // value-type episodes: re-read the copy removeFromQueue just saved so we don't write stale status back
+            episode = dataManager.findBaseEpisode(uuid: episode.uuid) ?? episode
             episode.autoDownloadStatus = previousStatus
         } else {
             episode.autoDownloadStatus = Settings.downloadUpNextEpisodes() ? AutoDownloadStatus.autoDownloaded.rawValue :  AutoDownloadStatus.playerDownloadedForStreaming.rawValue
@@ -441,9 +444,9 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
             fileLog.addMessage("DownloadManager stream and download: episode uuid is empty")
             return playbackItem
         }
-        downloadingEpisodesCache[downloadTaskUUID] = episode
         episode.downloadTaskId = downloadTaskUUID
         episode.lastDownloadAttemptDate = Date.now
+        downloadingEpisodesCache[downloadTaskUUID] = episode
         DataManager.sharedManager.save(episode: episode)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
 
@@ -515,7 +518,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         return newItem
     }
 
-    private func markUnplayedAndUnarchiveIfRequired(episode: BaseEpisode, saveChanges: Bool) {
+    private func markUnplayedAndUnarchiveIfRequired(episode: inout BaseEpisode, saveChanges: Bool) {
         var episodeModified = false
 
         if episode.played() {
@@ -631,6 +634,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
     // note, this method should only be called if you just grabbed the episode from the DB, if you're unsure how fresh your episode is, use the episodeUuid method
     func removeFromQueue(episode: BaseEpisode, fireNotification: Bool, userInitiated: Bool) {
+        var episode = episode
         let uniquedDownloadId = episode.downloadTaskId
         cancelTaskId(uniquedDownloadId, episode: episode, session: wifiOnlyBackgroundSession)
         cancelTaskId(uniquedDownloadId, episode: episode, session: cellularBackgroundSession)
@@ -666,7 +670,7 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     }
 
     private func shouldAddDownload(_ episodeUuid: String, autoDownloadStatus: AutoDownloadStatus) -> Bool {
-        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid) else { return false }
+        guard var episode = dataManager.findBaseEpisode(uuid: episodeUuid) else { return false }
 
         if let taskId = episode.downloadTaskId,
             episode.autoDownloadStatus == AutoDownloadStatus.playerDownloadedForStreaming.rawValue,

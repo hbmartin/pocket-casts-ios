@@ -184,7 +184,7 @@ final class DataManagerTests: DataManagerTestCase {
             dataManager.save(episode: episode)
 
             // Create downloaded user episode with a more recent download date
-            let userEpisode = UserEpisode()
+            var userEpisode = UserEpisode()
             userEpisode.uuid = "downloaded-user-ep"
             userEpisode.addedDate = Date()
             userEpisode.episodeStatus = DownloadStatus.downloaded.rawValue

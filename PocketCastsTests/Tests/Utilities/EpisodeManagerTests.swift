@@ -30,7 +30,7 @@ final class EpisodeManagerTests: DBTestCase {
 
     func testUrlForEpisodeStreamingOnlyWithUserEpisode() {
         // Given: A user episode (uploaded content)
-        let userEpisode = UserEpisode()
+        var userEpisode = UserEpisode()
         userEpisode.uuid = "user-episode-abc"
         userEpisode.uploadStatus = UploadStatus.uploaded.rawValue
 
@@ -122,7 +122,7 @@ final class EpisodeManagerTests: DBTestCase {
 
     func testUrlForEpisodeUserEpisodeWithoutToken() {
         // Given: A user episode but no sync token available
-        let userEpisode = UserEpisode()
+        var userEpisode = UserEpisode()
         userEpisode.uuid = "user-episode-no-token"
         userEpisode.uploadStatus = UploadStatus.uploaded.rawValue
 

@@ -50,13 +50,14 @@ class UploadFilesUpdateTask: ApiBaseTask, @unchecked Sendable {
                 completion?(httpStatus)
                 return
             }
-            episodes = episodes.map {
-                $0.titleModified = 0
-                $0.imageColorModified = 0
-                $0.playingStatusModified = 0
-                $0.playedUpToModified = 0
-                $0.durationModified = 0
-                return $0
+            episodes = episodes.map { episode in
+                var episode = episode
+                episode.titleModified = 0
+                episode.imageColorModified = 0
+                episode.playingStatusModified = 0
+                episode.playedUpToModified = 0
+                episode.durationModified = 0
+                return episode
             }
 
             DataManager.sharedManager.bulkSave(episodes: episodes)

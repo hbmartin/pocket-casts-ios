@@ -4,7 +4,7 @@ import XCTest
 
 class BaseEpisodeTests: XCTestCase {
     func testSelectAChapter() {
-        let episode = Episode()
+        var episode = Episode()
         episode.deselectedChapters = "0,1,2,3"
 
         episode.select(chapterIndex: 0)
@@ -13,7 +13,7 @@ class BaseEpisodeTests: XCTestCase {
     }
 
     func testDeselectAChapter() {
-        let episode = Episode()
+        var episode = Episode()
         episode.deselectedChapters = "0,1,2,3"
 
         episode.deselect(chapterIndex: 4)
@@ -22,7 +22,7 @@ class BaseEpisodeTests: XCTestCase {
     }
 
     func testDontDeselectAChapterTwice() {
-        let episode = Episode()
+        var episode = Episode()
         episode.deselectedChapters = "0,1,2,3"
 
         episode.deselect(chapterIndex: 0)

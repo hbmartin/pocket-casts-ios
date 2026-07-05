@@ -110,7 +110,7 @@ class UserEpisodeDetailViewController: UIViewController {
         super.init(nibName: "UserEpisodeDetailViewController", bundle: nil)
     }
 
-    @objc init(episode: UserEpisode) {
+    init(episode: UserEpisode) {
         self.episode = episode
 
         super.init(nibName: "UserEpisodeDetailViewController", bundle: nil)

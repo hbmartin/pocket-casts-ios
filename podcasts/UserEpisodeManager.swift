@@ -7,7 +7,7 @@ import UIKit
 struct UserEpisodeManager {
     #if !os(tvOS)
         static func addUserEpisode(uuid: String, title: String, localFileUrl: URL, artwork: UIImage?, color: Int, fileSize: Int, duration: TimeInterval) throws -> UserEpisode {
-            let episode = UserEpisode()
+            var episode = UserEpisode()
             episode.title = title
             episode.addedDate = Date()
             episode.publishedDate = Date()
@@ -30,7 +30,7 @@ struct UserEpisodeManager {
                 episode.hasCustomImage = false
             }
 
-            DataManager.sharedManager.save(episode: episode)
+            episode = DataManager.sharedManager.save(episode: episode)
 
             if Settings.userFilesAutoUpload() {
                 uploadUserEpisode(userEpisode: episode)
@@ -45,6 +45,7 @@ struct UserEpisodeManager {
     #endif
 
     static func renameUserEpisode(title: String, userEpisode: UserEpisode) {
+        var userEpisode = userEpisode
         userEpisode.title = title
         DataManager.sharedManager.save(episode: userEpisode)
     }
@@ -156,7 +157,7 @@ struct UserEpisodeManager {
     // MARK: - Update User Episode
 
     static func updateUserEpisode(uuid: String, title: String, color: Int) {
-        guard let episode = DataManager.sharedManager.findUserEpisode(uuid: uuid) else {
+        guard var episode = DataManager.sharedManager.findUserEpisode(uuid: uuid) else {
             return
         }
         var episodeSyncRequired = false
@@ -193,6 +194,7 @@ struct UserEpisodeManager {
                 }
 
                 ImageManager.sharedManager.removeUserEpisodeImage(episode: episode, completionHandler: {
+                    var episode = episode
                     episode.imageUrl = nil
                     if episode.imageColor != 0 {
                         episode.imageColor = 0
