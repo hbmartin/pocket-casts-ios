@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class FeatureTour {
     private var tourController: TourViewController?
     private var window: UIWindow?

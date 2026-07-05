@@ -126,18 +126,6 @@ podcasts/Common Components/ExpandableLabel.swift: warning: main actor-isolated p
 podcasts/Common Components/ExpandableLabel.swift: warning: main actor-isolated property 'numberOfTapsRequired' can not be mutated from a nonisolated context
 podcasts/Common Components/ExpandableLabel.swift: warning: main actor-isolated property 'numberOfTouchesRequired' can not be mutated from a nonisolated context
 podcasts/Common Components/ExplicitBadge.swift: warning: static property 'imageCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: call to main actor-isolated initializer 'init(frame:)' in a synchronous nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: call to main actor-isolated initializer 'init(tourSteps:)' in a synchronous nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: call to main actor-isolated instance method 'animateIn()' in a synchronous nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: call to main actor-isolated instance method 'animateOut()' in a synchronous nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: call to main actor-isolated instance method 'makeKeyAndVisible()' in a synchronous nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: call to main actor-isolated instance method 'resignKey()' in a synchronous nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: main actor-isolated class property 'main' can not be referenced from a nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: main actor-isolated property 'delegate' can not be mutated from a nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: main actor-isolated property 'overrideStatusBarStyle' can not be mutated from a nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: main actor-isolated property 'rootViewController' can not be mutated from a nonisolated context
-podcasts/Common Components/Feature Tour/FeatureTour.swift: warning: main actor-isolated property 'windowLevel' can not be mutated from a nonisolated context
 podcasts/Common Components/Feature Tour/TourViewController.swift: warning: conformance of 'TourViewController' to protocol 'TourDelegate' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode
 podcasts/Common Components/FullSyncRefreshController.swift: warning: call to main actor-isolated instance method 'set(text:)' in a synchronous nonisolated context
 podcasts/Common Components/FullSyncRefreshController.swift: warning: capture of 'self' with non-Sendable type 'FullSyncRefreshController?' in a '@Sendable' closure
@@ -612,15 +600,6 @@ podcasts/UserEpisodeManager.swift: warning: call to main actor-isolated instance
 podcasts/UserEpisodeManager.swift: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/AVFileUtil.swift: warning: passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode
 podcasts/Utilities/BlurEffectView.swift: warning: call to main actor-isolated instance method 'stopAnimation' in a synchronous nonisolated context
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: call to main actor-isolated initializer 'init(title:message:icon:actions:style:maxContentWidth:)' in a synchronous nonisolated context
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: call to main actor-isolated initializer 'init(title:subtitle:image:selectedImage:identifier:discoverabilityTitle:attributes:state:handler:)' in a synchronous nonisolated context
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: call to main actor-isolated initializer 'init(tryAgainHandler:)' in a synchronous nonisolated context
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: sending 'actions' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: sending 'icon' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: sending 'style' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: sending 'tryAgainHandler' risks causing data races; this is an error in the Swift 6 language mode
-podcasts/Utilities/ContentUnavailableConfiguration.swift: warning: sending value of non-Sendable type '(UIAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/ModalMessageViewController.swift: warning: call to main actor-isolated initializer 'init(icon:title:message:destructive:actionTitle:action:)' in a synchronous nonisolated context
 podcasts/Utilities/ModalMessageViewController.swift: warning: sending value of non-Sendable type '() -> Void' risks causing data races; this is an error in the Swift 6 language mode
 podcasts/Utilities/NotificationsHelper.swift: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'UserNotifications'
