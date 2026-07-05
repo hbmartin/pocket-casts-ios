@@ -1,7 +1,7 @@
 import PocketCastsDataModel
 import SwipeCellKit
 
-extension PlaylistDetailViewController: SwipeTableViewCellDelegate, SwipeHandler {
+extension PlaylistDetailViewController: @preconcurrency SwipeTableViewCellDelegate, SwipeHandler {
     // MARK: - SwipeTableViewCellDelegate
 
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {

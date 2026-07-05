@@ -1,6 +1,7 @@
 import PocketCastsDataModel
 import UIKit
 import Combine
+import PocketCastsUtils
 
 class ShortcutManager: CustomObserver {
 
@@ -41,14 +42,12 @@ class ShortcutManager: CustomObserver {
     }
 
     @objc private func shortcutsRequireUpdate() {
-        DispatchQueue.global().async { [weak self] () in
-            guard let strongSelf = self else { return }
-
-            strongSelf.updateShortcuts()
+        DispatchQueue.global().async {
+            Self.updateShortcuts()
         }
     }
 
-    private func updateShortcuts() {
+    private static func updateShortcuts() {
         var shortcutItems = [UIMutableApplicationShortcutItem]()
 
         // top playlist
@@ -100,8 +99,9 @@ class ShortcutManager: CustomObserver {
             )
         }
 
-        DispatchQueue.main.async {
-            UIApplication.shared.shortcutItems = shortcutItems
+        let boxedItems = PocketCastsUtils.UncheckedSendable(shortcutItems)
+        Task { @MainActor in
+            UIApplication.shared.shortcutItems = boxedItems.value
         }
     }
 }
