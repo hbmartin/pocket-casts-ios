@@ -29,8 +29,10 @@ class ThemeableCollectionCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        updateColor(AppTheme.colorForStyle(style))
+        MainActor.assumeIsolated {
+            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            updateColor(AppTheme.colorForStyle(style))
+        }
     }
 
     deinit {

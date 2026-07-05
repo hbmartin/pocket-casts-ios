@@ -1,6 +1,7 @@
 
 import UIKit
 
+@MainActor
 protocol AutoScrollCollectionViewDelegate: UICollectionView {
     var timer: Timer? { get set }
     func initializeAutoScrollTimer()
@@ -16,8 +17,11 @@ class ThemeableCollectionView: UICollectionView, AutoScrollCollectionViewDelegat
     }
 
     override func awakeFromNib() {
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        updateColor()
+        super.awakeFromNib()
+        MainActor.assumeIsolated {
+            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            updateColor()
+        }
     }
 
     deinit {

@@ -1,4 +1,5 @@
 class ModalMessageViewController {
+    @MainActor
     static func episodeUnavailableAlert(removeAction: (() -> Void)? = nil) -> ModalMessageView {
         return ModalMessageView(
             icon: "bang-circle-ol",
