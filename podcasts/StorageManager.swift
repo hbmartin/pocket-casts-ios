@@ -4,7 +4,8 @@ import PocketCastsUtils
 struct StorageManager {
     typealias Attributes = [FileAttributeKey: Any]
 
-    private static var fileManager: FileManager = .default
+    // FileManager.default is a thread-safe Apple singleton
+    nonisolated(unsafe) private static let fileManager: FileManager = .default
 
     @discardableResult
     static func moveItem(at fromURL: URL, to toURL: URL, attributes: Attributes? = nil, options: Options? = nil) throws -> Bool {
@@ -76,7 +77,7 @@ struct StorageManager {
     }
 
     private enum Constants {
-        static let defaultAttributes: Attributes = [
+        static let defaultAttributes: [FileAttributeKey: FileProtectionType] = [
             .protectionKey: FileProtectionType.none
         ]
     }

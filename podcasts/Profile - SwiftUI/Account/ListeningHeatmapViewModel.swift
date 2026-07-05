@@ -17,6 +17,7 @@ struct HeatmapDay: Identifiable {
     let intensity: HeatmapIntensity
 }
 
+@MainActor
 final class ListeningHeatmapViewModel: ObservableObject {
     @Published private(set) var weeks: [[HeatmapDay]] = []
 
@@ -52,15 +53,15 @@ final class ListeningHeatmapViewModel: ObservableObject {
         guard !isLoading else { return }
         isLoading = true
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            let rawData = self.dataManager.dailyListeningTime(forLast: self.daysOfHistory)
-            let weeks = self.buildWeeks(from: rawData)
-
-            DispatchQueue.main.async {
-                self.weeks = weeks
-                self.isLoading = false
-            }
+        Task { [dataManager, daysOfHistory] in
+            let rawData = await Self.fetchListeningTime(dataManager: dataManager, days: daysOfHistory)
+            self.weeks = buildWeeks(from: rawData)
+            self.isLoading = false
         }
+    }
+
+    nonisolated private static func fetchListeningTime(dataManager: DataManager, days: Int) async -> [String: Double] {
+        dataManager.dailyListeningTime(forLast: days)
     }
 
     func buildWeeks(from data: [String: Double]) -> [[HeatmapDay]] {

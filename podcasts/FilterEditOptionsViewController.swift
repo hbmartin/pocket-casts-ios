@@ -261,8 +261,10 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
 
     private func updateExistingSortcutData() {
         SiriShortcutsManager.shared.voiceShortcutForFilter(filter: filterToEdit, completion: { voiceShortcut in
-            self.existingShortcut = voiceShortcut
-            DispatchQueue.main.async {
+            // The shortcuts callback is off-main; state and table belong to the main actor
+            let boxed = PocketCastsUtils.UncheckedSendable(voiceShortcut)
+            Task { @MainActor in
+                self.existingShortcut = boxed.value
                 self.tableView.reloadData()
             }
         })
