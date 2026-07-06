@@ -2,6 +2,13 @@
 
 SWIFT_VERSION = 6.0
 
+// Minimum deployment target for the app and every extension target. Centralized
+// here (the four project configs all include this file) so there is a single iOS
+// floor; the per-target IPHONEOS_DEPLOYMENT_TARGET overrides in project.pbxproj
+// were removed when the floor moved to iOS 26. Keep in sync with the .iOS(...)
+// platform in Modules/Package.swift.
+IPHONEOS_DEPLOYMENT_TARGET = 26.0
+
 // Strict-concurrency ratchet: warnings outside Modules/Sources are gated against
 // scripts/ci/concurrency-baseline.txt (deletion-only) by scripts/ci/check-concurrency-warnings.sh.
 // See MODERNIZATION.md. Regenerate the baseline with `mise run concurrency:baseline`.
