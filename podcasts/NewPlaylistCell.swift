@@ -175,10 +175,13 @@ class NewPlaylistCell: ThemeableCell {
     /// Subscribe to metadata updates for the specified playlist.
     /// This enables reactive updates when counts or images change from other sources.
     private func subscribeToUpdates(for playlistID: String) {
-        // Subscribe to count updates
+        // Hop to main BEFORE the filter: the loader sends on its subject from a
+        // background Task, and under default MainActor isolation these operator
+        // closures are @MainActor — running the filter on the sending thread trips
+        // a main-queue executor assertion. receive(on:) must come first.
         playlistMetadataLoader.countUpdatesPublisher
-            .filter { $0.playlistID == playlistID }
             .receive(on: DispatchQueue.main)
+            .filter { $0.playlistID == playlistID }
             .sink { [weak self] update in
                 guard let self, self.playlistID == playlistID else { return }
                 if update.count != self.viewModel.episodesCount {
@@ -187,10 +190,10 @@ class NewPlaylistCell: ThemeableCell {
             }
             .store(in: &cancellables)
 
-        // Subscribe to image updates
+        // Subscribe to image updates (same main-hop-before-filter requirement)
         playlistMetadataLoader.imageUpdatesPublisher
-            .filter { $0.playlistID == playlistID }
             .receive(on: DispatchQueue.main)
+            .filter { $0.playlistID == playlistID }
             .sink { [weak self] update in
                 guard let self, self.playlistID == playlistID else { return }
                 if update.images != self.viewModel.images {

@@ -198,6 +198,7 @@
 		467DF6EB26E10AFD00AC290C /* Strings+Generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467DF6E826E1093A00AC290C /* Strings+Generated.swift */; };
 		4694FA652799C80300E9CF70 /* iPhone_GenerateScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA642799C80300E9CF70 /* iPhone_GenerateScreenshots.swift */; };
 		4694FA6D2799C85500E9CF70 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA6C2799C85500E9CF70 /* SnapshotHelper.swift */; };
+		7A5B124020260706000000AE /* SmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B124020260706000000AD /* SmokeUITests.swift */; };
 		4694FA712799E73E00E9CF70 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 460C375526D831E3008B3609 /* Localizable.strings */; };
 		46C22EE028F73D9A00F4173B /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */; };
 		46C22EE328F7497300F4173B /* DeveloperMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C22EE228F7497300F4173B /* DeveloperMenu.swift */; };
@@ -983,6 +984,13 @@
 			remoteGlobalIDString = BDBD53EB17019B2A0048C8C5;
 			remoteInfo = podcasts;
 		};
+		7A5B124020260706000000AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BDBD53EB17019B2A0048C8C5;
+			remoteInfo = podcasts;
+		};
 		8B0845912A66C86500742C2F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BDBD53E417019B290048C8C5 /* Project object */;
@@ -1245,6 +1253,8 @@
 		4680CC04271F5EDA00391AB8 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4680CC05271F5EDA00391AB8 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4694FA602799C80300E9CF70 /* Screenshot Automation.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Screenshot Automation.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A5B124020260706000000AC /* PocketCastsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PocketCastsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A5B124020260706000000AD /* SmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeUITests.swift; sourceTree = "<group>"; };
 		4694FA642799C80300E9CF70 /* iPhone_GenerateScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhone_GenerateScreenshots.swift; sourceTree = "<group>"; };
 		4694FA6C2799C85500E9CF70 /* SnapshotHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotHelper.swift; path = fastlane/SnapshotHelper.swift; sourceTree = SOURCE_ROOT; };
 		46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
@@ -2523,6 +2533,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A5B124020260706000000A8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BD3A210A1E6CFC2400F42241 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -2867,6 +2884,14 @@
 				46316CF127A85F3000458BA4 /* XCUIElement+Extensions.swift */,
 			);
 			path = "Screenshot Automation";
+			sourceTree = "<group>";
+		};
+		7A5B124020260706000000AF /* PocketCastsUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7A5B124020260706000000AD /* SmokeUITests.swift */,
+			);
+			path = PocketCastsUITests;
 			sourceTree = "<group>";
 		};
 		46C22EE128F7496000F4173B /* Developer Menu */ = {
@@ -3942,6 +3967,7 @@
 				3F26BBE52F4FC3090007119B /* WidgetExtension */,
 				467DF6E526E1078400AC290C /* Resources */,
 				4694FA612799C80300E9CF70 /* Screenshot Automation */,
+				7A5B124020260706000000AF /* PocketCastsUITests */,
 				3F26BB7B2F4FC23E0007119B /* PocketCastsTests */,
 				3FDAD5042F46D78E00CC3259 /* Share Extension */,
 				BDBD53EE17019B2A0048C8C5 /* Frameworks */,
@@ -3959,6 +3985,7 @@
 				403B5B1921813FFA00821A54 /* PodcastsIntentsUI.appex */,
 				4090974E25235DFA00CED68C /* WidgetExtension.appex */,
 				4694FA602799C80300E9CF70 /* Screenshot Automation.xctest */,
+				7A5B124020260706000000AC /* PocketCastsUITests.xctest */,
 				45ECEF7B27E910E300C65030 /* PocketCastsTests.xctest */,
 				2F90990B2A4F88B00044FC55 /* Share Extension.appex */,
 			);
@@ -4976,6 +5003,24 @@
 			productReference = 4694FA602799C80300E9CF70 /* Screenshot Automation.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		7A5B124020260706000000A1 /* PocketCastsUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A5B124020260706000000A2 /* Build configuration list for PBXNativeTarget "PocketCastsUITests" */;
+			buildPhases = (
+				7A5B124020260706000000A7 /* Sources */,
+				7A5B124020260706000000A8 /* Frameworks */,
+				7A5B124020260706000000A9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7A5B124020260706000000AA /* PBXTargetDependency */,
+			);
+			name = PocketCastsUITests;
+			productName = PocketCastsUITests;
+			productReference = 7A5B124020260706000000AC /* PocketCastsUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		BD3A210C1E6CFC2400F42241 /* NotificationExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BD3A21171E6CFC2400F42241 /* Build configuration list for PBXNativeTarget "NotificationExtension" */;
@@ -5116,6 +5161,10 @@
 						CreatedOnToolsVersion = 13.1;
 						TestTargetID = BDBD53EB17019B2A0048C8C5;
 					};
+					7A5B124020260706000000A1 = {
+						CreatedOnToolsVersion = 17.0;
+						TestTargetID = BDBD53EB17019B2A0048C8C5;
+					};
 					BD3A210C1E6CFC2400F42241 = {
 						CreatedOnToolsVersion = 8.2.1;
 						DevelopmentTeam = SFWALZRJ55;
@@ -5186,6 +5235,7 @@
 				4090974D25235DFA00CED68C /* WidgetExtension */,
 				462EE0C02702532E003D67DC /* PreBuildActions */,
 				4694FA5F2799C80300E9CF70 /* Screenshot Automation */,
+				7A5B124020260706000000A1 /* PocketCastsUITests */,
 				45ECEF7A27E910E300C65030 /* PocketCastsTests */,
 				2F90990A2A4F88B00044FC55 /* Share Extension */,
 			);
@@ -5235,6 +5285,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				4694FA712799E73E00E9CF70 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A5B124020260706000000A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5825,6 +5882,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A5B124020260706000000A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A5B124020260706000000AE /* SmokeUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BD3A21091E6CFC2400F42241 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -6324,6 +6389,11 @@
 			isa = PBXTargetDependency;
 			target = BDBD53EB17019B2A0048C8C5 /* podcasts */;
 			targetProxy = 4694FA662799C80300E9CF70 /* PBXContainerItemProxy */;
+		};
+		7A5B124020260706000000AA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BDBD53EB17019B2A0048C8C5 /* podcasts */;
+			targetProxy = 7A5B124020260706000000AB /* PBXContainerItemProxy */;
 		};
 		8B0845922A66C86500742C2F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -7960,6 +8030,167 @@
 				3FD6E05D2BFC790F003941C0 /* StagingDebug */,
 				4694FA692799C80300E9CF70 /* Prototype */,
 				4694FA6A2799C80300E9CF70 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A5B124020260706000000A3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.PocketCastsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = podcasts;
+			};
+			name = Debug;
+		};
+		7A5B124020260706000000A4 /* StagingDebug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.PocketCastsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = podcasts;
+			};
+			name = StagingDebug;
+		};
+		7A5B124020260706000000A5 /* Prototype */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.PocketCastsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = podcasts;
+			};
+			name = Prototype;
+		};
+		7A5B124020260706000000A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = au.com.shiftyjelly.podcasts.PocketCastsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = podcasts;
+			};
+			name = Release;
+		};
+		7A5B124020260706000000A2 /* Build configuration list for PBXNativeTarget "PocketCastsUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A5B124020260706000000A3 /* Debug */,
+				7A5B124020260706000000A4 /* StagingDebug */,
+				7A5B124020260706000000A5 /* Prototype */,
+				7A5B124020260706000000A6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

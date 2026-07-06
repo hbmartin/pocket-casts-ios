@@ -52,4 +52,56 @@ final class OffMainDeallocationTests: XCTestCase {
         // deinit removes a NotificationCenter observer.
         assertDeallocatesOffMain { ImageManager() }
     }
+
+    func testDownloadProgressManager_deallocatesOffMain() {
+        assertDeallocatesOffMain { DownloadProgressManager() }
+    }
+
+    func testThreadSafeDictionary_deallocatesOffMain() {
+        assertDeallocatesOffMain { ThreadSafeDictionary<String, Int>() }
+    }
+
+    func testPodcastChapterParser_deallocatesOffMain() {
+        assertDeallocatesOffMain { PodcastChapterParser() }
+    }
+
+    func testEpisodeFileSizeUpdater_deallocatesOffMain() {
+        assertDeallocatesOffMain { EpisodeFileSizeUpdater() }
+    }
+
+    func testAutoplayHelper_deallocatesOffMain() {
+        assertDeallocatesOffMain { AutoplayHelper() }
+    }
+
+    func testWidgetAnalytics_deallocatesOffMain() {
+        assertDeallocatesOffMain { WidgetAnalytics() }
+    }
+
+    /// Stress variant for the class that produced a real use-after-free: AVFileUtil
+    /// starts detached metadata-loading tasks in init, and the owner releases it
+    /// while those tasks are in flight. Rapid create/release cycles across queues
+    /// widen the race window that a single-shot test usually misses.
+    func testAVFileUtil_rapidCreateReleaseWhileTasksInFlight() {
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("offmain_stress_test.m4a")
+        for _ in 0..<30 {
+            assertDeallocatesOffMain {
+                AVFileUtil(
+                    fileURL: url,
+                    durationHandler: { _ in },
+                    titleHandler: { _ in },
+                    artworkHandler: { _ in }
+                )
+            }
+        }
+    }
+
+    func testMediaFileHandle_rapidCreateReleaseStress() {
+        for _ in 0..<30 {
+            let path = (NSTemporaryDirectory() as NSString)
+                .appendingPathComponent(UUID().uuidString + "_offmain_stress.media")
+            defer { try? FileManager.default.removeItem(atPath: path) }
+            assertDeallocatesOffMain { MediaFileHandle(filePath: path) }
+        }
+    }
 }

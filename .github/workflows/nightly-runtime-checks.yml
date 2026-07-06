@@ -1,0 +1,93 @@
+name: Nightly Runtime Checks
+
+on:
+  schedule:
+    # 10:00 UTC ≈ 3am PT, after the day's merges settle.
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-runtime-checks-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  thread_sanitizer:
+    name: Thread Sanitizer (iOS 18.6)
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Run unit suites under TSan
+        env:
+          RUNTIME_VERSION: "18.6"
+        run: scripts/ci/nightly-runtime-checks.sh tsan
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nightly-tsan-${{ github.run_id }}
+          path: build/github/logs/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  runtime_matrix:
+    name: Unit suite on iOS ${{ matrix.runtime }}
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        # isolated-deinit and executor behavior differ across OS runtimes;
+        # green on one runtime does not imply green on the other.
+        runtime: ["26.5"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Run unit suites
+        env:
+          RUNTIME_VERSION: ${{ matrix.runtime }}
+        run: scripts/ci/nightly-runtime-checks.sh runtime-matrix
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nightly-runtime-${{ matrix.runtime }}-${{ github.run_id }}
+          path: build/github/logs/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  ui_smoke:
+    name: UI smoke plan (iOS 18.6)
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Run SmokeUITests plan
+        env:
+          RUNTIME_VERSION: "18.6"
+        run: scripts/ci/nightly-runtime-checks.sh smoke-ui
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nightly-ui-smoke-${{ github.run_id }}
+          path: build/github/logs/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14

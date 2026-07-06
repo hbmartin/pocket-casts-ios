@@ -344,17 +344,20 @@ private extension UploadedViewController {
     func listenForChangedBookmarks() {
         let manager = PlaybackManager.shared.bookmarkManager
 
+        // receive(on:) must precede the filter: the manager sends off-main and under
+        // default MainActor isolation these operator closures are @MainActor, which
+        // traps a main-queue assertion if they run on the sending thread.
         manager.onBookmarkCreated
-            .filter { $0.podcast == nil }
             .receive(on: DispatchQueue.main)
+            .filter { $0.podcast == nil }
             .sink { [weak self] _ in
                 self?.handleReloadFromNotification()
             }
             .store(in: &cancellables)
 
         manager.onBookmarksDeleted
-            .filter { $0.items.contains(where: { $0.podcast == nil }) }
             .receive(on: DispatchQueue.main)
+            .filter { $0.items.contains(where: { $0.podcast == nil }) }
             .sink { [weak self] _ in
                 self?.handleReloadFromNotification()
             }

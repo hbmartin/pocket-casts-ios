@@ -47,6 +47,9 @@
             reference = "container:PocketCastsTests/UnitTests.xctestplan"
             default = "YES">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:PocketCastsUITests/SmokeUITests.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction

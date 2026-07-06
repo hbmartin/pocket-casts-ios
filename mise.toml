@@ -87,20 +87,78 @@ xcodebuild -project podcasts.xcodeproj \
 description = "Run unit tests (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
 DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+CRASH_STATE="$(mktemp)"
+./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
+TEST_STATUS=0
 xcodebuild test -project podcasts.xcodeproj \
     -scheme pocketcasts \
     -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
-    -destination "$DESTINATION"
+    -destination "$DESTINATION" || TEST_STATUS=$?
+./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
+exit $TEST_STATUS
 '''
 
 [tasks."test:staging"]
 description = "Run unit tests (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
 DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+CRASH_STATE="$(mktemp)"
+./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
+TEST_STATUS=0
 xcodebuild test -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
     -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
-    -destination "$DESTINATION"
+    -destination "$DESTINATION" || TEST_STATUS=$?
+./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
+exit $TEST_STATUS
+'''
+
+[tasks."test:tsan"]
+description = "Run unit tests under Thread Sanitizer (Pocket Casts Staging scheme; ONLY_TESTING/SIMULATOR_OS overridable)"
+run = '''
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+CRASH_STATE="$(mktemp)"
+./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
+TEST_STATUS=0
+xcodebuild test -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
+    -enableThreadSanitizer YES \
+    -destination "$DESTINATION" || TEST_STATUS=$?
+./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
+exit $TEST_STATUS
+'''
+
+[tasks."test:smoke-ui"]
+description = "Run the PocketCastsUITests launch/navigation smoke suite on the simulator (SIMULATOR_OS to override)"
+run = '''
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+CRASH_STATE="$(mktemp)"
+./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
+TEST_STATUS=0
+xcodebuild test -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -testPlan SmokeUITests \
+    -destination "$DESTINATION" || TEST_STATUS=$?
+./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
+exit $TEST_STATUS
+'''
+
+[tasks."smoke:launch"]
+description = "Verify the staging app launches on the simulator and stays alive (SMOKE_APP_PATH to skip the build; SMOKE_SETTLE_SECONDS, SMOKE_SCREENSHOT_PATH)"
+run = '''
+APP_PATH="${SMOKE_APP_PATH:-}"
+if [ -z "$APP_PATH" ]; then
+    DERIVED_DATA="${SMOKE_DERIVED_DATA_PATH:-/tmp/pocketcasts-smoke-deriveddata}"
+    xcodebuild -quiet -project podcasts.xcodeproj \
+        -scheme "Pocket Casts Staging" \
+        -configuration StagingDebug \
+        -destination 'generic/platform=iOS Simulator' \
+        -derivedDataPath "$DERIVED_DATA" \
+        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+    APP_PATH="$DERIVED_DATA/Build/Products/StagingDebug-iphonesimulator/podcasts.app"
+fi
+./scripts/ci/smoke-launch.sh "$APP_PATH" "" "${SMOKE_SETTLE_SECONDS:-30}" "${SMOKE_SCREENSHOT_PATH:-}"
 '''
 
 [tasks."test:scripts"]

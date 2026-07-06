@@ -60,14 +60,17 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
     }
 
     func addListeners() {
+        // receive(on:) must precede the operators: the manager sends off-main and
+        // these closures touch main-actor state (self.items), which traps a
+        // main-queue assertion if they run on the sending thread.
         bookmarkManager.onBookmarkChanged
+            .receive(on: DispatchQueue.main)
             .filter { [weak self] event in
                 self?.items.contains(where: { $0.uuid == event.uuid }) ?? false
             }
             .compactMap { [weak self] event in
                 self?.bookmarkManager.bookmark(for: event.uuid)
             }
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] bookmark in
                 self?.refresh(bookmark: bookmark)
             }
