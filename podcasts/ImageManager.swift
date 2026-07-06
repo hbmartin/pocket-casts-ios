@@ -498,7 +498,7 @@ nonisolated final class ImageManager: @unchecked Sendable {
     func clearCache(podcastUuid: String, recacheWhenDone: Bool) {
         // reset the podcast color version, so it re-downloads that when re-caching the image if required
         DataManager.sharedManager.setPodcastImageVersion(podcastUuid: podcastUuid, version: 0)
-        NotificationCenter.default.post(name: Constants.Notifications.podcastUpdated, object: podcastUuid)
+        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcastUuid)
 
         // list and card are the same image, so card is not in the list below
         let listUrl = Self.podcastUrl(sizeRequired: Self.sizeFor(imageSize: .list), uuid: podcastUuid)

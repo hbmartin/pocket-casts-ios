@@ -73,7 +73,7 @@ public final class RefreshManager: @unchecked Sendable {
                 DispatchQueue.global().async {
                     Thread.sleep(forTimeInterval: 1.second)
                     ServerNotificationsHelper.shared.firePodcastsUpdated()
-                    NotificationCenter.default.post(name: ServerNotifications.podcastRefreshThrottled, object: nil)
+                    NotificationCenter.postOnMainThread(notification: ServerNotifications.podcastRefreshThrottled, object: nil)
                 }
 
                 return

@@ -20,7 +20,7 @@ class RetrieveFileUploadStatusTask: ApiBaseTask, @unchecked Sendable {
 
             if httpResponse?.statusCode == ServerConstants.HttpConstants.notModified {
                 FileLog.shared.addMessage("RetrieveFileUploadStatusTask - not modified, no changes required")
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodesRefreshed, object: nil)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodesRefreshed, object: nil)
                 return
             }
 
@@ -28,7 +28,7 @@ class RetrieveFileUploadStatusTask: ApiBaseTask, @unchecked Sendable {
                 FileLog.shared.addMessage("RetrieveFileUploadStatusTask  - server returned \(httpResponse?.statusCode ?? -1), upload marked as failed")
 
                 DataManager.sharedManager.saveEpisode(uploadStatus: .uploadFailed, episode: episode)
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
                 return
             }
 
@@ -40,7 +40,7 @@ class RetrieveFileUploadStatusTask: ApiBaseTask, @unchecked Sendable {
                 } else {
                     DataManager.sharedManager.saveEpisode(uploadStatus: .uploadFailed, episode: episode)
                 }
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
             } catch {
                 FileLog.shared.addMessage("Decoding User episodes failed \(error.localizedDescription)")
             }

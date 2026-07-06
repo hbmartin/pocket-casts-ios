@@ -68,7 +68,7 @@ class MetadataTask: Operation, @unchecked Sendable {
         }
 
         if performedUpdate {
-            NotificationCenter.default.post(name: ServerNotifications.episodeTypeOrLengthChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(notification: ServerNotifications.episodeTypeOrLengthChanged, object: episode.uuid)
         }
     }
 }

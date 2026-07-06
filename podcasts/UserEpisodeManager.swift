@@ -78,12 +78,12 @@ nonisolated struct UserEpisodeManager {
         }
 
         DataManager.sharedManager.saveEpisode(uploadStatus: .deleteFromCloudPending, episode: episode)
-        NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
 
         ApiServerHandler.shared.uploadFileDelete(episode: episode, completion: { success in
             guard let success, success else { return }
             DataManager.sharedManager.saveEpisode(uploadStatus: .notUploaded, episode: episode)
-            NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
             UserEpisodeManager.updateUserEpisodes()
         })
 
@@ -110,7 +110,7 @@ nonisolated struct UserEpisodeManager {
 
     static func deleteFromEverywhere(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) {
         DataManager.sharedManager.saveEpisode(uploadStatus: .deleteFromCloudAndLocalPending, episode: userEpisode)
-        NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: userEpisode.uuid)
+        NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: userEpisode.uuid)
 
         if removeFromPlaybackQueue {
             PlaybackManager.onMainSync { $0.removeIfPlayingOrQueued(episode: userEpisode, fireNotification: true) }

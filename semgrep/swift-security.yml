@@ -4658,3 +4658,51 @@ rules:
       # carrying `@unchecked Sendable`. re2 (no backreferences) — the bounded [\s\S] spans cover
       # comments and wrapped conformance lists between the macro, declaration, and Sendable marker.
       - pattern-regex: '@GRDBRecord\([^\n]*\)[\s\S]{0,600}?\bclass\b[\s\S]{0,300}?@unchecked\s+Sendable'
+
+  - id: pocketcasts.server-module-post-on-main-thread
+    severity: ERROR
+    metadata:
+      category: concurrency
+      confidence: HIGH
+      likelihood: HIGH
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Server-module code runs on background operation queues, and NotificationCenter delivers
+      selector-based observers synchronously on the posting thread. Under the app target's
+      default MainActor isolation, @objc selector observers are main-actor and trap a
+      dispatch_assert_queue when called off-main (this crashed the app at launch via
+      RefreshOperation -> podcastsRefreshed -> FullSyncRefreshController). Post with
+      NotificationCenter.postOnMainThread(notification:object:userInfo:) instead — it is
+      synchronous (main.sync off-main, direct post on main), so ordering is preserved.
+    languages: [generic]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/**/*.swift"
+    patterns:
+      - pattern-regex: 'NotificationCenter\.default\.post\('
+
+  - id: pocketcasts.isolated-deinit-requires-justification
+    severity: ERROR
+    metadata:
+      category: concurrency
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      isolated deinit routes deallocation through swift_task_deinitOnExecutor, which double-frees
+      TaskLocal state when the object is released from a context with task-local bindings on
+      current runtimes (swiftlang/swift#87316 — synchronous XCTest methods bind task-locals and
+      crash; production code using TaskLocal.withValue can too). Objects released off-main also
+      hop to the main actor to die, which hides lifetime bugs. Prefer `nonisolated deinit` (or a
+      nonisolated class) unless the type provably deallocates on the main actor AND its deinit
+      must touch isolated state; justify with a same-line or preceding-line comment containing
+      'isolated deinit:' followed by the reason.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+    patterns:
+      - pattern-regex: 'isolated deinit'
+      - pattern-not-regex: '(?://[^\n]*isolated deinit[ \t]*:[ \t]*\S[^\n]*\n[^\n]*isolated deinit)|(?:isolated deinit[^\n]*//[^\n]*isolated deinit[ \t]*:[ \t]*\S)|(?://[^\n]*isolated deinit)|nonisolated deinit'

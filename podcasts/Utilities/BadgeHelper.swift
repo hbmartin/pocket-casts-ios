@@ -5,6 +5,7 @@ import Combine
 import UserNotifications
 
 class BadgeHelper {
+    // isolated deinit: main-actor-owned helper; deinit removes isolated notification observers
     isolated deinit {
         teardown()
     }

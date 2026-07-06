@@ -60,7 +60,7 @@ extension UploadManager: URLSessionDelegate, URLSessionDataDelegate {
                 }
 
                 DataManager.sharedManager.saveEpisode(uploadStatus: .uploadFailed, uploadError: error.localizedDescription, uploadTaskId: nil, episode: episode)
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     ApiServerHandler.shared.uploadFilesUpdateStatusRequest(episode: episode)

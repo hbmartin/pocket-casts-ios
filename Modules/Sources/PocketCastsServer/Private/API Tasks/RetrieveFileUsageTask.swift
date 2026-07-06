@@ -16,7 +16,7 @@ class RetrieveFileUsageTask: ApiBaseTask, @unchecked Sendable {
 
             if httpResponse?.statusCode == ServerConstants.HttpConstants.notModified {
                 FileLog.shared.addMessage("RetrieveFileUsageTask - not modified, no changes required")
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodesRefreshed, object: nil)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodesRefreshed, object: nil)
                 return
             }
 

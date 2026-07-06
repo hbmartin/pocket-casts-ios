@@ -90,7 +90,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             ImageManager.sharedManager.updatePodcastImagesIfRequired()
             WidgetHelper.shared.cleanupAppGroupImages()
-            SiriShortcutsManager.shared.setup()
+            // CustomObserver's initializer and observer registration are main-actor;
+            // touching .shared from this background block traps an executor assertion.
+            Task { @MainActor in
+                SiriShortcutsManager.shared.setup()
+            }
 
             DownloadManager.shared.startAllQueued()
 
