@@ -219,14 +219,28 @@ episodes moved under the Phase 5 umbrella.)_
 **Exit criteria:** complete-mode baseline contains only playback files; non-playback completion-handler
 APIs converted or explicitly kept with rationale.
 
-## Phase 5 — OPEN: playback/audio
+## Phase 5 — COMPLETE: playback/audio
 
-`PlaybackManager` (2,400 lines), `DefaultPlayer` (980), `EffectsPlayer`, the `VoiceBoostN` C/ObjC code,
-their feature flags, and their baseline entries. Phases 1–4 created the preconditions: the rest of the
-app is isolation-clean and on Swift 6 language mode (Phase 4, baseline empty), and the data layer is
-GRDB-unconditional (Phase 3 exited). **Opened 2026-07-05 — the sizing, isolation design (honest
-`@MainActor` PlaybackManager above a preserved real-time engine boundary), position-tracking redesign,
-and the 11-slice sequence live in `docs/Phase5-PlaybackModernization.md`.**
+**Completed 2026-07-05** (PRs #233–#242; design and per-slice record in
+`docs/Phase5-PlaybackModernization.md`). What landed:
+
+- `PlaybackManager`, `PlaybackQueue`, and the playback helpers are honestly `@MainActor`; the
+  Up Next queue is fully encapsulated behind PlaybackManager; `PlaybackServerAdapter` bridges the
+  server delegate synchronously onto the main actor.
+- The real-time engine boundary (`DefaultPlayer` render taps, `AudioReadTask`/`AudioPlayTask`
+  queues, VoiceBoostN C DSP) is preserved, narrowed, and documented: engines hop per-event into the
+  main actor and read state through lock-guarded nonisolated mirrors — never synchronously into
+  isolated code.
+- `PlaybackPositionTracker` owns the transient playing position; the per-second in-place
+  `episode.playedUpTo` mutation is gone.
+- `BaseEpisode`, `FilePathProtocol`, and `PlaybackProtocol` are plain Swift protocols, and
+  **`Episode` and `UserEpisode` are Sendable value types** — completing the record-Sendability arc
+  (Folder, EpisodeFilter, Podcast, UpNextChanges, UserEpisode, Episode).
+- The `voiceBoostN` flag remains (TestFlight-only; retirement needs remote-config sign-off).
+
+With this, every phase of the roadmap (0–5) is complete: strict concurrency `complete` everywhere,
+all first-party targets and packages on Swift 6 language mode, an empty warning baseline enforced by
+the deletion-only ratchet, GRDB-unconditional data layer, and value-semantic Sendable model records.
 
 ## Sizing & dependency summary
 
