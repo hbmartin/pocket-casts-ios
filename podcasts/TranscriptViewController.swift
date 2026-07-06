@@ -117,6 +117,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         cancelAutoScrollBack()
     }
 
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
     isolated deinit {
         // Cleanup-only: cancel is thread-safe, and invalidating the main-runloop display link
         // here mirrors what stopHighlightDisplayLink() does without touching isolated state

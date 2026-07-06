@@ -271,6 +271,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         fatalError("init(coder:) has not been implemented")
     }
 
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
     isolated deinit {
         operationQueue.cancelAllOperations()
     }

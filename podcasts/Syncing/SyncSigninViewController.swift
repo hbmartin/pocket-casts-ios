@@ -106,6 +106,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         Analytics.track(.signInShown)
     }
 
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
     isolated deinit {
         NotificationCenter.default.removeObserver(self)
     }

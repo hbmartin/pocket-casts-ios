@@ -16,13 +16,13 @@ class RetrieveCustomFilesTask: ApiBaseTask, @unchecked Sendable {
 
             if httpResponse?.statusCode == ServerConstants.HttpConstants.notModified {
                 FileLog.shared.addMessage("RetrieveCustomFilesTask - not modified, no changes required")
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodesRefreshed, object: nil)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodesRefreshed, object: nil)
                 return
             }
 
             guard let responseData = data, httpResponse?.statusCode == ServerConstants.HttpConstants.ok else {
                 FileLog.shared.addMessage("RetrieveCustomFilesTask - server returned \(httpResponse?.statusCode ?? -1), firing refresh failed")
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodesRefreshFailed, object: nil)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodesRefreshFailed, object: nil)
 
                 return
             }
@@ -48,7 +48,7 @@ class RetrieveCustomFilesTask: ApiBaseTask, @unchecked Sendable {
                 }
             } catch {
                 FileLog.shared.addMessage("Decoding User episodes failed \(error.localizedDescription)")
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodesRefreshFailed, object: nil)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodesRefreshFailed, object: nil)
             }
         }
     }
@@ -121,7 +121,7 @@ class RetrieveCustomFilesTask: ApiBaseTask, @unchecked Sendable {
             ServerConfig.shared.syncDelegate?.autoDownloadUserEpisodes(episodes: autodownloadEpisodes)
         }
 
-        NotificationCenter.default.post(name: ServerNotifications.userEpisodesRefreshed, object: nil)
+        NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodesRefreshed, object: nil)
     }
 
     private func convertFromProto(_ protoEpisode: Files_File) -> UserEpisode {

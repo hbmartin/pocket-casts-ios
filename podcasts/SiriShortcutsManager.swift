@@ -5,7 +5,7 @@ import PocketCastsServer
 import PocketCastsUtils
 
 /// Observers are registered once at init; Siri callbacks arrive on intent queues.
-nonisolated final class SiriShortcutsManager: CustomObserver, @unchecked Sendable {
+final class SiriShortcutsManager: CustomObserver, @unchecked Sendable {
     static let shared = SiriShortcutsManager()
 
     var analyticsSource: AnalyticsSource {
@@ -15,11 +15,8 @@ nonisolated final class SiriShortcutsManager: CustomObserver, @unchecked Sendabl
     func setup() {
         addDefaultSuggestions()
         publishSubscribedPodcasts()
-        // Observer registration mutates CustomObserver's main-actor token list.
-        Task { @MainActor in
-            self.addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(self.publishSubscribedPodcasts))
-            self.addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(self.publishSubscribedPodcasts))
-        }
+        addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(publishSubscribedPodcasts))
+        addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(publishSubscribedPodcasts))
     }
 
     func defaultSuggestions() -> [INShortcut] {

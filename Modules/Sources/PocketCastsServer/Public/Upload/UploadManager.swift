@@ -60,7 +60,7 @@ public final class UploadManager: NSObject, @unchecked Sendable {
         DataManager.sharedManager.saveEpisode(uploadStatus: .waitingForWifi, episode: episode)
 
         if fireNotification {
-            NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
         }
     }
 
@@ -81,7 +81,7 @@ public final class UploadManager: NSObject, @unchecked Sendable {
 
         progressManager.updateStatusForEpisode(episode.uuid, status: .queued)
 
-        if fireNotification { NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
+        if fireNotification { NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
 
         performAddToQueue(episode: episode, previousUploadFailed: previousUploadFailed, fireNotification: fireNotification)
     }
@@ -92,7 +92,7 @@ public final class UploadManager: NSObject, @unchecked Sendable {
         let sessionToUse = useCellularSession ? cellularBackgroundSession : wifiOnlyBackgroundSession
 
         resumeUpload(episode: episode, session: sessionToUse, previousUploadFailed: previousUploadFailed, taskId: episode.uploadTaskId)
-        if fireNotification { NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
+        if fireNotification { NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
     }
 
     public func removeFromQueue(episodeUuid: String, fireNotification: Bool) {
@@ -123,7 +123,7 @@ public final class UploadManager: NSObject, @unchecked Sendable {
 
         DataManager.sharedManager.save(episode: episode)
 
-        if fireNotification { NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
+        if fireNotification { NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
     }
 
     private func shouldAddUpload(_ episodeUuid: String) -> Bool {
@@ -197,7 +197,7 @@ public final class UploadManager: NSObject, @unchecked Sendable {
 
             guard let url = uploadURL, let fileProtocol = ServerConfig.shared.syncDelegate?.userEpisodeFileProtocol else {
                 DataManager.sharedManager.saveEpisode(uploadStatus: UploadStatus.uploadFailed, episode: episode)
-                NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
+                NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
                 return
             }
 

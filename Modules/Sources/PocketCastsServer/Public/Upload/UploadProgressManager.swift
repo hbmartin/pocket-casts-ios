@@ -1,5 +1,6 @@
 import PocketCastsDataModel
 import UIKit
+import PocketCastsUtils
 
 public class UploadProgressManager: NSObject {
     private var progressItems = [String: UploadProgress]()
@@ -41,7 +42,7 @@ public class UploadProgressManager: NSObject {
 
         // throttle updates to once every 1s so we don't flood the UI thread
         if lastUiUpdateTime == nil || lastUiUpdateTime!.timeIntervalSinceNow < -1 {
-            NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadProgress, object: nil)
+            NotificationCenter.postOnMainThread(notification: ServerNotifications.userEpisodeUploadProgress, object: nil)
             lastUiUpdateTime = Date()
         }
     }

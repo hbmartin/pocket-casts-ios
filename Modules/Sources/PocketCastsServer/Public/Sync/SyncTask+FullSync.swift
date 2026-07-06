@@ -61,7 +61,7 @@ extension SyncTask {
         }
         importQueue.waitUntilAllOperationsAreFinished()
 
-        NotificationCenter.default.post(name: ServerNotifications.syncProgressImportedPodcasts, object: nil)
+        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressImportedPodcasts, object: nil)
     }
 
     private func processFolder(_ folder: FolderSyncInfo) {

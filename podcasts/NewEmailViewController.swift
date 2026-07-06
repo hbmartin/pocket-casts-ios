@@ -133,6 +133,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         emailField.becomeFirstResponder()
     }
 
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
     isolated deinit {
         NotificationCenter.default.removeObserver(self)
     }

@@ -56,7 +56,7 @@ extension SyncTask {
             }
         }
         importQueue.waitUntilAllOperationsAreFinished()
-        NotificationCenter.default.post(name: ServerNotifications.syncProgressImportedPodcasts, object: nil)
+        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressImportedPodcasts, object: nil)
 
         for episodeItem in episodesToImport {
             importQueue.addOperation { [weak self] in

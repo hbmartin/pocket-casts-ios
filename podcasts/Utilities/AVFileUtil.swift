@@ -44,8 +44,14 @@ nonisolated final class AVFileUtil: NSObject, @unchecked Sendable {
     func loadMetaData() {
         cancelLoading()
 
-        metadataTask = Task { [weak self] in
-            guard let asset = self?.asset, let titleHandler = self?.titleHandler, let artworkHandler = self?.artworkHandler else { return }
+        // Capture dependencies strongly at task creation: reading self's vars from
+        // the concurrent executor races with off-main deallocation of this object.
+        let asset = self.asset
+        let titleHandler = self.titleHandler
+        let artworkHandler = self.artworkHandler
+        let durationHandler = self.durationHandler
+
+        metadataTask = Task {
             let metadataItems: [AVMetadataItem]
             do {
                 metadataItems = try await asset.load(.commonMetadata)
@@ -73,8 +79,7 @@ nonisolated final class AVFileUtil: NSObject, @unchecked Sendable {
         }
 
         // Load duration separately as it can take longer than basic metadata.
-        durationTask = Task { [weak self] in
-            guard let asset = self?.asset, let durationHandler = self?.durationHandler else { return }
+        durationTask = Task {
             do {
                 let duration = try await asset.load(.duration)
                 try Task.checkCancellation()
