@@ -204,8 +204,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
 
     /// Show the listening activity heatmap on the Stats screen
     case statsHeatmap
-    /// Enable the Liquid Glass UI redesign
-    case liquidGlass
 
     /// Show explicit content badges on podcasts
     case showExplicitBadges
@@ -367,8 +365,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .trackNetworkDataUsage:
             true
         case .statsHeatmap:
-            true
-        case .liquidGlass:
             true
         case .showExplicitBadges:
             false

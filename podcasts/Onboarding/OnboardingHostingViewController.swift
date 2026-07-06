@@ -71,22 +71,8 @@ class OnboardingHostingViewController<Content>: UIHostingController<Content>, UI
     }
 
     private func apply() {
-        guard !LiquidGlass.isEnabled else { return }
-
-        let barAppearance = UINavigationBar.appearance(whenContainedInInstancesOf: [Self.self])
-
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.shadowColor = nil
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-
-        // Update the back icon
-        let config = UIImage.SymbolConfiguration(weight: .bold)
-        let image = UIImage(systemName: "arrow.left")?.applyingSymbolConfiguration(config)
-
-        barAppearance.backIndicatorImage = image
-        barAppearance.backIndicatorTransitionMaskImage = image
+        // On iOS 26 the system Liquid Glass nav bar handles its own transparent appearance and
+        // back-indicator styling, so there is nothing to configure here.
     }
 
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {

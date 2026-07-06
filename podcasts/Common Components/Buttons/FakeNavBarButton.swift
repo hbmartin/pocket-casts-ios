@@ -30,13 +30,9 @@ final class FakeNavBarButton: UIButton, FakeNavBarStylable {
     /// gives correct contrast on its own. On earlier OS versions, wraps a `FakeNavBarButton` so the
     /// icon stays visible over both the at-edge artwork and the scrolled blur.
     static func makeBarButtonItem(image: UIImage?, accessibilityLabel: String, target: Any?, action: Selector) -> UIBarButtonItem {
-        if LiquidGlass.isEnabled {
-            let item = UIBarButtonItem(image: image, style: .plain, target: target, action: action)
-            item.accessibilityLabel = accessibilityLabel
-            return item
-        }
-        let button = FakeNavBarButton(image: image, accessibilityLabel: accessibilityLabel, target: target, action: action)
-        return UIBarButtonItem(customView: button)
+        let item = UIBarButtonItem(image: image, style: .plain, target: target, action: action)
+        item.accessibilityLabel = accessibilityLabel
+        return item
     }
 
     func setNavBarScrolled(_ scrolled: Bool, animated: Bool) {

@@ -372,11 +372,7 @@ class AppTheme {
         case .dark, .extraDark, .electric, .contrastDark:
             return UIStatusBarStyle.lightContent
         case .classic, .indigo:
-            if LiquidGlass.isEnabled {
-                return UIStatusBarStyle.darkContent
-            } else {
-                return UIStatusBarStyle.lightContent
-            }
+            return UIStatusBarStyle.darkContent
         case .light, .rosé, .contrastLight:
             return UIStatusBarStyle.darkContent
         }

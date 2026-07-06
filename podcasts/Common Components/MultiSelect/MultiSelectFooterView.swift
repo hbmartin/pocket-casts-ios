@@ -102,20 +102,18 @@ class MultiSelectFooterView: UIView, MultiSelectActionOrderDelegate {
         contentView.frame = bounds
         contentView.backgroundColor = UIColor.clear
         backgroundColor = UIColor.clear
-        if LiquidGlass.isEnabled, #available(iOS 26.0, *) {
-            let glass = UIGlassEffect()
-            glass.isInteractive = true
-            blurView.effect = glass
-            containerView.backgroundColor = .clear
+        let glass = UIGlassEffect()
+        glass.isInteractive = true
+        blurView.effect = glass
+        containerView.backgroundColor = .clear
 
-            containerLeadingConstraint.constant = 13
-            containerTrailingConstraint.constant = 13
-            containerTopConstraint.constant = 4
-            containerBottomConstraint.constant = 4
+        containerLeadingConstraint.constant = 13
+        containerTrailingConstraint.constant = 13
+        containerTopConstraint.constant = 4
+        containerBottomConstraint.constant = 4
 
-            blurView.layer.cornerRadius = 28
-            containerView.layer.cornerRadius = 28
-        }
+        blurView.layer.cornerRadius = 28
+        containerView.layer.cornerRadius = 28
         NotificationCenter.default.addObserver(self, selector: #selector(handleThemeDidChange), name: Constants.Notifications.themeChanged, object: nil)
     }
 

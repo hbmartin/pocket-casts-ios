@@ -18,9 +18,7 @@ extension PlayerContainerViewController: UIGestureRecognizerDelegate {
             // Round the player's corners for the drag so it reads as a card
             // lifting off the screen. They're squared again if the drag springs
             // back, or carried into the dismiss transition if it closes.
-            if FeatureFlag.liquidGlass.enabled, #available(iOS 26, *) {
-                roundCornersForPlayerTransition()
-            }
+            roundCornersForPlayerTransition()
         case .changed:
             if touchPoint.y > initialTouchPoint.y {
                 view.frame.origin.y = touchPoint.y - initialTouchPoint.y
@@ -53,9 +51,7 @@ extension PlayerContainerViewController: UIGestureRecognizerDelegate {
                 }, completion: { _ in
                     // Settled back full-screen: square the corners so the player
                     // covers the whole screen with no edge gaps.
-                    if FeatureFlag.liquidGlass.enabled, #available(iOS 26, *) {
-                        self.resetCornersAfterPlayerTransition()
-                    }
+                    self.resetCornersAfterPlayerTransition()
                 })
             }
             if let scroll = activeInnerScrollView {

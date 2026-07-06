@@ -12,14 +12,7 @@ extension MiniPlayerViewController: UIGestureRecognizerDelegate {
         let miniPlayerTap = UITapGestureRecognizer(target: self, action: #selector(miniPlayerTapped))
         miniPlayerTap.require(toFail: panUpRecognizer)
 
-        if LiquidGlass.isEnabled {
-            view.addInteraction(UIContextMenuInteraction(delegate: self))
-        } else {
-            longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(miniPlayerLongPressed(_:)))
-            longPressRecognizer.delegate = self
-            view.addGestureRecognizer(longPressRecognizer)
-            miniPlayerTap.require(toFail: longPressRecognizer)
-        }
+        view.addInteraction(UIContextMenuInteraction(delegate: self))
 
         view.addGestureRecognizer(miniPlayerTap)
     }

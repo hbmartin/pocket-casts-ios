@@ -324,23 +324,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         )
         customRightBtn = shareBarButtonItem
 
-        if !LiquidGlass.isEnabled {
-            defaultBackBarButton = FakeNavBarButton.makeBarButtonItem(
-                image: UIImage(systemName: "chevron.backward"),
-                accessibilityLabel: L10n.back,
-                target: self,
-                action: #selector(backButtonTapped)
-            )
-            navigationItem.leftBarButtonItem = defaultBackBarButton
-            navigationItem.setHidesBackButton(true, animated: false)
-
-            if let navController = navigationController as? PCNavigationController {
-                navController.enableInteractivePopGestureWorkaround()
-            } else {
-                assertionFailure("Expected PCNavigationController")
-            }
-        }
-
         if podcast != nil, episodeInfo.isEmpty {
             let searchHeader = ListHeader(headerTitle: L10n.search, isSectionHeader: true, sectionNumber: -1)
             episodeInfo = [ArraySection(model: searchHeader.headerTitle, elements: [searchHeader])]
@@ -842,20 +825,14 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
             let selectAll = UIBarButtonItem(title: L10n.selectAll, style: .plain, target: self, action: #selector(selectAllTapped))
             multiSelectAllBarButton = selectAll
             navigationItem.setLeftBarButton(selectAll, animated: true)
-            if LiquidGlass.isEnabled {
-                navigationItem.setHidesBackButton(true, animated: true)
-            }
+            navigationItem.setHidesBackButton(true, animated: true)
             updateSelectAllBtn()
         } else {
             multiSelectCancelBarButton = nil
             multiSelectAllBarButton = nil
             customRightBtn = shareBarButtonItem
-            if LiquidGlass.isEnabled {
-                navigationItem.setLeftBarButton(nil, animated: true)
-                navigationItem.setHidesBackButton(false, animated: true)
-            } else {
-                navigationItem.setLeftBarButton(defaultBackBarButton, animated: false)
-            }
+            navigationItem.setLeftBarButton(nil, animated: true)
+            navigationItem.setHidesBackButton(false, animated: true)
             refreshRightButtons()
         }
         updateNavBarBlur()

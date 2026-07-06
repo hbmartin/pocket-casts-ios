@@ -26,7 +26,6 @@ enum SmartPlaylistRule: Int, CaseIterable, Identifiable {
     }
 
     var isMenuCompatible: Bool {
-        guard FeatureFlag.liquidGlass.enabled else { return false }
         switch self {
         case .releaseDate, .downloadStatus, .mediaType, .starred:
             return true

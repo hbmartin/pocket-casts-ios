@@ -111,14 +111,6 @@ class PlaylistPreviewViewController: PCViewController {
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.titleView = smallTitleLabel
         navigationItem.titleView?.isHidden = true
-
-        if !LiquidGlass.isEnabled {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            navigationBar.standardAppearance = appearance
-            navigationBar.scrollEdgeAppearance = appearance
-            navigationBar.tintColor = AppTheme.colorForStyle(.primaryIcon03)
-        }
     }
 
     override func handleThemeChanged() {

@@ -218,12 +218,8 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
     func configureForSheetPresentation() {
         isPresentedAsSheet = true
 
-        if LiquidGlass.isEnabled {
-            view.backgroundColor = scrollView.backgroundColor?.withAlphaComponent(0.85)
-            scrollView.backgroundColor = .clear
-        } else {
-            view.backgroundColor = scrollView.backgroundColor
-        }
+        view.backgroundColor = scrollView.backgroundColor?.withAlphaComponent(0.85)
+        scrollView.backgroundColor = .clear
         view.layer.cornerRadius = 0
         dismissView?.isHidden = true
 

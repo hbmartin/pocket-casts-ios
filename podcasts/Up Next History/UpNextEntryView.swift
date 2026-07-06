@@ -15,14 +15,9 @@ struct UpNextEntryView: View {
     }
 
     var body: some View {
-        if LiquidGlass.isEnabled, #available(iOS 26.0, *) {
-            liquidGlassBody
-        } else {
-            legacyBody
-        }
+        liquidGlassBody
     }
 
-    @available(iOS 26.0, *)
     private var liquidGlassBody: some View {
         NavigationStack {
             episodeList
@@ -43,28 +38,6 @@ struct UpNextEntryView: View {
                 }
                 .restoreAlert(isPresented: $showingAlert, onRestore: restore)
         }
-        .applyDefaultThemeOptions()
-    }
-
-    private var legacyBody: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .center) {
-                Button(L10n.restore) {
-                    showingAlert = true
-                }
-                .restoreAlert(isPresented: $showingAlert, onRestore: restore)
-                Spacer()
-                Text("\(entryDate.formatted())").bold()
-                Spacer()
-                Button(L10n.cancel) {
-                    dismiss()
-                }
-            }.padding()
-
-            episodeList
-        }
-        .navigationTitle("\(entryDate.formatted())")
-        .background(theme.primaryUi04)
         .applyDefaultThemeOptions()
     }
 

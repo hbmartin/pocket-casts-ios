@@ -75,9 +75,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         super.viewDidLoad()
 
         let barButton = UIBarButtonItem(image: UIImage(named: "playlist_add_icon"), style: .plain, target: self, action: #selector(addNewFilter))
-        if !LiquidGlass.isEnabled {
-            barButton.tintColor = ThemeColor.secondaryIcon01()
-        }
         customRightBtn = barButton
         customRightBtn?.accessibilityLabel = L10n.playlistsDefaultNewPlaylist
 
@@ -179,9 +176,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         newFilterButton.layer.borderColor = ThemeColor.primaryInteractive01().cgColor
         newFilterButton.titleLabel?.textColor = ThemeColor.primaryInteractive01()
         view.backgroundColor = ThemeColor.primaryUi04()
-        if !LiquidGlass.isEnabled {
-            customRightBtn?.tintColor = ThemeColor.secondaryIcon01()
-        }
         refreshContentUnavailable()
     }
 

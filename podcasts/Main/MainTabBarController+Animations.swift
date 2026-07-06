@@ -8,8 +8,6 @@ extension MainTabBarController {
     static let upNextGenieViewTag = 776_611
 
     @objc func animateEpisodeAddedToUpNext(_ notification: Notification) {
-        guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
-
         // Posted via postOnMainThread, so we're already on the main thread here.
         guard let episodeUuid = notification.object as? String else {
             // Nothing to animate — just keep the count current.
@@ -177,7 +175,6 @@ extension MainTabBarController {
 
     /// A quick spring "pop" on the mini player artwork — the queue's on-screen
     /// representation — so a queue change is felt, not just silently re-rendered.
-    @available(iOS 26.0, *)
     func pulseUpNextTarget() {
         // A burst of rapid adds shouldn't stack overlapping springs — one pop
         // already conveys "queue grew".
@@ -195,7 +192,6 @@ extension MainTabBarController {
     /// A snappy, bounce-free grow, then a single softly springy settle. The
     /// grow is short enough that the peak isn't visibly held, and one gentle
     /// bounce on the way back reads as lively rather than jittery.
-    @available(iOS 26.0, *)
     static func playUpNextPopAnimation(on views: [UIView], completion: (() -> Void)? = nil) {
         UIView.animate(springDuration: 0.15, bounce: 0, initialSpringVelocity: 0,
                        options: [.allowUserInteraction]) {

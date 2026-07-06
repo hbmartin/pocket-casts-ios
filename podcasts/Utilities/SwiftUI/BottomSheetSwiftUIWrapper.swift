@@ -143,7 +143,7 @@ private extension UIViewController {
                 sheetController.delegate = sheetDelegate
             }
             sheetController.prefersGrabberVisible = showingGrabber
-            sheetController.preferredCornerRadius = LiquidGlass.isEnabled ? 26 : 10
+            sheetController.preferredCornerRadius = 26
 
             // Scrolling content to the edge should not expand the sheet to a larger detent
             sheetController.prefersScrollingExpandsWhenScrolledToEdge = false

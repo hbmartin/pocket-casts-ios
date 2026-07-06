@@ -46,33 +46,14 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
     }
 
     private func updateNavColors() {
-        guard !LiquidGlass.isEnabled else {
-            // Under Liquid Glass we rely on the system glass nav bar, which derives its
-            // title/button colors from the interface style. Force it to match the nav
-            // controller's theme override so an always-dark screen like Up Next keeps a
-            // light title even after content scrolls under the bar (otherwise the glass
-            // renders with the ambient appearance and the title flips to black on scroll).
-            if let themeOverride {
-                overrideUserInterfaceStyle = themeOverride.isDark ? .dark : .light
-            }
-            return
+        // Under Liquid Glass we rely on the system glass nav bar, which derives its
+        // title/button colors from the interface style. Force it to match the nav
+        // controller's theme override so an always-dark screen like Up Next keeps a
+        // light title even after content scrolls under the bar (otherwise the glass
+        // renders with the ambient appearance and the title flips to black on scroll).
+        if let themeOverride {
+            overrideUserInterfaceStyle = themeOverride.isDark ? .dark : .light
         }
-
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = AppTheme.colorForStyle(navStyle, themeOverride: themeOverride)
-        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: AppTheme.colorForStyle(titleStyle, themeOverride: themeOverride)]
-        appearance.shadowColor = nil
-
-        navigationBar.standardAppearance = appearance
-        navigationBar.scrollEdgeAppearance = appearance
-        navigationBar.tintColor = AppTheme.colorForStyle(iconStyle, themeOverride: themeOverride)
-
-        // Attempt to shrink longer text to fit in the navbar.
-        let labelAppearance = UILabel.appearance(whenContainedInInstancesOf: [UINavigationBar.self])
-        labelAppearance.adjustsFontSizeToFitWidth = true
-        labelAppearance.minimumScaleFactor = 0.75
-        labelAppearance.baselineAdjustment = .none
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {

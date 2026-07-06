@@ -49,7 +49,6 @@ struct PlaybackControlIntent: AudioPlaybackIntent {
 
     static var openAppWhenRun: Bool { false }
 
-    @available(iOS 26.0, *)
     static var supportedModes: IntentModes { [.background] }
 
     @MainActor
