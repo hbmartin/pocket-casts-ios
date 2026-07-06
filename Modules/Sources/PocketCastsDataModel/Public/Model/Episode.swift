@@ -4,58 +4,57 @@ import GRDBMacros
 import PocketCastsUtils
 
 @GRDBRecord(table: "SJEpisode")
-// @unchecked Sendable: mutable model object passed across threads by long-standing
-// convention in this codebase; consistency is maintained by database-write discipline
-// rather than by the type itself.
-public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
+public struct Episode: BaseEpisode, Identifiable, Equatable, Hashable, Sendable {
+    public init() {}
+
     private static let bonusType = "bonus"
     private static let trailerType = "trailer"
 
-    @objc public var id = 0 as Int64
-    @objc public var addedDate: Date?
+    public var id = 0 as Int64
+    public var addedDate: Date?
     @GRDBNullDateAsEpoch
-    @objc public var lastDownloadAttemptDate: Date?
-    @objc public var detailedDescription: String?
-    @objc public var downloadErrorDetails: String?
-    @objc public var downloadTaskId: String?
-    @objc public var downloadUrl: String?
-    @objc public var episodeDescription: String?
-    @objc public var episodeStatus = 0 as Int32
-    @objc public var fileType: String?
-    @objc public var contentType: String?
-    @objc public var keepEpisode = false
-    @objc public var playedUpTo: Double = 0
-    @objc public var duration: Double = 0
-    @objc public var playingStatus = 0 as Int32
-    @objc public var autoDownloadStatus = 0 as Int32
-    @objc public var publishedDate: Date?
-    @objc public var sizeInBytes = 0 as Int64
-    @objc public var playingStatusModified = 0 as Int64
-    @objc public var playedUpToModified = 0 as Int64
-    @objc public var durationModified = 0 as Int64
-    @objc public var keepEpisodeModified = 0 as Int64
-    @objc public var starredModified = 0 as Int64
-    @objc public var lastPlaybackInteractionDate: Date?
-    @objc public var lastPlaybackInteractionSyncStatus = 1 as Int32
-    @objc public var title: String?
-    @objc public var uuid = ""
-    @objc public var podcastUuid = ""
-    @objc public var playbackErrorDetails: String?
-    @objc public var cachedFrameCount = 0 as Int64
-    @objc public var podcast_id = 0 as Int64
-    @objc public var episodeNumber = -1 as Int64
-    @objc public var seasonNumber = -1 as Int64
-    @objc public var episodeType: String?
-    @objc public var archived = false
-    @objc public var archivedModified = 0 as Int64
+    public var lastDownloadAttemptDate: Date?
+    public var detailedDescription: String?
+    public var downloadErrorDetails: String?
+    public var downloadTaskId: String?
+    public var downloadUrl: String?
+    public var episodeDescription: String?
+    public var episodeStatus = 0 as Int32
+    public var fileType: String?
+    public var contentType: String?
+    public var keepEpisode = false
+    public var playedUpTo: Double = 0
+    public var duration: Double = 0
+    public var playingStatus = 0 as Int32
+    public var autoDownloadStatus = 0 as Int32
+    public var publishedDate: Date?
+    public var sizeInBytes = 0 as Int64
+    public var playingStatusModified = 0 as Int64
+    public var playedUpToModified = 0 as Int64
+    public var durationModified = 0 as Int64
+    public var keepEpisodeModified = 0 as Int64
+    public var starredModified = 0 as Int64
+    public var lastPlaybackInteractionDate: Date?
+    public var lastPlaybackInteractionSyncStatus = 1 as Int32
+    public var title: String?
+    public var uuid = ""
+    public var podcastUuid = ""
+    public var playbackErrorDetails: String?
+    public var cachedFrameCount = 0 as Int64
+    public var podcast_id = 0 as Int64
+    public var episodeNumber = -1 as Int64
+    public var seasonNumber = -1 as Int64
+    public var episodeType: String?
+    public var archived = false
+    public var archivedModified = 0 as Int64
     @GRDBNullDateAsEpoch
-    @objc public var lastArchiveInteractionDate: Date?
-    @objc public var excludeFromEpisodeLimit = false
+    public var lastArchiveInteractionDate: Date?
+    public var excludeFromEpisodeLimit = false
     @GRDBIgnore
-    @objc public var hasOnlyUuid = false
-    @objc public var deselectedChapters: String?
-    @objc public var deselectedChaptersModified = 0 as Int64
-    @objc public var wasDeleted = false
+    public var hasOnlyUuid = false
+    public var deselectedChapters: String?
+    public var deselectedChaptersModified = 0 as Int64
+    public var wasDeleted = false
     public var hasGeneratedTranscript: Bool? = nil
 
     public var hasBookmarks: Bool {
@@ -70,8 +69,6 @@ public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
     public var isUserEpisode: Bool {
         false
     }
-
-    override public init() {}
 
     public func displayableTitle() -> String {
         title ?? ""
@@ -163,7 +160,7 @@ public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
 
     // MARK: - Meta
 
-    @objc public func videoPodcast() -> Bool {
+    public func videoPodcast() -> Bool {
         if let fileType, fileType.startsWith(string: "video/") {
             return true
         }
@@ -191,14 +188,13 @@ public class Episode: NSObject, BaseEpisode, @unchecked Sendable {
         Int(truncatingIfNeeded: id)
     }
 
-    override public func isEqual(_ object: Any?) -> Bool {
-        guard let otherEpisode = object as? Episode else { return false }
-
-        return otherEpisode.uuid == uuid
+    // Equality/hashing are uuid-consistent, matching the other struct records
+    public static func == (lhs: Episode, rhs: Episode) -> Bool {
+        lhs.uuid == rhs.uuid
     }
 
-    override public var hash: Int {
-        taggableId()
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(uuid)
     }
 
     // MARK: - Metadata

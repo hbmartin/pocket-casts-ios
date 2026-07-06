@@ -359,7 +359,8 @@ extension SyncTask {
             return episode ?? Episode(playlistEpisode)
         }
 
-        addedEpisodes.forEach { episode in
+        let preparedEpisodes: [Episode] = addedEpisodes.map { episode in
+            var episode = episode
             if DataManager.sharedManager.findEpisode(uuid: episode.uuid) == nil {
                 episode.wasDeleted = true
             }
@@ -373,13 +374,14 @@ extension SyncTask {
             }
 
             DataManager.sharedManager.save(episode: episode)
+            return episode
         }
 
         if !episodesToDelete.isEmpty {
             DataManager.sharedManager.rawDeleteEpisodes(Array(episodesToDelete), from: playlist)
         }
 
-        let didAdd = DataManager.sharedManager.add(episodes: addedEpisodes, to: playlist)
+        let didAdd = DataManager.sharedManager.add(episodes: preparedEpisodes, to: playlist)
         if !didAdd {
             let playlistCount = DataManager.sharedManager.allPlaylistEpisodeCount(for: playlist, episodeUuidToAdd: nil, includingArchivedEpisodes: true)
             FileLog.shared.addMessage("SyncTask: Tried to add too many episodes to imported playlist \(playlist.playlistName) episodeCount: \(addedEpisodes) playlistCount: \(playlistCount)")
@@ -390,7 +392,7 @@ extension SyncTask {
         playlist.syncStatus = SyncStatus.synced.rawValue
         DataManager.sharedManager.save(playlist: playlist)
 
-        addedEpisodes.forEach { addedEpisode in
+        preparedEpisodes.forEach { addedEpisode in
             ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: addedEpisode.uuid, podcastUuid: addedEpisode.podcastUuid, shouldUpdateEpisode: true)
         }
     }

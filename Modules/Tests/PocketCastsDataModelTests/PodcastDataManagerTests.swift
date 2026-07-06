@@ -1183,7 +1183,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         lastPlaybackInteractionDate: Date? = nil,
         dataManager: DataManager
     ) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.podcastUuid = podcast.uuid
         episode.podcast_id = podcast.id

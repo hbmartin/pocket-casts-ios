@@ -31,7 +31,7 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
     func testAddEpisodesToUnsavedManualPlaylistUsesAssignedPlaylistId() throws {
         try runWithBothImplementations { dataManager, impl in
             let playlist = makeManualPlaylist(uuid: "pl-unsaved", name: "Unsaved")
-            let episode = makeEpisode(uuid: "unsaved-episode")
+            var episode = makeEpisode(uuid: "unsaved-episode")
 
             XCTAssertEqual(playlist.id, 0, "\(impl): unsaved playlist should start without a row id")
             XCTAssertTrue(dataManager.add(episodes: [episode], to: playlist), "\(impl): should add episode")
@@ -85,7 +85,7 @@ final class PlaylistEpisodeManipulationTests: DataManagerTestCase {
     // MARK: - Helpers
 
     private func makeEpisode(uuid: String) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.podcastUuid = "p1"
         episode.title = uuid

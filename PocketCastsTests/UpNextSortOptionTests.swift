@@ -5,7 +5,7 @@ import XCTest
 final class UpNextSortOptionTests: XCTestCase {
 
     private func episode(_ uuid: String, published: Date? = nil, duration: Double = 0, playedUpTo: Double = 0, added: Date? = nil) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.publishedDate = published
         episode.duration = duration

@@ -19,7 +19,7 @@ import GRDB
 ///     func testFindEpisodeByUuid() async throws {
 ///         try await runWithBothImplementations { dataManager, implementationName in
 ///             let podcast = self.createTestPodcast(dataManager: dataManager)
-///             let episode = self.createTestEpisode(podcast: podcast, dataManager: dataManager)
+///             var episode = self.createTestEpisode(podcast: podcast, dataManager: dataManager)
 ///             let found = dataManager.findEpisode(uuid: episode.uuid)
 ///             XCTAssertNotNil(found, "\(implementationName) should find episode")
 ///         }
@@ -81,7 +81,7 @@ class DataManagerTestCase: XCTestCase {
         downloadTaskId: String? = nil,
         dataManager: DataManager
     ) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.podcastUuid = podcast.uuid
         episode.podcast_id = podcast.id
@@ -95,7 +95,7 @@ class DataManagerTestCase: XCTestCase {
         episode.wasDeleted = wasDeleted
         episode.lastPlaybackInteractionDate = lastPlaybackInteractionDate
         episode.downloadTaskId = downloadTaskId
-        dataManager.save(episode: episode)
+        episode = dataManager.save(episode: episode)
         return episode
     }
 

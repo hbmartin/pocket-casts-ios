@@ -6,7 +6,7 @@ import XCTest
 final class RepositoryProtocolTests: XCTestCase {
     func testMockStubsAndRecordsInvocations() {
         let mock = EpisodeRepositoryMock()
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = "episode-uuid"
         mock.stub("findEpisode(uuid:)", with: episode)
 
@@ -61,7 +61,7 @@ final class RepositoryProtocolTests: XCTestCase {
         podcast.addedDate = Date()
         podcast = dataManager.save(podcast: podcast)
 
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = UUID().uuidString.lowercased()
         episode.addedDate = Date()
         episode.podcastUuid = podcast.uuid
@@ -111,7 +111,7 @@ final class RepositoryProtocolTests: XCTestCase {
         podcast.isEffectsOverridden = true
         podcast = await dataManager.saveAsync(podcast: podcast)
 
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = UUID().uuidString.lowercased()
         episode.addedDate = Date()
         episode.podcastUuid = podcast.uuid

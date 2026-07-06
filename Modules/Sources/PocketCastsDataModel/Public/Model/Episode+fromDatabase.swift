@@ -6,7 +6,7 @@ extension Episode {
             return nil
         }
 
-        let episode = Episode()
+        var episode = Episode()
         episode.id = rs.longLongInt(forColumn: "id")
         episode.addedDate = DBUtils.convertDate(value: rs.double(forColumn: "addedDate"))
         episode.lastDownloadAttemptDate = DBUtils.convertDate(value: rs.double(forColumn: "lastDownloadAttemptDate"))

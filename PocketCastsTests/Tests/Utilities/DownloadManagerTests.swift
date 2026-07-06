@@ -34,7 +34,7 @@ final class DownloadManagerTests: DBTestCase {
 
     func testProcessEpisodeRemovesTempFileWhenMoveSucceeds() {
         // Given: A successfully downloaded episode
-        let testEpisode = Episode()
+        var testEpisode = Episode()
         testEpisode.uuid = "test-move-\(UUID().uuidString)"
         testEpisode.podcastUuid = podcast.uuid
         testEpisode.podcast_id = podcast.id

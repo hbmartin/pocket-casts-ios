@@ -48,7 +48,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testAllUpNextEpisodesReturnsMixedEpisodesInCorrectOrder() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "episode-1", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "episode-1", podcast: podcast, dataManager: dataManager)
             let userEpisode = createTestUserEpisode(uuid: "user-ep-1", dataManager: dataManager)
 
             // Add user episode first, then regular episode
@@ -67,7 +67,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testFindBaseEpisodeByUuidFindsRegularEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "test-episode", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "test-episode", podcast: podcast, dataManager: dataManager)
 
             let found = dataManager.findBaseEpisode(uuid: episode.uuid)
             XCTAssertNotNil(found, "\(impl): should find regular episode")
@@ -112,7 +112,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testFindBaseEpisodeByDownloadTaskIdFindsRegularEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "test-episode", podcast: podcast, downloadTaskId: "task-123", dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "test-episode", podcast: podcast, downloadTaskId: "task-123", dataManager: dataManager)
 
             let found = dataManager.findBaseEpisode(downloadTaskId: "task-123")
             XCTAssertNotNil(found, "\(impl): should find regular episode by download task id")
@@ -174,14 +174,14 @@ final class DataManagerTests: DataManagerTestCase {
             let podcast = createTestPodcast(dataManager: dataManager)
 
             // Create downloaded regular episode with a specific download date
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = "downloaded-ep"
             episode.podcastUuid = podcast.uuid
             episode.podcast_id = podcast.id
             episode.addedDate = Date()
             episode.episodeStatus = DownloadStatus.downloaded.rawValue
             episode.lastDownloadAttemptDate = Date(timeIntervalSince1970: 1000)
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             // Create downloaded user episode with a more recent download date
             var userEpisode = UserEpisode()
@@ -207,7 +207,7 @@ final class DataManagerTests: DataManagerTestCase {
             let podcast = createTestPodcast(dataManager: dataManager)
 
             // Create episode with playbackErrorDetails set
-            let episode = createTestEpisode(uuid: "ep-with-error", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "ep-with-error", podcast: podcast, dataManager: dataManager)
             dataManager.saveEpisode(playbackError: "Test error", episode: episode)
 
             // Create user episode with playbackErrorDetails set
@@ -231,7 +231,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testBulkUserFileDeleteHandlesMixedTypes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "ep-1", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "ep-1", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
             let userEpisode = createTestUserEpisode(uuid: "user-ep-1", episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
 
             dataManager.bulkUserFileDelete(baseEpisodes: [episode, userEpisode])
@@ -249,7 +249,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testEpisodeInUpNextAtReturnsRegularEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "test-episode", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "test-episode", podcast: podcast, dataManager: dataManager)
             addToUpNextBottom(episodeUuid: episode.uuid, podcastUuid: podcast.uuid, dataManager: dataManager)
 
             let found = dataManager.episodeInUpNextAt(index: 0)
@@ -281,7 +281,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testEpisodeInUpNextAtReturnsNilForOutOfBoundsIndex() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "test-episode", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "test-episode", podcast: podcast, dataManager: dataManager)
             addToUpNextBottom(episodeUuid: episode.uuid, podcastUuid: podcast.uuid, dataManager: dataManager)
 
             let found = dataManager.episodeInUpNextAt(index: 5)
@@ -341,21 +341,21 @@ final class DataManagerTests: DataManagerTestCase {
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
             // Played past the halfway mark -> counted
-            let played1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 80, dataManager: dataManager)
+            var played1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 80, dataManager: dataManager)
             played1.duration = 100
             dataManager.save(episode: played1)
-            let played2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playedUpTo: 60, dataManager: dataManager)
+            var played2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playedUpTo: 60, dataManager: dataManager)
             played2.duration = 100
             dataManager.save(episode: played2)
 
             // Played less than halfway -> not counted
-            let barelyPlayed = self.createTestEpisode(uuid: "ep-3", podcast: podcast, playedUpTo: 10, dataManager: dataManager)
+            var barelyPlayed = self.createTestEpisode(uuid: "ep-3", podcast: podcast, playedUpTo: 10, dataManager: dataManager)
             barelyPlayed.duration = 100
             dataManager.save(episode: barelyPlayed)
 
             // Different podcast, played past halfway -> not counted
             let otherPodcast = self.createTestPodcast(uuid: "other-podcast", dataManager: dataManager)
-            let otherPlayed = self.createTestEpisode(uuid: "other-ep", podcast: otherPodcast, playedUpTo: 90, dataManager: dataManager)
+            var otherPlayed = self.createTestEpisode(uuid: "other-ep", podcast: otherPodcast, playedUpTo: 90, dataManager: dataManager)
             otherPlayed.duration = 100
             dataManager.save(episode: otherPlayed)
 
@@ -392,7 +392,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testPositionForPlaylistEpisodeBottomOfList() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
             addToUpNextBottom(episodeUuid: episode.uuid, podcastUuid: podcast.uuid, dataManager: dataManager)
 
             let position = dataManager.positionForPlaylistEpisode(bottomOfList: true)
@@ -403,7 +403,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testPositionForPlaylistEpisodeTopOfList() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
             addToUpNextBottom(episodeUuid: episode.uuid, podcastUuid: podcast.uuid, dataManager: dataManager)
 
             let position = dataManager.positionForPlaylistEpisode(bottomOfList: false)
@@ -416,7 +416,7 @@ final class DataManagerTests: DataManagerTestCase {
     func testUpdateEpisodePlaybackInteractionDateUpdatesForEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = createTestPodcast(dataManager: dataManager)
-            let episode = createTestEpisode(uuid: "test-episode", podcast: podcast, lastPlaybackInteractionDate: nil, dataManager: dataManager)
+            var episode = createTestEpisode(uuid: "test-episode", podcast: podcast, lastPlaybackInteractionDate: nil, dataManager: dataManager)
 
             dataManager.updateEpisodePlaybackInteractionDate(episode: episode)
 

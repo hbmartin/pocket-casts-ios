@@ -6,13 +6,13 @@ final class FindMatchingEpisodesTests: XCTestCase {
         let dm = DataManager.newTestDataManager()
 
         // Create two episodes that exist in DB
-        let ep1 = Episode()
+        var ep1 = Episode()
         ep1.uuid = "ep-1"
         ep1.podcastUuid = "pod-1"
         ep1.podcast_id = 1
         ep1.addedDate = Date()
 
-        let ep2 = Episode()
+        var ep2 = Episode()
         ep2.uuid = "ep-2"
         ep2.podcastUuid = "pod-2"
         ep2.podcast_id = 2

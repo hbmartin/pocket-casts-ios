@@ -201,7 +201,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         // if we have this episode already, then we don't need to do anything here
         guard DataManager.sharedManager.findEpisode(uuid: upNextItem.episodeUuid) == nil else { return }
 
-        let episode = Episode()
+        var episode = Episode()
         episode.addedDate = Date()
         episode.podcastUuid = podcast.uuid
         episode.playingStatus = PlayingStatus.notPlayed.rawValue
@@ -274,7 +274,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
               let firstEpisode = episodesJson.first,
               let uuid = firstEpisode["uuid"] as? String else { return nil }
 
-        if let episode = DataManager.sharedManager.findEpisode(uuid: uuid) {
+        if var episode = DataManager.sharedManager.findEpisode(uuid: uuid) {
             if shouldUpdate {
                 let updatedEpisode = Episode.from(episodeJson: firstEpisode, podcastId: podcast.id, podcastUuid: podcast.uuid, isoFormatter: isoFormatter)
 

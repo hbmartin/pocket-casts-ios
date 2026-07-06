@@ -135,7 +135,7 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
             podcast.addedDate = Date()
             dataManager.save(podcast: podcast)
 
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = UUID().uuidString.lowercased()
             episode.podcastUuid = podcast.uuid
             episode.title = "Test Episode"
@@ -170,7 +170,7 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
     }
 
     private func createFullyPopulatedEpisode(podcastUuid: String, podcastId: Int64) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = UUID().uuidString.lowercased()
         episode.podcastUuid = podcastUuid
         episode.podcast_id = podcastId

@@ -23,7 +23,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
 
     func testChangedFiltersIncludesManualEpisodesAndFlag() {
         // Seed episodes used by the manual playlist
-        let e1 = Episode()
+        var e1 = Episode()
         e1.uuid = "m-1"
         e1.podcastUuid = "p-1"
         e1.podcast_id = 1
@@ -32,7 +32,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
         e1.addedDate = Date(timeIntervalSince1970: 100)
         dataManager.save(episode: e1)
 
-        let e2 = Episode()
+        var e2 = Episode()
         e2.uuid = "m-2"
         e2.podcastUuid = "p-2"
         e2.podcast_id = 2
@@ -75,7 +75,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
 
     func testManualPlaylistSyncOverridesSortTypeToDragAndDrop() {
         // Seed episodes that would be sorted differently if playlist.sortType was honored
-        let older = Episode()
+        var older = Episode()
         older.uuid = "manual-old"
         older.podcastUuid = "pod-old"
         older.podcast_id = 1
@@ -85,7 +85,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
         older.publishedDate = Date(timeIntervalSince1970: 1)
         dataManager.save(episode: older)
 
-        let newer = Episode()
+        var newer = Episode()
         newer.uuid = "manual-new"
         newer.podcastUuid = "pod-new"
         newer.podcast_id = 2
@@ -125,7 +125,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
         proto.title.value = "Title"
         proto.url.value = "http://example.com/ep.mp3"
 
-        let episode = Episode(proto)
+        var episode = Episode(proto)
 
         XCTAssertEqual(episode.uuid, "uuid-123")
         XCTAssertEqual(episode.podcastUuid, "pod-123")
@@ -140,7 +140,7 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
         defer { URLProtocol.unregisterClass(FailingURLProtocol.self) }
 
         // One existing episode, one missing
-        let existing = Episode()
+        var existing = Episode()
         existing.uuid = "exist-1"
         existing.podcastUuid = "p1"
         existing.podcast_id = 1

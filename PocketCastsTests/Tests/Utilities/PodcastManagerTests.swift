@@ -74,7 +74,7 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testGhostCleanupDeletesGhostEpisode() throws {
-        let ghostEpisode = Episode()
+        var ghostEpisode = Episode()
         ghostEpisode.uuid = "ghost-\(UUID().uuidString)"
         ghostEpisode.podcastUuid = "missing-\(UUID().uuidString)"
         ghostEpisode.podcast_id = Int64.max
@@ -135,7 +135,7 @@ final class PodcastManagerTests: DBTestCase {
         podcast.syncStatus = SyncStatus.synced.rawValue
         podcast = dataManager.save(podcast: podcast)
 
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = UUID().uuidString
         episode.podcastUuid = podcast.uuid
         episode.podcast_id = podcast.id

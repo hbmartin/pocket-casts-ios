@@ -14,7 +14,7 @@ final class DownloadManagerRetryTests: DBTestCase {
 
     func testRetryDownloadWithoutUserAgent_CallsPerformDownloadWithCorrectParameters() async throws {
         // Create a mock episode with download URL
-        let mockEpisode = Episode()
+        var mockEpisode = Episode()
         mockEpisode.uuid = UUID().uuidString
         mockEpisode.podcastUuid = podcast.uuid
         mockEpisode.podcast_id = podcast.id
@@ -45,7 +45,7 @@ final class DownloadManagerRetryTests: DBTestCase {
 
     func testRetryDownloadWithoutUserAgent_DoesNothingWhenNoDownloadUrl() async throws {
         // Create a mock episode without download URL
-        let mockEpisode = Episode()
+        var mockEpisode = Episode()
         mockEpisode.uuid = UUID().uuidString
         mockEpisode.podcastUuid = podcast.uuid
         mockEpisode.podcast_id = podcast.id
