@@ -34,8 +34,8 @@ iOS Simulator** — not via `swift test` on the macOS host (that builds for macO
 strategy is unavailable). The helper file is wrapped in `#if canImport(UIKit)` for that reason.
 
 Determinism matters: reference images are sensitive to the renderer. Record and verify on the **same
-Simulator/OS** that CI pins via the `IOS_SIMULATOR_RUNTIME_VERSION` variable, and on the pinned Xcode
-(`.xcode-version`). Images recorded on a different device or OS will produce false failures. The
+Simulator/OS** that CI pins via the `IOS_SIMULATOR_RUNTIME_VERSION` variable (currently **iOS 26.5** —
+promoted from 18.6 during the iOS 26 migration), and on the pinned Xcode (`.xcode-version`). Images recorded on a different device or OS will produce false failures. The
 helper applies a small `perceptualPrecision` tolerance (0.98) to absorb sub-pixel anti-aliasing
 differences; tune it per view if a snapshot proves flaky.
 
