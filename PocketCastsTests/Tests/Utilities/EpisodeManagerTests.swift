@@ -9,7 +9,7 @@ final class EpisodeManagerTests: DBTestCase {
 
     func testUrlForEpisodeStreamingOnlyWithNoDownloadedContent() {
         // Given: An episode that is not downloaded at all
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = "test-no-download-789"
         episode.downloadUrl = "https://example.com/remote-podcast.mp3"
         episode.episodeStatus = DownloadStatus.notDownloaded.rawValue
@@ -53,7 +53,7 @@ final class EpisodeManagerTests: DBTestCase {
 
     func testUrlForEpisodeReturnsNilForInvalidEpisode() {
         // Given: An episode with no downloadUrl and not a user episode
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = "invalid-episode"
         episode.downloadUrl = nil
         episode.episodeStatus = DownloadStatus.notDownloaded.rawValue
@@ -70,7 +70,7 @@ final class EpisodeManagerTests: DBTestCase {
         // streamingOnly: true was still returning local file paths
 
         // Given: An episode with downloadUrl
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = "chromecast-test-episode"
         episode.downloadUrl = "https://feeds.example.com/podcast.mp3"
         episode.episodeStatus = DownloadStatus.notDownloaded.rawValue
@@ -95,12 +95,12 @@ final class EpisodeManagerTests: DBTestCase {
         // This test verifies the key fix: streamingOnly parameter changes behavior
 
         // Given: Two identical episodes with streaming URLs
-        let episode1 = Episode()
+        var episode1 = Episode()
         episode1.uuid = "streaming-logic-test-1"
         episode1.downloadUrl = "https://cdn.example.com/episode1.mp3"
         episode1.episodeStatus = DownloadStatus.notDownloaded.rawValue
 
-        let episode2 = Episode()
+        var episode2 = Episode()
         episode2.uuid = "streaming-logic-test-2"
         episode2.downloadUrl = "https://cdn.example.com/episode2.mp3"
         episode2.episodeStatus = DownloadStatus.notDownloaded.rawValue

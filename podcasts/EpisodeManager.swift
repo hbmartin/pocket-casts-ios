@@ -269,7 +269,7 @@ class EpisodeManager: NSObject {
         DataManager.sharedManager.deleteAllEpisodesInPodcast(podcastId: id)
     }
 
-    @objc class func setStarred(_ starred: Bool, episode: Episode, updateSyncStatus: Bool) {
+    class func setStarred(_ starred: Bool, episode: Episode, updateSyncStatus: Bool) {
         if starred == episode.keepEpisode { return } // we've already set this, no need to reset it again
 
         DataManager.sharedManager.saveEpisode(starred: starred, episode: episode, updateSyncFlag: updateSyncStatus)

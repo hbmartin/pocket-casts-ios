@@ -30,7 +30,7 @@ class ChapterManagerTests: XCTestCase {
             chapterInfo(startTime: 501, duration: 600, shouldPlay: false)
         ]
         let chapterManager = ChapterManager(chapterParser: parserMock, showInfoCoordinator: showInfoCoordinatorMock)
-        await chapterManager.parseChapters(episode: EpisodeMock(), duration: 600)
+        await chapterManager.parseChapters(episode: makeEpisodeMock(), duration: 600)
 
         chapterManager.updateCurrentChapter(time: 10)
 
@@ -50,7 +50,7 @@ class ChapterManagerTests: XCTestCase {
             chapterInfo(startTime: 501, duration: 600, shouldPlay: false)
         ]
         let chapterManager = ChapterManager(chapterParser: parserMock, showInfoCoordinator: showInfoCoordinatorMock)
-        await chapterManager.parseChapters(episode: EpisodeMock(), duration: 600)
+        await chapterManager.parseChapters(episode: makeEpisodeMock(), duration: 600)
         chapterManager.updateCurrentChapter(time: 10)
 
         let nextVisiblePlayableChapter = chapterManager.nextVisiblePlayableChapter()
@@ -71,7 +71,7 @@ class ChapterManagerTests: XCTestCase {
             chapterInfo(startTime: 501, duration: 600, shouldPlay: false)
         ]
         let chapterManager = ChapterManager(chapterParser: parserMock, showInfoCoordinator: showInfoCoordinatorMock)
-        await chapterManager.parseChapters(episode: EpisodeMock(), duration: 600)
+        await chapterManager.parseChapters(episode: makeEpisodeMock(), duration: 600)
         chapterManager.updateCurrentChapter(time: 450)
 
         let nextVisiblePlayableChapter = chapterManager.previousVisibleChapter()
@@ -118,9 +118,8 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
     }
 }
 
-private final class EpisodeMock: Episode, @unchecked Sendable {
-    override var downloadUrl: String? {
-        get { "https://pocketcasts.com/" }
-        set {}
-    }
+private func makeEpisodeMock() -> Episode {
+    var episode = Episode()
+    episode.downloadUrl = "https://pocketcasts.com/"
+    return episode
 }

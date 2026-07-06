@@ -114,7 +114,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
                 guard let episodeUuid = episode.uuid else { return nil }
                 if let _ = DataManager.sharedManager.findEpisode(uuid: episodeUuid) { return nil }
 
-                let newEpisode = Episode()
+                var newEpisode = Episode()
                 newEpisode.podcast_id = podcast.id
                 newEpisode.podcastUuid = podcast.uuid
                 newEpisode.playingStatus = PlayingStatus.notPlayed.rawValue

@@ -530,17 +530,18 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
             episodeModified = true
         }
-        if episode.archived, let episode = episode as? Episode {
-            fileLog.addMessage("Un-archiving episode because it's getting added to the download queue: \(episode.displayableTitle())")
-            episode.archived = false
-            episode.archivedModified = TimeFormatter.currentUTCTimeInMillis()
-            episode.lastArchiveInteractionDate = Date()
+        if episode.archived, var typedEpisode = episode as? Episode {
+            fileLog.addMessage("Un-archiving episode because it's getting added to the download queue: \(typedEpisode.displayableTitle())")
+            typedEpisode.archived = false
+            typedEpisode.archivedModified = TimeFormatter.currentUTCTimeInMillis()
+            typedEpisode.lastArchiveInteractionDate = Date()
 
             // if this podcast has an episode limit, flag this episode as being manually excluded from that limit
-            if let parentPodcast = episode.parentPodcast(), parentPodcast.autoArchiveEpisodeLimitCount > 0 {
-                episode.excludeFromEpisodeLimit = true
+            if let parentPodcast = typedEpisode.parentPodcast(), parentPodcast.autoArchiveEpisodeLimitCount > 0 {
+                typedEpisode.excludeFromEpisodeLimit = true
             }
 
+            episode = typedEpisode
             episodeModified = true
         }
 

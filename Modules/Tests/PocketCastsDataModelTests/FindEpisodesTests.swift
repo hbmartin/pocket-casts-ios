@@ -39,7 +39,7 @@ final class FindEpisodesTests: XCTestCase {
             podcastId: 2
         )
 
-        let deleted = makeEpisode(
+        var deleted = makeEpisode(
             uuid: "ep-deleted",
             podcastUuid: podcastUuid,
             title: "Daily Deleted",
@@ -124,7 +124,7 @@ final class FindEpisodesTests: XCTestCase {
         added: TimeInterval,
         podcastId: Int64 = 1
     ) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.podcastUuid = podcastUuid
         episode.podcast_id = podcastId

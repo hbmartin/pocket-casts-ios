@@ -1221,9 +1221,10 @@ final class PlaybackManager {
                 episode.playedUpToModified = currentUtcTime
             }
 
-            if let episode = episode as? Episode {
-                episode.lastPlaybackInteractionDate = Date()
-                episode.lastPlaybackInteractionSyncStatus = SyncStatus.notSynced.rawValue
+            if var typedEpisode = episode as? Episode {
+                typedEpisode.lastPlaybackInteractionDate = Date()
+                typedEpisode.lastPlaybackInteractionSyncStatus = SyncStatus.notSynced.rawValue
+                episode = typedEpisode
             }
             DataManager.sharedManager.save(episode: episode)
 

@@ -102,7 +102,7 @@ extension ServerPodcastManager {
             guard let uuid = episodeJson["uuid"] as? String, let publishedStr = episodeJson["published"] as? String, let episodeDate = isoFormatter.date(from: publishedStr) else { continue }
 
             // for existing episodes, update the fields we want to pick up when they change
-            if let existingEpisode = DataManager.sharedManager.findEpisode(uuid: uuid) {
+            if var existingEpisode = DataManager.sharedManager.findEpisode(uuid: uuid) {
                 var episodeChanged = false
                 if let title = episodeJson["title"] as? String, existingEpisode.title != title {
                     existingEpisode.title = title
@@ -160,7 +160,7 @@ extension ServerPodcastManager {
             }
 
             // if we get to here then we need to add this episode because we are missing it
-            let episode = Episode()
+            var episode = Episode()
             episode.addedDate = Date()
             episode.podcast_id = podcast.id
             episode.podcastUuid = podcast.uuid

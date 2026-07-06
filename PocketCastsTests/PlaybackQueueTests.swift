@@ -98,7 +98,7 @@ final class PlaybackQueueTests: XCTestCase {
     }
 
     private func episode(_ uuid: String) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         return episode
     }
@@ -144,14 +144,15 @@ final class PlaybackQueueTests: XCTestCase {
         let mockDataManager = MockDataManager()
         DataManager.sharedManager = mockDataManager
 
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = "episode-\(toTop ? "top" : "bottom")"
         episode.title = "Queue Episode"
         episode.podcastUuid = "podcast-uuid"
 
+        let expectedUuid = episode.uuid
         let expectation = XCTNSNotificationExpectation(name: Constants.Notifications.upNextEpisodeAdded)
         expectation.handler = { notification in
-            XCTAssertEqual(notification.object as? String, episode.uuid, file: file, line: line)
+            XCTAssertEqual(notification.object as? String, expectedUuid, file: file, line: line)
             XCTAssertEqual(
                 notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool,
                 toTop,
@@ -203,7 +204,7 @@ fileprivate class MockDataManager: DataManager, @unchecked Sendable {
 
     override func allUpNextEpisodes() -> [BaseEpisode] {
         upNextEpisodes.map {
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = $0.episodeUuid
             episode.title = $0.title
             episode.podcastUuid = $0.podcastUuid

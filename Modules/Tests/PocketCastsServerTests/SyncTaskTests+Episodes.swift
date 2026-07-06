@@ -21,7 +21,7 @@ final class SyncTaskTests_EpisodeImport: XCTestCase {
         let episodeCount = 5
 
         (0..<episodeCount).forEach { _ in
-            let episode = addEpisode()
+            var episode = addEpisode()
             episode.playingStatusModified = 1
             DataManager.sharedManager.save(episode: episode)
         }
@@ -42,7 +42,7 @@ private extension SyncTaskTests_EpisodeImport {
     @discardableResult
     func addEpisode(episodeUuid: String = "episode-\(UUID().uuidString)",
                      podcastUuid: String = "podcast-\(UUID().uuidString)") -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.addedDate = Date()
         episode.podcast_id = 0
         episode.podcastUuid = podcastUuid

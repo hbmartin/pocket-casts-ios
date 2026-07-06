@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 
 public extension Episode {
-    func populate(fromEpisode updateEpisode: RefreshEpisode) {
+    mutating func populate(fromEpisode updateEpisode: RefreshEpisode) {
         title = updateEpisode.title
         uuid = updateEpisode.uuid ?? ""
         downloadUrl = updateEpisode.url

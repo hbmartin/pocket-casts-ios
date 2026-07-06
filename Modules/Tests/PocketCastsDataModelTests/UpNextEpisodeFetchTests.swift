@@ -7,13 +7,13 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
 
     func testEpisodeDataManagerFiltersNonUpNextPlaylists() throws {
         try runWithBothImplementations { dataManager, impl in
-            let upNextEpisode = Episode()
+            var upNextEpisode = Episode()
             upNextEpisode.uuid = "ep-upnext"
             upNextEpisode.title = "Up Next Episode"
             upNextEpisode.podcastUuid = "pod-upnext"
             upNextEpisode.addedDate = Date()
 
-            let otherEpisode = Episode()
+            var otherEpisode = Episode()
             otherEpisode.uuid = "ep-other"
             otherEpisode.title = "Other Playlist Episode"
             otherEpisode.podcastUuid = "pod-other"

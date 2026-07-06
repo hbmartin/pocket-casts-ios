@@ -23,7 +23,7 @@ class RecommendEpisodesTask: ApiBaseTask, @unchecked Sendable {
 
             do {
                 if let topEpisode = try Api_EpisodesResponse(serializedBytes: responseData).episodes.first {
-                    let episode = Episode()
+                    var episode = Episode()
                     episode.uuid = topEpisode.uuid
                     episode.podcastUuid = topEpisode.podcastUuid
                     completion?(episode)

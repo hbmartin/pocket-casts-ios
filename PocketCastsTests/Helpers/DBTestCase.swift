@@ -123,7 +123,7 @@ class DBTestCase: XCTestCase {
         // the episode below is linked via the real podcast_id (a discarded save would leave id == 0).
         podcast = dataManager.save(podcast: podcast)
 
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = UUID().uuidString
         episode.podcastUuid = podcast.uuid
         episode.podcast_id = podcast.id

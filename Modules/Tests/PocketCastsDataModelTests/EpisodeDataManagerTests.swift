@@ -12,7 +12,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testFindEpisodeByUuidReturnsEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "test-episode-uuid", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "test-episode-uuid", podcast: podcast, dataManager: dataManager)
 
             let found = dataManager.findEpisode(uuid: "test-episode-uuid")
 
@@ -163,7 +163,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testDownloadedEpisodeExistsReturnsTrueWhenExists() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "downloaded-episode", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "downloaded-episode", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
 
             let exists = dataManager.downloadedEpisodeExists(uuid: episode.uuid)
 
@@ -174,7 +174,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testDownloadedEpisodeExistsReturnsFalseWhenNotDownloaded() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(podcast: podcast, episodeStatus: DownloadStatus.notDownloaded.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(podcast: podcast, episodeStatus: DownloadStatus.notDownloaded.rawValue, dataManager: dataManager)
 
             let exists = dataManager.downloadedEpisodeExists(uuid: episode.uuid)
 
@@ -196,7 +196,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
-            let episode1 = Episode()
+            var episode1 = Episode()
             episode1.uuid = "unsynced-1"
             episode1.podcastUuid = podcast.uuid
             episode1.podcast_id = podcast.id
@@ -204,7 +204,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode1.playingStatusModified = 1
             dataManager.save(episode: episode1)
 
-            let episode2 = Episode()
+            var episode2 = Episode()
             episode2.uuid = "synced"
             episode2.podcastUuid = podcast.uuid
             episode2.podcast_id = podcast.id
@@ -223,7 +223,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
-            let episode1 = Episode()
+            var episode1 = Episode()
             episode1.uuid = "modified-played"
             episode1.podcastUuid = podcast.uuid
             episode1.podcast_id = podcast.id
@@ -231,7 +231,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode1.playedUpToModified = 1
             dataManager.save(episode: episode1)
 
-            let episode2 = Episode()
+            var episode2 = Episode()
             episode2.uuid = "modified-duration"
             episode2.podcastUuid = podcast.uuid
             episode2.podcast_id = podcast.id
@@ -239,7 +239,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode2.durationModified = 1
             dataManager.save(episode: episode2)
 
-            let episode3 = Episode()
+            var episode3 = Episode()
             episode3.uuid = "modified-archived"
             episode3.podcastUuid = podcast.uuid
             episode3.podcast_id = podcast.id
@@ -258,7 +258,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testDeleteRemovesEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "to-delete", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "to-delete", podcast: podcast, dataManager: dataManager)
 
             dataManager.delete(episodeUuid: episode.uuid)
 
@@ -291,7 +291,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testMarkAllEpisodePlaybackHistorySyncedUpdatesSyncStatus() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(podcast: podcast, dataManager: dataManager)
 
             dataManager.markAllEpisodePlaybackHistorySynced()
 
@@ -380,7 +380,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             let newDate = Date(timeIntervalSinceNow: 86400)
 
             let oldEpisode = self.createTestEpisode(uuid: "old-ep", podcast: podcast, lastPlaybackInteractionDate: oldDate, dataManager: dataManager)
-            let newEpisode = self.createTestEpisode(uuid: "new-ep", podcast: podcast, lastPlaybackInteractionDate: newDate, dataManager: dataManager)
+            var newEpisode = self.createTestEpisode(uuid: "new-ep", podcast: podcast, lastPlaybackInteractionDate: newDate, dataManager: dataManager)
 
             dataManager.clearEpisodePlaybackInteractionDatesBefore(date: cutoffDate)
 
@@ -400,7 +400,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
 
             var episodes = [Episode]()
             for i in 0..<5 {
-                let episode = Episode()
+                var episode = Episode()
                 episode.uuid = "bulk-\(i)"
                 episode.podcastUuid = podcast.uuid
                 episode.podcast_id = podcast.id
@@ -424,8 +424,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkMarkAsPlayedMarksEpisodesAsPlayed() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
 
             dataManager.bulkMarkAsPlayed(episodes: [episode1, episode2], updateSyncFlag: false)
 
@@ -440,7 +440,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkMarkAsPlayedSkipsAlreadyPlayedEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "already-played", podcast: podcast, playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "already-played", podcast: podcast, playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
 
             // This should not crash or cause issues
             dataManager.bulkMarkAsPlayed(episodes: [episode], updateSyncFlag: false)
@@ -455,8 +455,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkMarkAsUnPlayedMarksEpisodesAsNotPlayed() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.completed.rawValue, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, playingStatus: PlayingStatus.inProgress.rawValue, dataManager: dataManager)
 
             dataManager.bulkMarkAsUnPlayed(baseEpisodes: [episode1, episode2], updateSyncFlag: false)
 
@@ -471,7 +471,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkMarkAsUnPlayedResetsPlayedUpTo() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.inProgress.rawValue, playedUpTo: 300.0, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.inProgress.rawValue, playedUpTo: 300.0, dataManager: dataManager)
 
             dataManager.bulkMarkAsUnPlayed(baseEpisodes: [episode], updateSyncFlag: false)
 
@@ -485,8 +485,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkArchiveArchivesEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
 
             dataManager.bulkArchive(episodes: [episode1, episode2], markAsNotDownloaded: false, markAsPlayed: false, updateSyncFlag: false)
 
@@ -501,7 +501,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkArchiveCanMarkAsNotDownloaded() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
 
             dataManager.bulkArchive(episodes: [episode], markAsNotDownloaded: true, markAsPlayed: false, updateSyncFlag: false)
 
@@ -513,7 +513,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkArchiveCanMarkAsPlayed() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             dataManager.bulkArchive(episodes: [episode], markAsNotDownloaded: false, markAsPlayed: true, updateSyncFlag: false)
 
@@ -527,8 +527,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkUnarchiveUnarchivesEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: true, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, archived: true, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: true, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, archived: true, dataManager: dataManager)
 
             dataManager.bulkUnarchive(episodes: [episode1, episode2], updateSyncFlag: false)
 
@@ -545,8 +545,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testMarkAllUnarchivedForPodcastUnarchivesAllEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: true, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, archived: true, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: true, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, archived: true, dataManager: dataManager)
 
             dataManager.markAllUnarchivedForPodcast(id: podcast.id)
 
@@ -563,8 +563,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             let podcast1 = self.createTestPodcast(uuid: "podcast-1", dataManager: dataManager)
             let podcast2 = self.createTestPodcast(uuid: "podcast-2", dataManager: dataManager)
 
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast1, archived: true, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast2, archived: true, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast1, archived: true, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast2, archived: true, dataManager: dataManager)
 
             dataManager.markAllUnarchivedForPodcast(id: podcast1.id)
 
@@ -619,7 +619,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodePlayingStatusUpdatesStatus() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             dataManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: false)
 
@@ -631,7 +631,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodePlayingStatusUpdatesSyncFlag() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             dataManager.saveEpisode(playingStatus: .completed, episode: episode, updateSyncFlag: true)
 
@@ -646,7 +646,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodeArchivedUpdatesArchiveStatus() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: false, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: false, dataManager: dataManager)
 
             dataManager.saveEpisode(archived: true, episode: episode, updateSyncFlag: false)
 
@@ -658,7 +658,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodeArchivedUpdatesSyncFlag() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: false, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: false, dataManager: dataManager)
 
             dataManager.saveEpisode(archived: true, episode: episode, updateSyncFlag: true)
 
@@ -673,7 +673,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodePlayedUpToUpdatesPosition() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 0, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 0, dataManager: dataManager)
 
             dataManager.saveEpisode(playedUpTo: 300.5, episode: episode, updateSyncFlag: false)
 
@@ -685,7 +685,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodePlayedUpToUpdatesSyncFlag() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 0, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playedUpTo: 0, dataManager: dataManager)
 
             dataManager.saveEpisode(playedUpTo: 300.5, episode: episode, updateSyncFlag: true)
 
@@ -700,7 +700,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveEpisodeExcludeFromEpisodeLimitUpdatesFlag() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             dataManager.saveEpisode(excludeFromEpisodeLimit: true, episode: episode)
 
@@ -714,8 +714,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkSetStarredSetsStarredOnEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
 
             dataManager.bulkSetStarred(starred: true, episodes: [episode1, episode2], updateSyncStatus: false)
 
@@ -730,7 +730,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testBulkSetStarredUnsetsStarred() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, keepEpisode: true, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, keepEpisode: true, dataManager: dataManager)
 
             dataManager.bulkSetStarred(starred: false, episodes: [episode], updateSyncStatus: false)
 
@@ -744,7 +744,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveAndFindFrameCount() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             dataManager.saveFrameCount(episode: episode, frameCount: 12345)
 
@@ -756,7 +756,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testFindFrameCountReturnsZeroForUnset() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             let frameCount = dataManager.findFrameCount(episode: episode)
             XCTAssertEqual(frameCount, 0, "\(impl): Frame count should be 0 when not set")
@@ -768,7 +768,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testClearEpisodePlaybackInteractionDateClearsDate() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, lastPlaybackInteractionDate: Date(), dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, lastPlaybackInteractionDate: Date(), dataManager: dataManager)
 
             dataManager.clearEpisodePlaybackInteractionDate(episodeUuid: episode.uuid)
 
@@ -782,7 +782,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSetEpisodePlaybackInteractionDateSetsDate() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, lastPlaybackInteractionDate: nil, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, lastPlaybackInteractionDate: nil, dataManager: dataManager)
             let interactionDate = Date()
 
             dataManager.setEpisodePlaybackInteractionDate(interactionDate: interactionDate, episodeUuid: episode.uuid)
@@ -797,7 +797,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveIfNotModifiedStarredUpdatesWhenNotModified() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, keepEpisode: false, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, keepEpisode: false, dataManager: dataManager)
 
             _ = dataManager.saveIfNotModified(starred: true, episodeUuid: episode.uuid)
 
@@ -809,7 +809,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveIfNotModifiedArchivedUpdatesWhenNotModified() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: false, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, archived: false, dataManager: dataManager)
 
             _ = dataManager.saveIfNotModified(archived: true, episodeUuid: episode.uuid)
 
@@ -821,7 +821,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveIfNotModifiedPlayingStatusUpdatesWhenNotModified() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             _ = dataManager.saveIfNotModified(playingStatus: .completed, episodeUuid: episode.uuid)
 
@@ -835,7 +835,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveContentTypeUpdatesEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             dataManager.saveEpisode(contentType: "audio/mpeg", episode: episode)
 
@@ -849,7 +849,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveFileTypeUpdatesEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             dataManager.saveEpisode(fileType: "mp3", episode: episode)
 
@@ -863,7 +863,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveFileSizeUpdatesEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             dataManager.saveEpisode(fileSize: 1024000, episode: episode)
 
@@ -877,8 +877,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testAllUpNextEpisodesFromUuidsReturnsMatchingEpisodes() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
             _ = self.createTestEpisode(uuid: "ep-3", podcast: podcast, dataManager: dataManager)
 
             // Add episodes to Up Next (required for allUpNextEpisodes to find them)
@@ -952,7 +952,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testClearDownloadTaskIdClearsTaskId() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
 
             // Set a download task ID first
             dataManager.saveEpisode(downloadStatus: .downloading, downloadTaskId: "task-123", episode: episode)
@@ -970,7 +970,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testClearKeepEpisodeModifiedClearsFlag() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, keepEpisode: true, dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "ep-1", podcast: podcast, keepEpisode: true, dataManager: dataManager)
 
             dataManager.clearKeepEpisodeModified(episode: episode)
 
@@ -988,7 +988,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             _ = self.createTestEpisode(uuid: "ep-with-podcast", podcast: podcast, dataManager: dataManager)
 
             // Create an episode manually with invalid podcast reference
-            let ghostEpisode = Episode()
+            var ghostEpisode = Episode()
             ghostEpisode.uuid = "ghost-ep"
             ghostEpisode.podcastUuid = "non-existent-podcast"
             ghostEpisode.podcast_id = 99999
@@ -1113,7 +1113,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = "save-test-uuid"
             episode.title = "Save Test Episode"
             episode.podcastUuid = podcast.uuid
@@ -1132,7 +1132,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode.fileType = "mp3"
             episode.contentType = "audio/mpeg"
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findEpisode(uuid: "save-test-uuid")
             XCTAssertNotNil(found, "\(impl): Should find saved episode")
@@ -1157,7 +1157,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
     func testSaveUpdatesExistingEpisode() throws {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode = self.createTestEpisode(uuid: "update-test-uuid", podcast: podcast, title: "Original Title", dataManager: dataManager)
+            var episode = self.createTestEpisode(uuid: "update-test-uuid", podcast: podcast, title: "Original Title", dataManager: dataManager)
 
             // Update fields
             episode.title = "Updated Title"
@@ -1165,7 +1165,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode.playedUpTo = 3600.0
             episode.archived = true
             episode.keepEpisode = true
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findEpisode(uuid: "update-test-uuid")
             XCTAssertEqual(found?.title, "Updated Title", "\(impl): Title should be updated")
@@ -1180,7 +1180,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
-            let episode = Episode()
+            var episode = Episode()
             episode.id = 0 // Zero ID
             episode.uuid = "auto-id-episode"
             episode.podcastUuid = podcast.uuid
@@ -1188,7 +1188,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode.title = "Auto ID Episode"
             episode.addedDate = Date()
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             XCTAssertNotEqual(episode.id, 0, "\(impl): ID should be generated")
 
@@ -1202,7 +1202,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = "modified-flags-episode"
             episode.podcastUuid = podcast.uuid
             episode.podcast_id = podcast.id
@@ -1213,7 +1213,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode.durationModified = 34567
             episode.archivedModified = 45678
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findEpisode(uuid: "modified-flags-episode")
             XCTAssertEqual(found?.playingStatusModified, 12345, "\(impl): playingStatusModified should be preserved")
@@ -1227,7 +1227,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         try runWithBothImplementations { dataManager, impl in
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = "optional-strings-episode"
             episode.podcastUuid = podcast.uuid
             episode.podcast_id = podcast.id
@@ -1238,7 +1238,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             episode.downloadTaskId = "task-123"
             episode.cachedFrameCount = 1000
 
-            dataManager.save(episode: episode)
+            episode = dataManager.save(episode: episode)
 
             let found = dataManager.findEpisode(uuid: "optional-strings-episode")
             XCTAssertEqual(found?.episodeDescription, "A detailed description", "\(impl): Description should be preserved")
@@ -1255,8 +1255,8 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
             // Create initial episodes
-            let episode1 = self.createTestEpisode(uuid: "bulk-update-1", podcast: podcast, title: "Original 1", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(uuid: "bulk-update-2", podcast: podcast, title: "Original 2", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode1 = self.createTestEpisode(uuid: "bulk-update-1", podcast: podcast, title: "Original 1", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
+            var episode2 = self.createTestEpisode(uuid: "bulk-update-2", podcast: podcast, title: "Original 2", playingStatus: PlayingStatus.notPlayed.rawValue, dataManager: dataManager)
 
             // Modify episodes
             episode1.title = "Updated 1"
@@ -1281,10 +1281,10 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
             let podcast = self.createTestPodcast(dataManager: dataManager)
 
             // Create existing episode
-            let existingEpisode = self.createTestEpisode(uuid: "existing-bulk", podcast: podcast, title: "Existing Episode", dataManager: dataManager)
+            var existingEpisode = self.createTestEpisode(uuid: "existing-bulk", podcast: podcast, title: "Existing Episode", dataManager: dataManager)
 
             // Create new episode to insert
-            let newEpisode = Episode()
+            var newEpisode = Episode()
             newEpisode.uuid = "new-bulk"
             newEpisode.podcastUuid = podcast.uuid
             newEpisode.podcast_id = podcast.id
@@ -1311,7 +1311,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
 
             var episodes = [Episode]()
             for i in 0..<3 {
-                let episode = Episode()
+                var episode = Episode()
                 episode.uuid = "bulk-fields-\(i)"
                 episode.podcastUuid = podcast.uuid
                 episode.podcast_id = podcast.id
@@ -1367,7 +1367,7 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         lastDownloadAttemptDate: Date? = nil,
         dataManager: DataManager
     ) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.podcastUuid = podcast.uuid
         episode.podcast_id = podcast.id

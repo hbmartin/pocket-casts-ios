@@ -2,7 +2,7 @@ import Foundation
 
 extension Episode {
     public static func from(episodeJson: [String: Any], podcastId: Int64, podcastUuid: String, isoFormatter: ISO8601DateFormatter) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.addedDate = Date()
         episode.podcast_id = podcastId
         episode.podcastUuid = podcastUuid

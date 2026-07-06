@@ -184,7 +184,7 @@ public class DataManager {
 
     public func allUpNextEpisodeUuids() -> [BaseEpisode] {
         upNextManager.allUpNextPlaylistEpisodes(dbQueue: dbQueue).map {
-            let episode = Episode()
+            var episode = Episode()
             episode.uuid = $0.episodeUuid
             episode.hasOnlyUuid = true
             return episode
@@ -584,6 +584,12 @@ public class DataManager {
     @discardableResult
     public func save(episode: UserEpisode) -> UserEpisode {
         userEpisodeManager.save(episode: episode, dbQueue: dbQueue)
+    }
+
+    /// Value-type Episode: returns the saved copy carrying the generated row id.
+    @discardableResult
+    public func save(episode: Episode) -> Episode {
+        episodeManager.save(episode: episode, dbQueue: dbQueue)
     }
 
     public func bulkSave(episodes: [Episode]) {

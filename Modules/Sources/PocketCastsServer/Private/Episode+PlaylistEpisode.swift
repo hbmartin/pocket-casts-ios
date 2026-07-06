@@ -2,7 +2,7 @@ import PocketCastsDataModel
 import Foundation
 
 extension Episode {
-    convenience init(_ playlistEpisode: Api_SyncPlaylistEpisode) {
+    init(_ playlistEpisode: Api_SyncPlaylistEpisode) {
         self.init()
 
         uuid = playlistEpisode.episode

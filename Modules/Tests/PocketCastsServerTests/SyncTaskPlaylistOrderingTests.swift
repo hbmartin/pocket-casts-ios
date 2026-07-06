@@ -68,7 +68,7 @@ final class SyncTaskPlaylistOrderingTests: XCTestCase {
     }
 
     private func makeEpisode(uuid: String) -> Episode {
-        let episode = Episode()
+        var episode = Episode()
         episode.uuid = uuid
         episode.podcastUuid = "pod-\(uuid)"
         episode.title = "Episode-\(uuid)"
