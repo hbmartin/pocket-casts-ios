@@ -1,5 +1,13 @@
 # Phase 5 — Playback/Audio Modernization Plan
 
+_**COMPLETE 2026-07-05** — all 11 slices landed (PRs #233 plan, #234 queue encapsulation,
+#235 callback hops, #236 the @MainActor flip incl. helper isolation, #237 PlaybackProtocol
+de-@objc, #238 PlaybackPositionTracker, #239 BaseEpisode/FilePathProtocol de-@objc,
+#240 UserEpisode struct, #241 Episode struct, #242 cleanup). Deviations from the plan:
+slices 4+5 merged (helpers can't isolate before their sole caller); requiredStartingPosition
+is consumed at play-dispatch/prepare-finish rather than snapshotted at load (it has one-shot
+side effects); the GRDBRecord macro gained epoch-date codegen for struct records._
+
 _Opened 2026-07-05, after Phase 4 completed (Swift 6 language mode everywhere, concurrency baseline
 empty) and Phase 3 exited (GRDB query interface unconditional, raw-SQL legacy deleted). This document
 is the sizing-and-approach plan that MODERNIZATION.md deferred "until this phase opens." It records
