@@ -5,28 +5,28 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-protocol DownloadManagerEpisodesCache {
+nonisolated protocol DownloadManagerEpisodesCache {
     subscript(index: String) -> BaseEpisode? { get set }
 
     func contains(where predicate: ((key: String, value: BaseEpisode)) throws -> Bool) rethrows -> Bool
 }
 
-extension Dictionary: DownloadManagerEpisodesCache where Self == Dictionary<String, BaseEpisode> {
+nonisolated extension Dictionary: DownloadManagerEpisodesCache where Self == Dictionary<String, BaseEpisode> {
 }
 
-extension ThreadSafeDictionary: DownloadManagerEpisodesCache where ThreadSafeDictionary == ThreadSafeDictionary<String, BaseEpisode> {
+nonisolated extension ThreadSafeDictionary: DownloadManagerEpisodesCache where ThreadSafeDictionary == ThreadSafeDictionary<String, BaseEpisode> {
 }
 
-protocol DownloadManagerStreamAndDownloadCache {
+nonisolated protocol DownloadManagerStreamAndDownloadCache {
     subscript(index: String) -> AVAssetResourceLoaderDelegate? { get set }
 
     func contains(where predicate: ((key: String, value: AVAssetResourceLoaderDelegate)) throws -> Bool) rethrows -> Bool
 }
 
-extension Dictionary: DownloadManagerStreamAndDownloadCache where Self == Dictionary<String, AVAssetResourceLoaderDelegate> {
+nonisolated extension Dictionary: DownloadManagerStreamAndDownloadCache where Self == Dictionary<String, AVAssetResourceLoaderDelegate> {
 }
 
-extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where ThreadSafeDictionary == ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate> {
+nonisolated extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where ThreadSafeDictionary == ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate> {
 }
 
 // @unchecked Sendable: `DownloadManager.shared` is a process-wide singleton already shared across
@@ -35,7 +35,7 @@ extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where Thre
 // synchronization of its mutable caches (which use `ThreadSafeDictionary` when the
 // `downloadsThreadSafeCache` flag is enabled). Revisit when isolation is formalized in
 // modernization Phase 2.
-final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
+nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
     static let shared: DownloadManager = {
         let manager = DownloadManager(dataManager: DataManager.sharedManager)
@@ -116,53 +116,37 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
     @MainActor
     private lazy var episodeArtwork = EpisodeArtwork()
 
-    /// Eagerly initializes all URLSessions to avoid race conditions.
-    /// Swift lazy properties are not thread-safe: if multiple threads access an
-    /// uninitialized lazy var concurrently, the initializer can run more than once.
-    /// Calling this from `init()` guarantees single-threaded first access.
+    // Assigned once from init (the lazy-var pattern conflicted with the class's
+    // explicit nonisolated under default-MainActor; init assignment also keeps
+    // first access single-threaded)
+    private(set) var wifiOnlyBackgroundSession: URLSession!
+    private(set) var cellularBackgroundSession: URLSession!
+    private(set) var cellularForegroundSession: URLSession!
+
     private func setupSessions() {
-        _ = wifiOnlyBackgroundSession
-        _ = cellularBackgroundSession
-        _ = cellularForegroundSession
+        var wifiConfig = makeBaseConfiguration("au.com.shiftyjelly.PCBackgroundSession")
+        if FeatureFlag.useCellularNetworkApis.enabled {
+            wifiConfig.allowsCellularAccess = false
+        } else {
+            wifiConfig.allowsExpensiveNetworkAccess = false
+        }
+        addStandardConfig(to: &wifiConfig)
+        wifiOnlyBackgroundSession = URLSession(configuration: wifiConfig, delegate: self, delegateQueue: nil)
+
+        var cellConfig = makeBaseConfiguration(DownloadManager.cellBackgroundSessionId)
+        if FeatureFlag.useCellularNetworkApis.enabled {
+            cellConfig.allowsCellularAccess = true
+        } else {
+            cellConfig.allowsExpensiveNetworkAccess = true
+        }
+        addStandardConfig(to: &cellConfig)
+        cellularBackgroundSession = URLSession(configuration: cellConfig, delegate: self, delegateQueue: nil)
+
+        var foregroundConfig = makeBaseConfiguration(nil)
+        foregroundConfig.allowsCellularAccess = true
+        addStandardConfig(to: &foregroundConfig)
+        cellularForegroundSession = URLSession(configuration: foregroundConfig, delegate: self, delegateQueue: nil)
     }
-
-    lazy var wifiOnlyBackgroundSession: URLSession = {
-        var config = makeBaseConfiguration("au.com.shiftyjelly.PCBackgroundSession")
-        if FeatureFlag.useCellularNetworkApis.enabled {
-            config.allowsCellularAccess = false
-        } else {
-            config.allowsExpensiveNetworkAccess = false
-        }
-        addStandardConfig(to: &config)
-
-        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
-        return session
-    }()
-
-    lazy var cellularBackgroundSession: URLSession = {
-        var config = makeBaseConfiguration(DownloadManager.cellBackgroundSessionId)
-        if FeatureFlag.useCellularNetworkApis.enabled {
-            config.allowsCellularAccess = true
-        } else {
-            config.allowsExpensiveNetworkAccess = true
-        }
-        addStandardConfig(to: &config)
-
-        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
-
-        return session
-    }()
-
-    lazy var cellularForegroundSession: URLSession = {
-        var config = makeBaseConfiguration(nil)
-
-        config.allowsCellularAccess = true
-        addStandardConfig(to: &config)
-
-        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
-
-        return session
-    }()
 
     private func addStandardConfig(to config: inout URLSessionConfiguration) {
         config.httpMaximumConnectionsPerHost = Constants.Limits.maxDownloadConnectionsPerHost
@@ -173,12 +157,12 @@ final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
         config.httpCookieAcceptPolicy = .never
     }
 
-    lazy var podcastsDirectory: String = {
+    let podcastsDirectory: String = {
         let directory = (NSHomeDirectory() as NSString).appendingPathComponent("Documents/podcasts_non_backed_up")
         return directory
     }()
 
-    private lazy var streamingBufferDirectory: String = {
+    private let streamingBufferDirectory: String = {
         let directory = (NSHomeDirectory() as NSString).appendingPathComponent("Documents/podcasts_buffered")
         return directory
     }()

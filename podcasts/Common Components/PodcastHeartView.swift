@@ -36,7 +36,7 @@ class PodcastHeartView: UIView {
         NotificationCenter.default.addObserver(self, selector: #selector(handleThemeDidChange), name: Constants.Notifications.themeChanged, object: nil)
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             setupViews()

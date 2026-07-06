@@ -7,7 +7,7 @@ enum MediaFileHandleError: Error, Equatable {
 }
 
 /// File handle for local file operations.
-final class MediaFileHandle {
+nonisolated final class MediaFileHandle {
     private let filePath: String
     private lazy var readHandle = FileHandle(forReadingAtPath: filePath)
     private lazy var writeHandle = FileHandle(forWritingAtPath: filePath)
@@ -34,7 +34,7 @@ final class MediaFileHandle {
 
 // MARK: Internal methods
 
-extension MediaFileHandle {
+nonisolated extension MediaFileHandle {
 
     func fileSize() throws -> Int {
         do {

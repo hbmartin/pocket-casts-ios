@@ -1,6 +1,6 @@
 import Foundation
 
-class NoSearchResultsPlaceholder: ListItem {
+nonisolated class NoSearchResultsPlaceholder: ListItem {
     override var differenceIdentifier: String {
         "noSaarchResults"
     }

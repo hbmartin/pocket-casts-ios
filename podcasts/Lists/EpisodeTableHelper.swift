@@ -2,7 +2,7 @@ import DifferenceKit
 import Foundation
 import PocketCastsDataModel
 
-struct EpisodeTableHelper {
+nonisolated struct EpisodeTableHelper {
     static func loadEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]?) -> [ListEpisode] {
         let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: arguments)
         return loadedEpisodes.map { ListEpisode(episode: $0, tintColor: tintColor) }

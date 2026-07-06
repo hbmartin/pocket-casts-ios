@@ -1,6 +1,6 @@
 import PocketCastsDataModel
 
-extension URLSession {
+nonisolated extension URLSession {
     func existingTask(for episode: BaseEpisode) async -> URLSessionTask? {
         guard let downloadTaskId = episode.downloadTaskId else {
             return nil

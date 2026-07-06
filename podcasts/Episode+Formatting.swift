@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-extension Episode {
+nonisolated extension Episode {
     func shortLastPlaybackInteractionDate() -> String {
         shortDateFor(date: lastPlaybackInteractionDate)
     }

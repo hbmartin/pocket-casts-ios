@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-extension LibraryType: AnalyticsDescribable {
+nonisolated extension LibraryType: AnalyticsDescribable {
     enum Old: Int {
         case fourByFour = 1, threeByThree = 2, list = 3
     }
@@ -49,7 +49,7 @@ extension LibraryType: AnalyticsDescribable {
     }
 }
 
-extension BadgeType: AnalyticsDescribable {
+nonisolated extension BadgeType: AnalyticsDescribable {
     var description: String {
         switch self {
         case .off:
@@ -77,7 +77,7 @@ enum PodcastFinishedAction: Int {
     case doNothing = 0, delete
 }
 
-enum PodcastThumbnailSize {
+nonisolated enum PodcastThumbnailSize {
     case list, grid, page, detail
 }
 
@@ -85,7 +85,7 @@ enum PodcastLicensing: Int32 {
     case keepEpisodesAfterExpiry = 0, deleteEpisodesAfterExpiry = 1
 }
 
-extension PodcastEpisodeSortOrder: AnalyticsDescribable {
+nonisolated extension PodcastEpisodeSortOrder: AnalyticsDescribable {
     var description: String {
         switch self {
         case .titleAtoZ:
@@ -131,7 +131,7 @@ extension LibrarySort.Old: AnalyticsDescribable {
     }
 }
 
-extension LibrarySort: AnalyticsDescribable {
+nonisolated extension LibrarySort: AnalyticsDescribable {
     enum Old: Int {
         case dateAddedNewestToOldest = 1, titleAtoZ = 2, episodeDateNewestToOldest = 5, custom = 6, recentlyPlayed = 7
     }
@@ -204,7 +204,7 @@ extension LibrarySort: AnalyticsDescribable {
     }
 }
 
-extension AppBadge: AnalyticsDescribable {
+nonisolated extension AppBadge: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .off:
@@ -219,7 +219,7 @@ extension AppBadge: AnalyticsDescribable {
     }
 }
 
-extension PrimaryRowAction: AnalyticsDescribable {
+nonisolated extension PrimaryRowAction: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .stream:
@@ -230,7 +230,7 @@ extension PrimaryRowAction: AnalyticsDescribable {
     }
 }
 
-extension PrimaryUpNextSwipeAction: AnalyticsDescribable {
+nonisolated extension PrimaryUpNextSwipeAction: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .playNext:
@@ -252,7 +252,7 @@ enum PlaylistIcon: Int32 {
          redTop, blueTop, greenTop, purpleTop, yellowTop
 }
 
-extension PlayerAction: AnalyticsDescribable {
+nonisolated extension PlayerAction: AnalyticsDescribable {
 
     /// Specify default actions and their order
     static var defaultActions: [PlayerAction] {
@@ -629,7 +629,7 @@ enum MultiSelectAction: Int32, CaseIterable, AnalyticsDescribable {
     }
 }
 
-extension BookmarksSort {
+nonisolated extension BookmarksSort {
     func option(lastOption: BookmarkSortOption) -> BookmarkSortOption {
         switch self {
         case .newestToOldest:

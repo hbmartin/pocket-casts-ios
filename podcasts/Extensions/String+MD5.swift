@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-extension String {
+nonisolated extension String {
     var sha256Hash: String {
         let hash = SHA256.hash(data: Data(utf8))
             .map { String(format: "%02x", $0) }

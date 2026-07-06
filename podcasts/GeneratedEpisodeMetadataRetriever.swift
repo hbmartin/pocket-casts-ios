@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-public struct GeneratedMetadataEnvelope: Decodable, Sendable {
+nonisolated public struct GeneratedMetadataEnvelope: Decodable, Sendable {
     let summary: String?
     let chapters: [GeneratedChapter]?
 }

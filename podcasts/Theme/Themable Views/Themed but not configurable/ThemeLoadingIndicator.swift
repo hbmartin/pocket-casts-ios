@@ -1,7 +1,7 @@
 import UIKit
 
 class ThemeLoadingIndicator: UIActivityIndicatorView {
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {

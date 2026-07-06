@@ -1,6 +1,6 @@
 import UIKit
 
-class TimeSliderLayer: CALayer {
+nonisolated class TimeSliderLayer: CALayer {
 
     @NSManaged private var progressAnimationRect: CGRect
     @NSManaged var animationColor: CGColor

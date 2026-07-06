@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-public struct PodcastIndexEnvelope: Decodable, Sendable {
+nonisolated public struct PodcastIndexEnvelope: Decodable, Sendable {
     let chapters: [PodcastIndexChapter]
 }
 

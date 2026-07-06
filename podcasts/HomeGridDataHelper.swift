@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-class HomeGridDataHelper {
+nonisolated class HomeGridDataHelper {
     var numberOfPodcasts: Int {
         DataManager.sharedManager.allPodcasts(includeUnsubscribed: false).count
     }

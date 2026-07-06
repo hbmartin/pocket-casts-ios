@@ -1,7 +1,7 @@
 import UIKit
 import CoreMedia
 
-class Chapters: Equatable {
+nonisolated class Chapters: Equatable {
     private var chapters = [ChapterInfo]()
 
     var visibleChapter: ChapterInfo? {
@@ -51,7 +51,7 @@ class Chapters: Equatable {
     }
 }
 
-private extension Chapters {
+nonisolated private extension Chapters {
 
     func chaptersOverlap(_ chapters: [ChapterInfo]) -> Bool {
         let ranges = chapters.compactMap { $0.duration > 0 ? $0.startTime.seconds ... ($0.startTime.seconds + $0.duration) : nil }

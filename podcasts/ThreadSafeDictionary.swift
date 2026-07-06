@@ -1,6 +1,6 @@
 import Foundation
 
-final class ThreadSafeDictionary<Key: Hashable, Value>: @unchecked Sendable {
+nonisolated final class ThreadSafeDictionary<Key: Hashable, Value>: @unchecked Sendable {
 
     private let tableLock = NSLock()
     private var table: [Key: Value] = [:]

@@ -37,7 +37,7 @@ class ThemeableButton: UIView {
 
     private var lastCGRectRendered = CGRect.zero
 
-    override func prepareForInterfaceBuilder() {
+    override nonisolated func prepareForInterfaceBuilder() {
         super.prepareForInterfaceBuilder()
         MainActor.assumeIsolated {
             setup()
@@ -46,7 +46,7 @@ class ThemeableButton: UIView {
 
     // MARK: - View Methods
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {

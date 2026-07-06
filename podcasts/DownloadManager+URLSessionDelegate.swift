@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
+nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDelegate {
     // things smaller than 10kbs are not episodes, way too small and something has gone wrong
     static let badEpisodeSize = 10 * 1024
 

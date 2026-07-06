@@ -1,6 +1,6 @@
 import Foundation
 
-extension UserDefaults {
+nonisolated extension UserDefaults {
     @objc dynamic var debugOptedOut: Bool {
         get {
             bool(forKey: Constants.UserDefaults.supportRemoveDebugInfo)

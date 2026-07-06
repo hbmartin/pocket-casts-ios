@@ -22,7 +22,7 @@ enum PlaybackControlAction: String, AppEnum, CaseIterable {
 
 /// Kinds for the playback `ControlWidget`s, shared between the widget extension
 /// (which declares the controls) and the app (which reloads them).
-enum PlaybackControlKind {
+nonisolated enum PlaybackControlKind {
     static let playPause = "au.com.shiftyjelly.pocketcasts.control.playPause"
     static let skipBack = "au.com.shiftyjelly.pocketcasts.control.skipBack"
     static let skipForward = "au.com.shiftyjelly.pocketcasts.control.skipForward"

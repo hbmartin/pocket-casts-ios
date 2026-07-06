@@ -5,7 +5,7 @@ import PocketCastsServer
 
 /// Reponsible for handling the Autoplay of episodes
 /// State is a thread-safe UserDefaults reference plus constants.
-final class AutoplayHelper: @unchecked Sendable {
+nonisolated final class AutoplayHelper: @unchecked Sendable {
     enum Playlist: Codable, AnalyticsDescribable, Equatable {
         case podcast(uuid: String)
         case filter(uuid: String)
@@ -129,7 +129,7 @@ final class AutoplayHelper: @unchecked Sendable {
     }
 }
 
-extension AutoPlaySource {
+nonisolated extension AutoPlaySource {
     init(playlist: AutoplayHelper.Playlist) {
         switch playlist {
         case .podcast(uuid: let uuid):

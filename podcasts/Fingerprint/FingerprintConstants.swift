@@ -1,6 +1,6 @@
 import Foundation
 
-enum FingerprintConstants {
+nonisolated enum FingerprintConstants {
     /// If consecutive playback-progress notifications differ by more than this,
     /// treat it as a seek/skip and restart fingerprint generation at the new position
     /// so coverage stays close to what the listener is hearing.

@@ -9,7 +9,7 @@ import WidgetKit
 /// handler logic can be unit-tested with a fake. The live implementation drives
 /// `PlaybackManager`/`DataManager`, matching the behaviour previously provided
 /// by `SiriShortcutsManager`.
-protocol PlaybackFacade: Sendable {
+nonisolated protocol PlaybackFacade: Sendable {
     func isPlaying() -> Bool
     func hasCurrentEpisode() -> Bool
     func upNextCount() -> Int
@@ -33,7 +33,7 @@ protocol PlaybackFacade: Sendable {
 /// Single implementation path for playback actions triggered by App Intents,
 /// WidgetKit controls and App Shortcuts. Runs in the app process where
 /// `PlaybackManager` is available.
-struct PlaybackIntentActionHandler {
+nonisolated struct PlaybackIntentActionHandler {
     static let shared = PlaybackIntentActionHandler()
 
     private let facade: PlaybackFacade
@@ -146,7 +146,7 @@ extension PlaybackControlIntent {
 
 /// Live facade backed by `PlaybackManager`/`DataManager`. The implementations
 /// mirror the behaviour previously exposed through `SiriShortcutsManager`.
-struct LivePlaybackFacade: PlaybackFacade {
+nonisolated struct LivePlaybackFacade: PlaybackFacade {
     func isPlaying() -> Bool { PlaybackManager.onMainSync { $0.playing() } }
 
     func hasCurrentEpisode() -> Bool { PlaybackManager.onMainSync { $0.currentEpisode() != nil } }

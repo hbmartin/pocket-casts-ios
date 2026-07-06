@@ -2,7 +2,7 @@ import AVFoundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-class PlaybackItem: NSObject {
+nonisolated class PlaybackItem: NSObject {
     var episode: BaseEpisode
 
     init(episode: BaseEpisode) {

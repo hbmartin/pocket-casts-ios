@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsUtils
 
-struct ReferenceFingerprint: Decodable {
+nonisolated struct ReferenceFingerprint: Decodable {
     static let supportedFormat = "fingerprint-compact-v2"
 
     let format: String

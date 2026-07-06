@@ -13,7 +13,7 @@ import PocketCastsUtils
 /// a content sample hash of the audio file matches. Anything less and the
 /// cache is ignored — partial-cache short-circuits are how the prior
 /// POC-546 attempt trapped the timing manager in `.preparing`.
-enum FingerprintMappingCache {
+nonisolated enum FingerprintMappingCache {
 
     struct LoadResult {
         let entries: [FingerprintTimingManager.TimeMappingEntry]

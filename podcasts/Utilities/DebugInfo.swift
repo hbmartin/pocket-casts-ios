@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-struct DebugInfo {
+nonisolated struct DebugInfo {
     private static func formattedFreeDiskSpace() -> String {
         guard let documentURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
               let values = try? documentURL.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]),

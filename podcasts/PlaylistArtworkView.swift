@@ -2,7 +2,7 @@ import SwiftUI
 import Kingfisher
 
 struct PlaylistArtworkView: View {
-    struct ImageItem: Equatable {
+    nonisolated struct ImageItem: Equatable {
         let id: String
         let url: URL
     }
@@ -67,7 +67,7 @@ struct PlaylistArtworkView: View {
     }
 }
 
-enum PlaylistArtworkHelper {
+nonisolated enum PlaylistArtworkHelper {
     static func distinctPodcasts<T>(
         from episodes: [T],
         limit: Int,

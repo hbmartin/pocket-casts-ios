@@ -29,7 +29,7 @@ class ConfettiView: UIView {
         var spinRange: CGFloat = .pi * 8
     }
 
-    public struct Particle {
+    nonisolated public struct Particle {
         let image: UIImage
         let tintColor: UIColor?
         init(image: UIImage, tintColor: UIColor? = nil) {
@@ -107,7 +107,7 @@ class ConfettiView: UIView {
     }
 
     // MARK: - Private: ParticleEmitterLayer
-    private class ParticleEmitterLayer: CAEmitterLayer {
+    nonisolated private class ParticleEmitterLayer: CAEmitterLayer {
         init(with particles: [Particle], config: EmitterConfig) {
             super.init()
 
@@ -133,7 +133,7 @@ class ConfettiView: UIView {
             fatalError("init(coder:) has not been implemented")
         }
 
-        private class ParticleCell: CAEmitterCell {
+        nonisolated private class ParticleCell: CAEmitterCell {
             init(with particle: Particle, config: EmitterConfig) {
                 super.init()
 

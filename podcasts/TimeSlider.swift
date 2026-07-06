@@ -75,7 +75,7 @@ class TimeSlider: UIView {
 
     // MARK: - View Methods
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
         MainActor.assumeIsolated {
             let tLayer = timeLayer()
@@ -101,7 +101,7 @@ class TimeSlider: UIView {
         recalculatePositionRects(false)
     }
 
-    override func prepareForInterfaceBuilder() {
+    override nonisolated func prepareForInterfaceBuilder() {
         // prepareForInterfaceBuilder is nonisolated in its ObjC declaration but runs on the main thread
         MainActor.assumeIsolated {
             draggingKnob = true

@@ -1,6 +1,6 @@
 import PocketCastsDataModel
 
-extension EpisodeFilter {
+nonisolated extension EpisodeFilter {
 
     /// Determines if this playlist could be affected by the given change type.
     /// For manual playlists, bulk changes and archiving matter

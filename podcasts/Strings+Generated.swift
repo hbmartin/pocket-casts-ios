@@ -9,7 +9,9 @@ import Foundation
 
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
-internal enum L10n {
+// nonisolated: pure string constants read from every isolation domain; required
+// because the app target builds with SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
+nonisolated internal enum L10n {
   /// Button that takes you to other Automattic apps, eg: our Automattic family of apps
   internal static var aboutA8cFamily: String { return L10n.tr("Localizable", "about_a8c_family", fallback: "Automattic Family") }
   /// Button that takes the user to the Acknowledgements screen
@@ -4587,9 +4589,10 @@ internal enum L10n {
 
 // MARK: - Implementation Details
 
-extension L10n {
+nonisolated extension L10n {
   private static func tr(_ table: String, _ key: String, _ args: CVarArg..., fallback value: String) -> String {
     let format = localizedFormat(key, table, value)
     return String(format: format, locale: Locale.current, arguments: args)
   }
 }
+

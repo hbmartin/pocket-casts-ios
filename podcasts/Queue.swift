@@ -1,4 +1,4 @@
-public struct Queue<T> {
+nonisolated public struct Queue<T> {
     private var array = [T]()
 
     public var isEmpty: Bool {

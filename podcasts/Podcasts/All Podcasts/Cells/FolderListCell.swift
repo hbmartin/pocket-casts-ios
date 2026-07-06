@@ -28,7 +28,7 @@ class FolderListCell: ThemeableCollectionCell {
 
     private var badgeType: BadgeType = .off
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }

@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-struct HomeGridItem: Identifiable {
+nonisolated struct HomeGridItem: Identifiable {
     let podcast: Podcast?
     let folder: Folder?
 

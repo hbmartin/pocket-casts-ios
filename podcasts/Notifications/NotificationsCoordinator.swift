@@ -3,7 +3,7 @@ import PocketCastsUtils
 import PocketCastsServer
 import PocketCastsDataModel
 
-enum NotificationType: String {
+nonisolated enum NotificationType: String {
 
     case onboardingSignUp
     case onboardingImport
@@ -136,7 +136,7 @@ enum NotificationType: String {
     }
 }
 
-enum NotificationsGroup: CaseIterable {
+nonisolated enum NotificationsGroup: CaseIterable {
 
     case newEpisodes
     case dailyReminders
@@ -302,7 +302,7 @@ enum NotificationsGroup: CaseIterable {
 
 /// State is an immutable (thread-safe) UNUserNotificationCenter plus a debug toggle
 /// only flipped from the developer menu.
-final class NotificationsCoordinator: @unchecked Sendable {
+nonisolated final class NotificationsCoordinator: @unchecked Sendable {
 
     static let shared = NotificationsCoordinator()
 
@@ -421,9 +421,7 @@ final class NotificationsCoordinator: @unchecked Sendable {
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [type.identifier])
     }
 
-    private lazy var episodesDataManager: EpisodesDataManager = {
-        return EpisodesDataManager()
-    }()
+    private let episodesDataManager = EpisodesDataManager()
 
     func numberOfDownloadsAvailable() -> Int {
         episodesDataManager.downloadedEpisodes().reduce(0) { partialResult, list in

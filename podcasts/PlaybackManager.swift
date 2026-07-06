@@ -16,7 +16,7 @@ final class PlaybackManager {
     /// Lock-guarded mirror of state the audio engines read synchronously from
     /// non-main contexts (Phase 5 D1: real-time-adjacent code can't await).
     /// PlaybackManager updates it on the main actor whenever effects change.
-    final class EngineStateMirror: Sendable {
+    nonisolated final class EngineStateMirror: Sendable {
         private let lock = NSLock()
         // nonisolated(unsafe): only ever accessed through the lock below
         nonisolated(unsafe) private var _effects = PlaybackEffects()

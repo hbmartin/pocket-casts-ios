@@ -6,7 +6,7 @@ import UIKit
 
 /// AVAudioEngine effects pipeline driven by PlaybackManager; state is guarded
 /// by playerLock and the serial seek queue.
-final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
+nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private static let targetVolumeDbGain = 15.0 as Float
 
     private var engine: AVAudioEngine?
@@ -43,7 +43,7 @@ final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private var lastSeekTime = 0 as TimeInterval
 
     // this lock is to avoid race conditions where you're destroying the player while in the middle of setting it up (since the play method does its work asynchronously)
-    private lazy var playerLock = NSLock()
+    private let playerLock = NSLock()
 
     private let serialSeekQueue = DispatchQueue(label: "effectsplayer.serial.queue")
 

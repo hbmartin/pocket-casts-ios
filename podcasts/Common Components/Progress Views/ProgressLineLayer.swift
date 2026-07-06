@@ -1,7 +1,7 @@
 
 import UIKit
 
-class ProgressLineLayer: CALayer {
+nonisolated class ProgressLineLayer: CALayer {
     @NSManaged var progressRect: CGRect
     @NSManaged var bufferRect: CGRect
     @NSManaged var bgRect: CGRect

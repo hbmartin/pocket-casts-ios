@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-extension AudioVideoFilter: AnalyticsDescribable {
+nonisolated extension AudioVideoFilter: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .all:
@@ -15,7 +15,7 @@ extension AudioVideoFilter: AnalyticsDescribable {
     }
 }
 
-extension PlaylistSort: AnalyticsDescribable {
+nonisolated extension PlaylistSort: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .newestToOldest:
@@ -32,7 +32,7 @@ extension PlaylistSort: AnalyticsDescribable {
     }
 }
 
-extension AutoAddToUpNextSetting: AnalyticsDescribable {
+nonisolated extension AutoAddToUpNextSetting: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .off:
@@ -45,7 +45,7 @@ extension AutoAddToUpNextSetting: AnalyticsDescribable {
     }
 }
 
-extension AutoArchiveAfterTime: AnalyticsDescribable {
+nonisolated extension AutoArchiveAfterTime: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .never:
@@ -68,7 +68,7 @@ extension AutoArchiveAfterTime: AnalyticsDescribable {
     }
 }
 
-extension PodcastGrouping: AnalyticsDescribable {
+nonisolated extension PodcastGrouping: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .none:
@@ -85,7 +85,7 @@ extension PodcastGrouping: AnalyticsDescribable {
     }
 }
 
-extension AutoAddLimitReachedAction: AnalyticsDescribable {
+nonisolated extension AutoAddLimitReachedAction: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .stopAdding:
@@ -96,7 +96,7 @@ extension AutoAddLimitReachedAction: AnalyticsDescribable {
     }
 }
 
-extension PodcastInfo: AnalyticsDescribable {
+nonisolated extension PodcastInfo: AnalyticsDescribable {
     var analyticsDescription: String {
         if let uuid {
             return uuid

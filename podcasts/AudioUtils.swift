@@ -3,7 +3,7 @@ import Foundation
 import Accelerate
 import PocketCastsUtils
 
-class AudioUtils {
+nonisolated class AudioUtils {
     private static let bufferLength = UInt32(Constants.Audio.defaultFrameSize)
     private static let bufferByteSize = Float32(MemoryLayout<Float32>.size)
 

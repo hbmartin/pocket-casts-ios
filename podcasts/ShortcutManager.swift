@@ -47,7 +47,7 @@ class ShortcutManager: CustomObserver {
         }
     }
 
-    private static func updateShortcuts() {
+    nonisolated private static func updateShortcuts() {
         var shortcutItems = [UIMutableApplicationShortcutItem]()
 
         // top playlist

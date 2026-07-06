@@ -11,6 +11,8 @@ protocol PCSearchBarDelegate: AnyObject {
 }
 
 class PCSearchBarController: UIViewController {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     @IBOutlet var roundedBackgroundView: UIView!
     @IBOutlet var searchTextField: UITextField! {
         didSet {

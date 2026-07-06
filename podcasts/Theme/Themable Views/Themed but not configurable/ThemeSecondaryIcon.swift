@@ -4,7 +4,7 @@ import UIKit
 class ThemeSecondaryIcon: UIImageView {
     var originalImage: UIImage?
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             originalImage = image

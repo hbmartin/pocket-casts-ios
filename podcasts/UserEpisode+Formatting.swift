@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-extension UserEpisode {
+nonisolated extension UserEpisode {
     // MARK: - Helpers
 
     func displayableInfo(includeSize: Bool = true) -> String {

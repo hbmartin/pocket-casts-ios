@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
-class ShowNotesUpdater {
+nonisolated class ShowNotesUpdater {
     class func updateShowNotesInBackground(podcastUuid: String, episodeUuid: String) {
         Task {
             // Load the show notes and any available chapters

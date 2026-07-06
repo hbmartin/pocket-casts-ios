@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-extension UIColor {
+nonisolated extension UIColor {
     var color: Color {
         Color(self)
     }

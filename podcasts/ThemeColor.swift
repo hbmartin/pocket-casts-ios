@@ -3,7 +3,7 @@ import PocketCastsServer
 import UIKit
 
 // ************ WARNING AUTO GENERATED, DO NOT EDIT ************
-struct ThemeColor {
+nonisolated struct ThemeColor {
     private static let primaryUi01Light = UIColor(hex: "#FFFFFF")
     private static let primaryUi01Dark = UIColor(hex: "#292B2E")
     private static let primaryUi01ExtraDark = UIColor(hex: "#222427")

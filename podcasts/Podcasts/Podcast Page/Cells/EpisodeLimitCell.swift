@@ -9,7 +9,7 @@ class EpisodeLimitCell: ThemeableCell {
         }
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             style = .primaryUi04

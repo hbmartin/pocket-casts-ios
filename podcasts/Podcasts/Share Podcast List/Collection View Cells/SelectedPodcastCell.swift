@@ -4,7 +4,7 @@ import UIKit
 class SelectedPodcastCell: UICollectionViewCell {
     @IBOutlet var podcastImage: UIImageView!
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {

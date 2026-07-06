@@ -8,6 +8,8 @@ import Foundation
 ///         ...
 ///     }
 class MultiSelectListViewModel<Model: Hashable>: ListViewModel<Model> {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     /// Whether the list is currently in the multi selection mode
     @Published private(set) var isMultiSelecting = false
 

@@ -1,7 +1,7 @@
 import PocketCastsDataModel
 import PocketCastsUtils
 
-extension DataManager {
+nonisolated extension DataManager {
     func importPodcastSettings() {
         let podcasts = allPodcasts(includeUnsubscribed: true)
 

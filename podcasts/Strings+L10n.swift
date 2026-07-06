@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsUtils
 
-extension L10n {
+nonisolated extension L10n {
     // MARK: Proper Nouns
 
     /// These strings are proper nouns and shouldn't be localized
@@ -139,7 +139,7 @@ extension L10n {
     }
 }
 
-extension L10n {
+nonisolated extension L10n {
     static func localizedFormat(_ key: String, _ table: String?, _ value: String? = nil) -> String {
         let format = BundleToken.bundle.localizedString(forKey: key, value: value, table: table)
 
@@ -153,7 +153,7 @@ extension L10n {
 }
 
 // swiftlint:disable convenience_type
-private final class BundleToken {
+nonisolated private final class BundleToken {
     static let bundle: Bundle = {
         #if SWIFT_PACKAGE
             return Bundle.module

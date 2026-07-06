@@ -6,6 +6,8 @@ import SwiftUI
 
 @MainActor
 class FolderModel: ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     @Published var folderUuid: String?
     @Published var selectedPodcastUuids: [String] = [] {
         didSet {

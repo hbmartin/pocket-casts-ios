@@ -120,6 +120,6 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
 
 private func makeEpisodeMock() -> Episode {
     var episode = Episode()
-    episode.downloadUrl = "https://pocketcasts.com/"
+    episode.downloadUrl = "https://example.com/episode.mp3"
     return episode
 }

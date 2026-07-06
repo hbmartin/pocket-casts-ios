@@ -242,6 +242,23 @@ With this, every phase of the roadmap (0–5) is complete: strict concurrency `c
 all first-party targets and packages on Swift 6 language mode, an empty warning baseline enforced by
 the deletion-only ratchet, GRDB-unconditional data layer, and value-semantic Sendable model records.
 
+## Swift 6.2 default isolation (adopted 2026-07-05)
+
+The app target now builds with `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and
+`SWIFT_APPROACHABLE_CONCURRENCY = YES` (all four configurations; extension targets excluded — they
+run off-main). Unannotated app-target declarations are `@MainActor` by default; the utility, model,
+playback-engine, and I/O layers (~80 files) carry explicit `nonisolated`. Generated code cooperates
+via a custom SwiftGen stencil (`swiftgen-templates/strings-nonisolated.stencil`), checked-in intent
+classes (`podcasts/Intents Generated/`, codegen disabled), and `scripts/themes/generate_themes.rb`.
+
+The sharpest adoption gotcha: default isolation makes even *synthesized* deinits `isolated` (they
+hop through `swift_task_deinitOnExecutor`), which crashes synchronous XCTest methods that deallocate
+a MainActor object (swiftlang/swift#87316) — classes exercised by unit tests carry an explicit
+`nonisolated deinit {}` as the workaround. Other rules that recur: class-level `nonisolated` does
+not cover extensions (each extension needs its own), `nonisolated` cannot apply to `lazy var`, and
+an unannotated protocol becomes `@MainActor` and drags witnesses in `nonisolated` classes onto the
+main actor (fix at the protocol).
+
 ## Sizing & dependency summary
 
 | Phase | Risk | Rough size | Unblocks |

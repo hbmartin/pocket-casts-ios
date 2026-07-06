@@ -4,7 +4,7 @@ import UIKit
 import SwiftUI
 import PocketCastsUtils
 
-class Settings: NSObject {
+nonisolated class Settings: NSObject {
 
     // nonisolated(unsafe): developer-menu debug knob; written only from the debug UI
     nonisolated(unsafe) static var debugPlaylistsLimit = Constants.Limits.maxFilterItems
@@ -1553,7 +1553,7 @@ class Settings: NSObject {
         }
 }
 
-extension Settings {
+nonisolated extension Settings {
     static func trackValueChanged(_ event: AnalyticsEvent, value: Any) {
         let promoted: any Sendable = switch value {
         case let v as String: v
@@ -1583,7 +1583,7 @@ extension L10n {
 }
 #endif
 
-extension HeadphoneControl {
+nonisolated extension HeadphoneControl {
     init(action: HeadphoneControlAction) {
         switch action {
         case .addBookmark:
@@ -1615,7 +1615,7 @@ extension HeadphoneControl {
     }
 }
 
-extension UserDefaults {
+nonisolated extension UserDefaults {
     var playerActions: [PlayerAction]? {
         guard let savedInts = UserDefaults.standard.object(forKey: Settings.playerActionsKey) as? [Int] else {
             return nil

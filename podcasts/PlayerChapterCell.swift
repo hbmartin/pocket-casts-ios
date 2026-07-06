@@ -50,7 +50,7 @@ class PlayerChapterCell: UITableViewCell {
 
     private var isChapterToggleEnabled: Bool = false
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {

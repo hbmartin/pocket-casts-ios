@@ -5,7 +5,7 @@ import Combine
 
 /// One export flow at a time, owned by a single presenting controller;
 /// the async export crosses executors by design.
-final class DatabaseExport: @unchecked Sendable {
+nonisolated final class DatabaseExport: @unchecked Sendable {
     /// The resulting file name of the zip file
     let exportName: String
 

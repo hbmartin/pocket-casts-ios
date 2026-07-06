@@ -1,6 +1,6 @@
 import Foundation
 
-extension String {
+nonisolated extension String {
 
     var sentenceCased: String {
         var components = self.localizedLowercase.components(separatedBy: " ")

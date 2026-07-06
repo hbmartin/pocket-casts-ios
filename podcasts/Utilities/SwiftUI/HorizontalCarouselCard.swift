@@ -51,7 +51,7 @@ struct HorizontalCarouselCard: View {
     }
 }
 
-fileprivate enum MockItem: String, CaseIterable, Identifiable, HorizontalCarouselItemRepresentable {
+fileprivate enum MockItem: String, CaseIterable, Identifiable, @MainActor HorizontalCarouselItemRepresentable {
     case test
 
     var backgroundColor: Color {

@@ -2,7 +2,7 @@ import PocketCastsDataModel
 import SwiftUI
 import PocketCastsUtils
 
-extension UTType {
+nonisolated extension UTType {
     static let pcasts = UTType(filenameExtension: "pcasts", conformingTo: .package)!
 }
 
@@ -83,7 +83,7 @@ struct PCBundleDoc: FileDocument {
     }
 }
 
-extension FileManager {
+nonisolated extension FileManager {
     fileprivate static var preferencesURL: URL? {
         guard
             let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first,

@@ -115,7 +115,7 @@ class SleepTimerManager {
         tonePlayer.play()
     }
 
-    struct SleepTimerSetting: JSONEncodable, JSONDecodable {
+    nonisolated struct SleepTimerSetting: JSONEncodable, JSONDecodable {
         let duration: TimeInterval?
         let sleepOnEpisodeEnd: Bool?
     }

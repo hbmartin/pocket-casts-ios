@@ -2,7 +2,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-class DownloadProgressManager {
+nonisolated class DownloadProgressManager {
     private var progressItems = [String: DownloadProgress]()
     private let progressItemsQueue: DispatchQueue
 

@@ -28,6 +28,8 @@ enum ChapterOrigin {
 
 @MainActor
 class ChapterManager {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     private var chapterParser = PodcastChapterParser()
     private var showInfoCoordinator: ShowInfoCoordinating
     private var chapters = [ChapterInfo]() {

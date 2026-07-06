@@ -3,7 +3,7 @@ import PocketCastsUtils
 
 /// Adapters are registered once at startup (or cleared on sign-out) and read by
 /// track(); events fire from any thread by design.
-class Analytics: @unchecked Sendable {
+nonisolated class Analytics: @unchecked Sendable {
     static let shared = Analytics()
     private var adapters: [AnalyticsAdapter]?
 #if !APPCLIP && !os(tvOS)
@@ -82,7 +82,7 @@ class Analytics: @unchecked Sendable {
 
 // MARK: - Analytics + Source
 
-extension Analytics {
+nonisolated extension Analytics {
     static func track(_ event: AnalyticsEvent, source: Sendable, properties: [String: Sendable]? = nil) {
         var sourceProperties = properties ?? [:]
         sourceProperties["source"] = source
@@ -93,7 +93,7 @@ extension Analytics {
 
 // MARK: - Opt out/in
 
-extension Analytics {
+nonisolated extension Analytics {
     @MainActor func optOutOfAnalytics() {
         Analytics.track(.analyticsOptOut)
         Settings.setAnalytics(optOut: true)
@@ -126,7 +126,7 @@ extension Analytics {
 // MARK: - Protocols
 
 /// Allows an object to determine how its described in the context of analytics
-protocol AnalyticsDescribable {
+nonisolated protocol AnalyticsDescribable {
     var analyticsDescription: String { get }
 }
 
@@ -137,7 +137,7 @@ protocol AnalyticsAdapter: Sendable {
 
 // MARK: - Dynamic Event Name
 
-extension AnalyticsEvent {
+nonisolated extension AnalyticsEvent {
     var eventName: String {
         return rawValue.toSnakeCaseFromCamelCase()
     }

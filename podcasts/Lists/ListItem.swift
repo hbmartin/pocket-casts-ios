@@ -1,7 +1,7 @@
 import DifferenceKit
 import Foundation
 
-class ListItem: Differentiable, Equatable {
+nonisolated class ListItem: Differentiable, Equatable {
     var differenceIdentifier: String {
         ""
     }

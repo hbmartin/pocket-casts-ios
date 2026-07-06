@@ -3,7 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
-class PlaylistManager {
+nonisolated class PlaylistManager {
     enum DefaultUUIDs {
         static let newReleases = "2797DCF8-1C93-4999-B52A-D1849736FA2C"
         static let inProgress = "D89A925C-5CE1-41A4-A879-2751838CE5CE"

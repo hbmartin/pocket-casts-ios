@@ -4,6 +4,8 @@ import PocketCastsServer
 
 @MainActor
 class InformationalBannerViewCoordinator {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     private var viewModel: InformationalBannerPresenting
 
     var onDismissBanner: (() -> Void)? = nil

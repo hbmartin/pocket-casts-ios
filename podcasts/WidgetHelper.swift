@@ -4,7 +4,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import WidgetKit
 
-final class WidgetHelper: Sendable {
+nonisolated final class WidgetHelper: Sendable {
     static let shared = WidgetHelper()
     static let appGroupId = SharedConstants.GroupUserDefaults.groupContainerId
     static let maxUpNextToPublish = 10

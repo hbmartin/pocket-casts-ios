@@ -19,6 +19,8 @@ struct HeatmapDay: Identifiable {
 
 @MainActor
 final class ListeningHeatmapViewModel: ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     @Published private(set) var weeks: [[HeatmapDay]] = []
 
     let calendar: Calendar

@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 protocol HorizontalCarouselItemRepresentable: RawRepresentable, CaseIterable, Identifiable where RawValue == String, Self.AllCases: RandomAccessCollection {
     var title: String { get }
     var text: String { get }

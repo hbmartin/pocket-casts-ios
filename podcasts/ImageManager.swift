@@ -7,7 +7,7 @@ import PocketCastsUtils
 
 /// State is Kingfisher caches (thread-safe) and a lock-guarded metrics cache,
 /// so the shared instance is safe to hand across isolation domains.
-final class ImageManager: @unchecked Sendable {
+nonisolated final class ImageManager: @unchecked Sendable {
     static let sharedManager = ImageManager()
 
     private struct ScreenMetrics: Sendable {
@@ -49,13 +49,13 @@ final class ImageManager: @unchecked Sendable {
     private var searchImageCache = ImageCache(name: "generalImageCache")
 
     // subscribed image cache, these we want to store for a longer period of time
-    lazy var subscribedPodcastsCache: ImageCache = {
+    let subscribedPodcastsCache: ImageCache = {
         let path = (NSHomeDirectory() as NSString).appendingPathComponent("Documents/artworkv3")
         let url = URL(fileURLWithPath: path)
-        subscribedPodcastsCache = try! ImageCache(name: "subscribedPodcastsCache", cacheDirectoryURL: url)
-        subscribedPodcastsCache.diskStorage.config.sizeLimit = UInt(400.megabytes)
-        subscribedPodcastsCache.diskStorage.config.expiration = .days(365) // cache artwork for a full year, so that users don't have their artwork disappeared
-        return subscribedPodcastsCache
+        let cache = try! ImageCache(name: "subscribedPodcastsCache", cacheDirectoryURL: url)
+        cache.diskStorage.config.sizeLimit = UInt(400.megabytes)
+        cache.diskStorage.config.expiration = .days(365) // cache artwork for a full year, so that users don't have their artwork disappeared
+        return cache
     }()
 
     // user episode image cache
@@ -594,13 +594,13 @@ final class ImageManager: @unchecked Sendable {
         return image
     }
 
-    @MainActor static func podcastUrl(imageSize: PodcastThumbnailSize, uuid: String) -> URL {
+    nonisolated static func podcastUrl(imageSize: PodcastThumbnailSize, uuid: String) -> URL {
         let sizeRequired = ImageManager.sizeFor(imageSize: imageSize)
         return podcastUrl(sizeRequired: sizeRequired, uuid: uuid)
     }
 
     // Pure URL builder for concurrent call sites that precompute screen-dependent sizes.
-    static func podcastUrl(sizeRequired: Int, uuid: String) -> URL {
+    nonisolated static func podcastUrl(sizeRequired: Int, uuid: String) -> URL {
         let closestSize = closestImageSize(sizeRequired: sizeRequired)
 
         return ServerHelper.imageUrl(podcastUuid: uuid, size: closestSize)

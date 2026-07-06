@@ -1,7 +1,7 @@
 import AVFoundation
 import Foundation
 
-class SynchronizedAudioStack {
+nonisolated class SynchronizedAudioStack {
     private var itemQueue = Queue<BufferedAudio>()
     private var itemQueueCount = 0
     private var samplesStored = 0 as AVAudioFrameCount

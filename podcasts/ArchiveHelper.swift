@@ -3,7 +3,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-class ArchiveHelper {
+nonisolated class ArchiveHelper {
     class func archiveTimeToText(_ time: TimeInterval) -> String {
         if time < 0 {
             return L10n.timeFormatNever.localizedCapitalized

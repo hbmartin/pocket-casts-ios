@@ -7,7 +7,7 @@ import PocketCastsDataModel
 import EndOfYear
 #endif
 
-extension EpisodeFilter {
+nonisolated extension EpisodeFilter {
     func iconImage() -> UIImage? {
         guard let icon = PlaylistIcon(rawValue: customIcon) else { return nil }
 

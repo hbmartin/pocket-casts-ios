@@ -7,6 +7,8 @@ import PocketCastsUtils
 
 @MainActor
 class PodcastHeaderViewModel: NSObject, ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
 
     @Published var podcast: Podcast
 

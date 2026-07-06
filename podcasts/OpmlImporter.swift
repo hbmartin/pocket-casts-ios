@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendable {
+nonisolated class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendable {
     private var podcastsToAdd = [String]()
     private var pollUuids = [String]()
     private var failedCount = 0
@@ -13,7 +13,7 @@ class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendable {
     private var initialPodcastCount = 0
     private var importedCount = 0
 
-    lazy var importQueue: OperationQueue = {
+    let importQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 5
 

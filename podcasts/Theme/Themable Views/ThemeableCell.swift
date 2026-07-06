@@ -15,7 +15,7 @@ class ThemeableCell: UITableViewCell, ReusableTableCell {
         }
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {

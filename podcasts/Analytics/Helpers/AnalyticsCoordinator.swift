@@ -66,7 +66,7 @@ enum AnalyticsSource: String, AnalyticsDescribable {
 }
 
 /// Events fire from any thread; the one-shot source hint is lock-guarded.
-class AnalyticsCoordinator: @unchecked Sendable {
+nonisolated class AnalyticsCoordinator: @unchecked Sendable {
     /// Sometimes the playback source can't be inferred, just inform it here
     var currentSource: AnalyticsSource? {
         get { currentSourceLock.withLock { _currentSource } }

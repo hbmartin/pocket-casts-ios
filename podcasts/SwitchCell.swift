@@ -29,7 +29,7 @@ class SwitchCell: ThemeableCell {
         }
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         // awakeFromNib is nonisolated in its ObjC declaration, but views always wake on the main thread
         MainActor.assumeIsolated {

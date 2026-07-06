@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
+nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsEpisodeHelper()
 
     // Internally track the episode UUIDs that the user is downloading or uploadiung
@@ -167,7 +167,7 @@ class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
     }
 }
 
-private extension AnalyticsEpisodeHelper {
+nonisolated private extension AnalyticsEpisodeHelper {
     func cacheDownloadSource(for episodeUUID: String) -> AnalyticsSource {
         let source = currentAnalyticsSource
         episodeDownloadSources[episodeUUID] = source
@@ -208,7 +208,7 @@ private extension AnalyticsEpisodeHelper {
     }
 }
 
-private extension AnalyticsEpisodeHelper {
+nonisolated private extension AnalyticsEpisodeHelper {
     func addNotificationObservers() {
             NotificationCenter.default.addObserver(forName: Constants.Notifications.episodeDownloaded, object: nil, queue: .main) { notification in
                 // Verify the UUID is one that we're tracking

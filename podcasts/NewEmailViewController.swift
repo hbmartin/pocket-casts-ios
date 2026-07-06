@@ -133,7 +133,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         emailField.becomeFirstResponder()
     }
 
-    deinit {
+    isolated deinit {
         NotificationCenter.default.removeObserver(self)
     }
 

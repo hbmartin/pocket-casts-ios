@@ -1,7 +1,7 @@
 import PocketCastsServer
 import UIKit
 
-class IncomingShareItem {
+nonisolated class IncomingShareItem {
     var podcastHeader: PodcastHeader?
     var episodeHeader: EpisodeHeader?
     var fromTime: String?

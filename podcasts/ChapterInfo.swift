@@ -6,7 +6,7 @@ import UIKit
 // @unchecked Sendable: instances are built single-threaded by the chapter parser and
 // then handed over wholesale to the main-actor ChapterManager; all post-hand-off
 // reads/writes (shouldPlay toggling) happen on the main actor.
-class ChapterInfo: Equatable, @unchecked Sendable {
+nonisolated class ChapterInfo: Equatable, @unchecked Sendable {
     var title = ""
     var url: String?
     var startTime = CMTime(seconds: 0, preferredTimescale: 0)

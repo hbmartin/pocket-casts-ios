@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum InformationalFeatureCardItem: String, CaseIterable, Identifiable, HorizontalCarouselItemRepresentable {
+enum InformationalFeatureCardItem: String, CaseIterable, Identifiable, @MainActor HorizontalCarouselItemRepresentable {
     case sync
     case backups
     case recommendation

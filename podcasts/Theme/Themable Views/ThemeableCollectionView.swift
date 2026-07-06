@@ -16,7 +16,7 @@ class ThemeableCollectionView: UICollectionView, AutoScrollCollectionViewDelegat
         }
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
