@@ -1,4 +1,4 @@
-extension String {
+nonisolated extension String {
     // Further explanation on character choices: https://superuser.com/a/358861
     func sanitizedFileName() -> String {
         let invalidCharacters = CharacterSet(charactersIn: "\\/:*?\"<>|")

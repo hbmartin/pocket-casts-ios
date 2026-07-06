@@ -3,7 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import DifferenceKit
 
-class EpisodesDataManager {
+nonisolated class EpisodesDataManager {
     // MARK: - Playlist episodes
 
     /// Return the list of episodes for a given playlist

@@ -3,7 +3,7 @@ import PocketCastsServer
 import UIKit
 import PocketCastsUtils
 
-extension TrimSilenceAmount: AnalyticsDescribable {
+nonisolated extension TrimSilenceAmount: AnalyticsDescribable {
     var description: String {
         switch self {
         case .off:
@@ -35,7 +35,7 @@ extension TrimSilenceAmount: AnalyticsDescribable {
     }
 }
 
-class PlaybackEffects {
+nonisolated class PlaybackEffects {
     internal static let defaultRemoveSilenceAmount = 3
 
     var playbackSpeed: Double = 1.0

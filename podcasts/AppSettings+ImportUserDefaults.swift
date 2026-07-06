@@ -2,7 +2,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import PocketCastsDataModel
 
-extension SettingsStore<AppSettings> {
+nonisolated extension SettingsStore<AppSettings> {
     /// Updates the values in AppSettings with
     /// - Parameter userDefaults: The UserDefaults to read values from
     func importUserDefaults(_ userDefaults: UserDefaults = UserDefaults.standard) {

@@ -1,6 +1,6 @@
 import Foundation
 
-extension FileManager {
+nonisolated extension FileManager {
 
     func fileSize(of url: URL) -> Int64? {
 

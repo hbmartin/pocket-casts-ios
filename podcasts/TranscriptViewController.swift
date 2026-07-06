@@ -117,7 +117,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         cancelAutoScrollBack()
     }
 
-    deinit {
+    isolated deinit {
         // Cleanup-only: cancel is thread-safe, and invalidating the main-runloop display link
         // here mirrors what stopHighlightDisplayLink() does without touching isolated state
         autoScrollBackWorkItem?.cancel()

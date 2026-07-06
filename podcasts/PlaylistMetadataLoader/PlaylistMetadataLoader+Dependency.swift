@@ -1,16 +1,16 @@
 import Dependencies
 
-enum PlaylistMetadataLoaderKey: DependencyKey {
+nonisolated enum PlaylistMetadataLoaderKey: DependencyKey {
     static let liveValue = PlaylistMetadataLoader()
 }
 
-enum PlaylistCacheInvalidationCoordinatorKey: DependencyKey {
+nonisolated enum PlaylistCacheInvalidationCoordinatorKey: DependencyKey {
     static let liveValue = PlaylistCacheInvalidationCoordinator(
         playlistMetadataLoader: PlaylistMetadataLoaderKey.liveValue
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var playlistMetadataLoader: PlaylistMetadataLoader {
         get { self[PlaylistMetadataLoaderKey.self] }
         set { self[PlaylistMetadataLoaderKey.self] = newValue }

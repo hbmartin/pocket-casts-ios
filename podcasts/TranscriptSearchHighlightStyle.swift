@@ -2,7 +2,7 @@ import UIKit
 
 /// Colors for highlighting transcript search matches, matching the interactive
 /// button styling when shown from an episode and the player palette otherwise.
-enum TranscriptSearchHighlightStyle {
+nonisolated enum TranscriptSearchHighlightStyle {
     static func attributes(showFromEpisode: Bool, isCurrent: Bool) -> [NSAttributedString.Key: Any] {
         if showFromEpisode {
             return [

@@ -106,7 +106,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         Analytics.track(.signInShown)
     }
 
-    deinit {
+    isolated deinit {
         NotificationCenter.default.removeObserver(self)
     }
 

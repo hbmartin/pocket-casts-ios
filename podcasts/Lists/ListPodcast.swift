@@ -2,7 +2,7 @@ import DifferenceKit
 import Foundation
 import PocketCastsDataModel
 
-class ListPodcast: ListItem {
+nonisolated class ListPodcast: ListItem {
     let podcast: Podcast
     let badgeType: BadgeType
 

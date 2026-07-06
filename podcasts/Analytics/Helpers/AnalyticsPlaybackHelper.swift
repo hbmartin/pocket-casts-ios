@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import Foundation
 
 /// Helper used to track playback
-class AnalyticsPlaybackHelper: AnalyticsCoordinator, @unchecked Sendable {
+nonisolated class AnalyticsPlaybackHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsPlaybackHelper()
 
     /// Whether to ignore the next seek event

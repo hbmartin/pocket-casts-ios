@@ -2,7 +2,7 @@ import AVFoundation
 import Foundation
 import PocketCastsUtils
 
-class PlayBufferManager {
+nonisolated class PlayBufferManager {
     private var playBuffer = SynchronizedAudioStack()
 
     let lowBufferPoint = 300

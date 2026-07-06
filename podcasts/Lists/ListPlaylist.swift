@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-class ListPlaylist: ListItem, Identifiable, Hashable {
+nonisolated class ListPlaylist: ListItem, Identifiable, Hashable {
     let playlist: EpisodeFilter
 
     var id: String {

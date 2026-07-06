@@ -41,7 +41,7 @@ class VideoPlayerView: UIView {
         observedLayer?.removeObserver(self, forKeyPath: "videoRect")
     }
 
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+    override nonisolated func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
         Task { @MainActor [weak self] in
             guard let self, keyPath == "videoRect", self.playerLayer.videoRect.size != CGSize.zero else { return }
 

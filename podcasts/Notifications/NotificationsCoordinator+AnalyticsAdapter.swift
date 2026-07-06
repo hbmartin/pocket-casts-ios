@@ -1,6 +1,6 @@
 import Foundation
 
-extension NotificationsCoordinator: AnalyticsAdapter {
+nonisolated extension NotificationsCoordinator: AnalyticsAdapter {
 
     @MainActor
     func track(name: String, properties: [String: Sendable]) async {
@@ -54,7 +54,7 @@ extension NotificationsCoordinator: AnalyticsAdapter {
     }
 }
 
-extension NotificationType {
+nonisolated extension NotificationType {
 
     func checkCancelConditionsForEvent(name: String, properties: [String: Sendable]) -> Bool {
         var possibleConditions: Set<AnalyticsEvent>

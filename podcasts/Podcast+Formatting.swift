@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-extension Podcast {
+nonisolated extension Podcast {
     func displayableFrequency() -> String? {
         guard let frequency = episodeFrequency?.lowercased(), frequency != "unknown", frequency != "new" else { return nil }
 

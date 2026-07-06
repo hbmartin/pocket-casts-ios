@@ -1,4 +1,4 @@
-extension Optional {
+nonisolated extension Optional {
 
     struct OptionalNil: Error { }
 

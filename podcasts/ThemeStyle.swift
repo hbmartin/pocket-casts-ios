@@ -1,5 +1,5 @@
 // ************ WARNING AUTO GENERATED, DO NOT EDIT ************
-enum ThemeStyle {
+nonisolated enum ThemeStyle {
     case primaryUi01,
          primaryUi01Active,
          primaryUi02,

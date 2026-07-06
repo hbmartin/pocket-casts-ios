@@ -11,6 +11,8 @@ struct SearchHistoryEntry: Codable, Hashable, Sendable {
 
 @MainActor
 class SearchHistoryModel: ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     static let shared = SearchHistoryModel()
 
     @Published var entries: [SearchHistoryEntry] = []

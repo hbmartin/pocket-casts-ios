@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-public enum TranscriptFormat: String, CaseIterable, Sendable {
+nonisolated public enum TranscriptFormat: String, CaseIterable, Sendable {
 
     case srt = "application/srt"
     case vtt = "text/vtt"
@@ -47,7 +47,7 @@ public enum TranscriptFormat: String, CaseIterable, Sendable {
     }
 }
 
-extension Episode.Metadata.Transcript {
+nonisolated extension Episode.Metadata.Transcript {
     public var transcriptFormat: TranscriptFormat? {
         TranscriptFormat.allCases.first { $0.possibleTypes.contains(type) }
     }

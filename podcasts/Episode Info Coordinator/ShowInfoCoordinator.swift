@@ -4,7 +4,20 @@ import PocketCastsServer
 import PocketCastsUtils
 
 actor ShowInfoCoordinator: ShowInfoCoordinating {
-    static let shared = ShowInfoCoordinator()
+    nonisolated static let shared = makeShared()
+
+    /// Explicitly nonisolated factory: the init's default-argument thunks (and
+    /// closure literals) are @MainActor-inferred under default isolation, but the
+    /// static above initializes in a nonisolated context.
+    nonisolated private static func makeShared() -> ShowInfoCoordinator {
+        ShowInfoCoordinator(
+            dataRetriever: ShowInfoDataRetriever(),
+            podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever(),
+            generatedEpisodeMetadataRetriever: GeneratedEpisodeMetadataRetriever(),
+            dataManager: .sharedManager,
+            transcriptDataRetriever: TranscriptsDataRetriever()
+        )
+    }
 
     private let dataRetriever: ShowInfoDataRetriever
     private let podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever
@@ -15,12 +28,14 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
     private var requestingShowInfo: [String: Task<Episode.Metadata?, Error>] = [:]
     private var requestingRawMetadata: [String: Task<String?, Error>] = [:]
 
+    // No default arguments: their thunks are @MainActor-inferred under default
+    // isolation, which would isolate this init away from nonisolated callers
     init(
-        dataRetriever: ShowInfoDataRetriever = ShowInfoDataRetriever(),
-        podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever = PodcastIndexChapterDataRetriever(),
-        generatedEpisodeMetadataRetriever: GeneratedEpisodeMetadataRetriever = GeneratedEpisodeMetadataRetriever(),
-        dataManager: DataManager = .sharedManager,
-        transcriptDataRetriever: TranscriptsDataRetriever = TranscriptsDataRetriever()
+        dataRetriever: ShowInfoDataRetriever,
+        podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever,
+        generatedEpisodeMetadataRetriever: GeneratedEpisodeMetadataRetriever,
+        dataManager: DataManager,
+        transcriptDataRetriever: TranscriptsDataRetriever
     ) {
         self.dataRetriever = dataRetriever
         self.podcastIndexChapterRetriever = podcastIndexChapterRetriever

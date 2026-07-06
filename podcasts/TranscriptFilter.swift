@@ -1,10 +1,10 @@
 import Foundation
 
-protocol TranscriptFilter: Sendable {
+nonisolated protocol TranscriptFilter: Sendable {
     func filter(_ input: String) -> String
 }
 
-struct ComposeFilter: TranscriptFilter {
+nonisolated struct ComposeFilter: TranscriptFilter {
     private let filters: [TranscriptFilter]
 
     func filter(_ input: String) -> String {
@@ -35,7 +35,7 @@ struct ComposeFilter: TranscriptFilter {
     ])
 }
 
-struct RegexFilter: TranscriptFilter {
+nonisolated struct RegexFilter: TranscriptFilter {
 
     private let pattern: String
     private let replacement: String
@@ -56,7 +56,7 @@ struct RegexFilter: TranscriptFilter {
     }
 }
 
-extension RegexFilter {
+nonisolated extension RegexFilter {
     // Remove VTT tags, for example: <Speaker 1> to ""
     static let vttTagsFilter = RegexFilter(pattern: "<[^>]*>", replacement: "")
     // Remove SRT tags, for example: "Speaker 1: " to ""
@@ -85,7 +85,7 @@ extension RegexFilter {
     static let htmlParagraphFilter = RegexFilter(pattern: "</p>", replacement: "\n")
 }
 
-struct SuffixFilter: TranscriptFilter {
+nonisolated struct SuffixFilter: TranscriptFilter {
     private let condition: String
     private let replacement: String
 
@@ -94,11 +94,11 @@ struct SuffixFilter: TranscriptFilter {
     }
 }
 
-extension SuffixFilter {
+nonisolated extension SuffixFilter {
     static let addSpaceWhenNotEndofLine = SuffixFilter(condition: ".\n", replacement: " ")
 }
 
-struct HTMLEntititiesFilter: TranscriptFilter {
+nonisolated struct HTMLEntititiesFilter: TranscriptFilter {
 
     private static let htmlEntities: [(String, String)] = [
         ("&nbsp;", " "),

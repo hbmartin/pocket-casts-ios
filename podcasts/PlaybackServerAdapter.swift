@@ -12,7 +12,7 @@ import PocketCastsUtils
 /// which re-reads `upNextQueueCount()` after each `addToUpNext`) keep their exact
 /// semantics. Blocking the operation queue on main is safe here because the main
 /// thread never synchronously waits on those operation queues.
-final class PlaybackServerAdapter: ServerPlaybackDelegate, Sendable {
+nonisolated final class PlaybackServerAdapter: ServerPlaybackDelegate, Sendable {
     private func onMain<T>(_ body: @MainActor (PlaybackManager) -> T) -> T {
         PlaybackManager.onMainSync(body)
     }

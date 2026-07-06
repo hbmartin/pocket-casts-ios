@@ -48,7 +48,7 @@ struct BookmarkRow: Equatable, Sendable {
     }
 }
 
-public struct BookmarkDataManager {
+public struct BookmarkDataManager: Sendable {
     static let tableName = "Bookmark"
     private let dbQueue: GRDBQueue
 

@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 
 class AppLifecycleAnalytics {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     // Dependencies
     private let userDefaults: UserDefaults
     private let analytics: Analytics

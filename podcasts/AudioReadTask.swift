@@ -5,7 +5,7 @@ import PocketCastsUtils
 
 /// Audio pipeline reader; state is confined to its dispatch queue and the
 /// semaphore-coordinated buffer hand-off.
-final class AudioReadTask: @unchecked Sendable {
+nonisolated final class AudioReadTask: @unchecked Sendable {
     private let maxSilenceAmountToSave = 1000
 
     private var minRMS = 0.005 as Float32

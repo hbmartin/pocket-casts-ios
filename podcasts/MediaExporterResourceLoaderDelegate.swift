@@ -19,7 +19,7 @@ enum MediaExporterItemConfiguration {
     nonisolated(unsafe) public static var minimumExpectedFileSize: Int = DownloadManager.badEpisodeSize
 }
 
-fileprivate extension Int {
+nonisolated fileprivate extension Int {
     var KB: Int { return self * 1024 }
     var MB: Int { return self * 1024 * 1024 }
 }
@@ -27,7 +27,7 @@ fileprivate extension Int {
 /// Responsible for downloading media data and providing the requested data parts.
 /// `URLSessionDelegate` requires `Sendable`; instances are handed to URLSession and
 /// AVAssetResourceLoader queues by design, with mutable state guarded by `lock`.
-final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate, @unchecked Sendable {
+nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate, @unchecked Sendable {
     private let lock = NSLock()
 
     private let readDataLimit = MediaExporterItemConfiguration.readDataLimit
@@ -48,7 +48,7 @@ final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoader
     private let episodeUuid: String?
     private let podcastUuid: String?
 
-    private lazy var callbackQueue: DispatchQueue = {
+    private let callbackQueue: DispatchQueue = {
         let queue: DispatchQueue
         if FeatureFlag.useBackgroundQueueForStreamingCallback.enabled {
             queue = DispatchQueue(label: "com.pocketcasts.MediaExporterResourceLoaderDelegate.callback", qos: .default, attributes: [])

@@ -23,7 +23,7 @@ class ThemeableTable: UITableView {
         super.init(coder: coder)
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             commonInit()

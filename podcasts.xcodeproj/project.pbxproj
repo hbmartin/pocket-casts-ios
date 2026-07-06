@@ -201,7 +201,7 @@
 		4694FA712799E73E00E9CF70 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 460C375526D831E3008B3609 /* Localizable.strings */; };
 		46C22EE028F73D9A00F4173B /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */; };
 		46C22EE328F7497300F4173B /* DeveloperMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C22EE228F7497300F4173B /* DeveloperMenu.swift */; };
-		46FBD8B5276A874F00867746 /* Intents.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = 46FBD8B9276A874F00867746 /* Intents.intentdefinition */; };
+		46FBD8B5276A874F00867746 /* Intents.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = 46FBD8B9276A874F00867746 /* Intents.intentdefinition */; settings = {ATTRIBUTES = (no_codegen, ); }; };
 		46FBD8B6276A874F00867746 /* Intents.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = 46FBD8B9276A874F00867746 /* Intents.intentdefinition */; settings = {ATTRIBUTES = (codegen, ); }; };
 		46FBD8B7276A874F00867746 /* Intents.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = 46FBD8B9276A874F00867746 /* Intents.intentdefinition */; settings = {ATTRIBUTES = (codegen, ); }; };
 		54BE91D0E6ACE4680F2AD848 /* PodcastAppEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B820500C690D26E1B0B4200B /* PodcastAppEntity.swift */; };
@@ -771,6 +771,11 @@
 		BDF09F041E669E16009E9845 /* BasePlayPauseButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF09F031E669E16009E9845 /* BasePlayPauseButton.swift */; };
 		BDF15A3E1B54E053000EC323 /* PlaybackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */; };
 		7A5B116E20260705AD450002 /* PlaybackServerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450001 /* PlaybackServerAdapter.swift */; };
+		7A5B116E20260705AD450110 /* SJChapterIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450100 /* SJChapterIntent.swift */; };
+		7A5B116E20260705AD450111 /* SJExtendSleepTimerIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450101 /* SJExtendSleepTimerIntent.swift */; };
+		7A5B116E20260705AD450112 /* SJNextPrevious.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450102 /* SJNextPrevious.swift */; };
+		7A5B116E20260705AD450113 /* SJOpenFilterIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450103 /* SJOpenFilterIntent.swift */; };
+		7A5B116E20260705AD450114 /* SJSleepTimerIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450104 /* SJSleepTimerIntent.swift */; };
 		7A5B116E20260705AD450004 /* PlaybackPositionTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B116E20260705AD450003 /* PlaybackPositionTracker.swift */; };
 		BDF15A401B54E064000EC323 /* PlaybackQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A3F1B54E064000EC323 /* PlaybackQueue.swift */; };
 		BDF15A421B54E088000EC323 /* EffectsPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF15A411B54E088000EC323 /* EffectsPlayer.swift */; };
@@ -1865,6 +1870,11 @@
 		BDF09F031E669E16009E9845 /* BasePlayPauseButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasePlayPauseButton.swift; sourceTree = "<group>"; };
 		BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackManager.swift; sourceTree = "<group>"; };
 		7A5B116E20260705AD450001 /* PlaybackServerAdapter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackServerAdapter.swift; sourceTree = "<group>"; };
+		7A5B116E20260705AD450100 /* SJChapterIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SJChapterIntent.swift"; sourceTree = "<group>"; };
+		7A5B116E20260705AD450101 /* SJExtendSleepTimerIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SJExtendSleepTimerIntent.swift"; sourceTree = "<group>"; };
+		7A5B116E20260705AD450102 /* SJNextPrevious.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SJNextPrevious.swift"; sourceTree = "<group>"; };
+		7A5B116E20260705AD450103 /* SJOpenFilterIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SJOpenFilterIntent.swift"; sourceTree = "<group>"; };
+		7A5B116E20260705AD450104 /* SJSleepTimerIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SJSleepTimerIntent.swift"; sourceTree = "<group>"; };
 		7A5B116E20260705AD450003 /* PlaybackPositionTracker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackPositionTracker.swift; sourceTree = "<group>"; };
 		BDF15A3F1B54E064000EC323 /* PlaybackQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlaybackQueue.swift; sourceTree = "<group>"; };
 		BDF15A411B54E088000EC323 /* EffectsPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EffectsPlayer.swift; sourceTree = "<group>"; };
@@ -2542,6 +2552,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7A5B116E20260705AD450200 /* Intents Generated */ = {
+			isa = PBXGroup;
+			children = (
+				7A5B116E20260705AD450100 /* SJChapterIntent.swift */,
+				7A5B116E20260705AD450101 /* SJExtendSleepTimerIntent.swift */,
+				7A5B116E20260705AD450102 /* SJNextPrevious.swift */,
+				7A5B116E20260705AD450103 /* SJOpenFilterIntent.swift */,
+				7A5B116E20260705AD450104 /* SJSleepTimerIntent.swift */,
+			);
+			path = "Intents Generated";
+			sourceTree = "<group>";
+		};
 		100C99512CE7B7A2008D73E9 /* Cancel Subscription */ = {
 			isa = PBXGroup;
 			children = (
@@ -3390,6 +3412,7 @@
 				BDF15A491B54E386000EC323 /* Players */,
 				BDF15A3D1B54E053000EC323 /* PlaybackManager.swift */,
 				7A5B116E20260705AD450001 /* PlaybackServerAdapter.swift */,
+				7A5B116E20260705AD450200 /* Intents Generated */,
 				7A5B116E20260705AD450003 /* PlaybackPositionTracker.swift */,
 				BDF15A3F1B54E064000EC323 /* PlaybackQueue.swift */,
 				BDF15A451B54E21B000EC323 /* PlaybackEffects.swift */,
@@ -6085,6 +6108,11 @@
 				BD7BCF111F6A4F110006E008 /* SharingHelper.swift in Sources */,
 				BDF15A3E1B54E053000EC323 /* PlaybackManager.swift in Sources */,
 				7A5B116E20260705AD450002 /* PlaybackServerAdapter.swift in Sources */,
+				7A5B116E20260705AD450110 /* SJChapterIntent.swift in Sources */,
+				7A5B116E20260705AD450111 /* SJExtendSleepTimerIntent.swift in Sources */,
+				7A5B116E20260705AD450112 /* SJNextPrevious.swift in Sources */,
+				7A5B116E20260705AD450113 /* SJOpenFilterIntent.swift in Sources */,
+				7A5B116E20260705AD450114 /* SJSleepTimerIntent.swift in Sources */,
 				7A5B116E20260705AD450004 /* PlaybackPositionTracker.swift in Sources */,
 				BD40987C1B9ED731007F36BD /* SynchronizedAudioStack.swift in Sources */,
 				BD8032D32123EAD600BFBB03 /* EffectsButton.swift in Sources */,
@@ -6576,6 +6604,8 @@
 		3FD6E0552BFC790F003941C0 /* StagingDebug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcastsDebug.entitlements;
@@ -7497,6 +7527,8 @@
 		BD69A01A2266A9E400168459 /* Prototype */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconPrototype;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcasts.prototype.entitlements;
@@ -7750,6 +7782,8 @@
 		BDBD540F17019B2A0048C8C5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcastsDebug.entitlements;
@@ -7774,6 +7808,8 @@
 		BDBD541017019B2A0048C8C5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = podcasts/podcasts.entitlements;

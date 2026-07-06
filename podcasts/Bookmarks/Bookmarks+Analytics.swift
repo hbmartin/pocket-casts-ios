@@ -18,7 +18,7 @@ enum BookmarkAnalyticsSource: String, AnalyticsDescribable {
     }
 }
 
-extension BookmarkSortOption: AnalyticsDescribable {
+nonisolated extension BookmarkSortOption: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .newestToOldest:
@@ -35,7 +35,7 @@ extension BookmarkSortOption: AnalyticsDescribable {
     }
 }
 
-extension HeadphoneControlAction: AnalyticsDescribable {
+nonisolated extension HeadphoneControlAction: AnalyticsDescribable {
     var analyticsDescription: String {
         switch self {
         case .skipBack:

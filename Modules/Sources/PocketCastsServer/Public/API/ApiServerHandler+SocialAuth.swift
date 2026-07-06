@@ -21,7 +21,7 @@ public extension ASAuthorizationAppleIDProvider.CredentialState {
     }
 }
 
-public enum AuthenticationScope: String {
+public enum AuthenticationScope: String, Sendable {
     case mobile
     case tv
     case sonos

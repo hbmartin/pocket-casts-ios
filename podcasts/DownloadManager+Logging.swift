@@ -3,7 +3,7 @@ import PocketCastsUtils
 import PocketCastsServer
 import Combine
 
-extension DownloadManager {
+nonisolated extension DownloadManager {
     func logDownload(_ episode: BaseEpisode, failure: FailureReason, extraProperties: [String: Any?] = [:]) {
         let properties = ["reason": failure.localizedDescription].merging(extraProperties) { current, _ in return current }
         AnalyticsEpisodeHelper.shared.downloadFailed(episodeUUID: episode.uuid,
@@ -71,7 +71,7 @@ extension DownloadManager {
     }
 }
 
-extension tls_ciphersuite_t: @retroactive CustomDebugStringConvertible {
+nonisolated extension tls_ciphersuite_t: @retroactive CustomDebugStringConvertible {
     public var debugDescription: String {
         switch self {
         case .RSA_WITH_3DES_EDE_CBC_SHA:

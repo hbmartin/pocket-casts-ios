@@ -1,6 +1,6 @@
 import Foundation
 
-enum SharedConstants {
+nonisolated enum SharedConstants {
     enum GroupUserDefaults {
         /// Resolved from the PCAppGroupIdentifier Info.plist key, which every app and
         /// extension target maps to the APP_GROUP_IDENTIFIER build setting. Keep the

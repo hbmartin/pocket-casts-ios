@@ -5,24 +5,24 @@ import PocketCastsUtils
 
 /// State is configured-once lazy formatters/queues (created during startup);
 /// the manager's API is called across queues by design.
-final class PodcastManager: NSObject, @unchecked Sendable {
+nonisolated final class PodcastManager: NSObject, @unchecked Sendable {
     private static let maxAutoDownloadSeperationTime = 12.hours
 
     @objc static let shared = PodcastManager(dataManager: DataManager.sharedManager, downloadManager: DownloadManager.shared)
 
-    lazy var isoFormatter: ISO8601DateFormatter = {
+    let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         return formatter
     }()
 
-    lazy var subscribeQueue: OperationQueue = {
+    let subscribeQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 
         return queue
     }()
 
-    lazy var importerQueue: OperationQueue = {
+    let importerQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 

@@ -27,7 +27,7 @@ enum TranscriptError: Error {
     }
 }
 
-class TranscriptManager {
+nonisolated class TranscriptManager {
 
     typealias Transcript = Episode.Metadata.Transcript
 

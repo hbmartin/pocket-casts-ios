@@ -144,7 +144,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
 
     // MARK: - Setup
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }

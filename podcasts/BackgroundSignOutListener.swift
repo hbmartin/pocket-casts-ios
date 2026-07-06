@@ -6,6 +6,8 @@ import PocketCastsServer
 /// and alert to the user asking them to sign in again
 @MainActor
 class BackgroundSignOutListener {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     private let notificationCenter: NotificationCenter
     private let navigationManager: NavigationManager
 

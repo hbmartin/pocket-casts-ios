@@ -567,7 +567,7 @@ enum UpNextViewSource: String, AnalyticsDescribable {
 }
 
 /// Sort orders offered by the Up Next sort button; a one-off reorder, so there's no persisted "current" option.
-enum UpNextSortOption: CaseIterable, AnalyticsDescribable {
+nonisolated enum UpNextSortOption: CaseIterable, AnalyticsDescribable {
     case newestToOldest
     case oldestToNewest
     case shortestToLongest

@@ -2,7 +2,7 @@ import DifferenceKit
 import Foundation
 import PocketCastsDataModel
 
-class PodcastEpisodesRefreshOperation: Operation, @unchecked Sendable {
+nonisolated class PodcastEpisodesRefreshOperation: Operation, @unchecked Sendable {
     private let episodesDataManager: EpisodesDataManager
     private let podcast: Podcast
     private let uuidsToFilter: [String]?

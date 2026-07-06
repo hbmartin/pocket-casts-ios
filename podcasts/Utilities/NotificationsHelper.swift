@@ -7,7 +7,7 @@ import PocketCastsUtils
 
 /// Stateless (constants only); UN-delegate callbacks arrive on arbitrary queues,
 /// so the instance crosses isolation domains by contract.
-final class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate, Sendable {
+nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate, Sendable {
     private let downloadEpisodeActionId = "SJEpDownload"
     private let playNowActionid = "SJPlayNow"
     private let addToQueueFirstActionId = "SJEpAddQueueFirst"
@@ -68,12 +68,14 @@ final class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate, Sen
         let box = PocketCastsUtils.UncheckedSendable((podcast, completion))
         registerForPushNotifications { granted in
             guard granted || !enabled else {
-                Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
-                    Analytics.track(.notificationsPermissionsOpenSystemSettings)
-                    Task { @MainActor in
-                        UIApplication.shared.openNotificationSettings()
-                    }
-                })])
+                Task { @MainActor in
+                    Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
+                        Analytics.track(.notificationsPermissionsOpenSystemSettings)
+                        Task { @MainActor in
+                            UIApplication.shared.openNotificationSettings()
+                        }
+                    })])
+                }
                 return
             }
             let (podcast, completion) = box.value
@@ -84,7 +86,7 @@ final class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate, Sen
             if let title = savedPodcast.title, enabled {
                 message = L10n.notificationsOnForPodcast(title)
             }
-            Toast.show(message)
+            Task { @MainActor in Toast.show(message) }
         }
     }
 

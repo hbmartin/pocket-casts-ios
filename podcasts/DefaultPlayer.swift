@@ -6,7 +6,7 @@ import PocketCastsUtils
 
 /// AVPlayer wrapper driven by PlaybackManager's queues plus KVO/main callbacks;
 /// mutable state is confined to that flow by design.
-final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
+nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private var audioMix: AVAudioMix?
     private var assetTrack: AVAssetTrack?
     private var assetTrackLoadTask: Task<Void, Never>?

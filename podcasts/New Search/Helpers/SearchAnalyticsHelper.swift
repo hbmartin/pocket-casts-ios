@@ -75,17 +75,17 @@ class SearchAnalyticsHelper: ObservableObject {
     }
 }
 
-protocol AnalyticsSearchResultItem: AnalyticsDescribable, Sendable {
+nonisolated protocol AnalyticsSearchResultItem: AnalyticsDescribable, Sendable {
     var uuid: String { get }
 }
 
-extension EpisodeSearchResult: AnalyticsSearchResultItem {
+nonisolated extension EpisodeSearchResult: AnalyticsSearchResultItem {
     var analyticsDescription: String {
         "episode"
     }
 }
 
-extension PodcastFolderSearchResult: AnalyticsSearchResultItem {
+nonisolated extension PodcastFolderSearchResult: AnalyticsSearchResultItem {
     var analyticsDescription: String {
         if kind == .folder {
             return "folder"
@@ -97,7 +97,7 @@ extension PodcastFolderSearchResult: AnalyticsSearchResultItem {
     }
 }
 
-extension SearchHistoryEntry: AnalyticsSearchResultItem {
+nonisolated extension SearchHistoryEntry: AnalyticsSearchResultItem {
     var uuid: String {
         podcast?.uuid ?? episode?.uuid ?? ""
     }

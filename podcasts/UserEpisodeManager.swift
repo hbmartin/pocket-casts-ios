@@ -4,7 +4,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
-struct UserEpisodeManager {
+nonisolated struct UserEpisodeManager {
     #if !os(tvOS)
         static func addUserEpisode(uuid: String, title: String, localFileUrl: URL, artwork: UIImage?, color: Int, fileSize: Int, duration: TimeInterval) throws -> UserEpisode {
             var episode = UserEpisode()
@@ -182,7 +182,7 @@ struct UserEpisodeManager {
     }
 
     #if !os(tvOS)
-        static func updateUserEpisodeImage(uuid: String, artwork: UIImage?, completion: @escaping () -> Void) throws {
+        @MainActor static func updateUserEpisodeImage(uuid: String, artwork: UIImage?, completion: @escaping () -> Void) throws {
             guard let episode = DataManager.sharedManager.findUserEpisode(uuid: uuid) else {
                 return
             }

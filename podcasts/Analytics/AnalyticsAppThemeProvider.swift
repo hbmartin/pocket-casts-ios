@@ -1,10 +1,10 @@
 import Foundation
 
-protocol AnalyticsAppThemeProviding {
+nonisolated protocol AnalyticsAppThemeProviding {
     var appThemeProperties: [String: Sendable] { get }
 }
 
-struct AnalyticsAppThemeProvider: AnalyticsAppThemeProviding {
+nonisolated struct AnalyticsAppThemeProvider: AnalyticsAppThemeProviding {
     var appThemeProperties: [String: Sendable] {
         // Theme state is main-actor; analytics can ask for these properties from
         // any thread, so bridge synchronously (previously this read theme state

@@ -54,7 +54,7 @@ struct HorizontalCarouselCardViewContainer<Item: HorizontalCarouselItemRepresent
     }
 }
 
-fileprivate enum MockItem: String, CaseIterable, Identifiable, HorizontalCarouselItemRepresentable {
+fileprivate enum MockItem: String, CaseIterable, Identifiable, @MainActor HorizontalCarouselItemRepresentable {
     case test
     case test2
 

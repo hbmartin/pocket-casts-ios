@@ -3,7 +3,7 @@ import SwiftSubtitles
 import PocketCastsDataModel
 import PocketCastsUtils
 
-struct TranscriptCue: Sendable {
+nonisolated struct TranscriptCue: Sendable {
     let startTime: Double
     let endTime: Double
     let characterRange: NSRange
@@ -16,7 +16,7 @@ struct TranscriptCue: Sendable {
 extension NSAttributedString: @retroactive @unchecked Sendable {
 }
 
-struct TranscriptModel: Sendable {
+nonisolated struct TranscriptModel: Sendable {
 
     let attributedText: NSAttributedString
     let cues: [TranscriptCue]
@@ -111,7 +111,7 @@ struct TranscriptModel: Sendable {
     }
 }
 
-extension NSAttributedString.Key {
+nonisolated extension NSAttributedString.Key {
 
     static let transcriptSpeaker = NSAttributedString.Key("TranscriptSpeaker")
 }

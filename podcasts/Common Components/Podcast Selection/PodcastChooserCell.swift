@@ -12,7 +12,7 @@ class PodcastChooserCell: ThemeableCell {
     @IBOutlet var podcastSelectBg: UIImageView!
     @IBOutlet var podcastSelectTick: UIImageView!
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }

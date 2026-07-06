@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsUtils
 import UIKit
 
-struct Constants {
+nonisolated struct Constants {
     enum Notifications {
         static let upNextEpisodeAdded = NSNotification.Name(rawValue: "SJUpNextEpisodeAdded")
         /// `userInfo` key on `upNextEpisodeAdded` — a `Bool` that's `true` when

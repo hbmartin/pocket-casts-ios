@@ -196,7 +196,7 @@ private extension BookmarkSortOption {
 
 // MARK: - Bookmarks Array Extension
 
-extension Array where Element == Bookmark {
+nonisolated extension Array where Element == Bookmark {
 
     func includePodcasts(using dataManager: DataManager = .sharedManager) -> [Element] {
         guard !isEmpty else { return [] }

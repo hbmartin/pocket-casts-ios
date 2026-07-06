@@ -271,7 +271,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         fatalError("init(coder:) has not been implemented")
     }
 
-    deinit {
+    isolated deinit {
         operationQueue.cancelAllOperations()
     }
 

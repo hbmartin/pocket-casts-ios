@@ -10,6 +10,8 @@ import Foundation
 ///
 @MainActor
 class ListViewModel<Model: Hashable>: ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     @Published var items: [Model] = [] {
         didSet {
             numberOfItems = items.count

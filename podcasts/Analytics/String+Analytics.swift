@@ -1,6 +1,6 @@
 import Foundation
 
-extension String {
+nonisolated extension String {
     /// Converts a camel cased word (ohHelloThere) into snake case (oh_hello_there)
     /// - Returns: A snack cased string
     func toSnakeCaseFromCamelCase() -> String {

@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-extension DownloadManager {
+nonisolated extension DownloadManager {
 
     func transferForegroundDownloadsToBackground() {
         cellularForegroundSession.getTasksWithCompletionHandler { _, _, downloadTasks in

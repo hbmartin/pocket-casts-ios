@@ -196,8 +196,7 @@ private extension PlayerTabsView {
         fadeTrailing.opacity = (contentOffset.x + bounds.width) < contentSize.width ? 1 : 0
     }
 
-    @MainActor
-    private class FadeOutLayer: CAGradientLayer {
+    nonisolated private class FadeOutLayer: CAGradientLayer {
         enum FadePosition {
             case leading, trailing
         }
@@ -210,7 +209,13 @@ private extension PlayerTabsView {
 
             super.init()
 
-            updateColors()
+            // constructed by the @MainActor PlayerTabsView; UIColor is Sendable so
+            // only the color values cross out of the assumeIsolated block
+            let color = MainActor.assumeIsolated { PlayerColorHelper.playerBackgroundColor01() }
+            colors = [
+                color.withAlphaComponent(0).cgColor,
+                color.cgColor
+            ]
 
             switch fadePosition {
             case .leading:
@@ -223,7 +228,7 @@ private extension PlayerTabsView {
             }
         }
 
-        func updateColors() {
+        @MainActor func updateColors() {
             let color = PlayerColorHelper.playerBackgroundColor01()
 
             colors = [

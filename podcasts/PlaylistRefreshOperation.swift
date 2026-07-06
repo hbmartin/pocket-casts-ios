@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-class PlaylistRefreshOperation: Operation, @unchecked Sendable {
+nonisolated class PlaylistRefreshOperation: Operation, @unchecked Sendable {
     private let episodesDataManager: EpisodesDataManager
     private let playlist: EpisodeFilter
     private let completion: ([ListEpisode]) -> Void

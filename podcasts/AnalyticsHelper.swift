@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsUtils
 
-class AnalyticsHelper {
+nonisolated class AnalyticsHelper {
     /// Whether the user has opted out of analytics or not.
     static var optedOut: Bool {
         #if APPCLIP
@@ -301,7 +301,7 @@ class AnalyticsHelper {
 
 // MARK: - Private
 
-private extension AnalyticsHelper {
+nonisolated private extension AnalyticsHelper {
     class func bumpStat(_ name: String, parameters: [String: Any]? = nil) {
         // These legacy Firebase duplicates already have Analytics.track calls.
     }

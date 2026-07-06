@@ -3,6 +3,8 @@ import PocketCastsUtils
 import Combine
 
 class BannerModel: ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
 
     let title: String?
     let message: String?

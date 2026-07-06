@@ -407,7 +407,7 @@ final class LocalSearchViewModel: ObservableObject {
     }
 }
 
-extension EpisodeSearchResult {
+nonisolated extension EpisodeSearchResult {
     init(episode: Episode, dataManager: DataManager = DataManager.sharedManager) {
         let publishedDate = episode.publishedDate ?? episode.addedDate ?? Date()
         let duration = episode.duration > 0 ? episode.duration : nil

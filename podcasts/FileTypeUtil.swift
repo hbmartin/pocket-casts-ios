@@ -2,7 +2,7 @@ import Foundation
 import UniformTypeIdentifiers
 import PocketCastsUtils
 
-class FileTypeUtil {
+nonisolated class FileTypeUtil {
     public class func fileExtension(forType type: String?) -> String {
         guard let type else { return ".mp3" }
 
@@ -96,7 +96,7 @@ class FileTypeUtil {
     }
 }
 
-extension UTType {
+nonisolated extension UTType {
     static let gpp3 = UTType(filenameExtension: "3gp")!
     static let gpp3v2 = UTType(filenameExtension: "3g2")!
     static let amr = UTType(filenameExtension: "amr")!

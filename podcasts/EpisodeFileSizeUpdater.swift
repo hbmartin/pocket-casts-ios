@@ -3,7 +3,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-class EpisodeFileSizeUpdater {
+nonisolated class EpisodeFileSizeUpdater {
     class func updateEpisodeDuration(episode: BaseEpisode?) {
         guard let episode else { return }
 

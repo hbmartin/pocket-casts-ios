@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-class PlaylistDetailFetchOperation: Operation, @unchecked Sendable {
+nonisolated class PlaylistDetailFetchOperation: Operation, @unchecked Sendable {
     typealias CompletionHandler = ([ListEpisode], Int) -> Void
 
     private let episodesDataManager: EpisodesDataManager

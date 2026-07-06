@@ -4,7 +4,7 @@ import PocketCastsServer
 import PocketCastsUtils
 
 /// Stateless (constants only); the sync delegate is called from server queues.
-final class ServerSyncManager: ServerSyncDelegate, Sendable {
+nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
     static let shared = ServerSyncManager()
     private static let networkDataUsageRetentionPeriod: TimeInterval = 30.days
     private static let networkDataUsageCleanupInterval: TimeInterval = 24.hours

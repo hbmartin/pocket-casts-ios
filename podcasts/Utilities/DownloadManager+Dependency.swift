@@ -9,7 +9,7 @@ import PocketCastsDataModel
 ///
 /// `Sendable` because the production conformer (`DownloadManager`) is an `@unchecked Sendable`
 /// singleton already shared across threads; mocks must take the same responsibility.
-protocol DownloadManaging: Sendable {
+nonisolated protocol DownloadManaging: Sendable {
     var progressManager: DownloadProgressManager { get }
     var tempDownloadFolder: String { get }
 
@@ -34,13 +34,13 @@ extension DownloadManaging {
     }
 }
 
-extension DownloadManager: DownloadManaging { }
+nonisolated extension DownloadManager: DownloadManaging { }
 
-enum DownloadManagerKey: DependencyKey {
+nonisolated enum DownloadManagerKey: DependencyKey {
     static let liveValue: any DownloadManaging = DownloadManager.shared
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var downloadManager: any DownloadManaging {
         get { self[DownloadManagerKey.self] }
         set { self[DownloadManagerKey.self] = newValue }

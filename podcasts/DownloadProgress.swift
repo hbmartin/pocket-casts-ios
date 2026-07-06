@@ -1,7 +1,7 @@
 import PocketCastsDataModel
 import UIKit
 
-struct DownloadProgress {
+nonisolated struct DownloadProgress {
     var downloadedSoFar = 0 as Int64
     var totalToDownload = 0 as Int64
     var status = DownloadStatus.notDownloaded

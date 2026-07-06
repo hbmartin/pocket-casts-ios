@@ -32,7 +32,7 @@ class TinyPageControl: UIControl {
         super.init(coder: aDecoder)
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             isAccessibilityElement = true

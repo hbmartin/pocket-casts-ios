@@ -14,7 +14,7 @@
    inputs:
      - podcasts/en.lproj/Localizable.strings
    outputs:
-     - templateName: structured-swift5
+     - templatePath: swiftgen-templates/strings-nonisolated.stencil
        params:
          lookupFunction: localizedFormat
        output: podcasts/Strings+Generated.swift

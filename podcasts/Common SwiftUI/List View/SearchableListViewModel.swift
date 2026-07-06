@@ -10,6 +10,8 @@ protocol SearchableDataModel: Hashable {
 
 /// A generic list view model that allows the user to filter the items using the given `searchText`.
 class SearchableListViewModel<Model: SearchableDataModel>: MultiSelectListViewModel<Model> {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     @Published var searchText: String = ""
     @Published private(set) var isSearching: Bool = false
 

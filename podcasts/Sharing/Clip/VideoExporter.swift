@@ -252,7 +252,7 @@ fileprivate extension AVAssetWriterInput {
         }
     }
 
-    private static func waitForMediaDataResult(_ block: @escaping () async throws -> Bool) -> Result<Bool, Error> {
+    nonisolated private static func waitForMediaDataResult(_ block: @escaping () async throws -> Bool) -> Result<Bool, Error> {
         final class ResultBox: @unchecked Sendable {
             let lock = NSLock()
             var result: Result<Bool, Error>?

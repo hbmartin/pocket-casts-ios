@@ -5,7 +5,7 @@ import UIKit
 
 /// Mutable state (`downloadingPodcasts`) is guarded by `lock`; everything else is
 /// immutable, so the shared instance is safe to use across isolation domains.
-final class ColorManager: @unchecked Sendable {
+nonisolated final class ColorManager: @unchecked Sendable {
     private let defaultBackgroundColor = UIColor(hex: "#3D3D3D")
     private let defaultLightTintColor = UIColor(hex: "#1E1F1E")
     private let defaultDarkTintColor = UIColor(hex: "#FFFFFF")

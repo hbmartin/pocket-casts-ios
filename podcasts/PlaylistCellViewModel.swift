@@ -7,6 +7,8 @@ import UIKit
 
 @MainActor
 class PlaylistCellViewModel: ObservableObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     enum DisplayType {
         case count
         case toggle

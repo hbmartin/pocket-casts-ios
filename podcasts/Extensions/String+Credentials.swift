@@ -1,4 +1,4 @@
-extension String {
+nonisolated extension String {
     /// `true` when this credential value is missing or still an un-substituted
     /// build-time placeholder of the form `%{token}` (for example the TelemetryDeck
     /// App ID token).

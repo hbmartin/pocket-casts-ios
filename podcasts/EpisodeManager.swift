@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-class EpisodeManager: NSObject {
+nonisolated class EpisodeManager: NSObject {
     static let analyticsHelper = AnalyticsEpisodeHelper.shared
 
     class func markAsPlayed(episode: BaseEpisode, fireNotification: Bool, userInitiated: Bool = true) {

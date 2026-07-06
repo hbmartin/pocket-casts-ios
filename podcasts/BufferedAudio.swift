@@ -1,7 +1,7 @@
 import AVFoundation
 import Foundation
 
-struct BufferedAudio {
+nonisolated struct BufferedAudio {
     var audioBuffer: AVAudioPCMBuffer
     var framePosition: AVAudioFramePosition
     var shouldFadeOut: Bool

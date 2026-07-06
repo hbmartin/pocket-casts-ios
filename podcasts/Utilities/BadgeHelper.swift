@@ -5,7 +5,7 @@ import Combine
 import UserNotifications
 
 class BadgeHelper {
-    deinit {
+    isolated deinit {
         teardown()
     }
 

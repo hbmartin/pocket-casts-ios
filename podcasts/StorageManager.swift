@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsUtils
 
-struct StorageManager {
+nonisolated struct StorageManager {
     typealias Attributes = [FileAttributeKey: Any]
 
     // nonisolated(unsafe): fileManager.default is a thread-safe Apple singleton
@@ -83,7 +83,7 @@ struct StorageManager {
     }
 }
 
-private extension StorageManager {
+nonisolated private extension StorageManager {
     @discardableResult
     static func tryLog(_ block: @autoclosure () throws -> Void, operation: String, error handler: @autoclosure () -> ((Error) -> Void)? = nil) -> Bool {
         do {

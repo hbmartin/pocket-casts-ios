@@ -3,7 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import Combine
 
-extension ThemeType: AnalyticsDescribable {
+nonisolated extension ThemeType: AnalyticsDescribable {
     static var displayOrder: [ThemeType] {
         [.light, .dark, .rosé, .extraDark, .indigo, .contrastDark, .contrastLight, .electric, .classic]
     }
@@ -319,7 +319,7 @@ class Theme: ObservableObject {
 }
 
 /// A minimal lock-guarded box for mirroring the active theme to nonisolated readers.
-private final class ThemeSnapshotBox: @unchecked Sendable {
+nonisolated private final class ThemeSnapshotBox: @unchecked Sendable {
     private let lock = NSLock()
     private var storage: Theme.ThemeType = .light
 

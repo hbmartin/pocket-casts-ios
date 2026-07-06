@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-extension PodcastManager {
+nonisolated extension PodcastManager {
     func deletePodcastIfUnused(_ podcast: Podcast) async {
         // we don't delete podcasts that haven't been synced or you're still subscribed to
         if podcast.syncStatus == SyncStatus.notSynced.rawValue || podcast.isSubscribed() { return }

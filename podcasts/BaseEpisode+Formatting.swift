@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-extension BaseEpisode {
+nonisolated extension BaseEpisode {
     func fileExtension() -> String {
         if let contentType {
             return FileTypeUtil.fileExtension(forType: contentType)

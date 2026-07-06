@@ -4,7 +4,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-final class FingerprintTimingManager: NSObject, @unchecked Sendable {
+nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     // MARK: - Public Types
 
@@ -81,7 +81,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         }
     }
 
-    struct TimeMappingEntry {
+    nonisolated struct TimeMappingEntry {
         let playbackTime: Double
         let referenceTime: Double
         let score: Float
@@ -1000,9 +1000,10 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
         startOffset: Double,
         context ctx: GenerationContext
     ) {
+        let boxedWindows = PocketCastsUtils.UncheckedSendable(windows)
         queue.async { [weak self] in
             guard let self, self.isCurrent(ctx) else { return }
-            self.processMatches(windows: windows, startOffset: startOffset, context: ctx)
+            self.processMatches(windows: boxedWindows.value, startOffset: startOffset, context: ctx)
         }
     }
 
@@ -1381,7 +1382,7 @@ final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
 // MARK: - Cancellation
 
-private final class CancellationFlag: @unchecked Sendable {
+nonisolated private final class CancellationFlag: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
 
@@ -1396,7 +1397,7 @@ private final class CancellationFlag: @unchecked Sendable {
 
 // MARK: - Array Sorted Insertion
 
-private extension Array {
+nonisolated private extension Array {
     func sortedInsertionIndex(isOrderedBefore: (Element) -> Bool) -> Int {
         var lo = 0
         var hi = count

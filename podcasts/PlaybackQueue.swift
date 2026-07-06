@@ -5,6 +5,8 @@ import UIKit
 
 @MainActor
 class PlaybackQueue: NSObject {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     // we get asked for this a lot, so might as well cache it
     private var topEpisode: BaseEpisode?
 

@@ -1,7 +1,7 @@
 import Dependencies
 import PocketCastsDataModel
 
-struct PlaybackTimeHelper {
+nonisolated struct PlaybackTimeHelper {
     let dataManager: any EpisodeRepository
 
     init(dataManager: (any EpisodeRepository)? = nil) {

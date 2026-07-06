@@ -40,7 +40,7 @@ class PlayPauseLabeledButton: BasePlayPauseButton {
         }
     }
 
-    override func awakeFromNib() {
+    override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
             layer.borderWidth = 1.5

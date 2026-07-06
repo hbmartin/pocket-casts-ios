@@ -20,6 +20,8 @@ extension InformationalBannerPresenting {
 }
 
 class InformationalBannerViewModel: BannerModel, InformationalBannerPresenting {
+    // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
+    nonisolated deinit {}
     let bannerType: InformationalBannerType
 
     var onCloseBannerTap: (() -> Void)? = nil
