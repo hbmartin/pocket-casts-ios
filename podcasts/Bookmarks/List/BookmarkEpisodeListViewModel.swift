@@ -28,11 +28,14 @@ class BookmarkEpisodeListViewModel: BookmarkListViewModel {
     override func addListeners() {
         super.addListeners()
 
+        // receive(on:) must precede the filter: the manager sends off-main and this
+        // closure reads main-actor state (self.episode), which traps a main-queue
+        // assertion if it runs on the sending thread.
         bookmarkManager.onBookmarkCreated
+            .receive(on: DispatchQueue.main)
             .filter { [weak self] event in
                 self?.episode?.uuid == event.episode
             }
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.reload()
             }

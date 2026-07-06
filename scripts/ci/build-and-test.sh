@@ -47,9 +47,23 @@ if [[ -n "${POCKET_CASTS_CI_OTHER_SWIFT_FLAGS:-}" ]]; then
   XCODEBUILD_ARGS+=(OTHER_SWIFT_FLAGS="${POCKET_CASTS_CI_OTHER_SWIFT_FLAGS}")
 fi
 
+CRASH_STATE="$(mktemp)"
+"$SCRIPT_DIR/check-crash-reports.sh" snapshot "$CRASH_STATE"
+
 set -o pipefail
 xcodebuild "${XCODEBUILD_ARGS[@]}" \
   2>&1 | tee build/github/logs/test-staging.log
 
+echo "Check for crash reports left behind by the test run"
+"$SCRIPT_DIR/check-crash-reports.sh" check "$CRASH_STATE"
+
 echo "Check strict-concurrency warnings"
 scripts/ci/check-concurrency-warnings.sh build/github/logs/test-staging.log
+
+echo "Launch smoke test"
+SIMULATOR_UDID="${DESTINATION##*id=}"
+"$SCRIPT_DIR/smoke-launch.sh" \
+  "$DERIVED_DATA_PATH/Build/Products/StagingDebug-iphonesimulator/podcasts.app" \
+  "$SIMULATOR_UDID" \
+  "${POCKET_CASTS_SMOKE_SETTLE_SECONDS:-30}" \
+  build/github/results/smoke-launch.png

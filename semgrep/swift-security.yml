@@ -4705,4 +4705,4 @@ rules:
         - "**/podcasts/**/*.swift"
     patterns:
       - pattern-regex: 'isolated deinit'
-      - pattern-not-regex: '(?://[^\n]*isolated deinit[ \t]*:[ \t]*\S[^\n]*\n[^\n]*isolated deinit)|(?:isolated deinit[^\n]*//[^\n]*isolated deinit[ \t]*:[ \t]*\S)|(?://[^\n]*isolated deinit)|nonisolated deinit'
+      - pattern-not-regex: '(?://[^\n]*isolated deinit[ \t]*:[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*isolated deinit)|(?:isolated deinit[^\n]*//[^\n]*isolated deinit[ \t]*:[ \t]*\S)|(?://[^\n]*isolated deinit)|nonisolated deinit'
