@@ -315,6 +315,32 @@ final class SafeNotificationDelegate: NSObject, UNUserNotificationCenterDelegate
     }
 }
 
+final class UnsafeBackgroundTaskExpirationHandler {
+    func start() {
+        var taskID: UIBackgroundTaskIdentifier = .invalid
+        // ruleid: pocketcasts.background-task-expiration-main-thread
+        taskID = UIApplication.shared.beginBackgroundTask(withName: "unsafe") {
+            UIApplication.shared.endBackgroundTask(taskID)
+            taskID = .invalid
+        }
+    }
+}
+
+final class SafeBackgroundTaskExpirationHandler {
+    func start() {
+        var taskID: UIBackgroundTaskIdentifier = .invalid
+        taskID = UIApplication.shared.beginBackgroundTask(withName: "safe") {
+            DispatchQueue.main.async {
+                if taskID != .invalid {
+                    // ok: pocketcasts.background-task-expiration-main-thread
+                    UIApplication.shared.endBackgroundTask(taskID)
+                    taskID = .invalid
+                }
+            }
+        }
+    }
+}
+
 final class UnsafeTimerRunLoopAssumption {
     private var timer: Timer?
 

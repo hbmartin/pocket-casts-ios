@@ -96,14 +96,19 @@ final class FileSyncCoordinator {
         guard FeatureFlag.fileSync.enabled else { return }
         var taskID: UIBackgroundTaskIdentifier = .invalid
         taskID = UIApplication.shared.beginBackgroundTask(withName: "au.com.pocketcasts.filesync.flush") {
-            UIApplication.shared.endBackgroundTask(taskID)
-            taskID = .invalid
+            DispatchQueue.main.async {
+                if taskID != .invalid {
+                    UIApplication.shared.endBackgroundTask(taskID)
+                    taskID = .invalid
+                }
+            }
         }
         Task {
             await FileSyncManager.shared.syncNow()
             await MainActor.run {
                 if taskID != .invalid {
                     UIApplication.shared.endBackgroundTask(taskID)
+                    taskID = .invalid
                 }
             }
         }

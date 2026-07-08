@@ -2,9 +2,10 @@ import Foundation
 
 enum UserEpisodeArtwork {
     nonisolated static var directory: String {
-        let directory = NSHomeDirectory() + "/Documents/custom_images"
-        try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
-        return directory
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let directoryURL = documentsURL.appendingPathComponent("custom_images")
+        try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        return directoryURL.path
     }
 
     nonisolated static func imagePath(forEpisodeUuid uuid: String) -> String {

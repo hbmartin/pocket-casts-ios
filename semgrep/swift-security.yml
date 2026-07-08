@@ -491,6 +491,51 @@ rules:
             ...
           }
 
+  - id: pocketcasts.background-task-expiration-main-thread
+    severity: ERROR
+    metadata:
+      category: concurrency
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: UIApplication background task expiration handlers may run off-main; dispatch to the main queue or MainActor before ending a captured UIBackgroundTaskIdentifier.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          var $TASK: UIBackgroundTaskIdentifier = .invalid
+          ...
+      - pattern: |
+          UIApplication.shared.beginBackgroundTask(...) {
+            ...
+            UIApplication.shared.endBackgroundTask($TASK)
+            ...
+          }
+      - pattern-not: |
+          UIApplication.shared.beginBackgroundTask(...) {
+            ...
+            DispatchQueue.main.async {
+              ...
+              UIApplication.shared.endBackgroundTask($TASK)
+              ...
+            }
+            ...
+          }
+      - pattern-not: |
+          UIApplication.shared.beginBackgroundTask(...) {
+            ...
+            Task { @MainActor in
+              ...
+              UIApplication.shared.endBackgroundTask($TASK)
+              ...
+            }
+            ...
+          }
+
   - id: pocketcasts.filesync-upload-group-must-be-validated
     severity: ERROR
     metadata:
