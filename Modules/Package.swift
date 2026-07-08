@@ -43,6 +43,10 @@ let package = Package(
             targets: ["PocketCastsServer"]
         ),
         .library(
+            name: "PocketCastsFileSync",
+            targets: ["PocketCastsFileSync"]
+        ),
+        .library(
             name: "EndOfYear",
             targets: ["EndOfYear"]
         ),
@@ -172,6 +176,32 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrencySettings
         ),
+        // Local-first file sync: per-device protobuf op logs in a user-visible
+        // cloud folder (iCloud Drive or any picked Files.app location). Must
+        // NOT depend on PocketCastsServer — the local-first stack has to keep
+        // working if the server module is ever removed.
+        .target(
+            name: "PocketCastsFileSync",
+            dependencies: [
+                .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+                "PocketCastsDataModel",
+                "PocketCastsUtils",
+            ],
+            path: "Sources/PocketCastsFileSync",
+            exclude: ["Proto"],
+            swiftSettings: strictConcurrencyTestableSettings
+        ),
+        .testTarget(
+            name: "PocketCastsFileSyncTests",
+            dependencies: [
+                "PocketCastsFileSync",
+                "PocketCastsDataModel",
+                "PocketCastsDataModelTesting",
+            ],
+            path: "Tests/PocketCastsFileSyncTests",
+            resources: [.copy("Fixtures")],
+            swiftSettings: strictConcurrencySettings
+        ),
         .target(
             name: "EndOfYear",
             dependencies: [
@@ -242,6 +272,7 @@ enum XcodeSupport {
                 dependencies: [
                     "PocketCastsDataModel",
                     "PocketCastsServer",
+                    "PocketCastsFileSync",
                     "PocketCastsUtils",
                     .product(name: "Dependencies", package: "swift-dependencies"),
                     .product(name: "DifferenceKit", package: "DifferenceKit"),

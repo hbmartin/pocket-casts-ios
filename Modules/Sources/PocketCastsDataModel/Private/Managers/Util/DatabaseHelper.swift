@@ -17,6 +17,42 @@ class DatabaseHelper {
         // Adds the explicit-content flag parsed from the server feed (#4427).
         SchemaMigration(toVersion: 74) { db in
             try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN isExplicit INTEGER DEFAULT 0;", values: nil)
+        },
+        // File-based sync (local-first): the change journal + per-device
+        // cursors that back PocketCastsFileSync, and the folder-identity
+        // columns that let SJUserEpisode rows reference files living in the
+        // user's sync folder (identityState: 0 = legacy app-local file,
+        // 1 = provisional path-keyed identity, 2 = canonical content-hash).
+        SchemaMigration(toVersion: 75) { db in
+            try db.executeUpdate("""
+            CREATE TABLE FileSyncJournal (
+                id INTEGER PRIMARY KEY,
+                entityType INTEGER NOT NULL,
+                entityUuid TEXT,
+                opType INTEGER NOT NULL,
+                fields TEXT,
+                wallClockMs INTEGER NOT NULL,
+                flushedSeq INTEGER
+            );
+            """, values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX file_sync_journal_unflushed ON FileSyncJournal (flushedSeq, wallClockMs);", values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE FileSyncCursor (
+                peerDeviceId TEXT PRIMARY KEY,
+                fileName TEXT,
+                recordOffset INTEGER NOT NULL DEFAULT 0,
+                lastAppliedSeq INTEGER NOT NULL DEFAULT 0,
+                lastAppliedSnapshotSeq INTEGER NOT NULL DEFAULT 0,
+                currentLogIndex INTEGER NOT NULL DEFAULT 0,
+                headSeq INTEGER NOT NULL DEFAULT 0,
+                lastSnapshotSeq INTEGER NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+            try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN folderRelativePath TEXT;", values: nil)
+            try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN contentHash TEXT;", values: nil)
+            try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN groupName TEXT;", values: nil)
+            try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN identityState INTEGER DEFAULT 0;", values: nil)
         }
     ]
 

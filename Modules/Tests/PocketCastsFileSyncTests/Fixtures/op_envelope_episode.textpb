@@ -1,0 +1,16 @@
+op_id: "0d9f1c2e-1111-2222-3333-444455556666"
+device_id: "device-a"
+seq: 42
+wall_clock_ms: 1767225600000
+record {
+  episode {
+    uuid: "ep-uuid-1"
+    podcast_uuid: "pod-uuid-1"
+    playing_status { value: 2 }
+    playing_status_modified { value: 1767225600001 }
+    played_up_to { value: 1234 }
+    played_up_to_modified { value: 1767225600002 }
+    starred { value: true }
+    starred_modified { value: 1767225600003 }
+  }
+}

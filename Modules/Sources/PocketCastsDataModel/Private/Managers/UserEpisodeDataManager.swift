@@ -33,7 +33,11 @@ final class UserEpisodeDataManager: Sendable {
         "imageColorModified",
         "titleModified",
         "durationModified",
-        "imageModified"
+        "imageModified",
+        "folderRelativePath",
+        "contentHash",
+        "groupName",
+        "identityState"
     ]
 
     // MARK: - GRDB Fetching
@@ -84,6 +88,18 @@ final class UserEpisodeDataManager: Sendable {
 
     func findBy(uploadTaskId: String, dbQueue: GRDBQueue) -> UserEpisode? {
         return grdbFetchOne(UserEpisode.filter(UserEpisode.Columns.uploadTaskId == uploadTaskId), in: dbQueue)
+    }
+
+    func findBy(folderRelativePath: String, dbQueue: GRDBQueue) -> UserEpisode? {
+        return grdbFetchOne(UserEpisode.filter(UserEpisode.Columns.folderRelativePath == folderRelativePath), in: dbQueue)
+    }
+
+    func findBy(contentHash: String, dbQueue: GRDBQueue) -> UserEpisode? {
+        return grdbFetchOne(UserEpisode.filter(UserEpisode.Columns.contentHash == contentHash), in: dbQueue)
+    }
+
+    func findAllFolderBacked(dbQueue: GRDBQueue) -> [UserEpisode] {
+        return grdbFetchAll(UserEpisode.filter(UserEpisode.Columns.folderRelativePath != nil), in: dbQueue)
     }
 
     func findAll(sortedBy: UploadedSort, limit: Int? = nil, dbQueue: GRDBQueue) -> [UserEpisode] {
