@@ -116,7 +116,8 @@ class ShareProfileViewModel: ObservableObject {
     }
 
     nonisolated private static var photoURL: URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         return documentsPath.appendingPathComponent("share_profile_photo.jpg")
     }
 

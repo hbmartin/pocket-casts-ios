@@ -34,9 +34,42 @@ public actor FileSyncManager {
     private var delegate: (any FileSyncDelegate)?
 
     private var syncPassRunning = false
+    private var uploadManifestState: UploadManifestState?
 
     private(set) var lastScanDate: Date?
     private(set) var lastError: String?
+
+    private struct UploadManifestState {
+        var uploads: [String: MergeEngine.UploadEntry]
+        var uploadTombstones: [String: OpStamp]
+
+        init(mergedState: MergeEngine.MergedState) {
+            uploads = mergedState.uploads
+            uploadTombstones = mergedState.uploadTombstones
+        }
+
+        mutating func merge(_ mergedState: MergeEngine.MergedState) {
+            for (uuid, upload) in mergedState.uploads {
+                if let existing = uploads[uuid], upload.stamp <= existing.stamp {
+                    continue
+                }
+                uploads[uuid] = upload
+            }
+
+            for (uuid, tombstone) in mergedState.uploadTombstones {
+                if let existing = uploadTombstones[uuid], tombstone <= existing {
+                    continue
+                }
+                uploadTombstones[uuid] = tombstone
+            }
+        }
+
+        var manifest: [Filesync_UploadIdentity] {
+            uploads.values
+                .filter { uploadTombstones[$0.identity.uuid] == nil }
+                .map(\.identity)
+        }
+    }
 
     public init(dataManager: DataManager = .sharedManager, defaults: UserDefaults = .standard) {
         self.dataManager = dataManager
@@ -112,6 +145,7 @@ public actor FileSyncManager {
             folder: folder,
             dataManager: dataManager,
             localPathResolver: localPathResolver)
+        uploadManifestState = nil
 
         let firstEnableForFolder = !defaults.bool(forKey: DefaultsKey.enabled)
             || defaults.string(forKey: DefaultsKey.folderKind) != kind.rawValue
@@ -121,7 +155,7 @@ public actor FileSyncManager {
         FileLog.shared.addMessage("FileSync: enabled (\(kind.rawValue)) as device \(deviceID)")
 
         if firstEnableForFolder {
-            FileSyncBootstrap(dataManager: dataManager).seedLocalState()
+            try FileSyncBootstrap(dataManager: dataManager).seedLocalState()
         }
         await folder.startChangeMonitoring { [weak self] _ in
             Task { await self?.syncNow() }
@@ -151,6 +185,7 @@ public actor FileSyncManager {
         folder = nil
         uploadsScanner = nil
         materializer = nil
+        uploadManifestState = nil
         defaults.set(false, forKey: DefaultsKey.enabled)
         defaults.removeObject(forKey: DefaultsKey.bookmarkData)
         dataManager.deleteAllFileSyncCursors()
@@ -162,6 +197,7 @@ public actor FileSyncManager {
     public func importUpload(from sourceURL: URL, group: String? = nil) async throws -> String {
         guard let materializer else { throw SyncFolderError.ubiquityUnavailable }
         let relative = try await materializer.importUpload(from: sourceURL, group: group)
+        uploadManifestState = nil
         onUploadsChanged?()
         return relative
     }
@@ -170,6 +206,7 @@ public actor FileSyncManager {
         guard let materializer, let uploadsScanner else { throw SyncFolderError.ubiquityUnavailable }
         let (_, folderURL) = try await materializer.materialize(episodeUuid: episodeUuid)
         try await uploadsScanner.resolveIdentity(episodeUuid: episodeUuid, materializedURL: folderURL, manifest: [])
+        uploadManifestState = nil
         onUploadsChanged?()
     }
 
@@ -187,11 +224,11 @@ public actor FileSyncManager {
         }
         dataManager.delete(userEpisodeUuid: episodeUuid)
         dataManager.journalFileSyncDelete(entityType: .userEpisode, uuid: episodeUuid)
+        uploadManifestState = nil
         onUploadsChanged?()
         if let relativePath = episode.folderRelativePath {
             try await folder.coordinatedDelete("\(FileSyncFormat.uploadsDirectory)/\(relativePath)")
         }
-        onUploadsChanged?()
     }
 
     public func forgetDevice(id peerDeviceID: String) async throws {
@@ -221,7 +258,9 @@ public actor FileSyncManager {
 
             let ingest = try await ingestor.ingest()
             let hasRemoteChanges = ingest.opsRead > 0 || ingest.state.hasContent
-            let uploadState = try await ingestor.fullMerge()
+            let uploadState = try await currentUploadManifestState(
+                ingestor: ingestor,
+                ingestState: ingest.state)
             if hasRemoteChanges {
                 let applyResult = await applier.apply(ingest.state)
                 if applyResult.queueChanged
@@ -231,13 +270,12 @@ public actor FileSyncManager {
                     onUploadsChanged?()
                 }
             }
-            let uploadsManifest = uploadState.uploads.values
-                .filter { uploadState.uploadTombstones[$0.identity.uuid] == nil }
-                .map(\.identity)
+            let uploadsManifest = uploadState.manifest
             ingestor.commit(ingest)
 
             let scanResult = try await uploadsScanner.scan(manifest: uploadsManifest)
             if scanResult.created + scanResult.adopted + scanResult.moved + scanResult.reset + scanResult.removed > 0 {
+                uploadManifestState = nil
                 onUploadsChanged?()
             }
 
@@ -321,6 +359,21 @@ public actor FileSyncManager {
 
     private func appVersion() -> String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    }
+
+    private func currentUploadManifestState(
+        ingestor: RemoteOpIngestor,
+        ingestState: MergeEngine.MergedState
+    ) async throws -> UploadManifestState {
+        if var cachedState = uploadManifestState {
+            cachedState.merge(ingestState)
+            uploadManifestState = cachedState
+            return cachedState
+        }
+
+        let fullState = UploadManifestState(mergedState: try await ingestor.fullMerge())
+        uploadManifestState = fullState
+        return fullState
     }
 }
 

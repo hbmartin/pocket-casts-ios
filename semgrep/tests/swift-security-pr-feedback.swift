@@ -906,3 +906,18 @@ struct SafeNativeEmptyStateThemeColor {
         return configuration
     }
 }
+
+enum UnsafeFileManagerURLLookup {
+    static var directory: URL {
+        // ruleid: pocketcasts.filemanager-urls-no-force-index
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+}
+
+enum SafeFileManagerURLLookup {
+    static var directory: URL {
+        // ok: pocketcasts.filemanager-urls-no-force-index
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+    }
+}
