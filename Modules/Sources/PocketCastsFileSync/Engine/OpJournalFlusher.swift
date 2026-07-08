@@ -182,6 +182,11 @@ struct OpJournalFlusher {
                   let folder = dataManager.findFolder(uuid: uuid) else { return nil }
             return .record(RecordConverters.record(from: folder))
 
+        case (.bookmark, .upsert):
+            guard let uuid = group.entityUuid,
+                  let bookmark = dataManager.bookmarks.bookmark(for: uuid, allowDeleted: true) else { return nil }
+            return .record(RecordConverters.record(from: bookmark))
+
         case (.userEpisode, .upsert):
             guard let uuid = group.entityUuid,
                   let episode = dataManager.findUserEpisode(uuid: uuid) else { return nil }

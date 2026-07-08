@@ -49,6 +49,12 @@ struct FileSyncBootstrap {
                 entityType: .folder, uuid: folder.uuid, changedFields: [], wallClockMs: fallback)
         }
 
+        for bookmark in dataManager.bookmarks.allBookmarks(includeDeleted: false) {
+            dataManager.seedFileSyncJournal(
+                entityType: .bookmark, uuid: bookmark.uuid, changedFields: [],
+                wallClockMs: Int64(bookmark.created.timeIntervalSince1970 * 1000))
+        }
+
         for episode in dataManager.allFolderBackedUserEpisodes() where episode.identity == .canonical {
             dataManager.seedFileSyncJournal(
                 entityType: .userEpisode, uuid: episode.uuid,

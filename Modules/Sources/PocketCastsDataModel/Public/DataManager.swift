@@ -96,6 +96,14 @@ public class DataManager {
 
         autoAddCandidates = AutoAddCandidatesDataManager(dbQueue: dbQueue)
         bookmarks = BookmarkDataManager(dbQueue: dbQueue)
+        bookmarks.fileSyncChangeHook = { [weak self] uuid, isDelete in
+            guard let self, !DataManager.isApplyingRemoteFileSyncOps else { return }
+            if isDelete {
+                self.journalFileSyncDelete(entityType: .bookmark, uuid: uuid)
+            } else {
+                self.journalFileSyncUpsert(entityType: .bookmark, uuid: uuid, changedFields: [])
+            }
+        }
         ratings = RatingsDataManager()
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
     }

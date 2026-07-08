@@ -74,6 +74,12 @@ public struct BookmarkDataManager: Sendable {
     ///   - time: The playback time for the bookmark
     ///   - transcription: A transcription of the clip if available
     @discardableResult
+    /// File-sync change hook: fired with (bookmarkUuid, isDelete) after any
+    /// user-intent mutation, so changes journal into the file-sync channel
+    /// without reusing the server syncStatus bookkeeping. Set by DataManager.
+    // nonisolated(unsafe): assigned once during DataManager init, before use.
+    nonisolated(unsafe) public var fileSyncChangeHook: ((String, Bool) -> Void)?
+
     public func add(uuid: String? = nil, episodeUuid: String, podcastUuid: String?, title: String, time: TimeInterval, dateCreated: Date = Date(), syncStatus: SyncStatus = .notSynced) -> String? {
         var row = BookmarkRow()
         row.uuid = uuid ?? UUID().uuidString.lowercased()
@@ -88,6 +94,9 @@ public struct BookmarkDataManager: Sendable {
 
         let success = dbQueue.write { db in
             try rowToSave.insert(db)
+        }
+        if success, syncStatus == .notSynced {
+            fileSyncChangeHook?(rowToSave.uuid, false)
         }
         return success ? rowToSave.uuid : nil
     }
@@ -114,6 +123,9 @@ public struct BookmarkDataManager: Sendable {
                 assignments.append(BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
 
                 try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
+            }
+            if syncStatus == .notSynced {
+                fileSyncChangeHook?(uuid, false)
             }
             return true
         } catch {
@@ -204,6 +216,9 @@ public struct BookmarkDataManager: Sendable {
                                BookmarkRow.Columns.deleted.set(to: true),
                                BookmarkRow.Columns.deletedModifiedDate.set(to: deletedModifiedInterval),
                                BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+            }
+            if syncStatus == .notSynced {
+                uuids.forEach { fileSyncChangeHook?($0, true) }
             }
             return true
         } catch {

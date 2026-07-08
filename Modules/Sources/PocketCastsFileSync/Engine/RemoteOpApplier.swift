@@ -41,6 +41,9 @@ struct RemoteOpApplier {
             applyPlaylist(uuid: uuid, merged.record)
             result.playlistsApplied += 1
         }
+        for (uuid, merged) in state.bookmarks {
+            await applyBookmark(uuid: uuid, merged.record)
+        }
         if !state.upNextOps.isEmpty {
             result.queueChanged = await applyUpNext(UpNextMerger.replay(ops: state.upNextOps))
         }
@@ -168,6 +171,47 @@ struct RemoteOpApplier {
             }()
             folder = RecordConverters.apply(item, to: folder)
             _ = dataManager.save(folder: folder)
+        }
+    }
+
+    // MARK: - Bookmarks
+
+    /// Bookmark writes pass `syncStatus: .synced`, which both skips the
+    /// server-sync queue and suppresses the file-sync change hook — no
+    /// echo either way.
+    private func applyBookmark(uuid: String, _ item: Api_SyncUserBookmark) async {
+        let existing = dataManager.bookmarks.bookmark(for: uuid, allowDeleted: true)
+
+        if item.hasIsDeleted, item.isDeleted.value {
+            if let existing, !existing.deleted {
+                _ = await dataManager.bookmarks.remove(bookmarks: [existing], syncStatus: .synced)
+            }
+            return
+        }
+
+        guard let existing else {
+            guard !item.episodeUuid.isEmpty else { return }
+            _ = dataManager.bookmarks.add(
+                uuid: uuid,
+                episodeUuid: item.episodeUuid,
+                podcastUuid: item.podcastUuid.isEmpty ? nil : item.podcastUuid,
+                title: item.title.value,
+                time: TimeInterval(item.time.value),
+                dateCreated: item.hasCreatedAt ? item.createdAt.date : Date(),
+                syncStatus: .synced)
+            return
+        }
+
+        // Title LWW on the embedded stamp.
+        if item.hasTitle, item.title.value != existing.title {
+            let incomingModified = item.titleModified.value
+            let localModified = existing.titleModified.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0
+            if incomingModified > localModified {
+                _ = await dataManager.bookmarks.update(
+                    bookmark: existing, title: item.title.value,
+                    modified: Date(timeIntervalSince1970: Double(incomingModified) / 1000),
+                    syncStatus: .synced)
+            }
         }
     }
 
