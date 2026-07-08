@@ -73,13 +73,13 @@ public struct BookmarkDataManager: Sendable {
     ///   - podcastUuid: The UUID of the podcast of the episode, can be nil for user episodes
     ///   - time: The playback time for the bookmark
     ///   - transcription: A transcription of the clip if available
-    @discardableResult
     /// File-sync change hook: fired with (bookmarkUuid, isDelete) after any
     /// user-intent mutation, so changes journal into the file-sync channel
     /// without reusing the server syncStatus bookkeeping. Set by DataManager.
     // nonisolated(unsafe): assigned once during DataManager init, before use.
     nonisolated(unsafe) public var fileSyncChangeHook: ((String, Bool) -> Void)?
 
+    @discardableResult
     public func add(uuid: String? = nil, episodeUuid: String, podcastUuid: String?, title: String, time: TimeInterval, dateCreated: Date = Date(), syncStatus: SyncStatus = .notSynced) -> String? {
         var row = BookmarkRow()
         row.uuid = uuid ?? UUID().uuidString.lowercased()

@@ -2,7 +2,9 @@ import Foundation
 import GRDB
 import PocketCastsUtils
 
-class FileSyncJournalDataManager {
+/// Stateless (every method takes its dbQueue), so Sendable — required for
+/// the file-scoped shared instance in DataManager+FileSync.
+final class FileSyncJournalDataManager: Sendable {
 
     // MARK: - Journal
 
