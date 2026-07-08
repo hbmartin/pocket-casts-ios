@@ -239,12 +239,11 @@ class PlaylistDetailViewController: PCViewController, UIScrollViewDelegate {
             navTitleLabel.anchorToAllSidesOf(view: view)
             return view
         }()
-        defaultRightBarButton = FakeNavBarButton.makeBarButtonItem(
-            image: UIImage(named: "more"),
-            accessibilityLabel: L10n.accessibilityMoreActions,
-            target: self,
-            action: #selector(moreTapped)
-        )
+        defaultRightBarButton = {
+            let item = UIBarButtonItem(image: UIImage(named: "more"), style: .plain, target: self, action: #selector(moreTapped))
+            item.accessibilityLabel = L10n.accessibilityMoreActions
+            return item
+        }()
         customRightBtn = defaultRightBarButton
     }
 

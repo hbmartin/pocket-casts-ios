@@ -7,7 +7,7 @@ import Foundation
 /// Requires the iCloud Documents entitlement and an `NSUbiquitousContainers`
 /// Info.plist entry — see docs/file-sync-format.md.
 public actor UbiquitySyncFolder: SyncFolder {
-    public nonisolated let kind: SyncFolderKind = .ubiquity
+    nonisolated public let kind: SyncFolderKind = .ubiquity
 
     private let containerIdentifier: String?
     private var resolvedRoot: URL?
@@ -56,6 +56,11 @@ public actor UbiquitySyncFolder: SyncFolder {
     public func coordinatedWrite(_ relativePath: String, data: Data) async throws {
         let root = try await rootURL()
         try await CoordinatedFileIO.write(root.appendingPathComponent(relativePath), data: data)
+    }
+
+    public func createDirectory(_ relativePath: String) async throws {
+        let root = try await rootURL()
+        try await CoordinatedFileIO.createDirectory(root.appendingPathComponent(relativePath, isDirectory: true))
     }
 
     public func coordinatedCopy(from localURL: URL, to relativePath: String) async throws {

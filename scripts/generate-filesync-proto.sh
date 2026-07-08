@@ -15,28 +15,36 @@
 # types must never change once shipped — see the contract notes in the .proto
 # files.
 
-set -e
+set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if command -v brew &> /dev/null; then
-    for pkg in protobuf swift-protobuf; do
-        if brew list --formula "$pkg" &> /dev/null; then
-            brew upgrade "$pkg" || echo "Warning: failed to upgrade $pkg; continuing with the installed version."
-        else
-            brew install "$pkg"
-        fi
-    done
-else
-    echo "Brew is not installed. Make sure protoc + protoc-gen-swift is installed."
-fi
+REQUIRED_PROTOC_VERSION="${FILESYNC_PROTOC_VERSION:-libprotoc 35.1}"
+REQUIRED_PROTOC_GEN_SWIFT_VERSION="${FILESYNC_PROTOC_GEN_SWIFT_VERSION:-1.36.1}"
 
 for tool in protoc protoc-gen-swift; do
     if ! command -v "$tool" &> /dev/null; then
-        echo "Error: $tool is not installed or not on PATH. Install protobuf and swift-protobuf and try again."
+        echo "Error: $tool is not installed or not on PATH."
+        echo "Install the pinned protobuf tools, then re-run:"
+        echo "  protoc: $REQUIRED_PROTOC_VERSION"
+        echo "  protoc-gen-swift: $REQUIRED_PROTOC_GEN_SWIFT_VERSION"
         exit 1
     fi
 done
+
+actual_protoc_version="$(protoc --version)"
+if [[ "$actual_protoc_version" != "$REQUIRED_PROTOC_VERSION" ]]; then
+    echo "Error: expected protoc $REQUIRED_PROTOC_VERSION but found $actual_protoc_version."
+    echo "Set FILESYNC_PROTOC_VERSION only when intentionally regenerating with a reviewed tool version."
+    exit 1
+fi
+
+actual_protoc_gen_swift_version="$(protoc-gen-swift --version)"
+if [[ "$actual_protoc_gen_swift_version" != *"$REQUIRED_PROTOC_GEN_SWIFT_VERSION"* ]]; then
+    echo "Error: expected protoc-gen-swift $REQUIRED_PROTOC_GEN_SWIFT_VERSION but found $actual_protoc_gen_swift_version."
+    echo "Set FILESYNC_PROTOC_GEN_SWIFT_VERSION only when intentionally regenerating with a reviewed tool version."
+    exit 1
+fi
 
 PROTO_DIR=./Modules/Sources/PocketCastsFileSync/Proto
 PROTO_OUT=./Modules/Sources/PocketCastsFileSync/Generated

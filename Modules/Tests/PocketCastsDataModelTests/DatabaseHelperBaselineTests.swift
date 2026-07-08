@@ -113,7 +113,9 @@ final class DatabaseHelperBaselineTests: XCTestCase {
         "PlaylistEpisodeHistory",
         "PodcastFoldersHistory",
         "Bookmark",
-        "NetworkDataUsage"
+        "NetworkDataUsage",
+        "FileSyncJournal",
+        "FileSyncCursor"
     ]
 
     private static let expectedIndexes: Set<String> = [
@@ -126,6 +128,9 @@ final class DatabaseHelperBaselineTests: XCTestCase {
         "playlist_episode_playlist_uuid",
         "candidate_episode",
         "bookmark_uuid",
-        "network_data_timestamp"
+        "network_data_timestamp",
+        "file_sync_journal_unflushed",
+        "user_episode_folder_relative_path",
+        "user_episode_content_hash"
     ]
 }

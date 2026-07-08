@@ -31,14 +31,11 @@ public enum SyncFolderBootstrapper {
         // Fixed layout. Directory creation is idempotent; the uploads and
         // mirrors directories are what users see in the Files app, so they
         // must exist from day one.
-        let root = try await folder.rootURL()
         for directory in [FileSyncFormat.syncDirectory,
                           FileSyncFormat.uploadsDirectory,
                           FileSyncFormat.podcastMirrorsDirectory,
                           FileSyncFormat.deviceDirectory(deviceID: deviceID)] {
-            try? FileManager.default.createDirectory(
-                at: root.appendingPathComponent(directory, isDirectory: true),
-                withIntermediateDirectories: true)
+            try await folder.createDirectory(directory)
         }
     }
 

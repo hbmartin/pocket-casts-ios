@@ -79,7 +79,7 @@ jobs:
           # Optional: real service credentials for support/telemetry integrations.
           # When unset, placeholder credentials are generated and those
           # integrations are disabled in the build.
-          POCKET_CASTS_CREDENTIALS_JSON: ${{ github.event_name == 'workflow_dispatch' && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
+          POCKET_CASTS_CREDENTIALS_JSON: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
           # Optional: dSYM upload to Bitdrift. Skipped when the secret is unset.
           BITDRIFT_API_KEY: ${{ secrets.BITDRIFT_API_KEY }}
           POCKET_CASTS_SKIP_BITDRIFT_UPLOAD: ${{ secrets.BITDRIFT_API_KEY == '' && '1' || '0' }}

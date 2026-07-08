@@ -51,6 +51,8 @@ public enum SyncFolderError: Error, Sendable {
     /// iCloud is unavailable (no account, or Documents disabled).
     case ubiquityUnavailable
     case fileNotFound(String)
+    /// A caller supplied a relative path component that could escape its intended directory.
+    case invalidPathComponent(String)
     /// The item never finished materializing within the timeout.
     case materializeTimeout(String)
     /// The folder was written by a newer format version than this app reads.
@@ -80,6 +82,9 @@ public protocol SyncFolder: Sendable {
 
     /// Coordinated whole-file write, creating intermediate directories.
     func coordinatedWrite(_ relativePath: String, data: Data) async throws
+
+    /// Coordinated directory creation, including intermediate directories.
+    func createDirectory(_ relativePath: String) async throws
 
     /// Coordinated copy of a local file into the folder.
     func coordinatedCopy(from localURL: URL, to relativePath: String) async throws

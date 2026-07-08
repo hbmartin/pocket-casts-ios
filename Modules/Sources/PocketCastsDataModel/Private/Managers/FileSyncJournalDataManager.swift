@@ -2,28 +2,46 @@ import Foundation
 import GRDB
 import PocketCastsUtils
 
-class FileSyncJournalDataManager {
+struct FileSyncJournalDataManager: Sendable {
 
     // MARK: - Journal
 
     func record(_ entry: FileSyncJournalEntry, dbQueue: GRDBQueue) {
-        var toSave = entry
-        if toSave.id == 0 {
-            toSave.id = DBUtils.generateUniqueId()
-        }
-        if toSave.wallClockMs == 0 {
-            toSave.wallClockMs = DBUtils.currentUTCTimeInMillis()
-        }
-        let entryToSave = toSave
         dbQueue.write { db in
-            try entryToSave.insert(db)
+            try record(entry, db: db)
         }
+    }
+
+    func record(_ entry: FileSyncJournalEntry, db: Database) throws {
+        var entryToSave = entryWithDefaults(entry)
+        try entryToSave.insert(db)
     }
 
     /// Coalesces consecutive upserts for the same entity+fields: position
     /// heartbeats would otherwise pile up a row a minute. The newest row's
     /// timestamp wins; the older duplicate is removed.
     func recordCoalescing(_ entry: FileSyncJournalEntry, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try recordCoalescing(entry, db: db)
+        }
+    }
+
+    func recordCoalescing(_ entry: FileSyncJournalEntry, db: Database) throws {
+        var entryToSave = entryWithDefaults(entry)
+        if entryToSave.opType == FileSyncJournalEntry.OpType.upsert.rawValue,
+           let uuid = entryToSave.entityUuid {
+            try FileSyncJournalEntry
+                .filter(FileSyncJournalEntry.Columns.entityType == entryToSave.entityType)
+                .filter(FileSyncJournalEntry.Columns.entityUuid == uuid)
+                .filter(FileSyncJournalEntry.Columns.opType == entryToSave.opType)
+                .filter(FileSyncJournalEntry.Columns.fields == entryToSave.fields)
+                .filter(FileSyncJournalEntry.Columns.flushedSeq == nil)
+                .deleteAll(db)
+        }
+        try entryToSave.insert(db)
+    }
+
+    private func entryWithDefaults(_ entry: FileSyncJournalEntry) -> FileSyncJournalEntry {
         var toSave = entry
         if toSave.id == 0 {
             toSave.id = DBUtils.generateUniqueId()
@@ -31,20 +49,7 @@ class FileSyncJournalDataManager {
         if toSave.wallClockMs == 0 {
             toSave.wallClockMs = DBUtils.currentUTCTimeInMillis()
         }
-        let entryToSave = toSave
-        dbQueue.write { db in
-            if entryToSave.opType == FileSyncJournalEntry.OpType.upsert.rawValue,
-               let uuid = entryToSave.entityUuid {
-                try FileSyncJournalEntry
-                    .filter(FileSyncJournalEntry.Columns.entityType == entryToSave.entityType)
-                    .filter(FileSyncJournalEntry.Columns.entityUuid == uuid)
-                    .filter(FileSyncJournalEntry.Columns.opType == entryToSave.opType)
-                    .filter(FileSyncJournalEntry.Columns.fields == entryToSave.fields)
-                    .filter(FileSyncJournalEntry.Columns.flushedSeq == nil)
-                    .deleteAll(db)
-            }
-            try entryToSave.insert(db)
-        }
+        return toSave
     }
 
     func unflushedEntries(limit: Int, dbQueue: GRDBQueue) -> [FileSyncJournalEntry] {

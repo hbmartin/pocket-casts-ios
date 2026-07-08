@@ -13,7 +13,7 @@ import Foundation
 /// drives `FolderScanner` on its scan schedule instead. `startChangeMonitoring`
 /// is therefore a no-op here.
 public actor BookmarkSyncFolder: SyncFolder {
-    public nonisolated let kind: SyncFolderKind = .securityScopedBookmark
+    nonisolated public let kind: SyncFolderKind = .securityScopedBookmark
 
     private var bookmarkData: Data
     private var resolvedRoot: URL?
@@ -76,6 +76,12 @@ public actor BookmarkSyncFolder: SyncFolder {
     public func coordinatedWrite(_ relativePath: String, data: Data) async throws {
         try await withAccess { root in
             try await CoordinatedFileIO.write(root.appendingPathComponent(relativePath), data: data)
+        }
+    }
+
+    public func createDirectory(_ relativePath: String) async throws {
+        try await withAccess { root in
+            try await CoordinatedFileIO.createDirectory(root.appendingPathComponent(relativePath, isDirectory: true))
         }
     }
 

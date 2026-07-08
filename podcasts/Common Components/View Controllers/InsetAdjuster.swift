@@ -5,16 +5,9 @@ import UIKit
 @MainActor
 class InsetAdjuster {
 
-    let ignoreMiniPlayer: Bool
-
-    init(ignoreMiniPlayer: Bool = false) {
-        self.ignoreMiniPlayer = ignoreMiniPlayer
-    }
-
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-
 
     var isMultiSelectEnabled: Bool = false {
         didSet {
@@ -41,6 +34,6 @@ class InsetAdjuster {
         guard let scrollView = scrollViewAdjustableToMiniPlayer else {
             return
         }
-        scrollView.updateContentInset(multiSelectEnabled: self.isMultiSelectEnabled, ignoreMiniPlayer: ignoreMiniPlayer)
+        scrollView.updateContentInset(multiSelectEnabled: self.isMultiSelectEnabled)
     }
 }

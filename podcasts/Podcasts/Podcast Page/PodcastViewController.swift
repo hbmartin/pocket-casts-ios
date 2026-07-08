@@ -316,12 +316,11 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
             navTitleLabel.anchorToAllSidesOf(view: view)
             return view
         }()
-        shareBarButtonItem = FakeNavBarButton.makeBarButtonItem(
-            image: UIImage(named: "podcast-share"),
-            accessibilityLabel: L10n.share,
-            target: self,
-            action: #selector(shareTapped)
-        )
+        shareBarButtonItem = {
+            let item = UIBarButtonItem(image: UIImage(named: "podcast-share"), style: .plain, target: self, action: #selector(shareTapped))
+            item.accessibilityLabel = L10n.share
+            return item
+        }()
         customRightBtn = shareBarButtonItem
 
         if podcast != nil, episodeInfo.isEmpty {

@@ -14,7 +14,6 @@ struct SearchView: View {
     var body: some View {
         searchView
             .ignoresSafeArea(.keyboard)
-            .miniPlayerSafeAreaInset()
             .applyDefaultThemeOptions()
     }
 

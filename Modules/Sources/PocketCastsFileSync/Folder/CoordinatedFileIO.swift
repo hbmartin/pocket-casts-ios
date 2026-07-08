@@ -54,6 +54,30 @@ enum CoordinatedFileIO {
         }
     }
 
+    static func createDirectory(_ url: URL) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            queue.async {
+                let coordinator = NSFileCoordinator(filePresenter: nil)
+                var coordinatorError: NSError?
+                var result: Result<Void, Error>?
+                coordinator.coordinate(writingItemAt: url, options: .forMerging, error: &coordinatorError) { actualURL in
+                    result = Result {
+                        try FileManager.default.createDirectory(
+                            at: actualURL,
+                            withIntermediateDirectories: true)
+                    }
+                }
+                if let coordinatorError {
+                    continuation.resume(throwing: coordinatorError)
+                } else if let result {
+                    continuation.resume(with: result)
+                } else {
+                    continuation.resume(throwing: SyncFolderError.fileNotFound(url.lastPathComponent))
+                }
+            }
+        }
+    }
+
     static func copy(from source: URL, to destination: URL) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             queue.async {
@@ -87,21 +111,24 @@ enum CoordinatedFileIO {
     static func delete(_ url: URL) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             queue.async {
-                guard FileManager.default.fileExists(atPath: url.path) else {
-                    // Another device may have deleted first; that is success.
-                    continuation.resume()
-                    return
-                }
                 let coordinator = NSFileCoordinator(filePresenter: nil)
                 var coordinatorError: NSError?
                 var result: Result<Void, Error>?
                 coordinator.coordinate(writingItemAt: url, options: .forDeleting, error: &coordinatorError) { actualURL in
                     result = Result {
-                        try FileManager.default.removeItem(at: actualURL)
+                        do {
+                            try FileManager.default.removeItem(at: actualURL)
+                        } catch where isMissingFileError(error) {
+                            // Another device may have deleted first; that is success.
+                        }
                     }
                 }
                 if let coordinatorError {
-                    continuation.resume(throwing: coordinatorError)
+                    if isMissingFileError(coordinatorError) {
+                        continuation.resume()
+                    } else {
+                        continuation.resume(throwing: coordinatorError)
+                    }
                 } else if let result {
                     continuation.resume(with: result)
                 } else {
@@ -109,6 +136,12 @@ enum CoordinatedFileIO {
                 }
             }
         }
+    }
+
+    private static func isMissingFileError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return (nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileNoSuchFileError)
+            || (nsError.domain == NSPOSIXErrorDomain && nsError.code == ENOENT)
     }
 
     /// Recursive listing with placeholder awareness. iCloud placeholders

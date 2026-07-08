@@ -299,12 +299,21 @@ class PlaylistDataManager {
     // instance, preserving the existing back-mutation behaviour).
     @discardableResult
     func save(playlist: EpisodeFilter, dbQueue: GRDBQueue) -> EpisodeFilter {
+        var saved = playlist
+        dbQueue.write { db in
+            saved = try save(playlist: playlist, db: db)
+        }
+        return saved
+    }
+
+    @discardableResult
+    func save(playlist: EpisodeFilter, db: Database) throws -> EpisodeFilter {
         var playlist = playlist
         // Resolve insert-vs-update by uuid (the stable identity), not by the local row id: value-type
         // callers don't get the assigned id back, so a re-save of an already-persisted filter still
         // arrives with id == 0. Keying on id alone would insert a duplicate row for the same uuid
         // (e.g. `save(filter)` then `add(episodes:to:filter)`, whose internal save still sees id == 0).
-        if playlist.id == 0, !playlist.uuid.isEmpty, let existingId = existingPlaylistId(uuid: playlist.uuid, dbQueue: dbQueue) {
+        if playlist.id == 0, !playlist.uuid.isEmpty, let existingId = try existingPlaylistId(uuid: playlist.uuid, db: db) {
             playlist.id = existingId
         }
         let isInsert = playlist.id == 0
@@ -313,13 +322,7 @@ class PlaylistDataManager {
         }
         playlist.playlistUpdateDate = .now
 
-        do {
-            try dbQueue.dbPool.write { db in
-                try playlist.save(db)
-            }
-        } catch {
-            FileLog.shared.addMessage("PlaylistDataManager.save error: \(error)")
-        }
+        try playlist.save(db)
 
         return playlist
     }
@@ -327,6 +330,13 @@ class PlaylistDataManager {
     /// The persisted row id for the playlist with this uuid, or nil if it isn't saved yet.
     private func existingPlaylistId(uuid: String, dbQueue: GRDBQueue) -> Int64? {
         return dbQueue.fetchOne(EpisodeFilter.filter(EpisodeFilter.Columns.uuid == uuid))?.id
+    }
+
+    private func existingPlaylistId(uuid: String, db: Database) throws -> Int64? {
+        try EpisodeFilter
+            .filter(EpisodeFilter.Columns.uuid == uuid)
+            .fetchOne(db)?
+            .id
     }
 
     /// Update the playlistUpdateDate for a specific playlist to the given date (defaults to now)
@@ -340,11 +350,15 @@ class PlaylistDataManager {
 
     func delete(playlist: EpisodeFilter, dbQueue: GRDBQueue) {
         dbQueue.write { db in
-            try EpisodeFilter.filter(EpisodeFilter.Columns.uuid == playlist.uuid).deleteAll(db)
-            try Table(DataManager.playlistEpisodeTableName)
-                .filter(Column("playlist_uuid") == playlist.uuid || Column("playlist_id") == playlist.id)
-                .deleteAll(db)
+            try delete(playlist: playlist, db: db)
         }
+    }
+
+    func delete(playlist: EpisodeFilter, db: Database) throws {
+        try EpisodeFilter.filter(EpisodeFilter.Columns.uuid == playlist.uuid).deleteAll(db)
+        try Table(DataManager.playlistEpisodeTableName)
+            .filter(Column("playlist_uuid") == playlist.uuid || Column("playlist_id") == playlist.id)
+            .deleteAll(db)
     }
 
     func markAllSynced(dbQueue: GRDBQueue) {
