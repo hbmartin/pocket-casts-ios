@@ -138,8 +138,13 @@ public actor FileSyncManager {
     public func restoreIfEnabled() async {
         guard isEnabled, folder == nil else { return }
         do {
-            if defaults.string(forKey: DefaultsKey.folderKind) == SyncFolderKind.securityScopedBookmark.rawValue,
-               let bookmark = defaults.data(forKey: DefaultsKey.bookmarkData) {
+            if defaults.string(forKey: DefaultsKey.folderKind) == SyncFolderKind.securityScopedBookmark.rawValue {
+                // A configured picked folder whose bookmark data is gone must
+                // fail loudly (the UI asks for a re-pick), not silently
+                // re-point sync at the iCloud container.
+                guard let bookmark = defaults.data(forKey: DefaultsKey.bookmarkData) else {
+                    throw SyncFolderError.bookmarkUnresolvable
+                }
                 try await enable(folder: BookmarkSyncFolder(bookmarkData: bookmark),
                                  kind: .securityScopedBookmark)
             } else {
@@ -298,7 +303,7 @@ public actor FileSyncManager {
                 }
                 devices.append(FileSyncStatus.Device(
                     deviceID: peerID,
-                    name: info?.name ?? "Unknown device",
+                    name: info?.name ?? "",
                     model: info?.model ?? "",
                     appVersion: info?.appVersion ?? "",
                     lastSeen: info.flatMap { $0.lastSeenMs > 0 ? Date(timeIntervalSince1970: Double($0.lastSeenMs) / 1000) : nil },
@@ -317,12 +322,11 @@ public actor FileSyncManager {
 
     // MARK: Device metadata
 
+    /// Fallback only: the app injects the user-facing name
+    /// (UIDevice.current.name, main-actor-bound) via
+    /// `configureDeviceMetadata`; this actor can't read it directly.
     private func deviceDisplayName() -> String {
-        #if canImport(UIKit) && !os(watchOS)
-        return ProcessInfo.processInfo.hostName
-        #else
-        return ProcessInfo.processInfo.hostName
-        #endif
+        ProcessInfo.processInfo.hostName
     }
 
     private func deviceModelIdentifier() -> String {

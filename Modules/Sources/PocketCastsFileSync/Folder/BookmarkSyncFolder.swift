@@ -13,7 +13,7 @@ import Foundation
 /// drives `FolderScanner` on its scan schedule instead. `startChangeMonitoring`
 /// is therefore a no-op here.
 public actor BookmarkSyncFolder: SyncFolder {
-    public nonisolated let kind: SyncFolderKind = .securityScopedBookmark
+    nonisolated public let kind: SyncFolderKind = .securityScopedBookmark
 
     private var bookmarkData: Data
     private var resolvedRoot: URL?

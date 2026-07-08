@@ -7,7 +7,7 @@ import Foundation
 /// Requires the iCloud Documents entitlement and an `NSUbiquitousContainers`
 /// Info.plist entry — see docs/file-sync-format.md.
 public actor UbiquitySyncFolder: SyncFolder {
-    public nonisolated let kind: SyncFolderKind = .ubiquity
+    nonisolated public let kind: SyncFolderKind = .ubiquity
 
     private let containerIdentifier: String?
     private var resolvedRoot: URL?

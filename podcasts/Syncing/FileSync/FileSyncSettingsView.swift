@@ -81,7 +81,7 @@ struct FileSyncSettingsView: View {
             ForEach(model.status.devices) { device in
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
-                        Text(device.name.isEmpty ? device.model : device.name)
+                        Text(displayName(for: device))
                             .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
                         if device.isThisDevice {
                             Text(L10n.fileSyncDevicesThisDevice)
@@ -111,6 +111,13 @@ struct FileSyncSettingsView: View {
                 }
             }
         }
+    }
+
+    /// Peers that never wrote a device name (or predate device.pb) fall back
+    /// to model identifier, then raw device ID — data, not localizable copy.
+    private func displayName(for device: FileSyncStatus.Device) -> String {
+        if !device.name.isEmpty { return device.name }
+        return device.model.isEmpty ? device.deviceID : device.model
     }
 
     private var diagnosticsSection: some View {

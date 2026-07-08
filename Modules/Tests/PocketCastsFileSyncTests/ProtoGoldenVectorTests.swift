@@ -31,7 +31,8 @@ final class ProtoGoldenVectorTests: XCTestCase {
 
         guard case .record(let record)? = envelope.payload,
               case .episode(let episode)? = record.record else {
-            return XCTFail("expected an episode record payload")
+            XCTFail("expected an episode record payload")
+            return
         }
         XCTAssertEqual(episode.uuid, "ep-uuid-1")
         XCTAssertEqual(episode.podcastUuid, "pod-uuid-1")
@@ -52,7 +53,8 @@ final class ProtoGoldenVectorTests: XCTestCase {
         let envelope = try Filesync_OpEnvelope(serializedBytes: bytes)
 
         guard case .upNext(let op)? = envelope.payload else {
-            return XCTFail("expected an up-next payload")
+            XCTFail("expected an up-next payload")
+            return
         }
         XCTAssertEqual(op.action, .replace)
         XCTAssertEqual(op.entries.count, 2)
@@ -68,7 +70,8 @@ final class ProtoGoldenVectorTests: XCTestCase {
 
         guard case .record(let record)? = envelope.payload,
               case .podcast(let podcast)? = record.record else {
-            return XCTFail("expected a podcast record payload")
+            XCTFail("expected a podcast record payload")
+            return
         }
         XCTAssertEqual(podcast.uuid, "pod-uuid-1")
         XCTAssertTrue(podcast.subscribed.value)
@@ -89,7 +92,8 @@ final class ProtoGoldenVectorTests: XCTestCase {
         XCTAssertEqual(snapshot.asOfSeq, 100)
         XCTAssertEqual(snapshot.records.count, 1)
         guard case .folder(let folder)? = snapshot.records[0].record.record else {
-            return XCTFail("expected a folder record")
+            XCTFail("expected a folder record")
+            return
         }
         XCTAssertEqual(folder.folderUuid, "folder-1")
         XCTAssertEqual(folder.name, "News")
