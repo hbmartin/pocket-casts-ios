@@ -16,25 +16,7 @@ class DateHeadingView: UIView {
     }
 
     private func setup() {
-        let label: UILabel
-
-        if LiquidGlass.isEnabled {
-            label = UILabel()
-        } else {
-            let dividerHeight = 1 / UIScreen.main.scale
-            let topDivider = ThemeDividerView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: dividerHeight))
-            topDivider.translatesAutoresizingMaskIntoConstraints = false
-            addSubview(topDivider)
-
-            NSLayoutConstraint.activate([
-                topDivider.heightAnchor.constraint(equalToConstant: dividerHeight),
-                topDivider.leadingAnchor.constraint(equalTo: leadingAnchor),
-                topDivider.trailingAnchor.constraint(equalTo: trailingAnchor),
-                topDivider.topAnchor.constraint(equalTo: topAnchor)
-            ])
-
-            label = ThemeableLabel()
-        }
+        let label = UILabel()
 
         label.textAlignment = .natural
         label.text = title
@@ -64,6 +46,6 @@ class DateHeadingView: UIView {
     }
 
     private func setBgColorForTheme() {
-        backgroundColor = LiquidGlass.isEnabled ? .clear : ThemeColor.primaryUi02()
+        backgroundColor = .clear
     }
 }

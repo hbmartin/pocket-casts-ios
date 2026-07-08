@@ -29,9 +29,7 @@ class DownloadsViewController: PCViewController {
             registerTableCells()
             registerLongPress()
             downloadsTable.allowsMultipleSelectionDuringEditing = true
-            if LiquidGlass.isEnabled {
-                downloadsTable.themeStyle = .primaryUi02
-            }
+            downloadsTable.themeStyle = .primaryUi02
         }
     }
 

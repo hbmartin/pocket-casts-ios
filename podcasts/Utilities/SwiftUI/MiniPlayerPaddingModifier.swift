@@ -2,36 +2,17 @@ import SwiftUI
 
 /// Apply a bottom padding whenever the mini player is visible
 public struct MiniPlayerSafeAreaInset: ViewModifier {
-    @State var isMiniPlayerVisible: Bool = false
     let multipler: CGFloat
-    let isEnabled: Bool
 
     init(multipler: CGFloat) {
         self.multipler = multipler
-        self.isEnabled = !LiquidGlass.isEnabled
     }
 
     public func body(content: Content) -> some View {
-        if isEnabled {
-            content
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    // Adjust the bottom inset only when the mini player is visible
-                    Color.clear
-                        .frame(height: (isMiniPlayerVisible ? Constants.Values.miniPlayerOffset : 0) * multipler)
-                }
-                .onAppear {
-                    isMiniPlayerVisible = (PlaybackManager.shared.currentEpisode() != nil)
-                }
-                .ignoresSafeArea(.keyboard)
-                .onReceive(NotificationCenter.default.publisher(for: Constants.Notifications.miniPlayerDidAppear), perform: { _ in
-                    isMiniPlayerVisible = true
-                })
-                .onReceive(NotificationCenter.default.publisher(for: Constants.Notifications.miniPlayerDidDisappear), perform: { _ in
-                    isMiniPlayerVisible = false
-                })
-        } else {
-            content
-        }
+        // On iOS 26 the mini player is presented as a `UITabAccessory`, which manages its own
+        // bottom safe-area inset, so this modifier is now a pass-through kept for call-site
+        // compatibility.
+        content
     }
 }
 

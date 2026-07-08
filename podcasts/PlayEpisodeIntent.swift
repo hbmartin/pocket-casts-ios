@@ -17,7 +17,6 @@ struct PlayEpisodeIntent: AudioPlaybackIntent {
 
     static var openAppWhenRun: Bool { return false }
 
-    @available(iOS 26.0, *)
     static var supportedModes: IntentModes { return [.background] }
 
     @MainActor

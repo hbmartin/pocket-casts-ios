@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.3
 
 import PackageDescription
 import CompilerPluginSupport
@@ -19,7 +19,7 @@ let strictConcurrencyTestableSettings: [SwiftSetting] = strictConcurrencySetting
 let package = Package(
     name: "Modules",
     platforms: [
-        .iOS("18.0"), .macOS(.v10_15)
+        .iOS("26.0"), .macOS(.v10_15)
     ],
     products: XcodeSupport.products + [
         .library(

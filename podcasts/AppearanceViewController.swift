@@ -247,9 +247,7 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         }
 
         // The tab bar's minimize-on-scroll behavior only exists on iOS 26's Liquid Glass tab bar.
-        if LiquidGlass.isEnabled {
-            newTableData.append([.tabBarMinimizing])
-        }
+        newTableData.append([.tabBarMinimizing])
 
         tableData = newTableData
         settingsTable.reloadData()

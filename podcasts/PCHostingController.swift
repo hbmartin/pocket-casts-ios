@@ -79,11 +79,7 @@ class PCHostingController<Content>: ThemedHostingController<Content> where Conte
     }
 
     private func setupNavBar() {
-        guard !LiquidGlass.isEnabled else { return }
-        configureNavBarFor(theme: Theme.preferredLightTheme(), traits: UITraitCollection(userInterfaceStyle: .light))
-
-        let preferredThemeWhenDark = Settings.shouldFollowSystemTheme() ? Theme.preferredDarkTheme() : Theme.preferredLightTheme()
-        configureNavBarFor(theme: preferredThemeWhenDark, traits: UITraitCollection(userInterfaceStyle: .dark))
+        // On iOS 26 the system Liquid Glass nav bar manages its own appearance; nothing to do.
     }
 
     private func configureNavBarFor(theme: Theme.ThemeType, traits: UITraitCollection) {

@@ -90,7 +90,7 @@ xcodebuild -project podcasts.xcodeproj \
 [tasks.test]
 description = "Run unit tests (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
-DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0
@@ -105,7 +105,7 @@ exit $TEST_STATUS
 [tasks."test:staging"]
 description = "Run unit tests (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
-DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0
@@ -120,7 +120,7 @@ exit $TEST_STATUS
 [tasks."test:tsan"]
 description = "Run unit tests under Thread Sanitizer (Pocket Casts Staging scheme; ONLY_TESTING/SIMULATOR_OS overridable)"
 run = '''
-DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0
@@ -136,7 +136,7 @@ exit $TEST_STATUS
 [tasks."test:smoke-ui"]
 description = "Run the PocketCastsUITests launch/navigation smoke suite on the simulator (SIMULATOR_OS to override)"
 run = '''
-DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-18.6}" ruby scripts/ci/select-ios-simulator.rb)"
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0

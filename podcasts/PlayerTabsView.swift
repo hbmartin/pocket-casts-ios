@@ -318,9 +318,7 @@ private class PlayerTabButton: UIButton {
         config.background = {
             var config = UIBackgroundConfiguration.clear()
             config.backgroundColor = .clear
-            if LiquidGlass.isEnabled {
-                config.cornerRadius = 8
-            }
+            config.cornerRadius = 8
             return config
         }()
 

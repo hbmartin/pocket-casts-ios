@@ -135,44 +135,7 @@ class PCViewController: SimpleNotificationsViewController {
     }
 
     private func setupNavBar(animated: Bool) {
-        guard !LiquidGlass.isEnabled else { return }
-
-        guard let navController = navigationController else { return }
-
-        guard !useTransparentNavigationBarAppearance else {
-            configureTransparentAppearance()
-            return
-        }
-
-        let navigationBar = navController.navigationBar
-        let titleColor = navTitleColor ?? AppTheme.navBarTitleColor()
-        let iconsColor = navIconsColor ?? AppTheme.navBarIconsColor()
-        let backgroundColor = navBgColor ?? ThemeColor.secondaryUi01()
-
-        navigationBar.backIndicatorImage = UIImage(named: "nav-back")?.tintedImage(iconsColor)
-        navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "nav-back")?.tintedImage(iconsColor)
-
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = backgroundColor
-        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: titleColor]
-        appearance.largeTitleTextAttributes = [
-            NSAttributedString.Key.foregroundColor: titleColor,
-            NSAttributedString.Key.font: largeTitleFont
-        ]
-        appearance.shadowColor = nil
-
-        if animated {
-            UIView.animate(withDuration: Constants.Animation.defaultAnimationTime, animations: {
-                navigationBar.standardAppearance = appearance
-                navigationBar.scrollEdgeAppearance = appearance
-                navigationBar.tintColor = iconsColor
-            })
-        } else {
-            navigationBar.standardAppearance = appearance
-            navigationBar.scrollEdgeAppearance = appearance
-            navigationBar.tintColor = iconsColor
-        }
+        // On iOS 26 the system Liquid Glass nav bar manages its own appearance; nothing to do.
     }
 
     private func configureTransparentAppearance() {
@@ -187,29 +150,8 @@ class PCViewController: SimpleNotificationsViewController {
     /// at-edge/scrolled transition on its own, so we just install its default background once.
     func setTransparentNavBarScrolled(_ scrolled: Bool) {
         isNavBarScrolled = scrolled
-
-        guard !LiquidGlass.isEnabled else {
-            return // It's a no-op since on iOS 26 we already use default transparent bars
-        }
-
-        guard let navigationBar = navigationController?.navigationBar else {
-            // `navigationController` is nil once this view controller has been popped off the stack.
-            // A scroll view can still fire `scrollViewDidScroll` mid-deceleration after the pop, which
-            // funnels here — there's simply no bar left to style, so this is expected, not an error.
-            return
-        }
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        if scrolled {
-            appearance.configureWithOpaqueBackground()
-        }
-        navigationBar.standardAppearance = appearance
-        navigationBar.scrollEdgeAppearance = appearance
-
-        let allItems = ([navigationItem.leftBarButtonItem, customRightBtn].compactMap { $0 }) + extraRightButtons
-        for item in allItems {
-            (item.customView as? FakeNavBarStylable)?.setNavBarScrolled(scrolled, animated: true)
-        }
+        // On iOS 26 the system Liquid Glass nav bar handles the at-edge/scrolled transition on its
+        // own, so there is nothing further to style here.
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {

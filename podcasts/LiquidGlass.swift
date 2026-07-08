@@ -2,14 +2,6 @@ import Foundation
 import UIKit
 import PocketCastsUtils
 
-enum LiquidGlass {
-    static var isEnabled: Bool {
-        guard FeatureFlag.liquidGlass.enabled else { return false }
-        if #available(iOS 26.0, *) { return true }
-        return false
-    }
-}
-
 extension UIWindow {
     /// Forces the window's interface style to match the active in-app theme so the
     /// Liquid Glass material renders with the right tint immediately, instead of
@@ -17,7 +9,6 @@ extension UIWindow {
     /// Read the actual system appearance via `view.systemUserInterfaceStyle` instead of
     /// `traitCollection.userInterfaceStyle`, which reflects this override.
     func applyInterfaceStyleForActiveTheme() {
-        guard LiquidGlass.isEnabled else { return }
         overrideUserInterfaceStyle = Theme.sharedTheme.activeTheme.isDark ? .dark : .light
     }
 }
@@ -33,15 +24,12 @@ extension Theme {
 
 extension Constants {
     @MainActor static var effectiveMiniPlayerOffset: CGFloat {
-        if LiquidGlass.isEnabled {
-            // The player is shown using `UITabAccessory`, so it automatically gets
-            // added to bottom safe area.
-            return 0
-        }
-        return PlaybackManager.shared.currentEpisode() == nil ? 0 : Constants.Values.miniPlayerOffset
+        // The player is shown using `UITabAccessory`, so it is automatically added
+        // to the bottom safe area.
+        0
     }
 
     @MainActor static var effectiveFooterViewPadding: CGFloat {
-        Constants.effectiveMiniPlayerOffset + (LiquidGlass.isEnabled ? 4 : 16)
+        Constants.effectiveMiniPlayerOffset + 4
     }
 }

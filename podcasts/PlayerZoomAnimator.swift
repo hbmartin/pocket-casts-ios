@@ -1,6 +1,5 @@
 import UIKit
 
-@available(iOS 26, *)
 @MainActor
 final class PlayerZoomAnimator: NSObject, UIViewControllerAnimatedTransitioning {
     let isPresenting: Bool
@@ -487,7 +486,6 @@ final class PlayerZoomAnimator: NSObject, UIViewControllerAnimatedTransitioning 
 
 // MARK: - Helpers on the player view controllers
 
-@available(iOS 26, *)
 extension PlayerContainerViewController {
     private struct ScreenCornerRadiusCacheKey: Equatable {
         let bounds: CGRect

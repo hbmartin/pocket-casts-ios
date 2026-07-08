@@ -11,9 +11,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     @IBOutlet var uploadsTable: ThemeableTable! {
         didSet {
             registerLongPress()
-            if LiquidGlass.isEnabled {
-                uploadsTable.themeStyle = .primaryUi02
-            }
+            uploadsTable.themeStyle = .primaryUi02
             uploadsTable.allowsMultipleSelectionDuringEditing = true
             uploadsTable.rowHeight = UITableView.automaticDimension
             uploadsTable.estimatedRowHeight = 80

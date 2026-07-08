@@ -105,22 +105,12 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
 
         view.isHidden = false
 
-        if FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) {
-            setupLiquidGlassLayout()
-        } else {
-            setupCorners()
-        }
+        setupLiquidGlassLayout()
         addUINotificationObservers()
         playbackStateDidChange()
         themeChanged()
     }
 
-    private func setupCorners() {
-        mainView.layer.cornerRadius = MiniPlayerShadowView.Constants.shadowCornerRadius
-        mainView.layer.masksToBounds = true
-    }
-
-    @available(iOS 26.0, *)
     private func setupLiquidGlassLayout() {
         gradientView.isHidden = true
         shadowView.isHidden = true
@@ -228,7 +218,7 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     }
 
     override func updateViewConstraints() {
-        if #available(iOS 26.0, *), let glassButtonStack, let glassProgressView {
+        if let glassButtonStack, let glassProgressView {
             let isInline = forcedInlineLayout ?? (view.traitCollection.tabAccessoryEnvironment == .inline)
             let buttonWidth: CGFloat = isInline ? 40 : 44
             skipBackBtnWidthConstraint.constant = buttonWidth
@@ -421,11 +411,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         return nil
     }
 
-    func miniPlayerShowing() -> Bool {
-        assert(!LiquidGlass.isEnabled, "Should never be used when Liquid Glass is on")
-        return !view.isHidden
-    }
-
     private func setupForEpisode(_ episode: BaseEpisode) {
         updateColors()
         updateArtwork(for: episode)
@@ -507,10 +492,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     }
 
     @objc private func statusBarHeightDidChange() {
-        if !LiquidGlass.isEnabled, miniPlayerShowing() {
-            hideMiniPlayer(false)
-            showMiniPlayer()
-        }
     }
 
     @objc private func upNextListChanged() {
@@ -584,35 +565,11 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     private func updateColors() {
         view.backgroundColor = .clear
 
-        if FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) {
-            updateColorsLiquidGlass()
-        } else {
-            updateColorsLegacy()
-        }
+        updateColorsLiquidGlass()
 
         playPauseBtn.isPlaying = PlaybackManager.shared.playing()
     }
 
-    private func updateColorsLegacy() {
-        gradientView.colors = [ThemeColor.primaryUi02().withAlphaComponent(0), ThemeColor.primaryUi02()]
-
-        let actionColor = currentPodcastTintColor()
-        let bgColor = ThemeColor.podcastUi02(podcastColor: actionColor)
-        let iconColor = ThemeColor.podcastIcon03(podcastColor: actionColor)
-
-        mainView.backgroundColor = bgColor
-
-        playPauseBtn.playButtonColor = bgColor
-        playPauseBtn.circleColor = iconColor
-
-        playbackProgressView.updateColors()
-
-        skipBackBtn.tintColor = iconColor
-        skipFwdBtn.tintColor = iconColor
-        upNextBtn.iconColor = iconColor
-    }
-
-    @available(iOS 26.0, *)
     private func updateColorsLiquidGlass() {
         let actionColor = currentPodcastTintColor()
         let iconColor = ThemeColor.podcastIcon03(podcastColor: actionColor)

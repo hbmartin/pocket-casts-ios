@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   thread_sanitizer:
-    name: Thread Sanitizer (iOS 18.6)
+    name: Thread Sanitizer (iOS 26.5)
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 120
     steps:
@@ -26,7 +26,7 @@ jobs:
 
       - name: Run unit suites under TSan
         env:
-          RUNTIME_VERSION: "18.6"
+          RUNTIME_VERSION: "26.5"
         run: scripts/ci/nightly-runtime-checks.sh tsan
 
       - name: Upload logs
@@ -69,7 +69,7 @@ jobs:
           retention-days: 14
 
   ui_smoke:
-    name: UI smoke plan (iOS 18.6)
+    name: UI smoke plan (iOS 26.5)
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 120
     steps:
@@ -80,7 +80,7 @@ jobs:
 
       - name: Run SmokeUITests plan
         env:
-          RUNTIME_VERSION: "18.6"
+          RUNTIME_VERSION: "26.5"
         run: scripts/ci/nightly-runtime-checks.sh smoke-ui
 
       - name: Upload logs

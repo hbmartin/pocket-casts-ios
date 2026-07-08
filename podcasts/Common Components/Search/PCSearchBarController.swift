@@ -158,11 +158,7 @@ class PCSearchBarController: UIViewController {
     }
 
     private func updateColors() {
-        if LiquidGlass.isEnabled {
-            configureAppearance()
-        } else {
-            configureLegacyAppearnace()
-        }
+        configureAppearance()
     }
 
     private func configureAppearance() {
@@ -182,28 +178,8 @@ class PCSearchBarController: UIViewController {
         clearSearchBtn.tintColor = iconColor
     }
 
-    private func configureLegacyAppearnace() {
-        view.backgroundColor = backgroundColorOverride ?? ThemeColor.secondaryUi01()
-        searchTextField.backgroundColor = UIColor.clear
-        searchTextField.keyboardAppearance = AppTheme.keyboardAppearance()
-        roundedBackgroundView.backgroundColor = backgroundColorOverride == nil ? ThemeColor.secondaryField01() : ThemeColor.primaryField01()
-
-        let textColor = backgroundColorOverride == nil ? ThemeColor.secondaryText01() : ThemeColor.primaryText01()
-        searchTextField.textColor = textColor
-        cancelButton.setTitleColor(textColor, for: .normal)
-
-        updatePlaceholderColor()
-
-        let iconColor = backgroundColorOverride == nil ? ThemeColor.secondaryIcon02() : ThemeColor.primaryIcon02()
-        searchIcon.tintColor = iconColor
-        clearSearchBtn.tintColor = iconColor
-    }
-
     private func updatePlaceholderColor() {
-        var placeholderColor = backgroundColorOverride == nil ? ThemeColor.secondaryText02() : ThemeColor.primaryText02()
-        if LiquidGlass.isEnabled {
-            placeholderColor = ThemeColor.primaryText02()
-        }
+        let placeholderColor = ThemeColor.primaryText02()
         searchTextField.attributedPlaceholder = NSAttributedString(string: placeholderText, attributes: [NSAttributedString.Key.foregroundColor: placeholderColor])
     }
 

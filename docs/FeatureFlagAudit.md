@@ -67,7 +67,7 @@ Assessment meanings:
 | `podcastFeedUpdate` | true | 8 | PodcastViewController+NetworkLoad.swift, PodcastViewControll | candidate (wide adoption — retire in its own PR) | |
 | `searchImprovements` | true | 8 | PCSearchBarController+Search.swift, PredictiveList.swift, Se | candidate (wide adoption — retire in its own PR) | |
 | `podcastsSortChanges` | true | 10 | FolderViewController.swift, HomeGridDataHelper.swift, Podcas | candidate (wide adoption — retire in its own PR) | |
-| `liquidGlass` | true | 11 | LiquidGlass.swift, MainTabBarController+Animations.swift, Ma | candidate (wide adoption — retire in its own PR) | |
+| ~~`liquidGlass`~~ | true | 0 | — | removed (iOS 26 min-target migration) | ✅ code removed 2026-07-06; retire remote `liquid_glass` key server-side |
 | `grdbQueryInterface` | true | 12 | BookmarkDataManagerTests.swift, DataManagerTestCase.swift, E | candidate (wide adoption — retire in its own PR) | |
 | `newOnboardingAccountCreation` | true | 18 | InformationalModalView.swift, InformationalModalViewModel.sw | candidate (wide adoption — retire in its own PR) | |
 | `useFollowNaming` | true | 18 | DiscoverPodcastTableCell.swift, ImportExportViewController.s | candidate (wide adoption — retire in its own PR) | |

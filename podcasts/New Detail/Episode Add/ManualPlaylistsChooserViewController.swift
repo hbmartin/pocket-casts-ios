@@ -88,20 +88,6 @@ class ManualPlaylistsChooserViewController: PCViewController {
 
         navigationController?.navigationBar.prefersLargeTitles = false
         navigationItem.largeTitleDisplayMode = .never
-
-        if !LiquidGlass.isEnabled {
-            let appearance = UINavigationBarAppearance()
-            appearance.backgroundColor = backgroundColor
-            appearance.largeTitleTextAttributes = [
-                NSAttributedString.Key.foregroundColor: AppTheme.colorForStyle(.primaryText01)
-            ]
-            appearance.titleTextAttributes = [
-                NSAttributedString.Key.foregroundColor: AppTheme.colorForStyle(.primaryText01)
-            ]
-            navigationController?.navigationBar.scrollEdgeAppearance = appearance
-            navigationController?.navigationBar.standardAppearance = appearance
-            navigationController?.navigationBar.sizeToFit()
-        }
     }
 
     private func setupContent() {

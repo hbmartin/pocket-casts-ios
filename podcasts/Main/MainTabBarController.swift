@@ -57,7 +57,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     private let errorBanner: UIView = {
         let view = UIView()
-        view.backgroundColor = LiquidGlass.isEnabled ? UIColor.clear : ThemeColor.primaryUi03()
+        view.backgroundColor = UIColor.clear
         view.translatesAutoresizingMaskIntoConstraints = false
         view.isHidden = true
         view.alpha = 0
@@ -82,7 +82,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     // MARK: - State
 
-    private let errorBannerHeight: CGFloat = LiquidGlass.isEnabled ? 60 : 48
+    private let errorBannerHeight: CGFloat = 60
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -234,24 +234,11 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let miniPlayer = MiniPlayerViewController(nibName: "MiniPlayerViewController", bundle: nil)
         NavigationManager.sharedManager.miniPlayer = miniPlayer
 
-        if LiquidGlass.isEnabled, #available(iOS 26.0, *) {
-            addChild(miniPlayer)
-            miniPlayer.didMove(toParent: self)
-            // Load the view so XIB outlets and observers are wired up before
-            // it's installed as a tab accessory contentView.
-            miniPlayer.loadViewIfNeeded()
-        } else {
-            miniPlayer.view.translatesAutoresizingMaskIntoConstraints = false
-            view.insertSubview(miniPlayer.view, belowSubview: tabBar)
-
-            NSLayoutConstraint.activate([
-                miniPlayer.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                miniPlayer.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                miniPlayer.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor)
-            ])
-
-            miniPlayer.changeHeightTo(miniPlayer.desiredHeight())
-        }
+        addChild(miniPlayer)
+        miniPlayer.didMove(toParent: self)
+        // Load the view so XIB outlets and observers are wired up before
+        // it's installed as a tab accessory contentView.
+        miniPlayer.loadViewIfNeeded()
     }
 
     // MARK: - UITabBarDelegate
@@ -649,27 +636,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         tabBar.unselectedItemTintColor = AppTheme.unselectedTabBarItemColor()
         tabBar.tintColor = AppTheme.tabBarItemTintColor()
 
-        // Liquid Glass renders its own translucent material, so skip the opaque
-        // background appearance below — but the theme tint above must still apply.
-        guard !LiquidGlass.isEnabled else { return }
-
-        self.view.backgroundColor = AppTheme.viewBackgroundColor()
-
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = AppTheme.tabBarBackgroundColor()
-
-        // Change badge colors
-        [appearance.stackedLayoutAppearance,
-         appearance.inlineLayoutAppearance,
-         appearance.compactInlineLayoutAppearance]
-            .forEach {
-                $0.normal.badgeBackgroundColor = .clear
-                $0.normal.badgeTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.systemRed]
-            }
-
-        tabBar.standardAppearance = appearance
-        tabBar.scrollEdgeAppearance = appearance
+        // Liquid Glass renders its own translucent material, so there is no opaque background
+        // appearance to configure here; only the theme tint above applies.
     }
 
     @objc private func willEnterForeground() {
@@ -682,7 +650,6 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     // traits aren't affected by the per-window override.
     private func registerSceneAppearanceObserverIfNeeded() {
         guard systemAppearanceObservation == nil,
-              LiquidGlass.isEnabled,
               let scene = view.window?.windowScene else { return }
         systemAppearanceObservation = scene.registerForTraitChanges(
             [UITraitUserInterfaceStyle.self]
@@ -934,7 +901,7 @@ extension MainTabBarController {
     }
 
     private func updateErrorColor() {
-        errorBanner.backgroundColor = LiquidGlass.isEnabled ? UIColor.clear : AppTheme.tabBarBackgroundColor()
+        errorBanner.backgroundColor = UIColor.clear
         errorLabel.textColor = AppTheme.mainTextColor()
     }
 }
@@ -953,8 +920,6 @@ private extension MainTabBarController {
     }
 
     func loadProfileTabAvatar(forceRefresh: Bool) {
-        guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
-
         guard let email = ServerSettings.syncingEmail(), !email.isEmpty,
               let url = URL(string: "https://www.gravatar.com/avatar/\(email.sha256)?d=404&s=256") else {
             resetProfileTabImage()
@@ -985,8 +950,6 @@ private extension MainTabBarController {
 
 extension MainTabBarController {
     @objc func upNextQueueDidChange() {
-        guard FeatureFlag.liquidGlass.enabled, #available(iOS 26.0, *) else { return }
-
         let count = PlaybackManager.shared.upNextCount()
         let previous = previousUpNextCount
         previousUpNextCount = count
