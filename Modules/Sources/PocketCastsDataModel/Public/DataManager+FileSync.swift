@@ -16,6 +16,25 @@ import PocketCastsUtils
 /// ops are being applied (see `withFileSyncApplySuppression`), which is
 /// what prevents echo loops.
 public extension DataManager {
+    struct SeedEntry: Sendable {
+        public let entityType: FileSyncJournalEntry.EntityType
+        public let uuid: String
+        public let changedFields: [String]
+        public let wallClockMs: Int64
+
+        public init(
+            entityType: FileSyncJournalEntry.EntityType,
+            uuid: String,
+            changedFields: [String],
+            wallClockMs: Int64
+        ) {
+            self.entityType = entityType
+            self.uuid = uuid
+            self.changedFields = changedFields
+            self.wallClockMs = wallClockMs
+        }
+    }
+
     /// True while `RemoteOpApplier` is writing folder-derived state into
     /// the database on the current task. Suppresses journaling so applied
     /// remote ops don't get re-journaled and echo back to the folder.
@@ -98,6 +117,39 @@ public extension DataManager {
     /// when this device first joins a folder. The caller supplies the
     /// timestamp so existing local data does not overwrite newer remote
     /// edits merely because sync was enabled later.
+    func seedFileSyncJournalBatch(
+        entries: [SeedEntry],
+        upNextEpisodeUuids: [String]?,
+        upNextWallClockMs: Int64?
+    ) {
+        _ = dbQueue.write { db in
+            for entry in entries {
+                let fieldsJSON = entry.changedFields.isEmpty
+                    ? nil
+                    : (try? JSONEncoder().encode(entry.changedFields)).flatMap { String(data: $0, encoding: .utf8) }
+                try fileSyncJournalManager.recordCoalescing(
+                    FileSyncJournalEntry(
+                        entityType: entry.entityType.rawValue,
+                        entityUuid: entry.uuid,
+                        opType: FileSyncJournalEntry.OpType.upsert.rawValue,
+                        fields: fieldsJSON,
+                        wallClockMs: entry.wallClockMs),
+                    db: db)
+            }
+
+            if let upNextEpisodeUuids, let upNextWallClockMs {
+                let fieldsJSON = (try? JSONEncoder().encode(upNextEpisodeUuids)).flatMap { String(data: $0, encoding: .utf8) }
+                try fileSyncJournalManager.record(
+                    FileSyncJournalEntry(
+                        entityType: FileSyncJournalEntry.EntityType.upNext.rawValue,
+                        opType: FileSyncJournalEntry.OpType.upNextReplace.rawValue,
+                        fields: fieldsJSON,
+                        wallClockMs: upNextWallClockMs),
+                    db: db)
+            }
+        }
+    }
+
     func seedFileSyncJournal(
         entityType: FileSyncJournalEntry.EntityType,
         uuid: String,

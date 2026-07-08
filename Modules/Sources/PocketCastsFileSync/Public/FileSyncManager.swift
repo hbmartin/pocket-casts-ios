@@ -181,12 +181,16 @@ public actor FileSyncManager {
     public func deleteUpload(episodeUuid: String) async throws {
         guard let folder else { throw SyncFolderError.ubiquityUnavailable }
         guard let episode = dataManager.findUserEpisode(uuid: episodeUuid) else { return }
+        let localPath = localPathResolver(episode)
+        if !localPath.isEmpty {
+            try? FileManager.default.removeItem(atPath: localPath)
+        }
+        dataManager.delete(userEpisodeUuid: episodeUuid)
+        dataManager.journalFileSyncDelete(entityType: .userEpisode, uuid: episodeUuid)
+        onUploadsChanged?()
         if let relativePath = episode.folderRelativePath {
             try await folder.coordinatedDelete("\(FileSyncFormat.uploadsDirectory)/\(relativePath)")
         }
-        await materializer?.evict(episodeUuid: episodeUuid)
-        dataManager.delete(userEpisodeUuid: episodeUuid)
-        dataManager.journalFileSyncDelete(entityType: .userEpisode, uuid: episodeUuid)
         onUploadsChanged?()
     }
 
@@ -217,7 +221,7 @@ public actor FileSyncManager {
 
             let ingest = try await ingestor.ingest()
             let hasRemoteChanges = ingest.opsRead > 0 || ingest.state.hasContent
-            let uploadState = hasRemoteChanges ? ingest.state : try await ingestor.fullMerge()
+            let uploadState = try await ingestor.fullMerge()
             if hasRemoteChanges {
                 let applyResult = await applier.apply(ingest.state)
                 if applyResult.queueChanged

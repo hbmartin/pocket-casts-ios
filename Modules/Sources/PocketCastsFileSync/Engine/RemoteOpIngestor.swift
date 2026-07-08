@@ -43,8 +43,8 @@ struct RemoteOpIngestor {
                 .sorted { snapshotSeq($0.fileName) < snapshotSeq($1.fileName) }
             if let newest = snapshotEntries.last, snapshotSeq(newest.fileName) > cursor.lastAppliedSnapshotSeq {
                 if let snapshot: Filesync_Snapshot = try? await folder.coordinatedRead(newest.relativePath, { url in
-                    guard let data = try? Data(contentsOf: url) else { return nil }
-                    return try? Filesync_Snapshot(serializedBytes: data)
+                    let data = try Data(contentsOf: url)
+                    return try Filesync_Snapshot(serializedBytes: data)
                 }) {
                     snapshots.append(snapshot)
                     cursor.lastAppliedSnapshotSeq = snapshotSeq(newest.fileName)
@@ -60,7 +60,7 @@ struct RemoteOpIngestor {
 
                 let startOffset = (log.fileName == cursor.fileName) ? Int(cursor.recordOffset) : 0
                 guard let data: Data = try? await folder.coordinatedRead(log.relativePath, { url in
-                    try? Data(contentsOf: url)
+                    try Data(contentsOf: url)
                 }) else { continue }
                 guard startOffset < data.count else { continue }
 

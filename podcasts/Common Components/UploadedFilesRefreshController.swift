@@ -35,11 +35,9 @@ final class UploadedFilesRefreshController {
     private func beginRefreshing() {
         refreshControl.set(text: L10n.refreshControlRefreshingFiles)
         if FeatureFlag.fileSync.enabled {
-            Task { [weak self] in
+            Task { @MainActor [weak self] in
                 await FileSyncManager.shared.syncNow()
-                await MainActor.run {
-                    self?.finishRefreshing(message: L10n.refreshControlRefreshComplete)
-                }
+                self?.finishRefreshing(message: L10n.refreshControlRefreshComplete)
             }
         } else {
             UserEpisodeManager.updateUserEpisodes()

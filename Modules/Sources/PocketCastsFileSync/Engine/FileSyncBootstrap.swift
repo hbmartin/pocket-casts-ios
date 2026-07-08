@@ -12,11 +12,12 @@ struct FileSyncBootstrap {
     func seedLocalState() {
         let now = FileSyncClock.currentUTCTimeInMillis()
         let fallback = now - 1
+        var seedEntries: [DataManager.SeedEntry] = []
 
         for podcast in dataManager.allPodcasts(includeUnsubscribed: false) {
             let stamp = podcast.addedDate.map { Int64($0.timeIntervalSince1970 * 1000) } ?? fallback
-            dataManager.seedFileSyncJournal(
-                entityType: .podcast, uuid: podcast.uuid, changedFields: [], wallClockMs: stamp)
+            seedEntries.append(DataManager.SeedEntry(
+                entityType: .podcast, uuid: podcast.uuid, changedFields: [], wallClockMs: stamp))
         }
 
         for episode in dataManager.unsyncedEpisodes(limit: 10000) {
@@ -33,37 +34,40 @@ struct FileSyncBootstrap {
                 episode.archivedModified,
                 episode.keepEpisodeModified,
                 episode.durationModified)
-            dataManager.seedFileSyncJournal(
+            seedEntries.append(DataManager.SeedEntry(
                 entityType: .episode, uuid: episode.uuid, changedFields: fields,
-                wallClockMs: stamp > 0 ? stamp : fallback)
+                wallClockMs: stamp > 0 ? stamp : fallback))
         }
 
         for playlist in dataManager.allPlaylists(includeDeleted: false) {
-            dataManager.seedFileSyncJournal(
-                entityType: .playlist, uuid: playlist.uuid, changedFields: [], wallClockMs: fallback)
+            seedEntries.append(DataManager.SeedEntry(
+                entityType: .playlist, uuid: playlist.uuid, changedFields: [], wallClockMs: fallback))
         }
 
         for folder in dataManager.allFolders(includeDeleted: false) {
-            dataManager.seedFileSyncJournal(
-                entityType: .folder, uuid: folder.uuid, changedFields: [], wallClockMs: fallback)
+            seedEntries.append(DataManager.SeedEntry(
+                entityType: .folder, uuid: folder.uuid, changedFields: [], wallClockMs: fallback))
         }
 
         for bookmark in dataManager.bookmarks.allBookmarks(includeDeleted: false) {
-            dataManager.seedFileSyncJournal(
+            seedEntries.append(DataManager.SeedEntry(
                 entityType: .bookmark, uuid: bookmark.uuid, changedFields: [],
-                wallClockMs: Int64(bookmark.created.timeIntervalSince1970 * 1000))
+                wallClockMs: Int64(bookmark.created.timeIntervalSince1970 * 1000)))
         }
 
         for episode in dataManager.allFolderBackedUserEpisodes() where episode.identity == .canonical {
-            dataManager.seedFileSyncJournal(
+            seedEntries.append(DataManager.SeedEntry(
                 entityType: .userEpisode, uuid: episode.uuid,
-                changedFields: ["uploadIdentity"], wallClockMs: fallback)
+                changedFields: ["uploadIdentity"], wallClockMs: fallback))
         }
 
         let queue = dataManager.allUpNextEpisodes().map(\.uuid)
-        if !queue.isEmpty {
-            dataManager.seedFileSyncUpNextReplace(episodeUuids: queue, wallClockMs: fallback)
-        }
+        let upNextUuids = queue.isEmpty ? nil : queue
+
+        dataManager.seedFileSyncJournalBatch(
+            entries: seedEntries,
+            upNextEpisodeUuids: upNextUuids,
+            upNextWallClockMs: upNextUuids != nil ? fallback : nil)
 
         FileLog.shared.addMessage("FileSync: union-join seed journaled")
     }
