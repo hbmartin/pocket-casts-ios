@@ -207,4 +207,18 @@ nonisolated class EpisodesDataManager {
 
         return DataManager.sharedManager.allUserEpisodes(sortedBy: sortBy)
     }
+
+    /// Uploaded episodes partitioned by their sync-folder subfolder
+    /// (uploads dropped at the root come first, then groups A→Z). Episodes
+    /// keep the user's chosen sort within each group.
+    func uploadedEpisodeGroups() -> [(group: String, episodes: [UserEpisode])] {
+        let episodes = uploadedEpisodes()
+        let grouped = Dictionary(grouping: episodes) { $0.groupName ?? "" }
+        return grouped
+            .sorted { lhs, rhs in
+                if lhs.key.isEmpty != rhs.key.isEmpty { return lhs.key.isEmpty }
+                return lhs.key.localizedCaseInsensitiveCompare(rhs.key) == .orderedAscending
+            }
+            .map { (group: $0.key, episodes: $0.value) }
+    }
 }

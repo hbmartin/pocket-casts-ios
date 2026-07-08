@@ -1,7 +1,9 @@
 import Combine
 import SwiftUI
 import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
+import PocketCastsUtils
 import UIKit
 
 class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
@@ -28,6 +30,16 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
             refreshContentUnavailable()
         }
     }
+
+    /// Episodes partitioned by their sync-folder subfolder; a single
+    /// unnamed group when folder sync is off or nothing is grouped.
+    var uploadedGroups: [(group: String, episodes: [UserEpisode])] = []
+
+    func episodeAt(_ indexPath: IndexPath) -> UserEpisode? {
+        guard let group = uploadedGroups[safe: indexPath.section] else { return nil }
+        return group.episodes[safe: indexPath.row]
+    }
+
     let headerView = UploadedStorageHeaderView()
 
     private var tableRefreshController: UploadedFilesRefreshController?
@@ -38,7 +50,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
 
         if uploadedEpisodes.isEmpty {
             let title = L10n.fileUploadNoFilesTitle
-            let message = L10n.fileUploadNoFilesDescription
+            let message = FeatureFlag.fileSync.enabled ? L10n.fileSyncFilesEmptyMessage : L10n.fileUploadNoFilesDescription
             config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("profile_files") }, actions: [
                 .init(title: L10n.fileUploadAddFile) {
                     self.addFile()
@@ -171,6 +183,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(handleReloadFromNotification))
         addCustomObserver(ServerNotifications.userEpisodeUploadStatusChanged, selector: #selector(uploadCompletedRefresh(notification:)))
+        addCustomObserver(Constants.Notifications.fileSyncUploadsChanged, selector: #selector(handleReloadFromNotification))
     }
 
     func setupNavBar() {
@@ -225,6 +238,11 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
 
     func reloadLocalFiles() {
         uploadedEpisodes = episodesDataManager.uploadedEpisodes()
+        if FeatureFlag.fileSync.enabled {
+            uploadedGroups = episodesDataManager.uploadedEpisodeGroups()
+        } else {
+            uploadedGroups = uploadedEpisodes.isEmpty ? [] : [(group: "", episodes: uploadedEpisodes)]
+        }
         uploadsTable.isHidden = (uploadedEpisodes.isEmpty)
 
         uploadsTable.reloadData()
@@ -232,7 +250,11 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     private func reloadAllFiles() {
-        UserEpisodeManager.updateUserEpisodes()
+        if FeatureFlag.fileSync.enabled {
+            Task { await FileSyncManager.shared.syncNow() }
+        } else {
+            UserEpisodeManager.updateUserEpisodes()
+        }
         updateHeaderView()
     }
 

@@ -1,5 +1,7 @@
 import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
+import PocketCastsUtils
 
 extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func registerCells() {
@@ -87,7 +89,14 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
 
         case .download:
             Analytics.track(.userFileDetailOptionTapped, properties: ["option": "download"])
-            PlaybackActionHelper.download(episodeUuid: episode.uuid)
+            if FeatureFlag.fileSync.enabled, episode.folderRelativePath != nil {
+                let episodeUuid = episode.uuid
+                Task {
+                    try? await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
+                }
+            } else {
+                PlaybackActionHelper.download(episodeUuid: episode.uuid)
+            }
             close()
         case .cancelDownload:
             Analytics.track(.userFileDetailOptionTapped, properties: ["option": "cancel_download"])
@@ -157,6 +166,17 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
 
     private func tableData() -> [TableRow] {
         var data: [TableRow] = [.upNext, .markAsPlayed, .bookmarks, .editDetails, .delete]
+
+        if FeatureFlag.fileSync.enabled {
+            // Folder-backed uploads never talk to the server: the only
+            // contextual action is materializing the folder file locally.
+            if episode.queued() || episode.downloading() || episode.waitingForWifi() {
+                data.insert(.cancelDownload, at: 3)
+            } else if !episode.downloaded(pathFinder: DownloadManager.shared) {
+                data.insert(.download, at: 3)
+            }
+            return data
+        }
 
         if episode.queued() || episode.downloading() || episode.waitingForWifi() {
             data.insert(.cancelDownload, at: 3)

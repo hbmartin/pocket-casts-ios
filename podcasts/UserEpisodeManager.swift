@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
 import UIKit
@@ -32,7 +33,26 @@ nonisolated struct UserEpisodeManager {
 
             episode = DataManager.sharedManager.save(episode: episode)
 
-            if Settings.userFilesAutoUpload() {
+            if FeatureFlag.fileSync.enabled {
+                // Folder-sync model: the added file is copied into the sync
+                // folder's Uploads directory (the source of truth); the copy
+                // already in the download cache doubles as the materialized
+                // local copy, so the episode stays playable immediately.
+                let episodeUuid = episode.uuid
+                Task {
+                    do {
+                        let relativePath = try await FileSyncManager.shared.importUpload(from: localFileUrl, group: nil)
+                        if var saved = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
+                            saved.folderRelativePath = relativePath
+                            saved.groupName = ""
+                            saved.identity = .provisional
+                            DataManager.sharedManager.save(episode: saved)
+                        }
+                    } catch {
+                        FileLog.shared.addMessage("FileSync: import into sync folder failed: \(error)")
+                    }
+                }
+            } else if Settings.userFilesAutoUpload() {
                 uploadUserEpisode(userEpisode: episode)
             }
 
@@ -59,6 +79,8 @@ nonisolated struct UserEpisodeManager {
     }
 
     static func updateUserEpisodes() {
+        // Folder sync replaces server file sync entirely.
+        guard !FeatureFlag.fileSync.enabled else { return }
         let episodes = DataManager.sharedManager.unsyncedUserEpisodes()
         if !episodes.isEmpty {
             ApiServerHandler.shared.uploadFilesUpdateRequest(episodes: episodes, completion: { _ in })
@@ -127,6 +149,7 @@ nonisolated struct UserEpisodeManager {
     }
 
     static func checkForPendingCloudDeletes() {
+        guard !FeatureFlag.fileSync.enabled else { return }
         let allCloudDeletes = DataManager.sharedManager.findUserEpisodesWithUploadStatus(.deleteFromCloudPending)
         if !allCloudDeletes.isEmpty {
             ApiServerHandler.shared.processPendingCloudDeletes(episodes: allCloudDeletes, deleteCompletedHandler: nil)
@@ -141,6 +164,7 @@ nonisolated struct UserEpisodeManager {
     }
 
     static func checkForPendingUploads() {
+        guard !FeatureFlag.fileSync.enabled else { return }
         // check if any existing episode that have been queued need to be uploaded
         if NetworkUtils.shared.isConnectedToUnexpensiveConnection() {
             let queuedEpisodes = DataManager.sharedManager.findUserEpisodesWithUploadStatus(.waitingForWifi)
@@ -274,7 +298,32 @@ nonisolated struct UserEpisodeManager {
         }
 
         var actions: [UIAlertAction]
-        if episode.downloaded(pathFinder: DownloadManager.shared), episode.uploaded() {
+        if FeatureFlag.fileSync.enabled, episode.folderRelativePath != nil {
+            // Folder-backed upload: the file in the sync folder is the
+            // library. Offer cache eviction and a true everywhere-delete of
+            // the real file (the provider's trash is the undo).
+            let episodeUuid = episode.uuid
+            var folderActions = [UIAlertAction]()
+            if episode.downloaded(pathFinder: DownloadManager.shared) {
+                folderActions.append(UIAlertAction(title: L10n.fileSyncRemoveDownload, style: .default) { _ in
+                    Task {
+                        await FileSyncManager.shared.evictUpload(episodeUuid: episodeUuid)
+                        await MainActor.run { actionCallback?(true, false) }
+                    }
+                })
+            }
+            folderActions.append(UIAlertAction(title: L10n.fileSyncDeleteEverywhere, style: .destructive) { _ in
+                Task {
+                    do {
+                        try await FileSyncManager.shared.deleteUpload(episodeUuid: episodeUuid)
+                        await MainActor.run { actionCallback?(true, true) }
+                    } catch {
+                        FileLog.shared.addMessage("FileSync: delete upload failed: \(error)")
+                    }
+                }
+            })
+            actions = folderActions
+        } else if episode.downloaded(pathFinder: DownloadManager.shared), episode.uploaded() {
             actions = [deleteDeviceAction, deleteEverywhereAction]
         } else if episode.downloaded(pathFinder: DownloadManager.shared), !episode.uploaded() {
             actions = [deleteDeviceAction]

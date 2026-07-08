@@ -1,5 +1,7 @@
 import Foundation
+import PocketCastsFileSync
 import PocketCastsServer
+import PocketCastsUtils
 
 /// Owns a `CustomRefreshControl` and wires it up to a user-files refresh:
 /// triggers `UserEpisodeManager.updateUserEpisodes()` on pull, and observes
@@ -32,7 +34,14 @@ final class UploadedFilesRefreshController {
 
     private func beginRefreshing() {
         refreshControl.set(text: L10n.refreshControlRefreshingFiles)
-        UserEpisodeManager.updateUserEpisodes()
+        if FeatureFlag.fileSync.enabled {
+            Task { [weak self] in
+                await FileSyncManager.shared.syncNow()
+                self?.finishRefreshing(message: L10n.refreshControlRefreshComplete)
+            }
+        } else {
+            UserEpisodeManager.updateUserEpisodes()
+        }
         Analytics.track(.pulledToRefresh, properties: ["source": source])
     }
 

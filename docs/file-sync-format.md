@@ -142,8 +142,18 @@ access layer (both kinds), change journal + DataManager hooks + cursors
 (planner unit-tested), `FileSyncManager` facade with device presence and
 uploads reconciliation.
 
+Also implemented: app wiring (FileSyncCoordinator cadence triggers, silent
+iCloud onboarding, BGAppRefresh + background flush), iCloud entitlements +
+NSUbiquitousContainers, Settings → Folder Sync inspector with folder picker
+and diagnostics export, one-time Profile banner, and the rebacked Files UI
+(grouped-by-subfolder sections, local header stats, syncNow refresh path,
+import-into-folder, folder-file delete/evict flows, server upload paths
+gated off behind FeatureFlag.fileSync).
+
 Next: op flusher (journal → log files), remote ingest + `RemoteOpApplier`
 (merged state → DataManager via `saveIfNotModified`/suppression), union-
-join bootstrap and seeding, cadence trigger wiring in the app, iCloud
-entitlements + Info.plist, rebacked Files UI, settings/stats observers,
-snapshot writer, inspector UI. See the implementation plan for phasing.
+join bootstrap and seeding, settings/stats observers, snapshot writer,
+op-log browser, UserEpisode artwork decoupling from server URLs
+(`urlForImage` color branch + `customImageDirectory` ownership), and
+UploadedSettingsViewController cleanup of server-upload rows. See the
+implementation plan for phasing.
