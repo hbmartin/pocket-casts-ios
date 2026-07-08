@@ -1,0 +1,202 @@
+// On-disk format for Pocket Casts file-based sync.
+//
+// Layout in the sync folder (see docs/file-sync-format.md):
+//   Sync/devices/<deviceId>/device.pb          -> DeviceInfo
+//   Sync/devices/<deviceId>/log-NNNNNNNN.pcsync -> length-delimited OpEnvelope
+//   Sync/devices/<deviceId>/snapshot-<seq>.pcsnap -> Snapshot
+//   Sync/version.pb                             -> FormatVersion
+//
+// Each device writes ONLY inside its own devices/<deviceId>/ directory, so
+// no file is ever written concurrently by two writers and cloud providers
+// never produce conflicted copies of sync state.
+//
+// Merge semantics: ops from all devices are ordered by
+// (wall_clock_ms, device_id, seq) and folded last-writer-wins per field.
+//
+// Regenerate Swift with: scripts/generate-filesync-proto.sh
+
+syntax = "proto3";
+
+package filesync;
+
+import "sync_records.proto";
+
+// One entry in a device's op log.
+message OpEnvelope {
+    // UUID for dedupe and diagnostics.
+    string op_id = 1;
+    // The writing device. Matches the devices/<deviceId>/ directory name.
+    string device_id = 2;
+    // Per-device monotonic sequence (the local journal row id).
+    uint64 seq = 3;
+    // Wall-clock timestamp in ms; the LWW ordering key.
+    int64 wall_clock_ms = 4;
+
+    oneof payload {
+        // A changed entity. Only changed fields are populated; wrapper
+        // presence (has_*) marks which fields this op carries.
+        api.Record record = 10;
+        RecordTombstone tombstone = 11;
+        UpNextOp up_next = 12;
+        SettingOp setting = 13;
+        StatsCumulative stats = 14;
+        UploadIdentity upload = 15;
+        UploadTombstone upload_removed = 16;
+        DeviceForget forget = 17;
+    }
+}
+
+enum EntityType {
+    ENTITY_TYPE_UNKNOWN = 0;
+    ENTITY_TYPE_PODCAST = 1;
+    ENTITY_TYPE_EPISODE = 2;
+    ENTITY_TYPE_PLAYLIST = 3;
+    ENTITY_TYPE_FOLDER = 4;
+    ENTITY_TYPE_BOOKMARK = 5;
+    ENTITY_TYPE_USER_EPISODE = 6;
+}
+
+// Deletion marker. Retained in snapshots for the tombstone retention window
+// so deleted entities do not resurrect from stale devices' state.
+message RecordTombstone {
+    EntityType entity_type = 1;
+    string uuid = 2;
+    int64 deleted_at_ms = 3;
+    // For folder deletes: podcasts whose folder assignment this delete
+    // cleared, so appliers can mirror the server-sync behaviour.
+    repeated string member_podcast_uuids = 4;
+}
+
+// A single Up Next queue mutation, replayed op-based across devices
+// (mirrors the app's UpNextChanges.Actions semantics).
+message UpNextOp {
+    enum Action {
+        ACTION_UNKNOWN = 0;
+        // Insert at head (now playing).
+        ACTION_PLAY_NOW = 1;
+        // Insert directly after the playing episode.
+        ACTION_PLAY_NEXT = 2;
+        // Append to the end of the queue.
+        ACTION_PLAY_LAST = 3;
+        ACTION_REMOVE = 4;
+        // Replace the whole queue with `entries`.
+        ACTION_REPLACE = 5;
+    }
+    Action action = 1;
+    // The affected episode for single-episode actions.
+    UpNextEntry entry = 2;
+    // Full ordered queue for ACTION_REPLACE.
+    repeated UpNextEntry entries = 3;
+}
+
+message UpNextEntry {
+    string episode_uuid = 1;
+    // Empty or the user-episode sentinel for uploaded files.
+    string podcast_uuid = 2;
+}
+
+// One app-level setting change; per-setting LWW by name.
+message SettingOp {
+    // Stable setting key (the AppSettings property name).
+    string name = 1;
+    // JSON-encoded value, matching the app's CodableStore encoding.
+    string json_value = 2;
+    int64 modified_at_ms = 3;
+}
+
+// This device's lifetime listening stats. Counters are monotonic, so
+// latest-per-device wins and displayed totals are summed across devices.
+message StatsCumulative {
+    int64 times_started_at = 1;
+    int64 time_silence_removal = 2;
+    int64 time_variable_speed = 3;
+    int64 time_intro_skipping = 4;
+    int64 time_skipping = 5;
+    int64 time_listened = 6;
+}
+
+// Canonical identity record for a file in the Uploads folder (or an extra
+// watched folder). First device to fully download a file hashes it and
+// publishes this mapping; other devices adopt the uuid without downloading.
+message UploadIdentity {
+    // The UserEpisode uuid all devices share for this file.
+    string uuid = 1;
+    // Path relative to the watched folder root, using "/" separators.
+    string relative_path = 2;
+    int64 size_bytes = 3;
+    int64 mtime_ms = 4;
+    // Lowercase hex SHA-256 of the full file contents; empty until the
+    // first device has materialized and hashed the file.
+    string sha256 = 5;
+    // First path component when the file lives in a subfolder ("" at root).
+    string group = 6;
+    string title = 7;
+    double duration_seconds = 8;
+    // MIME type, e.g. "audio/mp3" (FileTypeUtil conventions).
+    string file_type = 9;
+    // "" for the root Uploads folder; otherwise the id of an extra
+    // watched folder.
+    string watched_folder_id = 10;
+}
+
+message UploadTombstone {
+    string uuid = 1;
+    string relative_path = 2;
+    int64 deleted_at_ms = 3;
+}
+
+// Marks another device's directory as forgotten; readers drop cursors and
+// ignore its remaining files.
+message DeviceForget {
+    string device_id = 1;
+}
+
+// devices/<deviceId>/device.pb — presence + freshness for the inspector.
+message DeviceInfo {
+    string device_id = 1;
+    // User-facing device name, e.g. "Henry's iPhone".
+    string name = 2;
+    // Hardware model identifier, e.g. "iPhone16,1".
+    string model = 3;
+    string app_version = 4;
+    int64 last_seen_ms = 5;
+    // Highest op seq this device has written.
+    uint64 head_seq = 6;
+    int32 format_version = 7;
+}
+
+// Sync/version.pb — readers must refuse folders written by a newer format.
+message FormatVersion {
+    int32 version = 1;
+}
+
+// A full-state checkpoint of one device's merged view, written periodically
+// so new devices bootstrap without replaying full history and so old logs
+// can be compacted away.
+message Snapshot {
+    string device_id = 1;
+    int64 created_at_ms = 2;
+    // Own-op seq this snapshot covers; logs with ops <= this seq are
+    // eligible for compaction.
+    uint64 as_of_seq = 3;
+    repeated SnapshotRecord records = 4;
+    repeated RecordTombstone tombstones = 5;
+    UpNextState up_next = 6;
+    repeated SettingOp settings = 7;
+    StatsCumulative stats = 8;
+    repeated UploadIdentity uploads = 9;
+    repeated UploadTombstone upload_tombstones = 10;
+}
+
+// A record plus the per-field modification times the LWW merge needs.
+// Episode records carry their *_modified fields inline; for the other
+// entity types field_modified_ms maps proto field number -> timestamp.
+message SnapshotRecord {
+    api.Record record = 1;
+    map<uint32, int64> field_modified_ms = 2;
+}
+
+message UpNextState {
+    repeated UpNextEntry entries = 1;
+    int64 modified_at_ms = 2;
+}

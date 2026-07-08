@@ -51,6 +51,10 @@ run = "ruby scripts/themes/generate_themes.rb scripts/themes/theme.csv"
 description = "Regenerate protobuf Swift files. Usage: mise run generate:proto /path/to/pocketcasts-api/api/modules/protobuf/src/main/proto"
 run = "./scripts/update_proto.sh"
 
+[tasks."generate:filesync-proto"]
+description = "Regenerate the PocketCastsFileSync protobuf Swift files from the vendored schemas in Modules/Sources/PocketCastsFileSync/Proto"
+run = "./scripts/generate-filesync-proto.sh"
+
 # -----------------------------------------------------------------------------
 # Build / test
 # -----------------------------------------------------------------------------
