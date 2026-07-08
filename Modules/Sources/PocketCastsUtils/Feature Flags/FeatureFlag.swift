@@ -222,6 +222,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Enable Generated Chapters
     case generatedChapters
 
+    /// Local-first file sync: library state and uploads sync through a
+    /// user-visible cloud folder (iCloud Drive or a picked Files.app
+    /// location) with no Pocket Casts server required.
+    case fileSync
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -380,6 +385,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current == .debug
         case .generatedChapters:
             BuildEnvironment.current == .debug
+        case .fileSync:
+            true
         }
     }
 

@@ -3477,6 +3477,60 @@ nonisolated internal enum L10n {
   internal static var settingsFilesDeleteLocalFile: String { return L10n.tr("Localizable", "settings_files_delete_local_file", fallback: "Delete Local File") }
   /// Label displayed next to the toggle to opt-in/out for First-Party Analytics tracking
   internal static var settingsFirstPartyAnalytics: String { return L10n.tr("Localizable", "settings_first_party_analytics", fallback: "First-party analytics") }
+  /// Button that opens a folder picker to choose where sync data lives
+  internal static var fileSyncActionChooseFolder: String { return L10n.tr("Localizable", "file_sync_action_choose_folder", fallback: "Choose Folder…") }
+  /// Button that exports a sync diagnostics report for troubleshooting
+  internal static var fileSyncActionExportDiagnostics: String { return L10n.tr("Localizable", "file_sync_action_export_diagnostics", fallback: "Export Diagnostics") }
+  /// Button that runs a sync pass immediately
+  internal static var fileSyncActionSyncNow: String { return L10n.tr("Localizable", "file_sync_action_sync_now", fallback: "Sync Now") }
+  /// Action button on the folder sync banner that opens Settings
+  internal static var fileSyncBannerAction: String { return L10n.tr("Localizable", "file_sync_banner_action", fallback: "View Settings") }
+  /// Message of the one-time banner shown after folder sync turns on. Explains the new Files-app folder
+  internal static var fileSyncBannerMessage: String { return L10n.tr("Localizable", "file_sync_banner_message", fallback: "Your library now syncs through a Pocket Casts folder in iCloud Drive. Drop audio files into its Uploads folder to listen to them here.") }
+  /// Title of the one-time banner shown after folder sync turns on
+  internal static var fileSyncBannerTitle: String { return L10n.tr("Localizable", "file_sync_banner_title", fallback: "Syncing via iCloud Drive") }
+  /// Delete option that removes an upload's file from the sync folder on all devices
+  internal static var fileSyncDeleteEverywhere: String { return L10n.tr("Localizable", "file_sync_delete_everywhere", fallback: "Delete File Everywhere") }
+  /// Shown when no devices have written to the sync folder yet
+  internal static var fileSyncDevicesEmpty: String { return L10n.tr("Localizable", "file_sync_devices_empty", fallback: "No devices have synced yet.") }
+  /// Swipe action that removes a device's data from the sync folder
+  internal static var fileSyncDevicesForget: String { return L10n.tr("Localizable", "file_sync_devices_forget", fallback: "Forget") }
+  /// Header for the list of devices sharing the sync folder
+  internal static var fileSyncDevicesHeader: String { return L10n.tr("Localizable", "file_sync_devices_header", fallback: "Devices") }
+  /// Badge marking a device that hasn't synced for a long time
+  internal static var fileSyncDevicesStale: String { return L10n.tr("Localizable", "file_sync_devices_stale", fallback: "Inactive") }
+  /// Badge marking the current device in the device list
+  internal static var fileSyncDevicesThisDevice: String { return L10n.tr("Localizable", "file_sync_devices_this_device", fallback: "This device") }
+  /// Empty-state message for the Files screen when folder sync is on. Tells users where to drop audio files
+  internal static var fileSyncFilesEmptyMessage: String { return L10n.tr("Localizable", "file_sync_files_empty_message", fallback: "Add audio files here, or drop them into Pocket Casts → Uploads in the Files app and they'll appear on all your devices.") }
+  /// Footer explaining the sync folder choice
+  internal static var fileSyncFolderExplanation: String { return L10n.tr("Localizable", "file_sync_folder_explanation", fallback: "Your library syncs through a folder of files. Use the app's iCloud Drive folder, or choose any folder in Files — including Dropbox or Google Drive. Audio files you drop into its Uploads folder appear in Files on every device.") }
+  /// Value when the sync folder is the app's iCloud Drive folder
+  internal static var fileSyncFolderICloud: String { return L10n.tr("Localizable", "file_sync_folder_icloud", fallback: "iCloud Drive") }
+  /// Value when the sync folder is a user-chosen Files location
+  internal static var fileSyncFolderPicked: String { return L10n.tr("Localizable", "file_sync_folder_picked", fallback: "Chosen folder") }
+  /// Files screen header summary: number of synced devices. Placeholder is a number
+  internal static func fileSyncHeaderDevicesPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "file_sync_header_devices_plural", String(describing: p1), fallback: "%1$@ devices")
+  }
+  /// Files screen header summary for a single synced device
+  internal static var fileSyncHeaderDevicesSingular: String { return L10n.tr("Localizable", "file_sync_header_devices_singular", fallback: "1 device") }
+  /// Delete option that only removes the locally cached copy of an upload
+  internal static var fileSyncRemoveDownload: String { return L10n.tr("Localizable", "file_sync_remove_download", fallback: "Remove Download") }
+  /// Label for the row showing which folder file sync uses
+  internal static var fileSyncStatusFolder: String { return L10n.tr("Localizable", "file_sync_status_folder", fallback: "Folder") }
+  /// Label for the row showing when the last sync pass ran
+  internal static var fileSyncStatusLastSync: String { return L10n.tr("Localizable", "file_sync_status_last_sync", fallback: "Last synced") }
+  /// Value shown when file sync is disabled
+  internal static var fileSyncStatusOff: String { return L10n.tr("Localizable", "file_sync_status_off", fallback: "Off") }
+  /// Value shown when file sync is enabled
+  internal static var fileSyncStatusOn: String { return L10n.tr("Localizable", "file_sync_status_on", fallback: "On") }
+  /// Label for the row showing how many local changes are waiting to sync
+  internal static var fileSyncStatusPendingChanges: String { return L10n.tr("Localizable", "file_sync_status_pending_changes", fallback: "Pending changes") }
+  /// Label for the row showing whether file sync is on or off
+  internal static var fileSyncStatusState: String { return L10n.tr("Localizable", "file_sync_status_state", fallback: "Status") }
+  /// Title of the file sync settings screen and its row in Settings
+  internal static var settingsFileSync: String { return L10n.tr("Localizable", "settings_file_sync", fallback: "Folder Sync") }
   /// A common string used throughout the app. Reference to the General settings menu.
   internal static var settingsGeneral: String { return L10n.tr("Localizable", "settings_general", fallback: "General") }
   /// Confirmation to apply a setting change to all podcasts.

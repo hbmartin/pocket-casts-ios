@@ -49,6 +49,9 @@ nonisolated struct Constants {
         static let currentlyPlayingEpisodeUpdated = NSNotification.Name(rawValue: "SJCurrentlyPlayingEpisodeUpdated")
         static let sleepTimerChanged = NSNotification.Name(rawValue: "SJSleepTimerChanged")
         static let videoPlaybackEngineSwitched = NSNotification.Name(rawValue: "SJVideoPlaybackEngineSwitched")
+        /// Posted after a file-sync pass changed upload episodes (created,
+        /// adopted, moved, removed) so the Files UI reloads.
+        static let fileSyncUploadsChanged = NSNotification.Name(rawValue: "PCFileSyncUploadsChanged")
 
         // episode notifications
         static let episodePlayStatusChanged = NSNotification.Name(rawValue: "SJEpPlayStatusChanged")

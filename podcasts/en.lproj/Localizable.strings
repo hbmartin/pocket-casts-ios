@@ -6053,3 +6053,81 @@
 
 /* Warning message shown for automatically generated episode chapters */
 "chapters_generated_warning_message" = "These chapters are automatically generated and may not be perfectly accurate.";
+
+/* Title of the file sync settings screen and its row in Settings */
+"settings_file_sync" = "Folder Sync";
+
+/* Label for the row showing whether file sync is on or off */
+"file_sync_status_state" = "Status";
+
+/* Value shown when file sync is enabled */
+"file_sync_status_on" = "On";
+
+/* Value shown when file sync is disabled */
+"file_sync_status_off" = "Off";
+
+/* Label for the row showing which folder file sync uses */
+"file_sync_status_folder" = "Folder";
+
+/* Value when the sync folder is the app's iCloud Drive folder */
+"file_sync_folder_icloud" = "iCloud Drive";
+
+/* Value when the sync folder is a user-chosen Files location */
+"file_sync_folder_picked" = "Chosen folder";
+
+/* Label for the row showing how many local changes are waiting to sync */
+"file_sync_status_pending_changes" = "Pending changes";
+
+/* Label for the row showing when the last sync pass ran */
+"file_sync_status_last_sync" = "Last synced";
+
+/* Button that runs a sync pass immediately */
+"file_sync_action_sync_now" = "Sync Now";
+
+/* Button that opens a folder picker to choose where sync data lives */
+"file_sync_action_choose_folder" = "Choose Folder…";
+
+/* Footer explaining the sync folder choice */
+"file_sync_folder_explanation" = "Your library syncs through a folder of files. Use the app's iCloud Drive folder, or choose any folder in Files — including Dropbox or Google Drive. Audio files you drop into its Uploads folder appear in Files on every device.";
+
+/* Header for the list of devices sharing the sync folder */
+"file_sync_devices_header" = "Devices";
+
+/* Shown when no devices have written to the sync folder yet */
+"file_sync_devices_empty" = "No devices have synced yet.";
+
+/* Badge marking the current device in the device list */
+"file_sync_devices_this_device" = "This device";
+
+/* Badge marking a device that hasn't synced for a long time */
+"file_sync_devices_stale" = "Inactive";
+
+/* Swipe action that removes a device's data from the sync folder */
+"file_sync_devices_forget" = "Forget";
+
+/* Button that exports a sync diagnostics report for troubleshooting */
+"file_sync_action_export_diagnostics" = "Export Diagnostics";
+
+/* Title of the one-time banner shown after folder sync turns on */
+"file_sync_banner_title" = "Syncing via iCloud Drive";
+
+/* Message of the one-time banner shown after folder sync turns on. Explains the new Files-app folder */
+"file_sync_banner_message" = "Your library now syncs through a Pocket Casts folder in iCloud Drive. Drop audio files into its Uploads folder to listen to them here.";
+
+/* Action button on the folder sync banner that opens Settings */
+"file_sync_banner_action" = "View Settings";
+
+/* Empty-state message for the Files screen when folder sync is on. Tells users where to drop audio files */
+"file_sync_files_empty_message" = "Add audio files here, or drop them into Pocket Casts → Uploads in the Files app and they'll appear on all your devices.";
+
+/* Files screen header summary: number of synced devices. Placeholder is a number */
+"file_sync_header_devices_plural" = "%1$@ devices";
+
+/* Files screen header summary for a single synced device */
+"file_sync_header_devices_singular" = "1 device";
+
+/* Delete option that removes an upload's file from the sync folder on all devices */
+"file_sync_delete_everywhere" = "Delete File Everywhere";
+
+/* Delete option that only removes the locally cached copy of an upload */
+"file_sync_remove_download" = "Remove Download";

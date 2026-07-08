@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -267,6 +267,30 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             return cell
         }
 
+        if row == .fileSyncBanner {
+            let bannerCell = UITableViewCell()
+            bannerCell.selectionStyle = .none
+            bannerCell.backgroundColor = .clear
+            let banner = FileSyncBanner.bannerView(
+                onAction: { [weak self] in
+                    FileSyncBanner.dismiss()
+                    self?.navigationController?.pushViewController(SettingsViewController(), animated: true)
+                },
+                onDismiss: { [weak self] in
+                    self?.refreshTableData()
+                }
+            )
+            banner.translatesAutoresizingMaskIntoConstraints = false
+            bannerCell.contentView.addSubview(banner)
+            NSLayoutConstraint.activate([
+                banner.leadingAnchor.constraint(equalTo: bannerCell.contentView.leadingAnchor),
+                banner.trailingAnchor.constraint(equalTo: bannerCell.contentView.trailingAnchor),
+                banner.topAnchor.constraint(equalTo: bannerCell.contentView.topAnchor),
+                banner.bottomAnchor.constraint(equalTo: bannerCell.contentView.bottomAnchor)
+            ])
+            return bannerCell
+        }
+
         let cell = tableView.dequeueReusableCell(withIdentifier: settingsCellId, for: indexPath) as! TopLevelSettingsCell
 
         cell.settingsImage.tintColor = ThemeColor.primaryIcon01()
@@ -274,8 +298,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         cell.separatorInset = .zero
 
         switch row {
-        case .informationalBanner:
-            return InformationalProfileBannerCell()
+        case .informationalBanner, .fileSyncBanner:
+            return cell
         case .allStats:
             cell.settingsImage.image = UIImage(named: "profile-stats")
             cell.settingsLabel.text = L10n.settingsStats
@@ -304,13 +328,13 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
         let row = tableData[indexPath.section][indexPath.row]
-        return row != .informationalBanner
+        return row != .informationalBanner && row != .fileSyncBanner
     }
 
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         let row = tableData[indexPath.section][indexPath.row]
         switch row {
-        case .informationalBanner:
+        case .informationalBanner, .fileSyncBanner:
             return 160
         default:
             return 70
@@ -330,7 +354,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     func navigateToRow(_ row: TableRow) {
         switch row {
-        case .informationalBanner:
+        case .informationalBanner, .fileSyncBanner:
             break
         case .allStats:
             let statsViewController = StatsViewController()
@@ -377,6 +401,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
         if informationalBannerCoordinator.shouldShowBanner() {
             data[0].insert(.informationalBanner, at: 0)
+        } else if FileSyncBanner.shouldShow {
+            data[0].insert(.fileSyncBanner, at: 0)
         }
 
         tableData = data

@@ -13,6 +13,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private let shortcutManager = ShortcutManager()
     private let badgeHelper = BadgeHelper()
+    private let fileSyncCoordinator = FileSyncCoordinator()
 
     @objc var backgroundSessionCompletionHandler: (() -> Void)?
 
@@ -105,6 +106,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         badgeHelper.setup()
         shortcutManager.listenForShortcutChanges()
+        fileSyncCoordinator.setup()
 
         setupBackgroundRefresh()
 
@@ -147,6 +149,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 UserEpisodeManager.checkForPendingUploads()
             }
         }
+        fileSyncCoordinator.handleAppBecameActive()
         PlaybackManager.shared.updateIdleTimer()
     }
 
@@ -264,8 +267,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         let boxedTask = PocketCastsUtils.UncheckedSendable(task)
+        let syncCoordinator = fileSyncCoordinator
         RefreshManager.shared.refreshPodcasts(completion: { refreshFetchResult in
-            boxedTask.value.setTaskCompleted(success: refreshFetchResult != .failed)
+            Task {
+                await syncCoordinator.performBackgroundSync()
+                boxedTask.value.setTaskCompleted(success: refreshFetchResult != .failed)
+            }
         })
         badgeHelper.updateBadge()
     }
