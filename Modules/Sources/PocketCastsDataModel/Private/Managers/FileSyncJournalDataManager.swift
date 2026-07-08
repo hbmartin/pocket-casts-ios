@@ -57,11 +57,12 @@ class FileSyncJournalDataManager {
     }
 
     func unflushedCount(dbQueue: GRDBQueue) -> Int {
-        dbQueue.read { db in
+        let count: Int? = dbQueue.read { db in
             (try? FileSyncJournalEntry
                 .filter(FileSyncJournalEntry.Columns.flushedSeq == nil)
                 .fetchCount(db)) ?? 0
         }
+        return count ?? 0
     }
 
     /// Marks entries as durably written to the device log, recording the
@@ -81,7 +82,7 @@ class FileSyncJournalDataManager {
     /// purged.
     func purgeFlushed(olderThanMs: Int64, dbQueue: GRDBQueue) {
         dbQueue.write { db in
-            try FileSyncJournalEntry
+            _ = try FileSyncJournalEntry
                 .filter(FileSyncJournalEntry.Columns.flushedSeq != nil)
                 .filter(FileSyncJournalEntry.Columns.wallClockMs < olderThanMs)
                 .deleteAll(db)
@@ -90,7 +91,7 @@ class FileSyncJournalDataManager {
 
     func deleteAll(dbQueue: GRDBQueue) {
         dbQueue.write { db in
-            try FileSyncJournalEntry.deleteAll(db)
+            _ = try FileSyncJournalEntry.deleteAll(db)
         }
     }
 
@@ -112,7 +113,7 @@ class FileSyncJournalDataManager {
 
     func deleteCursor(peerDeviceId: String, dbQueue: GRDBQueue) {
         dbQueue.write { db in
-            try FileSyncCursor
+            _ = try FileSyncCursor
                 .filter(FileSyncCursor.Columns.peerDeviceId == peerDeviceId)
                 .deleteAll(db)
         }
@@ -120,7 +121,7 @@ class FileSyncJournalDataManager {
 
     func deleteAllCursors(dbQueue: GRDBQueue) {
         dbQueue.write { db in
-            try FileSyncCursor.deleteAll(db)
+            _ = try FileSyncCursor.deleteAll(db)
         }
     }
 }
