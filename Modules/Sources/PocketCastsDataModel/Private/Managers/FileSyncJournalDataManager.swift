@@ -7,13 +7,13 @@ struct FileSyncJournalDataManager: Sendable {
     // MARK: - Journal
 
     func record(_ entry: FileSyncJournalEntry, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try record(entry, db: db)
         }
     }
 
     func record(_ entry: FileSyncJournalEntry, db: Database) throws {
-        var entryToSave = entryWithDefaults(entry)
+        let entryToSave = entryWithDefaults(entry)
         try entryToSave.insert(db)
     }
 
@@ -21,13 +21,13 @@ struct FileSyncJournalDataManager: Sendable {
     /// heartbeats would otherwise pile up a row a minute. The newest row's
     /// timestamp wins; the older duplicate is removed.
     func recordCoalescing(_ entry: FileSyncJournalEntry, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try recordCoalescing(entry, db: db)
         }
     }
 
     func recordCoalescing(_ entry: FileSyncJournalEntry, db: Database) throws {
-        var entryToSave = entryWithDefaults(entry)
+        let entryToSave = entryWithDefaults(entry)
         if entryToSave.opType == FileSyncJournalEntry.OpType.upsert.rawValue,
            let uuid = entryToSave.entityUuid {
             try FileSyncJournalEntry
@@ -62,18 +62,14 @@ struct FileSyncJournalDataManager: Sendable {
     }
 
     func unflushedCount(dbQueue: GRDBQueue) -> Int {
-        dbQueue.read { db in
-            (try? FileSyncJournalEntry
-                .filter(FileSyncJournalEntry.Columns.flushedSeq == nil)
-                .fetchCount(db)) ?? 0
-        }
+        dbQueue.count(FileSyncJournalEntry.self, filter: FileSyncJournalEntry.Columns.flushedSeq == nil)
     }
 
     /// Marks entries as durably written to the device log, recording the
     /// per-device seq each op was assigned.
     func markFlushed(entryIDs: [Int64], startingSeq: Int64, dbQueue: GRDBQueue) {
         guard !entryIDs.isEmpty else { return }
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             for (index, id) in entryIDs.enumerated() {
                 try FileSyncJournalEntry
                     .filter(FileSyncJournalEntry.Columns.id == id)
@@ -85,7 +81,7 @@ struct FileSyncJournalDataManager: Sendable {
     /// Flushed rows are kept briefly for the inspector's op browser, then
     /// purged.
     func purgeFlushed(olderThanMs: Int64, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try FileSyncJournalEntry
                 .filter(FileSyncJournalEntry.Columns.flushedSeq != nil)
                 .filter(FileSyncJournalEntry.Columns.wallClockMs < olderThanMs)
@@ -94,7 +90,7 @@ struct FileSyncJournalDataManager: Sendable {
     }
 
     func deleteAll(dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try FileSyncJournalEntry.deleteAll(db)
         }
     }
@@ -110,13 +106,13 @@ struct FileSyncJournalDataManager: Sendable {
     }
 
     func save(cursor: FileSyncCursor, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try cursor.save(db)
         }
     }
 
     func deleteCursor(peerDeviceId: String, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try FileSyncCursor
                 .filter(FileSyncCursor.Columns.peerDeviceId == peerDeviceId)
                 .deleteAll(db)
@@ -124,7 +120,7 @@ struct FileSyncJournalDataManager: Sendable {
     }
 
     func deleteAllCursors(dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try FileSyncCursor.deleteAll(db)
         }
     }

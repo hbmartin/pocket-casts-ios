@@ -124,7 +124,7 @@ public actor UbiquitySyncFolder: SyncFolder {
 
     public func startChangeMonitoring(_ handler: @escaping @Sendable (FolderChangeHint) -> Void) async {
         guard monitor == nil else { return }
-        let monitor = UbiquityChangeMonitor(handler: handler)
+        let monitor = await UbiquityChangeMonitor(handler: handler)
         self.monitor = monitor
         await monitor.start()
     }
@@ -159,8 +159,9 @@ final class UbiquityChangeMonitor {
         for name in [NSNotification.Name.NSMetadataQueryDidFinishGathering,
                      NSNotification.Name.NSMetadataQueryDidUpdate] {
             observers.append(center.addObserver(forName: name, object: query, queue: .main) { [weak self] notification in
+                let paths = Self.paths(from: notification)
                 MainActor.assumeIsolated {
-                    self?.deliver(notification)
+                    self?.deliver(paths: paths)
                 }
             })
         }
@@ -168,7 +169,7 @@ final class UbiquityChangeMonitor {
         query.start()
     }
 
-    private func deliver(_ notification: Notification) {
+    nonisolated private static func paths(from notification: Notification) -> [String] {
         var paths: [String] = []
         let changedKeys = [NSMetadataQueryUpdateAddedItemsKey,
                            NSMetadataQueryUpdateChangedItemsKey,
@@ -181,6 +182,10 @@ final class UbiquityChangeMonitor {
                 }
             }
         }
+        return paths
+    }
+
+    private func deliver(paths: [String]) {
         handler(FolderChangeHint(changedPaths: paths))
     }
 

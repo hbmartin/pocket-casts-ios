@@ -1256,6 +1256,8 @@ nonisolated internal enum L10n {
   internal static var feedbackMailNotConfiguredMsg: String { return L10n.tr("Localizable", "feedback_mail_not_configured_msg", fallback: "To send a debug attachment, the Apple Mail app has to be configured on your phone. What would you like to do?") }
   /// Error title for when the user has a mail app configured that's not the default mail app.
   internal static var feedbackMailNotConfiguredTitle: String { return L10n.tr("Localizable", "feedback_mail_not_configured_title", fallback: "Mail Not Configured") }
+  /// Fallback label in the file-sync device list when a peer device name cannot be read.
+  internal static var fileSyncUnknownDevice: String { return L10n.tr("Localizable", "file_sync_unknown_device", fallback: "Unknown device") }
   /// Title for the file upload settings screen. This is used when a user is uploading a new file.
   internal static var fileUploadAddFile: String { return L10n.tr("Localizable", "file_upload_add_file", fallback: "Add File") }
   /// Prompt to add a custom image to the uploaded file.
