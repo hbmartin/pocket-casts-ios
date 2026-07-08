@@ -112,6 +112,26 @@ enum RecordConverters {
         return record
     }
 
+    static func record(from bookmark: Bookmark) -> Api_Record {
+        var item = Api_SyncUserBookmark()
+        item.bookmarkUuid = bookmark.uuid
+        item.episodeUuid = bookmark.episodeUuid
+        item.podcastUuid = bookmark.podcastUuid ?? ""
+        item.createdAt = Google_Protobuf_Timestamp(date: bookmark.created)
+        item.time = .with { $0.value = Int32(bookmark.time) }
+        item.title = .with { $0.value = bookmark.title }
+        if let titleModified = bookmark.titleModified {
+            item.titleModified = .with { $0.value = Int64(titleModified.timeIntervalSince1970 * 1000) }
+        }
+        item.isDeleted = .with { $0.value = bookmark.deleted }
+        if let deletedModified = bookmark.deletedModified {
+            item.isDeletedModified = .with { $0.value = Int64(deletedModified.timeIntervalSince1970 * 1000) }
+        }
+        var record = Api_Record()
+        record.bookmark = item
+        return record
+    }
+
     static func uploadIdentity(from episode: UserEpisode) -> Filesync_UploadIdentity? {
         guard let relativePath = episode.folderRelativePath else { return nil }
         var identity = Filesync_UploadIdentity()
