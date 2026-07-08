@@ -58,6 +58,13 @@ public actor UbiquitySyncFolder: SyncFolder {
         try await CoordinatedFileIO.write(root.appendingPathComponent(relativePath), data: data)
     }
 
+    public func ensureDirectoryExists(_ relativeDir: String) async throws {
+        let root = try await rootURL()
+        try FileManager.default.createDirectory(
+            at: root.appendingPathComponent(relativeDir, isDirectory: true),
+            withIntermediateDirectories: true)
+    }
+
     public func coordinatedCopy(from localURL: URL, to relativePath: String) async throws {
         let root = try await rootURL()
         try await CoordinatedFileIO.copy(from: localURL, to: root.appendingPathComponent(relativePath))

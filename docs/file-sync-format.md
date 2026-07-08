@@ -12,7 +12,7 @@ depend on `PocketCastsServer`.
 
 ## Folder layout
 
-```
+```text
 Pocket Casts/                           # sync root (iCloud container Documents/, or picked folder)
 ├── Sync/
 │   ├── version.pb                      # FormatVersion — readers refuse newer formats

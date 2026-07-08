@@ -87,16 +87,14 @@ enum CoordinatedFileIO {
     static func delete(_ url: URL) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             queue.async {
-                guard FileManager.default.fileExists(atPath: url.path) else {
-                    // Another device may have deleted first; that is success.
-                    continuation.resume()
-                    return
-                }
                 let coordinator = NSFileCoordinator(filePresenter: nil)
                 var coordinatorError: NSError?
                 var result: Result<Void, Error>?
                 coordinator.coordinate(writingItemAt: url, options: .forDeleting, error: &coordinatorError) { actualURL in
                     result = Result {
+                        // Checked inside coordination: another device may
+                        // have deleted first, and that is success.
+                        guard FileManager.default.fileExists(atPath: actualURL.path) else { return }
                         try FileManager.default.removeItem(at: actualURL)
                     }
                 }

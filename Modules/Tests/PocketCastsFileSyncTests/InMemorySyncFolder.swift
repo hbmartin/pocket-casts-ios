@@ -55,6 +55,10 @@ actor InMemorySyncFolder: SyncFolder {
         files[relativePath] = data
     }
 
+    func ensureDirectoryExists(_ relativeDir: String) async throws {
+        // Directories are implicit in the dictionary-backed fake.
+    }
+
     func coordinatedCopy(from localURL: URL, to relativePath: String) async throws {
         files[relativePath] = try Data(contentsOf: localURL)
     }

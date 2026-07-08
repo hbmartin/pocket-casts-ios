@@ -19,11 +19,11 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+# Install-if-missing only: never auto-upgrade, so codegen stays reproducible
+# against whatever versions the developer has pinned.
 if command -v brew &> /dev/null; then
     for pkg in protobuf swift-protobuf; do
-        if brew list --formula "$pkg" &> /dev/null; then
-            brew upgrade "$pkg" || echo "Warning: failed to upgrade $pkg; continuing with the installed version."
-        else
+        if ! brew list --formula "$pkg" &> /dev/null; then
             brew install "$pkg"
         fi
     done

@@ -70,10 +70,20 @@ public actor UploadMaterializer {
     /// '+' flow): coordinated copy, then immediate registration without
     /// waiting for the next scan.
     public func importUpload(from sourceURL: URL, group: String?) async throws -> String {
-        let fileName = sourceURL.lastPathComponent
-        let relative = group.flatMap { $0.isEmpty ? nil : "\($0)/\(fileName)" } ?? fileName
+        let fileName = Self.sanitizedPathComponent(sourceURL.lastPathComponent)
+        let safeGroup = group.map(Self.sanitizedPathComponent).flatMap { $0.isEmpty ? nil : $0 }
+        let relative = safeGroup.map { "\($0)/\(fileName)" } ?? fileName
         let folderRelative = "\(FileSyncFormat.uploadsDirectory)/\(relative)"
         try await folder.coordinatedCopy(from: sourceURL, to: folderRelative)
         return relative
+    }
+
+    /// Strips path separators and traversal sequences so user-supplied
+    /// names can never escape the Uploads directory.
+    static func sanitizedPathComponent(_ component: String) -> String {
+        let cleaned = component
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: "\\", with: "-")
+        return cleaned == ".." || cleaned == "." ? "-" : cleaned
     }
 }

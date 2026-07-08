@@ -79,6 +79,14 @@ public actor BookmarkSyncFolder: SyncFolder {
         }
     }
 
+    public func ensureDirectoryExists(_ relativeDir: String) async throws {
+        try await withAccess { root in
+            try FileManager.default.createDirectory(
+                at: root.appendingPathComponent(relativeDir, isDirectory: true),
+                withIntermediateDirectories: true)
+        }
+    }
+
     public func coordinatedCopy(from localURL: URL, to relativePath: String) async throws {
         try await withAccess { root in
             try await CoordinatedFileIO.copy(from: localURL, to: root.appendingPathComponent(relativePath))

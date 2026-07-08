@@ -81,6 +81,11 @@ public protocol SyncFolder: Sendable {
     /// Coordinated whole-file write, creating intermediate directories.
     func coordinatedWrite(_ relativePath: String, data: Data) async throws
 
+    /// Creates a directory (and intermediates) under the root. Must run
+    /// inside the implementation's access bracket (security scope for
+    /// picked folders).
+    func ensureDirectoryExists(_ relativeDir: String) async throws
+
     /// Coordinated copy of a local file into the folder.
     func coordinatedCopy(from localURL: URL, to relativePath: String) async throws
 

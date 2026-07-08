@@ -53,6 +53,12 @@ class DatabaseHelper {
             try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN contentHash TEXT;", values: nil)
             try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN groupName TEXT;", values: nil)
             try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN identityState INTEGER DEFAULT 0;", values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX file_sync_journal_entity ON FileSyncJournal (entityType, entityUuid, flushedSeq);", values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX user_episode_folder_relative_path ON SJUserEpisode (folderRelativePath);", values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX user_episode_content_hash ON SJUserEpisode (contentHash);", values: nil)
         }
     ]
 
