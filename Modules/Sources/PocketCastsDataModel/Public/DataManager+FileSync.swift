@@ -93,6 +93,32 @@ public extension DataManager {
             dbQueue: dbQueue)
     }
 
+    // MARK: - Bootstrap seeding (bypasses suppression; explicit stamps)
+
+    /// Writes a journal row directly with a historical timestamp — used by
+    /// the union-join bootstrap to seed the full local library.
+    func seedFileSyncJournal(entityType: FileSyncJournalEntry.EntityType, uuid: String,
+                             changedFields: [String], wallClockMs: Int64) {
+        let fieldsJSON = changedFields.isEmpty
+            ? nil
+            : (try? JSONEncoder().encode(changedFields)).flatMap { String(data: $0, encoding: .utf8) }
+        recordFileSyncJournal(FileSyncJournalEntry(
+            entityType: entityType.rawValue,
+            entityUuid: uuid,
+            opType: FileSyncJournalEntry.OpType.upsert.rawValue,
+            fields: fieldsJSON,
+            wallClockMs: wallClockMs))
+    }
+
+    func seedFileSyncUpNextReplace(episodeUuids: [String], wallClockMs: Int64) {
+        let fieldsJSON = (try? JSONEncoder().encode(episodeUuids)).flatMap { String(data: $0, encoding: .utf8) }
+        recordFileSyncJournal(FileSyncJournalEntry(
+            entityType: FileSyncJournalEntry.EntityType.upNext.rawValue,
+            opType: FileSyncJournalEntry.OpType.upNextReplace.rawValue,
+            fields: fieldsJSON,
+            wallClockMs: wallClockMs))
+    }
+
     // MARK: - Flusher/inspector surface
 
     func unflushedFileSyncEntries(limit: Int) -> [FileSyncJournalEntry] {

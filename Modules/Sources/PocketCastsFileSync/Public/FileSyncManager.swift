@@ -29,6 +29,7 @@ public actor FileSyncManager {
     private var materializer: UploadMaterializer?
     private var isSupportedFile: @Sendable (String) -> Bool = { _ in false }
     private var deviceName: String?
+    private var delegate: (any FileSyncDelegate)?
     private var localPathResolver: @Sendable (UserEpisode) -> String = { _ in "" }
     /// Invoked after any pass that may have changed upload episodes; the app
     /// bridges this to its NotificationCenter reload notifications.
@@ -76,6 +77,11 @@ public actor FileSyncManager {
         deviceName = name
     }
 
+    /// App-side capabilities bridge (playback, backfill, settings, stats).
+    public func configureDelegate(_ delegate: any FileSyncDelegate) {
+        self.delegate = delegate
+    }
+
     // MARK: Enable / disable
 
     /// Silently enables iCloud-backed sync when available and nothing was
@@ -94,6 +100,12 @@ public actor FileSyncManager {
     /// Enables sync against a user-picked folder (bookmark from the app's
     /// document picker flow).
     public func enable(pickedFolderBookmark: Data) async throws {
+        // A different root folder invalidates all read cursors and needs a
+        // fresh union-join seed.
+        if defaults.data(forKey: DefaultsKey.bookmarkData) != pickedFolderBookmark {
+            dataManager.deleteAllFileSyncCursors()
+            defaults.set(false, forKey: DefaultsKey.enabled)
+        }
         try await enable(folder: BookmarkSyncFolder(bookmarkData: pickedFolderBookmark),
                          kind: .securityScopedBookmark)
         defaults.set(pickedFolderBookmark, forKey: DefaultsKey.bookmarkData)
@@ -106,10 +118,20 @@ public actor FileSyncManager {
             folder: folder, dataManager: dataManager, isSupportedFile: isSupportedFile)
         self.materializer = UploadMaterializer(
             folder: folder, dataManager: dataManager, localPathResolver: localPathResolver)
+        let firstEnableForFolder = !defaults.bool(forKey: DefaultsKey.enabled)
+            || defaults.string(forKey: DefaultsKey.folderKind) != kind.rawValue
         defaults.set(true, forKey: DefaultsKey.enabled)
         defaults.set(kind.rawValue, forKey: DefaultsKey.folderKind)
         lastError = nil
         FileLog.shared.addMessage("FileSync: enabled (\(kind.rawValue)) as device \(deviceID)")
+
+        if firstEnableForFolder {
+            // Union join: seed the full local library into the journal with
+            // historical stamps; the next sync pass flushes it and merges
+            // whatever already lives in the folder. Nothing is lost on
+            // either side.
+            FileSyncBootstrap(dataManager: dataManager).seedLocalState()
+        }
     }
 
     /// Reattaches the persisted folder on app launch.
@@ -192,28 +214,69 @@ public actor FileSyncManager {
         dataManager.deleteFileSyncCursor(peerDeviceId: peerDeviceID)
     }
 
-    // MARK: Sync cycle (Phase 1: uploads reconciliation + device presence)
+    // MARK: Sync cycle: flush → ingest → apply → scan → snapshot
 
-    /// Runs one sync pass. Currently: refresh device presence and reconcile
-    /// the uploads folder. The op flush/ingest cycle lands here as the
-    /// engine integration grows.
+    private var syncPassRunning = false
+
+    /// Runs one full sync pass. Re-entrant calls coalesce into the running
+    /// pass (the next trigger picks up anything new).
     public func syncNow() async {
         guard isEnabled, let folder, let uploadsScanner else { return }
+        guard !syncPassRunning else { return }
+        syncPassRunning = true
+        defer { syncPassRunning = false }
+
         do {
+            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+            let flusher = OpJournalFlusher(folder: folder, dataManager: dataManager, deviceID: deviceID)
+            let ingestor = RemoteOpIngestor(folder: folder, dataManager: dataManager, deviceID: deviceID)
+            let applier = RemoteOpApplier(dataManager: dataManager, delegate: delegate)
+
+            // 1. Flush pending local changes into our own log.
+            let flushResult = try await flusher.flush(
+                settings: delegate?.collectChangedSettings() ?? [],
+                stats: delegate?.collectStats())
+
+            // 2. Ingest peers' new ops and apply the merged consensus.
+            let ingest = try await ingestor.ingest()
+            var uploadsManifest: [Filesync_UploadIdentity] = []
+            if ingest.opsRead > 0 || !ingest.state.uploads.isEmpty {
+                let applyResult = await applier.apply(ingest.state)
+                if applyResult.queueChanged || applyResult.episodesApplied > 0 || applyResult.podcastsApplied > 0 {
+                    onUploadsChanged?()
+                }
+                uploadsManifest = ingest.state.uploads.values
+                    .filter { ingest.state.uploadTombstones[$0.identity.uuid] == nil }
+                    .map(\.identity)
+            }
+            // Cursors advance only after apply committed: replay after a
+            // crash is idempotent because everything merges LWW.
+            ingestor.commit(ingest)
+
+            // 3. Reconcile the uploads folder against the merged manifest.
+            let scanResult = try await uploadsScanner.scan(manifest: uploadsManifest)
+            if scanResult.created + scanResult.adopted + scanResult.moved + scanResult.reset + scanResult.removed > 0 {
+                onUploadsChanged?()
+            }
+
+            // 4. Periodic snapshot + compaction (full state built lazily).
+            let snapshotWriter = SnapshotWriter(folder: folder, dataManager: dataManager, deviceID: deviceID)
+            try await snapshotWriter.snapshotIfNeeded(headSeq: flushResult.headSeq, nowMs: nowMs) {
+                try await ingestor.fullMerge()
+            }
+
+            // 5. Presence marker.
             try await SyncFolderBootstrapper.writeDeviceInfo(
                 folder: folder,
                 deviceID: deviceID,
                 name: deviceName ?? deviceDisplayName(),
                 model: deviceModelIdentifier(),
                 appVersion: appVersion(),
-                headSeq: UInt64(max(0, dataManager.fileSyncCursor(peerDeviceId: deviceID)?.headSeq ?? 0)),
-                nowMs: Int64(Date().timeIntervalSince1970 * 1000))
-            let result = try await uploadsScanner.scan(manifest: [])
+                headSeq: UInt64(max(0, flushResult.headSeq)),
+                nowMs: nowMs)
+
             lastScanDate = Date()
             lastError = nil
-            if result.created + result.adopted + result.moved + result.reset + result.removed > 0 {
-                onUploadsChanged?()
-            }
         } catch {
             lastError = "\(error)"
             FileLog.shared.addMessage("FileSync: sync pass failed: \(error)")

@@ -150,10 +150,20 @@ and diagnostics export, one-time Profile banner, and the rebacked Files UI
 import-into-folder, folder-file delete/evict flows, server upload paths
 gated off behind FeatureFlag.fileSync).
 
-Next: op flusher (journal → log files), remote ingest + `RemoteOpApplier`
-(merged state → DataManager via `saveIfNotModified`/suppression), union-
-join bootstrap and seeding, settings/stats observers, snapshot writer,
-op-log browser, UserEpisode artwork decoupling from server URLs
-(`urlForImage` color branch + `customImageDirectory` ownership), and
-UploadedSettingsViewController cleanup of server-upload rows. See the
-implementation plan for phasing.
+Phase 2 (engine core) implemented: `OpJournalFlusher` (journal →
+coalesced ops → own log with rotation; settings/stats pulled via
+`FileSyncDelegate` and emitted on change), `RemoteOpIngestor` (per-peer
+snapshot + log cursors, truncated-tail retry, `fullMerge()` for
+snapshots), `RemoteOpApplier` (merged state → DB mirroring
+SyncTask+ServerChanges: saveIfNotModified guards, actively-playing
+local-wins, paused-seek, server backfill with feed-URL stub fallback,
+op-based Up Next reconciliation), `FileSyncBootstrap` union-join seeding
+on enable/folder switch, and `SnapshotWriter` with log compaction —
+`syncNow()` runs flush → ingest → apply → uploads scan (real manifest) →
+snapshot → presence. Round-trip and convergence tests included.
+
+Remaining: full AppSettings bridge for SettingOps (collect/apply are
+stubbed in FileSyncAppDelegate), bookmarks channel, UserEpisode artwork
+decoupling from server URLs, UploadedSettingsViewController cleanup,
+op-log browser UI, and the on-device spike matrix (iCloud latency,
+Dropbox/Drive placeholder semantics).

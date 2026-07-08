@@ -35,6 +35,7 @@ class FileSyncCoordinator {
                 }
             )
             await FileSyncManager.shared.configureDeviceMetadata(name: deviceName)
+            await FileSyncManager.shared.configureDelegate(FileSyncAppDelegate())
             await FileSyncManager.shared.restoreIfEnabled()
             // Silent onboarding: first launch with iCloud available starts
             // syncing with zero setup, like iOS Notes.
