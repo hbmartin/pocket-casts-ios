@@ -96,7 +96,7 @@ public class DataManager {
         upNextManager.setup(dbQueue: dbQueue)
 
         autoAddCandidates = AutoAddCandidatesDataManager(dbQueue: dbQueue)
-        bookmarks = BookmarkDataManager(dbQueue: dbQueue)
+        bookmarks = BookmarkDataManager(dbQueue: dbQueue, fileSyncJournalManager: fileSyncJournalManager)
         ratings = RatingsDataManager()
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
     }

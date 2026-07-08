@@ -78,6 +78,23 @@ struct FileSyncJournalDataManager: Sendable {
         }
     }
 
+    /// Marks rows as durably written when one flushed op represented many
+    /// coalesced journal rows. Each row is assigned the actual envelope seq,
+    /// not a synthetic per-row seq.
+    func markFlushed(entryIDs: [Int64], seq: Int64, dbQueue: GRDBQueue) {
+        guard !entryIDs.isEmpty else { return }
+        _ = dbQueue.write { db in
+            try markFlushed(entryIDs: entryIDs, seq: seq, db: db)
+        }
+    }
+
+    func markFlushed(entryIDs: [Int64], seq: Int64, db: Database) throws {
+        guard !entryIDs.isEmpty else { return }
+        try FileSyncJournalEntry
+            .filter(entryIDs.contains(FileSyncJournalEntry.Columns.id))
+            .updateAll(db, [FileSyncJournalEntry.Columns.flushedSeq.set(to: seq)])
+    }
+
     /// Flushed rows are kept briefly for the inspector's op browser, then
     /// purged.
     func purgeFlushed(olderThanMs: Int64, dbQueue: GRDBQueue) {

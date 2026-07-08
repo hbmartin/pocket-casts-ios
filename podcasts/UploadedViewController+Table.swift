@@ -13,12 +13,22 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
 
     // MARK: TableView Datasource
 
+    func numberOfSections(in tableView: UITableView) -> Int {
+        max(uploadedGroups.count, 1)
+    }
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        uploadedEpisodes.count
+        uploadedGroups[safe: section]?.episodes.count ?? 0
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return headerView
+        if section == 0 {
+            return headerView
+        }
+        guard let group = uploadedGroups[safe: section], !group.group.isEmpty else { return nil }
+        let sectionHeader = DateHeadingView(frame: CGRect(x: 0, y: 0, width: tableView.frame.size.width, height: 45))
+        sectionHeader.title = group.group
+        return sectionHeader
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -26,7 +36,8 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
         cell.hidesArtwork = false
         cell.playlist = .files
         cell.delegate = self
-        let episode: BaseEpisode = uploadedEpisodes[indexPath.row] as BaseEpisode
+        guard let userEpisode = episodeAt(indexPath) else { return cell }
+        let episode: BaseEpisode = userEpisode as BaseEpisode
         cell.populateFrom(episode: episode, tintColor: ThemeColor.primaryIcon01(), podcastUuid: episode.parentIdentifier())
         cell.shouldShowSelect = isMultiSelectEnabled
         if isMultiSelectEnabled {
@@ -40,7 +51,7 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
         guard uploadsTable.isEditing, !multiSelectGestureInProgress else { return indexPath }
 
-        if selectedEpisodesContains(uuid: uploadedEpisodes[indexPath.row].uuid) {
+        if let episode = episodeAt(indexPath), selectedEpisodesContains(uuid: episode.uuid) {
             uploadsTable.delegate?.tableView?(uploadsTable, didDeselectRowAt: indexPath)
             return nil
         }
@@ -49,7 +60,7 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if isMultiSelectEnabled {
-            let userEpisode = uploadedEpisodes[indexPath.row]
+            guard let userEpisode = episodeAt(indexPath) else { return }
 
             if !multiSelectGestureInProgress {
                 // If the episode is already selected move to the end of the array
@@ -65,7 +76,7 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
             }
         } else {
             tableView.deselectRow(at: indexPath, animated: true)
-            let episode = uploadedEpisodes[indexPath.row]
+            guard let episode = episodeAt(indexPath) else { return }
             userEpisodeDetailVC = UserEpisodeDetailViewController(episodeUuid: episode.uuid)
             userEpisodeDetailVC?.playlist = .files
             userEpisodeDetailVC?.delegate = self
@@ -74,8 +85,7 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        guard isMultiSelectEnabled else { return }
-        let userEpisode = uploadedEpisodes[indexPath.row]
+        guard isMultiSelectEnabled, let userEpisode = episodeAt(indexPath) else { return }
         if let index = selectedEpisodes.firstIndex(where: { $0.uuid == userEpisode.uuid }) {
             selectedEpisodes.remove(at: index)
             if let cell = tableView.cellForRow(at: indexPath) as? EpisodeCell {

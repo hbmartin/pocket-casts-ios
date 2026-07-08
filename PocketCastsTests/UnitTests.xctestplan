@@ -44,6 +44,13 @@
     {
       "target" : {
         "containerPath" : "container:Modules",
+        "identifier" : "PocketCastsFileSyncTests",
+        "name" : "PocketCastsFileSyncTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules",
         "identifier" : "PocketCastsUtilsTests",
         "name" : "PocketCastsUtilsTests"
       }

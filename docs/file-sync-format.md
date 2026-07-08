@@ -119,8 +119,8 @@ code paths; evicting the cache never removes the episode.
 - Tombstones are retained in snapshots for 90 days. A device offline
   longer than that can resurrect deletions when it rejoins (documented
   limitation; the inspector flags devices unseen for 60+ days).
-- "Forget device" writes a `DeviceForget` op and deletes that device's
-  directory.
+- "Forget device" removes that device's directory and clears the local
+  cursor for the peer. It never writes into the forgotten peer's namespace.
 
 ## iCloud specifics
 
@@ -133,17 +133,17 @@ backstop and as the only change source for picked folders. `Sync/` files
 are downloaded eagerly; `Uploads/` audio stays as placeholders until
 played or downloaded.
 
-## Status / roadmap
+## Status
 
 Implemented: vendored schemas + generated code + protoc golden vectors,
-pure merge engine + Up Next merger + log framing (unit-tested), folder
-access layer (both kinds), change journal + DataManager hooks + cursors
-(migration 75, tested), uploads planner/resolver/materializer
-(planner unit-tested), `FileSyncManager` facade with device presence and
-uploads reconciliation.
+pure merge engine + Up Next merger + log framing, folder access layer
+(iCloud and picked folders), change journal + DataManager hooks + cursors
+(migration 75), uploads planner/resolver/materializer, journal flusher,
+remote ingest, remote applier, union-join bootstrap/seeding, snapshot
+writer, `FileSyncManager` facade, app cadence wiring, iCloud
+entitlements/Info.plist, rebacked Files UI, Profile banner, and Settings
+inspector.
 
-Next: op flusher (journal → log files), remote ingest + `RemoteOpApplier`
-(merged state → DataManager via `saveIfNotModified`/suppression), union-
-join bootstrap and seeding, cadence trigger wiring in the app, iCloud
-entitlements + Info.plist, rebacked Files UI, settings/stats observers,
-snapshot writer, inspector UI. See the implementation plan for phasing.
+Known follow-ups: broaden settings observation beyond the current
+no-op bridge, add deeper UI coverage for provider failure states, and
+continue expanding end-to-end tests around real File Provider behavior.

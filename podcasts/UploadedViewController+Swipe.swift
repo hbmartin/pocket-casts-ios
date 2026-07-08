@@ -6,7 +6,7 @@ extension UploadedViewController: @preconcurrency SwipeTableViewCellDelegate, Sw
     // MARK: - SwipeTableViewCellDelegate
 
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        guard isMultiSelectEnabled == false, let episode = uploadedEpisodes[safe: indexPath.row] else { return nil }
+        guard isMultiSelectEnabled == false, let episode = episodeAt(indexPath) else { return nil }
 
         switch orientation {
         case .left:

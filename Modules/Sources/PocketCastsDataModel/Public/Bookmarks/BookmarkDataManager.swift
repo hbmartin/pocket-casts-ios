@@ -51,9 +51,11 @@ struct BookmarkRow: Equatable, Sendable {
 public struct BookmarkDataManager: Sendable {
     static let tableName = "Bookmark"
     private let dbQueue: GRDBQueue
+    private let fileSyncJournalManager: FileSyncJournalDataManager?
 
-    init(dbQueue: GRDBQueue) {
+    init(dbQueue: GRDBQueue, fileSyncJournalManager: FileSyncJournalDataManager? = nil) {
         self.dbQueue = dbQueue
+        self.fileSyncJournalManager = fileSyncJournalManager
     }
 
     /// Looks for any existing bookmarks in an episode that have the same start time
@@ -88,6 +90,7 @@ public struct BookmarkDataManager: Sendable {
 
         let success = dbQueue.write { db in
             try rowToSave.insert(db)
+            try recordFileSyncChange(uuid: rowToSave.uuid, isDelete: false, syncStatus: syncStatus, db: db)
         }
         return success ? rowToSave.uuid : nil
     }
@@ -101,25 +104,22 @@ public struct BookmarkDataManager: Sendable {
         let modifiedInterval = (modified ?? Date()).timeIntervalSince1970
         let syncStatusValue = syncStatus.rawValue
 
-        do {
-            try await dbQueue.write { db in
-                var assignments: [ColumnAssignment] = [BookmarkRow.Columns.title.set(to: title)]
-                if let timeValue {
-                    assignments.append(BookmarkRow.Columns.time.set(to: timeValue))
-                }
-                if let createdInterval {
-                    assignments.append(BookmarkRow.Columns.dateAdded.set(to: createdInterval))
-                }
-                assignments.append(BookmarkRow.Columns.titleModifiedDate.set(to: modifiedInterval))
-                assignments.append(BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-
-                try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
+        let success = dbQueue.write { db in
+            var assignments: [ColumnAssignment] = [BookmarkRow.Columns.title.set(to: title)]
+            if let timeValue {
+                assignments.append(BookmarkRow.Columns.time.set(to: timeValue))
             }
-            return true
-        } catch {
-            FileLog.shared.addMessage("BookmarkManager.update failed: \(error)")
-            return false
+            if let createdInterval {
+                assignments.append(BookmarkRow.Columns.dateAdded.set(to: createdInterval))
+            }
+            assignments.append(BookmarkRow.Columns.titleModifiedDate.set(to: modifiedInterval))
+            assignments.append(BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+
+            try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
+            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
         }
+        if !success { FileLog.shared.addMessage("BookmarkManager.update failed") }
+        return success
     }
 
     // MARK: - Retrieving
@@ -176,15 +176,11 @@ public struct BookmarkDataManager: Sendable {
 
     @discardableResult
     public func markAllBookmarksAsSynced() async -> Bool {
-        do {
-            try await dbQueue.write { db in
-                try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
-            }
-            return true
-        } catch {
-            FileLog.shared.addMessage("BookmarkManager.markAllBookmarksAsSynced failed: \(error)")
-            return false
+        let success = dbQueue.write { db in
+            _ = try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
         }
+        if !success { FileLog.shared.addMessage("BookmarkManager.markAllBookmarksAsSynced failed") }
+        return success
     }
 
     // MARK: - Deleting
@@ -196,20 +192,19 @@ public struct BookmarkDataManager: Sendable {
         let deletedModifiedInterval = Date().timeIntervalSince1970
         let syncStatusValue = syncStatus.rawValue
 
-        do {
-            try await dbQueue.write { db in
-                try BookmarkRow
-                    .filter(uuids.contains(BookmarkRow.Columns.uuid))
-                    .updateAll(db,
-                               BookmarkRow.Columns.deleted.set(to: true),
-                               BookmarkRow.Columns.deletedModifiedDate.set(to: deletedModifiedInterval),
-                               BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+        let success = dbQueue.write { db in
+            try BookmarkRow
+                .filter(uuids.contains(BookmarkRow.Columns.uuid))
+                .updateAll(db,
+                           BookmarkRow.Columns.deleted.set(to: true),
+                           BookmarkRow.Columns.deletedModifiedDate.set(to: deletedModifiedInterval),
+                           BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+            for uuid in uuids {
+                try recordFileSyncChange(uuid: uuid, isDelete: true, syncStatus: syncStatus, db: db)
             }
-            return true
-        } catch {
-            FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
-            return false
         }
+        if !success { FileLog.shared.addMessage("BookmarkManager.remove failed") }
+        return success
     }
 
     /// Permanently removes the bookmarks from the database
@@ -217,15 +212,11 @@ public struct BookmarkDataManager: Sendable {
     public func permanentlyDelete(bookmarks: [Bookmark]) async -> Bool {
         let uuids = bookmarks.map { $0.uuid }
 
-        do {
-            try await dbQueue.write { db in
-                try BookmarkRow.filter(uuids.contains(BookmarkRow.Columns.uuid)).deleteAll(db)
-            }
-            return true
-        } catch {
-            FileLog.shared.addMessage("BookmarkManager.remove failed: \(error)")
-            return false
+        let success = dbQueue.write { db in
+            _ = try BookmarkRow.filter(uuids.contains(BookmarkRow.Columns.uuid)).deleteAll(db)
         }
+        if !success { FileLog.shared.addMessage("BookmarkManager.remove failed") }
+        return success
     }
 
     // MARK: - Sortings
@@ -268,6 +259,25 @@ public struct BookmarkDataManager: Sendable {
 // MARK: - Private
 
 private extension BookmarkDataManager {
+    func recordFileSyncChange(uuid: String, isDelete: Bool, syncStatus: SyncStatus, db: Database) throws {
+        guard syncStatus == .notSynced,
+              !DataManager.isApplyingRemoteFileSyncOps,
+              let fileSyncJournalManager else { return }
+
+        let entry = FileSyncJournalEntry(
+            entityType: FileSyncJournalEntry.EntityType.bookmark.rawValue,
+            entityUuid: uuid,
+            opType: isDelete
+                ? FileSyncJournalEntry.OpType.delete.rawValue
+                : FileSyncJournalEntry.OpType.upsert.rawValue,
+            fields: isDelete ? nil : "[]")
+        if isDelete {
+            try fileSyncJournalManager.record(entry, db: db)
+        } else {
+            try fileSyncJournalManager.recordCoalescing(entry, db: db)
+        }
+    }
+
     /// GRDB query-interface twin of `selectBookmarks(where:values:limit:sorted:allowDeleted:)`
     func grdbSelectBookmarks(in dbQueue: GRDBQueue, filters: [any SQLSpecificExpressible] = [], sorted: SortOption = .newestToOldest, limit: Int = 0, allowDeleted: Bool = false) -> [Bookmark] {
         var request = BookmarkRow.all()

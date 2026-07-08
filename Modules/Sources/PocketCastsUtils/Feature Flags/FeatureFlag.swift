@@ -220,6 +220,9 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Enable Generated Chapters
     case generatedChapters
 
+    /// Enable the local-first file sync engine and app integration
+    case fileSync
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -375,6 +378,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .upNextSort:
             BuildEnvironment.current == .debug
         case .generatedChapters:
+            BuildEnvironment.current == .debug
+        case .fileSync:
             BuildEnvironment.current == .debug
         }
     }
