@@ -1,4 +1,5 @@
 import PocketCastsServer
+import PocketCastsUtils
 import UIKit
 
 class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource {
@@ -30,10 +31,16 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
     }
 
     private func tableSections() -> [TableSections] {
+        if FeatureFlag.fileSync.enabled {
+            return [.autoAddToUpNext, .afterPlaying]
+        }
         return [.autoAddToUpNext, .afterPlaying, .autoSync, .onlyOnWifi]
     }
 
     private func tableRows() -> [[TableRows]] {
+        if FeatureFlag.fileSync.enabled {
+            return [[.autoAddToUpNext], [.removeFileAfterPlaying]]
+        }
         return [[.autoAddToUpNext], [.removeFileAfterPlaying, .removeFromCloudAfterPlaying], [.autoUpload, .autoDownload], [.onlyOnWifi]]
     }
 

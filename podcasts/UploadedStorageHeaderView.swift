@@ -1,3 +1,4 @@
+import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import UIKit
@@ -77,6 +78,16 @@ class UploadedStorageHeaderView: UIView {
     @objc func update() {
         plusView.isHidden = false
         noPlusView.isHidden = true
+
+        if FeatureFlag.fileSync.enabled {
+            let episodes = DataManager.sharedManager.allUserEpisodes(sortedBy: .newestToOldest)
+            let totalBytes = episodes.reduce(Int64(0)) { $0 + $1.sizeInBytes }
+            numFilesLabel.text = episodes.count == 1 ? L10n.profileSingleFile : L10n.profileNumberOfFiles(episodes.count.localized())
+            storageSizeLabel.text = SizeFormatter.shared.defaultFormat(bytes: totalBytes)
+            percentageLabel.text = L10n.fileSyncFolderIcloud
+            percentageLabel.textColor = AppTheme.colorForStyle(.primaryText01)
+            return
+        }
 
         let maxStorage = Int64(ServerSettings.customStorageUserLimit())
         let usedStorage = Int64(ServerSettings.customStorageUsed())

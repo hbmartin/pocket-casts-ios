@@ -39,7 +39,10 @@ nonisolated extension UserEpisode {
 
     func urlForImage(size: Int = 280) -> URL {
         if imageColor > 0 {
-                return ServerHelper.userEpisodeDefaultImageUrl(isDark: Theme.isDarkTheme(), color: Int(imageColor), size: size)
+            if FeatureFlag.fileSync.enabled {
+                return URL(fileURLWithPath: pathToLocalImage())
+            }
+            return ServerHelper.userEpisodeDefaultImageUrl(isDark: Theme.isDarkTheme(), color: Int(imageColor), size: size)
         }
 
         if let serverImageLocation = imageUrl, let serverURL = URL(string: serverImageLocation) {
@@ -50,7 +53,7 @@ nonisolated extension UserEpisode {
     }
 
     func pathToLocalImage() -> String {
-        UploadManager.shared.customImageDirectory + "/" + uuid + ".jpg"
+        UserEpisodeArtwork.imagePath(forEpisodeUuid: uuid)
     }
 
     public func subTitle() -> String {

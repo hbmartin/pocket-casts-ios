@@ -2572,6 +2572,78 @@
 /* Fallback label in the file-sync device list when a peer device name cannot be read. */
 "file_sync_unknown_device" = "Unknown device";
 
+/* Button title that lets the user pick a different local file-sync folder. */
+"file_sync_action_choose_folder" = "Choose Folder";
+
+/* Button title that exports local file-sync diagnostics. */
+"file_sync_action_export_diagnostics" = "Export Diagnostics";
+
+/* Button title that starts a manual file-sync pass. */
+"file_sync_action_sync_now" = "Sync Now";
+
+/* Button title in the profile banner that opens file-sync settings. */
+"file_sync_banner_action" = "View Settings";
+
+/* Message in the profile banner explaining local file sync was enabled. */
+"file_sync_banner_message" = "Your podcasts, playback, and files can now sync through your local iCloud Drive folder.";
+
+/* Title in the profile banner announcing local file sync. */
+"file_sync_banner_title" = "Local File Sync Is On";
+
+/* Destructive action that deletes a folder-backed upload from the sync folder and all devices. */
+"file_sync_delete_everywhere" = "Delete Everywhere";
+
+/* Empty-state text for the file-sync device list. */
+"file_sync_devices_empty" = "No synced devices yet.";
+
+/* Swipe action that removes a stale peer device folder from file sync. */
+"file_sync_devices_forget" = "Forget";
+
+/* Section title for devices participating in file sync. */
+"file_sync_devices_header" = "Devices";
+
+/* Label shown next to a device that has not written presence recently. */
+"file_sync_devices_stale" = "Stale";
+
+/* Label shown next to the current device in the file-sync device list. */
+"file_sync_devices_this_device" = "This Device";
+
+/* Empty-state message shown in Files when local file sync is enabled and no files exist. */
+"file_sync_files_empty_message" = "Add files here or drop supported audio files into your Pocket Casts sync folder.";
+
+/* Footer text explaining where local file-sync data is stored. */
+"file_sync_folder_explanation" = "Pocket Casts stores sync logs and uploaded files in this folder. You can use iCloud Drive for automatic Apple-device sync or choose another Files location.";
+
+/* Label for the default iCloud Drive file-sync folder. */
+"file_sync_folder_icloud" = "iCloud Drive";
+
+/* Label for a user-picked file-sync folder. */
+"file_sync_folder_picked" = "Picked Folder";
+
+/* Action that removes only the local cached copy of a folder-backed upload. */
+"file_sync_remove_download" = "Remove Download";
+
+/* Row label for the current file-sync folder type. */
+"file_sync_status_folder" = "Folder";
+
+/* Row label for the most recent successful file-sync pass. */
+"file_sync_status_last_sync" = "Last Sync";
+
+/* Value shown when file sync is disabled. */
+"file_sync_status_off" = "Off";
+
+/* Value shown when file sync is enabled. */
+"file_sync_status_on" = "On";
+
+/* Row label for the number of local changes waiting to be written to file sync. */
+"file_sync_status_pending_changes" = "Pending Changes";
+
+/* Row label for the current file-sync enabled state. */
+"file_sync_status_state" = "State";
+
+/* Title for the file-sync settings screen and Settings row. */
+"settings_file_sync" = "File Sync";
+
 /* Subtitle for the toggle to auto add new files to the Up Next Queue. */
 "Settings_files_add_up_next_subtitle" = "Add new files to Up Next automatically";
 

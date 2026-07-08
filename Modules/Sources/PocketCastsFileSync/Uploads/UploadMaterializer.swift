@@ -71,10 +71,26 @@ public actor UploadMaterializer {
     /// waiting for the next scan.
     public func importUpload(from sourceURL: URL, group: String?) async throws -> String {
         let fileName = sourceURL.lastPathComponent
-        let relative = try Self.uploadRelativePath(fileName: fileName, group: group)
+        let relative = try await uniqueUploadRelativePath(fileName: fileName, group: group)
         let folderRelative = "\(FileSyncFormat.uploadsDirectory)/\(relative)"
         try await folder.coordinatedCopy(from: sourceURL, to: folderRelative)
         return relative
+    }
+
+    private func uniqueUploadRelativePath(fileName: String, group: String?) async throws -> String {
+        let group = try Self.validatedGroup(group)
+        let prefix = group.flatMap { "\($0)/" } ?? ""
+        let existing = Set(try await folder.list(FileSyncFormat.uploadsDirectory)
+            .filter { !$0.isDirectory }
+            .map { Self.stripUploadsPrefix($0.relativePath).lowercased() })
+
+        for candidate in Self.fileNameCandidates(for: fileName) {
+            let relative = prefix + candidate
+            if !existing.contains(relative.lowercased()) {
+                return relative
+            }
+        }
+        throw SyncFolderError.invalidPathComponent(fileName)
     }
 
     static func uploadRelativePath(fileName: String, group: String?) throws -> String {
@@ -89,5 +105,27 @@ public actor UploadMaterializer {
             throw SyncFolderError.invalidPathComponent(group)
         }
         return group
+    }
+
+    private static func fileNameCandidates(for fileName: String) -> some Sequence<String> {
+        sequence(first: fileName) { previous in
+            let name = previous as NSString
+            let pathExtension = name.pathExtension
+            let base = name.deletingPathExtension
+
+            let nextBase: String
+            if let match = base.range(of: #" \d+$"#, options: .regularExpression),
+               let number = Int(base[match].trimmingCharacters(in: .whitespaces)) {
+                nextBase = base.replacingCharacters(in: match, with: " \(number + 1)")
+            } else {
+                nextBase = "\(base) 2"
+            }
+            return pathExtension.isEmpty ? nextBase : "\(nextBase).\(pathExtension)"
+        }
+    }
+
+    private static func stripUploadsPrefix(_ path: String) -> String {
+        let prefix = FileSyncFormat.uploadsDirectory + "/"
+        return path.hasPrefix(prefix) ? String(path.dropFirst(prefix.count)) : path
     }
 }

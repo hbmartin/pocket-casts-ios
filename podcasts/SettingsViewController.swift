@@ -8,6 +8,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
         case customFiles, importSteps, opml
+        case fileSync
         case about, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
@@ -16,6 +17,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         /// Whether the section should be displayed or not
         var visible: Bool {
             switch self {
+            case .fileSync:
+                return FeatureFlag.fileSync.enabled
             default:
                 return true
             }
@@ -59,6 +62,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.upNextHistory, .init(named: "upnext"))
             case .foldersHistory:
                 return (L10n.foldersHistory, .init(named: "folder-empty"))
+            case .fileSync:
+                return (L10n.settingsFileSync, UIImage(named: "settings_import_podcasts"))
             }
         }
     }
@@ -77,6 +82,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             developerSection,
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
+            [.fileSync],
             [.storageAndDataUse, .siriShortcuts, .headphoneControls, .customFiles],
             [.importSteps, .opml],
             [.upNextHistory, .foldersHistory],
@@ -190,6 +196,11 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case .foldersHistory:
             let foldersHistoryViewController = FolderHistoryViewController()
             navigationController?.pushViewController(foldersHistoryViewController, animated: true)
+        case .fileSync:
+            let syncView = FileSyncSettingsView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: syncView)
+            hostingController.title = L10n.settingsFileSync
+            navigationController?.pushViewController(hostingController, animated: true)
         }
     }
 

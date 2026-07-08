@@ -92,6 +92,42 @@ public extension DataManager {
             dbQueue: dbQueue)
     }
 
+    // MARK: - Bootstrap seeding
+
+    /// Writes a historical journal row used by the union-join bootstrap
+    /// when this device first joins a folder. The caller supplies the
+    /// timestamp so existing local data does not overwrite newer remote
+    /// edits merely because sync was enabled later.
+    func seedFileSyncJournal(
+        entityType: FileSyncJournalEntry.EntityType,
+        uuid: String,
+        changedFields: [String],
+        wallClockMs: Int64
+    ) {
+        let fieldsJSON = changedFields.isEmpty
+            ? nil
+            : (try? JSONEncoder().encode(changedFields)).flatMap { String(data: $0, encoding: .utf8) }
+        fileSyncJournalManager.recordCoalescing(
+            FileSyncJournalEntry(
+                entityType: entityType.rawValue,
+                entityUuid: uuid,
+                opType: FileSyncJournalEntry.OpType.upsert.rawValue,
+                fields: fieldsJSON,
+                wallClockMs: wallClockMs),
+            dbQueue: dbQueue)
+    }
+
+    func seedFileSyncUpNextReplace(episodeUuids: [String], wallClockMs: Int64) {
+        let fieldsJSON = (try? JSONEncoder().encode(episodeUuids)).flatMap { String(data: $0, encoding: .utf8) }
+        fileSyncJournalManager.record(
+            FileSyncJournalEntry(
+                entityType: FileSyncJournalEntry.EntityType.upNext.rawValue,
+                opType: FileSyncJournalEntry.OpType.upNextReplace.rawValue,
+                fields: fieldsJSON,
+                wallClockMs: wallClockMs),
+            dbQueue: dbQueue)
+    }
+
     // MARK: - Flusher/inspector surface
 
     func unflushedFileSyncEntries(limit: Int) -> [FileSyncJournalEntry] {
@@ -104,6 +140,10 @@ public extension DataManager {
 
     func markFileSyncEntriesFlushed(entryIDs: [Int64], startingSeq: Int64) {
         fileSyncJournalManager.markFlushed(entryIDs: entryIDs, startingSeq: startingSeq, dbQueue: dbQueue)
+    }
+
+    func markFileSyncEntriesFlushed(entryIDs: [Int64], seq: Int64) {
+        fileSyncJournalManager.markFlushed(entryIDs: entryIDs, seq: seq, dbQueue: dbQueue)
     }
 
     func purgeFlushedFileSyncEntries(olderThanMs: Int64) {

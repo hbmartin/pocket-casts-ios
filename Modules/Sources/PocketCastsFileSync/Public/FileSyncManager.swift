@@ -9,10 +9,8 @@ import UIKit
 /// server sync).
 ///
 /// Owns the sync folder handle, this device's identity, the uploads
-/// pipeline, and — as the engine grows — the flush/ingest cycle. The app
-/// configures it at startup and pokes `syncNow()` from its cadence
-/// triggers (pause/seek/queue-edit notifications, backgrounding, the 60s
-/// playback heartbeat, and BGAppRefresh).
+/// pipeline, and the flush/ingest/apply cycle. The app configures it at
+/// startup and pokes `syncNow()` from cadence triggers.
 public actor FileSyncManager {
     public static let shared = FileSyncManager()
 
@@ -29,7 +27,13 @@ public actor FileSyncManager {
     private let defaults: UserDefaults
     private var folder: (any SyncFolder)?
     private var uploadsScanner: UploadsScanner?
+    private var materializer: UploadMaterializer?
     private var isSupportedFile: @Sendable (String) -> Bool = { _ in false }
+    private var localPathResolver: @Sendable (UserEpisode) -> String = { _ in "" }
+    private var onUploadsChanged: (@Sendable () -> Void)?
+    private var delegate: (any FileSyncDelegate)?
+
+    private var syncPassRunning = false
 
     private(set) var lastScanDate: Date?
     private(set) var lastError: String?
@@ -54,15 +58,27 @@ public actor FileSyncManager {
         defaults.bool(forKey: DefaultsKey.enabled)
     }
 
-    /// The app injects file-type support (FileTypeUtil) once at startup.
-    public func configure(isSupportedFile: @escaping @Sendable (String) -> Bool) {
+    /// The app injects file-type support, local cache path resolution, and
+    /// the upload-list reload bridge once at startup.
+    public func configure(
+        isSupportedFile: @escaping @Sendable (String) -> Bool,
+        localPathResolver: @escaping @Sendable (UserEpisode) -> String,
+        onUploadsChanged: (@Sendable () -> Void)? = nil
+    ) {
         self.isSupportedFile = isSupportedFile
+        self.localPathResolver = localPathResolver
+        self.onUploadsChanged = onUploadsChanged
+    }
+
+    public func configureDelegate(_ delegate: any FileSyncDelegate) {
+        self.delegate = delegate
     }
 
     // MARK: Enable / disable
 
     /// Silently enables iCloud-backed sync when available and nothing was
-    /// configured yet (first-launch onboarding path). No-op otherwise.
+    /// configured yet. The app decides whether to call this via feature
+    /// flag/product gating.
     public func enableICloudIfUnconfigured() async {
         guard defaults.object(forKey: DefaultsKey.enabled) == nil,
               UbiquitySyncFolder.isAvailable else { return }
@@ -74,26 +90,44 @@ public actor FileSyncManager {
         }
     }
 
-    /// Enables sync against a user-picked folder (bookmark from the app's
-    /// document picker flow).
     public func enable(pickedFolderBookmark: Data) async throws {
+        if defaults.data(forKey: DefaultsKey.bookmarkData) != pickedFolderBookmark {
+            dataManager.deleteAllFileSyncCursors()
+            defaults.set(false, forKey: DefaultsKey.enabled)
+        }
         try await enable(folder: BookmarkSyncFolder(bookmarkData: pickedFolderBookmark),
                          kind: .securityScopedBookmark)
         defaults.set(pickedFolderBookmark, forKey: DefaultsKey.bookmarkData)
     }
 
     private func enable(folder: any SyncFolder, kind: SyncFolderKind) async throws {
+        await self.folder?.stopChangeMonitoring()
         try await SyncFolderBootstrapper.prepare(folder: folder, deviceID: deviceID)
         self.folder = folder
         self.uploadsScanner = UploadsScanner(
-            folder: folder, dataManager: dataManager, isSupportedFile: isSupportedFile)
+            folder: folder,
+            dataManager: dataManager,
+            isSupportedFile: isSupportedFile)
+        self.materializer = UploadMaterializer(
+            folder: folder,
+            dataManager: dataManager,
+            localPathResolver: localPathResolver)
+
+        let firstEnableForFolder = !defaults.bool(forKey: DefaultsKey.enabled)
+            || defaults.string(forKey: DefaultsKey.folderKind) != kind.rawValue
         defaults.set(true, forKey: DefaultsKey.enabled)
         defaults.set(kind.rawValue, forKey: DefaultsKey.folderKind)
         lastError = nil
         FileLog.shared.addMessage("FileSync: enabled (\(kind.rawValue)) as device \(deviceID)")
+
+        if firstEnableForFolder {
+            FileSyncBootstrap(dataManager: dataManager).seedLocalState()
+        }
+        await folder.startChangeMonitoring { [weak self] _ in
+            Task { await self?.syncNow() }
+        }
     }
 
-    /// Reattaches the persisted folder on app launch.
     public func restoreIfEnabled() async {
         guard isEnabled, folder == nil else { return }
         do {
@@ -112,33 +146,111 @@ public actor FileSyncManager {
         }
     }
 
-    /// Disabling keeps the folder contents (they belong to the user) but
-    /// clears local cursors so a re-enable bootstraps cleanly.
     public func disable() {
+        let currentFolder = folder
         folder = nil
         uploadsScanner = nil
+        materializer = nil
         defaults.set(false, forKey: DefaultsKey.enabled)
         defaults.removeObject(forKey: DefaultsKey.bookmarkData)
         dataManager.deleteAllFileSyncCursors()
+        Task { await currentFolder?.stopChangeMonitoring() }
     }
 
-    // MARK: Sync cycle (Phase 1: uploads reconciliation + device presence)
+    // MARK: Upload operations
 
-    /// Runs one sync pass. Currently: refresh device presence and reconcile
-    /// the uploads folder. The op flush/ingest cycle lands here as the
-    /// engine integration grows.
+    public func importUpload(from sourceURL: URL, group: String? = nil) async throws -> String {
+        guard let materializer else { throw SyncFolderError.ubiquityUnavailable }
+        let relative = try await materializer.importUpload(from: sourceURL, group: group)
+        onUploadsChanged?()
+        return relative
+    }
+
+    public func materializeUpload(episodeUuid: String) async throws {
+        guard let materializer, let uploadsScanner else { throw SyncFolderError.ubiquityUnavailable }
+        let (_, folderURL) = try await materializer.materialize(episodeUuid: episodeUuid)
+        try await uploadsScanner.resolveIdentity(episodeUuid: episodeUuid, materializedURL: folderURL, manifest: [])
+        onUploadsChanged?()
+    }
+
+    public func evictUpload(episodeUuid: String) async {
+        await materializer?.evict(episodeUuid: episodeUuid)
+        onUploadsChanged?()
+    }
+
+    public func deleteUpload(episodeUuid: String) async throws {
+        guard let folder else { throw SyncFolderError.ubiquityUnavailable }
+        guard let episode = dataManager.findUserEpisode(uuid: episodeUuid) else { return }
+        if let relativePath = episode.folderRelativePath {
+            try await folder.coordinatedDelete("\(FileSyncFormat.uploadsDirectory)/\(relativePath)")
+        }
+        await materializer?.evict(episodeUuid: episodeUuid)
+        dataManager.delete(userEpisodeUuid: episodeUuid)
+        dataManager.journalFileSyncDelete(entityType: .userEpisode, uuid: episodeUuid)
+        onUploadsChanged?()
+    }
+
+    public func forgetDevice(id peerDeviceID: String) async throws {
+        guard let folder else { throw SyncFolderError.ubiquityUnavailable }
+        guard peerDeviceID != deviceID else { return }
+        try await folder.coordinatedDelete(FileSyncFormat.deviceDirectory(deviceID: peerDeviceID))
+        dataManager.deleteFileSyncCursor(peerDeviceId: peerDeviceID)
+    }
+
+    // MARK: Sync cycle
+
     public func syncNow() async {
         guard isEnabled, let folder, let uploadsScanner else { return }
+        guard !syncPassRunning else { return }
+        syncPassRunning = true
+        defer { syncPassRunning = false }
+
         do {
+            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+            let flusher = OpJournalFlusher(folder: folder, dataManager: dataManager, deviceID: deviceID)
+            let ingestor = RemoteOpIngestor(folder: folder, dataManager: dataManager, deviceID: deviceID)
+            let applier = RemoteOpApplier(dataManager: dataManager, delegate: delegate)
+
+            let flushResult = try await flusher.flush(
+                settings: delegate?.collectChangedSettings() ?? [],
+                stats: delegate?.collectStats())
+
+            let ingest = try await ingestor.ingest()
+            let hasRemoteChanges = ingest.opsRead > 0 || ingest.state.hasContent
+            let uploadState = hasRemoteChanges ? ingest.state : try await ingestor.fullMerge()
+            if hasRemoteChanges {
+                let applyResult = await applier.apply(ingest.state)
+                if applyResult.queueChanged
+                    || applyResult.episodesApplied > 0
+                    || applyResult.podcastsApplied > 0
+                    || applyResult.bookmarksApplied > 0 {
+                    onUploadsChanged?()
+                }
+            }
+            let uploadsManifest = uploadState.uploads.values
+                .filter { uploadState.uploadTombstones[$0.identity.uuid] == nil }
+                .map(\.identity)
+            ingestor.commit(ingest)
+
+            let scanResult = try await uploadsScanner.scan(manifest: uploadsManifest)
+            if scanResult.created + scanResult.adopted + scanResult.moved + scanResult.reset + scanResult.removed > 0 {
+                onUploadsChanged?()
+            }
+
+            let snapshotWriter = SnapshotWriter(folder: folder, dataManager: dataManager, deviceID: deviceID)
+            try await snapshotWriter.snapshotIfNeeded(headSeq: flushResult.headSeq, nowMs: nowMs) {
+                try await ingestor.fullMerge()
+            }
+
             try await SyncFolderBootstrapper.writeDeviceInfo(
                 folder: folder,
                 deviceID: deviceID,
                 name: await deviceDisplayName(),
                 model: deviceModelIdentifier(),
                 appVersion: appVersion(),
-                headSeq: UInt64(max(0, dataManager.fileSyncCursor(peerDeviceId: deviceID)?.headSeq ?? 0)),
-                nowMs: Int64(Date().timeIntervalSince1970 * 1000))
-            try await uploadsScanner.scan(manifest: [])
+                headSeq: UInt64(max(0, flushResult.headSeq)),
+                nowMs: nowMs)
+
             lastScanDate = Date()
             lastError = nil
         } catch {
@@ -205,5 +317,21 @@ public actor FileSyncManager {
 
     private func appVersion() -> String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    }
+}
+
+private extension MergeEngine.MergedState {
+    var hasContent: Bool {
+        !podcasts.isEmpty
+            || !episodes.isEmpty
+            || !playlists.isEmpty
+            || !folders.isEmpty
+            || !bookmarks.isEmpty
+            || !tombstones.isEmpty
+            || !upNextOps.isEmpty
+            || !settings.isEmpty
+            || !statsByDevice.isEmpty
+            || !uploads.isEmpty
+            || !uploadTombstones.isEmpty
     }
 }
