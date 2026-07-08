@@ -4744,6 +4744,23 @@ rules:
     patterns:
       - pattern-regex: 'NotificationCenter\.default\.post\('
 
+  - id: pocketcasts.filemanager-urls-no-force-index
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: LOW
+      impact: MEDIUM
+      technology: [ios]
+    message: FileManager.urls(for:in:) returns an array; use .first with an explicit fallback instead of force-indexing [0].
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: 'FileManager\.default\.urls\s*\(\s*for\s*:[^\n]+\)\s*\[0\]'
+
   - id: pocketcasts.isolated-deinit-requires-justification
     severity: ERROR
     metadata:

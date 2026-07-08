@@ -9,7 +9,15 @@ import PocketCastsUtils
 struct FileSyncBootstrap {
     let dataManager: DataManager
 
-    func seedLocalState() {
+    private enum BootstrapError: Error, CustomStringConvertible {
+        case seedJournalWriteFailed
+
+        var description: String {
+            "file-sync bootstrap seed journal write failed"
+        }
+    }
+
+    func seedLocalState() throws {
         let now = FileSyncClock.currentUTCTimeInMillis()
         let fallback = now - 1
         var seedEntries: [DataManager.SeedEntry] = []
@@ -64,10 +72,12 @@ struct FileSyncBootstrap {
         let queue = dataManager.allUpNextEpisodes().map(\.uuid)
         let upNextUuids = queue.isEmpty ? nil : queue
 
-        dataManager.seedFileSyncJournalBatch(
+        guard dataManager.seedFileSyncJournalBatch(
             entries: seedEntries,
             upNextEpisodeUuids: upNextUuids,
-            upNextWallClockMs: upNextUuids != nil ? fallback : nil)
+            upNextWallClockMs: upNextUuids != nil ? fallback : nil) else {
+            throw BootstrapError.seedJournalWriteFailed
+        }
 
         FileLog.shared.addMessage("FileSync: union-join seed journaled")
     }

@@ -121,8 +121,8 @@ public extension DataManager {
         entries: [SeedEntry],
         upNextEpisodeUuids: [String]?,
         upNextWallClockMs: Int64?
-    ) {
-        _ = dbQueue.write { db in
+    ) -> Bool {
+        dbQueue.write { db in
             for entry in entries {
                 let fieldsJSON = entry.changedFields.isEmpty
                     ? nil

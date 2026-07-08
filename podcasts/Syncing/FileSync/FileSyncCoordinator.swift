@@ -103,13 +103,11 @@ final class FileSyncCoordinator {
                 }
             }
         }
-        Task {
+        Task { @MainActor in
             await FileSyncManager.shared.syncNow()
-            await MainActor.run {
-                if taskID != .invalid {
-                    UIApplication.shared.endBackgroundTask(taskID)
-                    taskID = .invalid
-                }
+            if taskID != .invalid {
+                UIApplication.shared.endBackgroundTask(taskID)
+                taskID = .invalid
             }
         }
     }
