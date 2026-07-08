@@ -263,7 +263,7 @@ class PlaylistDataManager {
     func rawDeleteEpisodes(_ episodeUuids: [String], from playlist: EpisodeFilter, dbQueue: GRDBQueue) {
         guard !episodeUuids.isEmpty else { return }
 
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try Table(DataManager.playlistEpisodeTableName)
                 .filter(Column("playlist_uuid") == playlist.uuid)
                 .filter(episodeUuids.contains(Column("episodeUuid")))

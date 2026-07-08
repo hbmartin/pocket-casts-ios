@@ -460,7 +460,7 @@ final class UserEpisodeDataManager: Sendable {
         if episodes.isEmpty { return }
 
         let uuids = episodes.map(\.uuid)
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try UserEpisode.filter(uuids.contains(UserEpisode.Columns.uuid)).updateAll(
                 db,
                 UserEpisode.Columns.episodeStatus.set(to: DownloadStatus.notDownloaded.rawValue),
@@ -526,7 +526,7 @@ final class UserEpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try save(fieldName: fieldName, value: value, episodeId: episodeId, db: db)
         }
     }
@@ -539,9 +539,9 @@ final class UserEpisodeDataManager: Sendable {
 
     private func save(fields: [String], values: [Any], useId: Bool = true, dbQueue: GRDBQueue) {
         // The last value is the id/uuid used by the WHERE clause, mirroring the legacy layout
-        guard values.count == fields.count + 1, let identifier = values.last else { return }
+        guard values.count == fields.count + 1 else { return }
 
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try save(fields: fields, values: values, useId: useId, db: db)
         }
     }

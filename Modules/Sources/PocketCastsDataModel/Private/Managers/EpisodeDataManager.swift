@@ -968,9 +968,9 @@ final class EpisodeDataManager: Sendable {
 
     private func save(fields: [String], values: [Any], useId: Bool = true, dbQueue: GRDBQueue) {
         // The last value is the id/uuid used by the WHERE clause, mirroring the legacy layout
-        guard values.count == fields.count + 1, let identifier = values.last else { return }
+        guard values.count == fields.count + 1 else { return }
 
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try save(fields: fields, values: values, useId: useId, db: db)
         }
     }
@@ -990,7 +990,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try Episode
                 .filter(Episode.Columns.id == episodeId)
                 .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
@@ -998,7 +998,7 @@ final class EpisodeDataManager: Sendable {
     }
 
     private func save(fieldName: String, value: Any, episodeUuid: String, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
+        _ = dbQueue.write { db in
             try Episode
                 .filter(Episode.Columns.uuid == episodeUuid)
                 .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
