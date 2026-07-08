@@ -40,6 +40,33 @@ public struct UserEpisode: BaseEpisode, Identifiable, Equatable, Hashable, Senda
     public var imageColor = 0 as Int32
     public var imageColorModified = 0 as Int64
     public var hasCustomImage = false
+
+    // MARK: File-sync folder identity (local-first uploads)
+
+    /// Identity resolution state for folder-backed uploads.
+    public enum IdentityState: Int32, Sendable {
+        /// Pre-file-sync upload living only in the app sandbox.
+        case legacyLocal = 0
+        /// Discovered in the folder, identity keyed by path+size+mtime until
+        /// the file is first downloaded and hashed.
+        case provisional = 1
+        /// Content hash computed; `contentHash` is the cross-device identity.
+        case canonical = 2
+    }
+
+    /// Path relative to the watched folder root when this episode is backed
+    /// by a file in the sync folder; nil for legacy sandbox-only uploads.
+    public var folderRelativePath: String?
+    /// Lowercase hex SHA-256 of the file contents once known.
+    public var contentHash: String?
+    /// Subfolder grouping within the uploads folder ("" or nil at root).
+    public var groupName: String?
+    public var identityState = 0 as Int32
+
+    public var identity: IdentityState {
+        get { IdentityState(rawValue: identityState) ?? .legacyLocal }
+        set { identityState = newValue.rawValue }
+    }
     @GRDBIgnore
     public var hasOnlyUuid = false
     // Note: These properties exist on the model but were never added to the SJUserEpisode table.

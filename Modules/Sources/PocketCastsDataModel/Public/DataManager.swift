@@ -261,22 +261,27 @@ public class DataManager {
 
     public func saveUpNextRemove(episodeUuid: String) {
         upNextChangesManager.saveUpNextRemove(episodeUuid: episodeUuid, dbQueue: dbQueue)
+        journalFileSyncUpNext(op: .upNextRemove, episodeUuid: episodeUuid)
     }
 
     public func saveUpNextAddToTop(episodeUuid: String) {
         upNextChangesManager.saveUpNextAddToTop(episodeUuid: episodeUuid, dbQueue: dbQueue)
+        journalFileSyncUpNext(op: .upNextPlayNext, episodeUuid: episodeUuid)
     }
 
     public func saveUpNextAddToBottom(episodeUuid: String) {
         upNextChangesManager.saveUpNextAddToBottom(episodeUuid: episodeUuid, dbQueue: dbQueue)
+        journalFileSyncUpNext(op: .upNextPlayLast, episodeUuid: episodeUuid)
     }
 
     public func saveUpNextAddNowPlaying(episodeUuid: String) {
         upNextChangesManager.saveUpNextAddNowPlaying(episodeUuid: episodeUuid, dbQueue: dbQueue)
+        journalFileSyncUpNext(op: .upNextPlayNow, episodeUuid: episodeUuid)
     }
 
     public func saveReplace(episodeList: [String]) {
         upNextChangesManager.saveReplace(episodeList: episodeList, dbQueue: dbQueue)
+        journalFileSyncUpNext(op: .upNextReplace, episodeUuid: nil, episodeUuids: episodeList)
     }
 
     public func deleteChangesOlderThan(utcTime: Int64) {
@@ -371,11 +376,14 @@ public class DataManager {
 
     public func delete(podcast: Podcast) {
         podcastManager.delete(podcast: podcast, dbQueue: dbQueue)
+        journalFileSyncDelete(entityType: .podcast, uuid: podcast.uuid)
     }
 
     @discardableResult
     public func save(podcast: Podcast) -> Podcast {
-        podcastManager.save(podcast: podcast, dbQueue: dbQueue)
+        let saved = podcastManager.save(podcast: podcast, dbQueue: dbQueue)
+        journalFileSyncUpsert(entityType: .podcast, uuid: podcast.uuid, changedFields: [])
+        return saved
     }
 
     public func savePushSetting(podcast: Podcast, pushEnabled: Bool) {
@@ -641,6 +649,9 @@ public class DataManager {
         } else if let episode = episode as? UserEpisode {
             userEpisodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         }
+        if updateSyncFlag {
+            journalFileSyncEpisodeChange(episode: episode, changedFields: ["playedUpTo"])
+        }
     }
 
     public func saveEpisode(playingStatus: PlayingStatus, episode: BaseEpisode, updateSyncFlag: Bool) {
@@ -649,10 +660,16 @@ public class DataManager {
         } else if let episode = episode as? UserEpisode {
             userEpisodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         }
+        if updateSyncFlag {
+            journalFileSyncEpisodeChange(episode: episode, changedFields: ["playingStatus"])
+        }
     }
 
     public func saveEpisode(archived: Bool, episode: Episode, updateSyncFlag: Bool) {
         episodeManager.saveEpisode(archived: archived, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
+        if updateSyncFlag {
+            journalFileSyncEpisodeChange(episode: episode, changedFields: ["archived"])
+        }
     }
 
     public func saveEpisode(excludeFromEpisodeLimit: Bool, episode: Episode) {
@@ -698,6 +715,9 @@ public class DataManager {
 
     public func saveEpisode(starred: Bool, starredModified: Int64? = nil, episode: Episode, updateSyncFlag: Bool) {
         episodeManager.saveEpisode(starred: starred, starredModified: starredModified, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
+        if updateSyncFlag {
+            journalFileSyncEpisodeChange(episode: episode, changedFields: ["starred"])
+        }
     }
 
     public func saveEpisode(duration: Double, episode: BaseEpisode, updateSyncFlag: Bool) {
@@ -705,6 +725,9 @@ public class DataManager {
             episodeManager.saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         } else if let episode = episode as? UserEpisode {
             userEpisodeManager.saveEpisode(duration: duration, episode: episode, dbQueue: dbQueue)
+        }
+        if updateSyncFlag {
+            journalFileSyncEpisodeChange(episode: episode, changedFields: ["duration"])
         }
     }
 
@@ -915,6 +938,19 @@ public class DataManager {
         userEpisodeManager.findBy(uploadTaskId: uploadTaskId, dbQueue: dbQueue)
     }
 
+    public func findUserEpisode(folderRelativePath: String) -> UserEpisode? {
+        userEpisodeManager.findBy(folderRelativePath: folderRelativePath, dbQueue: dbQueue)
+    }
+
+    public func findUserEpisode(contentHash: String) -> UserEpisode? {
+        userEpisodeManager.findBy(contentHash: contentHash, dbQueue: dbQueue)
+    }
+
+    /// Every upload episode backed by a file in the sync folder.
+    public func allFolderBackedUserEpisodes() -> [UserEpisode] {
+        userEpisodeManager.findAllFolderBacked(dbQueue: dbQueue)
+    }
+
     public func findUserEpisodesWithUploadStatus(_ status: UploadStatus) -> [UserEpisode] {
         userEpisodeManager.findAllWithUploadStatus(status, dbQueue: dbQueue)
     }
@@ -1021,7 +1057,9 @@ public class DataManager {
 
     @discardableResult
     public func save(playlist: EpisodeFilter) -> EpisodeFilter {
-        playlistManager.save(playlist: playlist, dbQueue: dbQueue)
+        let saved = playlistManager.save(playlist: playlist, dbQueue: dbQueue)
+        journalFileSyncUpsert(entityType: .playlist, uuid: playlist.uuid, changedFields: [])
+        return saved
     }
 
     public func updatePlaylistUpdateDate(for playlist: EpisodeFilter, to date: Date = .now) {
@@ -1035,6 +1073,7 @@ public class DataManager {
 
     public func delete(playlist: EpisodeFilter) {
         playlistManager.delete(playlist: playlist, dbQueue: dbQueue)
+        journalFileSyncDelete(entityType: .playlist, uuid: playlist.uuid)
     }
 
     public func markAllPlaylistsSynced() {
@@ -1086,7 +1125,9 @@ public class DataManager {
 
     @discardableResult
     public func save(folder: Folder) -> Folder {
-        folderManager.save(folder: folder, dbQueue: dbQueue)
+        let saved = folderManager.save(folder: folder, dbQueue: dbQueue)
+        journalFileSyncUpsert(entityType: .folder, uuid: folder.uuid, changedFields: [])
+        return saved
     }
 
     public func allFolders(includeDeleted: Bool = false) -> [Folder] {
@@ -1134,6 +1175,7 @@ public class DataManager {
         } else {
             folderManager.delete(folderUuid: folderUuid, dbQueue: dbQueue)
         }
+        journalFileSyncDelete(entityType: .folder, uuid: folderUuid)
     }
 
     public func bulkSetSyncModified(_ syncModified: Int64, onFolders folderUuids: [String]) {
