@@ -6,7 +6,7 @@ extension UIScrollView {
         // inset, so no manual content inset is applied here.
     }
 
-    func updateContentInset(multiSelectEnabled: Bool, ignoreMiniPlayer: Bool = false) {
+    func updateContentInset(multiSelectEnabled: Bool) {
         let multiSelectFooterOffset: CGFloat = multiSelectEnabled ? 60 : 0
         contentInset.bottom = multiSelectFooterOffset
         verticalScrollIndicatorInsets.bottom = multiSelectFooterOffset

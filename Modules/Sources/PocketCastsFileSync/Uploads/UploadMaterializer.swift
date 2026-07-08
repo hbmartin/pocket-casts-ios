@@ -71,9 +71,23 @@ public actor UploadMaterializer {
     /// waiting for the next scan.
     public func importUpload(from sourceURL: URL, group: String?) async throws -> String {
         let fileName = sourceURL.lastPathComponent
-        let relative = group.flatMap { $0.isEmpty ? nil : "\($0)/\(fileName)" } ?? fileName
+        let relative = try Self.uploadRelativePath(fileName: fileName, group: group)
         let folderRelative = "\(FileSyncFormat.uploadsDirectory)/\(relative)"
         try await folder.coordinatedCopy(from: sourceURL, to: folderRelative)
         return relative
+    }
+
+    static func uploadRelativePath(fileName: String, group: String?) throws -> String {
+        let group = try validatedGroup(group)
+        return group.flatMap { "\($0)/\(fileName)" } ?? fileName
+    }
+
+    static func validatedGroup(_ group: String?) throws -> String? {
+        guard let group, !group.isEmpty else { return nil }
+        guard group != ".", group != "..",
+              !group.contains("/"), !group.contains("\\") else {
+            throw SyncFolderError.invalidPathComponent(group)
+        }
+        return group
     }
 }

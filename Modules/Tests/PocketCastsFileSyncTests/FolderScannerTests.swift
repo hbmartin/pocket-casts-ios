@@ -38,6 +38,16 @@ final class FolderScannerTests: XCTestCase {
         XCTAssertTrue(FolderScanner.diff(previous: listing, current: listing).isEmpty)
     }
 
+    func testDuplicatePreviousPathsDoNotCrashDiff() {
+        let previous = [
+            entry("Uploads/a.mp3", size: 100),
+            entry("Uploads/a.mp3", size: 200),
+        ]
+        let current = [entry("Uploads/a.mp3", size: 200)]
+
+        XCTAssertTrue(FolderScanner.diff(previous: previous, current: current).isEmpty)
+    }
+
     func testMediaFilesFiltersDirectoriesHiddenAndUnsupported() {
         let entries = [
             entry("Uploads/lecture.mp3"),

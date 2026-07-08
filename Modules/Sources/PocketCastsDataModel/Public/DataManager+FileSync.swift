@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import PocketCastsUtils
 
 /// File-sync change journal surface.
@@ -14,8 +15,6 @@ import PocketCastsUtils
 /// same signal that drives server sync) and never while remote file-sync
 /// ops are being applied (see `withFileSyncApplySuppression`), which is
 /// what prevents echo loops.
-private let fileSyncJournalManager = FileSyncJournalDataManager()
-
 public extension DataManager {
     /// True while `RemoteOpApplier` is writing folder-derived state into
     /// the database on the current task. Suppresses journaling so applied
@@ -136,5 +135,68 @@ public extension DataManager {
     /// Root-folder switch or disable: all read progress is folder-specific.
     func deleteAllFileSyncCursors() {
         fileSyncJournalManager.deleteAllCursors(dbQueue: dbQueue)
+    }
+}
+
+extension DataManager {
+    func recordFileSyncJournal(_ entry: FileSyncJournalEntry, db: Database) throws {
+        guard !Self.isApplyingRemoteFileSyncOps else { return }
+        try fileSyncJournalManager.record(entry, db: db)
+    }
+
+    func journalFileSyncEpisodeChange(episode: BaseEpisode, changedFields: [String], db: Database) throws {
+        guard !Self.isApplyingRemoteFileSyncOps else { return }
+        let entityType: FileSyncJournalEntry.EntityType = episode is UserEpisode ? .userEpisode : .episode
+        try journalFileSyncUpsert(entityType: entityType, uuid: episode.uuid, changedFields: changedFields, db: db)
+    }
+
+    func journalFileSyncUpsert(
+        entityType: FileSyncJournalEntry.EntityType,
+        uuid: String,
+        changedFields: [String],
+        db: Database
+    ) throws {
+        guard !Self.isApplyingRemoteFileSyncOps else { return }
+        let fieldsJSON = (try? JSONEncoder().encode(changedFields)).flatMap { String(data: $0, encoding: .utf8) }
+        try fileSyncJournalManager.recordCoalescing(
+            FileSyncJournalEntry(
+                entityType: entityType.rawValue,
+                entityUuid: uuid,
+                opType: FileSyncJournalEntry.OpType.upsert.rawValue,
+                fields: fieldsJSON),
+            db: db)
+    }
+
+    func journalFileSyncDelete(
+        entityType: FileSyncJournalEntry.EntityType,
+        uuid: String,
+        db: Database
+    ) throws {
+        guard !Self.isApplyingRemoteFileSyncOps else { return }
+        try fileSyncJournalManager.record(
+            FileSyncJournalEntry(
+                entityType: entityType.rawValue,
+                entityUuid: uuid,
+                opType: FileSyncJournalEntry.OpType.delete.rawValue),
+            db: db)
+    }
+
+    func journalFileSyncUpNext(
+        op: FileSyncJournalEntry.OpType,
+        episodeUuid: String?,
+        episodeUuids: [String]? = nil,
+        db: Database
+    ) throws {
+        guard !Self.isApplyingRemoteFileSyncOps else { return }
+        let fieldsJSON = episodeUuids.flatMap { uuids in
+            (try? JSONEncoder().encode(uuids)).flatMap { String(data: $0, encoding: .utf8) }
+        }
+        try fileSyncJournalManager.record(
+            FileSyncJournalEntry(
+                entityType: FileSyncJournalEntry.EntityType.upNext.rawValue,
+                entityUuid: episodeUuid,
+                opType: op.rawValue,
+                fields: fieldsJSON),
+            db: db)
     }
 }

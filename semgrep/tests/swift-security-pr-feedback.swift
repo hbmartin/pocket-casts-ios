@@ -153,6 +153,30 @@ final class SafePlaylistSearchEscapingHelper {
     }
 }
 
+final class UnsafeFileSyncUploadImportHelper {
+    func relativePath(group: String?, fileName: String) -> String {
+        // ruleid: pocketcasts.filesync-upload-group-must-be-validated
+        let relative = group.flatMap { $0.isEmpty ? nil : "\($0)/\(fileName)" } ?? fileName
+        return relative
+    }
+}
+
+final class SafeFileSyncUploadImportHelper {
+    func relativePath(group: String?, fileName: String) throws -> String {
+        let group = try validate(group)
+        // ok: pocketcasts.filesync-upload-group-must-be-validated
+        return group.map { "\($0)/\(fileName)" } ?? fileName
+    }
+
+    private func validate(_ group: String?) throws -> String? {
+        guard let group, !group.isEmpty else { return nil }
+        guard group != ".", group != "..", !group.contains("/"), !group.contains("\\") else {
+            throw NSError(domain: "test", code: 1)
+        }
+        return group
+    }
+}
+
 final class UnsafeEpisodeTransferHelper {
     func prepare(episode: BaseEpisode) {
         // ruleid: pocketcasts.no-unsafe-transfer-episode

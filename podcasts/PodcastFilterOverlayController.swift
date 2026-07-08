@@ -57,7 +57,7 @@ class PodcastFilterOverlayController: PodcastChooserViewController, PodcastSelec
         super.viewDidLoad()
         largeTitleFont = UIFont.font(ofSize: 22, weight: .bold, scalingWith: .title2)
 
-        insetAdjuster = InsetAdjuster(ignoreMiniPlayer: true)
+        insetAdjuster = InsetAdjuster()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: podcastTable)
 
         delegate = self

@@ -20,7 +20,7 @@ public enum FolderScanner {
 
     public static func diff(previous: [FolderEntry], current: [FolderEntry]) -> Diff {
         var diff = Diff()
-        let previousByPath = Dictionary(uniqueKeysWithValues: previous.map { ($0.relativePath, $0) })
+        let previousByPath = Dictionary(previous.map { ($0.relativePath, $0) }, uniquingKeysWith: { _, latest in latest })
         var seen = Set<String>()
 
         for entry in current {

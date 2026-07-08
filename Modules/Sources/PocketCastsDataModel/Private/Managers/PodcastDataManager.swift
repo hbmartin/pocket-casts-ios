@@ -442,6 +442,18 @@ class PodcastDataManager {
 
     @discardableResult
     func save(podcast: Podcast, dbQueue: GRDBQueue) -> Podcast {
+        var saved = podcast
+        let success = dbQueue.write { db in
+            saved = try save(podcast: podcast, db: db)
+        }
+        if success {
+            cachePodcasts(dbQueue: dbQueue)
+        }
+        return saved
+    }
+
+    @discardableResult
+    func save(podcast: Podcast, db: Database) throws -> Podcast {
         var podcast = podcast
         var isInsert = podcast.id == 0
         if isInsert, let existingId = existingPodcastId(uuid: podcast.uuid) {
@@ -454,17 +466,10 @@ class PodcastDataManager {
             podcast.id = DBUtils.generateUniqueId()
         }
 
-        do {
-            try dbQueue.dbPool.write { db in
-                try podcast.save(db)
-            }
-        } catch {
-            FileLog.shared.addMessage("PodcastDataManager.save error: \(error)")
-        }
+        try podcast.save(db)
         if FeatureFlag.newSettingsStorage.enabled {
-            saveSettings(podcast: podcast, dbQueue: dbQueue)
+            try saveSettings(podcast: podcast, db: db)
         }
-        cachePodcasts(dbQueue: dbQueue)
         return podcast
     }
 
@@ -554,8 +559,16 @@ class PodcastDataManager {
     }
 
     func delete(podcast: Podcast, dbQueue: GRDBQueue) {
-        dbQueue.deleteAll(Podcast.self, filter: Podcast.Columns.uuid == podcast.uuid)
-        cachePodcasts(dbQueue: dbQueue)
+        let success = dbQueue.write { db in
+            try delete(podcast: podcast, db: db)
+        }
+        if success {
+            cachePodcasts(dbQueue: dbQueue)
+        }
+    }
+
+    func delete(podcast: Podcast, db: Database) throws {
+        try Podcast.filter(Podcast.Columns.uuid == podcast.uuid).deleteAll(db)
     }
 
     func markAllSynced(dbQueue: GRDBQueue) {
@@ -694,14 +707,22 @@ class PodcastDataManager {
     }
 
     func removeAllPodcastsFromFolder(folderUuid: String, dbQueue: GRDBQueue) {
-        dbQueue.updateAll(
-            Podcast.self,
-            filter: Podcast.Columns.folderUuid == folderUuid,
-            Podcast.Columns.folderUuid.set(to: nil as String?),
-            Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
-        )
+        let success = dbQueue.write { db in
+            try removeAllPodcastsFromFolder(folderUuid: folderUuid, db: db)
+        }
 
-        cachePodcasts(dbQueue: dbQueue)
+        if success {
+            cachePodcasts(dbQueue: dbQueue)
+        }
+    }
+
+    func removeAllPodcastsFromFolder(folderUuid: String, db: Database) throws {
+        try Podcast
+            .filter(Podcast.Columns.folderUuid == folderUuid)
+            .updateAll(
+                db,
+                Podcast.Columns.folderUuid.set(to: nil as String?),
+                Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue))
     }
 
     func removeAllPodcastsFromAllFolders(dbQueue: GRDBQueue) {
@@ -736,13 +757,21 @@ class PodcastDataManager {
     }
 
     private func saveSettings(podcast: Podcast, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveSettings(podcast: podcast, db: db)
+        }
+    }
+
+    private func saveSettings(podcast: Podcast, db: Database) throws {
         guard let json = podcast.settings.jsonData,
               let jsonString = String(data: json, encoding: .utf8) else {
             FileLog.shared.addMessage("PodcastDataManager.saveSettings failed to encode settings for \(podcast.uuid)")
             return
         }
 
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET settings = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?", values: [jsonString, podcast.uuid], methodName: "PodcastDataManager.saveSettings", onQueue: dbQueue) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - settings JSON writer; Swift re-encode would drop unmodeled payload fields
+        try db.execute(
+            sql: "UPDATE \(DataManager.podcastTableName) SET settings = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?",
+            arguments: StatementArguments([jsonString, podcast.uuid])!) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - settings JSON writer; Swift re-encode would drop unmodeled payload fields
     }
 
     private func savePushSettingWithNewSettingsStorage(podcastUuid: String, pushEnabled: Bool, dbQueue: GRDBQueue) {
@@ -801,7 +830,7 @@ class PodcastDataManager {
 
     // MARK: - Caching
 
-    private func cachePodcasts(dbQueue: GRDBQueue) {
+    func cachePodcasts(dbQueue: GRDBQueue) {
         let trace = TraceManager.shared.beginTracing(eventName: "DATABASE_PODCAST_CACHE")
         defer { TraceManager.shared.endTracing(trace: trace) }
 

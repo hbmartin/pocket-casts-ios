@@ -73,7 +73,6 @@ struct SearchResultsListView: View {
         .onAppear {
             searchAnalyticsHelper.trackListShown(displayMode)
         }
-        .miniPlayerSafeAreaInset()
         .applyDefaultThemeOptions()
     }
 }

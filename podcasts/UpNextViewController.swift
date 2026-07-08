@@ -24,7 +24,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     var themeOverride: Theme.ThemeType? = nil
 
     lazy var contentInseter = {
-        InsetAdjuster(ignoreMiniPlayer: !self.showingInTab)
+        InsetAdjuster()
     }()
 
     @MainActor
@@ -296,7 +296,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         }
         let upNextShuffleEnabled = Settings.upNextShuffleEnabled()
         if upNextShuffleEnabled {
-            Toast.show(L10n.upNextShuffleToastMessage, aboveMiniPlayer: self.showingInTab ? true : false)
+            Toast.show(L10n.upNextShuffleToastMessage)
         }
         track(.upNextShuffleEnabled, properties: ["value": upNextShuffleEnabled])
     }

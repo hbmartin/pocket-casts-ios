@@ -2569,6 +2569,9 @@
 /* Prompt to navigate the user to the files setting screen. */
 "settings_files" = "Files Settings";
 
+/* Fallback label in the file-sync device list when a peer device name cannot be read. */
+"file_sync_unknown_device" = "Unknown device";
+
 /* Subtitle for the toggle to auto add new files to the Up Next Queue. */
 "Settings_files_add_up_next_subtitle" = "Add new files to Up Next automatically";
 

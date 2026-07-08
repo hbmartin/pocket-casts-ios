@@ -1,6 +1,9 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Facade for local-first file sync (mirrors RefreshManager's role for
 /// server sync).
@@ -98,6 +101,8 @@ public actor FileSyncManager {
                let bookmark = defaults.data(forKey: DefaultsKey.bookmarkData) {
                 try await enable(folder: BookmarkSyncFolder(bookmarkData: bookmark),
                                  kind: .securityScopedBookmark)
+            } else if defaults.string(forKey: DefaultsKey.folderKind) == SyncFolderKind.securityScopedBookmark.rawValue {
+                throw SyncFolderError.fileNotFound("missing bookmark data for restore")
             } else {
                 try await enable(folder: UbiquitySyncFolder(), kind: .ubiquity)
             }
@@ -128,7 +133,7 @@ public actor FileSyncManager {
             try await SyncFolderBootstrapper.writeDeviceInfo(
                 folder: folder,
                 deviceID: deviceID,
-                name: deviceDisplayName(),
+                name: await deviceDisplayName(),
                 model: deviceModelIdentifier(),
                 appVersion: appVersion(),
                 headSeq: UInt64(max(0, dataManager.fileSyncCursor(peerDeviceId: deviceID)?.headSeq ?? 0)),
@@ -157,7 +162,7 @@ public actor FileSyncManager {
                 }
                 devices.append(FileSyncStatus.Device(
                     deviceID: peerID,
-                    name: info?.name ?? "Unknown device",
+                    name: info?.name ?? unknownDeviceName(),
                     model: info?.model ?? "",
                     appVersion: info?.appVersion ?? "",
                     lastSeen: info.flatMap { $0.lastSeenMs > 0 ? Date(timeIntervalSince1970: Double($0.lastSeenMs) / 1000) : nil },
@@ -176,9 +181,15 @@ public actor FileSyncManager {
 
     // MARK: Device metadata
 
-    private func deviceDisplayName() -> String {
+    private func unknownDeviceName() -> String {
+        NSLocalizedString(
+            "file_sync_unknown_device",
+            comment: "Fallback label for a file-sync peer device when its device name cannot be read")
+    }
+
+    private func deviceDisplayName() async -> String {
         #if canImport(UIKit) && !os(watchOS)
-        return ProcessInfo.processInfo.hostName
+        return await MainActor.run { UIDevice.current.name }
         #else
         return ProcessInfo.processInfo.hostName
         #endif

@@ -377,7 +377,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(playbackStateDidChange))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackStateDidChange))
         addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(playbackProgressDidChange))
-        addCustomObserver(Constants.Notifications.statusBarHeightChanged, selector: #selector(statusBarHeightDidChange))
 
         addCustomObserver(Constants.Notifications.podcastImageReCacheRequired, selector: #selector(updateRequired))
 
@@ -489,9 +488,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
 
     @objc private func playbackStarting() {
         playbackStateDidChange()
-    }
-
-    @objc private func statusBarHeightDidChange() {
     }
 
     @objc private func upNextListChanged() {

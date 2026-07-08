@@ -17,7 +17,6 @@ struct BetaMenu: View {
         .id(resetTrigger)
         .listStyle(.plain)
         .searchable(text: $searchText, prompt: L10n.search)
-        .miniPlayerSafeAreaInset()
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Reset") {

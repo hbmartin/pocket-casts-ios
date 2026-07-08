@@ -491,6 +491,23 @@ rules:
             ...
           }
 
+  - id: pocketcasts.filesync-upload-group-must-be-validated
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Validate file-sync upload group names before interpolating them into relative paths.
+    languages: [generic]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-regex: 'let\s+\w+\s*=\s*group\.flatMap\s*\{\s*\$0\.isEmpty\s*\?\s*nil\s*:\s*"\\\(\$0\)/'
+
   - id: pocketcasts.timer-assumeisolated-requires-main-runloop
     severity: ERROR
     metadata:

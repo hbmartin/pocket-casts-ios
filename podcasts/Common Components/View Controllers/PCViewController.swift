@@ -142,12 +142,9 @@ class PCViewController: SimpleNotificationsViewController {
         setTransparentNavBarScrolled(isNavBarScrolled)
     }
 
-    /// Toggles the navigation bar between its at-edge (transparent) and scrolled (blurred) styles,
-    /// and forwards the new state to any `FakeNavBarStylable` bar buttons so their tint and background
-    /// crossfade in step. Subclasses using `useTransparentNavigationBarAppearance` should call this
-    /// from `scrollViewDidScroll` when the scroll position crosses their header threshold;
-    /// UIKit animates the appearance swap. When Liquid Glass is enabled the system handles the
-    /// at-edge/scrolled transition on its own, so we just install its default background once.
+    /// Records whether the navigation bar is at-edge or scrolled. On iOS 26, Liquid Glass handles
+    /// the visual transition itself, but subclasses still call this when their scroll threshold
+    /// changes so `isNavBarScrolled` stays current.
     func setTransparentNavBarScrolled(_ scrolled: Bool) {
         isNavBarScrolled = scrolled
         // On iOS 26 the system Liquid Glass nav bar handles the at-edge/scrolled transition on its

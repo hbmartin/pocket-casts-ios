@@ -21,6 +21,7 @@ public class DataManager {
     private let folderManager = FolderDataManager()
     private let upNextHistoryManager = UpNextHistoryManager()
     private let folderHistoryManager = FolderHistoryManager()
+    let fileSyncJournalManager = FileSyncJournalDataManager()
 
     public let autoAddCandidates: AutoAddCandidatesDataManager
     public let bookmarks: BookmarkDataManager
@@ -260,28 +261,38 @@ public class DataManager {
     }
 
     public func saveUpNextRemove(episodeUuid: String) {
-        upNextChangesManager.saveUpNextRemove(episodeUuid: episodeUuid, dbQueue: dbQueue)
-        journalFileSyncUpNext(op: .upNextRemove, episodeUuid: episodeUuid)
+        dbQueue.inTransaction { db in
+            try upNextChangesManager.saveUpNextRemove(episodeUuid: episodeUuid, db: db)
+            try journalFileSyncUpNext(op: .upNextRemove, episodeUuid: episodeUuid, db: db)
+        }
     }
 
     public func saveUpNextAddToTop(episodeUuid: String) {
-        upNextChangesManager.saveUpNextAddToTop(episodeUuid: episodeUuid, dbQueue: dbQueue)
-        journalFileSyncUpNext(op: .upNextPlayNext, episodeUuid: episodeUuid)
+        dbQueue.inTransaction { db in
+            try upNextChangesManager.saveUpNextAddToTop(episodeUuid: episodeUuid, db: db)
+            try journalFileSyncUpNext(op: .upNextPlayNext, episodeUuid: episodeUuid, db: db)
+        }
     }
 
     public func saveUpNextAddToBottom(episodeUuid: String) {
-        upNextChangesManager.saveUpNextAddToBottom(episodeUuid: episodeUuid, dbQueue: dbQueue)
-        journalFileSyncUpNext(op: .upNextPlayLast, episodeUuid: episodeUuid)
+        dbQueue.inTransaction { db in
+            try upNextChangesManager.saveUpNextAddToBottom(episodeUuid: episodeUuid, db: db)
+            try journalFileSyncUpNext(op: .upNextPlayLast, episodeUuid: episodeUuid, db: db)
+        }
     }
 
     public func saveUpNextAddNowPlaying(episodeUuid: String) {
-        upNextChangesManager.saveUpNextAddNowPlaying(episodeUuid: episodeUuid, dbQueue: dbQueue)
-        journalFileSyncUpNext(op: .upNextPlayNow, episodeUuid: episodeUuid)
+        dbQueue.inTransaction { db in
+            try upNextChangesManager.saveUpNextAddNowPlaying(episodeUuid: episodeUuid, db: db)
+            try journalFileSyncUpNext(op: .upNextPlayNow, episodeUuid: episodeUuid, db: db)
+        }
     }
 
     public func saveReplace(episodeList: [String]) {
-        upNextChangesManager.saveReplace(episodeList: episodeList, dbQueue: dbQueue)
-        journalFileSyncUpNext(op: .upNextReplace, episodeUuid: nil, episodeUuids: episodeList)
+        dbQueue.inTransaction { db in
+            try upNextChangesManager.saveReplace(episodeList: episodeList, db: db)
+            try journalFileSyncUpNext(op: .upNextReplace, episodeUuid: nil, episodeUuids: episodeList, db: db)
+        }
     }
 
     public func deleteChangesOlderThan(utcTime: Int64) {
@@ -375,14 +386,25 @@ public class DataManager {
     }
 
     public func delete(podcast: Podcast) {
-        podcastManager.delete(podcast: podcast, dbQueue: dbQueue)
-        journalFileSyncDelete(entityType: .podcast, uuid: podcast.uuid)
+        let success = dbQueue.inTransaction { db in
+            try podcastManager.delete(podcast: podcast, db: db)
+            try journalFileSyncDelete(entityType: .podcast, uuid: podcast.uuid, db: db)
+        }
+        if success {
+            podcastManager.cachePodcasts(dbQueue: dbQueue)
+        }
     }
 
     @discardableResult
     public func save(podcast: Podcast) -> Podcast {
-        let saved = podcastManager.save(podcast: podcast, dbQueue: dbQueue)
-        journalFileSyncUpsert(entityType: .podcast, uuid: podcast.uuid, changedFields: [])
+        var saved = podcast
+        let success = dbQueue.inTransaction { db in
+            saved = try podcastManager.save(podcast: podcast, db: db)
+            try journalFileSyncUpsert(entityType: .podcast, uuid: saved.uuid, changedFields: [], db: db)
+        }
+        if success {
+            podcastManager.cachePodcasts(dbQueue: dbQueue)
+        }
         return saved
     }
 
@@ -644,31 +666,37 @@ public class DataManager {
         let trace = TraceManager.shared.beginTracing(eventName: "DATABASE_EPISODE_POSITION_SAVE")
         defer { TraceManager.shared.endTracing(trace: trace) }
 
-        if let episode = episode as? Episode {
-            episodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        }
-        if updateSyncFlag {
-            journalFileSyncEpisodeChange(episode: episode, changedFields: ["playedUpTo"])
+        dbQueue.inTransaction { db in
+            if let episode = episode as? Episode {
+                try episodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            } else if let episode = episode as? UserEpisode {
+                try userEpisodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            }
+            if updateSyncFlag {
+                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["playedUpTo"], db: db)
+            }
         }
     }
 
     public func saveEpisode(playingStatus: PlayingStatus, episode: BaseEpisode, updateSyncFlag: Bool) {
-        if let episode = episode as? Episode {
-            episodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        }
-        if updateSyncFlag {
-            journalFileSyncEpisodeChange(episode: episode, changedFields: ["playingStatus"])
+        dbQueue.inTransaction { db in
+            if let episode = episode as? Episode {
+                try episodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            } else if let episode = episode as? UserEpisode {
+                try userEpisodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            }
+            if updateSyncFlag {
+                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["playingStatus"], db: db)
+            }
         }
     }
 
     public func saveEpisode(archived: Bool, episode: Episode, updateSyncFlag: Bool) {
-        episodeManager.saveEpisode(archived: archived, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        if updateSyncFlag {
-            journalFileSyncEpisodeChange(episode: episode, changedFields: ["archived"])
+        dbQueue.inTransaction { db in
+            try episodeManager.saveEpisode(archived: archived, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            if updateSyncFlag {
+                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["archived"], db: db)
+            }
         }
     }
 
@@ -714,20 +742,24 @@ public class DataManager {
     }
 
     public func saveEpisode(starred: Bool, starredModified: Int64? = nil, episode: Episode, updateSyncFlag: Bool) {
-        episodeManager.saveEpisode(starred: starred, starredModified: starredModified, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        if updateSyncFlag {
-            journalFileSyncEpisodeChange(episode: episode, changedFields: ["starred"])
+        dbQueue.inTransaction { db in
+            try episodeManager.saveEpisode(starred: starred, starredModified: starredModified, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            if updateSyncFlag {
+                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["starred"], db: db)
+            }
         }
     }
 
     public func saveEpisode(duration: Double, episode: BaseEpisode, updateSyncFlag: Bool) {
-        if let episode = episode as? Episode {
-            episodeManager.saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
-        } else if let episode = episode as? UserEpisode {
-            userEpisodeManager.saveEpisode(duration: duration, episode: episode, dbQueue: dbQueue)
-        }
-        if updateSyncFlag {
-            journalFileSyncEpisodeChange(episode: episode, changedFields: ["duration"])
+        dbQueue.inTransaction { db in
+            if let episode = episode as? Episode {
+                try episodeManager.saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+            } else if let episode = episode as? UserEpisode {
+                try userEpisodeManager.saveEpisode(duration: duration, episode: episode, db: db)
+            }
+            if updateSyncFlag {
+                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["duration"], db: db)
+            }
         }
     }
 
@@ -1057,8 +1089,11 @@ public class DataManager {
 
     @discardableResult
     public func save(playlist: EpisodeFilter) -> EpisodeFilter {
-        let saved = playlistManager.save(playlist: playlist, dbQueue: dbQueue)
-        journalFileSyncUpsert(entityType: .playlist, uuid: playlist.uuid, changedFields: [])
+        var saved = playlist
+        dbQueue.inTransaction { db in
+            saved = try playlistManager.save(playlist: playlist, db: db)
+            try journalFileSyncUpsert(entityType: .playlist, uuid: saved.uuid, changedFields: [], db: db)
+        }
         return saved
     }
 
@@ -1072,8 +1107,10 @@ public class DataManager {
     }
 
     public func delete(playlist: EpisodeFilter) {
-        playlistManager.delete(playlist: playlist, dbQueue: dbQueue)
-        journalFileSyncDelete(entityType: .playlist, uuid: playlist.uuid)
+        dbQueue.inTransaction { db in
+            try playlistManager.delete(playlist: playlist, db: db)
+            try journalFileSyncDelete(entityType: .playlist, uuid: playlist.uuid, db: db)
+        }
     }
 
     public func markAllPlaylistsSynced() {
@@ -1125,8 +1162,14 @@ public class DataManager {
 
     @discardableResult
     public func save(folder: Folder) -> Folder {
-        let saved = folderManager.save(folder: folder, dbQueue: dbQueue)
-        journalFileSyncUpsert(entityType: .folder, uuid: folder.uuid, changedFields: [])
+        var saved = folder
+        let success = dbQueue.inTransaction { db in
+            saved = try folderManager.save(folder: folder, db: db)
+            try journalFileSyncUpsert(entityType: .folder, uuid: saved.uuid, changedFields: [], db: db)
+        }
+        if success {
+            folderManager.cacheFolders(dbQueue: dbQueue)
+        }
         return saved
     }
 
@@ -1168,14 +1211,20 @@ public class DataManager {
     }
 
     public func delete(folderUuid: String, markAsDeleted: Bool) {
-        podcastManager.removeAllPodcastsFromFolder(folderUuid: folderUuid, dbQueue: dbQueue)
+        let success = dbQueue.inTransaction { db in
+            try podcastManager.removeAllPodcastsFromFolder(folderUuid: folderUuid, db: db)
 
-        if markAsDeleted {
-            folderManager.markFolderAsDeleted(folderUuid: folderUuid, syncModified: TimeFormatter.currentUTCTimeInMillis(), dbQueue: dbQueue)
-        } else {
-            folderManager.delete(folderUuid: folderUuid, dbQueue: dbQueue)
+            if markAsDeleted {
+                try folderManager.markFolderAsDeleted(folderUuid: folderUuid, syncModified: TimeFormatter.currentUTCTimeInMillis(), db: db)
+            } else {
+                try folderManager.delete(folderUuid: folderUuid, db: db)
+            }
+            try journalFileSyncDelete(entityType: .folder, uuid: folderUuid, db: db)
         }
-        journalFileSyncDelete(entityType: .folder, uuid: folderUuid)
+        if success {
+            podcastManager.cachePodcasts(dbQueue: dbQueue)
+            folderManager.cacheFolders(dbQueue: dbQueue)
+        }
     }
 
     public func bulkSetSyncModified(_ syncModified: Int64, onFolders folderUuids: [String]) {

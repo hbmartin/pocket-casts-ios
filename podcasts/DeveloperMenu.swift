@@ -191,7 +191,6 @@ struct DeveloperMenu: View {
                 Text("Bundle ID")
             }
         }
-        .miniPlayerSafeAreaInset()
     }
 
     func showInterestRecommendations(categories: [DiscoverCategory]) {

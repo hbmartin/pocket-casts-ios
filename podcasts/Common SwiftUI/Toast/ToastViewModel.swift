@@ -21,7 +21,6 @@ class ToastViewModel: ObservableObject {
     let title: String
     let actions: [Toast.Action]
     let dismissPolicy: ToastViewDismissPolicy
-    let aboveMiniPlayer: Bool
 
     deinit {
         autoDismissTimer?.invalidate()
@@ -31,12 +30,11 @@ class ToastViewModel: ObservableObject {
     /// When this is true the view should animate out and call `didDismiss`
     @Published var didAutoDismiss = false
 
-    init(coordinator: ToastDelegate, title: String, actions: [Toast.Action]?, dismissPolicy: ToastViewDismissPolicy, aboveMiniPlayer: Bool = false) {
+    init(coordinator: ToastDelegate, title: String, actions: [Toast.Action]?, dismissPolicy: ToastViewDismissPolicy) {
         self.coordinator = coordinator
         self.title = title
         self.actions = actions ?? []
         self.dismissPolicy = dismissPolicy
-        self.aboveMiniPlayer = aboveMiniPlayer
     }
 
     // MARK: - Window Methods

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'dotenv'
+require 'fileutils'
 require 'json'
 require 'net/http'
 require 'open3'
@@ -792,62 +793,67 @@ platform :ios do
     # credential, which must be provided as a .p8 file on disk.
     api_key = app_store_connect_api_key
     auth_key_path = write_asc_auth_key_file
+    auth_key_dir = File.dirname(auth_key_path)
 
-    cloud_signing_args = [
-      '-allowProvisioningUpdates',
-      "-authenticationKeyPath #{auth_key_path.shellescape}",
-      "-authenticationKeyID #{get_required_env!('APP_STORE_CONNECT_API_KEY_KEY_ID').shellescape}",
-      "-authenticationKeyIssuerID #{get_required_env!('APP_STORE_CONNECT_API_KEY_ISSUER_ID').shellescape}"
-    ].join(' ')
+    begin
+      cloud_signing_args = [
+        '-allowProvisioningUpdates',
+        "-authenticationKeyPath #{auth_key_path.shellescape}",
+        "-authenticationKeyID #{get_required_env!('APP_STORE_CONNECT_API_KEY_KEY_ID').shellescape}",
+        "-authenticationKeyIssuerID #{get_required_env!('APP_STORE_CONNECT_API_KEY_ISSUER_ID').shellescape}"
+      ].join(' ')
 
-    build_settings = {
-      'CODE_SIGN_STYLE' => 'Automatic',
-      'CODE_SIGN_IDENTITY' => 'Apple Development',
-      'DEVELOPMENT_TEAM' => team_id,
-      'PRODUCT_BUNDLE_IDENTIFIER_ROOT' => bundle_id_root,
-      'APP_GROUP_IDENTIFIER' => app_group_id,
-      # Clear the `match AppStore …` specifiers from the Release xcconfig so
-      # automatic signing can pick (or create) profiles for the personal team.
-      'PROVISIONING_PROFILE_SPECIFIER' => ''
-    }
-    build_number = ENV.fetch('PERSONAL_BUILD_NUMBER', '')
-    build_settings['VERSION_LONG'] = build_number unless build_number.empty?
+      build_settings = {
+        'CODE_SIGN_STYLE' => 'Automatic',
+        'CODE_SIGN_IDENTITY' => 'Apple Development',
+        'DEVELOPMENT_TEAM' => team_id,
+        'PRODUCT_BUNDLE_IDENTIFIER_ROOT' => bundle_id_root,
+        'APP_GROUP_IDENTIFIER' => app_group_id,
+        # Clear the `match AppStore …` specifiers from the Release xcconfig so
+        # automatic signing can pick (or create) profiles for the personal team.
+        'PROVISIONING_PROFILE_SPECIFIER' => ''
+      }
+      build_number = ENV.fetch('PERSONAL_BUILD_NUMBER', '')
+      build_settings['VERSION_LONG'] = build_number unless build_number.empty?
 
-    xcargs = build_settings.map { |setting, value| "#{setting}=#{value.shellescape}" }.join(' ')
+      xcargs = build_settings.map { |setting, value| "#{setting}=#{value.shellescape}" }.join(' ')
 
-    build_app(
-      scheme: SCHEME,
-      clean: true,
-      include_bitcode: false,
-      include_symbols: true,
-      xcargs: "#{xcargs} #{cloud_signing_args}",
-      export_options: {
-        method: 'app-store',
-        signingStyle: 'automatic',
-        teamID: team_id,
-        manageAppVersionAndBuildNumber: false
-      },
-      export_xcargs: cloud_signing_args,
-      archive_path: PERSONAL_XCARCHIVE_PATH,
-      output_directory: ARTIFACTS_FOLDER,
-      output_name: PERSONAL_BUILD_OUTPUT_NAME
-    )
+      build_app(
+        scheme: SCHEME,
+        clean: true,
+        include_bitcode: false,
+        include_symbols: true,
+        xcargs: "#{xcargs} #{cloud_signing_args}",
+        export_options: {
+          method: 'app-store',
+          signingStyle: 'automatic',
+          teamID: team_id,
+          manageAppVersionAndBuildNumber: false
+        },
+        export_xcargs: cloud_signing_args,
+        archive_path: PERSONAL_XCARCHIVE_PATH,
+        output_directory: ARTIFACTS_FOLDER,
+        output_name: PERSONAL_BUILD_OUTPUT_NAME
+      )
 
-    if skip_upload
-      UI.important("skip_upload is set; the IPA was exported to #{PERSONAL_BUILD_IPA_PATH} but not uploaded.")
-      next
+      if skip_upload
+        UI.important("skip_upload is set; the IPA was exported to #{PERSONAL_BUILD_IPA_PATH} but not uploaded.")
+        next
+      end
+
+      upload_to_testflight(
+        ipa: PERSONAL_BUILD_IPA_PATH,
+        app_identifier: bundle_id_root,
+        api_key: api_key,
+        distribute_external: false,
+        skip_submission: true,
+        # Don't block CI on App Store Connect processing; internal groups with
+        # automatic distribution enabled receive the build once processing ends.
+        skip_waiting_for_build_processing: true
+      )
+    ensure
+      FileUtils.rm_rf(auth_key_dir) if Dir.exist?(auth_key_dir)
     end
-
-    upload_to_testflight(
-      ipa: PERSONAL_BUILD_IPA_PATH,
-      app_identifier: bundle_id_root,
-      api_key: api_key,
-      distribute_external: false,
-      skip_submission: true,
-      # Don't block CI on App Store Connect processing; internal groups with
-      # automatic distribution enabled receive the build once processing ends.
-      skip_waiting_for_build_processing: true
-    )
   end
 
   # Create a GitHub Release for a beta or final build

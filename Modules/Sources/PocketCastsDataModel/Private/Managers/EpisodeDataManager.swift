@@ -548,6 +548,12 @@ final class EpisodeDataManager: Sendable {
     }
 
     func saveEpisode(playedUpTo: Double, episode: Episode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(playedUpTo: Double, episode: Episode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         episode.playedUpTo = playedUpTo
         var fields = ["playedUpTo"]
@@ -560,7 +566,7 @@ final class EpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func updateEpisodePlaybackInteractionDate(episode: Episode, dbQueue: GRDBQueue) {
@@ -606,6 +612,12 @@ final class EpisodeDataManager: Sendable {
     }
 
     func saveEpisode(playingStatus: PlayingStatus, episode: Episode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(playingStatus: PlayingStatus, episode: Episode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         episode.playingStatus = playingStatus.rawValue
         var fields = ["playingStatus"]
@@ -618,10 +630,16 @@ final class EpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func saveEpisode(archived: Bool, episode: Episode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(archived: archived, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(archived: Bool, episode: Episode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         let now = Date()
         episode.archived = archived
@@ -636,7 +654,7 @@ final class EpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func saveEpisode(excludeFromEpisodeLimit: Bool, episode: Episode, dbQueue: GRDBQueue) {
@@ -646,6 +664,12 @@ final class EpisodeDataManager: Sendable {
     }
 
     func saveEpisode(duration: Double, episode: Episode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(duration: Double, episode: Episode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         episode.duration = duration
         var fields = ["duration"]
@@ -658,10 +682,16 @@ final class EpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func saveEpisode(starred: Bool, starredModified: Int64?, episode: Episode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(starred: starred, starredModified: starredModified, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(starred: Bool, starredModified: Int64?, episode: Episode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         episode.keepEpisode = starred
         var fields = ["keepEpisode"]
@@ -682,7 +712,7 @@ final class EpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func saveEpisode(downloadStatus: DownloadStatus, episode: Episode, dbQueue: GRDBQueue) {
@@ -941,15 +971,22 @@ final class EpisodeDataManager: Sendable {
         guard values.count == fields.count + 1, let identifier = values.last else { return }
 
         dbQueue.write { db in
-            let assignments = zip(fields, values).map { field, value in
-                Column(field).set(to: Self.databaseValue(from: value))
-            }
-            let filter: SQLSpecificExpressible = useId
-                ? Episode.Columns.id == Self.databaseValue(from: identifier)
-                : Episode.Columns.uuid == Self.databaseValue(from: identifier)
-
-            try Episode.filter(filter).updateAll(db, assignments)
+            try save(fields: fields, values: values, useId: useId, db: db)
         }
+    }
+
+    private func save(fields: [String], values: [Any], useId: Bool = true, db: Database) throws {
+        // The last value is the id/uuid used by the WHERE clause, mirroring the legacy layout
+        guard values.count == fields.count + 1, let identifier = values.last else { return }
+
+        let assignments = zip(fields, values).map { field, value in
+            Column(field).set(to: Self.databaseValue(from: value))
+        }
+        let filter: SQLSpecificExpressible = useId
+            ? Episode.Columns.id == Self.databaseValue(from: identifier)
+            : Episode.Columns.uuid == Self.databaseValue(from: identifier)
+
+        try Episode.filter(filter).updateAll(db, assignments)
     }
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: GRDBQueue) {

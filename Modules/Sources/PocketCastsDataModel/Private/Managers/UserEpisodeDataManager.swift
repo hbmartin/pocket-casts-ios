@@ -260,6 +260,12 @@ final class UserEpisodeDataManager: Sendable {
 
 
     func saveEpisode(playingStatus: PlayingStatus, episode: UserEpisode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(playingStatus: PlayingStatus, episode: UserEpisode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         episode.playingStatus = playingStatus.rawValue
         var fields = ["playingStatus"]
@@ -272,7 +278,7 @@ final class UserEpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func saveEpisode(downloadStatus: DownloadStatus, sizeInBytes: Int64, downloadTaskId: String?, episode: UserEpisode, dbQueue: GRDBQueue) {
@@ -348,10 +354,16 @@ final class UserEpisodeDataManager: Sendable {
     }
 
     func saveEpisode(duration: Double, episode: UserEpisode, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(duration: duration, episode: episode, db: db)
+        }
+    }
+
+    func saveEpisode(duration: Double, episode: UserEpisode, db: Database) throws {
         var episode = episode
         episode.duration = duration
 
-        save(fieldName: "duration", value: episode.duration, episodeId: episode.id, dbQueue: dbQueue)
+        try save(fieldName: "duration", value: episode.duration, episodeId: episode.id, db: db)
     }
 
     func saveEpisode(playbackError: String?, episode: UserEpisode, dbQueue: GRDBQueue) {
@@ -481,6 +493,12 @@ final class UserEpisodeDataManager: Sendable {
     }
 
     func saveEpisode(playedUpTo: Double, episode: UserEpisode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            try saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
+        }
+    }
+
+    func saveEpisode(playedUpTo: Double, episode: UserEpisode, updateSyncFlag: Bool, db: Database) throws {
         var episode = episode
         episode.playedUpTo = playedUpTo
         var fields = ["playedUpTo"]
@@ -493,7 +511,7 @@ final class UserEpisodeDataManager: Sendable {
         }
         values.append(episode.id)
 
-        save(fields: fields, values: values, dbQueue: dbQueue)
+        try save(fields: fields, values: values, db: db)
     }
 
     func markEpisodeImageUploaded(episode: UserEpisode, dbQueue: GRDBQueue) {
@@ -509,10 +527,14 @@ final class UserEpisodeDataManager: Sendable {
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: GRDBQueue) {
         dbQueue.write { db in
-            try UserEpisode
-                .filter(UserEpisode.Columns.id == episodeId)
-                .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
+            try save(fieldName: fieldName, value: value, episodeId: episodeId, db: db)
         }
+    }
+
+    private func save(fieldName: String, value: Any, episodeId: Int64, db: Database) throws {
+        try UserEpisode
+            .filter(UserEpisode.Columns.id == episodeId)
+            .updateAll(db, Column(fieldName).set(to: Self.databaseValue(from: value)))
     }
 
     private func save(fields: [String], values: [Any], useId: Bool = true, dbQueue: GRDBQueue) {
@@ -520,15 +542,22 @@ final class UserEpisodeDataManager: Sendable {
         guard values.count == fields.count + 1, let identifier = values.last else { return }
 
         dbQueue.write { db in
-            let assignments = zip(fields, values).map { field, value in
-                Column(field).set(to: Self.databaseValue(from: value))
-            }
-            let filter: SQLSpecificExpressible = useId
-                ? UserEpisode.Columns.id == Self.databaseValue(from: identifier)
-                : UserEpisode.Columns.uuid == Self.databaseValue(from: identifier)
-
-            try UserEpisode.filter(filter).updateAll(db, assignments)
+            try save(fields: fields, values: values, useId: useId, db: db)
         }
+    }
+
+    private func save(fields: [String], values: [Any], useId: Bool = true, db: Database) throws {
+        // The last value is the id/uuid used by the WHERE clause, mirroring the legacy layout
+        guard values.count == fields.count + 1, let identifier = values.last else { return }
+
+        let assignments = zip(fields, values).map { field, value in
+            Column(field).set(to: Self.databaseValue(from: value))
+        }
+        let filter: SQLSpecificExpressible = useId
+            ? UserEpisode.Columns.id == Self.databaseValue(from: identifier)
+            : UserEpisode.Columns.uuid == Self.databaseValue(from: identifier)
+
+        try UserEpisode.filter(filter).updateAll(db, assignments)
     }
 
     /// Converts the legacy `[Any]` binding values for the GRDB path, matching the legacy shim's

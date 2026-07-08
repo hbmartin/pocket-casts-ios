@@ -69,38 +69,6 @@ class PCHostingController<Content>: ThemedHostingController<Content> where Conte
         UITableView.appearance(whenContainedInInstancesOf: [PCHostingController.self]).backgroundColor = .clear
         UICollectionView.appearance(whenContainedInInstancesOf: [PCHostingController.self]).backgroundColor = .clear
         UITextView.appearance(whenContainedInInstancesOf: [PCHostingController.self]).backgroundColor = UIColor.clear
-
-        setupNavBar()
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-    }
-
-    @objc override func themeDidChange() {
-        setupNavBar()
-    }
-
-    private func setupNavBar() {
-        // On iOS 26 the system Liquid Glass nav bar manages its own appearance; nothing to do.
-    }
-
-    private func configureNavBarFor(theme: Theme.ThemeType, traits: UITraitCollection) {
-        let titleColor = AppTheme.navBarTitleColor(themeOverride: theme)
-        let iconsColor = AppTheme.navBarIconsColor(themeOverride: theme)
-        let backgroundColor = ThemeColor.secondaryUi01(for: theme)
-
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = backgroundColor
-        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: titleColor]
-        appearance.largeTitleTextAttributes = [
-            NSAttributedString.Key.foregroundColor: titleColor,
-            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 31, weight: .bold)
-        ]
-        appearance.shadowColor = nil
-
-        UINavigationBar.appearance(for: traits, whenContainedInInstancesOf: [PCHostingController.self]).standardAppearance = appearance
-        UINavigationBar.appearance(for: traits, whenContainedInInstancesOf: [PCHostingController.self]).compactAppearance = appearance
-        UINavigationBar.appearance(for: traits, whenContainedInInstancesOf: [PCHostingController.self]).scrollEdgeAppearance = appearance
-        UINavigationBar.appearance(for: traits, whenContainedInInstancesOf: [PCHostingController.self]).tintColor = iconsColor
     }
 }
 

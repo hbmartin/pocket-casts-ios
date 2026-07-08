@@ -43,26 +43,39 @@ class FolderDataManager {
     /// need the generated `uuid` must use the returned folder.
     @discardableResult
     func save(folder: Folder, dbQueue: GRDBQueue) -> Folder {
+        var saved = folder
+        let success = dbQueue.write { db in
+            saved = try save(folder: folder, db: db)
+        }
+        if success {
+            cacheFolders(dbQueue: dbQueue)
+        }
+        return saved
+    }
+
+    @discardableResult
+    func save(folder: Folder, db: Database) throws -> Folder {
         var folder = folder
         if folder.uuid.isEmpty {
             folder.uuid = UUID().uuidString.lowercased()
         }
         let folderToSave = folder
 
-        do {
-            try dbQueue.dbPool.write { db in
-                try folderToSave.save(db)
-            }
-        } catch {
-            FileLog.shared.addMessage("FolderDataManager.save error: \(error)")
-        }
-        cacheFolders(dbQueue: dbQueue)
+        try folderToSave.save(db)
         return folder
     }
 
     func delete(folderUuid: String, dbQueue: GRDBQueue) {
-        dbQueue.deleteAll(Folder.self, filter: Folder.Columns.uuid == folderUuid)
-        cacheFolders(dbQueue: dbQueue)
+        let success = dbQueue.write { db in
+            try delete(folderUuid: folderUuid, db: db)
+        }
+        if success {
+            cacheFolders(dbQueue: dbQueue)
+        }
+    }
+
+    func delete(folderUuid: String, db: Database) throws {
+        try Folder.filter(Folder.Columns.uuid == folderUuid).deleteAll(db)
     }
 
     func deleteAllFolders(dbQueue: GRDBQueue) {
@@ -115,8 +128,21 @@ class FolderDataManager {
     }
 
     func markFolderAsDeleted(folderUuid: String, syncModified: Int64, dbQueue: GRDBQueue) {
-        dbQueue.updateAll(Folder.self, filter: Folder.Columns.uuid == folderUuid, Folder.Columns.syncModified.set(to: syncModified), Folder.Columns.wasDeleted.set(to: true))
-        cacheFolders(dbQueue: dbQueue)
+        let success = dbQueue.write { db in
+            try markFolderAsDeleted(folderUuid: folderUuid, syncModified: syncModified, db: db)
+        }
+        if success {
+            cacheFolders(dbQueue: dbQueue)
+        }
+    }
+
+    func markFolderAsDeleted(folderUuid: String, syncModified: Int64, db: Database) throws {
+        try Folder
+            .filter(Folder.Columns.uuid == folderUuid)
+            .updateAll(
+                db,
+                Folder.Columns.syncModified.set(to: syncModified),
+                Folder.Columns.wasDeleted.set(to: true))
     }
 
     func markAllFolderAsDeleted(syncModified: Int64, dbQueue: GRDBQueue) {
@@ -126,7 +152,7 @@ class FolderDataManager {
         cacheFolders(dbQueue: dbQueue)
     }
 
-    private func cacheFolders(dbQueue: GRDBQueue) {
+    func cacheFolders(dbQueue: GRDBQueue) {
         guard let newFolders = dbQueue.read({ db in
             do {
                 return try Folder.fetchAll(db)
