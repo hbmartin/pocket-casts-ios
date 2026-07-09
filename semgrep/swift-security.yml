@@ -4753,13 +4753,13 @@ rules:
       impact: MEDIUM
       technology: [ios]
     message: FileManager.urls(for:in:) returns an array; use .first with an explicit fallback instead of force-indexing [0].
-    languages: [generic]
+    languages: [swift]
     paths:
       include:
         - "**/*.swift"
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
-      - pattern-regex: 'FileManager\.default\.urls\s*\(\s*for\s*:[^\n]+\)\s*\[0\]'
+      - pattern: 'FileManager.default.urls(for: $FOR, in: $IN)[0]'
 
   - id: pocketcasts.isolated-deinit-requires-justification
     severity: ERROR

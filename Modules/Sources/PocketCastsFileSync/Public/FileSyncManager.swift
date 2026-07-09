@@ -39,7 +39,7 @@ public actor FileSyncManager {
     private(set) var lastScanDate: Date?
     private(set) var lastError: String?
 
-    private struct UploadManifestState {
+    struct UploadManifestState {
         var uploads: [String: MergeEngine.UploadEntry]
         var uploadTombstones: [String: OpStamp]
 
@@ -66,7 +66,10 @@ public actor FileSyncManager {
 
         var manifest: [Filesync_UploadIdentity] {
             uploads.values
-                .filter { uploadTombstones[$0.identity.uuid] == nil }
+                .filter { upload in
+                    guard let tombstoneStamp = uploadTombstones[upload.identity.uuid] else { return true }
+                    return upload.stamp > tombstoneStamp
+                }
                 .map(\.identity)
         }
     }

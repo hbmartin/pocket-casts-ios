@@ -298,6 +298,27 @@ final class MergeEngineTests: XCTestCase {
                        "removal is recorded; the applier resolves delete-vs-identity by stamp")
     }
 
+    func testUploadManifestOnlySuppressesUploadsNoNewerThanTombstone() {
+        func manifest(uploadStamp: Int64, tombstoneStamp: Int64) -> [Filesync_UploadIdentity] {
+            var identity = Filesync_UploadIdentity()
+            identity.uuid = "ue-1"
+            identity.relativePath = "Audiobooks/new.mp3"
+
+            var mergedState = MergeEngine.MergedState()
+            mergedState.uploads[identity.uuid] = MergeEngine.UploadEntry(
+                identity: identity,
+                stamp: OpStamp(wallClockMs: uploadStamp, deviceID: "a", seq: 1)
+            )
+            mergedState.uploadTombstones[identity.uuid] = OpStamp(wallClockMs: tombstoneStamp, deviceID: "b", seq: 1)
+
+            return FileSyncManager.UploadManifestState(mergedState: mergedState).manifest
+        }
+
+        XCTAssertEqual(manifest(uploadStamp: 4000, tombstoneStamp: 3000).map(\.uuid), ["ue-1"])
+        XCTAssertTrue(manifest(uploadStamp: 3000, tombstoneStamp: 3000).isEmpty)
+        XCTAssertTrue(manifest(uploadStamp: 2000, tombstoneStamp: 3000).isEmpty)
+    }
+
     // MARK: Snapshot equivalence
 
     func testSnapshotBootstrapMatchesLogReplayForEpisodes() {
