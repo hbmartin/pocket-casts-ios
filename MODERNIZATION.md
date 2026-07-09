@@ -119,6 +119,22 @@ singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.sh
   `Settings`/`ServerSettings` protocol facades and the `PlaybackManager` consumer facade (2a below);
   (3) once a singleton's call sites are fully migrated, add the Semgrep `.shared`-access lock-in rule
   for it (see Lock-in below).
+  _(Update 2026-07-09: the `PlaybackManager` consumer facade and a `Theme` seam are in —
+  `PlaybackManaging` + `\.playbackManager` and `Theming` + `\.theme` in
+  `podcasts/Utilities/{PlaybackManager,Theme}+Dependency.swift`, following the `DownloadManaging`
+  consumed-surface pattern. The generated color accessors (`Theme+Color.swift`) moved to
+  `extension Theming`, and `AppTheme.color(for:theme:)` takes `any Theming`, so `@Dependency(\.theme)`
+  consumers keep the `theme.primaryUi02` spelling; `.environmentObject(Theme.sharedTheme)` sites stay
+  concrete by design. Both keys mirror `testValue` to `liveValue` for the same reason the repository
+  keys do. Mocks (`PlaybackManagingMock`, `ThemingMock`) plus override tests landed with the seams.
+  Pilot conversion covered 14 small feature dirs (~43 sites): Analytics, Bookmarks, Fingerprint,
+  Folder History, Lists, Notifications, Onboarding, Profile-SwiftUI, Ratings, Share Profile, Sharing,
+  Syncing, Up Next History, Playlists Onboarding. Remaining backlog by grep: `DataManager.sharedManager`
+  ~446 sites / 129 files, `PlaybackManager.shared` ~386 / 69 (engine/player-callback files stay on the
+  singleton by design), `Theme.sharedTheme` ~273 / 68 (many are `environmentObject`/concrete-`Theme`
+  sites that should not convert). Known seam gaps found during conversion: `activateAudioSession` is
+  not on `PlaybackManaging` (blocks `ClipPlaybackManager`), and the `DataManager+FileSync` surface is
+  on none of the repository protocols (blocks `FileSyncSettingsView`).)_
 - **2a — Singleton seams.** For each of `DataManager.sharedManager`, `DownloadManager.shared`,
   `ServerSettings`, `Settings` (split the 1,595-line god object into focused protocol facades), and
   `FileLog.shared`: define a protocol, add a swift-dependencies `DependencyKey` (deciding its isolation

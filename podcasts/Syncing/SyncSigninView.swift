@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -168,6 +169,7 @@ struct SyncSigninView: View {
 final class SyncSigninViewModel: ObservableObject {
     // Dependencies
     private let coordinator: LoginCoordinator
+    @Dependency(\.podcastRepository) private var podcastRepository
 
     // Inputs
     @Published var email: String = ""
@@ -308,7 +310,7 @@ final class SyncSigninViewModel: ObservableObject {
 
         if (FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled && ServerSettings.lastSyncTime == nil)
             || !FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled {
-            DataManager.sharedManager.markAllPodcastsUnsynced()
+            podcastRepository.markAllPodcastsUnsynced()
         }
 
         SyncManager.syncReason = .login

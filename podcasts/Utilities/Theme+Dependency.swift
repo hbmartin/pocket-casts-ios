@@ -32,6 +32,12 @@ extension Theme: Theming { }
 
 nonisolated enum ThemeKey: DependencyKey {
     static let liveValue: any Theming = Theme.sharedTheme
+
+    /// Mirrors `liveValue` deliberately: the app test suite has always exercised the real
+    /// singleton through converted call paths (same rationale as the repository keys in
+    /// PocketCastsDataModel); an unimplemented-dependency failure would be a behavior change.
+    /// Tests that want isolation override with `ThemingMock` via `withDependencies`.
+    static var testValue: any Theming { liveValue }
 }
 
 nonisolated extension DependencyValues {

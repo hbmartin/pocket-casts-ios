@@ -1,3 +1,4 @@
+import Dependencies
 import SwiftUI
 import PocketCastsServer
 import PocketCastsDataModel
@@ -8,6 +9,8 @@ struct PodcastSubscribeButton: View {
 
     @State private var isSubscribed: Bool = false
     @State private var scale: CGFloat = 1.0
+
+    @Dependency(\.podcastRepository) private var podcastRepository
 
     @EnvironmentObject var theme: Theme
     @EnvironmentObject var searchAnalyticsHelper: SearchAnalyticsHelper
@@ -73,7 +76,7 @@ struct PodcastSubscribeButton: View {
     private func unsubscribe() {
         guard let uuid = podcast.uuid else { return }
 
-        guard let podcast = DataManager.sharedManager.findPodcast(uuid: uuid) else { return }
+        guard let podcast = podcastRepository.findPodcast(uuid: uuid) else { return }
 
         isSubscribed = false
 

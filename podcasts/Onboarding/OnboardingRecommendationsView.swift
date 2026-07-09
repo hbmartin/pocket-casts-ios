@@ -1,3 +1,4 @@
+import Dependencies
 import SwiftUI
 import PocketCastsDataModel
 import PocketCastsServer
@@ -113,6 +114,8 @@ struct OnboardingRecommendationsView: View {
     @State var searchTask: Task<Void, Never>?
     @State private var didTapContinue = false
 
+    @Dependency(\.podcastRepository) private var podcastRepository
+
     @MainActor
     init(coordinator: LoginCoordinator, viewModel: RecommendationsViewModel? = nil) {
         self.coordinator = coordinator
@@ -156,7 +159,7 @@ struct OnboardingRecommendationsView: View {
                     VStack {
                         Button(action: {
                             didTapContinue = true
-                            OnboardingFlow.shared.track(.recommendationsContinueTapped, properties: ["subscriptions": DataManager.sharedManager.podcastCount()])
+                            OnboardingFlow.shared.track(.recommendationsContinueTapped, properties: ["subscriptions": podcastRepository.podcastCount()])
                             coordinator.recommendationsContinueTapped()
                         }) {
                             Text(L10n.continue)
@@ -191,7 +194,7 @@ struct OnboardingRecommendationsView: View {
         .environmentObject(SearchAnalyticsHelper(source: .recommendations))
         .onDisappear {
             if didTapContinue == false {
-                Analytics.track(.recommendationsDismissed, properties: ["subscriptions": DataManager.sharedManager.podcastCount()])
+                Analytics.track(.recommendationsDismissed, properties: ["subscriptions": podcastRepository.podcastCount()])
             }
         }
     }

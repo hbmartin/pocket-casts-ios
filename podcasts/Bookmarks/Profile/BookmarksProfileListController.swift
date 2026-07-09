@@ -1,17 +1,17 @@
 import Combine
+import Dependencies
 import PocketCastsDataModel
 import SwiftUI
 
 class BookmarksProfileListController: ThemedHostingController<BookmarksProfileListView> {
-    private let playbackManager: PlaybackManager
+    @Dependency(\.playbackManager) private var playbackManager: any PlaybackManaging
     private let bookmarkManager: BookmarkManager
     private let viewModel: BookmarkPodcastListViewModel
 
-    init(bookmarkManager: BookmarkManager = PlaybackManager.shared.bookmarkManager,
-         playbackManager: PlaybackManager = .shared) {
-
+    init() {
+        @Dependency(\.playbackManager) var playbackManager
+        let bookmarkManager = playbackManager.bookmarkManager
         self.bookmarkManager = bookmarkManager
-        self.playbackManager = playbackManager
 
         let sortOption = Settings.profileBookmarksSort
         let viewModel = BookmarkPodcastListViewModel(podcast: nil, bookmarkManager: bookmarkManager, sortOption: sortOption)

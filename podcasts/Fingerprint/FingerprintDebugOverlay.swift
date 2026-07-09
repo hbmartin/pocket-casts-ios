@@ -1,7 +1,9 @@
 #if DEBUG
+import Dependencies
 import UIKit
 
 class FingerprintDebugOverlay: UIView {
+    @Dependency(\.playbackManager) private var playbackManager: any PlaybackManaging
 
     private var entries: [FingerprintTimingManager.TimeMappingEntry] = []
     private var rejections: [FingerprintTimingManager.TimeMappingEntry] = []
@@ -46,8 +48,8 @@ class FingerprintDebugOverlay: UIView {
         // Fall back to the episode's duration so the playback cursor and tap-to-seek
         // work regardless of fingerprint state.
         let fingerprintDuration = FingerprintTimingManager.shared.totalDuration ?? 0
-        totalDuration = fingerprintDuration > 0 ? fingerprintDuration : PlaybackManager.shared.duration()
-        playbackPosition = PlaybackManager.shared.currentTime()
+        totalDuration = fingerprintDuration > 0 ? fingerprintDuration : playbackManager.duration()
+        playbackPosition = playbackManager.currentTime()
         isHighlighting = FingerprintTimingManager.shared.isWithinMatchedContent(forPlaybackTime: playbackPosition)
         statusLabel.text = "\(describe(state: FingerprintTimingManager.shared.state)) · \(isHighlighting ? "🟢 highlighting" : "🔴 suppressed")"
         setNeedsDisplay()
@@ -57,7 +59,7 @@ class FingerprintDebugOverlay: UIView {
         guard totalDuration > 0, bounds.width > 0 else { return }
         let x = gesture.location(in: self).x
         let time = Double(x / bounds.width) * totalDuration
-        PlaybackManager.shared.seekTo(time: min(max(0, time), totalDuration))
+        playbackManager.seekTo(time: min(max(0, time), totalDuration))
     }
 
     override func draw(_ rect: CGRect) {

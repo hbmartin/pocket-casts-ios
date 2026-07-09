@@ -229,6 +229,12 @@ nonisolated enum PlaybackManagerKey: DependencyKey {
     static var liveValue: any PlaybackManaging {
         PlaybackManager.onMainSync { $0 }
     }
+
+    /// Mirrors `liveValue` deliberately: the app test suite has always exercised the real
+    /// singleton through converted call paths (same rationale as the repository keys in
+    /// PocketCastsDataModel); an unimplemented-dependency failure would be a behavior change.
+    /// Tests that want isolation override with `PlaybackManagingMock` via `withDependencies`.
+    static var testValue: any PlaybackManaging { liveValue }
 }
 
 nonisolated extension DependencyValues {

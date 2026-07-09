@@ -1,3 +1,4 @@
+import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
 
@@ -5,25 +6,22 @@ class FolderHistoryModel: ObservableObject {
     @Published var historyEntries: [FolderHistoryManager.PodcastFoldersHistoryEntry] = []
     @Published var podcastsAndFolders: [(Podcast, Folder)] = []
 
-    private let dataManager: DataManager
-
-    init(dataManager: DataManager = DataManager.sharedManager) {
-        self.dataManager = dataManager
-    }
+    @Dependency(\.folderRepository) private var folderRepository: any FolderRepository
+    @Dependency(\.podcastRepository) private var podcastRepository: any PodcastRepository
 
     @MainActor
     func loadEntries() {
         Task {
-            historyEntries = dataManager.foldersHistoryEntries()
+            historyEntries = folderRepository.foldersHistoryEntries()
         }
     }
 
     @MainActor
     func loadFoldersHistory(for entry: Date) {
         Task {
-            podcastsAndFolders = dataManager.folderHistory(entry: entry).compactMap {
-                if let podcast = dataManager.findPodcast(uuid: $0.key),
-                   let folder = dataManager.findFolder(uuid: $0.value) {
+            podcastsAndFolders = folderRepository.folderHistory(entry: entry).compactMap {
+                if let podcast = podcastRepository.findPodcast(uuid: $0.key),
+                   let folder = folderRepository.findFolder(uuid: $0.value) {
                     return (podcast, folder)
                 }
 
@@ -37,7 +35,7 @@ class FolderHistoryModel: ObservableObject {
             var podcast = podcast
             podcast.folderUuid = folder.uuid
             podcast.syncStatus = SyncStatus.notSynced.rawValue
-            dataManager.save(podcast: podcast)
+            podcastRepository.save(podcast: podcast)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
         }
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)

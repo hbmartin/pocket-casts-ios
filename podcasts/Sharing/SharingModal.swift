@@ -1,3 +1,4 @@
+import Dependencies
 import PocketCastsDataModel
 import SwiftUI
 import PocketCastsUtils
@@ -88,9 +89,11 @@ enum SharingModal {
 
         let optionPicker = OptionsPicker(title: L10n.share.uppercased(), themeOverride: .dark, colors: colors)
 
+        @Dependency(\.playbackManager) var playbackManager
+
         let timeInterval: Double
-        if PlaybackManager.shared.currentEpisode()?.uuid == episode?.uuid {
-            timeInterval = PlaybackManager.shared.currentTime()
+        if playbackManager.currentEpisode()?.uuid == episode?.uuid {
+            timeInterval = playbackManager.currentTime()
         } else {
             timeInterval = episode?.playedUpTo ?? 0
         }

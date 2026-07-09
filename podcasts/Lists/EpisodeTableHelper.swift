@@ -1,20 +1,24 @@
+import Dependencies
 import DifferenceKit
 import Foundation
 import PocketCastsDataModel
 
 nonisolated struct EpisodeTableHelper {
     static func loadEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]?) -> [ListEpisode] {
-        let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let loadedEpisodes = episodeRepository.findEpisodesWhere(customWhere: query, arguments: arguments)
         return loadedEpisodes.map { ListEpisode(episode: $0, tintColor: tintColor) }
     }
 
     static func loadPlaylistEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]? = nil) -> [ListEpisode] {
-        let loadedEpisodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query, arguments: arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let loadedEpisodes = episodeRepository.findPlaylistEpisodesWhere(query: query, arguments: arguments)
         return loadedEpisodes.map { ListEpisode(episode: $0, tintColor: tintColor) }
     }
 
     static func loadSectionedEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]?, episodeShortKey: (Episode) -> String) -> [ArraySection<String, ListEpisode>] {
-        let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let loadedEpisodes = episodeRepository.findEpisodesWhere(customWhere: query, arguments: arguments)
 
         var previousSectionName = ""
         var currSectionIndex = -1
@@ -39,7 +43,8 @@ nonisolated struct EpisodeTableHelper {
     }
 
     static func loadSortedSectionedEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]?, sectionComparator: (String, String) -> Bool, episodeShortKey: (Episode) -> String) -> [ArraySection<String, ListItem>] {
-        let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query, arguments: arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let loadedEpisodes = episodeRepository.findEpisodesWhere(customWhere: query, arguments: arguments)
 
         var sections = [String: [ListEpisode]]()
         for episode in loadedEpisodes {
@@ -67,7 +72,8 @@ nonisolated struct EpisodeTableHelper {
 
     static func searchSectionedEpisodes(for search: String, listenedTo: Bool, tintColor: UIColor = AppTheme.appTintColor(), episodeShortKey: (Episode) -> String) -> [ArraySection<String, ListEpisode>] {
         let escapedSearch = search.escapeLike(escapeChar: "\\")
-        let loadedEpisodes = DataManager.sharedManager.findEpisodesAndPodcastsWhere(customWhere: escapedSearch, listenedTo: listenedTo)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let loadedEpisodes = episodeRepository.findEpisodesAndPodcastsWhere(customWhere: escapedSearch, listenedTo: listenedTo)
 
         var previousSectionName = ""
         var currSectionIndex = -1
