@@ -16,7 +16,9 @@ import SwiftUI
 ///     }
 /// }
 ///
-extension Theme {
+/// Declared on `Theming` (not the concrete `Theme`) so `@Dependency(\.theme)` consumers get the
+/// same accessors; `@EnvironmentObject var theme: Theme` usage is unaffected.
+extension Theming {
     var primaryText01: Color {
         AppTheme.color(for: .primaryText01, theme: self)
     }
@@ -447,7 +449,7 @@ extension Theme {
 }
 
 // MARK: - Player Colors
-extension Theme {
+extension Theming {
     var playerBackground01: Color {
         Color(uiColor: PlayerColorHelper.playerBackgroundColor01())
     }
