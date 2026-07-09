@@ -1,0 +1,71 @@
+# Per-file baseline for the 'force-cast' count ratchet: 'as!' force casts (excluding tests).
+# Enforced by scripts/ci/check-count-ratchets.sh (mise run check:ratchets).
+# Deletion-only: counts may only go down. Regenerate after removing usages
+# with: mise run ratchets:baseline
+Modules/Sources/PocketCastsDataModel/Public/DataManager.swift: 1
+Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift: 6
+podcasts/AccountViewController+TableView.swift: 8
+podcasts/AddCustomViewController+CollectionView.swift: 2
+podcasts/AddCustomViewController+ImagePicker.swift: 2
+podcasts/AppDelegate+SiriShortcuts.swift: 7
+podcasts/AppearanceViewController.swift: 8
+podcasts/AutoAddToUpNextViewController.swift: 2
+podcasts/AutoArchiveViewController.swift: 2
+podcasts/BadgeSettingsViewController.swift: 1
+podcasts/ChaptersViewController+Table.swift: 1
+podcasts/Common Components/MultiSelect/MultiSelectActionController.swift: 1
+podcasts/Common Components/Podcast Selection/PodcastChooserViewController.swift: 1
+podcasts/Common Components/Progress Views/ProgressLine.swift: 1
+podcasts/Common Components/Progress Views/ProgressLineLayer.swift: 1
+podcasts/Common Components/View Controllers/PCTableViewController.swift: 2
+podcasts/CountryChooserViewController.swift: 1
+podcasts/DownloadFilterOverlayController.swift: 1
+podcasts/DownloadSettingsViewController.swift: 7
+podcasts/DownloadedFilesViewController.swift: 4
+podcasts/DownloadsViewController+Table.swift: 1
+podcasts/EpisodeFilterOverlayController.swift: 2
+podcasts/Extensions/UIView+Nib.swift: 1
+podcasts/FilterEditOptionsViewController.swift: 5
+podcasts/Folders/FolderViewController+CollectionView.swift: 2
+podcasts/GeneralSettingsViewController.swift: 20
+podcasts/IconSelectorCell.swift: 1
+podcasts/ImageManager.swift: 1
+podcasts/ListeningHistoryViewController+Table.swift: 1
+podcasts/MediaFilterOverlayController.swift: 1
+podcasts/New Detail/Custom Order/PlaylistDetailCustomOrderViewController.swift: 1
+podcasts/New Detail/Episode Add/ManualPlaylistsChooserViewController.swift: 1
+podcasts/New Detail/PlaylistDetailViewController+TableView.swift: 5
+podcasts/NotificationsViewController.swift: 3
+podcasts/PlaybackManager.swift: 2
+podcasts/PlaylistSelectionViewController.swift: 1
+podcasts/PlaylistShortcutsViewController.swift: 2
+podcasts/PlaylistsShortcutsViewController.swift: 1
+podcasts/PlaylistsViewController+Table.swift: 1
+podcasts/PodcastFilterOverlayController.swift: 2
+podcasts/PodcastShortcutsViewController.swift: 1
+podcasts/Podcasts/All Podcasts/PodcastListViewController+CollectionView.swift: 4
+podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastArchiveViewController+Table.swift: 4
+podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastEffectsViewController+Table.swift: 5
+podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastSettingsViewController+Table.swift: 14
+podcasts/Podcasts/Podcast Page/PodcastViewController+TableData.swift: 11
+podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: 2
+podcasts/Podcasts/Share Podcast List/SharePodcastsViewController.swift: 1
+podcasts/Podcasts/Share Podcast List/SharePublishViewController.swift: 1
+podcasts/PrivacySettings/PrivacySettingsDataSource.swift: 8
+podcasts/ProfileViewController.swift: 2
+podcasts/ReleaseDateFilterOverlayController.swift: 1
+podcasts/SettingsViewController.swift: 1
+podcasts/ShelfActionsViewController+Table.swift: 1
+podcasts/SiriSettingsViewController.swift: 4
+podcasts/StarredFilterOverlayController.swift: 1
+podcasts/StarredViewController+Table.swift: 1
+podcasts/StatsViewController.swift: 3
+podcasts/StorageAndDataUseViewController.swift: 2
+podcasts/TimeSlider.swift: 2
+podcasts/TimeSliderLayer.swift: 1
+podcasts/UpNextViewController+Table.swift: 3
+podcasts/UploadedSettingsViewController.swift: 1
+podcasts/UploadedViewController+Table.swift: 1
+podcasts/UserEpisodeDetailViewController+Table.swift: 1
+podcasts/Utilities/PCBundleDoc.swift: 1
+podcasts/VideoPlayerView.swift: 1

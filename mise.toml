@@ -166,7 +166,7 @@ fi
 '''
 
 [tasks."test:scripts"]
-description = "Run tests for the repo's helper scripts (credentials generation, simulator selection, SwiftLint version sync, concurrency ratchet)"
+description = "Run tests for the repo's helper scripts (credentials generation, simulator selection, SwiftLint version sync, concurrency/count/coverage ratchets)"
 alias = "test:credentials-script"
 run = [
     "ruby scripts/tests/generate_credentials_test.rb",
@@ -175,6 +175,8 @@ run = [
     "ruby scripts/tests/swiftlint_version_sync_test.rb",
     "ruby scripts/tests/sync_swiftlint_version_test.rb",
     "./scripts/tests/check_concurrency_warnings_test.sh",
+    "./scripts/tests/check_count_ratchets_test.sh",
+    "./scripts/tests/check_coverage_floor_test.sh",
 ]
 
 [tasks."sync:swiftlint-version"]
@@ -253,8 +255,16 @@ xcodebuild -project podcasts.xcodeproj \
 echo "Wrote $(wc -l < scripts/ci/concurrency-baseline.txt | tr -d ' ') entries to scripts/ci/concurrency-baseline.txt"
 '''
 
+[tasks."check:ratchets"]
+description = "Fail on new '@unchecked Sendable' or non-test 'as!' usages above the committed per-file baselines (scripts/ci/ratchet-*.txt)"
+run = "./scripts/ci/check-count-ratchets.sh"
+
+[tasks."ratchets:baseline"]
+description = "Regenerate scripts/ci/ratchet-*.txt count-ratchet baselines (deletion-only ratchet; run after removing usages)"
+run = "./scripts/ci/check-count-ratchets.sh --update-baselines"
+
 [tasks."check:static"]
-description = "Run SwiftLint, helper script tests, Semgrep, and the Xcode static analyzer"
+description = "Run SwiftLint, helper script tests, Semgrep, count ratchets, and the Xcode static analyzer"
 alias = "static-checks"
 depends = [
     "lint",
@@ -262,6 +272,7 @@ depends = [
     "semgrep:tests",
     "semgrep:security",
     "semgrep:pocket-casts",
+    "check:ratchets",
     "check:analyzer",
 ]
 

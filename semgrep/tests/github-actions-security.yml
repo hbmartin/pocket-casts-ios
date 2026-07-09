@@ -116,6 +116,30 @@ steps:
       POCKET_CASTS_CREDENTIALS_JSON: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.pull_request_number == '')) && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
     run: scripts/ci/build-and-test.sh
 ---
+steps:
+  - name: Checkout fork PR head
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      persist-credentials: false
+      # ruleid: pocketcasts.github-actions-no-mutable-fork-ref-checkout
+      ref: ${{ github.event.pull_request.head.ref }}
+---
+steps:
+  - name: Checkout fork PR head
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      persist-credentials: false
+      # ruleid: pocketcasts.github-actions-no-mutable-fork-ref-checkout
+      ref: ${{ github.head_ref }}
+---
+steps:
+  - name: Checkout label-approved fork PR head
+    uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+    with:
+      persist-credentials: false
+      # ok: pocketcasts.github-actions-no-mutable-fork-ref-checkout
+      ref: ${{ github.event.pull_request.head.sha }}
+---
 script: |
   if [[ -z "${BITDRIFT_API_KEY:-}" ]]; then
     # ruleid: pocketcasts.bitdrift-gate-on-github-actions

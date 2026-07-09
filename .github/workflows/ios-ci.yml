@@ -7,6 +7,14 @@ on:
       - "release/**"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  # Fork PRs don't run CI automatically (they would execute untrusted code on
+  # self-hosted runners). After reviewing the code, a maintainer applies the
+  # `ci-approved` label to run CI once against the exact SHA that was current
+  # when the label was added. New pushes do NOT re-run automatically — re-review
+  # and re-apply the label. No repository secrets are exposed to these runs
+  # (the credentials env below only populates for push/workflow_dispatch).
+  pull_request_target:
+    types: [labeled]
   workflow_dispatch:
     inputs:
       pull_request_number:
@@ -16,7 +24,7 @@ on:
 
 concurrency:
   group: ios-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
 
 permissions:
   contents: read
@@ -27,7 +35,12 @@ env:
 jobs:
   build_and_test:
     name: Build and Test
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    if: >-
+      ${{
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'pull_request_target' && github.event.label.name == 'ci-approved' && github.event.pull_request.head.repo.full_name != github.repository) ||
+        (github.event_name != 'pull_request' && github.event_name != 'pull_request_target')
+      }}
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 90
     env:
@@ -35,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '' }}
+        if: ${{ github.event_name != 'pull_request_target' && (github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '') }}
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
@@ -48,6 +61,16 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           ref: refs/pull/${{ inputs.pull_request_number }}/head
+
+      # Pinned to the SHA that was current when `ci-approved` was applied, so a
+      # push racing the label cannot swap in unreviewed code.
+      - name: Checkout label-approved fork PR head
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Build and test
         env:
@@ -67,13 +90,18 @@ jobs:
 
   static_checks:
     name: Static Checks
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    if: >-
+      ${{
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'pull_request_target' && github.event.label.name == 'ci-approved' && github.event.pull_request.head.repo.full_name != github.repository) ||
+        (github.event_name != 'pull_request' && github.event_name != 'pull_request_target')
+      }}
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 90
 
     steps:
       - name: Checkout repository
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '' }}
+        if: ${{ github.event_name != 'pull_request_target' && (github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '') }}
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
@@ -86,6 +114,16 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           ref: refs/pull/${{ inputs.pull_request_number }}/head
+
+      # Pinned to the SHA that was current when `ci-approved` was applied, so a
+      # push racing the label cannot swap in unreviewed code.
+      - name: Checkout label-approved fork PR head
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Run static checks
         env:

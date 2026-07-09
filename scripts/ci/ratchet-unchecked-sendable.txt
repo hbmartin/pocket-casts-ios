@@ -1,0 +1,142 @@
+# Per-file baseline for the 'unchecked-sendable' count ratchet: '@unchecked Sendable' conformances.
+# Enforced by scripts/ci/check-count-ratchets.sh (mise run check:ratchets).
+# Deletion-only: counts may only go down. Regenerate after removing usages
+# with: mise run ratchets:baseline
+Modules/Sources/EndOfYear/ShareableMetadataProvider.swift: 1
+Modules/Sources/EndOfYear/StoryShareableProvider.swift: 1
+Modules/Sources/PocketCastsDataModel/Private/DB/GRDB/GRDBQueue.swift: 3
+Modules/Sources/PocketCastsDataModel/Private/Managers/FolderHistoryManager.swift: 2
+Modules/Sources/PocketCastsDataModel/Public/Bookmarks/Bookmark.swift: 1
+Modules/Sources/PocketCastsDataModel/Public/Model/PlaylistEpisode.swift: 2
+Modules/Sources/PocketCastsDataModel/Public/Repositories/Repositories+Dependency.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/DataMaintenanceMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/EpisodeRepositoryMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/FolderRepositoryMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/PlaylistRepositoryMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/PodcastRepositoryMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/RepositoryMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/UpNextRepositoryMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/UserEpisodeRepositoryMock.swift: 2
+Modules/Sources/PocketCastsFileSync/Generated/sync_records.pb.swift: 2
+Modules/Sources/PocketCastsServer/Private/API Tasks/ApiBaseTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/ChangeEmailTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/ChangePasswordTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/DeleteAccountTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/ExchangeSonosTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/MetadataTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/PositionSyncTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RecommendEpisodesTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveBookmarksTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveCustomFilesTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveEpisodesTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveFileUploadStatus.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveFileUsageTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveLastSyncDateTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrievePlaylistsTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrievePodcastsTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveRatingsTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveStarredTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveStatsTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/StarredSyncTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/SuggestedFolderTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/SupportFeedbackTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UploadFileDeleteTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UploadFilePlayRequestTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UploadFileRequestTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UploadFilesUpdateTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UploadImageDeleteTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UploadImageRequestTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/UserPodcastRatingTask.swift: 2
+Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 13
+Modules/Sources/PocketCastsServer/Private/Protobuffer/files.pb.swift: 1
+Modules/Sources/PocketCastsServer/Private/TokenHelper.swift: 2
+Modules/Sources/PocketCastsServer/Private/UserDefaults+DataProtection.swift: 1
+Modules/Sources/PocketCastsServer/Public/API/ApiServerHandler.swift: 2
+Modules/Sources/PocketCastsServer/Public/Cache/CacheServerHandler.swift: 2
+Modules/Sources/PocketCastsServer/Public/Discover/DiscoverServerHandler.swift: 2
+Modules/Sources/PocketCastsServer/Public/MetadataUpdater.swift: 2
+Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift: 2
+Modules/Sources/PocketCastsServer/Public/Refresh/PodcastSearchOperation.swift: 2
+Modules/Sources/PocketCastsServer/Public/Refresh/RefreshManager.swift: 2
+Modules/Sources/PocketCastsServer/Public/Refresh/RefreshOperation.swift: 1
+Modules/Sources/PocketCastsServer/Public/ServerConfig.swift: 2
+Modules/Sources/PocketCastsServer/Public/ServerPodcastManager.swift: 2
+Modules/Sources/PocketCastsServer/Public/Sharing/SharingServerHandler.swift: 2
+Modules/Sources/PocketCastsServer/Public/StatsManager.swift: 2
+Modules/Sources/PocketCastsServer/Public/Sync/BackgroundSyncManager.swift: 2
+Modules/Sources/PocketCastsServer/Public/Sync/PodcastExistsHelper.swift: 2
+Modules/Sources/PocketCastsServer/Public/Sync/SyncHistoryTask.swift: 1
+Modules/Sources/PocketCastsServer/Public/Sync/SyncSettingsTask.swift: 1
+Modules/Sources/PocketCastsServer/Public/Sync/SyncTask.swift: 1
+Modules/Sources/PocketCastsServer/Public/Sync/UpNextSyncTask.swift: 1
+Modules/Sources/PocketCastsServer/Public/Upload/UploadManager.swift: 2
+Modules/Sources/PocketCastsUtils/Formatting/DateFormatHelper.swift: 2
+Modules/Sources/PocketCastsUtils/Formatting/SizeFormatter.swift: 2
+Modules/Sources/PocketCastsUtils/Formatting/TimeFormatter.swift: 2
+Modules/Sources/PocketCastsUtils/General/TimedActionHelper.swift: 2
+Modules/Sources/PocketCastsUtils/General/UncheckedSendable.swift: 1
+Modules/Sources/PocketCastsUtils/General/UncheckedSendableBox.swift: 1
+Modules/Sources/PocketCastsUtils/Logging/FileLog.swift: 2
+Modules/Sources/PocketCastsUtils/Logging/FileRotating.swift: 2
+Modules/Sources/PocketCastsUtils/Logging/PersistentTextWriting.swift: 2
+Modules/Sources/PocketCastsUtils/Logging/TraceManager.swift: 2
+Modules/Sources/PocketCastsUtils/Networking/NetworkUtils.swift: 2
+Modules/Tests/PocketCastsServerTests/PodcastExistsHelperTests.swift: 2
+Modules/Tests/PocketCastsServerTests/SyncTaskPlaylistOrderingTests.swift: 2
+Modules/Tests/PocketCastsUtilsTests/FileLogDependencyTests.swift: 2
+Modules/Tests/PocketCastsUtilsTests/Logging/LogPersistenceSpy.swift: 2
+Modules/Tests/PocketCastsUtilsTests/Logging/LogRotationSpy.swift: 2
+PocketCastsTests/Mocks/DataManagerMock.swift: 2
+PocketCastsTests/Mocks/InMemoryKeychainStore.swift: 1
+PocketCastsTests/PlaybackQueueTests.swift: 2
+PocketCastsTests/Tests/Analytics/AnalyticsAdapterPersistenceTests.swift: 1
+PocketCastsTests/Tests/Analytics/AnalyticsAppThemeProviderTests.swift: 1
+PocketCastsTests/Tests/Analytics/AnalyticsPlaybackHelperTests.swift: 1
+PocketCastsTests/Tests/Analytics/AppLifecyleAnalyticsTests.swift: 1
+PocketCastsTests/Tests/AppIntents/PlaybackIntentActionHandlerTests.swift: 1
+PocketCastsTests/Tests/DownloadManagerDependencyTests.swift: 2
+PocketCastsTests/Tests/Playback/Chapters/ChapterManagerTests.swift: 1
+WidgetExtension/Data/WidgetData.swift: 1
+podcasts/Analytics/Analytics.swift: 1
+podcasts/Analytics/Helpers/AnalyticsCoordinator.swift: 1
+podcasts/Analytics/Helpers/AnalyticsEpisodeHelper.swift: 1
+podcasts/Analytics/Helpers/AnalyticsPlaybackHelper.swift: 1
+podcasts/Analytics/WidgetAnalytics.swift: 1
+podcasts/AudioPlayTask.swift: 1
+podcasts/AudioReadTask.swift: 1
+podcasts/AutoplayHelper.swift: 1
+podcasts/BookmarkManager.swift: 1
+podcasts/ChapterInfo.swift: 2
+podcasts/ColorManager.swift: 1
+podcasts/Constants.swift: 2
+podcasts/DefaultPlayer.swift: 1
+podcasts/DownloadManager.swift: 2
+podcasts/EffectsPlayer.swift: 1
+podcasts/Fingerprint/FingerprintTimingManager.swift: 3
+podcasts/ImageManager.swift: 2
+podcasts/Lists/ListEpisode.swift: 2
+podcasts/MediaExporterResourceLoaderDelegate.swift: 1
+podcasts/New Detail/Operation/PlaylistDetailFetchOperation.swift: 1
+podcasts/New Detail/PlaylistDetailViewModel/PlaylistDetailViewModel.swift: 1
+podcasts/Notifications/NotificationsCoordinator.swift: 1
+podcasts/Onboarding/InterestsView.swift: 1
+podcasts/OpmlImporter.swift: 1
+podcasts/PlaylistMetadataLoader/PlaylistCacheInvalidationCoordinator.swift: 1
+podcasts/PlaylistMetadataLoader/PlaylistMetadataLoader.swift: 1
+podcasts/PlaylistRefreshOperation.swift: 1
+podcasts/PodcastChapterParser.swift: 1
+podcasts/PodcastManager.swift: 1
+podcasts/Podcasts/Podcast Page/PodcastEpisodesRefreshOperation.swift: 1
+podcasts/SharedItemImporter.swift: 1
+podcasts/Sharing/AnimatedShareImageView.swift: 1
+podcasts/Sharing/Clip/VideoExporter.swift: 2
+podcasts/SharingItemProvider.swift: 1
+podcasts/SiriShortcutsManager.swift: 1
+podcasts/StreamingCellularTracker.swift: 1
+podcasts/Theme.swift: 1
+podcasts/ThreadSafeDictionary.swift: 1
+podcasts/TranscriptModel.swift: 1
+podcasts/Utilities/AVFileUtil.swift: 1
+podcasts/Utilities/DatabaseExport.swift: 1
+podcasts/Utilities/DownloadManager+Dependency.swift: 1
+podcasts/Utilities/UnsafeTransfer.swift: 1

@@ -60,6 +60,9 @@ echo "Check for crash reports left behind by the test run"
 echo "Check strict-concurrency warnings"
 scripts/ci/check-concurrency-warnings.sh build/github/logs/test-staging.log
 
+echo "Check code coverage floor"
+scripts/ci/check-coverage-floor.sh build/github/results/PocketCastsTests.xcresult
+
 echo "Launch smoke test"
 SIMULATOR_UDID="${DESTINATION##*id=}"
 "$SCRIPT_DIR/smoke-launch.sh" \
