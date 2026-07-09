@@ -54,14 +54,11 @@ Modules/Sources/PocketCastsServer/Private/UserDefaults+DataProtection.swift: 1
 Modules/Sources/PocketCastsServer/Public/API/ApiServerHandler.swift: 2
 Modules/Sources/PocketCastsServer/Public/Cache/CacheServerHandler.swift: 2
 Modules/Sources/PocketCastsServer/Public/Discover/DiscoverServerHandler.swift: 2
-Modules/Sources/PocketCastsServer/Public/MetadataUpdater.swift: 2
 Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift: 2
 Modules/Sources/PocketCastsServer/Public/Refresh/PodcastSearchOperation.swift: 2
-Modules/Sources/PocketCastsServer/Public/Refresh/RefreshManager.swift: 2
 Modules/Sources/PocketCastsServer/Public/Refresh/RefreshOperation.swift: 1
 Modules/Sources/PocketCastsServer/Public/ServerConfig.swift: 2
 Modules/Sources/PocketCastsServer/Public/ServerPodcastManager.swift: 2
-Modules/Sources/PocketCastsServer/Public/Sharing/SharingServerHandler.swift: 2
 Modules/Sources/PocketCastsServer/Public/StatsManager.swift: 2
 Modules/Sources/PocketCastsServer/Public/Sync/BackgroundSyncManager.swift: 2
 Modules/Sources/PocketCastsServer/Public/Sync/PodcastExistsHelper.swift: 2
@@ -70,7 +67,6 @@ Modules/Sources/PocketCastsServer/Public/Sync/SyncSettingsTask.swift: 1
 Modules/Sources/PocketCastsServer/Public/Sync/SyncTask.swift: 1
 Modules/Sources/PocketCastsServer/Public/Sync/UpNextSyncTask.swift: 1
 Modules/Sources/PocketCastsServer/Public/Upload/UploadManager.swift: 2
-Modules/Sources/PocketCastsUtils/Formatting/DateFormatHelper.swift: 2
 Modules/Sources/PocketCastsUtils/Formatting/SizeFormatter.swift: 2
 Modules/Sources/PocketCastsUtils/Formatting/TimeFormatter.swift: 2
 Modules/Sources/PocketCastsUtils/General/TimedActionHelper.swift: 2
@@ -87,7 +83,6 @@ Modules/Tests/PocketCastsUtilsTests/FileLogDependencyTests.swift: 2
 Modules/Tests/PocketCastsUtilsTests/Logging/LogPersistenceSpy.swift: 2
 Modules/Tests/PocketCastsUtilsTests/Logging/LogRotationSpy.swift: 2
 PocketCastsTests/Mocks/DataManagerMock.swift: 2
-PocketCastsTests/Mocks/InMemoryKeychainStore.swift: 1
 PocketCastsTests/PlaybackQueueTests.swift: 2
 PocketCastsTests/Tests/Analytics/AnalyticsAdapterPersistenceTests.swift: 1
 PocketCastsTests/Tests/Analytics/AnalyticsAppThemeProviderTests.swift: 1
@@ -112,8 +107,8 @@ podcasts/Constants.swift: 2
 podcasts/DefaultPlayer.swift: 1
 podcasts/DownloadManager.swift: 2
 podcasts/EffectsPlayer.swift: 1
-podcasts/Fingerprint/FingerprintTimingManager.swift: 3
-podcasts/ImageManager.swift: 2
+podcasts/Fingerprint/FingerprintTimingManager.swift: 2
+podcasts/ImageManager.swift: 1
 podcasts/Lists/ListEpisode.swift: 2
 podcasts/MediaExporterResourceLoaderDelegate.swift: 1
 podcasts/New Detail/Operation/PlaylistDetailFetchOperation.swift: 1
@@ -133,7 +128,6 @@ podcasts/Sharing/Clip/VideoExporter.swift: 2
 podcasts/SharingItemProvider.swift: 1
 podcasts/SiriShortcutsManager.swift: 1
 podcasts/StreamingCellularTracker.swift: 1
-podcasts/Theme.swift: 1
 podcasts/ThreadSafeDictionary.swift: 1
 podcasts/TranscriptModel.swift: 1
 podcasts/Utilities/AVFileUtil.swift: 1

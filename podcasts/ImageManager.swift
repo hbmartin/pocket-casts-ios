@@ -4,6 +4,7 @@ import Kingfisher
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
+import Synchronization
 
 /// State is Kingfisher caches (thread-safe) and a lock-guarded metrics cache,
 /// so the shared instance is safe to hand across isolation domains.
@@ -23,22 +24,15 @@ nonisolated final class ImageManager: @unchecked Sendable {
         static let fallback = ScreenMetrics(scale: 2, shortestSide: 390)
     }
 
-    // Safety: value is only read or written while holding lock.
-    private final class ScreenMetricsCache: @unchecked Sendable {
-        private let lock = NSLock()
-        private var value = ScreenMetrics.fallback
+    private final class ScreenMetricsCache: Sendable {
+        private let value = Mutex(ScreenMetrics.fallback)
 
         func update(_ value: ScreenMetrics) {
-            lock.lock()
-            defer { lock.unlock() }
-            self.value = value
+            self.value.withLock { $0 = value }
         }
 
         func snapshot() -> ScreenMetrics {
-            lock.lock()
-            defer { lock.unlock() }
-            let value = self.value
-            return value
+            value.withLock { $0 }
         }
     }
 

@@ -1,8 +1,6 @@
 import Foundation
 
-// @unchecked Sendable: every formatter is configured in its property initializer and never
-// mutated afterwards; Foundation formatters are safe for concurrent reads.
-public final class DateFormatHelper: NSObject, @unchecked Sendable {
+public final class DateFormatHelper: NSObject, Sendable {
     public static let sharedHelper = DateFormatHelper()
 
     private let shortLocalizedFormatter: DateFormatter = {
