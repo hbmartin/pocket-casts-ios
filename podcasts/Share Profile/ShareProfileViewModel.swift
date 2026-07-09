@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
@@ -39,6 +40,10 @@ class ShareProfileViewModel: ObservableObject {
     @Published var recentEpisodes: [Episode] = []
     @Published var playlists: [EpisodeFilter] = []
 
+    @Dependency(\.podcastRepository) private var podcastRepository
+    @Dependency(\.episodeRepository) private var episodeRepository
+    @Dependency(\.playlistRepository) private var playlistRepository
+
     init() {
         email = SyncManager.isUserLoggedIn() ? ServerSettings.syncingEmail() : nil
         displayName = Self.loadDisplayName() ?? ""
@@ -50,12 +55,12 @@ class ShareProfileViewModel: ObservableObject {
     }
 
     private func loadData() {
-        // Run the synchronous DataManager reads off the main actor (the class is @MainActor), then
+        // Run the synchronous repository reads off the main actor (the class is @MainActor), then
         // hop back to assign the @Published state. All three result types are Sendable.
-        Task.detached {
-            let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
-            let episodes = DataManager.sharedManager.episodesWithListenHistory(limit: 10)
-            let filters = DataManager.sharedManager.allPlaylists(includeDeleted: false)
+        Task.detached { [podcastRepository, episodeRepository, playlistRepository] in
+            let podcasts = podcastRepository.allPodcasts(includeUnsubscribed: false)
+            let episodes = episodeRepository.episodesWithListenHistory(limit: 10)
+            let filters = playlistRepository.allPlaylists(includeDeleted: false)
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 self.followedPodcasts = podcasts
@@ -75,7 +80,8 @@ class ShareProfileViewModel: ObservableObject {
     }
 
     nonisolated func podcastName(for episode: Episode) -> String? {
-        DataManager.sharedManager.findPodcast(uuid: episode.podcastUuid, includeUnsubscribed: true)?.title
+        @Dependency(\.podcastRepository) var podcastRepository
+        return podcastRepository.findPodcast(uuid: episode.podcastUuid, includeUnsubscribed: true)?.title
     }
 
     @MainActor

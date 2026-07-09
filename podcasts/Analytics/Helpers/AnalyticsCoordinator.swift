@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import UIKit
 import PocketCastsDataModel
@@ -77,12 +78,13 @@ nonisolated class AnalyticsCoordinator: @unchecked Sendable {
     private var _currentSource: AnalyticsSource?
 
     private var currentEpisodeIsVideo: Bool {
+        @Dependency(\.playbackManager) var playbackManager
         // Analytics events can originate off-main; bridge to the main-actor PlaybackManager
         if Thread.isMainThread {
-            MainActor.assumeIsolated { PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false }
+            return MainActor.assumeIsolated { playbackManager.currentEpisode()?.videoPodcast() ?? false }
         } else {
-            DispatchQueue.main.sync {
-                MainActor.assumeIsolated { PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false }
+            return DispatchQueue.main.sync {
+                MainActor.assumeIsolated { playbackManager.currentEpisode()?.videoPodcast() ?? false }
             }
         }
     }

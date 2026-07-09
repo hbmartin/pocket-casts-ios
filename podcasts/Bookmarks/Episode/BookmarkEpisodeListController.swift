@@ -1,20 +1,21 @@
 import Combine
+import Dependencies
 import PocketCastsDataModel
 import SwiftUI
 
 class BookmarkEpisodeListController: ThemedHostingController<BookmarkEpisodeListView> {
-    private let playbackManager: PlaybackManager
+    @Dependency(\.playbackManager) private var playbackManager: any PlaybackManaging
     private let bookmarkManager: BookmarkManager
     let viewModel: BookmarkEpisodeListViewModel
 
     private var cancellables = Set<AnyCancellable>()
 
     init(episode: BaseEpisode, displayMode: BookmarkEpisodeListView.DisplayMode = .list,
-         bookmarkManager: BookmarkManager = PlaybackManager.shared.bookmarkManager,
-         playbackManager: PlaybackManager = .shared, themeOverride: Theme.ThemeType? = nil) {
+         themeOverride: Theme.ThemeType? = nil) {
 
+        @Dependency(\.playbackManager) var playbackManager
+        let bookmarkManager = playbackManager.bookmarkManager
         self.bookmarkManager = bookmarkManager
-        self.playbackManager = playbackManager
 
         let viewModel = BookmarkEpisodeListViewModel(episode: episode,
                                                       bookmarkManager: bookmarkManager,

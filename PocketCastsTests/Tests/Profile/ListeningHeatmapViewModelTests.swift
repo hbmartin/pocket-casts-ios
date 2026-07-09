@@ -1,5 +1,6 @@
 import XCTest
 import Combine
+import Dependencies
 
 @testable import PocketCastsDataModel
 @testable import podcasts
@@ -136,7 +137,11 @@ final class ListeningHeatmapViewModelTests: XCTestCase {
         dataManager: DataManager = DataManagerMock(),
         today: Date
     ) -> ListeningHeatmapViewModel {
-        ListeningHeatmapViewModel(dataManager: dataManager, calendar: enUSCalendar, now: { today })
+        withDependencies {
+            $0.episodeRepository = dataManager
+        } operation: {
+            ListeningHeatmapViewModel(calendar: enUSCalendar, now: { today })
+        }
     }
 
     private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {

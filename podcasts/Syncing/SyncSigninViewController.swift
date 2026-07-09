@@ -1,3 +1,4 @@
+import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -9,6 +10,8 @@ protocol SyncSigninDelegate: AnyObject {
 }
 
 class SyncSigninViewController: PCViewController, UITextFieldDelegate {
+    @Dependency(\.podcastRepository) private var podcastRepository
+
     @IBOutlet var emailField: ThemeableTextField! {
         didSet {
             emailField.placeholder = L10n.signInEmailAddressPrompt
@@ -326,7 +329,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         // be non synced if the user never logged in before
         if (FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled && ServerSettings.lastSyncTime == nil)
             || !FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled {
-            DataManager.sharedManager.markAllPodcastsUnsynced()
+            podcastRepository.markAllPodcastsUnsynced()
         }
 
         SyncManager.syncReason = .login

@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
@@ -26,7 +27,7 @@ final class ListeningHeatmapViewModel: ObservableObject {
     let calendar: Calendar
 
     private var isLoading = false
-    private let dataManager: DataManager
+    @Dependency(\.episodeRepository) private var episodeRepository
     private let now: () -> Date
     private let dateFormatter: DateFormatter
 
@@ -34,11 +35,9 @@ final class ListeningHeatmapViewModel: ObservableObject {
     private let daysOfHistory = 2 * 365
 
     init(
-        dataManager: DataManager = DataManager.sharedManager,
         calendar: Calendar = .current,
         now: @escaping () -> Date = { Date() }
     ) {
-        self.dataManager = dataManager
         self.calendar = calendar
         self.now = now
 
@@ -55,15 +54,15 @@ final class ListeningHeatmapViewModel: ObservableObject {
         guard !isLoading else { return }
         isLoading = true
 
-        Task { [dataManager, daysOfHistory] in
-            let rawData = await Self.fetchListeningTime(dataManager: dataManager, days: daysOfHistory)
+        Task { [episodeRepository, daysOfHistory] in
+            let rawData = await Self.fetchListeningTime(episodeRepository: episodeRepository, days: daysOfHistory)
             self.weeks = buildWeeks(from: rawData)
             self.isLoading = false
         }
     }
 
-    nonisolated private static func fetchListeningTime(dataManager: DataManager, days: Int) async -> [String: Double] {
-        dataManager.dailyListeningTime(forLast: days)
+    nonisolated private static func fetchListeningTime(episodeRepository: any EpisodeRepository, days: Int) async -> [String: Double] {
+        episodeRepository.dailyListeningTime(forLast: days)
     }
 
     func buildWeeks(from data: [String: Double]) -> [[HeatmapDay]] {

@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 nonisolated protocol AnalyticsAppThemeProviding {
@@ -20,8 +21,9 @@ nonisolated struct AnalyticsAppThemeProvider: AnalyticsAppThemeProviding {
 
     @MainActor
     private static func currentProperties() -> [String: Sendable] {
+        @Dependency(\.theme) var theme
         return [
-            "theme_selected": Theme.sharedTheme.activeTheme.analyticsDescription,
+            "theme_selected": theme.activeTheme.analyticsDescription,
             "theme_dark_preference": Theme.preferredDarkTheme().analyticsDescription,
             "theme_light_preference": Theme.preferredLightTheme().analyticsDescription,
             "theme_use_system_settings": Settings.shouldFollowSystemTheme()

@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PocketCastsUtils
 import PocketCastsServer
@@ -196,7 +197,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
             case .newEpisodes:
                 if newValue {
                     // the user has just turned on push, enable it for all their podcasts for simplicity
-                    DataManager.sharedManager.setPushForAllPodcasts(pushEnabled: true)
+                    @Dependency(\.podcastRepository) var podcastRepository
+                    podcastRepository.setPushForAllPodcasts(pushEnabled: true)
                     NotificationsHelper.shared.registerForPushNotifications()
                 } else {
                     RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)

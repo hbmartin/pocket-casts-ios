@@ -531,7 +531,7 @@ class AppTheme {
     // MARK: - Getting Colors from ThemeStyles
 
     /// Returns a SwiftUI color for the theme style
-    nonisolated static func color(for style: ThemeStyle, theme: Theme? = nil) -> Color {
+    nonisolated static func color(for style: ThemeStyle, theme: (any Theming)? = nil) -> Color {
         return colorForStyle(style, themeOverride: theme?.nonisolatedActiveTheme).color
     }
 

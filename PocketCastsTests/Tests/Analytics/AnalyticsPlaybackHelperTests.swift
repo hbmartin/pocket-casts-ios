@@ -1,3 +1,4 @@
+import Dependencies
 import XCTest
 
 @testable import podcasts
@@ -7,7 +8,11 @@ class AnalyticsPlaybackHelperTests: XCTestCase {
     func testCurrentSourceIsRemovedAfterEventIsTriggered() {
         AnalyticsPlaybackHelper.shared.currentSource = .unknown
 
-        AnalyticsPlaybackHelper.shared.play()
+        withDependencies {
+            $0.playbackManager = PlaybackManagingMock()
+        } operation: {
+            AnalyticsPlaybackHelper.shared.play()
+        }
 
         eventually {
             XCTAssertNil(AnalyticsPlaybackHelper.shared.currentSource)

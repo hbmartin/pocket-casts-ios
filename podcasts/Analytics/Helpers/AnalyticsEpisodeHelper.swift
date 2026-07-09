@@ -1,9 +1,13 @@
+import Dependencies
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
 nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsEpisodeHelper()
+
+    @Dependency(\.episodeRepository) private var episodeRepository: any EpisodeRepository
+    @Dependency(\.userEpisodeRepository) private var userEpisodeRepository: any UserEpisodeRepository
 
     // Internally track the episode UUIDs that the user is downloading or uploadiung
     private var episodeDownloadQueue: Set<String> = []
@@ -218,7 +222,7 @@ nonisolated private extension AnalyticsEpisodeHelper {
 
                 // Verify that the file has finished downloading
                 guard
-                    let episode = DataManager.sharedManager.findEpisode(uuid: uuid),
+                    let episode = self.episodeRepository.findEpisode(uuid: uuid),
                     let status = DownloadStatus(rawValue: episode.episodeStatus),
                     status == .downloaded
                 else {
@@ -237,7 +241,7 @@ nonisolated private extension AnalyticsEpisodeHelper {
 
                 // Verify that the file has finished uploading
                 guard
-                    let episode = DataManager.sharedManager.findUserEpisode(uuid: uuid),
+                    let episode = self.userEpisodeRepository.findUserEpisode(uuid: uuid),
                     let status = UploadStatus(rawValue: episode.uploadStatus)
                 else {
                     return

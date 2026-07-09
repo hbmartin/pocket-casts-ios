@@ -1,3 +1,4 @@
+import Dependencies
 import SwiftUI
 import PocketCastsUtils
 import PocketCastsDataModel
@@ -5,6 +6,8 @@ import PocketCastsServer
 
 @MainActor
 class BookmarkRowViewModel: ObservableObject {
+    @Dependency(\.episodeRepository) private var episodeRepository: any EpisodeRepository
+
     @Published var heading: String?
     let title: String
     let subtitle: String
@@ -32,8 +35,7 @@ class BookmarkRowViewModel: ObservableObject {
 
     private func loadEpisode(from bookmark: Bookmark) {
         // Get the bookmark's BaseEpisode so we can load it
-        let dataManager = DataManager.sharedManager
-        if let episode = bookmark.episode ?? dataManager.findBaseEpisode(uuid: bookmark.episodeUuid) {
+        if let episode = bookmark.episode ?? episodeRepository.findBaseEpisode(uuid: bookmark.episodeUuid) {
             updateFromEpisode(episode)
         } else if let podcastUuid = bookmark.podcastUuid {
             ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: bookmark.episodeUuid, podcastUuid: podcastUuid) { [weak self] episode in

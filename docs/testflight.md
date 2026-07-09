@@ -184,7 +184,7 @@ Optional secrets (leave unset for a normal personal build):
 
 | Secret | Effect when set |
 | --- | --- |
-| `POCKET_CASTS_CREDENTIALS_JSON` | Real service credentials (Zendesk, sharing server, TelemetryDeck, …) instead of generated placeholders. Same JSON shape enforced by `scripts/ci/prepare-credentials.sh`. |
+| `POCKET_CASTS_CREDENTIALS_JSON` | Real service credentials (sharing server, TelemetryDeck, Instagram, …) instead of generated placeholders. Same JSON shape enforced by `scripts/ci/prepare-credentials.sh`. |
 | `BITDRIFT_API_KEY` | Uploads Release dSYMs to Bitdrift. When unset, the workflow sets `POCKET_CASTS_SKIP_BITDRIFT_UPLOAD=1` and the build phase skips the upload instead of failing. |
 
 These names deliberately don't overlap with the release pipeline's
@@ -275,10 +275,9 @@ to the same values as before.
 ## Known Limitations of a Personal Build
 
 - **Service credentials are placeholders** unless you provide
-  `POCKET_CASTS_CREDENTIALS_JSON`: Zendesk support, encrypted log upload, the
-  sharing server, TelemetryDeck analytics, and the Instagram integration are
-  disabled. Core podcast browsing, playback, downloads, filters, folders, and
-  widgets work.
+  `POCKET_CASTS_CREDENTIALS_JSON`: encrypted log upload, the sharing server,
+  TelemetryDeck analytics, and the Instagram integration are disabled. Core
+  podcast browsing, playback, downloads, filters, folders, and widgets work.
 - **Push notifications from the Pocket Casts servers will not arrive.** APNs
   delivery is tied to Automattic's team and push keys; your build's
   `aps-environment` belongs to your team, which their servers don't know.
