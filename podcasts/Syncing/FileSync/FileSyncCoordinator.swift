@@ -8,6 +8,7 @@ import UIKit
 ///
 /// It configures the sync module once at launch, then runs debounced sync
 /// passes on meaningful local events and app lifecycle transitions.
+@MainActor
 final class FileSyncCoordinator {
     private static let debounceInterval: TimeInterval = 2
     private static let heartbeatInterval: TimeInterval = 60
@@ -68,29 +69,22 @@ final class FileSyncCoordinator {
     }
 
     @objc private func syncTriggerFired() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            debounceTimer?.invalidate()
-            debounceTimer = Timer.scheduledTimer(withTimeInterval: Self.debounceInterval, repeats: false) { _ in
-                Task { await FileSyncManager.shared.syncNow() }
-            }
+        debounceTimer?.invalidate()
+        debounceTimer = Timer.scheduledTimer(withTimeInterval: Self.debounceInterval, repeats: false) { _ in
+            Task { await FileSyncManager.shared.syncNow() }
         }
     }
 
     @objc private func playbackStarted() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, heartbeatTimer == nil else { return }
-            heartbeatTimer = Timer.scheduledTimer(withTimeInterval: Self.heartbeatInterval, repeats: true) { _ in
-                Task { await FileSyncManager.shared.syncNow() }
-            }
+        guard heartbeatTimer == nil else { return }
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: Self.heartbeatInterval, repeats: true) { _ in
+            Task { await FileSyncManager.shared.syncNow() }
         }
     }
 
     @objc private func playbackStopped() {
-        DispatchQueue.main.async { [weak self] in
-            self?.heartbeatTimer?.invalidate()
-            self?.heartbeatTimer = nil
-        }
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
     }
 
     @objc private func appDidEnterBackground() {
