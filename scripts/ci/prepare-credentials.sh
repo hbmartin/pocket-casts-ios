@@ -17,10 +17,6 @@ if [[ -n "${POCKET_CASTS_CREDENTIALS_JSON:-}" ]]; then
   echo "Writing service credentials from POCKET_CASTS_CREDENTIALS_JSON"
   if ! printf '%s' "$POCKET_CASTS_CREDENTIALS_JSON" | /usr/bin/ruby -rjson -e '
     required_keys = %w[
-      zendesk_api_key
-      zendesk_url
-      zendesk_new_url
-      dotcom_secret
       encrypted_log_key
       sharing_server_secret
       bitdrift_sdk_key

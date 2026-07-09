@@ -1,6 +1,6 @@
 # Translation Sync Re-implementation
 
-> **Status:** The previous WordPress-hosted GlotPress translation pipeline has been
+> **Status:** The previous hosted GlotPress translation pipeline has been
 > **completely removed** — the fastlane lanes, their helper, the locale-code maps,
 > and the `Frozen.strings` / `AppStoreStrings.po` data files are all gone. There is
 > currently **no automated translation sync**. This document describes the state that
@@ -9,8 +9,7 @@
 
 ## Background — what was removed
 
-Historically, translation flowed through a WordPress-backed
-[GlotPress](https://translate.wordpress.com/) instance hosted by Automattic:
+Historically, translation flowed through a hosted GlotPress instance:
 
 - **Upload (source → GlotPress):** During the release process, the English source
   strings in [`podcasts/en.lproj/Localizable.strings`](../podcasts/en.lproj/Localizable.strings)
@@ -22,12 +21,7 @@ Historically, translation flowed through a WordPress-backed
 - **Progress checks:** A lane reported the translation completion percentage of the
   "Mag16" locales across the app-strings and metadata projects.
 
-That GlotPress project no longer exists. As part of removing it:
-
-- The Zendesk support SDK and its credentials (`zendeskAPIKey`, `zendeskUrl`,
-  `zendeskNewUrl`, `dotcomSecret`) were removed from the credentials template and
-  secrets pipeline. (Zendesk and the WordPress.com "dotcom" secret were tied to the
-  same Automattic integration that hosted GlotPress.)
+That GlotPress project no longer exists.
 
 ## Current state
 
@@ -70,9 +64,8 @@ A re-implementation needs to restore four capabilities:
 | **Crowdin / Lokalise / Transifex (SaaS)** | First-class `.strings` + `.xcstrings` support, CLIs and fastlane plugins, built-in progress APIs. Lowest operational burden; adds a vendor dependency and per-seat cost. |
 | **Apple String Catalogs (`.xcstrings`)** | Native Xcode tooling, but only solves the *file format* — you still need a service/process to get strings translated and a way to gate releases on completeness. Could be combined with any of the above. |
 
-Pick based on who owns translation operations after the WordPress/Automattic split. If
-translation is moving in-house, the SaaS options give the fastest path back to a
-working pipeline.
+Pick based on who owns translation operations going forward. If translation is moving
+in-house, the SaaS options give the fastest path back to a working pipeline.
 
 ## Integration points to touch
 
@@ -81,8 +74,7 @@ working pipeline.
   [`podcasts/Credentials/ApiCredentials.tpl`](../podcasts/Credentials/ApiCredentials.tpl),
   wire it through `replace_secrets.rb`, and extend
   [`scripts/tests/generate_credentials_test.rb`](../scripts/tests/generate_credentials_test.rb).
-  Use new platform-specific key names instead of the old `zendesk_*` /
-  `dotcom_secret` names.
+  Use new platform-specific key names.
 - **Fastlane:** re-create the deleted upload/download/progress lanes (and a source-
   string export equivalent to the old `update_app_store_strings`) against the new
   source, and re-add their calls in `code_freeze`, `new_beta_release`, and
@@ -116,4 +108,4 @@ hold regardless of the chosen platform, because the app and codegen depend on th
    `update_app_store_strings` source push).
 4. Add a translation-progress check and re-gate the release process on it.
 5. Re-add the lane calls in `code_freeze`, `new_beta_release`, and `finalize_release`,
-   then update Semgrep and the docs above.
+   then update the docs above.
