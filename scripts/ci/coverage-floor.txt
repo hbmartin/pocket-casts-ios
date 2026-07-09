@@ -1,0 +1,11 @@
+# Minimum aggregate first-party line coverage (percent) enforced by
+# scripts/ci/check-coverage-floor.sh in CI (build-and-test.sh).
+# Ratchet-up only: raise this as coverage grows (keep ~0.5 points of headroom
+# below the current CI number for run-to-run noise). Never lower it to make a
+# PR pass — add tests instead.
+#
+# The initial floor is deliberately conservative (it mainly guards against
+# tests silently not running). Slather measured ~15% total in July 2026, but
+# the xccov aggregate weights targets differently — raise the floor to just
+# below the number the first CI runs report.
+2.0

@@ -175,6 +175,27 @@ rules:
           metavariable: $SECRET
           regex: ^\$\{\{\s*secrets\.[A-Za-z0-9_]*CREDENTIALS[A-Za-z0-9_]*\s*\}\}$
 
+  - id: pocketcasts.github-actions-no-mutable-fork-ref-checkout
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [github-actions]
+    message: Check out reviewed fork code by its immutable commit SHA (github.event.pull_request.head.sha); a branch-name ref can be force-pushed after approval, swapping in unreviewed code.
+    languages: [yaml]
+    paths:
+      include:
+        - "**/.github/workflows/*.yml"
+        - "**/semgrep/tests/github-actions-security.yml"
+    patterns:
+      - pattern: |
+          ref: $REF
+      - metavariable-regex:
+          metavariable: $REF
+          regex: .*(github\.event\.pull_request\.head\.ref|github\.head_ref)
+
   - id: pocketcasts.release-fastlane-release-version-required
     severity: WARNING
     metadata:
