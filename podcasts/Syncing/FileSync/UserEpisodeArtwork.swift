@@ -2,9 +2,8 @@ import Foundation
 
 enum UserEpisodeArtwork {
     nonisolated static var directory: String {
-        guard let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            return ""
-        }
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         let directoryURL = documentsURL.appendingPathComponent("custom_images")
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         return directoryURL.path

@@ -14,6 +14,7 @@ final class FileSyncCoordinator {
 
     private var debounceTimer: Timer?
     private var heartbeatTimer: Timer?
+    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
     private var isSetup = false
 
     func setup() {
@@ -94,21 +95,20 @@ final class FileSyncCoordinator {
 
     @objc private func appDidEnterBackground() {
         guard FeatureFlag.fileSync.enabled else { return }
-        var taskID: UIBackgroundTaskIdentifier = .invalid
-        taskID = UIApplication.shared.beginBackgroundTask(withName: "au.com.pocketcasts.filesync.flush") {
-            DispatchQueue.main.async {
-                if taskID != .invalid {
-                    UIApplication.shared.endBackgroundTask(taskID)
-                    taskID = .invalid
-                }
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "au.com.pocketcasts.filesync.flush") { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.endBackgroundTaskIfNeeded()
             }
         }
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
             await FileSyncManager.shared.syncNow()
-            if taskID != .invalid {
-                UIApplication.shared.endBackgroundTask(taskID)
-                taskID = .invalid
-            }
+            self?.endBackgroundTaskIfNeeded()
         }
+    }
+
+    private func endBackgroundTaskIfNeeded() {
+        guard backgroundTaskID != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(backgroundTaskID)
+        backgroundTaskID = .invalid
     }
 }
