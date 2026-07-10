@@ -203,6 +203,39 @@ final class SmokeUITests: XCTestCase {
         XCTAssertEqual(app.state, .runningForeground)
     }
 
+    /// Calls both NowPlayingHelper artwork request handlers on a detached task.
+    /// Without @Sendable, default MainActor isolation traps before the marker appears.
+    func testNowPlayingArtworkRequestHandlersRunOffMain() throws {
+        let app = launchApp(additionalEnvironment: [
+            "POCKET_CASTS_UI_TEST_EXERCISE_ARTWORK_HANDLERS": "1"
+        ])
+        waitForTabBar(in: app)
+
+        let failed = app.descendants(matching: .any)["mediaConcurrencyArtworkHandlersFailed"]
+        let completed = app.descendants(matching: .any)["mediaConcurrencyArtworkHandlersCompleted"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 15),
+                      failed.exists
+                          ? "Artwork handlers ran but returned unexpected images"
+                          : "Artwork handlers did not complete off-main")
+        XCTAssertEqual(app.state, .runningForeground)
+    }
+
+    /// Posts the three AVAudioSession notifications from a detached task and waits
+    /// until the live PlaybackManager has handled every callback on the main actor.
+    func testAudioSessionNotificationsPostedOffMainReachPlaybackManager() throws {
+        let app = launchApp(additionalEnvironment: [
+            "POCKET_CASTS_UI_TEST_EXERCISE_AUDIO_SESSION_NOTIFICATIONS": "1"
+        ])
+        waitForTabBar(in: app)
+
+        let completed = app.descendants(matching: .any)["mediaConcurrencyAudioSessionNotificationsCompleted"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 15),
+                      "PlaybackManager did not handle every off-main AVAudioSession notification")
+        XCTAssertTrue(app.tabBars.firstMatch.exists,
+                      "App lost its main UI while handling audio-session notifications")
+        XCTAssertEqual(app.state, .runningForeground)
+    }
+
     /// Exercises the checked-Sendable replacements through their user-facing paths:
     /// RefreshManager starts a refresh, Theme publishes two snapshot mutations, and
     /// ImageManager clears/rebuilds artwork caches before a cold relaunch verifies the
