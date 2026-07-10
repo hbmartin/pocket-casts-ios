@@ -1,20 +1,72 @@
 import XCTest
 
-/// Launch-path smoke tests. Unit tests share one long-lived test-host process,
-/// so they never re-exercise cold start, AppDelegate's deferred background
-/// launch work, or scene lifecycle transitions — the paths where default
-/// MainActor isolation regressions surface as executor-assertion traps.
 @MainActor
-final class SmokeUITests: XCTestCase {
+class PocketCastsUITestCase: XCTestCase {
+    // nonisolated(unsafe): XCTest calls tearDownWithError through a legacy nonisolated
+    // override on the same runner thread; all XCUIApplication operations still execute
+    // inside MainActor.assumeIsolated before the reference is used.
+    nonisolated(unsafe) private(set) var launchedApp: XCUIApplication?
+
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
-    private func launchApp(
+    override nonisolated func tearDownWithError() throws {
+        if testRun?.hasSucceeded == false, let app = launchedApp {
+            let payload = MainActor.assumeIsolated {
+                Self.failurePayload(for: app)
+            }
+
+            let screenshot = XCTAttachment(
+                data: payload.screenshotPNG,
+                uniformTypeIdentifier: "public.png"
+            )
+            screenshot.name = "Failure screenshot"
+
+            let hierarchy = XCTAttachment(string: payload.hierarchy)
+            hierarchy.name = "Accessibility hierarchy"
+
+            let scenarioAttachment = XCTAttachment(string: payload.scenario)
+            scenarioAttachment.name = "Selected UI test scenario"
+
+            let logAttachment = XCTAttachment(string: payload.logs)
+            logAttachment.name = "Pocket Casts app logs"
+
+            let attachments = [screenshot, hierarchy, scenarioAttachment, logAttachment]
+            for attachment in attachments {
+                attachment.lifetime = .keepAlways
+                add(attachment)
+            }
+        }
+
+        try super.tearDownWithError()
+    }
+
+    private static func failurePayload(for app: XCUIApplication) -> FailureArtifactPayload {
+        let scenario = app.launchEnvironment["UI_TEST_SCENARIO"] ?? "live-staging-or-unseeded"
+        let logMarker = app.descendants(matching: .any)["uiTestCapturedLogs"]
+        let logs = (logMarker.value as? String) ?? "No app logs were captured"
+        return FailureArtifactPayload(
+            screenshotPNG: app.screenshot().pngRepresentation,
+            hierarchy: app.debugDescription,
+            scenario: scenario,
+            logs: logs
+        )
+    }
+
+    private struct FailureArtifactPayload: Sendable {
+        let screenshotPNG: Data
+        let hierarchy: String
+        let scenario: String
+        let logs: String
+    }
+
+    func launchApp(
         additionalArguments: [String] = [],
         additionalEnvironment: [String: String] = [:]
     ) -> XCUIApplication {
         let app = XCUIApplication()
+        launchedApp = app
         // A fresh install otherwise opens the onboarding carousel instead of the
         // tab bar. This launch argument lands in UserDefaults' NSArgumentDomain
         // (highest priority): MainTabBarController skips onboarding when
@@ -22,6 +74,7 @@ final class SmokeUITests: XCTestCase {
         // (hasSeenInitialOnboardingBefore), both of which "0" satisfies at once.
         app.launchArguments += ["-shouldShowInitialOnboardingFlow", "0"]
         app.launchArguments += additionalArguments
+        app.launchEnvironment["POCKET_CASTS_UI_TEST_CAPTURE_LOGS"] = "1"
         app.launchEnvironment.merge(additionalEnvironment) { _, new in new }
         app.launch()
         dismissSystemAlerts(reactivating: app)
@@ -31,7 +84,7 @@ final class SmokeUITests: XCTestCase {
     /// System alerts (permission prompts, URL-open confirmations) present in the
     /// springboard session, deactivate the app behind them, and swallow taps —
     /// queries against the app then time out or hit the alert instead.
-    private func dismissSystemAlerts(reactivating app: XCUIApplication) {
+    func dismissSystemAlerts(reactivating app: XCUIApplication) {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         var dismissed = false
         for _ in 0..<3 {
@@ -53,13 +106,45 @@ final class SmokeUITests: XCTestCase {
         }
     }
 
-    private func waitForTabBar(in app: XCUIApplication) {
+    func waitForTabBar(in app: XCUIApplication) {
         // Generous timeout: the first cold launch on a freshly-booted simulator runs
         // DB schema migration and credential setup and can take 30s+ under CI load.
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 90),
                       "App did not reach the main tab bar after launch")
     }
 
+    @discardableResult
+    func waitForScenario(
+        _ scenario: String,
+        in app: XCUIApplication,
+        containing expectedFragments: [String]
+    ) -> XCUIElement {
+        let ready = app.descendants(matching: .any)["uiTestAppReady"]
+        XCTAssertTrue(ready.waitForExistence(timeout: 15), "Scenario did not publish its readiness marker")
+
+        let value = ready.value as? String ?? ""
+        XCTAssertTrue(value.contains(scenario), "Unexpected scenario readiness value: \(value)")
+        for fragment in expectedFragments {
+            XCTAssertTrue(value.contains(fragment), "Readiness value did not contain '\(fragment)': \(value)")
+        }
+        return ready
+    }
+
+    func relaunchPreservingScenario(_ app: XCUIApplication) {
+        app.terminate()
+        app.launchEnvironment["UI_TEST_SCENARIO_MODE"] = "preserve"
+        app.launch()
+        dismissSystemAlerts(reactivating: app)
+        waitForTabBar(in: app)
+    }
+}
+
+/// Launch-path smoke tests. Unit tests share one long-lived test-host process,
+/// so they never re-exercise cold start, AppDelegate's deferred background
+/// launch work, or scene lifecycle transitions — the paths where default
+/// MainActor isolation regressions surface as executor-assertion traps.
+@MainActor
+final class SmokeUITests: PocketCastsUITestCase {
     private func openProfile(in app: XCUIApplication) {
         let profileTab = app.tabBars.firstMatch.buttons["Profile"]
         XCTAssertTrue(profileTab.waitForExistence(timeout: 10), "Missing Profile tab")
@@ -130,9 +215,8 @@ final class SmokeUITests: XCTestCase {
         confirmation.buttons["OK"].tap()
     }
 
-    // Cold-launch coverage is provided by testTabNavigation and
-    // testDiscoverBrowseSmoke — both launch the app and wait for the tab bar as
-    // their first step, so a broken cold launch fails them. Post-launch-settle
+    // Cold-launch coverage is provided by every test here: each launches the app
+    // and waits for the tab bar before exercising its path. Post-launch-settle
     // crash detection is covered by scripts/ci/smoke-launch.sh and the crash-report
     // sweep. A standalone cold-start test was removed: the very first launch on a
     // freshly-booted simulator under CI load is unreliably slow, making it flaky
@@ -163,27 +247,152 @@ final class SmokeUITests: XCTestCase {
     // are still covered by the crash-report sweep (runs around every test) and the
     // launch smoke test. Restore this test on a dedicated, unloaded CI simulator.
 
-    func testDiscoverBrowseSmoke() throws {
-        let app = launchApp()
+    func testDeterministicLibraryWithQueueScenario() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "libraryWithQueue"
+        ])
         waitForTabBar(in: app)
 
-        // Fresh installs land on the empty Podcasts tab with a Discover button;
-        // seeded installs reach Discover through search. Either path exercises
-        // the discover/refresh network stack.
-        let discoverButton = app.buttons["Discover Podcasts"]
-        if discoverButton.waitForExistence(timeout: 5) {
-            discoverButton.tap()
-        } else {
-            throw XCTSkip("No Discover entry point on this install state")
+        waitForScenario(
+            "libraryWithQueue",
+            in: app,
+            containing: ["mode=seed", "podcasts=1", "upNext=2"]
+        )
+
+        let seededPodcast = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == 'UI Test Library'")
+        ).firstMatch
+        XCTAssertTrue(seededPodcast.waitForExistence(timeout: 15), "Seeded podcast was not rendered")
+    }
+
+    func testPlaybackAndUpNextPersistAcrossRelaunch() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "playbackQueuePersistence"
+        ])
+        waitForTabBar(in: app)
+        waitForScenario(
+            "playbackQueuePersistence",
+            in: app,
+            containing: ["mode=seed", "podcasts=1", "episodes=3", "upNext=0"]
+        )
+
+        let podcast = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == 'UI Test Playback Podcast'")
+        ).firstMatch
+        XCTAssertTrue(podcast.waitForExistence(timeout: 15), "Seeded playback podcast was not rendered")
+        podcast.tap()
+
+        let firstEpisode = app.cells.matching(
+            NSPredicate(format: "label CONTAINS 'Playback Episode One'")
+        ).firstMatch
+        XCTAssertTrue(firstEpisode.waitForExistence(timeout: 15), "First seeded episode was not rendered")
+        firstEpisode.tap()
+
+        let episodePlayButton = app.buttons["Play"].firstMatch
+        XCTAssertTrue(episodePlayButton.waitForExistence(timeout: 10), "Episode detail did not expose playback")
+        episodePlayButton.tap()
+
+        let upNextButton = app.buttons["Up Next List"]
+        XCTAssertTrue(upNextButton.waitForExistence(timeout: 15), "Playing an episode did not show the mini-player")
+
+        let secondEpisode = app.cells.matching(
+            NSPredicate(format: "label CONTAINS 'Queue Episode Two'")
+        ).firstMatch
+        XCTAssertTrue(secondEpisode.waitForExistence(timeout: 15), "Second seeded episode was not rendered")
+        secondEpisode.swipeRight()
+
+        let playLast = app.buttons["Play Last"]
+        XCTAssertTrue(playLast.waitForExistence(timeout: 10), "Episode swipe did not expose Play Last")
+        playLast.tap()
+
+        relaunchPreservingScenario(app)
+        waitForScenario(
+            "playbackQueuePersistence",
+            in: app,
+            containing: ["mode=preserve", "upNext=2"]
+        )
+
+        let restoredUpNextButton = app.buttons["Up Next List"]
+        XCTAssertTrue(
+            restoredUpNextButton.waitForExistence(timeout: 15),
+            "Relaunch did not restore the mini-player"
+        )
+        restoredUpNextButton.tap()
+
+        for title in ["Playback Episode One", "Queue Episode Two"] {
+            let queuedEpisode = app.descendants(matching: .any).matching(
+                NSPredicate(format: "label CONTAINS %@", title)
+            ).firstMatch
+            XCTAssertTrue(queuedEpisode.waitForExistence(timeout: 15), "Up Next did not restore \(title)")
+        }
+    }
+
+    func testFolderOrganizationPersistsAcrossRelaunch() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "folderOrganizationPersistence"
+        ])
+        waitForTabBar(in: app)
+        waitForScenario(
+            "folderOrganizationPersistence",
+            in: app,
+            containing: ["mode=seed", "podcasts=2", "folders=0", "organized=0"]
+        )
+
+        let createFolder = app.buttons["Create New Folder"]
+        XCTAssertTrue(createFolder.waitForExistence(timeout: 15), "Library did not expose Create New Folder")
+        createFolder.tap()
+
+        for title in ["Organization Podcast One", "Organization Podcast Two"] {
+            let pickerRow = app.buttons.matching(
+                NSPredicate(format: "label CONTAINS %@ AND label CONTAINS 'Not Selected'", title)
+            ).firstMatch
+            XCTAssertTrue(pickerRow.waitForExistence(timeout: 15), "Folder picker did not show \(title)")
+            pickerRow.tap()
         }
 
-        // Any non-trivial content proves the discover feed rendered without
-        // tripping an isolation assert in the networking/refresh pipeline.
-        let content = app.cells.firstMatch
-        guard content.waitForExistence(timeout: 30) else {
-            throw XCTSkip("Discover content did not load (offline or staging outage)")
+        let addPodcasts = app.buttons["Add 2 Podcasts"]
+        XCTAssertTrue(addPodcasts.waitForExistence(timeout: 10), "Folder picker did not accept both podcasts")
+        addPodcasts.tap()
+
+        let folderName = app.textFields["Folder name"]
+        XCTAssertTrue(folderName.waitForExistence(timeout: 10), "Folder name field was not shown")
+        folderName.typeText("UI Journey Folder")
+        app.buttons["Continue"].tap()
+
+        let saveFolder = app.buttons["Save Folder"]
+        XCTAssertTrue(saveFolder.waitForExistence(timeout: 10), "Folder color step was not shown")
+        saveFolder.tap()
+
+        let folderNavigation = app.navigationBars["UI Journey Folder"]
+        XCTAssertTrue(folderNavigation.waitForExistence(timeout: 15), "Created folder did not open")
+        for title in ["Organization Podcast One", "Organization Podcast Two"] {
+            XCTAssertTrue(
+                app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", title))
+                    .firstMatch.waitForExistence(timeout: 10),
+                "Created folder did not contain \(title)"
+            )
         }
-        XCTAssertEqual(app.state, .runningForeground)
+
+        relaunchPreservingScenario(app)
+        waitForScenario(
+            "folderOrganizationPersistence",
+            in: app,
+            containing: ["mode=preserve", "podcasts=2", "folders=1", "organized=2"]
+        )
+
+        let restoredFolder = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS 'UI Journey Folder'")
+        ).firstMatch
+        XCTAssertTrue(restoredFolder.waitForExistence(timeout: 15), "Relaunch did not restore the folder")
+        restoredFolder.tap()
+
+        for title in ["Organization Podcast One", "Organization Podcast Two"] {
+            XCTAssertTrue(
+                app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", title))
+                    .firstMatch.waitForExistence(timeout: 10),
+                "Restored folder did not contain \(title)"
+            )
+        }
     }
 
     /// Posts the same queue/playback notifications that drive FileSyncCoordinator,

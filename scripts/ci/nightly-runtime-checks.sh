@@ -6,9 +6,10 @@
 # OS runtime), and launch-path regressions.
 #
 # MODE (first argument):
-#   tsan            Thread Sanitizer over PocketCastsTests (RUNTIME_VERSION env)
+#   tsan            Thread Sanitizer over the UnitTests plan (RUNTIME_VERSION env)
 #   runtime-matrix  plain unit suite on RUNTIME_VERSION (env, required)
 #   smoke-ui        SmokeUITests test plan on RUNTIME_VERSION
+#   live-staging-ui LiveStagingUITests test plan on RUNTIME_VERSION
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,7 +18,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/select-xcode.sh"
 
 cd "$REPO_ROOT"
-MODE="${1:?usage: nightly-runtime-checks.sh tsan|runtime-matrix|smoke-ui}"
+MODE="${1:?usage: nightly-runtime-checks.sh tsan|runtime-matrix|smoke-ui|live-staging-ui}"
 mkdir -p build/github/logs
 
 "$SCRIPT_DIR/shared-setup.sh" --skip-gems
@@ -41,13 +42,25 @@ XCODEBUILD_ARGS=(
 
 case "$MODE" in
   tsan)
-    XCODEBUILD_ARGS+=("-only-testing:${ONLY_TESTING:-PocketCastsTests}" -enableThreadSanitizer YES)
+    if [[ -n "${ONLY_TESTING:-}" ]]; then
+      XCODEBUILD_ARGS+=("-only-testing:$ONLY_TESTING")
+    else
+      XCODEBUILD_ARGS+=(-testPlan UnitTests)
+    fi
+    XCODEBUILD_ARGS+=(-enableThreadSanitizer YES)
     ;;
   runtime-matrix)
-    XCODEBUILD_ARGS+=("-only-testing:${ONLY_TESTING:-PocketCastsTests}")
+    if [[ -n "${ONLY_TESTING:-}" ]]; then
+      XCODEBUILD_ARGS+=("-only-testing:$ONLY_TESTING")
+    else
+      XCODEBUILD_ARGS+=(-testPlan UnitTests)
+    fi
     ;;
   smoke-ui)
     XCODEBUILD_ARGS+=(-testPlan SmokeUITests)
+    ;;
+  live-staging-ui)
+    XCODEBUILD_ARGS+=(-testPlan LiveStagingUITests)
     ;;
   *)
     echo "nightly-runtime-checks: unknown mode '$MODE'" >&2

@@ -2,7 +2,80 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 
-nonisolated class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendable {
+nonisolated struct OpmlFeed: Equatable, Sendable {
+    let title: String
+    let url: String
+}
+
+nonisolated enum OpmlDocumentError: Error {
+    case invalidDocument
+}
+
+/// The pure OPML boundary shared by import and export. Keeping XML parsing and
+/// generation free of networking and global state makes round-trip coverage
+/// deterministic while the existing importer remains responsible for resolving
+/// feed URLs through the server.
+nonisolated enum OpmlDocument {
+    static func xmlString(feeds: [OpmlFeed]) -> String {
+        let outlines = feeds.map {
+            "<outline type=\"rss\" text=\"\(escapeAttribute($0.title))\" xmlUrl=\"\(escapeAttribute($0.url))\"/>"
+        }.joined(separator: "\n")
+
+        return """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <opml version="1.0">
+          <head><title>Pocket Casts Feeds</title></head>
+          <body>
+            <outline text="feeds">
+        \(outlines)
+            </outline>
+          </body>
+        </opml>
+        """
+    }
+
+    static func feedURLs(from data: Data) throws -> [String] {
+        let delegate = FeedParser()
+        let parser = XMLParser(data: data)
+        parser.delegate = delegate
+
+        guard parser.parse(), !delegate.urls.isEmpty else {
+            throw OpmlDocumentError.invalidDocument
+        }
+
+        return delegate.urls
+    }
+
+    private static func escapeAttribute(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&apos;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+    }
+
+    private final class FeedParser: NSObject, XMLParserDelegate {
+        private(set) var urls: [String] = []
+
+        func parser(
+            _ parser: XMLParser,
+            didStartElement elementName: String,
+            namespaceURI: String?,
+            qualifiedName qName: String?,
+            attributes attributeDict: [String: String] = [:]
+        ) {
+            guard elementName.lowercased() == "outline", let url = attributeDict["xmlUrl"] else { return }
+
+            let trimmedURL = url.trim()
+            guard !trimmedURL.isEmpty else { return }
+
+            urls.append(trimmedURL)
+        }
+    }
+}
+
+nonisolated class OpmlImporter: Operation, @unchecked Sendable {
     private var podcastsToAdd = [String]()
     private var pollUuids = [String]()
     private var failedCount = 0
@@ -33,9 +106,9 @@ nonisolated class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendabl
         autoreleasepool {
             Analytics.track(.opmlImportStarted)
             // parse OPML file
-            let parser = XMLParser(contentsOf: opmlFileUrl)
-            parser?.delegate = self
-            guard let parsed = parser?.parse(), parsed, !parsedUrls.isEmpty else {
+            guard let data = try? Data(contentsOf: opmlFileUrl),
+                  let parsedUrls = try? OpmlDocument.feedURLs(from: data),
+                  !parsedUrls.isEmpty else {
                 DispatchQueue.main.sync {
                     if let progressWindow = self.progressWindow {
                         progressWindow.hideAlert(false)
@@ -51,6 +124,7 @@ nonisolated class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendabl
 
                 return
             }
+            self.parsedUrls = parsedUrls
 
             // send urls to server 100 at a time
             initialPodcastCount = parsedUrls.count
@@ -77,17 +151,6 @@ nonisolated class OpmlImporter: Operation, XMLParserDelegate, @unchecked Sendabl
                 Analytics.track(.opmlImportFinished, properties: ["count": self.initialPodcastCount, "number_parsed": self.initialPodcastCount])
             }
         }
-    }
-
-    // MARK: - XMLParserDelegate
-
-    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String: String] = [:]) {
-        guard elementName.lowercased() == "outline", let url = attributeDict["xmlUrl"] else { return }
-
-        let trimmedURL = url.trim()
-        guard !trimmedURL.isEmpty else { return }
-
-        parsedUrls.append(trimmedURL)
     }
 
     private func importPodcasts(urls: [String]) {

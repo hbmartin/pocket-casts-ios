@@ -102,25 +102,14 @@ class ImportExportViewController: PCViewController, @preconcurrency UIDocumentIn
     }
 
     private func performOpmlExport(_ podcasts: [Podcast], mappingDictionary: [String: String]) {
-        let exportXML = AEXMLDocument()
-        let opml = exportXML.addChild(name: "opml", attributes: ["version": "1.0"])
-        let header = opml.addChild(name: "head")
-        _ = header.addChild(name: "title", value: "Pocket Casts Feeds")
-
-        let body = opml.addChild(name: "body")
-        let outline = body.addChild(name: "outline", attributes: ["text": "feeds"])
-        for podcast in podcasts {
-            let podcastTitle = podcast.title ?? ""
-            let urlToUse = mappingDictionary[podcast.uuid] ?? ""
-            _ = outline.addChild(name: "outline", attributes: ["type": "rss", "text": podcastTitle, "xmlUrl": urlToUse])
+        let feeds = podcasts.map {
+            OpmlFeed(title: $0.title ?? "", url: mappingDictionary[$0.uuid] ?? "")
         }
-
-        shareOpmlDocument(exportXML)
+        shareOpmlDocument(OpmlDocument.xmlString(feeds: feeds))
         Analytics.track(.settingsImportExportFinished)
     }
 
-    private func shareOpmlDocument(_ document: AEXMLDocument) {
-        let text = document.xmlString
+    private func shareOpmlDocument(_ text: String) {
         let homeDirectory = NSTemporaryDirectory() as NSString
         let filePath = homeDirectory.appendingPathComponent("podcasts.opml")
         do {

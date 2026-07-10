@@ -88,45 +88,60 @@ xcodebuild -project podcasts.xcodeproj \
 '''
 
 [tasks.test]
-description = "Run unit tests (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
+description = "Run the UnitTests plan (pocketcasts scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
 DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0
+if [ -n "${ONLY_TESTING:-}" ]; then
+    set -- "-only-testing:$ONLY_TESTING"
+else
+    set -- -testPlan UnitTests
+fi
 xcodebuild test -project podcasts.xcodeproj \
     -scheme pocketcasts \
-    -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
+    "$@" \
     -destination "$DESTINATION" || TEST_STATUS=$?
 ./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
 exit $TEST_STATUS
 '''
 
 [tasks."test:staging"]
-description = "Run unit tests (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
+description = "Run the UnitTests plan (Pocket Casts Staging scheme). Override ONLY_TESTING / SIMULATOR_OS / SIMULATOR_NAME via env"
 run = '''
 DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0
+if [ -n "${ONLY_TESTING:-}" ]; then
+    set -- "-only-testing:$ONLY_TESTING"
+else
+    set -- -testPlan UnitTests
+fi
 xcodebuild test -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
-    -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
+    "$@" \
     -destination "$DESTINATION" || TEST_STATUS=$?
 ./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
 exit $TEST_STATUS
 '''
 
 [tasks."test:tsan"]
-description = "Run unit tests under Thread Sanitizer (Pocket Casts Staging scheme; ONLY_TESTING/SIMULATOR_OS overridable)"
+description = "Run the UnitTests plan under Thread Sanitizer (Pocket Casts Staging scheme; ONLY_TESTING/SIMULATOR_OS overridable)"
 run = '''
 DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
 ./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
 TEST_STATUS=0
+if [ -n "${ONLY_TESTING:-}" ]; then
+    set -- "-only-testing:$ONLY_TESTING"
+else
+    set -- -testPlan UnitTests
+fi
 xcodebuild test -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
-    -only-testing:"${ONLY_TESTING:-PocketCastsTests}" \
+    "$@" \
     -enableThreadSanitizer YES \
     -destination "$DESTINATION" || TEST_STATUS=$?
 ./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
@@ -134,7 +149,7 @@ exit $TEST_STATUS
 '''
 
 [tasks."test:smoke-ui"]
-description = "Run the PocketCastsUITests launch/navigation smoke suite on the simulator (SIMULATOR_OS to override)"
+description = "Run deterministic PocketCastsUITests on the simulator (SIMULATOR_OS to override)"
 run = '''
 DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
 CRASH_STATE="$(mktemp)"
@@ -143,6 +158,21 @@ TEST_STATUS=0
 xcodebuild test -project podcasts.xcodeproj \
     -scheme "Pocket Casts Staging" \
     -testPlan SmokeUITests \
+    -destination "$DESTINATION" || TEST_STATUS=$?
+./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
+exit $TEST_STATUS
+'''
+
+[tasks."test:live-staging-ui"]
+description = "Run the live-staging PocketCastsUITests canary on the simulator (SIMULATOR_OS to override)"
+run = '''
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
+CRASH_STATE="$(mktemp)"
+./scripts/ci/check-crash-reports.sh snapshot "$CRASH_STATE"
+TEST_STATUS=0
+xcodebuild test -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -testPlan LiveStagingUITests \
     -destination "$DESTINATION" || TEST_STATUS=$?
 ./scripts/ci/check-crash-reports.sh check "$CRASH_STATE" || exit 1
 exit $TEST_STATUS
@@ -177,6 +207,7 @@ run = [
     "./scripts/tests/check_concurrency_warnings_test.sh",
     "./scripts/tests/check_count_ratchets_test.sh",
     "./scripts/tests/check_coverage_floor_test.sh",
+    "./scripts/tests/check_test_targets_test.sh",
 ]
 
 [tasks."sync:swiftlint-version"]

@@ -50,6 +50,9 @@
          <TestPlanReference
             reference = "container:PocketCastsUITests/SmokeUITests.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:PocketCastsUITests/LiveStagingUITests.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction

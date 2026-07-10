@@ -5,13 +5,57 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
+nonisolated enum InboundAction: Equatable, Sendable {
+    case route(URL)
+    case importOpml(URL)
+    case importArchive(URL)
+    case uploadMedia(URL)
+    case unsupported
+}
+
+/// Classifies external URLs without touching UIKit, JLRoutes, or global app state.
+/// AppDelegate performs the resulting action; tests can exercise this boundary in
+/// parallel using isolated databases and directories.
+nonisolated enum InboundActionRouter {
+    static func action(for url: URL) -> InboundAction {
+        guard url.isFileURL else {
+            return url.scheme?.lowercased() == "pktc" ? .route(url) : .unsupported
+        }
+
+        guard let type = UTType(filenameExtension: url.pathExtension) else {
+            return .unsupported
+        }
+
+        if let extensionName = UTType.pcasts.preferredFilenameExtension,
+           let archiveType = UTType(filenameExtension: extensionName),
+           type.conforms(to: archiveType) {
+            return .importArchive(url)
+        }
+
+        let opmlTypes: [UTType] = [.xml, UTType("public.opml"), UTType("unofficial.opml")].compactMap { $0 }
+        if opmlTypes.contains(where: { type.conforms(to: $0) }) {
+            return .importOpml(url)
+        }
+
+        if type.conforms(to: .audio) || type.conforms(to: .movie) {
+            return .uploadMedia(url)
+        }
+
+        return .unsupported
+    }
+
+    static func shortcutURL(from urlString: String?) -> URL? {
+        urlString.flatMap(URL.init(string:))
+    }
+}
+
 extension AppDelegate {
     func application(_ application: UIApplication, performActionFor shortcutItem: UIApplicationShortcutItem, completionHandler: @escaping (Bool) -> Void) {
         appDelegate()?.handleShortcutItem(shortcutItem)
     }
 
     func handleShortcutItem(_ shortcutItem: UIApplicationShortcutItem) {
-        if let urlString = shortcutItem.userInfo?["url"] as? String, let url = URL(string: urlString) {
+        if let url = InboundActionRouter.shortcutURL(from: shortcutItem.userInfo?["url"] as? String) {
             JLRoutes.routeURL(url)
         }
     }
@@ -22,47 +66,35 @@ extension AppDelegate {
     }
 
     func handleOpenUrl(url: URL, rootViewController: UIViewController) -> Bool {
-        if url.isFileURL {
-            guard let type = UTType(filenameExtension: url.pathExtension) else { return false }
-
-            let supportedTypes: [UTType] = [.xml, UTType("public.opml"), UTType("unofficial.opml")].compactMap { $0 }
-
-            let isSupported = supportedTypes.contains { supportedType in
-                type.conforms(to: supportedType)
-            }
-
-            if let fileExtension = UTType.pcasts.preferredFilenameExtension, type.conforms(to: UTType(filenameExtension: fileExtension)!) {
-                let alert = UIAlertController(title: "Import Podcasts and Settings", message: "Do you want to reset your podcasts and settings to this file?", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Import", style: .default) { _ in
-                    Task {
-                        do {
-                            let fileWrapper = try FileWrapper(url: url)
-                            try PCBundleDoc.performImport(from: fileWrapper)
-                        } catch {
-                            FileLog.shared.addMessage("File Import failed with error \(error)")
-                        }
+        switch InboundActionRouter.action(for: url) {
+        case .importArchive:
+            let alert = UIAlertController(title: "Import Podcasts and Settings", message: "Do you want to reset your podcasts and settings to this file?", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Import", style: .default) { _ in
+                Task {
+                    do {
+                        let fileWrapper = try FileWrapper(url: url)
+                        try PCBundleDoc.performImport(from: fileWrapper)
+                    } catch {
+                        FileLog.shared.addMessage("File Import failed with error \(error)")
                     }
-                })
-                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-                rootViewController.present(alert, animated: true)
-            }
-
-            if isSupported {
-                progressDialog = ShiftyLoadingAlert(title: L10n.opmlImporting)
-                rootViewController.dismiss(animated: false, completion: nil)
-                progressDialog?.showAlert(rootViewController, hasProgress: false, completion: { [weak self] in
-                    if let progressDialog = self?.progressDialog {
-                        PodcastManager.shared.importPodcastsFromOpml(url, progressWindow: progressDialog)
-                    }
-                })
-            } else if type.conforms(to: .audio) || type.conforms(to: .movie) {
-                NavigationManager.sharedManager.navigateTo(NavigationManager.uploadedPageKey, data: [NavigationManager.uploadFileKey: url])
-            }
-        } else {
-            // check to see what the scheme is we support itpc, http, feed & our own pktc
-            if let scheme = url.scheme, scheme == "pktc" {
-                JLRoutes.routeURL(url)
-            }
+                }
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            rootViewController.present(alert, animated: true)
+        case .importOpml:
+            progressDialog = ShiftyLoadingAlert(title: L10n.opmlImporting)
+            rootViewController.dismiss(animated: false, completion: nil)
+            progressDialog?.showAlert(rootViewController, hasProgress: false, completion: { [weak self] in
+                if let progressDialog = self?.progressDialog {
+                    PodcastManager.shared.importPodcastsFromOpml(url, progressWindow: progressDialog)
+                }
+            })
+        case .uploadMedia:
+            NavigationManager.sharedManager.navigateTo(NavigationManager.uploadedPageKey, data: [NavigationManager.uploadFileKey: url])
+        case .route:
+            JLRoutes.routeURL(url)
+        case .unsupported:
+            break
         }
         return true
     }

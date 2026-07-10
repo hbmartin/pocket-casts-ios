@@ -154,6 +154,7 @@ let package = Package(
                 .product(name: "Dependencies", package: "swift-dependencies"),
             ],
             path: "Tests/PocketCastsDataModelTests",
+            resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrencySettings
         ),
         .target(
