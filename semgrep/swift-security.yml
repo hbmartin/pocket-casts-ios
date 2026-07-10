@@ -1497,6 +1497,43 @@ rules:
           }
       - pattern-regex: 'Task\s*\{\s*\[weak\s+self\]\s+in[\s\S]{0,500}?guard\s+let\s+self(?:\s*=\s*self)?\s+else\s*\{\s*return\s*\}[\s\S]{0,1000}?await\b'
 
+  - id: pocketcasts.media-item-artwork-handler-must-be-sendable
+    severity: ERROR
+    metadata:
+      category: concurrency
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Mark MPMediaItemArtwork request handlers @Sendable. MediaPlayer invokes them off-main, while the app target's default actor isolation otherwise makes closure literals MainActor-isolated and liable to trap at runtime.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/semgrep/tests/swift-security-concurrency.swift"
+    patterns:
+      - pattern-inside: MPMediaItemArtwork(...)
+      - pattern-regex: 'requestHandler:\s*\{(?!\s*@Sendable\b)'
+
+  - id: pocketcasts.av-audio-session-observer-must-use-main-queue
+    severity: ERROR
+    metadata:
+      category: concurrency
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: AVAudioSession notifications can be posted off-main. Use the block observer API with queue .main, hop through MainActor.assumeIsolated, and retain the returned token for later removal.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/semgrep/tests/swift-security-concurrency.swift"
+    patterns:
+      - pattern-either:
+          - pattern: '$CENTER.addObserver($OBSERVER, selector: $SELECTOR, name: AVAudioSession.$NOTIFICATION, object: $OBJECT)'
+          - pattern-regex: 'addObserver\s*\(\s*forName:\s*AVAudioSession\.[A-Za-z_][A-Za-z0-9_]*\s*,\s*object:\s*[^,]{1,100},\s*queue:\s*nil\s*\)'
+
   - id: pocketcasts.no-subject-send-in-task
     severity: WARNING
     metadata:

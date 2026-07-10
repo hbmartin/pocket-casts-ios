@@ -4,10 +4,15 @@ import PackageDescription
 import CompilerPluginSupport
 import Foundation
 
-/// Swift 6 language mode: data-race safety enforced as errors. Applied
-/// target-by-target (the package default stays v5 via `swiftLanguageModes`).
+/// Swift 6 language mode: data-race safety enforced as errors. The upcoming
+/// features align package targets with the app's approachable-concurrency setting:
+/// nonisolated async functions remain on the caller's actor, and isolated protocol
+/// conformances are inferred. Applied target-by-target (the package default stays
+/// v5 via `swiftLanguageModes`).
 let strictConcurrencySettings: [SwiftSetting] = [
-    .swiftLanguageMode(.v6)
+    .swiftLanguageMode(.v6),
+    .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+    .enableUpcomingFeature("InferIsolatedConformances"),
 ]
 
 /// Same as `strictConcurrencySettings` plus -enable-testing, pre-concatenated so the

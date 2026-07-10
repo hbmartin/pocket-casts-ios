@@ -28,7 +28,7 @@ class NowPlayingHelper {
         var nowPlayingInfoWithProgress = NowPlayingHelper.addUpToInformationToNowPlaying(playingInfo, duration: duration, upTo: upTo, playbackRate: playbackRate)
 
         if let chapterArtwork = currentChapters.artwork {
-            let artwork = MPMediaItemArtwork(boundsSize: chapterArtwork.size, requestHandler: { _ in chapterArtwork })
+            let artwork = artworkForChapterImage(chapterArtwork)
             nowPlayingInfoWithProgress[MPMediaItemPropertyArtwork] = artwork
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfoWithProgress
             return
@@ -38,14 +38,47 @@ class NowPlayingHelper {
         ImageManager.sharedManager.imageForEpisode(episode, size: .page) { image in
             let imageToUse = image ?? UIImage(named: "noartwork-page")!
 
-            let artwork = MPMediaItemArtwork(boundsSize: CGSize(width: size, height: size), requestHandler: { _ -> UIImage in
-                imageToUse
-            })
+            let artwork = artworkForEpisodeImage(imageToUse, size: size)
 
             nowPlayingInfoWithProgress[MPMediaItemPropertyArtwork] = artwork
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfoWithProgress
         }
     }
+
+    private class func artworkForChapterImage(_ image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size, requestHandler: { @Sendable _ in image })
+    }
+
+    private class func artworkForEpisodeImage(_ image: UIImage, size: Int) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: CGSize(width: size, height: size), requestHandler: { @Sendable _ in image })
+    }
+
+    #if DEBUG
+    /// Exercises both production artwork request handlers from a detached task.
+    /// XCUITest enables this through `MediaConcurrencyUITestHarness`.
+    class func exerciseArtworkRequestHandlersForUITesting() {
+        let imageSize = CGSize(width: 8, height: 8)
+        let image = UIGraphicsImageRenderer(size: imageSize).image { context in
+            UIColor.red.setFill()
+            context.fill(CGRect(origin: .zero, size: imageSize))
+        }
+        let artworks = UnsafeTransfer([
+            artworkForChapterImage(image),
+            artworkForEpisodeImage(image, size: 16)
+        ])
+
+        Task.detached {
+            let handlersReturnedExpectedImage = artworks.wrappedValue.allSatisfy {
+                $0.image(at: imageSize)?.size == imageSize
+            }
+            await MainActor.run {
+                MediaConcurrencyUITestHarness.artworkRequestHandlersCompleted(
+                    succeeded: handlersReturnedExpectedImage
+                )
+            }
+        }
+    }
+    #endif
 
     class func clearNowPlayingInfo() {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil

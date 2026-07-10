@@ -6,6 +6,24 @@ import PocketCastsUtils
 import UIKit
 import Combine
 
+/// Owns block-observer tokens so they can be removed when their main-actor owner
+/// is released from a nonisolated deinitializer.
+nonisolated final class AudioSessionNotificationObservers: Sendable {
+    private let notificationCenter: NotificationCenter
+    private let observers: UnsafeTransfer<[NSObjectProtocol]>
+
+    init(notificationCenter: NotificationCenter, observers: [NSObjectProtocol]) {
+        self.notificationCenter = notificationCenter
+        self.observers = UnsafeTransfer(observers)
+    }
+
+    deinit {
+        for observer in observers.wrappedValue {
+            notificationCenter.removeObserver(observer)
+        }
+    }
+}
+
 /// Long-lived audio coordinator, isolated to the main actor (Phase 5,
 /// docs/Phase5-PlaybackModernization.md D2). Engine callbacks hop in per-event;
 /// real-time audio code stays below this boundary.
@@ -130,6 +148,7 @@ final class PlaybackManager {
 
     /// The time the episode was last switched as tracked by handleCurrentlyPlayingEpisodeUpdated
     private var episodeSwitchTime: Date?
+    private var audioSessionNotificationObservers: AudioSessionNotificationObservers?
 
     init() {
         queue = PlaybackQueue()
@@ -138,9 +157,26 @@ final class PlaybackManager {
 
         setupRemoteControlSupport()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleRouteChanged(_:)), name: AVAudioSession.routeChangeNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleAudioInterruption(_:)), name: AVAudioSession.interruptionNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSystemAudioReset(_:)), name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
+        audioSessionNotificationObservers = Self.observeAudioSessionNotifications(
+            routeChanged: { [weak self] notification in
+                self?.handleRouteChanged(notification)
+                #if DEBUG
+                MediaConcurrencyUITestHarness.audioSessionNotificationHandled(notification.name)
+                #endif
+            },
+            audioInterrupted: { [weak self] notification in
+                self?.handleAudioInterruption(notification)
+                #if DEBUG
+                MediaConcurrencyUITestHarness.audioSessionNotificationHandled(notification.name)
+                #endif
+            },
+            mediaServicesReset: { [weak self] notification in
+                self?.handleSystemAudioReset(notification)
+                #if DEBUG
+                MediaConcurrencyUITestHarness.audioSessionNotificationHandled(notification.name)
+                #endif
+            }
+        )
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleSkipTimesChanged), name: Constants.Notifications.skipTimesChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidUpdate(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
@@ -164,6 +200,37 @@ final class PlaybackManager {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+
+    nonisolated static func observeAudioSessionNotifications(
+        notificationCenter: NotificationCenter = .default,
+        routeChanged: @escaping @MainActor @Sendable (Notification) -> Void,
+        audioInterrupted: @escaping @MainActor @Sendable (Notification) -> Void,
+        mediaServicesReset: @escaping @MainActor @Sendable (Notification) -> Void
+    ) -> AudioSessionNotificationObservers {
+        let observers = [
+            notificationCenter.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { notification in
+                // OperationQueue.main guarantees synchronous main-thread delivery. The
+                // wrapper expresses that this Foundation payload is not concurrently shared.
+                let notification = UnsafeTransfer(notification)
+                MainActor.assumeIsolated {
+                    routeChanged(notification.wrappedValue)
+                }
+            },
+            notificationCenter.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { notification in
+                let notification = UnsafeTransfer(notification)
+                MainActor.assumeIsolated {
+                    audioInterrupted(notification.wrappedValue)
+                }
+            },
+            notificationCenter.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { notification in
+                let notification = UnsafeTransfer(notification)
+                MainActor.assumeIsolated {
+                    mediaServicesReset(notification.wrappedValue)
+                }
+            }
+        ]
+        return AudioSessionNotificationObservers(notificationCenter: notificationCenter, observers: observers)
     }
 
     // MARK: - API
@@ -2017,7 +2084,7 @@ final class PlaybackManager {
 
     // MARK: - AVAudioSession Notifications
 
-    @objc private func handleRouteChanged(_ notification: Notification) {
+    private func handleRouteChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo, let changeReason = userInfo[AVAudioSessionRouteChangeReasonKey] as? NSNumber else { return }
 
         logRouteChange(userInfo: userInfo)
@@ -2059,7 +2126,7 @@ final class PlaybackManager {
         }
     }
 
-    @objc private func handleAudioInterruption(_ notification: Notification) {
+    private func handleAudioInterruption(_ notification: Notification) {
         guard let userInfo = notification.userInfo else { return }
 
         let interruptionType = userInfo[AVAudioSessionInterruptionTypeKey] as! NSNumber
@@ -2105,7 +2172,7 @@ final class PlaybackManager {
         }
     }
 
-    @objc private func handleSystemAudioReset(_ notification: Notification) {
+    private func handleSystemAudioReset(_ notification: Notification) {
         if currentEpisode() != nil {
             cleanupCurrentPlayer(permanent: false)
         }

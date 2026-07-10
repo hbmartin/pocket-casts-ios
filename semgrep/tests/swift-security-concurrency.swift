@@ -1,6 +1,9 @@
+import AVFoundation
 import Combine
 import Foundation
+import MediaPlayer
 import UserNotifications
+import UIKit
 
 // ruleid: pocketcasts.unchecked-sendable-lazy-dispatch-group
 class UnsafeLazyDispatchGroupTask: Operation, @unchecked Sendable {
@@ -170,4 +173,31 @@ actor MetadataLoader {
     }
 
     private func compute(_ value: Int) async {}
+}
+
+func mediaItemArtworkHandlers(image: UIImage) {
+    // ruleid: pocketcasts.media-item-artwork-handler-must-be-sendable
+    _ = MPMediaItemArtwork(boundsSize: image.size, requestHandler: { _ in image })
+
+    // ok: pocketcasts.media-item-artwork-handler-must-be-sendable
+    _ = MPMediaItemArtwork(boundsSize: image.size, requestHandler: { @Sendable _ in image })
+}
+
+final class AudioSessionObserverFixtures: NSObject {
+    func selectorObserver(notificationCenter: NotificationCenter) {
+        // ruleid: pocketcasts.av-audio-session-observer-must-use-main-queue
+        notificationCenter.addObserver(self, selector: #selector(routeChanged), name: AVAudioSession.routeChangeNotification, object: nil)
+    }
+
+    func nilQueueObserver(notificationCenter: NotificationCenter) {
+        // ruleid: pocketcasts.av-audio-session-observer-must-use-main-queue
+        _ = notificationCenter.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: nil) { _ in }
+    }
+
+    func mainQueueObserver(notificationCenter: NotificationCenter) {
+        // ok: pocketcasts.av-audio-session-observer-must-use-main-queue
+        _ = notificationCenter.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { _ in }
+    }
+
+    @objc private func routeChanged() {}
 }
