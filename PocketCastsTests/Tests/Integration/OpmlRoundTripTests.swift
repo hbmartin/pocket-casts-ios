@@ -38,6 +38,38 @@ struct OpmlRoundTripTests {
         #expect(Set(importedURLs) == Set(expectedFeeds.values))
         #expect(importedURLs.count == expectedFeeds.count)
     }
+
+    @Test("Offline export builds feeds from local rows and skips podcasts without a feed URL")
+    func offlineExportFromLocalRows() throws {
+        let sandbox = try IntegrationTestSandbox()
+        defer { try? sandbox.cleanUp() }
+
+        var withURL = Podcast()
+        withURL.addedDate = Date(timeIntervalSince1970: 1_700_000_000)
+        withURL.title = "Has Feed URL"
+        withURL.uuid = "podcast-with-url"
+        withURL.podcastUrl = "https://example.test/with.xml"
+        withURL.subscribed = 1
+        sandbox.dataManager.save(podcast: withURL)
+
+        // legacy server-sourced rows can predate podcastUrl storage
+        var withoutURL = Podcast()
+        withoutURL.addedDate = Date(timeIntervalSince1970: 1_700_000_100)
+        withoutURL.title = "Legacy Row"
+        withoutURL.uuid = "podcast-without-url"
+        withoutURL.subscribed = 1
+        sandbox.dataManager.save(podcast: withoutURL)
+
+        // the exact export mapping ImportExportViewController.startExport uses
+        let feeds = sandbox.dataManager.allPodcasts(includeUnsubscribed: false)
+            .compactMap { podcast -> OpmlFeed? in
+                guard let url = podcast.podcastUrl, !url.isEmpty else { return nil }
+                return OpmlFeed(title: podcast.title ?? "", url: url)
+            }
+
+        let importedURLs = try OpmlDocument.feedURLs(from: Data(OpmlDocument.xmlString(feeds: feeds).utf8))
+        #expect(importedURLs == ["https://example.test/with.xml"])
+    }
 }
 
 extension Tag {

@@ -27,6 +27,21 @@ public final class SettingsStore<Value: JSONCodable> {
 }
 
 extension SettingsStore {
+    /// Round-trippable JSON of the whole settings value, `@ModifiedDate` wrappers
+    /// included — the payload user-facing backup writes alongside the database.
+    public func exportSettingsJSON() -> Data? {
+        settings.jsonData
+    }
+
+    /// Replaces the stored settings with the decoded JSON (the restore counterpart of
+    /// `exportSettingsJSON`). Returns false when the data doesn't decode as `Value`.
+    @discardableResult
+    public func importSettingsJSON(_ data: Data) -> Bool {
+        guard let imported = try? Value.encodedObject(Value.self, from: data) else { return false }
+        settings = imported
+        return true
+    }
+
     /// Access any property from `settings` without direct access to settings.
     /// Avoids having to type `appSettings.settings` and allows for future ObservableObject / publisher adoption in this method
     subscript<T>(modifiedDate keyPath: WritableKeyPath<Value, ModifiedDate<T>>) -> ModifiedDate<T> {

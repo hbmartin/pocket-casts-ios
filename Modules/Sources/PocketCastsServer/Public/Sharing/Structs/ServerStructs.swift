@@ -30,23 +30,6 @@ public struct ImportOpmlResult: Decodable, Sendable {
     }
 }
 
-public struct ExportPodcastsResponse: Decodable, Sendable {
-    public var status: String? = nil
-    public var message: String? = nil
-    public var result: [String: String]?
-
-    public func success() -> Bool {
-        status == "ok"
-    }
-
-    public static func failedResponse() -> ExportPodcastsResponse {
-        var failed = ExportPodcastsResponse()
-        failed.status = "failed"
-
-        return failed
-    }
-}
-
 public struct ShareListResponse: Decodable, Sendable {
     public var status: String? = nil
     public var message: String? = nil

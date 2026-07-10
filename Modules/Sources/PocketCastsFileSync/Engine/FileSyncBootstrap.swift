@@ -28,7 +28,7 @@ struct FileSyncBootstrap {
                 entityType: .podcast, uuid: podcast.uuid, changedFields: [], wallClockMs: stamp))
         }
 
-        for episode in dataManager.unsyncedEpisodes(limit: 10000) {
+        for episode in dataManager.unsyncedEpisodesIncludingLocalFeed(limit: 10000) {
             var fields: [String] = []
             if episode.playedUpToModified > 0 { fields.append("playedUpTo") }
             if episode.playingStatusModified > 0 { fields.append("playingStatus") }

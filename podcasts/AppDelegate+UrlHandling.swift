@@ -217,6 +217,26 @@ extension AppDelegate {
             strongSelf.progressDialog = ShiftyLoadingAlert(title: L10n.podcastLoading)
             rootController.dismiss(animated: false, completion: nil)
             strongSelf.progressDialog?.showAlert(rootController, hasProgress: false, completion: {
+                // On-device ingest: parse the feed locally instead of resolving it
+                // through the Pocket Casts search/cache servers.
+                if Settings.localFeedIngestEnabled() {
+                    let localUuid = LocalFeedIdentity.uuid(seed: searchTerm)
+                    ServerPodcastManager.shared.addLocalFeed(feedURL: searchTerm, subscribe: false) { success in
+                        DispatchQueue.main.async {
+                            self?.hideProgressDialog()
+
+                            // dedup can attach to an existing row, so resolve the real uuid
+                            let uuid = DataManager.sharedManager.findPodcast(feedURL: searchTerm)?.uuid ?? localUuid
+                            if success {
+                                NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: uuid])
+                            } else {
+                                SJUIUtils.showAlert(title: L10n.error, message: L10n.errorGeneralPodcastNotFound, from: SceneHelper.rootViewController())
+                            }
+                        }
+                    }
+                    return
+                }
+
                 MainServerHandler.shared.podcastSearch(searchTerm: searchTerm) { response in
                     guard let uuid = response?.result?.podcast?.uuid else {
                         DispatchQueue.main.async {

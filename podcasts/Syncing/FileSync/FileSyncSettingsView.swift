@@ -18,10 +18,12 @@ struct FileSyncSettingsView: View {
             FileSyncFolderSection(showFolderPicker: {
                 model.showingFolderPicker = true
             })
+            FileSyncMirrorSection(model: model)
             FileSyncDevicesSection(
                 devices: model.status.devices,
                 forgetDevice: { deviceID in Task { await model.forgetDevice(deviceID) } }
             )
+            FileSyncMaintenanceSection(model: model)
             FileSyncDiagnosticsSection(exportDiagnostics: {
                 Task { await model.exportDiagnostics() }
             })
@@ -157,6 +159,54 @@ private struct FileSyncDeviceRow: View {
     }
 }
 
+private struct FileSyncMirrorSection: View {
+    @EnvironmentObject private var theme: Theme
+    @ObservedObject var model: FileSyncSettingsViewModel
+
+    var body: some View {
+        Section(header: Text(L10n.fileSyncMirrorHeader)
+            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
+                footer: Text(L10n.fileSyncMirrorExplanation)
+            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))) {
+            Toggle(L10n.fileSyncMirrorToggle, isOn: Binding(
+                get: { model.mirrorEnabled },
+                set: { model.setMirrorEnabled($0) }))
+                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+            if model.mirrorEnabled {
+                Toggle(L10n.fileSyncMirrorWifiOnly, isOn: Binding(
+                    get: { model.mirrorWifiOnly },
+                    set: { model.setMirrorWifiOnly($0) }))
+                    .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+            }
+        }
+    }
+}
+
+private struct FileSyncMaintenanceSection: View {
+    @EnvironmentObject private var theme: Theme
+    @ObservedObject var model: FileSyncSettingsViewModel
+
+    @State private var showingResetConfirm = false
+
+    var body: some View {
+        Section(footer: Text(L10n.fileSyncResetExplanation)
+            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))) {
+            Button(L10n.fileSyncActionReset, role: .destructive) {
+                showingResetConfirm = true
+            }
+            .disabled(!model.status.isEnabled || model.isSyncing)
+        }
+        .alert(L10n.fileSyncResetConfirmTitle, isPresented: $showingResetConfirm) {
+            Button(L10n.fileSyncActionReset, role: .destructive) {
+                Task { await model.resetAndRebootstrap() }
+            }
+            Button(L10n.cancel, role: .cancel) {}
+        } message: {
+            Text(L10n.fileSyncResetConfirmMessage)
+        }
+    }
+}
+
 private struct FileSyncDiagnosticsSection: View {
     @EnvironmentObject private var theme: Theme
 
@@ -192,9 +242,37 @@ final class FileSyncSettingsViewModel: ObservableObject {
     @Published var status = FileSyncStatus()
     @Published var isSyncing = false
     @Published var showingFolderPicker = false
+    @Published var mirrorEnabled = false
+    @Published var mirrorWifiOnly = true
 
     func refresh() async {
         status = await FileSyncManager.shared.status()
+        mirrorEnabled = await FileSyncManager.shared.isMirroringEnabled
+        mirrorWifiOnly = await FileSyncManager.shared.isMirroringWifiOnly
+    }
+
+    func setMirrorEnabled(_ enabled: Bool) {
+        mirrorEnabled = enabled
+        Task {
+            await FileSyncManager.shared.setMirroringEnabled(enabled)
+            if enabled { await FileSyncManager.shared.syncNow() }
+        }
+    }
+
+    func setMirrorWifiOnly(_ wifiOnly: Bool) {
+        mirrorWifiOnly = wifiOnly
+        Task { await FileSyncManager.shared.setMirroringWifiOnly(wifiOnly) }
+    }
+
+    func resetAndRebootstrap() async {
+        isSyncing = true
+        do {
+            try await FileSyncManager.shared.resetAndRebootstrap()
+        } catch {
+            FileLog.shared.addMessage("FileSync: reset & re-bootstrap failed: \(error)")
+        }
+        await refresh()
+        isSyncing = false
     }
 
     func syncNow() async {

@@ -138,7 +138,11 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
             guard let self else { throw TaskError.nilSelf }
 
             do {
-                let data = try await dataRetriever.loadEpisodeDataFromCache(for: podcastUuid, episodeUuid: episodeUuid)
+                // Local-feed podcasts have no cache-server entry; their show info is
+                // seeded into the cache from the parsed feed, and no request should
+                // leave the device for them.
+                let isLocalFeed = dataManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)?.isLocalFeedSourced ?? false
+                let data = try await dataRetriever.loadEpisodeDataFromCache(for: podcastUuid, episodeUuid: episodeUuid, useCacheOnly: isLocalFeed)
                 await setRequestingShowInfoToNil(for: episodeUuid)
                 return await getShowInfo(for: data?.data(using: .utf8))
             } catch {

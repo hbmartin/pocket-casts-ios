@@ -39,8 +39,19 @@ nonisolated final class FileSyncAppDelegate: FileSyncDelegate, Sendable {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
     }
 
-    func backfillPodcast(uuid: String) async -> Bool {
-        await withCheckedContinuation { continuation in
+    func backfillPodcast(uuid: String, feedURL: String?) async -> Bool {
+        // A uuid that is the deterministic hash of the record's feed URL is a local-feed
+        // podcast: the Pocket Casts servers have never heard of it, so re-ingest it from
+        // the feed itself — this is how local podcasts propagate across devices.
+        if let feedURL, LocalFeedIdentity.uuid(seed: feedURL) == uuid {
+            return await withCheckedContinuation { continuation in
+                ServerPodcastManager.shared.addLocalFeed(feedURL: feedURL, subscribe: true) { added in
+                    continuation.resume(returning: added)
+                }
+            }
+        }
+
+        return await withCheckedContinuation { continuation in
             ServerPodcastManager.shared.addFromUuid(podcastUuid: uuid, subscribe: true) { added in
                 continuation.resume(returning: added)
             }

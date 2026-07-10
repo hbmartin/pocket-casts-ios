@@ -33,6 +33,12 @@ final class FileSyncCoordinator {
                 localPathResolver: { episode in
                     episode.pathToDownloadedFile(pathFinder: DownloadManager.shared)
                 },
+                episodeLocalPathResolver: { episode in
+                    episode.pathToDownloadedFile(pathFinder: DownloadManager.shared)
+                },
+                isUnmeteredConnection: {
+                    NetworkUtils.shared.isConnectedToUnexpensiveConnection()
+                },
                 onUploadsChanged: {
                     NotificationCenter.postOnMainThread(notification: Constants.Notifications.fileSyncUploadsChanged)
                 }

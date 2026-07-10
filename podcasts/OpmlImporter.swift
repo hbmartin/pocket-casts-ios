@@ -126,18 +126,24 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
             }
             self.parsedUrls = parsedUrls
 
-            // send urls to server 100 at a time
             initialPodcastCount = parsedUrls.count
-            importPodcasts(urls: parsedUrls)
 
-            var amountOfTimesPolled = 0
-            while amountOfTimesPolled < 20, !pollUuids.isEmpty {
-                amountOfTimesPolled += 1
+            if Settings.localFeedIngestEnabled() {
+                // On-device ingest: fetch and parse each feed locally, no server, no polling.
+                importPodcastsLocally(urls: parsedUrls)
+            } else {
+                // send urls to server 100 at a time
+                importPodcasts(urls: parsedUrls)
 
-                let pollUuidsToSend = pollUuids
-                pollUuids.removeAll()
-                pollImportPodcasts(pollUuids: pollUuidsToSend)
-                Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
+                var amountOfTimesPolled = 0
+                while amountOfTimesPolled < 20, !pollUuids.isEmpty {
+                    amountOfTimesPolled += 1
+
+                    let pollUuidsToSend = pollUuids
+                    pollUuids.removeAll()
+                    pollImportPodcasts(pollUuids: pollUuidsToSend)
+                    Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
+                }
             }
 
             DispatchQueue.main.async {
@@ -151,6 +157,34 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 Analytics.track(.opmlImportFinished, properties: ["count": self.initialPodcastCount, "number_parsed": self.initialPodcastCount])
             }
         }
+    }
+
+    /// The offline import path: every feed URL goes through the Phase-1 local subscribe
+    /// pipeline (`addLocalFeed`), which dedups by feed URL against existing rows of
+    /// either refresh regime.
+    private func importPodcastsLocally(urls: [String]) {
+        for url in urls {
+            importQueue.addOperation {
+                let addGroup = DispatchGroup()
+                addGroup.enter()
+                ServerPodcastManager.shared.addLocalFeed(feedURL: url, subscribe: true) { added in
+                    self.importedCount += 1
+                    if !added { self.failedCount += 1 }
+
+                    DispatchQueue.main.async {
+                        guard let progressWindow = self.progressWindow else { return }
+                        progressWindow.title = self.progress(imported: self.importedCount, total: self.initialPodcastCount)
+                    }
+
+                    addGroup.leave()
+                }
+
+                // wait for the add operation to return
+                _ = addGroup.wait(timeout: .now() + 30.seconds)
+            }
+        }
+
+        importQueue.waitUntilAllOperationsAreFinished()
     }
 
     private func importPodcasts(urls: [String]) {

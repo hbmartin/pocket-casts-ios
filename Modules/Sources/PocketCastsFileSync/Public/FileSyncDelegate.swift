@@ -13,9 +13,13 @@ public protocol FileSyncDelegate: Sendable {
     func currentQueueEpisodeUuids() -> [String]
     func refreshQueueFromDatabase()
 
-    // MARK: Server-backed metadata backfill
+    // MARK: Metadata backfill
 
-    func backfillPodcast(uuid: String) async -> Bool
+    /// Fetches full metadata for a podcast another device synced. `feedURL` is the feed
+    /// URL carried on the record (when known) so local-feed podcasts — whose hash UUIDs
+    /// mean nothing to the Pocket Casts servers — can be re-ingested from the feed
+    /// itself instead.
+    func backfillPodcast(uuid: String, feedURL: String?) async -> Bool
     func backfillEpisode(uuid: String, podcastUuid: String) async -> Bool
 
     // MARK: Settings

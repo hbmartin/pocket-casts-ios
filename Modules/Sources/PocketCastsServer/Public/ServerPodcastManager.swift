@@ -91,16 +91,42 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         addFromJson(lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
     }
 
-    public func addFromJson(lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {
+    public func addFromJson(lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, refreshSource: PodcastRefreshSource = .server, completion: ((Bool) -> Void)?) {
         // Handed wholesale to the subscribe queue; not touched by the caller afterwards.
         let podcastInfo = UncheckedSendable(podcastInfo)
         let completion = UncheckedSendable(completion)
         subscribeQueue.addOperation { [weak self] in
             guard let strongSelf = self else { return }
 
-            let added = strongSelf.addPodcast(podcastInfo: podcastInfo.value, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
+            let added = strongSelf.addPodcast(podcastInfo: podcastInfo.value, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified, refreshSource: refreshSource)
             if subscribe, added { ServerConfig.shared.syncDelegate?.subscribedToPodcast() } // addFromUuid and addFromiTunesId end up here, so just need this one analytic
             completion.value?(added)
+        }
+    }
+
+    /// Subscribes to (or adds) a feed parsed entirely on device — no Pocket Casts servers
+    /// involved. Dedups by feed URL first so a feed already in the library (under either
+    /// refresh regime) is subscribed in place instead of duplicated under a hash UUID.
+    public func addLocalFeed(feedURL: String, subscribe: Bool, autoDownloads: Int = 0, completion: (@Sendable (Bool) -> Void)?) {
+        if var existing = DataManager.sharedManager.findPodcast(feedURL: feedURL) {
+            if subscribe, !existing.isSubscribed() {
+                existing.subscribed = 1
+                // resubscribes to a server-sourced row must sync; local rows never do
+                existing.syncStatus = (existing.isLocalFeedSourced ? SyncStatus.synced : SyncStatus.notSynced).rawValue
+                DataManager.sharedManager.save(podcast: existing)
+                updateLatestEpisodeInfo(podcast: existing, setDefaults: true, autoDownloadLimit: autoDownloads)
+                ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: existing.uuid)
+            }
+            completion?(true)
+            return
+        }
+
+        Task { [weak self] in
+            guard let podcastInfo = await LocalPodcastSource().loadPodcastInfo(feedURL: feedURL) else {
+                completion?(false)
+                return
+            }
+            self?.addFromJson(lastModified: nil, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, refreshSource: .localFeed, completion: completion)
         }
     }
 
@@ -215,7 +241,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         DataManager.sharedManager.save(episode: episode)
     }
 
-    private func addPodcast(podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int = 0, lastModified: String?) -> Bool {
+    private func addPodcast(podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int = 0, lastModified: String?, refreshSource: PodcastRefreshSource = .server) -> Bool {
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any], let podcastUuid = podcastJson["uuid"] as? String else { return false }
 
         // check if we already have this podcast, and if we do treat it differently
@@ -241,6 +267,12 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         }
 
         var podcast = Podcast.from(podcastJson: podcastJson, podcastInfo: podcastInfo, uuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified, isoFormatter: isoFormatter)
+
+        podcast.feedRefreshSource = refreshSource
+        if refreshSource == .localFeed {
+            // never queued for account sync — the hash UUID is meaningless to the server
+            podcast.syncStatus = SyncStatus.synced.rawValue
+        }
 
         podcast.sortOrder = highestSortOrderForHomeGrid() + 1
 

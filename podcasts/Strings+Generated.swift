@@ -1260,6 +1260,8 @@ nonisolated internal enum L10n {
   internal static var fileSyncActionChooseFolder: String { return L10n.tr("Localizable", "file_sync_action_choose_folder", fallback: "Choose Folder") }
   /// Button title that exports local file-sync diagnostics.
   internal static var fileSyncActionExportDiagnostics: String { return L10n.tr("Localizable", "file_sync_action_export_diagnostics", fallback: "Export Diagnostics") }
+  /// Destructive button that resets file-sync state and re-seeds the library.
+  internal static var fileSyncActionReset: String { return L10n.tr("Localizable", "file_sync_action_reset", fallback: "Reset & Re-bootstrap") }
   /// Button title that starts a manual file-sync pass.
   internal static var fileSyncActionSyncNow: String { return L10n.tr("Localizable", "file_sync_action_sync_now", fallback: "Sync Now") }
   /// Button title in the profile banner that opens file-sync settings.
@@ -1288,8 +1290,22 @@ nonisolated internal enum L10n {
   internal static var fileSyncFolderIcloud: String { return L10n.tr("Localizable", "file_sync_folder_icloud", fallback: "iCloud Drive") }
   /// Label for a user-picked file-sync folder.
   internal static var fileSyncFolderPicked: String { return L10n.tr("Localizable", "file_sync_folder_picked", fallback: "Picked Folder") }
+  /// Explanation of the download-mirroring toggle.
+  internal static var fileSyncMirrorExplanation: String { return L10n.tr("Localizable", "file_sync_mirror_explanation", fallback: "Copies downloaded episode audio into the sync folder so your other devices can fetch it without re-downloading from the internet.") }
+  /// Section header for the download-mirroring settings in file sync.
+  internal static var fileSyncMirrorHeader: String { return L10n.tr("Localizable", "file_sync_mirror_header", fallback: "Download Mirroring") }
+  /// Toggle that mirrors downloaded episode audio into the sync folder.
+  internal static var fileSyncMirrorToggle: String { return L10n.tr("Localizable", "file_sync_mirror_toggle", fallback: "Mirror Downloads") }
+  /// Toggle that restricts pulling mirrored audio to unmetered connections.
+  internal static var fileSyncMirrorWifiOnly: String { return L10n.tr("Localizable", "file_sync_mirror_wifi_only", fallback: "Pull Audio on Wi-Fi Only") }
   /// Action that removes only the local cached copy of a folder-backed upload.
   internal static var fileSyncRemoveDownload: String { return L10n.tr("Localizable", "file_sync_remove_download", fallback: "Remove Download") }
+  /// Message of the confirmation shown before resetting file-sync state.
+  internal static var fileSyncResetConfirmMessage: String { return L10n.tr("Localizable", "file_sync_reset_confirm_message", fallback: "This re-seeds your entire library into the sync folder and replays history from your other devices. It can take a while on large libraries.") }
+  /// Title of the confirmation shown before resetting file-sync state.
+  internal static var fileSyncResetConfirmTitle: String { return L10n.tr("Localizable", "file_sync_reset_confirm_title", fallback: "Reset Sync State?") }
+  /// Explanation of the reset & re-bootstrap button.
+  internal static var fileSyncResetExplanation: String { return L10n.tr("Localizable", "file_sync_reset_explanation", fallback: "Forgets this device's sync progress and re-seeds your full library into the sync folder. Use this if your devices seem out of step.") }
   /// Row label for the current file-sync folder type.
   internal static var fileSyncStatusFolder: String { return L10n.tr("Localizable", "file_sync_status_folder", fallback: "Folder") }
   /// Row label for the most recent successful file-sync pass.
@@ -3433,6 +3449,14 @@ nonisolated internal enum L10n {
   internal static var settingsAutoDownloadsSubtitlePlaylists: String { return L10n.tr("Localizable", "settings_auto_downloads_subtitle_playlists", fallback: "Download the top episodes in a playlist.") }
   /// Subtitle explaining the toggle to auto download items in the Up Next Queue.
   internal static var settingsAutoDownloadsSubtitleUpNext: String { return L10n.tr("Localizable", "settings_auto_downloads_subtitle_up_next", fallback: "Download episodes added to Up Next.") }
+  /// Title of the alert shown when creating a backup fails.
+  internal static var settingsBackupFailed: String { return L10n.tr("Localizable", "settings_backup_failed", fallback: "Backup Failed") }
+  /// Explanation under the back up button.
+  internal static var settingsBackupFooter: String { return L10n.tr("Localizable", "settings_backup_footer", fallback: "Saves your podcasts, episodes, playback history and settings to a folder you choose. Downloaded audio files aren't included.") }
+  /// Button that saves a backup of the library to a user-chosen location.
+  internal static var settingsBackupNow: String { return L10n.tr("Localizable", "settings_backup_now", fallback: "Back Up Library") }
+  /// Title for the settings screen (and row) for backing up and restoring the library.
+  internal static var settingsBackupRestore: String { return L10n.tr("Localizable", "settings_backup_restore", fallback: "Backup & Restore") }
   /// Section Header for selecting the options for setting the app badge based on the user's filters.
   internal static var settingsBadgeFilterHeader: String { return L10n.tr("Localizable", "settings_badge_filter_header", fallback: "EPISODE FILTER COUNT") }
   /// Option for setting the app badge based on the new episodes since the app opened.
@@ -3557,6 +3581,10 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralLegacyBluetooth: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth", fallback: "Legacy Bluetooth Support") }
   /// Subtitle explaining the toggle to modify which bluetooth protocol to use.
   internal static var settingsGeneralLegacyBluetoothSubtitle: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth_subtitle", fallback: "If you have a Bluetooth Device or Car Stereo that seems to be pausing Pocket Casts while it's playing, or resetting the playback position to 0, try turning this setting on to fix it.") }
+  /// Setting toggle that makes newly added podcasts fetch and parse their feeds on this device instead of via the Pocket Casts servers.
+  internal static var settingsGeneralLocalFeedIngest: String { return L10n.tr("Localizable", "settings_general_local_feed_ingest", fallback: "On-Device Feed Refresh") }
+  /// Subtitle explaining the on-device feed refresh toggle.
+  internal static var settingsGeneralLocalFeedIngestSubtitle: String { return L10n.tr("Localizable", "settings_general_local_feed_ingest_subtitle", fallback: "New podcasts added by URL or OPML import are fetched and refreshed directly from their feeds on this device, without Pocket Casts servers. They won't sync with your account.") }
   /// Setting toggle to enable the feature that disables the lock screen scrubber.
   internal static var settingsGeneralLockScreenDisabled: String { return L10n.tr("Localizable", "settings_general_lock_screen_disabled", fallback: "Enable Lock Screen Scrubbing") }
   /// Setting toggle to enable the gesture for multi-select.
@@ -3663,6 +3691,22 @@ nonisolated internal enum L10n {
   internal static var settingsQueuePosition: String { return L10n.tr("Localizable", "settings_queue_position", fallback: "Position in Queue") }
   /// Label for an input that takes the user to the privacy policy
   internal static var settingsReadPrivacyPolicy: String { return L10n.tr("Localizable", "settings_read_privacy_policy", fallback: "Read privacy policy") }
+  /// Button that restores the library from a previously saved backup.
+  internal static var settingsRestore: String { return L10n.tr("Localizable", "settings_restore", fallback: "Restore From Backup") }
+  /// Message of the confirmation shown before restoring from a backup.
+  internal static var settingsRestoreConfirmMessage: String { return L10n.tr("Localizable", "settings_restore_confirm_message", fallback: "This replaces your current library and settings with the backup. This can't be undone.") }
+  /// Title of the confirmation shown before restoring from a backup.
+  internal static var settingsRestoreConfirmTitle: String { return L10n.tr("Localizable", "settings_restore_confirm_title", fallback: "Restore From Backup?") }
+  /// Message of the alert shown when a restore finishes successfully.
+  internal static var settingsRestoreDoneMessage: String { return L10n.tr("Localizable", "settings_restore_done_message", fallback: "Your library has been restored. Restart Pocket Casts to make sure everything is refreshed.") }
+  /// Title of the alert shown when a restore finishes successfully.
+  internal static var settingsRestoreDoneTitle: String { return L10n.tr("Localizable", "settings_restore_done_title", fallback: "Restore Complete") }
+  /// Title of the alert shown when restoring from a backup fails.
+  internal static var settingsRestoreFailed: String { return L10n.tr("Localizable", "settings_restore_failed", fallback: "Restore Failed") }
+  /// Explanation under the restore button.
+  internal static var settingsRestoreFooter: String { return L10n.tr("Localizable", "settings_restore_footer", fallback: "Replaces this device's library and settings with a previously saved backup.") }
+  /// Message of the alert shown when the chosen folder does not contain a valid backup.
+  internal static var settingsRestoreInvalidBackup: String { return L10n.tr("Localizable", "settings_restore_invalid_backup", fallback: "The selected folder doesn't contain a Pocket Casts backup.") }
   /// Prompt to select a filter
   internal static var settingsSelectFilterSingular: String { return L10n.tr("Localizable", "settings_select_filter_singular", fallback: "Select Filter") }
   /// Prompt to select filters

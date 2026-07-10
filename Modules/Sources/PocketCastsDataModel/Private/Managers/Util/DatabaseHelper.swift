@@ -59,6 +59,12 @@ class DatabaseHelper {
             try db.executeUpdate(
                 "CREATE INDEX user_episode_content_hash ON SJUserEpisode (contentHash) WHERE contentHash IS NOT NULL;",
                 values: nil)
+        },
+        // Local-first ingest: which regime owns refreshing each podcast (0 = Pocket Casts
+        // refresh servers, 1 = on-device feed fetch/parse). Local-feed podcasts use
+        // deterministic hash UUIDs and are excluded from account sync.
+        SchemaMigration(toVersion: 76) { db in
+            try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN refreshSource INTEGER DEFAULT 0;", values: nil)
         }
     ]
 

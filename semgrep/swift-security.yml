@@ -4843,3 +4843,35 @@ rules:
     patterns:
       - pattern-regex: 'isolated deinit'
       - pattern-not-regex: '(?://[^\n]*isolated deinit[ \t]*:[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*isolated deinit)|(?:isolated deinit[^\n]*//[^\n]*isolated deinit[ \t]*:[ \t]*\S)|(?://[^\n]*isolated deinit)|nonisolated deinit'
+
+  - id: pocketcasts.ingest-through-provider-seam
+    severity: ERROR
+    metadata:
+      category: architecture
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      Feed refresh and podcast subscribe/ingest must go through the strategy seams so
+      local-first ingest keeps working: refresh through FeedRefreshProviding (the
+      Composite/Server/Local providers), subscribe through ServerPodcastManager
+      (addFromUuid/addFromJson/addLocalFeed) or LocalPodcastSource. Calling
+      MainServerHandler.shared.refresh/sendOpmlChunk or
+      CacheServerHandler.shared.loadPodcastInfo directly silently re-adds a hard
+      Pocket Casts server dependency that the per-podcast refreshSource contract cannot
+      intercept. If you are extending one of the seams themselves, add the file to this
+      rule's exclude list.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/Modules/Sources/**/*.swift"
+      exclude:
+        - "**/Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift"
+        - "**/Modules/Sources/PocketCastsServer/Public/Cache/CacheServerHandler.swift"
+        - "**/Modules/Sources/PocketCastsServer/Public/LocalFeed/*.swift"
+        - "**/Modules/Sources/PocketCastsServer/Public/ServerPodcastManager.swift"
+        - "**/podcasts/OpmlImporter.swift"
+    patterns:
+      - pattern-regex: '(MainServerHandler\.shared\.(refresh|sendOpmlChunk)\(|CacheServerHandler\.shared\.loadPodcastInfo\()'

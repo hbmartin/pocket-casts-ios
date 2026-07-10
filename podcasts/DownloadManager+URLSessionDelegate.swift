@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -201,6 +202,15 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
             dataManager.saveEpisode(downloadStatus: newDownloadStatus, lastDownloadAttemptDate: Date.now, autoDownloadStatus: autoDownloadStatus, episode: episode)
             EpisodeFileSizeUpdater.updateEpisodeDuration(episode: episode)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloaded, object: episode.uuid)
+
+            // Publish full podcast downloads into the FileSync mirror area (no-op unless
+            // sync + mirroring are enabled). Streaming buffers aren't durable downloads.
+            if FeatureFlag.fileSync.enabled, newDownloadStatus == .downloaded, episode is Episode {
+                let episodeUuid = episode.uuid
+                Task {
+                    await FileSyncManager.shared.mirrorDownloadedEpisode(episodeUuid: episodeUuid)
+                }
+            }
         } catch {
             if !copyFile {
                 // Lets try remove the file so we don't have a pending file on the tmp folder
