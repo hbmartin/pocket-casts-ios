@@ -8,9 +8,15 @@ import UIKit
 ///
 /// It configures the sync module once at launch, then runs debounced sync
 /// passes on meaningful local events and app lifecycle transitions.
+@MainActor
 final class FileSyncCoordinator {
     private static let debounceInterval: TimeInterval = 2
     private static let heartbeatInterval: TimeInterval = 60
+
+    #if DEBUG
+    private static let uiTestExerciseEventsEnvironment = "POCKET_CASTS_UI_TEST_EXERCISE_FILE_SYNC_COORDINATOR_EVENTS"
+    private static let uiTestDebounceCompletedIdentifier = "fileSyncCoordinatorDebounceCompleted"
+    #endif
 
     private var debounceTimer: Timer?
     private var heartbeatTimer: Timer?
@@ -38,6 +44,12 @@ final class FileSyncCoordinator {
         }
 
         addObservers()
+
+        #if DEBUG
+        if ProcessInfo.processInfo.environment[Self.uiTestExerciseEventsEnvironment] == "1" {
+            exerciseNotificationHandlersForUITesting()
+        }
+        #endif
     }
 
     func handleAppBecameActive() {
@@ -68,29 +80,27 @@ final class FileSyncCoordinator {
     }
 
     @objc private func syncTriggerFired() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            debounceTimer?.invalidate()
-            debounceTimer = Timer.scheduledTimer(withTimeInterval: Self.debounceInterval, repeats: false) { _ in
-                Task { await FileSyncManager.shared.syncNow() }
+        debounceTimer?.invalidate()
+        debounceTimer = Timer.scheduledTimer(withTimeInterval: Self.debounceInterval, repeats: false) { _ in
+            Task { @MainActor in
+                #if DEBUG
+                Self.markDebounceCompletedForUITesting()
+                #endif
+                await FileSyncManager.shared.syncNow()
             }
         }
     }
 
     @objc private func playbackStarted() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, heartbeatTimer == nil else { return }
-            heartbeatTimer = Timer.scheduledTimer(withTimeInterval: Self.heartbeatInterval, repeats: true) { _ in
-                Task { await FileSyncManager.shared.syncNow() }
-            }
+        guard heartbeatTimer == nil else { return }
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: Self.heartbeatInterval, repeats: true) { _ in
+            Task { await FileSyncManager.shared.syncNow() }
         }
     }
 
     @objc private func playbackStopped() {
-        DispatchQueue.main.async { [weak self] in
-            self?.heartbeatTimer?.invalidate()
-            self?.heartbeatTimer = nil
-        }
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
     }
 
     @objc private func appDidEnterBackground() {
@@ -111,4 +121,29 @@ final class FileSyncCoordinator {
         UIApplication.shared.endBackgroundTask(backgroundTaskID)
         backgroundTaskID = .invalid
     }
+
+    #if DEBUG
+    private func exerciseNotificationHandlersForUITesting() {
+        let center = NotificationCenter.default
+        center.post(name: Constants.Notifications.upNextQueueChanged, object: nil)
+        center.post(name: Constants.Notifications.upNextQueueChanged, object: nil)
+        center.post(name: Constants.Notifications.playbackStarted, object: nil)
+        center.post(name: Constants.Notifications.playbackStarted, object: nil)
+        center.post(name: Constants.Notifications.playbackPaused, object: nil)
+        center.post(name: Constants.Notifications.playbackEnded, object: nil)
+    }
+
+    private static func markDebounceCompletedForUITesting() {
+        guard ProcessInfo.processInfo.environment[uiTestExerciseEventsEnvironment] == "1",
+              let window = UIApplication.shared.connectedScenes
+                  .compactMap({ $0 as? UIWindowScene })
+                  .flatMap(\.windows)
+                  .first(where: \.isKeyWindow) else { return }
+
+        let marker = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+        marker.isAccessibilityElement = true
+        marker.accessibilityIdentifier = uiTestDebounceCompletedIdentifier
+        window.addSubview(marker)
+    }
+    #endif
 }

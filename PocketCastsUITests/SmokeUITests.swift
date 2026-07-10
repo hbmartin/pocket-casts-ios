@@ -10,7 +10,10 @@ final class SmokeUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    private func launchApp() -> XCUIApplication {
+    private func launchApp(
+        additionalArguments: [String] = [],
+        additionalEnvironment: [String: String] = [:]
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         // A fresh install otherwise opens the onboarding carousel instead of the
         // tab bar. This launch argument lands in UserDefaults' NSArgumentDomain
@@ -18,6 +21,8 @@ final class SmokeUITests: XCTestCase {
         // shouldShowInitialOnboardingFlow is false AND the key exists
         // (hasSeenInitialOnboardingBefore), both of which "0" satisfies at once.
         app.launchArguments += ["-shouldShowInitialOnboardingFlow", "0"]
+        app.launchArguments += additionalArguments
+        app.launchEnvironment.merge(additionalEnvironment) { _, new in new }
         app.launch()
         dismissSystemAlerts(reactivating: app)
         return app
@@ -53,6 +58,76 @@ final class SmokeUITests: XCTestCase {
         // DB schema migration and credential setup and can take 30s+ under CI load.
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 90),
                       "App did not reach the main tab bar after launch")
+    }
+
+    private func openProfile(in app: XCUIApplication) {
+        let profileTab = app.tabBars.firstMatch.buttons["Profile"]
+        XCTAssertTrue(profileTab.waitForExistence(timeout: 10), "Missing Profile tab")
+        profileTab.tap()
+
+        let settingsButton = app.buttons["Settings"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: 10),
+                      "Profile did not expose its Settings button")
+    }
+
+    private func openAppearanceSettings(in app: XCUIApplication) {
+        app.buttons["Settings"].tap()
+
+        let appearanceRow = app.staticTexts["appearance"]
+        XCTAssertTrue(appearanceRow.waitForExistence(timeout: 10),
+                      "Settings did not expose the Appearance row")
+        appearanceRow.tap()
+
+        XCTAssertTrue(app.navigationBars["Appearance"].waitForExistence(timeout: 10),
+                      "Appearance settings did not open")
+    }
+
+    private func selectTheme(named name: String, in app: XCUIApplication) {
+        let themeRow = app.cells.containing(.staticText, identifier: "Theme").firstMatch
+        XCTAssertTrue(themeRow.waitForExistence(timeout: 10),
+                      "Appearance did not expose the Theme row")
+        themeRow.tap()
+
+        let selectorTitle = app.staticTexts["Select Theme"]
+        XCTAssertTrue(selectorTitle.waitForExistence(timeout: 10),
+                      "Theme selector did not open")
+
+        // ThemePreviewView supplies the accessibility label inside a SwiftUI
+        // Button, and XCTest may expose that labelled node as an image/other
+        // element rather than as the enclosing button. Match by label across
+        // element types; tapping the labelled descendant activates the button.
+        let option = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@", name)
+        ).firstMatch
+        XCTAssertTrue(option.waitForExistence(timeout: 10),
+                      "Theme selector did not expose the \(name) theme")
+        option.tap()
+
+        let dismissed = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"),
+            object: selectorTitle
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed,
+                       "Theme selector did not dismiss after choosing \(name)")
+
+        let selectedThemeRow = app.cells.containing(.staticText, identifier: name).firstMatch
+        XCTAssertTrue(selectedThemeRow.waitForExistence(timeout: 10),
+                      "Appearance did not reflect the selected \(name) theme")
+    }
+
+    private func refreshPodcastArtwork(in app: XCUIApplication) {
+        let refreshArtwork = app.staticTexts["Refresh All Podcast Artwork"]
+        for _ in 0..<4 where !refreshArtwork.exists {
+            app.tables.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(refreshArtwork.waitForExistence(timeout: 10),
+                      "Appearance did not expose artwork refresh")
+        refreshArtwork.tap()
+
+        let confirmation = app.alerts["Aye Aye Captain"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 10),
+                      "Artwork refresh confirmation did not appear")
+        confirmation.buttons["OK"].tap()
     }
 
     // Cold-launch coverage is provided by testTabNavigation and
@@ -109,5 +184,63 @@ final class SmokeUITests: XCTestCase {
             throw XCTSkip("Discover content did not load (offline or staging outage)")
         }
         XCTAssertEqual(app.state, .runningForeground)
+    }
+
+    /// Posts the same queue/playback notifications that drive FileSyncCoordinator,
+    /// including repeated starts and stops, then waits for its debounced timer to fire.
+    /// An actor-isolation regression in any handler crashes the app before the marker appears.
+    func testFileSyncCoordinatorNotificationTimers() throws {
+        let app = launchApp(additionalEnvironment: [
+            "POCKET_CASTS_UI_TEST_EXERCISE_FILE_SYNC_COORDINATOR_EVENTS": "1"
+        ])
+        waitForTabBar(in: app)
+
+        let debounceCompleted = app.descendants(matching: .any)["fileSyncCoordinatorDebounceCompleted"]
+        XCTAssertTrue(debounceCompleted.waitForExistence(timeout: 15),
+                      "File sync notification debounce did not complete")
+        XCTAssertTrue(app.tabBars.firstMatch.exists,
+                      "App lost its main UI while exercising file sync notification timers")
+        XCTAssertEqual(app.state, .runningForeground)
+    }
+
+    /// Exercises the checked-Sendable replacements through their user-facing paths:
+    /// RefreshManager starts a refresh, Theme publishes two snapshot mutations, and
+    /// ImageManager clears/rebuilds artwork caches before a cold relaunch verifies the
+    /// selected theme survived. The final Default Light selection leaves shared simulators tidy.
+    func testAppearanceThemeArtworkAndRefreshSmoke() throws {
+        let app = launchApp(additionalArguments: ["-FollowSystemTheme", "0"])
+        waitForTabBar(in: app)
+        openProfile(in: app)
+
+        let refreshButton = app.buttons.matching(
+            NSPredicate(format: "label == 'Refresh Now' OR label == 'Try Again'")
+        ).firstMatch
+        XCTAssertTrue(refreshButton.waitForExistence(timeout: 10),
+                      "Profile did not expose its refresh action")
+        refreshButton.tap()
+
+        openAppearanceSettings(in: app)
+        selectTheme(named: "Default Light", in: app)
+        selectTheme(named: "Default Dark", in: app)
+        refreshPodcastArtwork(in: app)
+
+        app.terminate()
+        app.launch()
+        dismissSystemAlerts(reactivating: app)
+        waitForTabBar(in: app)
+        openProfile(in: app)
+        openAppearanceSettings(in: app)
+
+        let persistedDarkTheme = app.cells.containing(.staticText, identifier: "Default Dark").firstMatch
+        XCTAssertTrue(persistedDarkTheme.waitForExistence(timeout: 10),
+                      "Dark theme did not survive a cold relaunch")
+
+        selectTheme(named: "Default Light", in: app)
+
+        let podcastsTab = app.tabBars.firstMatch.buttons["Podcasts"]
+        XCTAssertTrue(podcastsTab.waitForExistence(timeout: 10), "Missing Podcasts tab")
+        podcastsTab.tap()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10),
+                      "App lost its main UI after theme and artwork changes")
     }
 }
