@@ -21,7 +21,7 @@ nonisolated struct DebugInfo {
         }
 
         let now = Date()
-        let localTime = DateFormatHelper.sharedHelper.localTimeJsonDateFormatter.string(from: now)
+        let localTime = DateFormatHelper.sharedHelper.localTimeJsonFormat(now)
         let gmtTime = DateFormatHelper.sharedHelper.jsonFormat(now)
 
         var debugString = """
