@@ -12,7 +12,7 @@ class PocketCastsUITestCase: XCTestCase {
     }
 
     override nonisolated func tearDownWithError() throws {
-        if testRun?.hasSucceeded == false, let app = launchedApp {
+        if (testRun?.failureCount ?? 0) > 0, let app = launchedApp {
             let payload = MainActor.assumeIsolated {
                 Self.failurePayload(for: app)
             }
@@ -215,6 +215,36 @@ final class SmokeUITests: PocketCastsUITestCase {
         confirmation.buttons["OK"].tap()
     }
 
+    private func openFolderNameStep(in app: XCUIApplication) {
+        let createFolder = app.buttons["Create New Folder"]
+        XCTAssertTrue(createFolder.waitForExistence(timeout: 15), "Library did not expose Create New Folder")
+        createFolder.tap()
+
+        for title in ["Organization Podcast One", "Organization Podcast Two"] {
+            let pickerRow = app.buttons.matching(
+                NSPredicate(format: "label CONTAINS %@ AND label CONTAINS 'Not Selected'", title)
+            ).firstMatch
+            XCTAssertTrue(pickerRow.waitForExistence(timeout: 15), "Folder picker did not show \(title)")
+            pickerRow.tap()
+        }
+
+        let addPodcasts = app.buttons["Add 2 Podcasts"]
+        XCTAssertTrue(addPodcasts.waitForExistence(timeout: 10), "Folder picker did not accept both podcasts")
+        addPodcasts.tap()
+
+        XCTAssertTrue(
+            app.textFields["Folder name"].waitForExistence(timeout: 10),
+            "Folder name field was not shown"
+        )
+    }
+
+    private func dismissKeyboardIntroductionIfNeeded(in app: XCUIApplication) {
+        let keyboardIntroduction = app.otherElements["UIContinuousPathIntroductionView"]
+        if keyboardIntroduction.waitForExistence(timeout: 2) {
+            keyboardIntroduction.buttons["Continue"].tap()
+        }
+    }
+
     // Cold-launch coverage is provided by every test here: each launches the app
     // and waits for the tab bar before exercising its path. Post-launch-settle
     // crash detection is covered by scripts/ci/smoke-launch.sh and the crash-report
@@ -265,6 +295,73 @@ final class SmokeUITests: PocketCastsUITestCase {
         XCTAssertTrue(seededPodcast.waitForExistence(timeout: 15), "Seeded podcast was not rendered")
     }
 
+    func testCannedRefreshPreservesSeededEpisodes() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "playbackQueuePersistence",
+            "POCKET_CASTS_UI_TEST_EXERCISE_CANNED_REFRESH": "1"
+        ])
+        waitForTabBar(in: app)
+        waitForScenario(
+            "playbackQueuePersistence",
+            in: app,
+            containing: ["mode=seed", "episodes=3", "downloaded=1"]
+        )
+
+        let refreshCompleted = app.descendants(matching: .any)["uiTestCannedRefreshCompleted"]
+        XCTAssertTrue(refreshCompleted.waitForExistence(timeout: 15), "Canned podcast refresh did not complete")
+        let result = refreshCompleted.value as? String ?? ""
+        for fragment in ["result=noData", "episodes=3", "archived=0", "downloaded=1"] {
+            XCTAssertTrue(result.contains(fragment), "Canned refresh result omitted '\(fragment)': \(result)")
+        }
+
+        let podcast = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == 'UI Test Playback Podcast'")
+        ).firstMatch
+        XCTAssertTrue(podcast.waitForExistence(timeout: 15), "Seeded playback podcast was not rendered")
+        podcast.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["3 episodes • 0 archived"].waitForExistence(timeout: 15),
+            "Canned refresh archived seeded episodes"
+        )
+    }
+
+    func testPlaybackScenarioUsesLocalDownloadedAudio() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "playbackQueuePersistence"
+        ])
+        waitForTabBar(in: app)
+        waitForScenario(
+            "playbackQueuePersistence",
+            in: app,
+            containing: ["mode=seed", "episodes=3", "downloaded=1"]
+        )
+
+        let podcast = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == 'UI Test Playback Podcast'")
+        ).firstMatch
+        XCTAssertTrue(podcast.waitForExistence(timeout: 15), "Seeded playback podcast was not rendered")
+        podcast.tap()
+
+        let downloadedEpisode = app.cells.matching(
+            NSPredicate(format: "label CONTAINS 'Playback Episode One' AND label CONTAINS 'Downloaded'")
+        ).firstMatch
+        XCTAssertTrue(downloadedEpisode.waitForExistence(timeout: 15), "Playback fixture was not downloaded")
+        downloadedEpisode.tap()
+
+        let episodePlayButton = app.buttons["Play"].firstMatch
+        XCTAssertTrue(episodePlayButton.waitForExistence(timeout: 10), "Episode detail did not expose playback")
+        episodePlayButton.tap()
+
+        let playingMiniPlayer = app.buttons.matching(
+            NSPredicate(format: "identifier == 'play pause button' AND label == 'Pause'")
+        ).firstMatch
+        XCTAssertTrue(
+            playingMiniPlayer.waitForExistence(timeout: 15),
+            "Local downloaded fixture did not enter playing state"
+        )
+    }
+
     func testPlaybackAndUpNextPersistAcrossRelaunch() throws {
         let app = launchApp(additionalEnvironment: [
             "UI_TEST_SCENARIO": "playbackQueuePersistence"
@@ -292,8 +389,11 @@ final class SmokeUITests: PocketCastsUITestCase {
         XCTAssertTrue(episodePlayButton.waitForExistence(timeout: 10), "Episode detail did not expose playback")
         episodePlayButton.tap()
 
-        let upNextButton = app.buttons["Up Next List"]
-        XCTAssertTrue(upNextButton.waitForExistence(timeout: 15), "Playing an episode did not show the mini-player")
+        let miniPlayerPlayPauseButton = app.buttons["play pause button"]
+        XCTAssertTrue(
+            miniPlayerPlayPauseButton.waitForExistence(timeout: 15),
+            "Playing an episode did not show the mini-player"
+        )
 
         let secondEpisode = app.cells.matching(
             NSPredicate(format: "label CONTAINS 'Queue Episode Two'")
@@ -312,11 +412,18 @@ final class SmokeUITests: PocketCastsUITestCase {
             containing: ["mode=preserve", "upNext=2"]
         )
 
-        let restoredUpNextButton = app.buttons["Up Next List"]
+        let restoredMiniPlayer = app.buttons["play pause button"]
         XCTAssertTrue(
-            restoredUpNextButton.waitForExistence(timeout: 15),
+            restoredMiniPlayer.waitForExistence(timeout: 15),
             "Relaunch did not restore the mini-player"
         )
+
+        let openPlayerButton = app.buttons["Player"].firstMatch
+        XCTAssertTrue(openPlayerButton.waitForExistence(timeout: 10), "Restored mini-player could not be opened")
+        openPlayerButton.tap()
+
+        let restoredUpNextButton = app.buttons["Up Next List"]
+        XCTAssertTrue(restoredUpNextButton.waitForExistence(timeout: 10), "Full player did not expose Up Next")
         restoredUpNextButton.tap()
 
         for title in ["Playback Episode One", "Queue Episode Two"] {
@@ -338,26 +445,15 @@ final class SmokeUITests: PocketCastsUITestCase {
             containing: ["mode=seed", "podcasts=2", "folders=0", "organized=0"]
         )
 
-        let createFolder = app.buttons["Create New Folder"]
-        XCTAssertTrue(createFolder.waitForExistence(timeout: 15), "Library did not expose Create New Folder")
-        createFolder.tap()
-
-        for title in ["Organization Podcast One", "Organization Podcast Two"] {
-            let pickerRow = app.buttons.matching(
-                NSPredicate(format: "label CONTAINS %@ AND label CONTAINS 'Not Selected'", title)
-            ).firstMatch
-            XCTAssertTrue(pickerRow.waitForExistence(timeout: 15), "Folder picker did not show \(title)")
-            pickerRow.tap()
-        }
-
-        let addPodcasts = app.buttons["Add 2 Podcasts"]
-        XCTAssertTrue(addPodcasts.waitForExistence(timeout: 10), "Folder picker did not accept both podcasts")
-        addPodcasts.tap()
+        openFolderNameStep(in: app)
 
         let folderName = app.textFields["Folder name"]
-        XCTAssertTrue(folderName.waitForExistence(timeout: 10), "Folder name field was not shown")
         folderName.typeText("UI Journey Folder")
-        app.buttons["Continue"].tap()
+        dismissKeyboardIntroductionIfNeeded(in: app)
+
+        let continueButton = app.buttons["folderNameContinueButton"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 10), "Folder name step did not expose Continue")
+        continueButton.tap()
 
         let saveFolder = app.buttons["Save Folder"]
         XCTAssertTrue(saveFolder.waitForExistence(timeout: 10), "Folder color step was not shown")
@@ -393,6 +489,34 @@ final class SmokeUITests: PocketCastsUITestCase {
                 "Restored folder did not contain \(title)"
             )
         }
+    }
+
+    func testFolderNameContinueButtonHasStableIdentifier() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "folderOrganizationPersistence"
+        ])
+        waitForTabBar(in: app)
+        waitForScenario(
+            "folderOrganizationPersistence",
+            in: app,
+            containing: ["mode=seed", "podcasts=2", "folders=0", "organized=0"]
+        )
+        openFolderNameStep(in: app)
+
+        app.textFields["Folder name"].typeText("Stable Identifier Folder")
+
+        let continueButtons = app.buttons.matching(identifier: "folderNameContinueButton")
+        XCTAssertEqual(continueButtons.count, 1, "Folder name step must expose one stable Continue action")
+        dismissKeyboardIntroductionIfNeeded(in: app)
+
+        let continueButton = continueButtons.firstMatch
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 10), "Stable Continue action disappeared")
+        continueButton.tap()
+
+        XCTAssertTrue(
+            app.buttons["Save Folder"].waitForExistence(timeout: 10),
+            "Stable Continue action did not advance to folder color selection"
+        )
     }
 
     /// Posts the same queue/playback notifications that drive FileSyncCoordinator,

@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 # Verifies that every expected test bundle ran at least one non-skipped test.
+#
+# Parses the JSON from `xcrun xcresulttool get test-results tests`, keying off the
+# `nodeType` ("Unit test bundle" / "Test Case") and `result` ("Skipped") strings.
+# That shape is an unversioned xcresulttool detail that Apple has changed across
+# Xcode releases; validated against the Xcode pinned by scripts/ci/select-xcode.sh.
+# On a format change this fails closed (reports targets as not executed) rather
+# than hiding a real gap — if a green test run trips it, re-check the JSON shape.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

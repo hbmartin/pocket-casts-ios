@@ -181,6 +181,12 @@ func mediaItemArtworkHandlers(image: UIImage) {
 
     // ok: pocketcasts.media-item-artwork-handler-must-be-sendable
     _ = MPMediaItemArtwork(boundsSize: image.size, requestHandler: { @Sendable _ in image })
+
+    // ruleid: pocketcasts.media-item-artwork-handler-must-be-sendable
+    _ = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+
+    // ok: pocketcasts.media-item-artwork-handler-must-be-sendable
+    _ = MPMediaItemArtwork(boundsSize: image.size) { @Sendable _ in image }
 }
 
 final class AudioSessionObserverFixtures: NSObject {

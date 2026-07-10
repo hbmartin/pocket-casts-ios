@@ -27,6 +27,7 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
         #if DEBUG
         UITestScenarioLauncher.publishReadinessMarker(in: window)
         UITestLogCapture.start(in: window)
+        UITestScenarioLauncher.exerciseCannedRefreshIfRequested(in: window)
         MediaConcurrencyUITestHarness.exerciseIfRequested()
         #endif
 
@@ -87,7 +88,9 @@ enum UITestScenarioLauncher {
 
     private static let scenarioEnvironment = "UI_TEST_SCENARIO"
     private static let launchModeEnvironment = "UI_TEST_SCENARIO_MODE"
+    private static let cannedRefreshEnvironment = "POCKET_CASTS_UI_TEST_EXERCISE_CANNED_REFRESH"
     private static let readyIdentifier = "uiTestAppReady"
+    private static weak var cannedRefreshWindow: UIWindow?
 
     private static var requestedScenario: Scenario? {
         ProcessInfo.processInfo.environment[scenarioEnvironment].flatMap(Scenario.init(rawValue:))
@@ -126,14 +129,15 @@ enum UITestScenarioLauncher {
 
         let dataManager = DataManager.sharedManager
         let podcasts = dataManager.allPodcasts(includeUnsubscribed: true)
-        let episodeCount = podcasts.reduce(into: 0) { count, podcast in
-            count += dataManager.allEpisodesForPodcast(id: podcast.id).count
+        let episodes = podcasts.flatMap { podcast in
+            dataManager.allEpisodesForPodcast(id: podcast.id)
         }
         let value = [
             scenario.rawValue,
             "mode=\(launchMode.rawValue)",
             "podcasts=\(podcasts.count)",
-            "episodes=\(episodeCount)",
+            "episodes=\(episodes.count)",
+            "downloaded=\(episodes.filter { $0.episodeStatus == DownloadStatus.downloaded.rawValue }.count)",
             "upNext=\(dataManager.playlistEpisodeCount())",
             "folders=\(dataManager.allFolders().count)",
             "organized=\(podcasts.filter { $0.folderUuid != nil }.count)",
@@ -141,6 +145,44 @@ enum UITestScenarioLauncher {
             "network=canned"
         ].joined(separator: "|")
         UITestAccessibilityMarker.add(identifier: readyIdentifier, value: value, to: window)
+    }
+
+    static func exerciseCannedRefreshIfRequested(in window: UIWindow) {
+        guard requestedScenario != nil,
+              ProcessInfo.processInfo.environment[cannedRefreshEnvironment] == "1" else { return }
+
+        cannedRefreshWindow = window
+        RefreshManager.shared.refreshPodcasts { result in
+            let resultName: String
+            switch result {
+            case .newData:
+                resultName = "newData"
+            case .noData:
+                resultName = "noData"
+            case .failed:
+                resultName = "failed"
+            }
+
+            Task { @MainActor in
+                publishCannedRefreshResult(resultName)
+            }
+        }
+    }
+
+    private static func publishCannedRefreshResult(_ result: String) {
+        guard let window = cannedRefreshWindow else { return }
+
+        let dataManager = DataManager.sharedManager
+        let episodes = dataManager.allPodcasts(includeUnsubscribed: true).flatMap { podcast in
+            dataManager.allEpisodesForPodcast(id: podcast.id)
+        }
+        let value = [
+            "result=\(result)",
+            "episodes=\(episodes.count)",
+            "archived=\(episodes.filter(\.archived).count)",
+            "downloaded=\(episodes.filter { $0.episodeStatus == DownloadStatus.downloaded.rawValue }.count)"
+        ].joined(separator: "|")
+        UITestAccessibilityMarker.add(identifier: "uiTestCannedRefreshCompleted", value: value, to: window)
     }
 
     private static func configureStableUserState() {
@@ -220,13 +262,69 @@ enum UITestScenarioLauncher {
             "Queue Episode Two",
             "Spare Episode Three"
         ].enumerated() {
-            let (episode, _) = makeEpisode(
+            var (episode, _) = makeEpisode(
                 uuid: "ui-test-playback-episode-\(index + 1)",
                 title: title,
                 position: Int32(index),
                 podcast: podcast
             )
+            if index == 0 {
+                episode.downloadUrl = "https://ui-test.pocketcasts.invalid/\(episode.uuid).wav"
+                installDownloadedAudioFixture(for: episode)
+                episode.episodeStatus = DownloadStatus.downloaded.rawValue
+                episode.duration = 180
+            }
             dataManager.save(episode: episode)
+        }
+    }
+
+    private static func installDownloadedAudioFixture(for episode: Episode) {
+        let destinationURL = URL(fileURLWithPath: DownloadManager.shared.pathForEpisode(episode))
+        let fileManager = FileManager.default
+
+        do {
+            try fileManager.createDirectory(
+                at: destinationURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+            try silentWaveAudio().write(to: destinationURL, options: .atomic)
+        } catch {
+            preconditionFailure("Unable to install the UI test audio fixture: \(error)")
+        }
+    }
+
+    private static func silentWaveAudio() -> Data {
+        let sampleRate: UInt32 = 8_000
+        let duration: UInt32 = 180
+        let dataSize = sampleRate * duration
+
+        var data = Data()
+        data.append(contentsOf: "RIFF".utf8)
+        appendLittleEndian(36 + dataSize, to: &data)
+        data.append(contentsOf: "WAVEfmt ".utf8)
+        appendLittleEndian(UInt32(16), to: &data)
+        appendLittleEndian(UInt16(1), to: &data)
+        appendLittleEndian(UInt16(1), to: &data)
+        appendLittleEndian(sampleRate, to: &data)
+        appendLittleEndian(sampleRate, to: &data)
+        appendLittleEndian(UInt16(1), to: &data)
+        appendLittleEndian(UInt16(8), to: &data)
+        data.append(contentsOf: "data".utf8)
+        appendLittleEndian(dataSize, to: &data)
+        data.append(contentsOf: repeatElement(UInt8(128), count: Int(dataSize)))
+        return data
+    }
+
+    private static func appendLittleEndian<Integer: FixedWidthInteger>(
+        _ value: Integer,
+        to data: inout Data
+    ) {
+        var value = value.littleEndian
+        withUnsafeBytes(of: &value) { bytes in
+            data.append(contentsOf: bytes)
         }
     }
 
@@ -316,6 +414,12 @@ nonisolated final class UITestCannedURLProtocol: URLProtocol {
         case "mp3", "m4a":
             responseBody = Data("ID3UI-TEST-AUDIO".utf8)
             contentType = "audio/mpeg"
+        case _ where url.path.hasSuffix("/user/update"):
+            // A successful refresh with no result leaves seeded episodes intact.
+            // An empty result object is interpreted as an empty feed and archives them.
+            responseBody = Data("{\"status\":\"ok\",\"result\":null}".utf8)
+            contentType = "application/json"
+            FileLog.shared.addMessage("UI test canned /user/update response served with result=null")
         default:
             responseBody = Data("{\"status\":\"ok\",\"result\":{}}".utf8)
             contentType = "application/json"
@@ -441,12 +545,10 @@ enum MediaConcurrencyUITestHarness {
 
     private static func postAudioSessionNotificationsOffMain() {
         let notificationCenter = NotificationCenter.default
-        Task {
-            await Task.detached {
-                notificationCenter.post(name: AVAudioSession.routeChangeNotification, object: nil)
-                notificationCenter.post(name: AVAudioSession.interruptionNotification, object: nil)
-                notificationCenter.post(name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
-            }.value
+        Task.detached {
+            notificationCenter.post(name: AVAudioSession.routeChangeNotification, object: nil)
+            notificationCenter.post(name: AVAudioSession.interruptionNotification, object: nil)
+            notificationCenter.post(name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
         }
     }
 
