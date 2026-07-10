@@ -3,6 +3,7 @@ import Foundation
 @preconcurrency import Fingerprint
 import PocketCastsDataModel
 import PocketCastsUtils
+import Synchronization
 
 nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
@@ -1382,16 +1383,15 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
 
 // MARK: - Cancellation
 
-nonisolated private final class CancellationFlag: @unchecked Sendable {
-    private let lock = NSLock()
-    private var cancelled = false
+nonisolated private final class CancellationFlag: Sendable {
+    private let cancelled = Mutex(false)
 
     var isCancelled: Bool {
-        lock.withLock { cancelled }
+        cancelled.withLock { $0 }
     }
 
     func cancel() {
-        lock.withLock { cancelled = true }
+        cancelled.withLock { $0 = true }
     }
 }
 

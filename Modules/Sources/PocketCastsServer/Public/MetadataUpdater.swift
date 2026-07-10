@@ -1,8 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-// @unchecked Sendable: the only stored property is an OperationQueue (thread-safe).
-public final class MetadataUpdater: @unchecked Sendable {
+public final class MetadataUpdater: Sendable {
     public static let shared = MetadataUpdater()
 
     private let operationQueue = OperationQueue()

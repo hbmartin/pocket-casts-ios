@@ -3,8 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-// @unchecked Sendable: the only stored property is an OperationQueue (thread-safe).
-public final class RefreshManager: @unchecked Sendable {
+public final class RefreshManager: Sendable {
     public static let shared = RefreshManager()
 
     let refreshQueue: OperationQueue = {

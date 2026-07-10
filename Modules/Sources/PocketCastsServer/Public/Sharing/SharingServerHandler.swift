@@ -1,8 +1,7 @@
 import CryptoKit
 import Foundation
 
-// @unchecked Sendable: stateless besides constants.
-public final class SharingServerHandler: @unchecked Sendable {
+public final class SharingServerHandler: Sendable {
     private static let timeout: TimeInterval = 20
 
     public static let shared = SharingServerHandler()

@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import PocketCastsServer
+import Synchronization
 import UIKit
 
 @testable import podcasts
@@ -56,12 +57,11 @@ final class ThemingMock: Theming {
 
 /// Test-side copy of `Theme`'s private `ThemeSnapshotBox`: a minimal lock-guarded box for
 /// mirroring the active theme to nonisolated readers.
-nonisolated private final class MockThemeSnapshotBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var storage: ThemeType = .light
+nonisolated private final class MockThemeSnapshotBox: Sendable {
+    private let storage = Mutex<ThemeType>(.light)
 
     var value: ThemeType {
-        get { lock.withLock { storage } }
-        set { lock.withLock { storage = newValue } }
+        get { storage.withLock { $0 } }
+        set { storage.withLock { $0 = newValue } }
     }
 }

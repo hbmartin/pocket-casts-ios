@@ -1,8 +1,6 @@
 import Foundation
 
-// @unchecked Sendable: every formatter is configured in its property initializer and never
-// mutated afterwards; Foundation formatters are safe for concurrent reads.
-public final class DateFormatHelper: NSObject, @unchecked Sendable {
+public final class DateFormatHelper: NSObject, Sendable {
     public static let sharedHelper = DateFormatHelper()
 
     private let shortLocalizedFormatter: DateFormatter = {
@@ -12,7 +10,7 @@ public final class DateFormatHelper: NSObject, @unchecked Sendable {
         return formatter
     }()
 
-    public let justDayFormatter: DateFormatter = {
+    private let justDayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("EEEE")
 
@@ -26,7 +24,7 @@ public final class DateFormatHelper: NSObject, @unchecked Sendable {
         return formatter
     }()
 
-    public let monthYearFormatter: DateFormatter = {
+    private let monthYearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
 
@@ -105,13 +103,23 @@ public final class DateFormatHelper: NSObject, @unchecked Sendable {
         return monthDayFormatter.string(from: date)
     }
 
-    // MARK: - Tiny dd MMM
+    // MARK: - Day name EEEE
 
-    public let tinyLocalizedFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM"
-        return formatter
-    }()
+    public func justDayFormat(_ date: Date?) -> String {
+        guard let date else { return "" }
+
+        return justDayFormatter.string(from: date)
+    }
+
+    // MARK: - MMMM yyyy
+
+    public func monthYearFormat(_ date: Date?) -> String {
+        guard let date else { return "" }
+
+        return monthYearFormatter.string(from: date)
+    }
+
+    // MARK: - Tiny dd MMM
 
     public func tinyLocalizedFormat(_ date: Date?) -> String {
         guard let date else { return "" }
@@ -127,13 +135,19 @@ public final class DateFormatHelper: NSObject, @unchecked Sendable {
 
     // MARK: - JSON
 
-    public let localTimeJsonDateFormatter: DateFormatter = {
+    private let localTimeJsonDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         formatter.locale = Locale(identifier: "en_US_POSIX")
 
         return formatter
     }()
+
+    public func localTimeJsonFormat(_ date: Date?) -> String {
+        guard let date else { return "" }
+
+        return localTimeJsonDateFormatter.string(from: date)
+    }
 
     private let jsonDateFormatter: DateFormatter = {
         let formatter = DateFormatter()

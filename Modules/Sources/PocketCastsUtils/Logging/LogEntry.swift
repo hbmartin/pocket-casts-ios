@@ -8,13 +8,7 @@ struct LogEntry {
     let timestamp: Date
 
     var formattedForLog: String {
-        "\(formatter.string(from: timestamp)) \(message)"
-    }
-
-    // MARK: - Private Properties
-
-    private var formatter: DateFormatter {
-        DateFormatHelper.sharedHelper.localTimeJsonDateFormatter
+        "\(DateFormatHelper.sharedHelper.localTimeJsonFormat(timestamp)) \(message)"
     }
 
     // MARK: - Initializers

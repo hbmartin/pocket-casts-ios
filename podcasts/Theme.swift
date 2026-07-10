@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 import Combine
+import Synchronization
 
 nonisolated extension ThemeType: AnalyticsDescribable {
     static var displayOrder: [ThemeType] {
@@ -319,12 +320,11 @@ class Theme: ObservableObject {
 }
 
 /// A minimal lock-guarded box for mirroring the active theme to nonisolated readers.
-nonisolated private final class ThemeSnapshotBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var storage: Theme.ThemeType = .light
+nonisolated private final class ThemeSnapshotBox: Sendable {
+    private let storage = Mutex<Theme.ThemeType>(.light)
 
     var value: Theme.ThemeType {
-        get { lock.withLock { storage } }
-        set { lock.withLock { storage = newValue } }
+        get { storage.withLock { $0 } }
+        set { storage.withLock { $0 = newValue } }
     }
 }

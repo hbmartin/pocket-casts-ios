@@ -53,8 +53,7 @@ nonisolated extension Podcast {
         } else if expectedDate < now, expectedDate >= now.addingTimeInterval(-7.days) {
             return L10n.podcastSoon
         } else if expectedDate < now.addingTimeInterval(6.days) {
-            let dateFormatter = DateFormatHelper.sharedHelper.justDayFormatter
-            return dateFormatter.string(from: expectedDate).localizedCapitalized
+            return DateFormatHelper.sharedHelper.justDayFormat(expectedDate).localizedCapitalized
         } else {
             return DateFormatHelper.sharedHelper.tinyLocalizedFormat(expectedDate)
         }
