@@ -71,17 +71,6 @@ public final class MainServerHandler: @unchecked Sendable {
         var c: String?
     }
 
-    private struct ExportPodcastsRequest: BaseRequest {
-        var uuids: [String]?
-        var device: String?
-        var m: String?
-        var av: String?
-        var l: String?
-        var c: String?
-        var dt: String?
-        var v: String?
-    }
-
     private struct UploadOpmlRequest: BaseRequest {
         var urls: [String]?
         var pollUuids: [String]?
@@ -128,39 +117,6 @@ public final class MainServerHandler: @unchecked Sendable {
                 completion(refreshResponse)
             } catch {
                 completion(ImportOpmlResponse.failedResponse())
-            }
-        }.resume()
-    }
-
-    public func exportPodcasts(uuids: [String], completion: @escaping @Sendable (ExportPodcastsResponse?) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(ExportPodcastsResponse.failedResponse())
-            return
-        }
-
-        var baseRequest: BaseRequest = ExportPodcastsRequest()
-        addStandardParams(baseRequest: &baseRequest, uniqueId: uniqueId)
-
-        var exportRequest = baseRequest as! ExportPodcastsRequest
-        exportRequest.uuids = uuids
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "import/export_feed_urls")
-        guard let request = ServerHelper.createJsonRequest(url: url, params: exportRequest, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData) else {
-            completion(ExportPodcastsResponse.failedResponse())
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            guard let data, error == nil else {
-                completion(ExportPodcastsResponse.failedResponse())
-                return
-            }
-
-            do {
-                let refreshResponse = try JSONDecoder().decode(ExportPodcastsResponse.self, from: data)
-                completion(refreshResponse)
-            } catch {
-                completion(ExportPodcastsResponse.failedResponse())
             }
         }.resume()
     }

@@ -2614,6 +2614,30 @@
 /* Footer text explaining where local file-sync data is stored. */
 "file_sync_folder_explanation" = "Pocket Casts stores sync logs and uploaded files in this folder. You can use iCloud Drive for automatic Apple-device sync or choose another Files location.";
 
+/* Section header for the download-mirroring settings in file sync. */
+"file_sync_mirror_header" = "Download Mirroring";
+
+/* Toggle that mirrors downloaded episode audio into the sync folder. */
+"file_sync_mirror_toggle" = "Mirror Downloads";
+
+/* Explanation of the download-mirroring toggle. */
+"file_sync_mirror_explanation" = "Copies downloaded episode audio into the sync folder so your other devices can fetch it without re-downloading from the internet.";
+
+/* Toggle that restricts pulling mirrored audio to unmetered connections. */
+"file_sync_mirror_wifi_only" = "Pull Audio on Wi-Fi Only";
+
+/* Destructive button that resets file-sync state and re-seeds the library. */
+"file_sync_action_reset" = "Reset & Re-bootstrap";
+
+/* Explanation of the reset & re-bootstrap button. */
+"file_sync_reset_explanation" = "Forgets this device's sync progress and re-seeds your full library into the sync folder. Use this if your devices seem out of step.";
+
+/* Title of the confirmation shown before resetting file-sync state. */
+"file_sync_reset_confirm_title" = "Reset Sync State?";
+
+/* Message of the confirmation shown before resetting file-sync state. */
+"file_sync_reset_confirm_message" = "This re-seeds your entire library into the sync folder and replays history from your other devices. It can take a while on large libraries.";
+
 /* Label for the default iCloud Drive file-sync folder. */
 "file_sync_folder_icloud" = "iCloud Drive";
 
@@ -2715,6 +2739,48 @@
 
 /* Option to not move forward with a prompt to apply to all podcasts. */
 "settings_general_no_thanks" = "No thanks";
+
+/* Title for the settings screen (and row) for backing up and restoring the library. */
+"settings_backup_restore" = "Backup & Restore";
+
+/* Button that saves a backup of the library to a user-chosen location. */
+"settings_backup_now" = "Back Up Library";
+
+/* Explanation under the back up button. */
+"settings_backup_footer" = "Saves your podcasts, episodes, playback history and settings to a folder you choose. Downloaded audio files aren't included.";
+
+/* Button that restores the library from a previously saved backup. */
+"settings_restore" = "Restore From Backup";
+
+/* Explanation under the restore button. */
+"settings_restore_footer" = "Replaces this device's library and settings with a previously saved backup.";
+
+/* Title of the confirmation shown before restoring from a backup. */
+"settings_restore_confirm_title" = "Restore From Backup?";
+
+/* Message of the confirmation shown before restoring from a backup. */
+"settings_restore_confirm_message" = "This replaces your current library and settings with the backup. This can't be undone.";
+
+/* Title of the alert shown when a restore finishes successfully. */
+"settings_restore_done_title" = "Restore Complete";
+
+/* Message of the alert shown when a restore finishes successfully. */
+"settings_restore_done_message" = "Your library has been restored. Restart Pocket Casts to make sure everything is refreshed.";
+
+/* Title of the alert shown when creating a backup fails. */
+"settings_backup_failed" = "Backup Failed";
+
+/* Title of the alert shown when restoring from a backup fails. */
+"settings_restore_failed" = "Restore Failed";
+
+/* Message of the alert shown when the chosen folder does not contain a valid backup. */
+"settings_restore_invalid_backup" = "The selected folder doesn't contain a Pocket Casts backup.";
+
+/* Setting toggle that makes newly added podcasts fetch and parse their feeds on this device instead of via the Pocket Casts servers. */
+"settings_general_local_feed_ingest" = "On-Device Feed Refresh";
+
+/* Subtitle explaining the on-device feed refresh toggle. */
+"settings_general_local_feed_ingest_subtitle" = "New podcasts added by URL or OPML import are fetched and refreshed directly from their feeds on this device, without Pocket Casts servers. They won't sync with your account.";
 
 /* Setting toggle to enable the app to open the links in an external browser. */
 "settings_general_open_in_browser" = "Open Links In Browser";

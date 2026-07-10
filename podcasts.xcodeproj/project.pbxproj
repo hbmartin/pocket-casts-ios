@@ -797,6 +797,7 @@
 		BDF9DDDA1B8AD29C00E77B35 /* TimeSliderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF9DDD71B8AD29C00E77B35 /* TimeSliderDelegate.swift */; };
 		BDF9DDDB1B8AD29C00E77B35 /* TimeSliderLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF9DDD81B8AD29C00E77B35 /* TimeSliderLayer.swift */; };
 		BDFB26E71CD08B3C00787B7E /* ImportExportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFB26E51CD08B3C00787B7E /* ImportExportViewController.swift */; };
+		15414E5F10FC4B5FAB156EE4 /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576518C16D7249549E38885E /* BackupRestoreView.swift */; };
 		BDFB26E81CD08B3C00787B7E /* ImportExportViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = BDFB26E61CD08B3C00787B7E /* ImportExportViewController.xib */; };
 		BDFB53C72362A2570001806E /* NowPlayingPlayerItemViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFB53C52362A2570001806E /* NowPlayingPlayerItemViewController.swift */; };
 		BDFB53C82362A2570001806E /* NowPlayingPlayerItemViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = BDFB53C62362A2570001806E /* NowPlayingPlayerItemViewController.xib */; };
@@ -1906,6 +1907,7 @@
 		BDF9DDD71B8AD29C00E77B35 /* TimeSliderDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeSliderDelegate.swift; sourceTree = "<group>"; };
 		BDF9DDD81B8AD29C00E77B35 /* TimeSliderLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeSliderLayer.swift; sourceTree = "<group>"; };
 		BDFB26E51CD08B3C00787B7E /* ImportExportViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImportExportViewController.swift; sourceTree = "<group>"; };
+		576518C16D7249549E38885E /* BackupRestoreView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BackupRestoreView.swift; path = "Settings/BackupRestore/BackupRestoreView.swift"; sourceTree = "<group>"; };
 		BDFB26E61CD08B3C00787B7E /* ImportExportViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImportExportViewController.xib; sourceTree = "<group>"; };
 		BDFB53C52362A2570001806E /* NowPlayingPlayerItemViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingPlayerItemViewController.swift; sourceTree = "<group>"; };
 		BDFB53C62362A2570001806E /* NowPlayingPlayerItemViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = NowPlayingPlayerItemViewController.xib; sourceTree = "<group>"; };
@@ -3643,6 +3645,7 @@
 				BD03DF861CACD9AB005A127E /* DownloadedFilesViewController.swift */,
 				BD03DF871CACD9AB005A127E /* DownloadedFilesViewController.xib */,
 				BDFB26E51CD08B3C00787B7E /* ImportExportViewController.swift */,
+				576518C16D7249549E38885E /* BackupRestoreView.swift */,
 				BDFB26E61CD08B3C00787B7E /* ImportExportViewController.xib */,
 				BDEC9AB42051197900088D76 /* BadgeSettingsViewController.swift */,
 				BD108DFA182B0B90001F7B71 /* BadgeSettingsViewController.xib */,
@@ -6159,6 +6162,7 @@
 				FF7F89ED2C2AF6DE00FC0ED5 /* TranscriptManager.swift in Sources */,
 				BD2F3BA62366C17500416633 /* PlayerContainerViewController+Scroll.swift in Sources */,
 				BDFB26E71CD08B3C00787B7E /* ImportExportViewController.swift in Sources */,
+				15414E5F10FC4B5FAB156EE4 /* BackupRestoreView.swift in Sources */,
 				BD14E793214642B80082FD5F /* VideoViewController.swift in Sources */,
 				BDBE35DD211D735E00C334B8 /* PlayerCell.swift in Sources */,
 				BD9553C6237A7F9E002CB19A /* ShelfActionsViewController+Table.swift in Sources */,

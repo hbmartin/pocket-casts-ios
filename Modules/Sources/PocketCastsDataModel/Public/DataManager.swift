@@ -329,6 +329,13 @@ public class DataManager {
         podcastManager.find(uuid: uuid, includeUnsubscribed: includeUnsubscribed, dbQueue: dbQueue)
     }
 
+    /// Finds a podcast (subscribed or not) by its feed URL, tolerating trivial URL
+    /// differences. Used to dedup add-by-feed subscriptions against existing rows,
+    /// whichever refresh source owns them.
+    public func findPodcast(feedURL: String) -> Podcast? {
+        podcastManager.find(feedURL: feedURL, dbQueue: dbQueue)
+    }
+
     public func allUnsubscribedPodcastUuids() -> [String] {
         podcastManager.allUnsubscribedPodcastUuids(dbQueue: dbQueue)
     }
@@ -557,8 +564,15 @@ public class DataManager {
         episodeManager.findLatestEpisodes(podcast: podcast, limit: limit, dbQueue: dbQueue)
     }
 
+    /// Feeds account sync: local-feed podcasts are excluded so their hash UUIDs never
+    /// reach the Pocket Casts servers.
     public func unsyncedEpisodes(limit: Int) -> [Episode] {
-        episodeManager.unsyncedEpisodes(limit: limit, dbQueue: dbQueue)
+        episodeManager.unsyncedEpisodes(limit: limit, excludingLocalFeedPodcasts: true, dbQueue: dbQueue)
+    }
+
+    /// Feeds FileSync seeding, where local-feed episodes are exactly the point.
+    public func unsyncedEpisodesIncludingLocalFeed(limit: Int) -> [Episode] {
+        episodeManager.unsyncedEpisodes(limit: limit, excludingLocalFeedPodcasts: false, dbQueue: dbQueue)
     }
 
     public func unsyncedUserEpisodes() -> [UserEpisode] {
@@ -1389,6 +1403,69 @@ extension DataManager {
                 try? fileManager.setAttributes([.protectionKey: FileProtectionType.none], ofItemAtPath: dbPath)
             }
         }
+    }
+}
+
+// MARK: - GRDB: Backup / Restore
+
+extension DataManager {
+    /// Writes a consistent snapshot of the live database (WAL included) to `path`,
+    /// using SQLite's online-backup API. The foundation of user-facing library backup.
+    public func backupDatabase(to path: String) throws {
+        let destination = try DatabaseQueue(path: path)
+        defer { try? destination.close() }
+        try dbQueue.dbPool.backup(to: destination)
+    }
+
+    /// User-facing restore: replaces the current library with the database staged at
+    /// `path` (by default `pathToDbBackup()`), **including `SJEpisode`** — unlike
+    /// `copyAllData()`, which is corruption-recovery-specific and deliberately skips
+    /// episodes. Each table present in the backup is cleared and repopulated, and
+    /// in-memory caches are rebuilt. Returns false when the backup can't be opened.
+    @discardableResult
+    public func restoreAllData(fromPath path: String = DataManager.pathToDbBackup()) -> Bool {
+        guard FileManager.default.fileExists(atPath: path),
+              let sourceDbQueue = try? DatabaseQueue(path: path) else {
+            return false
+        }
+        defer { try? sourceDbQueue.close() }
+
+        guard let tableNames: [String] = try? sourceDbQueue.read({ db in
+            try String.fetchAll(db,
+                sql: """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+                """)
+        }) else {
+            return false
+        }
+
+        let destinationDbQueue = dbQueue.dbPool
+        for tableName in tableNames {
+            try? sourceDbQueue.read { sourceDb in
+                let previewCursor = try Row.fetchCursor(sourceDb, sql: "SELECT * FROM \(tableName.quotedDatabaseIdentifier)")
+                guard let firstRow = try previewCursor.next() else { return }
+                let columnNames = firstRow.columnNames
+
+                let rowCursor = try Row.fetchCursor(sourceDb, sql: "SELECT * FROM \(tableName.quotedDatabaseIdentifier)")
+
+                let columnsList = columnNames.map { $0.quotedDatabaseIdentifier }.joined(separator: ", ")
+                let placeholders = Array(repeating: "?", count: columnNames.count).joined(separator: ", ")
+                let insertSQL = "INSERT OR REPLACE INTO \(tableName.quotedDatabaseIdentifier) (\(columnsList)) VALUES (\(placeholders))"
+
+                try? destinationDbQueue.write { destDb in
+                    // restore replaces, it doesn't merge — but only tables the backup contains
+                    try? destDb.execute(sql: "DELETE FROM \(tableName.quotedDatabaseIdentifier)")
+                    while let row = try rowCursor.next() {
+                        let values: [DatabaseValueConvertible?] = columnNames.map { row[$0] }
+                        try? destDb.execute(sql: insertSQL, arguments: StatementArguments(values))
+                    }
+                }
+            }
+        }
+
+        podcastManager.cachePodcasts(dbQueue: dbQueue)
+        return true
     }
 }
 

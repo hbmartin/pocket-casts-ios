@@ -112,6 +112,21 @@ nonisolated class Settings: NSObject {
         trackValueToggled(.settingsAutoDownloadUpNextToggled, enabled: download)
     }
 
+    // MARK: - On-device feed refresh (local-first ingest)
+
+    private static let localFeedIngestEnabledKey = "SJLocalFeedIngestEnabled"
+
+    /// When on, new subscriptions from add-by-URL and OPML import are ingested by
+    /// fetching and parsing the feed on device (no Pocket Casts servers) and refresh
+    /// locally from then on. Existing podcasts are unaffected.
+    class func localFeedIngestEnabled() -> Bool {
+        UserDefaults.standard.bool(forKey: Settings.localFeedIngestEnabledKey)
+    }
+
+    class func setLocalFeedIngestEnabled(_ enabled: Bool) {
+        UserDefaults.standard.set(enabled, forKey: Settings.localFeedIngestEnabledKey)
+    }
+
     // MARK: - Mobile Data
 
     static let allowCellularDownloadKey = "SJUserCellular"

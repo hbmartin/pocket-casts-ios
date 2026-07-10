@@ -7,7 +7,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
-        case customFiles, importSteps, opml
+        case customFiles, importSteps, opml, backupRestore
         case fileSync
         case about, privacy
         case upNextHistory, foldersHistory
@@ -44,6 +44,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.welcomeImportButton, UIImage(named: "settings_import_podcasts"))
             case .opml:
                 return (L10n.exportPodcastsOption, UIImage(named: "settings_export_podcasts"))
+            case .backupRestore:
+                return (L10n.settingsBackupRestore, UIImage(named: "settings_storage"))
             case .about:
                 return (L10n.settingsAbout, UIImage(named: "settings_about"))
             case .siriShortcuts:
@@ -84,7 +86,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
             [.storageAndDataUse, .siriShortcuts, .headphoneControls, .customFiles],
-            [.importSteps, .opml],
+            [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
         ]
@@ -166,6 +168,10 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             navigationController?.present(controller, animated: true)
         case .opml:
             navigationController?.pushViewController(ImportExportViewController(), animated: true)
+        case .backupRestore:
+            let controller = BackupRestoreViewController()
+            controller.title = L10n.settingsBackupRestore
+            navigationController?.pushViewController(controller, animated: true)
         case .about:
             Analytics.track(.settingsAboutShown)
 

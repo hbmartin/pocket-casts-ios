@@ -380,7 +380,10 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .generatedChapters:
             BuildEnvironment.current == .debug
         case .fileSync:
-            BuildEnvironment.current == .debug
+            // Promoted past debug-only: on for debug and TestFlight builds by default;
+            // App Store builds are gated by the "file_sync" remote key (which resolves
+            // via the default lowerSnakeCased remoteKey and overrides this fallback).
+            BuildEnvironment.current != .appStore
         }
     }
 

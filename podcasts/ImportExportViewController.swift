@@ -4,8 +4,6 @@ import PocketCastsUtils
 import UIKit
 
 class ImportExportViewController: PCViewController, @preconcurrency UIDocumentInteractionControllerDelegate {
-    private var loadingAlert: ShiftyLoadingAlert?
-
     private var opmlShareController: UIDocumentInteractionController?
 
     @IBOutlet var importPocdcastsTitle: UILabel! {
@@ -70,41 +68,27 @@ class ImportExportViewController: PCViewController, @preconcurrency UIDocumentIn
     @IBOutlet var mainScrollView: UIScrollView!
 
     @IBAction func exportPodcasts(_ sender: AnyObject) {
-        loadingAlert = ShiftyLoadingAlert(title: L10n.settingsExportOpml)
-        loadingAlert?.showAlert(self, hasProgress: false, completion: {
-            self.startExport()
-        })
-
         Analytics.track(.settingsImportExportTapped)
+        startExport()
     }
 
+    /// Builds the OPML entirely from local rows — no server round trip. Podcasts whose
+    /// rows never stored a feed URL (legacy server-sourced rows) are skipped.
     private func startExport() {
         Analytics.track(.settingsImportExportStarted)
-        let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
 
-        let uuids = podcasts.map(\.uuid)
-
-        MainServerHandler.shared.exportPodcasts(uuids: uuids) { exportResponse in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.loadingAlert?.hideAlert(false)
-                self.loadingAlert = nil
-
-                guard let exportResponse, exportResponse.success(), let mapping = exportResponse.result else {
-                    self.presentError()
-                    Analytics.track(.settingsImportExportFailed)
-                    return
-                }
-
-                self.performOpmlExport(podcasts, mappingDictionary: mapping)
+        let feeds = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
+            .compactMap { podcast -> OpmlFeed? in
+                guard let url = podcast.podcastUrl, !url.isEmpty else { return nil }
+                return OpmlFeed(title: podcast.title ?? "", url: url)
             }
-        }
-    }
 
-    private func performOpmlExport(_ podcasts: [Podcast], mappingDictionary: [String: String]) {
-        let feeds = podcasts.map {
-            OpmlFeed(title: $0.title ?? "", url: mappingDictionary[$0.uuid] ?? "")
+        guard !feeds.isEmpty else {
+            presentError()
+            Analytics.track(.settingsImportExportFailed)
+            return
         }
+
         shareOpmlDocument(OpmlDocument.xmlString(feeds: feeds))
         Analytics.track(.settingsImportExportFinished)
     }

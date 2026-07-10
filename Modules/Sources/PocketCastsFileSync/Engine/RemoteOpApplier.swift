@@ -62,7 +62,9 @@ struct RemoteOpApplier {
         }
 
         guard item.hasSubscribed, item.subscribed.value else { return }
-        let backfilled = await delegate?.backfillPodcast(uuid: uuid) ?? false
+        let backfilled = await delegate?.backfillPodcast(
+            uuid: uuid,
+            feedURL: item.feedURL.isEmpty ? nil : item.feedURL) ?? false
         DataManager.withFileSyncApplySuppression {
             if backfilled, let added = dataManager.findPodcast(uuid: uuid, includeUnsubscribed: true) {
                 var updated = RecordConverters.apply(item, to: added)

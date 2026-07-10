@@ -21,6 +21,9 @@ public actor FileSyncManager {
         static let enabled = "FileSync.enabled"
         static let folderKind = "FileSync.folderKind"
         static let bookmarkData = "FileSync.rootBookmark"
+        static let mirrorEnabled = "FileSync.mirrorEnabled"
+        static let mirrorWifiOnly = "FileSync.mirrorWifiOnly"
+        static let mirrorMaxBytes = "FileSync.mirrorMaxBytes"
     }
 
     private let dataManager: DataManager
@@ -28,8 +31,12 @@ public actor FileSyncManager {
     private var folder: (any SyncFolder)?
     private var uploadsScanner: UploadsScanner?
     private var materializer: UploadMaterializer?
+    private var mirrorScanner: PodcastMirrorScanner?
+    private var mirrorMaterializer: PodcastMirrorMaterializer?
     private var isSupportedFile: @Sendable (String) -> Bool = { _ in false }
     private var localPathResolver: @Sendable (UserEpisode) -> String = { _ in "" }
+    private var episodeLocalPathResolver: @Sendable (Episode) -> String = { _ in "" }
+    private var isUnmeteredConnection: @Sendable () -> Bool = { false }
     private var onUploadsChanged: (@Sendable () -> Void)?
     private var delegate: (any FileSyncDelegate)?
 
@@ -99,11 +106,72 @@ public actor FileSyncManager {
     public func configure(
         isSupportedFile: @escaping @Sendable (String) -> Bool,
         localPathResolver: @escaping @Sendable (UserEpisode) -> String,
+        episodeLocalPathResolver: @escaping @Sendable (Episode) -> String = { _ in "" },
+        isUnmeteredConnection: @escaping @Sendable () -> Bool = { false },
         onUploadsChanged: (@Sendable () -> Void)? = nil
     ) {
         self.isSupportedFile = isSupportedFile
         self.localPathResolver = localPathResolver
+        self.episodeLocalPathResolver = episodeLocalPathResolver
+        self.isUnmeteredConnection = isUnmeteredConnection
         self.onUploadsChanged = onUploadsChanged
+    }
+
+    // MARK: Podcast mirror configuration
+
+    /// Whether downloaded podcast audio is mirrored into (and pulled from) the sync
+    /// folder's `Podcast Mirrors/` area. Off by default: mirrors can be large.
+    public var isMirroringEnabled: Bool {
+        defaults.bool(forKey: DefaultsKey.mirrorEnabled)
+    }
+
+    public func setMirroringEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: DefaultsKey.mirrorEnabled)
+    }
+
+    /// When true (the default), mirrored audio is only pulled from the folder on
+    /// unmetered connections; publishing this device's own downloads is always allowed.
+    public var isMirroringWifiOnly: Bool {
+        defaults.object(forKey: DefaultsKey.mirrorWifiOnly) == nil
+            ? true
+            : defaults.bool(forKey: DefaultsKey.mirrorWifiOnly)
+    }
+
+    public func setMirroringWifiOnly(_ wifiOnly: Bool) {
+        defaults.set(wifiOnly, forKey: DefaultsKey.mirrorWifiOnly)
+    }
+
+    /// Per-sync-pass budget for pulled mirror audio in bytes; 0 = unlimited.
+    public var mirroringMaxBytesPerPass: Int64 {
+        Int64(defaults.integer(forKey: DefaultsKey.mirrorMaxBytes))
+    }
+
+    public func setMirroringMaxBytesPerPass(_ bytes: Int64) {
+        defaults.set(Int(bytes), forKey: DefaultsKey.mirrorMaxBytes)
+    }
+
+    /// Write hook: publishes a just-downloaded episode's audio into the mirror area.
+    /// Cheap no-op when sync or mirroring is off.
+    public func mirrorDownloadedEpisode(episodeUuid: String) async {
+        guard isEnabled, isMirroringEnabled, let mirrorMaterializer else { return }
+        do {
+            _ = try await mirrorMaterializer.mirror(episodeUuid: episodeUuid)
+        } catch {
+            FileLog.shared.addMessage("FileSync mirrors: publish of \(episodeUuid) failed: \(error)")
+        }
+    }
+
+    /// Destructive recovery affordance: forgets everything this device knows about the
+    /// folder's history (cursors and snapshot progress) and re-seeds the full local
+    /// library into the journal, then runs a sync pass. Use when a folder is suspected
+    /// out of step; it converges via the normal union-join merge.
+    public func resetAndRebootstrap() async throws {
+        guard folder != nil else { throw SyncFolderError.ubiquityUnavailable }
+        dataManager.deleteAllFileSyncCursors()
+        uploadManifestState = nil
+        try FileSyncBootstrap(dataManager: dataManager).seedLocalState()
+        FileLog.shared.addMessage("FileSync: reset & re-bootstrap requested")
+        await syncNow()
     }
 
     public func configureDelegate(_ delegate: any FileSyncDelegate) {
@@ -148,6 +216,15 @@ public actor FileSyncManager {
             folder: folder,
             dataManager: dataManager,
             localPathResolver: localPathResolver)
+        let mirrorMaterializer = PodcastMirrorMaterializer(
+            folder: folder,
+            dataManager: dataManager,
+            localPathResolver: episodeLocalPathResolver)
+        self.mirrorMaterializer = mirrorMaterializer
+        self.mirrorScanner = PodcastMirrorScanner(
+            folder: folder,
+            dataManager: dataManager,
+            materializer: mirrorMaterializer)
         uploadManifestState = nil
 
         let firstEnableForFolder = !defaults.bool(forKey: DefaultsKey.enabled)
@@ -188,6 +265,8 @@ public actor FileSyncManager {
         folder = nil
         uploadsScanner = nil
         materializer = nil
+        mirrorScanner = nil
+        mirrorMaterializer = nil
         uploadManifestState = nil
         defaults.set(false, forKey: DefaultsKey.enabled)
         defaults.removeObject(forKey: DefaultsKey.bookmarkData)
@@ -280,6 +359,16 @@ public actor FileSyncManager {
             if scanResult.created + scanResult.adopted + scanResult.moved + scanResult.reset + scanResult.removed > 0 {
                 uploadManifestState = nil
                 onUploadsChanged?()
+            }
+
+            if isMirroringEnabled, let mirrorScanner {
+                let materializeIn = isMirroringWifiOnly ? isUnmeteredConnection() : true
+                let mirrorResult = try await mirrorScanner.scan(
+                    materializeIn: materializeIn,
+                    maxMaterializeBytes: mirroringMaxBytesPerPass)
+                if mirrorResult.materialized > 0 {
+                    onUploadsChanged?()
+                }
             }
 
             let snapshotWriter = SnapshotWriter(folder: folder, dataManager: dataManager, deviceID: deviceID)
