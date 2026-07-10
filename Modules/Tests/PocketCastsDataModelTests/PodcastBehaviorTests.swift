@@ -120,6 +120,7 @@ final class PodcastPersistenceTests: DataManagerTestCase {
             var podcast = Podcast()
             podcast.uuid = UUID().uuidString
             podcast.title = "Returns id"
+            podcast.addedDate = Date()
             XCTAssertEqual(podcast.id, 0, "\(implementationName): a new podcast has no id yet")
 
             let saved = dataManager.save(podcast: podcast)

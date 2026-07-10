@@ -1513,7 +1513,7 @@ rules:
         - "**/semgrep/tests/swift-security-concurrency.swift"
     patterns:
       - pattern-inside: MPMediaItemArtwork(...)
-      - pattern-regex: 'requestHandler:\s*\{(?!\s*@Sendable\b)'
+      - pattern-regex: '(?:requestHandler:\s*\{|\)\s*\{)(?!\s*@Sendable\b)'
 
   - id: pocketcasts.av-audio-session-observer-must-use-main-queue
     severity: ERROR

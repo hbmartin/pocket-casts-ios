@@ -2172,7 +2172,7 @@ final class PlaybackManager {
         }
     }
 
-    private func handleSystemAudioReset(_ notification: Notification) {
+    private func handleSystemAudioReset(_: Notification) {
         if currentEpisode() != nil {
             cleanupCurrentPlayer(permanent: false)
         }

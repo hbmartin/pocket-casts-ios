@@ -32,6 +32,7 @@ struct NameFolderView: View {
                 Text(L10n.continue)
                     .textStyle(RoundedButton())
             }
+            .accessibilityIdentifier("folderNameContinueButton")
         }
         .padding()
         .navigationTitle(L10n.folderNameTitle)

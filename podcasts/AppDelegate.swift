@@ -31,6 +31,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         #if DEBUG
+        // Destructive: when UI_TEST_SCENARIO is set this wipes the shared library,
+        // clears keychain tokens, and signs the user out before seeding fixtures.
+        // It no-ops without that env var, but a DEBUG build launched with it set in
+        // the scheme will lose local data — keep it gated and opt-in.
         UITestScenarioLauncher.prepareIfRequested()
         #endif
 

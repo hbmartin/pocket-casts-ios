@@ -12,6 +12,17 @@ struct ProductionDatabaseMigrationFixtureTests {
 
         #expect(DatabaseHelper.setup(queue: sandbox.databaseQueue, migrations: []))
 
+        // The fixture's INSERTs assume the v73 baked schema. If the baked baseline
+        // ever moves past 73, setup(migrations: []) would create a different schema
+        // and this test would silently stop exercising the 73 -> current migration
+        // path. Assert the starting version so that day fails loudly here instead of
+        // rotting quietly into a vacuous pass.
+        try sandbox.databasePool.read { database in
+            let bakedVersion = try Int.fetchOne(database, sql: "PRAGMA user_version")
+            #expect(bakedVersion == 73)
+            #expect(bakedVersion == Int(DatabaseHelper.baselineSchemaVersion))
+        }
+
         let fixtureURL = try #require(
             Bundle.module.url(forResource: "Fixtures/ProductionDatabases/v73.sql", withExtension: nil)
                 ?? Bundle.module.url(

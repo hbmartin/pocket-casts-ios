@@ -52,6 +52,7 @@ final class PlaybackManagerNotificationTests: XCTestCase {
             notificationCenter.post(name: AVAudioSession.interruptionNotification, object: nil)
             notificationCenter.post(name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
         }.value
+        await Task.yield()
 
         XCTAssertEqual(deliveredNames.count, 3, "Releasing the observer owner should unregister every callback")
     }

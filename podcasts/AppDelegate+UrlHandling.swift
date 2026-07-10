@@ -94,7 +94,9 @@ extension AppDelegate {
         case .route:
             JLRoutes.routeURL(url)
         case .unsupported:
-            break
+            // Report "not handled" so callers (application(_:open:) and the JLRoutes
+            // /import-file route) can fall through instead of swallowing the URL.
+            return false
         }
         return true
     }
