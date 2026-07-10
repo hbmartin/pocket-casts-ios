@@ -34,7 +34,6 @@ XCODEBUILD_ARGS=(
   -project podcasts.xcodeproj
   -scheme "Pocket Casts Staging"
   -configuration StagingDebug
-  "-only-testing:${ONLY_TESTING:-PocketCastsTests}"
   -destination "$DESTINATION"
   -derivedDataPath "$DERIVED_DATA_PATH"
   -resultBundlePath build/github/results/PocketCastsTests.xcresult
@@ -42,6 +41,12 @@ XCODEBUILD_ARGS=(
   CODE_SIGNING_ALLOWED=YES
   CODE_SIGNING_REQUIRED=NO
 )
+
+if [[ -n "${ONLY_TESTING:-}" ]]; then
+  XCODEBUILD_ARGS+=("-only-testing:$ONLY_TESTING")
+else
+  XCODEBUILD_ARGS+=(-testPlan UnitTests)
+fi
 
 if [[ -n "${POCKET_CASTS_CI_OTHER_SWIFT_FLAGS:-}" ]]; then
   XCODEBUILD_ARGS+=(OTHER_SWIFT_FLAGS="${POCKET_CASTS_CI_OTHER_SWIFT_FLAGS}")
@@ -59,6 +64,9 @@ echo "Check for crash reports left behind by the test run"
 
 echo "Check strict-concurrency warnings"
 scripts/ci/check-concurrency-warnings.sh build/github/logs/test-staging.log
+
+echo "Check every expected test target executed"
+scripts/ci/check-test-targets.sh build/github/results/PocketCastsTests.xcresult
 
 echo "Check code coverage floor"
 scripts/ci/check-coverage-floor.sh build/github/results/PocketCastsTests.xcresult

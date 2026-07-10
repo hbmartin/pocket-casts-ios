@@ -29,8 +29,6 @@ final class DatabaseHelperMigrationTests: XCTestCase {
     }
 
     func testFreshInstallMatchesUpgradedDatabase() throws {
-        // newTestDatabase closes the previously created pool, so the two databases
-        // must be used strictly one after the other.
         let freshPool = try XCTUnwrap(DatabasePool.newTestDatabase(databaseName: "\(UUID().uuidString).sqlite3"))
 
         // Fresh install straight to the latest version.

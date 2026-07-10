@@ -1,61 +1,27 @@
-import SQLite3
 import GRDB
 import Foundation
 @testable import PocketCastsDataModel
-import PocketCastsUtils
 
 extension DatabasePool {
     enum TestError: Error {
-        case dbFolderPathFailure
+        case temporaryDirectoryCreationFailure
     }
-
-    // nonisolated(unsafe): test-only handle, set and read from the test runner.
-    nonisolated(unsafe) static var currentDatabasePool: DatabasePool?
 
     static func newTestDatabase(databaseName: String? = nil) throws -> DatabasePool? {
         var config = Configuration()
         config.busyMode = .timeout(10)
 
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.applicationSupportDirectory, .userDomainMask, true).last as NSString?
-        guard let dbFolderPath = documentsPath?.appendingPathComponent("Pocket Casts") as? NSString else {
-            throw TestError.dbFolderPathFailure
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PocketCastsDataModelTests", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        } catch {
+            throw TestError.temporaryDirectoryCreationFailure
         }
 
-        if !FileManager.default.fileExists(atPath: dbFolderPath as String) {
-            try FileManager.default.createDirectory(atPath: dbFolderPath as String, withIntermediateDirectories: true)
-        }
-
-        let dbPath = dbFolderPath.appendingPathComponent(databaseName ?? "podcast_testDB_GRDB.sqlite3")
-        if databaseName == nil && FileManager.default.fileExists(atPath: dbPath) {
-            try FileManager.default.removeItem(atPath: dbPath)
-        }
-
-        // Close any previous connection
-        try! currentDatabasePool?.close()
-
-        currentDatabasePool = try! DatabasePool(path: dbPath, configuration: config)
-
-        return currentDatabasePool!
-    }
-
-    static func copyDatabase(toFile: String) throws {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.applicationSupportDirectory, .userDomainMask, true).last as NSString?
-        guard let dbFolderPath = documentsPath?.appendingPathComponent("Pocket Casts") as? NSString else {
-            throw TestError.dbFolderPathFailure
-        }
-
-        if !FileManager.default.fileExists(atPath: dbFolderPath as String) {
-            try FileManager.default.createDirectory(atPath: dbFolderPath as String, withIntermediateDirectories: true)
-        }
-
-        let dbPath = dbFolderPath.appendingPathComponent("podcast_testDB_GRDB.sqlite3")
-        if FileManager.default.fileExists(atPath: dbPath) {
-            if FileManager.default.fileExists(atPath: dbFolderPath.appendingPathComponent(toFile)) {
-                try FileManager.default.removeItem(atPath: dbFolderPath.appendingPathComponent(toFile))
-            }
-
-            try FileManager.default.copyItem(at: URL(fileURLWithPath: dbPath), to: URL(fileURLWithPath: dbFolderPath.appendingPathComponent(toFile)))
-        }
+        let databaseURL = root.appendingPathComponent(databaseName ?? "database.sqlite3")
+        return try DatabasePool(path: databaseURL.path, configuration: config)
     }
 }
 

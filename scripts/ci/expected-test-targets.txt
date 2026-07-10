@@ -1,0 +1,7 @@
+# Test bundles that the per-PR UnitTests plan must execute.
+PocketCastsTests
+PocketCastsDataModelTests
+PocketCastsServerTests
+PocketCastsFileSyncTests
+PocketCastsUtilsTests
+ModulesTests

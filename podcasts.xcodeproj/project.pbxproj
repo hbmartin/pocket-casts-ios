@@ -199,6 +199,7 @@
 		4694FA652799C80300E9CF70 /* iPhone_GenerateScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA642799C80300E9CF70 /* iPhone_GenerateScreenshots.swift */; };
 		4694FA6D2799C85500E9CF70 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4694FA6C2799C85500E9CF70 /* SnapshotHelper.swift */; };
 		7A5B124020260706000000AE /* SmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B124020260706000000AD /* SmokeUITests.swift */; };
+		7A5B124020260710000000B2 /* LiveStagingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B124020260710000000B1 /* LiveStagingUITests.swift */; };
 		4694FA712799E73E00E9CF70 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 460C375526D831E3008B3609 /* Localizable.strings */; };
 		46C22EE028F73D9A00F4173B /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */; };
 		46C22EE328F7497300F4173B /* DeveloperMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C22EE228F7497300F4173B /* DeveloperMenu.swift */; };
@@ -1255,6 +1256,7 @@
 		4694FA602799C80300E9CF70 /* Screenshot Automation.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Screenshot Automation.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A5B124020260706000000AC /* PocketCastsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PocketCastsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A5B124020260706000000AD /* SmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeUITests.swift; sourceTree = "<group>"; };
+		7A5B124020260710000000B1 /* LiveStagingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveStagingUITests.swift; sourceTree = "<group>"; };
 		4694FA642799C80300E9CF70 /* iPhone_GenerateScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhone_GenerateScreenshots.swift; sourceTree = "<group>"; };
 		4694FA6C2799C85500E9CF70 /* SnapshotHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotHelper.swift; path = fastlane/SnapshotHelper.swift; sourceTree = SOURCE_ROOT; };
 		46C22EDF28F73D9900F4173B /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
@@ -2890,6 +2892,7 @@
 			isa = PBXGroup;
 			children = (
 				7A5B124020260706000000AD /* SmokeUITests.swift */,
+				7A5B124020260710000000B1 /* LiveStagingUITests.swift */,
 			);
 			path = PocketCastsUITests;
 			sourceTree = "<group>";
@@ -5887,6 +5890,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A5B124020260706000000AE /* SmokeUITests.swift in Sources */,
+				7A5B124020260710000000B2 /* LiveStagingUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

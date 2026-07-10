@@ -1,6 +1,9 @@
 import AVFoundation
+import Combine
 import JLRoutes
 import UIKit
+import PocketCastsDataModel
+import PocketCastsServer
 import PocketCastsUtils
 
 class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
@@ -22,6 +25,8 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
 
         #if DEBUG
+        UITestScenarioLauncher.publishReadinessMarker(in: window)
+        UITestLogCapture.start(in: window)
         MediaConcurrencyUITestHarness.exerciseIfRequested()
         #endif
 
@@ -67,6 +72,328 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
 }
 
 #if DEBUG
+@MainActor
+enum UITestScenarioLauncher {
+    private enum Scenario: String {
+        case libraryWithQueue
+        case playbackQueuePersistence
+        case folderOrganizationPersistence
+    }
+
+    private enum LaunchMode: String {
+        case seed
+        case preserve
+    }
+
+    private static let scenarioEnvironment = "UI_TEST_SCENARIO"
+    private static let launchModeEnvironment = "UI_TEST_SCENARIO_MODE"
+    private static let readyIdentifier = "uiTestAppReady"
+
+    private static var requestedScenario: Scenario? {
+        ProcessInfo.processInfo.environment[scenarioEnvironment].flatMap(Scenario.init(rawValue:))
+    }
+
+    private static var launchMode: LaunchMode {
+        ProcessInfo.processInfo.environment[launchModeEnvironment]
+            .flatMap(LaunchMode.init(rawValue:)) ?? .seed
+    }
+
+    static func prepareIfRequested() {
+        guard let scenario = requestedScenario else { return }
+
+        _ = URLProtocol.registerClass(UITestCannedURLProtocol.self)
+        configureStableUserState()
+        if launchMode == .seed {
+            resetDatabase()
+
+            switch scenario {
+            case .libraryWithQueue:
+                seedLibraryWithQueue()
+            case .playbackQueuePersistence:
+                seedPlaybackQueuePersistence()
+            case .folderOrganizationPersistence:
+                seedFolderOrganizationPersistence()
+            }
+        }
+
+        FileLog.shared.addMessage(
+            "UI test scenario prepared: \(scenario.rawValue), mode: \(launchMode.rawValue)"
+        )
+    }
+
+    static func publishReadinessMarker(in window: UIWindow) {
+        guard let scenario = requestedScenario else { return }
+
+        let dataManager = DataManager.sharedManager
+        let podcasts = dataManager.allPodcasts(includeUnsubscribed: true)
+        let episodeCount = podcasts.reduce(into: 0) { count, podcast in
+            count += dataManager.allEpisodesForPodcast(id: podcast.id).count
+        }
+        let value = [
+            scenario.rawValue,
+            "mode=\(launchMode.rawValue)",
+            "podcasts=\(podcasts.count)",
+            "episodes=\(episodeCount)",
+            "upNext=\(dataManager.playlistEpisodeCount())",
+            "folders=\(dataManager.allFolders().count)",
+            "organized=\(podcasts.filter { $0.folderUuid != nil }.count)",
+            "account=signedOut",
+            "network=canned"
+        ].joined(separator: "|")
+        UITestAccessibilityMarker.add(identifier: readyIdentifier, value: value, to: window)
+    }
+
+    private static func configureStableUserState() {
+        Settings.shouldShowInitialOnboardingFlow = false
+        SyncManager.clearTokensFromKeyChain()
+        ServerSettings.userId = nil
+        ServerSettings.removePushToken()
+
+        let overrides = FeatureFlagOverrideStore()
+        overrides.resetOverrides()
+        try? overrides.override(FeatureFlag.newSettingsStorage, withValue: false)
+        try? overrides.override(FeatureFlag.useFollowNaming, withValue: false)
+        try? overrides.override(FeatureFlag.fileSync, withValue: false)
+        try? overrides.override(FeatureFlag.recommendations, withValue: false)
+
+        Settings.setPrimaryRowAction(.stream)
+        Settings.setLibraryType(.list)
+    }
+
+    private static func resetDatabase() {
+        let dataManager = DataManager.sharedManager
+
+        dataManager.deleteAllUpNextEpisodes()
+        for playlist in dataManager.allPlaylists(includeDeleted: true) {
+            dataManager.delete(playlist: playlist)
+        }
+        for userEpisode in dataManager.allUserEpisodes(sortedBy: .newestToOldest) {
+            dataManager.delete(userEpisodeUuid: userEpisode.uuid)
+        }
+        for podcast in dataManager.allPodcasts(includeUnsubscribed: true) {
+            dataManager.deleteAllEpisodesInPodcast(podcastId: podcast.id)
+            dataManager.delete(podcast: podcast)
+        }
+        dataManager.clearAllFolderInformation()
+    }
+
+    private static func seedLibraryWithQueue() {
+        let dataManager = DataManager.sharedManager
+
+        let podcast = savePodcast(
+            uuid: "ui-test-podcast",
+            title: "UI Test Library",
+            addedDate: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+
+        let episodes = [
+            makeEpisode(
+                uuid: "ui-test-episode-one",
+                title: "Queued Episode One",
+                position: 0,
+                podcast: podcast
+            ),
+            makeEpisode(
+                uuid: "ui-test-episode-two",
+                title: "Queued Episode Two",
+                position: 1,
+                podcast: podcast
+            )
+        ]
+
+        for (episode, playlistEpisode) in episodes {
+            dataManager.save(episode: episode)
+            dataManager.save(playlistEpisode: playlistEpisode)
+        }
+    }
+
+    private static func seedPlaybackQueuePersistence() {
+        let dataManager = DataManager.sharedManager
+        let podcast = savePodcast(
+            uuid: "ui-test-playback-podcast",
+            title: "UI Test Playback Podcast",
+            addedDate: Date(timeIntervalSince1970: 1_700_001_000)
+        )
+
+        for (index, title) in [
+            "Playback Episode One",
+            "Queue Episode Two",
+            "Spare Episode Three"
+        ].enumerated() {
+            let (episode, _) = makeEpisode(
+                uuid: "ui-test-playback-episode-\(index + 1)",
+                title: title,
+                position: Int32(index),
+                podcast: podcast
+            )
+            dataManager.save(episode: episode)
+        }
+    }
+
+    private static func seedFolderOrganizationPersistence() {
+        savePodcast(
+            uuid: "ui-test-organization-podcast-one",
+            title: "Organization Podcast One",
+            addedDate: Date(timeIntervalSince1970: 1_700_002_000)
+        )
+        savePodcast(
+            uuid: "ui-test-organization-podcast-two",
+            title: "Organization Podcast Two",
+            addedDate: Date(timeIntervalSince1970: 1_700_002_100)
+        )
+    }
+
+    @discardableResult
+    private static func savePodcast(uuid: String, title: String, addedDate: Date) -> Podcast {
+        let dataManager = DataManager.sharedManager
+
+        var podcast = Podcast()
+        podcast.addedDate = addedDate
+        podcast.title = title
+        podcast.author = "Pocket Casts Testing"
+        podcast.uuid = uuid
+        podcast.podcastUrl = "https://ui-test.pocketcasts.invalid/\(uuid).xml"
+        podcast.subscribed = 1
+        podcast.syncStatus = SyncStatus.synced.rawValue
+        dataManager.save(podcast: podcast)
+        return dataManager.allPodcasts(includeUnsubscribed: true, reloadFromDatabase: true)
+            .first(where: { $0.uuid == uuid }) ?? podcast
+    }
+
+    private static func makeEpisode(
+        uuid: String,
+        title: String,
+        position: Int32,
+        podcast: Podcast
+    ) -> (Episode, PlaylistEpisode) {
+        var episode = Episode()
+        episode.addedDate = Date(timeIntervalSince1970: 1_700_000_100 + Double(position))
+        episode.publishedDate = episode.addedDate
+        episode.title = title
+        episode.uuid = uuid
+        episode.podcastUuid = podcast.uuid
+        episode.podcast_id = podcast.id
+        episode.downloadUrl = "https://ui-test.pocketcasts.invalid/\(uuid).mp3"
+        episode.episodeStatus = DownloadStatus.notDownloaded.rawValue
+        episode.playingStatus = PlayingStatus.notPlayed.rawValue
+        episode.duration = 1_800
+
+        let playlistEpisode = PlaylistEpisode()
+        playlistEpisode.episodePosition = position
+        playlistEpisode.episodeUuid = uuid
+        playlistEpisode.title = title
+        playlistEpisode.podcastUuid = podcast.uuid
+        return (episode, playlistEpisode)
+    }
+}
+
+nonisolated final class UITestCannedURLProtocol: URLProtocol {
+    private static let handledKey = "PocketCastsUITestCannedURLProtocolHandled"
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        guard ProcessInfo.processInfo.environment["UI_TEST_SCENARIO"] != nil,
+              URLProtocol.property(forKey: handledKey, in: request) == nil,
+              let scheme = request.url?.scheme?.lowercased() else { return false }
+        return scheme == "http" || scheme == "https"
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        guard let url = request.url else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badURL))
+            return
+        }
+
+        let responseBody: Data
+        let contentType: String
+        switch url.pathExtension.lowercased() {
+        case "jpg", "jpeg", "png":
+            responseBody = Data(base64Encoded: Self.transparentPixel) ?? Data()
+            contentType = "image/png"
+        case "mp3", "m4a":
+            responseBody = Data("ID3UI-TEST-AUDIO".utf8)
+            contentType = "audio/mpeg"
+        default:
+            responseBody = Data("{\"status\":\"ok\",\"result\":{}}".utf8)
+            contentType = "application/json"
+        }
+
+        let response = HTTPURLResponse(
+            url: url,
+            statusCode: 200,
+            httpVersion: "HTTP/1.1",
+            headerFields: [
+                "Content-Type": contentType,
+                "Content-Length": String(responseBody.count)
+            ]
+        )!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: responseBody)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+
+    private static let transparentPixel =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+}
+
+@MainActor
+enum UITestAccessibilityMarker {
+    @discardableResult
+    static func add(identifier: String, value: String? = nil, to window: UIWindow) -> UIView {
+        if let existing = window.subviews.first(where: { $0.accessibilityIdentifier == identifier }) {
+            existing.accessibilityValue = value
+            return existing
+        }
+
+        let marker = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+        marker.isAccessibilityElement = true
+        marker.accessibilityIdentifier = identifier
+        marker.accessibilityLabel = identifier
+        marker.accessibilityValue = value
+        window.addSubview(marker)
+        return marker
+    }
+}
+
+@MainActor
+enum UITestLogCapture {
+    private static let captureEnvironment = "POCKET_CASTS_UI_TEST_CAPTURE_LOGS"
+    private static let markerIdentifier = "uiTestCapturedLogs"
+    private static let maximumCharacters = 16_000
+    private static var capturedLogs = ""
+    private static var cancellable: AnyCancellable?
+    private static weak var marker: UIView?
+
+    static func start(in window: UIWindow) {
+        guard ProcessInfo.processInfo.environment[captureEnvironment] == "1" else { return }
+
+        marker = UITestAccessibilityMarker.add(identifier: markerIdentifier, to: window)
+        cancellable = FileLog.shared.publisher
+            .receive(on: DispatchQueue.main)
+            .sink { message in
+                append(message)
+            }
+
+        Task {
+            append(await FileLog.shared.logFileAsString())
+        }
+    }
+
+    private static func append(_ message: String) {
+        capturedLogs.append(message)
+        capturedLogs.append("\n")
+        if capturedLogs.count > maximumCharacters {
+            capturedLogs = String(capturedLogs.suffix(maximumCharacters))
+        }
+        marker?.accessibilityValue = capturedLogs
+    }
+}
+
 /// Debug-only app-side driver for deterministic XCUITest coverage of APIs that
 /// are called by system frameworks from background threads.
 @MainActor
