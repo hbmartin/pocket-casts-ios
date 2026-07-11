@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
+import Synchronization
 
 nonisolated struct OpmlFeed: Equatable, Sendable {
     let title: String
@@ -75,17 +76,53 @@ nonisolated enum OpmlDocument {
     }
 }
 
-nonisolated class OpmlImporter: Operation, @unchecked Sendable {
-    private var podcastsToAdd = [String]()
-    private var pollUuids = [String]()
-    private var failedCount = 0
+/// Shared mutable state used by the operation thread and asynchronous import callbacks.
+/// Every access stays behind one lock so late responses after a timeout cannot race with
+/// polling or progress updates.
+nonisolated final class OpmlImportState: Sendable {
+    private struct State {
+        var pollUuids = [String]()
+        var failedCount = 0
+        var importedCount = 0
+    }
 
+    private let state = Mutex(State())
+
+    func recordResponse(pollUuids: [String], failedCount: Int) {
+        state.withLock { state in
+            state.pollUuids += pollUuids
+            state.failedCount += failedCount
+        }
+    }
+
+    func takePollUuids() -> [String]? {
+        state.withLock { state in
+            guard !state.pollUuids.isEmpty else { return nil }
+            let uuids = state.pollUuids
+            state.pollUuids.removeAll()
+            return uuids
+        }
+    }
+
+    func updateProgress(failed: Bool = false) -> Int {
+        state.withLock { state in
+            state.importedCount += 1
+            if failed { state.failedCount += 1 }
+            return state.importedCount
+        }
+    }
+
+    var failureCount: Int {
+        state.withLock { $0.failedCount }
+    }
+}
+
+nonisolated class OpmlImporter: Operation, @unchecked Sendable {
     private let opmlFileUrl: URL
     private let progressWindow: ShiftyLoadingAlert?
+    private let importState = OpmlImportState()
 
     private var initialPodcastCount = 0
-    private var importedCount = 0
-    private let progressLock = NSLock()
 
     let importQueue: OperationQueue = {
         let queue = OperationQueue()
@@ -93,8 +130,6 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
         return queue
     }()
-
-    private var parsedUrls = [String]()
 
     init(opmlFile: URL, progressWindow: ShiftyLoadingAlert? = nil) {
         opmlFileUrl = opmlFile
@@ -125,8 +160,6 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
                 return
             }
-            self.parsedUrls = parsedUrls
-
             initialPodcastCount = parsedUrls.count
 
             if Settings.localFeedIngestEnabled() {
@@ -137,11 +170,9 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 importPodcasts(urls: parsedUrls)
 
                 var amountOfTimesPolled = 0
-                while amountOfTimesPolled < 20, !pollUuids.isEmpty {
+                while amountOfTimesPolled < 20, let pollUuidsToSend = importState.takePollUuids() {
                     amountOfTimesPolled += 1
 
-                    let pollUuidsToSend = pollUuids
-                    pollUuids.removeAll()
                     pollImportPodcasts(pollUuids: pollUuidsToSend)
                     Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
                 }
@@ -219,12 +250,11 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
         // since the code below is going to be making more network requests, get this call off the URLSession delegate queue
         DispatchQueue.global().async {
             if let result = uploadResponse.result {
-                self.podcastsToAdd = result.uuids ?? []
-                self.pollUuids += result.pollUuids ?? []
-                self.failedCount += result.failedCount
-
-                self.addAllPendingPodcasts()
-                self.podcastsToAdd.removeAll()
+                self.importState.recordResponse(
+                    pollUuids: result.pollUuids ?? [],
+                    failedCount: result.failedCount
+                )
+                self.addAllPendingPodcasts(podcastUuids: result.uuids ?? [])
             }
             dispatchGroup.leave()
         }
@@ -232,8 +262,8 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
     // MARK: - Add Podcasts
 
-    private func addAllPendingPodcasts() {
-        for uuid in podcastsToAdd {
+    private func addAllPendingPodcasts(podcastUuids: [String]) {
+        for uuid in podcastUuids {
             importQueue.addOperation {
                 // check to see if we already have this podcast
                 let existingPodcast = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true)
@@ -279,10 +309,6 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
     }
 
     private func updateProgress(failed: Bool = false) -> Int {
-        progressLock.lock()
-        defer { progressLock.unlock() }
-        importedCount += 1
-        if failed { failedCount += 1 }
-        return importedCount
+        importState.updateProgress(failed: failed)
     }
 }

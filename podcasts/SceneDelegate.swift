@@ -3,6 +3,7 @@ import Combine
 import JLRoutes
 import UIKit
 import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -28,6 +29,8 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
         UITestScenarioLauncher.publishReadinessMarker(in: window)
         UITestLogCapture.start(in: window)
         UITestScenarioLauncher.exerciseCannedRefreshIfRequested(in: window)
+        PR263UITestHarness.exerciseIfRequested(in: window)
+        PR264UITestHarness.exerciseIfRequested()
         MediaConcurrencyUITestHarness.exerciseIfRequested()
         #endif
 
@@ -495,6 +498,241 @@ enum UITestLogCapture {
             capturedLogs = String(capturedLogs.suffix(maximumCharacters))
         }
         marker?.accessibilityValue = capturedLogs
+    }
+}
+
+/// Deterministic integration coverage for the backup, restore, URL-redaction, and
+/// mirror-path fixes exercised from XCUITest. The harness uses the seeded UI-test
+/// database and publishes only a compact accessibility result marker.
+@MainActor
+enum PR263UITestHarness {
+    private static let environment = "POCKET_CASTS_UI_TEST_EXERCISE_PR263_FIXES"
+    private static let completedIdentifier = "pr263FixesCompleted"
+    private static let failedIdentifier = "pr263FixesFailed"
+
+    static func exerciseIfRequested(in window: UIWindow) {
+        guard ProcessInfo.processInfo.environment[environment] == "1" else { return }
+
+        do {
+            let result = try exerciseFixes()
+            UITestAccessibilityMarker.add(identifier: completedIdentifier, value: result, to: window)
+        } catch {
+            UITestAccessibilityMarker.add(
+                identifier: failedIdentifier,
+                value: error.localizedDescription,
+                to: window
+            )
+        }
+    }
+
+    private static func exerciseFixes() throws -> String {
+        let fileManager = FileManager.default
+        let dataManager = DataManager.sharedManager
+        let restoreURL = fileManager.temporaryDirectory
+            .appendingPathComponent("pr263-restore-\(UUID().uuidString).sqlite3")
+        defer { try? fileManager.removeItem(at: restoreURL) }
+
+        try dataManager.backupDatabase(to: restoreURL.path)
+
+        var folder = Folder()
+        folder.uuid = "pr263-folder"
+        folder.name = "Restore must remove this folder"
+        folder.addedDate = Date()
+        _ = dataManager.save(folder: folder)
+        guard dataManager.findFolder(uuid: folder.uuid) != nil else {
+            throw HarnessError.fixtureCreationFailed
+        }
+
+        guard dataManager.restoreAllData(fromPath: restoreURL.path),
+              dataManager.findFolder(uuid: folder.uuid) == nil,
+              !dataManager.allFolders(includeDeleted: true).contains(where: { $0.uuid == folder.uuid }) else {
+            throw HarnessError.restoreDidNotReplaceCachedFolderState
+        }
+
+        let sanitizedURL = LocalFeedURL.removingCredentials(
+            from: "https://reader:secret@example.com/private.xml"
+        )
+        guard sanitizedURL == "https://example.com/private.xml" else {
+            throw HarnessError.credentialsWereNotRemoved
+        }
+
+        let mirrorPath = PodcastMirrorFormat.relativePath(
+            podcastUuid: "../podcast",
+            episodeUuid: "episode/../../secret",
+            fileExtension: "m4a"
+        )
+        guard !mirrorPath.contains(".."), mirrorPath.components(separatedBy: "/").count == 3 else {
+            throw HarnessError.unsafeMirrorPath
+        }
+
+        let stagedBackup = try BackupRestoreView.stageBackupFolder()
+        defer { try? fileManager.removeItem(at: stagedBackup) }
+        let backupName = stagedBackup.lastPathComponent
+        let backupNamePattern = /^Pocket Casts Backup \d{4}-\d{2}-\d{2} \d{2}\.\d{2}$/
+        guard backupName.wholeMatch(of: backupNamePattern) != nil,
+              fileManager.fileExists(atPath: stagedBackup.appendingPathComponent("library.sqlite3").path) else {
+            throw HarnessError.invalidBackupFolder
+        }
+
+        return "restore=atomic|folderCache=refreshed|credentials=redacted|mirrorPath=safe|backupFolder=stable"
+    }
+
+    private enum HarnessError: LocalizedError {
+        case fixtureCreationFailed
+        case restoreDidNotReplaceCachedFolderState
+        case credentialsWereNotRemoved
+        case unsafeMirrorPath
+        case invalidBackupFolder
+
+        var errorDescription: String? {
+            String(describing: self)
+        }
+    }
+}
+
+/// Deterministic app-process coverage for the three PR #264 concurrency fixes.
+/// XCUITest selects one scenario per launch and observes the published result marker.
+@MainActor
+enum PR264UITestHarness {
+    private static let environment = "POCKET_CASTS_UI_TEST_EXERCISE_PR264_FIX"
+    private static let completedIdentifier = "pr264FixCompleted"
+    private static let failedIdentifier = "pr264FixFailed"
+
+    private enum Scenario: String, Sendable {
+        case opmlImportState
+        case fileSyncWaiter
+        case showInfoCache
+    }
+
+    static func exerciseIfRequested() {
+        guard let rawScenario = ProcessInfo.processInfo.environment[environment],
+              let scenario = Scenario(rawValue: rawScenario) else { return }
+
+        Task { @concurrent in
+            do {
+                let result = try await exercise(scenario)
+                await publish(identifier: completedIdentifier, value: result)
+            } catch {
+                await publish(
+                    identifier: failedIdentifier,
+                    value: "\(scenario.rawValue):\(error.localizedDescription)"
+                )
+            }
+        }
+    }
+
+    nonisolated private static func exercise(_ scenario: Scenario) async throws -> String {
+        switch scenario {
+        case .opmlImportState:
+            return try await exerciseOpmlImportState()
+        case .fileSyncWaiter:
+            return try await exerciseFileSyncWaiter()
+        case .showInfoCache:
+            return try await exerciseShowInfoCache()
+        }
+    }
+
+    nonisolated private static func exerciseOpmlImportState() async throws -> String {
+        let state = OpmlImportState()
+        let updateCount = 200
+
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<updateCount {
+                group.addTask {
+                    state.recordResponse(pollUuids: ["poll-\(index)"], failedCount: 1)
+                    _ = state.updateProgress(failed: true)
+                }
+            }
+        }
+
+        let pollUuids = state.takePollUuids() ?? []
+        let expectedUuids = Set((0..<updateCount).map { "poll-\($0)" })
+        guard Set(pollUuids) == expectedUuids,
+              state.takePollUuids() == nil,
+              state.updateProgress() == updateCount + 1,
+              state.failureCount == updateCount * 2 else {
+            throw HarnessError.opmlStateWasNotAtomic
+        }
+
+        return "opmlState=atomic|responses=\(updateCount)|failures=\(state.failureCount)"
+    }
+
+    nonisolated private static func exerciseFileSyncWaiter() async throws -> String {
+        let manager = FileSyncManager()
+        guard await manager.exerciseSyncPassWaiterForUITesting() else {
+            throw HarnessError.fileSyncWaiterDidNotResume
+        }
+        return "fileSyncWaiter=continuation|waiters=cleared"
+    }
+
+    nonisolated private static func exerciseShowInfoCache() async throws -> String {
+        let podcastUuid = "pr264-podcast-\(UUID().uuidString)"
+        let episodeUuid = "pr264-episode-\(UUID().uuidString)"
+        let readerCount = 16
+        let showInfo = try JSONSerialization.data(withJSONObject: [
+            "podcast": [
+                "episodes": [[
+                    "uuid": episodeUuid,
+                    "title": "PR 264 locally seeded episode",
+                ]],
+            ],
+        ])
+
+        await ShowInfoDataRetriever.localFeedSeeder.storeLocalShowInfo(
+            data: showInfo,
+            for: podcastUuid
+        )
+
+        let matchingReaders = try await withThrowingTaskGroup(
+            of: Bool.self,
+            returning: Int.self
+        ) { group in
+            for _ in 0..<readerCount {
+                group.addTask {
+                    let reader = ShowInfoDataRetriever()
+                    guard let metadata = try await reader.loadEpisodeDataFromCache(
+                        for: podcastUuid,
+                        episodeUuid: episodeUuid,
+                        useCacheOnly: true
+                    ),
+                    let data = metadata.data(using: .utf8),
+                    let decoded = try JSONSerialization.jsonObject(with: data) as? [String: String] else {
+                        return false
+                    }
+                    return decoded["uuid"] == episodeUuid
+                        && decoded["title"] == "PR 264 locally seeded episode"
+                }
+            }
+
+            var matches = 0
+            for try await matched in group where matched {
+                matches += 1
+            }
+            return matches
+        }
+
+        guard matchingReaders == readerCount else {
+            throw HarnessError.showInfoCacheWasNotShared
+        }
+        return "showInfoCache=shared|readers=\(matchingReaders)"
+    }
+
+    private static func publish(identifier: String, value: String) {
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow) else { return }
+        UITestAccessibilityMarker.add(identifier: identifier, value: value, to: window)
+    }
+
+    private enum HarnessError: LocalizedError {
+        case opmlStateWasNotAtomic
+        case fileSyncWaiterDidNotResume
+        case showInfoCacheWasNotShared
+
+        var errorDescription: String? {
+            String(describing: self)
+        }
     }
 }
 

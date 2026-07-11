@@ -47,6 +47,29 @@ class UnsafeApiTaskDispatchGroupWaitWithProtocol: ApiBaseTask, RetriableApiTask 
     }
 }
 
+actor YieldPollingWaiter {
+    private var operationIsRunning = true
+
+    func waitForCompletion() async {
+        // ruleid: pocketcasts.no-task-yield-polling-loop
+        while operationIsRunning {
+            await Task.yield()
+        }
+    }
+}
+
+actor ContinuationWaiter {
+    private var operationIsRunning = true
+    private var waiters = [CheckedContinuation<Void, Never>]()
+
+    func waitForCompletion() async {
+        guard operationIsRunning else { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+}
+
 func clearsBadgeWithTransientValue(notificationCenter: UNUserNotificationCenter) {
     // ruleid: pocketcasts.badge-transient-clear-notifications
     notificationCenter.setBadgeCount(1) {

@@ -167,6 +167,50 @@ final class SmokeUITests: PocketCastsUITestCase {
                       "Appearance settings did not open")
     }
 
+    private func openBackupRestoreSettings(in app: XCUIApplication) {
+        openProfile(in: app)
+        app.buttons["Settings"].tap()
+
+        let backupRestoreRow = app.staticTexts["backupRestore"]
+        for _ in 0..<5 where !backupRestoreRow.exists {
+            app.tables.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(backupRestoreRow.waitForExistence(timeout: 10),
+                      "Settings did not expose Backup & Restore")
+        backupRestoreRow.tap()
+
+        XCTAssertTrue(app.navigationBars["Backup & Restore"].waitForExistence(timeout: 10),
+                      "Backup & Restore settings did not open")
+    }
+
+    private func assertPR264Harness(
+        scenario: String,
+        expectedFragments: [String]
+    ) {
+        let app = launchApp(additionalEnvironment: [
+            "POCKET_CASTS_UI_TEST_EXERCISE_PR264_FIX": scenario
+        ])
+        waitForTabBar(in: app)
+
+        let failed = app.descendants(matching: .any)["pr264FixFailed"]
+        let completed = app.descendants(matching: .any)["pr264FixCompleted"]
+        guard completed.waitForExistence(timeout: 20) else {
+            XCTFail(
+                failed.exists
+                    ? "PR #264 \(scenario) harness failed: \(failed.value as? String ?? "unknown error")"
+                    : "PR #264 \(scenario) harness did not complete"
+            )
+            return
+        }
+
+        let value = completed.value as? String ?? ""
+        for fragment in expectedFragments {
+            XCTAssertTrue(value.contains(fragment),
+                          "PR #264 \(scenario) result omitted '\(fragment)': \(value)")
+        }
+        XCTAssertEqual(app.state, .runningForeground)
+    }
+
     private func selectTheme(named name: String, in app: XCUIApplication) {
         let themeRow = app.cells.containing(.staticText, identifier: "Theme").firstMatch
         XCTAssertTrue(themeRow.waitForExistence(timeout: 10),
@@ -534,6 +578,75 @@ final class SmokeUITests: PocketCastsUITestCase {
         XCTAssertTrue(app.tabBars.firstMatch.exists,
                       "App lost its main UI while exercising file sync notification timers")
         XCTAssertEqual(app.state, .runningForeground)
+    }
+
+    func testBackupRestoreScreenPresentsDestructiveRestoreConfirmation() throws {
+        let app = launchApp()
+        waitForTabBar(in: app)
+        openBackupRestoreSettings(in: app)
+
+        XCTAssertTrue(app.buttons["backupRestoreBackupNow"].exists,
+                      "Backup action did not expose its stable identifier")
+        let restore = app.buttons["backupRestoreRestore"]
+        XCTAssertTrue(restore.exists, "Restore action did not expose its stable identifier")
+        restore.tap()
+
+        let confirmation = app.alerts["Restore From Backup?"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 10),
+                      "Restore did not require destructive confirmation")
+        XCTAssertTrue(confirmation.buttons["Restore From Backup"].exists,
+                      "Restore confirmation did not expose its destructive action")
+        confirmation.buttons["Cancel"].tap()
+        XCTAssertFalse(confirmation.exists, "Restore confirmation did not dismiss")
+    }
+
+    func testPR263BackupRestoreAndSecurityFixes() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "libraryWithQueue",
+            "POCKET_CASTS_UI_TEST_EXERCISE_PR263_FIXES": "1"
+        ])
+        waitForTabBar(in: app)
+        waitForScenario("libraryWithQueue", in: app, containing: ["mode=seed"])
+
+        let failed = app.descendants(matching: .any)["pr263FixesFailed"]
+        let completed = app.descendants(matching: .any)["pr263FixesCompleted"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 20),
+                      failed.exists
+                          ? "PR #263 harness failed: \(failed.value as? String ?? "unknown error")"
+                          : "PR #263 harness did not complete")
+
+        let value = completed.value as? String ?? ""
+        for fragment in [
+            "restore=atomic",
+            "folderCache=refreshed",
+            "credentials=redacted",
+            "mirrorPath=safe",
+            "backupFolder=stable"
+        ] {
+            XCTAssertTrue(value.contains(fragment),
+                          "PR #263 result omitted '\(fragment)': \(value)")
+        }
+    }
+
+    func testPR264OpmlImportStateRemainsAtomicAcrossConcurrentCallbacks() throws {
+        assertPR264Harness(
+            scenario: "opmlImportState",
+            expectedFragments: ["opmlState=atomic", "responses=200", "failures=400"]
+        )
+    }
+
+    func testPR264FileSyncWaiterResumesThroughContinuation() throws {
+        assertPR264Harness(
+            scenario: "fileSyncWaiter",
+            expectedFragments: ["fileSyncWaiter=continuation", "waiters=cleared"]
+        )
+    }
+
+    func testPR264ShowInfoCacheIsSharedAcrossConcurrentRetrievers() throws {
+        assertPR264Harness(
+            scenario: "showInfoCache",
+            expectedFragments: ["showInfoCache=shared", "readers=16"]
+        )
     }
 
     /// Calls both NowPlayingHelper artwork request handlers on a detached task.
