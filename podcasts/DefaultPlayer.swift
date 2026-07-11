@@ -52,14 +52,39 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
     private var peakLimiter: AudioUnit?
     private var highPassFilter: AudioUnit?
+    private var dynamicsProcessor: AudioUnit?
     private var sampleCount: Float64 = 0
     private var backgroundTaskId: UIBackgroundTaskIdentifier
     private var voiceBoostNState: OpaquePointer?
     private var cachedSampleRate: Double = 0
+    /// Integrated LUFS precomputed for this episode; 0 = unknown (adapt live).
+    /// Written before playback starts, read by the tap on VBN state creation.
+    private var cachedLoudness: Double = 0
+
+    /// Tuning snapshot for the tap thread: written on the playback flow
+    /// (loadEpisode / effectsDidChange), read per tap callback. Guarded by
+    /// tapStateLock so the tap never touches UserDefaults or the main actor.
+    private let tapStateLock = NSLock()
+    private var tapUseVoiceBoostN = false
+    private var tapVBNConfig = VBN_GetDefaultConfig()
+    private var tapConfigGeneration: UInt64 = 0
+    /// Tap-thread only: the generation last pushed into the VBN state.
+    private var appliedTapConfigGeneration: UInt64 = 0
 
     init() {
         backgroundTaskId = .invalid
         NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        refreshTapTuning()
+    }
+
+    /// Re-snapshots the tuning-derived values the tap thread consumes.
+    private func refreshTapTuning() {
+        let tuning = PlaybackManager.engineState.tuning
+        tapStateLock.lock()
+        tapUseVoiceBoostN = FeatureFlag.voiceBoostN.enabled && tuning.voiceBoost.useVoiceBoostN
+        tapVBNConfig = tuning.vbnConfig()
+        tapConfigGeneration &+= 1
+        tapStateLock.unlock()
     }
 
     func loadEpisode(_ episode: BaseEpisode) {
@@ -85,6 +110,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
         episodeUuid = episode.uuid
         podcastUuid = episode.parentIdentifier()
+        cachedLoudness = DataManager.sharedManager.findLoudness(episode: episode)
+        refreshTapTuning()
 
         // Start cellular tracking for remote streaming
         // MediaExporterResourceLoaderDelegate handles its own tracking for cache+stream,
@@ -233,6 +260,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
         setPlaybackRate(effects.playbackSpeed)
         volumeBoostEnabled = effects.volumeBoost
+        refreshTapTuning()
     }
 
     func supportsSilenceRemoval() -> Bool {
@@ -455,6 +483,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             referenceToSelf.peakLimiter = nil
             referenceToSelf.highPassFilter = nil
+            referenceToSelf.dynamicsProcessor = nil
             referenceToSelf.sampleCount = 0
             referenceToSelf.voiceBoostNState = nil
         }
@@ -477,6 +506,12 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             }
             referenceToSelf.highPassFilter = filter
 
+            guard let dynamics = referenceToSelf.createDynamicsProcessor(maxFrames: maxFrames, processingFormat: processingFormat.pointee, tap: tap) else {
+                referenceToSelf.handlePlaybackError("Setup dynamics processor failed")
+                return
+            }
+            referenceToSelf.dynamicsProcessor = dynamics
+
             guard let limiter = referenceToSelf.createPeakLimiter(maxFrames: maxFrames, processingFormat: processingFormat.pointee, tap: tap) else {
                 referenceToSelf.handlePlaybackError("Setup peak limiter failed")
                 return
@@ -495,6 +530,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             if let vbnState = referenceToSelf.voiceBoostNState {
                 VBN_Destroy(vbnState)
                 referenceToSelf.voiceBoostNState = nil
+                PlaybackManager.engineState.voiceBoostMeters = nil
                 FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN state destroyed")
             }
 
@@ -502,6 +538,12 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 AudioUnitUninitialize(peakLimiter)
                 AudioComponentInstanceDispose(peakLimiter)
                 referenceToSelf.peakLimiter = nil
+            }
+
+            if let dynamicsProcessor = referenceToSelf.dynamicsProcessor {
+                AudioUnitUninitialize(dynamicsProcessor)
+                AudioComponentInstanceDispose(dynamicsProcessor)
+                referenceToSelf.dynamicsProcessor = nil
             }
 
             if let highPassFilter = referenceToSelf.highPassFilter {
@@ -518,7 +560,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             let currentSampleCount = referenceToSelf.sampleCount
             referenceToSelf.sampleCount += Float64(numberFrames)
-            guard referenceToSelf.volumeBoostEnabled, let highPassFilter = referenceToSelf.highPassFilter, referenceToSelf.peakLimiter != nil else {
+            guard referenceToSelf.volumeBoostEnabled, let peakLimiter = referenceToSelf.peakLimiter, referenceToSelf.highPassFilter != nil, referenceToSelf.dynamicsProcessor != nil else {
                 // no effects enabled, so just play normally
                 guard MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut) == noErr else {
                     referenceToSelf.handlePlaybackError("MTAudioProcessingTapGetSourceAudio failed")
@@ -527,12 +569,23 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 return
             }
 
-            let shouldUseVoiceBoostN = Settings.isVoiceBoostNEnabled
+            // Snapshot the tuning state; the tap never reads UserDefaults
+            referenceToSelf.tapStateLock.lock()
+            let shouldUseVoiceBoostN = referenceToSelf.tapUseVoiceBoostN
+            var vbnConfig = referenceToSelf.tapVBNConfig
+            let configGeneration = referenceToSelf.tapConfigGeneration
+            referenceToSelf.tapStateLock.unlock()
 
             // Handle dynamic state creation/destruction
             if shouldUseVoiceBoostN && referenceToSelf.voiceBoostNState == nil {
                 let isInitial = referenceToSelf.sampleCount == Float64(numberFrames) // First buffer
-                referenceToSelf.voiceBoostNState = VBN_Create(referenceToSelf.cachedSampleRate)
+                referenceToSelf.voiceBoostNState = VBN_CreateWithConfig(referenceToSelf.cachedSampleRate, &vbnConfig)
+                referenceToSelf.appliedTapConfigGeneration = configGeneration
+                if let vbnState = referenceToSelf.voiceBoostNState, referenceToSelf.cachedLoudness != 0 {
+                    // seed the gain from the precomputed loudness so playback
+                    // starts at the right level instead of adapting live
+                    VBN_SetInitialGainDB(vbnState, vbnConfig.targetLUFS - Float(referenceToSelf.cachedLoudness))
+                }
                 if isInitial {
                     FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN enabled - created state at \(referenceToSelf.cachedSampleRate) Hz")
                 } else {
@@ -541,10 +594,18 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             } else if !shouldUseVoiceBoostN && referenceToSelf.voiceBoostNState != nil {
                 VBN_Destroy(referenceToSelf.voiceBoostNState)
                 referenceToSelf.voiceBoostNState = nil
+                PlaybackManager.engineState.voiceBoostMeters = nil
                 FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN disabled mid-playback - switching to previous voice boost")
             }
 
             if let vbnState = referenceToSelf.voiceBoostNState {
+                // Live-apply any staged tuning change (VBN_SetConfig is safe here;
+                // the tap thread owns the state pointer)
+                if referenceToSelf.appliedTapConfigGeneration != configGeneration {
+                    VBN_SetConfig(vbnState, &vbnConfig)
+                    referenceToSelf.appliedTapConfigGeneration = configGeneration
+                }
+
                 // Use VoiceBoostN processing
                 guard MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut) == noErr else {
                     referenceToSelf.handlePlaybackError("MTAudioProcessingTapGetSourceAudio failed")
@@ -563,13 +624,21 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                     VBN_Process(vbnState, ptr.baseAddress, Int32(numberFrames), channelCount)
                 }
 
+                PlaybackManager.engineState.voiceBoostMeters = .init(
+                    gainDB: VBN_GetCurrentGainDB(vbnState),
+                    measuredLUFS: VBN_GetMeasuredLUFS(vbnState),
+                    limiterReductionDB: VBN_GetLimiterReductionDB(vbnState)
+                )
+
                 numberFramesOut.pointee = numberFrames
             } else {
-                // Use previous voice boost (AudioUnit chain)
+                // Use previous voice boost (AudioUnit chain): the peak limiter is
+                // the end of the pull chain source → high-pass → dynamics → limiter,
+                // matching EffectsPlayer's legacy graph
                 var audioTimeStamp = AudioTimeStamp()
                 audioTimeStamp.mSampleTime = currentSampleCount
                 audioTimeStamp.mFlags = AudioTimeStampFlags.sampleTimeValid
-                guard AudioUnitRender(highPassFilter, nil, &audioTimeStamp, 0, UInt32(numberFrames), bufferListInOut) == noErr else {
+                guard AudioUnitRender(peakLimiter, nil, &audioTimeStamp, 0, UInt32(numberFrames), bufferListInOut) == noErr else {
                     referenceToSelf.handlePlaybackError("AudioUnitRender failed")
                     return
                 }
@@ -622,22 +691,101 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             AudioUnitSetParameter(createdUnit, kLimiterParam_AttackTime, kAudioUnitScope_Global, 0, 0.002, 0)
             AudioUnitSetParameter(createdUnit, kLimiterParam_DecayTime, kAudioUnitScope_Global, 0, 0.005, 0)
-            AudioUnitSetParameter(createdUnit, kLimiterParam_PreGain, kAudioUnitScope_Global, 0, 8, 0)
+            AudioUnitSetParameter(createdUnit, kLimiterParam_PreGain, kAudioUnitScope_Global, 0, 11, 0)
 
             return createdUnit
         }
 
-        let peakLimiterRenderCallback: AURenderCallback = { inRefCon, _, _, _, inNumberFrames, ioData -> OSStatus in
+        let peakLimiterRenderCallback: AURenderCallback = { inRefCon, _, inTimeStamp, _, inNumberFrames, ioData -> OSStatus in
             guard
                 let referenceToSelf = DefaultPlayer.unretainedDefaultPlayer(for: inRefCon),
-                let tap = referenceToSelf.audioMix?.inputParameters.first?.audioTapProcessor,
+                let dynamicsProcessor = referenceToSelf.dynamicsProcessor,
                 let ioData
             else {
                 return -1
             }
 
-            // The peak limiter is at the end of the chain so just grab the processed audio
-            return MTAudioProcessingTapGetSourceAudio(tap, CMItemCount(inNumberFrames), ioData, nil, nil, nil)
+            var audioTimeStamp = AudioTimeStamp()
+            audioTimeStamp.mSampleTime = inTimeStamp.pointee.mSampleTime
+            audioTimeStamp.mFlags = AudioTimeStampFlags.sampleTimeValid
+
+            // The peak limiter pulls from the dynamics processor
+            var actionFlags = AudioUnitRenderActionFlags()
+            return AudioUnitRender(dynamicsProcessor, &actionFlags, &audioTimeStamp, 0, inNumberFrames, ioData)
+        }
+
+        // MARK: - Dynamics Processor
+
+        func createDynamicsProcessor(maxFrames: CMItemCount, processingFormat: AudioStreamBasicDescription, tap: MTAudioProcessingTap) -> AudioUnit? {
+            guard let referenceToSelf = DefaultPlayer.unretainedDefaultPlayer(for: tap) else {
+                return nil
+            }
+            var componentDescription = AudioComponentDescription(componentType: kAudioUnitType_Effect,
+                                                                 componentSubType: kAudioUnitSubType_DynamicsProcessor,
+                                                                 componentManufacturer: kAudioUnitManufacturer_Apple,
+                                                                 componentFlags: 0,
+                                                                 componentFlagsMask: 0)
+
+            var unit: AudioUnit?
+            guard let audioComponent = AudioComponentFindNext(nil, &componentDescription) else { return nil }
+            guard AudioComponentInstanceNew(audioComponent, &unit) == noErr, let createdUnit = unit else { return nil }
+
+            // Set audio unit input/output stream format to processing format
+            var format = processingFormat
+            guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
+            guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
+
+            // Set audio unit render callback
+            var renderCallback: AURenderCallbackStruct
+            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
+                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.dynamicsProcessorRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
+            } else {
+                renderCallback = AURenderCallbackStruct(inputProc: dynamicsProcessorRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
+            }
+            guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
+
+            // Set audio unit maximum frames per slice to max frames
+            var maximumFramesPerSlice = UInt32(maxFrames)
+            guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &maximumFramesPerSlice, UInt32(MemoryLayout<UInt32>.stride)) == noErr else { return nil }
+
+            // Initialize audio unit
+            guard AudioUnitInitialize(createdUnit) == noErr else {
+                AudioComponentInstanceDispose(createdUnit)
+                return nil
+            }
+
+            // same parameters as EffectsPlayer's legacy volume-boost chain
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_Threshold, kAudioUnitScope_Global, 0, -41, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_HeadRoom, kAudioUnitScope_Global, 0, 40, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_ExpansionRatio, kAudioUnitScope_Global, 0, 1, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_ExpansionThreshold, kAudioUnitScope_Global, 0, -100, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_AttackTime, kAudioUnitScope_Global, 0, 0.05, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_ReleaseTime, kAudioUnitScope_Global, 0, 0.2, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_OverallGain, kAudioUnitScope_Global, 0, 0, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_CompressionAmount, kAudioUnitScope_Global, 0, 0, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_InputAmplitude, kAudioUnitScope_Global, 0, -120, 0)
+            AudioUnitSetParameter(createdUnit, kDynamicsProcessorParam_OutputAmplitude, kAudioUnitScope_Global, 0, -120, 0)
+
+            return createdUnit
+        }
+
+        let dynamicsProcessorRenderCallback: AURenderCallback = { inRefCon, _, inTimeStamp, _, inNumberFrames, ioData -> OSStatus in
+            guard
+                let referenceToSelf = DefaultPlayer.unretainedDefaultPlayer(for: inRefCon),
+                let highPassFilter = referenceToSelf.highPassFilter,
+                let ioData
+            else {
+                return -1
+            }
+
+            var audioTimeStamp = AudioTimeStamp()
+            audioTimeStamp.mSampleTime = inTimeStamp.pointee.mSampleTime
+            audioTimeStamp.mFlags = AudioTimeStampFlags.sampleTimeValid
+
+            // The dynamics processor pulls from the high pass filter
+            var actionFlags = AudioUnitRenderActionFlags()
+            return AudioUnitRender(highPassFilter, &actionFlags, &audioTimeStamp, 0, inNumberFrames, ioData)
         }
 
         // MARK: - High Pass Filter
@@ -687,34 +835,33 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             return createdUnit
         }
 
-        let highPassFilterRenderCallback: AURenderCallback = { inRefCon, _, inTimeStamp, _, inNumberFrames, ioData -> OSStatus in
+        let highPassFilterRenderCallback: AURenderCallback = { inRefCon, _, _, _, inNumberFrames, ioData -> OSStatus in
             guard
                 let referenceToSelf = DefaultPlayer.unretainedDefaultPlayer(for: inRefCon),
-                let peakLimiter = referenceToSelf.peakLimiter,
+                let tap = referenceToSelf.audioMix?.inputParameters.first?.audioTapProcessor,
                 let ioData
             else {
                 return -1
             }
 
-            var audioTimeStamp = AudioTimeStamp()
-            audioTimeStamp.mSampleTime = inTimeStamp.pointee.mSampleTime
-            audioTimeStamp.mFlags = AudioTimeStampFlags.sampleTimeValid
-
-            // The high pass filter calls the peak limiter as the next thing in the chain
-            var actionFlags = AudioUnitRenderActionFlags()
-            return AudioUnitRender(peakLimiter, &actionFlags, &audioTimeStamp, 0, inNumberFrames, ioData)
+            // The high pass filter is the start of the chain, so it pulls the source audio
+            return MTAudioProcessingTapGetSourceAudio(tap, CMItemCount(inNumberFrames), ioData, nil, nil, nil)
         }
 
     // MARK: - Helpers
 
     private func performSetPlaybackRate() {
-        if requiredPlaybackRate < 0.5 {
+        if requiredPlaybackRate == 0 {
+            // never set: default to normal speed
             requiredPlaybackRate = 1.0
+        } else if requiredPlaybackRate < 0.5 {
+            // clamp instead of the old silent snap back to 1.0
+            requiredPlaybackRate = 0.5
         }
 
         player?.rate = Float(requiredPlaybackRate)
 
-        player?.currentItem?.audioTimePitchAlgorithm = .timeDomain
+        player?.currentItem?.audioTimePitchAlgorithm = PlaybackManager.engineState.tuning.timeStretch.defaultPlayerAlgorithm.avAlgorithm
     }
 
     private func jumpToStartingPosition() {

@@ -65,6 +65,13 @@ class DatabaseHelper {
         // deterministic hash UUIDs and are excluded from account sync.
         SchemaMigration(toVersion: 76) { db in
             try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN refreshSource INTEGER DEFAULT 0;", values: nil)
+        },
+        // Precomputed integrated loudness (BS.1770 LUFS) for downloaded episodes so
+        // VoiceBoostN can seed its gain instantly. 0 = not yet measured (real
+        // measurements are always negative). Follows the cachedFrameCount pattern.
+        SchemaMigration(toVersion: 77) { db in
+            try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN cachedLoudness REAL NOT NULL DEFAULT 0;", values: nil)
+            try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN cachedLoudness REAL NOT NULL DEFAULT 0;", values: nil)
         }
     ]
 

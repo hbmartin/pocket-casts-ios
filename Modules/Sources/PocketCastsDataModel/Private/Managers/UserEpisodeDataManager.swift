@@ -25,6 +25,7 @@ final class UserEpisodeDataManager: Sendable {
         "uuid",
         "playbackErrorDetails",
         "cachedFrameCount",
+        "cachedLoudness",
         "uploadStatus",
         "uploadTaskId",
         "imageUrl",
@@ -212,6 +213,10 @@ final class UserEpisodeDataManager: Sendable {
 
     func findFrameCount(episodeId: Int64, dbQueue: GRDBQueue) -> Int64 {
         return dbQueue.fetchOne(UserEpisode.filter(UserEpisode.Columns.id == episodeId))?.cachedFrameCount ?? 0
+    }
+
+    func findLoudness(episodeId: Int64, dbQueue: GRDBQueue) -> Double {
+        return dbQueue.fetchOne(UserEpisode.filter(UserEpisode.Columns.id == episodeId))?.cachedLoudness ?? 0
     }
 
     private func loadMultiple(query: String, values: [Any]?, dbQueue: GRDBQueue) -> [UserEpisode] {
@@ -465,7 +470,8 @@ final class UserEpisodeDataManager: Sendable {
                 db,
                 UserEpisode.Columns.episodeStatus.set(to: DownloadStatus.notDownloaded.rawValue),
                 UserEpisode.Columns.autoDownloadStatus.set(to: AutoDownloadStatus.userDeletedFile.rawValue),
-                UserEpisode.Columns.cachedFrameCount.set(to: 0)
+                UserEpisode.Columns.cachedFrameCount.set(to: 0),
+                UserEpisode.Columns.cachedLoudness.set(to: 0)
             )
         }
     }
@@ -490,6 +496,17 @@ final class UserEpisodeDataManager: Sendable {
 
     func saveFrameCount(episodeId: Int64, frameCount: Int64, dbQueue: GRDBQueue) {
         save(fieldName: "cachedFrameCount", value: frameCount, episodeId: episodeId, dbQueue: dbQueue)
+    }
+
+    func saveLoudness(episodeId: Int64, loudness: Double, dbQueue: GRDBQueue) {
+        save(fieldName: "cachedLoudness", value: loudness, episodeId: episodeId, dbQueue: dbQueue)
+    }
+
+    /// Zeroes both cached audio measurements (frame count + loudness); call when
+    /// the local file changes so stale values never seed the player.
+    func clearCachedAudioMetadata(episodeId: Int64, dbQueue: GRDBQueue) {
+        save(fieldName: "cachedFrameCount", value: 0, episodeId: episodeId, dbQueue: dbQueue)
+        save(fieldName: "cachedLoudness", value: 0, episodeId: episodeId, dbQueue: dbQueue)
     }
 
     func saveEpisode(playedUpTo: Double, episode: UserEpisode, updateSyncFlag: Bool, dbQueue: GRDBQueue) {
@@ -599,6 +616,7 @@ final class UserEpisodeDataManager: Sendable {
         episode.uuid = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "uuid")
         episode.playbackErrorDetails = rs.string(forColumn: "playbackErrorDetails")
         episode.cachedFrameCount = rs.longLongInt(forColumn: "cachedFrameCount")
+        episode.cachedLoudness = rs.double(forColumn: "cachedLoudness")
         episode.uploadStatus = rs.int(forColumn: "uploadStatus")
         episode.uploadTaskId = rs.string(forColumn: "uploadTaskId")
         episode.imageUrl = rs.string(forColumn: "imageUrl")

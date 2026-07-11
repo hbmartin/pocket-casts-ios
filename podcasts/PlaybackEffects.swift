@@ -84,8 +84,12 @@ nonisolated class PlaybackEffects {
         }
 
         var roundedSpeed = round(savedSpeed * 10.0) / 10.0
-        if roundedSpeed < 0.5 {
+        if roundedSpeed == 0 {
+            // never set: default to normal speed
             roundedSpeed = 1.0
+        } else if roundedSpeed < 0.5 {
+            // clamp instead of the old silent snap back to 1.0
+            roundedSpeed = 0.5
         }
         effects.playbackSpeed = roundedSpeed
 

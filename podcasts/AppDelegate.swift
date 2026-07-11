@@ -81,6 +81,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         setupRoutes()
 
+        // start observing episode downloads so loudness gets measured in the background
+        _ = EpisodeLoudnessScanner.shared
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in
@@ -311,7 +314,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if !episode.downloaded(pathFinder: DownloadManager.shared) {
                 // episode is listed as downloaded, but the file isn't there, fix this
                 dataManager.saveEpisode(downloadStatus: .notDownloaded, episode: episode)
-                dataManager.saveFrameCount(episode: episode, frameCount: 0)
+                dataManager.clearCachedAudioMetadata(episode: episode)
             }
         }
 

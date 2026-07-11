@@ -35,6 +35,14 @@ final class PlaybackManager {
     /// non-main contexts (Phase 5 D1: real-time-adjacent code can't await).
     /// PlaybackManager updates it on the main actor whenever effects change.
     nonisolated final class EngineStateMirror: Sendable {
+        /// Live VoiceBoostN meter readouts written from the audio read/tap
+        /// threads for the Advanced Audio screen; nil while VBN is inactive.
+        nonisolated struct VoiceBoostMeters: Equatable, Sendable {
+            var gainDB: Float
+            var measuredLUFS: Float
+            var limiterReductionDB: Float
+        }
+
         private let lock = NSLock()
         // nonisolated(unsafe): only ever accessed through the lock below
         nonisolated(unsafe) private var _effects = PlaybackEffects()
@@ -42,6 +50,22 @@ final class PlaybackManager {
         var effects: PlaybackEffects {
             get { lock.withLock { _effects } }
             set { lock.withLock { _effects = newValue } }
+        }
+
+        // nonisolated(unsafe): only ever accessed through the lock below
+        nonisolated(unsafe) private var _tuning = AudioTuning.default
+
+        var tuning: AudioTuning {
+            get { lock.withLock { _tuning } }
+            set { lock.withLock { _tuning = newValue } }
+        }
+
+        // nonisolated(unsafe): only ever accessed through the lock below
+        nonisolated(unsafe) private var _voiceBoostMeters: VoiceBoostMeters?
+
+        var voiceBoostMeters: VoiceBoostMeters? {
+            get { lock.withLock { _voiceBoostMeters } }
+            set { lock.withLock { _voiceBoostMeters = newValue } }
         }
 
         // nonisolated(unsafe): only ever accessed through the lock below
@@ -178,6 +202,9 @@ final class PlaybackManager {
             }
         )
 
+        Self.engineState.tuning = Settings.audioTuning
+
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAudioTuningChanged), name: Constants.Notifications.audioTuningDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSkipTimesChanged), name: Constants.Notifications.skipTimesChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidUpdate(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidDownload(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
@@ -1002,6 +1029,24 @@ final class PlaybackManager {
         currentEffects = newEffects
         Self.engineState.effects = newEffects
         handlePlaybackEffectsChanged(effects: newEffects)
+    }
+
+    @objc private func handleAudioTuningChanged() {
+        let oldTuning = Self.engineState.tuning
+        let newTuning = Settings.audioTuning
+        guard oldTuning != newTuning else { return }
+
+        Self.engineState.tuning = newTuning
+
+        if oldTuning.timeStretch.effectsPlayerAlgorithm != newTuning.timeStretch.effectsPlayerAlgorithm,
+           player is EffectsPlayer, let episode = currentEpisode() {
+            // the EffectsPlayer time-stretch unit is wired into the engine graph at
+            // build time, so an algorithm change needs a player rebuild
+            load(episode: episode, autoPlay: playing(), overrideUpNext: false)
+            return
+        }
+
+        player?.effectsDidChange()
     }
 
     func overrideEffectsToggled(applyLocalSettings: Bool) {

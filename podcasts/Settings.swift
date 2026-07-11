@@ -1460,17 +1460,51 @@ nonisolated class Settings: NSObject {
 
     // MARK: - VoiceBoostN
 
+    /// Facade over `audioTuning.voiceBoost.useVoiceBoostN` so the General
+    /// settings toggle and the Advanced Audio screen share one source of truth.
     static var isVoiceBoostNEnabled: Bool {
         get {
             guard FeatureFlag.voiceBoostN.enabled else { return false }
-            if UserDefaults.standard.object(forKey: Constants.UserDefaults.voiceBoostNEnabled) == nil {
-                return true
-            }
-            return UserDefaults.standard.bool(forKey: Constants.UserDefaults.voiceBoostNEnabled)
+            return audioTuning.voiceBoost.useVoiceBoostN
         }
         set {
+            var tuning = audioTuning
+            tuning.voiceBoost.useVoiceBoostN = newValue
+            audioTuning = tuning
             UserDefaults.standard.set(newValue, forKey: Constants.UserDefaults.voiceBoostNEnabled)
             FileLog.shared.addMessage("[Settings] VoiceBoostN \(newValue ? "enabled" : "disabled")")
+        }
+    }
+
+    // MARK: - Advanced Audio Tuning
+
+    /// The full advanced-audio tuning snapshot, persisted as one JSON blob so
+    /// the engine mirror always sees a consistent value. Default tuning stores
+    /// nothing; a corrupt blob falls back to defaults rather than crashing.
+    static var audioTuning: AudioTuning {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: Constants.UserDefaults.audioTuning),
+                  let tuning = try? JSONDecoder().decode(AudioTuning.self, from: data) else {
+                var tuning = AudioTuning.default
+                // Honor a legacy VoiceBoostN opt-out recorded before this blob existed
+                if UserDefaults.standard.object(forKey: Constants.UserDefaults.voiceBoostNEnabled) != nil {
+                    tuning.voiceBoost.useVoiceBoostN = UserDefaults.standard.bool(forKey: Constants.UserDefaults.voiceBoostNEnabled)
+                }
+                return tuning
+            }
+            return tuning
+        }
+        set {
+            guard newValue != audioTuning else { return }
+            if newValue == .default {
+                UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.audioTuning)
+                // keep the legacy VoiceBoostN key from resurrecting an old opt-out
+                UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.voiceBoostNEnabled)
+            } else if let data = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(data, forKey: Constants.UserDefaults.audioTuning)
+            }
+            FileLog.shared.addMessage("[Settings] AudioTuning changed (default: \(newValue == .default))")
+            NotificationCenter.postOnMainThread(notification: Constants.Notifications.audioTuningDidChange)
         }
     }
 

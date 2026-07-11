@@ -41,6 +41,8 @@ public struct Episode: BaseEpisode, Identifiable, Equatable, Hashable, Sendable 
     public var podcastUuid = ""
     public var playbackErrorDetails: String?
     public var cachedFrameCount = 0 as Int64
+    /// Integrated BS.1770 loudness in LUFS; 0 = not yet measured.
+    public var cachedLoudness = 0 as Double
     public var podcast_id = 0 as Int64
     public var episodeNumber = -1 as Int64
     public var seasonNumber = -1 as Int64

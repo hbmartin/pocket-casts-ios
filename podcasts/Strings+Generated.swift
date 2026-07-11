@@ -166,6 +166,138 @@ nonisolated internal enum L10n {
   internal static var addBookmarkSubtitle: String { return L10n.tr("Localizable", "add_bookmark_subtitle", fallback: "Add an optional title to identify this bookmark") }
   /// A common string used throughout the app. Title for the prompt to add an episode to the up next queue.
   internal static var addToUpNext: String { return L10n.tr("Localizable", "add_to_up_next", fallback: "Add to Up Next") }
+  /// Advanced Audio - toggle for converging faster while far from the target loudness
+  internal static var advancedAudioBoostAdaptiveSmoothing: String { return L10n.tr("Localizable", "advanced_audio_boost_adaptive_smoothing", fallback: "Adaptive smoothing") }
+  /// Advanced Audio - slider for the compressor attack time
+  internal static var advancedAudioBoostCompAttack: String { return L10n.tr("Localizable", "advanced_audio_boost_comp_attack", fallback: "Attack") }
+  /// Advanced Audio - slider for the compressor soft knee width
+  internal static var advancedAudioBoostCompKnee: String { return L10n.tr("Localizable", "advanced_audio_boost_comp_knee", fallback: "Knee width") }
+  /// Advanced Audio - slider for the compression ratio
+  internal static var advancedAudioBoostCompRatio: String { return L10n.tr("Localizable", "advanced_audio_boost_comp_ratio", fallback: "Ratio") }
+  /// Advanced Audio - slider for the compressor release time
+  internal static var advancedAudioBoostCompRelease: String { return L10n.tr("Localizable", "advanced_audio_boost_comp_release", fallback: "Release") }
+  /// Advanced Audio - slider for the compressor threshold
+  internal static var advancedAudioBoostCompThreshold: String { return L10n.tr("Localizable", "advanced_audio_boost_comp_threshold", fallback: "Threshold") }
+  /// Advanced Audio - toggle for the compressor stage
+  internal static var advancedAudioBoostCompressor: String { return L10n.tr("Localizable", "advanced_audio_boost_compressor", fallback: "Compressor") }
+  /// Advanced Audio - header of the compressor and limiter section
+  internal static var advancedAudioBoostDynamicsHeader: String { return L10n.tr("Localizable", "advanced_audio_boost_dynamics_header", fallback: "Voice Boost — Compressor & Limiter") }
+  /// Advanced Audio - picker choosing the volume boost processing engine
+  internal static var advancedAudioBoostEngine: String { return L10n.tr("Localizable", "advanced_audio_boost_engine", fallback: "Boost engine") }
+  /// Advanced Audio - footer shown when the VoiceBoostN feature flag is off
+  internal static var advancedAudioBoostEngineFooter: String { return L10n.tr("Localizable", "advanced_audio_boost_engine_footer", fallback: "The VoiceBoostN feature flag is currently off, so the legacy engine is used regardless of this setting.") }
+  /// Advanced Audio - the original AudioUnit-based boost engine
+  internal static var advancedAudioBoostEngineLegacy: String { return L10n.tr("Localizable", "advanced_audio_boost_engine_legacy", fallback: "Legacy") }
+  /// Advanced Audio - the modern loudness-normalization boost engine
+  internal static var advancedAudioBoostEngineModern: String { return L10n.tr("Localizable", "advanced_audio_boost_engine_modern", fallback: "VoiceBoostN") }
+  /// Advanced Audio - slider for how quickly the gain converges on its target
+  internal static var advancedAudioBoostGainSmoothing: String { return L10n.tr("Localizable", "advanced_audio_boost_gain_smoothing", fallback: "Gain smoothing") }
+  /// Advanced Audio - header of the Voice Boost normalization section
+  internal static var advancedAudioBoostHeader: String { return L10n.tr("Localizable", "advanced_audio_boost_header", fallback: "Voice Boost — Normalization") }
+  /// Advanced Audio - toggle for the rumble high-pass filter
+  internal static var advancedAudioBoostHighPass: String { return L10n.tr("Localizable", "advanced_audio_boost_high_pass", fallback: "High-pass filter") }
+  /// Advanced Audio - slider for the high-pass cutoff frequency
+  internal static var advancedAudioBoostHighPassFreq: String { return L10n.tr("Localizable", "advanced_audio_boost_high_pass_freq", fallback: "Cutoff frequency") }
+  /// Advanced Audio - slider for the high-pass resonance (Q)
+  internal static var advancedAudioBoostHighPassQ: String { return L10n.tr("Localizable", "advanced_audio_boost_high_pass_q", fallback: "Resonance (Q)") }
+  /// Advanced Audio - slider for the limiter output ceiling
+  internal static var advancedAudioBoostLimiterCeiling: String { return L10n.tr("Localizable", "advanced_audio_boost_limiter_ceiling", fallback: "Limiter ceiling") }
+  /// Advanced Audio - slider for the limiter lookahead time
+  internal static var advancedAudioBoostLimiterLookahead: String { return L10n.tr("Localizable", "advanced_audio_boost_limiter_lookahead", fallback: "Limiter lookahead") }
+  /// Advanced Audio - slider for the limiter release time
+  internal static var advancedAudioBoostLimiterRelease: String { return L10n.tr("Localizable", "advanced_audio_boost_limiter_release", fallback: "Limiter release") }
+  /// Advanced Audio - slider for the maximum boost the normalizer may apply
+  internal static var advancedAudioBoostMaxGain: String { return L10n.tr("Localizable", "advanced_audio_boost_max_gain", fallback: "Maximum gain") }
+  /// Advanced Audio - slider for the maximum attenuation the normalizer may apply
+  internal static var advancedAudioBoostMinGain: String { return L10n.tr("Localizable", "advanced_audio_boost_min_gain", fallback: "Minimum gain") }
+  /// Advanced Audio - slider for the loudness normalization target
+  internal static var advancedAudioBoostTargetLufs: String { return L10n.tr("Localizable", "advanced_audio_boost_target_lufs", fallback: "Target loudness") }
+  /// Advanced Audio - footer explaining the loudness target measurement point
+  internal static var advancedAudioBoostTargetLufsFooter: String { return L10n.tr("Localizable", "advanced_audio_boost_target_lufs_footer", fallback: "Target applies before compression; the compressor adds roughly 3 dB, so the default lands near -14 LUFS.") }
+  /// Advanced Audio - toggle for oversampled inter-sample peak detection
+  internal static var advancedAudioBoostTruePeak: String { return L10n.tr("Localizable", "advanced_audio_boost_true_peak", fallback: "True-peak detection") }
+  /// Advanced Audio - footer explaining true-peak detection
+  internal static var advancedAudioBoostTruePeakFooter: String { return L10n.tr("Localizable", "advanced_audio_boost_true_peak_footer", fallback: "True-peak detection catches inter-sample peaks with 4x oversampling at a small CPU cost.") }
+  /// Advanced Audio - warning footer explaining these are expert DSP settings
+  internal static var advancedAudioFooterWarning: String { return L10n.tr("Localizable", "advanced_audio_footer_warning", fallback: "These settings tune the audio engine directly. Defaults match standard playback; reset if something sounds wrong.") }
+  /// Advanced Audio - label for the current normalization gain meter
+  internal static var advancedAudioMetersGain: String { return L10n.tr("Localizable", "advanced_audio_meters_gain", fallback: "Applied gain") }
+  /// Advanced Audio - header of the live meters section
+  internal static var advancedAudioMetersHeader: String { return L10n.tr("Localizable", "advanced_audio_meters_header", fallback: "Live Status") }
+  /// Advanced Audio - shown in the meters section while nothing is playing with Voice Boost
+  internal static var advancedAudioMetersIdle: String { return L10n.tr("Localizable", "advanced_audio_meters_idle", fallback: "Play something with Volume Boost on to see live meters.") }
+  /// Advanced Audio - label for the limiter gain-reduction meter
+  internal static var advancedAudioMetersLimiter: String { return L10n.tr("Localizable", "advanced_audio_meters_limiter", fallback: "Limiter reduction") }
+  /// Advanced Audio - label for the measured loudness meter
+  internal static var advancedAudioMetersLufs: String { return L10n.tr("Localizable", "advanced_audio_meters_lufs", fallback: "Measured loudness") }
+  /// Advanced Audio - button resetting every tuning parameter
+  internal static var advancedAudioResetAll: String { return L10n.tr("Localizable", "advanced_audio_reset_all", fallback: "Reset All Tuning") }
+  /// Advanced Audio - message of the reset-all confirmation alert
+  internal static var advancedAudioResetConfirmMessage: String { return L10n.tr("Localizable", "advanced_audio_reset_confirm_message", fallback: "All parameters return to their defaults. Playback behaves exactly like standard Pocket Casts.") }
+  /// Advanced Audio - title of the reset-all confirmation alert
+  internal static var advancedAudioResetConfirmTitle: String { return L10n.tr("Localizable", "advanced_audio_reset_confirm_title", fallback: "Reset all audio tuning?") }
+  /// Advanced Audio - button resetting one section's parameters
+  internal static var advancedAudioResetSection: String { return L10n.tr("Localizable", "advanced_audio_reset_section", fallback: "Reset Section") }
+  /// Advanced Audio - the classic speech-tuned time stretch algorithm
+  internal static var advancedAudioStretchAlgoIpod: String { return L10n.tr("Localizable", "advanced_audio_stretch_algo_ipod", fallback: "Classic (speech-tuned)") }
+  /// Advanced Audio - the spectral time stretch algorithm
+  internal static var advancedAudioStretchAlgoSpectral: String { return L10n.tr("Localizable", "advanced_audio_stretch_algo_spectral", fallback: "Spectral") }
+  /// Advanced Audio - the time-domain time stretch algorithm
+  internal static var advancedAudioStretchAlgoTimeDomain: String { return L10n.tr("Localizable", "advanced_audio_stretch_algo_time_domain", fallback: "Time domain") }
+  /// Advanced Audio - the varispeed algorithm that shifts pitch with speed
+  internal static var advancedAudioStretchAlgoVarispeed: String { return L10n.tr("Localizable", "advanced_audio_stretch_algo_varispeed", fallback: "Varispeed (pitch shifts)") }
+  /// Advanced Audio - picker for the streamed-audio time stretch algorithm
+  internal static var advancedAudioStretchDefaultPlayer: String { return L10n.tr("Localizable", "advanced_audio_stretch_default_player", fallback: "Streamed audio") }
+  /// Advanced Audio - picker for the downloaded-audio time stretch algorithm
+  internal static var advancedAudioStretchEffectsPlayer: String { return L10n.tr("Localizable", "advanced_audio_stretch_effects_player", fallback: "Downloaded audio") }
+  /// Advanced Audio - footer warning that changing the downloaded-audio algorithm restarts playback
+  internal static var advancedAudioStretchFooter: String { return L10n.tr("Localizable", "advanced_audio_stretch_footer", fallback: "Changing the downloaded-audio algorithm briefly restarts playback.") }
+  /// Advanced Audio - header of the time stretch section
+  internal static var advancedAudioStretchHeader: String { return L10n.tr("Localizable", "advanced_audio_stretch_header", fallback: "Time Stretch") }
+  /// Advanced Audio - toggle for tracking the recording's noise floor automatically
+  internal static var advancedAudioTrimAdaptiveFloor: String { return L10n.tr("Localizable", "advanced_audio_trim_adaptive_floor", fallback: "Adaptive noise floor") }
+  /// Advanced Audio - slider for how far above the noise floor the gate sits
+  internal static var advancedAudioTrimAdaptiveOffset: String { return L10n.tr("Localizable", "advanced_audio_trim_adaptive_offset", fallback: "Floor offset") }
+  /// Advanced Audio - slider for how much recent audio the noise floor tracks
+  internal static var advancedAudioTrimAdaptiveWindow: String { return L10n.tr("Localizable", "advanced_audio_trim_adaptive_window", fallback: "Floor window") }
+  /// Advanced Audio - slider for the crossfade length at each trim splice
+  internal static var advancedAudioTrimCrossfade: String { return L10n.tr("Localizable", "advanced_audio_trim_crossfade", fallback: "Crossfade") }
+  /// Advanced Audio - footer explaining the custom trim gate toggle
+  internal static var advancedAudioTrimCustomFooter: String { return L10n.tr("Localizable", "advanced_audio_trim_custom_footer", fallback: "When Custom gate is on, these values replace the Low/Medium/High preset amounts chosen in playback effects.") }
+  /// Advanced Audio - toggle replacing the Low/Medium/High presets with the custom values below
+  internal static var advancedAudioTrimCustomToggle: String { return L10n.tr("Localizable", "advanced_audio_trim_custom_toggle", fallback: "Custom gate") }
+  /// Advanced Audio - picker choosing how silence is detected
+  internal static var advancedAudioTrimDiscriminator: String { return L10n.tr("Localizable", "advanced_audio_trim_discriminator", fallback: "Detection") }
+  /// Advanced Audio - silence detection using loudness plus spectral heuristics
+  internal static var advancedAudioTrimDiscriminatorHeuristic: String { return L10n.tr("Localizable", "advanced_audio_trim_discriminator_heuristic", fallback: "Heuristic") }
+  /// Advanced Audio - silence detection using loudness only
+  internal static var advancedAudioTrimDiscriminatorRms: String { return L10n.tr("Localizable", "advanced_audio_trim_discriminator_rms", fallback: "Loudness only") }
+  /// Advanced Audio - silence detection assisted by the system speech classifier
+  internal static var advancedAudioTrimDiscriminatorVad: String { return L10n.tr("Localizable", "advanced_audio_trim_discriminator_vad", fallback: "Speech detection") }
+  /// Advanced Audio - slider for how many final seconds of an episode are never trimmed
+  internal static var advancedAudioTrimEndGuard: String { return L10n.tr("Localizable", "advanced_audio_trim_end_guard", fallback: "End guard") }
+  /// Advanced Audio - slider for the spectral flatness above which quiet audio counts as silence
+  internal static var advancedAudioTrimFlatnessThreshold: String { return L10n.tr("Localizable", "advanced_audio_trim_flatness_threshold", fallback: "Flatness threshold") }
+  /// Advanced Audio - header of the trim silence tuning section
+  internal static var advancedAudioTrimHeader: String { return L10n.tr("Localizable", "advanced_audio_trim_header", fallback: "Trim Silence") }
+  /// Advanced Audio - slider for how long the gate stays open after speech resumes
+  internal static var advancedAudioTrimHold: String { return L10n.tr("Localizable", "advanced_audio_trim_hold", fallback: "Hold time") }
+  /// Advanced Audio - slider for the gap between the gate's close and reopen thresholds
+  internal static var advancedAudioTrimHysteresis: String { return L10n.tr("Localizable", "advanced_audio_trim_hysteresis", fallback: "Hysteresis") }
+  /// Advanced Audio - slider for how much of each trimmed pause is kept
+  internal static var advancedAudioTrimKeepGap: String { return L10n.tr("Localizable", "advanced_audio_trim_keep_gap", fallback: "Kept pause") }
+  /// Advanced Audio - menu seeding the custom trim values from a preset
+  internal static var advancedAudioTrimLoadPreset: String { return L10n.tr("Localizable", "advanced_audio_trim_load_preset", fallback: "Load Values From Preset") }
+  /// Advanced Audio - slider for the shortest pause that can be trimmed
+  internal static var advancedAudioTrimMinGap: String { return L10n.tr("Localizable", "advanced_audio_trim_min_gap", fallback: "Minimum gap") }
+  /// Advanced Audio - slider for the silence gate threshold in decibels
+  internal static var advancedAudioTrimThreshold: String { return L10n.tr("Localizable", "advanced_audio_trim_threshold", fallback: "Threshold") }
+  /// Advanced Audio - slider for the speech confidence that blocks a trim
+  internal static var advancedAudioTrimVadConfidence: String { return L10n.tr("Localizable", "advanced_audio_trim_vad_confidence", fallback: "Speech confidence") }
+  /// Advanced Audio - slider for how far below the gate fricative protection applies
+  internal static var advancedAudioTrimZcrMargin: String { return L10n.tr("Localizable", "advanced_audio_trim_zcr_margin", fallback: "Protection margin") }
+  /// Advanced Audio - slider for the zero-crossing rate protecting quiet consonants
+  internal static var advancedAudioTrimZcrThreshold: String { return L10n.tr("Localizable", "advanced_audio_trim_zcr_threshold", fallback: "Fricative protection") }
   /// A common string used throughout the app. Option that determines the behavior of the app after playing an item.
   internal static var afterPlaying: String { return L10n.tr("Localizable", "after_playing", fallback: "After Playing") }
   /// Search Results filter option
@@ -3359,6 +3491,8 @@ nonisolated internal enum L10n {
   internal static var settings: String { return L10n.tr("Localizable", "settings", fallback: "Settings") }
   /// A common string used throughout the app. Refers to the About settings menu
   internal static var settingsAbout: String { return L10n.tr("Localizable", "settings_about", fallback: "About") }
+  /// Settings row title for the Advanced Audio tuning screen
+  internal static var settingsAdvancedAudio: String { return L10n.tr("Localizable", "settings_advanced_audio", fallback: "Advanced Audio") }
   /// Label displayed below the toggle to opt-in/out for First-Party Analytics tracking
   internal static var settingsAllowCollectionFirstParty: String { return L10n.tr("Localizable", "settings_allow_collection_first_party", fallback: "Allow us to collect analytics.") }
   /// Label displayed below the toggle to opt-in/out for Third-Party Analytics tracking

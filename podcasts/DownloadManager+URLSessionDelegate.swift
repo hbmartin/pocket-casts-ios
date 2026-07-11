@@ -198,6 +198,8 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
             }
 
             let newDownloadStatus: DownloadStatus = autoDownloadStatus == .playerDownloadedForStreaming ? .downloadedForStreaming : .downloaded
+            // the local file just changed; stale frame-count/loudness caches must not seed the player
+            dataManager.clearCachedAudioMetadata(episode: episode)
             dataManager.saveEpisode(downloadStatus: newDownloadStatus, sizeInBytes: fileSize, downloadTaskId: nil, episode: episode)
             dataManager.saveEpisode(downloadStatus: newDownloadStatus, lastDownloadAttemptDate: Date.now, autoDownloadStatus: autoDownloadStatus, episode: episode)
             EpisodeFileSizeUpdater.updateEpisodeDuration(episode: episode)

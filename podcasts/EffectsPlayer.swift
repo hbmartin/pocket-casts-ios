@@ -7,8 +7,6 @@ import UIKit
 /// AVAudioEngine effects pipeline driven by PlaybackManager; state is guarded
 /// by playerLock and the serial seek queue.
 nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
-    private static let targetVolumeDbGain = 15.0 as Float
-
     private var engine: AVAudioEngine?
     private var player: AVAudioPlayerNode?
 
@@ -30,6 +28,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var audioFile: AVAudioFile?
 
     private var effects = PlaybackEffects()
+    private var tuning = AudioTuning.default
 
     private let shouldKeepPlaying = AtomicBool()
     private var haveFiredDurationNotification = false
@@ -91,6 +90,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
             strongSelf.engine?.attach(strongSelf.player!)
 
             strongSelf.effects = PlaybackManager.engineState.effects
+            strongSelf.tuning = PlaybackManager.engineState.tuning
             strongSelf.playBufferManager = PlayBufferManager()
 
             // Set useVoiceBoostN before setVolumeBoostSettings so bypass is configured correctly
@@ -283,13 +283,15 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
     func effectsDidChange() {
         effects = PlaybackManager.engineState.effects
+        tuning = PlaybackManager.engineState.tuning
 
         audioReadTask?.setTrimSilence(effects.trimSilence)
+        audioReadTask?.setTuning(tuning)
         playbackSpeed = effects.playbackSpeed
         timePitch?.rate = Float(playbackSpeed)
 
         // Update VoiceBoostN flag for dynamic switching
-        let shouldUseVoiceBoostN = Settings.isVoiceBoostNEnabled && effects.volumeBoost
+        let shouldUseVoiceBoostN = Settings.isVoiceBoostNEnabled && tuning.voiceBoost.useVoiceBoostN && effects.volumeBoost
         if shouldUseVoiceBoostN != useVoiceBoostN.value {
             useVoiceBoostN.value = shouldUseVoiceBoostN
             FileLog.shared.addMessage("[EffectsPlayer] VoiceBoostN flag changed to \(shouldUseVoiceBoostN)")
@@ -382,8 +384,19 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
         audioPlayTask?.shutdown()
 
         guard let audioFile, let player, let playBufferManager else { return }
+
+        // seed VoiceBoostN from the precomputed loudness when we have one, and
+        // queue a background measurement when we don't
+        var knownLUFS: Double = 0
+        if let episode {
+            knownLUFS = DataManager.sharedManager.findLoudness(episode: episode)
+            if knownLUFS == 0 {
+                EpisodeLoudnessScanner.shared.scanIfNeeded(episodeUuid: episode.uuid)
+            }
+        }
+
         let requiredStartTime = PlaybackManager.engineState.consumePendingStartingPosition() ?? 0
-        audioReadTask = AudioReadTask(trimSilence: effects.trimSilence, audioFile: audioFile, outputFormat: audioFile.processingFormat, bufferManager: playBufferManager, playPositionHint: requiredStartTime, frameCount: cachedFrameCount, useVoiceBoostN: useVoiceBoostN, sampleRate: audioFileSampleRate)
+        audioReadTask = AudioReadTask(trimSilence: effects.trimSilence, audioFile: audioFile, outputFormat: audioFile.processingFormat, bufferManager: playBufferManager, playPositionHint: requiredStartTime, frameCount: cachedFrameCount, useVoiceBoostN: useVoiceBoostN, sampleRate: audioFileSampleRate, tuning: PlaybackManager.engineState.tuning, knownLUFS: knownLUFS)
         audioPlayTask = AudioPlayTask(player: player, bufferManager: playBufferManager)
 
         audioReadTask?.startup()
@@ -443,12 +456,21 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     private func createTimePitchUnit() -> AVAudioUnitTimePitch {
-        var componentDescription = AudioComponentDescription()
-        componentDescription.componentType = kAudioUnitType_FormatConverter
-        componentDescription.componentSubType = kAudioUnitSubType_AUiPodTimeOther
-        componentDescription.componentManufacturer = kAudioUnitManufacturer_Apple
+        switch tuning.timeStretch.effectsPlayerAlgorithm {
+        case .spectral:
+            // Apple's default (phase-vocoder) time pitch unit
+            return AVAudioUnitTimePitch()
+        case .iPodTimeOther:
+            // the iPod-era speech-tuned unit the app has always used; the
+            // algorithm is baked into the engine graph, so switching requires a
+            // player rebuild (PlaybackManager.handleAudioTuningChanged)
+            var componentDescription = AudioComponentDescription()
+            componentDescription.componentType = kAudioUnitType_FormatConverter
+            componentDescription.componentSubType = kAudioUnitSubType_AUiPodTimeOther
+            componentDescription.componentManufacturer = kAudioUnitManufacturer_Apple
 
-        return AVAudioUnitTimePitch(audioComponentDescription: componentDescription)
+            return AVAudioUnitTimePitch(audioComponentDescription: componentDescription)
+        }
     }
 
     private func createHighPassUnit() -> AVAudioUnitEffect {
