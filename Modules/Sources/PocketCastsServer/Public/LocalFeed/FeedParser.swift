@@ -267,7 +267,7 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
 /// Parses the date formats found in the wild: RFC 822 (`pubDate`, in several truncations)
 /// and ISO 8601 (Atom, and some RSS feeds that use it anyway).
 enum FeedDateParser {
-    private static let rfc822Formatters: [DateFormatter] = [
+    private static var rfc822Formatters: [DateFormatter] { [
         "EEE, dd MMM yyyy HH:mm:ss Z",
         "EEE, dd MMM yyyy HH:mm:ss zzz",
         "EEE, dd MMM yyyy HH:mm Z",
@@ -279,7 +279,7 @@ enum FeedDateParser {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter
-    }
+    } }
 
     // nonisolated(unsafe): ISO8601DateFormatter is documented thread-safe (unlike
     // DateFormatter it has no mutable parse state); it just lacks a Sendable annotation.

@@ -7,13 +7,18 @@ public actor ShowInfoDataRetriever {
     /// instances share the same disk-backed store (`diskPath: "show_notes"`), so entries
     /// seeded here are visible to the instances the display path creates.
     public static let localFeedSeeder = ShowInfoDataRetriever()
+    nonisolated(unsafe) private static let sharedCache = URLCache(
+        memoryCapacity: 1.megabytes,
+        diskCapacity: 100.megabytes,
+        diskPath: "show_notes"
+    )
 
     private var dataRequestMap: [String: Task<Data, Error>] = [:]
 
     private let cache: URLCache
 
     public init() {
-        cache = URLCache(memoryCapacity: 1.megabytes, diskCapacity: 100.megabytes, diskPath: "show_notes")
+        cache = Self.sharedCache
     }
 
     /// Try to load episode data from the network

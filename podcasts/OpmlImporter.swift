@@ -85,6 +85,7 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
     private var initialPodcastCount = 0
     private var importedCount = 0
+    private let progressLock = NSLock()
 
     let importQueue: OperationQueue = {
         let queue = OperationQueue()
@@ -168,12 +169,11 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 let addGroup = DispatchGroup()
                 addGroup.enter()
                 ServerPodcastManager.shared.addLocalFeed(feedURL: url, subscribe: true) { added in
-                    self.importedCount += 1
-                    if !added { self.failedCount += 1 }
+                    let imported = self.updateProgress(failed: !added)
 
                     DispatchQueue.main.async {
                         guard let progressWindow = self.progressWindow else { return }
-                        progressWindow.title = self.progress(imported: self.importedCount, total: self.initialPodcastCount)
+                        progressWindow.title = self.progress(imported: imported, total: self.initialPodcastCount)
                     }
 
                     addGroup.leave()
@@ -243,10 +243,10 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                         podcast.syncStatus = SyncStatus.notSynced.rawValue
                         DataManager.sharedManager.save(podcast: podcast)
                     }
-                    self.importedCount += 1
+                    let imported = self.updateProgress()
                     DispatchQueue.main.async {
                         guard let progressWindow = self.progressWindow else { return }
-                        progressWindow.title = self.progress(imported: self.importedCount, total: self.initialPodcastCount)
+                        progressWindow.title = self.progress(imported: imported, total: self.initialPodcastCount)
                     }
 
                     return
@@ -256,11 +256,11 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 let addGroup = DispatchGroup()
                 addGroup.enter()
                 ServerPodcastManager.shared.addFromUuid(podcastUuid: uuid, subscribe: true) { _ in
-                    self.importedCount += 1
+                    let imported = self.updateProgress()
 
                     DispatchQueue.main.async {
                         guard let progressWindow = self.progressWindow else { return }
-                        progressWindow.title = self.progress(imported: self.importedCount, total: self.initialPodcastCount)
+                        progressWindow.title = self.progress(imported: imported, total: self.initialPodcastCount)
                     }
 
                     addGroup.leave()
@@ -276,5 +276,13 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
     func progress(imported: Int, total: Int) -> String {
         L10n.opmlImportProgressFormat(imported.localized(), total.localized())
+    }
+
+    private func updateProgress(failed: Bool = false) -> Int {
+        progressLock.lock()
+        defer { progressLock.unlock() }
+        importedCount += 1
+        if failed { failedCount += 1 }
+        return importedCount
     }
 }

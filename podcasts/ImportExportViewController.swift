@@ -77,13 +77,14 @@ class ImportExportViewController: PCViewController, @preconcurrency UIDocumentIn
     private func startExport() {
         Analytics.track(.settingsImportExportStarted)
 
-        let feeds = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
+        let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
+        let feeds = podcasts
             .compactMap { podcast -> OpmlFeed? in
                 guard let url = podcast.podcastUrl, !url.isEmpty else { return nil }
-                return OpmlFeed(title: podcast.title ?? "", url: url)
+                return OpmlFeed(title: podcast.title ?? "", url: LocalFeedURL.removingCredentials(from: url))
             }
 
-        guard !feeds.isEmpty else {
+        guard !feeds.isEmpty, feeds.count == podcasts.count else {
             presentError()
             Analytics.track(.settingsImportExportFailed)
             return

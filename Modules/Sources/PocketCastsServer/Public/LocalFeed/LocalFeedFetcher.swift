@@ -6,6 +6,15 @@ public enum LocalFeedError: Error {
     case httpError(statusCode: Int)
 }
 
+public enum LocalFeedURL {
+    public static func removingCredentials(from urlString: String) -> String {
+        guard var components = URLComponents(string: urlString) else { return urlString }
+        components.user = nil
+        components.password = nil
+        return components.string ?? urlString
+    }
+}
+
 /// Fetches and parses a feed over the network — no Pocket Casts servers involved.
 ///
 /// Private feeds are supported to the extent their credentials live in the stored feed

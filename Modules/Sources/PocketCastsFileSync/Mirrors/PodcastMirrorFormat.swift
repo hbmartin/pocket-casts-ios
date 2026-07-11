@@ -21,8 +21,10 @@ public enum PodcastMirrorFormat {
     }
 
     public static func relativePath(podcastUuid: String, episodeUuid: String, fileExtension: String) -> String {
-        let ext = fileExtension.isEmpty ? "mp3" : fileExtension
-        return "\(FileSyncFormat.podcastMirrorsDirectory)/\(podcastUuid)/\(episodeUuid).\(ext)"
+        let podcast = safePathComponent(podcastUuid)
+        let episode = safePathComponent(episodeUuid)
+        let ext = safePathComponent(fileExtension.isEmpty ? "mp3" : fileExtension)
+        return "\(FileSyncFormat.podcastMirrorsDirectory)/\(podcast)/\(episode).\(ext)"
     }
 
     /// Parses a folder listing entry back into mirror identity; nil for anything that
@@ -38,7 +40,9 @@ public enum PodcastMirrorFormat {
 
         let podcastUuid = components[0]
         let episodeUuid = (components[1] as NSString).deletingPathExtension
-        guard !podcastUuid.isEmpty, !episodeUuid.isEmpty else { return nil }
+        guard !podcastUuid.isEmpty, !episodeUuid.isEmpty,
+              podcastUuid == safePathComponent(podcastUuid),
+              episodeUuid == safePathComponent(episodeUuid) else { return nil }
 
         return MirrorEntry(
             podcastUuid: podcastUuid,
@@ -46,5 +50,10 @@ public enum PodcastMirrorFormat {
             relativePath: folderEntry.relativePath,
             sizeBytes: folderEntry.sizeBytes,
             isPlaceholder: folderEntry.isPlaceholder)
+    }
+
+    private static func safePathComponent(_ value: String) -> String {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+        return value.unicodeScalars.map { allowed.contains($0) ? String($0) : "_" }.joined()
     }
 }

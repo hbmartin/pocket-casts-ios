@@ -204,6 +204,14 @@ private struct FileSyncMaintenanceSection: View {
         } message: {
             Text(L10n.fileSyncResetConfirmMessage)
         }
+        .alert(L10n.fileSyncResetConfirmTitle, isPresented: Binding(
+            get: { model.resetError != nil },
+            set: { if !$0 { model.resetError = nil } }
+        )) {
+            Button(L10n.ok) { model.resetError = nil }
+        } message: {
+            Text(model.resetError ?? "")
+        }
     }
 }
 
@@ -244,6 +252,7 @@ final class FileSyncSettingsViewModel: ObservableObject {
     @Published var showingFolderPicker = false
     @Published var mirrorEnabled = false
     @Published var mirrorWifiOnly = true
+    @Published var resetError: String?
 
     func refresh() async {
         status = await FileSyncManager.shared.status()
@@ -270,6 +279,7 @@ final class FileSyncSettingsViewModel: ObservableObject {
             try await FileSyncManager.shared.resetAndRebootstrap()
         } catch {
             FileLog.shared.addMessage("FileSync: reset & re-bootstrap failed: \(error)")
+            resetError = error.localizedDescription
         }
         await refresh()
         isSyncing = false

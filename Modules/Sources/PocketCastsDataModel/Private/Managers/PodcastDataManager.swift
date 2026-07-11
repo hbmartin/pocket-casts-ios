@@ -396,6 +396,8 @@ class PodcastDataManager {
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         guard var components = URLComponents(string: trimmed) else { return trimmed }
+        components.user = nil
+        components.password = nil
         components.scheme = components.scheme?.lowercased()
         components.host = components.host?.lowercased()
         var normalized = components.string ?? trimmed
