@@ -1440,31 +1440,32 @@ extension DataManager {
             return false
         }
 
-        let destinationDbQueue = dbQueue.dbPool
-        for tableName in tableNames {
-            try? sourceDbQueue.read { sourceDb in
-                let previewCursor = try Row.fetchCursor(sourceDb, sql: "SELECT * FROM \(tableName.quotedDatabaseIdentifier)")
-                guard let firstRow = try previewCursor.next() else { return }
-                let columnNames = firstRow.columnNames
-
-                let rowCursor = try Row.fetchCursor(sourceDb, sql: "SELECT * FROM \(tableName.quotedDatabaseIdentifier)")
-
-                let columnsList = columnNames.map { $0.quotedDatabaseIdentifier }.joined(separator: ", ")
-                let placeholders = Array(repeating: "?", count: columnNames.count).joined(separator: ", ")
-                let insertSQL = "INSERT OR REPLACE INTO \(tableName.quotedDatabaseIdentifier) (\(columnsList)) VALUES (\(placeholders))"
-
-                try? destinationDbQueue.write { destDb in
-                    // restore replaces, it doesn't merge — but only tables the backup contains
-                    try? destDb.execute(sql: "DELETE FROM \(tableName.quotedDatabaseIdentifier)")
-                    while let row = try rowCursor.next() {
-                        let values: [DatabaseValueConvertible?] = columnNames.map { row[$0] }
-                        try? destDb.execute(sql: insertSQL, arguments: StatementArguments(values))
+        do {
+            try dbQueue.dbPool.write { destDb in
+                for tableName in tableNames {
+                    try destDb.execute(sql: "DELETE FROM \(tableName.quotedDatabaseIdentifier)")
+                    try sourceDbQueue.read { sourceDb in
+                        let columnNames = try sourceDb.columns(in: tableName).map(\.name)
+                        guard !columnNames.isEmpty else { return }
+                        let columnsList = columnNames.map { $0.quotedDatabaseIdentifier }.joined(separator: ", ")
+                        let placeholders = Array(repeating: "?", count: columnNames.count).joined(separator: ", ")
+                        let insertSQL = "INSERT OR REPLACE INTO \(tableName.quotedDatabaseIdentifier) (\(columnsList)) VALUES (\(placeholders))"
+                        let rowCursor = try Row.fetchCursor(sourceDb, sql: "SELECT * FROM \(tableName.quotedDatabaseIdentifier)")
+                        while let row = try rowCursor.next() {
+                            let values: [DatabaseValueConvertible?] = columnNames.map { row[$0] }
+                            try destDb.execute(sql: insertSQL, arguments: StatementArguments(values))
+                        }
                     }
                 }
             }
+        } catch {
+            FileLog.shared.addMessage("DataManager: restore failed: \(error)")
+            return false
         }
 
         podcastManager.cachePodcasts(dbQueue: dbQueue)
+        folderManager.setup(dbQueue: dbQueue)
+        upNextManager.setup(dbQueue: dbQueue)
         return true
     }
 }

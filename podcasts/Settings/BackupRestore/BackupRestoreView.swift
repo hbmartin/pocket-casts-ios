@@ -14,7 +14,7 @@ class BackupRestoreViewController: ThemedHostingController<BackupRestoreView> {
 /// database (episodes included) plus the app-settings JSON — exported to a user-chosen
 /// location via the document picker. No Pocket Casts account or servers involved.
 struct BackupRestoreView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
 
     @State private var exportFolder: ExportFolder?
     @State private var showingRestoreConfirm = false
@@ -38,26 +38,26 @@ struct BackupRestoreView: View {
                 Button(L10n.settingsBackupNow) {
                     backUp()
                 }
-                .listRowBackground(theme.primaryUi02)
+                .listRowBackground(AppTheme.color(for: .primaryUi02, theme: theme))
             } footer: {
                 Text(L10n.settingsBackupFooter)
-                    .foregroundStyle(theme.primaryText02)
+                    .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
             }
 
             Section {
                 Button(L10n.settingsRestore, role: .destructive) {
                     showingRestoreConfirm = true
                 }
-                .listRowBackground(theme.primaryUi02)
+                .listRowBackground(AppTheme.color(for: .primaryUi02, theme: theme))
             } footer: {
                 Text(L10n.settingsRestoreFooter)
-                    .foregroundStyle(theme.primaryText02)
+                    .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
             }
         }
         .modifier(HiddenScrollContentBackground())
-        .background(theme.primaryUi04)
+        .background(AppTheme.color(for: .primaryUi04, theme: theme))
         .navigationTitle(L10n.settingsBackupRestore)
-        .sheet(item: $exportFolder) { folder in
+        .sheet(item: $exportFolder, onDismiss: cleanUpExportFolder) { folder in
             BackupFolderExporter(folderURL: folder.url)
         }
         .alert(L10n.settingsRestoreConfirmTitle, isPresented: $showingRestoreConfirm) {
@@ -81,6 +81,7 @@ struct BackupRestoreView: View {
 
     private func backUp() {
         do {
+            cleanUpExportFolder()
             let folderURL = try BackupRestoreView.stageBackupFolder()
             exportFolder = ExportFolder(url: folderURL)
         } catch {
@@ -91,6 +92,8 @@ struct BackupRestoreView: View {
 
     static func stageBackupFolder() throws -> URL {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "yyyy-MM-dd HH.mm"
         let folderName = "Pocket Casts Backup \(formatter.string(from: Date()))"
 
@@ -104,6 +107,12 @@ struct BackupRestoreView: View {
         }
 
         return folderURL
+    }
+
+    private func cleanUpExportFolder() {
+        guard let exportFolder else { return }
+        try? FileManager.default.removeItem(at: exportFolder.url)
+        self.exportFolder = nil
     }
 
     // MARK: - Restore
@@ -136,8 +145,11 @@ struct BackupRestoreView: View {
             return
         }
 
-        if let settingsData = try? Data(contentsOf: folderURL.appendingPathComponent(BackupFile.settings)) {
-            SettingsStore.appSettings.importSettingsJSON(settingsData)
+        if let settingsData = try? Data(contentsOf: folderURL.appendingPathComponent(BackupFile.settings)),
+           !SettingsStore.appSettings.importSettingsJSON(settingsData) {
+            FileLog.shared.addMessage("BackupRestore: settings import failed")
+            resultAlert = ResultAlert(title: L10n.settingsRestoreFailed, message: L10n.settingsRestoreInvalidBackup)
+            return
         }
 
         NotificationCenter.postOnMainThread(notification: ServerNotifications.podcastsRefreshed, object: nil)

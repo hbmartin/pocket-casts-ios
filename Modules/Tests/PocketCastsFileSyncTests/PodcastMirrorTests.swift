@@ -23,10 +23,10 @@ final class PodcastMirrorTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeDataManager(name: String) -> DataManager {
+    private func makeDataManager(name: String) throws -> DataManager {
         var config = Configuration()
         config.busyMode = .timeout(10)
-        let pool = try! DatabasePool(path: testDirectory.appendingPathComponent(name).path, configuration: config)
+        let pool = try DatabasePool(path: testDirectory.appendingPathComponent(name).path, configuration: config)
         return DataManager(dbQueue: GRDBQueue(dbPool: pool))
     }
 
@@ -82,7 +82,7 @@ final class PodcastMirrorTests: XCTestCase {
         let audio = Data("mirrored audio bytes".utf8)
 
         // Device A: episode downloaded, audio in its local cache.
-        let deviceA = makeDataManager(name: "deviceA.sqlite3")
+        let deviceA = try makeDataManager(name: "deviceA.sqlite3")
         let resolverA = pathResolver(deviceName: "A")
         let episodeA = seedEpisode(on: deviceA, uuid: "ep-1", podcastUuid: "pod-1", downloaded: true)
         try audio.write(to: URL(fileURLWithPath: resolverA(episodeA)))
@@ -96,7 +96,7 @@ final class PodcastMirrorTests: XCTestCase {
         XCTAssertEqual(mirroredData, audio)
 
         // Device B: same episode row, no audio yet.
-        let deviceB = makeDataManager(name: "deviceB.sqlite3")
+        let deviceB = try makeDataManager(name: "deviceB.sqlite3")
         let resolverB = pathResolver(deviceName: "B")
         let episodeB = seedEpisode(on: deviceB, uuid: "ep-1", podcastUuid: "pod-1", downloaded: false)
 
@@ -111,7 +111,7 @@ final class PodcastMirrorTests: XCTestCase {
     }
 
     func testMaterializeInRespectsSizeCapAndSkipsUnknownEpisodes() async throws {
-        let deviceB = makeDataManager(name: "deviceB.sqlite3")
+        let deviceB = try makeDataManager(name: "deviceB.sqlite3")
         let resolverB = pathResolver(deviceName: "B")
 
         _ = seedEpisode(on: deviceB, uuid: "ep-known", podcastUuid: "pod-1", downloaded: false)

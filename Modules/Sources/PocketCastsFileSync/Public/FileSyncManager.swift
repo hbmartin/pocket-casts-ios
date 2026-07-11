@@ -41,6 +41,7 @@ public actor FileSyncManager {
     private var delegate: (any FileSyncDelegate)?
 
     private var syncPassRunning = false
+    private var resetInProgress = false
     private var uploadManifestState: UploadManifestState?
 
     private(set) var lastScanDate: Date?
@@ -167,10 +168,17 @@ public actor FileSyncManager {
     /// out of step; it converges via the normal union-join merge.
     public func resetAndRebootstrap() async throws {
         guard folder != nil else { throw SyncFolderError.ubiquityUnavailable }
+        guard !resetInProgress else { return }
+        resetInProgress = true
+        defer { resetInProgress = false }
+        while syncPassRunning {
+            await Task.yield()
+        }
         dataManager.deleteAllFileSyncCursors()
         uploadManifestState = nil
         try FileSyncBootstrap(dataManager: dataManager).seedLocalState()
         FileLog.shared.addMessage("FileSync: reset & re-bootstrap requested")
+        resetInProgress = false
         await syncNow()
     }
 
@@ -324,7 +332,7 @@ public actor FileSyncManager {
 
     public func syncNow() async {
         guard isEnabled, let folder, let uploadsScanner else { return }
-        guard !syncPassRunning else { return }
+        guard !syncPassRunning, !resetInProgress else { return }
         syncPassRunning = true
         defer { syncPassRunning = false }
 
