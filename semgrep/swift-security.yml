@@ -1436,6 +1436,27 @@ rules:
           }
       - pattern: $GROUP.wait()
 
+  - id: pocketcasts.no-task-yield-polling-loop
+    severity: ERROR
+    metadata:
+      category: performance
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: Await an active task or continuation instead of repeatedly polling state with Task.yield().
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern: |
+          while $CONDITION {
+            ...
+            await Task.yield()
+            ...
+          }
+
   - id: pocketcasts.badge-transient-clear-notifications
     severity: WARNING
     metadata:

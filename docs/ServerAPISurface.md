@@ -6,6 +6,8 @@ It is intended as a reference for engineers and security reviewers: where reques
 
 > Scope note: the networking layer lives almost entirely in the **`PocketCastsServer`** Swift package (`Modules/Sources/PocketCastsServer/`). The main app (`podcasts/`) and extensions add downloads, image loading, analytics SDKs, push registration, transcripts, and web links. Both are covered here.
 
+> **Building a backend?** This document is a *surface map* (what talks to what). For the *implementation contract* — precise request/response schemas, protobuf field numbers, status codes, and behavioral semantics needed to re-implement the first-party services from scratch — see [`ServerBackendSpec.md`](./ServerBackendSpec.md).
+
 ---
 
 ## Table of Contents
@@ -20,7 +22,6 @@ It is intended as a reference for engineers and security reviewers: where reques
 8. [Discover (`static` host)](#8-discover-static-host)
 9. [Search](#9-search)
 10. [Cache & metadata (`cache` host)](#10-cache--metadata-cache-host)
-11. [User file uploads](#11-user-file-uploads)
 12. [Sharing & curated lists](#12-sharing--curated-lists)
 13. [Stats](#13-stats)
 14. [Ratings](#14-ratings)
@@ -30,7 +31,6 @@ It is intended as a reference for engineers and security reviewers: where reques
 18. [Transcripts & chapters (main app)](#18-transcripts--chapters-main-app)
 19. [Push notifications](#19-push-notifications)
 20. [Analytics & telemetry](#20-analytics--telemetry)
-21. [In‑app purchases / subscriptions](#21-in-app-purchases--subscriptions)
 22. [OPML import/export & status page](#22-opml-importexport--status-page)
 23. [Protocol Buffers catalog](#23-protocol-buffers-catalog)
 24. [Server notifications (NSNotification)](#24-server-notifications-nsnotification)
@@ -233,19 +233,6 @@ All endpoints below are relative to `ServerConstants.Urls.api()` and require a B
 | POST | `user/bookmark/list` | `Api_BookmarksResponse` | Bookmarks |
 | POST | `starred/list` | `Api_StarredEpisodesResponse` | Starred episodes |
 
-### Files (user uploads) — see [§11](#11-user-file-uploads)
-| Method | Path | Notes |
-|---|---|---|
-| GET | `files` | List uploaded files + quota (`Files_FileListResponse`); supports `If-Modified-Since` |
-| POST | `files` | Bulk metadata update (`Files_FileListUpdateRequest`) |
-| GET | `files/usage/` | Storage usage (`Files_AccountUsage`) |
-| POST | `files/upload/request` | Request presigned audio upload URL (`Files_FileUploadResponse`) |
-| POST | `files/upload/image` | Request presigned image upload URL (`Files_ImageUploadResponse`) |
-| GET | `files/upload/status/{uuid}` | Upload completion check (`Files_SuccessResponse`) |
-| GET | `files/play/{uuid}` | Presigned playback URL (`Files_FilePlayResponse`) |
-| DELETE | `files/{uuid}` | Delete file (200/404 both = success) |
-| DELETE | `files/image/{uuid}` | Delete custom image |
-
 ### Ratings, stats, recommendations, feedback
 | Method | Path | Request → Response | Purpose |
 |---|---|---|---|
@@ -376,25 +363,6 @@ Source: `Public/Cache/` and `Public/ServerPodcastManager*.swift`. JSON over `Ser
 
 ---
 
-## 11. User file uploads
-
-Source: `Public/Upload/`. Two‑phase: presign on the `api` host, then a direct **`PUT`** to a presigned (S3‑style) URL via a **background `URLSession`**.
-
-**Background sessions:**
-
-| Session | Identifier | Cellular |
-|---|---|---|
-| Wi‑Fi only | `au.com.shiftyjelly.PCUploadBackgroundSession` | disabled |
-| Cellular allowed | `au.com.shiftyjelly.PCUploadManualSession` | enabled |
-
-Both: `httpMaximumConnectionsPerHost = 1`, cookies disabled.
-
-**Audio flow:** `UploadFileRequestTask` (`POST api/files/upload/request`, `Files_FileUploadRequest`) → presigned `url` → `PUT` the file (`Content-Type` = episode file type or `audio/mp3`, 30 s timeout) → 1 s later `UploadFilesUpdateTask` (`POST api/files`) updates metadata. **Image flow:** `UploadImageRequestTask` (`POST api/files/upload/image`, `image/jpeg`) → `PUT` from `~/Documents/custom_images/{uuid}.jpg`.
-
-Task IDs: audio = `episode.uuid`, image = `"Image-" + episode.uuid`. Progress tracked in `urlSession(_:task:didSendBodyData:...)` → `UploadProgressManager`, surfaced (throttled to 1 s) via `userEpisodeUploadProgress`. Episode `uploadStatus`/`uploadTaskId` persist across launches. With `trackNetworkDataUsage`, bytes are recorded via `networkDataUsageManager` (`.upload`/`.background`).
-
----
-
 ## 12. Sharing & curated lists
 
 Source: `Public/Sharing/`.
@@ -485,23 +453,9 @@ Source: `podcasts/Analytics/`. All gated on the user **not** opting out (`Settin
 |---|---|---|
 | **Bitdrift** (`import Capture`) | Error/session logging | `Capture.Logger.start(withAPIKey: ApiCredentials.bitdriftSDKKey, …)` in `AppDelegate`; SDK manages its own network |
 | **TelemetryDeck** (`import TelemetryDeck`) | Product analytics | `TelemetryDeck.initialize(config:.init(appID: ApiCredentials.telemetryDeckAppID))`; `TelemetryDeck.signal(name, parameters:)` |
-| **LiveAnalyticsStreamer** | In‑house event stream | `POST` JSON batches to a **server‑provided** `ServerSettings.liveAnalyticsUrl` (delivered by settings sync). Buffers ≤1000 events, first event sent immediately then ~500 ms batching, 30 s backoff on ≥400. Production allow‑list: `*.pocketcasts.com` |
 | `AnalyticsLoggingAdapter` | Local only | No network |
 
 Opt‑in/opt‑out transitions (`analyticsOptIn`/`analyticsOptOut`) are themselves tracked before adapters are torn down.
-
----
-
-## 21. In‑app purchases / subscriptions
-
-**Important:** in this repository there is **no active StoreKit purchase flow or receipt‑validation network call**.
-
-- The only `StoreKit` usage in the app is the App Store **review prompt** (`AppStore.requestReview` in `UIViewController+requestReview.swift`).
-- `ServerPodcastManager+Subscription.swift` is about **following podcasts**, not paid subscriptions.
-- The protobuf schema *defines* commerce messages — `Api_SubscriptionsPurchaseAppleRequest` (with a `receipt` field), `Api_SubscriptionsPurchaseAndroid/WebRequest`, `Api_SubscriptionsStatusResponse`, `Api_UpdatePlanRequest/Response`, `Api_CancelUserSubscriptionRequest`, `Api_PaymentResponse`, promotions/referrals/winback — but **none of these are referenced by Swift networking code here**.
-- A `subscriptionStatusChanged` notification exists, but no dedicated subscription‑status endpoint is invoked in this codebase; Plus status is reflected through synced account data.
-
-If/when IAP is wired up, the natural home is an `api` host endpoint consuming `Api_SubscriptionsPurchaseAppleRequest`.
 
 ---
 
@@ -522,7 +476,7 @@ If/when IAP is wired up, the natural home is an `api` host endpoint consuming `A
 
 Generated Swift lives in `Private/Protobuffer/api.pb.swift` (~149 message types) and `files.pb.swift` (~17 types). The proto is regenerated with `mise run generate:proto /path/to/pocketcasts-api/api/modules/protobuf/src/main/proto` (see `README.md` and `AGENTS.md`).
 
-**`api.pb.swift` groups:** auth (`Api_UserLoginRequest/Response`, `Api_UserTokenRequest`, `Api_TokenLoginResponse`, `Api_DeviceAuthorize*`), account (`Api_RegisterRequest/Response`, `Api_UserChange*`, `Api_EmailRequest`, `Api_UserLastSyncAtResponse`), sync (`Api_SyncUpdateRequest/Response`, `Api_Record`, `Api_SyncUser{Podcast,Episode,Playlist,Folder,Device,Bookmark}`), Up Next/history/settings (`Api_UpNext*`, `Api_History*`, `Api_NamedSettings*`, `Api_ChangeableSettings`, `Api_{Bool,Int32,Double,String}Setting`), episodes (`Api_Episode(s)Response`, `Api_UpdateEpisode*`, `Api_StarredEpisode(s)Response`), podcasts/folders/playlists/bookmarks/ratings/stats, search, **commerce** (subscriptions/promotions/referrals/winback — see [§21](#21-in-app-purchases--subscriptions)), and misc (`Api_BasicRequest`, `Api_EmptyRequest/Response`, `Api_SupportFeedbackRequest`, legacy types).
+**`api.pb.swift` groups:** auth (`Api_UserLoginRequest/Response`, `Api_UserTokenRequest`, `Api_TokenLoginResponse`, `Api_DeviceAuthorize*`), account (`Api_RegisterRequest/Response`, `Api_UserChange*`, `Api_EmailRequest`, `Api_UserLastSyncAtResponse`), sync (`Api_SyncUpdateRequest/Response`, `Api_Record`, `Api_SyncUser{Podcast,Episode,Playlist,Folder,Device,Bookmark}`), Up Next/history/settings (`Api_UpNext*`, `Api_History*`, `Api_NamedSettings*`, `Api_ChangeableSettings`, `Api_{Bool,Int32,Double,String}Setting`), episodes (`Api_Episode(s)Response`, `Api_UpdateEpisode*`, `Api_StarredEpisode(s)Response`), podcasts/folders/playlists/bookmarks/ratings/stats, search,  and misc (`Api_BasicRequest`, `Api_EmptyRequest/Response`, `Api_SupportFeedbackRequest`, legacy types).
 
 **`files.pb.swift`:** `Files_File`, `Files_FileUpdate`, `Files_FileList(Request|Response|UpdateRequest)`, `Files_File{Request,DeleteRequest/Response,PlayRequest/Response,UploadRequest/Response}`, `Files_Image{UploadRequest,UploadResponse}`, `Files_FileUploadedStatusRequest`, `Files_AccountUsage`, `Files_SuccessResponse`.
 
@@ -581,11 +535,9 @@ Posted by `ServerNotifications` / `ServerNotificationsHelper` so the UI can reac
 |---|---|
 | Podcast publisher CDNs | Episode audio/video downloads (URLs from feeds) |
 | `dts.podtrac.com` | Status‑page hosting check (Podtrac redirect) |
-| `www.gravatar.com` / `gravatar.com` | Profile avatars + edit page |
 | **Bitdrift** (`Capture` SDK) | Error/session logging |
 | **TelemetryDeck** SDK | Product analytics |
 | Apple **APNs** | Push delivery (token registered via refresh) |
-| Apple **App Store** (`StoreKit`) | Review prompt |
 | `x.com`, `instagram.com` | Social links (deep link / web fallback) |
 
 ---

@@ -41,6 +41,7 @@ public actor FileSyncManager {
     private var delegate: (any FileSyncDelegate)?
 
     private var syncPassRunning = false
+    private var syncPassCompletionWaiters = [CheckedContinuation<Void, Never>]()
     private var resetInProgress = false
     private var uploadManifestState: UploadManifestState?
 
@@ -171,9 +172,7 @@ public actor FileSyncManager {
         guard !resetInProgress else { return }
         resetInProgress = true
         defer { resetInProgress = false }
-        while syncPassRunning {
-            await Task.yield()
-        }
+        await waitForSyncPassToFinish()
         dataManager.deleteAllFileSyncCursors()
         uploadManifestState = nil
         try FileSyncBootstrap(dataManager: dataManager).seedLocalState()
@@ -334,7 +333,7 @@ public actor FileSyncManager {
         guard isEnabled, let folder, let uploadsScanner else { return }
         guard !syncPassRunning, !resetInProgress else { return }
         syncPassRunning = true
-        defer { syncPassRunning = false }
+        defer { finishSyncPass() }
 
         do {
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
@@ -400,6 +399,44 @@ public actor FileSyncManager {
             FileLog.shared.addMessage("FileSync: sync pass failed: \(error)")
         }
     }
+
+    private func waitForSyncPassToFinish() async {
+        guard syncPassRunning else { return }
+        await withCheckedContinuation { continuation in
+            syncPassCompletionWaiters.append(continuation)
+        }
+    }
+
+    private func finishSyncPass() {
+        syncPassRunning = false
+        let waiters = syncPassCompletionWaiters
+        syncPassCompletionWaiters.removeAll()
+        for waiter in waiters {
+            waiter.resume()
+        }
+    }
+
+    #if DEBUG
+    /// Exercises the event-driven sync-pass waiter and returns whether it resumed cleanly.
+    public func exerciseSyncPassWaiterForUITesting() async -> Bool {
+        guard !syncPassRunning, syncPassCompletionWaiters.isEmpty else { return false }
+
+        syncPassRunning = true
+        let clock = ContinuousClock()
+        let startedAt = clock.now
+        let finisher = Task { @concurrent in
+            try? await Task.sleep(for: .milliseconds(100))
+            await self.finishSyncPass()
+        }
+
+        await waitForSyncPassToFinish()
+        await finisher.value
+
+        return !syncPassRunning
+            && syncPassCompletionWaiters.isEmpty
+            && startedAt.duration(to: clock.now) >= .milliseconds(50)
+    }
+    #endif
 
     // MARK: Inspector
 

@@ -38,6 +38,7 @@ struct BackupRestoreView: View {
                 Button(L10n.settingsBackupNow) {
                     backUp()
                 }
+                .accessibilityIdentifier("backupRestoreBackupNow")
                 .listRowBackground(AppTheme.color(for: .primaryUi02, theme: theme))
             } footer: {
                 Text(L10n.settingsBackupFooter)
@@ -48,6 +49,7 @@ struct BackupRestoreView: View {
                 Button(L10n.settingsRestore, role: .destructive) {
                     showingRestoreConfirm = true
                 }
+                .accessibilityIdentifier("backupRestoreRestore")
                 .listRowBackground(AppTheme.color(for: .primaryUi02, theme: theme))
             } footer: {
                 Text(L10n.settingsRestoreFooter)

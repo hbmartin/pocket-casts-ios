@@ -25,8 +25,19 @@ Pocket Casts/                           # sync root (iCloud container Documents/
 ├── Uploads/                            # user audio; subfolders = groupings
 │   ├── loose-file.mp3
 │   └── Audiobooks/chapter01.m4b
-└── Podcast Mirrors/                    # opt-in per-podcast download mirror (one-way)
+└── Podcast Mirrors/                    # opt-in shared cache of downloaded episode audio
+    └── <podcastUuid>/<episodeUuid>.mp3 # identity lives entirely in the path
 ```
+
+`Podcast Mirrors/` needs no manifest or hashing (unlike `Uploads/`): podcast
+episodes already carry stable UUIDs — server-issued or deterministic
+local-feed hashes — so the path is the identity. The area is the **union of
+downloads across devices**: any device that downloaded an episode may publish
+it; any device holding the episode row may materialize the audio instead of
+re-downloading from the feed host. Evicting a local download does not remove
+the mirror; mirrors are only cleaned up alongside episode deletion (which
+syncs through the ordinary record tombstones). Pulling audio is gated by the
+mirror settings (off by default, Wi-Fi-only, per-pass size budget).
 
 **The core invariant: each device writes only inside its own
 `Sync/devices/<deviceId>/` directory.** No file is ever written by two
