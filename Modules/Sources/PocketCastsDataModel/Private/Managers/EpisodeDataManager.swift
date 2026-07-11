@@ -32,6 +32,7 @@ final class EpisodeDataManager: Sendable {
         "podcastUuid",
         "playbackErrorDetails",
         "cachedFrameCount",
+        "cachedLoudness",
         "lastPlaybackInteractionDate",
         "lastPlaybackInteractionSyncStatus",
         "podcast_id",
@@ -468,8 +469,8 @@ final class EpisodeDataManager: Sendable {
 
         let updates = episodes.map { episode -> (fields: [String], values: [Any], uuid: String) in
             (
-                fields: ["episodeStatus", "autoDownloadStatus", "cachedFrameCount"],
-                values: [DownloadStatus.notDownloaded.rawValue, AutoDownloadStatus.userDeletedFile.rawValue, 0],
+                fields: ["episodeStatus", "autoDownloadStatus", "cachedFrameCount", "cachedLoudness"],
+                values: [DownloadStatus.notDownloaded.rawValue, AutoDownloadStatus.userDeletedFile.rawValue, 0, 0],
                 uuid: episode.uuid
             )
         }
@@ -547,6 +548,21 @@ final class EpisodeDataManager: Sendable {
 
     func findFrameCount(episodeId: Int64, dbQueue: GRDBQueue) -> Int64 {
         return dbQueue.fetchOne(Episode.filter(Episode.Columns.id == episodeId))?.cachedFrameCount ?? 0
+    }
+
+    func saveLoudness(episodeId: Int64, loudness: Double, dbQueue: GRDBQueue) {
+        save(fieldName: "cachedLoudness", value: loudness, episodeId: episodeId, dbQueue: dbQueue)
+    }
+
+    func findLoudness(episodeId: Int64, dbQueue: GRDBQueue) -> Double {
+        return dbQueue.fetchOne(Episode.filter(Episode.Columns.id == episodeId))?.cachedLoudness ?? 0
+    }
+
+    /// Zeroes both cached audio measurements (frame count + loudness); call when
+    /// the local file changes so stale values never seed the player.
+    func clearCachedAudioMetadata(episodeId: Int64, dbQueue: GRDBQueue) {
+        save(fieldName: "cachedFrameCount", value: 0, episodeId: episodeId, dbQueue: dbQueue)
+        save(fieldName: "cachedLoudness", value: 0, episodeId: episodeId, dbQueue: dbQueue)
     }
 
     func saveEpisode(playbackError: String?, episode: Episode, dbQueue: GRDBQueue) {

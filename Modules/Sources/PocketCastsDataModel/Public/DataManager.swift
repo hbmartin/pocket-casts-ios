@@ -755,6 +755,37 @@ public class DataManager {
         return userEpisodeManager.findFrameCount(episodeId: userEpisode.id, dbQueue: dbQueue)
     }
 
+    /// Stores the integrated BS.1770 loudness (LUFS) measured for the episode's
+    /// downloaded file; 0 means "not measured".
+    public func saveLoudness(episode: BaseEpisode, loudness: Double) {
+        if let episode = episode as? Episode {
+            episodeManager.saveLoudness(episodeId: episode.id, loudness: loudness, dbQueue: dbQueue)
+        } else if let episode = episode as? UserEpisode {
+            userEpisodeManager.saveLoudness(episodeId: episode.id, loudness: loudness, dbQueue: dbQueue)
+        }
+    }
+
+    public func findLoudness(episode: BaseEpisode) -> Double {
+        if let episode = episode as? Episode {
+            return episodeManager.findLoudness(episodeId: episode.id, dbQueue: dbQueue)
+        }
+        if let userEpisode = episode as? UserEpisode {
+            return userEpisodeManager.findLoudness(episodeId: userEpisode.id, dbQueue: dbQueue)
+        }
+
+        return 0
+    }
+
+    /// Zeroes the cached frame count and loudness; call whenever the episode's
+    /// local file is replaced so stale measurements never seed the player.
+    public func clearCachedAudioMetadata(episode: BaseEpisode) {
+        if let episode = episode as? Episode {
+            episodeManager.clearCachedAudioMetadata(episodeId: episode.id, dbQueue: dbQueue)
+        } else if let episode = episode as? UserEpisode {
+            userEpisodeManager.clearCachedAudioMetadata(episodeId: episode.id, dbQueue: dbQueue)
+        }
+    }
+
     public func saveEpisode(starred: Bool, starredModified: Int64? = nil, episode: Episode, updateSyncFlag: Bool) {
         dbQueue.inTransaction { db in
             try episodeManager.saveEpisode(starred: starred, starredModified: starredModified, episode: episode, updateSyncFlag: updateSyncFlag, db: db)

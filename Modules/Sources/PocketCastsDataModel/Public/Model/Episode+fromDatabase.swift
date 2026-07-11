@@ -34,6 +34,7 @@ extension Episode {
         episode.podcastUuid = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "podcastUuid")
         episode.playbackErrorDetails = rs.string(forColumn: "playbackErrorDetails")
         episode.cachedFrameCount = rs.longLongInt(forColumn: "cachedFrameCount")
+        episode.cachedLoudness = rs.double(forColumn: "cachedLoudness")
         episode.lastPlaybackInteractionDate = DBUtils.convertDate(value: rs.double(forColumn: "lastPlaybackInteractionDate"))
         episode.lastPlaybackInteractionSyncStatus = rs.int(forColumn: "lastPlaybackInteractionSyncStatus")
         episode.podcast_id = rs.longLongInt(forColumn: "podcast_id")

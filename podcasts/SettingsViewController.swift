@@ -7,6 +7,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
+        case advancedAudio
         case customFiles, importSteps, opml, backupRestore
         case fileSync
         case about, privacy
@@ -66,6 +67,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.foldersHistory, .init(named: "folder-empty"))
             case .fileSync:
                 return (L10n.settingsFileSync, UIImage(named: "settings_import_podcasts"))
+            case .advancedAudio:
+                return (L10n.settingsAdvancedAudio, UIImage(systemName: "slider.horizontal.3"))
             }
         }
     }
@@ -85,7 +88,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
-            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .customFiles],
+            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .advancedAudio, .customFiles],
             [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -206,6 +209,11 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let syncView = FileSyncSettingsView().environmentObject(Theme.sharedTheme)
             let hostingController = PCHostingController(rootView: syncView)
             hostingController.title = L10n.settingsFileSync
+            navigationController?.pushViewController(hostingController, animated: true)
+        case .advancedAudio:
+            let tuningView = AdvancedAudioSettingsView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: tuningView)
+            hostingController.title = L10n.settingsAdvancedAudio
             navigationController?.pushViewController(hostingController, animated: true)
         }
     }

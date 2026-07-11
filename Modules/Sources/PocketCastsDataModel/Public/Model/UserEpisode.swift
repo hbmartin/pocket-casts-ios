@@ -33,6 +33,8 @@ public struct UserEpisode: BaseEpisode, Identifiable, Equatable, Hashable, Senda
     public var uuid = ""
     public var playbackErrorDetails: String?
     public var cachedFrameCount = 0 as Int64
+    /// Integrated BS.1770 loudness in LUFS; 0 = not yet measured.
+    public var cachedLoudness = 0 as Double
     public var uploadStatus = 0 as Int32
     public var uploadTaskId: String?
     public var imageUrl: String?

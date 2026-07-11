@@ -6194,3 +6194,204 @@
 
 /* Warning message shown for automatically generated episode chapters */
 "chapters_generated_warning_message" = "These chapters are automatically generated and may not be perfectly accurate.";
+
+/* Settings row title for the Advanced Audio tuning screen */
+"settings_advanced_audio" = "Advanced Audio";
+
+/* Advanced Audio - warning footer explaining these are expert DSP settings */
+"advanced_audio_footer_warning" = "These settings tune the audio engine directly. Defaults match standard playback; reset if something sounds wrong.";
+
+/* Advanced Audio - button resetting every tuning parameter */
+"advanced_audio_reset_all" = "Reset All Tuning";
+
+/* Advanced Audio - button resetting one section's parameters */
+"advanced_audio_reset_section" = "Reset Section";
+
+/* Advanced Audio - title of the reset-all confirmation alert */
+"advanced_audio_reset_confirm_title" = "Reset all audio tuning?";
+
+/* Advanced Audio - message of the reset-all confirmation alert */
+"advanced_audio_reset_confirm_message" = "All parameters return to their defaults. Playback behaves exactly like standard Pocket Casts.";
+
+/* Advanced Audio - header of the live meters section */
+"advanced_audio_meters_header" = "Live Status";
+
+/* Advanced Audio - label for the current normalization gain meter */
+"advanced_audio_meters_gain" = "Applied gain";
+
+/* Advanced Audio - label for the measured loudness meter */
+"advanced_audio_meters_lufs" = "Measured loudness";
+
+/* Advanced Audio - label for the limiter gain-reduction meter */
+"advanced_audio_meters_limiter" = "Limiter reduction";
+
+/* Advanced Audio - shown in the meters section while nothing is playing with Voice Boost */
+"advanced_audio_meters_idle" = "Play something with Volume Boost on to see live meters.";
+
+/* Advanced Audio - header of the trim silence tuning section */
+"advanced_audio_trim_header" = "Trim Silence";
+
+/* Advanced Audio - toggle replacing the Low/Medium/High presets with the custom values below */
+"advanced_audio_trim_custom_toggle" = "Custom gate";
+
+/* Advanced Audio - footer explaining the custom trim gate toggle */
+"advanced_audio_trim_custom_footer" = "When Custom gate is on, these values replace the Low/Medium/High preset amounts chosen in playback effects.";
+
+/* Advanced Audio - menu seeding the custom trim values from a preset */
+"advanced_audio_trim_load_preset" = "Load Values From Preset";
+
+/* Advanced Audio - picker choosing how silence is detected */
+"advanced_audio_trim_discriminator" = "Detection";
+
+/* Advanced Audio - silence detection using loudness only */
+"advanced_audio_trim_discriminator_rms" = "Loudness only";
+
+/* Advanced Audio - silence detection using loudness plus spectral heuristics */
+"advanced_audio_trim_discriminator_heuristic" = "Heuristic";
+
+/* Advanced Audio - silence detection assisted by the system speech classifier */
+"advanced_audio_trim_discriminator_vad" = "Speech detection";
+
+/* Advanced Audio - slider for the silence gate threshold in decibels */
+"advanced_audio_trim_threshold" = "Threshold";
+
+/* Advanced Audio - toggle for tracking the recording's noise floor automatically */
+"advanced_audio_trim_adaptive_floor" = "Adaptive noise floor";
+
+/* Advanced Audio - slider for how far above the noise floor the gate sits */
+"advanced_audio_trim_adaptive_offset" = "Floor offset";
+
+/* Advanced Audio - slider for how much recent audio the noise floor tracks */
+"advanced_audio_trim_adaptive_window" = "Floor window";
+
+/* Advanced Audio - slider for the gap between the gate's close and reopen thresholds */
+"advanced_audio_trim_hysteresis" = "Hysteresis";
+
+/* Advanced Audio - slider for how long the gate stays open after speech resumes */
+"advanced_audio_trim_hold" = "Hold time";
+
+/* Advanced Audio - slider for the shortest pause that can be trimmed */
+"advanced_audio_trim_min_gap" = "Minimum gap";
+
+/* Advanced Audio - slider for how much of each trimmed pause is kept */
+"advanced_audio_trim_keep_gap" = "Kept pause";
+
+/* Advanced Audio - slider for the crossfade length at each trim splice */
+"advanced_audio_trim_crossfade" = "Crossfade";
+
+/* Advanced Audio - slider for how many final seconds of an episode are never trimmed */
+"advanced_audio_trim_end_guard" = "End guard";
+
+/* Advanced Audio - slider for the spectral flatness above which quiet audio counts as silence */
+"advanced_audio_trim_flatness_threshold" = "Flatness threshold";
+
+/* Advanced Audio - slider for the zero-crossing rate protecting quiet consonants */
+"advanced_audio_trim_zcr_threshold" = "Fricative protection";
+
+/* Advanced Audio - slider for how far below the gate fricative protection applies */
+"advanced_audio_trim_zcr_margin" = "Protection margin";
+
+/* Advanced Audio - slider for the speech confidence that blocks a trim */
+"advanced_audio_trim_vad_confidence" = "Speech confidence";
+
+/* Advanced Audio - header of the Voice Boost normalization section */
+"advanced_audio_boost_header" = "Voice Boost — Normalization";
+
+/* Advanced Audio - picker choosing the volume boost processing engine */
+"advanced_audio_boost_engine" = "Boost engine";
+
+/* Advanced Audio - the modern loudness-normalization boost engine */
+"advanced_audio_boost_engine_modern" = "VoiceBoostN";
+
+/* Advanced Audio - the original AudioUnit-based boost engine */
+"advanced_audio_boost_engine_legacy" = "Legacy";
+
+/* Advanced Audio - footer shown when the VoiceBoostN feature flag is off */
+"advanced_audio_boost_engine_footer" = "The VoiceBoostN feature flag is currently off, so the legacy engine is used regardless of this setting.";
+
+/* Advanced Audio - slider for the loudness normalization target */
+"advanced_audio_boost_target_lufs" = "Target loudness";
+
+/* Advanced Audio - footer explaining the loudness target measurement point */
+"advanced_audio_boost_target_lufs_footer" = "Target applies before compression; the compressor adds roughly 3 dB, so the default lands near -14 LUFS.";
+
+/* Advanced Audio - slider for the maximum boost the normalizer may apply */
+"advanced_audio_boost_max_gain" = "Maximum gain";
+
+/* Advanced Audio - slider for the maximum attenuation the normalizer may apply */
+"advanced_audio_boost_min_gain" = "Minimum gain";
+
+/* Advanced Audio - slider for how quickly the gain converges on its target */
+"advanced_audio_boost_gain_smoothing" = "Gain smoothing";
+
+/* Advanced Audio - toggle for converging faster while far from the target loudness */
+"advanced_audio_boost_adaptive_smoothing" = "Adaptive smoothing";
+
+/* Advanced Audio - toggle for the rumble high-pass filter */
+"advanced_audio_boost_high_pass" = "High-pass filter";
+
+/* Advanced Audio - slider for the high-pass cutoff frequency */
+"advanced_audio_boost_high_pass_freq" = "Cutoff frequency";
+
+/* Advanced Audio - slider for the high-pass resonance (Q) */
+"advanced_audio_boost_high_pass_q" = "Resonance (Q)";
+
+/* Advanced Audio - header of the compressor and limiter section */
+"advanced_audio_boost_dynamics_header" = "Voice Boost — Compressor & Limiter";
+
+/* Advanced Audio - toggle for the compressor stage */
+"advanced_audio_boost_compressor" = "Compressor";
+
+/* Advanced Audio - slider for the compressor threshold */
+"advanced_audio_boost_comp_threshold" = "Threshold";
+
+/* Advanced Audio - slider for the compression ratio */
+"advanced_audio_boost_comp_ratio" = "Ratio";
+
+/* Advanced Audio - slider for the compressor attack time */
+"advanced_audio_boost_comp_attack" = "Attack";
+
+/* Advanced Audio - slider for the compressor release time */
+"advanced_audio_boost_comp_release" = "Release";
+
+/* Advanced Audio - slider for the compressor soft knee width */
+"advanced_audio_boost_comp_knee" = "Knee width";
+
+/* Advanced Audio - slider for the limiter output ceiling */
+"advanced_audio_boost_limiter_ceiling" = "Limiter ceiling";
+
+/* Advanced Audio - slider for the limiter lookahead time */
+"advanced_audio_boost_limiter_lookahead" = "Limiter lookahead";
+
+/* Advanced Audio - slider for the limiter release time */
+"advanced_audio_boost_limiter_release" = "Limiter release";
+
+/* Advanced Audio - toggle for oversampled inter-sample peak detection */
+"advanced_audio_boost_true_peak" = "True-peak detection";
+
+/* Advanced Audio - footer explaining true-peak detection */
+"advanced_audio_boost_true_peak_footer" = "True-peak detection catches inter-sample peaks with 4x oversampling at a small CPU cost.";
+
+/* Advanced Audio - header of the time stretch section */
+"advanced_audio_stretch_header" = "Time Stretch";
+
+/* Advanced Audio - picker for the downloaded-audio time stretch algorithm */
+"advanced_audio_stretch_effects_player" = "Downloaded audio";
+
+/* Advanced Audio - picker for the streamed-audio time stretch algorithm */
+"advanced_audio_stretch_default_player" = "Streamed audio";
+
+/* Advanced Audio - the classic speech-tuned time stretch algorithm */
+"advanced_audio_stretch_algo_ipod" = "Classic (speech-tuned)";
+
+/* Advanced Audio - the spectral time stretch algorithm */
+"advanced_audio_stretch_algo_spectral" = "Spectral";
+
+/* Advanced Audio - the time-domain time stretch algorithm */
+"advanced_audio_stretch_algo_time_domain" = "Time domain";
+
+/* Advanced Audio - the varispeed algorithm that shifts pitch with speed */
+"advanced_audio_stretch_algo_varispeed" = "Varispeed (pitch shifts)";
+
+/* Advanced Audio - footer warning that changing the downloaded-audio algorithm restarts playback */
+"advanced_audio_stretch_footer" = "Changing the downloaded-audio algorithm briefly restarts playback.";

@@ -6,12 +6,6 @@ import PocketCastsUtils
 /// Audio pipeline reader; state is confined to its dispatch queue and the
 /// semaphore-coordinated buffer hand-off.
 nonisolated final class AudioReadTask: @unchecked Sendable {
-    private let maxSilenceAmountToSave = 1000
-
-    private var minRMS = 0.005 as Float32
-    private var minGapSizeInFrames = 3
-    private var amountOfSilentFramesToReInsert = 1
-
     private let cancelled = AtomicBool()
 
     private let readQueue: DispatchQueue
@@ -26,7 +20,12 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     private let bufferLength = UInt32(Constants.Audio.defaultFrameSize)
     private let bufferByteSize = Float32(MemoryLayout<Float32>.size)
 
-    private var foundGap = false
+    private let detector = TrimSilenceDetector()
+    private var trimParameters = TrimSilenceParameters.preset(for: .off)
+    private let flatnessBox = SpectralFlatnessBox()
+    private var vadAnalyzer: TrimVoiceActivityAnalyzer?
+    private var gapStartFramePosition: AVAudioFramePosition = 0
+
     private var channelCount = 0 as UInt32
     private var buffersSavedDuringGap = SynchronizedAudioStack()
     private var fadeInNextFrame = true
@@ -39,8 +38,11 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     private var useVoiceBoostN: AtomicBool?
     private var voiceBoostNSampleRate: Double = 0
     private var hasProcessedFirstBuffer = false
+    private var tuning: AudioTuning
+    /// Integrated LUFS precomputed for this episode; 0 = unknown (adapt live).
+    private let knownLUFS: Double
 
-    init(trimSilence: TrimSilenceAmount, audioFile: AVAudioFile, outputFormat: AVAudioFormat, bufferManager: PlayBufferManager, playPositionHint: TimeInterval, frameCount: Int64, useVoiceBoostN: AtomicBool? = nil, sampleRate: Double = 0) {
+    init(trimSilence: TrimSilenceAmount, audioFile: AVAudioFile, outputFormat: AVAudioFormat, bufferManager: PlayBufferManager, playPositionHint: TimeInterval, frameCount: Int64, useVoiceBoostN: AtomicBool? = nil, sampleRate: Double = 0, tuning: AudioTuning = PlaybackManager.engineState.tuning, knownLUFS: Double = 0) {
         self.trimSilence = trimSilence
         self.audioFile = audioFile
         self.outputFormat = outputFormat
@@ -48,6 +50,8 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         cachedFrameCount = frameCount
         self.useVoiceBoostN = useVoiceBoostN
         voiceBoostNSampleRate = sampleRate
+        self.tuning = tuning
+        self.knownLUFS = knownLUFS
 
         let qos: DispatchQoS
 
@@ -59,7 +63,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
 
         readQueue = DispatchQueue(label: "au.com.pocketcasts.ReadQueue", qos: qos, attributes: [], autoreleaseFrequency: .never, target: nil)
 
-        updateRemoveSilenceNumbers()
+        reconfigureDetector()
 
         if playPositionHint > 0 {
             currentFramePosition = framePositionForTime(playPositionHint).framePosition
@@ -112,9 +116,13 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         bufferManager.bufferSemaphore.signal()
         endOfFileSemaphore.signal()
 
+        vadAnalyzer?.finish()
+        vadAnalyzer = nil
+
         if let vbnState = voiceBoostNState {
             VBN_Destroy(vbnState)
             voiceBoostNState = nil
+            PlaybackManager.engineState.voiceBoostMeters = nil
             FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state destroyed on shutdown")
         }
     }
@@ -124,15 +132,40 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         defer { objc_sync_exit(lock) }
 
         self.trimSilence = trimSilence
-        updateRemoveSilenceNumbers()
+        reconfigureDetector()
     }
 
-    private func updateRemoveSilenceNumbers() {
-        guard trimSilence != .off else { return }
+    /// Live-applies a new tuning snapshot: restages the VoiceBoostN config and
+    /// updates the trim gate parameters.
+    func setTuning(_ tuning: AudioTuning) {
+        objc_sync_enter(lock)
+        defer { objc_sync_exit(lock) }
 
-        minGapSizeInFrames = gapSizeForSilenceAmount()
-        amountOfSilentFramesToReInsert = framesToReInsertForSilenceAmount()
-        minRMS = minRMSForSilenceAmount()
+        self.tuning = tuning
+        reconfigureDetector()
+        if let vbnState = voiceBoostNState {
+            var config = tuning.vbnConfig()
+            VBN_SetConfig(vbnState, &config)
+        }
+    }
+
+    /// Must be called with `lock` held (or from init).
+    private func reconfigureDetector() {
+        trimParameters = tuning.trimParameters(for: trimSilence)
+        detector.configure(parameters: trimParameters, sampleRate: audioFile.fileFormat.sampleRate, framesPerBuffer: Int(bufferLength))
+
+        let wantsVAD = trimSilence != .off && trimParameters.discriminator == .vad
+        if wantsVAD, vadAnalyzer == nil {
+            do {
+                vadAnalyzer = try TrimVoiceActivityAnalyzer(sampleRate: audioFile.processingFormat.sampleRate)
+                FileLog.shared.addMessage("[AudioReadTask] system VAD analyzer active for trim silence")
+            } catch {
+                FileLog.shared.addMessage("[AudioReadTask] system VAD unavailable, falling back to heuristic gating: \(error.localizedDescription)")
+            }
+        } else if !wantsVAD, let analyzer = vadAnalyzer {
+            analyzer.finish()
+            vadAnalyzer = nil
+        }
     }
 
     func seekTo(_ time: TimeInterval, completion: ((Bool) -> Void)?) {
@@ -160,9 +193,16 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             currentFramePosition = positionRequired.framePosition
             audioFile.framePosition = currentFramePosition
             bufferManager.aboutToSeek()
-            foundGap = false
+            detector.reset()
             buffersSavedDuringGap.removeAll()
             fadeInNextFrame = true
+
+            // stream analyzers can't rewind; recreate after the seek
+            if let analyzer = vadAnalyzer {
+                analyzer.finish()
+                vadAnalyzer = nil
+                reconfigureDetector()
+            }
 
             if let vbnState = voiceBoostNState {
                 VBN_Reset(vbnState)
@@ -217,15 +257,22 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         // Handle dynamic VoiceBoostN state creation/destruction
         let shouldUseVoiceBoostN = useVoiceBoostN?.value == true
         if shouldUseVoiceBoostN && voiceBoostNState == nil {
-            voiceBoostNState = VBN_Create(voiceBoostNSampleRate)
+            var config = tuning.vbnConfig()
+            voiceBoostNState = VBN_CreateWithConfig(voiceBoostNSampleRate, &config)
+            if let vbnState = voiceBoostNState, knownLUFS != 0 {
+                // seed the gain from the precomputed loudness so playback starts
+                // at the right level instead of adapting over the first seconds
+                VBN_SetInitialGainDB(vbnState, Float(tuning.voiceBoost.targetLUFS - knownLUFS))
+            }
             if hasProcessedFirstBuffer {
                 FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled mid-playback - created state at \(voiceBoostNSampleRate) Hz")
             } else {
-                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled - created state at \(voiceBoostNSampleRate) Hz")
+                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled - created state at \(voiceBoostNSampleRate) Hz\(knownLUFS != 0 ? " (seeded from \(knownLUFS) LUFS)" : "")")
             }
         } else if !shouldUseVoiceBoostN && voiceBoostNState != nil {
             VBN_Destroy(voiceBoostNState)
             voiceBoostNState = nil
+            PlaybackManager.engineState.voiceBoostMeters = nil
             FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN disabled mid-playback - switching to previous voice boost")
         }
         hasProcessedFirstBuffer = true
@@ -244,6 +291,12 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             channelPointers.withUnsafeMutableBufferPointer { ptr in
                 VBN_Process(vbnState, ptr.baseAddress, frameCount, bufferChannelCount)
             }
+
+            PlaybackManager.engineState.voiceBoostMeters = .init(
+                gainDB: VBN_GetCurrentGainDB(vbnState),
+                measuredLUFS: VBN_GetMeasuredLUFS(vbnState),
+                limiterReductionDB: VBN_GetLimiterReductionDB(vbnState)
+            )
         }
 
         currentFramePosition = audioFile.framePosition
@@ -286,61 +339,47 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             let currPosition = currentFramePosition / Int64(audioFile.fileFormat.sampleRate)
             let totalDuration = cachedFrameCount / Int64(audioFile.fileFormat.sampleRate)
             let timeLeft = totalDuration - currPosition
-            var rms: Float32 = 0
-            if timeLeft <= 5 {
-                // don't trim silence from the last 5 seconds
-                rms = 1
-            } else {
-                rms = (channelCount == 1) ? AudioUtils.calculateRms(bufferListPointer[0]) : AudioUtils.calculateStereoRms(bufferListPointer[0], rightBuffer: bufferListPointer[1])
+
+            let rms = (channelCount == 1) ? AudioUtils.calculateRms(bufferListPointer[0]) : AudioUtils.calculateStereoRms(bufferListPointer[0], rightBuffer: bufferListPointer[1])
+            var features = TrimFeatureFrame(rmsDB: 20 * log10(max(rms, 1e-7)))
+
+            if trimParameters.discriminator != .rms {
+                features.zeroCrossingRate = AudioUtils.calculateZeroCrossingRate(bufferListPointer[0])
+                features.spectralFlatness = flatnessBox.spectralFlatness(of: bufferListPointer[0])
+            }
+            if trimParameters.discriminator == .vad, let analyzer = vadAnalyzer, let sourceBuffer = audioPCMBuffer {
+                analyzer.append(sourceBuffer, atFramePosition: currentFramePosition)
+                features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: currentFramePosition)
             }
 
-            if rms > minRMS, !foundGap {
-                // the RMS is higher than our minimum and we aren't currently in a gap, just play it
+            let stashedCount = buffersSavedDuringGap.count()
+            if stashedCount == 0 {
+                gapStartFramePosition = currentFramePosition
+            }
+
+            var decision = detector.analyze(features, stashedCount: stashedCount, timeLeft: TimeInterval(timeLeft))
+
+            // retrospective VAD veto: never drop a gap the classifier heard speech in
+            if case .endGapTrim = decision,
+               let analyzer = vadAnalyzer,
+               analyzer.speechDetected(inFrameRange: gapStartFramePosition ..< currentFramePosition, aboveConfidence: Float(trimParameters.vadSpeechConfidenceThreshold)) == true {
+                decision = .endGapEmitAll
+                FileLog.shared.addMessage("[AudioReadTask] VAD vetoed a silence trim (speech detected in gap)")
+            }
+
+            switch decision {
+            case .passthrough:
                 buffers.append(audioBuffer)
-            } else if foundGap, rms > minRMS || buffersSavedDuringGap.count() > maxSilenceAmountToSave {
-                foundGap = false
-                // we've come to the end of a gap (or we've had a suspiscious amount of gap), piece back together the audio
-                if buffersSavedDuringGap.count() < minGapSizeInFrames {
-                    // we don't have enough gap to remove, just push
-                    while buffersSavedDuringGap.canPop() {
-                        buffers.append(buffersSavedDuringGap.pop()!)
-                    }
-
-                    buffers.append(audioBuffer)
-                } else {
-                    for index in 0 ... amountOfSilentFramesToReInsert {
-                        if index < amountOfSilentFramesToReInsert {
-                            buffers.append(buffersSavedDuringGap.pop()!)
-                        } else {
-                            // fade out the last frame to avoid a jarring re-attach
-                            let buffer = buffersSavedDuringGap.pop()!
-                            AudioUtils.fadeAudio(buffer, fadeOut: true, channelCount: channelCount)
-                            buffers.append(buffer)
-                        }
-                    }
-
-                    // pop all the ones we don't need after that
-                    while buffersSavedDuringGap.canPop(), buffersSavedDuringGap.count() > (amountOfSilentFramesToReInsert - 1) {
-                        _ = buffersSavedDuringGap.pop()
-                        let secondsSaved = Double((audioPCMBuffer?.frameLength)!) / audioFile.fileFormat.sampleRate
-                        StatsManager.shared.addTimeSavedDynamicSpeed(secondsSaved)
-                    }
-
-                    while buffersSavedDuringGap.canPop() {
-                        buffers.append(buffersSavedDuringGap.pop()!)
-                    }
-
-                    // fade back in the new frame
-                    AudioUtils.fadeAudio(audioBuffer, fadeOut: false, channelCount: channelCount)
-                    buffers.append(audioBuffer)
+            case .stash:
+                buffersSavedDuringGap.push(audioBuffer)
+            case .endGapEmitAll:
+                // the gap was too short to trim, push it all back
+                while buffersSavedDuringGap.canPop() {
+                    buffers.append(buffersSavedDuringGap.pop()!)
                 }
-            } else if rms < minRMS, !foundGap {
-                // we are at the start of a gap, save this clip and keep going
-                foundGap = true
-                buffersSavedDuringGap.push(audioBuffer)
-            } else if rms < minRMS, foundGap {
-                // we are inside a gap we've already found
-                buffersSavedDuringGap.push(audioBuffer)
+                buffers.append(audioBuffer)
+            case .endGapTrim(let keepBuffers):
+                appendTrimmedGap(keepBuffers: keepBuffers, resume: audioBuffer, into: &buffers)
             }
         } else {
             buffers.append(audioBuffer)
@@ -348,6 +387,84 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
 
         objc_sync_exit(lock)
         return buffers
+    }
+
+    /// Reassembles a trimmed gap: keeps the head of the gap (start of the
+    /// pause), drops the middle, keeps a short tail leading back into speech,
+    /// and splices — either with the legacy fade-out/fade-in or, when
+    /// configured, an equal-power crossfade across the cut.
+    private func appendTrimmedGap(keepBuffers: Int, resume: BufferedAudio, into buffers: inout [BufferedAudio]) {
+        let sampleRate = audioFile.fileFormat.sampleRate
+        let crossfadeFrames = detector.crossfadeFrames
+
+        if crossfadeFrames > 0 {
+            // crossfade splice: keep `keepBuffers` head buffers (or a short
+            // overlap carrier when none are kept), drop the middle, keep the
+            // legacy-sized tail, and overlap across the cut
+            var head = [BufferedAudio]()
+            for _ in 0 ..< max(keepBuffers, 1) {
+                guard let buffer = buffersSavedDuringGap.pop() else { break }
+                head.append(buffer)
+            }
+            if keepBuffers == 0, let carrier = head.first {
+                AudioUtils.truncate(carrier.audioBuffer, toFrames: crossfadeFrames)
+            }
+
+            while buffersSavedDuringGap.canPop(), buffersSavedDuringGap.count() > max(0, keepBuffers - 1) {
+                if let dropped = buffersSavedDuringGap.pop() {
+                    StatsManager.shared.addTimeSavedDynamicSpeed(Double(dropped.audioBuffer.frameLength) / sampleRate)
+                }
+            }
+
+            var tail = [BufferedAudio]()
+            while buffersSavedDuringGap.canPop() {
+                tail.append(buffersSavedDuringGap.pop()!)
+            }
+
+            if let outgoing = head.last {
+                let incoming = tail.first ?? resume
+                let overlap = min(crossfadeFrames, Int(outgoing.audioBuffer.frameLength), Int(incoming.audioBuffer.frameLength))
+                if overlap > 1 {
+                    AudioUtils.crossfadeSplice(outgoing: outgoing.audioBuffer, incoming: incoming.audioBuffer, overlapFrames: overlap)
+                    AudioUtils.trimLeadingFrames(incoming.audioBuffer, frames: overlap)
+                    StatsManager.shared.addTimeSavedDynamicSpeed(Double(overlap) / sampleRate)
+                }
+            }
+
+            buffers.append(contentsOf: head)
+            buffers.append(contentsOf: tail)
+            buffers.append(resume)
+            return
+        }
+
+        // legacy splice: keep keepBuffers+1 head buffers (fading the last out),
+        // drop the middle, keep the last keepBuffers-1 as the tail, fade the
+        // resume buffer back in
+        for index in 0 ... keepBuffers {
+            guard let buffer = buffersSavedDuringGap.pop() else { break }
+            if index < keepBuffers {
+                buffers.append(buffer)
+            } else {
+                // fade out the last frame to avoid a jarring re-attach
+                AudioUtils.fadeAudio(buffer, fadeOut: true, channelCount: channelCount)
+                buffers.append(buffer)
+            }
+        }
+
+        // pop all the ones we don't need after that
+        while buffersSavedDuringGap.canPop(), buffersSavedDuringGap.count() > (keepBuffers - 1) {
+            if let dropped = buffersSavedDuringGap.pop() {
+                StatsManager.shared.addTimeSavedDynamicSpeed(Double(dropped.audioBuffer.frameLength) / sampleRate)
+            }
+        }
+
+        while buffersSavedDuringGap.canPop() {
+            buffers.append(buffersSavedDuringGap.pop()!)
+        }
+
+        // fade back in the new frame
+        AudioUtils.fadeAudio(resume, fadeOut: false, channelCount: channelCount)
+        buffers.append(resume)
     }
 
     private func scheduleForPlayback(buffer: BufferedAudio) {
@@ -358,43 +475,6 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
 
         if !cancelled.value {
             bufferManager.push(buffer)
-        }
-    }
-
-    private func gapSizeForSilenceAmount() -> Int {
-        switch trimSilence {
-        case .low:
-            return 20
-        case .medium:
-            return 16
-        case .high:
-            return 4
-        case .off:
-            return 0
-        }
-    }
-
-    private func framesToReInsertForSilenceAmount() -> Int {
-        switch trimSilence {
-        case .low:
-            return 14
-        case .medium:
-            return 12
-        case .high, .off:
-            return 0
-        }
-    }
-
-    private func minRMSForSilenceAmount() -> Float32 {
-        switch trimSilence {
-        case .low:
-            return 0.0055
-        case .medium:
-            return 0.00511
-        case .high:
-            return 0.005
-        case .off:
-            return 0
         }
     }
 

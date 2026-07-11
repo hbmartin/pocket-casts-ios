@@ -44,6 +44,7 @@ nonisolated struct Constants {
         static let systemThemeMayHaveChanged = NSNotification.Name(rawValue: "SystemThemeChanged")
         static let followSystemThemeTurnedOn = NSNotification.Name(rawValue: "FollowSystemThemeTurnedOn")
         static let playbackEffectsChanged = NSNotification.Name(rawValue: "SJEffectsChanged")
+        static let audioTuningDidChange = NSNotification.Name(rawValue: "SJAudioTuningDidChange")
         static let extraMediaSessionActionsChanged = NSNotification.Name(rawValue: "SJMediaSessionActionsChanged")
         static let remoteCommandSettingsChanged = NSNotification.Name(rawValue: "SJRemoteCommandSettingsChanged")
         static let currentlyPlayingEpisodeUpdated = NSNotification.Name(rawValue: "SJCurrentlyPlayingEpisodeUpdated")
@@ -228,6 +229,7 @@ nonisolated struct Constants {
         }
 
         static let voiceBoostNEnabled = "VoiceBoostNEnabled"
+        static let audioTuning = "SJAudioTuning"
     }
 
     enum Values {

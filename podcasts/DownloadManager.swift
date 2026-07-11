@@ -341,6 +341,8 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         do {
             try StorageManager.moveItem(at: sourceUrl, to: destinationUrl, options: .overwriteExisting)
             let fileSize = FileManager.default.fileSize(of: destinationUrl) ?? 0
+            // the local file just changed; stale frame-count/loudness caches must not seed the player
+            dataManager.clearCachedAudioMetadata(episode: episode)
             dataManager.saveEpisode(downloadStatus: .downloaded, sizeInBytes: fileSize, downloadTaskId: nil, episode: episode)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloaded, object: episode.uuid)
         } catch {

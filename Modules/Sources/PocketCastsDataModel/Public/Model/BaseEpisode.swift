@@ -7,6 +7,7 @@ public protocol BaseEpisode {
     var addedDate: Date? { get set }
     var publishedDate: Date? { get set }
     var cachedFrameCount: Int64 { get set }
+    var cachedLoudness: Double { get set }
     var autoDownloadStatus: Int32 { get set }
     var downloadUrl: String? { get set }
     var fileType: String? { get set }
