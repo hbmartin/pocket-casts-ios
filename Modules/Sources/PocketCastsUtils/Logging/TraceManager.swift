@@ -1,24 +1,20 @@
 import Foundation
+import Synchronization
 
-// @unchecked Sendable: `traceHandler` is guarded by `lock`.
-public final class TraceManager: @unchecked Sendable {
+public final class TraceManager: Sendable {
     public static let shared = TraceManager()
 
-    private let lock = NSLock()
-    private var traceHandler: TraceHandlingProtocol?
+    private let traceHandler = Mutex<(any TraceHandlingProtocol)?>(nil)
 
     public func setup(handler: TraceHandlingProtocol) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        precondition(traceHandler == nil, "TraceManager.setup(handler:) must only be called once.")
-        traceHandler = handler
+        traceHandler.withLock {
+            precondition($0 == nil, "TraceManager.setup(handler:) must only be called once.")
+            $0 = handler
+        }
     }
 
     public func beginTracing(eventName: String) -> AnyObject? {
-        lock.lock()
-        let handler = traceHandler
-        lock.unlock()
+        let handler = traceHandler.withLock { $0 }
 
         return handler?.beginTracing(eventName: eventName)
     }
@@ -26,15 +22,13 @@ public final class TraceManager: @unchecked Sendable {
     public func endTracing(trace: AnyObject?) {
         guard let trace else { return }
 
-        lock.lock()
-        let handler = traceHandler
-        lock.unlock()
+        let handler = traceHandler.withLock { $0 }
 
         handler?.endTracing(trace: trace)
     }
 }
 
-public protocol TraceHandlingProtocol {
+public protocol TraceHandlingProtocol: Sendable {
     func beginTracing(eventName: String) -> AnyObject?
     func endTracing(trace: AnyObject)
 }

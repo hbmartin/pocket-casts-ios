@@ -1,18 +1,27 @@
 import Foundation
+import Synchronization
 
 @testable import PocketCastsUtils
 
-// @unchecked Sendable: test double; assertions only read state after awaiting the
-// actor-isolated work that writes it.
-final class LogPersistenceSpy: PersistentTextWriting, @unchecked Sendable {
+final class LogPersistenceSpy: PersistentTextWriting {
 
-    private(set) var textWrittenToLog = false
-    private(set) var writeCount: UInt = 0
-    private(set) var lastWrittenChunk: String?
+    private struct State {
+        var textWrittenToLog = false
+        var writeCount: UInt = 0
+        var lastWrittenChunk: String?
+    }
+
+    private let state = Mutex(State())
+
+    var textWrittenToLog: Bool { state.withLock { $0.textWrittenToLog } }
+    var writeCount: UInt { state.withLock { $0.writeCount } }
+    var lastWrittenChunk: String? { state.withLock { $0.lastWrittenChunk } }
 
     func write(_ text: String) {
-        textWrittenToLog = true
-        writeCount += 1
-        lastWrittenChunk = text
+        state.withLock {
+            $0.textWrittenToLog = true
+            $0.writeCount += 1
+            $0.lastWrittenChunk = text
+        }
     }
 }

@@ -1,14 +1,17 @@
 import Foundation
+import Synchronization
 
 @testable import PocketCastsUtils
 
-// @unchecked Sendable: test double; assertions only read state after awaiting the
-// actor-isolated work that writes it.
-final class LogRotationSpy: FileRotating, @unchecked Sendable {
+final class LogRotationSpy: FileRotating {
 
-    private(set) var rotationRequested = false
+    private let state = Mutex(false)
+
+    var rotationRequested: Bool {
+        state.withLock { $0 }
+    }
 
     func rotateFile(ifSizeExceeds: Int) {
-        rotationRequested = true
+        state.withLock { $0 = true }
     }
 }

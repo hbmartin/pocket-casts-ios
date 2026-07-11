@@ -25,9 +25,6 @@ nonisolated class EpisodeManager: NSObject {
                 if Settings.userEpisodeRemoveFileAfterPlaying() {
                     UserEpisodeManager.deleteFromDevice(userEpisode: episode)
                 }
-                if Settings.userEpisodeRemoveFromCloudAfterPlaying() {
-                    UserEpisodeManager.deleteFromCloud(episode: episode)
-                }
             }
         }
         #endif
@@ -89,9 +86,6 @@ nonisolated class EpisodeManager: NSObject {
                 // Do this last as it may delete the episode from the database
                 if Settings.userEpisodeRemoveFileAfterPlaying() {
                     UserEpisodeManager.deleteFromDevice(userEpisode: userEpisode, removeFromPlaybackQueue: false)
-                }
-                if Settings.userEpisodeRemoveFromCloudAfterPlaying() {
-                    UserEpisodeManager.deleteFromCloud(episode: userEpisode, removeFromPlaybackQueue: false)
                 }
             }
             #endif
@@ -440,10 +434,6 @@ nonisolated class EpisodeManager: NSObject {
         // For streaming or when no local files, return remote URL
         if let episode = episode as? Episode, let url = episode.downloadUrl {
             return URL(string: url)
-        } else if let episode = episode as? UserEpisode {
-            if let token = ServerSettings.syncingV2Token, episode.uploadStatus != UploadStatus.missing.rawValue {
-                return URL(string: "\(ServerConstants.Urls.api())files/url/\(episode.uuid)?token=\(token)")
-            }
         }
 
         return nil
@@ -457,8 +447,8 @@ nonisolated class EpisodeManager: NSObject {
             }
 
             return Settings.autoArchivePlayedAfter() == 0 && (Settings.archiveStarredEpisodes() || !episode.keepEpisode)
-        } else if let _ = episode as? UserEpisode {
-            return Settings.userEpisodeRemoveFileAfterPlaying() || Settings.userEpisodeRemoveFromCloudAfterPlaying()
+        } else if episode is UserEpisode {
+            return Settings.userEpisodeRemoveFileAfterPlaying()
         }
         #endif
 
@@ -545,7 +535,7 @@ nonisolated class EpisodeManager: NSObject {
         var episodesToMarkAsNotDownloaded = [BaseEpisode]()
         for episode in episodes {
             deleteFilesForEpisode(episode)
-            if let userEpisode = episode as? UserEpisode, !userEpisode.uploaded() {
+            if let userEpisode = episode as? UserEpisode {
                 userEpisodeUuidsToDelete.append(userEpisode.uuid)
             } else {
                 episodesToMarkAsNotDownloaded.append(episode)

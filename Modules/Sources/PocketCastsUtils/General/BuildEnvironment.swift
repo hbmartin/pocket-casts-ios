@@ -6,10 +6,7 @@ public enum BuildEnvironment: Sendable {
     /// From Xcode, or another DEBUG build
     case debug
 
-    /// A release build from TestFlight
-    case testFlight
-
-    /// A release build from the AppStore
+    /// A release build
     case appStore
 
     /// Returns the `BuildEnvironment` for the current build
@@ -17,17 +14,11 @@ public enum BuildEnvironment: Sendable {
 
     /// Determines the current environment by:
     /// - If the DEBUG or STAGING preprocessor macros are set, return `.debug`
-    /// - If the `appStoreReceiptURL` is `sandboxReceipt` return `.beta`
     /// - For anything else, return `.appStore`
     private static var determineCurrentEnvironment: BuildEnvironment {
         #if DEBUG || STAGING
         return .debug
         #else
-        // https://stackoverflow.com/a/26113597/257949
-        if Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" {
-            return .testFlight
-        }
-
         return .appStore
         #endif
     }

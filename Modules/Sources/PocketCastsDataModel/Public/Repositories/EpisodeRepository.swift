@@ -24,7 +24,6 @@ public protocol EpisodeRepository: AnyObject, Sendable {
     func findLatestEpisode(podcast: Podcast) -> Episode?
     func findLatestEpisodes(podcast: Podcast, limit: Int) -> [Episode]
     func unsyncedEpisodes(limit: Int) -> [Episode]
-    func unsyncedUserEpisodes() -> [UserEpisode]
     func episodesWithListenHistory(limit: Int) -> [Episode]
     func dailyListeningTime(forLast days: Int) -> [String: Double]
     func failedDownloadedEpisodesCount() -> Int

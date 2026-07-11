@@ -2,11 +2,11 @@ import Foundation
 import PocketCastsServer
 
 struct MockRequestHandler {
-    typealias Handler = ((URLRequest) throws -> (Data?, URLResponse?))
+    typealias Handler = (@Sendable (URLRequest) throws -> (Data?, URLResponse?))
 
     let handler: Handler
 
-    init(handler: @escaping ((URLRequest) throws -> (Data?, URLResponse?))) {
+    init(handler: @escaping Handler) {
         self.handler = handler
     }
 }

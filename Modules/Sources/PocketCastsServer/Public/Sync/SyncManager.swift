@@ -47,10 +47,7 @@ public class SyncManager {
         UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.historyServerLastModified)
         UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.marketingOptInNeedsSyncKey)
         UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.marketingOptInKey)
-        ServerSettings.liveAnalyticsUrl = nil
         UserDefaults.standard.synchronize()
-
-        ServerConfig.shared.syncDelegate?.cleanupCloudOnlyFiles()
     }
 
     public class func clearTokensFromKeyChain() {

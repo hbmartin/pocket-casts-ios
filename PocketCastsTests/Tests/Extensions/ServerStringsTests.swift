@@ -12,7 +12,6 @@ final class ServerStringsTests: XCTestCase {
         XCTAssertEqual(APIError.INCORRECT_PASSWORD.localizedDescription, L10n.serverErrorLoginPasswordIncorrect)
         XCTAssertEqual(APIError.EMAIL_TAKEN.localizedDescription, L10n.serverErrorLoginEmailTaken)
         XCTAssertEqual(APIError.NO_CONNECTION.localizedDescription, L10n.playerErrorInternetConnection)
-        XCTAssertEqual(APIError.FILES_EXCEEDS_STORAGE.localizedDescription, L10n.serverErrorFilesStorageLimitExceeded)
         XCTAssertEqual(APIError.INVALID_GRANT.localizedDescription, L10n.serverErrorLoginInvalidGrant)
     }
 

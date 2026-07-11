@@ -5,24 +5,21 @@ protocol PersistentTextWriting: Sendable {
     func write(_ text: String)
 }
 
-// @unchecked Sendable: all stored properties are immutable; FileManager is documented
-// thread-safe (the delegate, which is not, is never used here).
-struct LogFileWriter: PersistentTextWriting, @unchecked Sendable {
+struct LogFileWriter: PersistentTextWriting, Sendable {
 
     private let targetFilePath: String
     private let encoding: String.Encoding
-    private let fileManager: FileManager
     private let logger: Logger?
+
+    private var fileManager: FileManager { .default }
 
     init(
         writingToFileAtPath targetFilePath: String,
         encodingTextAs encoding: String.Encoding = .utf8,
-        fileManager: FileManager = .default,
         loggingTo logger: Logger? = nil
     ) {
         self.encoding = encoding
         self.logger = logger
-        self.fileManager = fileManager
         self.targetFilePath = targetFilePath
     }
 

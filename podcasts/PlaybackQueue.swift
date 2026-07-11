@@ -373,7 +373,7 @@ class PlaybackQueue: NSObject {
         var missingEpisode = UserEpisode()
         missingEpisode.title = playlistEpisode.title
         missingEpisode.uuid = playlistEpisode.episodeUuid
-        missingEpisode.uploadStatus = UploadStatus.missing.rawValue
+        missingEpisode.episodeStatus = DownloadStatus.downloadFailed.rawValue
         missingEpisode.imageColor = 1
 
         return missingEpisode

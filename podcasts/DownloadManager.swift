@@ -2,6 +2,7 @@ import AVKit
 import Dependencies
 import Foundation
 @preconcurrency import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -321,17 +322,26 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
                 }
             }
         } else if let episode = episode as? UserEpisode {
-            ApiServerHandler.shared.uploadFilePlayRequest(episode: episode, completion: { [weak self] url in
-                guard let url else {
-                    self?.dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorTryAgain, downloadTaskId: nil, episode: episode)
-                    NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
-                    return
+            Task {
+                do {
+                    try await FileSyncManager.shared.materializeUpload(episodeUuid: episode.uuid)
+                    NotificationCenter.postOnMainThread(
+                        notification: Constants.Notifications.episodeDownloadStatusChanged,
+                        object: episode.uuid
+                    )
+                } catch {
+                    dataManager.saveEpisode(
+                        downloadStatus: .downloadFailed,
+                        downloadError: L10n.downloadErrorTryAgain,
+                        downloadTaskId: nil,
+                        episode: episode
+                    )
+                    NotificationCenter.postOnMainThread(
+                        notification: Constants.Notifications.episodeDownloadStatusChanged,
+                        object: episode.uuid
+                    )
                 }
-
-                Task { [weak self] in
-                    await self?.performAddToQueue(episode: episode, url: url.absoluteString, previousDownloadFailed: previousDownloadFailed, fireNotification: fireNotification, autoDownloadStatus: autoDownloadStatus)
-                }
-            })
+            }
         }
     }
 

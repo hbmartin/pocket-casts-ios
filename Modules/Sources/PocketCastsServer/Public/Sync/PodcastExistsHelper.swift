@@ -1,14 +1,17 @@
 import Foundation
 import PocketCastsDataModel
+import Synchronization
 
 /// Helper that checks for podcast existence and caches database requests.
-// @unchecked Sendable: the uuid cache and revision counter are guarded by `lock`.
-public final class PodcastExistsHelper: @unchecked Sendable {
+public final class PodcastExistsHelper: Sendable {
     public static let shared = PodcastExistsHelper()
 
-    private var checkedUuidsThatExist = Set<String>()
-    private var cacheRevision: UInt64 = 0
-    private let lock = NSLock()
+    private struct Cache {
+        var checkedUuidsThatExist = Set<String>()
+        var revision: UInt64 = 0
+    }
+
+    private let cache = Mutex(Cache())
 
     private init() {}
 
@@ -30,35 +33,31 @@ public final class PodcastExistsHelper: @unchecked Sendable {
     }
 
     func markExists(uuid: String) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        checkedUuidsThatExist.insert(uuid)
+        cache.withLock {
+            $0.checkedUuidsThatExist.insert(uuid)
+        }
     }
 
     public func invalidate(uuid: String) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        cacheRevision += 1
-        checkedUuidsThatExist.remove(uuid)
+        cache.withLock {
+            $0.revision += 1
+            $0.checkedUuidsThatExist.remove(uuid)
+        }
     }
 
     private func cacheRevisionForLookup(uuid: String) -> (exists: Bool, value: UInt64) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        return (checkedUuidsThatExist.contains(uuid), cacheRevision)
+        cache.withLock {
+            ($0.checkedUuidsThatExist.contains(uuid), $0.revision)
+        }
     }
 
     private func markExists(uuid: String, unlessInvalidatedAfter revision: UInt64) {
-        lock.lock()
-        defer { lock.unlock() }
+        cache.withLock {
+            guard $0.revision == revision else {
+                return
+            }
 
-        guard cacheRevision == revision else {
-            return
+            $0.checkedUuidsThatExist.insert(uuid)
         }
-
-        checkedUuidsThatExist.insert(uuid)
     }
 }

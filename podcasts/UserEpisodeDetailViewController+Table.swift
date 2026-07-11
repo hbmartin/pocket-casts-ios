@@ -1,5 +1,4 @@
 import PocketCastsDataModel
-import PocketCastsServer
 
 extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func registerCells() {
@@ -32,16 +31,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             cell.titleLabel.style = .primaryText01
             cell.actionImage?.image = UIImage(named: "cancel")
             cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-        case .upload:
-            cell.titleLabel.text = L10n.customEpisodeUpload
-            cell.titleLabel.style = .primaryText01
-            cell.actionImage?.image = UIImage(named: "plus_upload")
-            cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-        case .removeFromCloud:
-            cell.titleLabel.text = L10n.customEpisodeRemoveUpload
-            cell.titleLabel.style = .primaryText01
-            cell.actionImage?.image = UIImage(named: "remove_from_cloud")
-            cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
         case .upNext:
             cell.titleLabel.text = PlaybackManager.shared.inUpNext(episode: episode) ? L10n.removeFromUpNext : L10n.addToUpNext
             cell.titleLabel.style = .primaryText01
@@ -62,12 +51,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             cell.titleLabel.style = .support05
             cell.actionImage?.image = UIImage(named: "delete")
             cell.actionImage?.tintColor = ThemeColor.support05(for: themeOverride)
-        case .cancelUpload:
-            cell.titleLabel.text = L10n.customEpisodeCancelUpload
-            cell.titleLabel.style = .primaryText01
-            cell.actionImage?.image = UIImage(named: "cancel")
-            cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-
         case .bookmarks:
             cell.titleLabel.text = L10n.bookmarks
             cell.titleLabel.style = .primaryText01
@@ -92,18 +75,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
         case .cancelDownload:
             Analytics.track(.userFileDetailOptionTapped, properties: ["option": "cancel_download"])
             PlaybackActionHelper.stopDownload(episodeUuid: episode.uuid)
-            close()
-        case .upload:
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "upload"])
-            PlaybackActionHelper.upload(episodeUuid: episode.uuid)
-            close()
-        case .cancelUpload:
-            PlaybackActionHelper.stopUpload(episodeUuid: episode.uuid)
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "cancel_upload"])
-            close()
-        case .removeFromCloud:
-            UserEpisodeManager.deleteFromCloud(episode: episode)
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "delete_from_cloud"])
             close()
         case .upNext:
             if PlaybackManager.shared.inUpNext(episode: episode) {
@@ -160,14 +131,8 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
 
         if episode.queued() || episode.downloading() || episode.waitingForWifi() {
             data.insert(.cancelDownload, at: 3)
-        } else if episode.uploadQueued() || episode.uploading() || episode.uploadWaitingForWifi() {
-            data.insert(.cancelUpload, at: 3)
         } else if !episode.downloaded(pathFinder: DownloadManager.shared) {
             data.insert(.download, at: 3)
-        } else if episode.uploaded() {
-            data.insert(.removeFromCloud, at: 3)
-        } else {
-            data.insert(.upload, at: 3)
         }
         return data
     }

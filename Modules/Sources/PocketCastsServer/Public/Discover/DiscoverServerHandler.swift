@@ -6,9 +6,7 @@ public protocol DiscoverServerHandling {
     func discoverCategories(source: String, authenticated: Bool?) async -> [DiscoverCategory]
 }
 
-// @unchecked Sendable: stored properties are a token helper and a URLCache,
-// both internally thread-safe and configured at init.
-public final class DiscoverServerHandler: DiscoverServerHandling, @unchecked Sendable {
+public final class DiscoverServerHandler: DiscoverServerHandling, Sendable {
     enum DiscoverServerError: Error {
         case unknown
         case badRequest

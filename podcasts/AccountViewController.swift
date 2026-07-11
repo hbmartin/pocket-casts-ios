@@ -3,7 +3,7 @@ import PocketCastsUtils
 import UIKit
 
 class AccountViewController: UIViewController, ChangeEmailDelegate {
-    enum TableRow { case changeAvatar, changeEmail, changePassword, newsletter, logout, deleteAccount, privacyPolicy, termsOfUse }
+    enum TableRow { case changeEmail, changePassword, newsletter, logout, deleteAccount, privacyPolicy, termsOfUse }
     var tableData: [[TableRow]] = [[.changeEmail, .changePassword, .newsletter], [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
 
     static let newsletterCellId = "NewsletterCellId"
@@ -74,10 +74,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         } else {
             accountOptions = [.newsletter]
         }
-        if headerViewModel.profile.isLoggedIn {
-            accountOptions.insert(.changeAvatar, safelyAt: 0)
-        }
-
         let newTableRows: [[TableRow]] = [accountOptions, [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
 
         updateTableRows(newRows: newTableRows)

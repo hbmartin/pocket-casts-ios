@@ -15,8 +15,6 @@
     <string>Legal i altres</string>
     <key>about_privacy_policy</key>
     <string>Política de privadesa</string>
-    <key>about_rate_us</key>
-    <string>Puntua'ns</string>
     <key>about_share_friends</key>
     <string>Comparteix amb amics</string>
     <key>about_terms_of_service</key>
@@ -345,8 +343,6 @@ Descarrega l'app per a una experiència completa!</string>
     <string>Els teus pòdcasts i l'historial d'escolta seguiran sent accessibles.</string>
     <key>cancel_confirm_item_plus</key>
     <string>Després d'aquesta data, s'eliminarà l'accés a les funcions Plus com ara els marcadors, la reproducció aleatòria, els dispositius portables i més.</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>Tots els fitxers pujats al teu compte de Pocket Casts s'eliminaran (però els fitxers que has baixat al dispositiu mòbil es mantindran).</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>La teva subscripció actual estarà activa fins al %1$@.</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -437,10 +433,6 @@ Deixa'ns ajudar-te primer</string>
     <string>Aconsegueix un 50%% de descompte el teu any vinent</string>
     <key>canceling</key>
     <string>Cancel·lant...</string>
-    <key>champion_description</key>
-    <string>Gràcies per estar amb nosaltres des del principi! Si t'agrada fer servir la nostra app, ens encantaria saber la teva opinió.</string>
-    <key>champion_title</key>
-    <string>Ets un veritable campió de Pocket Casts!</string>
     <key>change_app_icon</key>
     <string>Canvia la icona de l'app</string>
     <key>change_bookmark_subtitle</key>
@@ -565,12 +557,6 @@ Deixa'ns ajudar-te primer</string>
     <string>Contrasenya actual</string>
     <key>custom_episode</key>
     <string>Episodi personalitzat</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>Cancel·la la pujada</string>
-    <key>custom_episode_remove_upload</key>
-    <string>Esborra del núvol</string>
-    <key>custom_episode_upload</key>
-    <string>Puja al núvol</string>
     <key>database_migration</key>
     <string>Estem movent uns quants bits i bytes perquè l'aplicació vagi més ràpida...</string>
     <key>day</key>
@@ -595,8 +581,6 @@ Deixa'ns ajudar-te primer</string>
     <string>Esborra el fitxer</string>
     <key>delete_file_message</key>
     <string>Estàs segur que vols esborrar aquest fitxer?</string>
-    <key>delete_from_cloud</key>
-    <string>Esborra del núvol</string>
     <key>delete_from_device</key>
     <string>Esborra del dispositiu</string>
     <key>delete_from_device_only</key>
@@ -815,8 +799,6 @@ Deixa'ns ajudar-te primer</string>
     <string>És possible que aquest episodi s'hagi mogut o esborrat. Posa't en contacte amb l'autor del pòdcast.</string>
     <key>download_error_not_enough_space</key>
     <string>No s'ha pogut desar el fitxer. T'has quedat sense espai?</string>
-    <key>download_error_not_uploaded</key>
-    <string>El fitxer no se n'ha pogut pujar i no es pot reproduir</string>
     <key>download_error_status_code</key>
     <string>S'ha produït un error a la descàrrega. El codi d'error és %1$@. Posa't en contacte amb l'autor del pòdcast.</string>
     <key>download_error_try_again</key>
@@ -1082,8 +1064,6 @@ Ens veiem el 2024!</string>
     <string>Totes les funcions de Plus</string>
     <key>feature_marketing_bookmarks</key>
     <string>Conserva moments destacats amb els marcadors</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>%1$@ GB d'emmagatzematge al núvol per als teus fitxers</string>
     <key>feature_marketing_early_access</key>
     <string>Accés anticipat a noves funcions</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1120,10 +1100,6 @@ Ens veiem el 2024!</string>
     <string>Biblioteca de fotos</string>
     <key>file_upload_edit_file</key>
     <string>Edita el fitxer</string>
-    <key>file_upload_error</key>
-    <string>No hi ha prou espai per a pujar aquest arxiu.</string>
-    <key>file_upload_error_subtitle</key>
-    <string>Esborra alguns arxius i prova-ho de nou.</string>
     <key>file_upload_name_required</key>
     <string>El nom és necessari</string>
     <key>file_upload_no_files_description</key>
@@ -1142,8 +1118,6 @@ Ens veiem el 2024!</string>
     <string>Arxius</string>
     <key>files_how_to_title</key>
     <string>Com desar un arxiu</string>
-    <key>files_not_uploaded</key>
-    <string>No s'han pujat fitxers</string>
     <key>files_sort</key>
     <string>Ordena els arxius</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ ACTUALITZACIONS</string>
     <string>Pausa</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>Digues adeu als anuncis publicitaris i més amb Pocket Casts Plus</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>Carrega els teus arxius amb Pocket Casts Plus, i més</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>Organitza els teus pòdcasts amb Pocket Casts Plus, i més</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2086,8 +2058,6 @@ Això sí que és compromís!</string>
     <string>Error de la descàrrega</string>
     <key>player_user_episode_playback_error</key>
     <string>Error de reproducció</string>
-    <key>player_user_episode_upload_error</key>
-    <string>Error a la càrrega</string>
     <key>playlist_add_to_title</key>
     <string>Afegeix a "%@"</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2246,10 +2216,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Es pot cancel·lar en qualsevol moment</string>
     <key>plus_champion</key>
     <string>Campió de Pocket Casts</string>
-    <key>plus_champion_message</key>
-    <string>Gràcies per estar amb Pocket Casts des del principi. Ets un veritable campió!</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>%1$@ GB d'emmagatzematge al núvol</string>
     <key>plus_discount_yearly_membership</key>
     <string>50%% de descompte el primer any</string>
     <key>plus_error_already_registered</key>
@@ -2268,8 +2234,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Organitza els teus pòdcasts en carpetes i mantingues-los sincronitzats en tots els teus dispositius.</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>Aconsegueix 1 any de contingut prèmium de Slumber Studios.</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>Carrega els teus arxius a l'emmagatzematge al núvol per a poder accedir-hi des de qualsevol lloc.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Marcadors</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2314,8 +2278,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Amaga els anuncis</string>
     <key>plus_marketing_learn_more_button</key>
     <string>Més informació sobre Pocket Casts Plus</string>
-    <key>plus_marketing_main_description</key>
-    <string>Personal i organitzat, tot a la vegada. Puja els teus arxius d'àudio personals als nostres servidors al núvol, accedeix al teu compte a través del nostre reproductor web i personalitza l'aplicació.</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>Sense anuncis publicitaris</string>
     <key>plus_marketing_subtitle</key>
@@ -2326,8 +2288,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Tot el que t'agrada de Pocket Casts, i molt més</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>Reproducció aleatòria</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>Carrega els teus arxius a l'emmagatzematge al núvol per a poder accedir-hi des de qualsevol lloc</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>Escolta els teus pòdcasts a més llocs amb les nostres aplicacions per a Windows, macOS i web</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2456,8 +2416,6 @@ Prova d'ajustar les regles, o desa aquesta llista de reproducció per a futurs e
     <string>Extres</string>
     <key>podcast_failed_download</key>
     <string>Error en descarregar l'episodi.</string>
-    <key>podcast_failed_upload</key>
-    <string>S'ha produït un error a la pujada</string>
     <key>podcast_feed_reload_button</key>
     <string>Actualitza la llista d'episodis</string>
     <key>podcast_feed_reload_loading</key>
@@ -2554,16 +2512,10 @@ Si vols noves idees, ves a la pestanya Descobreix.</string>
     <string>Actualitzacions finalitzades: %1$@</string>
     <key>podcast_updates_ends</key>
     <string>Les actualitzacions acaben: %1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>Puja ara</string>
-    <key>podcast_uploading</key>
-    <string>Pujant... %1$@</string>
     <key>podcast_view_changes_tip_details</key>
     <string>Toca el títol del pòdcast per plegar o desplegar la descripció i detalls</string>
     <key>podcast_view_changes_tip_title</key>
     <string>Hem fet alguns canvis</string>
-    <key>podcast_waiting_upload</key>
-    <string>Esperant per a pujar</string>
     <key>podcast_yesterday</key>
     <string>Ahir</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2674,8 +2626,6 @@ Si vols noves idees, ves a la pestanya Descobreix.</string>
     <string>Queda en total: %1$@</string>
     <key>rate</key>
     <string>Valora</string>
-    <key>rate_pocket_casts</key>
-    <string>Valora Pocket Casts</string>
     <key>rating_error</key>
     <string>Ep! Hi ha hagut un error.</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2810,20 +2760,6 @@ Si vols noves idees, ves a la pestanya Descobreix.</string>
     <string>Selecciona episodis</string>
     <key>selected_count_format</key>
     <string>%1$@ seleccionats</string>
-    <key>server_error_files_file_too_large</key>
-    <string>Aquest arxiu és massa gran i no es pot pujar.</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>No s'ha pogut pujar aquest arxiu perquè  no podem determinar quin contingut té.</string>
-    <key>server_error_files_invalid_user</key>
-    <string>L'usuari no està connectat.</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>Has superat el límit d'emmagatzematge del compte.</string>
-    <key>server_error_files_title_required</key>
-    <string>Es necessita un títol.</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>No s'ha pogut pujar el fitxer, intenta-ho més tard.</string>
-    <key>server_error_files_uuid_required</key>
-    <string>Es necessita l'identificador únic universal (UUID)  de l'arxiu.</string>
     <key>server_error_login_access_denied</key>
     <string>L'usuari ha denegat la sol·licitud d'autorització</string>
     <key>server_error_login_account_locked</key>
@@ -3014,20 +2950,6 @@ Si vols noves idees, ves a la pestanya Descobreix.</string>
     <string>El feed d'aquest pòdcast s'ha deixat d'actualitzar perquè tenia massa errors.</string>
     <key>settings_files</key>
     <string>Configuració dels arxius</string>
-    <key>settings_files_auto_download</key>
-    <string>Descarregar automàticament des del núvol</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>Els arxius pujats al núvol des d'altres dispositius no es descarregaran automàticament.</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>Els arxius pujats al núvol des d'altres dispositius es descarregaran automàticament.</string>
-    <key>settings_files_auto_upload</key>
-    <string>Pujar automàticament al núvol</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>Els arxius afegits a aquest dispositiu no es pujaran automàticament al núvol.</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>Els arxius afegits a aquests dispositius es pujaran automàticament al núvol.</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>Esborra l'arxiu del núvol</string>
     <key>settings_files_delete_local_file</key>
     <string>Esborra l'arxiu local</string>
     <key>settings_first_party_analytics</key>
@@ -3549,8 +3471,6 @@ Mai es compartirà la teva adreça de correu electrònic, ni la contrasenya ni c
     <string>Destacat</string>
     <key>status_unplayed</key>
     <string>No reproduït</string>
-    <key>status_uploaded</key>
-    <string>Pujat</string>
     <key>stop_download</key>
     <string>Atura la descàrrega</string>
     <key>subscribe</key>

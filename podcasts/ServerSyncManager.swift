@@ -71,21 +71,12 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
         episode.episodeCanBeCleanedUp()
     }
 
-    // User Episodes functions
-    func deleteFromDevice(userEpisode: UserEpisode) {
-        #if !APPCLIP
-        UserEpisodeManager.deleteFromDevice(userEpisode: userEpisode)
-        #endif
-    }
-
     func performActionsAfterSync() {
         cleanupNetworkDataUsageIfNeeded()
         PodcastManager.shared.checkForExpiredPodcastsAndCleanup()
         PodcastManager.shared.checkForPendingAndAutoDownloads()
         #if !APPCLIP
         PlaylistManager.checkForAutoDownloads()
-        UserEpisodeManager.checkForPendingUploads()
-        UserEpisodeManager.checkForPendingCloudDeletes()
         #endif
         DispatchQueue.main.async {
             Analytics.shared.refreshRegistered()
@@ -121,29 +112,6 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
                 defaults.set(lastCleanupDate, forKey: Constants.UserDefaults.lastNetworkDataUsageCleanupDate)
             }
         }
-    }
-
-    func cleanupCloudOnlyFiles() {
-        #if !APPCLIP
-        UserEpisodeManager.cleanupCloudOnlyFiles()
-        #endif
-    }
-
-    func autoDownloadUserEpisodes(episodes: [UserEpisode]) {
-        let autoDownloadsRequireWifi = ServerSettings.userEpisodeOnlyOnWifi()
-        let isWiFiConnected = NetworkUtils.shared.isConnectedToUnexpensiveConnection()
-
-        for episode in episodes {
-            if isWiFiConnected || !autoDownloadsRequireWifi {
-                DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .autoDownloaded)
-            } else {
-                DownloadManager.shared.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .autoDownloaded)
-            }
-        }
-    }
-
-    func userEpisodeFileProtocol() -> FilePathProtocol {
-        DownloadManager.shared
     }
 
     // MARK: - Settings

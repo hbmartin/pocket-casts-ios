@@ -10,7 +10,7 @@ actor PlaylistMetadataLoader {
     // MARK: - Update Types
 
     /// Represents an update to a playlist's metadata
-    enum MetadataUpdate: @unchecked Sendable {
+    enum MetadataUpdate: Sendable {
         case count(playlistID: String, count: Int)
         case images(playlistID: String, images: [PlaylistArtworkView.ImageItem])
     }

@@ -2,8 +2,7 @@ import GRDB
 import PocketCastsUtils
 import Foundation
 
-// @unchecked Sendable: stateless wrapper over GRDB's thread-safe DatabasePool
-final class GRDBQueue: PCDBQueue, @unchecked Sendable {
+final class GRDBQueue: PCDBQueue, Sendable {
     public let dbPool: DatabasePool
     let logger: ErrorLogger?
 

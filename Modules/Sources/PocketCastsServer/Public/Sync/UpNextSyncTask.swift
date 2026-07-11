@@ -260,16 +260,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
                         newEpisode.title = localEpisode.displayableTitle()
                         DataManager.sharedManager.save(playlistEpisode: newEpisode)
                     }
-                    // 2. If the episode is a custom episode..
-                    else if episodeInfo.podcast == DataConstants.userEpisodeFakePodcastId {
-                        FileLog.shared.addMessage("UpNextSyncTask: Episode \(episodeInfo.title) is a custom episode, adding to the queue")
-                        // because a custom episode import task always runs before an Up Next sync, if we don't have this episode it's most likely local only on some other device
-                        // handle this here by adding it to our Up Next
-                        newEpisode.podcastUuid = DataConstants.userEpisodeFakePodcastId
-                        newEpisode.title = episodeInfo.title
-                        DataManager.sharedManager.save(playlistEpisode: newEpisode)
-                    }
-                    // 3. The episode is not in the local database, and is not custom so it will attempt to retrieve the episode from
+                    // 2. The episode is not in the local database, so attempt to retrieve it from
                     // the server. And will only add the episode if that succeeds.
                     else {
                         FileLog.shared.addMessage("UpNextSyncTask: Episode \(episodeInfo.title) is not in the local DB, fetching from the server...")
@@ -430,7 +421,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
             let uuidArr = uuids.components(separatedBy: ",")
             var episodes = [Api_UpNextEpisodeRequest]()
             for uuid in uuidArr {
-                if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid) {
+                if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid), !(episode is UserEpisode) {
                     var episodeInfo = Api_UpNextEpisodeRequest()
                     episodeInfo.title = episode.displayableTitle()
                     episodeInfo.url = episode.downloadUrl ?? ""
@@ -456,7 +447,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
         change.action = action.type
         change.modified = action.utcTime
 
-        if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid) {
+        if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid), !(episode is UserEpisode) {
             change.title = episode.displayableTitle()
             if episode is Episode, let url = episode.downloadUrl {
                 change.url = url

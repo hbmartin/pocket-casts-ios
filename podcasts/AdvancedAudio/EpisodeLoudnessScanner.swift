@@ -2,6 +2,7 @@ import AVFoundation
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
+import Synchronization
 
 /// Measures the integrated BS.1770 loudness of downloaded episodes on a
 /// background queue and caches it per episode, so VoiceBoostN can seed its gain
@@ -9,15 +10,14 @@ import PocketCastsUtils
 ///
 /// Triggered from episode-download notifications and from EffectsPlayer when it
 /// loads an episode with no cached measurement.
-nonisolated final class EpisodeLoudnessScanner: @unchecked Sendable {
+nonisolated final class EpisodeLoudnessScanner: Sendable {
     static let shared = EpisodeLoudnessScanner()
 
     private static let framesPerRead: AVAudioFrameCount = 32768
 
     /// Serial utility queue: one scan at a time keeps CPU/battery bounded.
     private let scanQueue = DispatchQueue(label: "au.com.pocketcasts.LoudnessScan", qos: .utility, autoreleaseFrequency: .workItem)
-    private let lock = NSLock()
-    private var inFlight = Set<String>()
+    private let inFlight = Mutex(Set<String>())
 
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(episodeDownloaded(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
@@ -29,18 +29,13 @@ nonisolated final class EpisodeLoudnessScanner: @unchecked Sendable {
     }
 
     func scanIfNeeded(episodeUuid: String) {
-        lock.lock()
-        let alreadyQueued = inFlight.contains(episodeUuid)
-        if !alreadyQueued { inFlight.insert(episodeUuid) }
-        lock.unlock()
+        let alreadyQueued = inFlight.withLock { !$0.insert(episodeUuid).inserted }
         guard !alreadyQueued else { return }
 
         scanQueue.async { [weak self] in
             guard let self else { return }
             self.scan(episodeUuid: episodeUuid)
-            self.lock.lock()
-            self.inFlight.remove(episodeUuid)
-            self.lock.unlock()
+            self.inFlight.withLock { _ = $0.remove(episodeUuid) }
         }
     }
 

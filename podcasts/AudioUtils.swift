@@ -117,7 +117,11 @@ nonisolated class AudioUtils {
 
         let remaining = currentLength - frames
         for channel in 0 ..< Int(buffer.format.channelCount) {
-            data[channel].update(from: data[channel] + frames, count: remaining)
+            memmove(
+                data[channel],
+                data[channel] + frames,
+                remaining * MemoryLayout<Float32>.stride
+            )
         }
         buffer.frameLength = AVAudioFrameCount(remaining)
     }

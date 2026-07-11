@@ -26,10 +26,6 @@ public enum ServerConstants {
             production() ? "https://static.pocketcasts.com/" : "https://static.pocketcasts.net/"
         }
 
-        public static func files() -> String {
-            production() ? "https://files.pocketcasts.com/files/" : "https://files.pocketcasts.net/files/"
-        }
-
         public static func share() -> String {
             production() ? "https://pca.st/" : "https://pcast.pocketcasts.net/"
         }
@@ -61,7 +57,6 @@ public enum ServerConstants {
         public static let automatticDotCom = "https://automattic.com/"
         public static let automatticWorkWithUs = "https://automattic.com/work-with-us/"
         public static let appStore = "https://apps.apple.com/app/id414834813"
-        public static let appStoreReview = "https://apps.apple.com/app/id414834813?action=write-review"
         public static let podrollLearnMore = "https://support.pocketcasts.com/knowledge-base/podroll/"
         public static let supportPlaybackDownloadErrors = "https://support.pocketcasts.com/knowledge-base/download-and-playback-errors/"
         public static let supportEpisodeAccessIssues = "https://support.pocketcasts.com/knowledge-base/episode-access-issues/"
@@ -119,10 +114,6 @@ public enum ServerConstants {
         static let pushTokenKey = "SJPushToken" // NOSONAR - Keychain item name, not a credential.
         static let appleAuthUserIDKey = "SJAppleAuthUserID"
         public static let appUserAgent = "Pocket Casts"
-        static let customStorageUsed = "SJCustomStorageUsed"
-        static let customStorageNumFiles = "SJCustomStorageNumFiles"
-        static let customStorageUserLimit = "SJCustomStorageUserLimit"
-
         static let oldEpisodeCutoff = 2.weeks
     }
 
@@ -139,7 +130,6 @@ public enum ServerConstants {
         static let pushToken = "SJPushToken"
         public static let marketingOptInKey = "SJMarketingOptIn"
         static let marketingOptInNeedsSyncKey = "SJMarketingOptInNeedsSync"
-        static let filesLastModifiedKey = "UserFilesLastModified"
         static let statsStartDate = "StatsStartDate"
         static let statsSyncStatus = "StatsSyncStatus"
         static let statsDynamicSpeedSeconds = "StatsDynamicSpeed"

@@ -1,9 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-// @unchecked Sendable: stored properties are caches/retrievers that are
-// internally thread-safe and configured at init.
-public final class CacheServerHandler: @unchecked Sendable {
+public final class CacheServerHandler: Sendable {
     private static let defaultTimeout: TimeInterval = 15
 
     public static let shared = CacheServerHandler()
@@ -11,8 +9,6 @@ public final class CacheServerHandler: @unchecked Sendable {
     public static let noShowNotesMessage = "Unable to find show notes for this episode."
 
     private let colorsUrlsCache: URLCache
-
-    private lazy var episodeInfoHandler = ShowInfoDataRetriever()
 
     private let tokenHelper = TokenHelper.shared
 

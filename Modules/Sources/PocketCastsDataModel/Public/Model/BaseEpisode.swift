@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol BaseEpisode {
+public protocol BaseEpisode: Sendable {
     // MARK: - Properties
 
     var uuid: String { get set }

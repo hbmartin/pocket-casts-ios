@@ -367,11 +367,6 @@ enum AnalyticsEvent: String {
     case podcastScreenSeasonOptionsArchiveAllTapped
     case podcastScreenSeasonOptionsUnarchiveAllTapped
 
-    // MARK: - App Store Review Request
-
-    case appStoreReviewRequested
-    case rateUsTapped
-
     // MARK: - Signed out alert
 
     case signedOutAlertShown
@@ -491,12 +486,6 @@ enum AnalyticsEvent: String {
     case episodeDownloadFailed
     case episodeDownloadsStale
     case episodeDownloadTasks
-
-    case episodeUploadQueued
-    case episodeUploadFinished
-    case episodeUploadFailed
-    case episodeUploadCancelled
-    case episodeDeletedFromCloud
 
     case episodeDownloadDeleted
     case episodeBulkDownloadDeleted
@@ -673,9 +662,6 @@ enum AnalyticsEvent: String {
     case settingsFilesShown
     case settingsFilesAutoAddUpNextToggled
     case settingsFilesDeleteLocalFileAfterPlayingToggled
-    case settingsFilesDeleteCloudFileAfterPlayingToggled
-    case settingsFilesAutoUploadToCloudToggled
-    case settingsFilesAutoDownloadFromCloudToggled
     case settingsFilesOnlyOnWifiToggled
 
     // MARK: - Settings: Help and Feedback
@@ -849,10 +835,6 @@ enum AnalyticsEvent: String {
     case shareScreenNavigationButtonTapped
     case shareScreenEditButtonTapped
     case shareScreenCloseButtonTapped
-
-    // MARK: - Champion Dialog
-    case pocketCastsChampionDialogShown
-    case pocketCastsChampionDialogRateButtonTapped
 
     // MARK: - Select/Choose Podcasts
     case settingsSelectPodcastsShown

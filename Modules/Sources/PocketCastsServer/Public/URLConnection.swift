@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsUtils
 
 /// A generic request handler to send URLRequests with a completion block
-public protocol RequestHandler {
+public protocol RequestHandler: Sendable {
     func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void)
 }
 
@@ -13,7 +13,7 @@ extension URLSession: RequestHandler {
     }
 }
 
-public class URLConnection {
+public final class URLConnection: Sendable {
 
     private let handler: RequestHandler
 

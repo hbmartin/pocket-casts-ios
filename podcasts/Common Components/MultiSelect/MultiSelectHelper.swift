@@ -70,49 +70,19 @@ class MultiSelectHelper {
     private class func delete(actionDelegate: MultiSelectActionDelegate) {
         guard let selectedEpisodes = actionDelegate.multiSelectedBaseEpisodes() as? [UserEpisode] else { return }
 
-        let downloadedEpisodes = selectedEpisodes.filter { $0.downloaded(pathFinder: DownloadManager.shared) }
-        let uploadedEpisodes = selectedEpisodes.filter { $0.uploaded() }
-
-        let alert: UIAlertController
-        if downloadedEpisodes.isEmpty {
-            alert = UIAlertController(title: L10n.deleteFromCloud, message: deleteFileMessage(uploadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromCloud, style: .destructive) { _ in
-                Task.detached {
-                    for episode in uploadedEpisodes {
-                        UserEpisodeManager.deleteFromCloud(episode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
+        let alert = UIAlertController(
+            title: L10n.deleteFile,
+            message: deleteFileMessage(selectedEpisodes.count),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: L10n.delete, style: .destructive) { _ in
+            Task.detached {
+                for episode in selectedEpisodes {
+                    UserEpisodeManager.deleteFromEverywhere(userEpisode: episode)
                 }
-            })
-        } else if uploadedEpisodes.isEmpty {
-            alert = UIAlertController(title: L10n.deleteFromDevice, message: deleteFileMessage(downloadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromDeviceOnly, style: .destructive) { _ in
-                Task.detached {
-                    for episode in downloadedEpisodes {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        } else {
-            alert = UIAlertController(title: L10n.deleteFile, message: deleteFileMessage(downloadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromDeviceOnly, style: .default) { _ in
-                Task.detached {
-                    for episode in downloadedEpisodes {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-            alert.addAction(UIAlertAction(title: L10n.deleteEverywhere, style: .destructive) { _ in
-                Task.detached {
-                    for episode in selectedEpisodes {
-                        UserEpisodeManager.deleteFromEverywhere(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        }
+                await actionDelegate.multiSelectActionCompleted()
+            }
+        })
 
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         actionDelegate.multiSelectPresentingViewController().present(alert, animated: true)

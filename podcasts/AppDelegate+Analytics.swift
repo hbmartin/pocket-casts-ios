@@ -24,9 +24,6 @@ extension AppDelegate {
             }
         }
 
-        // LiveAnalyticsStreamer buffers events for all builds, sends when server enables liveAnalyticsUrl
-        adapters.append(LiveAnalyticsStreamer())
-
         adapters.append(NotificationsCoordinator.shared)
 
         Analytics.register(adapters: adapters)

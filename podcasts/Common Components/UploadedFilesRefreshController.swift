@@ -1,12 +1,8 @@
 import Foundation
 import PocketCastsFileSync
-import PocketCastsServer
 import PocketCastsUtils
 
-/// Owns a `CustomRefreshControl` and wires it up to a user-files refresh:
-/// triggers `UserEpisodeManager.updateUserEpisodes()` on pull, and observes
-/// the resulting server notifications to update the status text and dismiss
-/// the control when the refresh finishes.
+/// Owns a `CustomRefreshControl` and wires it up to local File Sync.
 ///
 /// The owner is responsible for assigning `refreshControl` to a scroll view
 /// and customising its appearance.
@@ -22,35 +18,15 @@ final class UploadedFilesRefreshController {
         refreshControl.perform = { [weak self] _ in
             self?.beginRefreshing()
         }
-
-        let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(userEpisodesRefreshed), name: ServerNotifications.userEpisodesRefreshed, object: nil)
-        center.addObserver(self, selector: #selector(userEpisodesRefreshFailed), name: ServerNotifications.userEpisodesRefreshFailed, object: nil)
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
     }
 
     private func beginRefreshing() {
         refreshControl.set(text: L10n.refreshControlRefreshingFiles)
-        if FeatureFlag.fileSync.enabled {
-            Task { @MainActor [weak self] in
-                await FileSyncManager.shared.syncNow()
-                self?.finishRefreshing(message: L10n.refreshControlRefreshComplete)
-            }
-        } else {
-            UserEpisodeManager.updateUserEpisodes()
+        Task { @MainActor [weak self] in
+            await FileSyncManager.shared.syncNow()
+            self?.finishRefreshing(message: L10n.refreshControlRefreshComplete)
         }
         Analytics.track(.pulledToRefresh, properties: ["source": source])
-    }
-
-    @objc private func userEpisodesRefreshed() {
-        finishRefreshing(message: L10n.refreshControlRefreshComplete)
-    }
-
-    @objc private func userEpisodesRefreshFailed() {
-        finishRefreshing(message: L10n.refreshControlRefreshFailed)
     }
 
     private func finishRefreshing(message: String) {

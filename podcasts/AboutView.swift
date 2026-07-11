@@ -38,10 +38,6 @@ struct AboutView: View {
                     .padding(.top, 30)
                     Form {
                         Section {
-                            AboutRow(mainText: L10n.aboutRateUs) {
-                                model.track(action: .rateUs)
-                                openUrl(ServerConstants.Urls.appStoreReview)
-                            }
                             AboutRow(mainText: L10n.aboutShareFriends) {
                                 model.track(action: .shareWithFriends)
                                 openShareApp()

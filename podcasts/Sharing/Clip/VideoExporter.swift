@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Synchronization
 import UIKit
 import PocketCastsUtils
 
@@ -253,9 +254,8 @@ fileprivate extension AVAssetWriterInput {
     }
 
     nonisolated private static func waitForMediaDataResult(_ block: @escaping () async throws -> Bool) -> Result<Bool, Error> {
-        final class ResultBox: @unchecked Sendable {
-            let lock = NSLock()
-            var result: Result<Bool, Error>?
+        final class ResultBox: Sendable {
+            let result = Mutex<Result<Bool, Error>?>(nil)
         }
 
         let semaphore = DispatchSemaphore(value: 0)
@@ -270,13 +270,11 @@ fileprivate extension AVAssetWriterInput {
                 taskResult = .failure(error)
             }
 
-            box.lock.withLock {
-                box.result = taskResult
-            }
+            box.result.withLock { $0 = taskResult }
             semaphore.signal()
         }
 
         semaphore.wait()
-        return box.lock.withLock { box.result } ?? .success(false)
+        return box.result.withLock { $0 } ?? .success(false)
     }
 }

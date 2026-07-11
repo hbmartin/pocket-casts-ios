@@ -15,8 +15,6 @@
     <string>Legal y otros</string>
     <key>about_privacy_policy</key>
     <string>Política de privacidad</string>
-    <key>about_rate_us</key>
-    <string>Déjanos una valoración</string>
     <key>about_share_friends</key>
     <string>Comparte con tus amigos</string>
     <key>about_terms_of_service</key>
@@ -339,8 +337,6 @@ Descarga la aplicación para disfrutar de la experiencia completa.</string>
     <string>Podrás seguir accediendo a tus podcasts y a tu historial de escucha. </string>
     <key>cancel_confirm_item_plus</key>
     <string>Después de esta fecha, se eliminará el acceso a las funciones del plan Plus, como los marcadores, la reproducción aleatoria, los dispositivos conectados y mucho más.</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>Todos los archivos subidos a tu cuenta de Pocket Casts se eliminarán (pero las descargas en tus dispositivos móviles se mantendrán).</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>Tu suscripción actual estará activa hasta el %1$@.</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -431,10 +427,6 @@ Deja que te ayudemos</string>
     <string>Consigue un 50 %% de descuento el próximo año</string>
     <key>canceling</key>
     <string>Cancelando…</string>
-    <key>champion_description</key>
-    <string>Gracias por acompañarnos desde el principio. Si disfrutas con nuestra aplicación, nos encantará escuchar tu opinión.</string>
-    <key>champion_title</key>
-    <string>Eres un verdadero campeón de Pocket Casts.</string>
     <key>change_app_icon</key>
     <string>Cambiar icono de la aplicación</string>
     <key>change_bookmark_subtitle</key>
@@ -559,12 +551,6 @@ Deja que te ayudemos</string>
     <string>Contraseña actual</string>
     <key>custom_episode</key>
     <string>Episodio personalizado</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>Cancelar subida</string>
-    <key>custom_episode_remove_upload</key>
-    <string>Eliminar de la nube</string>
-    <key>custom_episode_upload</key>
-    <string>Subir a la nube</string>
     <key>database_migration</key>
     <string>Estamos haciendo algunos cambios para que la aplicación vaya más rápido...</string>
     <key>day</key>
@@ -589,8 +575,6 @@ Deja que te ayudemos</string>
     <string>Borrar archivo</string>
     <key>delete_file_message</key>
     <string>¿Seguro que quieres borrar este archivo?</string>
-    <key>delete_from_cloud</key>
-    <string>Borrar de la nube</string>
     <key>delete_from_device</key>
     <string>Borrar del dispositivo</string>
     <key>delete_from_device_only</key>
@@ -809,8 +793,6 @@ Deja que te ayudemos</string>
     <string>Es posible que este episodio se haya movido o borrado. Ponte en contacto con el autor del podcast.</string>
     <key>download_error_not_enough_space</key>
     <string>No se puede guardar el episodio, ¿te has quedado sin espacio?</string>
-    <key>download_error_not_uploaded</key>
-    <string>El archivo no se ha subido y no se puede reproducir</string>
     <key>download_error_status_code</key>
     <string>Se ha producido un error en la descarga. El código de error es %1$@. Ponte en contacto con el autor del podcast.</string>
     <key>download_error_try_again</key>
@@ -1080,8 +1062,6 @@ que has escuchado dura
     <string>Todas las funciones de Plus</string>
     <key>feature_marketing_bookmarks</key>
     <string>Guarda las marcas de tiempo con los marcadores</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>%1$@ GB de almacenamiento en la nube para tus archivos</string>
     <key>feature_marketing_early_access</key>
     <string>Acceso anticipado a las nuevas funciones</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1118,10 +1098,6 @@ que has escuchado dura
     <string>Biblioteca de fotos</string>
     <key>file_upload_edit_file</key>
     <string>Editar archivo</string>
-    <key>file_upload_error</key>
-    <string>No hay espacio suficiente para subir este archivo.</string>
-    <key>file_upload_error_subtitle</key>
-    <string>Elimina algunos archivos e inténtalo de nuevo.</string>
     <key>file_upload_name_required</key>
     <string>El nombre es necesario</string>
     <key>file_upload_no_files_description</key>
@@ -1140,8 +1116,6 @@ que has escuchado dura
     <string>Archivos</string>
     <key>files_how_to_title</key>
     <string>Cómo guardar un archivo</string>
-    <key>files_not_uploaded</key>
-    <string>No se ha subido ningún archivo</string>
     <key>files_sort</key>
     <string>Ordenar archivos</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ ACTUALIZACIONES</string>
     <string>Pausa</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>Despídete de los banners publicitarios y más con Pocket Casts Plus</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>Sube tus archivos con Pocket Casts Plus, y mucho más</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>Organiza tus podcasts con Pocket Casts Plus, y mucho más</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2086,8 +2058,6 @@ ACTUALIZACIONES</string>
     <string>Error de descarga</string>
     <key>player_user_episode_playback_error</key>
     <string>Error de reproducción</string>
-    <key>player_user_episode_upload_error</key>
-    <string>Error de subida</string>
     <key>playlist_add_to_title</key>
     <string>Añadir a "%@"</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2246,10 +2216,6 @@ Intenta ajustar las reglas, o guarda esta playlist para futuros episodios que pu
     <string>Se puede cancelar en cualquier momento</string>
     <key>plus_champion</key>
     <string>Campeón de Pocket Casts</string>
-    <key>plus_champion_message</key>
-    <string>Gracias por apoyar Pocket Casts desde el principio. Eres un auténtico campeón.</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>%1$@ GB de almacenamiento en la nube</string>
     <key>plus_discount_yearly_membership</key>
     <string>50%% de descuento en tu primer año</string>
     <key>plus_error_already_registered</key>
@@ -2268,8 +2234,6 @@ Intenta ajustar las reglas, o guarda esta playlist para futuros episodios que pu
     <string>Organiza tus podcasts en carpetas y mantenlos sincronizados en todos tus dispositivos.</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>Consigue 1 año de contenido premium de Slumber Studios.</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>Sube tus archivos de audio al almacenamiento en la nube para que estén disponibles desde cualquier lugar.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Marcadores</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2314,8 +2278,6 @@ Intenta ajustar las reglas, o guarda esta playlist para futuros episodios que pu
     <string>Ocultar anuncios</string>
     <key>plus_marketing_learn_more_button</key>
     <string>Más información sobre Pocket Casts Plus</string>
-    <key>plus_marketing_main_description</key>
-    <string>Personal y organizado, todo al mismo tiempo. Sube tus archivos de audio personales a nuestros servidores en la nube, accede a tu cuenta a través de nuestro reproductor web y personaliza la aplicación.</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>Sin anuncios de banner</string>
     <key>plus_marketing_subtitle</key>
@@ -2326,8 +2288,6 @@ Intenta ajustar las reglas, o guarda esta playlist para futuros episodios que pu
     <string>Todo lo que te encanta de Pocket Casts y mucho más</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>Reproducción aleatoria</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>Carga tus archivos en el almacenamiento en la nube para poder acceder a ellos desde cualquier lugar</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>Escucha pódcast en más lugares con nuestras aplicaciones para Windows, macOS y web</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2456,8 +2416,6 @@ Intenta ajustar las reglas, o guarda esta playlist para futuros episodios que pu
     <string>Extras</string>
     <key>podcast_failed_download</key>
     <string>Se ha producido un error en la descarga del episodio.</string>
-    <key>podcast_failed_upload</key>
-    <string>Se ha producido un error en la subida</string>
     <key>podcast_feed_reload_button</key>
     <string>Actualizar lista de episodios</string>
     <key>podcast_feed_reload_loading</key>
@@ -2555,16 +2513,10 @@ Si quieres nuevas ideas, ve a la pestaña Descubrir.</string>
     <string>Las actualizaciones terminaron: %1$@</string>
     <key>podcast_updates_ends</key>
     <string>Las actualizaciones terminan: %1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>Subir ahora</string>
-    <key>podcast_uploading</key>
-    <string>Subiendo... %1$@</string>
     <key>podcast_view_changes_tip_details</key>
     <string>Toca el título del podcast para contraer o ampliar la descripción y los detalles</string>
     <key>podcast_view_changes_tip_title</key>
     <string>Hemos cambiado algunas cosas</string>
-    <key>podcast_waiting_upload</key>
-    <string>Esperando para subir</string>
     <key>podcast_yesterday</key>
     <string>Ayer</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2675,8 +2627,6 @@ Si quieres nuevas ideas, ve a la pestaña Descubrir.</string>
     <string>Tiempo total restante: %1$@</string>
     <key>rate</key>
     <string>Valoración</string>
-    <key>rate_pocket_casts</key>
-    <string>Calificar Pocket Casts</string>
     <key>rating_error</key>
     <string>¡Vaya! Se ha producido un error.</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2811,20 +2761,6 @@ Si quieres nuevas ideas, ve a la pestaña Descubrir.</string>
     <string>Seleccionar episodios</string>
     <key>selected_count_format</key>
     <string>%1$@ seleccionados</string>
-    <key>server_error_files_file_too_large</key>
-    <string>Este archivo es demasiado grande para que se pueda subir.</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>No se puede subir este archivo, ya que no podemos determinar el tipo de contenido que tiene.</string>
-    <key>server_error_files_invalid_user</key>
-    <string>El usuario no está conectado.</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>Has superado el límite de almacenamiento de la cuenta.</string>
-    <key>server_error_files_title_required</key>
-    <string>Se necesita un título.</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>No se puede subir el archivo, inténtalo más tarde.</string>
-    <key>server_error_files_uuid_required</key>
-    <string>Se necesita el identificador único universal (UUID) del archivo.</string>
     <key>server_error_login_access_denied</key>
     <string>El usuario ha denegado la solicitud de autorización.</string>
     <key>server_error_login_account_locked</key>
@@ -3015,20 +2951,6 @@ Si quieres nuevas ideas, ve a la pestaña Descubrir.</string>
     <string>El feed de este podcast dejó de actualizarse porque tenía demasiados errores.</string>
     <key>settings_files</key>
     <string>Ajustes de los archivos</string>
-    <key>settings_files_auto_download</key>
-    <string>Descarga automática desde la nube</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>No se descargarán automáticamente los archivos añadidos a la nube que procedan de otros dispositivos.</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>Se descargarán automáticamente los archivos añadidos a la nube que procedan de otros dispositivos.</string>
-    <key>settings_files_auto_upload</key>
-    <string>Subir automáticamente a la nube</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>No se subirán automáticamente a la nube los archivos añadidos a este dispositivo.</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>Se subirán automáticamente a la nube los archivos añadidos a este dispositivo.</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>Borrar archivo de la nube</string>
     <key>settings_files_delete_local_file</key>
     <string>Borrar archivo local</string>
     <key>settings_first_party_analytics</key>
@@ -3551,8 +3473,6 @@ Nunca se compartirá tu dirección de correo electrónico, contraseña ni otra i
     <string>Destacado</string>
     <key>status_unplayed</key>
     <string>Sin reproducir</string>
-    <key>status_uploaded</key>
-    <string>Subido</string>
     <key>stop_download</key>
     <string>Detener descarga</string>
     <key>subscribe</key>

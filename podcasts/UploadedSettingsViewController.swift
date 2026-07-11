@@ -1,16 +1,27 @@
-import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
 class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UITableViewDataSource {
     private let switchCellId = "SwitchCell"
-    private enum TableSections: Int { case autoSync, autoAddToUpNext, afterPlaying, onlyOnWifi }
-    private enum TableRows: Int { case autoDownload, autoUpload, autoAddToUpNext, removeFileAfterPlaying, removeFromCloudAfterPlaying, onlyOnWifi }
+
+    private enum TableSections: Int {
+        case autoAddToUpNext
+        case afterPlaying
+    }
+
+    private enum TableRows: Int {
+        case autoAddToUpNext
+        case removeFileAfterPlaying
+    }
+
+    private let rows: [[TableRows]] = [[.autoAddToUpNext], [.removeFileAfterPlaying]]
 
     @IBOutlet var settingsTable: UITableView! {
         didSet {
-            settingsTable.register(UINib(nibName: "SwitchCell", bundle: nil), forCellReuseIdentifier: switchCellId)
-
+            settingsTable.register(
+                UINib(nibName: "SwitchCell", bundle: nil),
+                forCellReuseIdentifier: switchCellId
+            )
             settingsTable.rowHeight = UITableView.automaticDimension
             settingsTable.estimatedRowHeight = UITableView.automaticDimension
             settingsTable.sectionHeaderHeight = UITableView.automaticDimension
@@ -30,47 +41,20 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
     }
 
-    private func tableSections() -> [TableSections] {
-        if FeatureFlag.fileSync.enabled {
-            return [.autoAddToUpNext, .afterPlaying]
-        }
-        return [.autoAddToUpNext, .afterPlaying, .autoSync, .onlyOnWifi]
-    }
-
-    private func tableRows() -> [[TableRows]] {
-        if FeatureFlag.fileSync.enabled {
-            return [[.autoAddToUpNext], [.removeFileAfterPlaying]]
-        }
-        return [[.autoAddToUpNext], [.removeFileAfterPlaying, .removeFromCloudAfterPlaying], [.autoUpload, .autoDownload], [.onlyOnWifi]]
-    }
-
-    // MARK: - UITableView Methods
-
     func numberOfSections(in tableView: UITableView) -> Int {
-        tableSections().count
+        rows.count
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        tableRows()[section].count
+        rows[section].count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let row = tableRows()[indexPath.section][indexPath.row]
-
+        let row = rows[indexPath.section][indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
-        cell.cellSwitch.removeTarget(self, action: nil, for: UIControl.Event.valueChanged)
+        cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
 
         switch row {
-        case .autoDownload:
-            cell.cellLabel?.text = L10n.settingsFilesAutoDownload
-            cell.cellSwitch.isOn = ServerSettings.userEpisodeAutoDownload()
-            cell.cellSwitch.addTarget(self, action: #selector(autoDownloadToggled(_:)), for: .valueChanged)
-            cell.setImage(imageName: "episode-download")
-        case .autoUpload:
-            cell.cellLabel?.text = L10n.settingsFilesAutoUpload
-            cell.setImage(imageName: "plus_upload")
-            cell.cellSwitch.isOn = Settings.userFilesAutoUpload()
-            cell.cellSwitch.addTarget(self, action: #selector(autoUploadToggled(_:)), for: .valueChanged)
         case .autoAddToUpNext:
             cell.cellLabel?.text = L10n.settingsAutoAdd
             cell.setImage(imageName: "settings_upnext")
@@ -81,35 +65,12 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
             cell.setImage(imageName: "delete")
             cell.cellSwitch.isOn = Settings.userEpisodeRemoveFileAfterPlaying()
             cell.cellSwitch.addTarget(self, action: #selector(removeFileAfterPlayingToggled(_:)), for: .valueChanged)
-        case .removeFromCloudAfterPlaying:
-            cell.cellLabel?.text = L10n.settingsFilesDeleteCloudFile
-            cell.setImage(imageName: "settings_cloud_strikethrough")
-            cell.cellSwitch.isOn = Settings.userEpisodeRemoveFromCloudAfterPlaying()
-            cell.cellSwitch.addTarget(self, action: #selector(removeFromCloudAfterPlayingToggled(_:)), for: .valueChanged)
-        case .onlyOnWifi:
-            cell.cellLabel?.text = L10n.onlyOnWifi
-            cell.setNoImage()
-            cell.cellSwitch.isOn = ServerSettings.userEpisodeOnlyOnWifi()
-            cell.cellSwitch.addTarget(self, action: #selector(onlyOnWifiToggled(_:)), for: .valueChanged)
-            cell.setImage(imageName: "settings_wifi")
         }
         return cell
     }
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        let section = tableSections()[section]
-        switch section {
-        case .autoSync:
-            let syncFooter = (Settings.userFilesAutoUpload() ? L10n.settingsFilesAutoUploadSubtitleOn : L10n.settingsFilesAutoUploadSubtitleOff)
-                + "\n"
-                + (ServerSettings.userEpisodeAutoDownload() ? L10n.settingsFilesAutoDownloadSubtitleOn : L10n.settingsFilesAutoDownloadSubtitleOff)
-
-            return syncFooter
-        case .autoAddToUpNext:
-            return L10n.settingsFilesAddUpNextSubtitle
-        default:
-            return nil
-        }
+        section == TableSections.autoAddToUpNext.rawValue ? L10n.settingsFilesAddUpNextSubtitle : nil
     }
 
     func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
@@ -117,45 +78,13 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
     }
 
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return nil
+        nil
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerFrame = CGRect(x: 0, y: 0, width: 0, height: Constants.Values.tableSectionHeaderHeight)
-        let title: String
-        let section = tableSections()[section]
-        switch section {
-        case .autoSync:
-            title = L10n.plusFeatures
-        case .afterPlaying:
-            title = L10n.afterPlaying.localizedUppercase
-        default:
-            title = ""
-        }
-
-        let headerView = SettingsTableHeader(frame: headerFrame, title: title, showLockedImage: false)
-
-        return headerView
-    }
-
-    func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        return indexPath
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    }
-
-    // MARK: - Switch Actions
-
-    @objc private func autoDownloadToggled(_ sender: UISwitch) {
-        ServerSettings.setUserEpisodeAutoDownload(sender.isOn)
-        settingsTable.reloadData()
-        Settings.trackValueToggled(.settingsFilesAutoDownloadFromCloudToggled, enabled: sender.isOn)
-    }
-
-    @objc private func autoUploadToggled(_ sender: UISwitch) {
-        Settings.setUserEpisodeAutoUpload(sender.isOn)
-        settingsTable.reloadData()
+        let frame = CGRect(x: 0, y: 0, width: 0, height: Constants.Values.tableSectionHeaderHeight)
+        let title = section == TableSections.afterPlaying.rawValue ? L10n.afterPlaying.localizedUppercase : ""
+        return SettingsTableHeader(frame: frame, title: title, showLockedImage: false)
     }
 
     @objc private func autoAddToUpNextToggled(_ sender: UISwitch) {
@@ -164,14 +93,5 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
 
     @objc private func removeFileAfterPlayingToggled(_ sender: UISwitch) {
         Settings.setUserEpisodeRemoveFileAfterPlaying(sender.isOn)
-    }
-
-    @objc private func removeFromCloudAfterPlayingToggled(_ sender: UISwitch) {
-        Settings.setUserEpisodeRemoveFromCloudAfterPlayingKey(sender.isOn)
-    }
-
-    @objc private func onlyOnWifiToggled(_ sender: UISwitch) {
-        ServerSettings.setUserEpisodeOnlyOnWifi(sender.isOn)
-        Settings.trackValueToggled(.settingsFilesOnlyOnWifiToggled, enabled: sender.isOn)
     }
 }

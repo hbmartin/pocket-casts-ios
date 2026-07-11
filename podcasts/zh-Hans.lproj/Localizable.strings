@@ -15,8 +15,6 @@
     <string>法律及更多信息</string>
     <key>about_privacy_policy</key>
     <string>隐私政策</string>
-    <key>about_rate_us</key>
-    <string>给我们评分</string>
     <key>about_share_friends</key>
     <string>分享给朋友</string>
     <key>about_terms_of_service</key>
@@ -339,8 +337,6 @@
     <string>您仍可继续访问您的播客和收听历史记录。 </string>
     <key>cancel_confirm_item_plus</key>
     <string>在此日期之后，Plus 功能（如书签、随机播放、可穿戴设备等）将被停用。</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>上传至您的 Pocket Casts 账户的所有文件都将删除，但您移动设备上的下载文件会保留。</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>您的当前订阅将保持启用状态，直到 %1$@。</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -431,10 +427,6 @@ Pocket Casts Plus</string>
     <string>下一年获享 5%% 折优惠</string>
     <key>canceling</key>
     <string>正在取消...</string>
-    <key>champion_description</key>
-    <string>感谢您从一开始就与我们同在！ 如果您喜欢使用我们的应用程序，我们很乐意听取您的反馈意见。</string>
-    <key>champion_title</key>
-    <string>您是 Pocket Casts 真正的拥护者！</string>
     <key>change_app_icon</key>
     <string>更改应用图标</string>
     <key>change_bookmark_subtitle</key>
@@ -559,12 +551,6 @@ Pocket Casts Plus</string>
     <string>当前密码</string>
     <key>custom_episode</key>
     <string>自定义剧集</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>取消上传</string>
-    <key>custom_episode_remove_upload</key>
-    <string>从云中删除</string>
-    <key>custom_episode_upload</key>
-    <string>上传至云</string>
     <key>database_migration</key>
     <string>我们正在移动一些比特和字节，以加快应用程序的运行速度…</string>
     <key>day</key>
@@ -589,8 +575,6 @@ Pocket Casts Plus</string>
     <string>删除文件</string>
     <key>delete_file_message</key>
     <string>是否确定要删除此文件？</string>
-    <key>delete_from_cloud</key>
-    <string>从云中删除</string>
     <key>delete_from_device</key>
     <string>从设备中删除</string>
     <key>delete_from_device_only</key>
@@ -809,8 +793,6 @@ Pocket Casts Plus</string>
     <string>此剧集可能已移动或删除。 联系播客作者。</string>
     <key>download_error_not_enough_space</key>
     <string>无法保存剧集，空间是否已用完？</string>
-    <key>download_error_not_uploaded</key>
-    <string>文件未上传，无法播放</string>
     <key>download_error_status_code</key>
     <string>下载失败，错误代码 %1$@。 联系播客作者。</string>
     <key>download_error_try_again</key>
@@ -1080,8 +1062,6 @@ Pocket Casts。</string>
     <string>Plus 中的所有功能</string>
     <key>feature_marketing_bookmarks</key>
     <string>使用书签保留时间戳</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>供您存放文件的 %1$@ GB 云存储空间</string>
     <key>feature_marketing_early_access</key>
     <string>抢先体验新功能</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1118,10 +1098,6 @@ Pocket Casts。</string>
     <string>照片库</string>
     <key>file_upload_edit_file</key>
     <string>编辑文件</string>
-    <key>file_upload_error</key>
-    <string>空间不足，无法上传此文件。</string>
-    <key>file_upload_error_subtitle</key>
-    <string>删除一些文件并重试。</string>
     <key>file_upload_name_required</key>
     <string>必须填写名称</string>
     <key>file_upload_no_files_description</key>
@@ -1140,8 +1116,6 @@ Pocket Casts。</string>
     <string>文件</string>
     <key>files_how_to_title</key>
     <string>如何保存文件</string>
-    <key>files_not_uploaded</key>
-    <string>未上传文件</string>
     <key>files_sort</key>
     <string>排列文件</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ Pocket Casts。</string>
     <string>暂停</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>使用 Pocket Casts Plus，告别横幅广告等干扰</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>通过 Pocket Casts Plus 上传文件，并享用更多功能</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>通过 Pocket Casts Plus 整理您的播客，并享用更多功能</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2086,8 +2058,6 @@ Pocket Casts。</string>
     <string>下载错误</string>
     <key>player_user_episode_playback_error</key>
     <string>播放错误</string>
-    <key>player_user_episode_upload_error</key>
-    <string>上传错误</string>
     <key>playlist_add_to_title</key>
     <string>添加至“%@”</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2246,10 +2216,6 @@ Pocket Casts。</string>
     <string>可随时取消</string>
     <key>plus_champion</key>
     <string>Pocket Casts 拥护者</string>
-    <key>plus_champion_message</key>
-    <string>感谢您从一开始就与 Pocket Casts 同在。 您是真正的拥护者！</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>%1$@ GB 云存储</string>
     <key>plus_discount_yearly_membership</key>
     <string>首年享 50%% 优惠</string>
     <key>plus_error_already_registered</key>
@@ -2268,8 +2234,6 @@ Pocket Casts。</string>
     <string>将播客整理到文件夹中，并让它们在所有设备中保持同步。</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>获得由 Slumber Studios 提供的 1 年高级版内容。</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>将音频文件上传到云存储空间，以便随时随地访问。</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>书签</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2314,8 +2278,6 @@ Pocket Casts。</string>
     <string>隐藏广告</string>
     <key>plus_marketing_learn_more_button</key>
     <string>了解有关 Pocket Casts Plus 的更多信息</string>
-    <key>plus_marketing_main_description</key>
-    <string>同时进行个性化设计并分发。 将您的个人音频文件上传到我们的云服务器，通过我们的 Web 播放器访问您的账户，并将应用程序设置为您的应用程序。</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>无横幅广告</string>
     <key>plus_marketing_subtitle</key>
@@ -2326,8 +2288,6 @@ Pocket Casts。</string>
     <string>您喜欢的 Pocket Casts 的一切，还有更多内容</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>下一个随机播放</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>将文件上传到云存储空间，在任何地方都能访问这些文件</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>借助我们的 Windows、macOS 和 Web 应用等更多位置收听播客</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2456,8 +2416,6 @@ Pocket Casts。</string>
     <string>其他</string>
     <key>podcast_failed_download</key>
     <string>剧集下载失败。</string>
-    <key>podcast_failed_upload</key>
-    <string>上传失败</string>
     <key>podcast_feed_reload_button</key>
     <string>刷新剧集列表</string>
     <key>podcast_feed_reload_loading</key>
@@ -2555,16 +2513,10 @@ Pocket Casts。</string>
     <string>更新已结束：%1$@</string>
     <key>podcast_updates_ends</key>
     <string>更新结束：%1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>立即上传</string>
-    <key>podcast_uploading</key>
-    <string>正在上传... %1$@</string>
     <key>podcast_view_changes_tip_details</key>
     <string>轻点播客标题即可收起或展开其描述和详细信息</string>
     <key>podcast_view_changes_tip_title</key>
     <string>我们进行了一些更改</string>
-    <key>podcast_waiting_upload</key>
-    <string>正在等待上传</string>
     <key>podcast_yesterday</key>
     <string>昨天</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2675,8 +2627,6 @@ Pocket Casts。</string>
     <string>总剩余时间为 %1$@</string>
     <key>rate</key>
     <string>评分</string>
-    <key>rate_pocket_casts</key>
-    <string>为 Pocket Casts 评分</string>
     <key>rating_error</key>
     <string>糟糕！ 出现错误。</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2811,20 +2761,6 @@ Pocket Casts。</string>
     <string>选择剧集</string>
     <key>selected_count_format</key>
     <string>已选择 %1$@ 项</string>
-    <key>server_error_files_file_too_large</key>
-    <string>此文件太大，无法上传。</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>无法上传，因为我们无法确定此文件的内容类型。</string>
-    <key>server_error_files_invalid_user</key>
-    <string>用户未登录。</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>您已超出您账户的存储限制。</string>
-    <key>server_error_files_title_required</key>
-    <string>标题是必填项。</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>无法上传文件，请稍后重试。</string>
-    <key>server_error_files_uuid_required</key>
-    <string>文件 uuid 为必填项。</string>
     <key>server_error_login_access_denied</key>
     <string>用户拒绝了该授权请求</string>
     <key>server_error_login_account_locked</key>
@@ -3015,20 +2951,6 @@ Pocket Casts。</string>
     <string>此播客的源由于错误太多而停止更新。</string>
     <key>settings_files</key>
     <string>文件设置</string>
-    <key>settings_files_auto_download</key>
-    <string>从云自动下载</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>从其他设备添加到云的文件将不会自动下载。</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>从其他设备添加到云的文件将自动下载。</string>
-    <key>settings_files_auto_upload</key>
-    <string>自动上传到云</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>添加到此设备的文件不会自动上传到云。</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>添加到此设备的文件将自动上传到云。</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>删除云文件</string>
     <key>settings_files_delete_local_file</key>
     <string>删除本地文件</string>
     <key>settings_first_party_analytics</key>
@@ -3551,8 +3473,6 @@ Pocket Casts。</string>
     <string>已加星标</string>
     <key>status_unplayed</key>
     <string>未播放</string>
-    <key>status_uploaded</key>
-    <string>已上传</string>
     <key>stop_download</key>
     <string>停止下载</string>
     <key>subscribe</key>

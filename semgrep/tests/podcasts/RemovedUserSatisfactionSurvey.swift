@@ -12,5 +12,5 @@ final class RemovedUserSatisfactionSurveyReferences {
     let flag = FeatureFlag.userSatisfactionSurvey
 
     // ok: pocketcasts.no-removed-user-satisfaction-survey
-    let appStoreReviewSource = AnalyticsSource.ratingPrompt
+    let unrelatedAnalyticsSource = AnalyticsSource.ratingPrompt
 }

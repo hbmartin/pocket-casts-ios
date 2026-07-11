@@ -623,16 +623,6 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(value, forKey: userEpisodeSortByKey)
     }
 
-    private static let userEpisodeAutoUploadKey = "UserEpisodeAutoUpload"
-    class func userFilesAutoUpload() -> Bool {
-        UserDefaults.standard.bool(forKey: userEpisodeAutoUploadKey)
-    }
-
-    class func setUserEpisodeAutoUpload(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: userEpisodeAutoUploadKey)
-        trackValueToggled(.settingsFilesAutoUploadToCloudToggled, enabled: value)
-    }
-
     static let userEpisodeAutoAddToUpNextKey = "UserEpisodeAutoAddToUpNext"
     class func userEpisodeAutoAddToUpNext() -> Bool {
         if FeatureFlag.newSettingsStorage.enabled {
@@ -666,23 +656,6 @@ nonisolated class Settings: NSObject {
         }
         UserDefaults.standard.set(value, forKey: userEpisodeRemoveFileAfterPlayingKey)
         trackValueToggled(.settingsFilesDeleteLocalFileAfterPlayingToggled, enabled: value)
-    }
-
-    static let userEpisodeRemoveFromCloudAfterPlayingKey = "UserEpisodeRemoveFromCloudAfterPlaying"
-    class func userEpisodeRemoveFromCloudAfterPlaying() -> Bool {
-        if FeatureFlag.newSettingsStorage.enabled {
-            return SettingsStore.appSettings.filesAfterPlayingDeleteCloud
-        } else {
-            return UserDefaults.standard.bool(forKey: userEpisodeRemoveFromCloudAfterPlayingKey)
-        }
-    }
-
-    class func setUserEpisodeRemoveFromCloudAfterPlayingKey(_ value: Bool) {
-        if FeatureFlag.newSettingsStorage.enabled {
-            SettingsStore.appSettings.filesAfterPlayingDeleteCloud = value
-        }
-        UserDefaults.standard.set(value, forKey: userEpisodeRemoveFromCloudAfterPlayingKey)
-        trackValueToggled(.settingsFilesDeleteCloudFileAfterPlayingToggled, enabled: value)
     }
 
     // MARK: - Full Player Chapters Expanded
@@ -884,22 +857,6 @@ nonisolated class Settings: NSObject {
     class func updateUpNextMultiSelectActions(_ actions: [MultiSelectAction]) {
         let actionInts = actions.map(\.rawValue)
         UserDefaults.standard.set(actionInts, forKey: Settings.upNextMultiSelectActionsKey)
-    }
-
-    // MARK: - App Store Review Requests
-
-    class func addReviewRequested() {
-        var reviewRequestDates = Self.reviewRequestDates()
-        reviewRequestDates.append(Date())
-        UserDefaults.standard.set(reviewRequestDates, forKey: Constants.UserDefaults.reviewRequestDates)
-    }
-
-    class func reviewRequestDates() -> [Date] {
-        UserDefaults.standard.array(forKey: Constants.UserDefaults.reviewRequestDates) as? [Date] ?? [Date]()
-    }
-
-    class func resetReviewRequests() {
-        UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.reviewRequestDates)
     }
 
     // MARK: - Tracks
@@ -1560,20 +1517,6 @@ nonisolated class Settings: NSObject {
             )
         }
 
-        static var plusCloudStorageLimit: Int {
-            configuredInt(
-                key: Constants.RemoteParams.customStorageLimitGB,
-                default: Constants.RemoteParams.customStorageLimitGBDefault
-            )
-        }
-
-        static var patronCloudStorageLimit: Int {
-            configuredInt(
-                key: Constants.RemoteParams.patronCloudStorageGB,
-                default: Constants.RemoteParams.patronCloudStorageGBDefault
-            )
-        }
-
         static var errorLogoutHandling: Bool {
             configuredBool(
                 key: Constants.RemoteParams.errorLogoutHandling,
@@ -1619,18 +1562,6 @@ nonisolated extension Settings {
         Analytics.track(event, properties: ["enabled": enabled])
     }
 }
-
-#if !os(tvOS)
-extension L10n {
-    static var plusCloudStorageLimit: String {
-        plusCloudStorageLimitFormat(Settings.plusCloudStorageLimit.localized())
-    }
-
-    static var patronCloudStorageLimit: String {
-        plusCloudStorageLimitFormat(Settings.patronCloudStorageLimit.localized())
-    }
-}
-#endif
 
 nonisolated extension HeadphoneControl {
     init(action: HeadphoneControlAction) {

@@ -406,15 +406,6 @@
 /* An indicator that the current episode is a user generated episode */
 "custom_episode" = "Custom Episode";
 
-/* Prompt to cancel an active upload of a file. */
-"custom_episode_cancel_upload" = "Cancel Upload";
-
-/* Prompt to delete an uploaded file from the cloud. */
-"custom_episode_remove_upload" = "Remove from Cloud";
-
-/* Prompt to upload a file to the cloud. */
-"custom_episode_upload" = "Upload to Cloud";
-
 /* A common string used throughout the app. Prompt to delete the selected item(s). */
 "delete" = "Delete";
 
@@ -432,9 +423,6 @@
 
 /* A common string used throughout the app. Message portion of the prompt to delete the selected file. */
 "delete_file_message" = "Are you sure you want to delete this file?";
-
-/* A common string used throughout the app. Prompt to delete the selected item(s) from the cloud storage. */
-"delete_from_cloud" = "Delete From Cloud";
 
 /* A common string used throughout the app. Prompt to delete the selected item(s) from the device storage. */
 "delete_from_device" = "Delete From Device";
@@ -763,9 +751,6 @@
 /* The episode failed to download due to the user running out of storage space. */
 "download_error_not_enough_space" = "Unable to save episode, have you run out of space?";
 
-/* The episode failed to download because the file wasn't available on the server */
-"download_error_not_uploaded" = "File not uploaded, unable to play";
-
 /* The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author. '%1$@' is a placeholder for the status code that the app received. */
 "download_error_status_code" = "Download failed, error code %1$@. Contact the podcast author.";
 
@@ -894,12 +879,6 @@
 
 /* Title for the file upload settings screen. This is used when a user is editing an uploaded file. */
 "file_upload_edit_file" = "Edit File";
-
-/* Error message displayed when the user has used all of their storage space. */
-"file_upload_error" = "Not enough space to upload this file.";
-
-/* Subtitle for the error message displayed when the user has used all of their storage space. Instructs the user to try freeing up space. */
-"file_upload_error_subtitle" = "Remove some files and try again.";
 
 /* Prompt indicating that the user needs to name the file in order to upload it. */
 "file_upload_name_required" = "Name required";
@@ -1591,9 +1570,6 @@
 /* Error title when there is a playback error. */
 "player_user_episode_playback_error" = "Playback Error";
 
-/* Error title when there is an upload error. */
-"player_user_episode_upload_error" = "Upload Error";
-
 /* Used in the player to describe effects you can use to change audio playback. Things like speed, volume, etc. */
 "playback_effects" = "Playback effects";
 
@@ -1645,9 +1621,6 @@
 /* Details message informing the user that they'll return to a free account at the end of their trial */
 "plus_account_trial_details" = "When your trial is over you’ll still have all the great benefits of your regular account. Happy podcasting!";
 
-/* The available cloud storage limit available to Pocket Casts Plus Subscribers. '%1$@' is a placeholder for the available storage. */
-"plus_cloud_storage_limit_format" = "%1$@ GB Cloud Storage";
-
 /* Account detail message informing the user that they have been granted 50% discount. */
 "plus_discount_yearly_membership" = "50%% off your first year";
 
@@ -1669,17 +1642,11 @@
 /* Account detail message informing the user that they have been granted a lifetime membership, don't translate "Pocket Casts Champion" */
 "plus_champion" = "Pocket Casts Champion";
 
-/* Message displayed when the user taps "Pocket Casts Champion" button */
-"plus_champion_message" = "Thanks for being with Pocket Casts from the start. You're a real champion!";
-
 /* Pocket Casts Plus marketing page, description of generated transcriptsg */
 "plus_marketing_generated_transcripts" = "Generated Transcripts";
 
 /* Pocket Casts Plus marketing page, description of removing banner ads */
 "plus_marketing_no_banner_ads" = "No Banner Ads";
-
-/* Pocket Casts Plus marketing page, description of the Cloud Storage feature */
-"plus_marketing_updated_cloud_storage_description" = "Upload your files to cloud storage and have it available everywhere";
 
 /* Pocket Casts Plus marketing page, description of the Desktop Apps feature */
 "plus_marketing_updated_desktop_apps_description" = "Listen in more places with our Windows, macOS and Web apps";
@@ -1689,9 +1656,6 @@
 
 /* Pocket Casts Plus marketing page, learn more button. Note that Pocket Casts is a proper noun and shouldn't be translated */
 "plus_marketing_learn_more_button" = "Learn more about Pocket Casts Plus";
-
-/* Pocket Casts Plus marketing page, the main description of Pocket Casts Plus */
-"plus_marketing_main_description" = "Get personal, and get distributed, all at once. Upload your personal audio files to our cloud servers, access your account via our web player, and make the app yours.";
 
 /* Pocket Casts Plus marketing page, title of the Themes & Icons feature */
 "plus_marketing_themes_icons_title" = "Themes & Icons";
@@ -1929,9 +1893,6 @@
 /* Indicates that a file has failed to download. */
 "podcast_failed_download" = "Episode download failed.";
 
-/* Indicates that a file has failed to upload. */
-"podcast_failed_upload" = "Failed to upload";
-
 /* Button text shown on the podcast grid when you have no podcasts, takes you to the Discover section of the app */
 "podcast_grid_discover_podcasts" = "Discover Podcasts";
 
@@ -2054,15 +2015,6 @@
 
 /* Indicates that the updates to the podcast will end on the specified date. '%1$@' is a placeholder for date that the updates will end. */
 "podcast_updates_ends" = "Updates ends: %1$@";
-
-/* Confirmation option to upload the selected file. Used in tandem with a notice that the user is not on WiFi. */
-"podcast_upload_confirmation" = "Upload Now";
-
-/* Indicates that a file is being uploaded and includes the completed percentage. '%1$@' is a placeholder for a localized percentage that has been uploaded so far. */
-"podcast_uploading" = "Uploading... %1$@";
-
-/* Indicates that a file is queued to be uploaded but hasn't started yet. */
-"podcast_waiting_upload" = "Waiting to upload";
 
 /* Used to reference yesterday. */
 "podcast_yesterday" = "Yesterday";
@@ -2298,27 +2250,6 @@
 
 /* A common string used throughout the app. Indicates the number of selected items. '%1$@' is a placeholder for the selected items. */
 "selected_count_format" = "%1$@ selected";
-
-/* Server error message for when the user tries to upload a file that is too large. */
-"server_error_files_file_too_large" = "This file is too big too upload.";
-
-/* Server error message for when the user tries to upload a file with an invalid file type. */
-"server_error_files_invalid_content_type" = "Unable to upload, as we're unable to determine the content type of this file.";
-
-/* Server error message for when the user tries to upload a file while not logged in. */
-"server_error_files_invalid_user" = "User is not logged in.";
-
-/* Server error message for when the user tries to upload a file but doesn't have sufficient space remaining. */
-"server_error_files_storage_limit_exceeded" = "You have exceeded the storage limit for your account.";
-
-/* Server error message for when the user tries to upload a file without a title. */
-"server_error_files_title_required" = "Title is required.";
-
-/* Server error message indicating a generic error for when the file uploads fail. */
-"server_error_files_upload_failed_generic" = "Unable to upload file, please try again later.";
-
-/* Server error message for when a file upload files because a unique identifier failed wasn't created. */
-"server_error_files_uuid_required" = "File uuid is required.";
 
 /* Server error message for when the user account has been locked. */
 "server_error_login_account_locked" = "Your account has been locked due too many login attempts, please try again later.";
@@ -2670,27 +2601,6 @@
 
 /* Subtitle for the toggle to auto add new files to the Up Next Queue. */
 "Settings_files_add_up_next_subtitle" = "Add new files to Up Next automatically";
-
-/* Prompt for the toggle to enable auto downloads for uploaded files. */
-"settings_files_auto_download" = "Auto Download from Cloud";
-
-/* Subtitle explaining the app behavior when the toggle to for auto downloads for uploaded files is off. */
-"settings_files_auto_download_subtitle_off" = "Files added to the cloud from other devices will not be automatically downloaded.";
-
-/* Subtitle explaining the app behavior when the toggle to for auto downloads for uploaded files is on. */
-"settings_files_auto_download_subtitle_on" = "Files added to the cloud from other devices will be automatically downloaded.";
-
-/* Prompt for the toggle to enable auto uploads for uploaded files. */
-"settings_files_auto_upload" = "Auto Upload to Cloud";
-
-/* Subtitle explaining the app behavior when the toggle to for auto uploads is off. */
-"settings_files_auto_upload_subtitle_off" = "Files added to this device will not be automatically uploaded to the Cloud.";
-
-/* Subtitle explaining the app behavior when the toggle to for auto uploads is on. */
-"settings_files_auto_upload_subtitle_on" = "Files added to this device will be automatically uploaded to the Cloud.";
-
-/* Prompt for the toggle to enable the option to delete the cloud file after playing. */
-"settings_files_delete_cloud_file" = "Delete Cloud File";
 
 /* Prompt for the toggle to enable the option to delete the local file after playing. */
 "settings_files_delete_local_file" = "Delete Local File";
@@ -3439,9 +3349,6 @@
 /* A common string used throughout the app. Status message informing the user that the episode has not been played. */
 "status_unplayed" = "Unplayed";
 
-/* A common string used throughout the app. Status message informing the user that the episode has been uploaded. */
-"status_uploaded" = "Uploaded";
-
 /* A common string used throughout the app. Prompt to cancel the download for the selected item(s). */
 "stop_download" = "Stop Download";
 
@@ -3727,9 +3634,6 @@
 
 /* Heading for things that require Pocket Casts Plus to work. Please note that "Pocket Casts Plus" should not be translated because it's a product name */
 "plus_required_feature" = "This feature requires Pocket Casts Plus";
-
-/* About page text to ask the user to rate our app in the App Store */
-"about_rate_us" = "Rate Us";
 
 /* About page text to ask the user to share a link to our app with friends */
 "about_share_friends" = "Share With Friends";
@@ -4339,9 +4243,6 @@
 /* Title of a list item that informs the user their folders will be removed if they cancel */
 "cancel_confirm_item_folders" = "Your folders will be removed and their contents will move back to the Podcasts screen.";
 
-/* Title of a list item that informs the user uploaded files will be removed if they cancel */
-"cancel_confirm_item_uploads" = "All files uploaded to your Pocket Casts account will be deleted, but downloads on your mobile devices will remain.";
-
 /* Title of a list item that informs the user they will no longer be able to access plus on the web if they cancel */
 "cancel_confirm_item_web_player" =  "You will no longer be able to access Pocket Casts using your web browser, or desktop computer.";
 
@@ -4771,15 +4672,6 @@
 /* A label shown while the clip is being created */
 "clip_loading_label" = "Creating Clip...";
 
-/* Title of the Pocket Casts champion screen, greeting an user that has been using Pocket Casts for a long time */
-"champion_title" = "You’re a true champion of Pocket Casts!";
-
-/* Subtitle of the Pocket Casts champion screen */
-"champion_description" = "Thanks for being with us since the beginning! If you enjoy using our app, we’d love to hear your feedback.";
-
-/* Title of a button that allows the user to rate the app */
-"rate_pocket_casts" = "Rate Pocket Casts";
-
 /* Transcript error message when a transcript is not available*/
 "transcript_error_not_available" = "Sorry, but this episode has no transcript available";
 
@@ -4839,9 +4731,6 @@
 
 /* Upgrade Experiment - Features Variation: Slumber Studio feature card text*/
 "plus_feature_card_text_slumber_studio" = "Get 1 year of premium content from Slumber Studios.";
-
-/* Upgrade Experiment - Features Variation: Storage feature card text*/
-"plus_feature_card_text_storage" = "Upload your audio files to cloud storage and have them available everywhere.";
 
 /* Upgrade Experiment - Features Variation: Extra feature card text*/
 "plus_feature_card_text_extra_themes" = "Fly your true colors. Exclusive icons and themes for our subscribers.";
@@ -4962,9 +4851,6 @@
 
 /* Paywall header for when the view is presented from the icons source */
 "paywall_dynamic_headline_icons" = "Get exclusive app icons with Pocket Casts Plus, and more";
-
-/* Paywall header for when the view is presented from the files source */
-"paywall_dynamic_headline_files" = "Upload your files with Pocket Casts Plus, and more";
 
 /* Paywall header for when the view is presented from the banner ad source */
 "paywall_dynamic_headline_banner_ad" = "Say goodbye to banner ads and more with Pocket Casts Plus";
@@ -5488,9 +5374,6 @@
 /* SKip Chapters feature marketing message */
 "feature_marketing_skip_chapters" = "Save time with Preselect Chapters";
 
-/* Cloud Storage feature marketing message. The %1$@ argument is the amount of cloud disk space available. Ex: 20 GB Cloud Storage for your files */
-"feature_marketing_cloud_storage" = "%1$@ GB Cloud Storage for your files";
-
 /* Extra Themes And App Icons feature marketing message */
 "feature_marketing_extra_themes_icons" = "Extra Themes and App Icons";
 
@@ -5909,9 +5792,6 @@
 
 /* Message to shown then trying to open playback from deep link but it's not available */
 "playback_not_available" = "Playback unavailable";
-
-/* Message when the user didn't upload any files */
-"files_not_uploaded" = "No files uploaded";
 
 /* Generic error used when playback fails because we are unable to access the episode file. */
 "player_error_episode_not_available" = "This episode can't be played.";

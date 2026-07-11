@@ -97,17 +97,7 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     var name: String
     var destinationUrl: URL!
     var isVideo: Bool = false
-    var fileSize: Int = 0 {
-        didSet {
-            if fileSize > 0 {
-                let maxStorage = Int64(max(ServerSettings.customStorageUserLimit(), Constants.RemoteParams.customStorageLimitGBDefault.gigabytes))
-                let usedStorage = Int64(ServerSettings.customStorageUsed())
-                if usedStorage + Int64(fileSize) > maxStorage, Settings.userFilesAutoUpload() {
-                    showError(message: L10n.fileUploadError + "\n" + L10n.fileUploadErrorSubtitle)
-                }
-            }
-        }
-    }
+    var fileSize: Int = 0
 
     var artwork: UIImage? {
         didSet {

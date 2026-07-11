@@ -1,11 +1,10 @@
 import PocketCastsUtils
 import PocketCastsDataModel
 import PocketCastsServer
+import Synchronization
 import UIKit
 
-/// Mutable state (`downloadingPodcasts`) is guarded by `lock`; everything else is
-/// immutable, so the shared instance is safe to use across isolation domains.
-nonisolated final class ColorManager: @unchecked Sendable {
+nonisolated final class ColorManager: Sendable {
     private let defaultBackgroundColor = UIColor(hex: "#3D3D3D")
     private let defaultLightTintColor = UIColor(hex: "#1E1F1E")
     private let defaultDarkTintColor = UIColor(hex: "#FFFFFF")
@@ -20,8 +19,7 @@ nonisolated final class ColorManager: @unchecked Sendable {
 
     private let colorDownloadQueue = OperationQueue()
 
-    private let lock = NSObject()
-    private var downloadingPodcasts = [String]()
+    private let downloadingPodcasts = Mutex([String]())
 
     static let sharedManager = ColorManager()
 
@@ -113,26 +111,23 @@ nonisolated final class ColorManager: @unchecked Sendable {
     }
 
     private func removeDownloadingUuid(_ podcastUuid: String) {
-        objc_sync_enter(lock)
-
-        if let removeIndex = downloadingPodcasts.firstIndex(of: podcastUuid) {
-            downloadingPodcasts.remove(at: removeIndex)
+        downloadingPodcasts.withLock { downloading in
+            if let removeIndex = downloading.firstIndex(of: podcastUuid) {
+                downloading.remove(at: removeIndex)
+            }
         }
-
-        objc_sync_exit(lock)
     }
 
     private func addDownloadingUuid(_ podcastUuid: String) -> Bool {
-        objc_sync_enter(lock)
-        defer { objc_sync_exit(lock) }
+        downloadingPodcasts.withLock { downloading in
+            if downloading.contains(podcastUuid) {
+                return false
+            }
 
-        if downloadingPodcasts.contains(podcastUuid) {
-            return false
+            downloading.append(podcastUuid)
+
+            return true
         }
-
-        downloadingPodcasts.append(podcastUuid)
-
-        return true
     }
 
     private func scheduleColorDownload(_ podcast: Podcast) {

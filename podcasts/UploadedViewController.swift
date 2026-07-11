@@ -2,7 +2,6 @@ import Combine
 import SwiftUI
 import PocketCastsDataModel
 import PocketCastsFileSync
-import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 
@@ -121,8 +120,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         tableRefreshController = controller
         uploadsTable.refreshControl = controller.refreshControl
 
-        headerView.controllerForPresenting = self
-
         updateHeaderView()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: uploadsTable)
         reloadLocalFiles()
@@ -170,14 +167,11 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private func addUIObservers() {
         // TODO: a table diff might be more efficient here (and have nicer animations)
 
-        addCustomObserver(ServerNotifications.userEpisodesRefreshed, selector: #selector(handleReloadFromNotification))
-        addCustomObserver(ServerNotifications.userEpisodesRefreshFailed, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.userEpisodeDeleted, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(handleReloadFromNotification))
-        addCustomObserver(ServerNotifications.userEpisodeUploadStatusChanged, selector: #selector(uploadCompletedRefresh(notification:)))
         addCustomObserver(Constants.Notifications.fileSyncUploadsChanged, selector: #selector(handleReloadFromNotification))
     }
 
@@ -247,8 +241,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private func reloadAllFiles() {
         if FeatureFlag.fileSync.enabled {
             Task { await FileSyncManager.shared.syncNow() }
-        } else {
-            UserEpisodeManager.updateUserEpisodes()
         }
         updateHeaderView()
     }
@@ -296,13 +288,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         headerView.update()
     }
 
-    @objc func uploadCompletedRefresh(notification: Notification) {
-        guard let episodeUuid = notification.object as? String, let episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid), episode.uploaded() else {
-            return
-        }
-        UserEpisodeManager.updateUserEpisodes()
-    }
-
     // NARK :- UserEpisodeDetailViewControllerDelegate
     func showEdit(userEpisode: UserEpisode) {
         let editVC = AddCustomViewController(episode: userEpisode)
@@ -313,10 +298,10 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         Analytics.track(.userFileDeleteShown)
         UserEpisodeManager.presentDeleteOptions(episode: userEpisode, from: self, dismissCallback: {
             Analytics.track(.userFileDeleteDismissed)
-        }) { deletedLocal, deletedRemote in
-            Analytics.track(.userFileDeleted, properties: ["local": deletedLocal, "remote": deletedRemote])
+        }) { deletedLocal, deletedEverywhere in
+            Analytics.track(.userFileDeleted, properties: ["local": deletedLocal, "everywhere": deletedEverywhere])
 
-            if deletedRemote {
+            if deletedEverywhere {
                 self.removeFromUploadTable(userEpisode: userEpisode)
             }
             if deletedLocal {

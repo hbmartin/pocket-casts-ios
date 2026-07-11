@@ -17,13 +17,6 @@ public extension APIError {
         case .EMAIL_INVALID: return L10n.serverErrorLoginEmailInvalid
         case .EMAIL_TAKEN: return L10n.serverErrorLoginEmailTaken
         case .USER_REGISTER_FAILED: return L10n.serverErrorLoginUserRegisterFailed
-        case .FILES_INVALID_CONTENT_TYPE: return L10n.serverErrorFilesInvalidContentType
-        case .FILES_INVALID_USER: return L10n.serverErrorFilesInvalidUser
-        case .FILES_FILE_LARGER_THAN_SPECIFIED_LIMIT: return L10n.serverErrorFilesFileTooLarge
-        case .FILES_EXCEEDS_STORAGE: return L10n.serverErrorFilesStorageLimitExceeded
-        case .FILES_TITLE_REQUIRED: return L10n.serverErrorFilesTitleRequired
-        case .FILES_FILE_UUID_REQUIRED: return L10n.serverErrorFilesUuidRequired
-        case .FILES_FILE_UPLOAD_FAILED: return L10n.serverErrorFilesUploadFailedGeneric
         case .PROMO_ALREADY_PLUS: return L10n.serverErrorPromoAlreadyPlus
         case .PROMO_CODE_EXPIRED_OR_INVALID: return L10n.serverErrorPromoCodeExpiredOrInvalid
         case .PROMO_ALREADY_REDEEMED: return L10n.serverErrorPromoAlreadyRedeemed

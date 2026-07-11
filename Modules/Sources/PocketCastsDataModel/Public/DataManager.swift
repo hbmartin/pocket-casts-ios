@@ -575,10 +575,6 @@ public class DataManager {
         episodeManager.unsyncedEpisodes(limit: limit, excludingLocalFeedPodcasts: false, dbQueue: dbQueue)
     }
 
-    public func unsyncedUserEpisodes() -> [UserEpisode] {
-        userEpisodeManager.unsyncedEpisodes(dbQueue: dbQueue)
-    }
-
     public func episodesWithListenHistory(limit: Int) -> [Episode] {
         episodeManager.episodesWithListenHistory(limit: limit, dbQueue: dbQueue)
     }
@@ -979,10 +975,6 @@ public class DataManager {
         userEpisodeManager.findAllDownloaded(sortedBy: sortedBy, limit: limit, dbQueue: dbQueue)
     }
 
-    public func allUserEpisodesUploaded() -> [UserEpisode] {
-        userEpisodeManager.findAllWithUploadStatus(.uploaded, dbQueue: dbQueue)
-    }
-
     public func bulkSave(episodes: [UserEpisode]) {
         userEpisodeManager.bulkSave(episodes: episodes, dbQueue: dbQueue)
     }
@@ -993,26 +985,6 @@ public class DataManager {
 
     public func deleteUserEpisodes(userEpisodeUuids: [String]) {
         userEpisodeManager.delete(userEpisodeUuids: userEpisodeUuids, dbQueue: dbQueue)
-    }
-
-    public func saveEpisode(uploadStatus: UploadStatus, episode: UserEpisode) {
-        userEpisodeManager.saveEpisode(uploadStatus: uploadStatus, episode: episode, dbQueue: dbQueue)
-    }
-
-    public func saveEpisode(uploadStatus: UploadStatus, uploadTaskId: String?, episode: UserEpisode) {
-        userEpisodeManager.saveEpisode(uploadStatus: uploadStatus, uploadTaskId: uploadTaskId, episode: episode, dbQueue: dbQueue)
-    }
-
-    public func saveEpisode(uploadStatus: UploadStatus, uploadError: String?, uploadTaskId: String?, episode: UserEpisode) {
-        userEpisodeManager.saveEpisode(uploadStatus: uploadStatus, uploadError: uploadError, uploadTaskId: uploadTaskId, episode: episode, dbQueue: dbQueue)
-    }
-
-    public func clearUploadTaskId(episode: UserEpisode) {
-        userEpisodeManager.clearUploadTaskId(episode: episode, dbQueue: dbQueue)
-    }
-
-    public func findUserEpisode(uploadTaskId: String) -> UserEpisode? {
-        userEpisodeManager.findBy(uploadTaskId: uploadTaskId, dbQueue: dbQueue)
     }
 
     public func findUserEpisode(folderRelativePath: String) -> UserEpisode? {
@@ -1028,16 +1000,8 @@ public class DataManager {
         userEpisodeManager.findAllFolderBacked(dbQueue: dbQueue)
     }
 
-    public func findUserEpisodesWithUploadStatus(_ status: UploadStatus) -> [UserEpisode] {
-        userEpisodeManager.findAllWithUploadStatus(status, dbQueue: dbQueue)
-    }
-
     public func findUserEpisodesWhereNotNull(propertyName: String) -> [UserEpisode] {
         userEpisodeManager.findWhereNotNull(columnName: propertyName, dbQueue: dbQueue)
-    }
-
-    public func markImageUploaded(episode: UserEpisode) {
-        userEpisodeManager.markEpisodeImageUploaded(episode: episode, dbQueue: dbQueue)
     }
 
     public func removeOrphanedUserEpisodes() {

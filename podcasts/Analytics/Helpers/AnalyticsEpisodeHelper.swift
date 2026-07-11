@@ -1,17 +1,13 @@
 import Dependencies
 import Foundation
 import PocketCastsDataModel
-import PocketCastsServer
 
 nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsEpisodeHelper()
 
     @Dependency(\.episodeRepository) private var episodeRepository: any EpisodeRepository
-    @Dependency(\.userEpisodeRepository) private var userEpisodeRepository: any UserEpisodeRepository
-
-    // Internally track the episode UUIDs that the user is downloading or uploadiung
+    // Internally track the episode UUIDs that the user is downloading.
     private var episodeDownloadQueue: Set<String> = []
-    private var episodeUploadQueue: Set<String> = []
     // Keep track of where a download was initiated so completion/failure logs use the same source
     private let episodeDownloadSources = ThreadSafeDictionary<String, AnalyticsSource>()
 
@@ -133,29 +129,6 @@ nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Senda
         bulkEvent(.episodeBulkUnarchived, count: count)
     }
 
-    // MARK: - Uploads
-
-    func episodeUploaded(episodeUUID: String) {
-        episodeUploadQueue.insert(episodeUUID)
-        episodeEvent(.episodeUploadQueued, uuid: episodeUUID)
-    }
-
-    func episodeUploadCancelled(episodeUUID: String) {
-        episodeEvent(.episodeUploadCancelled, uuid: episodeUUID)
-    }
-
-    func episodeDeletedFromCloud(episode: BaseEpisode) {
-        episodeEvent(.episodeDeletedFromCloud, episode: episode)
-    }
-
-    func episodeUploadFinished(episodeUUID: String) {
-        episodeEvent(.episodeUploadFinished, uuid: episodeUUID)
-    }
-
-    func episodeUploadFailed(episodeUUID: String) {
-        episodeEvent(.episodeUploadFailed, uuid: episodeUUID)
-    }
-
     // MARK: - Up Next
 
     func episodeAddedToUpNext(episode: BaseEpisode, toTop: Bool) {
@@ -231,31 +204,6 @@ nonisolated private extension AnalyticsEpisodeHelper {
 
                 self.episodeDownloadQueue.remove(uuid)
                 self.downloadFinished(episodeUUID: uuid)
-            }
-
-            NotificationCenter.default.addObserver(forName: ServerNotifications.userEpisodeUploadStatusChanged, object: nil, queue: .main) { notification in
-                // Verify the UUID is one that we're tracking
-                guard let uuid = notification.object as? String, self.episodeUploadQueue.contains(uuid) else {
-                    return
-                }
-
-                // Verify that the file has finished uploading
-                guard
-                    let episode = self.userEpisodeRepository.findUserEpisode(uuid: uuid),
-                    let status = UploadStatus(rawValue: episode.uploadStatus)
-                else {
-                    return
-                }
-
-                switch status {
-                case .uploaded:
-                    self.episodeUploadQueue.remove(uuid)
-                    self.episodeUploadFinished(episodeUUID: uuid)
-                case .uploadFailed:
-                    self.episodeUploadFailed(episodeUUID: uuid)
-                default:
-                    break
-                }
             }
     }
 }

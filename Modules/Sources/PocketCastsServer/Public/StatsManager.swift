@@ -1,19 +1,21 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
+import Synchronization
 
-// @unchecked Sendable: all mutable stats state is accessed through `updateQueue`.
-public final class StatsManager: @unchecked Sendable {
+public final class StatsManager: Sendable {
     public static let shared = StatsManager()
 
-    private var savedDynamicSpeed = -1 as TimeInterval
-    private var savedVariableSpeed = -1 as TimeInterval
-    private var totalListenedTo = -1 as TimeInterval
-    private var totalSkipped = -1 as TimeInterval
-    private var savedAutoSkipping = -1 as TimeInterval
+    private struct Stats {
+        var savedDynamicSpeed: TimeInterval
+        var savedVariableSpeed: TimeInterval
+        var totalListenedTo: TimeInterval
+        var totalSkipped: TimeInterval
+        var savedAutoSkipping: TimeInterval
+        var isSynced = true
+    }
 
-    private var isSynced = true
-    private let updateQueue = DispatchQueue(label: "au.com.pocketcasts.StatsManagerQueue")
+    private let stats: Mutex<Stats>
 
     public init() {
         if UserDefaults.standard.object(forKey: ServerConstants.UserDefaults.statsStartDate) as? Date == nil {
@@ -21,110 +23,112 @@ public final class StatsManager: @unchecked Sendable {
             UserDefaults.standard.synchronize()
         }
 
-        updateQueue.sync {
-            savedDynamicSpeed = timeForKey(ServerConstants.UserDefaults.statsDynamicSpeedSeconds)
-            savedVariableSpeed = timeForKey(ServerConstants.UserDefaults.statsVariableSpeed)
-            totalListenedTo = timeForKey(ServerConstants.UserDefaults.statsListenedTo)
-            totalSkipped = timeForKey(ServerConstants.UserDefaults.statsSkipped)
-            savedAutoSkipping = timeForKey(ServerConstants.UserDefaults.statsAutoSkip)
-        }
+        stats = Mutex(Stats(
+            savedDynamicSpeed: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsDynamicSpeedSeconds),
+            savedVariableSpeed: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsVariableSpeed),
+            totalListenedTo: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsListenedTo),
+            totalSkipped: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsSkipped),
+            savedAutoSkipping: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsAutoSkip)
+        ))
     }
 
     func updateStatsIfNeeded(savedDynamicSpeed: TimeInterval, savedVariableSpeed: TimeInterval, totalListenedTo: TimeInterval, totalSkipped: TimeInterval, savedAutoSkipping: TimeInterval) {
         let minimumStatsChangeToUpdate: TimeInterval = 100
 
-        updateQueue.sync {
-            if savedDynamicSpeed - self.savedDynamicSpeed > minimumStatsChangeToUpdate {
-                FileLog.shared.addMessage("[StatsManager] Changing savedDynamicSpeed from \(self.savedDynamicSpeed) to \(savedDynamicSpeed)")
-                self.savedDynamicSpeed = savedDynamicSpeed
+        stats.withLock { stats in
+            if savedDynamicSpeed - stats.savedDynamicSpeed > minimumStatsChangeToUpdate {
+                FileLog.shared.addMessage("[StatsManager] Changing savedDynamicSpeed from \(stats.savedDynamicSpeed) to \(savedDynamicSpeed)")
+                stats.savedDynamicSpeed = savedDynamicSpeed
             }
 
-            if savedVariableSpeed - self.savedVariableSpeed > minimumStatsChangeToUpdate {
-                FileLog.shared.addMessage("[StatsManager] Changing savedVariableSpeed from \(self.savedVariableSpeed) to \(savedVariableSpeed)")
-                self.savedVariableSpeed = savedVariableSpeed
+            if savedVariableSpeed - stats.savedVariableSpeed > minimumStatsChangeToUpdate {
+                FileLog.shared.addMessage("[StatsManager] Changing savedVariableSpeed from \(stats.savedVariableSpeed) to \(savedVariableSpeed)")
+                stats.savedVariableSpeed = savedVariableSpeed
             }
 
-            if totalListenedTo - self.totalListenedTo > minimumStatsChangeToUpdate {
-                FileLog.shared.addMessage("[StatsManager] Changing totalListenedTo from \(self.totalListenedTo) to \(totalListenedTo)")
-                self.totalListenedTo = totalListenedTo
+            if totalListenedTo - stats.totalListenedTo > minimumStatsChangeToUpdate {
+                FileLog.shared.addMessage("[StatsManager] Changing totalListenedTo from \(stats.totalListenedTo) to \(totalListenedTo)")
+                stats.totalListenedTo = totalListenedTo
             }
 
-            if totalSkipped - self.totalSkipped > minimumStatsChangeToUpdate {
-                FileLog.shared.addMessage("[StatsManager] Changing totalSkipped from \(self.totalSkipped) to \(totalSkipped)")
-                self.totalSkipped = totalSkipped
+            if totalSkipped - stats.totalSkipped > minimumStatsChangeToUpdate {
+                FileLog.shared.addMessage("[StatsManager] Changing totalSkipped from \(stats.totalSkipped) to \(totalSkipped)")
+                stats.totalSkipped = totalSkipped
             }
 
-            if savedAutoSkipping - self.savedAutoSkipping > minimumStatsChangeToUpdate {
-                FileLog.shared.addMessage("[StatsManager] Changing savedAutoSkipping from \(self.savedAutoSkipping) to \(savedAutoSkipping)")
-                self.savedAutoSkipping = savedAutoSkipping
+            if savedAutoSkipping - stats.savedAutoSkipping > minimumStatsChangeToUpdate {
+                FileLog.shared.addMessage("[StatsManager] Changing savedAutoSkipping from \(stats.savedAutoSkipping) to \(savedAutoSkipping)")
+                stats.savedAutoSkipping = savedAutoSkipping
             }
 
-            persistTimes()
+            // Persisted while the lock is held so a concurrent update can't interleave
+            // between the mutation and the write, matching the old serial-queue ordering.
+            persist(stats)
         }
     }
 
     // MARK: - dynamic speed
 
     public func timeSavedDynamicSpeed() -> TimeInterval {
-        updateQueue.sync { savedDynamicSpeed }
+        stats.withLock { $0.savedDynamicSpeed }
     }
 
     public func addTimeSavedDynamicSpeed(_ seconds: TimeInterval) {
-        updateQueue.async { [weak self] in
-            self?.savedDynamicSpeed += max(seconds, 0)
-            self?.isSynced = false
+        stats.withLock {
+            $0.savedDynamicSpeed += max(seconds, 0)
+            $0.isSynced = false
         }
     }
 
     // MARK: - variable speed
 
     public func timeSavedVariableSpeed() -> TimeInterval {
-        updateQueue.sync { savedVariableSpeed }
+        stats.withLock { $0.savedVariableSpeed }
     }
 
     public func addTimeSavedVariableSpeed(_ seconds: TimeInterval) {
-        updateQueue.async { [weak self] in
-            self?.savedVariableSpeed += max(seconds, 0)
-            self?.isSynced = false
+        stats.withLock {
+            $0.savedVariableSpeed += max(seconds, 0)
+            $0.isSynced = false
         }
     }
 
     // MARK: - total listened
 
     public func totalListeningTime() -> TimeInterval {
-        updateQueue.sync { totalListenedTo }
+        stats.withLock { $0.totalListenedTo }
     }
 
     public func addTotalListeningTime(_ seconds: TimeInterval) {
-        updateQueue.async { [weak self] in
-            self?.totalListenedTo += max(seconds, 0)
-            self?.isSynced = false
+        stats.withLock {
+            $0.totalListenedTo += max(seconds, 0)
+            $0.isSynced = false
         }
     }
 
     // MARK: - total skipped
 
     public func totalSkippedTime() -> TimeInterval {
-        updateQueue.sync { totalSkipped }
+        stats.withLock { $0.totalSkipped }
     }
 
     public func addSkippedTime(_ seconds: TimeInterval) {
-        updateQueue.async { [weak self] in
-            self?.totalSkipped += max(seconds, 0)
-            self?.isSynced = false
+        stats.withLock {
+            $0.totalSkipped += max(seconds, 0)
+            $0.isSynced = false
         }
     }
 
     // MARK: - total auto skipped
 
     public func totalAutoSkippedTime() -> TimeInterval {
-        updateQueue.sync { savedAutoSkipping }
+        stats.withLock { $0.savedAutoSkipping }
     }
 
     public func addAutoSkipTime(_ seconds: TimeInterval) {
-        updateQueue.async { [weak self] in
-            self?.savedAutoSkipping += max(seconds, 0)
-            self?.isSynced = false
+        stats.withLock {
+            $0.savedAutoSkipping += max(seconds, 0)
+            $0.isSynced = false
         }
     }
 
@@ -135,17 +139,18 @@ public final class StatsManager: @unchecked Sendable {
      * method to actually save them between app launches.
      */
     public func persistTimes() {
-        updateQueue.async { [weak self] in
-            guard let strongSelf = self else { return }
-            strongSelf.saveTime(strongSelf.savedDynamicSpeed, key: ServerConstants.UserDefaults.statsDynamicSpeedSeconds)
-            strongSelf.saveTime(strongSelf.savedVariableSpeed, key: ServerConstants.UserDefaults.statsVariableSpeed)
-            strongSelf.saveTime(strongSelf.totalListenedTo, key: ServerConstants.UserDefaults.statsListenedTo)
-            strongSelf.saveTime(strongSelf.totalSkipped, key: ServerConstants.UserDefaults.statsSkipped)
-            strongSelf.saveTime(strongSelf.savedAutoSkipping, key: ServerConstants.UserDefaults.statsAutoSkip)
+        stats.withLock { persist($0) }
+    }
 
-            UserDefaults.standard.set(strongSelf.isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
-            UserDefaults.standard.synchronize()
-        }
+    private func persist(_ stats: Stats) {
+        saveTime(stats.savedDynamicSpeed, key: ServerConstants.UserDefaults.statsDynamicSpeedSeconds)
+        saveTime(stats.savedVariableSpeed, key: ServerConstants.UserDefaults.statsVariableSpeed)
+        saveTime(stats.totalListenedTo, key: ServerConstants.UserDefaults.statsListenedTo)
+        saveTime(stats.totalSkipped, key: ServerConstants.UserDefaults.statsSkipped)
+        saveTime(stats.savedAutoSkipping, key: ServerConstants.UserDefaults.statsAutoSkip)
+
+        UserDefaults.standard.set(stats.isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        UserDefaults.standard.synchronize()
     }
 
     public func syncStatus() -> SyncStatus {

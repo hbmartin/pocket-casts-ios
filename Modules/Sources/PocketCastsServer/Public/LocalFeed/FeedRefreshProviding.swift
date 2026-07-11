@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
+import Synchronization
 
 /// The strategy seam for feed refresh: produces a `PodcastRefreshResponse` for the given
 /// podcasts, however the episodes are actually sourced (Pocket Casts refresh servers,
@@ -48,23 +49,23 @@ public struct CompositeFeedRefreshProvider: FeedRefreshProviding {
             return
         }
 
-        let collector = ResponseCollector()
+        let collected = Mutex<[PodcastRefreshResponse?]>([])
         let group = DispatchGroup()
 
         group.enter()
         serverProvider.refresh(podcasts: serverPodcasts) { response in
-            collector.add(response)
+            collected.withLock { $0.append(response) }
             group.leave()
         }
 
         group.enter()
         localProvider.refresh(podcasts: localPodcasts) { response in
-            collector.add(response)
+            collected.withLock { $0.append(response) }
             group.leave()
         }
 
         group.notify(queue: .global()) {
-            completion(Self.merged(collector.responses))
+            completion(Self.merged(collected.withLock { $0 }))
         }
     }
 
@@ -86,22 +87,5 @@ public struct CompositeFeedRefreshProvider: FeedRefreshProviding {
         merged.status = "ok"
         merged.result = RefreshResult(podcastUpdates: mergedUpdates)
         return merged
-    }
-
-    private final class ResponseCollector: @unchecked Sendable {
-        private let lock = NSLock()
-        private var collected = [PodcastRefreshResponse?]()
-
-        var responses: [PodcastRefreshResponse?] {
-            lock.lock()
-            defer { lock.unlock() }
-            return collected
-        }
-
-        func add(_ response: PodcastRefreshResponse?) {
-            lock.lock()
-            defer { lock.unlock() }
-            collected.append(response)
-        }
     }
 }

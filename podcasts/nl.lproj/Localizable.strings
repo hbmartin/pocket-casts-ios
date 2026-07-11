@@ -15,8 +15,6 @@
     <string>Juridisch en meer</string>
     <key>about_privacy_policy</key>
     <string>Privacybeleid</string>
-    <key>about_rate_us</key>
-    <string>Beoordeel ons</string>
     <key>about_share_friends</key>
     <string>Delen met vrienden</string>
     <key>about_terms_of_service</key>
@@ -339,8 +337,6 @@ Download de app voor de volledige ervaring!</string>
     <string>Je podcasts en luistergeschiedenis blijven toegankelijk. </string>
     <key>cancel_confirm_item_plus</key>
     <string>Na deze datum wordt toegang tot Plus-functies zoals bladwijzers, shuffle, wearables en meer verwijderd.</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>Alle bestanden die zijn geüpload naar je Pocket Casts-account worden verwijderd, maar bestanden die zijn gedownload op je mobiele apparaten blijven behouden.</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>Je huidige abonnement blijft actief tot %1$@.</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -431,10 +427,6 @@ Laat ons eerst helpen</string>
     <string>Krijg 50%% korting op je eerste jaar</string>
     <key>canceling</key>
     <string>Annuleren...</string>
-    <key>champion_description</key>
-    <string>Bedankt dat je al sinds het begin op ons vertrouwt! Als je onze app graag gebruikt, horen wij graag je feedback.</string>
-    <key>champion_title</key>
-    <string>Je bent een echte Pocket Casts-kampioen!</string>
     <key>change_app_icon</key>
     <string>App-pictogram veranderen</string>
     <key>change_bookmark_subtitle</key>
@@ -559,12 +551,6 @@ Laat ons eerst helpen</string>
     <string>Huidig wachtwoord</string>
     <key>custom_episode</key>
     <string>Aangepaste aflevering</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>Annuleer upload</string>
-    <key>custom_episode_remove_upload</key>
-    <string>Verwijderen uit cloud</string>
-    <key>custom_episode_upload</key>
-    <string>Uploaden naar cloud</string>
     <key>database_migration</key>
     <string>We verplaatsen een paar bits en bytes zodat de app sneller is...</string>
     <key>day</key>
@@ -589,8 +575,6 @@ Laat ons eerst helpen</string>
     <string>Bestand verwijderen</string>
     <key>delete_file_message</key>
     <string>Weet je zeker dat je dit bestand wilt verwijderen?</string>
-    <key>delete_from_cloud</key>
-    <string>Verwijderen uit cloud</string>
     <key>delete_from_device</key>
     <string>Verwijderen uit apparaat</string>
     <key>delete_from_device_only</key>
@@ -809,8 +793,6 @@ Laat ons eerst helpen</string>
     <string>Deze aflevering is mogelijk verplaatst of verwijderd. Neem contact op met de auteur van de podcast.</string>
     <key>download_error_not_enough_space</key>
     <string>Kan aflevering niet opslaan. Heb je geen opslagruimte meer?</string>
-    <key>download_error_not_uploaded</key>
-    <string>Bestand niet geüpload, kan niet worden afgespeeld</string>
     <key>download_error_status_code</key>
     <string>Download mislukt, foutcode %1$@. Neem contact op met de auteur van de podcast.</string>
     <key>download_error_try_again</key>
@@ -1080,8 +1062,6 @@ waar je naar hebt geluisterd was
     <string>Alle functies van Plus</string>
     <key>feature_marketing_bookmarks</key>
     <string>Tijdstempels bewaren met bladwijzers</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>%1$@ GB cloudopslag voor je bestanden</string>
     <key>feature_marketing_early_access</key>
     <string>Vroegtijdige toegang tot nieuwe functies</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1118,10 +1098,6 @@ waar je naar hebt geluisterd was
     <string>Fotobibliotheek</string>
     <key>file_upload_edit_file</key>
     <string>Bewerk bestand</string>
-    <key>file_upload_error</key>
-    <string>Niet genoeg ruimte om dit bestand te uploaden.</string>
-    <key>file_upload_error_subtitle</key>
-    <string>Verwijder wat bestanden en probeer het nogmaals.</string>
     <key>file_upload_name_required</key>
     <string>Naam verplicht</string>
     <key>file_upload_no_files_description</key>
@@ -1140,8 +1116,6 @@ waar je naar hebt geluisterd was
     <string>Bestanden</string>
     <key>files_how_to_title</key>
     <string>Een bestand opslaan</string>
-    <key>files_not_uploaded</key>
-    <string>Geen bestanden geüpload</string>
     <key>files_sort</key>
     <string>Bestanden sorteren</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ UPDATES</string>
     <string>Pauzeren</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>Zeg vaarwel tegen banneradvertenties en meer met Pocket Casts Plus</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>Upload je bestanden met Pocket Casts Plus, en meer</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>Organiseer je podcasts met Pocket Casts Plus, en meer</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2084,8 +2056,6 @@ Dat is waar we voor staan!</string>
     <string>Downloadfout</string>
     <key>player_user_episode_playback_error</key>
     <string>Afspeelfout</string>
-    <key>player_user_episode_upload_error</key>
-    <string>Uploadfout</string>
     <key>playlist_add_to_title</key>
     <string>Toevoegen aan "%@"</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2242,10 +2212,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Kan op elk moment worden opgezegd</string>
     <key>plus_champion</key>
     <string>Pocket Casts-kampioen</string>
-    <key>plus_champion_message</key>
-    <string>Hartstikke bedankt dat je al vanaf het begin bij Pocket Casts bent. Je bent een kampioen!</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>%1$@ GB cloud-opslagruimte</string>
     <key>plus_discount_yearly_membership</key>
     <string>50%% korting op je eerste jaar</string>
     <key>plus_error_already_registered</key>
@@ -2264,8 +2230,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Organiseer je podcasts in mappen en synchroniseer ze op al je apparaten.</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>Krijg 1 jaar premium content van Slumber Studios.</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>Wanneer je je audiobestanden naar een cloudopslag uploadt, zijn ze overal beschikbaar.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Bladwijzers</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2310,8 +2274,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Advertenties verbergen</string>
     <key>plus_marketing_learn_more_button</key>
     <string>Bekijk meer informatie over Pocket Casts Plus</string>
-    <key>plus_marketing_main_description</key>
-    <string>Tegelijkertijd persoonlijk zijn en gedeeld worden. Upload je persoonlijke audiobestanden naar onze cloudservers, krijg toegang tot je account via onze online speler en pas de app naar je eigen voorkeuren aan.</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>Geen banneradvertenties</string>
     <key>plus_marketing_subtitle</key>
@@ -2322,8 +2284,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Alles wat je geweldig vindt aan Pocket Casts en meer</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>Hierna shuffelen</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>Wanneer je je bestanden naar een cloudopslag uploadt, zijn ze overal beschikbaar</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>Luister overal met onze apps voor Windows en macOS en de online apps</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2452,8 +2412,6 @@ Pas de regels aan of sla deze playlist op voor toekomstige afleveringen.</string
     <string>Extra's</string>
     <key>podcast_failed_download</key>
     <string>Downloaden van aflevering mislukt.</string>
-    <key>podcast_failed_upload</key>
-    <string>Uploaden mislukt</string>
     <key>podcast_feed_reload_button</key>
     <string>Lijst met afleveringen vernieuwen</string>
     <key>podcast_feed_reload_loading</key>
@@ -2551,16 +2509,10 @@ Als je op zoek bent naar inspiratie, probeer dan het tabblad Ontdekken.</string>
     <string>Updates beëindigd: %1$@</string>
     <key>podcast_updates_ends</key>
     <string>Updates eindigen: %1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>Nu uploaden!</string>
-    <key>podcast_uploading</key>
-    <string>Wordt geüpload... %1$@</string>
     <key>podcast_view_changes_tip_details</key>
     <string>Tik op de podcasttitel om de beschrijving en details in te klappen of uit te vouwen</string>
     <key>podcast_view_changes_tip_title</key>
     <string>We hebben wat wijzigingen aangebracht</string>
-    <key>podcast_waiting_upload</key>
-    <string>Wachten op upload</string>
     <key>podcast_yesterday</key>
     <string>Gisteren</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2669,8 +2621,6 @@ Als je op zoek bent naar inspiratie, probeer dan het tabblad Ontdekken.</string>
     <string>%1$@ totale resterende tijd</string>
     <key>rate</key>
     <string>Beoordelen</string>
-    <key>rate_pocket_casts</key>
-    <string>Pocket Casts beoordelen</string>
     <key>rating_error</key>
     <string>Oeps! Er was een fout.</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2805,20 +2755,6 @@ Als je op zoek bent naar inspiratie, probeer dan het tabblad Ontdekken.</string>
     <string>Afleveringen selecteren</string>
     <key>selected_count_format</key>
     <string>%1$@ geselecteerd</string>
-    <key>server_error_files_file_too_large</key>
-    <string>Dit bestand is te groot om te uploaden.</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>Uploaden mislukt, omdat we het type content van dit bestand niet konden vaststellen.</string>
-    <key>server_error_files_invalid_user</key>
-    <string>Gebruiker is niet ingelogd.</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>Je hebt de opslaglimiet voor je account bereikt.</string>
-    <key>server_error_files_title_required</key>
-    <string>Titel is verplicht.</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>Bestand kon niet worden geüpload, probeer het later opnieuw.</string>
-    <key>server_error_files_uuid_required</key>
-    <string>Bestands-uuid is vereist.</string>
     <key>server_error_login_access_denied</key>
     <string>De gebruiker heeft het autorisatieverzoek geweigerd</string>
     <key>server_error_login_account_locked</key>
@@ -3009,20 +2945,6 @@ Als je op zoek bent naar inspiratie, probeer dan het tabblad Ontdekken.</string>
     <string>De feed voor deze podcast is gestopt met updaten, omdat er te veel fouten waren.</string>
     <key>settings_files</key>
     <string>Bestandsinstellingen</string>
-    <key>settings_files_auto_download</key>
-    <string>Automatisch downloaden vanuit cloud</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>Bestanden die via andere apparaten worden toegevoegd aan de cloud, worden niet automatisch gedownload.</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>Bestanden die via andere apparaten worden toegevoegd aan de cloud, worden automatisch gedownload.</string>
-    <key>settings_files_auto_upload</key>
-    <string>Automatisch uploaden naar cloud</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>Bestanden die aan dit apparaat worden toegevoegd, worden niet automatisch geüpload naar de cloud.</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>Bestanden die aan dit apparaat worden toegevoegd, worden automatisch geüpload naar de cloud.</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>Cloudbestand verwijderen</string>
     <key>settings_files_delete_local_file</key>
     <string>Lokaal bestand verwijderen</string>
     <key>settings_first_party_analytics</key>
@@ -3545,8 +3467,6 @@ Je e-mailadres, wachtwoord en andere gevoelige gegevens worden nooit gedeeld.</s
     <string>Aan favorieten toegevoegd</string>
     <key>status_unplayed</key>
     <string>Niet-afgespeeld</string>
-    <key>status_uploaded</key>
-    <string>Geüpload</string>
     <key>stop_download</key>
     <string>Download stoppen</string>
     <key>subscribe</key>

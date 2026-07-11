@@ -49,7 +49,6 @@ public struct AppSettings: JSONCodable {
 
     @ModifiedDate public var filesAutoUpNext: Bool = false
     @ModifiedDate public var filesAfterPlayingDeleteLocal: Bool = false
-    @ModifiedDate public var filesAfterPlayingDeleteCloud: Bool = false
 
     @ModifiedDate public var warnDataUsage: Bool = false
 
