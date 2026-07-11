@@ -13,9 +13,7 @@ protocol BaseRequest: Encodable {
     var v: String? { get set }
 }
 
-// @unchecked Sendable: stored properties are formatters and an OperationQueue,
-// configured at init and read-only afterwards.
-public final class MainServerHandler: @unchecked Sendable {
+public final class MainServerHandler: Sendable {
     private static let callTimeout = 60.seconds
 
     public static let shared = MainServerHandler()

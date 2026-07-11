@@ -62,37 +62,4 @@ extension NetworkUtils {
             optionsPicker.present()
         }
     }
-
-    // MARK: - Upload Helpers
-
-    func uploadEpisodeRequested(_ allowed: ((_ later: Bool) -> Void)?, disallowed: (() -> Void)?) {
-        let mobileDataAllowed = !ServerSettings.userEpisodeOnlyOnWifi()
-
-        if mobileDataAllowed || isConnectedToUnexpensiveConnection() {
-            allowed?(false)
-
-            return
-        }
-
-        // See downloadEpisodeRequested: main-actor prompt, callbacks handed over wholesale
-        let allowed = UncheckedSendable(allowed)
-        let disallowed = UncheckedSendable(disallowed)
-        Task { @MainActor in
-            let optionsPicker = OptionsPicker()
-            let uploadAction = OptionAction(label: "Upload Now", icon: nil) {
-                allowed.value?(false)
-            }
-            let laterAction = OptionAction(label: L10n.queueForLater, icon: nil) {
-                allowed.value?(true)
-            }
-            laterAction.outline = true
-            optionsPicker.addDescriptiveActions(title: L10n.notOnWifi, message: "", icon: "option-alert", actions: [uploadAction, laterAction])
-
-            optionsPicker.setNoActionCallback {
-                disallowed.value?()
-            }
-
-            optionsPicker.present()
-        }
-    }
 }

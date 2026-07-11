@@ -5,17 +5,15 @@ protocol FileRotating: Sendable {
     func rotateFile(ifSizeExceeds: Int)
 }
 
-// @unchecked Sendable: all stored properties are immutable; FileManager is documented
-// thread-safe (the delegate, which is not, is never used here).
-public struct FileRotator: FileRotating, @unchecked Sendable {
+public struct FileRotator: FileRotating, Sendable {
 
-    private let fileManager: FileManager
     private let targetFilePath: String
     private let backupFilePath: String
     private let logger: Logger?
 
-    public init(fileManager: FileManager = .default, targetFilePath: String, backupFilePath: String, loggingTo logger: Logger? = nil) {
-        self.fileManager = fileManager
+    private var fileManager: FileManager { .default }
+
+    public init(targetFilePath: String, backupFilePath: String, loggingTo logger: Logger? = nil) {
         self.targetFilePath = targetFilePath
         self.backupFilePath = backupFilePath
         self.logger = logger

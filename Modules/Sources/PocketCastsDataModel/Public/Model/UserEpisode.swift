@@ -196,24 +196,4 @@ public struct UserEpisode: BaseEpisode, Identifiable, Equatable, Hashable, Senda
     public func hash(into hasher: inout Hasher) {
         hasher.combine(uuid)
     }
-
-    public func uploaded() -> Bool {
-        uploadStatus == UploadStatus.uploaded.rawValue
-    }
-
-    public func uploadFailed() -> Bool {
-        uploadStatus == UploadStatus.uploadFailed.rawValue
-    }
-
-    public func uploading() -> Bool {
-        uploadStatus == UploadStatus.uploading.rawValue
-    }
-
-    public func uploadQueued() -> Bool {
-        uploadStatus == UploadStatus.queued.rawValue
-    }
-
-    public func uploadWaitingForWifi() -> Bool {
-        uploadStatus == UploadStatus.waitingForWifi.rawValue
-    }
 }

@@ -176,7 +176,7 @@ final class UserEpisodeColumnConsistencyTests: DataManagerTestCase {
         episode.titleModified = 444
         episode.playbackErrorDetails = "Playback error"
         episode.cachedFrameCount = 100
-        episode.uploadStatus = UploadStatus.uploaded.rawValue
+        episode.uploadStatus = 0
         episode.uploadTaskId = "upload-task-456"
         episode.imageUrl = "https://example.com/image.jpg"
         episode.imageModified = 555

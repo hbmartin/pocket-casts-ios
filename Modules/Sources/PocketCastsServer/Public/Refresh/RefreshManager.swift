@@ -28,8 +28,6 @@ public final class RefreshManager: Sendable {
     public func syncUpNext() {
         if !SyncManager.isUserLoggedIn() { return }
 
-        // sync custom episodes in their Up Next
-        refreshQueue.addOperation(RetrieveCustomFilesTask())
         refreshQueue.addOperation(UpNextSyncTask())
     }
 

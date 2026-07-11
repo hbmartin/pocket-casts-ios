@@ -60,7 +60,6 @@ nonisolated extension SettingsStore<AppSettings> {
         self.update(\.$badges, value: Int32(UserDefaults.standard.integer(forKey: Settings.badgeKey)))
         self.update(\.$filesAutoUpNext, value: UserDefaults.standard.bool(forKey: Settings.userEpisodeAutoAddToUpNextKey))
         self.update(\.$filesAfterPlayingDeleteLocal, value: UserDefaults.standard.bool(forKey: Settings.userEpisodeRemoveFileAfterPlayingKey))
-        self.update(\.$filesAfterPlayingDeleteCloud, value: UserDefaults.standard.bool(forKey: Settings.userEpisodeRemoveFromCloudAfterPlayingKey))
         self.update(\.$playerShelf, value: (UserDefaults.standard.playerActions ?? PlayerAction.defaultActions).map { ActionOption.known($0) })
         self.update(\.$useEmbeddedArtwork, value: UserDefaults.standard.bool(forKey: Constants.UserDefaults.loadEmbeddedImages))
         if let oldTheme = ThemeType.Old(rawValue: UserDefaults.standard.integer(forKey: Theme.themeKey)) {

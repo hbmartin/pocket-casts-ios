@@ -2,30 +2,34 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 import SwiftProtobuf
+import Synchronization
 
-// @unchecked Sendable: state is an operation queue (thread-safe) plus a
-// progress-save timestamp used as an advisory throttle.
-public final class ApiServerHandler: @unchecked Sendable {
+public final class ApiServerHandler: Sendable {
     public static let shared = ApiServerHandler()
 
-    lazy var apiQueue: OperationQueue = {
+    let apiQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
 
         return queue
     }()
 
-    private var lastUpToSaved: Date?
+    private let lastUpToSaved = Mutex<Date?>(nil)
     public class func saveUpTo(time: TimeInterval, duration: TimeInterval, episode: BaseEpisode) {
-        if let lastSaved = shared.lastUpToSaved, let minTimeBetweenProgressSaves = ServerConfig.shared.syncDelegate?.minTimeBetweenProgressSaves(), fabs(lastSaved.timeIntervalSinceNow) < minTimeBetweenProgressSaves { return }
-
-        shared.lastUpToSaved = Date()
+        // Fetched outside the lock so no delegate code runs while it is held.
+        let minTimeBetweenProgressSaves = ServerConfig.shared.syncDelegate?.minTimeBetweenProgressSaves()
+        let shouldSave = shared.lastUpToSaved.withLock { lastSaved in
+            if let lastSaved, let minTimeBetweenProgressSaves, fabs(lastSaved.timeIntervalSinceNow) < minTimeBetweenProgressSaves {
+                return false
+            }
+            lastSaved = Date()
+            return true
+        }
+        guard shouldSave else { return }
 
         if let episode = episode as? Episode {
             let saveOperation = PositionSyncTask(upTo: time, duration: duration, episode: episode)
             shared.apiQueue.addOperation(saveOperation)
-        } else if let userEpisode = episode as? UserEpisode, userEpisode.uploaded() {
-            shared.uploadSingleFileUpdateRequest(episode: userEpisode, completion: { _ in })
         }
     }
 
@@ -33,8 +37,6 @@ public final class ApiServerHandler: @unchecked Sendable {
         if let episode = episode as? Episode {
             let saveOperation = PositionSyncTask(upTo: episode.playedUpTo, duration: episode.duration, episode: episode)
             apiQueue.addOperation(saveOperation)
-        } else if let userEpisode = episode as? UserEpisode, userEpisode.uploaded() {
-            uploadSingleFileUpdateRequest(episode: userEpisode, completion: { _ in })
         }
     }
 
@@ -80,20 +82,6 @@ public final class ApiServerHandler: @unchecked Sendable {
     public func reloadFoldersFromServer() {
         ServerSettings.setHomeGridNeedsRefresh(true)
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-    }
-
-    public func processPendingCloudDeletes(episodes: [UserEpisode], deleteCompletedHandler: ((UserEpisode) -> Void)?) {
-        FileLog.shared.addMessage("\(episodes.count) episodes pending to be cloud deleted, processing those now")
-        for episode in episodes {
-            let deleteOperation = UploadFileDeleteTask(episode: episode)
-            deleteOperation.completion = { success in
-                guard success else { return } // failed deletes will remain as pending
-
-                DataManager.sharedManager.saveEpisode(uploadStatus: .notUploaded, episode: episode)
-                deleteCompletedHandler?(episode)
-            }
-            apiQueue.addOperation(deleteOperation)
-        }
     }
 
     /// Swaps the current auth token with one scoped for use in Sonos connections

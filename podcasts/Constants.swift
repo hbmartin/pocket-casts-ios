@@ -95,9 +95,6 @@ nonisolated struct Constants {
         /// This is triggered just once after a folder finishes editing
         static let folderEdited = NSNotification.Name(rawValue: "SJFolderEdited")
 
-        // Gravatar
-        static let avatarNeedsRefreshing = NSNotification.Name(rawValue: "avatarNeedsRefreshing")
-
         static let discoverNavigateToCategory = Notification.Name(rawValue: "DiscoverNavigateToCategory")
     }
 
@@ -144,7 +141,6 @@ nonisolated struct Constants {
 
         static let lastRunVersion = "lastRunVersion"
 
-        static let reviewRequestDates = "reviewRequestDates"
 
         static let modalHasBeenShown = "modal%dHasBeenShown"
         static let hasSyncedEpisodesForPlayback = "hasSyncedEpisodesForPlayback%d"
@@ -309,12 +305,6 @@ nonisolated struct Constants {
 
         static let episodeSearchDebounceMs = "episode_search_debounce_ms"
         static let episodeSearchDebounceMsDefault: Double = 800
-
-        static let customStorageLimitGB = "custom_storage_limit_gb"
-        static let customStorageLimitGBDefault: Int = 20
-
-        static let patronCloudStorageGB = "patron_custom_storage_limit_gb"
-        static let patronCloudStorageGBDefault = 100
 
         static let addMissingEpisodes = "add_missing_episodes"
         static let addMissingEpisodesDefault: Bool = true

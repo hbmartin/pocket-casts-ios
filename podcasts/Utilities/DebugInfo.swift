@@ -45,7 +45,6 @@ nonisolated struct DebugInfo {
         Auto Archive Played Episodes after: \(ArchiveHelper.archiveTimeToText(Settings.autoArchivePlayedAfter()))
         Auto Archive Inactive Episodes after: \(ArchiveHelper.archiveTimeToText(Settings.autoArchiveInactiveAfter()))
         Auto Archive Starred Episodes: \(Settings.archiveStarredEpisodes())
-        Uploaded Episode Count: \(ServerSettings.customStorageNumFiles())
         """
 
         return debugString

@@ -87,10 +87,6 @@ final class UserEpisodeDataManager: Sendable {
         return grdbFetchOne(UserEpisode.filter(UserEpisode.Columns.downloadTaskId == downloadTaskId), in: dbQueue)
     }
 
-    func findBy(uploadTaskId: String, dbQueue: GRDBQueue) -> UserEpisode? {
-        return grdbFetchOne(UserEpisode.filter(UserEpisode.Columns.uploadTaskId == uploadTaskId), in: dbQueue)
-    }
-
     func findBy(folderRelativePath: String, dbQueue: GRDBQueue) -> UserEpisode? {
         return grdbFetchOne(UserEpisode.filter(UserEpisode.Columns.folderRelativePath == folderRelativePath), in: dbQueue)
     }
@@ -104,10 +100,7 @@ final class UserEpisodeDataManager: Sendable {
     }
 
     func findAll(sortedBy: UploadedSort, limit: Int? = nil, dbQueue: GRDBQueue) -> [UserEpisode] {
-        var request = UserEpisode
-            .filter(UserEpisode.Columns.uploadStatus != UploadStatus.deleteFromCloudPending.rawValue)
-            .filter(UserEpisode.Columns.uploadStatus != UploadStatus.deleteFromCloudAndLocalPending.rawValue)
-            .order(Self.ordering(for: sortedBy))
+        var request = UserEpisode.order(Self.ordering(for: sortedBy))
         if let limit {
             request = request.limit(limit)
         }
@@ -143,28 +136,12 @@ final class UserEpisodeDataManager: Sendable {
         return grdbFetchAll(request, in: dbQueue)
     }
 
-    func findAllWithUploadStatus(_ status: UploadStatus, dbQueue: GRDBQueue) -> [UserEpisode] {
-        return grdbFetchAll(UserEpisode.filter(UserEpisode.Columns.uploadStatus == status.rawValue), in: dbQueue)
-    }
-
     func removeOrphaned(dbQueue: GRDBQueue) {
         dbQueue.deleteAll(
             UserEpisode.self,
-            filter: UserEpisode.Columns.uploadStatus == UploadStatus.notUploaded.rawValue
-                && (UserEpisode.Columns.episodeStatus == DownloadStatus.notDownloaded.rawValue || UserEpisode.Columns.episodeStatus == DownloadStatus.downloadFailed.rawValue)
-        )
-    }
-
-    func unsyncedEpisodes(dbQueue: GRDBQueue) -> [UserEpisode] {
-        return grdbFetchAll(
-            UserEpisode.filter(
-                UserEpisode.Columns.titleModified > 0
-                    || UserEpisode.Columns.imageColorModified > 0
-                    || UserEpisode.Columns.playingStatusModified > 0
-                    || UserEpisode.Columns.playedUpToModified > 0
-                    || UserEpisode.Columns.durationModified > 0
-            ),
-            in: dbQueue
+            filter: UserEpisode.Columns.folderRelativePath == nil
+                && (UserEpisode.Columns.episodeStatus == DownloadStatus.notDownloaded.rawValue
+                    || UserEpisode.Columns.episodeStatus == DownloadStatus.downloadFailed.rawValue)
         )
     }
 
@@ -327,37 +304,6 @@ final class UserEpisodeDataManager: Sendable {
         save(fields: fields, values: values, dbQueue: dbQueue)
     }
 
-    func saveEpisode(uploadStatus: UploadStatus, episode: UserEpisode, dbQueue: GRDBQueue) {
-        var episode = episode
-        episode.uploadStatus = uploadStatus.rawValue
-
-        let fields = ["uploadStatus"]
-        let values = [episode.uploadStatus, episode.id] as [Any]
-
-        save(fields: fields, values: values, dbQueue: dbQueue)
-    }
-
-    func saveEpisode(uploadStatus: UploadStatus, uploadTaskId: String?, episode: UserEpisode, dbQueue: GRDBQueue) {
-        var episode = episode
-        episode.uploadStatus = uploadStatus.rawValue
-        episode.downloadTaskId = uploadTaskId
-
-        let fields = ["uploadStatus", "uploadTaskId"]
-        let values = [episode.uploadStatus, DBUtils.replaceNilWithNull(value: episode.uploadTaskId), episode.id] as [Any]
-
-        save(fields: fields, values: values, dbQueue: dbQueue)
-    }
-
-    func saveEpisode(uploadStatus: UploadStatus, uploadError: String?, uploadTaskId: String?, episode: UserEpisode, dbQueue: GRDBQueue) {
-        var episode = episode
-        episode.uploadStatus = uploadStatus.rawValue
-        episode.uploadTaskId = uploadTaskId
-
-        let fields = ["uploadStatus", "uploadTaskId"]
-        let values = [episode.uploadStatus, DBUtils.replaceNilWithNull(value: episode.uploadTaskId), episode.id] as [Any]
-        save(fields: fields, values: values, dbQueue: dbQueue)
-    }
-
     func saveEpisode(duration: Double, episode: UserEpisode, dbQueue: GRDBQueue) {
         dbQueue.write { db in
             try saveEpisode(duration: duration, episode: episode, db: db)
@@ -480,10 +426,6 @@ final class UserEpisodeDataManager: Sendable {
         save(fieldName: "downloadTaskId", value: NSNull(), episodeId: episode.id, dbQueue: dbQueue)
     }
 
-    func clearUploadTaskId(episode: UserEpisode, dbQueue: GRDBQueue) {
-        save(fieldName: "uploadTaskId", value: NSNull(), episodeId: episode.id, dbQueue: dbQueue)
-    }
-
     func delete(userEpisodeUuid: String, dbQueue: GRDBQueue) {
         dbQueue.deleteAll(UserEpisode.self, filter: UserEpisode.Columns.uuid == userEpisodeUuid)
     }
@@ -529,17 +471,6 @@ final class UserEpisodeDataManager: Sendable {
         values.append(episode.id)
 
         try save(fields: fields, values: values, db: db)
-    }
-
-    func markEpisodeImageUploaded(episode: UserEpisode, dbQueue: GRDBQueue) {
-        var episode = episode
-        episode.imageModified = 0
-        episode.imageUrl = nil
-
-        let fields = ["imageModified", "imageUrl"]
-        let values = [episode.imageModified, DBUtils.replaceNilWithNull(value: episode.imageUrl), episode.id] as [Any]
-
-        save(fields: fields, values: values, dbQueue: dbQueue)
     }
 
     private func save(fieldName: String, value: Any, episodeId: Int64, dbQueue: GRDBQueue) {

@@ -4896,3 +4896,26 @@ rules:
         - "**/podcasts/OpmlImporter.swift"
     patterns:
       - pattern-regex: '(MainServerHandler\.shared\.(refresh|sendOpmlChunk)\(|CacheServerHandler\.shared\.loadPodcastInfo\()'
+
+  - id: pocketcasts.unsafe-pointer-update-overlapping-source
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: HIGH
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      UnsafeMutablePointer.update(from:count:) requires non-overlapping source and destination
+      ranges. When both pointers share a base, use memmove so shifting data within a buffer is
+      well-defined.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: '$POINTER.update(from: $POINTER + $OFFSET, count: $COUNT)'
+          - pattern: '$POINTER.update(from: $POINTER.advanced(by: $OFFSET), count: $COUNT)'
+          - pattern: '($POINTER + $OFFSET).update(from: $POINTER, count: $COUNT)'
+          - pattern: '$POINTER.advanced(by: $OFFSET).update(from: $POINTER, count: $COUNT)'

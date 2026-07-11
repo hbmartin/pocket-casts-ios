@@ -1,8 +1,6 @@
 import Foundation
 
-// @unchecked Sendable: formatters are configured in their property initializers and never
-// mutated afterwards; Foundation formatters are safe for concurrent reads.
-public final class TimeFormatter: @unchecked Sendable {
+public final class TimeFormatter: Sendable {
     public static let shared = TimeFormatter()
 
     private let colonFormatterMinutes: DateComponentsFormatter = {
@@ -125,10 +123,8 @@ public final class TimeFormatter: @unchecked Sendable {
         return appleFormatterMinutes.string(from: time) ?? ""
     }
 
-    private let relativeFormatter = RelativeDateTimeFormatter()
-
     public func appleStyleElapsedString(date: Date) -> String {
-        relativeFormatter.localizedString(for: date, relativeTo: Date())
+        date.formatted(.relative(presentation: .numeric, unitsStyle: .wide))
     }
 
     public func appleStyleTillString(date: Date) -> String? {

@@ -264,10 +264,8 @@
 		8BE85CA92876260700AEB5FF /* acknowledgements.html in Resources */ = {isa = PBXBuildFile; fileRef = 8BE85CA82876260600AEB5FF /* acknowledgements.html */; };
 		8BE85CAB28762C4900AEB5FF /* LegalAndMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BE85CAA28762C4900AEB5FF /* LegalAndMoreView.swift */; };
 		8BEE86FE2B7D02480073784A /* ChaptersHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEE86FD2B7D02480073784A /* ChaptersHeader.swift */; };
-		8BF622FF2C529F3C00D10F57 /* ChampionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF622FE2C529F3C00D10F57 /* ChampionView.swift */; };
 		8BF623012C53ED7C00D10F57 /* TranscriptSearchAccessoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF623002C53ED7C00D10F57 /* TranscriptSearchAccessoryView.swift */; };
 		8BFB434E2A1FFB4B00F3D409 /* StatusPageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFB434D2A1FFB4B00F3D409 /* StatusPageViewModel.swift */; };
-		91319B0B2C171F69000220A4 /* GravatarSafariViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91319B0A2C171F69000220A4 /* GravatarSafariViewController.swift */; };
 		9A01DDDA2E82EC4C0016E9D1 /* PlaylistDetailCustomOrderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A01DDD92E82EC430016E9D1 /* PlaylistDetailCustomOrderViewController.swift */; };
 		9A01DDDC2E84032D0016E9D1 /* PlaylistEpisodePreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A01DDDB2E84032D0016E9D1 /* PlaylistEpisodePreviewCell.swift */; };
 		9A11FCBB2D9592B300A1EF3E /* PrivacySettingsDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A11FCBA2D9592AC00A1EF3E /* PrivacySettingsDataSource.swift */; };
@@ -1333,10 +1331,8 @@
 		8BE85CA82876260600AEB5FF /* acknowledgements.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = acknowledgements.html; sourceTree = "<group>"; };
 		8BE85CAA28762C4900AEB5FF /* LegalAndMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalAndMoreView.swift; sourceTree = "<group>"; };
 		8BEE86FD2B7D02480073784A /* ChaptersHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChaptersHeader.swift; sourceTree = "<group>"; };
-		8BF622FE2C529F3C00D10F57 /* ChampionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChampionView.swift; sourceTree = "<group>"; };
 		8BF623002C53ED7C00D10F57 /* TranscriptSearchAccessoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptSearchAccessoryView.swift; sourceTree = "<group>"; };
 		8BFB434D2A1FFB4B00F3D409 /* StatusPageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageViewModel.swift; sourceTree = "<group>"; };
-		91319B0A2C171F69000220A4 /* GravatarSafariViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GravatarSafariViewController.swift; sourceTree = "<group>"; };
 		91889D5B4390BF8185DB5CF7 /* PlaybackIntentActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackIntentActionHandler.swift; sourceTree = "<group>"; };
 		9A01DDD92E82EC430016E9D1 /* PlaylistDetailCustomOrderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistDetailCustomOrderViewController.swift; sourceTree = "<group>"; };
 		9A01DDDB2E84032D0016E9D1 /* PlaylistEpisodePreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistEpisodePreviewCell.swift; sourceTree = "<group>"; };
@@ -2759,7 +2755,6 @@
 				4029E3E32293AD410003BEEB /* ChangePasswordViewController.xib */,
 				408529A5247CA913007FE8AA /* Paid Podcasts */,
 				40251CE822BB0F5900551C51 /* Acknowledge Modals */,
-				91319B0A2C171F69000220A4 /* GravatarSafariViewController.swift */,
 			);
 			name = "Account Management";
 			sourceTree = "<group>";
@@ -4340,7 +4335,6 @@
 			children = (
 				C713D4EE2A04C90400A78468 /* AccountHeaderView.swift */,
 				C713D4F22A04C90500A78468 /* AccountHeaderViewModel.swift */,
-				8BF622FE2C529F3C00D10F57 /* ChampionView.swift */,
 				AA1B2C3D4E5F607100HEAT03 /* ListeningHeatmapView.swift */,
 				AA1B2C3D4E5F607100HEAT04 /* ListeningHeatmapViewModel.swift */,
 			);
@@ -5954,7 +5948,6 @@
 				BD6B432C27561EA8005E4017 /* PCHostingController.swift in Sources */,
 				BDCA84F21C1FB7260022ED4D /* DownloadSettingsViewController.swift in Sources */,
 				F29158942FBD0C3F0028F7F3 /* CameraPicker.swift in Sources */,
-				91319B0B2C171F69000220A4 /* GravatarSafariViewController.swift in Sources */,
 				401EBA6923725C6400899F93 /* UpNextNowPlayingCell.swift in Sources */,
 				8BF623012C53ED7C00D10F57 /* TranscriptSearchAccessoryView.swift in Sources */,
 				BDA206601BB3D4D600D38389 /* DownloadsViewController.swift in Sources */,
@@ -5974,7 +5967,6 @@
 				0C364CA72FAB8BAA00B46BDA /* MiniPlayerLongPressPreviewViewController.swift in Sources */,
 				BD874EEE1C9A373C00F5B2A5 /* SettingsViewController.swift in Sources */,
 				BDDA14DC219B021A0066441E /* SearchLoadingCell.swift in Sources */,
-				8BF622FF2C529F3C00D10F57 /* ChampionView.swift in Sources */,
 				BDF9DDD91B8AD29C00E77B35 /* TimeSlider.swift in Sources */,
 				403B5AFE2179670F00821A54 /* MediaFilterOverlayController.swift in Sources */,
 				BD2A49E61701A6AE00C2F192 /* SJCommonUtils.m in Sources */,

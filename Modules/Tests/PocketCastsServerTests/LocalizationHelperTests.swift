@@ -50,34 +50,6 @@ final class LocalizationHelperTests: XCTestCase {
 
         XCTAssertTrue(LocalizationHelper.provider?.userRegion == "it")
     }
-
-    func testDefaultAllowedHostsUsesStagingFilesHostWhenServerIsNotProduction() {
-        let previousDelegate = ServerConfig.shared.syncDelegate
-        ServerConfig.shared.syncDelegate = TestServerSyncDelegate(isProduction: false)
-        defer { ServerConfig.shared.syncDelegate = previousDelegate }
-
-        let provider = InternationalizationProvider(userRegion: "en", appLanguage: "en-US")
-
-        XCTAssertTrue(provider.allowedHosts.contains("files.pocketcasts.net"))
-    }
-}
-
-private final class TestServerSyncDelegate: ServerSyncDelegate {
-    private let isProduction: Bool
-
-    init(isProduction: Bool) {
-        self.isProduction = isProduction
-    }
-
-    func production() -> Bool {
-        isProduction
-    }
-}
-
-private final class TestFilePathProvider: NSObject, FilePathProtocol {
-    func tempPathForEpisode(_: BaseEpisode) -> String { "" }
-    func pathForEpisode(_: BaseEpisode) -> String { "" }
-    func streamingBufferPathForEpisode(_: BaseEpisode) -> String { "" }
 }
 
 private enum TestServerDefaults {
@@ -109,13 +81,6 @@ extension ServerSyncDelegate {
     }
     func autoDownloadLatestEpisodes(uuids _: [String]) { testNoOp() }
     func cleanupAllUnusedEpisodeBuffers() { testNoOp() }
-    func deleteFromDevice(userEpisode _: UserEpisode) { testNoOp() }
-    func autoDownloadUserEpisodes(episodes _: [UserEpisode]) { testNoOp() }
-    func userEpisodeFileProtocol() -> FilePathProtocol {
-        testNoOp()
-        return TestFilePathProvider()
-    }
-    func cleanupCloudOnlyFiles() { testNoOp() }
     func performActionsAfterSync() { testNoOp() }
     func isPushEnabled() -> Bool {
         TestServerDefaults.pushNotificationsEnabled

@@ -94,11 +94,6 @@ public final class EpisodeRepositoryMock: RepositoryMock, EpisodeRepository, @un
         return stubs["unsyncedEpisodes(limit:)"] as? [Episode] ?? []
     }
 
-    public func unsyncedUserEpisodes() -> [UserEpisode] {
-        record("unsyncedUserEpisodes()")
-        return stubs["unsyncedUserEpisodes()"] as? [UserEpisode] ?? []
-    }
-
     public func episodesWithListenHistory(limit: Int) -> [Episode] {
         record("episodesWithListenHistory(limit:)")
         return stubs["episodesWithListenHistory(limit:)"] as? [Episode] ?? []

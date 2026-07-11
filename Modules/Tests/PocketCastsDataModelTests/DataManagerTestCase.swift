@@ -126,7 +126,7 @@ class DataManagerTestCase: XCTestCase {
         uuid: String = UUID().uuidString,
         title: String = "Test User Episode",
         episodeStatus: Int32 = DownloadStatus.notDownloaded.rawValue,
-        uploadStatus: Int32 = UploadStatus.notUploaded.rawValue,
+        uploadStatus: Int32 = 0,
         addedDate: Date = Date(),
         duration: Double = 3600,
         dataManager: DataManager

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Read and mutate user-uploaded episodes (Files).
+/// Read and mutate locally imported custom episodes.
 ///
 /// `DataManager` is the production conformer; inject `any UserEpisodeRepository` (see
 /// `Repositories+Dependency.swift`) so consumers can be tested with mocks and a
@@ -9,18 +9,10 @@ public protocol UserEpisodeRepository: AnyObject, Sendable {
     func findUserEpisode(uuid: String) -> UserEpisode?
     func allUserEpisodes(sortedBy: UploadedSort, limit: Int?) -> [UserEpisode]
     func allUserEpisodesDownloaded(sortedBy: UploadedSort, limit: Int?) -> [UserEpisode]
-    func allUserEpisodesUploaded() -> [UserEpisode]
     func bulkSave(episodes: [UserEpisode])
     func delete(userEpisodeUuid: String)
     func deleteUserEpisodes(userEpisodeUuids: [String])
-    func saveEpisode(uploadStatus: UploadStatus, episode: UserEpisode)
-    func saveEpisode(uploadStatus: UploadStatus, uploadTaskId: String?, episode: UserEpisode)
-    func saveEpisode(uploadStatus: UploadStatus, uploadError: String?, uploadTaskId: String?, episode: UserEpisode)
-    func clearUploadTaskId(episode: UserEpisode)
-    func findUserEpisode(uploadTaskId: String) -> UserEpisode?
-    func findUserEpisodesWithUploadStatus(_ status: UploadStatus) -> [UserEpisode]
     func findUserEpisodesWhereNotNull(propertyName: String) -> [UserEpisode]
-    func markImageUploaded(episode: UserEpisode)
     func removeOrphanedUserEpisodes()
 
     // MARK: Async variants

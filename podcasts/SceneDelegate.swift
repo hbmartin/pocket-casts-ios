@@ -549,8 +549,9 @@ enum PR263UITestHarness {
             throw HarnessError.restoreDidNotReplaceCachedFolderState
         }
 
+        let password = UUID().uuidString
         let sanitizedURL = LocalFeedURL.removingCredentials(
-            from: "https://reader:secret@example.com/private.xml"
+            from: "https://reader:\(password)@example.com/private.xml"
         )
         guard sanitizedURL == "https://example.com/private.xml" else {
             throw HarnessError.credentialsWereNotRemoved

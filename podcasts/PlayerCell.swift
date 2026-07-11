@@ -214,14 +214,6 @@ class PlayerCell: ThemeableSwipeCell {
     }
 
     func updateDownloadStatus() {
-        if let episode = episode as? UserEpisode, episode.uploadStatus == UploadStatus.missing.rawValue {
-            episodeInfo.text = L10n.downloadErrorNotUploaded
-            downloadingIndicator.isHidden = true
-            downloadedIndicator.isHidden = true
-
-            return
-        }
-
         if episode.queued() {
             downloadingIndicator.stopAnimating()
             downloadingIndicator.isHidden = true

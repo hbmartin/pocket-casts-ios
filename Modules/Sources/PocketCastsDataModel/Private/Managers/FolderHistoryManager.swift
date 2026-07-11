@@ -2,6 +2,7 @@ import PocketCastsUtils
 import Foundation
 import GRDB
 import GRDBMacros
+import Synchronization
 
 /// Row record for the `PodcastFoldersHistory` table.
 /// `date` is a raw `timeIntervalSince1970` Double rather than a `Date`: the table does
@@ -68,23 +69,21 @@ public class FolderHistoryManager {
     }
 }
 
-// @unchecked Sendable: `podcastAndFolderUuids` is guarded by `lock`.
-public final class FolderHistoryHelper: @unchecked Sendable {
+public final class FolderHistoryHelper: Sendable {
     public static let shared = FolderHistoryHelper()
 
-    private let lock = NSLock()
-    private var podcastAndFolderUuids: [String: String] = [:]
+    private let podcastAndFolderUuids = Mutex<[String: String]>([:])
 
     public func add(podcastUuid: String, folderUuid: String) {
-        lock.withLock {
-            podcastAndFolderUuids[podcastUuid] = folderUuid
+        podcastAndFolderUuids.withLock {
+            $0[podcastUuid] = folderUuid
         }
     }
 
     public func snapshot() {
-        let uuids: [String: String] = lock.withLock {
-            defer { podcastAndFolderUuids = [:] }
-            return podcastAndFolderUuids
+        let uuids: [String: String] = podcastAndFolderUuids.withLock { uuids in
+            defer { uuids = [:] }
+            return uuids
         }
 
         if !uuids.isEmpty {

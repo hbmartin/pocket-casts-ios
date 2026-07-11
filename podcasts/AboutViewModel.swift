@@ -3,8 +3,6 @@ import Foundation
 class AboutViewModel: ObservableObject {
     func track(action: AboutAction) {
         switch action {
-        case .rateUs:
-            Analytics.track(.rateUsTapped, properties: ["source": "about"])
         case .shareWithFriends:
             Analytics.track(.settingsAboutShareWithFriendsTapped)
         case .website:
@@ -19,7 +17,6 @@ class AboutViewModel: ObservableObject {
     }
 
     enum AboutAction {
-        case rateUs
         case shareWithFriends
         case website
         case twitter

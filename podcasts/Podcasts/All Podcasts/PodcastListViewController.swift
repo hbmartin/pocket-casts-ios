@@ -4,8 +4,6 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import UIKit
-import Kingfisher
-import SafariServices
 
 class PodcastListViewController: PCViewController, ShareListDelegate {
     let gridHelper = GridHelper()
@@ -157,34 +155,6 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
             badgeView.heightAnchor.constraint(equalToConstant: size),
         ])
         return badgeView
-    }
-
-    private func makeProfileButton(email: String?) -> UIBarButtonItem {
-        let avatarSize = CGFloat(32)
-        let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: avatarSize, height: avatarSize))
-        imageView.contentMode = .center
-        let profileImage = UIImage(named: "profile-placeholder")?.withRenderingMode(.alwaysTemplate)
-        imageView.image = profileImage
-        if let email {
-            imageView.contentMode = .scaleAspectFit
-            let gravatarURL = URL(string: "https://www.gravatar.com/avatar/\(email.sha256)?d=404&s=\(256)")
-            let processor = DownsamplingImageProcessor(size: imageView.bounds.size) |> RoundCornerImageProcessor(cornerRadius: 20)
-            imageView.kf.setImage(with: gravatarURL, placeholder: profileImage, options: [
-                .processor(processor),
-                .scaleFactor(UIScreen.main.scale),
-                .transition(.fade(1)),
-                .cacheOriginalImage
-            ])
-        }
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(profileTapped(_:)))
-        imageView.addGestureRecognizer(tapGesture)
-        imageView.isUserInteractionEnabled = true
-        NSLayoutConstraint.activate([
-            imageView.widthAnchor.constraint(equalToConstant: avatarSize),
-            imageView.heightAnchor.constraint(equalToConstant: avatarSize),
-        ])
-        return UIBarButtonItem(customView: imageView)
     }
 
     private func updateNavigationButtons() {

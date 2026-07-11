@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import UIKit
 
 extension UserDefaults {
@@ -8,16 +9,19 @@ extension UserDefaults {
     }
 }
 
-private final class ProtectedDataAvailability: @unchecked Sendable {
+private final class ProtectedDataAvailability: Sendable {
     static let shared = ProtectedDataAvailability()
 
-    private let lock = NSLock()
-    private var cachedValue: Bool?
-    private var observersInstalled = false
-    private var refreshScheduled = false
-    // Block-based observer tokens auto-unregister on dealloc, so they must stay retained
-    // for the lifetime of this singleton.
-    private var notificationObservers = [NSObjectProtocol]()
+    private struct State {
+        var cachedValue: Bool?
+        var observersInstalled = false
+        var refreshScheduled = false
+        // Block-based observer tokens auto-unregister on dealloc, so they must stay retained
+        // for the lifetime of this singleton.
+        var notificationObservers = [NSObjectProtocol]()
+    }
+
+    private let state = Mutex(State())
 
     func currentValue() -> Bool? {
         installObserversIfNeeded()
@@ -32,13 +36,13 @@ private final class ProtectedDataAvailability: @unchecked Sendable {
     }
 
     private func installObserversIfNeeded() {
-        lock.lock()
-        guard !observersInstalled else {
-            lock.unlock()
+        let alreadyInstalled = state.withLock { state in
+            defer { state.observersInstalled = true }
+            return state.observersInstalled
+        }
+        guard !alreadyInstalled else {
             return
         }
-        observersInstalled = true
-        lock.unlock()
 
         let notificationCenter = NotificationCenter.default
         let didBecomeAvailable = notificationCenter.addObserver(
@@ -56,28 +60,23 @@ private final class ProtectedDataAvailability: @unchecked Sendable {
             self?.setCachedValue(false)
         }
 
-        lock.lock()
-        notificationObservers = [didBecomeAvailable, willBecomeUnavailable]
-        lock.unlock()
+        state.withLock { $0.notificationObservers = [didBecomeAvailable, willBecomeUnavailable] }
 
         scheduleRefresh()
     }
 
     private func cached() -> Bool? {
-        lock.lock()
-        defer { lock.unlock() }
-
-        return cachedValue
+        state.withLock { $0.cachedValue }
     }
 
     private func scheduleRefresh() {
-        lock.lock()
-        guard !refreshScheduled else {
-            lock.unlock()
+        let alreadyScheduled = state.withLock { state in
+            defer { state.refreshScheduled = true }
+            return state.refreshScheduled
+        }
+        guard !alreadyScheduled else {
             return
         }
-        refreshScheduled = true
-        lock.unlock()
 
         DispatchQueue.main.async { [weak self] in
             self?.refreshFromUIApplicationOnMain()
@@ -94,9 +93,9 @@ private final class ProtectedDataAvailability: @unchecked Sendable {
     }
 
     private func setCachedValue(_ value: Bool) {
-        lock.lock()
-        cachedValue = value
-        refreshScheduled = false
-        lock.unlock()
+        state.withLock {
+            $0.cachedValue = value
+            $0.refreshScheduled = false
+        }
     }
 }

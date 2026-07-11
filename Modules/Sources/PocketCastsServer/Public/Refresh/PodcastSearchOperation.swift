@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsUtils
+import Synchronization
 
 class PodcastSearchOperation: Operation, @unchecked Sendable {
     private let completion: @Sendable (PodcastSearchResponse?) -> Void
@@ -97,32 +98,31 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
     }
 }
 
-private final class PodcastSearchState: @unchecked Sendable {
-    private let lock = NSLock()
-    private var retry = false
-    private var completed = false
+private final class PodcastSearchState: Sendable {
+    private struct State {
+        var retry = false
+        var completed = false
+    }
+
+    private let state = Mutex(State())
 
     func setShouldRetry(_ shouldRetry: Bool) {
-        lock.lock()
-        retry = shouldRetry
-        lock.unlock()
+        state.withLock { $0.retry = shouldRetry }
     }
 
     func shouldRetry() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-
-        return retry
+        state.withLock { $0.retry }
     }
 
     func complete(_ completion: () -> Void) {
-        lock.lock()
-        guard !completed else {
-            lock.unlock()
-            return
+        let shouldRun = state.withLock { state in
+            if state.completed {
+                return false
+            }
+            state.completed = true
+            return true
         }
-        completed = true
-        lock.unlock()
+        guard shouldRun else { return }
 
         completion()
     }

@@ -15,8 +15,6 @@
     <string>Юридическая информация и прочее</string>
     <key>about_privacy_policy</key>
     <string>Политика конфиденциальности</string>
-    <key>about_rate_us</key>
-    <string>Оцените нас</string>
     <key>about_share_friends</key>
     <string>Поделитесь с друзьями</string>
     <key>about_terms_of_service</key>
@@ -339,8 +337,6 @@
     <string>Ваши подкасты и история прослушиваний останутся доступными. </string>
     <key>cancel_confirm_item_plus</key>
     <string>После этой даты доступ к функциям Plus, таким как «Закладки», «Случайный выбор», «Портативные» и др., будет удалён.</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>Файлы, загруженные в вашу учётную запись Pocket Casts, будут удалены, но файлы, загруженные на ваши мобильные устройства, сохранятся.</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>Ваша текущая подписка будет действовать до %1$@.</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -431,10 +427,6 @@ Pocket Casts Plus</string>
     <string>Получите скидку 50 %% на следующий год</string>
     <key>canceling</key>
     <string>Отмена...</string>
-    <key>champion_description</key>
-    <string>Благодарим за то, что вы с нами с самого начала! Если вам нравится наше приложение, мы будем рады получить ваш отзыв.</string>
-    <key>champion_title</key>
-    <string>Вы просто чемпион Pocket Casts!</string>
     <key>change_app_icon</key>
     <string>Изменить значок приложения</string>
     <key>change_bookmark_subtitle</key>
@@ -559,12 +551,6 @@ Pocket Casts Plus</string>
     <string>Текущий пароль</string>
     <key>custom_episode</key>
     <string>Пользовательский выпуск</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>Отменить загрузку</string>
-    <key>custom_episode_remove_upload</key>
-    <string>Удалить из облака</string>
-    <key>custom_episode_upload</key>
-    <string>Загрузить в облако</string>
     <key>database_migration</key>
     <string>Мы двигаем туда-сюда биты и байты, чтобы приложение работало быстрее…</string>
     <key>day</key>
@@ -589,8 +575,6 @@ Pocket Casts Plus</string>
     <string>Удалить файл</string>
     <key>delete_file_message</key>
     <string>Вы уверены, что хотите удалить этот файл?</string>
-    <key>delete_from_cloud</key>
-    <string>Удалить из облака</string>
     <key>delete_from_device</key>
     <string>Удалить с устройства</string>
     <key>delete_from_device_only</key>
@@ -809,8 +793,6 @@ Pocket Casts Plus</string>
     <string>Этот выпуск мог быть перемещен или удален. Свяжитесь с автором подкаста.</string>
     <key>download_error_not_enough_space</key>
     <string>Не удается сохранить выпуск, у вас закончилось место?</string>
-    <key>download_error_not_uploaded</key>
-    <string>Файл не загружен, не удается воспроизвести</string>
     <key>download_error_status_code</key>
     <string>Не удалось скачать, код ошибки %1$@. Свяжитесь с автором подкаста.</string>
     <key>download_error_try_again</key>
@@ -1080,8 +1062,6 @@ Pocket Casts на полную мощность.</string>
     <string>Все функции Plus</string>
     <key>feature_marketing_bookmarks</key>
     <string>Сохраняйте отметки времени в закладках</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>%1$@ ГБ облачного хранилища для ваших файлов</string>
     <key>feature_marketing_early_access</key>
     <string>Ранний доступ к новым возможностям</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1118,10 +1098,6 @@ Pocket Casts на полную мощность.</string>
     <string>Библиотека фотографий</string>
     <key>file_upload_edit_file</key>
     <string>Редактировать файл</string>
-    <key>file_upload_error</key>
-    <string>Недостаточно места для загрузки этого файла.</string>
-    <key>file_upload_error_subtitle</key>
-    <string>Удалите некоторые файлы и попробуйте снова.</string>
     <key>file_upload_name_required</key>
     <string>Необходимо указать имя</string>
     <key>file_upload_no_files_description</key>
@@ -1140,8 +1116,6 @@ Pocket Casts на полную мощность.</string>
     <string>Файлы</string>
     <key>files_how_to_title</key>
     <string>Как сохранить файл</string>
-    <key>files_not_uploaded</key>
-    <string>Файлы не загружены</string>
     <key>files_sort</key>
     <string>Упорядочить файлы</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ Pocket Casts на полную мощность.</string>
     <string>Пауза</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>Забудьте о рекламных баннерах и не только благодаря Pocket Casts Plus</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>Загружайте свои файлы при помощи Pocket Casts Plus и многое другое</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>Упорядочивайте ваши подкасты с Pocket Casts Plus и многое другое</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2086,8 +2058,6 @@ Pocket Casts на полную мощность.</string>
     <string>Ошибка скачивания</string>
     <key>player_user_episode_playback_error</key>
     <string>Ошибка воспроизведения</string>
-    <key>player_user_episode_upload_error</key>
-    <string>Ошибка загрузки</string>
     <key>playlist_add_to_title</key>
     <string>Добавить в плейлист «%@»</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2246,10 +2216,6 @@ Pocket Casts на полную мощность.</string>
     <string>Можно отменить в любое время</string>
     <key>plus_champion</key>
     <string>Чемпион Pocket Casts</string>
-    <key>plus_champion_message</key>
-    <string>Благодарим за то, что вы с Pocket Casts с самого начала! Вы настоящий чемпион!</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>Облачное хранилище %1$@ ГБ</string>
     <key>plus_discount_yearly_membership</key>
     <string>Скидка 50%% на первый год</string>
     <key>plus_error_already_registered</key>
@@ -2268,8 +2234,6 @@ Pocket Casts на полную мощность.</string>
     <string>Распределите подкасты по папкам и синхронизируйте их на всех устройствах.</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>Получите годовую подписку на премиум-контент от Slumber Studios.</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>Загрузите аудиофайлы в облачное хранилище и пользуйтесь ими, где бы вы ни находились.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Закладки</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2314,8 +2278,6 @@ Pocket Casts на полную мощность.</string>
     <string>Скрыть рекламу</string>
     <key>plus_marketing_learn_more_button</key>
     <string>Подробнее о Pocket Casts Plus</string>
-    <key>plus_marketing_main_description</key>
-    <string>Личное пространство в открытом мире. Загрузите свои личные аудиофайлы на наши облачные серверы, зайдите в свою учетную запись через веб-плеер и пользуйтесь приложением.</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>Никаких рекламных баннеров</string>
     <key>plus_marketing_subtitle</key>
@@ -2326,8 +2288,6 @@ Pocket Casts на полную мощность.</string>
     <string>Всё, что вам нравится в Pocket Casts, и ещё больше</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>Следующий, случайно выбранный элемент</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>Загрузите файлы в облачное хранилище и пользуйтесь ими, где бы вы ни находились.</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>Слушайте подкасты везде: в приложениях для Windows и macOS и веб-приложении.</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2456,8 +2416,6 @@ Pocket Casts на полную мощность.</string>
     <string>Дополнения</string>
     <key>podcast_failed_download</key>
     <string>Не удалось скачать выпуск.</string>
-    <key>podcast_failed_upload</key>
-    <string>Не удалось загрузить</string>
     <key>podcast_feed_reload_button</key>
     <string>Обновить список выпусков</string>
     <key>podcast_feed_reload_loading</key>
@@ -2555,16 +2513,10 @@ Pocket Casts на полную мощность.</string>
     <string>Обновления завершены: %1$@</string>
     <key>podcast_updates_ends</key>
     <string>Обновления завершаются: %1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>Загрузить сейчас</string>
-    <key>podcast_uploading</key>
-    <string>Загрузка... %1$@</string>
     <key>podcast_view_changes_tip_details</key>
     <string>Коснитесь названия подкаста, чтобы свернуть или развернуть его описание и сведения о нём</string>
     <key>podcast_view_changes_tip_title</key>
     <string>Мы внесли некоторые изменения</string>
-    <key>podcast_waiting_upload</key>
-    <string>Ожидание загрузки</string>
     <key>podcast_yesterday</key>
     <string>Вчера</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2675,8 +2627,6 @@ Pocket Casts на полную мощность.</string>
     <string>Оставшееся время %1$@</string>
     <key>rate</key>
     <string>Оценить</string>
-    <key>rate_pocket_casts</key>
-    <string>Оценить Pocket Casts</string>
     <key>rating_error</key>
     <string>Ой! Произошла ошибка.</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2811,20 +2761,6 @@ Pocket Casts на полную мощность.</string>
     <string>Выбрать выпуски</string>
     <key>selected_count_format</key>
     <string>Выбрано %1$@</string>
-    <key>server_error_files_file_too_large</key>
-    <string>Этот файл слишком велик для загрузки.</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>Не удается загрузить, так как мы не можем определить тип содержимого этого файла.</string>
-    <key>server_error_files_invalid_user</key>
-    <string>Пользователь не выполнил вход.</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>Вы превысили предельный объем хранилища для вашей учетной записи.</string>
-    <key>server_error_files_title_required</key>
-    <string>Требуется название.</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>Не удается загрузить файл, повторите попытку позже.</string>
-    <key>server_error_files_uuid_required</key>
-    <string>Требуется файл uuid.</string>
     <key>server_error_login_access_denied</key>
     <string>Пользователь отклонил запрос на авторизацию</string>
     <key>server_error_login_account_locked</key>
@@ -3015,20 +2951,6 @@ Pocket Casts на полную мощность.</string>
     <string>Лента этого подкаста не обновляется из-за большого количества ошибок.</string>
     <key>settings_files</key>
     <string>Настройки файлов</string>
-    <key>settings_files_auto_download</key>
-    <string>Автоматическое скачивание из облака</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>Файлы, добавленные в облако с других устройств, не будут автоматически скачиваться.</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>Файлы, добавленные в облако с других устройств, будут автоматически скачиваться.</string>
-    <key>settings_files_auto_upload</key>
-    <string>Автоматическая загрузка в облако</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>Файлы, добавленные в это устройство, не будут автоматически загружаться в облако.</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>Файлы, добавленные в это устройство, будут автоматически загружаться в облако.</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>Удалить файл в облаке</string>
     <key>settings_files_delete_local_file</key>
     <string>Удалить локальный файл</string>
     <key>settings_first_party_analytics</key>
@@ -3551,8 +3473,6 @@ Pocket Casts на полную мощность.</string>
     <string>Включен в избранное</string>
     <key>status_unplayed</key>
     <string>Не воспроизводился</string>
-    <key>status_uploaded</key>
-    <string>Загружено</string>
     <key>stop_download</key>
     <string>Остановить скачивание</string>
     <key>subscribe</key>

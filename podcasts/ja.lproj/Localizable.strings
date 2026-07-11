@@ -15,8 +15,6 @@
     <string>法的情報およびその他</string>
     <key>about_privacy_policy</key>
     <string>プライバシーポリシー</string>
-    <key>about_rate_us</key>
-    <string>評価してください</string>
     <key>about_share_friends</key>
     <string>友達と共有する</string>
     <key>about_terms_of_service</key>
@@ -339,8 +337,6 @@
     <string>ポッドキャストと聴取履歴は引き続き利用できます。 </string>
     <key>cancel_confirm_item_plus</key>
     <string>この日付以降、ブックマーク、シャッフル、ウェアラブルなどの Plus 機能が利用できなくなります。</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>Pocket Casts アカウントにアップロードされたファイルはすべて削除されます (ただし、モバイルデバイスにダウンロードされたファイルは残ります)。</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>現在のサブスクリプションは%1$@まで有効です。</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -431,10 +427,6 @@ Pocket Casts Plus</string>
     <string>次年度が50%% オフ</string>
     <key>canceling</key>
     <string>キャンセルしています...</string>
-    <key>champion_description</key>
-    <string>最初からご利用いただきありがとうございます ! アプリを気に入っていただけましたら、ぜひフィードバックをお寄せください。</string>
-    <key>champion_title</key>
-    <string>あなたは Pocket Casts の真のサポーターです !</string>
     <key>change_app_icon</key>
     <string>アプリアイコンを変更</string>
     <key>change_bookmark_subtitle</key>
@@ -559,12 +551,6 @@ Pocket Casts Plus</string>
     <string>現在のパスワード</string>
     <key>custom_episode</key>
     <string>カスタムエピソード</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>アップロードをキャンセル</string>
-    <key>custom_episode_remove_upload</key>
-    <string>クラウドから削除</string>
-    <key>custom_episode_upload</key>
-    <string>クラウドにアップロード</string>
     <key>database_migration</key>
     <string>アプリの動作速度を上げるために、少量のビットとバイトを移動しています...</string>
     <key>day</key>
@@ -589,8 +575,6 @@ Pocket Casts Plus</string>
     <string>ファイルを削除</string>
     <key>delete_file_message</key>
     <string>このファイルを削除してもよろしいですか ?</string>
-    <key>delete_from_cloud</key>
-    <string>クラウドから削除</string>
     <key>delete_from_device</key>
     <string>端末から削除</string>
     <key>delete_from_device_only</key>
@@ -809,8 +793,6 @@ Pocket Casts Plus</string>
     <string>このエピソードは移動または削除された可能性があります。 ポッドキャストの作成者に連絡してください。</string>
     <key>download_error_not_enough_space</key>
     <string>エピソードを保存できません。容量がなくなりましたか ?</string>
-    <key>download_error_not_uploaded</key>
-    <string>ファイルがアップロードされていないため、再生できません。</string>
     <key>download_error_status_code</key>
     <string>ダウンロードに失敗しました。エラーコードは%1$@です。 ポッドキャストの作成者に連絡してください。</string>
     <key>download_error_try_again</key>
@@ -1080,8 +1062,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>Plus のすべての機能</string>
     <key>feature_marketing_bookmarks</key>
     <string>ブックマークでタイムスタンプを保存</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>ファイル用の%1$@GB のクラウドストレージ</string>
     <key>feature_marketing_early_access</key>
     <string>新機能への早期アクセス</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1118,10 +1098,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>フォトライブラリ</string>
     <key>file_upload_edit_file</key>
     <string>ファイルを編集</string>
-    <key>file_upload_error</key>
-    <string>このファイルをアップロードするスペース容量が足りません。</string>
-    <key>file_upload_error_subtitle</key>
-    <string>いくつかファイルを削除し、もう一度試してください。</string>
     <key>file_upload_name_required</key>
     <string>名前は必須項目です</string>
     <key>file_upload_no_files_description</key>
@@ -1140,8 +1116,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>ファイル</string>
     <key>files_how_to_title</key>
     <string>ファイルの保存方法</string>
-    <key>files_not_uploaded</key>
-    <string>アップロードされたファイルがありません</string>
     <key>files_sort</key>
     <string>ファイルを並び替え</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>一時停止</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>Pocket Casts Plus でバナー広告などにさよならしましょう</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>Pocket Casts Plus でファイルのアップロードなどを利用しましょう</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>Pocket Casts Plus でポッドキャストの整理などを利用しましょう</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2084,8 +2056,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>ダウンロードエラー</string>
     <key>player_user_episode_playback_error</key>
     <string>再生エラー</string>
-    <key>player_user_episode_upload_error</key>
-    <string>アップロードエラー</string>
     <key>playlist_add_to_title</key>
     <string>「%@」に追加</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2244,10 +2214,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>いつでもキャンセルできます</string>
     <key>plus_champion</key>
     <string>Pocket Casts の真のサポーター</string>
-    <key>plus_champion_message</key>
-    <string>Pocket Casts を最初からご利用いただきありがとうございます。 あなたは真のサポーターです !</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>%1$@GB のクラウドストレージ</string>
     <key>plus_discount_yearly_membership</key>
     <string>初年度は50%% オフ</string>
     <key>plus_error_already_registered</key>
@@ -2266,8 +2232,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>ポッドキャストをフォルダーに整理し、すべての端末間で同期させます。</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>Slumber Studios のプレミアムコンテンツ1年分をご利用ください。</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>音声ファイルをクラウドストレージにアップロードしてどこからでも利用できるようにします。</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>ブックマーク</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2312,8 +2276,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>広告を非表示</string>
     <key>plus_marketing_learn_more_button</key>
     <string>Pocket Casts Plus の詳細</string>
-    <key>plus_marketing_main_description</key>
-    <string>パーソナルにいろんな仲間とつながる。 個人的な音声ファイルをクラウドサーバーにアップロード。ウェブプレーヤーからアカウントにアクセスして、アプリを自分好みにカスタマイズしましょう。</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>バナー広告なし</string>
     <key>plus_marketing_subtitle</key>
@@ -2324,8 +2286,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>お気に入りの Pocket Casts の機能に加え、さらなる機能を利用できます</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>次のシャッフル</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>ファイルをクラウドストレージにアップロードしてどこからでも利用できるようにします</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>Pocket Casts の Windows 版、macOS 版、ウェブ版アプリでさらに多くの場所で聞きましょう</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2454,8 +2414,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>その他</string>
     <key>podcast_failed_download</key>
     <string>エピソードのダウンロードに失敗しました。</string>
-    <key>podcast_failed_upload</key>
-    <string>アップロードに失敗</string>
     <key>podcast_feed_reload_button</key>
     <string>エピソードリストを更新</string>
     <key>podcast_feed_reload_loading</key>
@@ -2553,16 +2511,10 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>更新終了日: %1$@</string>
     <key>podcast_updates_ends</key>
     <string>更新終了予定日: %1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>今すぐアップロード</string>
-    <key>podcast_uploading</key>
-    <string>アップロードしています... %1$@が完了</string>
     <key>podcast_view_changes_tip_details</key>
     <string>ポッドキャストのタイトルをタップすると、説明と詳細を折りたたんだり展開したりできます</string>
     <key>podcast_view_changes_tip_title</key>
     <string>いくつかの変更を行いました</string>
-    <key>podcast_waiting_upload</key>
-    <string>アップロード待ち</string>
     <key>podcast_yesterday</key>
     <string>昨日</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2673,8 +2625,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>合計残り時間: %1$@</string>
     <key>rate</key>
     <string>評価する</string>
-    <key>rate_pocket_casts</key>
-    <string>Pocket Casts を評価</string>
     <key>rating_error</key>
     <string>エラー。 エラーが発生しました。</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2809,20 +2759,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>エピソードを選択</string>
     <key>selected_count_format</key>
     <string>%1$@件を選択済み</string>
-    <key>server_error_files_file_too_large</key>
-    <string>このファイルはサイズが大きすぎるためアップロードできません。</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>このファイルのコンテンツタイプを判断できないため、アップロードできません。</string>
-    <key>server_error_files_invalid_user</key>
-    <string>ログインしてください。</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>アカウントストレージの上限を超えています。</string>
-    <key>server_error_files_title_required</key>
-    <string>タイトルが必要です。</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>ファイルをアップロードできません。後ほど、もう一度お試しください。</string>
-    <key>server_error_files_uuid_required</key>
-    <string>ファイルの UUID が必要です。</string>
     <key>server_error_login_access_denied</key>
     <string>ユーザーが認証リクエストを拒否しました</string>
     <key>server_error_login_account_locked</key>
@@ -3013,20 +2949,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>このポッドキャストのフィードはエラーが多すぎるため更新を停止しました。</string>
     <key>settings_files</key>
     <string>ファイル設定</string>
-    <key>settings_files_auto_download</key>
-    <string>クラウドから自動的にダウンロード</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>他の端末からクラウドに追加されたファイルは自動的にダウンロードされません。</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>他の端末からクラウドに追加されたファイルは自動的にダウンロードされます。</string>
-    <key>settings_files_auto_upload</key>
-    <string>クラウドに自動アップロード</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>この端末に追加されたファイルはクラウドに自動的にアップロードされません。</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>この端末に追加されたファイルはクラウドに自動的にアップロードされます。</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>クラウドファイルを削除</string>
     <key>settings_files_delete_local_file</key>
     <string>ローカルファイルを削除</string>
     <key>settings_first_party_analytics</key>
@@ -3545,8 +3467,6 @@ Pocket Casts を最大限に活用しましょう。</string>
     <string>星付き</string>
     <key>status_unplayed</key>
     <string>未再生</string>
-    <key>status_uploaded</key>
-    <string>アップロード済み</string>
     <key>stop_download</key>
     <string>ダウンロードを停止</string>
     <key>subscribe</key>

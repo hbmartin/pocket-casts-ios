@@ -6,7 +6,7 @@ enum Constants {
     static let apiKey = "apiKey"
     static let homeGridSortOrderKey = "SJPodcastLibrarySort"
     static let marketingOptInNeedsSyncKey = "SJMarketingOptInNeedsSync"
-    static let filesLastModifiedKey = "UserFilesLastModified"
+    static let syncCursorKey = "SyncCursor"
     static let cleanupInProgress = "CleanupInProgress"
     static let podcastGroupingDefaultKey = "PodcastGroupingDefault"
     static let pinCodeKey = "PinCode"

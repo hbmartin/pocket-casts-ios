@@ -152,80 +152,6 @@ public class ServerSettings {
         UserDefaults.standard.set(false, forKey: ServerConstants.UserDefaults.marketingOptInNeedsSyncKey)
     }
 
-    // MARK: Files last modified
-
-    public class func setFilesLastModified(_ value: String) {
-        UserDefaults.standard.set(value, forKey: ServerConstants.UserDefaults.filesLastModifiedKey)
-    }
-
-    public class func filesLastModified() -> String? {
-        UserDefaults.standard.string(forKey: ServerConstants.UserDefaults.filesLastModifiedKey)
-    }
-
-    public class func removeFilesLastModifiedKey() {
-        UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.filesLastModifiedKey)
-    }
-
-    private static let filesUsageLastModifiedKey = "UserFilesUsageLastModified"
-
-    public class func setFilesUsageLastModified(_ value: String) {
-        UserDefaults.standard.set(value, forKey: filesUsageLastModifiedKey)
-    }
-
-    public class func filesUsageLastModified() -> String? {
-        UserDefaults.standard.string(forKey: filesUsageLastModifiedKey)
-    }
-
-    // MARK: Custom Storage limit from user
-
-    public class func setCustomStorageUserLimit(_ value: Int) {
-        UserDefaults.standard.set(value, forKey: ServerConstants.Values.customStorageUserLimit)
-    }
-
-    public class func customStorageUserLimit() -> Int {
-        UserDefaults.standard.integer(forKey: ServerConstants.Values.customStorageUserLimit)
-    }
-
-    // MARK: Custom Storage used on server
-
-    public class func setCustomStorageUsed(_ value: Int) {
-        UserDefaults.standard.set(value, forKey: ServerConstants.Values.customStorageUsed)
-    }
-
-    public class func customStorageUsed() -> Int {
-        UserDefaults.standard.integer(forKey: ServerConstants.Values.customStorageUsed)
-    }
-
-    // MARK: Custom Storage number of files on server
-
-    public class func setCustomStorageNumFiles(_ value: Int) {
-        UserDefaults.standard.set(value, forKey: ServerConstants.Values.customStorageNumFiles)
-    }
-
-    public class func customStorageNumFiles() -> Int {
-        UserDefaults.standard.integer(forKey: ServerConstants.Values.customStorageNumFiles)
-    }
-
-    // User files autodownload
-    private static let userEpisodeAutoDownloadKey = "UserEpisodeAutoDownload"
-    public class func userEpisodeAutoDownload() -> Bool {
-        UserDefaults.standard.bool(forKey: userEpisodeAutoDownloadKey)
-    }
-
-    public class func setUserEpisodeAutoDownload(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: userEpisodeAutoDownloadKey)
-    }
-
-    // User files autodownload on wifi
-    private static let userEpisodeOnlyOnWifiKey = "UserEpisodeOnlyOnWifi"
-    public class func userEpisodeOnlyOnWifi() -> Bool {
-        UserDefaults.standard.bool(forKey: userEpisodeOnlyOnWifiKey)
-    }
-
-    public class func setUserEpisodeOnlyOnWifi(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: userEpisodeOnlyOnWifiKey)
-    }
-
     public class func syncingEmail() -> String? {
         try? KeychainHelper.string(for: ServerConstants.Values.syncingEmailKey)
     }
@@ -381,26 +307,5 @@ public extension ServerSettings {
 
     class func setRefreshToken(_ newValue: String?) {
         KeychainHelper.save(string: newValue, key: ServerConstants.Values.refreshTokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
-    }
-}
-
-// MARK: - Live Analytics Debugging
-
-public extension ServerSettings {
-    private static let liveAnalyticsUrlKey = "SJLiveAnalyticsUrl"
-
-    /// URL for streaming analytics events to a remote debugging endpoint.
-    /// This is set by the server and enables live analytics debugging when non-empty.
-    class var liveAnalyticsUrl: String? {
-        get {
-            UserDefaults.standard.string(forKey: liveAnalyticsUrlKey)
-        }
-        set {
-            if let newValue, !newValue.isEmpty {
-                UserDefaults.standard.set(newValue, forKey: liveAnalyticsUrlKey)
-            } else {
-                UserDefaults.standard.removeObject(forKey: liveAnalyticsUrlKey)
-            }
-        }
     }
 }

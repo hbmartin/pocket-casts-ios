@@ -15,8 +15,6 @@
     <string>Juridisk information med mera</string>
     <key>about_privacy_policy</key>
     <string>Integritetspolicy</string>
-    <key>about_rate_us</key>
-    <string>Betygsätt oss</string>
     <key>about_share_friends</key>
     <string>Dela med vänner</string>
     <key>about_terms_of_service</key>
@@ -339,8 +337,6 @@ Ladda ner appen för att få den fullständiga upplevelsen.</string>
     <string>Dina podcasts och din lyssningshistorik kommer fortsätta att vara tillgängliga. </string>
     <key>cancel_confirm_item_plus</key>
     <string>Efter detta datum kommer åtkomsten till Plus-funktioner som bokmärken, slumpmässig uppspelning, bärbara tillbehör med mera att tas bort.</string>
-    <key>cancel_confirm_item_uploads</key>
-    <string>Alla filer som har laddats upp till ditt Pocket Casts-konto kommer att tas bort (men nedladdningar på dina mobila enheter kommer att vara kvar).</string>
     <key>cancel_confirm_sub_expiry</key>
     <string>Din nuvarande prenumeration förblir aktiv till %1$@.</string>
     <key>cancel_confirm_sub_expiry_date_fallback</key>
@@ -431,10 +427,6 @@ Låt oss hjälpa dig först</string>
     <string>50 %% rabatt på ditt nästa år.</string>
     <key>canceling</key>
     <string>Avbryter …</string>
-    <key>champion_description</key>
-    <string>Tack för att du varit med oss sedan starten. Om du tycker om att använda vår app vill vi gärna höra din feedback.</string>
-    <key>champion_title</key>
-    <string>Du är en sann förespråkare för Pocket Casts.</string>
     <key>change_app_icon</key>
     <string>Ändra appikon</string>
     <key>change_bookmark_subtitle</key>
@@ -559,12 +551,6 @@ Låt oss hjälpa dig först</string>
     <string>Nuvarande lösenord</string>
     <key>custom_episode</key>
     <string>Anpassat avsnitt</string>
-    <key>custom_episode_cancel_upload</key>
-    <string>Avbryt uppladdning</string>
-    <key>custom_episode_remove_upload</key>
-    <string>Ta bort från molnet</string>
-    <key>custom_episode_upload</key>
-    <string>Ladda upp till molnet</string>
     <key>database_migration</key>
     <string>Vi flyttar på lite dittan och dattan så att appen ska bli snabbare ...</string>
     <key>day</key>
@@ -589,8 +575,6 @@ Låt oss hjälpa dig först</string>
     <string>Ta bort fil</string>
     <key>delete_file_message</key>
     <string>Är du säker på att du vill ta bort den här filen?</string>
-    <key>delete_from_cloud</key>
-    <string>Ta bort från molnet</string>
     <key>delete_from_device</key>
     <string>Ta bort från enheten</string>
     <key>delete_from_device_only</key>
@@ -809,8 +793,6 @@ Låt oss hjälpa dig först</string>
     <string>Det här avsnittet kan ha flyttats eller tagits bort. Kontakta podcastens skapare.</string>
     <key>download_error_not_enough_space</key>
     <string>Det gick inte att spara avsnittet. Har du använt allt ditt utrymme?</string>
-    <key>download_error_not_uploaded</key>
-    <string>Filen är inte uppladdad, kan inte spela upp</string>
     <key>download_error_status_code</key>
     <string>Nedladdningen misslyckades, felkod %1$@. Kontakta podcastens skapare.</string>
     <key>download_error_try_again</key>
@@ -1080,8 +1062,6 @@ du lyssnade på var
     <string>Alla funktionerna i Plus</string>
     <key>feature_marketing_bookmarks</key>
     <string>Behåll tidsstämplar med bokmärken</string>
-    <key>feature_marketing_cloud_storage</key>
-    <string>%1$@ GB molnlagring för dina filer</string>
     <key>feature_marketing_early_access</key>
     <string>Tidig åtkomst till nya funktioner</string>
     <key>feature_marketing_extra_themes_icons</key>
@@ -1118,10 +1098,6 @@ du lyssnade på var
     <string>Fotobibliotek</string>
     <key>file_upload_edit_file</key>
     <string>Redigera fil</string>
-    <key>file_upload_error</key>
-    <string>Det finns inte tillräckligt med utrymme för att ladda upp den här filen.</string>
-    <key>file_upload_error_subtitle</key>
-    <string>Ta bort några filer och försök igen.</string>
     <key>file_upload_name_required</key>
     <string>Namn obligatoriskt</string>
     <key>file_upload_no_files_description</key>
@@ -1140,8 +1116,6 @@ du lyssnade på var
     <string>Filer</string>
     <key>files_how_to_title</key>
     <string>Så här sparar du en fil</string>
-    <key>files_not_uploaded</key>
-    <string>Inga filer har laddats upp</string>
     <key>files_sort</key>
     <string>Sortera filer</string>
     <key>filter_auto_add_subtitle</key>
@@ -1839,8 +1813,6 @@ UPPDATERINGAR</string>
     <string>Pause</string>
     <key>paywall_dynamic_headline_banner_ad</key>
     <string>Säg adjö till bannerannonser och mer med Pocket Casts Plus</string>
-    <key>paywall_dynamic_headline_files</key>
-    <string>Ladda upp dina filer och mer därtill med Pocket Casts Plus</string>
     <key>paywall_dynamic_headline_folder</key>
     <string>Organisera dina podcasts och mer därtill med Pocket Casts Plus</string>
     <key>paywall_dynamic_headline_icons</key>
@@ -2086,8 +2058,6 @@ Det är engagemang!</string>
     <string>Nedladdningsfel</string>
     <key>player_user_episode_playback_error</key>
     <string>Uppspelningsfel</string>
-    <key>player_user_episode_upload_error</key>
-    <string>Uppladdningsfel</string>
     <key>playlist_add_to_title</key>
     <string>Lägg till i ”%@”</string>
     <key>playlist_create_no_episodes_description</key>
@@ -2246,10 +2216,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Kan avslutas när som helst</string>
     <key>plus_champion</key>
     <string>Pocket Casts-förespråkare</string>
-    <key>plus_champion_message</key>
-    <string>Tack för att du har varit med Pocket Casts sedan starten. Du är en sann förespråkare.</string>
-    <key>plus_cloud_storage_limit_format</key>
-    <string>%1$@ GB molnlagring</string>
     <key>plus_discount_yearly_membership</key>
     <string>50 %% rabatt på ditt första år</string>
     <key>plus_error_already_registered</key>
@@ -2268,8 +2234,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Organisera dina podcasts i mappar och håll dem synkroniserade på alla dina enheter.</string>
     <key>plus_feature_card_text_slumber_studio</key>
     <string>Få 1 år av premiuminnehåll från Slumber Studios.</string>
-    <key>plus_feature_card_text_storage</key>
-    <string>Ladda upp dina ljudfiler till molnlagringen och ha dem tillgängliga överallt.</string>
     <key>plus_feature_card_title_bookmarks</key>
     <string>Bokmärken</string>
     <key>plus_feature_card_title_desktop</key>
@@ -2314,8 +2278,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Dölj annonser</string>
     <key>plus_marketing_learn_more_button</key>
     <string>Läs mer om Pocket Casts Plus</string>
-    <key>plus_marketing_main_description</key>
-    <string>Gör appen din egen och bli distribuerad på en och samma gång. Ladda upp dina egna ljudfiler till vår molnserver och få tillgång till ditt konto via vår webbspelare.</string>
     <key>plus_marketing_no_banner_ads</key>
     <string>Inga bannerannonser</string>
     <key>plus_marketing_subtitle</key>
@@ -2326,8 +2288,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Allt du älskar med Pocket Casts och mer därtill</string>
     <key>plus_marketing_up_next_shuffle</key>
     <string>Slumpmässig Nästa-uppspelning</string>
-    <key>plus_marketing_updated_cloud_storage_description</key>
-    <string>Ladda upp dina filer till molnlagringen och ha dem tillgängliga överallt</string>
     <key>plus_marketing_updated_desktop_apps_description</key>
     <string>Lyssna på fler platser med våra Windows-, macOS- och webbappar</string>
     <key>plus_marketing_updated_folders_description</key>
@@ -2456,8 +2416,6 @@ Prova att justera reglerna, eller spara denna spellista för framtida avsnitt so
     <string>Extra</string>
     <key>podcast_failed_download</key>
     <string>Nedladdningen av avsnittet misslyckades.</string>
-    <key>podcast_failed_upload</key>
-    <string>Uppladdningen misslyckades</string>
     <key>podcast_feed_reload_button</key>
     <string>Uppdatera avsnittslista</string>
     <key>podcast_feed_reload_loading</key>
@@ -2555,16 +2513,10 @@ Om du behöver inspiration så kan du Upptäcka nya podcasts nedan.</string>
     <string>Uppdateringar slutade: %1$@</string>
     <key>podcast_updates_ends</key>
     <string>Uppdateringar slutar: %1$@</string>
-    <key>podcast_upload_confirmation</key>
-    <string>Ladda upp nu</string>
-    <key>podcast_uploading</key>
-    <string>Laddar upp … %1$@</string>
     <key>podcast_view_changes_tip_details</key>
     <string>Tryck på podcastens rubrik för att minimera eller expandera dess beskrivning och detaljer</string>
     <key>podcast_view_changes_tip_title</key>
     <string>Vi har gjort några ändringar</string>
-    <key>podcast_waiting_upload</key>
-    <string>Inväntar uppladdning</string>
     <key>podcast_yesterday</key>
     <string>Igår</string>
     <key>podcasts_badge_all_unplayed</key>
@@ -2675,8 +2627,6 @@ Om du behöver inspiration så kan du Upptäcka nya podcasts nedan.</string>
     <string>%1$@ återstår</string>
     <key>rate</key>
     <string>Omdöme</string>
-    <key>rate_pocket_casts</key>
-    <string>Betygsätt Pocket Casts</string>
     <key>rating_error</key>
     <string>Hoppsan. Det uppstod ett fel.</string>
     <key>rating_listen_to_this_podcast_message</key>
@@ -2811,20 +2761,6 @@ Om du behöver inspiration så kan du Upptäcka nya podcasts nedan.</string>
     <string>Välj avsnitt</string>
     <key>selected_count_format</key>
     <string>%1$@ valda</string>
-    <key>server_error_files_file_too_large</key>
-    <string>Filen är för stor för att laddas upp.</string>
-    <key>server_error_files_invalid_content_type</key>
-    <string>Uppladdningen kunde inte genomföras, eftersom vi inte kan fastställa innehållstypen för den här filen.</string>
-    <key>server_error_files_invalid_user</key>
-    <string>Användaren är inte inloggad.</string>
-    <key>server_error_files_storage_limit_exceeded</key>
-    <string>Du har överskridit lagringsgränsen för ditt konto.</string>
-    <key>server_error_files_title_required</key>
-    <string>Titel krävs.</string>
-    <key>server_error_files_upload_failed_generic</key>
-    <string>Det fick inte att ladda upp filen. Försök igen senare.</string>
-    <key>server_error_files_uuid_required</key>
-    <string>Fil-UUID krävs.</string>
     <key>server_error_login_access_denied</key>
     <string>Användaren nekade auktoriseringsbegäran</string>
     <key>server_error_login_account_locked</key>
@@ -3015,20 +2951,6 @@ Om du behöver inspiration så kan du Upptäcka nya podcasts nedan.</string>
     <string>Flödet för den här podcasten har slutat uppdateras eftersom det innehöll för många fel.</string>
     <key>settings_files</key>
     <string>Filinställningar</string>
-    <key>settings_files_auto_download</key>
-    <string>Automatisk nedladdning från molnet</string>
-    <key>settings_files_auto_download_subtitle_off</key>
-    <string>Filer som läggs till i molnet från andra enheter kommer inte att laddas ner  automatiskt.</string>
-    <key>settings_files_auto_download_subtitle_on</key>
-    <string>Filer som läggs till i molnet från andra enheter kommer att laddas ner automatiskt.</string>
-    <key>settings_files_auto_upload</key>
-    <string>Automatisk uppladdning till molnet</string>
-    <key>settings_files_auto_upload_subtitle_off</key>
-    <string>Filer på den här enheten kommer inte att laddas upp till molnet automatiskt .</string>
-    <key>settings_files_auto_upload_subtitle_on</key>
-    <string>Filer på den här enheten kommer automatiskt att laddas upp till molnet.</string>
-    <key>settings_files_delete_cloud_file</key>
-    <string>Ta bort molnfil</string>
     <key>settings_files_delete_local_file</key>
     <string>Ta bort lokal fil</string>
     <key>settings_first_party_analytics</key>
@@ -3551,8 +3473,6 @@ Din e-postadress, ditt lösenord eller annan känslig information delas aldrig.<
     <string>Stjärnmärkt</string>
     <key>status_unplayed</key>
     <string>Inte spelade</string>
-    <key>status_uploaded</key>
-    <string>Uppladdat</string>
     <key>stop_download</key>
     <string>Stoppa nedladdning</string>
     <key>subscribe</key>

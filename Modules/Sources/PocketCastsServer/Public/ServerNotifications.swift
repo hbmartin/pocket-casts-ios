@@ -15,12 +15,6 @@ public enum ServerNotifications {
 
     // Account state
     public static let subscriptionStatusChanged = NSNotification.Name(rawValue: "SJSubscriptionStatusChanged")
-
-    // User Episode
-    public static let userEpisodeUploadProgress = NSNotification.Name(rawValue: "SJUserEpisodeUploadProgress")
-    public static let userEpisodesRefreshFailed = NSNotification.Name(rawValue: "SJUserEpisodesRefreshFailed")
-    public static let userEpisodesRefreshed = NSNotification.Name(rawValue: "SJUserEpisodesRefreshed")
-    public static let userEpisodeUploadStatusChanged = NSNotification.Name(rawValue: "SJUserEpisodeUploadChanged")
 }
 
 public extension NSNotification.Name {

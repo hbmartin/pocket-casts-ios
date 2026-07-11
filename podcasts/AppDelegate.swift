@@ -157,7 +157,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         } else {
             DispatchQueue.global(qos: .userInitiated).async {
                 PodcastManager.shared.checkForPendingAndAutoDownloads()
-                UserEpisodeManager.checkForPendingUploads()
             }
         }
         fileSyncCoordinator.handleAppBecameActive()
@@ -389,7 +388,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-struct BitdriftErrorLogger: ErrorLogger {
+nonisolated struct BitdriftErrorLogger: ErrorLogger {
     let category: String
 
     func log(error: Error, context: [String: String]?) {

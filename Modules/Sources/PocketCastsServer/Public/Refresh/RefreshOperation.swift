@@ -55,7 +55,6 @@ class RefreshOperation: Operation, @unchecked Sendable {
             if SyncManager.isUserLoggedIn() {
                 NotificationCenter.postOnMainThread(notification: ServerNotifications.syncStarted, object: nil)
 
-                apiQueue.addOperation(RetrieveCustomFilesTask())
                 apiQueue.addOperation(UpNextSyncTask())
                 let syncTask = SyncTask()
                 apiQueue.addOperation(syncTask)
@@ -64,8 +63,8 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
                 apiQueue.addOperation(SyncSettingsTask())
 
-                    // update our local copy of the remote stats. Doesn't really matter if this fails or succeeds
-                    StatsManager.shared.loadRemoteStats(completion: nil)
+                // update our local copy of the remote stats. Doesn't really matter if this fails or succeeds
+                StatsManager.shared.loadRemoteStats(completion: nil)
 
                 apiQueue.waitUntilAllOperationsAreFinished()
 

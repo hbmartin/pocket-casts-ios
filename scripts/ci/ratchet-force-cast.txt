@@ -3,8 +3,8 @@
 # Deletion-only: counts may only go down. Regenerate after removing usages
 # with: mise run ratchets:baseline
 Modules/Sources/PocketCastsDataModel/Public/DataManager.swift: 1
-Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift: 6
-podcasts/AccountViewController+TableView.swift: 8
+Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift: 5
+podcasts/AccountViewController+TableView.swift: 7
 podcasts/AddCustomViewController+CollectionView.swift: 2
 podcasts/AddCustomViewController+ImagePicker.swift: 2
 podcasts/AppDelegate+SiriShortcuts.swift: 7

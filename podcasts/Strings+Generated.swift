@@ -22,8 +22,6 @@ nonisolated internal enum L10n {
   internal static var aboutLegalAndMore: String { return L10n.tr("Localizable", "about_legal_and_more", fallback: "Legal and More") }
   /// Button that takes the user to privacy policy screen
   internal static var aboutPrivacyPolicy: String { return L10n.tr("Localizable", "about_privacy_policy", fallback: "Privacy Policy") }
-  /// About page text to ask the user to rate our app in the App Store
-  internal static var aboutRateUs: String { return L10n.tr("Localizable", "about_rate_us", fallback: "Rate Us") }
   /// About page text to ask the user to share a link to our app with friends
   internal static var aboutShareFriends: String { return L10n.tr("Localizable", "about_share_friends", fallback: "Share With Friends") }
   /// Button that takes the user to terms of service screen
@@ -528,8 +526,6 @@ nonisolated internal enum L10n {
   internal static var cancelConfirmItemHistory: String { return L10n.tr("Localizable", "cancel_confirm_item_history", fallback: "Your podcasts and listening history will continue to be accessible. ") }
   /// Title of a list item that informs the user their plus features will be locked if they cancel
   internal static var cancelConfirmItemPlus: String { return L10n.tr("Localizable", "cancel_confirm_item_plus", fallback: "After this date, access to Plus features like bookmarks, shuffle, wearables and more will be removed.") }
-  /// Title of a list item that informs the user uploaded files will be removed if they cancel
-  internal static var cancelConfirmItemUploads: String { return L10n.tr("Localizable", "cancel_confirm_item_uploads", fallback: "All files uploaded to your Pocket Casts account will be deleted, but downloads on your mobile devices will remain.") }
   /// Title of a list item that informs the user they will no longer be able to access plus on the web if they cancel
   internal static var cancelConfirmItemWebPlayer: String { return L10n.tr("Localizable", "cancel_confirm_item_web_player", fallback: "You will no longer be able to access Pocket Casts using your web browser, or desktop computer.") }
   /// Button title that lets the user stop the cancellation process
@@ -636,10 +632,6 @@ nonisolated internal enum L10n {
   internal static var cancelSubscriptionYearlyPromotionTitle: String { return L10n.tr("Localizable", "cancel_subscription_yearly_promotion_title", fallback: "Get 50%% off your next year") }
   /// An activity message indicating that the process to cancel is running.
   internal static var canceling: String { return L10n.tr("Localizable", "canceling", fallback: "Canceling...") }
-  /// Subtitle of the Pocket Casts champion screen
-  internal static var championDescription: String { return L10n.tr("Localizable", "champion_description", fallback: "Thanks for being with us since the beginning! If you enjoy using our app, we’d love to hear your feedback.") }
-  /// Title of the Pocket Casts champion screen, greeting an user that has been using Pocket Casts for a long time
-  internal static var championTitle: String { return L10n.tr("Localizable", "champion_title", fallback: "You’re a true champion of Pocket Casts!") }
   /// Button label that changes the users chosen app icon
   internal static var changeAppIcon: String { return L10n.tr("Localizable", "change_app_icon", fallback: "Change App Icon") }
   /// The subtitle of a view where the user can edit their bookmark title
@@ -762,12 +754,6 @@ nonisolated internal enum L10n {
   internal static var currentPasswordPrompt: String { return L10n.tr("Localizable", "current_password_prompt", fallback: "Current Password") }
   /// An indicator that the current episode is a user generated episode
   internal static var customEpisode: String { return L10n.tr("Localizable", "custom_episode", fallback: "Custom Episode") }
-  /// Prompt to cancel an active upload of a file.
-  internal static var customEpisodeCancelUpload: String { return L10n.tr("Localizable", "custom_episode_cancel_upload", fallback: "Cancel Upload") }
-  /// Prompt to delete an uploaded file from the cloud.
-  internal static var customEpisodeRemoveUpload: String { return L10n.tr("Localizable", "custom_episode_remove_upload", fallback: "Remove from Cloud") }
-  /// Prompt to upload a file to the cloud.
-  internal static var customEpisodeUpload: String { return L10n.tr("Localizable", "custom_episode_upload", fallback: "Upload to Cloud") }
   /// Message displayed when doing heavy database operations
   internal static var databaseMigration: String { return L10n.tr("Localizable", "database_migration", fallback: "We're moving a few bits and bytes so the app runs faster...") }
   /// day
@@ -792,8 +778,6 @@ nonisolated internal enum L10n {
   internal static var deleteFile: String { return L10n.tr("Localizable", "delete_file", fallback: "Delete File") }
   /// A common string used throughout the app. Message portion of the prompt to delete the selected file.
   internal static var deleteFileMessage: String { return L10n.tr("Localizable", "delete_file_message", fallback: "Are you sure you want to delete this file?") }
-  /// A common string used throughout the app. Prompt to delete the selected item(s) from the cloud storage.
-  internal static var deleteFromCloud: String { return L10n.tr("Localizable", "delete_from_cloud", fallback: "Delete From Cloud") }
   /// A common string used throughout the app. Prompt to delete the selected item(s) from the device storage.
   internal static var deleteFromDevice: String { return L10n.tr("Localizable", "delete_from_device", fallback: "Delete From Device") }
   /// A common string used throughout the app. Prompt to delete the selected item(s) from the device storage. 'Only' is used to emphasize that the item is also stored in the cloud and that file won't be deleted.
@@ -1022,8 +1006,6 @@ nonisolated internal enum L10n {
   internal static var downloadErrorContactAuthorVersion2: String { return L10n.tr("Localizable", "download_error_contact_author_version_2", fallback: "This episode may have been moved or deleted. Contact the podcast author.") }
   /// The episode failed to download due to the user running out of storage space.
   internal static var downloadErrorNotEnoughSpace: String { return L10n.tr("Localizable", "download_error_not_enough_space", fallback: "Unable to save episode, have you run out of space?") }
-  /// The episode failed to download because the file wasn't available on the server
-  internal static var downloadErrorNotUploaded: String { return L10n.tr("Localizable", "download_error_not_uploaded", fallback: "File not uploaded, unable to play") }
   /// The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author. '%1$@' is a placeholder for the status code that the app received.
   internal static func downloadErrorStatusCode(_ p1: Any) -> String {
     return L10n.tr("Localizable", "download_error_status_code", String(describing: p1), fallback: "Download failed, error code %1$@. Contact the podcast author.")
@@ -1358,10 +1340,6 @@ nonisolated internal enum L10n {
   internal static var featureMarketingAllPlusFeatures: String { return L10n.tr("Localizable", "feature_marketing_all_plus_features", fallback: "All the features in Plus") }
   /// Bookmarks feature marketing message
   internal static var featureMarketingBookmarks: String { return L10n.tr("Localizable", "feature_marketing_bookmarks", fallback: "Keep timestamps with Bookmarks") }
-  /// Cloud Storage feature marketing message. The %1$@ argument is the amount of cloud disk space available. Ex: 20 GB Cloud Storage for your files
-  internal static func featureMarketingCloudStorage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "feature_marketing_cloud_storage", String(describing: p1), fallback: "%1$@ GB Cloud Storage for your files")
-  }
   /// Patron early access to new features marketing message
   internal static var featureMarketingEarlyAccess: String { return L10n.tr("Localizable", "feature_marketing_early_access", fallback: "Early access to new features") }
   /// Extra Themes And App Icons feature marketing message
@@ -1464,10 +1442,6 @@ nonisolated internal enum L10n {
   internal static var fileUploadChooseImagePhotoLibrary: String { return L10n.tr("Localizable", "file_upload_choose_image_photo_Library", fallback: "Photo Library") }
   /// Title for the file upload settings screen. This is used when a user is editing an uploaded file.
   internal static var fileUploadEditFile: String { return L10n.tr("Localizable", "file_upload_edit_file", fallback: "Edit File") }
-  /// Error message displayed when the user has used all of their storage space.
-  internal static var fileUploadError: String { return L10n.tr("Localizable", "file_upload_error", fallback: "Not enough space to upload this file.") }
-  /// Subtitle for the error message displayed when the user has used all of their storage space. Instructs the user to try freeing up space.
-  internal static var fileUploadErrorSubtitle: String { return L10n.tr("Localizable", "file_upload_error_subtitle", fallback: "Remove some files and try again.") }
   /// Prompt indicating that the user needs to name the file in order to upload it.
   internal static var fileUploadNameRequired: String { return L10n.tr("Localizable", "file_upload_name_required", fallback: "Name required") }
   /// The description for the screen when there are no files currently uploaded. '
@@ -1487,8 +1461,6 @@ nonisolated internal enum L10n {
   internal static var files: String { return L10n.tr("Localizable", "files", fallback: "Files") }
   /// Title for the screen that details how to add a file to Pocket Casts.
   internal static var filesHowToTitle: String { return L10n.tr("Localizable", "files_how_to_title", fallback: "How to save a file") }
-  /// Message when the user didn't upload any files
-  internal static var filesNotUploaded: String { return L10n.tr("Localizable", "files_not_uploaded", fallback: "No files uploaded") }
   /// Prompt to open a menu to allow sorting of manually added files.
   internal static var filesSort: String { return L10n.tr("Localizable", "files_sort", fallback: "Sort Files") }
   /// Subtitle informing the user that new podcasts will be automatically added to this filter.
@@ -2277,8 +2249,6 @@ nonisolated internal enum L10n {
   internal static var pause: String { return L10n.tr("Localizable", "pause", fallback: "Pause") }
   /// Paywall header for when the view is presented from the banner ad source
   internal static var paywallDynamicHeadlineBannerAd: String { return L10n.tr("Localizable", "paywall_dynamic_headline_banner_ad", fallback: "Say goodbye to banner ads and more with Pocket Casts Plus") }
-  /// Paywall header for when the view is presented from the files source
-  internal static var paywallDynamicHeadlineFiles: String { return L10n.tr("Localizable", "paywall_dynamic_headline_files", fallback: "Upload your files with Pocket Casts Plus, and more") }
   /// Paywall header for when the view is presented from the folder source
   internal static var paywallDynamicHeadlineFolder: String { return L10n.tr("Localizable", "paywall_dynamic_headline_folder", fallback: "Organize your podcasts with Pocket Casts Plus, and more") }
   /// Paywall header for when the view is presented from the icons source
@@ -2586,8 +2556,6 @@ nonisolated internal enum L10n {
   internal static var playerUserEpisodeDownloadError: String { return L10n.tr("Localizable", "player_user_episode_download_error", fallback: "Download Error") }
   /// Error title when there is a playback error.
   internal static var playerUserEpisodePlaybackError: String { return L10n.tr("Localizable", "player_user_episode_playback_error", fallback: "Playback Error") }
-  /// Error title when there is an upload error.
-  internal static var playerUserEpisodeUploadError: String { return L10n.tr("Localizable", "player_user_episode_upload_error", fallback: "Upload Error") }
   /// Navigation title that appears when adding episodes to a playlist. %@ is the playlist name.
   internal static func playlistAddToTitle(_ p1: Any) -> String {
     return L10n.tr("Localizable", "playlist_add_to_title", String(describing: p1), fallback: "Add to \"%@\"")
@@ -2769,12 +2737,6 @@ nonisolated internal enum L10n {
   internal static var plusCancelTerms: String { return L10n.tr("Localizable", "plus_cancel_terms", fallback: "Can be canceled at any time") }
   /// Account detail message informing the user that they have been granted a lifetime membership, don't translate "Pocket Casts Champion"
   internal static var plusChampion: String { return L10n.tr("Localizable", "plus_champion", fallback: "Pocket Casts Champion") }
-  /// Message displayed when the user taps "Pocket Casts Champion" button
-  internal static var plusChampionMessage: String { return L10n.tr("Localizable", "plus_champion_message", fallback: "Thanks for being with Pocket Casts from the start. You're a real champion!") }
-  /// The available cloud storage limit available to Pocket Casts Plus Subscribers. '%1$@' is a placeholder for the available storage.
-  internal static func plusCloudStorageLimitFormat(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "plus_cloud_storage_limit_format", String(describing: p1), fallback: "%1$@ GB Cloud Storage")
-  }
   /// Account detail message informing the user that they have been granted 50% discount.
   internal static var plusDiscountYearlyMembership: String { return L10n.tr("Localizable", "plus_discount_yearly_membership", fallback: "50%% off your first year") }
   /// Error message informing the user that they have already signed up for plus with this account.
@@ -2795,8 +2757,6 @@ nonisolated internal enum L10n {
   internal static var plusFeatureCardTextFolders: String { return L10n.tr("Localizable", "plus_feature_card_text_folders", fallback: "Organize your podcasts in folders, and keep them in sync across all your devices.") }
   /// Upgrade Experiment - Features Variation: Slumber Studio feature card text
   internal static var plusFeatureCardTextSlumberStudio: String { return L10n.tr("Localizable", "plus_feature_card_text_slumber_studio", fallback: "Get 1 year of premium content from Slumber Studios.") }
-  /// Upgrade Experiment - Features Variation: Storage feature card text
-  internal static var plusFeatureCardTextStorage: String { return L10n.tr("Localizable", "plus_feature_card_text_storage", fallback: "Upload your audio files to cloud storage and have them available everywhere.") }
   /// Upgrade Experiment - Features Variation: Bokmarks feature card title
   internal static var plusFeatureCardTitleBookmarks: String { return L10n.tr("Localizable", "plus_feature_card_title_bookmarks", fallback: "Bookmarks") }
   /// Upgrade Experiment - Features Variation: Desktop feature card title
@@ -2843,8 +2803,6 @@ nonisolated internal enum L10n {
   internal static var plusMarketingHideAdsTitle: String { return L10n.tr("Localizable", "plus_marketing_hide_ads_title", fallback: "Hide Ads") }
   /// Pocket Casts Plus marketing page, learn more button. Note that Pocket Casts is a proper noun and shouldn't be translated
   internal static var plusMarketingLearnMoreButton: String { return L10n.tr("Localizable", "plus_marketing_learn_more_button", fallback: "Learn more about Pocket Casts Plus") }
-  /// Pocket Casts Plus marketing page, the main description of Pocket Casts Plus
-  internal static var plusMarketingMainDescription: String { return L10n.tr("Localizable", "plus_marketing_main_description", fallback: "Get personal, and get distributed, all at once. Upload your personal audio files to our cloud servers, access your account via our web player, and make the app yours.") }
   /// Pocket Casts Plus marketing page, description of removing banner ads
   internal static var plusMarketingNoBannerAds: String { return L10n.tr("Localizable", "plus_marketing_no_banner_ads", fallback: "No Banner Ads") }
   /// Subtitle of the plus marketing view
@@ -2855,8 +2813,6 @@ nonisolated internal enum L10n {
   internal static var plusMarketingTitle: String { return L10n.tr("Localizable", "plus_marketing_title", fallback: "Everything you love about Pocket Casts, plus more") }
   /// Pocket Casts Plus marketing page, description of the Up Next Shuffle feature
   internal static var plusMarketingUpNextShuffle: String { return L10n.tr("Localizable", "plus_marketing_up_next_shuffle", fallback: "Up Next Shuffle") }
-  /// Pocket Casts Plus marketing page, description of the Cloud Storage feature
-  internal static var plusMarketingUpdatedCloudStorageDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_cloud_storage_description", fallback: "Upload your files to cloud storage and have it available everywhere") }
   /// Pocket Casts Plus marketing page, description of the Desktop Apps feature
   internal static var plusMarketingUpdatedDesktopAppsDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_desktop_apps_description", fallback: "Listen in more places with our Windows, macOS and Web apps") }
   /// Pocket Casts Plus marketing page, description of the Folders feature
@@ -3025,8 +2981,6 @@ nonisolated internal enum L10n {
   internal static var podcastExtras: String { return L10n.tr("Localizable", "podcast_extras", fallback: "Extras") }
   /// Indicates that a file has failed to download.
   internal static var podcastFailedDownload: String { return L10n.tr("Localizable", "podcast_failed_download", fallback: "Episode download failed.") }
-  /// Indicates that a file has failed to upload.
-  internal static var podcastFailedUpload: String { return L10n.tr("Localizable", "podcast_failed_upload", fallback: "Failed to upload") }
   /// Button title we display in the podcast view sheet prompted
   internal static var podcastFeedReloadButton: String { return L10n.tr("Localizable", "podcast_feed_reload_button", fallback: "Refresh Episode List") }
   /// Message showed in the toast menu or pull down to refresh control indicating the podcast feed is reloading
@@ -3139,18 +3093,10 @@ nonisolated internal enum L10n {
   internal static func podcastUpdatesEnds(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_updates_ends", String(describing: p1), fallback: "Updates ends: %1$@")
   }
-  /// Confirmation option to upload the selected file. Used in tandem with a notice that the user is not on WiFi.
-  internal static var podcastUploadConfirmation: String { return L10n.tr("Localizable", "podcast_upload_confirmation", fallback: "Upload Now") }
-  /// Indicates that a file is being uploaded and includes the completed percentage. '%1$@' is a placeholder for a localized percentage that has been uploaded so far.
-  internal static func podcastUploading(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "podcast_uploading", String(describing: p1), fallback: "Uploading... %1$@")
-  }
   /// Podcast View Changes tooltip details of change
   internal static var podcastViewChangesTipDetails: String { return L10n.tr("Localizable", "podcast_view_changes_tip_details", fallback: "Tap on the podcast title to collapse or expand its description and details") }
   /// Podcast View Changes tooltip title
   internal static var podcastViewChangesTipTitle: String { return L10n.tr("Localizable", "podcast_view_changes_tip_title", fallback: "We've made some changes") }
-  /// Indicates that a file is queued to be uploaded but hasn't started yet.
-  internal static var podcastWaitingUpload: String { return L10n.tr("Localizable", "podcast_waiting_upload", fallback: "Waiting to upload") }
   /// Used to reference yesterday.
   internal static var podcastYesterday: String { return L10n.tr("Localizable", "podcast_yesterday", fallback: "Yesterday") }
   /// The badge feature is set to show the number of unplayed episodes.
@@ -3283,8 +3229,6 @@ nonisolated internal enum L10n {
   }
   /// Title of a button that takes the user to a screen to rate a podcast
   internal static var rate: String { return L10n.tr("Localizable", "rate", fallback: "Rate") }
-  /// Title of a button that allows the user to rate the app
-  internal static var ratePocketCasts: String { return L10n.tr("Localizable", "rate_pocket_casts", fallback: "Rate Pocket Casts") }
   /// Error message when a user rating for a podcast couldn't be submitted
   internal static var ratingError: String { return L10n.tr("Localizable", "rating_error", fallback: "Ops! There was an error.") }
   /// Message displayed when an user want to rate a podcast but hasn't listened enough to it
@@ -3433,20 +3377,6 @@ nonisolated internal enum L10n {
   internal static func selectedCountFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "selected_count_format", String(describing: p1), fallback: "%1$@ selected")
   }
-  /// Server error message for when the user tries to upload a file that is too large.
-  internal static var serverErrorFilesFileTooLarge: String { return L10n.tr("Localizable", "server_error_files_file_too_large", fallback: "This file is too big too upload.") }
-  /// Server error message for when the user tries to upload a file with an invalid file type.
-  internal static var serverErrorFilesInvalidContentType: String { return L10n.tr("Localizable", "server_error_files_invalid_content_type", fallback: "Unable to upload, as we're unable to determine the content type of this file.") }
-  /// Server error message for when the user tries to upload a file while not logged in.
-  internal static var serverErrorFilesInvalidUser: String { return L10n.tr("Localizable", "server_error_files_invalid_user", fallback: "User is not logged in.") }
-  /// Server error message for when the user tries to upload a file but doesn't have sufficient space remaining.
-  internal static var serverErrorFilesStorageLimitExceeded: String { return L10n.tr("Localizable", "server_error_files_storage_limit_exceeded", fallback: "You have exceeded the storage limit for your account.") }
-  /// Server error message for when the user tries to upload a file without a title.
-  internal static var serverErrorFilesTitleRequired: String { return L10n.tr("Localizable", "server_error_files_title_required", fallback: "Title is required.") }
-  /// Server error message indicating a generic error for when the file uploads fail.
-  internal static var serverErrorFilesUploadFailedGeneric: String { return L10n.tr("Localizable", "server_error_files_upload_failed_generic", fallback: "Unable to upload file, please try again later.") }
-  /// Server error message for when a file upload files because a unique identifier failed wasn't created.
-  internal static var serverErrorFilesUuidRequired: String { return L10n.tr("Localizable", "server_error_files_uuid_required", fallback: "File uuid is required.") }
   /// info message when authorization is denied server
   internal static var serverErrorLoginAccessDenied: String { return L10n.tr("Localizable", "server_error_login_access_denied", fallback: "The user denied the authorization request") }
   /// Server error message for when the user account has been locked.
@@ -3667,20 +3597,6 @@ nonisolated internal enum L10n {
   internal static var settingsFiles: String { return L10n.tr("Localizable", "settings_files", fallback: "Files Settings") }
   /// Subtitle for the toggle to auto add new files to the Up Next Queue.
   internal static var settingsFilesAddUpNextSubtitle: String { return L10n.tr("Localizable", "Settings_files_add_up_next_subtitle", fallback: "Add new files to Up Next automatically") }
-  /// Prompt for the toggle to enable auto downloads for uploaded files.
-  internal static var settingsFilesAutoDownload: String { return L10n.tr("Localizable", "settings_files_auto_download", fallback: "Auto Download from Cloud") }
-  /// Subtitle explaining the app behavior when the toggle to for auto downloads for uploaded files is off.
-  internal static var settingsFilesAutoDownloadSubtitleOff: String { return L10n.tr("Localizable", "settings_files_auto_download_subtitle_off", fallback: "Files added to the cloud from other devices will not be automatically downloaded.") }
-  /// Subtitle explaining the app behavior when the toggle to for auto downloads for uploaded files is on.
-  internal static var settingsFilesAutoDownloadSubtitleOn: String { return L10n.tr("Localizable", "settings_files_auto_download_subtitle_on", fallback: "Files added to the cloud from other devices will be automatically downloaded.") }
-  /// Prompt for the toggle to enable auto uploads for uploaded files.
-  internal static var settingsFilesAutoUpload: String { return L10n.tr("Localizable", "settings_files_auto_upload", fallback: "Auto Upload to Cloud") }
-  /// Subtitle explaining the app behavior when the toggle to for auto uploads is off.
-  internal static var settingsFilesAutoUploadSubtitleOff: String { return L10n.tr("Localizable", "settings_files_auto_upload_subtitle_off", fallback: "Files added to this device will not be automatically uploaded to the Cloud.") }
-  /// Subtitle explaining the app behavior when the toggle to for auto uploads is on.
-  internal static var settingsFilesAutoUploadSubtitleOn: String { return L10n.tr("Localizable", "settings_files_auto_upload_subtitle_on", fallback: "Files added to this device will be automatically uploaded to the Cloud.") }
-  /// Prompt for the toggle to enable the option to delete the cloud file after playing.
-  internal static var settingsFilesDeleteCloudFile: String { return L10n.tr("Localizable", "settings_files_delete_cloud_file", fallback: "Delete Cloud File") }
   /// Prompt for the toggle to enable the option to delete the local file after playing.
   internal static var settingsFilesDeleteLocalFile: String { return L10n.tr("Localizable", "settings_files_delete_local_file", fallback: "Delete Local File") }
   /// Label displayed next to the toggle to opt-in/out for First-Party Analytics tracking
@@ -4281,8 +4197,6 @@ nonisolated internal enum L10n {
   internal static var statusStarred: String { return L10n.tr("Localizable", "status_starred", fallback: "Starred") }
   /// A common string used throughout the app. Status message informing the user that the episode has not been played.
   internal static var statusUnplayed: String { return L10n.tr("Localizable", "status_unplayed", fallback: "Unplayed") }
-  /// A common string used throughout the app. Status message informing the user that the episode has been uploaded.
-  internal static var statusUploaded: String { return L10n.tr("Localizable", "status_uploaded", fallback: "Uploaded") }
   /// A common string used throughout the app. Prompt to cancel the download for the selected item(s).
   internal static var stopDownload: String { return L10n.tr("Localizable", "stop_download", fallback: "Stop Download") }
   /// Prompt to subscribe to the selected podcast.

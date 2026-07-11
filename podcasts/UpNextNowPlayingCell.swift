@@ -191,13 +191,6 @@ class UpNextNowPlayingCell: ThemeableCell {
             downloadedIndicator.isHidden = true
             return
         }
-        if let episode = episode as? UserEpisode, episode.uploadStatus == UploadStatus.missing.rawValue {
-            downloadingIndicator.isHidden = true
-            downloadedIndicator.isHidden = true
-
-            return
-        }
-
         if episode.queued() {
             downloadingIndicator.stopAnimating()
             downloadingIndicator.isHidden = true

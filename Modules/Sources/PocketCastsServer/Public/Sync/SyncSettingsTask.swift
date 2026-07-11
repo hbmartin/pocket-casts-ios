@@ -44,7 +44,6 @@ extension Api_ChangeableSettings {
         badgesGlobal.update(settings.$badges)
         filesAutoUpNextGlobal.update(settings.$filesAutoUpNext)
         filesAfterPlayingDeleteLocalGlobal.update(settings.$filesAfterPlayingDeleteLocal)
-        filesAfterPlayingDeleteCloudGlobal.update(settings.$filesAfterPlayingDeleteCloud)
         playerShelfGlobal.update(settings.$playerShelf)
         useEmbeddedArtworkGlobal.update(settings.$useEmbeddedArtwork)
         theme.update(settings.$theme)
@@ -101,7 +100,6 @@ extension AppSettings {
         $badges.update(setting: settings.badgesGlobal)
         $filesAutoUpNext.update(setting: settings.filesAutoUpNextGlobal)
         $filesAfterPlayingDeleteLocal.update(setting: settings.filesAfterPlayingDeleteLocalGlobal)
-        $filesAfterPlayingDeleteCloud.update(setting: settings.filesAfterPlayingDeleteCloudGlobal)
         $playerShelf.update(setting: settings.playerShelfGlobal)
         $useEmbeddedArtwork.update(setting: settings.useEmbeddedArtworkGlobal)
         $theme.update(setting: settings.theme)
@@ -194,8 +192,6 @@ class SyncSettingsTask: ApiBaseTask, @unchecked Sendable {
                     ServerSettings.setHomeGridSortOrder(newOrder, syncChange: false)
                 }
             }
-
-            ServerSettings.liveAnalyticsUrl = settings.liveAnalyticsURL.value.value
 
             ServerSettings.setSkipBackSynced()
             ServerSettings.setSkipForwardSynced()

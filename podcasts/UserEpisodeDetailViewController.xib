@@ -29,8 +29,6 @@
                 <outlet property="playPauseButton" destination="LuC-fC-pKT" id="EhM-El-iWy"/>
                 <outlet property="titleLabel" destination="mS3-CC-CaQ" id="HDc-H4-Nlc"/>
                 <outlet property="upNextStatusImage" destination="Ov1-M8-SNF" id="7iA-xf-Sh1"/>
-                <outlet property="uploadProgressIndicator" destination="H7g-jz-LG9" id="kV0-ST-Nrz"/>
-                <outlet property="uploadStatusImage" destination="Smc-qY-s80" id="NEj-vy-ydq"/>
                 <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
             </connections>
         </placeholder>
@@ -124,21 +122,6 @@
                                         <constraint firstAttribute="width" constant="16" id="gQC-wo-zf1"/>
                                     </constraints>
                                 </imageView>
-                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="cloud-gold" translatesAutoresizingMaskIntoConstraints="NO" id="Smc-qY-s80">
-                                    <rect key="frame" x="84" y="0.0" width="16" height="16"/>
-                                    <constraints>
-                                        <constraint firstAttribute="height" constant="16" id="c5s-2A-VyG"/>
-                                        <constraint firstAttribute="width" constant="16" id="zY0-09-jcc"/>
-                                    </constraints>
-                                </imageView>
-                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="H7g-jz-LG9" customClass="ProgressPieView" customModule="podcasts" customModuleProvider="target">
-                                    <rect key="frame" x="105" y="0.0" width="16" height="16"/>
-                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                    <constraints>
-                                        <constraint firstAttribute="height" constant="16" id="aYb-gl-jrs"/>
-                                        <constraint firstAttribute="width" constant="16" id="zpd-E7-5vP"/>
-                                    </constraints>
-                                </view>
                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="32 mins" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uHs-3g-TAi" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                                     <rect key="frame" x="126" y="0.0" width="145" height="17"/>
                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -236,7 +219,6 @@
         </view>
     </objects>
     <resources>
-        <image name="cloud-gold" width="16" height="16"/>
         <image name="episode-download" width="24" height="24"/>
         <image name="list_downloadfailed" width="15" height="15"/>
         <image name="upnext" width="24" height="24"/>

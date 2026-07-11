@@ -931,3 +931,35 @@ enum SafeFileManagerURLLookup {
             ?? FileManager.default.temporaryDirectory
     }
 }
+
+enum UnsafeOverlappingPointerUpdate {
+    static func shiftLeft(_ data: UnsafeMutablePointer<Float32>, offset: Int, count: Int) {
+        // ruleid: pocketcasts.unsafe-pointer-update-overlapping-source
+        data.update(from: data + offset, count: count)
+        // ruleid: pocketcasts.unsafe-pointer-update-overlapping-source
+        data.update(from: data.advanced(by: offset), count: count)
+    }
+
+    static func shiftRight(_ data: UnsafeMutablePointer<Float32>, offset: Int, count: Int) {
+        // ruleid: pocketcasts.unsafe-pointer-update-overlapping-source
+        (data + offset).update(from: data, count: count)
+        // ruleid: pocketcasts.unsafe-pointer-update-overlapping-source
+        data.advanced(by: offset).update(from: data, count: count)
+    }
+}
+
+enum SafePointerMove {
+    static func copy(
+        destination: UnsafeMutablePointer<Float32>,
+        source: UnsafeMutablePointer<Float32>,
+        count: Int
+    ) {
+        // ok: pocketcasts.unsafe-pointer-update-overlapping-source
+        destination.update(from: source, count: count)
+    }
+
+    static func shift(_ data: UnsafeMutablePointer<Float32>, offset: Int, count: Int) {
+        // ok: pocketcasts.unsafe-pointer-update-overlapping-source
+        memmove(data, data + offset, count * MemoryLayout<Float32>.stride)
+    }
+}

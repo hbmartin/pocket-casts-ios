@@ -110,13 +110,23 @@ final class AudioFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(incoming.frameLength, AVAudioFrameCount(1152 - overlap))
     }
 
-    func testTrimLeadingFramesShiftsSamples() {
-        let buffer = makePCMBuffer(samples: (0 ..< 100).map(Float32.init))
+    func testTrimLeadingFramesShiftsOverlappingChannelData() {
+        let firstChannel = (0 ..< 100).map(Float32.init)
+        let secondChannel = firstChannel.map { $0 + 100 }
+        let buffer = makePCMBuffer(samples: firstChannel, channels: 2)
+        buffer.floatChannelData![1].update(from: secondChannel, count: secondChannel.count)
+
         AudioUtils.trimLeadingFrames(buffer, frames: 40)
 
         XCTAssertEqual(buffer.frameLength, 60)
-        XCTAssertEqual(buffer.floatChannelData![0][0], 40)
-        XCTAssertEqual(buffer.floatChannelData![0][59], 99)
+        XCTAssertEqual(
+            Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: 60)),
+            Array(firstChannel.dropFirst(40))
+        )
+        XCTAssertEqual(
+            Array(UnsafeBufferPointer(start: buffer.floatChannelData![1], count: 60)),
+            Array(secondChannel.dropFirst(40))
+        )
     }
 
     func testTruncateClampsFrameLength() {

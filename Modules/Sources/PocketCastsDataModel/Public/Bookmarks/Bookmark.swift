@@ -2,9 +2,7 @@ import Foundation
 import SwiftUI
 
 /// A bookmark that represents a position in time within an episode
-// @unchecked: the episode/podcast references are hydration results attached
-// once after load and not mutated concurrently.
-public struct Bookmark: Hashable, @unchecked Sendable {
+public struct Bookmark: Hashable, Sendable {
     public let uuid: String
     public let title: String
     public let time: TimeInterval

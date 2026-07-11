@@ -1,18 +1,16 @@
 import PocketCastsDataModel
 import PocketCastsUtils
+import Synchronization
 import XCTest
 @testable import PocketCastsServer
 
 final class CompositeFeedRefreshProviderTests: XCTestCase {
-    private final class StubProvider: FeedRefreshProviding, @unchecked Sendable {
+    private final class StubProvider: FeedRefreshProviding {
         let response: PodcastRefreshResponse?
-        private let lock = NSLock()
-        private var received: [[Podcast]] = []
+        private let received = Mutex<[[Podcast]]>([])
 
         var receivedBatches: [[Podcast]] {
-            lock.lock()
-            defer { lock.unlock() }
-            return received
+            received.withLock { $0 }
         }
 
         init(response: PodcastRefreshResponse?) {
@@ -20,9 +18,7 @@ final class CompositeFeedRefreshProviderTests: XCTestCase {
         }
 
         func refresh(podcasts: [Podcast], completion: @escaping @Sendable (PodcastRefreshResponse?) -> Void) {
-            lock.lock()
-            received.append(podcasts)
-            lock.unlock()
+            received.withLock { $0.append(podcasts) }
             completion(response)
         }
     }

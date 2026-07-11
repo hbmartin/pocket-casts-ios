@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -32,6 +33,22 @@ class PlaybackActionHelper {
     class func download(episodeUuid: String) {
         AnalyticsEpisodeHelper.shared.downloaded(episodeUUID: episodeUuid)
 
+        if let userEpisode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid),
+           userEpisode.folderRelativePath != nil {
+            Task {
+                do {
+                    try await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
+                    NotificationCenter.postOnMainThread(
+                        notification: Constants.Notifications.episodeDownloadStatusChanged,
+                        object: episodeUuid
+                    )
+                } catch {
+                    FileLog.shared.addMessage("FileSync: materialize upload failed: \(error)")
+                }
+            }
+            return
+        }
+
         NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
             if later {
                 DownloadManager.shared.queueForLaterDownload(episodeUuid: episodeUuid, fireNotification: true, autoDownloadStatus: .notSpecified)
@@ -55,23 +72,6 @@ class PlaybackActionHelper {
                 DownloadManager.shared.addToQueue(episodeUuid: episodeUuid)
             }
         }, disallowed: nil)
-    }
-
-    class func upload(episodeUuid: String) {
-        NetworkUtils.shared.uploadEpisodeRequested({ later in
-            if later {
-                UploadManager.shared.queueForLaterUpload(episodeUuid: episodeUuid, fireNotification: true)
-            } else {
-                UploadManager.shared.addToQueue(episodeUuid: episodeUuid)
-            }
-        }, disallowed: nil)
-
-        AnalyticsEpisodeHelper.shared.episodeUploaded(episodeUUID: episodeUuid)
-    }
-
-    class func stopUpload(episodeUuid: String) {
-        UploadManager.shared.removeFromQueue(episodeUuid: episodeUuid, fireNotification: true)
-        AnalyticsEpisodeHelper.shared.episodeUploadCancelled(episodeUUID: episodeUuid)
     }
 
     private class func performPlay(episode: BaseEpisode, playlistUuid: String? = nil, podcastUuid: String? = nil) {

@@ -4,9 +4,9 @@ import PocketCastsUtils
 import UIKit
 #endif
 
-// @unchecked Sendable: the only stored property is an immutable URLConnection;
-// token state lives in the keychain/ServerSettings.
-final class TokenHelper: @unchecked Sendable {
+// Token state lives in the keychain/ServerSettings; the only stored property
+// is an immutable URLConnection.
+final class TokenHelper: Sendable {
 
     static let shared = TokenHelper(urlConnection: URLConnection(handler: URLSession.shared))
 

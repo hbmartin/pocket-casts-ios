@@ -20,10 +20,6 @@ public protocol ServerSyncDelegate {
     func autoDownloadLatestEpisodes(uuids: [String])
     func cleanupAllUnusedEpisodeBuffers()
 
-    func deleteFromDevice(userEpisode: UserEpisode)
-    func autoDownloadUserEpisodes(episodes: [UserEpisode])
-    func userEpisodeFileProtocol() -> FilePathProtocol
-    func cleanupCloudOnlyFiles()
     func performActionsAfterSync()
 
     // Data required from App during sync

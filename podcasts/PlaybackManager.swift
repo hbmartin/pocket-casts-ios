@@ -1355,9 +1355,6 @@ final class PlaybackManager {
                     if Settings.userEpisodeRemoveFileAfterPlaying() {
                         UserEpisodeManager.deleteFromDevice(userEpisode: episode, removeFromPlaybackQueue: false)
                     }
-                    if Settings.userEpisodeRemoveFromCloudAfterPlaying() {
-                        UserEpisodeManager.deleteFromCloud(episode: episode, removeFromPlaybackQueue: false)
-                    }
                     #endif
                 }
             } else {

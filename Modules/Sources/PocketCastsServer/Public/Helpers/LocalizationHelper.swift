@@ -47,7 +47,6 @@ public struct InternationalizationProvider {
             ServerConstants.Urls.sharing(),
             ServerConstants.Urls.discover(),
             ServerConstants.Urls.image(),
-            ServerConstants.Urls.files(),
             ServerConstants.Urls.share(),
             ServerConstants.Urls.lists(),
             ServerConstants.Urls.search
