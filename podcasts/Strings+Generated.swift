@@ -506,6 +506,12 @@ nonisolated internal enum L10n {
   internal static func bookmarksEarlyAccessLockedMessage(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "bookmarks_early_access_locked_message", String(describing: p1), String(describing: p2), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes. Available for %2$@ subscribers soon.")
   }
+  /// Option menu action that exports the bookmark list as a Markdown document
+  internal static var bookmarksExportOption: String { return L10n.tr("Localizable", "bookmarks_export_option", fallback: "Export as Markdown") }
+  /// Heading used in the bookmark Markdown export when an episode no longer exists
+  internal static var bookmarksExportUnknownEpisode: String { return L10n.tr("Localizable", "bookmarks_export_unknown_episode", fallback: "Unknown Episode") }
+  /// Heading used in the bookmark Markdown export when a podcast no longer exists
+  internal static var bookmarksExportUnknownPodcast: String { return L10n.tr("Localizable", "bookmarks_export_unknown_podcast", fallback: "Unknown Podcast") }
   /// A message informing the user a feature is locked. %1$@ is the name of the tier (Plus or Patron)
   internal static func bookmarksLockedMessage(_ p1: Any) -> String {
     return L10n.tr("Localizable", "bookmarks_locked_message", String(describing: p1), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes.")
@@ -4561,6 +4567,10 @@ nonisolated internal enum L10n {
   internal static var upNextSortOldestToNewest: String { return L10n.tr("Localizable", "up_next_sort_oldest_to_newest", fallback: "Oldest to newest") }
   /// Up Next sort option that orders episodes by time remaining, shortest first
   internal static var upNextSortShortestToLongest: String { return L10n.tr("Localizable", "up_next_sort_shortest_to_longest", fallback: "Shortest to longest") }
+  /// Message of a tip pointing at the sort button on the Up Next screen, explaining what tapping it does
+  internal static var upNextSortTipMessage: String { return L10n.tr("Localizable", "up_next_sort_tip_message", fallback: "Tap to reorder the queue by date or duration.") }
+  /// Title of a tip pointing at the sort button on the Up Next screen
+  internal static var upNextSortTipTitle: String { return L10n.tr("Localizable", "up_next_sort_tip_title", fallback: "Sort your Up Next") }
   /// Title shown at the top of the Up Next sort options picker
   internal static var upNextSortTitle: String { return L10n.tr("Localizable", "up_next_sort_title", fallback: "Sort Up Next") }
   /// Label of a button that informs the user they can upgrade their account. .

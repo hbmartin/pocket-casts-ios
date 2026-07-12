@@ -141,10 +141,36 @@ extension BookmarkListViewModel {
             },
             .init(label: L10n.sortBy, secondaryLabel: sortOption.label, icon: "podcast-sort") { [weak self] in
                 self?.showSortOptions()
+            },
+            .init(label: L10n.bookmarksExportOption, icon: "podcast-share") { [weak self] in
+                self?.exportAllAsMarkdown()
             }
         ])
 
         optionPicker.show(statusBarStyle: AppTheme.defaultStatusBarStyle())
+    }
+
+    /// Exports every bookmark in the current list as a Markdown file via the
+    /// system share sheet (program item 65).
+    func exportAllAsMarkdown() {
+        guard let router, !items.isEmpty else { return }
+
+        Analytics.track(.bookmarksExportedAsMarkdown, source: analyticsSource, properties: ["count": items.count])
+
+        let resolved = BookmarkMarkdownExporter.resolve(items, bookmarkManager: bookmarkManager)
+        let markdown = BookmarkMarkdownExporter().markdown(for: resolved)
+
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(L10n.bookmarks.sanitizedFileName()).md")
+        do {
+            try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
+        } catch {
+            FileLog.shared.addMessage("BookmarkMarkdownExporter: failed to write export: \(error)")
+            return
+        }
+
+        let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+        router.presentBookmarkController(activityController)
     }
 
     func showSortOptions() {

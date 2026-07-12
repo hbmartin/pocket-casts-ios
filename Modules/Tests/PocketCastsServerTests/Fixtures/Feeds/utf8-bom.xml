@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>BOM Feed</title>
+    <description>Byte-order-marked — with émojis 🎙️ and dashes</description>
+    <itunes:author>Bôm Author</itunes:author>
+    <item>
+      <title>Episode 🎧 One</title>
+      <guid>bom-ep-1</guid>
+      <enclosure url="https://example.com/bom/1.mp3" length="1024" type="audio/mpeg"/>
+      <pubDate>Wed, 15 Jan 2025 10:30:00 +0000</pubDate>
+      <itunes:duration>30:00</itunes:duration>
+    </item>
+    <item>
+      <title>Episode Two</title>
+      <guid>bom-ep-2</guid>
+      <enclosure url="https://example.com/bom/2.mp3" length="2048" type="audio/mpeg"/>
+      <pubDate>Wed, 01 Jan 2025 08:00:00 GMT</pubDate>
+      <itunes:duration>1830</itunes:duration>
+    </item>
+  </channel>
+</rss>

@@ -4361,6 +4361,15 @@
 /* Label for displaying the number of bookmarks the user has when the bookmark count is more than one */
 "bookmarks_count_plural" = "%1$@ bookmarks";
 
+/* Option menu action that exports the bookmark list as a Markdown document */
+"bookmarks_export_option" = "Export as Markdown";
+
+/* Heading used in the bookmark Markdown export when an episode no longer exists */
+"bookmarks_export_unknown_episode" = "Unknown Episode";
+
+/* Heading used in the bookmark Markdown export when a podcast no longer exists */
+"bookmarks_export_unknown_podcast" = "Unknown Podcast";
+
 /* The title of an alert message asking the user if they want to continue with deleting the selected bookmarks */
 "bookmark_delete_warning_title" = "Delete Bookmarks?";
 
@@ -4885,6 +4894,12 @@
 
 /* Up Next sort option that orders episodes by time remaining, longest first */
 "up_next_sort_longest_to_shortest" = "Longest to shortest";
+
+/* Title of a tip pointing at the sort button on the Up Next screen */
+"up_next_sort_tip_title" = "Sort your Up Next";
+
+/* Message of a tip pointing at the sort button on the Up Next screen, explaining what tapping it does */
+"up_next_sort_tip_message" = "Tap to reorder the queue by date or duration.";
 
 /* Title for manage downloads file space usage banner and modal */
 "manage_downloads_title" = "Need to free up space?";

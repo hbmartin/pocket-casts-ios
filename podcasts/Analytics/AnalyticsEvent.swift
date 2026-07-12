@@ -781,6 +781,7 @@ enum AnalyticsEvent: String {
     case bookmarksEmptyGoToHeadphoneSettings
     case bookmarkPlayTapped
     case bookmarksSortByChanged
+    case bookmarksExportedAsMarkdown
     case bookmarkDeleted
     case bookmarkShareTapped
     case bookmarkEditFormShown

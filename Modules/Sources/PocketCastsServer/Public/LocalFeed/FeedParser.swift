@@ -64,6 +64,10 @@ public final class FeedParser {
         let delegate = FeedParserDelegate()
         let parser = XMLParser(data: data)
         parser.shouldProcessNamespaces = true
+        // Defence in depth against XXE: never resolve external entities. This is the
+        // Foundation default, but the security invariant (verified by
+        // FeedParserCorpusTests) is stated explicitly so it survives future edits.
+        parser.shouldResolveExternalEntities = false
         parser.delegate = delegate
         let succeeded = parser.parse()
 

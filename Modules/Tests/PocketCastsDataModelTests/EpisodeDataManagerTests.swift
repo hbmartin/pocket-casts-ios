@@ -1002,6 +1002,30 @@ final class EpisodeDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testDeleteGhostEpisodesCrossesChunkBoundary() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(dataManager: dataManager)
+            _ = self.createTestEpisode(uuid: "ep-kept", podcast: podcast, dataManager: dataManager)
+
+            // 501 uuids forces the 500-per-statement chunking to run two batches.
+            let ghostUuids = (0 ..< 501).map { "ghost-\($0)" }
+            for uuid in ghostUuids {
+                var ghost = Episode()
+                ghost.uuid = uuid
+                ghost.podcastUuid = "non-existent-podcast"
+                ghost.podcast_id = 99999
+                ghost.addedDate = Date()
+                dataManager.save(episode: ghost)
+            }
+
+            dataManager.deleteGhostsEpisodes(uuids: ghostUuids)
+
+            XCTAssertNil(dataManager.findEpisode(uuid: "ghost-0"), "\(impl): first chunk should be deleted")
+            XCTAssertNil(dataManager.findEpisode(uuid: "ghost-500"), "\(impl): second chunk should be deleted")
+            XCTAssertNotNil(dataManager.findEpisode(uuid: "ep-kept"), "\(impl): unrelated episode must survive")
+        }
+    }
+
     // MARK: - findWhere Tests
 
     func testFindWhereReturnsMatchingEpisodes() throws {
