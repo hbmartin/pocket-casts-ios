@@ -44,7 +44,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
 
         if uploadedEpisodes.isEmpty {
             let title = L10n.fileUploadNoFilesTitle
-            let message = FeatureFlag.fileSync.enabled ? L10n.fileSyncFilesEmptyMessage : L10n.fileUploadNoFilesDescription
+            let message = L10n.fileSyncFilesEmptyMessage
             config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("profile_files") }, actions: [
                 .init(title: L10n.fileUploadAddFile) {
                     self.addFile()
@@ -227,11 +227,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
 
     func reloadLocalFiles() {
         uploadedEpisodes = episodesDataManager.uploadedEpisodes()
-        if FeatureFlag.fileSync.enabled {
-            uploadedGroups = episodesDataManager.uploadedEpisodeGroups()
-        } else {
-            uploadedGroups = uploadedEpisodes.isEmpty ? [] : [(group: "", episodes: uploadedEpisodes)]
-        }
+        uploadedGroups = episodesDataManager.uploadedEpisodeGroups()
         uploadsTable.isHidden = (uploadedEpisodes.isEmpty)
 
         uploadsTable.reloadData()
@@ -239,9 +235,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     private func reloadAllFiles() {
-        if FeatureFlag.fileSync.enabled {
-            Task { await FileSyncManager.shared.syncNow() }
-        }
+        Task { await FileSyncManager.shared.syncNow() }
         updateHeaderView()
     }
 
@@ -324,13 +318,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     private func removeFromUploadTable(userEpisode: UserEpisode) {
-        guard !FeatureFlag.fileSync.enabled else {
-            reloadLocalFiles()
-            return
-        }
-        guard let index = uploadedEpisodes.firstIndex(where: { $0.uuid == userEpisode.uuid }) else { return }
-        uploadedEpisodes.remove(at: index)
-        uploadsTable.deleteRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
+        reloadLocalFiles()
     }
 
     override func handleThemeChanged() {

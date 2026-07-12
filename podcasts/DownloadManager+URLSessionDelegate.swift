@@ -218,7 +218,7 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
 
             // Publish full podcast downloads into the FileSync mirror area (no-op unless
             // sync + mirroring are enabled). Streaming buffers aren't durable downloads.
-            if FeatureFlag.fileSync.enabled, newDownloadStatus == .downloaded, episode is Episode {
+            if newDownloadStatus == .downloaded, episode is Episode {
                 let episodeUuid = episode.uuid
                 Task {
                     await FileSyncManager.shared.mirrorDownloadedEpisode(episodeUuid: episodeUuid)

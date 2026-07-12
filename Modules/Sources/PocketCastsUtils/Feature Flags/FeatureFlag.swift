@@ -220,9 +220,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Enable Generated Chapters
     case generatedChapters
 
-    /// Enable the local-first file sync engine and app integration
-    case fileSync
-
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -379,11 +376,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current == .debug
         case .generatedChapters:
             BuildEnvironment.current == .debug
-        case .fileSync:
-            // Promoted past debug-only: on for debug and TestFlight builds by default;
-            // App Store builds are gated by the "file_sync" remote key (which resolves
-            // via the default lowerSnakeCased remoteKey and overrides this fallback).
-            BuildEnvironment.current != .appStore
         }
     }
 

@@ -8,8 +8,7 @@ enum FileSyncBanner {
 
     @MainActor
     static var shouldShow: Bool {
-        FeatureFlag.fileSync.enabled
-            && !UserDefaults.standard.bool(forKey: dismissedKey)
+        !UserDefaults.standard.bool(forKey: dismissedKey)
             && UserDefaults.standard.bool(forKey: "FileSync.enabled")
     }
 

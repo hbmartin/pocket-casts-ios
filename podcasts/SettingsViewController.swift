@@ -17,12 +17,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
 
         /// Whether the section should be displayed or not
         var visible: Bool {
-            switch self {
-            case .fileSync:
-                return FeatureFlag.fileSync.enabled
-            default:
-                return true
-            }
+            true
         }
 
         var display: (text: String, image: UIImage?) {
