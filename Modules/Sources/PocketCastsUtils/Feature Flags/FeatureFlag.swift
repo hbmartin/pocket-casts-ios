@@ -105,8 +105,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         }
     }
 
+    /// A6a: flipped on 2026-07-12 after the storage/sync plumbing soak-tested behind
+    /// the gate. The remote keys `new_settings_storage`/`settings_sync` are now live
+    /// kill switches; A6b (deleting both flags and collapsing the ~158 call sites)
+    /// follows after one release of soak — see docs/DeferredWork.md.
     private var shouldEnableSyncedSettings: Bool {
-        false
+        true
     }
 
     /// Remote feature flag key used by runtime configuration providers.

@@ -212,3 +212,16 @@ restart) to present a feedback sheet in TestFlight builds, attaching the bitdrif
 recent `FileLog` tail into `SupportFeedbackRequest`.
 
 **Re-entry:** after F4; gate to `BuildEnvironment.current == .testFlight`.
+
+## A6b — Delete `newSettingsStorage`/`settingsSync` and collapse call sites
+
+**Why deferred:** A6a flipped `shouldEnableSyncedSettings` to `true` on 2026-07-12 (remote keys
+`new_settings_storage`/`settings_sync` are live kill switches). The flags themselves must soak one
+release before deletion.
+
+**Concept:** retire both `FeatureFlag` cases; collapse the ~153 `newSettingsStorage` call sites
+(`Settings.swift`, `Podcast.swift` settings accessors) and 5 `settingsSync` sites (`SyncTask`) in
+mechanical per-area PRs; one-time legacy→AppSettings migration audit; remove the
+`SceneDelegate` UI-test override for the flag.
+
+**Re-entry:** one release after A6a ships with no kill-switch activation.
