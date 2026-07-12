@@ -4,7 +4,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import PocketCastsDataModel
 
-/// Stateless; subclassed by test mocks, hence @unchecked on a non-final class.
+/// @unchecked Sendable: stateless; unchecked (rather than plain Sendable) because the class stays non-final for test mocks.
 nonisolated class PodcastChapterParser: @unchecked Sendable {
     func parseLocalFile(_ path: String, episodeDuration: TimeInterval, completion: @escaping @Sendable ([ChapterInfo]) -> Void) {
         parseChapters(url: URL(fileURLWithPath: path), episodeDuration: episodeDuration, completion: completion)

@@ -15,6 +15,7 @@ import PocketCastsUtils
 /// An access log observer keeps an in-memory byte count up to date so that flushes are accurate.
 /// Byte counters and connection state are confined to `monitorQueue`
 /// (the path handler runs there and the access-log observer hops to it).
+/// @unchecked Sendable: byte counters and connection state are confined to monitorQueue (see above).
 nonisolated final class StreamingCellularTracker: @unchecked Sendable {
     private var monitor: NWPathMonitor?
     private let monitorQueue = DispatchQueue(label: "com.pocketcasts.StreamingCellularTracker")

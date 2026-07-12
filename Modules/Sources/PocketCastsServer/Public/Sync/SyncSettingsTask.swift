@@ -115,6 +115,7 @@ extension AppSettings {
     }
 }
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; the only stored property is an immutable SettingsStore.
 class SyncSettingsTask: ApiBaseTask, @unchecked Sendable {
 
     private let appSettings: SettingsStore<AppSettings>

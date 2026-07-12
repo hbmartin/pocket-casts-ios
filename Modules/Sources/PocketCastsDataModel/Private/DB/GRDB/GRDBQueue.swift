@@ -100,6 +100,7 @@ final class GRDBQueue: PCDBQueue, Sendable {
 
 /// GRDB's async read/write require Sendable results; the legacy models are
 /// mutable reference types, so ownership is handed to the awaiting task instead.
+/// @unchecked Sendable: ownership of the boxed record passes wholesale to the awaiting task.
 private struct UncheckedSendableBox<T>: @unchecked Sendable {
     let value: T
 }

@@ -27,6 +27,7 @@ nonisolated fileprivate extension Int {
 /// Responsible for downloading media data and providing the requested data parts.
 /// `URLSessionDelegate` requires `Sendable`; instances are handed to URLSession and
 /// AVAssetResourceLoader queues by design, with mutable state guarded by `lock`.
+/// @unchecked Sendable: mutable state is guarded by `lock`; Sendable is required by the URLSession delegate contract.
 nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate, @unchecked Sendable {
     private let lock = NSLock()
 

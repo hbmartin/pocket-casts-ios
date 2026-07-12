@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsUtils
 import SwiftProtobuf
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class RetrieveEpisodesTask: ApiBaseTask, @unchecked Sendable {
     var completion: (([EpisodeSyncInfo]?) -> Void)?
 

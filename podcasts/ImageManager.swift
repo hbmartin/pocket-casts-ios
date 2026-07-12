@@ -8,6 +8,7 @@ import Synchronization
 
 /// State is Kingfisher caches (thread-safe) and a lock-guarded metrics cache,
 /// so the shared instance is safe to hand across isolation domains.
+/// @unchecked Sendable: Kingfisher caches are thread-safe and screen metrics are Mutex-guarded; the placeholder/embedded-lookup caches rely on main-thread callers.
 nonisolated final class ImageManager: @unchecked Sendable {
     static let sharedManager = ImageManager()
 

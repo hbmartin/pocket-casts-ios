@@ -5,6 +5,7 @@ import PocketCastsUtils
 
 /// Audio pipeline reader; state is confined to its dispatch queue and the
 /// semaphore-coordinated buffer hand-off.
+/// @unchecked Sendable: mutable state is guarded by `lock` or confined to the read queue (see above).
 nonisolated final class AudioReadTask: @unchecked Sendable {
     private let cancelled = AtomicBool()
 

@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; all stored properties are immutable.
 nonisolated class PlaylistRefreshOperation: Operation, @unchecked Sendable {
     private let episodesDataManager: EpisodesDataManager
     private let playlist: EpisodeFilter

@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; stored properties are immutable and set in init.
 class ApiBaseTask: Operation, @unchecked Sendable {
     private let syncTimeout = 60 as TimeInterval
     private let isoDateFormatter = ISO8601DateFormatter()

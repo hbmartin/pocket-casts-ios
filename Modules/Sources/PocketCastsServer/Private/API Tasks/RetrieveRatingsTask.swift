@@ -3,6 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import SwiftProtobuf
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class RetrieveRatingsTask: ApiBaseTask, @unchecked Sendable {
     var completion: (([UserPodcastRating]?) -> Void)?
 

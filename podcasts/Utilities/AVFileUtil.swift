@@ -4,6 +4,7 @@ import UIKit
 
 /// State is set in init and read by its own cancellable tasks; instances are
 /// owned by a single caller and deallocated freely off-main.
+/// @unchecked Sendable: state is set in init and read only by its own tasks; single-owner lifecycle.
 nonisolated final class AVFileUtil: NSObject, @unchecked Sendable {
     private var durationHandler: (TimeInterval) -> Void
     private var titleHandler: (String?) -> Void

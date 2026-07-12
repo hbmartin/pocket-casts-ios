@@ -29,6 +29,7 @@ public enum UpNextSyncError: LocalizedError {
     }
 }
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; response processing is serialized via the static processDataLock, the rest is confined to the operation's execution.
 class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
     // nonisolated(unsafe): lock token for objc_sync_enter/exit; never mutated.
     nonisolated(unsafe) private static let processDataLock = NSObject()

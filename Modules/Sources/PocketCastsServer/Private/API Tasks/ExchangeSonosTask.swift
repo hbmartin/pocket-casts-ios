@@ -1,6 +1,7 @@
 import Foundation
 
 /// Swaps the current Authorization token with one for use with Sonos connections
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class ExchangeSonosTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((String?) -> Void)?
 

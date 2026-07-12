@@ -6,6 +6,7 @@ import PocketCastsDataModel
 /// and triggers stale marking with debounced refresh.
 /// Pending changes are guarded by pendingChangesLock; observers/cancellable are
 /// configured once at start-up.
+/// @unchecked Sendable: pendingChanges is pendingChangesLock-guarded; observers and the cancellable are configured once at start-up.
 nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendable {
 
     private let playlistMetadataLoader: PlaylistMetadataLoader

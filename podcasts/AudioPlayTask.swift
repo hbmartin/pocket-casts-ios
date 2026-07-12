@@ -4,6 +4,7 @@ import PocketCastsUtils
 
 /// Audio pipeline player; state is confined to its dispatch queue and the
 /// semaphore-coordinated buffer hand-off.
+/// @unchecked Sendable: state is confined to its serial queues and the semaphore-coordinated hand-off.
 nonisolated final class AudioPlayTask: @unchecked Sendable {
     private static let minFramesToSchedule = 10 as Int32
 

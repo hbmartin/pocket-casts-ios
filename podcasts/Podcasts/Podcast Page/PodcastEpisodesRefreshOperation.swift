@@ -2,6 +2,7 @@ import DifferenceKit
 import Foundation
 import PocketCastsDataModel
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; all stored properties are immutable.
 nonisolated class PodcastEpisodesRefreshOperation: Operation, @unchecked Sendable {
     private let episodesDataManager: EpisodesDataManager
     private let podcast: Podcast

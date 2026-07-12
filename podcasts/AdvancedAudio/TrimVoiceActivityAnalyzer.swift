@@ -17,6 +17,7 @@ import Synchronization
 ///
 /// Frame positions must increase monotonically; recreate the analyzer after a
 /// seek. All public methods are safe to call from the read thread.
+/// @unchecked Sendable: results are Mutex-guarded; all other stored state is immutable after init.
 nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     private struct SpeechResult {
         let frameRange: Range<Int64>
@@ -45,6 +46,7 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
 
     /// The observer object SoundAnalysis calls back on the analysis queue.
     /// Kept separate so the analyzer never retains its owner.
+    /// @unchecked Sendable: onResult is assigned once in the owner's init before analysis starts; callbacks arrive serially on the analysis queue.
     private final class Observer: NSObject, SNResultsObserving, @unchecked Sendable {
         var onResult: ((_ startSeconds: Double, _ endSeconds: Double, _ confidence: Float) -> Void)?
 

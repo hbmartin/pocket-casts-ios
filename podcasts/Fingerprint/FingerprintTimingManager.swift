@@ -5,6 +5,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import Synchronization
 
+/// @unchecked Sendable: `state` is written on the main queue; all other mutable state is confined to the private serial `queue`.
 nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable {
 
     // MARK: - Public Types
@@ -37,7 +38,7 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
 
     // MARK: - Internal Types
 
-    // @unchecked: all-let value; the matcher is a thread-safe UniFFI handle
+    // @unchecked Sendable: all-let value; the matcher is a thread-safe UniFFI handle
     private struct GenerationContext: @unchecked Sendable {
         let generationID: UUID
         let episodeUuid: String

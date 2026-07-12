@@ -15,6 +15,7 @@ nonisolated struct UnsafeTransfer<Wrapped> {
     }
 }
 
+// @unchecked Sendable: deliberate transfer wrapper (swift-nio pattern); the caller guarantees exclusive hand-off.
 extension UnsafeTransfer: @unchecked Sendable {}
 
 extension UnsafeTransfer: Equatable where Wrapped: Equatable {}

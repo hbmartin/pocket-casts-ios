@@ -3,6 +3,7 @@ import PocketCastsUtils
 import SwiftProtobuf
 import PocketCastsDataModel
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class UserPodcastRatingAddTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((Bool) -> Void)?
 
@@ -45,6 +46,7 @@ class UserPodcastRatingAddTask: ApiBaseTask, @unchecked Sendable {
     }
 }
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class UserPodcastRatingGetTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((Bool, UserPodcastRating?) -> Void)?
 

@@ -2,6 +2,7 @@ import Foundation
 import WidgetKit
 
 /// Immutable references to thread-safe services.
+/// @unchecked Sendable: both stored properties are immutable references to thread-safe services.
 nonisolated final class WidgetAnalytics: @unchecked Sendable {
     private let userDefaults: UserDefaults
     private let analytics: Analytics

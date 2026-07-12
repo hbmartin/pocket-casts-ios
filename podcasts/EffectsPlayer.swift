@@ -6,6 +6,7 @@ import UIKit
 
 /// AVAudioEngine effects pipeline driven by PlaybackManager; state is guarded
 /// by playerLock and the serial seek queue.
+/// @unchecked Sendable: mutable state is guarded by playerLock, atomics, or the serial seek queue.
 nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private var engine: AVAudioEngine?
     private var player: AVAudioPlayerNode?
