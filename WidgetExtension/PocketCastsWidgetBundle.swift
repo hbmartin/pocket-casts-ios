@@ -14,5 +14,9 @@ struct PocketCastsWidgetBundle: WidgetBundle {
         PlaybackPlayPauseControl()
         PlaybackSkipBackControl()
         PlaybackSkipForwardControl()
+        PlaybackNextChapterControl()
+        PlaybackPlayUpNextControl()
+        PlaybackSleepTimerControl()
+        NowPlayingLiveActivity()
     }
 }

@@ -10,6 +10,7 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
     private final class FakePlaybackFacade: PlaybackFacade, @unchecked Sendable {
         var playing = false
         var currentEpisode = false
+        var sleepTimerActive = false
         var upNext = 0
         var suggestedLoads = true
         var filterTopLoads = true
@@ -30,6 +31,7 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
 
         func isPlaying() -> Bool { playing }
         func hasCurrentEpisode() -> Bool { currentEpisode }
+        func isSleepTimerActive() -> Bool { sleepTimerActive }
         func upNextCount() -> Int { upNext }
         func play() { playCount += 1 }
         func pause() { pauseCount += 1 }
@@ -72,6 +74,50 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
         let fake = FakePlaybackFacade()
         makeHandler(fake).perform(.skipForward)
         XCTAssertEqual(fake.skipForwardCount, 1)
+        XCTAssertEqual(fake.refreshCount, 1)
+    }
+
+    func testControlNextChapterRoutesToFacadeAndRefreshes() {
+        let fake = FakePlaybackFacade()
+        makeHandler(fake).perform(.nextChapter)
+        XCTAssertEqual(fake.nextChapterCount, 1)
+        XCTAssertEqual(fake.refreshCount, 1)
+    }
+
+    func testControlPlayUpNextRequiresQueuedContent() {
+        let fake = FakePlaybackFacade()
+        fake.currentEpisode = true
+        fake.upNext = 0
+        makeHandler(fake).perform(.playUpNext)
+        XCTAssertEqual(fake.removedCurrentFromUpNext, 0)
+        // The control always refreshes so its state stays truthful.
+        XCTAssertEqual(fake.refreshCount, 1)
+    }
+
+    func testControlPlayUpNextAdvancesWhenQueued() {
+        let fake = FakePlaybackFacade()
+        fake.currentEpisode = true
+        fake.upNext = 2
+        makeHandler(fake).perform(.playUpNext)
+        XCTAssertEqual(fake.removedCurrentFromUpNext, 1)
+        XCTAssertEqual(fake.refreshCount, 1)
+    }
+
+    func testControlSleepTimerStartsWhenInactive() {
+        let fake = FakePlaybackFacade()
+        fake.sleepTimerActive = false
+        makeHandler(fake).perform(.sleepTimer)
+        XCTAssertEqual(fake.sleepTimerSeconds, PlaybackIntentActionHandler.sleepTimerStepSeconds)
+        XCTAssertNil(fake.extendedBySeconds)
+        XCTAssertEqual(fake.refreshCount, 1)
+    }
+
+    func testControlSleepTimerExtendsWhenActive() {
+        let fake = FakePlaybackFacade()
+        fake.sleepTimerActive = true
+        makeHandler(fake).perform(.sleepTimer)
+        XCTAssertNil(fake.sleepTimerSeconds)
+        XCTAssertEqual(fake.extendedBySeconds, PlaybackIntentActionHandler.sleepTimerStepSeconds)
         XCTAssertEqual(fake.refreshCount, 1)
     }
 
