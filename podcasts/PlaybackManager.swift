@@ -897,8 +897,8 @@ final class PlaybackManager {
 
     func play(playlist: EpisodeFilter) {
         let playlistEpisodes: [Episode]
-        let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: ServerSettings.autoAddToUpNextLimit(), shouldShowArchived: playlist.showArchivedEpisodes)
-        playlistEpisodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments)
+        let request = PlaylistQueryBuilder.episodesRequest(for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: ServerSettings.autoAddToUpNextLimit(), shouldShowArchived: playlist.showArchivedEpisodes)
+        playlistEpisodes = DataManager.sharedManager.episodes(matching: request)
         if playlist.manual {
             let archivedEpisodes = playlistEpisodes.filter(\.archived)
             EpisodeManager.bulkUnarchive(episodes: archivedEpisodes, trackEvent: false)
@@ -2610,7 +2610,7 @@ extension PlaybackManager {
         dataManager.saveEpisode(playedUpTo: bookmark.time, episode: episode, updateSyncFlag: false)
         dataManager.saveEpisode(playingStatus: .inProgress, episode: episode, updateSyncFlag: false)
         // Start the play process
-        PlaybackActionHelper.play(episode: episode, podcastUuid: bookmark.podcastUuid)
+        PlaybackActionHelper.play(episode: episode)
     }
 }
 
@@ -2632,7 +2632,7 @@ extension PlaybackManager {
         }
 
         // Start the play process
-        PlaybackActionHelper.play(episode: episode, podcastUuid: searchEpisode.podcastUuid)
+        PlaybackActionHelper.play(episode: episode)
     }
 }
 #endif

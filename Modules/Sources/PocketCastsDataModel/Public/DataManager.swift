@@ -546,6 +546,10 @@ public class DataManager {
         return episodes
     }
 
+    /// RETAINED raw-SQL API: playlist queries moved to the typed `episodes(matching:)`,
+    /// but many non-playlist call sites (download cleanup, podcast episode lists,
+    /// sync history, mirrors) still build WHERE strings. Do not add new callers;
+    /// migrate to typed requests instead.
     public func findEpisodesWhere(customWhere: String, arguments: [Any]?) -> [Episode] {
         episodeManager.findEpisodesWhere(customWhere: customWhere, arguments: arguments, dbQueue: dbQueue)
     }
@@ -554,8 +558,29 @@ public class DataManager {
         episodeManager.findEpisodes(with: term, podcastUUID: podcastUUID, dbQueue: dbQueue)
     }
 
-    public func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode] {
+    /// LEGACY, test-only: executes a full raw playlist SQL string. Kept internal as
+    /// the golden-reference execution path for PlaylistQueryBuilderParityTests; all
+    /// production playlist fetches use `episodes(matching:)`.
+    func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode] {
         episodeManager.findPlaylistEpisodesWhere(query: query, arguments: arguments, dbQueue: dbQueue)
+    }
+
+    /// Fetches episodes matching a typed request (see `PlaylistQueryBuilder`'s
+    /// `episodesRequest`/`filterEpisodesRequest`). Prefer this over the raw-string
+    /// `findEpisodesWhere`/`findPlaylistEpisodesWhere` APIs for playlist queries.
+    public func episodes(matching request: SQLRequest<Episode>) -> [Episode] {
+        dbQueue.fetchAll(request)
+    }
+
+    /// Fetches a single count value from a typed request (see `PlaylistQueryBuilder.countRequest`).
+    public func count(matching request: SQLRequest<Int>) -> Int {
+        dbQueue.fetchValue(request) ?? 0
+    }
+
+    /// Whether a typed existence probe (a `SELECT 1 ... LIMIT 1` request such as
+    /// `PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesRequest`) returns a row.
+    public func exists(matching request: SQLRequest<Int>) -> Bool {
+        dbQueue.fetchValue(request) != nil
     }
 
     public func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool) -> [Episode] {
@@ -616,6 +641,17 @@ public class DataManager {
         let episodeCount = episodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
         let userEpisodeCount = userEpisodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
         return episodeCount + userEpisodeCount
+    }
+
+    /// Count of unplayed, unarchived episodes belonging to subscribed podcasts,
+    /// optionally restricted to episodes added after a date. Backs the app icon badge.
+    public func subscribedUnplayedEpisodeCount(addedAfter: Date? = nil) -> Int {
+        var query: SQL = "SELECT COUNT(e.id) FROM \(sql: DataManager.episodeTableName) e LEFT JOIN \(sql: DataManager.podcastTableName) p ON p.id = e.podcast_id WHERE p.subscribed = 1 AND e.playingStatus = \(PlayingStatus.notPlayed.rawValue) AND e.archived = 0"
+        if let addedAfter {
+            // addedDate is stored as epoch seconds (REAL), matching the legacy Date binding
+            query = query + " AND e.addedDate > \(addedAfter.timeIntervalSince1970)"
+        }
+        return count(matching: SQLRequest(literal: query))
     }
 
     public func save(episode: BaseEpisode) {
@@ -1066,14 +1102,13 @@ public class DataManager {
 
     public func playlistEpisodes(for playlist: EpisodeFilter, limit: Int? = nil, sortType: PlaylistSort? = nil) -> [Episode] {
         let limit = limit ?? EpisodeDataManager.Constants.Limits.maxPlaylistItems
-        let query = PlaylistQueryBuilder.query(
-            clause: .episode,
+        let request = PlaylistQueryBuilder.episodesRequest(
             for: playlist,
             episodeUuidToAdd: nil,
             limit: limit,
             sortType: sortType
         )
-        return episodeManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments, dbQueue: dbQueue)
+        return episodes(matching: request)
     }
 
     public func playlistFirstDistinctEpisodes(
@@ -1083,15 +1118,15 @@ public class DataManager {
         search: String? = nil,
         episodeUuidToAdd: String? = nil
     ) -> [Episode] {
-        let query = PlaylistQueryBuilder.query(
-            clause: .firstDistinctEpisodes,
+        let request = PlaylistQueryBuilder.episodesRequest(
+            .firstDistinctEpisodes,
             for: playlist,
             episodeUuidToAdd: episodeUuidToAdd,
             searchTerm: search,
             limit: limit,
             shouldShowArchived: shouldShowArchived
         )
-        return episodeManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments, dbQueue: dbQueue)
+        return episodes(matching: request)
     }
 
     public func deleteDeletedPlaylists() {
@@ -1265,6 +1300,10 @@ public class DataManager {
 
     // MARK: - Advanced
 
+    /// RETAINED raw-SQL API: playlist counts moved to the typed `count(matching:)`,
+    /// but podcast/episode count sites across the app, Server module and tests
+    /// (push defaults, episode-limit prompts, podcast page counts) still pass raw
+    /// COUNT queries here. Delete once those callers migrate to typed requests.
     public func count(query: String, values: [Any]?) -> Int {
         var count = 0
         dbQueue.read { db in

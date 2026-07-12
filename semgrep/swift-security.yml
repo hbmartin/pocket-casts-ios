@@ -4976,3 +4976,32 @@ rules:
           - pattern: VBN_Destroy(...)
           - pattern: AVAudioPCMBuffer(...)
           - pattern: AVAudioConverter(...)
+
+  - id: pocketcasts.playlist-queries-use-typed-requests
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      The string-based PlaylistQueryBuilder APIs (query/queryFor/
+      podcastExistsInPlaylistEpisodesQuery) are legacy golden references kept only
+      for the parity and snapshot tests. Production code must use the typed
+      SQLRequest APIs (episodesRequest/countRequest/filterEpisodesRequest/
+      podcastExistsInPlaylistEpisodesRequest) with DataManager's
+      episodes(matching:)/count(matching:)/exists(matching:).
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+      exclude:
+        - "**/Modules/Tests/**"
+        - "**/PocketCastsTests/**"
+        - "**/Modules/Sources/PocketCastsDataModel/Public/PlaylistQueryBuilder.swift"
+    patterns:
+      - pattern-either:
+          - pattern: PlaylistQueryBuilder.query(...)
+          - pattern: PlaylistQueryBuilder.queryFor(...)
+          - pattern: PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesQuery(...)

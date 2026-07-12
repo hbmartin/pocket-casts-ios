@@ -108,8 +108,8 @@ nonisolated class PlaylistManager {
         for playlist in playlists {
             guard playlist.autoDownloadEpisodes else { continue }
 
-            let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: Int(playlist.maxAutoDownloadEpisodes()))
-            let episodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments)
+            let request = PlaylistQueryBuilder.episodesRequest(for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: Int(playlist.maxAutoDownloadEpisodes()))
+            let episodes = DataManager.sharedManager.episodes(matching: request)
 
             for episode in episodes {
                 if episode.downloaded(pathFinder: DownloadManager.shared) || episode.queued() { continue }

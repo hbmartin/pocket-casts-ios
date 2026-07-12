@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import PocketCastsDataModel
 
 /// Generated protocol mock for `EpisodeRepository`. Stub return values by selector:
@@ -69,9 +70,9 @@ public final class EpisodeRepositoryMock: RepositoryMock, EpisodeRepository, @un
         return stubs["findEpisodes(with:podcastUUID:)"] as? [Episode] ?? []
     }
 
-    public func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode] {
-        record("findPlaylistEpisodesWhere(query:arguments:)")
-        return stubs["findPlaylistEpisodesWhere(query:arguments:)"] as? [Episode] ?? []
+    public func episodes(matching request: SQLRequest<Episode>) -> [Episode] {
+        record("episodes(matching:)")
+        return stubs["episodes(matching:)"] as? [Episode] ?? []
     }
 
     public func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool) -> [Episode] {

@@ -10,12 +10,6 @@ nonisolated struct EpisodeTableHelper {
         return loadedEpisodes.map { ListEpisode(episode: $0, tintColor: tintColor) }
     }
 
-    static func loadPlaylistEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]? = nil) -> [ListEpisode] {
-        @Dependency(\.episodeRepository) var episodeRepository
-        let loadedEpisodes = episodeRepository.findPlaylistEpisodesWhere(query: query, arguments: arguments)
-        return loadedEpisodes.map { ListEpisode(episode: $0, tintColor: tintColor) }
-    }
-
     static func loadSectionedEpisodes(tintColor: UIColor = AppTheme.appTintColor(), query: String, arguments: [Any]?, episodeShortKey: (Episode) -> String) -> [ArraySection<String, ListEpisode>] {
         @Dependency(\.episodeRepository) var episodeRepository
         let loadedEpisodes = episodeRepository.findEpisodesWhere(customWhere: query, arguments: arguments)

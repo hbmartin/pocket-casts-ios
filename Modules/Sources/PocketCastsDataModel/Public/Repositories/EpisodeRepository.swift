@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 
 /// Read and mutate podcast episodes, including playback, download and sync state.
 ///
@@ -19,7 +20,10 @@ public protocol EpisodeRepository: AnyObject, Sendable {
     func findEpisodesWhereNotNull(propertyName: String) -> [BaseEpisode]
     func findEpisodesWhere(customWhere: String, arguments: [Any]?) -> [Episode]
     func findEpisodes(with term: String, podcastUUID: String) -> [Episode]
-    func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode]
+    /// Typed replacement for the raw-string playlist fetches (the former
+    /// `findPlaylistEpisodesWhere`): pass a request built by
+    /// `PlaylistQueryBuilder.episodesRequest`/`filterEpisodesRequest`.
+    func episodes(matching request: SQLRequest<Episode>) -> [Episode]
     func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool) -> [Episode]
     func findLatestEpisode(podcast: Podcast) -> Episode?
     func findLatestEpisodes(podcast: Podcast, limit: Int) -> [Episode]

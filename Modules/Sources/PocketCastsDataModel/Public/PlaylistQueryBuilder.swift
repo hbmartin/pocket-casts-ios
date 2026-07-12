@@ -2,6 +2,14 @@ import Foundation
 import PocketCastsUtils
 import RegexBuilder
 
+/// Builds the playlist episode queries (filters, widgets, intents, autoplay).
+///
+/// The string-based `query(clause:...)`, `queryFor(filter:...)` and
+/// `podcastExistsInPlaylistEpisodesQuery(includeDeleted:)` APIs below are LEGACY:
+/// they remain only as the golden reference for `PlaylistQueryBuilderParityTests`
+/// (and for the SQL-text snapshot tests). All production consumers use the typed
+/// `SQLRequest` APIs in PlaylistQueryRequests.swift; do not add new callers of the
+/// string APIs.
 public class PlaylistQueryBuilder {
     static let episodeLimit: Int = 1000
 
@@ -287,7 +295,9 @@ public class PlaylistQueryBuilder {
 
     /// Wraps a search term in % wildcards for a LIKE comparison, escaping any
     /// literal %, _ or \ in the term itself (the queries declare ESCAPE '\').
-    private static func likePattern(for searchTerm: String) -> String {
+    /// Internal (not private) so the typed request builder in
+    /// PlaylistQueryRequests.swift shares the exact same implementation.
+    static func likePattern(for searchTerm: String) -> String {
         let escaped = searchTerm
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "%", with: "\\%")
@@ -1061,7 +1071,9 @@ public class PlaylistQueryBuilder {
         string = string.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private class func filterTimeFor(hours: Int32) -> TimeInterval {
+    /// Internal (not private) so the typed request builder in
+    /// PlaylistQueryRequests.swift shares the exact same implementation.
+    class func filterTimeFor(hours: Int32) -> TimeInterval {
         let changedTime = Date(timeIntervalSinceNow: TimeInterval(hours * -3600))
 
         return changedTime.timeIntervalSince1970

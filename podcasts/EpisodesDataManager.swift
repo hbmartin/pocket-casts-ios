@@ -1,3 +1,4 @@
+import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -139,9 +140,10 @@ nonisolated class EpisodesDataManager {
     // MARK: - Playlists
 
     func episodes(for filter: EpisodeFilter, limit: Int = Constants.Limits.maxFilterItems) -> [ListEpisode] {
-        let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: limit)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let request = PlaylistQueryBuilder.filterEpisodesRequest(for: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: limit)
         let tintColor = filter.playlistColor()
-        return EpisodeTableHelper.loadEpisodes(tintColor: tintColor, query: query.sql, arguments: query.arguments)
+        return episodeRepository.episodes(matching: request).map { ListEpisode(episode: $0, tintColor: tintColor) }
     }
 
     func playlistEpisodes(
@@ -150,8 +152,10 @@ nonisolated class EpisodesDataManager {
         shouldShowArchived: Bool = false,
         search: String? = nil
     ) -> [ListEpisode] {
-        let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), searchTerm: search, limit: limit, shouldShowArchived: shouldShowArchived)
-        return EpisodeTableHelper.loadPlaylistEpisodes(query: query.sql, arguments: query.arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let request = PlaylistQueryBuilder.episodesRequest(for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), searchTerm: search, limit: limit, shouldShowArchived: shouldShowArchived)
+        let tintColor = AppTheme.appTintColor()
+        return episodeRepository.episodes(matching: request).map { ListEpisode(episode: $0, tintColor: tintColor) }
     }
 
     func playlistFirstDistinctEpisodes(
@@ -160,8 +164,10 @@ nonisolated class EpisodesDataManager {
         shouldShowArchived: Bool = false,
         search: String? = nil
     ) -> [ListEpisode] {
-        let query = PlaylistQueryBuilder.query(clause: .firstDistinctEpisodes, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), searchTerm: search, limit: limit, shouldShowArchived: shouldShowArchived)
-        return EpisodeTableHelper.loadPlaylistEpisodes(query: query.sql, arguments: query.arguments)
+        @Dependency(\.episodeRepository) var episodeRepository
+        let request = PlaylistQueryBuilder.episodesRequest(.firstDistinctEpisodes, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), searchTerm: search, limit: limit, shouldShowArchived: shouldShowArchived)
+        let tintColor = AppTheme.appTintColor()
+        return episodeRepository.episodes(matching: request).map { ListEpisode(episode: $0, tintColor: tintColor) }
     }
 
     // MARK: - Downloads

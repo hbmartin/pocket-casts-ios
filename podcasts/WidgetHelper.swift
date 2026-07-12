@@ -109,9 +109,9 @@ nonisolated final class WidgetHelper: Sendable {
         var filterName: String?
         if let topFilter = DataManager.sharedManager.allPlaylists(includeDeleted: false).first {
             filterName = topFilter.playlistName
-            let query = PlaylistQueryBuilder.queryFor(filter: topFilter, episodeUuidToAdd: topFilter.episodeUuidToAddToQueries(), limit: WidgetHelper.maxFilterToPublish)
+            let request = PlaylistQueryBuilder.filterEpisodesRequest(for: topFilter, episodeUuidToAdd: topFilter.episodeUuidToAddToQueries(), limit: WidgetHelper.maxFilterToPublish)
 
-            let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query.sql, arguments: query.arguments)
+            let loadedEpisodes = DataManager.sharedManager.episodes(matching: request)
             for (index, playlistEpisode) in loadedEpisodes.enumerated() {
                 if index >= WidgetHelper.maxFilterToPublish { break }
 

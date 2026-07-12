@@ -34,6 +34,7 @@ for fixture in \
   semgrep/tests/swift-security-test-network-urls.swift \
   semgrep/tests/swift-security-concurrency-escape-hatches.swift \
   semgrep/tests/swift-security-unchecked-sendable.swift \
+  semgrep/tests/swift-playlist-typed-requests.swift \
   semgrep/tests/Modules/Sources/PocketCastsServer/ServerPostOnMainFixture.swift \
   semgrep/tests/podcasts/IsolatedDeinitFixture.swift \
   semgrep/tests/github-actions-security.yml \

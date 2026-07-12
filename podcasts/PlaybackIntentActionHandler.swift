@@ -8,7 +8,7 @@ import WidgetKit
 /// Abstracts the playback + data operations the intent handler needs, so the
 /// handler logic can be unit-tested with a fake. The live implementation drives
 /// `PlaybackManager`/`DataManager`, matching the behaviour previously provided
-/// by `SiriShortcutsManager`.
+/// by the removed SiriKit shortcuts stack.
 nonisolated protocol PlaybackFacade: Sendable {
     func isPlaying() -> Bool
     func hasCurrentEpisode() -> Bool
@@ -91,8 +91,8 @@ nonisolated struct PlaybackIntentActionHandler {
 
     @discardableResult
     func playUpNext() -> Bool {
-        // Mirrors SiriShortcutsManager: the intent is to drop the current
-        // episode and advance, so only act when there is something queued.
+        // Mirrors the legacy Siri shortcut behaviour: the intent is to drop the
+        // current episode and advance, so only act when there is something queued.
         guard facade.hasCurrentEpisode(), facade.upNextCount() > 0 else { return false }
         facade.removeCurrentEpisodeFromUpNext()
         facade.refreshWidgets()
@@ -163,7 +163,7 @@ extension PlaybackControlIntent {
 }
 
 /// Live facade backed by `PlaybackManager`/`DataManager`. The implementations
-/// mirror the behaviour previously exposed through `SiriShortcutsManager`.
+/// mirror the behaviour previously exposed through the removed SiriKit stack.
 nonisolated struct LivePlaybackFacade: PlaybackFacade {
     func isPlaying() -> Bool { PlaybackManager.onMainSync { $0.playing() } }
 
@@ -210,8 +210,8 @@ nonisolated struct LivePlaybackFacade: PlaybackFacade {
 
     func loadTopEpisode(forFilterUuid uuid: String) -> Bool {
         guard let filter = DataManager.sharedManager.findPlaylist(uuid: uuid) else { return false }
-        let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: 1)
-        guard let topEpisode = DataManager.sharedManager.findEpisodesWhere(customWhere: query.sql, arguments: query.arguments).first else { return false }
+        let request = PlaylistQueryBuilder.filterEpisodesRequest(for: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: 1)
+        guard let topEpisode = DataManager.sharedManager.episodes(matching: request).first else { return false }
         PlaybackManager.onMainSync { $0.load(episode: topEpisode, autoPlay: true, overrideUpNext: false) }
         return true
     }

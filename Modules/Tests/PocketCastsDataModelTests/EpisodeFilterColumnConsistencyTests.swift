@@ -8,9 +8,38 @@ import GRDB
 /// (or vice versa), causing inconsistent behavior when the feature flag is toggled.
 final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
 
-    /// Access columnNames directly from PlaylistDataManager (the source of truth for legacy SQL).
+    /// The playlist columns every implementation must persist. This used to live on
+    /// PlaylistDataManager for the raw-SQL read path; that path is gone, so the test
+    /// now owns the expected schema surface.
     private var columnNames: Set<String> {
-        Set(PlaylistDataManager().columnNames)
+        [
+            "id",
+            "autoDownloadEpisodes",
+            "customIcon",
+            "filterAllPodcasts",
+            "filterAudioVideoType",
+            "filterDownloaded",
+            "filterFinished",
+            "filterNotDownloaded",
+            "filterPartiallyPlayed",
+            "filterStarred",
+            "filterUnplayed",
+            "filterHours",
+            "playlistName",
+            "sortPosition",
+            "sortType",
+            "uuid",
+            "podcastUuids",
+            "autoDownloadLimit",
+            "syncStatus",
+            "wasDeleted",
+            "filterDuration",
+            "longerThan",
+            "shorterThan",
+            "manual",
+            "showArchivedEpisodes",
+            "playlistUpdateDate"
+        ]
     }
 
     // MARK: - Database Schema Tests

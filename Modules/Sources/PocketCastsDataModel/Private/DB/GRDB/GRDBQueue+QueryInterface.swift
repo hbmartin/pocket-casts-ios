@@ -36,6 +36,21 @@ extension GRDBQueue {
         }
     }
 
+    /// Fetch a single database value (e.g. a COUNT or an existence probe) from a
+    /// value-decoding request such as `SQLRequest<Int>`.
+    /// - Parameter request: The query request
+    /// - Returns: The fetched value, or nil when the request returns no row (or fails)
+    func fetchValue<T: DatabaseValueConvertible>(_ request: some FetchRequest<T>) -> T? {
+        do {
+            return try dbPool.read { db in
+                try request.fetchOne(db)
+            }
+        } catch {
+            logger?.log(error: error, context: [:])
+            return nil
+        }
+    }
+
     /// Fetch one record matching a request
     /// - Parameter request: The query request
     /// - Returns: The fetched record or nil
