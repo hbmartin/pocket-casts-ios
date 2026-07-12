@@ -50,4 +50,35 @@ final class StatsManagerTests: XCTestCase {
         XCTAssertEqual(reloadedManager.totalSkippedTime(), 104)
         XCTAssertEqual(reloadedManager.totalAutoSkippedTime(), 105)
     }
+
+    func testMissingSyncStatusDefaultsToSynced() {
+        let manager = StatsManager(userDefaults: userDefaults)
+
+        XCTAssertEqual(manager.syncStatus(), .synced)
+    }
+
+    func testInitLoadsPersistedSyncStatus() {
+        userDefaults.set(false, forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        let manager = StatsManager(userDefaults: userDefaults)
+
+        manager.persistTimes()
+        manager.waitForPendingPersistence()
+
+        let reloadedManager = StatsManager(userDefaults: userDefaults)
+        XCTAssertEqual(reloadedManager.syncStatus(), .notSynced)
+    }
+
+    func testSetSyncStatusUpdatesPendingPersistenceSnapshot() {
+        let manager = StatsManager(userDefaults: userDefaults)
+        manager.addTimeSavedDynamicSpeed(1)
+        manager.persistTimes()
+
+        manager.setSyncStatus(.synced)
+        manager.persistTimes()
+        manager.waitForPendingPersistence()
+
+        XCTAssertEqual(manager.syncStatus(), .synced)
+        let reloadedManager = StatsManager(userDefaults: userDefaults)
+        XCTAssertEqual(reloadedManager.syncStatus(), .synced)
+    }
 }
