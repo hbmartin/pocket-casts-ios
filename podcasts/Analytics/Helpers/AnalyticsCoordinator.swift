@@ -1,5 +1,6 @@
 import Dependencies
 import Foundation
+import Synchronization
 import UIKit
 import PocketCastsDataModel
 import PocketCastsUtils
@@ -67,15 +68,16 @@ enum AnalyticsSource: String, AnalyticsDescribable {
 }
 
 /// Events fire from any thread; the one-shot source hint is lock-guarded.
+// @unchecked Sendable: non-final (production and test subclasses), so a checked
+// conformance is impossible; own state is guarded by a Mutex.
 nonisolated class AnalyticsCoordinator: @unchecked Sendable {
     /// Sometimes the playback source can't be inferred, just inform it here
     var currentSource: AnalyticsSource? {
-        get { currentSourceLock.withLock { _currentSource } }
-        set { currentSourceLock.withLock { _currentSource = newValue } }
+        get { currentSourceState.withLock { $0 } }
+        set { currentSourceState.withLock { $0 = newValue } }
     }
 
-    private let currentSourceLock = NSLock()
-    private var _currentSource: AnalyticsSource?
+    private let currentSourceState = Mutex<AnalyticsSource?>(nil)
 
     private var currentEpisodeIsVideo: Bool {
         @Dependency(\.playbackManager) var playbackManager
@@ -90,9 +92,14 @@ nonisolated class AnalyticsCoordinator: @unchecked Sendable {
     }
 
     var currentAnalyticsSource: AnalyticsSource {
-        if let currentSource {
-            self.currentSource = nil
-            return currentSource
+        // Atomic take, so a source set concurrently between the read and the
+        // reset can't be clobbered.
+        let takenSource = currentSourceState.withLock { source in
+            defer { source = nil }
+            return source
+        }
+        if let takenSource {
+            return takenSource
         }
 
         #if !APPCLIP

@@ -1,29 +1,57 @@
 import Foundation
 import PocketCastsUtils
+import Synchronization
 
 /// Adapters are registered once at startup (or cleared on sign-out) and read by
 /// track(); events fire from any thread by design.
-nonisolated class Analytics: @unchecked Sendable {
+nonisolated final class Analytics: AnalyticsTracking, Sendable {
     static let shared = Analytics()
-    private var adapters: [AnalyticsAdapter]?
+
+    private struct State {
+        var adapters: [AnalyticsAdapter]?
+        var adaptersRegistered = false
 #if !APPCLIP && !os(tvOS)
-    var analyticsAppThemeProvider: AnalyticsAppThemeProviding?
+        var analyticsAppThemeProvider: (any AnalyticsAppThemeProviding)?
 #endif
+    }
+
+    private let state = Mutex(State())
 
     // Whether we have adapters registered or not
-    var adaptersRegistered: Bool = false
+    var adaptersRegistered: Bool {
+        state.withLock { $0.adaptersRegistered }
+    }
 
-    static func register(adapters: [AnalyticsAdapter]) {
-        Self.shared.adapters = adapters
-        Self.shared.setAdaptersRegisteredStatus(true)
+    func register(adapters: [AnalyticsAdapter]) {
+        state.withLock {
+            $0.adapters = adapters
+            $0.adaptersRegistered = true
+        }
+        logCurrentAdapters()
     }
 
     /// Unregisters all the registered adapters, disabling analytics
+    func unregister() {
+        state.withLock {
+            $0.adapters = nil
+            $0.adaptersRegistered = false
+        }
+        logCurrentAdapters()
+    }
+
+    static func register(adapters: [AnalyticsAdapter]) {
+        Self.shared.register(adapters: adapters)
+    }
+
     static func unregister() {
-        Self.shared.adapters = nil
-        Self.shared.setAdaptersRegisteredStatus(false)
+        Self.shared.unregister()
     }
 #if !APPCLIP && !os(tvOS)
+    var analyticsAppThemeProvider: (any AnalyticsAppThemeProviding)? {
+        get { state.withLock { $0.analyticsAppThemeProvider } }
+        set { state.withLock { $0.analyticsAppThemeProvider = newValue } }
+    }
+
     static func add(analyticsAppThemeProvider: AnalyticsAppThemeProviding) {
         Self.shared.analyticsAppThemeProvider = analyticsAppThemeProvider
     }
@@ -55,28 +83,34 @@ nonisolated class Analytics: @unchecked Sendable {
             return value
         }
 #if !APPCLIP && !os(tvOS)
+        // One snapshot for both; appThemeProperties can sync-hop to the main
+        // thread, so it must never be called while holding the lock.
+        let (adapters, themeProvider) = state.withLock { ($0.adapters, $0.analyticsAppThemeProvider) }
         if FeatureFlag.appThemePropertiesLogging.enabled {
-            analyticsAppThemeProvider?.appThemeProperties.forEach { key, value in
+            themeProvider?.appThemeProperties.forEach { key, value in
                 properties[key] = value
             }
         }
+#else
+        let adapters = state.withLock { $0.adapters }
 #endif
-        Task { [adapters] in
+        Task { [properties] in
             for adapter in adapters ?? [] {
                 await adapter.track(name: eventName, properties: properties)
             }
         }
     }
 
-    private static func logCurrentAdapters() {
+    fileprivate func logCurrentAdapters() {
 #if DEBUG
-        FileLog.shared.console("Analytics adapters: \(Self.shared.adapters ?? [])")
+        let adapters = state.withLock { $0.adapters }
+        FileLog.shared.console("Analytics adapters: \(adapters ?? [])")
 #endif
     }
 
     fileprivate func setAdaptersRegisteredStatus(_ value: Bool) {
-        adaptersRegistered = value
-        Self.logCurrentAdapters()
+        state.withLock { $0.adaptersRegistered = value }
+        logCurrentAdapters()
     }
 }
 
@@ -119,11 +153,25 @@ nonisolated extension Analytics {
         (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
 #endif
         FileLog.shared.addMessage("Analytics: Refreshed Registered Adapters")
-        Analytics.logCurrentAdapters()
+        logCurrentAdapters()
     }
 }
 
 // MARK: - Protocols
+
+/// Seam for injecting a test double where an `Analytics` instance is consumed.
+/// Deliberately not Sendable-refined: consumers hold it inside their own
+/// isolation (e.g. `AppLifecycleAnalytics` is MainActor-isolated), which lets
+/// test doubles use a @MainActor isolated conformance.
+nonisolated protocol AnalyticsTracking {
+    func track(_ event: AnalyticsEvent, properties: [String: Sendable]?)
+}
+
+nonisolated extension AnalyticsTracking {
+    func track(_ event: AnalyticsEvent) {
+        track(event, properties: nil)
+    }
+}
 
 /// Allows an object to determine how its described in the context of analytics
 nonisolated protocol AnalyticsDescribable {

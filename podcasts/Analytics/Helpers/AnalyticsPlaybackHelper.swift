@@ -1,13 +1,16 @@
 import PocketCastsUtils
 import PocketCastsDataModel
 import Foundation
+import Synchronization
 
 /// Helper used to track playback
+// @unchecked Sendable: restates AnalyticsCoordinator's conformance, as Swift requires
+// of subclasses; own state is guarded by a Mutex.
 nonisolated class AnalyticsPlaybackHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsPlaybackHelper()
 
     /// Whether to ignore the next seek event
-    private var ignoreNextSeek = false
+    private let ignoreNextSeek = Mutex(false)
 
     func play() {
         track(.playbackPlay)
@@ -18,20 +21,26 @@ nonisolated class AnalyticsPlaybackHelper: AnalyticsCoordinator, @unchecked Send
     }
 
     func skipBack() {
-        ignoreNextSeek = true
+        ignoreNextSeek.withLock { $0 = true }
         track(.playbackSkipBack)
     }
 
     func skipForward() {
-        ignoreNextSeek = true
+        ignoreNextSeek.withLock { $0 = true }
         track(.playbackSkipForward)
     }
 
     func seek(from: TimeInterval, to: TimeInterval, duration: TimeInterval) {
+        // Atomic read-and-reset: every path through the original guard left the
+        // flag false, so exchange first, then decide.
+        let wasIgnoringSeek = ignoreNextSeek.withLock { ignore in
+            defer { ignore = false }
+            return ignore
+        }
+
         // Currently ignore a seek event that is triggered by a sync process
         // Using the skip buttons triggers a seek, ignore this as well
-        guard currentSource != .sync, ignoreNextSeek == false else {
-            ignoreNextSeek = false
+        guard currentSource != .sync, wasIgnoringSeek == false else {
             return
         }
 

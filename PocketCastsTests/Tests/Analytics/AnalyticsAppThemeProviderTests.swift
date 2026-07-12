@@ -1,41 +1,53 @@
+import PocketCastsUtils
+import Synchronization
 import XCTest
 
 @testable import podcasts
 
 @MainActor
 class AnalyticsAppThemeProviderTests: XCTestCase {
-    private var analytics = MockAnalytics()
-
     override func setUp() async throws {
-        analytics.analyticsAppThemeProvider = MockAnalyticsAppThemeProvider()
+        try FeatureFlagOverrideStore().override(FeatureFlag.appThemePropertiesLogging, withValue: true)
     }
 
-    func testThemeProviderProperties() throws {
-        let expectation = expectation(description: "track method should be triggered")
-        analytics.didTrack = { _, properties in
-            expectation.fulfill()
+    override func tearDown() async throws {
+        try FeatureFlagOverrideStore().override(FeatureFlag.appThemePropertiesLogging, withValue: false)
+    }
 
-            guard let properties else {
-                XCTFail("Properties must not be nil")
-                return
-            }
-            XCTAssertEqual(properties["theme"] as? String, "dark")
-            XCTAssertEqual(properties["source"] as? String, "test")
-        }
+    func testThemePropertiesAreMergedIntoTrackedEvents() throws {
+        let analytics = Analytics()
+        analytics.analyticsAppThemeProvider = MockAnalyticsAppThemeProvider()
+
+        let expectation = expectation(description: "adapter should receive the tracked event")
+        let adapter = RecordingAdapter(expectation: expectation)
+        analytics.register(adapters: [adapter])
+
         analytics.track(.settingsAppearanceThemeChanged, properties: ["source": "test"])
         waitForExpectations(timeout: 1)
+
+        let tracked = try XCTUnwrap(adapter.recorded.withLock { $0.first })
+        XCTAssertEqual(tracked.name, "settings_appearance_theme_changed")
+        XCTAssertEqual(tracked.properties["theme"] as? String, "dark")
+        XCTAssertEqual(tracked.properties["source"] as? String, "test")
     }
 }
 
-private class MockAnalytics: Analytics, @unchecked Sendable {
-    var didTrack: ((_ event: AnalyticsEvent, _ properties: [String: Sendable]?) -> Void)?
+private final class RecordingAdapter: AnalyticsAdapter {
+    struct TrackedEvent {
+        let name: String
+        let properties: [String: Sendable]
+    }
 
-    override func track(_ event: AnalyticsEvent, properties: [String: Sendable]? = nil) {
-        var newProperties: [String: Sendable] = properties ?? [:]
-        analyticsAppThemeProvider?.appThemeProperties.forEach { key, value in
-            newProperties[key] = value
-        }
-        didTrack?(event, newProperties)
+    let recorded = Mutex<[TrackedEvent]>([])
+    private let expectation: XCTestExpectation
+
+    init(expectation: XCTestExpectation) {
+        self.expectation = expectation
+    }
+
+    func track(name: String, properties: [String: Sendable]) async {
+        recorded.withLock { $0.append(TrackedEvent(name: name, properties: properties)) }
+        expectation.fulfill()
     }
 }
 

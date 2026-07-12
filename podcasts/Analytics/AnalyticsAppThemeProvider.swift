@@ -1,7 +1,7 @@
 import Dependencies
 import Foundation
 
-nonisolated protocol AnalyticsAppThemeProviding {
+nonisolated protocol AnalyticsAppThemeProviding: Sendable {
     var appThemeProperties: [String: Sendable] { get }
 }
 

@@ -17,7 +17,9 @@ public final class StatsManager: Sendable {
 
     private let stats: Mutex<Stats>
     private let persistenceQueue: DispatchQueue
-    private let userDefaults: UserDefaults
+    // UserDefaults is documented thread-safe; its Sendable conformance is
+    // explicitly unavailable in the SDK, so opt this one property out of checking.
+    nonisolated(unsafe) private let userDefaults: UserDefaults
 
     public convenience init() {
         self.init(userDefaults: .standard)
