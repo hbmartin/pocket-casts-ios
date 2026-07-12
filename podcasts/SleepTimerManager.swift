@@ -87,16 +87,25 @@ class SleepTimerManager {
         fadeOutManager.fadeOut(duration: sleepTimerFadeDuration)
     }
 
+    private var durationChangedToken: NotificationCenter.ObservationToken?
+
     private func observePlaybackEndAndReactivateTime() {
-        NotificationCenter.default.addObserver(self, selector: #selector(episodeDurationChanged), name: Constants.Notifications.episodeDurationChanged, object: nil)
+        guard durationChangedToken == nil else { return }
+
+        durationChangedToken = NotificationCenter.default.addObserver(for: EpisodeDurationChanged.self) { [weak self] _ in
+            self?.episodeDurationChanged()
+        }
     }
 
-    @objc private func episodeDurationChanged() {
+    private func episodeDurationChanged() {
         let numberOfEpisodes = Settings.sleepTimerNumberOfEpisodes
         FileLog.shared.addMessage("Sleep Timer: restarting it automatically to the end of the episode")
         Analytics.track(.playerSleepTimerRestarted, properties: ["time": "end_of_episode", "number_of_episodes": numberOfEpisodes])
         PlaybackManager.shared.numberOfEpisodesToSleepAfter = numberOfEpisodes
-        NotificationCenter.default.removeObserver(self, name: Constants.Notifications.episodeDurationChanged, object: nil)
+        if let durationChangedToken {
+            NotificationCenter.default.removeObserver(durationChangedToken)
+            self.durationChangedToken = nil
+        }
     }
 
     private func restartSleepTimerAndPlayTone() {

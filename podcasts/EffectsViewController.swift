@@ -237,7 +237,9 @@ class EffectsViewController: SimpleNotificationsViewController {
 
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(updateControls))
         addCustomObserver(Constants.Notifications.playbackEffectsChanged, selector: #selector(updateControls))
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(updateColors))
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
 
         if isCustomPlaybackSettingsEnabled {
             analyticsPlaybackHelper.currentSource = analyticsSource
@@ -450,7 +452,7 @@ class EffectsViewController: SimpleNotificationsViewController {
         UIAccessibility.post(notification: .announcement, argument: speedBtn.accessibilityLabel)
     }
 
-    @objc private func updateColors() {
+    private func updateColors() {
         view.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
         headingView.backgroundColor = PlayerColorHelper.playerBackgroundColor02()
         volumeBoostSwitch.onTintColor = PlayerColorHelper.playerHighlightColor02(for: .dark)

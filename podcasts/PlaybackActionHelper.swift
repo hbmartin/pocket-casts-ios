@@ -6,17 +6,17 @@ import PocketCastsUtils
 
 @MainActor
 class PlaybackActionHelper {
-    class func play(episode: BaseEpisode, playlistUuid: String? = nil, podcastUuid: String? = nil, playlist: AutoplayHelper.Playlist? = nil) {
+    class func play(episode: BaseEpisode, playlist: AutoplayHelper.Playlist? = nil) {
         HapticsHelper.triggerPlayPauseHaptic()
 
         AutoplayHelper.shared.playedFrom(playlist: playlist)
 
         if !episode.downloaded(pathFinder: DownloadManager.shared) {
             NetworkUtils.shared.streamEpisodeRequested({
-                performPlay(episode: episode, playlistUuid: playlistUuid, podcastUuid: podcastUuid)
+                performPlay(episode: episode)
             }, disallowed: nil)
         } else {
-            performPlay(episode: episode, playlistUuid: playlistUuid, podcastUuid: podcastUuid)
+            performPlay(episode: episode)
         }
     }
 
@@ -38,10 +38,7 @@ class PlaybackActionHelper {
             Task {
                 do {
                     try await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
-                    NotificationCenter.postOnMainThread(
-                        notification: Constants.Notifications.episodeDownloadStatusChanged,
-                        object: episodeUuid
-                    )
+                    NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episodeUuid))
                 } catch {
                     FileLog.shared.addMessage("FileSync: materialize upload failed: \(error)")
                 }
@@ -74,7 +71,7 @@ class PlaybackActionHelper {
         }, disallowed: nil)
     }
 
-    private class func performPlay(episode: BaseEpisode, playlistUuid: String? = nil, podcastUuid: String? = nil) {
+    private class func performPlay(episode: BaseEpisode) {
         if PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episode.uuid) {
             PlaybackManager.shared.play()
         } else {
@@ -88,12 +85,5 @@ class PlaybackActionHelper {
 
             PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
         }
-        #if !os(tvOS)
-        if let playlistUuid {
-            SiriShortcutsManager.shared.donatePlaylistPlayed(playlistUuid: playlistUuid)
-        } else if let podcastUuid {
-            SiriShortcutsManager.shared.donatePodcastPlayed(podcastUuid: podcastUuid)
-        }
-        #endif
     }
 }

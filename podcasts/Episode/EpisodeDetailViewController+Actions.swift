@@ -218,6 +218,6 @@ extension EpisodeDetailViewController {
         PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true, userInitiated: false)
         EpisodeManager.deleteDownloadedFiles(episode: episode, userInitated: true)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
     }
 }

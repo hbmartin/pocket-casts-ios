@@ -21,7 +21,9 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
         // initial value reflects the actual system, not our override.
         Theme.systemIsDark = (windowScene.traitCollection.userInterfaceStyle == .dark)
         window.applyInterfaceStyleForActiveTheme()
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.window?.applyInterfaceStyleForActiveTheme()
+        }
 
         window.makeKeyAndVisible()
 
@@ -70,8 +72,13 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
         appDelegate()?.handleShortcutItem(shortcutItem)
     }
 
-    @objc private func themeDidChange() {
-        window?.applyInterfaceStyleForActiveTheme()
+    private var themeToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 }
 

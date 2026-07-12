@@ -42,7 +42,7 @@ extension MainTabBarController {
     }
 
     @objc func handleSearch() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.searchRequested, object: nil)
+        NotificationCenter.postOnMainThread(SearchRequested())
     }
 
     @objc func handlePlayPauseKey() {

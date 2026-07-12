@@ -60,7 +60,22 @@ class PCViewController: SimpleNotificationsViewController {
         }
         setupNavBar(animated: false)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
+    }
+
+    private var themeToken: NotificationCenter.ObservationToken?
+    private var backgroundToken: NotificationCenter.ObservationToken?
+    private var foregroundToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let tokens = [themeToken, backgroundToken, foregroundToken]
+        for token in tokens {
+            if let token {
+                NotificationCenter.default.removeObserver(token)
+            }
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -80,8 +95,16 @@ class PCViewController: SimpleNotificationsViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(appWasBackgrounded), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(appWillBecomeActive), name: UIApplication.willEnterForegroundNotification, object: nil)
+        if backgroundToken == nil {
+            backgroundToken = NotificationCenter.default.addObserver(for: UIApplication.DidEnterBackgroundMessage.self) { [weak self] _ in
+                self?.handleAppDidEnterBackground()
+            }
+        }
+        if foregroundToken == nil {
+            foregroundToken = NotificationCenter.default.addObserver(for: UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+                self?.handleAppWillBecomeActive()
+            }
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -98,8 +121,14 @@ class PCViewController: SimpleNotificationsViewController {
 
         navigationController?.delegate = nil
 
-        NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
+        if let backgroundToken {
+            NotificationCenter.default.removeObserver(backgroundToken)
+            self.backgroundToken = nil
+        }
+        if let foregroundToken {
+            NotificationCenter.default.removeObserver(foregroundToken)
+            self.foregroundToken = nil
+        }
     }
 
     func refreshRightButtons(animated: Bool = false) {
@@ -129,7 +158,7 @@ class PCViewController: SimpleNotificationsViewController {
         return closeButton
     }
 
-    @objc private func themeDidChange() {
+    private func themeDidChange() {
         setupNavBar(animated: false)
         handleThemeChanged()
     }
@@ -153,14 +182,6 @@ class PCViewController: SimpleNotificationsViewController {
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
         AppTheme.defaultStatusBarStyle()
-    }
-
-    @objc private func appWasBackgrounded() {
-        handleAppDidEnterBackground()
-    }
-
-    @objc private func appWillBecomeActive() {
-        handleAppWillBecomeActive()
     }
 
     func handleAppDidEnterBackground() {}

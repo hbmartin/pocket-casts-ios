@@ -54,7 +54,9 @@ class ChaptersViewController: PlayerItemViewController {
     }
 
     private func addObservers() {
-        addCustomObserver(Constants.Notifications.episodeDurationChanged, selector: #selector(update))
+        addCustomObserver(EpisodeDurationChanged.self) { [weak self] _ in
+            self?.update()
+        }
         addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update))
         addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(update))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(update))

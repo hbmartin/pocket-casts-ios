@@ -30,7 +30,7 @@ nonisolated enum EpisodeDurationCorrector {
             guard let corrected = correction(current: episode.duration, calculated: CMTimeGetSeconds(loaded)) else { return }
 
             DataManager.sharedManager.saveEpisode(duration: corrected.duration, episode: episode, updateSyncFlag: corrected.syncFlag)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDurationChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDurationChanged(uuid: episode.uuid))
         }
     }
 

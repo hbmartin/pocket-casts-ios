@@ -67,8 +67,12 @@ class FolderViewController: PCViewController {
 
         addCustomObserver(Constants.Notifications.podcastUpdated, selector: #selector(reloadFolder))
         addCustomObserver(Constants.Notifications.folderChanged, selector: #selector(reloadFolder))
-        addCustomObserver(Constants.Notifications.miniPlayerDidAppear, selector: #selector(miniPlayerStatusDidChange))
-        addCustomObserver(Constants.Notifications.miniPlayerDidDisappear, selector: #selector(miniPlayerStatusDidChange))
+        addCustomObserver(MiniPlayerDidAppear.self) { [weak self] _ in
+            self?.miniPlayerStatusDidChange()
+        }
+        addCustomObserver(MiniPlayerDidDisappear.self) { [weak self] _ in
+            self?.miniPlayerStatusDidChange()
+        }
 
         Analytics.track(.folderShown, properties: ["number_of_podcasts": podcasts.count, "sort_order": folder.librarySort()])
     }
@@ -242,7 +246,7 @@ class FolderViewController: PCViewController {
         Analytics.track(.folderSortByChanged, properties: ["sort_order": order])
     }
 
-    @objc private func miniPlayerStatusDidChange() {
+    private func miniPlayerStatusDidChange() {
         let horizontalMargin: CGFloat = Settings.libraryType() == .list ? 0 : 16
         let bottomMargin: CGFloat = Constants.effectiveMiniPlayerOffset + 8
         mainGrid.contentInset = UIEdgeInsets(top: mainGrid.contentInset.top, left: horizontalMargin, bottom: bottomMargin, right: horizontalMargin)

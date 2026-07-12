@@ -234,7 +234,7 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     // MARK: - UITextField Methods
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
         if textField == currentField {
             currentBorderView.isSelected = true
             newBorderView.isSelected = false
@@ -260,7 +260,7 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

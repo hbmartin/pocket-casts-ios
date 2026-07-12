@@ -18,20 +18,32 @@ class SyncLoadingAlert: ShiftyLoadingAlert {
         unsubscribeToSyncChanges()
     }
 
+    private var loginToken: NotificationCenter.ObservationToken?
+
     private func subscribeToSyncChanges() {
         NotificationCenter.default.addObserver(self, selector: #selector(syncProgressCountKnown(_:)), name: ServerNotifications.syncProgressPodcastCount, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(syncUpToChanged(_:)), name: ServerNotifications.syncProgressPodcastUpto, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(podcastsImported), name: ServerNotifications.syncProgressImportedPodcasts, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(loggedIn), name: .userLoginDidChange, object: nil)
+        if loginToken == nil {
+            loginToken = NotificationCenter.default.addObserver(for: UserLoginDidChange.self) { [weak self] _ in
+                self?.title = L10n.syncAccountLogin
+            }
+        }
     }
 
     private func unsubscribeToSyncChanges() {
+        let token = loginToken
+        loginToken = nil
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
-    @objc private func loggedIn() {
-        DispatchQueue.main.async {
-            self.title = L10n.syncAccountLogin
+    deinit {
+        let token = loginToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 

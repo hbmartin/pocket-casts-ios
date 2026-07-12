@@ -65,15 +65,27 @@ class UpNextNowPlayingCell: ThemeableCell {
             NotificationCenter.default.addObserver(self, selector: #selector(updatePlayingAnimation), name: Constants.Notifications.playbackPaused, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(updatePlayingAnimation), name: Constants.Notifications.playbackStarted, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadProgressChange), name: Constants.Notifications.downloadProgress, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadStatusChange(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadStatusChange(_:)), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+                self?.updateCellForDownloadStatusChange(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloadStatusChanged.self) { [weak self] message in
+                self?.updateCellForDownloadStatusChange(episodeUuid: message.uuid)
+            })
 
             updateSize()
         }
     }
 
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     deinit {
+        // Property reads must precede the self-copy removeObserver makes; after it,
+        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
         NotificationCenter.default.removeObserver(self)
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func populateFrom(episode: BaseEpisode) {
@@ -221,9 +233,9 @@ class UpNextNowPlayingCell: ThemeableCell {
         updateDownloadStatus()
     }
 
-    @objc private func updateCellForDownloadStatusChange(_ notification: Notification) {
+    private func updateCellForDownloadStatusChange(episodeUuid: String?) {
         // make sure this event is related to our episode
-        guard let ourEpisode = episode, let uuid = notification.object as? String, ourEpisode.uuid == uuid else { return }
+        guard let ourEpisode = episode, let episodeUuid, ourEpisode.uuid == episodeUuid else { return }
 
         // if it is, reload our episode so we get the latest status for it
         refreshEpisodeFromDatabase(uuid: ourEpisode.uuid)

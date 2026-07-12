@@ -42,13 +42,24 @@ class ThemedHostingController<Content>: ModifedHostingController<Content, Themed
         super.init(rootView: rootView, modifier: ThemedEnvironment(theme: theme))
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         themeDidChange()
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
     }
 
-    @objc func themeDidChange() {
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
+    func themeDidChange() {
         if let background {
             view.backgroundColor = UIColor(Theme.sharedTheme[keyPath: background])
         } else {

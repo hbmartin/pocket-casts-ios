@@ -94,7 +94,7 @@ extension AppDelegate {
             }
 
             ServerSettings.userId = userId
-            NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
+            NotificationCenter.postOnMainThread(UserLoginDidChange())
         }
     }
 }

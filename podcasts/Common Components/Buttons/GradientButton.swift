@@ -18,17 +18,25 @@ class GradientButton: UIButton {
         setup()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setup() {
         setupGradient()
         handleThemeChanged()
-        NotificationCenter.default.addObserver(self, selector: #selector(handleThemeChanged), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.handleThemeChanged()
+        }
     }
 
-    @objc private func handleThemeChanged() {
+    private func handleThemeChanged() {
         gradientLayer?.colors = [AppTheme.colorForStyle(gradientStartStyle).cgColor, AppTheme.colorForStyle(gradientEndStyle).cgColor]
     }
 

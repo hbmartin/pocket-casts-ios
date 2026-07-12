@@ -134,7 +134,9 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshGridItems))
+        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
+            self?.refreshGridItems()
+        }
         addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
             self?.refreshGridItems()
         }
@@ -142,8 +144,12 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         addCustomObserver(Constants.Notifications.folderChanged, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.folderDeleted, selector: #selector(refreshGridItems))
 
-        addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
-        addCustomObserver(Constants.Notifications.searchRequested, selector: #selector(searchRequested))
+        addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
+            self?.checkForScrollTap(message)
+        }
+        addCustomObserver(SearchRequested.self) { [weak self] _ in
+            self?.searchRequested()
+        }
     }
 
     private func makeBadge(size: CGFloat) -> UIView {
@@ -167,9 +173,9 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         extraRightButtons = []
     }
 
-    @objc private func checkForScrollTap(_ notification: Notification) {
+    private func checkForScrollTap(_ message: TappedOnSelectedTab) {
         let topOffset = -PCSearchBarController.defaultHeight - view.safeAreaInsets.top
-        if let index = notification.object as? Int, index == tabBarItem.tag, podcastsCollectionView.contentOffset.y.rounded(.down) > topOffset.rounded(.down) {
+        if let index = message.tabIndex, index == tabBarItem.tag, podcastsCollectionView.contentOffset.y.rounded(.down) > topOffset.rounded(.down) {
             podcastsCollectionView.setContentOffset(CGPoint(x: -horizontalMargin, y: topOffset), animated: true)
         } else {
             // When double-tapping on tab bar, dismiss the search if already active
@@ -182,7 +188,7 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         }
     }
 
-    @objc private func searchRequested() {
+    private func searchRequested() {
         let topOffset = view.safeAreaInsets.top
         podcastsCollectionView.setContentOffset(CGPoint(x: 0, y: -searchController.view.bounds.height - topOffset), animated: false)
         searchController.searchTextField.becomeFirstResponder()

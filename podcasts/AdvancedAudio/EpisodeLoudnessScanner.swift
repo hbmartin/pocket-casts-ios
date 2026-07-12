@@ -19,13 +19,15 @@ nonisolated final class EpisodeLoudnessScanner: Sendable {
     private let scanQueue = DispatchQueue(label: "au.com.pocketcasts.LoudnessScan", qos: .utility, autoreleaseFrequency: .workItem)
     private let inFlight = Mutex(Set<String>())
 
-    init() {
-        NotificationCenter.default.addObserver(self, selector: #selector(episodeDownloaded(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-    }
+    /// Held for the scanner's whole (process-long) lifetime; set once in init.
+    private let downloadToken = Mutex<NotificationCenter.ObservationToken?>(nil)
 
-    @objc private func episodeDownloaded(_ notification: Notification) {
-        guard let episodeUuid = notification.object as? String else { return }
-        scanIfNeeded(episodeUuid: episodeUuid)
+    init() {
+        let token = NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+            guard let self, let episodeUuid = message.uuid else { return }
+            self.scanIfNeeded(episodeUuid: episodeUuid)
+        }
+        downloadToken.withLock { $0 = token }
     }
 
     func scanIfNeeded(episodeUuid: String) {

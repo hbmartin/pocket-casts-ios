@@ -127,7 +127,7 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
         // the raw NSError was already written to the file log above.
         dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: Self.userFacingDownloadErrorMessage(for: error), downloadTaskId: nil, episode: episode)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
     }
 
     static func userFacingDownloadErrorMessage(for error: NSError) -> String {
@@ -209,7 +209,7 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
             dataManager.saveEpisode(downloadStatus: newDownloadStatus, sizeInBytes: fileSize, downloadTaskId: nil, episode: episode)
             dataManager.saveEpisode(downloadStatus: newDownloadStatus, lastDownloadAttemptDate: Date.now, autoDownloadStatus: autoDownloadStatus, episode: episode)
             EpisodeFileSizeUpdater.updateEpisodeDuration(episode: episode)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloaded, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDownloaded(uuid: episode.uuid))
 
             // Publish full podcast downloads into the FileSync mirror area (no-op unless
             // sync + mirroring are enabled). Streaming buffers aren't durable downloads.
@@ -338,7 +338,7 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
         removeEpisodeFromCache(episode)
 
         dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: message, downloadTaskId: nil, episode: episode)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
 
         taskFailure[episode.uuid] = reason
     }

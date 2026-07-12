@@ -7,24 +7,36 @@ import SafariServices
 extension NowPlayingPlayerItemViewController {
     func addObservers() {
         addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(progressUpdated))
-        addCustomObserver(Constants.Notifications.episodeDurationChanged, selector: #selector(progressUpdated))
+        addCustomObserver(EpisodeDurationChanged.self) { [weak self] _ in
+            self?.progressUpdated()
+        }
         addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update(notification:)))
         addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(update(notification:)))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackTrackChanged))
         addCustomObserver(Constants.Notifications.videoPlaybackEngineSwitched, selector: #selector(videoPlaybackEngineSwitched))
         addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update(notification:)))
         addCustomObserver(Constants.Notifications.playbackEffectsChanged, selector: #selector(update(notification:)))
-        addCustomObserver(.episodeEmbeddedArtworkLoaded, selector: #selector(update(notification:)))
+        addCustomObserver(EpisodeEmbeddedArtworkLoaded.self) { [weak self] _ in
+            self?.update(notification: nil)
+        }
         addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(updateChapterInfo))
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(update(notification:)))
-        addCustomObserver(UIApplication.willEnterForegroundNotification, selector: #selector(update(notification:)))
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.update(notification: nil)
+        }
+        addCustomObserver(UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.update(notification: nil)
+        }
         addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(update(notification:)))
 
         addCustomObserver(Constants.Notifications.sleepTimerChanged, selector: #selector(sleepTimerUpdated))
         addCustomObserver(Constants.Notifications.playerActionsUpdated, selector: #selector(reloadShelfActions))
         #if !APPCLIP
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(reloadShelfActions))
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(reloadShelfActions))
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
+            self?.reloadShelfActions()
+        }
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.reloadShelfActions()
+        }
         #endif
     }
 

@@ -5,20 +5,24 @@ class ThemeLoadingIndicator: UIActivityIndicatorView {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {
-            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.setThemeColor()
+            }
             setThemeColor()
         }
     }
 
-    @objc private func themeDidChange() {
-        setThemeColor()
-    }
+    private var themeToken: NotificationCenter.ObservationToken?
 
     private func setThemeColor() {
         color = AppTheme.loadingActivityColor()
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 }

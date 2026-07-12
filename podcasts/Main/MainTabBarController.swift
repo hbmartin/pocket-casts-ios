@@ -25,6 +25,18 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     /// when the queue actually changes (not on every refresh notification).
     private var previousUpNextCount: Int?
 
+    /// Typed-message observations, registered once in `viewDidLoad` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
+    deinit {
+        // Read isolated stored properties into locals before any observer removal
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
     /// `true` while the Up Next "pulse" spring is in flight, so a burst of
     /// rapid adds doesn't stack overlapping transforms on the mini player artwork.
     /// Not `private`: set from the pulse code in `+Animations`.
@@ -131,11 +143,17 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         NotificationCenter.default.addObserver(self, selector: #selector(handleFollowSystemThemeTurnedOn), name: Constants.Notifications.followSystemThemeTurnedOn, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(willEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+            self?.upNextQueueDidChange()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+            self?.upNextQueueDidChange()
+        })
         NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        // `upNextEpisodeAdded` refreshes the count via the genie animation's tail, not here.
-        NotificationCenter.default.addObserver(self, selector: #selector(animateEpisodeAddedToUpNext(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
+        // `UpNextEpisodeAdded` refreshes the count via the genie animation's tail, not here.
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeAdded.self) { [weak self] message in
+            self?.animateEpisodeAddedToUpNext(message)
+        })
         upNextQueueDidChange()
 
         addBookmarkCreatedToastHandler()

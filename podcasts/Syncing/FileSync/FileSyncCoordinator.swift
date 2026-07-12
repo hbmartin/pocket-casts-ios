@@ -23,6 +23,18 @@ final class FileSyncCoordinator {
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
     private var isSetup = false
 
+    /// Typed-message observations, registered once in `addObservers()` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
+    deinit {
+        // Read isolated stored properties into locals before any observer removal
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
     func setup() {
         guard !isSetup else { return }
         isSetup = true
@@ -70,13 +82,19 @@ final class FileSyncCoordinator {
         let center = NotificationCenter.default
         for name in [
             Constants.Notifications.playbackPaused,
-            Constants.Notifications.playbackTrackChanged,
-            Constants.Notifications.upNextQueueChanged,
-            Constants.Notifications.upNextEpisodeAdded,
-            Constants.Notifications.upNextEpisodeRemoved
+            Constants.Notifications.playbackTrackChanged
         ] {
             center.addObserver(self, selector: #selector(syncTriggerFired), name: name, object: nil)
         }
+        messageTokens.append(center.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+            self?.syncTriggerFired()
+        })
+        messageTokens.append(center.addObserver(for: UpNextEpisodeAdded.self) { [weak self] _ in
+            self?.syncTriggerFired()
+        })
+        messageTokens.append(center.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+            self?.syncTriggerFired()
+        })
         center.addObserver(self, selector: #selector(playbackStarted), name: Constants.Notifications.playbackStarted, object: nil)
         center.addObserver(self, selector: #selector(playbackStopped), name: Constants.Notifications.playbackPaused, object: nil)
         center.addObserver(self, selector: #selector(playbackStopped), name: Constants.Notifications.playbackEnded, object: nil)
@@ -128,8 +146,8 @@ final class FileSyncCoordinator {
     #if DEBUG
     private func exerciseNotificationHandlersForUITesting() {
         let center = NotificationCenter.default
-        center.post(name: Constants.Notifications.upNextQueueChanged, object: nil)
-        center.post(name: Constants.Notifications.upNextQueueChanged, object: nil)
+        center.post(UpNextQueueChanged())
+        center.post(UpNextQueueChanged())
         center.post(name: Constants.Notifications.playbackStarted, object: nil)
         center.post(name: Constants.Notifications.playbackStarted, object: nil)
         center.post(name: Constants.Notifications.playbackPaused, object: nil)

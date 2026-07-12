@@ -68,14 +68,16 @@ class EpisodeListSearchController: SimpleNotificationsViewController, UISearchBa
         showHideArchiveBtn.titleLabel?.heightAnchor.constraint(equalTo: showHideArchiveBtn.heightAnchor).isActive = true
         updateInfoView()
         themeChanged()
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(themeChanged))
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.themeChanged()
+        }
     }
 
     @objc private func textFieldDidChange() {
         handleTextFieldDidChange()
     }
 
-    @objc private func themeChanged() {
+    private func themeChanged() {
         view.backgroundColor = ThemeColor.primaryUi02()
 
         searchTextField.backgroundColor = UIColor.clear

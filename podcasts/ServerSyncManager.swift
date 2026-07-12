@@ -48,7 +48,7 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
                 PlaybackManager.shared.nowPlayingStarredChanged()
             }
         }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeStarredChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeStarredChanged(uuid: episode.uuid))
     }
 
     func archiveEpisodeExternal(episode: Episode) {

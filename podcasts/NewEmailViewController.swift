@@ -242,8 +242,8 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         ServerSettings.clearLastSyncTime()
         ServerSettings.setSyncingEmail(email: username)
 
-        NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
-        NotificationCenter.postOnMainThread(notification: .userSignedIn)
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
+        NotificationCenter.postOnMainThread(UserSignedIn())
     }
 
     // MARK: - UITextField Methods
@@ -259,7 +259,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
         if textField == emailField {
             emailBorderView.selectedStyle =
                 .primaryField03Active
@@ -273,7 +273,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     @objc func emailFieldDidChange() {

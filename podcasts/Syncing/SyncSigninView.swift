@@ -291,7 +291,7 @@ final class SyncSigninViewModel: ObservableObject {
 
                 RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
 
-                NotificationCenter.postOnMainThread(notification: .userSignedIn)
+                NotificationCenter.postOnMainThread(UserSignedIn())
                 self.isSigningIn = false
             }
         }
@@ -317,7 +317,7 @@ final class SyncSigninViewModel: ObservableObject {
         ServerSettings.clearLastSyncTime()
         ServerSettings.setSyncingEmail(email: username)
 
-        NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
 
         Analytics.track(.userSignedIn, properties: ["source": "password"])
     }

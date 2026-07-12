@@ -12,7 +12,13 @@ protocol PCSearchBarDelegate: AnyObject {
 
 class PCSearchBarController: UIViewController {
     // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
-    nonisolated deinit {}
+    nonisolated deinit {
+        if let themeToken {
+            NotificationCenter.default.removeObserver(themeToken)
+        }
+    }
+
+    private var themeToken: NotificationCenter.ObservationToken?
     @IBOutlet var roundedBackgroundView: UIView!
     @IBOutlet var searchTextField: UITextField! {
         didSet {
@@ -88,7 +94,9 @@ class PCSearchBarController: UIViewController {
         super.viewDidLoad()
         registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         updateColors()
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
         NotificationCenter.default.addObserver(self, selector: #selector(searchRequest), name: Constants.Notifications.podcastSearchRequest, object: nil)
         updateSize()
         updateCollapseAppearance()
@@ -143,10 +151,6 @@ class PCSearchBarController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         isVisible = false
-    }
-
-    @objc private func themeDidChange() {
-        updateColors()
     }
 
     @objc private func searchRequest(notification: Notification) {

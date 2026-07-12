@@ -134,7 +134,7 @@ nonisolated final class PodcastManager: NSObject, @unchecked Sendable {
         checkIfAutoDownloadsRequired()
 
         // fire off a single notification for any action that might have been performed above
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
     }
 
     private func checkIfAutoDownloadsRequired() {

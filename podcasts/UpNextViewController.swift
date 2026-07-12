@@ -151,6 +151,9 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 
     private var sortTipVC: UIViewController?
 
+    /// Typed-message observations, registered once in `viewDidLoad` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     @IBOutlet var upNextTable: ThemeableTable! {
         didSet {
             upNextTable.themeOverride = themeOverride
@@ -198,6 +201,15 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        // Read isolated stored properties into locals before any observer removal
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
@@ -209,16 +221,24 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 
         NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.playbackTrackChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.playbackEnded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeAdded.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
         NotificationCenter.default.addObserver(self, selector: #selector(updateTimeRemainingLabel), name: Constants.Notifications.playbackProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(reorderingDidBegin), name: .tableViewReorderWillBegin, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(reorderingDidEnd), name: .tableViewReorderDidEnd, object: nil)
 
         if showingInTab {
-            NotificationCenter.default.addObserver(self, selector: #selector(updateShuffleButtonState), name: Constants.Notifications.upNextShuffleToggle, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: UpNextShuffleToggled.self) { [weak self] _ in
+                self?.updateShuffleButtonState()
+            })
         }
 
         remainingLabel.font = UIFont.font(ofSize: 14, weight: .medium, scalingWith: .footnote)
@@ -421,7 +441,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         return optionsPicker
     }
 
-    @objc private func updateShuffleButtonState() {
+    private func updateShuffleButtonState() {
         shuffleButton.isSelected = Settings.upNextShuffleEnabled()
     }
 

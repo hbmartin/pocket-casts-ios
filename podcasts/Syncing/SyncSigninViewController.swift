@@ -225,7 +225,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
         if textField == emailField {
             emailBorderView.isSelected = true
             passwordBorderView.isSelected = false
@@ -236,7 +236,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     @objc func emailFieldDidChange() {
@@ -295,7 +295,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
                     self.handleSuccessfulSignIn(username, password: password, userId: userId)
                     RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
 
-                    NotificationCenter.postOnMainThread(notification: .userSignedIn)
+                    NotificationCenter.postOnMainThread(UserSignedIn())
                 })
             }
         }
@@ -336,7 +336,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         ServerSettings.clearLastSyncTime()
         ServerSettings.setSyncingEmail(email: username)
 
-        NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
 
         Analytics.track(.userSignedIn, properties: ["source": "password"])
     }

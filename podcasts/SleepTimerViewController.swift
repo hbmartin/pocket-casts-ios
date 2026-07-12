@@ -206,7 +206,9 @@ class SleepTimerViewController: SimpleNotificationsViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(progressUpdated))
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(updateColors))
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
 
         updateDisplay()
     }
@@ -221,7 +223,7 @@ class SleepTimerViewController: SimpleNotificationsViewController {
         updateSleepRemainingTime()
     }
 
-    @objc private func updateColors() {
+    private func updateColors() {
         view.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
         sleepTimerActiveView.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
         sleepTimerOffView.backgroundColor = PlayerColorHelper.playerBackgroundColor01()

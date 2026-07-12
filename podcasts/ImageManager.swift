@@ -302,7 +302,7 @@ nonisolated final class ImageManager: @unchecked Sendable {
 
     func save(_ image: UIImage, for episodeUuid: String) {
         subscribedPodcastsCache.store(image, forKey: episodeUuid) { _ in
-            NotificationCenter.postOnMainThread(notification: .episodeEmbeddedArtworkLoaded)
+            NotificationCenter.postOnMainThread(EpisodeEmbeddedArtworkLoaded())
         }
     }
 

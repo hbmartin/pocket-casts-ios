@@ -46,17 +46,24 @@ class OnboardingHostingViewController<Content>: UIHostingController<Content>, UI
         navigationItem.backButtonDisplayMode = .minimal
         navigationController?.navigationBar.tintColor = iconTintColor
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateNavigationBarStyle(animated: false)
+        }
+    }
+
+    private var themeToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
         viewModel?.didDismiss(type: .viewDisappearing)
-    }
-
-    @objc func themeDidChange() {
-        updateNavigationBarStyle(animated: false)
     }
 
     private func updateNavigationBarStyle(animated: Bool) {

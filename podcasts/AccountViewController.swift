@@ -43,10 +43,14 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         super.viewDidLoad()
         title = L10n.accountTitle
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateDisplayedData() // in case the avatar text color needs updating
+        }
 
         tableView.tableHeaderView = updatedHeaderContentView
     }
+
+    private var themeToken: NotificationCenter.ObservationToken?
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -55,7 +59,11 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -83,10 +91,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
 
     @IBAction func learnMoreTapped(_ sender: Any) {
         // Every feature is free now, so there is no plus marketing page to show.
-    }
-
-    @objc private func themeDidChange() {
-        updateDisplayedData() // in case the avatar text color needs updating
     }
 
     // MARK: Change email delegate

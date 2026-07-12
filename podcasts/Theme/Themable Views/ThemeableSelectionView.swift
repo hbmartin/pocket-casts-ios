@@ -44,18 +44,22 @@ class ThemeableSelectionView: UIView {
         setup()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setup() {
         updateColor()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-    }
-
-    @objc private func themeDidChange() {
-        updateColor()
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColor()
+        }
     }
 
     private func updateColor() {

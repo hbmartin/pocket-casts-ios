@@ -70,7 +70,7 @@ class AuthenticationHelper {
             ServerSettings.setSyncingEmail(email: response.email)
         }
 
-        NotificationCenter.postOnMainThread(notification: .userLoginDidChange)
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
 
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
     }

@@ -94,11 +94,20 @@ class ThemeableButton: UIView {
         isAccessibilityElement = true
         accessibilityTraits = [.button]
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        if themeToken == nil {
+            themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.updateColors()
+            }
+        }
     }
 
-    @objc private func themeDidChange() {
-        updateColors()
+    private var themeToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func updateColors() {

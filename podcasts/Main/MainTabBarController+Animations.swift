@@ -7,9 +7,8 @@ import UIKit
 extension MainTabBarController {
     static let upNextGenieViewTag = 776_611
 
-    @objc func animateEpisodeAddedToUpNext(_ notification: Notification) {
-        // Posted via postOnMainThread, so we're already on the main thread here.
-        guard let episodeUuid = notification.object as? String else {
+    func animateEpisodeAddedToUpNext(_ message: UpNextEpisodeAdded) {
+        guard let episodeUuid = message.uuid else {
             // Nothing to animate — just keep the count current.
             upNextQueueDidChange()
             return
@@ -17,7 +16,7 @@ extension MainTabBarController {
 
         // Whether this was a "Play Next" (top) or "Play Last" (bottom) add, so
         // the flying badge can show the matching glyph and tint.
-        let toTop = (notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool) ?? false
+        let toTop = message.addedToTop
 
         Task { [weak self] in
             let episode = await DataManager.sharedManager.findBaseEpisodeAsync(uuid: episodeUuid)

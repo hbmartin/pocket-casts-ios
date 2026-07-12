@@ -16,20 +16,24 @@ class ThemeableCollectionView: UICollectionView, AutoScrollCollectionViewDelegat
         }
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     override nonisolated func awakeFromNib() {
         super.awakeFromNib()
         MainActor.assumeIsolated {
-            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.updateColor()
+            }
             updateColor()
         }
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc private func themeDidChange() {
-        updateColor()
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func updateColor() {

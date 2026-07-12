@@ -124,14 +124,13 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
 
     // MARK: - Init
 
+    private var episodeDownloadedToken: NotificationCenter.ObservationToken?
+
     override init() {
         super.init()
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleEpisodeDownloaded(_:)),
-            name: Constants.Notifications.episodeDownloaded,
-            object: nil
-        )
+        episodeDownloadedToken = NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+            self?.handleEpisodeDownloaded(episodeUuid: message.uuid)
+        }
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handlePlaybackProgress),
@@ -141,7 +140,13 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
     }
 
     deinit {
+        // Property reads must precede the self-copy removeObserver makes; after it,
+        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let token = episodeDownloadedToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     // MARK: - Public API
@@ -172,8 +177,8 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
     /// When an episode download completes while the transcript flow has already requested
     /// preparation, retry. If we previously gave up because no local file existed, or were
     /// processing a partial streaming buffer, we now have a complete file to fingerprint.
-    @objc private func handleEpisodeDownloaded(_ notification: Notification) {
-        guard let downloadedUuid = notification.object as? String,
+    private func handleEpisodeDownloaded(episodeUuid: String?) {
+        guard let downloadedUuid = episodeUuid,
               let currentUuid = PlaybackManager.onMainSync({ $0.currentEpisode() })?.uuid,
               currentUuid == downloadedUuid else { return }
 

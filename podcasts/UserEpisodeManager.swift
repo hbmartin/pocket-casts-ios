@@ -88,10 +88,7 @@ nonisolated struct UserEpisodeManager {
                 downloadTaskId: nil,
                 episode: userEpisode
             )
-            NotificationCenter.postOnMainThread(
-                notification: Constants.Notifications.episodeDownloadStatusChanged,
-                object: userEpisode.uuid
-            )
+            NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: userEpisode.uuid))
             return
         }
 

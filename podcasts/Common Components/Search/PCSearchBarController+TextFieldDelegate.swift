@@ -2,13 +2,13 @@ import Foundation
 
 extension PCSearchBarController: UITextFieldDelegate {
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
         showCancelButton()
         searchDelegate?.searchDidBegin()
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

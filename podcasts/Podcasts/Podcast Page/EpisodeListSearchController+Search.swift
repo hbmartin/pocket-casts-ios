@@ -3,11 +3,11 @@ import Foundation
 extension EpisodeListSearchController: UITextFieldDelegate {
     func textFieldDidBeginEditing(_ textField: UITextField) {
         podcastDelegate?.didActivateSearch()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

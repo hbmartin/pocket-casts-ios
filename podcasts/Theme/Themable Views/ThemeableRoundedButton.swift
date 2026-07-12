@@ -41,16 +41,24 @@ class ThemeableRoundedButton: UIButton {
         setup()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     private func setup() {
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
         updateColor()
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
-    @objc func themeDidChange() {
+    func themeDidChange() {
         updateColor()
     }
 

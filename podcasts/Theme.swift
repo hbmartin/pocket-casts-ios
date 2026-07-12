@@ -142,7 +142,7 @@ class Theme: ObservableObject {
             // if the user is changing from or to the radioactive theme, we need to clear our memory cache because processing is applied to these images
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastImageReCacheRequired)
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.themeChanged)
+            NotificationCenter.postOnMainThread(ThemeChanged())
         }
     }
 

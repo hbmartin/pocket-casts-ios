@@ -114,7 +114,18 @@ class MultiSelectFooterView: UIView, MultiSelectActionOrderDelegate {
 
         blurView.layer.cornerRadius = 28
         containerView.layer.cornerRadius = 28
-        NotificationCenter.default.addObserver(self, selector: #selector(handleThemeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.handleThemeDidChange()
+        }
+    }
+
+    private var themeToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override var isHidden: Bool {
@@ -202,7 +213,7 @@ class MultiSelectFooterView: UIView, MultiSelectActionOrderDelegate {
         MultiSelectHelper.performAction(leftAction, actionDelegate: delegate, view: leftActionButton)
     }
 
-    @objc func handleThemeDidChange() {
+    func handleThemeDidChange() {
         moreButton.backgroundColor = AppTheme.colorForStyle(.primaryInteractive01, themeOverride: themeOverride)
         moreButton.tintColor = AppTheme.colorForStyle(.primaryInteractive02, themeOverride: themeOverride)
         rightActionButton.backgroundColor = AppTheme.colorForStyle(.primaryInteractive01, themeOverride: themeOverride)

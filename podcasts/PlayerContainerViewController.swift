@@ -230,7 +230,9 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         // Podcast colors load async on first play; recolor the background and
         // tab fades when they arrive instead of keeping the black fallback.
         addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(themeDidChange))
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
     }
 
     private func setupGestures() {
@@ -246,7 +248,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         #endif
     }
 
-    @objc private func themeDidChange() {
+    private func themeDidChange() {
         updateColors()
         tabsView.themeDidChange()
         nowPlayingItem.themeDidChange()

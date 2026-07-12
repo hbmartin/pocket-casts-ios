@@ -118,7 +118,9 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         super.viewDidAppear(animated)
         updateNavTintColors()
         addCustomObserver(Constants.Notifications.playlistChanged, selector: #selector(filtersUpdated))
-        addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
+        addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
+            self?.checkForScrollTap(message)
+        }
 
         Analytics.track(.filterListShown, properties: ["filter_count": listPlaylistItems.count])
 
@@ -134,9 +136,9 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         navigationController?.navigationBar.shadowImage = nil
     }
 
-    @objc private func checkForScrollTap(_ notification: Notification) {
+    private func checkForScrollTap(_ message: TappedOnSelectedTab) {
         let topOffset = view.safeAreaInsets.top
-        if let index = notification.object as? Int, index == tabBarItem.tag, filtersTable.contentOffset.y > -topOffset {
+        if let index = message.tabIndex, index == tabBarItem.tag, filtersTable.contentOffset.y > -topOffset {
             filtersTable.setContentOffset(CGPoint(x: 0, y: -topOffset), animated: true)
         }
     }

@@ -30,17 +30,23 @@ class ThemeableTable: UITableView {
         }
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     func commonInit() {
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        guard themeToken == nil else { return }
+
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColor()
+        }
         updateColor()
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc private func themeDidChange() {
-        updateColor()
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     class func setHeaderFooterTextColor(on headerFooter: UIView) {

@@ -5,8 +5,16 @@ import UIKit
 @MainActor
 class InsetAdjuster {
 
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     deinit {
+        // Property reads must precede removeObserver(self); after it, deinit may
+        // only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
         NotificationCenter.default.removeObserver(self)
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     var isMultiSelectEnabled: Bool = false {
@@ -24,13 +32,17 @@ class InsetAdjuster {
         }
         scrollViewAdjustableToMiniPlayer = scrollView
 
-        NotificationCenter.default.addObserver(self, selector: #selector(miniPlayerVisibilityDidChange), name: Constants.Notifications.miniPlayerDidDisappear, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(miniPlayerVisibilityDidChange), name: Constants.Notifications.miniPlayerDidAppear, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: MiniPlayerDidDisappear.self) { [weak self] _ in
+            self?.miniPlayerVisibilityDidChange()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: MiniPlayerDidAppear.self) { [weak self] _ in
+            self?.miniPlayerVisibilityDidChange()
+        })
 
         miniPlayerVisibilityDidChange()
     }
 
-    @objc func miniPlayerVisibilityDidChange() {
+    func miniPlayerVisibilityDidChange() {
         guard let scrollView = scrollViewAdjustableToMiniPlayer else {
             return
         }

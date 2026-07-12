@@ -26,18 +26,22 @@ class ThemeDividerView: UIView {
         }
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     private func setup() {
         setBgColorForTheme()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(ThemeDividerView.themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.setBgColorForTheme()
+        }
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc private func themeDidChange() {
-        setBgColorForTheme()
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setBgColorForTheme() {

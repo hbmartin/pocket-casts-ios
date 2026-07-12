@@ -32,8 +32,19 @@ class PodcastHeartView: UIView {
         setup()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     private func setup() {
-        NotificationCenter.default.addObserver(self, selector: #selector(handleThemeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
+    }
+
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override nonisolated func awakeFromNib() {
@@ -128,9 +139,5 @@ class PodcastHeartView: UIView {
         circleView.layer.addSublayer(colorGradientLayer)
         heartImageView.tintColor = ThemeColor.contrast01()
         bringSubviewToFront(heartImageView)
-    }
-
-    @objc func handleThemeDidChange() {
-        updateColors()
     }
 }

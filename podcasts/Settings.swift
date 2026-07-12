@@ -379,7 +379,7 @@ nonisolated class Settings: NSObject {
         let isOn = upNextShuffleEnabled()
         UserDefaults.standard.set(!isOn, forKey: Settings.upNextShuffleKey)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextShuffleToggle)
+        NotificationCenter.postOnMainThread(UpNextShuffleToggled())
     }
 
     class func upNextShuffleEnabled() -> Bool {

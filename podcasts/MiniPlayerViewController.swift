@@ -386,14 +386,22 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
 
         addCustomObserver(Constants.Notifications.podcastImageReCacheRequired, selector: #selector(updateRequired))
 
-        addCustomObserver(.episodeEmbeddedArtworkLoaded, selector: #selector(updateRequired))
+        addCustomObserver(EpisodeEmbeddedArtworkLoaded.self) { [weak self] _ in
+            self?.updateRequired()
+        }
 
-        addCustomObserver(Constants.Notifications.upNextQueueChanged, selector: #selector(upNextListChanged))
+        addCustomObserver(UpNextQueueChanged.self) { [weak self] _ in
+            self?.upNextListChanged()
+        }
         addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(upNextListChanged))
 
-        addCustomObserver(UIApplication.didBecomeActiveNotification, selector: #selector(playbackStateDidChange))
+        addCustomObserver(UIApplication.DidBecomeActiveMessage.self) { [weak self] _ in
+            self?.playbackStateDidChange()
+        }
 
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(themeChanged))
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
         addCustomObserver(Constants.Notifications.currentlyPlayingEpisodeUpdated, selector: #selector(updateRequired))
 
         addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(chapterDidChange))
@@ -510,10 +518,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         setupForEpisode(episodePlaying)
         showMiniPlayer()
         playbackProgressDidChange()
-    }
-
-    @objc private func themeChanged() {
-        updateColors()
     }
 
     @objc private func playbackProgressDidChange() {

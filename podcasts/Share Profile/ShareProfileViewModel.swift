@@ -2,6 +2,7 @@ import Dependencies
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsUtils
 import SwiftUI
 import PhotosUI
 
@@ -129,6 +130,22 @@ class ShareProfileViewModel: ObservableObject {
 
     nonisolated static let photoDidChangeNotification = Notification.Name("ShareProfilePhotoDidChange")
 
+    /// The saved share-profile photo changed on disk. Bridges with
+    /// `photoDidChangeNotification`, so the string-based `notifications(named:)`
+    /// observer in `SubscriptionProfileImage` keeps working. No payload.
+    nonisolated struct PhotoDidChange: NotificationCenter.MainActorMessage {
+        typealias Subject = AnyObject
+        static var name: Notification.Name { ShareProfileViewModel.photoDidChangeNotification }
+
+        static func makeMessage(_ notification: Notification) -> Self? {
+            Self()
+        }
+
+        static func makeNotification(_ message: Self) -> Notification {
+            Notification(name: Self.name)
+        }
+    }
+
     nonisolated private static let photoIOQueue = DispatchQueue(label: "au.com.pocketcasts.shareprofile.photo-io", qos: .background)
 
     nonisolated private static func saveProfilePhoto(_ image: UIImage?) {
@@ -138,9 +155,7 @@ class ShareProfileViewModel: ObservableObject {
             } else {
                 try? FileManager.default.removeItem(at: photoURL)
             }
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: photoDidChangeNotification, object: nil)
-            }
+            NotificationCenter.postOnMainThread(PhotoDidChange())
         }
     }
 

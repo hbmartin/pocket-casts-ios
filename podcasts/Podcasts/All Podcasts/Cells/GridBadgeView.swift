@@ -20,8 +20,14 @@ class GridBadgeView: UIView {
         setup()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func populateFrom(podcast: Podcast, badgeType: BadgeType) {
@@ -82,14 +88,12 @@ class GridBadgeView: UIView {
             simpleBadge.topAnchor.constraint(equalTo: topAnchor)
         ])
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateBadgeColors()
+        }
 
         updateBadgeColors()
         updateSize()
-    }
-
-    @objc private func themeDidChange() {
-        updateBadgeColors()
     }
 
     private func updateBadgeColors() {

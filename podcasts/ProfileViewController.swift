@@ -147,10 +147,14 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshComplete))
         addCustomObserver(ServerNotifications.syncFailed, selector: #selector(refreshComplete))
         addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(.userLoginDidChange, selector: #selector(handleDataChangedNotification))
+        addCustomObserver(UserLoginDidChange.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
         addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
 
-        addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
+        addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
+            self?.checkForScrollTap(message)
+        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -168,8 +172,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     // MARK: - Actions
 
-    @objc private func checkForScrollTap(_ notification: Notification) {
-        if let index = notification.object as? Int, index == tabBarItem.tag, profileTable.contentOffset.y > 0 {
+    private func checkForScrollTap(_ message: TappedOnSelectedTab) {
+        if let index = message.tabIndex, index == tabBarItem.tag, profileTable.contentOffset.y > 0 {
             profileTable.setContentOffset(CGPoint.zero, animated: true)
         }
     }

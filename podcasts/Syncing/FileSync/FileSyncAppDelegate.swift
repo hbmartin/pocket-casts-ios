@@ -36,7 +36,7 @@ nonisolated final class FileSyncAppDelegate: FileSyncDelegate, Sendable {
 
     func refreshQueueFromDatabase() {
         onMain { $0.queueRefreshList(checkForAutoDownload: true) }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func backfillPodcast(uuid: String, feedURL: String?) async -> Bool {

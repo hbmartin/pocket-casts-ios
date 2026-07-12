@@ -15,11 +15,13 @@ class ThemeableCell: UITableViewCell, ReusableTableCell {
         }
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     override nonisolated func awakeFromNib() {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {
-            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            observeThemeChanges()
             updateColor()
         }
     }
@@ -27,7 +29,7 @@ class ThemeableCell: UITableViewCell, ReusableTableCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        observeThemeChanges()
         updateColor()
     }
 
@@ -36,7 +38,19 @@ class ThemeableCell: UITableViewCell, ReusableTableCell {
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
+    private func observeThemeChanges() {
+        guard themeToken == nil else { return }
+
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColor()
+        }
     }
 
     override func setHighlighted(_ highlighted: Bool, animated: Bool) {
@@ -45,10 +59,6 @@ class ThemeableCell: UITableViewCell, ReusableTableCell {
 
     override func setSelected(_ selected: Bool, animated: Bool) {
         setHighlightedState(selected)
-    }
-
-    @objc private func themeDidChange() {
-        updateColor()
     }
 
     func handleThemeDidChange() {}
