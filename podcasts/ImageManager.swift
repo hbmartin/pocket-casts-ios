@@ -59,6 +59,10 @@ nonisolated final class ImageManager: @unchecked Sendable {
     // Discover Cache
     private var discoverCache = ImageCache(name: "discoverCache")
 
+    /// Kingfisher cache for SwiftUI discovery surfaces (the Explore tab) whose
+    /// artwork isn't tied to a subscribed podcast. Shares the discover cache.
+    var exploreImageCache: ImageCache { discoverCache }
+
     // cache for discover video thumbnails cache
     private var discoverVideoThumbnailCache: ImageCache = {
         let cache = ImageCache(name: "discoverVideoThumbnailCache")

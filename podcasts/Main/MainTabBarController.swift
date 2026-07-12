@@ -8,9 +8,12 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, profile }
+    enum Tab: Int { case podcasts, filter, explore, profile }
     private enum LegacyTab: Int { case podcasts, discover, filter, upNext, profile }
+    /// Tab layout before Explore was added (indices persisted in `lastTabOpened`).
+    private enum PreExploreTab: Int { case podcasts, filter, profile }
     private static let removedTabsMigrationKey = "SJLastTabOpenedRemovedDiscoverMigrated"
+    private static let exploreTabMigrationKey = "SJLastTabOpenedExploreTabMigrated"
 
     var pcTabs = [Tab]()
 
@@ -93,7 +96,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTabBarTraitCollectionOnIpad()
 
-        pcTabs = [.podcasts, .filter, .profile]
+        pcTabs = [.podcasts, .filter, .explore, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -103,10 +106,13 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let filtersViewController = PlaylistsViewController()
         filtersViewController.tabBarItem = UITabBarItem(title: L10n.playlists, image: UIImage(named: "playlists_tab"), tag: pcTabs.firstIndex(of: .filter)!)
 
+        let exploreViewController = ExploreViewController()
+        exploreViewController.tabBarItem = UITabBarItem(title: L10n.exploreTabTitle, image: UIImage(named: "discover_tab"), tag: pcTabs.firstIndex(of: .explore)!)
+
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
-        vcsInTab = [podcastsController, filtersViewController, profileViewController]
+        vcsInTab = [podcastsController, filtersViewController, exploreViewController, profileViewController]
 
         viewControllers = vcsInTab.map { SJUIUtils.navController(for: $0) }
         selectedIndex = restoredLastTabIndex()
@@ -259,20 +265,32 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     private func restoredLastTabIndex() -> Int {
         guard UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) != nil else {
             UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
+            UserDefaults.standard.set(true, forKey: Self.exploreTabMigrationKey)
             return pcTabs.firstIndex(of: .podcasts) ?? 0
         }
 
         let savedIndex = UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened)
 
-        guard !UserDefaults.standard.bool(forKey: Self.removedTabsMigrationKey) else {
-            return clampedTabIndex(savedIndex)
+        // Saved before the discover/up next tabs were removed (5-tab layout)
+        if !UserDefaults.standard.bool(forKey: Self.removedTabsMigrationKey) {
+            let migratedIndex = migratedLastTabIndex(savedIndex)
+
+            UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
+            UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
+            UserDefaults.standard.set(true, forKey: Self.exploreTabMigrationKey)
+            return migratedIndex
         }
 
-        let migratedIndex = migratedLastTabIndex(savedIndex)
+        // Saved before the Explore tab was inserted (3-tab layout)
+        if !UserDefaults.standard.bool(forKey: Self.exploreTabMigrationKey) {
+            let migratedIndex = exploreMigratedLastTabIndex(savedIndex)
 
-        UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
-        UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
-        return migratedIndex
+            UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
+            UserDefaults.standard.set(true, forKey: Self.exploreTabMigrationKey)
+            return migratedIndex
+        }
+
+        return clampedTabIndex(savedIndex)
     }
 
     private func migratedLastTabIndex(_ savedIndex: Int) -> Int {
@@ -285,8 +303,27 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             return pcTabs.firstIndex(of: .profile) ?? 0
         case .filter:
             return pcTabs.firstIndex(of: .filter) ?? 0
-        case .podcasts, .discover, .upNext:
+        case .discover:
+            return pcTabs.firstIndex(of: .explore) ?? 0
+        case .podcasts, .upNext:
             return pcTabs.firstIndex(of: .podcasts) ?? 0
+        }
+    }
+
+    /// Maps a tab index persisted by the 3-tab (pre-Explore) layout onto the
+    /// current tab order, so a user restored onto e.g. Profile stays on Profile.
+    private func exploreMigratedLastTabIndex(_ savedIndex: Int) -> Int {
+        guard let preExploreTab = PreExploreTab(rawValue: savedIndex) else {
+            return clampedTabIndex(savedIndex)
+        }
+
+        switch preExploreTab {
+        case .podcasts:
+            return pcTabs.firstIndex(of: .podcasts) ?? 0
+        case .filter:
+            return pcTabs.firstIndex(of: .filter) ?? 0
+        case .profile:
+            return pcTabs.firstIndex(of: .profile) ?? 0
         }
     }
 
@@ -767,6 +804,8 @@ private extension MainTabBarController {
             event = .podcastsTabOpened
         case .filter:
             event = .filtersTabOpened
+        case .explore:
+            event = .discoverTabOpened
         case .profile:
             event = .profileTabOpened
         }
