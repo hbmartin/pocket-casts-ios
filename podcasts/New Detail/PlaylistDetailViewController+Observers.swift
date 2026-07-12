@@ -17,7 +17,9 @@ extension PlaylistDetailViewController {
         addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.playlistChanged, selector: #selector(refreshFilterFromNotification))
-        addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
         addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshEpisodesFromNotification))

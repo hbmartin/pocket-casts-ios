@@ -159,7 +159,10 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
             NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: ServerNotifications.episodeTypeOrLengthChanged, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.playbackPositionSaved, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodePlayStatusChanged, object: nil)
+            playStatusToken = NotificationCenter.default.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] message in
+                guard let self, let episodeUuid = message.uuid, episodeUuid == self.episode?.uuid else { return }
+                self.updateCell(episodeUuid: episodeUuid)
+            }
             NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(reloadArtwork(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(upNextEpisodeChanged(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
@@ -170,8 +173,13 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         }
     }
 
+    private var playStatusToken: NotificationCenter.ObservationToken?
+
     deinit {
         NotificationCenter.default.removeObserver(self)
+        if let playStatusToken {
+            NotificationCenter.default.removeObserver(playStatusToken)
+        }
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {}

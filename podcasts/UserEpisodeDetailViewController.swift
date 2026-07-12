@@ -159,16 +159,25 @@ class UserEpisodeDetailViewController: UIViewController {
         addObservers()
     }
 
+    private var playStatusToken: NotificationCenter.ObservationToken?
+
     func addObservers() {
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodeDownloaded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodePlayStatusChanged, object: nil)
+        if playStatusToken == nil {
+            playStatusToken = NotificationCenter.default.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] _ in
+                self?.updateFromNotification()
+            }
+        }
         NotificationCenter.default.addObserver(self, selector: #selector(updateDownloadProgress), name: Constants.Notifications.downloadProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleThemeChanged), name: Constants.Notifications.themeChanged, object: nil)
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        if let playStatusToken {
+            NotificationCenter.default.removeObserver(playStatusToken)
+        }
     }
 
     @objc private func handleThemeChanged() {
