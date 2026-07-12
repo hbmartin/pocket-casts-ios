@@ -9,6 +9,8 @@ struct SearchHistoryView: View {
     @EnvironmentObject var searchResults: SearchResultsModel
     @EnvironmentObject var displaySearch: SearchVisibilityModel
 
+    @State private var localSuggestions: [Podcast] = []
+
     var body: some View {
         SearchListView {
             if !searchHistory.entries.isEmpty {
@@ -23,6 +25,15 @@ struct SearchHistoryView: View {
                     SearchHistoryCell(entry: entry)
                 }
             }
+
+            // Zero-state: with no history this shelf is all that renders, so the
+            // space between the field and the keyboard is never a blank screen.
+            if !localSuggestions.isEmpty {
+                SearchLocalSuggestionsView(podcasts: localSuggestions)
+            }
+        }
+        .task {
+            localSuggestions = Array(DataManager.sharedManager.allPodcastsOrderedByLastPlayedEpisodes().prefix(10))
         }
     }
 }

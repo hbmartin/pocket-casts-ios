@@ -1004,6 +1004,8 @@ nonisolated internal enum L10n {
   internal static var downloadErrorContactAuthor: String { return L10n.tr("Localizable", "download_error_contact_author", fallback: "Episode not available due to an error in the podcast feed. Contact the podcast author.") }
   /// The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author.
   internal static var downloadErrorContactAuthorVersion2: String { return L10n.tr("Localizable", "download_error_contact_author_version_2", fallback: "This episode may have been moved or deleted. Contact the podcast author.") }
+  /// The episode failed to download because the device has no internet connection.
+  internal static var downloadErrorNoInternet: String { return L10n.tr("Localizable", "download_error_no_internet", fallback: "Unable to download episode. Check your internet connection and try again.") }
   /// The episode failed to download due to the user running out of storage space.
   internal static var downloadErrorNotEnoughSpace: String { return L10n.tr("Localizable", "download_error_not_enough_space", fallback: "Unable to save episode, have you run out of space?") }
   /// The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author. '%1$@' is a placeholder for the status code that the app received.
@@ -1625,6 +1627,8 @@ nonisolated internal enum L10n {
   internal static var foldersHistoryExplanation: String { return L10n.tr("Localizable", "folders_history_explanation", fallback: "A list of podcasts that were removed from folders as a result of a sync.") }
   /// Prompt to follow to the selected podcast.
   internal static var follow: String { return L10n.tr("Localizable", "follow", fallback: "Follow") }
+  /// Label indicating that the user is currently following the selected podcast, e.g. read by VoiceOver on the follow button once followed.
+  internal static var following: String { return L10n.tr("Localizable", "following", fallback: "Following") }
   /// Upsell dialog free trial detail label that informs the user that they no payment is needed, and can cancel at anytime
   internal static var freeTrialDetailLabel: String { return L10n.tr("Localizable", "free_trial_detail_label", fallback: "No Payment Now – Cancel Anytime") }
   /// Free trial duration with the word free emphasized, %1$@ is the localize trial duration (1 month)
@@ -2040,10 +2044,6 @@ nonisolated internal enum L10n {
   internal static var notificationsOnboardingImportBody: String { return L10n.tr("Localizable", "notifications_onboarding_import_body", fallback: "Switching from another app? Bring all your favorite shows to Pocket Casts.") }
   /// Notification title for import podcast onboarding message
   internal static var notificationsOnboardingImportTitle: String { return L10n.tr("Localizable", "notifications_onboarding_import_title", fallback: "Easily import your podcasts") }
-  /// Subtitle for Newsletter opt-in option in the Notifications screen during onboarding
-  internal static var notificationsOnboardingNewsletterSubtitle: String { return L10n.tr("Localizable", "notifications_onboarding_newsletter_subtitle", fallback: "Once a month, all podcast goodness") }
-  /// Title for Newsletter opt-in option in the Notifications screen during onboarding
-  internal static var notificationsOnboardingNewsletterTitle: String { return L10n.tr("Localizable", "notifications_onboarding_newsletter_title", fallback: "Subscribe to our Newsletter") }
   /// Subtitle for Notifications opt-in option in the Notifications screen during onboarding
   internal static var notificationsOnboardingNotificationsSubtitle: String { return L10n.tr("Localizable", "notifications_onboarding_notifications_subtitle", fallback: "Receive news, podcast suggestions and more") }
   /// Title for Notifications opt-in option in the Notifications screen during onboarding
@@ -2883,16 +2883,10 @@ nonisolated internal enum L10n {
   }
   /// A Voice Over label for element which represents the Pocket Casts Logo
   internal static var pocketCastsLogo: String { return L10n.tr("Localizable", "pocket_casts_logo", fallback: "Pocket Casts logo") }
-  /// The heading shown for the Pocket Casts Newsletter
-  internal static var pocketCastsNewsletter: String { return L10n.tr("Localizable", "pocket_casts_newsletter", fallback: "Pocket Casts Newsletter") }
-  /// The description for the Pocket Casts Newsletter
-  internal static var pocketCastsNewsletterDescription: String { return L10n.tr("Localizable", "pocket_casts_newsletter_description", fallback: "Receive news, app updates, themed playlists, interviews, and more.") }
   /// A common string used throughout the app. Refers to the subscription program Pocket Casts Plus subscription. 'Pocket Casts' as a proper noun should not be localized.
   internal static var pocketCastsPlus: String { return L10n.tr("Localizable", "pocket_casts_plus", fallback: "Pocket Casts Plus") }
   /// A shortened version of the common string used throughout the app. Refers to the subscription program Pocket Casts Plus subscription.
   internal static var pocketCastsPlusShort: String { return L10n.tr("Localizable", "pocket_casts_plus_short", fallback: "Plus") }
-  /// The heading shown for the Pocket Casts Newsletter
-  internal static var pocketCastsWelcomeNewsletterTitle: String { return L10n.tr("Localizable", "pocket_casts_welcome_newsletter_title", fallback: "Get the Newsletter") }
   /// Indicates that the access to the podcast has ended on the specified date. '%1$@' is a placeholder for date that the access expired.
   internal static func podcastAccessEnded(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_access_ended", String(describing: p1), fallback: "Access ended: %1$@")
@@ -3317,6 +3311,8 @@ nonisolated internal enum L10n {
   internal static var restoreUpNextMessage: String { return L10n.tr("Localizable", "restore_up_next_message", fallback: "These episodes will be added to the bottom of your current Up Next") }
   /// A common string used throughout the app. Prompt to retry the recent request.
   internal static var retry: String { return L10n.tr("Localizable", "retry", fallback: "Retry") }
+  /// VoiceOver action name on an episode row whose download failed; performing it retries the download.
+  internal static var retryDownload: String { return L10n.tr("Localizable", "retry_download", fallback: "Retry download") }
   /// Title of a button that allows the user to save their changes
   internal static var saveBookmark: String { return L10n.tr("Localizable", "save_bookmark", fallback: "Save Bookmark") }
   /// A common string used throughout the app. Placeholder text used in search boxes.
@@ -3345,6 +3341,8 @@ nonisolated internal enum L10n {
   internal static func searchResultsViewAll(_ p1: Any) -> String {
     return L10n.tr("Localizable", "search_results_view_all", String(describing: p1), fallback: "View all results for \"%1$@\"")
   }
+  /// Header for the shelf of the user's own podcasts shown on the empty search screen.
+  internal static var searchYourPodcasts: String { return L10n.tr("Localizable", "search_your_podcasts", fallback: "Your Podcasts") }
   /// A common string used throughout the app. Refers to the season a podcast episode is in.
   internal static var season: String { return L10n.tr("Localizable", "season", fallback: "Season") }
   /// Shorthand format used to show the Season and the Episode number of a podcast. 'S' is short for Season. '%1$@' is a placeholder for the season number. 'E' is short for Episode. '%2$@' is a placeholder for the episode number.

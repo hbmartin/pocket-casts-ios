@@ -32,4 +32,11 @@ extension Constants {
     @MainActor static var effectiveFooterViewPadding: CGFloat {
         Constants.effectiveMiniPlayerOffset + 4
     }
+
+    /// Extra bottom content inset while the mini player accessory is visible.
+    /// The accessory extends the safe area, but only exactly to its own edge —
+    /// at maximum scroll the last row's bottom lands flush against the pill,
+    /// so short lists read as stuck underneath it. This gives the last row
+    /// room to rest clear of the pill.
+    @MainActor static let miniPlayerRestingClearance: CGFloat = 12
 }

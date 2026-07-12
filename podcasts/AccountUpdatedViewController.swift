@@ -14,32 +14,6 @@ class AccountUpdatedViewController: UIViewController {
     }
 
     @IBOutlet var imageView: UIImageView!
-    @IBOutlet var newsletterView: ThemeableView!
-
-    @IBOutlet var newsletterSwitch: ThemeableSwitch! {
-        didSet {
-            newsletterSwitch.setOn(false, animated: false)
-        }
-    }
-
-    @IBOutlet var newsletterImage: UIImageView! {
-        didSet {
-            newsletterImage.tintColor = ThemeColor.primaryField03Active()
-        }
-    }
-
-    @IBOutlet var newsletterHeadingLabel: ThemeableLabel! {
-        didSet {
-            newsletterHeadingLabel.text = L10n.pocketCastsNewsletter
-        }
-    }
-
-    @IBOutlet var newsletterDetailLabel: ThemeableLabel! {
-        didSet {
-            newsletterDetailLabel.style = .primaryText02
-            newsletterDetailLabel.text = L10n.pocketCastsNewsletterDescription
-        }
-    }
 
     @IBOutlet var doneBtn: ThemeableRoundedButton! {
         didSet {
@@ -50,7 +24,6 @@ class AccountUpdatedViewController: UIViewController {
     var titleText: String?
     var detailText: String?
     var imageName: (() -> String)?
-    var hideNewsletter = true
     weak var delegate: AccountUpdatedDelegate?
 
     override func viewDidLoad() {
@@ -65,7 +38,6 @@ class AccountUpdatedViewController: UIViewController {
         let closeButton = UIBarButtonItem(image: UIImage(named: "cancel"), style: .done, target: self, action: #selector(closeTapped(_:)))
         closeButton.accessibilityLabel = L10n.accessibilityCloseDialog
         navigationItem.leftBarButtonItem = closeButton
-        newsletterView.isHidden = hideNewsletter
 
         NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
 
@@ -93,11 +65,5 @@ class AccountUpdatedViewController: UIViewController {
         if let imageNameFunc = imageName {
             imageView.image = UIImage(named: imageNameFunc())
         }
-    }
-
-    @IBAction func newsletterOptInChanged(_ sender: UISwitch) {
-        Analytics.track(.newsletterOptInChanged, properties: ["enabled": sender.isOn, "source": "account_updated"])
-
-        ServerSettings.setMarketingOptIn(sender.isOn)
     }
 }

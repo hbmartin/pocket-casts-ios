@@ -123,9 +123,20 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
 
         downloadAttempts.removeValue(forKey: downloadTask.taskIdentifier)
 
-        dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: error.localizedDescription, downloadTaskId: nil, episode: episode)
+        // downloadErrorDetails is user-facing copy (episode row + detail sheet);
+        // the raw NSError was already written to the file log above.
+        dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: Self.userFacingDownloadErrorMessage(for: error), downloadTaskId: nil, episode: episode)
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+    }
+
+    static func userFacingDownloadErrorMessage(for error: NSError) -> String {
+        switch error.code {
+        case NSURLErrorNotConnectedToInternet, NSURLErrorNetworkConnectionLost, NSURLErrorDataNotAllowed:
+            return L10n.downloadErrorNoInternet
+        default:
+            return L10n.downloadErrorTryAgain
+        }
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {

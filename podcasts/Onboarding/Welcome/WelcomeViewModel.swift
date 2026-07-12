@@ -7,8 +7,6 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
     let displayType: DisplayType
     let sections: [WelcomeSection] = [.importPodcasts, .discover]
 
-    var newsletterOptIn: Bool = true
-
     init(navigationController: UINavigationController? = nil, displayType: DisplayType) {
         self.navigationController = navigationController
         self.displayType = displayType
@@ -21,13 +19,10 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
     func didDismiss(type: OnboardingDismissType) {
         guard type == .swipe else { return }
 
-        saveNewsletterOptIn()
         track(.welcomeDismissed)
     }
 
     func sectionTapped(_ section: WelcomeSection) {
-        saveNewsletterOptIn()
-
         switch section {
         case .importPodcasts:
             track(.welcomeImportTapped)
@@ -35,7 +30,6 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
             navigationController?.pushViewController(controller, animated: true)
 
         case .discover:
-            trackNewsletterOptIn()
             track(.welcomeDiscoverTapped)
             navigationController?.dismiss(animated: true)
             NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, data: nil)
@@ -43,22 +37,8 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
     }
 
     func doneTapped() {
-        saveNewsletterOptIn()
-        trackNewsletterOptIn()
         track(.welcomeDismissed)
         navigationController?.dismiss(animated: true)
-    }
-
-    private func saveNewsletterOptIn() {
-        ServerSettings.setMarketingOptIn(newsletterOptIn)
-    }
-
-    private func trackNewsletterOptIn() {
-        let source: String
-        switch displayType {
-        case .newAccount: source = "welcome_new_account"
-        }
-        Analytics.track(.newsletterOptInChanged, properties: ["enabled": newsletterOptIn, "source": source])
     }
 
     // MARK: - Configuration

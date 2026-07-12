@@ -2,6 +2,7 @@ import AVFoundation
 import Foundation
 import PocketCastsUtils
 import SoundAnalysis
+import Synchronization
 
 /// Runs the system sound classifier over the trim-silence read stream and
 /// records speech-confidence results by source frame range, so the trim gate
@@ -33,9 +34,14 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     private let observer: Observer
     private let analysisQueue = DispatchQueue(label: "au.com.pocketcasts.TrimVAD", qos: .userInitiated, autoreleaseFrequency: .workItem)
 
-    private let resultsLock = NSLock()
-    private var results = [SpeechResult]()
-    private var latestAnalyzedFrame: Int64 = 0
+    /// Recorded speech results and the newest analyzed frame, mutated on the analysis
+    /// queue and read from the read thread. A `Mutex` makes "only touched under the lock"
+    /// compiler-enforced (was an `NSLock` + separate `var`s).
+    private struct ResultStore {
+        var results = [SpeechResult]()
+        var latestAnalyzedFrame: Int64 = 0
+    }
+    private let store = Mutex(ResultStore())
 
     /// The observer object SoundAnalysis calls back on the analysis queue.
     /// Kept separate so the analyzer never retains its owner.
@@ -80,13 +86,13 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
 
     private func record(startSeconds: Double, endSeconds: Double, confidence: Float) {
         let frameRange = Int64(startSeconds * sampleRate) ..< Int64(endSeconds * sampleRate)
-        resultsLock.lock()
-        results.append(SpeechResult(frameRange: frameRange, confidence: confidence))
-        if results.count > Self.maxStoredResults {
-            results.removeFirst(results.count - Self.maxStoredResults)
+        store.withLock { store in
+            store.results.append(SpeechResult(frameRange: frameRange, confidence: confidence))
+            if store.results.count > Self.maxStoredResults {
+                store.results.removeFirst(store.results.count - Self.maxStoredResults)
+            }
+            store.latestAnalyzedFrame = max(store.latestAnalyzedFrame, frameRange.upperBound)
         }
-        latestAnalyzedFrame = max(latestAnalyzedFrame, frameRange.upperBound)
-        resultsLock.unlock()
     }
 
     /// Copies channel 0 of the buffer and queues it for analysis. Non-blocking.
@@ -105,26 +111,24 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     /// The freshest speech confidence covering `framePosition`, or nil when no
     /// non-stale result covers it (callers degrade to the heuristic).
     func speechConfidence(atFramePosition framePosition: Int64) -> Float? {
-        resultsLock.lock()
-        defer { resultsLock.unlock() }
-
-        guard isFresh(around: framePosition) else { return nil }
-        return results.last(where: { $0.frameRange.contains(framePosition) })?.confidence
+        store.withLock { store in
+            guard isFresh(around: framePosition, latestAnalyzedFrame: store.latestAnalyzedFrame) else { return nil }
+            return store.results.last(where: { $0.frameRange.contains(framePosition) })?.confidence
+        }
     }
 
     /// Whether any (non-stale) result overlapping the range detects speech above
     /// `threshold`. Returns nil when the range has no coverage at all — the
     /// caller should then not veto.
     func speechDetected(inFrameRange range: Range<Int64>, aboveConfidence threshold: Float) -> Bool? {
-        resultsLock.lock()
-        defer { resultsLock.unlock() }
-
-        let overlapping = results.filter { $0.frameRange.overlaps(range) }
-        guard !overlapping.isEmpty else { return nil }
-        return overlapping.contains { $0.confidence > threshold }
+        store.withLock { store in
+            let overlapping = store.results.filter { $0.frameRange.overlaps(range) }
+            guard !overlapping.isEmpty else { return nil }
+            return overlapping.contains { $0.confidence > threshold }
+        }
     }
 
-    private func isFresh(around framePosition: Int64) -> Bool {
+    private func isFresh(around framePosition: Int64, latestAnalyzedFrame: Int64) -> Bool {
         latestAnalyzedFrame >= framePosition - Int64(Self.stalenessWindow * sampleRate)
     }
 

@@ -255,6 +255,7 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
 
         loadShowNotes()
         loadEpisodeArtwork()
+        EpisodeDurationCorrector.correctDurationIfNeeded(for: episode)
 
         bookmarksController.view.isHidden = false
 

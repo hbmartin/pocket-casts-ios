@@ -29,6 +29,8 @@ struct MultiSelectRow<Content: View>: View {
                 } customize: { config in
                     config.label.applyButtonEffect(isPressed: config.isPressed)
                 }
+                .accessibilityLabel(L10n.select)
+                .accessibilityAddTraits(selected ? .isSelected : [])
                 .accessibilityTransition(.move(edge: .leading).combined(with: .opacity))
             }
 
@@ -65,6 +67,7 @@ struct MultiSelectRow<Content: View>: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(height: checkSize)
                 .foregroundStyle(style.check)
+                .accessibilityHidden(true)
         }
         .opacity(selected ? 1 : 0)
         .animation(.linear(duration: 0.1), value: selected)

@@ -6,7 +6,7 @@ import SwiftUI
 /// users. Changes apply live to the running player.
 struct AdvancedAudioSettingsView: View {
     @EnvironmentObject private var theme: Theme
-    @StateObject private var model = AdvancedAudioSettingsViewModel()
+    @State private var model = AdvancedAudioSettingsViewModel()
 
     var body: some View {
         List {
@@ -21,7 +21,10 @@ struct AdvancedAudioSettingsView: View {
         .scrollContentBackground(.hidden)
         .background(AppTheme.color(for: .primaryUi04, theme: theme).ignoresSafeArea())
         .onAppear { model.startMeterPolling() }
-        .onDisappear { model.stopMeterPolling() }
+        .onDisappear {
+            model.stopMeterPolling()
+            model.flush() // commit any edit still inside the debounce window
+        }
     }
 }
 
@@ -29,7 +32,7 @@ struct AdvancedAudioSettingsView: View {
 
 private struct LiveStatusSection: View {
     @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: AdvancedAudioSettingsViewModel
+    @Bindable var model: AdvancedAudioSettingsViewModel
 
     var body: some View {
         Section(header: header(L10n.advancedAudioMetersHeader)) {
@@ -40,13 +43,13 @@ private struct LiveStatusSection: View {
             } else {
                 Text(L10n.advancedAudioMetersIdle)
                     .font(.subheadline)
-                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
             }
         }
     }
 
     private func header(_ title: String) -> some View {
-        Text(title).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+        Text(title).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
     }
 }
 
@@ -54,12 +57,12 @@ private struct LiveStatusSection: View {
 
 private struct TrimSilenceSection: View {
     @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: AdvancedAudioSettingsViewModel
+    @Bindable var model: AdvancedAudioSettingsViewModel
 
     var body: some View {
         Section(
-            header: Text(L10n.advancedAudioTrimHeader).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
-            footer: Text(L10n.advancedAudioTrimCustomFooter).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            header: Text(L10n.advancedAudioTrimHeader).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(L10n.advancedAudioTrimCustomFooter).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
         ) {
             TuningToggleRow(title: L10n.advancedAudioTrimCustomToggle, isOn: $model.tuning.trim.useCustomGate)
 
@@ -70,7 +73,7 @@ private struct TrimSilenceSection: View {
             } label: {
                 Text(L10n.advancedAudioTrimLoadPreset)
                     .font(.subheadline)
-                    .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                    .foregroundStyle(AppTheme.color(for: .primaryInteractive01, theme: theme))
             }
 
             Group {
@@ -83,29 +86,29 @@ private struct TrimSilenceSection: View {
                     ],
                     selection: $model.tuning.trim.discriminator
                 )
-                TuningSliderRow(title: L10n.advancedAudioTrimThreshold, range: -70 ... -20, step: 0.5, unit: "dB", value: $model.tuning.trim.thresholdDB)
+                TuningSliderRow(title: L10n.advancedAudioTrimThreshold, range: TrimTuning.thresholdDBRange, step: 0.5, unit: "dB", value: $model.tuning.trim.thresholdDB)
                 TuningToggleRow(title: L10n.advancedAudioTrimAdaptiveFloor, isOn: $model.tuning.trim.adaptiveNoiseFloor)
                 if model.tuning.trim.adaptiveNoiseFloor {
-                    TuningSliderRow(title: L10n.advancedAudioTrimAdaptiveOffset, range: 3 ... 24, step: 1, unit: "dB", fractionDigits: 0, value: $model.tuning.trim.adaptiveOffsetDB)
-                    TuningSliderRow(title: L10n.advancedAudioTrimAdaptiveWindow, range: 5 ... 30, step: 1, unit: "s", fractionDigits: 0, value: $model.tuning.trim.adaptiveWindowSeconds)
+                    TuningSliderRow(title: L10n.advancedAudioTrimAdaptiveOffset, range: TrimTuning.adaptiveOffsetDBRange, step: 1, unit: "dB", fractionDigits: 0, value: $model.tuning.trim.adaptiveOffsetDB)
+                    TuningSliderRow(title: L10n.advancedAudioTrimAdaptiveWindow, range: TrimTuning.adaptiveWindowSecondsRange, step: 1, unit: "s", fractionDigits: 0, value: $model.tuning.trim.adaptiveWindowSeconds)
                 }
-                TuningSliderRow(title: L10n.advancedAudioTrimHysteresis, range: 0 ... 12, step: 0.5, unit: "dB", value: $model.tuning.trim.hysteresisDB)
-                TuningSliderRow(title: L10n.advancedAudioTrimHold, range: 0 ... 500, step: 10, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.holdTimeMs)
-                TuningSliderRow(title: L10n.advancedAudioTrimMinGap, range: 0 ... 1500, step: 25, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.minGapMs)
-                TuningSliderRow(title: L10n.advancedAudioTrimKeepGap, range: 0 ... 1000, step: 25, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.keepGapMs)
-                TuningSliderRow(title: L10n.advancedAudioTrimCrossfade, range: 0 ... 200, step: 5, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.crossfadeMs)
-                TuningSliderRow(title: L10n.advancedAudioTrimEndGuard, range: 0 ... 30, step: 1, unit: "s", fractionDigits: 0, value: $model.tuning.trim.endGuardSeconds)
+                TuningSliderRow(title: L10n.advancedAudioTrimHysteresis, range: TrimTuning.hysteresisDBRange, step: 0.5, unit: "dB", value: $model.tuning.trim.hysteresisDB)
+                TuningSliderRow(title: L10n.advancedAudioTrimHold, range: TrimTuning.holdTimeMsRange, step: 10, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.holdTimeMs)
+                TuningSliderRow(title: L10n.advancedAudioTrimMinGap, range: TrimTuning.minGapMsRange, step: 25, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.minGapMs)
+                TuningSliderRow(title: L10n.advancedAudioTrimKeepGap, range: TrimTuning.keepGapMsRange, step: 25, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.keepGapMs)
+                TuningSliderRow(title: L10n.advancedAudioTrimCrossfade, range: TrimTuning.crossfadeMsRange, step: 5, unit: "ms", fractionDigits: 0, value: $model.tuning.trim.crossfadeMs)
+                TuningSliderRow(title: L10n.advancedAudioTrimEndGuard, range: TrimTuning.endGuardSecondsRange, step: 1, unit: "s", fractionDigits: 0, value: $model.tuning.trim.endGuardSeconds)
             }
             .disabled(!model.tuning.trim.useCustomGate)
             .opacity(model.tuning.trim.useCustomGate ? 1 : 0.5)
 
             if model.tuning.trim.useCustomGate, model.tuning.trim.discriminator != .rms {
-                TuningSliderRow(title: L10n.advancedAudioTrimFlatnessThreshold, range: 0 ... 1, step: 0.05, fractionDigits: 2, value: $model.tuning.trim.flatnessThreshold)
-                TuningSliderRow(title: L10n.advancedAudioTrimZcrThreshold, range: 0 ... 0.5, step: 0.01, fractionDigits: 2, value: $model.tuning.trim.zcrThreshold)
-                TuningSliderRow(title: L10n.advancedAudioTrimZcrMargin, range: 0 ... 12, step: 0.5, unit: "dB", value: $model.tuning.trim.zcrLevelMarginDB)
+                TuningSliderRow(title: L10n.advancedAudioTrimFlatnessThreshold, range: TrimTuning.flatnessThresholdRange, step: 0.05, fractionDigits: 2, value: $model.tuning.trim.flatnessThreshold)
+                TuningSliderRow(title: L10n.advancedAudioTrimZcrThreshold, range: TrimTuning.zcrThresholdRange, step: 0.01, fractionDigits: 2, value: $model.tuning.trim.zcrThreshold)
+                TuningSliderRow(title: L10n.advancedAudioTrimZcrMargin, range: TrimTuning.zcrLevelMarginDBRange, step: 0.5, unit: "dB", value: $model.tuning.trim.zcrLevelMarginDB)
             }
             if model.tuning.trim.useCustomGate, model.tuning.trim.discriminator == .vad {
-                TuningSliderRow(title: L10n.advancedAudioTrimVadConfidence, range: 0 ... 1, step: 0.05, fractionDigits: 2, value: $model.tuning.trim.vadSpeechConfidenceThreshold)
+                TuningSliderRow(title: L10n.advancedAudioTrimVadConfidence, range: TrimTuning.vadSpeechConfidenceThresholdRange, step: 0.05, fractionDigits: 2, value: $model.tuning.trim.vadSpeechConfidenceThreshold)
             }
 
             TuningResetButton(title: L10n.advancedAudioResetSection) { model.resetTrimSilence() }
@@ -117,12 +120,12 @@ private struct TrimSilenceSection: View {
 
 private struct VoiceBoostSection: View {
     @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: AdvancedAudioSettingsViewModel
+    @Bindable var model: AdvancedAudioSettingsViewModel
 
     var body: some View {
         Section(
-            header: Text(L10n.advancedAudioBoostHeader).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
-            footer: Text(footerText).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            header: Text(L10n.advancedAudioBoostHeader).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(footerText).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
         ) {
             TuningPickerRow(
                 title: L10n.advancedAudioBoostEngine,
@@ -134,15 +137,15 @@ private struct VoiceBoostSection: View {
             )
 
             Group {
-                TuningSliderRow(title: L10n.advancedAudioBoostTargetLufs, range: -30 ... -10, step: 0.5, unit: "LUFS", value: $model.tuning.voiceBoost.targetLUFS)
-                TuningSliderRow(title: L10n.advancedAudioBoostMaxGain, range: 0 ... 36, step: 1, unit: "dB", fractionDigits: 0, value: $model.tuning.voiceBoost.maxGainDB)
-                TuningSliderRow(title: L10n.advancedAudioBoostMinGain, range: -24 ... 0, step: 1, unit: "dB", fractionDigits: 0, value: $model.tuning.voiceBoost.minGainDB)
-                TuningSliderRow(title: L10n.advancedAudioBoostGainSmoothing, range: 0.05 ... 2, step: 0.05, unit: "s", fractionDigits: 2, value: $model.tuning.voiceBoost.gainSmoothingTauSeconds)
+                TuningSliderRow(title: L10n.advancedAudioBoostTargetLufs, range: VoiceBoostTuning.targetLUFSRange, step: 0.5, unit: "LUFS", value: $model.tuning.voiceBoost.targetLUFS)
+                TuningSliderRow(title: L10n.advancedAudioBoostMaxGain, range: VoiceBoostTuning.maxGainDBRange, step: 1, unit: "dB", fractionDigits: 0, value: $model.tuning.voiceBoost.maxGainDB)
+                TuningSliderRow(title: L10n.advancedAudioBoostMinGain, range: VoiceBoostTuning.minGainDBRange, step: 1, unit: "dB", fractionDigits: 0, value: $model.tuning.voiceBoost.minGainDB)
+                TuningSliderRow(title: L10n.advancedAudioBoostGainSmoothing, range: VoiceBoostTuning.gainSmoothingTauSecondsRange, step: 0.05, unit: "s", fractionDigits: 2, value: $model.tuning.voiceBoost.gainSmoothingTauSeconds)
                 TuningToggleRow(title: L10n.advancedAudioBoostAdaptiveSmoothing, isOn: $model.tuning.voiceBoost.adaptiveGainSmoothing)
                 TuningToggleRow(title: L10n.advancedAudioBoostHighPass, isOn: $model.tuning.voiceBoost.hpEnabled)
                 if model.tuning.voiceBoost.hpEnabled {
-                    TuningSliderRow(title: L10n.advancedAudioBoostHighPassFreq, range: 40 ... 300, step: 5, unit: "Hz", fractionDigits: 0, value: $model.tuning.voiceBoost.hpFrequency)
-                    TuningSliderRow(title: L10n.advancedAudioBoostHighPassQ, range: 0.3 ... 2, step: 0.01, fractionDigits: 2, value: $model.tuning.voiceBoost.hpQ)
+                    TuningSliderRow(title: L10n.advancedAudioBoostHighPassFreq, range: VoiceBoostTuning.hpFrequencyRange, step: 5, unit: "Hz", fractionDigits: 0, value: $model.tuning.voiceBoost.hpFrequency)
+                    TuningSliderRow(title: L10n.advancedAudioBoostHighPassQ, range: VoiceBoostTuning.hpQRange, step: 0.01, fractionDigits: 2, value: $model.tuning.voiceBoost.hpQ)
                 }
             }
             .disabled(!model.tuning.voiceBoost.useVoiceBoostN)
@@ -159,25 +162,25 @@ private struct VoiceBoostSection: View {
 
 private struct DynamicsSection: View {
     @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: AdvancedAudioSettingsViewModel
+    @Bindable var model: AdvancedAudioSettingsViewModel
 
     var body: some View {
         Section(
-            header: Text(L10n.advancedAudioBoostDynamicsHeader).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
-            footer: Text(L10n.advancedAudioBoostTruePeakFooter).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            header: Text(L10n.advancedAudioBoostDynamicsHeader).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(L10n.advancedAudioBoostTruePeakFooter).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
         ) {
             Group {
                 TuningToggleRow(title: L10n.advancedAudioBoostCompressor, isOn: $model.tuning.voiceBoost.compEnabled)
                 if model.tuning.voiceBoost.compEnabled {
-                    TuningSliderRow(title: L10n.advancedAudioBoostCompThreshold, range: -40 ... 0, step: 0.5, unit: "dB", value: $model.tuning.voiceBoost.compThresholdDB)
-                    TuningSliderRow(title: L10n.advancedAudioBoostCompRatio, range: 1 ... 20, step: 0.1, unit: ":1", value: $model.tuning.voiceBoost.compRatio)
-                    TuningSliderRow(title: L10n.advancedAudioBoostCompAttack, range: 1 ... 500, step: 1, unit: "ms", fractionDigits: 0, value: $model.tuning.voiceBoost.compAttackMs)
-                    TuningSliderRow(title: L10n.advancedAudioBoostCompRelease, range: 10 ... 2000, step: 10, unit: "ms", fractionDigits: 0, value: $model.tuning.voiceBoost.compReleaseMs)
-                    TuningSliderRow(title: L10n.advancedAudioBoostCompKnee, range: 0 ... 24, step: 0.5, unit: "dB", value: $model.tuning.voiceBoost.compKneeWidthDB)
+                    TuningSliderRow(title: L10n.advancedAudioBoostCompThreshold, range: VoiceBoostTuning.compThresholdDBRange, step: 0.5, unit: "dB", value: $model.tuning.voiceBoost.compThresholdDB)
+                    TuningSliderRow(title: L10n.advancedAudioBoostCompRatio, range: VoiceBoostTuning.compRatioRange, step: 0.1, unit: ":1", value: $model.tuning.voiceBoost.compRatio)
+                    TuningSliderRow(title: L10n.advancedAudioBoostCompAttack, range: VoiceBoostTuning.compAttackMsRange, step: 1, unit: "ms", fractionDigits: 0, value: $model.tuning.voiceBoost.compAttackMs)
+                    TuningSliderRow(title: L10n.advancedAudioBoostCompRelease, range: VoiceBoostTuning.compReleaseMsRange, step: 10, unit: "ms", fractionDigits: 0, value: $model.tuning.voiceBoost.compReleaseMs)
+                    TuningSliderRow(title: L10n.advancedAudioBoostCompKnee, range: VoiceBoostTuning.compKneeWidthDBRange, step: 0.5, unit: "dB", value: $model.tuning.voiceBoost.compKneeWidthDB)
                 }
-                TuningSliderRow(title: L10n.advancedAudioBoostLimiterCeiling, range: -6 ... -0.1, step: 0.1, unit: "dB", value: $model.tuning.voiceBoost.limiterCeilingDB)
-                TuningSliderRow(title: L10n.advancedAudioBoostLimiterLookahead, range: 1 ... 20, step: 0.5, unit: "ms", value: $model.tuning.voiceBoost.limiterLookaheadMs)
-                TuningSliderRow(title: L10n.advancedAudioBoostLimiterRelease, range: 10 ... 1000, step: 10, unit: "ms", fractionDigits: 0, value: $model.tuning.voiceBoost.limiterReleaseMs)
+                TuningSliderRow(title: L10n.advancedAudioBoostLimiterCeiling, range: VoiceBoostTuning.limiterCeilingDBRange, step: 0.1, unit: "dB", value: $model.tuning.voiceBoost.limiterCeilingDB)
+                TuningSliderRow(title: L10n.advancedAudioBoostLimiterLookahead, range: VoiceBoostTuning.limiterLookaheadMsRange, step: 0.5, unit: "ms", value: $model.tuning.voiceBoost.limiterLookaheadMs)
+                TuningSliderRow(title: L10n.advancedAudioBoostLimiterRelease, range: VoiceBoostTuning.limiterReleaseMsRange, step: 10, unit: "ms", fractionDigits: 0, value: $model.tuning.voiceBoost.limiterReleaseMs)
                 TuningToggleRow(title: L10n.advancedAudioBoostTruePeak, isOn: $model.tuning.voiceBoost.truePeakEnabled)
             }
             .disabled(!model.tuning.voiceBoost.useVoiceBoostN)
@@ -192,12 +195,12 @@ private struct DynamicsSection: View {
 
 private struct TimeStretchSection: View {
     @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: AdvancedAudioSettingsViewModel
+    @Bindable var model: AdvancedAudioSettingsViewModel
 
     var body: some View {
         Section(
-            header: Text(L10n.advancedAudioStretchHeader).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
-            footer: Text(L10n.advancedAudioStretchFooter).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            header: Text(L10n.advancedAudioStretchHeader).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(L10n.advancedAudioStretchFooter).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
         ) {
             TuningPickerRow(
                 title: L10n.advancedAudioStretchEffectsPlayer,
@@ -225,10 +228,10 @@ private struct TimeStretchSection: View {
 
 private struct GlobalResetSection: View {
     @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: AdvancedAudioSettingsViewModel
+    @Bindable var model: AdvancedAudioSettingsViewModel
 
     var body: some View {
-        Section(footer: Text(L10n.advancedAudioFooterWarning).foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))) {
+        Section(footer: Text(L10n.advancedAudioFooterWarning).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))) {
             TuningResetButton(title: L10n.advancedAudioResetAll) { model.showingResetConfirmation = true }
         }
         .alert(L10n.advancedAudioResetConfirmTitle, isPresented: $model.showingResetConfirmation) {

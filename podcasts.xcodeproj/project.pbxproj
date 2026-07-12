@@ -102,8 +102,6 @@
 		404A080A24E4C78000308722 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404A080924E4C78000308722 /* SceneDelegate.swift */; };
 		4051A5762281A9DD00C13C12 /* AccountActionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4051A5742281A9DD00C13C12 /* AccountActionCell.swift */; };
 		4051A5772281A9DD00C13C12 /* AccountActionCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4051A5752281A9DD00C13C12 /* AccountActionCell.xib */; };
-		4051A5802281B38100C13C12 /* NewsletterCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4051A57E2281B38000C13C12 /* NewsletterCell.xib */; };
-		4051A5812281B38100C13C12 /* NewsletterCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4051A57F2281B38000C13C12 /* NewsletterCell.swift */; };
 		4053CDF7214B6B61001C92B1 /* EpisodeFilterOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4053CDF6214B6B61001C92B1 /* EpisodeFilterOverlayController.swift */; };
 		4053CDF9214F3583001C92B1 /* PodcastFilterOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4053CDF8214F3583001C92B1 /* PodcastFilterOverlayController.swift */; };
 		4053CDFB214F374B001C92B1 /* ReleaseDateFilterOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4053CDFA214F374B001C92B1 /* ReleaseDateFilterOverlayController.swift */; };
@@ -1143,8 +1141,6 @@
 		404A080924E4C78000308722 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		4051A5742281A9DD00C13C12 /* AccountActionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountActionCell.swift; sourceTree = "<group>"; };
 		4051A5752281A9DD00C13C12 /* AccountActionCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = AccountActionCell.xib; sourceTree = "<group>"; };
-		4051A57E2281B38000C13C12 /* NewsletterCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = NewsletterCell.xib; sourceTree = "<group>"; };
-		4051A57F2281B38000C13C12 /* NewsletterCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NewsletterCell.swift; sourceTree = "<group>"; };
 		4053CDF6214B6B61001C92B1 /* EpisodeFilterOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeFilterOverlayController.swift; sourceTree = "<group>"; };
 		4053CDF8214F3583001C92B1 /* PodcastFilterOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastFilterOverlayController.swift; sourceTree = "<group>"; };
 		4053CDFA214F374B001C92B1 /* ReleaseDateFilterOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseDateFilterOverlayController.swift; sourceTree = "<group>"; };
@@ -2720,8 +2716,6 @@
 			children = (
 				4051A5742281A9DD00C13C12 /* AccountActionCell.swift */,
 				4051A5752281A9DD00C13C12 /* AccountActionCell.xib */,
-				4051A57F2281B38000C13C12 /* NewsletterCell.swift */,
-				4051A57E2281B38000C13C12 /* NewsletterCell.xib */,
 			);
 			name = Cells;
 			sourceTree = "<group>";
@@ -5701,7 +5695,6 @@
 				C7D813A92A0D575E007F715F /* AlternateAppIcons.xcassets in Resources */,
 				BD1292EF22F7D066004608A6 /* AppIcon-Classic29x29@2x.png in Resources */,
 				BD6B665C245BC24C00CF5245 /* AppIcon-Pocket-Cats29x29@2x~ipad.png in Resources */,
-				4051A5802281B38100C13C12 /* NewsletterCell.xib in Resources */,
 				BDA0030B1F7B318B00DCB4AE /* AppIcon-Default83.5x83.5@2x~ipad.png in Resources */,
 				BDA003041F7B318B00DCB4AE /* AppIcon-Default40x40~ipad.png in Resources */,
 				4053CE052150B3D5001C92B1 /* Filter.xcassets in Resources */,
@@ -6330,7 +6323,6 @@
 				BD0F6D7B24BD60FF00EDFB99 /* FilterDurationViewController.swift in Sources */,
 				BDB4E7D4240E3C7A005770E3 /* DefaultPlayer.swift in Sources */,
 				BD4098821B9EFF6E007F36BD /* PlayBufferManager.swift in Sources */,
-				4051A5812281B38100C13C12 /* NewsletterCell.swift in Sources */,
 				408426352134CBE60076D82E /* SmallListCell.swift in Sources */,
 				BDED042421474365003A51E0 /* FloatingVideoView.swift in Sources */,
 				BDF15A4E1B54E8F0000EC323 /* Constants.swift in Sources */,

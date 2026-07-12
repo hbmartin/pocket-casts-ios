@@ -5,6 +5,8 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 import Combine
+import Synchronization
+import os
 
 /// Owns block-observer tokens so they can be removed when their main-actor owner
 /// is released from a nonisolated deinitializer.
@@ -43,47 +45,55 @@ final class PlaybackManager {
             var limiterReductionDB: Float
         }
 
-        private let lock = NSLock()
-        // nonisolated(unsafe): only ever accessed through the lock below
+        // tuning / pendingStartingPosition are Sendable value types, so they move to
+        // `Mutex` (compiler-enforced access). PlaybackEffects is a non-Sendable reference
+        // type — its `sending` semantics keep it out of a `Mutex` — so it keeps the lock +
+        // escape hatch. Live meters are written from the real-time read/tap threads, so
+        // they use a non-blocking unfair lock (see `publishVoiceBoostMeters`) below.
+        private let effectsLock = NSLock()
+        // nonisolated(unsafe): only ever accessed through effectsLock
         nonisolated(unsafe) private var _effects = PlaybackEffects()
-
         var effects: PlaybackEffects {
-            get { lock.withLock { _effects } }
-            set { lock.withLock { _effects = newValue } }
+            get { effectsLock.withLock { _effects } }
+            set { effectsLock.withLock { _effects = newValue } }
         }
 
-        // nonisolated(unsafe): only ever accessed through the lock below
-        nonisolated(unsafe) private var _tuning = AudioTuning.default
-
+        private let _tuning = Mutex(AudioTuning.default)
         var tuning: AudioTuning {
-            get { lock.withLock { _tuning } }
-            set { lock.withLock { _tuning = newValue } }
+            get { _tuning.withLock { $0 } }
+            set { _tuning.withLock { $0 = newValue } }
         }
-
-        // nonisolated(unsafe): only ever accessed through the lock below
-        nonisolated(unsafe) private var _voiceBoostMeters: VoiceBoostMeters?
-
-        var voiceBoostMeters: VoiceBoostMeters? {
-            get { lock.withLock { _voiceBoostMeters } }
-            set { lock.withLock { _voiceBoostMeters = newValue } }
-        }
-
-        // nonisolated(unsafe): only ever accessed through the lock below
-        nonisolated(unsafe) private var _pendingStartingPosition: TimeInterval?
 
         /// One-shot starting position for EffectsPlayer, captured on the main actor at
         /// play-dispatch time because its locked setup flow can't call back to main
         /// (a main.sync there deadlocks against endPlayback holding playerLock).
+        private let _pendingStartingPosition = Mutex<TimeInterval?>(nil)
         var pendingStartingPosition: TimeInterval? {
-            get { lock.withLock { _pendingStartingPosition } }
-            set { lock.withLock { _pendingStartingPosition = newValue } }
+            get { _pendingStartingPosition.withLock { $0 } }
+            set { _pendingStartingPosition.withLock { $0 = newValue } }
         }
 
         func consumePendingStartingPosition() -> TimeInterval? {
-            lock.withLock {
-                defer { _pendingStartingPosition = nil }
-                return _pendingStartingPosition
+            _pendingStartingPosition.withLock { position in
+                defer { position = nil }
+                return position
             }
+        }
+
+        /// Live VoiceBoostN meters are PUBLISHED from the real-time audio read/tap
+        /// threads, which must never block. Writers use a non-blocking trylock and
+        /// drop the frame if the (~2 Hz) UI reader holds the lock; the reader blocks.
+        private let _voiceBoostMeters = OSAllocatedUnfairLock<VoiceBoostMeters?>(initialState: nil)
+
+        /// Real-time-safe publish from the audio threads. Never blocks: a dropped
+        /// meter frame is imperceptible against the 2 Hz Advanced Audio screen read.
+        func publishVoiceBoostMeters(_ meters: VoiceBoostMeters?) {
+            _voiceBoostMeters.withLockIfAvailable { $0 = meters }
+        }
+
+        /// Read by the Advanced Audio screen on the main thread (~2 Hz).
+        var voiceBoostMeters: VoiceBoostMeters? {
+            _voiceBoostMeters.withLock { $0 }
         }
     }
 

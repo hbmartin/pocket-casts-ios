@@ -1,0 +1,8 @@
+# Asset names the check-asset-references.sh scan may not resolve statically.
+# One name per line; keep a justification comment above each entry.
+# Enforced by scripts/ci/check-asset-references.sh (mise run check:assets).
+
+# Referenced only inside HolographicEffect_Previews (Xcode preview code);
+# the component itself has no app users since the EndOfYear removal, so the
+# missing asset can never render at runtime.
+heart

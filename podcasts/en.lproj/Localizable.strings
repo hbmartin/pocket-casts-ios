@@ -754,6 +754,9 @@
 /* The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author. '%1$@' is a placeholder for the status code that the app received. */
 "download_error_status_code" = "Download failed, error code %1$@. Contact the podcast author.";
 
+/* The episode failed to download because the device has no internet connection. */
+"download_error_no_internet" = "Unable to download episode. Check your internet connection and try again.";
+
 /* The episode failed to download but the app wasn't able to determine why. Suggesting to try again after waiting for a bit. */
 "download_error_try_again" = "Unable to download episode. Please try again later.";
 
@@ -2203,6 +2206,9 @@
 /* A common string used throughout the app. Prompt to retry the recent request. */
 "retry" = "Retry";
 
+/* VoiceOver action name on an episode row whose download failed; performing it retries the download. */
+"retry_download" = "Retry download";
+
 /* The label of the search button in Discover. Explaining the user can search or directly add a RSS URL. */
 "search_label" = "Search podcasts or add RSS URL";
 
@@ -3361,6 +3367,9 @@
 /* Prompt to follow to the selected podcast. */
 "follow" = "Follow";
 
+/* Label indicating that the user is currently following the selected podcast, e.g. read by VoiceOver on the follow button once followed. */
+"following" = "Following";
+
 /* Label indicating that the user is currently following to the selected podcast. */
 "unfollow" = "Unfollow";
 
@@ -3598,14 +3607,6 @@
 /* Label shown for days saved when it's singular, eg: 2 days saved. */
 "days_saved" = "Days saved";
 
-/* The heading shown for the Pocket Casts Newsletter */
-"pocket_casts_newsletter" = "Pocket Casts Newsletter";
-
-/* The description for the Pocket Casts Newsletter */
-"pocket_casts_newsletter_description" = "Receive news, app updates, themed playlists, interviews, and more.";
-
-/* The heading shown for the Pocket Casts Newsletter */
-"pocket_casts_welcome_newsletter_title" = "Get the Newsletter";
 
 /* Title for page one of the 7.20 what's new dialog. */
 "whats_new_page_one_title_7_20" = "Folders";
@@ -4260,6 +4261,9 @@
 
 /* Label describing the recent searches */
 "search_recent" = "Recent searches";
+
+/* Header for the shelf of the user's own podcasts shown on the empty search screen. */
+"search_your_podcasts" = "Your Podcasts";
 
 /* Button label prompting the user to renew their subscription */
 "renew_subscription" = "Renew your Subscription";
@@ -5152,11 +5156,6 @@
 /* Notification body for onboarding to staff picks message */
 "notifications_onboarding_staff_picks_body" = "Perfectly ripe podcasts, picked just for you by real, podcast-loving humans.";
 
-/* Title for Newsletter opt-in option in the Notifications screen during onboarding */
-"notifications_onboarding_newsletter_title" = "Subscribe to our Newsletter";
-
-/* Subtitle for Newsletter opt-in option in the Notifications screen during onboarding */
-"notifications_onboarding_newsletter_subtitle" = "Once a month, all podcast goodness";
 
 /* Title for Notifications opt-in option in the Notifications screen during onboarding */
 "notifications_onboarding_notifications_title" = "Receive Notifications";

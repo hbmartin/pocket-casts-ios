@@ -27,8 +27,11 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var audioPlayTask: AudioPlayTask?
     private var audioFile: AVAudioFile?
 
-    private var effects = PlaybackEffects()
-    private var tuning = AudioTuning.default
+    // Read live from the engine-state mirror (thread-safe) instead of keeping
+    // locally-mutated copies, so the main-actor `effectsDidChange` writes no longer
+    // race the background `play()` reads (A5). Both were only ever re-synced from here.
+    private var effects: PlaybackEffects { PlaybackManager.engineState.effects }
+    private var tuning: AudioTuning { PlaybackManager.engineState.tuning }
 
     private let shouldKeepPlaying = AtomicBool()
     private var haveFiredDurationNotification = false
@@ -89,8 +92,6 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
             strongSelf.player = AVAudioPlayerNode()
             strongSelf.engine?.attach(strongSelf.player!)
 
-            strongSelf.effects = PlaybackManager.engineState.effects
-            strongSelf.tuning = PlaybackManager.engineState.tuning
             strongSelf.playBufferManager = PlayBufferManager()
 
             // Set useVoiceBoostN before setVolumeBoostSettings so bypass is configured correctly
@@ -282,9 +283,6 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     func effectsDidChange() {
-        effects = PlaybackManager.engineState.effects
-        tuning = PlaybackManager.engineState.tuning
-
         audioReadTask?.setTrimSilence(effects.trimSilence)
         audioReadTask?.setTuning(tuning)
         playbackSpeed = effects.playbackSpeed

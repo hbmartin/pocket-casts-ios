@@ -339,7 +339,8 @@ extension MainEpisodeActionView {
             let color = AppTheme.waitingForWifiColor()
             drawImageInCenter(imageName: "list_retry", color: color)
             drawEmptyCircle(context: context, color: color)
-            accessibilityLabel = L10n.error
+            // The glyph is a retry arrow; label the action, not the state.
+            accessibilityLabel = L10n.retry
         }
     }
 
