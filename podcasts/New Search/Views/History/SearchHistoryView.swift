@@ -23,6 +23,10 @@ struct SearchHistoryView: View {
                     SearchHistoryCell(entry: entry)
                 }
             }
+
+            // Zero-state: with no history this shelf is all that renders, so the
+            // space between the field and the keyboard is never a blank screen.
+            SearchLocalSuggestionsView()
         }
     }
 }

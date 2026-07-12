@@ -3341,6 +3341,8 @@ nonisolated internal enum L10n {
   internal static func searchResultsViewAll(_ p1: Any) -> String {
     return L10n.tr("Localizable", "search_results_view_all", String(describing: p1), fallback: "View all results for \"%1$@\"")
   }
+  /// Header for the shelf of the user's own podcasts shown on the empty search screen.
+  internal static var searchYourPodcasts: String { return L10n.tr("Localizable", "search_your_podcasts", fallback: "Your Podcasts") }
   /// A common string used throughout the app. Refers to the season a podcast episode is in.
   internal static var season: String { return L10n.tr("Localizable", "season", fallback: "Season") }
   /// Shorthand format used to show the Season and the Episode number of a podcast. 'S' is short for Season. '%1$@' is a placeholder for the season number. 'E' is short for Episode. '%2$@' is a placeholder for the episode number.

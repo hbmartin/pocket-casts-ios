@@ -4262,6 +4262,9 @@
 /* Label describing the recent searches */
 "search_recent" = "Recent searches";
 
+/* Header for the shelf of the user's own podcasts shown on the empty search screen. */
+"search_your_podcasts" = "Your Podcasts";
+
 /* Button label prompting the user to renew their subscription */
 "renew_subscription" = "Renew your Subscription";
 
