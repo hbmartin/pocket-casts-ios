@@ -117,7 +117,8 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, @preconcurren
         self.episode = episode
         let pubDate = DateFormatHelper.sharedHelper.longLocalizedFormat(episode.publishedDate)
         publishedDate.text = pubDate
-        duration.text = TimeFormatter.shared.minutesFormatted(time: episode.duration)
+        // Same short style ("1h 12m") as every episode row, instead of "72 minutes".
+        duration.text = TimeFormatter.shared.multipleUnitFormattedShortTime(time: episode.duration)
 
         // everything below here is expensive to do every single update, so limit it to when the episode changes
         if lastEpisodeUuidRendered == episode.uuid { return }
