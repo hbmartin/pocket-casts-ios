@@ -4369,6 +4369,18 @@ nonisolated internal enum L10n {
   internal static func transcriptErrorNotSupported(_ p1: Any) -> String {
     return L10n.tr("Localizable", "transcript_error_not_supported", String(describing: p1), fallback: "Sorry, but this transcript format is not supported: %1$@")
   }
+  /// Title of the button in the transcript screen that opens the full-screen transcript reader
+  internal static var transcriptReader: String { return L10n.tr("Localizable", "transcript_reader", fallback: "Reader") }
+  /// Label for a toggle in the transcript reader that switches the reading font between serif and sans-serif
+  internal static var transcriptReaderFontSerif: String { return L10n.tr("Localizable", "transcript_reader_font_serif", fallback: "Serif font") }
+  /// Title of a button that resumes auto-scrolling the transcript reader to follow the current playback position
+  internal static var transcriptReaderResumeFollowing: String { return L10n.tr("Localizable", "transcript_reader_resume_following", fallback: "Resume following") }
+  /// Title of a context-menu action in the transcript reader that shares the selected transcript line as an audio/video clip
+  internal static var transcriptReaderShareAsClip: String { return L10n.tr("Localizable", "transcript_reader_share_as_clip", fallback: "Share as clip") }
+  /// Title of a context-menu action in the transcript reader that shares the selected transcript line as a text quote
+  internal static var transcriptReaderShareQuote: String { return L10n.tr("Localizable", "transcript_reader_share_quote", fallback: "Share quote") }
+  /// Accessibility label for the transcript reader control that cycles through the available text sizes
+  internal static var transcriptReaderTextSize: String { return L10n.tr("Localizable", "transcript_reader_text_size", fallback: "Text size") }
   /// Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target.
   internal static var transcriptTapToSeekStreamingUnavailable: String { return L10n.tr("Localizable", "transcript_tap_to_seek_streaming_unavailable", fallback: "Download the episode to tap to seek") }
   /// Label indicating that the trial period for the subscription or promotion has ended.

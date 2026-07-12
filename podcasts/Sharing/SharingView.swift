@@ -65,6 +65,11 @@ struct SharingView: View {
                 endTime = episode.duration
             }
             self.clipTime = ClipTime(start: startTime, end: endTime, playback: time)
+        case .clipShare(_, let clipTime, _):
+            // Presented directly with a pre-seeded clip (e.g. from the transcript
+            // reader): keep the same ClipTime instance so tapping Edit trims the
+            // seeded window instead of resetting to zero.
+            self.clipTime = clipTime
         default:
             self.clipTime = ClipTime(start: 0, end: 0)
         }

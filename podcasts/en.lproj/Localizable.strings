@@ -4721,6 +4721,24 @@
 /* Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target. */
 "transcript_tap_to_seek_streaming_unavailable" = "Download the episode to tap to seek";
 
+/* Title of the button in the transcript screen that opens the full-screen transcript reader */
+"transcript_reader" = "Reader";
+
+/* Accessibility label for the transcript reader control that cycles through the available text sizes */
+"transcript_reader_text_size" = "Text size";
+
+/* Label for a toggle in the transcript reader that switches the reading font between serif and sans-serif */
+"transcript_reader_font_serif" = "Serif font";
+
+/* Title of a context-menu action in the transcript reader that shares the selected transcript line as a text quote */
+"transcript_reader_share_quote" = "Share quote";
+
+/* Title of a context-menu action in the transcript reader that shares the selected transcript line as an audio/video clip */
+"transcript_reader_share_as_clip" = "Share as clip";
+
+/* Title of a button that resumes auto-scrolling the transcript reader to follow the current playback position */
+"transcript_reader_resume_following" = "Resume following";
+
 /* Title of the Transcript excerpt in Episode detail */
 "view_transcript" = "View Transcript";
 

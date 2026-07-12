@@ -295,6 +295,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         stackView.addArrangedSubview(UIView())
 
         stackView.addArrangedSubview(shareButton)
+        stackView.addArrangedSubview(readerButton)
 
         if showFromEpisode {
             stackView.addArrangedSubview(playButton)
@@ -520,6 +521,40 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         return shareButton
     }()
 
+    private lazy var readerButton: RoundButton = {
+        let titleColor = showFromEpisode ? ThemeColor.primaryInteractive01() : .white
+        let tintColor = showFromEpisode ? ThemeColor.primaryInteractive01().withAlphaComponent(0.1) : .white.withAlphaComponent(0.2)
+
+        var configuration = UIButton.Configuration.filled()
+        configuration.contentInsets = .init(top: 4, leading: 12, bottom: 4, trailing: 12)
+        configuration.baseForegroundColor = titleColor
+        configuration.baseBackgroundColor = tintColor
+
+        let readerButton = RoundButton(type: .system)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.font(with: .callout, maxSizeCategory: .extraExtraExtraLarge)
+        ]
+        readerButton.setAttributedTitle(NSAttributedString(string: L10n.transcriptReader, attributes: attributes), for: .normal)
+        readerButton.addTarget(self, action: #selector(openReader), for: .touchUpInside)
+        readerButton.setTitleColor(titleColor, for: .normal)
+        readerButton.tintColor = tintColor
+        readerButton.layer.masksToBounds = true
+        readerButton.configuration = configuration
+        readerButton.titleLabel?.adjustsFontForContentSizeCategory = false
+        return readerButton
+    }()
+
+    @objc private func openReader() {
+        guard let transcript else { return }
+        let reader = TranscriptReaderHostingController(
+            transcript: transcript,
+            playbackManager: playbackManager,
+            isGeneratedTranscript: transcriptManager?.isDisplayingGeneratedTranscript == true,
+            source: analyticsSource
+        )
+        present(reader, animated: true)
+    }
+
     private lazy var hiddenTextView: UITextField = {
         let textView = UITextField()
         textView.layer.opacity = 0
@@ -621,6 +656,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private func setupLoadingState() {
         transcriptView.isHidden = true
         searchButton.isHidden = true
+        readerButton.isHidden = true
         errorView.isHidden = true
         activityIndicatorView.startAnimating()
     }
@@ -628,6 +664,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private func setupShowTranscriptState() {
         transcriptView.isHidden = false
         searchButton.isHidden = false
+        readerButton.isHidden = false
         errorView.isHidden = true
         activityIndicatorView.stopAnimating()
     }
@@ -727,6 +764,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         ]
         searchButton.setAttributedTitle(NSAttributedString(string: L10n.search, attributes: attributes), for: .normal)
         shareButton.setAttributedTitle(NSAttributedString(string: L10n.share, attributes: attributes), for: .normal)
+        readerButton.setAttributedTitle(NSAttributedString(string: L10n.transcriptReader, attributes: attributes), for: .normal)
         playButton.updateSize()
 
         bannerLabel.font = .font(ofSize: 13, weight: .medium, scalingWith: .footnote, maxSizeCategory: .extraExtraExtraLarge)
