@@ -1,0 +1,45 @@
+name: Mutation Tests
+
+# Mutation testing over the SPM module suites (muter.conf.yml). Deliberately
+# NOT per-PR: a full run takes hours. Weekly + on demand; the report artifact
+# is the deliverable — surviving mutants get triaged into test-gap issues.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation_tests:
+    name: Muter (DataModel, Utils, FileSync)
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 480
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Install muter
+        run: brew list muter >/dev/null 2>&1 || brew install muter
+
+      - name: Run mutation tests
+        run: |
+          set -o pipefail
+          mkdir -p build/github/logs
+          muter --output-json --skip-update-check 2>&1 | tee build/github/logs/muter.log
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mutation-report-${{ github.run_id }}
+          path: |
+            build/github/logs/muter.log
+            muterReport.json
+            .muter/**/*.json
+          if-no-files-found: ignore
+          retention-days: 30
