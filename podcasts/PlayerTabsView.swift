@@ -98,6 +98,11 @@ class PlayerTabsView: UIScrollView {
             tabsStackView.heightAnchor.constraint(equalTo: frameLayoutGuide.heightAnchor)
         ])
 
+        // Above the tab buttons: updateTabs() re-adds button subviews, whose
+        // layers would otherwise stack on top and bury the fade (the edge then
+        // reads as a hard mid-word clip instead of a scroll affordance).
+        fadeLeading.zPosition = 1
+        fadeTrailing.zPosition = 1
         layer.addSublayer(fadeLeading)
         layer.addSublayer(fadeTrailing)
     }

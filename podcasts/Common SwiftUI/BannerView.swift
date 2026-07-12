@@ -110,6 +110,7 @@ struct BannerView: View {
                         .foregroundColor(theme.primaryIcon02)
                         .frame(width: 24, height: 24)
                 }
+                .accessibilityLabel(L10n.close)
                 .padding(8)
             }
         }

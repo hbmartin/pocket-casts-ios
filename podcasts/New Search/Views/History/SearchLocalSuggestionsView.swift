@@ -4,31 +4,28 @@ import SwiftUI
 /// A shelf of the user's own podcasts, ordered by recently played, shown on
 /// the empty search screen so the space between the field and the keyboard is
 /// never blank — even before any search history exists. Local data only.
+///
+/// The podcasts are loaded by the parent (`SearchHistoryView`): this view
+/// lives inside a `LazyVStack`, where a zero-size child is never materialized,
+/// so it can't bootstrap its own data with `.task`/`.onAppear`.
 struct SearchLocalSuggestionsView: View {
     @EnvironmentObject var theme: Theme
 
-    @State private var podcasts: [Podcast] = []
+    let podcasts: [Podcast]
 
     var body: some View {
-        Group {
-            if !podcasts.isEmpty {
-                VStack(spacing: 0) {
-                    ThemeableListHeader(title: L10n.searchYourPodcasts, actionTitle: nil, action: nil)
+        VStack(spacing: 0) {
+            ThemeableListHeader(title: L10n.searchYourPodcasts, actionTitle: nil, action: nil)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 12) {
-                            ForEach(podcasts, id: \.uuid) { podcast in
-                                tile(for: podcast)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 12) {
+                    ForEach(podcasts, id: \.uuid) { podcast in
+                        tile(for: podcast)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
-        }
-        .task {
-            podcasts = Array(DataManager.sharedManager.allPodcastsOrderedByLastPlayedEpisodes().prefix(10))
         }
     }
 
@@ -57,7 +54,7 @@ struct SearchLocalSuggestionsView: View {
 
 struct SearchLocalSuggestionsView_Previews: PreviewProvider {
     static var previews: some View {
-        SearchLocalSuggestionsView()
+        SearchLocalSuggestionsView(podcasts: [])
             .previewWithAllThemes()
     }
 }
