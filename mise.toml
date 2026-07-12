@@ -208,6 +208,7 @@ run = [
     "./scripts/tests/check_count_ratchets_test.sh",
     "./scripts/tests/check_coverage_floor_test.sh",
     "./scripts/tests/check_test_targets_test.sh",
+    "./scripts/tests/check_asset_references_test.sh",
 ]
 
 [tasks."sync:swiftlint-version"]
@@ -290,6 +291,10 @@ echo "Wrote $(wc -l < scripts/ci/concurrency-baseline.txt | tr -d ' ') entries t
 description = "Fail on new '@unchecked Sendable' or non-test 'as!' usages above the committed per-file baselines (scripts/ci/ratchet-*.txt)"
 run = "./scripts/ci/check-count-ratchets.sh"
 
+[tasks."check:assets"]
+description = "Fail on UIImage(named:)/Image(_:)/IB image references whose asset name has no imageset/symbolset in any tracked catalog"
+run = "./scripts/ci/check-asset-references.sh"
+
 [tasks."ratchets:baseline"]
 description = "Regenerate scripts/ci/ratchet-*.txt count-ratchet baselines (deletion-only ratchet; run after removing usages)"
 run = "./scripts/ci/check-count-ratchets.sh --update-baselines"
@@ -304,6 +309,7 @@ depends = [
     "semgrep:security",
     "semgrep:pocket-casts",
     "check:ratchets",
+    "check:assets",
     "check:analyzer",
 ]
 
