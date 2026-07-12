@@ -6,7 +6,7 @@ It is intended as a reference for engineers and security reviewers: where reques
 
 > Scope note: the networking layer lives almost entirely in the **`PocketCastsServer`** Swift package (`Modules/Sources/PocketCastsServer/`). The main app (`podcasts/`) and extensions add downloads, image loading, analytics SDKs, push registration, transcripts, and web links. Both are covered here.
 
-> **Building a backend?** This document is a *surface map* (what talks to what). For the *implementation contract* — precise request/response schemas, protobuf field numbers, status codes, and behavioral semantics needed to re-implement the first-party services from scratch — see [`ServerBackendSpec.md`](./ServerBackendSpec.md).
+> **Building a backend?** This document is a *surface map* (what talks to what). The separate backend re-implementation spec was removed 2026-07-12 (program decision #59): this fork's direction is local-first operation with the production service as the optional sync layer, so no first-party backend re-implementation is planned. The protobuf schemas in `Modules/Sources/PocketCastsServer/Private/Protobuffer/` remain the wire-format reference.
 
 ---
 
