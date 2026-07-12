@@ -1421,8 +1421,7 @@ nonisolated class Settings: NSObject {
     /// settings toggle and the Advanced Audio screen share one source of truth.
     static var isVoiceBoostNEnabled: Bool {
         get {
-            guard FeatureFlag.voiceBoostN.enabled else { return false }
-            return audioTuning.voiceBoost.useVoiceBoostN
+            audioTuning.voiceBoost.useVoiceBoostN
         }
         set {
             var tuning = audioTuning

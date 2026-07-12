@@ -78,9 +78,11 @@ Assessment meanings:
 | `analyticsLogging` | false | 1 | AnalyticsLoggingAdapter.swift | keep (default not unconditionally true) | |
 | `appThemePropertiesLogging` | conditional | 1 | Analytics.swift | keep (default not unconditionally true) | |
 | `runVacuumOnVersionUpdate` | false | 1 | MainTabBarController.swift | keep (default not unconditionally true) | |
-| `voiceBoostN` | false | 2 | GeneralSettingsViewController.swift, Settings.swift | keep (default not unconditionally true) | |
+| ~~`voiceBoostN`~~ | false | 0 | — | removed (local-first program A5 — DSP available in all builds; user toggle `useVoiceBoostN` stays opt-in) | ✅ code removed 2026-07-12; retire remote `voice_boost_n` key server-side |
 | `settingsSync` | conditional | 5 | SyncSettingsTask.swift, SyncTask+LocalChanges.swift, SyncTas | keep (default not unconditionally true) | |
-| `shareProfile` | conditional | 6 | PrivacySettingsDataSource.swift, PrivacySettingsViewControll | keep (default not unconditionally true) | |
+| ~~`shareProfile`~~ | conditional | 0 | — | removed (local-first program A4 — available in all builds; renders signed-out with local data) | ✅ code removed 2026-07-12; retire remote `share_profile` key server-side |
+| ~~`upNextSort`~~ | conditional | 0 | — | removed (local-first program A4) | ✅ code removed 2026-07-12; retire remote `up_next_sort` key server-side |
+| ~~`generatedChapters`~~ | conditional | 0 | — | removed (local-first program A4 — AI chapters for server-sourced podcasts in all builds; unavailable for `.localFeed` podcasts by design) | ✅ code removed 2026-07-12; retire remote `generated_chapters` key server-side |
 | `activateAudioSessionInBackground` | true | 1 | PlaybackManager.swift | defer-playback | |
 | `avoidReplaceOnEpisodeSwap` | true | 1 | PlaybackQueue.swift | defer-playback | |
 | `doNotSwitchToDownloadedFile` | true | 1 | PlaybackManager.swift | defer-playback | |

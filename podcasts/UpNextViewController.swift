@@ -86,21 +86,19 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             remainingLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8)
         ])
 
-        if FeatureFlag.upNextSort.enabled {
-            headerView.addSubview(sortButton)
-            sortButton.translatesAutoresizingMaskIntoConstraints = false
-            sortButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-            NSLayoutConstraint.activate([
-                sortButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-                sortButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-                sortButton.widthAnchor.constraint(equalToConstant: 24),
-                sortButton.heightAnchor.constraint(equalToConstant: 24)
-            ])
-        }
+        headerView.addSubview(sortButton)
+        sortButton.translatesAutoresizingMaskIntoConstraints = false
+        sortButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        NSLayoutConstraint.activate([
+            sortButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            sortButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            sortButton.widthAnchor.constraint(equalToConstant: 24),
+            sortButton.heightAnchor.constraint(equalToConstant: 24)
+        ])
 
-        // When the sort button is shown, the shuffle/clear buttons sit to its left.
-        let trailingButtonAnchor = FeatureFlag.upNextSort.enabled ? sortButton.leadingAnchor : headerView.trailingAnchor
-        let trailingButtonConstant: CGFloat = FeatureFlag.upNextSort.enabled ? -16 : -20
+        // The shuffle/clear buttons sit to the sort button's left.
+        let trailingButtonAnchor = sortButton.leadingAnchor
+        let trailingButtonConstant: CGFloat = -16
 
         headerView.addSubview(shuffleButton)
         shuffleButton.translatesAutoresizingMaskIntoConstraints = false
@@ -129,9 +127,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             shuffleButton.isHidden = true
             clearQueueButton.isEnabled = PlaybackManager.shared.upNextCount() > 0
         }
-        if FeatureFlag.upNextSort.enabled {
-            sortButton.isHidden = PlaybackManager.shared.upNextCount() < 2
-        }
+        sortButton.isHidden = PlaybackManager.shared.upNextCount() < 2
         updateSize()
         return headerView
     }()
@@ -350,7 +346,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     private func setupSortButtonIfNecessary() {
-        guard FeatureFlag.upNextSort.enabled, sortButton.allTargets.isEmpty else { return }
+        guard sortButton.allTargets.isEmpty else { return }
         NotificationCenter.default.addObserver(self, selector: #selector(updateSortButtonImage), name: Constants.Notifications.themeChanged, object: nil)
         updateSortButtonImage()
         sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
@@ -667,8 +663,6 @@ extension UpNextViewController {
         let metric = UIFontMetrics(forTextStyle: .largeTitle)
         let buttonSize = max(24, metric.scaledValue(for: 24))
         shuffleButton.updateSizeConstraints(to: buttonSize)
-        if FeatureFlag.upNextSort.enabled {
-            sortButton.updateSizeConstraints(to: buttonSize)
-        }
+        sortButton.updateSizeConstraints(to: buttonSize)
     }
 }

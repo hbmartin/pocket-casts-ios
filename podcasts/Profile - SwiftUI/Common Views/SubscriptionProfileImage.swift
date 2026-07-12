@@ -7,7 +7,7 @@ struct SubscriptionProfileImage: View {
 
     var body: some View {
         Group {
-            if FeatureFlag.shareProfile.enabled, let photo = shareProfilePhoto {
+            if let photo = shareProfilePhoto {
                 Image(uiImage: photo)
                     .resizable()
                     .aspectRatio(contentMode: .fill)

@@ -18,8 +18,7 @@ class PrivacySettingsDataSource: NSObject, UITableViewDataSource {
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        guard FeatureFlag.shareProfile.enabled else { return 1 }
-        return Section.allCases.count
+        Section.allCases.count
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -125,7 +124,6 @@ class PrivacySettingsDataSource: NSObject, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        guard FeatureFlag.shareProfile.enabled else { return nil }
         let resolvedSection = resolvedSection(for: section)
         switch resolvedSection {
         case .profileSharing:
@@ -138,8 +136,7 @@ class PrivacySettingsDataSource: NSObject, UITableViewDataSource {
     // MARK: - Helpers
 
     private func resolvedSection(for section: Int) -> Section {
-        guard FeatureFlag.shareProfile.enabled else { return .analytics }
-        return Section(rawValue: section) ?? .analytics
+        Section(rawValue: section) ?? .analytics
     }
 
     private func configureDynamicTypeCell(_ cell: ThemeableCell) {

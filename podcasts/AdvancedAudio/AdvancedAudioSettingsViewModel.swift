@@ -32,10 +32,6 @@ final class AdvancedAudioSettingsViewModel {
         self.commitDebounce = commitDebounce
     }
 
-    var voiceBoostNFlagEnabled: Bool {
-        FeatureFlag.voiceBoostN.enabled
-    }
-
     // MARK: - Commit
 
     /// Debounced commit of the current tuning to `Settings` (which notifies PlaybackManager

@@ -178,9 +178,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Allow the release of the Media Exporter when is no longer being used by the player
     case releaseMediaExporterWhenNoLongerActive
 
-    /// Enable VoiceBoostN with updated description copy (TestFlight only)
-    case voiceBoostN
-
     /// Adds invalidation to the playlist cache on appearance when its been > 30 seconds
     case playlistCacheInvalidation
 
@@ -208,17 +205,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Show explicit content badges on podcasts
     case showExplicitBadges
 
-    /// Enable the Share Profile feature
-    case shareProfile
-
     /// Log database access performed on the main thread (DEBUG builds only)
     case logMainThreadDatabaseAccess
-
-    /// Enable the Up Next sort button
-    case upNextSort
-
-    /// Enable Generated Chapters
-    case generatedChapters
 
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
@@ -348,8 +336,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             true
         case .releaseMediaExporterWhenNoLongerActive:
             true
-        case .voiceBoostN:
-            false
         case .playlistCacheInvalidation:
             true
         case .skipSyncWhenProtectedDataUnavailable:
@@ -368,14 +354,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             true
         case .showExplicitBadges:
             false
-        case .shareProfile:
-            BuildEnvironment.current == .debug
         case .logMainThreadDatabaseAccess:
             true
-        case .upNextSort:
-            BuildEnvironment.current == .debug
-        case .generatedChapters:
-            BuildEnvironment.current == .debug
         }
     }
 

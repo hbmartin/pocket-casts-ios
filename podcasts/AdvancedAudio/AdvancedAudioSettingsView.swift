@@ -154,7 +154,7 @@ private struct VoiceBoostSection: View {
     }
 
     private var footerText: String {
-        model.voiceBoostNFlagEnabled ? L10n.advancedAudioBoostTargetLufsFooter : L10n.advancedAudioBoostEngineFooter
+        L10n.advancedAudioBoostTargetLufsFooter
     }
 }
 

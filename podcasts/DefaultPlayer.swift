@@ -105,7 +105,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private func refreshTapTuning() {
         let tuning = PlaybackManager.engineState.tuning
         tapConfig.withLock { config in
-            config.useVoiceBoostN = FeatureFlag.voiceBoostN.enabled && tuning.voiceBoost.useVoiceBoostN
+            config.useVoiceBoostN = tuning.voiceBoost.useVoiceBoostN
             config.vbnConfig = tuning.vbnConfig()
             config.generation &+= 1
         }
@@ -547,11 +547,11 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             // Create the VoiceBoostN state HERE (prepare runs once, before the first
             // real-time render callback) rather than lazily inside `tapProcess`, so the
-            // render thread never allocates. It is created whenever the feature could be
-            // toggled on during this playback; `tapProcess` gates actual processing on the
-            // live `useVoiceBoostN` flag. Seeded from the precomputed loudness so playback
-            // starts at the right level instead of adapting over the first seconds.
-            if referenceToSelf.voiceBoostNState == nil, FeatureFlag.voiceBoostN.enabled {
+            // render thread never allocates. It is always created because the feature can
+            // be toggled on during any playback; `tapProcess` gates actual processing on
+            // the live `useVoiceBoostN` flag. Seeded from the precomputed loudness so
+            // playback starts at the right level instead of adapting over the first seconds.
+            if referenceToSelf.voiceBoostNState == nil {
                 let snapshot = referenceToSelf.tapConfig.withLock { $0 }
                 referenceToSelf.lastTapConfig = snapshot
                 var config = snapshot.vbnConfig

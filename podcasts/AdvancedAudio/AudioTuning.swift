@@ -142,8 +142,7 @@ nonisolated struct TrimTuning: Codable, Equatable, Sendable {
 /// mirror the constants in VoiceBoostN_Internal.h so default tuning behaves
 /// exactly like the shipped DSP.
 nonisolated struct VoiceBoostTuning: Codable, Equatable, Sendable {
-    /// Effective only while `FeatureFlag.voiceBoostN` is enabled; when false the
-    /// legacy AudioUnit chain handles volume boost.
+    /// When false the legacy AudioUnit chain handles volume boost.
     var useVoiceBoostN = true
 
     var targetLUFS: Double = -17

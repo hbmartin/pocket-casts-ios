@@ -37,9 +37,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
             shuffleButton.isHidden = true
             clearQueueButton.isEnabled = PlaybackManager.shared.upNextCount() > 0
         }
-        if FeatureFlag.upNextSort.enabled {
-            sortButton.isHidden = PlaybackManager.shared.upNextCount() == 0
-        }
+        sortButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         return headerView
     }
 
