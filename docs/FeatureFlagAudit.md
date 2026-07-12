@@ -86,7 +86,7 @@ Assessment meanings:
 | ~~`activateAudioSessionInBackground`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `activate_audio_session_in_background` key server-side |
 | ~~`avoidReplaceOnEpisodeSwap`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `avoid_replace_on_episode_swap` key server-side |
 | ~~`doNotSwitchToDownloadedFile`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `do_not_switch_to_downloaded_file` key server-side |
-| `dontAutoplayOnRouteChange` | true | 1 | PlaybackManager.swift | defer-playback | |
+| ~~`dontAutoplayOnRouteChange`~~ | true | 0 | — | removed (local-first program E3 — absorbed by route-aware playback rules: don't-autoplay is now the default, per-route auto-resume is opt-in via `RouteRulesStore`) | ✅ code removed 2026-07-12; retire remote `dont_autoplay_on_route_change` key server-side |
 | ~~`effectsPlayerQOSUpgrade`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `effects_player_q_o_s_upgrade` key server-side |
 | ~~`ignorePlayWithOtherAudio`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `ignore_play_with_other_audio` key server-side |
 | ~~`ignoreRouteDisconnectedInterruption`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `ignore_route_disconnected_interruption` key server-side |

@@ -19,6 +19,10 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var requiredPlaybackRate: Double = 0
     private var shouldKeepPlaying = false
     private var volumeBoostEnabled = false
+    /// Normalize-volume effect (gain to target LUFS, no compression). Read on the
+    /// tap thread the same way `volumeBoostEnabled` is; both are only written on
+    /// the playback flow.
+    private var normalizeEnabled = false
 
     private var lastBackgroundedDate: Date?
 
@@ -103,11 +107,14 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
     /// Re-snapshots the tuning-derived values the tap thread consumes. Runs on the
     /// playback flow / main thread (never real-time), so a blocking `withLock` is fine.
+    /// Normalize-only playback rides the VBN engine with the normalize configuration
+    /// (compressor and filter bypassed), so the tap's VBN branch handles both modes.
     private func refreshTapTuning() {
         let tuning = PlaybackManager.engineState.tuning
+        let normalizeOnly = normalizeEnabled && !volumeBoostEnabled
         tapConfig.withLock { config in
-            config.useVoiceBoostN = tuning.voiceBoost.useVoiceBoostN
-            config.vbnConfig = tuning.vbnConfig()
+            config.useVoiceBoostN = normalizeOnly ? true : tuning.voiceBoost.useVoiceBoostN
+            config.vbnConfig = normalizeOnly ? tuning.vbnNormalizeConfig() : tuning.vbnConfig()
             config.generation &+= 1
         }
     }
@@ -284,6 +291,9 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
         setPlaybackRate(effects.playbackSpeed)
         volumeBoostEnabled = effects.volumeBoost
+        // Normalize is suppressed while Volume Boost is on (boost already
+        // normalizes loudness as part of its chain — the documented interlock).
+        normalizeEnabled = PlaybackManager.engineState.tuning.normalize.enabled && !effects.volumeBoost
         refreshTapTuning()
     }
 
@@ -594,7 +604,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             let currentSampleCount = referenceToSelf.sampleCount
             referenceToSelf.sampleCount += Float64(numberFrames)
-            guard referenceToSelf.volumeBoostEnabled, let peakLimiter = referenceToSelf.peakLimiter, referenceToSelf.highPassFilter != nil, referenceToSelf.dynamicsProcessor != nil else {
+            guard referenceToSelf.volumeBoostEnabled || referenceToSelf.normalizeEnabled, let peakLimiter = referenceToSelf.peakLimiter, referenceToSelf.highPassFilter != nil, referenceToSelf.dynamicsProcessor != nil else {
                 // no effects enabled, so just play normally
                 guard MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut) == noErr else {
                     referenceToSelf.handlePlaybackError("MTAudioProcessingTapGetSourceAudio failed")

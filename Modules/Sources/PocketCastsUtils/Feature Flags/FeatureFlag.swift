@@ -49,9 +49,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Optimizes manual playlist queries with improved deduplication
     case optimizeManualPlaylistQueries
 
-    /// Don't autoplay when route changes
-    case dontAutoplayOnRouteChange
-
     /// Show explicit content badges on podcasts
     case showExplicitBadges
 
@@ -102,8 +99,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .searchImprovements:
             true
         case .optimizeManualPlaylistQueries:
-            true
-        case .dontAutoplayOnRouteChange:
             true
         case .showExplicitBadges:
             false

@@ -1318,6 +1318,23 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    // MARK: - Normalize Volume
+
+    /// Facade over `audioTuning.normalize.enabled` — the "Normalize volume"
+    /// playback effect (gain to target LUFS with a true-peak limiter, no
+    /// compression). Suppressed at the engine level while Volume Boost is on.
+    static var isNormalizeVolumeEnabled: Bool {
+        get {
+            audioTuning.normalize.enabled
+        }
+        set {
+            var tuning = audioTuning
+            tuning.normalize.enabled = newValue
+            audioTuning = tuning
+            FileLog.shared.addMessage("[Settings] Normalize volume \(newValue ? "enabled" : "disabled")")
+        }
+    }
+
     // MARK: - VoiceBoostN
 
     /// Facade over `audioTuning.voiceBoost.useVoiceBoostN` so the General

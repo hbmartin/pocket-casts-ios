@@ -26,6 +26,11 @@ public struct PodcastSettings: JSONCodable, Equatable, Sendable {
     @ModifiedDate public var episodeGrouping: PodcastGrouping = .none
     @ModifiedDate public var showArchived: Bool = false
 
+    /// Chapter smart skip: case-insensitive title substrings whose matching chapters auto-deselect.
+    /// Optional with a nil default so settings payloads written before this field existed still decode
+    /// (see the `KeyedDecodingContainer` overload in `ModifiedDate.swift`).
+    @ModifiedDate public var skipChapterTitles: [String]? = nil
+
     public static var defaults: Self {
         return PodcastSettings(trimSilence: .off, boostVolume: false, playbackSpeed: 1)
     }

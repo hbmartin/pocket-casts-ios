@@ -12,6 +12,7 @@ struct AdvancedAudioSettingsView: View {
         List {
             LiveStatusSection(model: model)
             TrimSilenceSection(model: model)
+            NormalizeSection(model: model)
             VoiceBoostSection(model: model)
             DynamicsSection(model: model)
             TimeStretchSection(model: model)
@@ -50,6 +51,27 @@ private struct LiveStatusSection: View {
 
     private func header(_ title: String) -> some View {
         Text(title).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+    }
+}
+
+// MARK: - Normalize volume
+
+private struct NormalizeSection: View {
+    @EnvironmentObject private var theme: Theme
+    @Bindable var model: AdvancedAudioSettingsViewModel
+
+    var body: some View {
+        Section(
+            header: Text(L10n.settingsGeneralNormalizeVolume)
+                .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(L10n.settingsGeneralNormalizeVolumeSubtitle)
+                .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+        ) {
+            Toggle(L10n.settingsGeneralNormalizeVolume, isOn: $model.tuning.normalize.enabled)
+            TuningSliderRow(title: L10n.advancedAudioBoostTargetLufs, range: NormalizeTuning.targetLUFSRange, step: 0.5, unit: "LUFS", value: $model.tuning.normalize.targetLUFS)
+                .disabled(!model.tuning.normalize.enabled)
+                .opacity(model.tuning.normalize.enabled ? 1 : 0.5)
+        }
     }
 }
 

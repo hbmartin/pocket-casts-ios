@@ -31,4 +31,18 @@ nonisolated extension AudioTuning {
 
         return config
     }
+
+    /// Normalize-only configuration: gain to `normalize.targetLUFS` with the
+    /// true-peak limiter as the safety net — compressor and high-pass filter
+    /// bypassed so the program's dynamics are untouched.
+    func vbnNormalizeConfig() -> VBNConfig {
+        var config = VBN_GetDefaultConfig()
+
+        config.targetLUFS = Float(normalize.targetLUFS)
+        config.hpEnabled = false
+        config.compEnabled = false
+        config.truePeakEnabled = true
+
+        return config
+    }
 }

@@ -427,6 +427,12 @@ public class DataManager {
         podcastManager.saveAutoAddToUpNext(podcastUuid: podcastUuid, autoAddToUpNext: autoAddToUpNext, dbQueue: dbQueue)
     }
 
+    /// Persists the chapter smart-skip title patterns for a podcast into the settings JSON payload.
+    /// Writes through the json_set settings writer so it works regardless of `newSettingsStorage`.
+    public func saveSkipChapterTitles(_ titles: [String], podcastUuid: String) {
+        podcastManager.saveSkipChapterTitles(titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    }
+
     public func savePodcastDownloadSetting(_ setting: AutoDownloadSetting, podcastUuid: String) {
         podcastManager.savePodcastDownloadSetting(setting, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }

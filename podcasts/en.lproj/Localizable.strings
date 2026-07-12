@@ -838,6 +838,18 @@
 /* A common string used throughout the app. Generic title informing the user of an Error. General error message used when the app is unable to locate the podcast that was selected. This usually comes from a sharing or import feature. */
 "error_general_podcast_not_found" = "Unable to find podcast. Please contact the podcast author.";
 
+/* Explore tab: label for the category chip that shows the overall top charts across all categories. */
+"explore_all_categories" = "All";
+
+/* Explore tab: error message shown when the podcast charts or search results fail to load. */
+"explore_load_failed" = "Unable to load podcasts. Check your connection and try again.";
+
+/* Explore tab: message shown when a podcast search returns no results. */
+"explore_no_results" = "No podcasts found";
+
+/* Title of the Explore tab in the main tab bar, where users can discover new podcasts. */
+"explore_tab_title" = "Explore";
+
 /* Describes how the process to export podcasts from Pocket Casts works. */
 "export_podcasts_description" = "Exports all your podcasts as an OPML file, which you can import into other podcast apps.";
 
@@ -1608,6 +1620,12 @@
 
 /* Subtitle for the VoiceBoostN setting in Settings > General */
 "settings_general_voice_boost_n_subtitle" = "Use updated Volume Boost with more consistent voice levels.";
+
+/* Toggle in General settings enabling loudness normalization playback (gain to a target level, no compression) */
+"settings_general_normalize_volume" = "Normalize Volume";
+
+/* Footer explaining the Normalize Volume toggle */
+"settings_general_normalize_volume_subtitle" = "Play every episode at a consistent loudness. Gentle level matching only — no compression. When Volume Boost is on it takes over, since it already normalizes.";
 
 /* A common string used throughout the app. Catch all prompt to suggest to the user to try the task again. */
 "please_try_again" = "Please try again";
@@ -6289,3 +6307,36 @@
 
 /* Advanced Audio - footer warning that changing the downloaded-audio algorithm restarts playback */
 "advanced_audio_stretch_footer" = "Changing the downloaded-audio algorithm briefly restarts playback.";
+
+/* Podcast settings row and screen title for the chapter smart-skip rules editor. */
+"podcast_settings_skip_chapters" = "Skip Chapters";
+
+/* Placeholder for the text field used to add a new chapter skip phrase. */
+"skip_chapters_add_placeholder" = "Add a word or phrase";
+
+/* Accessibility label for the button that adds the typed chapter skip phrase to the list. */
+"skip_chapters_add_button" = "Add";
+
+/* Footer explaining how the chapter skip phrases are applied. */
+"skip_chapters_explanation" = "Chapters with titles containing any of these phrases will be skipped automatically for this podcast. Re-enabling a chapter in the player keeps it playable for the rest of the session.";
+
+/* Empty state shown when no chapter skip phrases have been added yet. */
+"skip_chapters_empty" = "No phrases yet. Try adding something like “sponsor” or “ad break”.";
+
+/* Settings row and screen title for per-device playback rules. */
+"settings_devices" = "Devices";
+
+/* Empty state shown when no audio devices have been seen yet. */
+"settings_devices_empty" = "Devices you listen with will appear here after they connect, so you can choose what happens when they connect or disconnect.";
+
+/* Footer explaining the per-device playback rules. */
+"settings_devices_footer" = "Auto-resume starts playback when the device connects and an episode is paused. Pause on disconnect pauses playback when the device disconnects.";
+
+/* Toggle to automatically resume playback when this audio device connects. */
+"settings_devices_auto_resume" = "Auto-Resume on Connect";
+
+/* Toggle to pause playback when this audio device disconnects. */
+"settings_devices_pause_on_disconnect" = "Pause on Disconnect";
+
+/* Footer showing when an audio device was last seen. '%1$@' is a placeholder for a relative date like 'yesterday'. */
+"settings_devices_last_seen_format" = "Last seen %1$@";

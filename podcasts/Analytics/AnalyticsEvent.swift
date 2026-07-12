@@ -555,6 +555,7 @@ enum AnalyticsEvent: String {
 
     case podcastSettingsSkipFirstChanged
     case podcastSettingsSkipLastChanged
+    case podcastSettingsSkipChaptersRulesChanged
 
     case podcastSettingsAutoArchiveToggled
     case podcastSettingsAutoArchivePlayedChanged
@@ -591,6 +592,10 @@ enum AnalyticsEvent: String {
     case settingsGeneralAutoplayToggled
     case settingsGeneralAutoSleepTimerRestartToggled
     case settingsGeneralShakeToResetSleepTimerToggled
+
+    // MARK: - Settings: Devices (route-aware playback rules)
+
+    case settingsDeviceRuleChanged
 
     // MARK: - Settings: Notifications
 

@@ -141,9 +141,13 @@ class PlayerChapterCell: UITableViewCell {
         if var currentEpisode = PlaybackManager.shared.currentEpisode(), let index = chapter?.index {
             if chapter?.shouldPlay == true {
                 currentEpisode.select(chapterIndex: index)
+                // Also exempt the chapter from smart-skip title rules for this session, otherwise
+                // the next chapter reload would immediately re-deselect a rule-matched chapter
+                PlaybackManager.shared.registerChapterSessionReEnable(chapterIndex: index, episodeUuid: currentEpisode.uuid)
                 track(.deselectChaptersChapterSelected)
             } else {
                 currentEpisode.deselect(chapterIndex: index)
+                PlaybackManager.shared.unregisterChapterSessionReEnable(chapterIndex: index, episodeUuid: currentEpisode.uuid)
                 track(.deselectChaptersChapterDeselected)
             }
 

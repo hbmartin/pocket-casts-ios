@@ -596,6 +596,17 @@ final class PlaybackManager {
         }
     }
 
+    /// The user re-enabled a chapter in the chapters UI: exempt it from smart-skip rules for the
+    /// rest of the session so a chapter reload doesn't immediately re-deselect it.
+    func registerChapterSessionReEnable(chapterIndex: Int, episodeUuid: String) {
+        chapterManager.registerSessionReEnable(chapterIndex: chapterIndex, episodeUuid: episodeUuid)
+    }
+
+    /// The user deselected a chapter again: drop any session smart-skip exemption for it.
+    func unregisterChapterSessionReEnable(chapterIndex: Int, episodeUuid: String) {
+        chapterManager.unregisterSessionReEnable(chapterIndex: chapterIndex, episodeUuid: episodeUuid)
+    }
+
     private func checkForChapterChange() {
         guard let episodeUuid = currentEpisode()?.uuid else { return }
 
@@ -2167,24 +2178,35 @@ final class PlaybackManager {
 
         let reason = changeReason.uintValue
         if let currEpisode = currentEpisode(), playingOverAirplay() && playerSwitchRequired() {
+            // Never autoplay on an AirPlay player switch unless we were already playing
+            // (previously gated by the retired dontAutoplayOnRouteChange flag)
             let wasPlaying = player?.shouldBePlaying() ?? false
-            let autoPlay: Bool
-            if FeatureFlag.dontAutoplayOnRouteChange.enabled {
-                // When flag is enabled: only autoplay if we were already playing
-                autoPlay = wasPlaying
-                if autoPlay {
-                    FileLog.shared.addMessage("PlaybackManager: Route change with active playback, preserving autoPlay=true")
-                }
-            } else {
-                // When flag is disabled: always autoplay (original behavior)
-                autoPlay = true
+            if wasPlaying {
+                FileLog.shared.addMessage("PlaybackManager: Route change with active playback, preserving autoPlay=true")
             }
-            load(episode: currEpisode, autoPlay: autoPlay, overrideUpNext: false)
+            load(episode: currEpisode, autoPlay: wasPlaying, overrideUpNext: false)
         } else if reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue {
-            player?.routeDidChange(shouldPause: true)
+            // Route rules: pause only if the disconnecting route's rule says so (default: pause)
+            let disconnectedPort = (userInfo[AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription)?.outputs.first
+            let rule = disconnectedPort.map { RouteRulesStore.shared.rule(for: RouteRulesStore.identity(portType: $0.portType.rawValue, portName: $0.portName)) } ?? RouteRule()
+            let action = RouteChangeDecider.action(for: .disconnect, rule: rule, isPlaying: playing(), hasCurrentEpisode: currentEpisode() != nil)
+            if action != .pause {
+                FileLog.shared.addMessage("PlaybackManager: not pausing on disconnect of \(disconnectedPort?.portName ?? "unknown route") per route rule")
+            }
+            player?.routeDidChange(shouldPause: action == .pause)
         } else if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue || reason == AVAudioSession.RouteChangeReason.override.rawValue || reason == AVAudioSession.RouteChangeReason.categoryChange.rawValue {
             player?.routeDidChange(shouldPause: false)
             updateAllNowPlayingData()
+
+            // Route rules: optionally auto-resume when a configured route connects
+            if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue,
+               let newPort = AVAudioSession.sharedInstance().currentRoute.outputs.first {
+                let rule = RouteRulesStore.shared.rule(for: RouteRulesStore.identity(portType: newPort.portType.rawValue, portName: newPort.portName))
+                if RouteChangeDecider.action(for: .connect, rule: rule, isPlaying: playing(), hasCurrentEpisode: currentEpisode() != nil) == .resume {
+                    FileLog.shared.addMessage("PlaybackManager: auto-resuming for connect of \(newPort.portName) per route rule")
+                    play(userInitiated: false)
+                }
+            }
         }
     }
 
@@ -2199,6 +2221,16 @@ final class PlaybackManager {
         let currentOutputDescriptions = currentRoute.outputs.map { $0.portName }.joined(separator: ", ")
         if let reason = AVAudioSession.RouteChangeReason(rawValue: UInt(changeReason.intValue)) {
             FileLog.shared.addMessage("PlaybackManager: Handle route change \(reason) | Previous Outputs: [\(previousOutputDescriptions)] | Current Outputs: [\(currentOutputDescriptions)]")
+        }
+
+        // Both sides of the change go into the recently-seen routes list so a just-disconnected
+        // device can still be configured in Settings → Devices. Built-in outputs are skipped:
+        // they never connect/disconnect, so rules for them can't apply.
+        let builtInPorts: Set<AVAudioSession.Port> = [.builtInSpeaker, .builtInReceiver]
+        for output in previousRoute.outputs + currentRoute.outputs where !builtInPorts.contains(output.portType) {
+            RouteRulesStore.shared.noteSeen(
+                identity: RouteRulesStore.identity(portType: output.portType.rawValue, portName: output.portName),
+                displayName: output.portName)
         }
     }
 
@@ -2488,7 +2520,13 @@ extension PlaybackManager {
     // MARK: - Analytics
 
     private func trackChapterSkipped() {
-        analyticsPlaybackHelper.chapterSkipped(properties: chapterManager.chaptersAnalyticsProperties)
+        var properties = chapterManager.chaptersAnalyticsProperties
+        if let skippedIndex = currentChapters().visibleChapter?.index {
+            // Whether the chapter being skipped was deselected by a podcast smart-skip title rule
+            // rather than manually by the user
+            properties["skipped_by_rule"] = chapterManager.isRuleSkipped(chapterIndex: skippedIndex)
+        }
+        analyticsPlaybackHelper.chapterSkipped(properties: properties)
     }
 
     func trackChapterEvent(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
