@@ -48,10 +48,19 @@ class SubscribeButton: ThemeableView {
         contentView.frame = bounds
         backgroundView.layer.cornerRadius = 16
         backgroundView.layer.borderWidth = 2
+        isAccessibilityElement = true
+        accessibilityTraits = .button
         setBackgroundColors()
     }
 
     func setBackgroundColors() {
+        // The tick-only selected state otherwise conveys nothing to VoiceOver.
+        accessibilityLabel = isSelected ? L10n.following : (FeatureFlag.useFollowNaming.enabled ? L10n.follow : L10n.subscribe)
+        if isSelected {
+            accessibilityTraits.insert(.selected)
+        } else {
+            accessibilityTraits.remove(.selected)
+        }
         contentView.backgroundColor = ThemeColor.primaryUi02()
         if isHighlighted || isSelected {
             titleLabel.style = .primaryInteractive02

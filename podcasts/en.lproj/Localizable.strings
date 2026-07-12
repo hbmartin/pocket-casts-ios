@@ -3361,6 +3361,9 @@
 /* Prompt to follow to the selected podcast. */
 "follow" = "Follow";
 
+/* Label indicating that the user is currently following the selected podcast, e.g. read by VoiceOver on the follow button once followed. */
+"following" = "Following";
+
 /* Label indicating that the user is currently following to the selected podcast. */
 "unfollow" = "Unfollow";
 

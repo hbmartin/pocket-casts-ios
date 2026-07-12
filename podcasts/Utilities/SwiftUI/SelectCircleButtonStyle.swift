@@ -23,6 +23,7 @@ struct SelectCircleButtonStyle: ButtonStyle {
                         .aspectRatio(contentMode: .fit)
                         .frame(height: checkSize)
                         .foregroundStyle(theme.primaryInteractive02)
+                        .accessibilityHidden(true)
                 }
                 .opacity(selected ? 1 : 0)
                 .animation(.linear(duration: 0.1), value: selected)

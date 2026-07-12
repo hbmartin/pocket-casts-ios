@@ -107,7 +107,7 @@ struct NoNetworkView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image("discover_nointernet", label: Text("No Internet"))
+            Image(decorative: "discover_nointernet")
             VStack(spacing: 10) {
                 Text(L10n.discoverUnableToLoad)
                     .font(Font.system(size: 17))
@@ -129,7 +129,7 @@ struct NoResultsView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Image("discover_noresult", label: Text("No Results"))
+            Image(decorative: "discover_noresult")
             VStack(spacing: 10) {
                 Text(L10n.discoverNoPodcastsFound)
                     .font(Font.system(size: 17))

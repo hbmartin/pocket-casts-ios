@@ -163,6 +163,9 @@ struct PodcastHeaderView: View {
                 .clipped()
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(viewModel.isSubscribed ? L10n.following : L10n.follow)
+        .accessibilityHint(viewModel.isSubscribed ? L10n.unfollow : "")
+        .accessibilityAddTraits(viewModel.isSubscribed ? .isSelected : [])
     }
 
     private var fundingButton: some View {

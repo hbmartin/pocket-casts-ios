@@ -26,6 +26,8 @@ struct RoundedSubscribeButtonView: View {
             }
         }
         .buttonStyle(RoundedSubscribeButtonStyle())
+        .accessibilityLabel(model.isSubscribed ? L10n.following : L10n.follow)
+        .accessibilityAddTraits(model.isSubscribed ? .isSelected : [])
         .onAppear {
             model.checkSubscriptionStatus()
         }
@@ -62,6 +64,8 @@ struct SubscribeButtonView: View {
             .frame(width: 32, height: 32)
         }
         .buttonStyle(SubscribeButtonStyle())
+        .accessibilityLabel(model.isSubscribed ? L10n.following : L10n.follow)
+        .accessibilityAddTraits(model.isSubscribed ? .isSelected : [])
         .onAppear {
             model.checkSubscriptionStatus()
         }

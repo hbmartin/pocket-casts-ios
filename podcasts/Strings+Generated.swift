@@ -1625,6 +1625,8 @@ nonisolated internal enum L10n {
   internal static var foldersHistoryExplanation: String { return L10n.tr("Localizable", "folders_history_explanation", fallback: "A list of podcasts that were removed from folders as a result of a sync.") }
   /// Prompt to follow to the selected podcast.
   internal static var follow: String { return L10n.tr("Localizable", "follow", fallback: "Follow") }
+  /// Label indicating that the user is currently following the selected podcast, e.g. read by VoiceOver on the follow button once followed.
+  internal static var following: String { return L10n.tr("Localizable", "following", fallback: "Following") }
   /// Upsell dialog free trial detail label that informs the user that they no payment is needed, and can cancel at anytime
   internal static var freeTrialDetailLabel: String { return L10n.tr("Localizable", "free_trial_detail_label", fallback: "No Payment Now – Cancel Anytime") }
   /// Free trial duration with the word free emphasized, %1$@ is the localize trial duration (1 month)
