@@ -47,7 +47,10 @@ final class NowPlayingLiveActivityManager {
         )
 
         if let activity {
-            Task { await activity.update(ActivityContent(state: state, staleDate: nil)) }
+            // Activity's async methods are @concurrent and the type carries no
+            // Sendable annotation; it is internally thread-safe, so hand it over boxed.
+            let boxed = UncheckedSendable(activity)
+            Task { await boxed.value.update(ActivityContent(state: state, staleDate: nil)) }
         } else {
             do {
                 activity = try Activity.request(
@@ -67,7 +70,8 @@ final class NowPlayingLiveActivityManager {
     private func endActivity() {
         guard let activity else { return }
         self.activity = nil
-        Task { await activity.end(nil, dismissalPolicy: .immediate) }
+        let boxed = UncheckedSendable(activity)
+        Task { await boxed.value.end(nil, dismissalPolicy: .immediate) }
     }
 
     /// Ends every activity of our type — used at launch to clean up leftovers

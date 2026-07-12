@@ -3,6 +3,7 @@ import AVFoundation
 import Synchronization
 import UIKit
 import PocketCastsUtils
+import UniformTypeIdentifiers
 
 protocol AnimatableContent: View, Sendable {
     @MainActor

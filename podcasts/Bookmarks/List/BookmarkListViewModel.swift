@@ -1,6 +1,7 @@
 import Combine
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsUtils
 import SwiftUI
 
 class BookmarkListViewModel: SearchableListViewModel<Bookmark> {

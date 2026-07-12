@@ -174,9 +174,12 @@ class UserEpisodeDetailViewController: UIViewController {
     }
 
     deinit {
+        // Property reads must precede the self-copy removeObserver makes; after it,
+        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let token = playStatusToken
         NotificationCenter.default.removeObserver(self)
-        if let playStatusToken {
-            NotificationCenter.default.removeObserver(playStatusToken)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 

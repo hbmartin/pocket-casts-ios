@@ -1,3 +1,5 @@
+import CoreMedia
+
 extension CMTimeScale {
     // A common 44.1 kHz sample rate for audio
     public static let audio: Self = 44100

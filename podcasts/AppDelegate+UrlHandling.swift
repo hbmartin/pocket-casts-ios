@@ -1,5 +1,6 @@
 import CoreServices
 import Foundation
+import UniformTypeIdentifiers
 import JLRoutes
 import PocketCastsDataModel
 import PocketCastsServer
