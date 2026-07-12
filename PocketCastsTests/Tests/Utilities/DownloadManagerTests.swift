@@ -54,7 +54,7 @@ final class DownloadManagerTests: DBTestCase {
 
         // When: Processing the episode with copyFile: false (move operation)
         let tempFileURL = URL(fileURLWithPath: tempFilePath)
-        downloadManager.processEpisode(testEpisode, downloadedFile: tempFileURL, reportedContentType: "audio/mpeg", copyFile: false)
+        downloadManager.processEpisode(testEpisode, downloadedFile: tempFileURL, copyFile: false)
 
         // Then: Temp file should be removed (moved to destination)
         XCTAssertFalse(fileManager.fileExists(atPath: tempFilePath), "Temp file should be removed after move")

@@ -12,9 +12,6 @@ nonisolated protocol DownloadManagerEpisodesCache {
     func contains(where predicate: ((key: String, value: BaseEpisode)) throws -> Bool) rethrows -> Bool
 }
 
-nonisolated extension Dictionary: DownloadManagerEpisodesCache where Self == Dictionary<String, BaseEpisode> {
-}
-
 nonisolated extension ThreadSafeDictionary: DownloadManagerEpisodesCache where ThreadSafeDictionary == ThreadSafeDictionary<String, BaseEpisode> {
 }
 
@@ -24,18 +21,14 @@ nonisolated protocol DownloadManagerStreamAndDownloadCache {
     func contains(where predicate: ((key: String, value: AVAssetResourceLoaderDelegate)) throws -> Bool) rethrows -> Bool
 }
 
-nonisolated extension Dictionary: DownloadManagerStreamAndDownloadCache where Self == Dictionary<String, AVAssetResourceLoaderDelegate> {
-}
-
 nonisolated extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where ThreadSafeDictionary == ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate> {
 }
 
 // @unchecked Sendable: `DownloadManager.shared` is a process-wide singleton already shared across
 // threads by design — its `URLSessionDelegate`/`URLSessionDownloadDelegate` callbacks run on the
 // session's background delegate queue. `@unchecked` because the compiler can't verify the ad-hoc
-// synchronization of its mutable caches (which use `ThreadSafeDictionary` when the
-// `downloadsThreadSafeCache` flag is enabled). Revisit when isolation is formalized in
-// modernization Phase 2.
+// synchronization of its mutable caches (which use `ThreadSafeDictionary`). Revisit when isolation
+// is formalized in modernization Phase 2.
 nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
     static let shared: DownloadManager = {
@@ -78,21 +71,9 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         }
     }
 
-    var downloadingEpisodesCache: DownloadManagerEpisodesCache = {
-        if FeatureFlag.downloadsThreadSafeCache.enabled {
-            ThreadSafeDictionary<String, BaseEpisode>()
-        } else {
-            Dictionary<String, BaseEpisode>()
-        }
-    }()
+    var downloadingEpisodesCache: DownloadManagerEpisodesCache = ThreadSafeDictionary<String, BaseEpisode>()
 
-    var downloadAndStreamEpisodes: DownloadManagerStreamAndDownloadCache = {
-        if FeatureFlag.downloadsThreadSafeCache.enabled {
-            ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate>()
-        } else {
-            Dictionary<String, AVAssetResourceLoaderDelegate>()
-        }
-    }()
+    var downloadAndStreamEpisodes: DownloadManagerStreamAndDownloadCache = ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate>()
 
     var taskFailure: [String: FailureReason] = [:]
 
@@ -126,20 +107,12 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
 
     private func setupSessions() {
         var wifiConfig = makeBaseConfiguration("au.com.shiftyjelly.PCBackgroundSession")
-        if FeatureFlag.useCellularNetworkApis.enabled {
-            wifiConfig.allowsCellularAccess = false
-        } else {
-            wifiConfig.allowsExpensiveNetworkAccess = false
-        }
+        wifiConfig.allowsCellularAccess = false
         addStandardConfig(to: &wifiConfig)
         wifiOnlyBackgroundSession = URLSession(configuration: wifiConfig, delegate: self, delegateQueue: nil)
 
         var cellConfig = makeBaseConfiguration(DownloadManager.cellBackgroundSessionId)
-        if FeatureFlag.useCellularNetworkApis.enabled {
-            cellConfig.allowsCellularAccess = true
-        } else {
-            cellConfig.allowsExpensiveNetworkAccess = true
-        }
+        cellConfig.allowsCellularAccess = true
         addStandardConfig(to: &cellConfig)
         cellularBackgroundSession = URLSession(configuration: cellConfig, delegate: self, delegateQueue: nil)
 
@@ -413,12 +386,10 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             let newAsset = AVURLAsset(url: customURL)
             newAsset.resourceLoader.setDelegate(customDelegate, queue: .global(qos: .default))
             newItem = AVPlayerItem(asset: newAsset)
-            if FeatureFlag.releaseMediaExporterWhenNoLongerActive.enabled {
-                if let activeMediaExporterDelegate = activeLoaderDelegate as? MediaExporterResourceLoaderDelegate {
-                    activeMediaExporterDelegate.releaseIfDownloadComplete()
-                }
-                activeLoaderDelegate = customDelegate
+            if let activeMediaExporterDelegate = activeLoaderDelegate as? MediaExporterResourceLoaderDelegate {
+                activeMediaExporterDelegate.releaseIfDownloadComplete()
             }
+            activeLoaderDelegate = customDelegate
             return newItem
         }
         var episode = episode
@@ -474,12 +445,10 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         let newAsset = AVURLAsset(url: customURL)
         newAsset.resourceLoader.setDelegate(customLoaderDelegate, queue: .global(qos: .default))
         newItem = AVPlayerItem(asset: newAsset)
-        if FeatureFlag.releaseMediaExporterWhenNoLongerActive.enabled {
-            if let activeMediaExporterDelegate = activeLoaderDelegate as? MediaExporterResourceLoaderDelegate {
-                activeMediaExporterDelegate.releaseIfDownloadComplete()
-            }
-            activeLoaderDelegate = customLoaderDelegate
+        if let activeMediaExporterDelegate = activeLoaderDelegate as? MediaExporterResourceLoaderDelegate {
+            activeMediaExporterDelegate.releaseIfDownloadComplete()
         }
+        activeLoaderDelegate = customLoaderDelegate
         let boxedEpisode = PocketCastsUtils.UncheckedSendable(episode)
         Task {
             while !exportStatus.completed {
@@ -487,8 +456,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             }
             downloadingEpisodesCache[downloadTaskUUID] = nil
             removeEpisodeFromCache(boxedEpisode.value)
-            if FeatureFlag.releaseMediaExporterWhenNoLongerActive.enabled,
-               let mediaExporterDelegate = downloadAndStreamEpisodes[downloadTaskUUID] as? MediaExporterResourceLoaderDelegate,
+            if let mediaExporterDelegate = downloadAndStreamEpisodes[downloadTaskUUID] as? MediaExporterResourceLoaderDelegate,
                mediaExporterDelegate != activeLoaderDelegate as? MediaExporterResourceLoaderDelegate {
                 mediaExporterDelegate.releaseIfDownloadComplete()
             }
@@ -498,7 +466,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             }
             if exportStatus.error == nil {
                 fileLog.addMessage("DownloadManager stream and download: end downloading \(episode.uuid) successfully")
-                processEpisode(episode, downloadedFile: outputURL, reportedContentType: exportStatus.reportedType, copyFile: true)
+                processEpisode(episode, downloadedFile: outputURL, copyFile: true)
             } else {
                 fileLog.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(exportStatus.error?.localizedDescription ?? "")")
                 wasDownloadingBefore = episode.downloading()

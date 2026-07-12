@@ -424,9 +424,7 @@ nonisolated class Settings: NSObject {
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.chartRegionChanged)
 
-        if FeatureFlag.enableLocalizationHeaders.enabled {
-            LocalizationHelper.update(userRegion: region)
-        }
+        LocalizationHelper.update(userRegion: region)
     }
 
     // MARK: - Auto Archiving
@@ -1490,16 +1488,7 @@ nonisolated class Settings: NSObject {
         }
 
         class func podcastSearchDebounceTime() -> TimeInterval {
-            if FeatureFlag.searchPredictive.enabled {
-                return 0.2
-            } else {
-                return millisecondsToTime(
-                    configuredDouble(
-                        key: Constants.RemoteParams.podcastSearchDebounceMs,
-                        default: Constants.RemoteParams.podcastSearchDebounceMsDefault
-                    )
-                )
-            }
+            0.2
         }
 
         class func episodeSearchDebounceTime() -> TimeInterval {

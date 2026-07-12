@@ -105,9 +105,7 @@ class NewPlaylistCell: ThemeableCell {
         playlistCountLoadTask = nil
         playlistImageLoadTask?.cancel()
         playlistImageLoadTask = nil
-        if FeatureFlag.playlistCacheInvalidation.enabled {
-            cancellables.removeAll()
-        }
+        cancellables.removeAll()
         Task {
             await playlistMetadataLoader.cancelLoadCount(for: playlistID)
             await playlistMetadataLoader.cancelLoadImages(for: playlistID)
@@ -123,20 +121,16 @@ class NewPlaylistCell: ThemeableCell {
         playlistID = playlist.uuid
 
         // Cancel previous subscriptions and set up new ones for this playlist
-        if FeatureFlag.playlistCacheInvalidation.enabled {
-            cancellables.removeAll()
-            subscribeToUpdates(for: playlist.uuid)
-        }
+        cancellables.removeAll()
+        subscribeToUpdates(for: playlist.uuid)
 
         playlistCountLoadTask = Task { [weak self] in
             guard let self else { return }
             let loadingPlaylist = playlistID
 
-            if FeatureFlag.playlistDataCacheBeforeQuery.enabled {
-                if let cachedCount = await self.playlistMetadataLoader.cachedCount(for: playlist.uuid) {
-                    await MainActor.run {
-                        self.viewModel.episodesCount = cachedCount
-                    }
+            if let cachedCount = await self.playlistMetadataLoader.cachedCount(for: playlist.uuid) {
+                await MainActor.run {
+                    self.viewModel.episodesCount = cachedCount
                 }
             }
 
@@ -154,10 +148,8 @@ class NewPlaylistCell: ThemeableCell {
             guard let self else { return }
             let loadingPlaylist = playlistID
 
-            if FeatureFlag.playlistDataCacheBeforeQuery.enabled {
-                if let cachedImages = await self.playlistMetadataLoader.cachedImages(for: playlist.uuid) {
-                    self.viewModel.images = cachedImages
-                }
+            if let cachedImages = await self.playlistMetadataLoader.cachedImages(for: playlist.uuid) {
+                self.viewModel.images = cachedImages
             }
 
             let images = await self.playlistMetadataLoader.loadImages(for: playlist)

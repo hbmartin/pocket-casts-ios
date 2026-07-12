@@ -29,7 +29,6 @@ final class SettingsTests: XCTestCase {
     }()
 
     private struct ConfigurableDefaultRemoteConfigKeys {
-        let podcastSearchDebounce: String
         let errorLogoutHandling: String
     }
 
@@ -57,15 +56,12 @@ final class SettingsTests: XCTestCase {
     private func configurableDefaultRemoteConfigKeys() -> ConfigurableDefaultRemoteConfigKeys {
         let valueStore = RemoteConfigValueStore()
         return ConfigurableDefaultRemoteConfigKeys(
-            podcastSearchDebounce: valueStore.key(for: Constants.RemoteParams.podcastSearchDebounceMs),
             errorLogoutHandling: valueStore.key(for: Constants.RemoteParams.errorLogoutHandling)
         )
     }
 
     private func removeConfigurableDefaultOverrides(keys: ConfigurableDefaultRemoteConfigKeys) {
-        UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.podcastSearchDebounceMs)
         UserDefaults.standard.removeObject(forKey: Constants.RemoteParams.errorLogoutHandling)
-        UserDefaults.standard.removeObject(forKey: keys.podcastSearchDebounce)
         UserDefaults.standard.removeObject(forKey: keys.errorLogoutHandling)
     }
 
@@ -139,34 +135,25 @@ final class SettingsTests: XCTestCase {
     }
 
     func testConfigurableDefaultsUseUserDefaultsOverrides() throws {
-        try override(flag: .searchPredictive, value: false)
         let remoteConfigKeys = configurableDefaultRemoteConfigKeys()
         defer {
-            try? reset(flag: .searchPredictive)
             removeConfigurableDefaultOverrides(keys: remoteConfigKeys)
         }
 
-        UserDefaults.standard.set(250, forKey: remoteConfigKeys.podcastSearchDebounce)
         UserDefaults.standard.set(true, forKey: remoteConfigKeys.errorLogoutHandling)
 
-        XCTAssertEqual(Settings.podcastSearchDebounceTime(), 0.25)
         XCTAssertTrue(Settings.errorLogoutHandling)
     }
 
     func testConfigurableDefaultsIgnoreBareUserDefaultsOverrides() throws {
-        try override(flag: .searchPredictive, value: false)
         let remoteConfigKeys = configurableDefaultRemoteConfigKeys()
         defer {
-            try? reset(flag: .searchPredictive)
             removeConfigurableDefaultOverrides(keys: remoteConfigKeys)
         }
-        UserDefaults.standard.removeObject(forKey: remoteConfigKeys.podcastSearchDebounce)
         UserDefaults.standard.removeObject(forKey: remoteConfigKeys.errorLogoutHandling)
 
-        UserDefaults.standard.set(250, forKey: Constants.RemoteParams.podcastSearchDebounceMs)
         UserDefaults.standard.set(true, forKey: Constants.RemoteParams.errorLogoutHandling)
 
-        XCTAssertEqual(Settings.podcastSearchDebounceTime(), Constants.RemoteParams.podcastSearchDebounceMsDefault / 1000)
         XCTAssertEqual(Settings.errorLogoutHandling, Constants.RemoteParams.errorLogoutHandlingDefault)
     }
 

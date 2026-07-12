@@ -37,17 +37,15 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
         // Skip sync when protected data is unavailable to prevent reading incorrect
         // UserDefaults values (which may return defaults instead of actual stored values)
         // This can happen when the app launches in background before first unlock after reboot
-        if FeatureFlag.skipSyncWhenProtectedDataUnavailable.enabled {
-            switch UserDefaults.isProtectedDataAvailable() {
-            case .some(true):
-                break
-            case .some(false):
-                FileLog.shared.addMessage("UpNextSyncTask: Skipped - protected data not available")
-                return
-            case .none:
-                FileLog.shared.addMessage("UpNextSyncTask: Skipped - protected data availability unknown")
-                return
-            }
+        switch UserDefaults.isProtectedDataAvailable() {
+        case .some(true):
+            break
+        case .some(false):
+            FileLog.shared.addMessage("UpNextSyncTask: Skipped - protected data not available")
+            return
+        case .none:
+            FileLog.shared.addMessage("UpNextSyncTask: Skipped - protected data availability unknown")
+            return
         }
 
         logProtectedDataAvailable()

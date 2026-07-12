@@ -89,10 +89,8 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         handleThemeChanged()
 
         // Start cache invalidation coordinator and subscribe to stale updates
-        if FeatureFlag.playlistCacheInvalidation.enabled {
-            cacheInvalidationCoordinator.startObserving()
-            subscribeToStaleUpdates()
-        }
+        cacheInvalidationCoordinator.startObserving()
+        subscribeToStaleUpdates()
     }
 
     func autoPushPlaylist() {
@@ -109,14 +107,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-
-        // Invalidate stale playlist metadata cache (>30s) to ensure fresh data on screen entry.
-        // This is lightweight and won't block - just clears dictionaries if threshold exceeded.
-        if !FeatureFlag.playlistCacheInvalidation.enabled {
-            Task {
-                await playlistMetadataLoader.invalidateCacheIfStale()
-            }
-        }
 
         reloadFilters()
     }

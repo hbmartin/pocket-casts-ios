@@ -29,38 +29,38 @@ Assessment meanings:
 | ~~`refreshPlaylistOnSubscriptions`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
 | ~~`smartCategories`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
 | ~~`syncStats`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
-| `activateAudioSessionForRoutePicker` | true | 1 | NowPlayingPlayerItemViewController+Shelf.swift | candidate | |
-| `checkProtectedDataBeforeMigration` | true | 1 | AppDelegate+Defaults.swift | candidate | |
-| `detectTruncatedBackgroundSyncDownloads` | true | 1 | BackgroundSyncManager+URLSession.swift | candidate | |
-| `encourageAccountCreation` | true | 1 | InformationalBannerViewCoordinator.swift | candidate | |
-| `episodeDetailTranscript` | true | 1 | EpisodeDetailViewController+ShowNotes.swift | candidate | |
-| `listeningHistorySearch` | true | 1 | ListeningHistoryViewController.swift | candidate | |
-| `logMainThreadDatabaseAccess` | true | 1 | MainThreadDBReporter.swift | candidate | |
-| `manageDownloadedEpisodes` | true | 1 | ManageDownloadsCoordinator.swift | candidate | |
-| `newOnboardingRecommendationChanges` | true | 1 | LoginCoordinator.swift | candidate | |
-| `podcastBookmarksInline` | true | 1 | PodcastViewController.swift | candidate | |
-| `retryWithoutUserAgent` | true | 1 | DownloadManager+URLSessionDelegate.swift | candidate | |
-| `shareTranscripts` | true | 1 | TranscriptViewController.swift | candidate | |
-| `skipSyncWhenProtectedDataUnavailable` | true | 1 | UpNextSyncTask.swift | candidate | |
-| `streamingCustomSessionConfiguration` | true | 1 | MediaExporterResourceLoaderDelegate.swift | candidate | |
-| `useBackgroundQueueForStreamingCallback` | true | 1 | MediaExporterResourceLoaderDelegate.swift | candidate | |
-| `useDescriptiveActionAttributedTextView` | true | 1 | DescriptiveActionView.swift | candidate | |
-| `useMimetypePackage` | true | 1 | DownloadManager+URLSessionDelegate.swift | candidate | |
-| `cleanUpTmpFiles` | true | 2 | DownloadedFilesViewController.swift | candidate | |
+| ~~`activateAudioSessionForRoutePicker`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `activate_audio_session_for_route_picker` key server-side |
+| ~~`checkProtectedDataBeforeMigration`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `check_protected_data_before_migration` key server-side |
+| ~~`detectTruncatedBackgroundSyncDownloads`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `detect_truncated_background_sync_downloads` key server-side |
+| ~~`encourageAccountCreation`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `encourage_account_creation` key server-side |
+| ~~`episodeDetailTranscript`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `episode_detail_transcript` key server-side |
+| ~~`listeningHistorySearch`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `listening_history_search` key server-side |
+| ~~`logMainThreadDatabaseAccess`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `log_main_thread_database_access` key server-side |
+| ~~`manageDownloadedEpisodes`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `manage_downloaded_episodes` key server-side |
+| ~~`newOnboardingRecommendationChanges`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `new_onboarding_recommendation_changes` key server-side |
+| ~~`podcastBookmarksInline`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `podcast_bookmarks_inline` key server-side |
+| ~~`retryWithoutUserAgent`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `retry_without_user_agent` key server-side |
+| ~~`shareTranscripts`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `share_transcripts` key server-side |
+| ~~`skipSyncWhenProtectedDataUnavailable`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `skip_sync_when_protected_data_unavailable` key server-side |
+| ~~`streamingCustomSessionConfiguration`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `streaming_custom_session_configuration` key server-side |
+| ~~`useBackgroundQueueForStreamingCallback`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_background_queue_for_streaming_callback` key server-side |
+| ~~`useDescriptiveActionAttributedTextView`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_descriptive_action_attributed_text_view` key server-side |
+| ~~`useMimetypePackage`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_mimetype_package` key server-side |
+| ~~`cleanUpTmpFiles`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `clean_up_tmp_files` key server-side |
 | ~~`concurrentDatabaseReads`~~ | true | 0 | — | removed (data-layer track B0 — DatabasePool concurrent reads are the only path; ValueObservation depends on this) | ✅ code removed 2026-07-12; retire remote `concurrent_database_reads` key server-side |
-| `customPlaybackSettings` | true | 2 | EffectsViewController.swift, PodcastEffectsViewController+Ta | candidate | |
-| `downloadsThreadSafeCache` | true | 2 | DownloadManager.swift | candidate | |
-| `enableLocalizationHeaders` | true | 2 | AppDelegate.swift, Settings.swift | candidate | |
-| `markAllSyncedInSingleStatement` | true | 2 | EpisodeDataManager.swift | candidate | |
-| `searchPredictive` | true | 2 | SearchResultsViewController.swift, Settings.swift | candidate | |
-| `statsHeatmap` | true | 2 | StatsViewController.swift | candidate | |
-| `suggestedFolders` | true | 2 | FoldersCoordinator.swift | candidate | |
-| `displayErrorsOnPlayer` | true | 3 | MainTabBarController.swift, NowPlayingPlayerItemViewControll | candidate | |
-| `releaseMediaExporterWhenNoLongerActive` | true | 3 | DownloadManager.swift | candidate | |
-| `useCellularNetworkApis` | true | 3 | DownloadManager.swift, NetworkUtils.swift | candidate | |
-| `playlistCacheInvalidation` | true | 4 | NewPlaylistCell.swift, PlaylistsViewController.swift | candidate | |
-| `playlistDataCacheBeforeQuery` | true | 4 | NewPlaylistCell.swift, PlaylistMetadataLoader.swift | candidate | |
-| `recommendations` | true | 4 | DiscoverServerHandler.swift, PodcastDetailsTabView.swift, Po | candidate | |
+| ~~`customPlaybackSettings`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `custom_playback_settings` key server-side |
+| ~~`downloadsThreadSafeCache`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `downloads_thread_safe_cache` key server-side |
+| ~~`enableLocalizationHeaders`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `enable_localization_headers` key server-side |
+| ~~`markAllSyncedInSingleStatement`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `mark_all_synced_in_single_statement` key server-side |
+| ~~`searchPredictive`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `search_predictive` key server-side |
+| ~~`statsHeatmap`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `stats_heatmap` key server-side |
+| ~~`suggestedFolders`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `suggested_folders` key server-side |
+| ~~`displayErrorsOnPlayer`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `display_errors_on_player` key server-side |
+| ~~`releaseMediaExporterWhenNoLongerActive`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `release_media_exporter_when_no_longer_active` key server-side |
+| ~~`useCellularNetworkApis`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_cellular_network_apis` key server-side |
+| ~~`playlistCacheInvalidation`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `playlist_cache_invalidation` key server-side |
+| ~~`playlistDataCacheBeforeQuery`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `playlist_data_cache_before_query` key server-side |
+| ~~`recommendations`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `recommendations` key server-side |
 | `onlyMarkPodcastsUnsyncedForNewUsers` | true | 6 | AuthenticationHelper.swift, SyncSigninView.swift, SyncSignin | candidate (wide adoption — retire in its own PR) | |
 | `autoDownloadOnSubscribe` | true | 8 | AppDelegate+Defaults.swift, DownloadSettingsViewController.s | candidate (wide adoption — retire in its own PR) | |
 | `generatedTranscripts` | true | 8 | ShowInfoCoordinator.swift, TranscriptViewController.swift | candidate (wide adoption — retire in its own PR) | |

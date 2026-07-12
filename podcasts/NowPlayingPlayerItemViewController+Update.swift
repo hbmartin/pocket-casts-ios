@@ -212,10 +212,6 @@ extension NowPlayingPlayerItemViewController {
     }
 
     @objc func updateError() {
-        guard FeatureFlag.displayErrorsOnPlayer.enabled else {
-            hideError()
-            return
-        }
         guard PlaybackManager.shared.currentEpisode() != nil,
               let error = PlaybackManager.shared.activeError else {
             hideError()

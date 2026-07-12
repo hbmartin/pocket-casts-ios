@@ -35,12 +35,7 @@ public final class DiscoverServerHandler: DiscoverServerHandling, Sendable {
     }
 
     public func discoverPage() async -> (DiscoverLayout?, Bool) {
-        let contentPath: String
-        if FeatureFlag.recommendations.enabled {
-            contentPath = "ios/content_v3.json"
-        } else {
-            contentPath = "ios/content_v2.json"
-        }
+        let contentPath = "ios/content_v3.json"
         return await withCheckedContinuation { continuation in
             discoverRequest(path: ServerConstants.Urls.discover() + contentPath, type: DiscoverLayout.self, authenticated: nil) { discoverItems, cachedResponse in
                 continuation.resume(returning: (discoverItems, cachedResponse))
@@ -172,7 +167,7 @@ public final class DiscoverServerHandler: DiscoverServerHandling, Sendable {
             return
         }
 
-        if FeatureFlag.recommendations.enabled && authenticated == true {
+        if authenticated == true {
             tokenHelper.callSecureUrl(request: request) { response, data, error in
                 completion(data, response, error, false)
             }

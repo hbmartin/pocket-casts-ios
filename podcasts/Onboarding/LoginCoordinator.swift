@@ -70,21 +70,13 @@ class LoginCoordinator: NSObject, OnboardingModel {
     @MainActor
     func getStartedTapped() {
         OnboardingFlow.shared.updateAnalyticsSource(.onboardingRecommendations)
-        let hostingController: UIViewController
-        if FeatureFlag.newOnboardingRecommendationChanges.enabled {
-            let view = InterestsView(continueCallback: { categories in
-                self.interestsContinueTapped(categories: categories)
-            }) {
-                self.interestsContinueTapped(categories: nil)
-            }
-            let controller = OnboardingHostingViewController(rootView: view.setupDefaultEnvironment())
-            controller.viewModel = self
-            hostingController = controller
-        } else {
-            let controller = OnboardingHostingViewController(rootView: OnboardingRecommendationsView(coordinator: self).setupDefaultEnvironment())
-            controller.viewModel = self
-            hostingController = controller
+        let view = InterestsView(continueCallback: { categories in
+            self.interestsContinueTapped(categories: categories)
+        }) {
+            self.interestsContinueTapped(categories: nil)
         }
+        let hostingController = OnboardingHostingViewController(rootView: view.setupDefaultEnvironment())
+        hostingController.viewModel = self
 
         hostingController.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationController?.pushViewController(hostingController, animated: true)

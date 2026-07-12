@@ -27,16 +27,10 @@ struct PodcastDetailsTabView: View {
     }
 
     var body: some View {
-        Group {
-            if FeatureFlag.recommendations.enabled {
-                ScrollView(.horizontal, showsIndicators: false) { tabs }
-            } else {
-                tabs
+        ScrollView(.horizontal, showsIndicators: false) { tabs }
+            .onReceive(delegate?.currentViewModePublisher ?? Just(.episodes).eraseToAnyPublisher()) { viewMode in
+                selectedTab = Tab(from: viewMode)
             }
-        }
-        .onReceive(delegate?.currentViewModePublisher ?? Just(.episodes).eraseToAnyPublisher()) { viewMode in
-            selectedTab = Tab(from: viewMode)
-        }
     }
 
     @ViewBuilder var tabs: some View {

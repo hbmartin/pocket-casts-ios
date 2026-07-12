@@ -44,39 +44,37 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             let episodeUUID = episode.uuid
             let showNotes = try? await ShowInfoCoordinator.shared.loadShowNotes(podcastUuid: parentIdentifier, episodeUuid: episodeUUID)
 
-            if FeatureFlag.episodeDetailTranscript.enabled {
-                let hideExcerpt: (EpisodeDetailViewController?) -> Void = { vc in
-                    vc?.transcriptExcerpt?.isHidden = true
-                    vc?.showNotesHolderTopAnchor?.constant = 0.0
-                    vc?.showNotesWebViewTopConstraint?.constant = 20.0
-                }
-                if let metadata = try? await ShowInfoCoordinator.shared.loadTranscriptsMetadata(podcastUuid: parentIdentifier, episodeUuid: episodeUUID), !metadata.transcripts.isEmpty {
-                    let viewModel = TranscriptExcerptViewModel(episodeUUID: episodeUUID, podcastUUID: parentIdentifier, isGeneratedTranscript: metadata.hasGeneratedTranscripts) {
-                        DispatchQueue.main.async { [weak self] in
-                            let playbackManager = TranscriptEpisodeInfoProvider(episodeUUID: episodeUUID, podcastUUID: parentIdentifier)
-                            let controller = TranscriptContainerViewController(playbackManager: playbackManager)
-                            controller.playButtonTapped = { [weak self] playing in
-                                self?.playPauseEpisode(isPlaying: playing)
-                            }
-                            self?.present(controller, animated: true)
+            let hideExcerpt: (EpisodeDetailViewController?) -> Void = { vc in
+                vc?.transcriptExcerpt?.isHidden = true
+                vc?.showNotesHolderTopAnchor?.constant = 0.0
+                vc?.showNotesWebViewTopConstraint?.constant = 20.0
+            }
+            if let metadata = try? await ShowInfoCoordinator.shared.loadTranscriptsMetadata(podcastUuid: parentIdentifier, episodeUuid: episodeUUID), !metadata.transcripts.isEmpty {
+                let viewModel = TranscriptExcerptViewModel(episodeUUID: episodeUUID, podcastUUID: parentIdentifier, isGeneratedTranscript: metadata.hasGeneratedTranscripts) {
+                    DispatchQueue.main.async { [weak self] in
+                        let playbackManager = TranscriptEpisodeInfoProvider(episodeUUID: episodeUUID, podcastUUID: parentIdentifier)
+                        let controller = TranscriptContainerViewController(playbackManager: playbackManager)
+                        controller.playButtonTapped = { [weak self] playing in
+                            self?.playPauseEpisode(isPlaying: playing)
                         }
+                        self?.present(controller, animated: true)
                     }
-                    await MainActor.run { [weak self] in
-                        let vc = ThemedHostingController(rootView: TranscriptExcerptView(viewModel: viewModel))
-                        vc.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
-                        let view = vc.view!
-                        view.translatesAutoresizingMaskIntoConstraints = false
-                        self?.addChild(vc)
-                        self?.transcriptExcerpt?.addSubview(view)
-                        vc.didMove(toParent: self)
-                        view.anchorToAllSidesOf(view: self?.transcriptExcerpt)
-                        self?.transcriptExcerpt?.isHidden = false
-                        self?.showNotesWebViewTopConstraint?.constant = 0.0
-                    }
-                } else {
-                    await MainActor.run { [weak self] in
-                        hideExcerpt(self)
-                    }
+                }
+                await MainActor.run { [weak self] in
+                    let vc = ThemedHostingController(rootView: TranscriptExcerptView(viewModel: viewModel))
+                    vc.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+                    let view = vc.view!
+                    view.translatesAutoresizingMaskIntoConstraints = false
+                    self?.addChild(vc)
+                    self?.transcriptExcerpt?.addSubview(view)
+                    vc.didMove(toParent: self)
+                    view.anchorToAllSidesOf(view: self?.transcriptExcerpt)
+                    self?.transcriptExcerpt?.isHidden = false
+                    self?.showNotesWebViewTopConstraint?.constant = 0.0
+                }
+            } else {
+                await MainActor.run { [weak self] in
+                    hideExcerpt(self)
                 }
             }
             downloadingShowNotes = false

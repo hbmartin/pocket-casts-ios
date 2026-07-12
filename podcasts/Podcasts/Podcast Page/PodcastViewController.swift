@@ -498,7 +498,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         showViewChangesTipIfNeeded()
 
         // Load recommendations when view appears
-        if FeatureFlag.recommendations.enabled && recommendations == nil {
+        if recommendations == nil {
             Task {
                 await loadRecommendations()
             }
@@ -1358,13 +1358,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func showBookmarks() {
-        if FeatureFlag.podcastBookmarksInline.enabled {
-            switchViewMode(to: .bookmarks)
-        } else {
-            guard let podcast else { return }
-            let controller = BookmarksPodcastListController(podcast: podcast)
-            present(controller, animated: true)
-        }
+        switchViewMode(to: .bookmarks)
     }
 
     func showYouMightLike() {

@@ -11,17 +11,15 @@ extension AppDelegate {
         // Check if protected data is available before running migrations that touch keychain
         // This prevents the v5Run migration from incorrectly clearing tokens when the app
         // launches in the background before the device has been unlocked after a reboot.
-        if FeatureFlag.checkProtectedDataBeforeMigration.enabled {
-            // This runs off-main during launch; bridge the UIKit read
-            let protectedDataAvailable = if Thread.isMainThread {
-                MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable }
-            } else {
-                DispatchQueue.main.sync { MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable } }
-            }
-            guard protectedDataAvailable else {
-                FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
-                return
-            }
+        // This runs off-main during launch; bridge the UIKit read
+        let protectedDataAvailable = if Thread.isMainThread {
+            MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable }
+        } else {
+            DispatchQueue.main.sync { MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable } }
+        }
+        guard protectedDataAvailable else {
+            FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
+            return
         }
 
         performUpdateIfRequired(updateKey: "v5Run") {

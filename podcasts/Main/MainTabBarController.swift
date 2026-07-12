@@ -133,10 +133,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         upNextQueueDidChange()
 
         addBookmarkCreatedToastHandler()
-        if FeatureFlag.displayErrorsOnPlayer.enabled {
-            setupErrorBanner()
-            setupErrorObservers()
-        }
+        setupErrorBanner()
+        setupErrorObservers()
     }
 
     private var cancellables = Set<AnyCancellable>()
@@ -828,8 +826,7 @@ extension MainTabBarController {
 
     @objc private func updateError(notification: NSNotification) {
         DispatchQueue.main.async { [weak self] in
-            guard FeatureFlag.displayErrorsOnPlayer.enabled,
-                let error = PlaybackManager.shared.activeError else {
+            guard let error = PlaybackManager.shared.activeError else {
                 self?.hideError()
                 return
             }

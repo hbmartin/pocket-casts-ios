@@ -43,8 +43,7 @@ class FoldersCoordinator: NSObject {
     }
 
     func startFolderCreationFlow(from vc: UIViewController) {
-        if FeatureFlag.suggestedFolders.enabled,
-           dataManager.allPodcasts(includeUnsubscribed: false, reloadFromDatabase: false).count > Constants.minimumNumberOfPodcasts,
+        if dataManager.allPodcasts(includeUnsubscribed: false, reloadFromDatabase: false).count > Constants.minimumNumberOfPodcasts,
            suggestedFoldersModel.loadingState == .loaded,
            didPodcastsChanged() {
             suggestedFolderCreationFlow(from: vc, source: .podcastsList)
@@ -56,8 +55,7 @@ class FoldersCoordinator: NSObject {
     }
 
     func showSuggestedFolders(from vc: UIViewController, source: AnalyticsSource = .notifications) {
-        guard FeatureFlag.suggestedFolders.enabled,
-              dataManager.allPodcasts(includeUnsubscribed: false, reloadFromDatabase: false).count > Constants.minimumNumberOfPodcasts else {
+        guard dataManager.allPodcasts(includeUnsubscribed: false, reloadFromDatabase: false).count > Constants.minimumNumberOfPodcasts else {
             return
         }
         suggestedFolderCreationFlow(from: vc, source: source)
