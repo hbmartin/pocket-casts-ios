@@ -3,10 +3,9 @@ import PocketCastsUtils
 import UIKit
 
 class AccountViewController: UIViewController, ChangeEmailDelegate {
-    enum TableRow { case changeEmail, changePassword, newsletter, logout, deleteAccount, privacyPolicy, termsOfUse }
-    var tableData: [[TableRow]] = [[.changeEmail, .changePassword, .newsletter], [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
+    enum TableRow { case changeEmail, changePassword, logout, deleteAccount, privacyPolicy, termsOfUse }
+    var tableData: [[TableRow]] = [[.changeEmail, .changePassword], [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
 
-    static let newsletterCellId = "NewsletterCellId"
     static let actionCellId = "AccountActionCellId"
 
     private var isUsernamePasswordLogin: Bool {
@@ -16,7 +15,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
     @IBOutlet var tableView: ThemeableTable! {
         didSet {
             tableView.applyInsetForMiniPlayer()
-            tableView.register(UINib(nibName: "NewsletterCell", bundle: nil), forCellReuseIdentifier: AccountViewController.newsletterCellId)
             tableView.register(UINib(nibName: "AccountActionCell", bundle: nil), forCellReuseIdentifier: AccountViewController.actionCellId)
         }
     }
@@ -68,13 +66,8 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
         headerViewModel.update()
 
         // Only accounts created with username/password can change email/password
-        var accountOptions: [TableRow]
-        if isUsernamePasswordLogin {
-            accountOptions = [.changeEmail, .changePassword, .newsletter]
-        } else {
-            accountOptions = [.newsletter]
-        }
-        let newTableRows: [[TableRow]] = [accountOptions, [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]]
+        let accountOptions: [TableRow] = isUsernamePasswordLogin ? [.changeEmail, .changePassword] : []
+        let newTableRows: [[TableRow]] = [accountOptions, [.privacyPolicy, .termsOfUse], [.logout], [.deleteAccount]].filter { !$0.isEmpty }
 
         updateTableRows(newRows: newTableRows)
     }
@@ -87,13 +80,6 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
     }
 
     // MARK: - Actions
-
-    @objc func newsletterOptInChanged(_ sender: UISwitch) {
-        Analytics.track(.newsletterOptInChanged, properties: ["enabled": sender.isOn, "source": "profile"])
-
-        ServerSettings.setMarketingOptIn(sender.isOn)
-        ServerSettings.syncSettings()
-    }
 
     @IBAction func learnMoreTapped(_ sender: Any) {
         // Every feature is free now, so there is no plus marketing page to show.

@@ -45,13 +45,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
             cell.showsDisclosureIndicator = false
             cell.counterView.isHidden = true
             return cell
-        case .newsletter:
-            let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.newsletterCellId, for: indexPath) as! NewsletterCell
-            cell.cellSwitch.setOn(ServerSettings.marketingOptIn(), animated: false)
-            cell.cellSwitch.removeTarget(self, action: nil, for: UIControl.Event.valueChanged)
-            cell.cellSwitch.addTarget(self, action: #selector(newsletterOptInChanged(_:)), for: UIControl.Event.valueChanged)
-            cell.iconStyle = .primaryInteractive01
-            return cell
         case .deleteAccount:
             let cell = tableView.dequeueReusableCell(withIdentifier: AccountViewController.actionCellId, for: indexPath) as! AccountActionCell
             cell.cellLabel.text = L10n.accountDeleteAccount
@@ -89,12 +82,7 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        let row = tableData[indexPath.section][indexPath.row]
-
-        if row == .newsletter {
-            return nil
-        }
-        return indexPath
+        indexPath
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -108,8 +96,6 @@ extension AccountViewController: UITableViewDataSource, UITableViewDelegate {
         case .changePassword:
             let changePasswordVC = ChangePasswordViewController()
             present(SJUIUtils.popupNavController(for: changePasswordVC), animated: true, completion: nil)
-        case .newsletter:
-            break
         case .logout:
             showSignOutWarning()
         case .deleteAccount:

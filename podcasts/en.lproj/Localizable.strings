@@ -3607,14 +3607,6 @@
 /* Label shown for days saved when it's singular, eg: 2 days saved. */
 "days_saved" = "Days saved";
 
-/* The heading shown for the Pocket Casts Newsletter */
-"pocket_casts_newsletter" = "Pocket Casts Newsletter";
-
-/* The description for the Pocket Casts Newsletter */
-"pocket_casts_newsletter_description" = "Receive news, app updates, themed playlists, interviews, and more.";
-
-/* The heading shown for the Pocket Casts Newsletter */
-"pocket_casts_welcome_newsletter_title" = "Get the Newsletter";
 
 /* Title for page one of the 7.20 what's new dialog. */
 "whats_new_page_one_title_7_20" = "Folders";
@@ -5161,11 +5153,6 @@
 /* Notification body for onboarding to staff picks message */
 "notifications_onboarding_staff_picks_body" = "Perfectly ripe podcasts, picked just for you by real, podcast-loving humans.";
 
-/* Title for Newsletter opt-in option in the Notifications screen during onboarding */
-"notifications_onboarding_newsletter_title" = "Subscribe to our Newsletter";
-
-/* Subtitle for Newsletter opt-in option in the Notifications screen during onboarding */
-"notifications_onboarding_newsletter_subtitle" = "Once a month, all podcast goodness";
 
 /* Title for Notifications opt-in option in the Notifications screen during onboarding */
 "notifications_onboarding_notifications_title" = "Receive Notifications";

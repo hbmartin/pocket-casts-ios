@@ -4,30 +4,19 @@ import PocketCastsServer
 
 @MainActor
 class NotificationsPermissionsViewModel: ObservableObject {
-    @Published var newsletterOptIn: Bool = true
-    @Published var notificationsOptIn: Bool = true
+    // Opt-ins default off: the user chooses, nothing is pre-checked for them.
+    @Published var notificationsOptIn: Bool = false
 
     func setupPermissions() async {
         let coordinator = NotificationsCoordinator.shared
         await coordinator.requestAndSetupInitialPermissions()
     }
 
-    func saveNewsletterOptIn() {
-        ServerSettings.setMarketingOptIn(newsletterOptIn)
-    }
-
-    func trackNewsletterOptIn() {
-        Analytics.track(.newsletterOptInChanged, properties: ["enabled": newsletterOptIn, "source": "notifications_permissions"])
-    }
-
     enum NotificationOption: CaseIterable {
-        case newsletter
         case notifications
 
         var title: String {
             switch self {
-            case .newsletter:
-                return L10n.notificationsOnboardingNewsletterTitle
             case .notifications:
                 return L10n.notificationsOnboardingNotificationsTitle
             }
@@ -35,8 +24,6 @@ class NotificationsPermissionsViewModel: ObservableObject {
 
         var subtitle: String {
             switch self {
-            case .newsletter:
-                return L10n.notificationsOnboardingNewsletterSubtitle
             case .notifications:
                 return L10n.notificationsOnboardingNotificationsSubtitle
             }
@@ -45,8 +32,6 @@ class NotificationsPermissionsViewModel: ObservableObject {
         @MainActor
         func isSelected(_ viewModel: NotificationsPermissionsViewModel) -> Bool {
             switch self {
-            case .newsletter:
-                return viewModel.newsletterOptIn
             case .notifications:
                 return viewModel.notificationsOptIn
             }
@@ -55,8 +40,6 @@ class NotificationsPermissionsViewModel: ObservableObject {
         @MainActor
         func toggle(_ viewModel: NotificationsPermissionsViewModel) {
             switch self {
-            case .newsletter:
-                viewModel.newsletterOptIn.toggle()
             case .notifications:
                 viewModel.notificationsOptIn.toggle()
             }
@@ -148,7 +131,6 @@ struct NotificationsPermissionsView: View {
                     Spacer()
                     if FeatureFlag.newOnboardingAccountCreation.enabled {
                         VStack(alignment: .leading, spacing: 24) {
-                            optionRow(for: .newsletter)
                             optionRow(for: .notifications)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -163,8 +145,6 @@ struct NotificationsPermissionsView: View {
             ZStack {
                 Button(action: {
                     Analytics.track(.notificationsPermissionsAllowTapped)
-                    viewModel.saveNewsletterOptIn()
-                    viewModel.trackNewsletterOptIn()
                     Task {
                         if viewModel.notificationsOptIn {
                             await viewModel.setupPermissions()

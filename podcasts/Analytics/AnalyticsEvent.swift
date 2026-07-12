@@ -71,10 +71,6 @@ enum AnalyticsEvent: String {
     case podcastsListDiscoverButtonTapped
     case podcastsListNotificationsTapped
 
-    // MARK: - Newsletter Opt In
-
-    case newsletterOptInChanged
-
     // MARK: - Forgot Password
 
     case forgotPasswordShown

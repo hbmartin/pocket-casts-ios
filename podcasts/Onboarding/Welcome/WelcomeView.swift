@@ -28,9 +28,6 @@ struct WelcomeView: View {
                     }
 
                     Spacer()
-                    newsletter
-                        .padding(.top, 30)
-                        .padding(.bottom, 16)
 
                     Button(L10n.done) {
                         viewModel.doneTapped()
@@ -41,22 +38,6 @@ struct WelcomeView: View {
                 .padding(.bottom)
             }
             .background(AppTheme.color(for: .background, theme: theme).ignoresSafeArea())
-        }
-    }
-
-    private var newsletter: some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                Label(L10n.pocketCastsWelcomeNewsletterTitle, for: .newsletterTitle)
-                Label(L10n.pocketCastsNewsletterDescription, for: .newsletterDescription)
-            }
-
-            Spacer()
-
-            Toggle(isOn: $viewModel.newsletterOptIn) {
-                EmptyView()
-            }.toggleStyle(SwitchToggleStyle(tint: AppTheme.color(for: .primaryInteractive01, theme: theme)))
-                .frame(maxWidth: 60)
         }
     }
 
@@ -135,8 +116,6 @@ private struct Label: View {
         case title
         case sectionTitle
         case sectionDescription
-        case newsletterTitle
-        case newsletterDescription
     }
 
     let text: String
@@ -159,9 +138,9 @@ private struct Label: View {
 
         case .title:
             return AppTheme.color(for: .text, theme: theme)
-        case .sectionTitle, .newsletterTitle:
+        case .sectionTitle:
             return AppTheme.color(for: .text, theme: theme)
-        case .sectionDescription, .newsletterDescription:
+        case .sectionDescription:
             return AppTheme.color(for: .sectionDescription, theme: theme)
         }
     }
@@ -177,10 +156,6 @@ private struct Label: View {
                 return content.font(size: 18, style: .body, weight: .semibold, maxSizeCategory: .extraExtraExtraLarge)
             case .sectionDescription:
                 return content.font(size: 13, style: .caption, maxSizeCategory: .extraExtraExtraLarge)
-            case .newsletterTitle:
-                return content.font(size: 15, style: .subheadline, weight: .medium, maxSizeCategory: .extraExtraExtraLarge)
-            case .newsletterDescription:
-                return content.font(size: 13, style: .footnote, maxSizeCategory: .extraExtraExtraLarge)
             }
         }
     }

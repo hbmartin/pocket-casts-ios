@@ -2044,10 +2044,6 @@ nonisolated internal enum L10n {
   internal static var notificationsOnboardingImportBody: String { return L10n.tr("Localizable", "notifications_onboarding_import_body", fallback: "Switching from another app? Bring all your favorite shows to Pocket Casts.") }
   /// Notification title for import podcast onboarding message
   internal static var notificationsOnboardingImportTitle: String { return L10n.tr("Localizable", "notifications_onboarding_import_title", fallback: "Easily import your podcasts") }
-  /// Subtitle for Newsletter opt-in option in the Notifications screen during onboarding
-  internal static var notificationsOnboardingNewsletterSubtitle: String { return L10n.tr("Localizable", "notifications_onboarding_newsletter_subtitle", fallback: "Once a month, all podcast goodness") }
-  /// Title for Newsletter opt-in option in the Notifications screen during onboarding
-  internal static var notificationsOnboardingNewsletterTitle: String { return L10n.tr("Localizable", "notifications_onboarding_newsletter_title", fallback: "Subscribe to our Newsletter") }
   /// Subtitle for Notifications opt-in option in the Notifications screen during onboarding
   internal static var notificationsOnboardingNotificationsSubtitle: String { return L10n.tr("Localizable", "notifications_onboarding_notifications_subtitle", fallback: "Receive news, podcast suggestions and more") }
   /// Title for Notifications opt-in option in the Notifications screen during onboarding
@@ -2887,16 +2883,10 @@ nonisolated internal enum L10n {
   }
   /// A Voice Over label for element which represents the Pocket Casts Logo
   internal static var pocketCastsLogo: String { return L10n.tr("Localizable", "pocket_casts_logo", fallback: "Pocket Casts logo") }
-  /// The heading shown for the Pocket Casts Newsletter
-  internal static var pocketCastsNewsletter: String { return L10n.tr("Localizable", "pocket_casts_newsletter", fallback: "Pocket Casts Newsletter") }
-  /// The description for the Pocket Casts Newsletter
-  internal static var pocketCastsNewsletterDescription: String { return L10n.tr("Localizable", "pocket_casts_newsletter_description", fallback: "Receive news, app updates, themed playlists, interviews, and more.") }
   /// A common string used throughout the app. Refers to the subscription program Pocket Casts Plus subscription. 'Pocket Casts' as a proper noun should not be localized.
   internal static var pocketCastsPlus: String { return L10n.tr("Localizable", "pocket_casts_plus", fallback: "Pocket Casts Plus") }
   /// A shortened version of the common string used throughout the app. Refers to the subscription program Pocket Casts Plus subscription.
   internal static var pocketCastsPlusShort: String { return L10n.tr("Localizable", "pocket_casts_plus_short", fallback: "Plus") }
-  /// The heading shown for the Pocket Casts Newsletter
-  internal static var pocketCastsWelcomeNewsletterTitle: String { return L10n.tr("Localizable", "pocket_casts_welcome_newsletter_title", fallback: "Get the Newsletter") }
   /// Indicates that the access to the podcast has ended on the specified date. '%1$@' is a placeholder for date that the access expired.
   internal static func podcastAccessEnded(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_access_ended", String(describing: p1), fallback: "Access ended: %1$@")
