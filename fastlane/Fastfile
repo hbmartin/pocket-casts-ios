@@ -88,8 +88,6 @@ EXTENSIONS = %w[
   Clip
   NotificationContent
   NotificationExtension
-  PodcastsIntents
-  PodcastsIntentsUI
   Share-Extension
   WidgetExtension
 ].freeze
@@ -134,8 +132,7 @@ EN_LPROJ_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'podcasts', 'en.lproj')
 # Used by the `spellcheck_strings` lane.
 MANUALLY_MAINTAINED_STRINGS_FILES = {
   File.join(EN_LPROJ_FOLDER, 'Localizable.strings') => nil,
-  File.join(EN_LPROJ_FOLDER, 'InfoPlist.strings') => 'infoplist_',
-  File.join(EN_LPROJ_FOLDER, 'Intents.strings') => 'siri_intent_definition_key_'
+  File.join(EN_LPROJ_FOLDER, 'InfoPlist.strings') => 'infoplist_'
 }.freeze
 
 # List of exceptions / known words during spell-checking. Used by the `spellcheck_strings` lane.
@@ -925,7 +922,7 @@ platform :ios do
       dict = JSON.parse(out)
       dict.each do |key, text|
         # Spell-check each entry
-        text.gsub!(/\${[a-zA-Z]+}/, 'this') # To avoid `${variable}` placeholders in Intents.strings to be seen as typos
+        text.gsub!(/\${[a-zA-Z]+}/, 'this') # To avoid `${variable}` placeholders in strings files being seen as typos
         out, err, status = Open3.capture3('aspell', 'list', "--lang=#{spellcheck_locale}", stdin_data: text)
         UI.shell_error!("Error spellchecking key `#{key}`: #{err}") unless err.empty? && status.success?
 

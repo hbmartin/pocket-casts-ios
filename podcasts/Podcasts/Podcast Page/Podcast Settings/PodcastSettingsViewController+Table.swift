@@ -1,4 +1,3 @@
-import IntentsUI
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -8,16 +7,12 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
     private static let disclosureCellId = "DisclosureCell"
     private static let switchCellId = "SwitchCell"
     private static let timeStepperCellId = "TimeStepperCell"
-    private static let createSiriShortcutCellId = "CreateSiriShortcutCell"
-    private static let siriEnabledCellId = "siriEnabledCellId"
     private static let destructiveButtonCellId = "destructiveButtonCell"
 
     func registerCells() {
         settingsTable.register(UINib(nibName: "DisclosureCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.disclosureCellId)
         settingsTable.register(UINib(nibName: "SwitchCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.switchCellId)
         settingsTable.register(UINib(nibName: "TimeStepperCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.timeStepperCellId)
-        settingsTable.register(UINib(nibName: "SiriShortcutEnabledCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.siriEnabledCellId)
-        settingsTable.register(UINib(nibName: "CreateSiriShortcutCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.createSiriShortcutCellId)
         settingsTable.register(UINib(nibName: "DestructiveButtonCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.destructiveButtonCellId)
     }
 
@@ -189,19 +184,6 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             }
 
             return cell
-        case .siriShortcut:
-            if existingShortcut != nil {
-                let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.siriEnabledCellId) as! SiriShortcutEnabledCell
-                cell.titleLabel.text = L10n.settingsSiriShortcut
-                let existingShortcutPhrase = existingSiriVoiceShortcut().invocationPhrase
-                cell.phraseLabel.text = "\"\(existingShortcutPhrase)\""
-                return cell
-            } else {
-                let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.createSiriShortcutCellId) as! CreateSiriShortcutCell
-                cell.buttonTitle.text = L10n.settingsCreateSiriShortcut
-
-                return cell
-            }
         case .unsubscribe:
             let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.destructiveButtonCellId, for: indexPath) as! DestructiveButtonCell
             cell.buttonTitle.text = FeatureFlag.useFollowNaming.enabled ? L10n.unfollow : L10n.unsubscribe
@@ -284,15 +266,6 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
                 Analytics.track(.filterUpdated, properties: ["group": "podcasts", "source": "podcast_settings"])
             }
             navigationController?.pushViewController(playlistSelectionViewController, animated: true)
-        } else if row == .siriShortcut {
-            if let voiceShortcut = existingSiriVoiceShortcut() {
-                let viewController = INUIEditVoiceShortcutViewController(voiceShortcut: voiceShortcut)
-                viewController.modalPresentationStyle = .formSheet
-                viewController.delegate = self
-                present(viewController, animated: true, completion: nil)
-            } else {
-                showINAddVoiceShortcutVC()
-            }
         } else if row == .unsubscribe {
             unsubscribe()
         }
@@ -324,9 +297,6 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             return nil
         } else if firstRow == .playbackEffects {
             return L10n.settingsSkipMsg
-        } else if firstRow == .siriShortcut, let name = podcast.title {
-            let format = existingShortcut != nil ? L10n.settingsSiriShortcutMsg : L10n.settingsCreateSiriShortcutMsg
-            return format(name)
         }
 
         return nil
@@ -429,7 +399,6 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         if !playlistsPodcastCanAppearIn().isEmpty {
             data.append([.inFilters])
         }
-        data.append([.siriShortcut])
         data.append([.unsubscribe])
 
         return data
@@ -445,14 +414,5 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         DataManager.sharedManager.allSmartPlaylists(includeDeleted: false).filter { playlist -> Bool in
             playlist.filterAllPodcasts == false
         }
-    }
-
-    // MARK: - Siri shortcuts helper function
-
-    private func showINAddVoiceShortcutVC() {
-        let viewController = INUIAddVoiceShortcutViewController(shortcut: SiriShortcutsManager.shared.playPodcastShortcut(podcast: podcast))
-        viewController.modalPresentationStyle = .formSheet
-        viewController.delegate = self
-        present(viewController, animated: true, completion: nil)
     }
 }

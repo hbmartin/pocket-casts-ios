@@ -15,9 +15,8 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
     private let switchCellId = "SwitchCell"
     private let disclosureCellId = "DisclosureCell"
     private let buttonCellId = "ButtonCell"
-    private let settingsCellId = "SettingsCell"
     private let deleteCellId = "DettingsCell"
-    private enum TableRow: Int { case filterName, autodownload, autoDownloadLimit, siriShortcut, deletePlaylist }
+    private enum TableRow: Int { case filterName, autodownload, autoDownloadLimit, deletePlaylist }
     private static let tableDataAutoDownloadDisabled: [[TableRow]] = {
         return [[.filterName], [.autodownload]]
     }()
@@ -25,12 +24,10 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
         return [[.filterName], [.autodownload, .autoDownloadLimit]]
     }()
     private var filterNameTextField: UITextField!
-    private var existingShortcut: Any!
 
     /* Analytics Helpers */
     private var didChangeAutoDownload = false
     private var didChangeEpisodeCount = false
-    private var isViewingShortcuts = false
     private var didChangeName: Bool {
         filterToEdit.playlistName != filterNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -48,9 +45,7 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
         tableView.register(UINib(nibName: "SwitchCell", bundle: nil), forCellReuseIdentifier: switchCellId)
         tableView.register(UINib(nibName: "DisclosureCell", bundle: nil), forCellReuseIdentifier: disclosureCellId)
         tableView.register(UINib(nibName: "ButtonCell", bundle: nil), forCellReuseIdentifier: buttonCellId)
-        tableView.register(UINib(nibName: "TopLevelSettingsCell", bundle: nil), forCellReuseIdentifier: settingsCellId)
         tableView.register(UINib(nibName: "AccountActionCell", bundle: nil), forCellReuseIdentifier: deleteCellId)
-        updateExistingSortcutData()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -67,18 +62,10 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
         filterToEdit = DataManager.sharedManager.save(playlist: filterToEdit)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filterToEdit)
 
-        if isViewingShortcuts == false {
-            let properties = ["did_change_name": didChangeName,
-                              "did_change_auto_download": didChangeAutoDownload,
-                              "did_change_episode_count": didChangeEpisodeCount]
-            track(.filterEditDismissed, properties: properties)
-        }
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-
-        isViewingShortcuts = false
+        let properties = ["did_change_name": didChangeName,
+                          "did_change_auto_download": didChangeAutoDownload,
+                          "did_change_episode_count": didChangeEpisodeCount]
+        track(.filterEditDismissed, properties: properties)
     }
 
     @objc func backgroundTapped(_ sender: UITapGestureRecognizer) {
@@ -133,12 +120,6 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
             cell.cellSecondaryLabel.text = L10n.episodeCountPluralFormat(filterToEdit.maxAutoDownloadEpisodes().localized())
 
             return cell
-        case .siriShortcut:
-            let cell = tableView.dequeueReusableCell(withIdentifier: settingsCellId) as! TopLevelSettingsCell
-            cell.settingsLabel.text = L10n.settingsSiriShortcuts
-            cell.settingsImage.image = UIImage(named: "settings_shortcuts")
-            cell.settingsImage.tintColor = AppTheme.colorForStyle(.primaryIcon01)
-            return cell
         case .deletePlaylist:
             let cell = tableView.dequeueReusableCell(withIdentifier: deleteCellId, for: indexPath) as! AccountActionCell
             cell.cellLabel.text = L10n.playlistsDelete
@@ -167,11 +148,6 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
             addAutoLimitOption(optionPicker: options, limit: 100, currentLimit: currentLimit)
 
             options.show(statusBarStyle: preferredStatusBarStyle)
-        case .siriShortcut:
-            isViewingShortcuts = true
-            let singleFilterVC = PlaylistShortcutsViewController(playlist: filterToEdit)
-            navigationController?.pushViewController(singleFilterVC, animated: true)
-            tableView.deselectRow(at: indexPath, animated: false)
         case .deletePlaylist:
             showDeleteConfirmationDialog(for: filterToEdit)
 
@@ -206,7 +182,7 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
     // MARK: - TextFieldDelegate
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
@@ -214,7 +190,7 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
             track(.filterNameUpdated)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
         filterToEdit.setTitle(filterNameTextField.text, defaultTitle: L10n.filtersDefaultNewFilter.localizedCapitalized)
         textField.resignFirstResponder()
     }
@@ -240,8 +216,6 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
     private func tableData() -> [[FilterEditOptionsViewController.TableRow]] {
         var data = filterToEdit.autoDownloadEpisodes ? FilterEditOptionsViewController.tableDataAutoDownloadEnabled : FilterEditOptionsViewController.tableDataAutoDownloadDisabled
 
-        data.append([.siriShortcut])
-
         data.append([.deletePlaylist])
 
         return data
@@ -257,17 +231,6 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
             self?.tableView.reloadData()
         }
         optionPicker.addAction(action: action)
-    }
-
-    private func updateExistingSortcutData() {
-        SiriShortcutsManager.shared.voiceShortcutForFilter(filter: filterToEdit, completion: { voiceShortcut in
-            // The shortcuts callback is off-main; state and table belong to the main actor
-            let boxed = PocketCastsUtils.UncheckedSendable(voiceShortcut)
-            Task { @MainActor in
-                self.existingShortcut = boxed.value
-                self.tableView.reloadData()
-            }
-        })
     }
 }
 

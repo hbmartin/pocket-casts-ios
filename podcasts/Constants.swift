@@ -264,19 +264,6 @@ nonisolated struct Constants {
         static let playerTabSwitch: TimeInterval = 0.2
     }
 
-        enum SiriActions {
-            static let resumeId = "Resume ID"
-            static let playPodcastId = "Play podcast ID"
-            static let playSuggestedId = "Play suggested ID"
-            static let playUpNextId = "play up next ID"
-            static let playFilterId = "Play filter ID"
-            static let playAllFilterId = "Play all filter ID"
-            static let pauseId = "Pause ID"
-            static let nextChapterId = "Next Chapter ID"
-            static let previousChapterId = "Previous Chapter ID"
-            static let markAsPlayedId = "Mark As Played ID"
-        }
-
     enum Audio {
         static let defaultFrameSize = 1152
     }

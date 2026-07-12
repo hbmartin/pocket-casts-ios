@@ -109,11 +109,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             ImageManager.sharedManager.updatePodcastImagesIfRequired()
             WidgetHelper.shared.cleanupAppGroupImages()
-            // CustomObserver's initializer and observer registration are main-actor;
-            // touching .shared from this background block traps an executor assertion.
-            Task { @MainActor in
-                SiriShortcutsManager.shared.setup()
-            }
 
             DownloadManager.shared.startAllQueued()
 
@@ -371,7 +366,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
     }
 
     nonisolated private func convertRefreshResult(result: RefreshFetchResult) -> UIBackgroundFetchResult {

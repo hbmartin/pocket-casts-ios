@@ -6,7 +6,7 @@ import UIKit
 class SettingsViewController: PCViewController, UITableViewDataSource, UITableViewDelegate {
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
-        case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
+        case autoArchive, autoDownload, autoAddToUpNext
         case advancedAudio, devices
         case customFiles, importSteps, opml, backupRestore
         case fileSync
@@ -44,8 +44,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsBackupRestore, UIImage(named: "settings_storage"))
             case .about:
                 return (L10n.settingsAbout, UIImage(named: "settings_about"))
-            case .siriShortcuts:
-                return (L10n.settingsSiriShortcuts, UIImage(named: "settings_shortcuts"))
             case .customFiles:
                 return (L10n.files, UIImage(named: "profile_files"))
             case .privacy:
@@ -85,7 +83,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
-            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .devices, .advancedAudio, .customFiles],
+            [.storageAndDataUse, .headphoneControls, .devices, .advancedAudio, .customFiles],
             [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -181,8 +179,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let hostingController = PCHostingController(rootView: aboutView)
 
             navigationController?.present(hostingController, animated: true, completion: nil)
-        case .siriShortcuts:
-            navigationController?.pushViewController(SiriSettingsViewController(), animated: true)
         case .customFiles:
             navigationController?.pushViewController(UploadedSettingsViewController(), animated: true)
         case .privacy:

@@ -241,9 +241,8 @@ let package = Package(
 enum XcodeTargetNames {
     static let podcasts = "podcasts"
     static let notificationExtension = "NotificationExtension"
-    static let podcastsIntents = "PodcastsIntents"
-    static let podcastsIntentsUI = "PodcastsIntentsUI"
     static let widgetExtension = "WidgetExtension"
+    static let pocketCastsTests = "PocketCastsTests"
 }
 
 enum XcodeSupport {
@@ -251,9 +250,8 @@ enum XcodeSupport {
         [
             XcodeTargetNames.podcasts,
             XcodeTargetNames.notificationExtension,
-            XcodeTargetNames.podcastsIntents,
-            XcodeTargetNames.podcastsIntentsUI,
             XcodeTargetNames.widgetExtension,
+            XcodeTargetNames.pocketCastsTests,
         ].map { .supportingProduct(forXcodeTarget: $0) }
     }
 
@@ -287,16 +285,19 @@ enum XcodeSupport {
                 ]
             ),
             .xcodeTarget(
-                XcodeTargetNames.podcastsIntents,
-                dependencies: [
-                    .product(name: "Fuse", package: "fuse-swift"),
-                ]
-            ),
-            .xcodeTarget(XcodeTargetNames.podcastsIntentsUI, dependencies: []),
-            .xcodeTarget(
                 XcodeTargetNames.widgetExtension,
                 dependencies: [
                     "PocketCastsUtils",
+                ]
+            ),
+            // The app-test target's themed snapshot coverage (program item H2)
+            // renders through swift-snapshot-testing; routing the dependency via
+            // this supporting product keeps the Xcode project free of direct
+            // package references.
+            .xcodeTarget(
+                XcodeTargetNames.pocketCastsTests,
+                dependencies: [
+                    .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
                 ]
             ),
         ]

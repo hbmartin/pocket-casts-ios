@@ -4,7 +4,7 @@ import PocketCastsDataModel
 
 // MARK: - Playback control App Intents
 //
-// These replace the SiriKit `INPlayMediaIntent`/`SJ*` shortcut flows with the
+// These replaced the app's legacy SiriKit shortcut flows (removed) with the
 // modern App Intents framework. They run in the app process and route through
 // the shared `PlaybackIntentActionHandler`.
 
@@ -140,8 +140,8 @@ struct ExtendSleepTimerIntent: AppIntent {
 
 // MARK: - App Shortcuts
 
-/// Surfaces the default shortcuts previously suggested by `SiriShortcutsManager`
-/// as App Shortcuts so they appear in the Shortcuts app and Spotlight.
+/// Surfaces the default shortcuts previously suggested by the legacy SiriKit
+/// stack as App Shortcuts so they appear in the Shortcuts app and Spotlight.
 struct PocketCastsAppShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(

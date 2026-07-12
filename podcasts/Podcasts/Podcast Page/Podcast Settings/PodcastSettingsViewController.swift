@@ -9,9 +9,7 @@ class PodcastSettingsViewController: PCViewController {
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case autoDownload, notifications, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, skipChapters, autoArchive, inFilters, siriShortcut, unsubscribe, feedError }
-
-    var existingShortcut: Any?
+    enum TableRow { case autoDownload, notifications, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, skipChapters, autoArchive, inFilters, unsubscribe, feedError }
 
     @IBOutlet var settingsTable: UITableView! {
         didSet {
@@ -31,7 +29,6 @@ class PodcastSettingsViewController: PCViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateExistingSortcutData()
         title = L10n.settingsTitle
 
         settingsTable.rowHeight = UITableView.automaticDimension
@@ -80,17 +77,6 @@ class PodcastSettingsViewController: PCViewController {
     private func updateColors() {
         changeNavTint(titleColor: nil, iconsColor: podcast.navIconTintColor(), backgroundColor: podcast.navigationBarTintColor())
         settingsTable.reloadData()
-    }
-
-    func updateExistingSortcutData() {
-        SiriShortcutsManager.shared.voiceShortcutForPodcast(podcast: podcast, completion: { voiceShortcut in
-            // The shortcuts callback is off-main; state and table belong to the main actor
-            let boxed = PocketCastsUtils.UncheckedSendable(voiceShortcut)
-            Task { @MainActor in
-                self.existingShortcut = boxed.value
-                self.settingsTable.reloadData()
-            }
-        })
     }
 
     func unsubscribe() {

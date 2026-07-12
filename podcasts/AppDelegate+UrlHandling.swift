@@ -539,4 +539,51 @@ extension AppDelegate {
             }
         })
     }
+
+    // MARK: - NSUserActivity (universal links / Handoff)
+
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        handleContinue(userActivity)
+
+        return true
+    }
+
+    func handleContinue(_ userActivity: NSUserActivity) {
+        if userActivity.activityType == "au.com.shiftyjelly.podcasts" {
+            let info = userActivity.userInfo
+            if let urlString = info?["url"] as? String, let url = URL(string: urlString) {
+                JLRoutes.routeURL(url)
+            }
+        } else if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
+            guard
+                let incomingURL = userActivity.webpageURL,
+                let components = NSURLComponents(url: incomingURL, resolvingAgainstBaseURL: true),
+                let path = components.path,
+                let controller = SceneHelper.rootViewController(),
+                path != "/get",
+                path != "/get/"
+            else { return }
+
+            // If path is just the base share URL let's return
+            if path.isEmpty || path == "/", URL(string: ServerConstants.Urls.share())?.host == incomingURL.host {
+                return
+            }
+
+            if path == "/discover" || path.startsWith(string: "/discover/") {
+                if let url = URL(string: "pktc:/\(path)") {
+                    NavigationManager.sharedManager.dismissPresentedViewController()
+                    JLRoutes.routeURL(url)
+                }
+                return
+            }
+
+            // Also pass any query params from the share URL to the server to allow support for episode position handling
+            // Ex: ?t=123
+            let query = components.query.map { "?\($0)" } ?? ""
+            let sharePath = "\(path)\(query)"
+
+            FileLog.shared.addMessage("Opening universal link, path: \(sharePath)")
+            openSharePath("social/share/show\(sharePath)", controller: controller, onErrorOpen: incomingURL)
+        }
+    }
 }

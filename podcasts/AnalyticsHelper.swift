@@ -184,50 +184,6 @@ nonisolated class AnalyticsHelper {
         logEvent("icon_selected", parameters: ["name": name])
     }
 
-    class func siriSleeptimer() {
-        logEvent("siri_sleep_timer", parameters: nil)
-    }
-
-    class func siriChapterChanged() {
-        logEvent("siri_chapter_change", parameters: nil)
-    }
-
-    class func siriSurpriseMe() {
-        logEvent("siri_surprise_me", parameters: nil)
-    }
-
-    class func siriUpNext() {
-        logEvent("siri_up_next", parameters: nil)
-    }
-
-    class func siriPause() {
-        logEvent("siri_pause", parameters: nil)
-    }
-
-    class func siriMarkAsPlayed() {
-        logEvent("siri_mark_as_played", parameters: nil)
-    }
-
-    class func siriResume() {
-        logEvent("siri_resume", parameters: nil)
-    }
-
-    class func siriPlayPodcast() {
-        logEvent("siri_play_podcast", parameters: nil)
-    }
-
-    class func siriPlayAllFilter() {
-        logEvent("siri_play_all_filter", parameters: nil)
-    }
-
-    class func siriPlayTopFilter() {
-        logEvent("siri_play_top_filter", parameters: nil)
-    }
-
-    class func siriOpenFilter() {
-        logEvent("siri_open_filter", parameters: nil)
-    }
-
     class func tourStarted(tourName: String) {
         logEvent("tour_started", parameters: ["tour": tourName])
     }
