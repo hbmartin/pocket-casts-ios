@@ -44,18 +44,27 @@ public struct LocalFeedRefreshProvider: FeedRefreshProviding {
             func addNextFetch() {
                 guard let podcast = iterator.next(), let feedURL = podcast.podcastUrl else { return }
                 let podcastUuid = podcast.uuid
+                let podcastId = podcast.id
                 group.addTask {
                     do {
                         let feed = try await fetcher.fetchFeed(url: feedURL)
 
+                        // One fetch of the existing catalog per podcast; the matcher
+                        // resolves every parsed item against it in memory, so podcasts
+                        // whose back catalog carries server-canonical UUIDs (signed-out
+                        // subscribes of server-sourced podcasts) never duplicate.
+                        let existing = DataManager.sharedManager.allEpisodesForPodcast(id: podcastId)
+                        let resolution = resolve(feed: feed, existing: existing)
+
                         // Keep the offline show-notes/chapters/transcripts cache fresh —
-                        // the whole feed was parsed anyway.
-                        if let showInfoData = LocalFeedShowInfo.data(from: feed, podcastUuid: podcastUuid) {
+                        // the whole feed was parsed anyway. Entries must be keyed by the
+                        // *resolved* UUIDs or the back catalog's show notes disappear
+                        // (ShowInfoCoordinator reads cache-only for .localFeed podcasts).
+                        if let showInfoData = LocalFeedShowInfo.data(from: feed, podcastUuid: podcastUuid, resolvedUuidOverrides: resolution.uuidOverrides) {
                             await ShowInfoDataRetriever.localFeedSeeder.storeLocalShowInfo(data: showInfoData, for: podcastUuid)
                         }
 
-                        let newEpisodes = newEpisodes(from: feed)
-                        return newEpisodes.isEmpty ? nil : (podcastUuid, newEpisodes)
+                        return resolution.newEpisodes.isEmpty ? nil : (podcastUuid, resolution.newEpisodes)
                     } catch {
                         FileLog.shared.addMessage("LocalFeedRefresh: failed to refresh \(podcastUuid) from \(feedURL): \(error)")
                         return nil
@@ -76,16 +85,30 @@ public struct LocalFeedRefreshProvider: FeedRefreshProviding {
         }
     }
 
-    /// Maps parsed items that aren't in the database yet to `RefreshEpisode`s, keeping
-    /// the feed's newest-first document order (`RefreshOperation` reverses before saving,
-    /// matching the server's contract).
-    private static func newEpisodes(from feed: ParsedFeed) -> [RefreshEpisode] {
-        feed.items.compactMap { item in
-            guard let uuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL) else { return nil }
-            guard DataManager.sharedManager.findEpisode(uuid: uuid) == nil else { return nil }
+    /// Splits a parsed feed against the existing catalog: items the matcher marks new
+    /// become `RefreshEpisode`s (keeping the feed's newest-first document order —
+    /// `RefreshOperation` reverses before saving, matching the server's contract);
+    /// matched items whose hash UUID differs from the stored UUID are collected so
+    /// show-info seeding can key their entries under the stored identity.
+    static func resolve(feed: ParsedFeed, existing: [Episode]) -> (newEpisodes: [RefreshEpisode], uuidOverrides: [String: String]) {
+        let matches = LocalFeedEpisodeMatcher.match(items: feed.items, existing: existing)
+        var newEpisodes = [RefreshEpisode]()
+        var uuidOverrides = [String: String]()
 
-            return RefreshEpisode(item: item, uuid: uuid)
+        for (item, match) in zip(feed.items, matches) {
+            switch match {
+            case .new(let hashUuid):
+                newEpisodes.append(RefreshEpisode(item: item, uuid: hashUuid))
+            case .existing(let uuid):
+                if let hashUuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL), hashUuid != uuid {
+                    uuidOverrides[hashUuid] = uuid
+                }
+            case nil:
+                continue
+            }
         }
+
+        return (newEpisodes, uuidOverrides)
     }
 }
 

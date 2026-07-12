@@ -239,6 +239,26 @@ extension AppDelegate {
 
                 MainServerHandler.shared.podcastSearch(searchTerm: searchTerm) { response in
                     guard let uuid = response?.result?.podcast?.uuid else {
+                        // Signed out and the catalog can't resolve it: ingest the feed on
+                        // device so any valid feed URL still opens.
+                        if !SyncManager.isUserLoggedIn() {
+                            let localUuid = LocalFeedIdentity.uuid(seed: searchTerm)
+                            ServerPodcastManager.shared.addLocalFeed(feedURL: searchTerm, subscribe: false) { success in
+                                DispatchQueue.main.async {
+                                    self?.hideProgressDialog()
+
+                                    // dedup can attach to an existing row, so resolve the real uuid
+                                    let resolvedUuid = DataManager.sharedManager.findPodcast(feedURL: searchTerm)?.uuid ?? localUuid
+                                    if success {
+                                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: resolvedUuid])
+                                    } else {
+                                        SJUIUtils.showAlert(title: L10n.error, message: L10n.errorGeneralPodcastNotFound, from: SceneHelper.rootViewController())
+                                    }
+                                }
+                            }
+                            return
+                        }
+
                         DispatchQueue.main.async {
                             self?.hideProgressDialog()
 
