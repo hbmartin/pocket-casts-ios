@@ -1004,6 +1004,8 @@ nonisolated internal enum L10n {
   internal static var downloadErrorContactAuthor: String { return L10n.tr("Localizable", "download_error_contact_author", fallback: "Episode not available due to an error in the podcast feed. Contact the podcast author.") }
   /// The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author.
   internal static var downloadErrorContactAuthorVersion2: String { return L10n.tr("Localizable", "download_error_contact_author_version_2", fallback: "This episode may have been moved or deleted. Contact the podcast author.") }
+  /// The episode failed to download because the device has no internet connection.
+  internal static var downloadErrorNoInternet: String { return L10n.tr("Localizable", "download_error_no_internet", fallback: "Unable to download episode. Check your internet connection and try again.") }
   /// The episode failed to download due to the user running out of storage space.
   internal static var downloadErrorNotEnoughSpace: String { return L10n.tr("Localizable", "download_error_not_enough_space", fallback: "Unable to save episode, have you run out of space?") }
   /// The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author. '%1$@' is a placeholder for the status code that the app received.
@@ -3319,6 +3321,8 @@ nonisolated internal enum L10n {
   internal static var restoreUpNextMessage: String { return L10n.tr("Localizable", "restore_up_next_message", fallback: "These episodes will be added to the bottom of your current Up Next") }
   /// A common string used throughout the app. Prompt to retry the recent request.
   internal static var retry: String { return L10n.tr("Localizable", "retry", fallback: "Retry") }
+  /// VoiceOver action name on an episode row whose download failed; performing it retries the download.
+  internal static var retryDownload: String { return L10n.tr("Localizable", "retry_download", fallback: "Retry download") }
   /// Title of a button that allows the user to save their changes
   internal static var saveBookmark: String { return L10n.tr("Localizable", "save_bookmark", fallback: "Save Bookmark") }
   /// A common string used throughout the app. Placeholder text used in search boxes.

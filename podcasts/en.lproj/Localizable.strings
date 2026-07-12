@@ -754,6 +754,9 @@
 /* The episode failed to download due to an issue with the feed. Suggesting the user reaches out to the Podcast Author. '%1$@' is a placeholder for the status code that the app received. */
 "download_error_status_code" = "Download failed, error code %1$@. Contact the podcast author.";
 
+/* The episode failed to download because the device has no internet connection. */
+"download_error_no_internet" = "Unable to download episode. Check your internet connection and try again.";
+
 /* The episode failed to download but the app wasn't able to determine why. Suggesting to try again after waiting for a bit. */
 "download_error_try_again" = "Unable to download episode. Please try again later.";
 
@@ -2202,6 +2205,9 @@
 
 /* A common string used throughout the app. Prompt to retry the recent request. */
 "retry" = "Retry";
+
+/* VoiceOver action name on an episode row whose download failed; performing it retries the download. */
+"retry_download" = "Retry download";
 
 /* The label of the search button in Discover. Explaining the user can search or directly add a RSS URL. */
 "search_label" = "Search podcasts or add RSS URL";

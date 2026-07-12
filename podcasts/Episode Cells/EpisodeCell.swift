@@ -333,6 +333,22 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
 
         isAccessibilityElement = true
         accessibilityLabel = labelForAccessibility(episode: episode)
+
+        // The retry affordance is the action button, which VoiceOver can't reach
+        // because the row is a single element — expose retry as a custom action.
+        if episode.downloadFailed() {
+            accessibilityCustomActions = [UIAccessibilityCustomAction(name: L10n.retryDownload) { [weak self] _ in
+                self?.downloadTapped()
+                return true
+            }]
+        } else if episode.playbackError() {
+            accessibilityCustomActions = [UIAccessibilityCustomAction(name: L10n.retry) { [weak self] _ in
+                self?.playTapped()
+                return true
+            }]
+        } else {
+            accessibilityCustomActions = nil
+        }
     }
 
     private func labelForAccessibility(episode: BaseEpisode?) -> String {
