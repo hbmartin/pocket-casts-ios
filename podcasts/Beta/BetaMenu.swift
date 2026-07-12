@@ -4,19 +4,32 @@ import PocketCastsUtils
 struct BetaMenu: View {
     @State private var searchText = ""
     @State private var resetTrigger = false
+    @State private var showingMetricKitPayloads = false
 
     var body: some View {
         List {
-            ForEach(filteredFeatures, id: \.self) { feature in
-                Toggle(isOn: feature.isOn) {
-                    Text(String(describing: feature))
+            Section("Diagnostics") {
+                Button("MetricKit Payloads") {
+                    showingMetricKitPayloads = true
                 }
-                .onTapGesture { }
+            }
+            Section("Feature Flags") {
+                ForEach(filteredFeatures, id: \.self) { feature in
+                    Toggle(isOn: feature.isOn) {
+                        Text(String(describing: feature))
+                    }
+                    .onTapGesture { }
+                }
             }
         }
         .id(resetTrigger)
         .listStyle(.plain)
         .searchable(text: $searchText, prompt: L10n.search)
+        .sheet(isPresented: $showingMetricKitPayloads) {
+            NavigationStack {
+                MetricKitPayloadsView()
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Reset") {

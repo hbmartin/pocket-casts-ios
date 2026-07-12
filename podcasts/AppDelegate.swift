@@ -41,6 +41,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ImageManager.refreshScreenMetrics()
         configureBitdrift()
         configureTelemetryDeck()
+        configureMetricKit()
         setupSecrets()
         addAnalyticsObservers()
         setupAnalytics()
@@ -354,6 +355,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             sessionStrategy: .fixed()
         )
         #endif
+    }
+
+    private func configureMetricKit() {
+        // Payload persistence is unconditional (local ring buffer for the Beta
+        // viewer); the analytics summaries respect the opt-out via the adapter
+        // fan-out at track time, so a mid-session opt-in needs no re-registration.
+        MetricKitCollector.shared.start()
     }
 
     @discardableResult
