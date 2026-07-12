@@ -72,10 +72,6 @@ extension AppDelegate {
             ServerSettings.setLastSyncSucceeded(true)
         }
 
-        performUpdateIfRequired(updateKey: "TTFRunFinal") {
-            ServerSettings.setUserEpisodeOnlyOnWifi(true)
-        }
-
         performUpdateIfRequired(updateKey: "v7_11Run") {
             if let email = ServerSettings.syncingEmailLegacy() {
                 FileLog.shared.addMessage("Migrating email address from preferences to Keychain")

@@ -129,6 +129,22 @@ final class AudioFeatureExtractorTests: XCTestCase {
         )
     }
 
+    func testTrimLeadingFramesEmptiesBufferWhenAllFramesAreRemoved() {
+        let buffer = makePCMBuffer(samples: (0 ..< 100).map(Float32.init))
+
+        AudioUtils.trimLeadingFrames(buffer, frames: 100)
+
+        XCTAssertEqual(buffer.frameLength, 0)
+    }
+
+    func testTrimLeadingFramesEmptiesBufferWhenMoreFramesThanAvailableAreRemoved() {
+        let buffer = makePCMBuffer(samples: (0 ..< 100).map(Float32.init))
+
+        AudioUtils.trimLeadingFrames(buffer, frames: 101)
+
+        XCTAssertEqual(buffer.frameLength, 0)
+    }
+
     func testTruncateClampsFrameLength() {
         let buffer = makePCMBuffer(samples: (0 ..< 100).map(Float32.init))
         AudioUtils.truncate(buffer, toFrames: 25)

@@ -6,7 +6,7 @@ import Synchronization
 public final class StatsManager: Sendable {
     public static let shared = StatsManager()
 
-    private struct Stats {
+    private struct Stats: Sendable {
         var savedDynamicSpeed: TimeInterval
         var savedVariableSpeed: TimeInterval
         var totalListenedTo: TimeInterval
@@ -16,19 +16,28 @@ public final class StatsManager: Sendable {
     }
 
     private let stats: Mutex<Stats>
+    private let persistenceQueue: DispatchQueue
+    private let userDefaults: UserDefaults
 
-    public init() {
-        if UserDefaults.standard.object(forKey: ServerConstants.UserDefaults.statsStartDate) as? Date == nil {
-            UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.statsStartDate)
-            UserDefaults.standard.synchronize()
+    public convenience init() {
+        self.init(userDefaults: .standard)
+    }
+
+    init(userDefaults: UserDefaults) {
+        self.userDefaults = userDefaults
+        persistenceQueue = DispatchQueue(label: "au.com.pocketcasts.StatsManagerPersistenceQueue")
+
+        if userDefaults.object(forKey: ServerConstants.UserDefaults.statsStartDate) as? Date == nil {
+            userDefaults.set(Date(), forKey: ServerConstants.UserDefaults.statsStartDate)
+            userDefaults.synchronize()
         }
 
         stats = Mutex(Stats(
-            savedDynamicSpeed: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsDynamicSpeedSeconds),
-            savedVariableSpeed: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsVariableSpeed),
-            totalListenedTo: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsListenedTo),
-            totalSkipped: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsSkipped),
-            savedAutoSkipping: UserDefaults.standard.double(forKey: ServerConstants.UserDefaults.statsAutoSkip)
+            savedDynamicSpeed: userDefaults.double(forKey: ServerConstants.UserDefaults.statsDynamicSpeedSeconds),
+            savedVariableSpeed: userDefaults.double(forKey: ServerConstants.UserDefaults.statsVariableSpeed),
+            totalListenedTo: userDefaults.double(forKey: ServerConstants.UserDefaults.statsListenedTo),
+            totalSkipped: userDefaults.double(forKey: ServerConstants.UserDefaults.statsSkipped),
+            savedAutoSkipping: userDefaults.double(forKey: ServerConstants.UserDefaults.statsAutoSkip)
         ))
     }
 
@@ -61,9 +70,7 @@ public final class StatsManager: Sendable {
                 stats.savedAutoSkipping = savedAutoSkipping
             }
 
-            // Persisted while the lock is held so a concurrent update can't interleave
-            // between the mutation and the write, matching the old serial-queue ordering.
-            persist(stats)
+            enqueuePersistence(stats)
         }
     }
 
@@ -139,7 +146,13 @@ public final class StatsManager: Sendable {
      * method to actually save them between app launches.
      */
     public func persistTimes() {
-        stats.withLock { persist($0) }
+        stats.withLock { enqueuePersistence($0) }
+    }
+
+    private func enqueuePersistence(_ stats: Stats) {
+        persistenceQueue.async { [self] in
+            persist(stats)
+        }
     }
 
     private func persist(_ stats: Stats) {
@@ -149,12 +162,12 @@ public final class StatsManager: Sendable {
         saveTime(stats.totalSkipped, key: ServerConstants.UserDefaults.statsSkipped)
         saveTime(stats.savedAutoSkipping, key: ServerConstants.UserDefaults.statsAutoSkip)
 
-        UserDefaults.standard.set(stats.isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
-        UserDefaults.standard.synchronize()
+        userDefaults.set(stats.isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        userDefaults.synchronize()
     }
 
     public func syncStatus() -> SyncStatus {
-        let isSynced = UserDefaults.standard.bool(forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        let isSynced = userDefaults.bool(forKey: ServerConstants.UserDefaults.statsSyncStatus)
 
         return isSynced ? SyncStatus.synced : SyncStatus.notSynced
     }
@@ -162,7 +175,7 @@ public final class StatsManager: Sendable {
     public func setSyncStatus(_ syncStatus: SyncStatus) {
         let isSynced = (syncStatus == SyncStatus.synced)
 
-        UserDefaults.standard.set(isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        userDefaults.set(isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
     }
 
     // MARK: - Remote Stats
@@ -177,23 +190,23 @@ public final class StatsManager: Sendable {
             strongSelf.saveTime(remoteStats.variableSpeedTime, key: ServerConstants.UserDefaults.statsVariableSpeedServer)
             strongSelf.saveTime(remoteStats.skipTime, key: ServerConstants.UserDefaults.statsSkippedServer)
 
-            UserDefaults.standard.setValue(remoteStats.startedStatsAt, forKey: ServerConstants.UserDefaults.statsStartedDateServer)
+            strongSelf.userDefaults.setValue(remoteStats.startedStatsAt, forKey: ServerConstants.UserDefaults.statsStartedDateServer)
 
             completion?(true)
         }
     }
 
     public func statsStartedAt() -> Int64 {
-        Int64(UserDefaults.standard.integer(forKey: ServerConstants.UserDefaults.statsStartedDateServer))
+        Int64(userDefaults.integer(forKey: ServerConstants.UserDefaults.statsStartedDateServer))
     }
 
     public func statsStartDate() -> Date {
-        if let startDate = UserDefaults.standard.object(forKey: ServerConstants.UserDefaults.statsStartDate) as? Date {
+        if let startDate = userDefaults.object(forKey: ServerConstants.UserDefaults.statsStartDate) as? Date {
             return startDate
         }
 
         let now = Date()
-        UserDefaults.standard.set(now, forKey: ServerConstants.UserDefaults.statsStartDate)
+        userDefaults.set(now, forKey: ServerConstants.UserDefaults.statsStartDate)
 
         return now
     }
@@ -252,16 +265,20 @@ public final class StatsManager: Sendable {
     }
 
     private func timeForKey(_ key: String) -> TimeInterval {
-        UserDefaults.standard.double(forKey: key)
+        userDefaults.double(forKey: key)
     }
 
     private func saveTime(_ time: TimeInterval, key: String) {
         if time < 0, time < timeForKey(key) { return }
 
-        UserDefaults.standard.set(time, forKey: key)
+        userDefaults.set(time, forKey: key)
     }
 
     private func saveTime(_ time: Int64, key: String) {
         saveTime(TimeInterval(time), key: key)
+    }
+
+    func waitForPendingPersistence() {
+        persistenceQueue.sync {}
     }
 }
