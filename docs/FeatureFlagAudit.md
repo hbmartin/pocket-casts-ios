@@ -83,21 +83,21 @@ Assessment meanings:
 | ~~`shareProfile`~~ | conditional | 0 | — | removed (local-first program A4 — available in all builds; renders signed-out with local data) | ✅ code removed 2026-07-12; retire remote `share_profile` key server-side |
 | ~~`upNextSort`~~ | conditional | 0 | — | removed (local-first program A4) | ✅ code removed 2026-07-12; retire remote `up_next_sort` key server-side |
 | ~~`generatedChapters`~~ | conditional | 0 | — | removed (local-first program A4 — AI chapters for server-sourced podcasts in all builds; unavailable for `.localFeed` podcasts by design) | ✅ code removed 2026-07-12; retire remote `generated_chapters` key server-side |
-| `activateAudioSessionInBackground` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `avoidReplaceOnEpisodeSwap` | true | 1 | PlaybackQueue.swift | defer-playback | |
-| `doNotSwitchToDownloadedFile` | true | 1 | PlaybackManager.swift | defer-playback | |
+| ~~`activateAudioSessionInBackground`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `activate_audio_session_in_background` key server-side |
+| ~~`avoidReplaceOnEpisodeSwap`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `avoid_replace_on_episode_swap` key server-side |
+| ~~`doNotSwitchToDownloadedFile`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `do_not_switch_to_downloaded_file` key server-side |
 | `dontAutoplayOnRouteChange` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `effectsPlayerQOSUpgrade` | true | 1 | AudioReadTask.swift | defer-playback | |
-| `ignorePlayWithOtherAudio` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `ignoreRouteDisconnectedInterruption` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `playerIsReadyToPlay` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `replaceSpecificEpisode` | true | 1 | PlaybackQueue.swift | defer-playback | |
-| `limitPlaybackPositionChanges` | true | 2 | PlaybackManager.swift | defer-playback | |
-| `whenPlayingOnlyUpdateEpisodeIfPlaybackFails` | true | 2 | DefaultPlayer.swift, PlaybackActionHelper.swift | defer-playback | |
-| `checkFinishedTimeBeforeShouldKeepPlaying` | true | 3 | DefaultPlayer.swift | defer-playback | |
-| `defaultPlayerFilterCallbackFix` | true | 5 | DefaultPlayer.swift, FeatureFlagTests.swift | defer-playback | |
-| `useDefaultPlayerTapCookie` | true | 5 | DefaultPlayer.swift | defer-playback | |
-| `streamAndCachePlayingEpisode` | true | 6 | DownloadManager.swift, PlaybackManager.swift, PlaybackQueue. | defer-playback | |
-| `trackNetworkDataUsage` | true | 7 | BackgroundSyncManager+URLSession.swift, DefaultPlayer.swift, | defer-playback | |
-| `upNextShuffle` | true | 14 | PlaybackManager.swift, Settings.swift, UpNextViewController+ | defer-playback | |
+| ~~`effectsPlayerQOSUpgrade`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `effects_player_q_o_s_upgrade` key server-side |
+| ~~`ignorePlayWithOtherAudio`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `ignore_play_with_other_audio` key server-side |
+| ~~`ignoreRouteDisconnectedInterruption`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `ignore_route_disconnected_interruption` key server-side |
+| ~~`playerIsReadyToPlay`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `player_is_ready_to_play` key server-side |
+| ~~`replaceSpecificEpisode`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `replace_specific_episode` key server-side |
+| ~~`limitPlaybackPositionChanges`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `limit_playback_position_changes` key server-side |
+| ~~`whenPlayingOnlyUpdateEpisodeIfPlaybackFails`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `when_playing_only_update_episode_if_playback_fails` key server-side |
+| ~~`checkFinishedTimeBeforeShouldKeepPlaying`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `check_finished_time_before_should_keep_playing` key server-side |
+| ~~`defaultPlayerFilterCallbackFix`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `default_player_filter_callback_fix` key server-side |
+| ~~`useDefaultPlayerTapCookie`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `use_default_player_tap_cookie` key server-side |
+| ~~`streamAndCachePlayingEpisode`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `stream_and_cache_playing_episode` key server-side |
+| ~~`trackNetworkDataUsage`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `track_network_data_usage` key server-side |
+| ~~`upNextShuffle`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `up_next_shuffle` key server-side |
 | `newSettingsStorage` | conditional | 153 | AppDelegate+Defaults.swift, AutoAddQueueDataManager.swift, A | defer-playback | |

@@ -170,8 +170,6 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
-        guard FeatureFlag.trackNetworkDataUsage.enabled else { return }
-
         let bytesReceived = task.countOfBytesReceived
         let connectionType = NetworkDataUsageManager.connectionType(from: metrics)
 

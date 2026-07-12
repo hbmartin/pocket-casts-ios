@@ -408,8 +408,6 @@ final class PlaybackManager {
         if autoPlay {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarting)
             play(completion: completion)
-
-            checkIfStreamBufferRequired(episode: episode, effects: effects())
         } else if episodeIsChanging {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
         }
@@ -647,7 +645,7 @@ final class PlaybackManager {
         seekingTo = time
         FileLog.shared.addMessage("seek to \(time) startPlaybackAfterSeek \(startPlaybackAfterSeek)")
 
-        let isReadyToPlay = FeatureFlag.playerIsReadyToPlay.enabled ? (player?.isReadyToPlay() == true) : true
+        let isReadyToPlay = player?.isReadyToPlay() == true
         if let player, isReadyToPlay {
             player.seekTo(time, completion: { [weak self] () in
                 guard let strongSelf = self else { return }
@@ -837,7 +835,7 @@ final class PlaybackManager {
         if queueCount == 0 { return }
 
         var index = 0
-        if FeatureFlag.upNextShuffle.enabled, queueCount > 1, Settings.upNextShuffleEnabled() {
+        if queueCount > 1, Settings.upNextShuffleEnabled() {
             index = Int.random(in: 0..<queueCount)
             FileLog.shared.addMessage("Play Next Episode with Shuffle enabled: playing episode \(index) out of \(queueCount)")
         }
@@ -846,7 +844,7 @@ final class PlaybackManager {
 
         FileLog.shared.addMessage("Play Next Episode \(nextEpisode.displayableTitle())")
 
-        if FeatureFlag.upNextShuffle.enabled, queueCount > 1, index > 0 {
+        if queueCount > 1, index > 0 {
             queue.move(episode: nextEpisode, to: 0)
         }
 
@@ -1127,7 +1125,6 @@ final class PlaybackManager {
             player.effectsDidChange()
         }
         updateAllNowPlayingData()
-        checkIfStreamBufferRequired(episode: episode, effects: effects)
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEffectsChanged)
     }
@@ -1585,18 +1582,14 @@ final class PlaybackManager {
     func activateAudioSession(completion: ((Bool) -> Void)?) {
         shouldDeactivateSession.value = false
 
-        if FeatureFlag.activateAudioSessionInBackground.enabled {
-            // Perform audio session activation on a background queue to avoid blocking the main thread
-            let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self else {
-                    boxedCompletion.value?(false)
-                    return
-                }
-                self.activateSession(completion: boxedCompletion.value)
+        // Perform audio session activation on a background queue to avoid blocking the main thread
+        let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else {
+                boxedCompletion.value?(false)
+                return
             }
-        } else {
-            self.activateSession(completion: completion)
+            self.activateSession(completion: boxedCompletion.value)
         }
     }
 
@@ -1921,11 +1914,9 @@ final class PlaybackManager {
                     FileLog.shared.addMessage("Remote control: playCommand, treating as play because playing over AirPlay")
                     if !strongSelf.playing() { strongSelf.play() }
                 } else {
-                    if FeatureFlag.ignorePlayWithOtherAudio.enabled {
-                        if AVAudioSession.sharedInstance().isOtherAudioPlaying {
-                            FileLog.shared.addMessage("Remote control: playCommand, ignored because other audio is playing")
-                            return .commandFailed
-                        }
+                    if AVAudioSession.sharedInstance().isOtherAudioPlaying {
+                        FileLog.shared.addMessage("Remote control: playCommand, ignored because other audio is playing")
+                        return .commandFailed
                     }
                     // we hook play up to play/pause because that's how some headphones/car stereos do it instead of sending distinct play/pause events
                     FileLog.shared.addMessage("Remote control: playCommand, treating as playPause")
@@ -2017,13 +2008,11 @@ final class PlaybackManager {
                     } else {
                         FileLog.shared.addMessage("Remote control: changePlaybackPositionCommand to \(seekEvent.positionTime)")
 
-                        if FeatureFlag.limitPlaybackPositionChanges.enabled {
-                            // Check if we're still in the limiting window after an episode change
-                            if let switchTime = episodeSwitchTime,
-                               Date.now.timeIntervalSince(switchTime) < 2.0 {
-                                FileLog.shared.addMessage("Remote control: ignoring changePlaybackPositionCommand due to recent episode switch")
-                                return .commandFailed
-                            }
+                        // Check if we're still in the limiting window after an episode change
+                        if let switchTime = episodeSwitchTime,
+                           Date.now.timeIntervalSince(switchTime) < 2.0 {
+                            FileLog.shared.addMessage("Remote control: ignoring changePlaybackPositionCommand due to recent episode switch")
+                            return .commandFailed
                         }
 
                         seekTo(time: seekEvent.positionTime)
@@ -2233,16 +2222,7 @@ final class PlaybackManager {
             // subsequent InterruptionType.ended notification, to set interruptInProgress correctly.
             // When routes are disconnected, there is no associated end event though. If the route reconnects, we'll
             // receive a different notification which is already handled elsewhere.
-            // Keep this check behind a feature flag so we can remotely revert to the old logic if
-            // we run into any issues.
-            if FeatureFlag.ignoreRouteDisconnectedInterruption.enabled {
-                if interruptionReason != AVAudioSession.InterruptionReason.routeDisconnected.rawValue {
-                    interruptInProgress = true
-                }
-            } else {
-                // We do not get the InterruptionReason.routeDisconnected notification on older versions, so
-                // no need to perform the same check for older versions.
-                // Also, will default to the old behaviour if the feature flag is disabled on newer versions.
+            if interruptionReason != AVAudioSession.InterruptionReason.routeDisconnected.rawValue {
                 interruptInProgress = true
             }
 
@@ -2329,9 +2309,7 @@ final class PlaybackManager {
     func needsToReloadPlayingEpisode(_ refreshedEpisode: BaseEpisode) -> Bool {
         let episodeIsChanging = refreshedEpisode.uuid != currentEpisode()?.uuid
 
-        if FeatureFlag.doNotSwitchToDownloadedFile.enabled,
-           FeatureFlag.streamAndCachePlayingEpisode.enabled,
-           !episodeIsChanging,
+        if !episodeIsChanging,
            effects().trimSilence == .off,
            !playerSwitchRequired(),
            !refreshedEpisode.videoPodcast() {
@@ -2353,9 +2331,7 @@ final class PlaybackManager {
 
     @objc private func handleCurrentlyPlayingEpisodeUpdated() {
         // Update episode switch time when the currently playing episode changes
-        if FeatureFlag.limitPlaybackPositionChanges.enabled {
-            episodeSwitchTime = Date()
-        }
+        episodeSwitchTime = Date()
     }
 
     // MARK: - Interruptions
@@ -2365,14 +2341,6 @@ final class PlaybackManager {
     }
 
     // MARK: - Private helpers
-
-    private func checkIfStreamBufferRequired(episode: BaseEpisode, effects: PlaybackEffects) {
-        let downloadEpisode = effects.trimSilence.isEnabled() && !FeatureFlag.streamAndCachePlayingEpisode.enabled
-        if downloadEpisode, !episode.downloaded(pathFinder: DownloadManager.shared) {
-            // the user is streaming and has turned on remove silence, kick off a download so we can fulfill that request
-            DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .playerDownloadedForStreaming)
-        }
-    }
 
     private func startFromTimeForCurrentEpisode() -> TimeInterval {
         guard let episode = currentEpisode() as? Episode, let parentPodcast = episode.parentPodcast() else { return 0 }

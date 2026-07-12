@@ -91,8 +91,6 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
     }
 
     private func cleanupNetworkDataUsageIfNeeded() {
-        guard FeatureFlag.trackNetworkDataUsage.enabled else { return }
-
         let defaults = UserDefaults.standard
         let lastCleanupDate = defaults.object(forKey: Constants.UserDefaults.lastNetworkDataUsageCleanupDate) as? Date
 

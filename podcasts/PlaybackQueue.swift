@@ -249,7 +249,7 @@ class PlaybackQueue: NSObject {
         FileLog.shared.addMessage("PlaybackQueue: overrideAllEpisodesWith with \(episode.title ?? "Untitled")")
 
         let upNext = DataManager.sharedManager.allUpNextEpisodes()
-        let shouldRemoveInsteadOfReplace = FeatureFlag.avoidReplaceOnEpisodeSwap.enabled && upNext.count == 1
+        let shouldRemoveInsteadOfReplace = upNext.count == 1
 
         if shouldRemoveInsteadOfReplace {
             if let episode = upNext.first {
@@ -259,11 +259,7 @@ class PlaybackQueue: NSObject {
 
         DataManager.sharedManager.deleteAllUpNextEpisodes()
         if !shouldRemoveInsteadOfReplace {
-            if FeatureFlag.replaceSpecificEpisode.enabled {
-                saveReplaceIfRequired(episodeList: [episode.uuid])
-            } else {
-                saveReplaceIfRequired()
-            }
+            saveReplaceIfRequired(episodeList: [episode.uuid])
         }
 
         pushNewCurrentlyPlaying(episode: episode)
@@ -404,7 +400,7 @@ class PlaybackQueue: NSObject {
         if !Settings.downloadUpNextEpisodes() { return }
 
         DispatchQueue.global().async {
-            let episodes = Self.allUpNextEpisodesFromDatabase(includeNowPlaying: !FeatureFlag.streamAndCachePlayingEpisode.enabled)
+            let episodes = Self.allUpNextEpisodesFromDatabase(includeNowPlaying: false)
             for episode in episodes {
                 Self.autoDownloadIfRequired(episode: episode)
             }

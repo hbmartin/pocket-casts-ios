@@ -144,7 +144,6 @@ nonisolated final class StreamingCellularTracker: @unchecked Sendable {
     }
 
     private func reportConnectionBytes(_ bytes: Int64) {
-        guard FeatureFlag.trackNetworkDataUsage.enabled else { return }
         guard bytes > 0 else { return }
         let connectionType = currentConnectionType
 

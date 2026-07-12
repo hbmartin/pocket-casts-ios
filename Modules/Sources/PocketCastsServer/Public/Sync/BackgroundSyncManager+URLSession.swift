@@ -4,8 +4,6 @@ import PocketCastsUtils
 
 extension BackgroundSyncManager: URLSessionDelegate, URLSessionDownloadDelegate {
     public func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
-        guard FeatureFlag.trackNetworkDataUsage.enabled else { return }
-
         let bytesReceived = task.countOfBytesReceived
         let bytesSent = task.countOfBytesSent
         let connectionType = NetworkDataUsageManager.connectionType(from: metrics)

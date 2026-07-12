@@ -148,8 +148,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         } else {
             DispatchQueue.main.sync { MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playerItem.asset as? AVURLAsset) } }
         }
-        if FeatureFlag.trackNetworkDataUsage.enabled,
-           let urlAsset = boxedAsset.value,
+        if let urlAsset = boxedAsset.value,
            !urlAsset.url.isFileURL,
            !(urlAsset.url.scheme?.hasPrefix(MediaExporterResourceLoaderDelegate.schemePrefix) ?? false) {
             cellularTracker = StreamingCellularTracker()
@@ -339,8 +338,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         let playerNSError = playerError as? NSError
 
         var retryUuid: String?
-        if FeatureFlag.whenPlayingOnlyUpdateEpisodeIfPlaybackFails.enabled,
-           let playerNSError, playerNSError.domain == NSURLErrorDomain, playerNSError.code != NSURLErrorNotConnectedToInternet,
+        if let playerNSError, playerNSError.domain == NSURLErrorDomain, playerNSError.code != NSURLErrorNotConnectedToInternet,
            let episodeUuid {
             retryUuid = episodeUuid
         }
@@ -447,15 +445,9 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     private static func unretainedDefaultPlayer(for pointer: UnsafeMutableRawPointer) -> DefaultPlayer? {
-        if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-            let cookie = Unmanaged<AudioProcessingTapProxy>.fromOpaque(pointer).takeUnretainedValue()
-            guard let player = cookie.input else { return nil }
-            return player
-        } else if FeatureFlag.defaultPlayerFilterCallbackFix.enabled {
-            return Unmanaged<DefaultPlayer>.fromOpaque(pointer).takeUnretainedValue()
-        } else {
-            return unsafeBitCast(pointer, to: DefaultPlayer.self)
-        }
+        let cookie = Unmanaged<AudioProcessingTapProxy>.fromOpaque(pointer).takeUnretainedValue()
+        guard let player = cookie.input else { return nil }
+        return player
     }
 
         private func createAudioMix() {
@@ -464,11 +456,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             let mutableMix = AVMutableAudioMix()
             let audioMixInputParameters = AVMutableAudioMixInputParameters(track: assetTrack)
 
-            var clientInfo = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let tapCookie = AudioProcessingTapProxy(input: self)
-                clientInfo = UnsafeMutableRawPointer(Unmanaged.passRetained(tapCookie).toOpaque())
-            }
+            let tapCookie = AudioProcessingTapProxy(input: self)
+            let clientInfo = UnsafeMutableRawPointer(Unmanaged.passRetained(tapCookie).toOpaque())
 
             var callbacks = MTAudioProcessingTapCallbacks(
                 version: kMTAudioProcessingTapCallbacksVersion_0,
@@ -514,10 +503,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         }
 
         let tapFinalize: MTAudioProcessingTapFinalizeCallback = { tap in
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                FileLog.shared.console("[AudioProcessingTapProxy] Finalize tap: \(tap)\n")
-                Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).release()
-            }
+            FileLog.shared.console("[AudioProcessingTapProxy] Finalize tap: \(tap)\n")
+            Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).release()
         }
 
         let tapPrepare: MTAudioProcessingTapPrepareCallback = { tap, maxFrames, processingFormat in
@@ -720,13 +707,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
 
             // Set audio unit render callback
-            var renderCallback: AURenderCallbackStruct
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
-                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.peakLimiterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
-            } else {
-                renderCallback = AURenderCallbackStruct(inputProc: peakLimiterRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
-            }
+            let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+            var renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.peakLimiterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
 
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
 
@@ -787,13 +769,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
 
             // Set audio unit render callback
-            var renderCallback: AURenderCallbackStruct
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
-                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.dynamicsProcessorRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
-            } else {
-                renderCallback = AURenderCallbackStruct(inputProc: dynamicsProcessorRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
-            }
+            let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+            var renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.dynamicsProcessorRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
 
             // Set audio unit maximum frames per slice to max frames
@@ -861,13 +838,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
 
             // Set audio unit render callback
-            var renderCallback: AURenderCallbackStruct
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
-                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.highPassFilterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
-            } else {
-                renderCallback = AURenderCallbackStruct(inputProc: highPassFilterRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
-            }
+            let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+            var renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.highPassFilterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
 
             // Set audio unit maximum frames per slice to max frames
@@ -1066,10 +1038,6 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         playToEndObserver = nc.addObserver(forName: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil, queue: nil) { [weak self] notification in
             guard let self else { return }
 
-            if !FeatureFlag.checkFinishedTimeBeforeShouldKeepPlaying.enabled {
-                self.shouldKeepPlaying = false
-            }
-
             if let itemThatFinished = notification.object as? AVPlayerItem {
                 let duration = CMTimeGetSeconds(itemThatFinished.duration)
                 let upTo = CMTimeGetSeconds(itemThatFinished.currentTime())
@@ -1090,19 +1058,15 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                     return
                 }
 
-                if FeatureFlag.checkFinishedTimeBeforeShouldKeepPlaying.enabled {
-                    // Additional safeguard: check if buffer is empty (shouldn't be if truly finished)
-                    // A truly finished item should have reached the end naturally, not due to buffer exhaustion
-                    if itemThatFinished.isPlaybackBufferEmpty && !itemThatFinished.isPlaybackLikelyToKeepUp {
-                        FileLog.shared.addMessage("Item reports finished but buffer is empty and playback unlikely to keep up - ignoring")
-                        return
-                    }
+                // Additional safeguard: check if buffer is empty (shouldn't be if truly finished)
+                // A truly finished item should have reached the end naturally, not due to buffer exhaustion
+                if itemThatFinished.isPlaybackBufferEmpty && !itemThatFinished.isPlaybackLikelyToKeepUp {
+                    FileLog.shared.addMessage("Item reports finished but buffer is empty and playback unlikely to keep up - ignoring")
+                    return
                 }
             }
 
-            if FeatureFlag.checkFinishedTimeBeforeShouldKeepPlaying.enabled {
-                self.shouldKeepPlaying = false
-            }
+            self.shouldKeepPlaying = false
 
             Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
         }

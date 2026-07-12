@@ -63,15 +63,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         self.tuning = tuning
         self.knownLUFS = knownLUFS
 
-        let qos: DispatchQoS
-
-        if FeatureFlag.effectsPlayerQOSUpgrade.enabled {
-            qos = .userInitiated
-        } else {
-            qos = .default
-        }
-
-        readQueue = DispatchQueue(label: "au.com.pocketcasts.ReadQueue", qos: qos, attributes: [], autoreleaseFrequency: .never, target: nil)
+        readQueue = DispatchQueue(label: "au.com.pocketcasts.ReadQueue", qos: .userInitiated, attributes: [], autoreleaseFrequency: .never, target: nil)
 
         reconfigureDetector()
 

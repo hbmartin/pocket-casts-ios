@@ -1365,10 +1365,10 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
             }
         }
         // Active streaming: the file is either absent or still growing.
-        // `MediaExporterResourceLoaderDelegate` (stream-and-cache, default on)
-        // writes to `tempPathForEpisode`, while the legacy URLSession path writes
-        // to `streamingBufferPathForEpisode`. Prefer whichever file already
-        // exists; otherwise pick the one the active feature flag selects.
+        // `MediaExporterResourceLoaderDelegate` (stream-and-cache) writes to
+        // `tempPathForEpisode`, while the legacy URLSession path writes to
+        // `streamingBufferPathForEpisode`. Prefer whichever file already
+        // exists; otherwise pick the stream-and-cache path.
         let tempPath = episode.tempPath
         let streamingPath = episode.streamingBufferPath
         if FileManager.default.fileExists(atPath: tempPath) {
@@ -1377,8 +1377,7 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
         if FileManager.default.fileExists(atPath: streamingPath) {
             return .streaming(URL(fileURLWithPath: streamingPath))
         }
-        let preferred = FeatureFlag.streamAndCachePlayingEpisode.enabled ? tempPath : streamingPath
-        return .streaming(URL(fileURLWithPath: preferred))
+        return .streaming(URL(fileURLWithPath: tempPath))
     }
 }
 

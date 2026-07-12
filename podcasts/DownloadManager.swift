@@ -368,8 +368,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         } else {
             DispatchQueue.main.sync { MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playbackItem.asset as? AVURLAsset) } }
         }
-        guard FeatureFlag.streamAndCachePlayingEpisode.enabled,
-              !episode.videoPodcast(),
+        guard !episode.videoPodcast(),
               !episode.isUserEpisode,
               let urlAsset = boxedAsset.value,
               !urlAsset.url.isFileURL, // only  start download if it's a remote file that we are playing
@@ -556,7 +555,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             sessionToUse = useCellularSession ? cellularBackgroundSession : wifiOnlyBackgroundSession
         }
 
-        if FeatureFlag.streamAndCachePlayingEpisode.enabled, downloadAndStreamEpisodes[episode.uuid] != nil {
+        if downloadAndStreamEpisodes[episode.uuid] != nil {
             return
         }
 
@@ -618,7 +617,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             saveRequired = true
         }
 
-        if FeatureFlag.streamAndCachePlayingEpisode.enabled, downloadAndStreamEpisodes[episode.uuid] != nil {
+        if downloadAndStreamEpisodes[episode.uuid] != nil {
             episode.downloadTaskId = episode.uuid
             episode.autoDownloadStatus = AutoDownloadStatus.playerDownloadedForStreaming.rawValue
             saveRequired = true
