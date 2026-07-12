@@ -153,6 +153,14 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             }
 
             return cell
+        case .skipChapters:
+            let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.disclosureCellId, for: indexPath) as! DisclosureCell
+            cell.cellLabel.text = L10n.podcastSettingsSkipChapters
+            cell.setImage(imageName: "deselect_chapters", tintColor: podcast.iconTintColor())
+            let patternCount = podcast.settings.skipChapterTitles?.count ?? 0
+            cell.showSecondaryLabel = patternCount > 0
+            cell.cellSecondaryLabel.text = patternCount > 0 ? patternCount.localized() : nil
+            return cell
         case .autoArchive:
             let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.disclosureCellId, for: indexPath) as! DisclosureCell
             cell.cellLabel.text = L10n.settingsAutoArchive
@@ -242,6 +250,11 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         } else if row == .playbackEffects {
             let effectsController = PodcastEffectsViewController(podcast: podcast)
             navigationController?.pushViewController(effectsController, animated: true)
+        } else if row == .skipChapters {
+            let skipChaptersView = PodcastSkipChaptersView(podcast: podcast).environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: skipChaptersView)
+            hostingController.title = L10n.podcastSettingsSkipChapters
+            navigationController?.pushViewController(hostingController, animated: true)
         } else if row == .autoArchive {
             let archiveController = PodcastArchiveViewController(podcast: podcast)
             navigationController?.pushViewController(archiveController, animated: true)
@@ -402,7 +415,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
     }
 
     private func tableData() -> [[TableRow]] {
-        var data: [[TableRow]] = [[.autoDownload, .notifications], [.upNext], [.playbackEffects, .skipFirst, .skipLast], [.autoArchive]]
+        var data: [[TableRow]] = [[.autoDownload, .notifications], [.upNext], [.playbackEffects, .skipFirst, .skipLast, .skipChapters], [.autoArchive]]
 
         if podcast.refreshAvailable {
             data.insert([.feedError], at: 0)

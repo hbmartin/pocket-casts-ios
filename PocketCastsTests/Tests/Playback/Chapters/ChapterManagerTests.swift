@@ -88,6 +88,7 @@ class ChapterManagerTests: XCTestCase {
     }
 }
 
+// @unchecked Sendable: subclass restating PodcastChapterParser's conformance; chapters is set before use on the test thread.
 class PodcastChapterParserMock: PodcastChapterParser, @unchecked Sendable {
     var chapters: [ChapterInfo] = []
 

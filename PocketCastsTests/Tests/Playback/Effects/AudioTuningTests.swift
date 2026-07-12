@@ -105,10 +105,58 @@ final class AudioTuningTests: XCTestCase {
         tuning.voiceBoost.truePeakEnabled = true
         tuning.timeStretch.effectsPlayerAlgorithm = .spectral
         tuning.timeStretch.defaultPlayerAlgorithm = .varispeed
+        tuning.normalize.enabled = true
+        tuning.normalize.targetLUFS = -18
 
         let data = try JSONEncoder().encode(tuning)
         let decoded = try JSONDecoder().decode(AudioTuning.self, from: data)
         XCTAssertEqual(decoded, tuning)
+    }
+
+    // MARK: - Normalize volume (E1)
+
+    func testNormalizeDefaultsOffAtMinusSixteen() {
+        let tuning = AudioTuning.default
+        XCTAssertFalse(tuning.normalize.enabled)
+        XCTAssertEqual(tuning.normalize.targetLUFS, -16)
+    }
+
+    func testNormalizeTargetClampsOnDecode() throws {
+        let json = """
+        {"normalize": {"enabled": true, "targetLUFS": -60}}
+        """
+        let decoded = try JSONDecoder().decode(AudioTuning.self, from: Data(json.utf8))
+        XCTAssertTrue(decoded.normalize.enabled)
+        XCTAssertEqual(decoded.normalize.targetLUFS, NormalizeTuning.targetLUFSRange.lowerBound)
+
+        let high = try JSONDecoder().decode(AudioTuning.self, from: Data("{\"normalize\": {\"targetLUFS\": 3}}".utf8))
+        XCTAssertEqual(high.normalize.targetLUFS, NormalizeTuning.targetLUFSRange.upperBound)
+    }
+
+    func testNormalizeMissingSectionDecodesToDefault() throws {
+        let decoded = try JSONDecoder().decode(AudioTuning.self, from: Data("{\"voiceBoost\": {\"targetLUFS\": -14}}".utf8))
+        XCTAssertEqual(decoded.normalize, NormalizeTuning())
+    }
+
+    func testNormalizeConfigBypassesCharacterProcessing() {
+        var tuning = AudioTuning.default
+        tuning.normalize.enabled = true
+        tuning.normalize.targetLUFS = -18
+        // Character settings on the boost chain must not leak into normalize-only playback.
+        tuning.voiceBoost.compEnabled = true
+        tuning.voiceBoost.hpEnabled = true
+        tuning.voiceBoost.targetLUFS = -12
+
+        let config = tuning.vbnNormalizeConfig()
+        XCTAssertEqual(config.targetLUFS, -18)
+        XCTAssertFalse(config.compEnabled)
+        XCTAssertFalse(config.hpEnabled)
+        XCTAssertTrue(config.truePeakEnabled, "the true-peak limiter is the safety net and always stays on")
+
+        // The boost config is unaffected by normalize settings.
+        let boostConfig = tuning.vbnConfig()
+        XCTAssertEqual(boostConfig.targetLUFS, -12)
+        XCTAssertTrue(boostConfig.compEnabled)
     }
 
     func testDecodingEmptyObjectYieldsDefaults() throws {

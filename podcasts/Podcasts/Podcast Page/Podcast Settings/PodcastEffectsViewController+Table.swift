@@ -177,7 +177,7 @@ extension PodcastEffectsViewController: UITableViewDataSource, UITableViewDelega
         #if APPCLIP
         false
         #else
-        FeatureFlag.customPlaybackSettings.enabled
+        true
         #endif
     }
 

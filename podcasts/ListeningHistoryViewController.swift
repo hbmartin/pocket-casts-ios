@@ -84,9 +84,7 @@ class ListeningHistoryViewController: PCViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        if FeatureFlag.listeningHistorySearch.enabled {
-            setupSearchController()
-        }
+        setupSearchController()
 
         operationQueue.maxConcurrentOperationCount = 1
         title = L10n.listeningHistory
@@ -111,7 +109,9 @@ class ListeningHistoryViewController: PCViewController {
         addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.listeningHistoryChanged, selector: #selector(refreshEpisodesFromNotification))

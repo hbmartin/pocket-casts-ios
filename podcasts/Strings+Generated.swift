@@ -506,6 +506,12 @@ nonisolated internal enum L10n {
   internal static func bookmarksEarlyAccessLockedMessage(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "bookmarks_early_access_locked_message", String(describing: p1), String(describing: p2), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes. Available for %2$@ subscribers soon.")
   }
+  /// Option menu action that exports the bookmark list as a Markdown document
+  internal static var bookmarksExportOption: String { return L10n.tr("Localizable", "bookmarks_export_option", fallback: "Export as Markdown") }
+  /// Heading used in the bookmark Markdown export when an episode no longer exists
+  internal static var bookmarksExportUnknownEpisode: String { return L10n.tr("Localizable", "bookmarks_export_unknown_episode", fallback: "Unknown Episode") }
+  /// Heading used in the bookmark Markdown export when a podcast no longer exists
+  internal static var bookmarksExportUnknownPodcast: String { return L10n.tr("Localizable", "bookmarks_export_unknown_podcast", fallback: "Unknown Podcast") }
   /// A message informing the user a feature is locked. %1$@ is the name of the tier (Plus or Patron)
   internal static func bookmarksLockedMessage(_ p1: Any) -> String {
     return L10n.tr("Localizable", "bookmarks_locked_message", String(describing: p1), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes.")
@@ -1326,6 +1332,14 @@ nonisolated internal enum L10n {
   internal static var error: String { return L10n.tr("Localizable", "error", fallback: "Error") }
   /// A common string used throughout the app. Generic title informing the user of an Error. General error message used when the app is unable to locate the podcast that was selected. This usually comes from a sharing or import feature.
   internal static var errorGeneralPodcastNotFound: String { return L10n.tr("Localizable", "error_general_podcast_not_found", fallback: "Unable to find podcast. Please contact the podcast author.") }
+  /// Explore tab: label for the category chip that shows the overall top charts across all categories.
+  internal static var exploreAllCategories: String { return L10n.tr("Localizable", "explore_all_categories", fallback: "All") }
+  /// Explore tab: error message shown when the podcast charts or search results fail to load.
+  internal static var exploreLoadFailed: String { return L10n.tr("Localizable", "explore_load_failed", fallback: "Unable to load podcasts. Check your connection and try again.") }
+  /// Explore tab: message shown when a podcast search returns no results.
+  internal static var exploreNoResults: String { return L10n.tr("Localizable", "explore_no_results", fallback: "No podcasts found") }
+  /// Title of the Explore tab in the main tab bar, where users can discover new podcasts.
+  internal static var exploreTabTitle: String { return L10n.tr("Localizable", "explore_tab_title", fallback: "Explore") }
   /// Title of an option to export the users data
   internal static var exportDatabase: String { return L10n.tr("Localizable", "export_database", fallback: "Export Database") }
   /// Describes how the process to export podcasts from Pocket Casts works.
@@ -3031,6 +3045,8 @@ nonisolated internal enum L10n {
   internal static func podcastSeasonFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_season_format", String(describing: p1), fallback: "Season %1$@")
   }
+  /// Podcast settings row and screen title for the chapter smart-skip rules editor.
+  internal static var podcastSettingsSkipChapters: String { return L10n.tr("Localizable", "podcast_settings_skip_chapters", fallback: "Skip Chapters") }
   /// Prompt to allow the user to share the currently selected episode.
   internal static var podcastShareEpisode: String { return L10n.tr("Localizable", "podcast_share_episode", fallback: "Share Link to Episode") }
   /// Error message used when there are no available apps that can accept the podcast file.
@@ -3551,6 +3567,20 @@ nonisolated internal enum L10n {
   internal static var settingsCustomAutoArchiveMsg: String { return L10n.tr("Localizable", "settings_custom_auto_archive_msg", fallback: "Need more fine grained control? Enable auto-archive settings for this podcast") }
   /// A message accompanying the toggle to set custom settings for a particular podcast.
   internal static var settingsCustomMsg: String { return L10n.tr("Localizable", "settings_custom_msg", fallback: "Pocket Casts will remember your last playback effects and use them on all podcasts. You can enable this if you want to create custom ones for just this podcast.") }
+  /// Settings row and screen title for per-device playback rules.
+  internal static var settingsDevices: String { return L10n.tr("Localizable", "settings_devices", fallback: "Devices") }
+  /// Toggle to automatically resume playback when this audio device connects.
+  internal static var settingsDevicesAutoResume: String { return L10n.tr("Localizable", "settings_devices_auto_resume", fallback: "Auto-Resume on Connect") }
+  /// Empty state shown when no audio devices have been seen yet.
+  internal static var settingsDevicesEmpty: String { return L10n.tr("Localizable", "settings_devices_empty", fallback: "Devices you listen with will appear here after they connect, so you can choose what happens when they connect or disconnect.") }
+  /// Footer explaining the per-device playback rules.
+  internal static var settingsDevicesFooter: String { return L10n.tr("Localizable", "settings_devices_footer", fallback: "Auto-resume starts playback when the device connects and an episode is paused. Pause on disconnect pauses playback when the device disconnects.") }
+  /// Footer showing when an audio device was last seen. '%1$@' is a placeholder for a relative date like 'yesterday'.
+  internal static func settingsDevicesLastSeenFormat(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "settings_devices_last_seen_format", String(describing: p1), fallback: "Last seen %1$@")
+  }
+  /// Toggle to pause playback when this audio device disconnects.
+  internal static var settingsDevicesPauseOnDisconnect: String { return L10n.tr("Localizable", "settings_devices_pause_on_disconnect", fallback: "Pause on Disconnect") }
   /// Provides a prompt for the user to configure the settings related to episode limits. This controls how many episodes will be preserved before auto archiving them.
   internal static var settingsEpisodeLimit: String { return L10n.tr("Localizable", "settings_episode_limit", fallback: "Episode Limit") }
   /// Informs the user of max episode count for the up next queue. This value is configurable. '%1$@' is a placeholder for the current value as set by the user.
@@ -3641,6 +3671,10 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralMultiSelectGestureSubtitle: String { return L10n.tr("Localizable", "settings_general_multi_select_gesture_subtitle", fallback: "Multi-select by dragging 2 fingers down on any episode list. Turn this off if you find yourself triggering this accidentally or it interferes with the accessibility features you use.") }
   /// Option to not move forward with a prompt to apply to all podcasts.
   internal static var settingsGeneralNoThanks: String { return L10n.tr("Localizable", "settings_general_no_thanks", fallback: "No thanks") }
+  /// Toggle in General settings enabling loudness normalization playback (gain to a target level, no compression)
+  internal static var settingsGeneralNormalizeVolume: String { return L10n.tr("Localizable", "settings_general_normalize_volume", fallback: "Normalize Volume") }
+  /// Footer explaining the Normalize Volume toggle
+  internal static var settingsGeneralNormalizeVolumeSubtitle: String { return L10n.tr("Localizable", "settings_general_normalize_volume_subtitle", fallback: "Play every episode at a consistent loudness. Gentle level matching only — no compression. When Volume Boost is on it takes over, since it already normalizes.") }
   /// Setting toggle to enable the app to open the links in an external browser.
   internal static var settingsGeneralOpenInBrowser: String { return L10n.tr("Localizable", "settings_general_open_in_browser", fallback: "Open Links In Browser") }
   /// Setting toggle to modify what controls are available on the lock screen.
@@ -4065,6 +4099,14 @@ nonisolated internal enum L10n {
   internal static var skipBack: String { return L10n.tr("Localizable", "skip_back", fallback: "Skip Back") }
   /// Label that toggles the option for the user to choose which chapters of the podcast they want to skip (to not be played)
   internal static var skipChapters: String { return L10n.tr("Localizable", "skip_chapters", fallback: "Preselect chapters") }
+  /// Accessibility label for the button that adds the typed chapter skip phrase to the list.
+  internal static var skipChaptersAddButton: String { return L10n.tr("Localizable", "skip_chapters_add_button", fallback: "Add") }
+  /// Placeholder for the text field used to add a new chapter skip phrase.
+  internal static var skipChaptersAddPlaceholder: String { return L10n.tr("Localizable", "skip_chapters_add_placeholder", fallback: "Add a word or phrase") }
+  /// Empty state shown when no chapter skip phrases have been added yet.
+  internal static var skipChaptersEmpty: String { return L10n.tr("Localizable", "skip_chapters_empty", fallback: "No phrases yet. Try adding something like “sponsor” or “ad break”.") }
+  /// Footer explaining how the chapter skip phrases are applied.
+  internal static var skipChaptersExplanation: String { return L10n.tr("Localizable", "skip_chapters_explanation", fallback: "Chapters with titles containing any of these phrases will be skipped automatically for this podcast. Re-enabling a chapter in the player keeps it playable for the rest of the session.") }
   /// Prompt for Plus mentioning Pre selecting Chapters, don't translate Pocket Casts Patron
   internal static var skipChaptersPatronPrompt: String { return L10n.tr("Localizable", "skip_chapters_patron_prompt", fallback: "Preselect chapters and more with Pocket Casts Patron") }
   /// Prompt for Plus mentioning Pre selecting Chapters, don't translate Pocket Casts Plus
@@ -4561,6 +4603,10 @@ nonisolated internal enum L10n {
   internal static var upNextSortOldestToNewest: String { return L10n.tr("Localizable", "up_next_sort_oldest_to_newest", fallback: "Oldest to newest") }
   /// Up Next sort option that orders episodes by time remaining, shortest first
   internal static var upNextSortShortestToLongest: String { return L10n.tr("Localizable", "up_next_sort_shortest_to_longest", fallback: "Shortest to longest") }
+  /// Message of a tip pointing at the sort button on the Up Next screen, explaining what tapping it does
+  internal static var upNextSortTipMessage: String { return L10n.tr("Localizable", "up_next_sort_tip_message", fallback: "Tap to reorder the queue by date or duration.") }
+  /// Title of a tip pointing at the sort button on the Up Next screen
+  internal static var upNextSortTipTitle: String { return L10n.tr("Localizable", "up_next_sort_tip_title", fallback: "Sort your Up Next") }
   /// Title shown at the top of the Up Next sort options picker
   internal static var upNextSortTitle: String { return L10n.tr("Localizable", "up_next_sort_title", fallback: "Sort Up Next") }
   /// Label of a button that informs the user they can upgrade their account. .

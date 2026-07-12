@@ -24,6 +24,15 @@ if File.exist?(xcode_result_bundle)
   xcode_summary.report(xcode_result_bundle)
 end
 
+build_log_path = ENV.fetch('POCKET_CASTS_BUILD_LOG_PATH', 'build/github/logs/test-staging.log')
+begin
+  require_relative 'scripts/ci/build-time-report'
+  build_time_table = BuildTimeReport.markdown(build_log_path)
+  markdown(build_time_table) if build_time_table
+rescue StandardError => e
+  warn("Build-time report could not be generated: #{e.message}")
+end
+
 if File.directory?(derived_data_path)
   begin
     slather.configure(

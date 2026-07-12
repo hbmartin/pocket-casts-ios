@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsUtils
 import Synchronization
 
 nonisolated struct OpmlFeed: Equatable, Sendable {
@@ -117,6 +118,7 @@ nonisolated final class OpmlImportState: Sendable {
     }
 }
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; counters live in the lock-guarded OpmlImportState, the rest is confined to main().
 nonisolated class OpmlImporter: Operation, @unchecked Sendable {
     private let opmlFileUrl: URL
     private let progressWindow: ShiftyLoadingAlert?
@@ -175,6 +177,20 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
                     pollImportPodcasts(pollUuids: pollUuidsToSend)
                     Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
+                }
+
+                // Signed out, feeds the catalog couldn't resolve still have to land, so
+                // they fall back to on-device ingest regardless of the local-ingest
+                // toggle. The chunk API doesn't attribute failures to URLs; "unresolved"
+                // is approximated as "no podcast row exists for the URL", which can
+                // rarely re-add a feed the server stored under a normalized URL — an
+                // acceptable, user-visible cost logged per feed.
+                if !SyncManager.isUserLoggedIn(), importState.failureCount > 0 {
+                    let unresolved = parsedUrls.filter { DataManager.sharedManager.findPodcast(feedURL: $0) == nil }
+                    if !unresolved.isEmpty {
+                        FileLog.shared.addMessage("OpmlImporter: signed-out fallback ingesting \(unresolved.count) unresolved feeds on device")
+                        importPodcastsLocally(urls: unresolved)
+                    }
                 }
             }
 

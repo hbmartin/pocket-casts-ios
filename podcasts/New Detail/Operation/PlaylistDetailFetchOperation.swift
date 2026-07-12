@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; all stored properties are immutable.
 nonisolated class PlaylistDetailFetchOperation: Operation, @unchecked Sendable {
     typealias CompletionHandler = ([ListEpisode], Int) -> Void
 

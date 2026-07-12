@@ -5,6 +5,7 @@ import PocketCastsUtils
 
 /// Audio pipeline reader; state is confined to its dispatch queue and the
 /// semaphore-coordinated buffer hand-off.
+/// @unchecked Sendable: mutable state is guarded by `lock` or confined to the read queue (see above).
 nonisolated final class AudioReadTask: @unchecked Sendable {
     private let cancelled = AtomicBool()
 
@@ -41,6 +42,11 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
 
     private var voiceBoostNState: OpaquePointer?
     private var useVoiceBoostN: AtomicBool?
+    private var useNormalize: AtomicBool?
+    /// Which configuration the live VBN state was created with, so a
+    /// boost ↔ normalize switch recreates it instead of reusing the wrong chain.
+    private enum VBNMode { case boost, normalize }
+    private var activeVBNMode: VBNMode?
     private var voiceBoostNSampleRate: Double = 0
     private var hasProcessedFirstBuffer = false
     /// Cached mono→stereo conversion objects, created once and reused per buffer
@@ -51,26 +57,19 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     /// Integrated LUFS precomputed for this episode; 0 = unknown (adapt live).
     private let knownLUFS: Double
 
-    init(trimSilence: TrimSilenceAmount, audioFile: AVAudioFile, outputFormat: AVAudioFormat, bufferManager: PlayBufferManager, playPositionHint: TimeInterval, frameCount: Int64, useVoiceBoostN: AtomicBool? = nil, sampleRate: Double = 0, tuning: AudioTuning = PlaybackManager.engineState.tuning, knownLUFS: Double = 0) {
+    init(trimSilence: TrimSilenceAmount, audioFile: AVAudioFile, outputFormat: AVAudioFormat, bufferManager: PlayBufferManager, playPositionHint: TimeInterval, frameCount: Int64, useVoiceBoostN: AtomicBool? = nil, useNormalize: AtomicBool? = nil, sampleRate: Double = 0, tuning: AudioTuning = PlaybackManager.engineState.tuning, knownLUFS: Double = 0) {
         self.trimSilence = trimSilence
         self.audioFile = audioFile
         self.outputFormat = outputFormat
         self.bufferManager = bufferManager
         cachedFrameCount = frameCount
         self.useVoiceBoostN = useVoiceBoostN
+        self.useNormalize = useNormalize
         voiceBoostNSampleRate = sampleRate
         self.tuning = tuning
         self.knownLUFS = knownLUFS
 
-        let qos: DispatchQoS
-
-        if FeatureFlag.effectsPlayerQOSUpgrade.enabled {
-            qos = .userInitiated
-        } else {
-            qos = .default
-        }
-
-        readQueue = DispatchQueue(label: "au.com.pocketcasts.ReadQueue", qos: qos, attributes: [], autoreleaseFrequency: .never, target: nil)
+        readQueue = DispatchQueue(label: "au.com.pocketcasts.ReadQueue", qos: .userInitiated, attributes: [], autoreleaseFrequency: .never, target: nil)
 
         reconfigureDetector()
 
@@ -137,7 +136,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             if let vbnState = voiceBoostNState {
                 VBN_Destroy(vbnState)
                 voiceBoostNState = nil
-                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                PlaybackManager.engineState.clearVoiceBoostMeters()
                 FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state destroyed on shutdown")
             }
         }
@@ -157,7 +156,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             self.tuning = tuning
             reconfigureDetector()
             if let vbnState = voiceBoostNState {
-                var config = tuning.vbnConfig()
+                var config = activeVBNMode == .normalize ? tuning.vbnNormalizeConfig() : tuning.vbnConfig()
                 VBN_SetConfig(vbnState, &config)
             }
         }
@@ -303,26 +302,40 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
 
             // Handle dynamic VoiceBoostN state creation/destruction (single-threaded
             // under `lock`; `shutdown()` takes the same lock before freeing this state).
-            let shouldUseVoiceBoostN = useVoiceBoostN?.value == true
-            if shouldUseVoiceBoostN && voiceBoostNState == nil {
-                var config = tuning.vbnConfig()
+            // Boost wins over normalize (the documented interlock); a mode switch
+            // recreates the state so the right chain (full boost vs gain+limiter
+            // only) is configured.
+            let requestedMode: VBNMode? = if useVoiceBoostN?.value == true {
+                .boost
+            } else if useNormalize?.value == true {
+                .normalize
+            } else {
+                nil
+            }
+
+            if requestedMode != activeVBNMode, voiceBoostNState != nil {
+                VBN_Destroy(voiceBoostNState)
+                voiceBoostNState = nil
+                PlaybackManager.engineState.clearVoiceBoostMeters()
+                FileLog.shared.addMessage("[AudioReadTask] VBN mode changed mid-playback (\(String(describing: activeVBNMode)) -> \(String(describing: requestedMode)))")
+            }
+
+            if let requestedMode, voiceBoostNState == nil {
+                var config = requestedMode == .boost ? tuning.vbnConfig() : tuning.vbnNormalizeConfig()
                 voiceBoostNState = VBN_CreateWithConfig(voiceBoostNSampleRate, &config)
                 if let vbnState = voiceBoostNState, knownLUFS != 0 {
                     // seed the gain from the precomputed loudness so playback starts
                     // at the right level instead of adapting over the first seconds
-                    VBN_SetInitialGainDB(vbnState, Float(tuning.voiceBoost.targetLUFS - knownLUFS))
+                    VBN_SetInitialGainDB(vbnState, config.targetLUFS - Float(knownLUFS))
                 }
+                let modeName = requestedMode == .boost ? "VoiceBoostN" : "Normalize"
                 if hasProcessedFirstBuffer {
-                    FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled mid-playback - created state at \(voiceBoostNSampleRate) Hz")
+                    FileLog.shared.addMessage("[AudioReadTask] \(modeName) enabled mid-playback - created state at \(voiceBoostNSampleRate) Hz")
                 } else {
-                    FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled - created state at \(voiceBoostNSampleRate) Hz\(knownLUFS != 0 ? " (seeded from \(knownLUFS) LUFS)" : "")")
+                    FileLog.shared.addMessage("[AudioReadTask] \(modeName) enabled - created state at \(voiceBoostNSampleRate) Hz\(knownLUFS != 0 ? " (seeded from \(knownLUFS) LUFS)" : "")")
                 }
-            } else if !shouldUseVoiceBoostN && voiceBoostNState != nil {
-                VBN_Destroy(voiceBoostNState)
-                voiceBoostNState = nil
-                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
-                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN disabled mid-playback - switching to previous voice boost")
             }
+            activeVBNMode = requestedMode
             hasProcessedFirstBuffer = true
 
             // Process through VoiceBoostN if enabled

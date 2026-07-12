@@ -12,6 +12,7 @@ import WidgetKit
 nonisolated protocol PlaybackFacade: Sendable {
     func isPlaying() -> Bool
     func hasCurrentEpisode() -> Bool
+    func isSleepTimerActive() -> Bool
     func upNextCount() -> Int
     func play()
     func pause()
@@ -52,9 +53,26 @@ nonisolated struct PlaybackIntentActionHandler {
             facade.skipBack()
         case .skipForward:
             facade.skipForward()
+        case .nextChapter:
+            facade.skipToNextChapter()
+        case .playUpNext:
+            // Only act when something is queued — mirrors playUpNext() below.
+            if facade.hasCurrentEpisode(), facade.upNextCount() > 0 {
+                facade.removeCurrentEpisodeFromUpNext()
+            }
+        case .sleepTimer:
+            if facade.isSleepTimerActive() {
+                facade.extendSleepTimer(bySeconds: Self.sleepTimerStepSeconds)
+            } else {
+                facade.setSleepTimer(seconds: Self.sleepTimerStepSeconds)
+            }
         }
         facade.refreshWidgets()
     }
+
+    /// The Control Center sleep-timer button has no duration parameter: it
+    /// starts (or extends by) this much.
+    static let sleepTimerStepSeconds: TimeInterval = 15 * 60
 
     // MARK: Shortcut / App Intent actions
 
@@ -151,6 +169,8 @@ nonisolated struct LivePlaybackFacade: PlaybackFacade {
 
     func hasCurrentEpisode() -> Bool { PlaybackManager.onMainSync { $0.currentEpisode() != nil } }
 
+    func isSleepTimerActive() -> Bool { PlaybackManager.onMainSync { $0.sleepTimerActive() } }
+
     func upNextCount() -> Int { PlaybackManager.onMainSync { $0.upNextCount() } }
 
     func play() { PlaybackManager.onMainSync { $0.play() } }
@@ -225,8 +245,8 @@ nonisolated struct LivePlaybackFacade: PlaybackFacade {
             defaults.set(PlaybackManager.onMainSync { $0.playing() }, forKey: SharedConstants.GroupUserDefaults.isPlaying)
         }
         WidgetCenter.shared.reloadAllTimelines()
-        ControlCenter.shared.reloadControls(ofKind: PlaybackControlKind.playPause)
-        ControlCenter.shared.reloadControls(ofKind: PlaybackControlKind.skipBack)
-        ControlCenter.shared.reloadControls(ofKind: PlaybackControlKind.skipForward)
+        for kind in PlaybackControlKind.all {
+            ControlCenter.shared.reloadControls(ofKind: kind)
+        }
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 
+// @unchecked Sendable: every access to `table` goes through tableLock.
 nonisolated final class ThreadSafeDictionary<Key: Hashable, Value>: @unchecked Sendable {
 
     private let tableLock = NSLock()

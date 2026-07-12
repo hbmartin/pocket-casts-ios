@@ -427,6 +427,12 @@ public class DataManager {
         podcastManager.saveAutoAddToUpNext(podcastUuid: podcastUuid, autoAddToUpNext: autoAddToUpNext, dbQueue: dbQueue)
     }
 
+    /// Persists the chapter smart-skip title patterns for a podcast into the settings JSON payload.
+    /// Writes through the json_set settings writer so it works regardless of `newSettingsStorage`.
+    public func saveSkipChapterTitles(_ titles: [String], podcastUuid: String) {
+        podcastManager.saveSkipChapterTitles(titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    }
+
     public func savePodcastDownloadSetting(_ setting: AutoDownloadSetting, podcastUuid: String) {
         podcastManager.savePodcastDownloadSetting(setting, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
@@ -1373,11 +1379,7 @@ public extension DataManager {
         // The ghost-episode list is unbounded, so delete in chunks to stay below
         // SQLite's bound-variable limit.
         for chunk in stride(from: 0, to: uuids.count, by: 500).map({ Array(uuids[$0 ..< min($0 + 500, uuids.count)]) }) {
-            dbQueue.write { db in
-                let query = "DELETE FROM \(Self.episodeTableName) WHERE uuid IN (\(DBUtils.placeholders(amount: chunk.count)))"
-
-                try? db.executeUpdate(query, values: chunk)
-            }
+            _ = dbQueue.deleteAll(Episode.self, filter: chunk.contains(Episode.Columns.uuid))
         }
     }
 }

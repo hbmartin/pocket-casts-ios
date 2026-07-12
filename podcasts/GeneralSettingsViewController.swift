@@ -12,13 +12,9 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case skipForward, skipBack, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN, localFeedIngest }
+    enum TableRow { case skipForward, skipBack, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN, normalizeVolume, localFeedIngest }
     private var tableData: [[TableRow]] {
-        var data: [[TableRow]] = [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay], [.localFeedIngest]]
-        if FeatureFlag.voiceBoostN.enabled {
-            data.append([.voiceBoostN])
-        }
-        return data
+        [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay], [.localFeedIngest], [.voiceBoostN, .normalizeVolume]]
     }
 
     @IBOutlet var settingsTable: UITableView! {
@@ -329,6 +325,16 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
             cell.cellSwitch.addTarget(self, action: #selector(voiceBoostNToggled(_:)), for: .valueChanged)
 
             return cell
+        case .normalizeVolume:
+            let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
+
+            cell.cellLabel.text = L10n.settingsGeneralNormalizeVolume
+            cell.cellSwitch.isOn = Settings.isNormalizeVolumeEnabled
+
+            cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
+            cell.cellSwitch.addTarget(self, action: #selector(normalizeVolumeToggled(_:)), for: .valueChanged)
+
+            return cell
         }
     }
 
@@ -474,6 +480,8 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
             return L10n.shakeToRestartSleepTimerDescription
         case .voiceBoostN:
             return L10n.settingsGeneralVoiceBoostNSubtitle
+        case .normalizeVolume:
+            return L10n.settingsGeneralNormalizeVolumeSubtitle
         case .localFeedIngest:
             return L10n.settingsGeneralLocalFeedIngestSubtitle
         default:
@@ -608,6 +616,10 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
 
     @objc private func voiceBoostNToggled(_ sender: UISwitch) {
         Settings.isVoiceBoostNEnabled = sender.isOn
+    }
+
+    @objc private func normalizeVolumeToggled(_ sender: UISwitch) {
+        Settings.isNormalizeVolumeEnabled = sender.isOn
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {

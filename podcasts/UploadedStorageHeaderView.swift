@@ -59,7 +59,7 @@ class UploadedStorageHeaderView: UIView {
         let totalBytes = episodes.reduce(Int64(0)) { $0 + $1.sizeInBytes }
         numFilesLabel.text = episodes.count == 1 ? L10n.profileSingleFile : L10n.profileNumberOfFiles(episodes.count.localized())
         storageSizeLabel.text = SizeFormatter.shared.defaultFormat(bytes: totalBytes)
-        percentageLabel.text = FeatureFlag.fileSync.enabled ? L10n.fileSyncFolderIcloud : nil
+        percentageLabel.text = L10n.fileSyncFolderIcloud
         percentageLabel.textColor = AppTheme.colorForStyle(.primaryText01)
     }
 }

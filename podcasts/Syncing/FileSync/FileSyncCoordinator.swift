@@ -24,7 +24,7 @@ final class FileSyncCoordinator {
     private var isSetup = false
 
     func setup() {
-        guard FeatureFlag.fileSync.enabled, !isSetup else { return }
+        guard !isSetup else { return }
         isSetup = true
 
         Task {
@@ -59,12 +59,10 @@ final class FileSyncCoordinator {
     }
 
     func handleAppBecameActive() {
-        guard FeatureFlag.fileSync.enabled else { return }
         Task { await FileSyncManager.shared.syncNow() }
     }
 
     func performBackgroundSync() async {
-        guard FeatureFlag.fileSync.enabled else { return }
         await FileSyncManager.shared.syncNow()
     }
 
@@ -110,7 +108,6 @@ final class FileSyncCoordinator {
     }
 
     @objc private func appDidEnterBackground() {
-        guard FeatureFlag.fileSync.enabled else { return }
         backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "au.com.pocketcasts.filesync.flush") { [weak self] in
             Task { @MainActor [weak self] in
                 self?.endBackgroundTaskIfNeeded()

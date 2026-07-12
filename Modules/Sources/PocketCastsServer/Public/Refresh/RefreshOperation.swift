@@ -2,6 +2,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is touched only during main(), which runs its sub-operations on a serial queue.
 class RefreshOperation: Operation, @unchecked Sendable {
     private var refreshResult: RefreshResult
 

@@ -63,22 +63,22 @@ class FeatureFlagTests: XCTestCase {
 
     func testRemoteConfigBooleanOverridesFeatureFlag() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
-        let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+        let remoteKey = try XCTUnwrap(FeatureFlag.autoDownloadOnSubscribe.remoteKey)
         let remoteConfigStore = RemoteConfigValueStore(store: defaults)
 
         defaults.set(false, forKey: remoteConfigStore.key(for: remoteKey))
 
-        XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
+        XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .autoDownloadOnSubscribe), false)
     }
 
     func testRemoteConfigStringBooleanOverridesFeatureFlag() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
-        let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+        let remoteKey = try XCTUnwrap(FeatureFlag.autoDownloadOnSubscribe.remoteKey)
         let remoteConfigStore = RemoteConfigValueStore(store: defaults)
 
         defaults.set("false", forKey: remoteConfigStore.key(for: remoteKey))
 
-        XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix), false)
+        XCTAssertEqual(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .autoDownloadOnSubscribe), false)
     }
 
     func testRemoteConfigValueStoreUsesCustomKeyPrefix() throws {
@@ -96,15 +96,15 @@ class FeatureFlagTests: XCTestCase {
 
     func testRemoteConfigBareKeyDoesNotOverrideFeatureFlag() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "FeatureFlagTests-\(UUID().uuidString)"))
-        let remoteKey = try XCTUnwrap(FeatureFlag.defaultPlayerFilterCallbackFix.remoteKey)
+        let remoteKey = try XCTUnwrap(FeatureFlag.autoDownloadOnSubscribe.remoteKey)
 
         defaults.set(false, forKey: remoteKey)
 
-        XCTAssertNil(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .defaultPlayerFilterCallbackFix))
+        XCTAssertNil(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .autoDownloadOnSubscribe))
     }
 
     func testEnabledUsesRemoteConfigValueAfterLocalOverride() throws {
-        let flag = FeatureFlag.defaultPlayerFilterCallbackFix
+        let flag = FeatureFlag.autoDownloadOnSubscribe
         let remoteKey = try XCTUnwrap(flag.remoteKey)
         let remoteConfigKey = RemoteConfigValueStore().key(for: remoteKey)
         defer {

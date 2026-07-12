@@ -41,47 +41,40 @@ struct ProfileHeaderView: View {
             ProfileInfoLabels(profile: viewModel.profile, alignment: alignment, spacing: Constants.spacing)
 
             if viewModel.profile.isLoggedIn {
-                if FeatureFlag.shareProfile.enabled {
-                    HStack(spacing: 12) {
-                        Button {
-                            viewModel.accountTapped()
-                        } label: {
-                            Label {
-                                Text(L10n.account)
-                            } icon: {
-                                Image("settings-avatar")
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 17, height: 17)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ProfileStrokeButtonStyle())
-
-                        Button {
-                            viewModel.shareTapped()
-                        } label: {
-                            Label {
-                                Text(L10n.share)
-                            } icon: {
-                                Image("podcast-share")
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 17, height: 17)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ProfileStrokeButtonStyle())
-                    }
-                    .padding(.bottom, 8)
-                } else {
-                    Button(L10n.account) {
+                HStack(spacing: 12) {
+                    Button {
                         viewModel.accountTapped()
+                    } label: {
+                        Label {
+                            Text(L10n.account)
+                        } icon: {
+                            Image("settings-avatar")
+                                .renderingMode(.template)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 17, height: 17)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(ProfileStrokeButtonStyle())
+
+                    Button {
+                        viewModel.shareTapped()
+                    } label: {
+                        Label {
+                            Text(L10n.share)
+                        } icon: {
+                            Image("podcast-share")
+                                .renderingMode(.template)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 17, height: 17)
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(ProfileStrokeButtonStyle())
                 }
+                .padding(.bottom, 8)
             } else {
                 Button(L10n.setupAccount) {
                     viewModel.accountTapped()

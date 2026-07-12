@@ -75,8 +75,7 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
             return (metadata: chapters, podcastIndex: nil, generated: nil)
         }
 
-        if FeatureFlag.generatedChapters.enabled,
-           let chapters = try? await generatedEpisodeMetadataRetriever.loadMetadata(podcastUuid: podcastUuid, episodeUuid: episodeUuid).chapters,
+        if let chapters = try? await generatedEpisodeMetadataRetriever.loadMetadata(podcastUuid: podcastUuid, episodeUuid: episodeUuid).chapters,
            !chapters.isEmpty {
             return (metadata: nil, podcastIndex: nil, generated: chapters)
         }

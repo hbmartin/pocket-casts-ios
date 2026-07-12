@@ -53,6 +53,7 @@ class AnalyticsPlaybackHelperTests: XCTestCase {
 
 // MARK: - AnalyticsPlaybackHelper Mock
 
+// @unchecked Sendable: subclass restating AnalyticsPlaybackHelper's conformance; lastEvent is only touched on the test thread.
 private class AnalyticsPlaybackHelperMock: AnalyticsPlaybackHelper, @unchecked Sendable {
     var lastEvent: TrackEvent?
 

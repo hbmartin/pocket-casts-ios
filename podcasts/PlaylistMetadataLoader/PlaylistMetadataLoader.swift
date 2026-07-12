@@ -219,25 +219,6 @@ actor PlaylistMetadataLoader {
         imagesTasks[playlistID] = nil
     }
 
-    /// Invalidates the cache if it's older than the specified threshold.
-    /// Call this when the view appears to ensure fresh data after the threshold.
-    /// - Parameter threshold: Time interval after which cache is considered stale. Defaults to 30 seconds.
-    /// - Returns: Whether the cache was invalidated.
-    @discardableResult
-    func invalidateCacheIfStale(threshold: TimeInterval = 30) -> Bool {
-        guard let lastUpdate = cache.lastUpdate else {
-            // No cache yet, nothing to invalidate
-            return false
-        }
-
-        let elapsed = Date().timeIntervalSince(lastUpdate)
-        if elapsed > threshold {
-            cache.clear()
-            return true
-        }
-        return false
-    }
-
     // MARK: - Stale Marking
 
     /// Marks playlists as stale based on an episode change.
@@ -306,7 +287,7 @@ actor PlaylistMetadataLoader {
         let playlist = playlist
         let dataManager = self.dataManager
 
-        return await Task(priority: FeatureFlag.playlistDataCacheBeforeQuery.enabled ? .medium : .userInitiated) {
+        return await Task(priority: .medium) {
             dataManager.allPlaylistEpisodeCount(
                 for: playlist,
                 episodeUuidToAdd: playlist.episodeUuidToAddToQueries(),
@@ -319,7 +300,7 @@ actor PlaylistMetadataLoader {
         // The playlist and data manager cross into the worker task boxed; the fresh
         // list crosses back the same way
         let boxed = PocketCastsUtils.UncheckedSendable((playlist, episodesDataManager))
-        let resultBox: PocketCastsUtils.UncheckedSendable<[ListEpisode]> = await Task(priority: FeatureFlag.playlistDataCacheBeforeQuery.enabled ? .medium : .userInitiated) {
+        let resultBox: PocketCastsUtils.UncheckedSendable<[ListEpisode]> = await Task(priority: .medium) {
             let (playlist, episodesDataManager) = boxed.value
             return PocketCastsUtils.UncheckedSendable(episodesDataManager.playlistFirstDistinctEpisodes(
                 for: playlist,

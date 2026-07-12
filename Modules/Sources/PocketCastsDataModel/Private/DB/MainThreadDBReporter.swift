@@ -10,7 +10,7 @@ enum MainThreadDBReporter {
     nonisolated(unsafe) private static var reportedCallers = Set<String>()
 
     static func reportIfNeeded(operation: StaticString = #function) {
-        guard Thread.isMainThread, FeatureFlag.logMainThreadDatabaseAccess.enabled else { return }
+        guard Thread.isMainThread else { return }
 
         let symbols = Array(Thread.callStackSymbols.dropFirst(2).prefix(10))
         // The interesting frame is the first one outside this module — the app-level call site.

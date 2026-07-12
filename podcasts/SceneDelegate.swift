@@ -198,8 +198,6 @@ enum UITestScenarioLauncher {
         overrides.resetOverrides()
         try? overrides.override(FeatureFlag.newSettingsStorage, withValue: false)
         try? overrides.override(FeatureFlag.useFollowNaming, withValue: false)
-        try? overrides.override(FeatureFlag.fileSync, withValue: false)
-        try? overrides.override(FeatureFlag.recommendations, withValue: false)
 
         Settings.setPrimaryRowAction(.stream)
         Settings.setLibraryType(.list)

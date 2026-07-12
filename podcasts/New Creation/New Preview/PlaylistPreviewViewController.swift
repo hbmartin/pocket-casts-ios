@@ -1,5 +1,6 @@
 import UIKit
 import Combine
+import TipKit
 import PocketCastsDataModel
 import PocketCastsUtils
 
@@ -227,9 +228,7 @@ class PlaylistPreviewViewController: PCViewController {
         delegate?.filterCreated(newFilter: savedPlaylist)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
 
-        if Settings.firstTimePlaylistCreated {
-            Settings.shouldShowDragAndDropTip = true
-        }
+        PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
 
         Analytics.track(.filterCreated, properties: [
             "all_podcasts": viewModel.newPlaylist.filterAllPodcasts,

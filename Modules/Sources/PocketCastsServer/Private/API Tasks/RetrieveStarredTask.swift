@@ -3,6 +3,7 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import SwiftProtobuf
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; convertedEpisodes is NSLock-guarded, the rest is confined to the operation's serial execution.
 class RetrieveStarredTask: ApiBaseTask, @unchecked Sendable {
     var completion: (([Episode]?) -> Void)?
 

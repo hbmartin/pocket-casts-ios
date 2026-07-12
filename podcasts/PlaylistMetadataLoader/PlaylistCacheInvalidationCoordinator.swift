@@ -6,11 +6,13 @@ import PocketCastsDataModel
 /// and triggers stale marking with debounced refresh.
 /// Pending changes are guarded by pendingChangesLock; observers/cancellable are
 /// configured once at start-up.
+/// @unchecked Sendable: pendingChanges is pendingChangesLock-guarded; observers and the cancellable are configured once at start-up.
 nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendable {
 
     private let playlistMetadataLoader: PlaylistMetadataLoader
     private let dataManager: DataManager
     private var notificationObservers: [NSObjectProtocol] = []
+    private var playStatusToken: NotificationCenter.ObservationToken?
 
     /// Subject for debouncing change processing
     private let changeSubject = PassthroughSubject<Void, Never>()
@@ -41,21 +43,16 @@ nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendabl
 
     /// Starts observing episode change notifications.
     func startObserving() {
-        guard notificationObservers.isEmpty else { return }
+        guard notificationObservers.isEmpty, playStatusToken == nil else { return }
 
         let center = NotificationCenter.default
 
-        // Play status changes
-        notificationObservers.append(
-            center.addObserver(
-                forName: Constants.Notifications.episodePlayStatusChanged,
-                object: nil,
-                queue: nil
-            ) { [weak self] notification in
-                let podcastUuid = self?.extractPodcastUuid(from: notification)
-                self?.handleChange(.playStatus, podcastUuid: podcastUuid)
-            }
-        )
+        // Play status changes. The legacy payload is the episode uuid in `object`,
+        // from which extractPodcastUuid never recovered a podcast uuid (it only reads
+        // userInfo["podcastUuid"] or an Episode object) — nil preserves that exactly.
+        playStatusToken = center.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] _ in
+            self?.handleChange(.playStatus, podcastUuid: nil)
+        }
 
         // Download status changes
         notificationObservers.append(
@@ -110,6 +107,10 @@ nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendabl
         let center = NotificationCenter.default
         notificationObservers.forEach { center.removeObserver($0) }
         notificationObservers.removeAll()
+        if let playStatusToken {
+            center.removeObserver(playStatusToken)
+            self.playStatusToken = nil
+        }
     }
 
     // MARK: - Private

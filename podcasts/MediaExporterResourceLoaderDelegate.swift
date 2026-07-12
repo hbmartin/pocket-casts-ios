@@ -27,6 +27,7 @@ nonisolated fileprivate extension Int {
 /// Responsible for downloading media data and providing the requested data parts.
 /// `URLSessionDelegate` requires `Sendable`; instances are handed to URLSession and
 /// AVAssetResourceLoader queues by design, with mutable state guarded by `lock`.
+/// @unchecked Sendable: mutable state is guarded by `lock`; Sendable is required by the URLSession delegate contract.
 nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate, @unchecked Sendable {
     private let lock = NSLock()
 
@@ -48,15 +49,7 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     private let episodeUuid: String?
     private let podcastUuid: String?
 
-    private let callbackQueue: DispatchQueue = {
-        let queue: DispatchQueue
-        if FeatureFlag.useBackgroundQueueForStreamingCallback.enabled {
-            queue = DispatchQueue(label: "com.pocketcasts.MediaExporterResourceLoaderDelegate.callback", qos: .default, attributes: [])
-        } else {
-            queue = DispatchQueue.main
-        }
-        return queue
-    }()
+    private let callbackQueue = DispatchQueue(label: "com.pocketcasts.MediaExporterResourceLoaderDelegate.callback", qos: .default, attributes: [])
 
     enum FileExportStatus {
         case downloading
@@ -177,8 +170,6 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
-        guard FeatureFlag.trackNetworkDataUsage.enabled else { return }
-
         let bytesReceived = task.countOfBytesReceived
         let connectionType = NetworkDataUsageManager.connectionType(from: metrics)
 
@@ -206,16 +197,14 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
 
         let configuration = URLSessionConfiguration.default
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        if FeatureFlag.streamingCustomSessionConfiguration.enabled {
-            configuration.networkServiceType = .avStreaming
-            configuration.allowsCellularAccess = true
-            configuration.timeoutIntervalForRequest = 60 // seconds
-            configuration.timeoutIntervalForResource = 3600 * 2 // seconds
+        configuration.networkServiceType = .avStreaming
+        configuration.allowsCellularAccess = true
+        configuration.timeoutIntervalForRequest = 60 // seconds
+        configuration.timeoutIntervalForResource = 3600 * 2 // seconds
 #if !APPCLIP
-            configuration.waitsForConnectivity = false
-            configuration.multipathServiceType = .handover // allows switching between celular/wifi
+        configuration.waitsForConnectivity = false
+        configuration.multipathServiceType = .handover // allows switching between celular/wifi
 #endif
-        }
 
         var urlRequest = URLRequest(url: url)
         if !retryWithoutUserAgent {

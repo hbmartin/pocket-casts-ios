@@ -38,7 +38,6 @@ class InformationalBannerViewCoordinator {
 
     func shouldShowBanner() -> Bool {
         guard
-            FeatureFlag.encourageAccountCreation.enabled,
             Settings.shouldShowBanner(for: viewModel.bannerType),
             !SyncManager.isUserLoggedIn()
         else {

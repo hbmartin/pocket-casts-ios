@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; episodeUuid is set before enqueue and async work is joined via dispatchGroup.
 class MetadataTask: Operation, @unchecked Sendable {
     static let minBytesInFile = 150 * 1024 as Int64
 

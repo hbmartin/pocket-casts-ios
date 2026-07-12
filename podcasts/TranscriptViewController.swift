@@ -294,9 +294,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         stackView.addArrangedSubview(closeButton)
         stackView.addArrangedSubview(UIView())
 
-        if FeatureFlag.shareTranscripts.enabled {
-            stackView.addArrangedSubview(shareButton)
-        }
+        stackView.addArrangedSubview(shareButton)
 
         if showFromEpisode {
             stackView.addArrangedSubview(playButton)

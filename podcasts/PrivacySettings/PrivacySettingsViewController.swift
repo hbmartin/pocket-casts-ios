@@ -34,7 +34,7 @@ class PrivacySettingsViewController: PCViewController, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let isProfileSharingSection = FeatureFlag.shareProfile.enabled && indexPath.section == 0
+        let isProfileSharingSection = indexPath.section == 0
         if !isProfileSharingSection {
             let analyticsRow = indexPath.row
             if analyticsRow == 3 {

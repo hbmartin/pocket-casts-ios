@@ -272,7 +272,10 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
         addCustomObserver(Constants.Notifications.downloadProgress, selector: #selector(updateDownloadProgress))
         addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(episodeDownloadedEvent))
 
-        addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
+        addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] message in
+            guard let self, let episodeUuid = message.uuid, episodeUuid == self.episode.uuid else { return }
+            self.updateDisplayedData()
+        }
         addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
         addCustomObserver(Constants.Notifications.episodeDurationChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
         addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(specificEpisodeEventDidFire(_:)))

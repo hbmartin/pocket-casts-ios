@@ -24,7 +24,7 @@ nonisolated final class EpisodeLoudnessScanner: Sendable {
     }
 
     @objc private func episodeDownloaded(_ notification: Notification) {
-        guard FeatureFlag.voiceBoostN.enabled, let episodeUuid = notification.object as? String else { return }
+        guard let episodeUuid = notification.object as? String else { return }
         scanIfNeeded(episodeUuid: episodeUuid)
     }
 

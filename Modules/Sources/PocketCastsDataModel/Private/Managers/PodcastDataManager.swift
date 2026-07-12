@@ -592,6 +592,12 @@ class PodcastDataManager {
         saveSingleValue(name: "episodeKeepSetting", value: limit, podcastUuid: podcast.uuid, dbQueue: dbQueue)
     }
 
+    /// Chapter smart-skip title patterns live only in the settings JSON payload (no legacy column),
+    /// so the json_set writer runs unconditionally rather than behind `newSettingsStorage`.
+    func saveSkipChapterTitles(_ titles: [String], podcastUuid: String, dbQueue: GRDBQueue) {
+        saveSingleSetting("skipChapterTitles", value: titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    }
+
     func delete(podcast: Podcast, dbQueue: GRDBQueue) {
         let success = dbQueue.write { db in
             try delete(podcast: podcast, db: db)

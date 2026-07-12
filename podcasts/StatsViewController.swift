@@ -24,9 +24,7 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
     private func reloadSections() {
         var newSections: [StatsSection] = [.header]
         if loadingState == .loaded {
-            if FeatureFlag.statsHeatmap.enabled {
-                newSections.append(.heatmap)
-            }
+            newSections.append(.heatmap)
             newSections.append(contentsOf: [.timeSavedBreakdown, .timeSavedTotal])
         }
         sections = newSections
@@ -57,9 +55,7 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        if FeatureFlag.statsHeatmap.enabled {
-            heatmapViewModel.load()
-        }
+        heatmapViewModel.load()
         loadStats()
     }
 

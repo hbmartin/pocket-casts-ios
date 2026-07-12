@@ -4,8 +4,6 @@ import PocketCastsUtils
 
 extension BackgroundSyncManager: URLSessionDelegate, URLSessionDownloadDelegate {
     public func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
-        guard FeatureFlag.trackNetworkDataUsage.enabled else { return }
-
         let bytesReceived = task.countOfBytesReceived
         let bytesSent = task.countOfBytesSent
         let connectionType = NetworkDataUsageManager.connectionType(from: metrics)
@@ -33,12 +31,10 @@ extension BackgroundSyncManager: URLSessionDelegate, URLSessionDownloadDelegate 
 
         // Verify the download completed fully by comparing received bytes to Content-Length.
         // A truncated download can produce valid-but-incomplete protobuf that silently drops fields.
-        if FeatureFlag.detectTruncatedBackgroundSyncDownloads.enabled {
-            let expectedLength = downloadTask.response?.expectedContentLength ?? BackgroundSyncManager.unknownContentLength
-            if let receivedData = data, !BackgroundSyncManager.isDownloadComplete(receivedBytes: receivedData.count, expectedContentLength: expectedLength) {
-                FileLog.shared.addMessage("Background sync data truncated for task \(downloadTask.taskDescription ?? "unknown"): received \(receivedData.count) bytes, expected \(expectedLength)")
-                data = nil
-            }
+        let expectedLength = downloadTask.response?.expectedContentLength ?? BackgroundSyncManager.unknownContentLength
+        if let receivedData = data, !BackgroundSyncManager.isDownloadComplete(receivedBytes: receivedData.count, expectedContentLength: expectedLength) {
+            FileLog.shared.addMessage("Background sync data truncated for task \(downloadTask.taskDescription ?? "unknown"): received \(receivedData.count) bytes, expected \(expectedLength)")
+            data = nil
         }
 
         if downloadTask.taskDescription == refreshTaskId {

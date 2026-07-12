@@ -7,7 +7,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
         case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
-        case advancedAudio
+        case advancedAudio, devices
         case customFiles, importSteps, opml, backupRestore
         case fileSync
         case about, privacy
@@ -17,12 +17,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
 
         /// Whether the section should be displayed or not
         var visible: Bool {
-            switch self {
-            case .fileSync:
-                return FeatureFlag.fileSync.enabled
-            default:
-                return true
-            }
+            true
         }
 
         var display: (text: String, image: UIImage?) {
@@ -69,6 +64,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsFileSync, UIImage(named: "settings_import_podcasts"))
             case .advancedAudio:
                 return (L10n.settingsAdvancedAudio, UIImage(systemName: "slider.horizontal.3"))
+            case .devices:
+                return (L10n.settingsDevices, UIImage(systemName: "airplayaudio"))
             }
         }
     }
@@ -88,7 +85,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
-            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .advancedAudio, .customFiles],
+            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .devices, .advancedAudio, .customFiles],
             [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -214,6 +211,11 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let tuningView = AdvancedAudioSettingsView().environmentObject(Theme.sharedTheme)
             let hostingController = PCHostingController(rootView: tuningView)
             hostingController.title = L10n.settingsAdvancedAudio
+            navigationController?.pushViewController(hostingController, animated: true)
+        case .devices:
+            let devicesView = DevicesSettingsView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: devicesView)
+            hostingController.title = L10n.settingsDevices
             navigationController?.pushViewController(hostingController, animated: true)
         }
     }

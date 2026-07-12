@@ -3,6 +3,7 @@ import SwiftProtobuf
 import PocketCastsDataModel
 import PocketCastsUtils
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; progress counters are progressLock-guarded and response processing is serialized via the static processDataLock.
 class SyncTask: ApiBaseTask, @unchecked Sendable {
     // nonisolated(unsafe): lock token for objc_sync_enter/exit; never mutated.
     nonisolated(unsafe) private static let processDataLock = NSObject()

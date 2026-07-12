@@ -5,6 +5,7 @@ import PocketCastsUtils
 
 /// State is configured-once lazy formatters/queues (created during startup);
 /// the manager's API is called across queues by design.
+/// @unchecked Sendable: all stored properties are immutable after init (formatters, queues, thread-safe managers).
 nonisolated final class PodcastManager: NSObject, @unchecked Sendable {
     private static let maxAutoDownloadSeperationTime = 12.hours
 

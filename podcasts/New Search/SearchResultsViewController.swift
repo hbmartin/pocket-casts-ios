@@ -63,7 +63,7 @@ extension SearchResultsViewController: SearchResultsDelegate {
             completion()
         }
 
-        if FeatureFlag.searchPredictive.enabled, triggeredByTimer {
+        if triggeredByTimer {
             searchResults.predictiveSearch(term: searchTerm)
         } else {
             searchResults.search(term: searchTerm)

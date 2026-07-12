@@ -8,6 +8,8 @@ import PocketCastsUtils
 /// merely because it joined later.
 struct FileSyncBootstrap {
     let dataManager: DataManager
+    /// Injectable clock so simulations control time; production uses the wall clock.
+    var now: @Sendable () -> Int64 = FileSyncClock.currentUTCTimeInMillis
 
     private enum BootstrapError: Error, CustomStringConvertible {
         case seedJournalWriteFailed
@@ -18,8 +20,8 @@ struct FileSyncBootstrap {
     }
 
     func seedLocalState() throws {
-        let now = FileSyncClock.currentUTCTimeInMillis()
-        let fallback = now - 1
+        let nowMs = now()
+        let fallback = nowMs - 1
         var seedEntries: [DataManager.SeedEntry] = []
 
         for podcast in dataManager.allPodcasts(includeUnsubscribed: false) {

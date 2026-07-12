@@ -29,38 +29,38 @@ Assessment meanings:
 | ~~`refreshPlaylistOnSubscriptions`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
 | ~~`smartCategories`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
 | ~~`syncStats`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
-| `activateAudioSessionForRoutePicker` | true | 1 | NowPlayingPlayerItemViewController+Shelf.swift | candidate | |
-| `checkProtectedDataBeforeMigration` | true | 1 | AppDelegate+Defaults.swift | candidate | |
-| `detectTruncatedBackgroundSyncDownloads` | true | 1 | BackgroundSyncManager+URLSession.swift | candidate | |
-| `encourageAccountCreation` | true | 1 | InformationalBannerViewCoordinator.swift | candidate | |
-| `episodeDetailTranscript` | true | 1 | EpisodeDetailViewController+ShowNotes.swift | candidate | |
-| `listeningHistorySearch` | true | 1 | ListeningHistoryViewController.swift | candidate | |
-| `logMainThreadDatabaseAccess` | true | 1 | MainThreadDBReporter.swift | candidate | |
-| `manageDownloadedEpisodes` | true | 1 | ManageDownloadsCoordinator.swift | candidate | |
-| `newOnboardingRecommendationChanges` | true | 1 | LoginCoordinator.swift | candidate | |
-| `podcastBookmarksInline` | true | 1 | PodcastViewController.swift | candidate | |
-| `retryWithoutUserAgent` | true | 1 | DownloadManager+URLSessionDelegate.swift | candidate | |
-| `shareTranscripts` | true | 1 | TranscriptViewController.swift | candidate | |
-| `skipSyncWhenProtectedDataUnavailable` | true | 1 | UpNextSyncTask.swift | candidate | |
-| `streamingCustomSessionConfiguration` | true | 1 | MediaExporterResourceLoaderDelegate.swift | candidate | |
-| `useBackgroundQueueForStreamingCallback` | true | 1 | MediaExporterResourceLoaderDelegate.swift | candidate | |
-| `useDescriptiveActionAttributedTextView` | true | 1 | DescriptiveActionView.swift | candidate | |
-| `useMimetypePackage` | true | 1 | DownloadManager+URLSessionDelegate.swift | candidate | |
-| `cleanUpTmpFiles` | true | 2 | DownloadedFilesViewController.swift | candidate | |
-| `concurrentDatabaseReads` | true | 2 | GRDBQueue.swift | candidate | |
-| `customPlaybackSettings` | true | 2 | EffectsViewController.swift, PodcastEffectsViewController+Ta | candidate | |
-| `downloadsThreadSafeCache` | true | 2 | DownloadManager.swift | candidate | |
-| `enableLocalizationHeaders` | true | 2 | AppDelegate.swift, Settings.swift | candidate | |
-| `markAllSyncedInSingleStatement` | true | 2 | EpisodeDataManager.swift | candidate | |
-| `searchPredictive` | true | 2 | SearchResultsViewController.swift, Settings.swift | candidate | |
-| `statsHeatmap` | true | 2 | StatsViewController.swift | candidate | |
-| `suggestedFolders` | true | 2 | FoldersCoordinator.swift | candidate | |
-| `displayErrorsOnPlayer` | true | 3 | MainTabBarController.swift, NowPlayingPlayerItemViewControll | candidate | |
-| `releaseMediaExporterWhenNoLongerActive` | true | 3 | DownloadManager.swift | candidate | |
-| `useCellularNetworkApis` | true | 3 | DownloadManager.swift, NetworkUtils.swift | candidate | |
-| `playlistCacheInvalidation` | true | 4 | NewPlaylistCell.swift, PlaylistsViewController.swift | candidate | |
-| `playlistDataCacheBeforeQuery` | true | 4 | NewPlaylistCell.swift, PlaylistMetadataLoader.swift | candidate | |
-| `recommendations` | true | 4 | DiscoverServerHandler.swift, PodcastDetailsTabView.swift, Po | candidate | |
+| ~~`activateAudioSessionForRoutePicker`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `activate_audio_session_for_route_picker` key server-side |
+| ~~`checkProtectedDataBeforeMigration`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `check_protected_data_before_migration` key server-side |
+| ~~`detectTruncatedBackgroundSyncDownloads`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `detect_truncated_background_sync_downloads` key server-side |
+| ~~`encourageAccountCreation`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `encourage_account_creation` key server-side |
+| ~~`episodeDetailTranscript`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `episode_detail_transcript` key server-side |
+| ~~`listeningHistorySearch`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `listening_history_search` key server-side |
+| ~~`logMainThreadDatabaseAccess`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `log_main_thread_database_access` key server-side |
+| ~~`manageDownloadedEpisodes`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `manage_downloaded_episodes` key server-side |
+| ~~`newOnboardingRecommendationChanges`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `new_onboarding_recommendation_changes` key server-side |
+| ~~`podcastBookmarksInline`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `podcast_bookmarks_inline` key server-side |
+| ~~`retryWithoutUserAgent`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `retry_without_user_agent` key server-side |
+| ~~`shareTranscripts`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `share_transcripts` key server-side |
+| ~~`skipSyncWhenProtectedDataUnavailable`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `skip_sync_when_protected_data_unavailable` key server-side |
+| ~~`streamingCustomSessionConfiguration`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `streaming_custom_session_configuration` key server-side |
+| ~~`useBackgroundQueueForStreamingCallback`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_background_queue_for_streaming_callback` key server-side |
+| ~~`useDescriptiveActionAttributedTextView`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_descriptive_action_attributed_text_view` key server-side |
+| ~~`useMimetypePackage`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_mimetype_package` key server-side |
+| ~~`cleanUpTmpFiles`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `clean_up_tmp_files` key server-side |
+| ~~`concurrentDatabaseReads`~~ | true | 0 | — | removed (data-layer track B0 — DatabasePool concurrent reads are the only path; ValueObservation depends on this) | ✅ code removed 2026-07-12; retire remote `concurrent_database_reads` key server-side |
+| ~~`customPlaybackSettings`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `custom_playback_settings` key server-side |
+| ~~`downloadsThreadSafeCache`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `downloads_thread_safe_cache` key server-side |
+| ~~`enableLocalizationHeaders`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `enable_localization_headers` key server-side |
+| ~~`markAllSyncedInSingleStatement`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `mark_all_synced_in_single_statement` key server-side |
+| ~~`searchPredictive`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `search_predictive` key server-side |
+| ~~`statsHeatmap`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `stats_heatmap` key server-side |
+| ~~`suggestedFolders`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `suggested_folders` key server-side |
+| ~~`displayErrorsOnPlayer`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `display_errors_on_player` key server-side |
+| ~~`releaseMediaExporterWhenNoLongerActive`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `release_media_exporter_when_no_longer_active` key server-side |
+| ~~`useCellularNetworkApis`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `use_cellular_network_apis` key server-side |
+| ~~`playlistCacheInvalidation`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `playlist_cache_invalidation` key server-side |
+| ~~`playlistDataCacheBeforeQuery`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `playlist_data_cache_before_query` key server-side |
+| ~~`recommendations`~~ | true | 0 | — | removed (program D1 simple-candidate batch) | ✅ code removed 2026-07-12; retire remote `recommendations` key server-side |
 | `onlyMarkPodcastsUnsyncedForNewUsers` | true | 6 | AuthenticationHelper.swift, SyncSigninView.swift, SyncSignin | candidate (wide adoption — retire in its own PR) | |
 | `autoDownloadOnSubscribe` | true | 8 | AppDelegate+Defaults.swift, DownloadSettingsViewController.s | candidate (wide adoption — retire in its own PR) | |
 | `generatedTranscripts` | true | 8 | ShowInfoCoordinator.swift, TranscriptViewController.swift | candidate (wide adoption — retire in its own PR) | |
@@ -68,31 +68,36 @@ Assessment meanings:
 | `searchImprovements` | true | 8 | PCSearchBarController+Search.swift, PredictiveList.swift, Se | candidate (wide adoption — retire in its own PR) | |
 | `podcastsSortChanges` | true | 10 | FolderViewController.swift, HomeGridDataHelper.swift, Podcas | candidate (wide adoption — retire in its own PR) | |
 | ~~`liquidGlass`~~ | true | 0 | — | removed (iOS 26 min-target migration) | ✅ code removed 2026-07-06; retire remote `liquid_glass` key server-side |
-| `grdbQueryInterface` | true | 12 | BookmarkDataManagerTests.swift, DataManagerTestCase.swift, E | candidate (wide adoption — retire in its own PR) | |
+| ~~`fileSync`~~ | conditional | 0 | — | removed (local-first program A1 — feature shipped un-gated; user off switch `FileSync.enabled` remains) | ✅ code removed 2026-07-12; retire remote `file_sync` key server-side |
+| `syncedTranscripts` | conditional | — | FingerprintTimingManager.swift, TranscriptViewController.swift | keep (post-audit flag; staged rollout) | |
+| `showExplicitBadges` | false | — | PodcastCells, search results | keep (default false) | |
+| ~~`grdbQueryInterface`~~ | true | 0 | — | removed (GRDB query-interface conversion) | ✅ code removed before 2026-07-12; retire remote `grdb_query_interface` key server-side |
 | `newOnboardingAccountCreation` | true | 18 | InformationalModalView.swift, InformationalModalViewModel.sw | candidate (wide adoption — retire in its own PR) | |
 | `useFollowNaming` | true | 18 | DiscoverPodcastTableCell.swift, ImportExportViewController.s | candidate (wide adoption — retire in its own PR) | |
 | `optimizeManualPlaylistQueries` | true | 42 | PlaylistQueryBuilder.swift, PlaylistQueryBuilderTests.swift | candidate (wide adoption — retire in its own PR) | |
 | `analyticsLogging` | false | 1 | AnalyticsLoggingAdapter.swift | keep (default not unconditionally true) | |
 | `appThemePropertiesLogging` | conditional | 1 | Analytics.swift | keep (default not unconditionally true) | |
 | `runVacuumOnVersionUpdate` | false | 1 | MainTabBarController.swift | keep (default not unconditionally true) | |
-| `voiceBoostN` | false | 2 | GeneralSettingsViewController.swift, Settings.swift | keep (default not unconditionally true) | |
+| ~~`voiceBoostN`~~ | false | 0 | — | removed (local-first program A5 — DSP available in all builds; user toggle `useVoiceBoostN` stays opt-in) | ✅ code removed 2026-07-12; retire remote `voice_boost_n` key server-side |
 | `settingsSync` | conditional | 5 | SyncSettingsTask.swift, SyncTask+LocalChanges.swift, SyncTas | keep (default not unconditionally true) | |
-| `shareProfile` | conditional | 6 | PrivacySettingsDataSource.swift, PrivacySettingsViewControll | keep (default not unconditionally true) | |
-| `activateAudioSessionInBackground` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `avoidReplaceOnEpisodeSwap` | true | 1 | PlaybackQueue.swift | defer-playback | |
-| `doNotSwitchToDownloadedFile` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `dontAutoplayOnRouteChange` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `effectsPlayerQOSUpgrade` | true | 1 | AudioReadTask.swift | defer-playback | |
-| `ignorePlayWithOtherAudio` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `ignoreRouteDisconnectedInterruption` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `playerIsReadyToPlay` | true | 1 | PlaybackManager.swift | defer-playback | |
-| `replaceSpecificEpisode` | true | 1 | PlaybackQueue.swift | defer-playback | |
-| `limitPlaybackPositionChanges` | true | 2 | PlaybackManager.swift | defer-playback | |
-| `whenPlayingOnlyUpdateEpisodeIfPlaybackFails` | true | 2 | DefaultPlayer.swift, PlaybackActionHelper.swift | defer-playback | |
-| `checkFinishedTimeBeforeShouldKeepPlaying` | true | 3 | DefaultPlayer.swift | defer-playback | |
-| `defaultPlayerFilterCallbackFix` | true | 5 | DefaultPlayer.swift, FeatureFlagTests.swift | defer-playback | |
-| `useDefaultPlayerTapCookie` | true | 5 | DefaultPlayer.swift | defer-playback | |
-| `streamAndCachePlayingEpisode` | true | 6 | DownloadManager.swift, PlaybackManager.swift, PlaybackQueue. | defer-playback | |
-| `trackNetworkDataUsage` | true | 7 | BackgroundSyncManager+URLSession.swift, DefaultPlayer.swift, | defer-playback | |
-| `upNextShuffle` | true | 14 | PlaybackManager.swift, Settings.swift, UpNextViewController+ | defer-playback | |
+| ~~`shareProfile`~~ | conditional | 0 | — | removed (local-first program A4 — available in all builds; renders signed-out with local data) | ✅ code removed 2026-07-12; retire remote `share_profile` key server-side |
+| ~~`upNextSort`~~ | conditional | 0 | — | removed (local-first program A4) | ✅ code removed 2026-07-12; retire remote `up_next_sort` key server-side |
+| ~~`generatedChapters`~~ | conditional | 0 | — | removed (local-first program A4 — AI chapters for server-sourced podcasts in all builds; unavailable for `.localFeed` podcasts by design) | ✅ code removed 2026-07-12; retire remote `generated_chapters` key server-side |
+| ~~`activateAudioSessionInBackground`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `activate_audio_session_in_background` key server-side |
+| ~~`avoidReplaceOnEpisodeSwap`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `avoid_replace_on_episode_swap` key server-side |
+| ~~`doNotSwitchToDownloadedFile`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `do_not_switch_to_downloaded_file` key server-side |
+| ~~`dontAutoplayOnRouteChange`~~ | true | 0 | — | removed (local-first program E3 — absorbed by route-aware playback rules: don't-autoplay is now the default, per-route auto-resume is opt-in via `RouteRulesStore`) | ✅ code removed 2026-07-12; retire remote `dont_autoplay_on_route_change` key server-side |
+| ~~`effectsPlayerQOSUpgrade`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `effects_player_q_o_s_upgrade` key server-side |
+| ~~`ignorePlayWithOtherAudio`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `ignore_play_with_other_audio` key server-side |
+| ~~`ignoreRouteDisconnectedInterruption`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `ignore_route_disconnected_interruption` key server-side |
+| ~~`playerIsReadyToPlay`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `player_is_ready_to_play` key server-side |
+| ~~`replaceSpecificEpisode`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `replace_specific_episode` key server-side |
+| ~~`limitPlaybackPositionChanges`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `limit_playback_position_changes` key server-side |
+| ~~`whenPlayingOnlyUpdateEpisodeIfPlaybackFails`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `when_playing_only_update_episode_if_playback_fails` key server-side |
+| ~~`checkFinishedTimeBeforeShouldKeepPlaying`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `check_finished_time_before_should_keep_playing` key server-side |
+| ~~`defaultPlayerFilterCallbackFix`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `default_player_filter_callback_fix` key server-side |
+| ~~`useDefaultPlayerTapCookie`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `use_default_player_tap_cookie` key server-side |
+| ~~`streamAndCachePlayingEpisode`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `stream_and_cache_playing_episode` key server-side |
+| ~~`trackNetworkDataUsage`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `track_network_data_usage` key server-side |
+| ~~`upNextShuffle`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `up_next_shuffle` key server-side |
 | `newSettingsStorage` | conditional | 153 | AppDelegate+Defaults.swift, AutoAddQueueDataManager.swift, A | defer-playback | |

@@ -1,8 +1,12 @@
 class CustomObserver: NSObject {
     private var customObservers = [Notification.Name]()
+    private var messageTokens = [Notification.Name: NotificationCenter.ObservationToken]()
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        for token in messageTokens.values {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func addCustomObserver(_ name: Notification.Name, selector: Selector) {
@@ -13,14 +17,25 @@ class CustomObserver: NSObject {
         NotificationCenter.default.addObserver(self, selector: selector, name: name, object: nil)
     }
 
-    func removeAllCustomObservers() {
-        if customObservers.isEmpty { return }
+    /// Typed-message registration; same dedupe-by-name behavior as the
+    /// selector-based variant above, removed in `removeAllCustomObservers` or deinit.
+    func addCustomObserver<M: NotificationCenter.MainActorMessage>(_ type: M.Type, handler: @escaping @MainActor (M) -> Void) {
+        guard messageTokens[M.name] == nil else { return } // we already have this one
 
+        messageTokens[M.name] = NotificationCenter.default.addObserver(for: type, using: handler)
+    }
+
+    func removeAllCustomObservers() {
         let notCenter = NotificationCenter.default
         for name in customObservers {
             notCenter.removeObserver(self, name: name, object: nil)
         }
         customObservers.removeAll()
+
+        for token in messageTokens.values {
+            notCenter.removeObserver(token)
+        }
+        messageTokens.removeAll()
     }
 
     private func containsObserver(_ name: Notification.Name) -> Bool {

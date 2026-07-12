@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Paged Feed — Page 1</title>
+    <atom:link rel="self" href="https://example.com/paged/feed.xml"/>
+    <atom:link rel="first" href="https://example.com/paged/feed.xml"/>
+    <atom:link rel="last" href="https://example.com/paged/page9.xml"/>
+    <atom:link rel="NEXT" href="https://example.com/paged/page2.xml"/>
+    <item>
+      <title>Newest Episode</title>
+      <guid>paged-1</guid>
+      <enclosure url="https://example.com/paged/1.mp3" length="10" type="audio/mpeg"/>
+      <atom:link rel="next" href="https://example.com/paged/item-level-should-be-ignored.xml"/>
+    </item>
+  </channel>
+</rss>

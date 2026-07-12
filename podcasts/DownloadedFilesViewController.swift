@@ -198,10 +198,8 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
 
     nonisolated private static func deleteDownloadedFiles(unplayed: Bool, inProgress: Bool, played: Bool, includeStarred: Bool) async {
         EpisodeManager.deleteAllDownloadedFiles(unplayed: unplayed, inProgress: inProgress, played: played, includeStarred: includeStarred)
-        if FeatureFlag.cleanUpTmpFiles.enabled {
-            // Remove any lingering files in the temporary folder that were not removed above, those should be orphan files
-            EpisodeManager.cleanUpTmpFolder()
-        }
+        // Remove any lingering files in the temporary folder that were not removed above, those should be orphan files
+        EpisodeManager.cleanUpTmpFolder()
     }
 
     private func performRefresh() async {
@@ -217,7 +215,7 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
         (EpisodeManager.downloadSizeOfUnplayedEpisodes(includeStarred: includeStarred),
          EpisodeManager.downloadSizeOfInProgressEpisodes(includeStarred: includeStarred),
          EpisodeManager.downloadSizeOfPlayedEpisodes(includeStarred: includeStarred),
-         FeatureFlag.cleanUpTmpFiles.enabled ? EpisodeManager.tmpFolderSize() : 0)
+         EpisodeManager.tmpFolderSize())
     }
 
     private func totalDeleteSize() -> UInt64 {

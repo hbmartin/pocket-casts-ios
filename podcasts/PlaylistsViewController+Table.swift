@@ -3,6 +3,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import UIKit
 import SwiftUI
+import TipKit
 
 extension PlaylistsViewController: UITableViewDelegate, UITableViewDataSource {
     func registerCells() {
@@ -155,44 +156,67 @@ extension PlaylistsViewController {
     }
 }
 
-// MARK: - Tip
+// MARK: - Tips
+
+/// Tip anchored to the playlists list, introducing the premade smart playlists to new users.
+///
+/// Upgraders never see it (invalidated in `AppDelegate`); it shows at most once.
+nonisolated struct NewFilterTip: Tip {
+    var title: Text {
+        Text(L10n.smartPlaylistsTipViewTitle)
+    }
+
+    var message: Text? {
+        Text(L10n.smartPlaylistsTipViewDescription)
+    }
+
+    var options: [any TipOption] {
+        MaxDisplayCount(1)
+    }
+}
+
+/// Tip anchored to a playlist's artwork, teaching drag & drop reordering.
+///
+/// Becomes eligible once the user creates their first manual playlist, and shows at most once.
+nonisolated struct PlaylistDragAndDropTip: Tip {
+    /// Donated whenever the user creates a manual playlist.
+    static let didCreateManualPlaylist = Tips.Event(id: "playlists.didCreateManualPlaylist")
+
+    var title: Text {
+        Text(L10n.playlistsTipDragAndDropTitle)
+    }
+
+    var message: Text? {
+        Text(L10n.playlistsTipDragAndDropDescription)
+    }
+
+    var rules: [Rule] {
+        #Rule(Self.didCreateManualPlaylist) { $0.donations.count > 0 }
+    }
+
+    var options: [any TipOption] {
+        MaxDisplayCount(1)
+    }
+}
 
 extension PlaylistsViewController {
-    func showNewFilterTip() {
-        guard
-            let vc = smartPlaylistsTip()
-        else {
-            return
-        }
-        newFilterTip = vc
-        Analytics.track(.filterTooltipShown)
-        present(vc, animated: true) {
-            Settings.shouldShowNewFilterTip = false
-        }
-    }
-
-    private func dismissTipView() {
-        dismiss(animated: true) { [weak self] in
-            self?.newFilterTip = nil
-        }
-        Analytics.track(.filterTooltipClosed)
-    }
-
     func showPlaylistsTipIfNeeded() {
-        if SyncManager.isUserLoggedIn(),
-           Settings.shouldShowNewFilterTip,
-           !hasPremadePlaylists(),
-           newFilterTip == nil {
-            showNewFilterTip()
-            return
+        guard newFilterTip == nil else { return }
+
+        if SyncManager.isUserLoggedIn(), !hasPremadePlaylists() {
+            let tip = NewFilterTip()
+            if tip.shouldDisplay {
+                showNewFilterTip(tip)
+                return
+            }
         }
 
-        if Settings.firstTimePlaylistCreated,
-           Settings.shouldShowDragAndDropTip,
-           !presentingPlaylistDetail,
-           newFilterTip == nil {
-            presentPlaylistsDragAndDropTip()
-            return
+        if !presentingPlaylistDetail {
+            let tip = PlaylistDragAndDropTip()
+            if tip.shouldDisplay {
+                presentPlaylistsDragAndDropTip(tip)
+                return
+            }
         }
     }
 
@@ -209,68 +233,53 @@ extension PlaylistsViewController {
         return false
     }
 
-    private func smartPlaylistsTip() -> UIHostingController<AnyView>? {
-        guard let indexPath = filtersTable.indexPathsForVisibleRows?.last, !listPlaylistItems.isEmpty else { return nil }
-        return tip(
-            title: L10n.smartPlaylistsTipViewTitle,
-            message: L10n.smartPlaylistsTipViewDescription,
-            sourceView: filtersTable,
-            sourceRect: filtersTable.rectForRow(at: indexPath)
-        )
+    private func showNewFilterTip(_ tip: NewFilterTip) {
+        guard
+            let indexPath = filtersTable.indexPathsForVisibleRows?.last,
+            let cell = filtersTable.cellForRow(at: indexPath),
+            !listPlaylistItems.isEmpty
+        else { return }
+
+        Analytics.track(.filterTooltipShown)
+        presentPlaylistsTip(tip, sourceItem: cell)
     }
 
-    private func presentPlaylistsDragAndDropTip() {
+    private func presentPlaylistsDragAndDropTip(_ tip: PlaylistDragAndDropTip) {
         guard
             let indexPath = filtersTable.indexPathsForVisibleRows?.first,
             let cell = filtersTable.cellForRow(at: indexPath) as? NewPlaylistCell,
             !listPlaylistItems.isEmpty
         else { return }
-        let tip = tip(
-            title: L10n.playlistsTipDragAndDropTitle,
-            message: L10n.playlistsTipDragAndDropDescription,
-            sourceView: cell.artworkImageSource,
-            sourceRect: cell.artworkImageSource.bounds
-        )
-        guard let tip else { return }
-        newFilterTip = tip
 
-        //TODO: Add analytics
+        presentPlaylistsTip(tip, sourceItem: cell.artworkImageSource)
+    }
 
-        present(tip, animated: true) {
-            Settings.firstTimePlaylistCreated = false
-            Settings.shouldShowDragAndDropTip = false
+    private func presentPlaylistsTip(_ tip: some Tip, sourceItem: any UIPopoverPresentationControllerSourceItem) {
+        let tipVC = TipUIPopoverViewController(tip, sourceItem: sourceItem)
+        tipVC.presentationDelegate = self
+        newFilterTip = tipVC
+        presentedPlaylistsTip = tip
+        present(tipVC, animated: true)
+
+        // Dismiss the popover once the tip is invalidated (close button,
+        // or its single allowed display ending).
+        Task { [weak self] in
+            for await status in tip.statusUpdates {
+                guard case .invalidated(let reason) = status else { continue }
+                self?.playlistsTipInvalidated(tip, reason: reason)
+                break
+            }
         }
     }
 
-    private func tip(
-        idealSize: CGSize = CGSizeMake(290, 100),
-        title: String,
-        message: String,
-        sourceView: UIView?,
-        sourceRect: CGRect
-    ) -> UIHostingController<AnyView>? {
-        let vc = UIHostingController(rootView: AnyView (EmptyView()) )
-        let tipView = TipViewStatic(title: title,
-                                    message: message,
-                              onTap: { [weak self] in
-            self?.dismissTipView()
-        })
-            .frame(idealWidth: idealSize.width, minHeight: idealSize.height)
-            .setupDefaultEnvironment()
-        vc.rootView = AnyView(tipView)
-        vc.view.backgroundColor = .clear
-        vc.view.clipsToBounds = false
-        vc.modalPresentationStyle = .popover
-        vc.sizingOptions = [.preferredContentSize]
-        guard let popoverPresentationController = vc.popoverPresentationController else {
-            return nil
+    private func playlistsTipInvalidated(_ tip: some Tip, reason: Tips.InvalidationReason) {
+        guard let tipVC = newFilterTip else { return }
+        newFilterTip = nil
+        presentedPlaylistsTip = nil
+        if tip is NewFilterTip, reason == .tipClosed {
+            Analytics.track(.filterTooltipClosed)
         }
-        popoverPresentationController.delegate = self
-        popoverPresentationController.permittedArrowDirections = [.up]
-        popoverPresentationController.sourceView = sourceView
-        popoverPresentationController.sourceRect = sourceRect
-        popoverPresentationController.backgroundColor = ThemeColor.primaryUi01()
-        return vc
+        tipVC.dismiss(animated: true)
     }
 }
 
@@ -281,7 +290,14 @@ extension PlaylistsViewController: UIPopoverPresentationControllerDelegate {
     }
 
     func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
-        dismissTipView()
+        // The user dismissed a tip popover by tapping outside of it: treat that as closing the tip.
+        guard let tip = presentedPlaylistsTip else { return }
+        newFilterTip = nil
+        presentedPlaylistsTip = nil
+        if tip is NewFilterTip {
+            Analytics.track(.filterTooltipClosed)
+        }
+        tip.invalidate(reason: .tipClosed)
     }
 }
 

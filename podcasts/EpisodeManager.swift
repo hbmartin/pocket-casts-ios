@@ -30,7 +30,7 @@ nonisolated class EpisodeManager: NSObject {
         #endif
 
         if fireNotification {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodePlayStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodePlayStatusChanged(uuid: episode.uuid))
         }
 
         if userInitiated {
@@ -139,7 +139,7 @@ nonisolated class EpisodeManager: NSObject {
         }
 
         if fireNotification {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodePlayStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodePlayStatusChanged(uuid: episode.uuid))
         }
 
         if userInitiated {

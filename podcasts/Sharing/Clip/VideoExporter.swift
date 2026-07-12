@@ -11,6 +11,7 @@ protocol AnimatableContent: View, Sendable {
 
 enum VideoExporter {
 
+    // @unchecked Sendable: all-let snapshot; the non-Sendable AVAsset is created for and owned by the single export flow.
     struct Parameters: @unchecked Sendable {
         let duration: TimeInterval
         let size: CGSize

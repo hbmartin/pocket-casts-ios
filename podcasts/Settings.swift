@@ -376,8 +376,6 @@ nonisolated class Settings: NSObject {
 
     static let upNextShuffleKey = "SJUpNextShuffleKey"
     class func upNextShuffleToggle() {
-        guard FeatureFlag.upNextShuffle.enabled else { return }
-
         let isOn = upNextShuffleEnabled()
         UserDefaults.standard.set(!isOn, forKey: Settings.upNextShuffleKey)
 
@@ -385,7 +383,7 @@ nonisolated class Settings: NSObject {
     }
 
     class func upNextShuffleEnabled() -> Bool {
-        if !FeatureFlag.upNextShuffle.enabled || !SyncManager.isUserLoggedIn() {
+        if !SyncManager.isUserLoggedIn() {
             return false
         }
         return UserDefaults.standard.bool(forKey: Settings.upNextShuffleKey)
@@ -424,9 +422,7 @@ nonisolated class Settings: NSObject {
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.chartRegionChanged)
 
-        if FeatureFlag.enableLocalizationHeaders.enabled {
-            LocalizationHelper.update(userRegion: region)
-        }
+        LocalizationHelper.update(userRegion: region)
     }
 
     // MARK: - Auto Archiving
@@ -679,31 +675,6 @@ nonisolated class Settings: NSObject {
         }
 
         return nil
-    }
-
-    // MARK: What's new
-
-    private static let whatsNewLastAcknowledgedKey = "SJWhatsNewLastAcknowledged"
-
-    class func setWhatsNewLastAcknowledged(_ value: Int) {
-        UserDefaults.standard.set(value, forKey: whatsNewLastAcknowledgedKey)
-    }
-
-    class func whatsNewLastAcknowledged() -> Int {
-        UserDefaults.standard.integer(forKey: whatsNewLastAcknowledgedKey)
-    }
-
-
-    private static let lastWhatsNewShownKey = "LastWhatsNewShown"
-    class var lastWhatsNewShown: String? {
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: lastWhatsNewShownKey)
-            UserDefaults.standard.synchronize()
-        }
-
-        get {
-            UserDefaults.standard.string(forKey: lastWhatsNewShownKey)
-        }
     }
 
     class func setShouldFollowSystemTheme(_ value: Bool) {
@@ -1206,17 +1177,6 @@ nonisolated class Settings: NSObject {
 
 
 
-    // MARK: - Podcast Feed Reload
-
-    static var shouldShowPodcastFeeReloadTip: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.podcastFeedReload.showTip) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.podcastFeedReload.showTip)
-        }
-    }
-
     // MARK: - Manage Downloads
 
     class var manageDownloadsLastCheckDate: Date? {
@@ -1260,56 +1220,7 @@ nonisolated class Settings: NSObject {
         }
     }
 
-    // MARK: - Podcast View Changes Tip
-
-    static var shouldShowPodcastViewChangesTip: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.podcastViewChanges.showTip) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.podcastViewChanges.showTip)
-        }
-    }
-
-    // MARK: - Recent Played Sorting Tip
-
-    static var shouldShowRecentlyPlayedSortingTip: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.shouldShowRecentlyPlayedSortingTip) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.shouldShowRecentlyPlayedSortingTip)
-        }
-    }
-
     // MARK: - Playlists
-
-    static var shouldShowNewFilterTip: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.newFilterTip) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.newFilterTip)
-        }
-    }
-
-    static var shouldShowNewFilterTipInCreationView: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.newFilterTipCreationView) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.newFilterTipCreationView)
-        }
-    }
-
-    static var shouldShowDragAndDropTip: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.playlistDragAndDropTip) as? Bool ?? false
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.playlistDragAndDropTip)
-        }
-    }
 
     static var shouldShowPlaylistsOnboarding: Bool {
         get {
@@ -1320,14 +1231,6 @@ nonisolated class Settings: NSObject {
         }
     }
 
-    static var firstTimePlaylistCreated: Bool {
-        get {
-            UserDefaults.standard.value(forKey: Constants.UserDefaults.firstTimePlaylistCreated) as? Bool ?? true
-        }
-        set {
-            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.firstTimePlaylistCreated)
-        }
-    }
 
     static var saveCurrentUpNextQueueIntoPlaylist: Bool {
         get {
@@ -1415,14 +1318,30 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    // MARK: - Normalize Volume
+
+    /// Facade over `audioTuning.normalize.enabled` — the "Normalize volume"
+    /// playback effect (gain to target LUFS with a true-peak limiter, no
+    /// compression). Suppressed at the engine level while Volume Boost is on.
+    static var isNormalizeVolumeEnabled: Bool {
+        get {
+            audioTuning.normalize.enabled
+        }
+        set {
+            var tuning = audioTuning
+            tuning.normalize.enabled = newValue
+            audioTuning = tuning
+            FileLog.shared.addMessage("[Settings] Normalize volume \(newValue ? "enabled" : "disabled")")
+        }
+    }
+
     // MARK: - VoiceBoostN
 
     /// Facade over `audioTuning.voiceBoost.useVoiceBoostN` so the General
     /// settings toggle and the Advanced Audio screen share one source of truth.
     static var isVoiceBoostNEnabled: Bool {
         get {
-            guard FeatureFlag.voiceBoostN.enabled else { return false }
-            return audioTuning.voiceBoost.useVoiceBoostN
+            audioTuning.voiceBoost.useVoiceBoostN
         }
         set {
             var tuning = audioTuning
@@ -1491,16 +1410,7 @@ nonisolated class Settings: NSObject {
         }
 
         class func podcastSearchDebounceTime() -> TimeInterval {
-            if FeatureFlag.searchPredictive.enabled {
-                return 0.2
-            } else {
-                return millisecondsToTime(
-                    configuredDouble(
-                        key: Constants.RemoteParams.podcastSearchDebounceMs,
-                        default: Constants.RemoteParams.podcastSearchDebounceMsDefault
-                    )
-                )
-            }
+            0.2
         }
 
         class func episodeSearchDebounceTime() -> TimeInterval {

@@ -37,21 +37,19 @@ nonisolated struct UserEpisodeManager {
 
             episode = DataManager.sharedManager.save(episode: episode)
 
-            if FeatureFlag.fileSync.enabled {
-                let episodeUuid = episode.uuid
-                Task {
-                    do {
-                        let relativePath = try await FileSyncManager.shared.importUpload(from: localFileUrl)
-                        if var saved = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
-                            saved.folderRelativePath = relativePath
-                            saved.groupName = ""
-                            saved.identity = .provisional
-                            DataManager.sharedManager.save(episode: saved)
-                            try await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
-                        }
-                    } catch {
-                        FileLog.shared.addMessage("FileSync: import into sync folder failed: \(error)")
+            let episodeUuid = episode.uuid
+            Task {
+                do {
+                    let relativePath = try await FileSyncManager.shared.importUpload(from: localFileUrl)
+                    if var saved = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
+                        saved.folderRelativePath = relativePath
+                        saved.groupName = ""
+                        saved.identity = .provisional
+                        DataManager.sharedManager.save(episode: saved)
+                        try await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
                     }
+                } catch {
+                    FileLog.shared.addMessage("FileSync: import into sync folder failed: \(error)")
                 }
             }
 
@@ -84,7 +82,7 @@ nonisolated struct UserEpisodeManager {
         }
         EpisodeManager.deleteDownloadedFiles(episode: userEpisode)
 
-        if FeatureFlag.fileSync.enabled, userEpisode.folderRelativePath != nil {
+        if userEpisode.folderRelativePath != nil {
             DataManager.sharedManager.saveEpisode(
                 downloadStatus: .notDownloaded,
                 downloadTaskId: nil,
@@ -105,7 +103,7 @@ nonisolated struct UserEpisodeManager {
     }
 
     static func deleteFromEverywhere(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) {
-        guard FeatureFlag.fileSync.enabled, userEpisode.folderRelativePath != nil else {
+        guard userEpisode.folderRelativePath != nil else {
             deleteFromDevice(userEpisode: userEpisode, removeFromPlaybackQueue: removeFromPlaybackQueue)
             return
         }
@@ -152,7 +150,7 @@ nonisolated struct UserEpisodeManager {
             object: episode.uuid
         )
 
-        if episodeSyncRequired, FeatureFlag.fileSync.enabled, episode.folderRelativePath != nil {
+        if episodeSyncRequired, episode.folderRelativePath != nil {
             DataManager.sharedManager.journalFileSyncUpsert(
                 entityType: .userEpisode,
                 uuid: episode.uuid,
@@ -222,7 +220,7 @@ nonisolated struct UserEpisodeManager {
                 dismissCallback?()
             })
 
-            if FeatureFlag.fileSync.enabled, episode.folderRelativePath != nil {
+            if episode.folderRelativePath != nil {
                 if episode.downloaded(pathFinder: DownloadManager.shared) {
                     alert.addAction(UIAlertAction(title: L10n.fileSyncRemoveDownload, style: .default) { _ in
                         Task {

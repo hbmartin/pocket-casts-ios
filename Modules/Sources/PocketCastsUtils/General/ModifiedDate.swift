@@ -52,6 +52,15 @@ extension ModifiedDate {
     }
 }
 
+public extension KeyedDecodingContainer {
+    /// Allows `@ModifiedDate` properties with an Optional wrapped value to decode payloads written
+    /// before the field existed: a missing key decodes as `nil` instead of throwing `keyNotFound`.
+    /// The synthesized `init(from:)` of the containing type calls this more specific overload.
+    func decode<T>(_ type: ModifiedDate<T?>.Type, forKey key: Key) throws -> ModifiedDate<T?> {
+        try decodeIfPresent(type, forKey: key) ?? ModifiedDate(wrappedValue: nil)
+    }
+}
+
 fileprivate extension Bool {
     init?(int: Int) {
         switch int {

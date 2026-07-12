@@ -77,6 +77,12 @@ jobs:
           POCKET_CASTS_CREDENTIALS_JSON: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.pull_request_number == '')) && secrets.POCKET_CASTS_CREDENTIALS_JSON || '' }}
         run: scripts/ci/build-and-test.sh
 
+      # Snapshot-coverage gate consumes the xcresult's xccov data, so it must run
+      # in this job (not check:static, which has no test results).
+      - name: Check snapshot coverage
+        if: ${{ !cancelled() }}
+        run: ruby scripts/ci/check-snapshot-coverage.rb build/github/results/PocketCastsTests.xcresult
+
       - name: Upload build logs and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -85,6 +91,65 @@ jobs:
           path: |
             build/github/logs/**/*.log
             build/github/results/PocketCastsTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Macro expansion tests only run where the compiler plugin loads (macOS host,
+  # not the simulator — every test is `#if canImport(GRDBMacrosPlugin)`-fenced
+  # and would report all-skipped there). The shared GRDBMacrosTests scheme
+  # (Modules/.swiftpm/xcode/xcshareddata/xcschemes/) scopes the build to the
+  # plugin + tests; plain `swift test` would try to build the whole package,
+  # and the iOS-only Fingerprint Rust binding does not compile for macOS.
+  macros_tests:
+    name: GRDB Macro Tests (macOS host)
+    if: >-
+      ${{
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'pull_request_target' && github.event.label.name == 'ci-approved' && github.event.pull_request.head.repo.full_name != github.repository) ||
+        (github.event_name != 'pull_request' && github.event_name != 'pull_request_target')
+      }}
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request_target' && (github.event_name != 'workflow_dispatch' || inputs.pull_request_number == '') }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout manually approved PR head
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.pull_request_number != '' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: refs/pull/${{ inputs.pull_request_number }}/head
+
+      # Pinned to the SHA that was current when `ci-approved` was applied, so a
+      # push racing the label cannot swap in unreviewed code.
+      - name: Checkout label-approved fork PR head
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Run GRDB macro tests
+        run: |
+          set -o pipefail
+          mkdir -p build/github/logs
+          (cd Modules && xcodebuild test -scheme GRDBMacrosTests -destination 'platform=macOS') 2>&1 \
+            | tee build/github/logs/grdb-macros-tests.log
+
+      - name: Upload macro test logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: grdb-macros-tests-${{ github.run_id }}
+          path: build/github/logs/**/*.log
           if-no-files-found: ignore
           retention-days: 14
 

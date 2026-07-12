@@ -47,11 +47,6 @@ final class GRDBQueue: PCDBQueue, Sendable {
         #if DEBUG
         MainThreadDBReporter.reportIfNeeded()
         #endif
-        guard FeatureFlag.concurrentDatabaseReads.enabled else {
-            performWrite(block)
-            return
-        }
-
         do {
             try dbPool.read { db in
                 let dbWrapper = GRDBDatabase(database: db)
@@ -81,10 +76,6 @@ final class GRDBQueue: PCDBQueue, Sendable {
     }
 
     func read<T>(_ block: @Sendable @escaping (any PCDatabase) throws -> T) async throws -> T {
-        guard FeatureFlag.concurrentDatabaseReads.enabled else {
-            return try await write(block)
-        }
-
         let box = try await dbPool.read { db in
             UncheckedSendableBox(value: try block(GRDBDatabase(database: db)))
         }
@@ -109,6 +100,7 @@ final class GRDBQueue: PCDBQueue, Sendable {
 
 /// GRDB's async read/write require Sendable results; the legacy models are
 /// mutable reference types, so ownership is handed to the awaiting task instead.
+/// @unchecked Sendable: ownership of the boxed record passes wholesale to the awaiting task.
 private struct UncheckedSendableBox<T>: @unchecked Sendable {
     let value: T
 }

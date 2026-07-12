@@ -9,6 +9,8 @@ struct OpJournalFlusher {
     let folder: any SyncFolder
     let dataManager: DataManager
     let deviceID: String
+    /// Injectable clock so simulations control time; production uses the wall clock.
+    var now: @Sendable () -> Int64 = FileSyncClock.currentUTCTimeInMillis
 
     struct Result {
         var flushedOps = 0
@@ -73,7 +75,7 @@ struct OpJournalFlusher {
                 envelope.opID = UUID().uuidString.lowercased()
                 envelope.deviceID = deviceID
                 envelope.seq = UInt64(nextSeq)
-                envelope.wallClockMs = FileSyncClock.currentUTCTimeInMillis()
+                envelope.wallClockMs = now()
                 envelope.stats = stats
                 envelopes.append(envelope)
             }
@@ -105,7 +107,7 @@ struct OpJournalFlusher {
         ownCursor.headSeq = nextSeq
         dataManager.save(fileSyncCursor: ownCursor)
         UserDefaults.standard.set(digest, forKey: digestKey)
-        let cutoff = FileSyncClock.currentUTCTimeInMillis() - Int64(7 * 24 * 60 * 60 * 1000)
+        let cutoff = now() - Int64(7 * 24 * 60 * 60 * 1000)
         dataManager.purgeFlushedFileSyncEntries(olderThanMs: cutoff)
 
         FileLog.shared.addMessage("FileSync: flushed \(envelopes.count) ops (head seq \(nextSeq))")

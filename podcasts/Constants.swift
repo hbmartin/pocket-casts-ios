@@ -161,13 +161,7 @@ nonisolated struct Constants {
 
         static let isLockScreenScrubbingDisabled = "IsLockScreenScrubbingDisabled"
 
-        static let shouldShowRecentlyPlayedSortingTip = "ShouldShowRecentlyPlayedSortingTip"
-
-        static let newFilterTip = "NewFilterTip"
-        static let newFilterTipCreationView = "NewFilterTipCreationView"
-        static let playlistDragAndDropTip = "PlaylistDragAndDropTip"
         static let playlistsOnboarding = "NewPlaylistsOnboarding"
-        static let firstTimePlaylistCreated = "FirstTimePlaylistCreated"
         static let saveCurrentUpNextQueueIntoPlaylist = "SaveCurrentUpNextQueueIntoPlaylist"
         static let lastNetworkDataUsageCleanupDate = "lastNetworkDataUsageCleanupDate"
 
@@ -197,18 +191,10 @@ nonisolated struct Constants {
             static let lastCheckDate = "manageDownloadsLastCheckDate"
         }
 
-        enum podcastFeedReload {
-            static let showTip = "podcastFeedReload.showtip"
-        }
-
         enum suggestedFolders {
             static let lastUpsellDate = "suggestedFolders.lastUpsellDate"
             static let upsellCount = "suggestedFolders.upsellCount"
             static let lastPodcastsUsed = "suggestedFolders.lastPodcastsUsed"
-        }
-
-        enum podcastViewChanges {
-            static let showTip = "podcastViewChanges.showtip"
         }
 
         enum notifications {
@@ -259,7 +245,6 @@ nonisolated struct Constants {
     enum Limits {
         static let minTimeBetweenRemoteSkips: TimeInterval = 0.2
         static let maxDownloadConnectionsPerHost = 2
-        static let upNextClearWithoutWarning = 2
 
         static let minSleepTime = 5.minutes
         static let maxSleepTime = 5.hours

@@ -6,6 +6,7 @@ import PocketCastsServer
 import PocketCastsUtils
 import Combine
 import TelemetryDeck
+import TipKit
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     private static let initialRefreshDelay = 2.seconds
@@ -41,6 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ImageManager.refreshScreenMetrics()
         configureBitdrift()
         configureTelemetryDeck()
+        configureMetricKit()
         setupSecrets()
         addAnalyticsObservers()
         setupAnalytics()
@@ -49,6 +51,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ServerConfig.shared.errorLogger = BitdriftErrorLogger(category: "sync")
         ServerConfig.shared.warmProtectedDataAvailabilityCache()
 
+        configureTipKit()
+
         appInstallState = appLifecycleAnalytics.checkApplicationInstalledOrUpgraded()
 
         if let appInstallState {
@@ -56,18 +60,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             case .updated:
                 Settings.notificationsNewEpisodes = UserDefaults.standard.bool(forKey: Constants.UserDefaults.pushEnabled)
 
-                Settings.shouldShowNewFilterTip = false
-                Settings.shouldShowNewFilterTipInCreationView = false
+                // Upgraders have already used playlists; never show them the new-user playlist tips
+                NewFilterTip().invalidate(reason: .actionPerformed)
+                NewFilterCreationTip().invalidate(reason: .actionPerformed)
             case .installed:
-                //Never show the podcast feed reload tooltip for fresh install
-                Settings.shouldShowPodcastFeeReloadTip = false
-                Settings.shouldShowPodcastViewChangesTip = false
-                Settings.shouldShowRecentlyPlayedSortingTip = false
+                // Never show the "here's what changed" tips for a fresh install
+                PodcastFeedReloadTip().invalidate(reason: .actionPerformed)
+                PodcastViewChangesTip().invalidate(reason: .actionPerformed)
+                RecentlyPlayedSortingTip().invalidate(reason: .actionPerformed)
                 Settings.shouldShowPlaylistsOnboarding = false
             case .sameVersion:
                 break
             }
         }
+
+        migrateLegacyTipFlags()
 
         let defaults = UserDefaults.standard
 
@@ -110,20 +117,67 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             DownloadManager.shared.startAllQueued()
 
-            if FeatureFlag.enableLocalizationHeaders.enabled {
-                LocalizationHelper.provider = InternationalizationProvider(userRegion: Settings.userRegion())
-            }
+            LocalizationHelper.provider = InternationalizationProvider(userRegion: Settings.userRegion())
         }
 
         badgeHelper.setup()
         shortcutManager.listenForShortcutChanges()
         fileSyncCoordinator.setup()
+        NowPlayingLiveActivityManager.shared.setup()
 
         setupBackgroundRefresh()
 
         setupSignOutListener()
 
         return true
+    }
+
+    // MARK: - TipKit
+
+    private func configureTipKit() {
+        do {
+            try Tips.configure()
+        } catch {
+            FileLog.shared.addMessage("TipKit configuration failed: \(error)")
+        }
+    }
+
+    /// One-time migration of the pre-TipKit tip booleans into TipKit's datastore.
+    ///
+    /// If the old system recorded a tip as already seen/consumed, invalidate the TipKit
+    /// equivalent so existing users don't see it again, then drop the legacy key.
+    /// The key strings are inlined because their `Constants.UserDefaults` entries were
+    /// removed together with the booleans they backed.
+    private func migrateLegacyTipFlags() {
+        let defaults = UserDefaults.standard
+
+        // For these keys false used to mean "the tip was shown/dismissed, don't show it again"
+        let legacyShowTipFlags: [(key: String, tip: any Tip)] = [
+            ("podcastFeedReload.showtip", PodcastFeedReloadTip()),
+            ("podcastViewChanges.showtip", PodcastViewChangesTip()),
+            ("ShouldShowRecentlyPlayedSortingTip", RecentlyPlayedSortingTip()),
+            ("NewFilterTip", NewFilterTip()),
+            ("NewFilterTipCreationView", NewFilterCreationTip())
+        ]
+        for (key, tip) in legacyShowTipFlags {
+            guard let shouldShow = defaults.value(forKey: key) as? Bool else { continue }
+            if !shouldShow {
+                tip.invalidate(reason: .tipClosed)
+            }
+            defaults.removeObject(forKey: key)
+        }
+
+        // The drag & drop tip used to be armed by creating a manual playlist…
+        if defaults.value(forKey: "PlaylistDragAndDropTip") as? Bool == true {
+            PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
+        }
+        defaults.removeObject(forKey: "PlaylistDragAndDropTip")
+
+        // …and FirstTimePlaylistCreated flipped to false once that tip had been shown
+        if defaults.value(forKey: "FirstTimePlaylistCreated") as? Bool == false {
+            PlaylistDragAndDropTip().invalidate(reason: .tipClosed)
+        }
+        defaults.removeObject(forKey: "FirstTimePlaylistCreated")
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
@@ -356,6 +410,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             sessionStrategy: .fixed()
         )
         #endif
+    }
+
+    private func configureMetricKit() {
+        // Payload persistence is unconditional (local ring buffer for the Beta
+        // viewer); the analytics summaries respect the opt-out via the adapter
+        // fan-out at track time, so a mid-session opt-in needs no re-registration.
+        MetricKitCollector.shared.start()
     }
 
     @discardableResult

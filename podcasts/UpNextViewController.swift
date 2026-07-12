@@ -1,7 +1,26 @@
 import PocketCastsDataModel
 import PocketCastsUtils
 import PocketCastsServer
+import SwiftUI
+import TipKit
 import UIKit
+
+/// Tip anchored to the Up Next sort button, teaching that the queue can be reordered.
+///
+/// Shows at most once, and never once the user has used the sort button.
+nonisolated struct UpNextSortTip: Tip {
+    var title: Text {
+        Text(L10n.upNextSortTipTitle)
+    }
+
+    var message: Text? {
+        Text(L10n.upNextSortTipMessage)
+    }
+
+    var options: [any TipOption] {
+        MaxDisplayCount(1)
+    }
+}
 
 class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     static let playerCell = "PlayerCell"
@@ -86,21 +105,19 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             remainingLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8)
         ])
 
-        if FeatureFlag.upNextSort.enabled {
-            headerView.addSubview(sortButton)
-            sortButton.translatesAutoresizingMaskIntoConstraints = false
-            sortButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-            NSLayoutConstraint.activate([
-                sortButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-                sortButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-                sortButton.widthAnchor.constraint(equalToConstant: 24),
-                sortButton.heightAnchor.constraint(equalToConstant: 24)
-            ])
-        }
+        headerView.addSubview(sortButton)
+        sortButton.translatesAutoresizingMaskIntoConstraints = false
+        sortButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        NSLayoutConstraint.activate([
+            sortButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            sortButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            sortButton.widthAnchor.constraint(equalToConstant: 24),
+            sortButton.heightAnchor.constraint(equalToConstant: 24)
+        ])
 
-        // When the sort button is shown, the shuffle/clear buttons sit to its left.
-        let trailingButtonAnchor = FeatureFlag.upNextSort.enabled ? sortButton.leadingAnchor : headerView.trailingAnchor
-        let trailingButtonConstant: CGFloat = FeatureFlag.upNextSort.enabled ? -16 : -20
+        // The shuffle/clear buttons sit to the sort button's left.
+        let trailingButtonAnchor = sortButton.leadingAnchor
+        let trailingButtonConstant: CGFloat = -16
 
         headerView.addSubview(shuffleButton)
         shuffleButton.translatesAutoresizingMaskIntoConstraints = false
@@ -122,22 +139,17 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             clearQueueButton.leadingAnchor.constraint(greaterThanOrEqualTo: remainingLabel.trailingAnchor, constant: 10)
         ])
 
-        if FeatureFlag.upNextShuffle.enabled {
-            clearQueueButton.isHidden = true
-            shuffleButton.isHidden = PlaybackManager.shared.upNextCount() == 0
-        } else {
-            shuffleButton.isHidden = true
-            clearQueueButton.isEnabled = PlaybackManager.shared.upNextCount() > 0
-        }
-        if FeatureFlag.upNextSort.enabled {
-            sortButton.isHidden = PlaybackManager.shared.upNextCount() < 2
-        }
+        clearQueueButton.isHidden = true
+        shuffleButton.isHidden = PlaybackManager.shared.upNextCount() == 0
+        sortButton.isHidden = PlaybackManager.shared.upNextCount() < 2
         updateSize()
         return headerView
     }()
 
     var multiSelectGestureInProgress = false
     var isReorderInProgress = false
+
+    private var sortTipVC: UIViewController?
 
     @IBOutlet var upNextTable: ThemeableTable! {
         didSet {
@@ -205,7 +217,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(reorderingDidBegin), name: .tableViewReorderWillBegin, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(reorderingDidEnd), name: .tableViewReorderDidEnd, object: nil)
 
-        if FeatureFlag.upNextShuffle.enabled, showingInTab {
+        if showingInTab {
             NotificationCenter.default.addObserver(self, selector: #selector(updateShuffleButtonState), name: Constants.Notifications.upNextShuffleToggle, object: nil)
         }
 
@@ -229,9 +241,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         super.viewWillAppear(animated)
         updateNavBarButtons()
         setupActionButtonsIfNecessary()
-        if FeatureFlag.upNextShuffle.enabled {
-            themeDidChange()
-        }
+        themeDidChange()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -242,6 +252,8 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         track(.upNextShown, properties: ["source": source])
 
         AnalyticsHelper.upNextOpened()
+
+        showUpNextSortTipIfNeeded()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -261,16 +273,12 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     @objc func clearQueueTapped() {
         let queueCount = PlaybackManager.shared.upNextCount()
 
-        if queueCount <= Constants.Limits.upNextClearWithoutWarning && !FeatureFlag.upNextShuffle.enabled {
-            performClearAll()
-        } else {
-            let alert = UIAlertController(title: L10n.clearUpNext, message: L10n.clearUpNextMessage, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
-            alert.addAction(UIAlertAction(title: actionLabelText(queueCount), style: .destructive) { [weak self] _ in
-                self?.performClearAll()
-            })
-            present(alert, animated: true)
-        }
+        let alert = UIAlertController(title: L10n.clearUpNext, message: L10n.clearUpNextMessage, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: actionLabelText(queueCount), style: .destructive) { [weak self] _ in
+            self?.performClearAll()
+        })
+        present(alert, animated: true)
 
         selectedPlayListEpisodes.removeAll()
         isMultiSelectEnabled = false
@@ -320,37 +328,26 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     @objc private func subscriptionStatusDidChange() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            if FeatureFlag.upNextShuffle.enabled {
-                // Update UI
-                setupActionButtonsIfNecessary()
-                themeDidChange()
-                updateNavBarButtons()
-                reloadTable()
-            }
+            // Update UI
+            setupActionButtonsIfNecessary()
+            themeDidChange()
+            updateNavBarButtons()
+            reloadTable()
         }
     }
 
     private func setupActionButtonsIfNecessary() {
-        if FeatureFlag.upNextShuffle.enabled {
-            guard shuffleButton.allTargets.isEmpty else { return }
+        if shuffleButton.allTargets.isEmpty {
             NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(subscriptionStatusDidChange), name: ServerNotifications.subscriptionStatusChanged, object: nil)
             themeDidChange()
             shuffleButton.addTarget(self, action: #selector(shuffleButtonTapped), for: .touchUpInside)
-        } else {
-            guard clearQueueButton.allTargets.isEmpty else { return }
-            clearQueueButton.setTitle(L10n.queueClearQueue, for: .normal)
-            clearQueueButton.setTitleColor(AppTheme.colorForStyle(.primaryText02, themeOverride: themeOverride), for: .normal)
-            clearQueueButton.setTitleColor(AppTheme.colorForStyle(.primaryText02, themeOverride: themeOverride).withAlphaComponent(0.5), for: .disabled)
-            clearQueueButton.titleLabel?.font = UIFont.font(ofSize: 13, weight: .bold, scalingWith: .footnote)
-            clearQueueButton.titleLabel?.adjustsFontForContentSizeCategory = true
-            clearQueueButton.addTarget(self, action: #selector(clearQueueTapped), for: .touchUpInside)
         }
         setupSortButtonIfNecessary()
     }
 
     private func setupSortButtonIfNecessary() {
-        guard FeatureFlag.upNextSort.enabled, sortButton.allTargets.isEmpty else { return }
+        guard sortButton.allTargets.isEmpty else { return }
         NotificationCenter.default.addObserver(self, selector: #selector(updateSortButtonImage), name: Constants.Notifications.themeChanged, object: nil)
         updateSortButtonImage()
         sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
@@ -368,8 +365,46 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     @objc private func sortButtonTapped() {
         guard PlaybackManager.shared.upNextCount() >= 2 else { return }
 
+        // The user found the sort button; no need to keep teaching it.
+        UpNextSortTip().invalidate(reason: .actionPerformed)
+
         let optionsPicker = makeSortOptionsPicker()
         optionsPicker.present(from: self)
+    }
+
+    private func showUpNextSortTipIfNeeded() {
+        guard
+            PlaybackManager.shared.upNextCount() >= 2,
+            !sortButton.isHidden,
+            sortButton.window != nil,
+            !isMultiSelectEnabled,
+            sortTipVC == nil,
+            presentedViewController == nil
+        else {
+            return
+        }
+
+        let tip = UpNextSortTip()
+        guard tip.shouldDisplay else { return }
+
+        let tipVC = TipUIPopoverViewController(tip, sourceItem: sortButton)
+        sortTipVC = tipVC
+        present(tipVC, animated: true)
+
+        // Dismiss the popover once the tip is invalidated (close button, sort
+        // button used, or its single allowed display ending).
+        Task { [weak self] in
+            for await shouldDisplay in tip.shouldDisplayUpdates where !shouldDisplay {
+                self?.dismissUpNextSortTip()
+                break
+            }
+        }
+    }
+
+    private func dismissUpNextSortTip() {
+        guard let sortTipVC else { return }
+        self.sortTipVC = nil
+        sortTipVC.dismiss(animated: true)
     }
 
     private func makeSortOptionsPicker() -> OptionsPicker {
@@ -391,7 +426,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     }
 
     private func actionLabelText(_ queueCount: Int) -> String {
-        if FeatureFlag.upNextShuffle.enabled, queueCount == 1 {
+        if queueCount == 1 {
             return L10n.queueClearEpisodeQueueSingular
         }
         return L10n.queueClearEpisodeQueuePlural(queueCount.localized())
@@ -481,7 +516,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         } else if !isMultiSelectEnabled, PlaybackManager.shared.upNextCount() > 0 {
             rightButton = UIBarButtonItem(title: L10n.select, style: .plain, target: self, action: #selector(selectTapped))
             if showingInTab {
-                if FeatureFlag.upNextShuffle.enabled, PlaybackManager.shared.upNextCount() > 0 {
+                if PlaybackManager.shared.upNextCount() > 0 {
                     leftButton = UIBarButtonItem(title: L10n.clear, style: .plain, target: self, action: #selector(clearQueueTapped))
                 } else {
                     leftButton = nil
@@ -667,8 +702,6 @@ extension UpNextViewController {
         let metric = UIFontMetrics(forTextStyle: .largeTitle)
         let buttonSize = max(24, metric.scaledValue(for: 24))
         shuffleButton.updateSizeConstraints(to: buttonSize)
-        if FeatureFlag.upNextSort.enabled {
-            sortButton.updateSizeConstraints(to: buttonSize)
-        }
+        sortButton.updateSizeConstraints(to: buttonSize)
     }
 }

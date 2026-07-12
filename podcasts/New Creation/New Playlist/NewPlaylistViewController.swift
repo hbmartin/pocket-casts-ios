@@ -1,11 +1,29 @@
 import UIKit
 import SwiftUI
+import TipKit
 import PocketCastsDataModel
 
 @MainActor
 protocol FilterCreatedDelegate: AnyObject {
     func filterCreated(newFilter: EpisodeFilter)
     var presentingPlaylistDetail: Bool { get set }
+}
+
+/// Tip shown on the default playlist-creation screen, explaining manual vs smart playlists.
+///
+/// Upgraders never see it (invalidated in `AppDelegate`); it shows at most once.
+nonisolated struct NewFilterCreationTip: Tip {
+    var title: Text {
+        Text(L10n.smartPlaylistsTipViewCreationTitle)
+    }
+
+    var message: Text? {
+        Text(L10n.smartPlaylistsTipViewCreationDescription)
+    }
+
+    var options: [any TipOption] {
+        MaxDisplayCount(1)
+    }
 }
 
 class NewPlaylistViewController: PCViewController {
@@ -238,9 +256,7 @@ class NewPlaylistViewController: PCViewController {
             Analytics.track(.filterCreated)
             Analytics.track(.filterCreateAsManualPlaylistTapped)
 
-            if Settings.firstTimePlaylistCreated {
-                Settings.shouldShowDragAndDropTip = true
-            }
+            PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
 
             // Dismiss all presented view controllers and show snackbar with navigation action
             if let rootVC = SceneHelper.rootViewController(includeTopMost: false) {
@@ -278,9 +294,7 @@ class NewPlaylistViewController: PCViewController {
             Analytics.track(.filterCreated)
             Analytics.track(.filterCreateAsManualPlaylistTapped)
 
-            if Settings.firstTimePlaylistCreated {
-                Settings.shouldShowDragAndDropTip = true
-            }
+            PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
 
             // Dismiss all presented view controllers and show snackbar with navigation action
             if let rootVC = SceneHelper.rootViewController(includeTopMost: false) {
@@ -303,9 +317,7 @@ class NewPlaylistViewController: PCViewController {
         Analytics.track(.filterCreated)
         Analytics.track(.filterCreateAsManualPlaylistTapped)
 
-        if Settings.firstTimePlaylistCreated {
-            Settings.shouldShowDragAndDropTip = true
-        }
+        PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
 
         dismiss(animated: true, completion: nil)
     }
@@ -331,25 +343,25 @@ class NewPlaylistViewController: PCViewController {
     }
 
     private func showSmartPlaylistTooltip() {
-        if creationType != .default || !Settings.shouldShowNewFilterTipInCreationView {
+        guard creationType == .default, smartPlaylistsTip == nil, let source = creationView else {
             return
         }
 
-        guard
-            let source = creationView,
-            let vc = tip(
-                title: L10n.smartPlaylistsTipViewCreationTitle,
-                message: L10n.smartPlaylistsTipViewCreationDescription,
-                sourceView: source,
-                sourceRect: source.bounds
-            )
-        else {
-            return
-        }
-        smartPlaylistsTip = vc
+        let tip = NewFilterCreationTip()
+        guard tip.shouldDisplay else { return }
 
-        present(vc, animated: true) {
-            Settings.shouldShowNewFilterTipInCreationView = false
+        let tipVC = TipUIPopoverViewController(tip, sourceItem: source)
+        tipVC.presentationDelegate = self
+        smartPlaylistsTip = tipVC
+        present(tipVC, animated: true)
+
+        // Dismiss the popover once the tip is invalidated (close button,
+        // or its single allowed display ending).
+        Task { [weak self] in
+            for await shouldDisplay in tip.shouldDisplayUpdates where !shouldDisplay {
+                self?.dismissTipView()
+                break
+            }
         }
     }
 
@@ -357,37 +369,6 @@ class NewPlaylistViewController: PCViewController {
         smartPlaylistsTip?.dismiss(animated: true) { [weak self] in
             self?.smartPlaylistsTip = nil
         }
-    }
-
-    private func tip(
-        idealSize: CGSize = CGSizeMake(290, 100),
-        title: String,
-        message: String,
-        sourceView: UIView?,
-        sourceRect: CGRect
-    ) -> UIHostingController<AnyView>? {
-        let vc = UIHostingController(rootView: AnyView (EmptyView()) )
-        let tipView = TipViewStatic(title: title,
-                                    message: message,
-                              onTap: { [weak self] in
-            self?.dismissTipView()
-        })
-            .frame(idealWidth: idealSize.width, minHeight: idealSize.height)
-            .setupDefaultEnvironment()
-        vc.rootView = AnyView(tipView)
-        vc.view.backgroundColor = .clear
-        vc.view.clipsToBounds = false
-        vc.modalPresentationStyle = .popover
-        vc.sizingOptions = [.preferredContentSize]
-        guard let popoverPresentationController = vc.popoverPresentationController else {
-            return nil
-        }
-        popoverPresentationController.delegate = self
-        popoverPresentationController.permittedArrowDirections = [.up]
-        popoverPresentationController.sourceView = sourceView
-        popoverPresentationController.sourceRect = sourceRect
-        popoverPresentationController.backgroundColor = ThemeColor.primaryUi01()
-        return vc
     }
 }
 
@@ -405,6 +386,9 @@ extension NewPlaylistViewController: UIPopoverPresentationControllerDelegate {
     }
 
     func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
-        dismissTipView()
+        // The user dismissed the tip popover by tapping outside of it: treat that as closing the tip.
+        guard smartPlaylistsTip != nil else { return }
+        smartPlaylistsTip = nil
+        NewFilterCreationTip().invalidate(reason: .tipClosed)
     }
 }

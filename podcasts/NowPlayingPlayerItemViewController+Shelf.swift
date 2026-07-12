@@ -558,10 +558,8 @@ extension NowPlayingPlayerItemViewController: @preconcurrency AVRoutePickerViewD
 
         // This prepares routing options without activating the session
         // The actual session activation happens when playback begins
-        if FeatureFlag.activateAudioSessionForRoutePicker.enabled {
-            AVAudioSession.sharedInstance().prepareRouteSelectionForPlayback { shouldStartPlayback, routeSelection in
-                FileLog.shared.addMessage("Route selection prepared: shouldStartPlayback=\(shouldStartPlayback), type=\(routeSelection.rawValue)")
-            }
+        AVAudioSession.sharedInstance().prepareRouteSelectionForPlayback { shouldStartPlayback, routeSelection in
+            FileLog.shared.addMessage("Route selection prepared: shouldStartPlayback=\(shouldStartPlayback), type=\(routeSelection.rawValue)")
         }
 
         if isPresentingOverflowRoutePicker {

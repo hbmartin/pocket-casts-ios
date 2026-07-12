@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsUtils
 import Synchronization
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; retry/completion flags live in the Mutex-guarded PodcastSearchState, the rest is immutable.
 class PodcastSearchOperation: Operation, @unchecked Sendable {
     private let completion: @Sendable (PodcastSearchResponse?) -> Void
     private let searchQuery: MainServerHandler.PodcastSearchQuery

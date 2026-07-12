@@ -55,10 +55,8 @@ extension UpNextViewController: @preconcurrency SwipeTableViewCellDelegate {
                     }
                 } else {
                     tableView.reloadData() // if they delete the very last episode, reload the table to get the empty up next cell
-                    if FeatureFlag.upNextShuffle.enabled {
-                        isMultiSelectEnabled = false
-                        updateNavBarButtons()
-                    }
+                    isMultiSelectEnabled = false
+                    updateNavBarButtons()
                 }
                 self.changedViaSwipeToRemove = false
             }

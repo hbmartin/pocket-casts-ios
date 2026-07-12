@@ -6,6 +6,7 @@ import PocketCastsUtils
 import UIKit
 import SwiftUI
 import SafariServices
+import TipKit
 
 enum PodcastFeedReloadSource {
     case menu
@@ -472,7 +473,9 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         // Episode grouping can change based on download and play status, so listen for both those events and refresh when they happen
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshEpisodes))
         addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(refreshEpisodes))
-        addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(refreshEpisodes))
+        addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
+            self?.refreshEpisodes()
+        }
 
         if featuredPodcast, !hasAppearedAlready {
             Analytics.track(.discoverFeaturedPodcastTapped, properties: ["uuid": podcastUUID])
@@ -498,7 +501,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         showViewChangesTipIfNeeded()
 
         // Load recommendations when view appears
-        if FeatureFlag.recommendations.enabled && recommendations == nil {
+        if recommendations == nil {
             Task {
                 await loadRecommendations()
             }
@@ -1358,13 +1361,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     func showBookmarks() {
-        if FeatureFlag.podcastBookmarksInline.enabled {
-            switchViewMode(to: .bookmarks)
-        } else {
-            guard let podcast else { return }
-            let controller = BookmarksPodcastListController(podcast: podcast)
-            present(controller, animated: true)
-        }
+        switchViewMode(to: .bookmarks)
     }
 
     func showYouMightLike() {
@@ -1441,21 +1438,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     }
 
     private func dismissPodcastFeedReloadTip() {
-        guard Settings.shouldShowPodcastFeeReloadTip,
-            let podcastFeedReloadTooltip
-        else {
-            return
-        }
+        guard let podcastFeedReloadTooltip else { return }
+        self.podcastFeedReloadTooltip = nil
         Analytics.track(.podcastRefreshEpisodeTooltipDismissed)
-        Settings.shouldShowPodcastFeeReloadTip = false
-        podcastFeedReloadTooltip.dismiss(animated: true) { [weak self] in
-            self?.podcastFeedReloadTooltip = nil
-        }
+        podcastFeedReloadTooltip.dismiss(animated: true)
     }
 
     func forceCollapsingHeaderIfNeeded() {
         if FeatureFlag.podcastFeedUpdate.enabled {
-            if Settings.shouldShowPodcastFeeReloadTip, summaryExpanded {
+            if PodcastFeedReloadTip().shouldDisplay, summaryExpanded {
                 summaryExpanded = false
             }
         }
@@ -1463,64 +1454,64 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
     func showPodcastFeedReloadTipIfNeeded() {
         guard
-            Settings.shouldShowPodcastFeeReloadTip,
             FeatureFlag.podcastFeedUpdate.enabled,
-            podcastFeedReloadTooltip == nil
+            podcastFeedReloadTooltip == nil,
+            presentedViewController == nil,
+            let button = searchController?.overflowButton
         else {
             return
         }
-        if let vc = showPodcastFeedReloadTip() {
-            present(vc, animated: true) {
-                Analytics.track(.podcastRefreshEpisodeTooltipShown)
-            }
-            podcastFeedReloadTooltip = vc
-        }
-    }
 
-    private func showPodcastFeedReloadTip() -> UIViewController? {
-        guard let button = searchController?.overflowButton else {
-            return nil
+        let tip = PodcastFeedReloadTip()
+        guard tip.shouldDisplay else { return }
+
+        let tipVC = TipUIPopoverViewController(tip, sourceItem: button)
+        tipVC.presentationDelegate = self
+        present(tipVC, animated: true) {
+            Analytics.track(.podcastRefreshEpisodeTooltipShown)
         }
-        let vc = UIHostingController(rootView: AnyView (EmptyView()) )
-        let idealSize = CGSizeMake(290, 100)
-        let tipView = TipViewStatic(title: L10n.podcastFeedReloadTipTitle,
-                                    message: L10n.podcastFeedReloadTipMessage,
-                              onTap: { [weak self] in
-            self?.dismissPodcastFeedReloadTip()
-        })
-            .frame(idealWidth: idealSize.width, minHeight: idealSize.height)
-            .setupDefaultEnvironment()
-        vc.rootView = AnyView(tipView)
-        vc.view.backgroundColor = .clear
-        vc.view.clipsToBounds = false
-        vc.modalPresentationStyle = .popover
-        vc.sizingOptions = [.preferredContentSize]
-        if let popoverPresentationController = vc.popoverPresentationController {
-            popoverPresentationController.delegate = self
-            popoverPresentationController.permittedArrowDirections = [.down]
-            popoverPresentationController.sourceView = button
-            popoverPresentationController.sourceRect = button.bounds
-            popoverPresentationController.backgroundColor = ThemeColor.primaryUi01()
+        podcastFeedReloadTooltip = tipVC
+
+        // Dismiss the popover once the tip is invalidated (eg: via its close button).
+        Task { [weak self] in
+            for await shouldDisplay in tip.shouldDisplayUpdates where !shouldDisplay {
+                self?.dismissPodcastFeedReloadTip()
+                break
+            }
         }
-        return vc
     }
 
     private var viewChangesTipVC: UIViewController?
     private var dimmingView: UIView?
 
     func showViewChangesTipIfNeeded() {
-        guard Settings.shouldShowPodcastViewChangesTip,
-              self.podcast != nil,
-              viewChangesTipVC == nil
+        guard self.podcast != nil,
+              viewChangesTipVC == nil,
+              presentedViewController == nil
         else {
             return
         }
-        Settings.shouldShowPodcastViewChangesTip = false
-        var point = podcastHeaderCell.center
-        point.y = summaryExpanded ? 1.4 * PodcastHeaderView.Constants.largeImageSize : 1.4 * PodcastHeaderView.Constants.smallImageSize
-        let rect = CGRect(origin: point, size: .zero)
-        viewChangesTipVC = showTip(title: L10n.podcastViewChangesTipTitle, message: L10n.podcastViewChangesTipDetails, sourceView: podcastHeaderCell, sourceRect: rect) { [weak self] in
-            self?.dismissViewChangesTip()
+
+        let tip = PodcastViewChangesTip()
+        guard tip.shouldDisplay else { return }
+
+        let dimmingView = UIView(frame: view.bounds)
+        dimmingView.backgroundColor = .black.withAlphaComponent(0.3)
+        tabBarController?.view.addSubview(dimmingView)
+        self.dimmingView = dimmingView
+
+        let tipVC = TipUIPopoverViewController(tip, sourceItem: podcastHeaderCell)
+        tipVC.presentationDelegate = self
+        present(tipVC, animated: true)
+        viewChangesTipVC = tipVC
+
+        // Remove the dimming and the popover once the tip is invalidated
+        // (close button, or its single allowed display ending).
+        Task { [weak self] in
+            for await shouldDisplay in tip.shouldDisplayUpdates where !shouldDisplay {
+                self?.dismissViewChangesTip()
+                break
+            }
         }
     }
 
@@ -1528,42 +1519,10 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         guard let viewChangesTipVC else {
             return
         }
-        viewChangesTipVC.dismiss(animated: true)
-        dimmingView?.removeFromSuperview()
         self.viewChangesTipVC = nil
-    }
-
-    private func showTip(title: String, message: String, sourceView: UIView, sourceRect: CGRect = CGRectNull, dimBackground: Bool = true, action: @escaping () -> ()) -> UIViewController {
-        if dimBackground {
-            let dimmingView = UIView(frame: self.view.bounds)
-            dimmingView.backgroundColor = .black.withAlphaComponent(0.3)
-            self.tabBarController?.view.addSubview(dimmingView)
-            self.dimmingView = dimmingView
-        }
-        let vc = UIHostingController(rootView: AnyView (EmptyView()) )
-        let idealSize = CGSizeMake(290, 100)
-        let tipView = TipViewStatic(title: title,
-                                    message: message,
-                                    showClose: true,
-                              onTap: {
-            action()
-        })
-            .frame(idealWidth: idealSize.width, minHeight: idealSize.height)
-            .setupDefaultEnvironment()
-        vc.rootView = AnyView(tipView)
-        vc.view.backgroundColor = .clear
-        vc.view.clipsToBounds = false
-        vc.modalPresentationStyle = .popover
-        vc.sizingOptions = [.preferredContentSize]
-        if let popoverPresentationController = vc.popoverPresentationController {
-            popoverPresentationController.delegate = self
-            popoverPresentationController.permittedArrowDirections = [.down]
-            popoverPresentationController.sourceView = sourceView
-            popoverPresentationController.sourceRect = sourceRect
-            popoverPresentationController.backgroundColor = ThemeColor.primaryUi01()
-        }
-        present(vc, animated: true)
-        return vc
+        dimmingView?.removeFromSuperview()
+        dimmingView = nil
+        viewChangesTipVC.dismiss(animated: true)
     }
 
     // MARK: - Long press actions
@@ -1696,6 +1655,38 @@ private extension PodcastViewController {
     }
 }
 
+// MARK: - Tips
+
+/// Tip anchored to the podcast page overflow button, teaching that the episode feed can be manually refreshed.
+///
+/// Fresh installs never see it (invalidated in `AppDelegate`); it keeps showing until the user dismisses it.
+nonisolated struct PodcastFeedReloadTip: Tip {
+    var title: Text {
+        Text(L10n.podcastFeedReloadTipTitle)
+    }
+
+    var message: Text? {
+        Text(L10n.podcastFeedReloadTipMessage)
+    }
+}
+
+/// Tip anchored to the podcast page header, pointing out that tapping the title collapses/expands the details.
+///
+/// Fresh installs never see it (invalidated in `AppDelegate`); it shows at most once.
+nonisolated struct PodcastViewChangesTip: Tip {
+    var title: Text {
+        Text(L10n.podcastViewChangesTipTitle)
+    }
+
+    var message: Text? {
+        Text(L10n.podcastViewChangesTipDetails)
+    }
+
+    var options: [any TipOption] {
+        MaxDisplayCount(1)
+    }
+}
+
 extension PodcastViewController: UIPopoverPresentationControllerDelegate {
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         // Return no adaptive presentation style, use default presentation behaviour
@@ -1703,8 +1694,18 @@ extension PodcastViewController: UIPopoverPresentationControllerDelegate {
     }
 
     func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
-        dismissPodcastFeedReloadTip()
-        dismissViewChangesTip()
+        // The user dismissed a tip popover by tapping outside of it: treat that as closing the tip.
+        if podcastFeedReloadTooltip != nil {
+            podcastFeedReloadTooltip = nil
+            Analytics.track(.podcastRefreshEpisodeTooltipDismissed)
+            PodcastFeedReloadTip().invalidate(reason: .tipClosed)
+        }
+        if viewChangesTipVC != nil {
+            viewChangesTipVC = nil
+            dimmingView?.removeFromSuperview()
+            dimmingView = nil
+            PodcastViewChangesTip().invalidate(reason: .tipClosed)
+        }
     }
 }
 

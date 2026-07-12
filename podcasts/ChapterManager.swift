@@ -47,15 +47,49 @@ class ChapterManager {
 
     var chaptersOrigin: ChapterOrigin = .unknown
 
+    /// Chapter indices deselected by the podcast's smart-skip title rules for the currently
+    /// loaded chapter list (excludes chapters the user deselected manually). Used for analytics.
+    private(set) var ruleSkippedIndices = Set<Int>()
+
+    /// Session-only exceptions to the smart-skip rules, keyed by episode uuid: when the user
+    /// re-enables a rule-skipped chapter in the chapters UI the index lands here so reloading
+    /// chapters doesn't re-deselect it. Re-enables last for the app session only; permanent
+    /// per-episode exceptions are a future refinement.
+    private var sessionReEnabledChapters = [String: Set<Int>]()
+
+    /// Resolves the smart-skip title patterns for an episode's podcast. Injectable for tests.
+    private let skipPatternsProvider: (BaseEpisode) -> [String]
+
     private var playableChapters: [ChapterInfo] {
         visibleChapters.filter { $0.isPlayable() }
     }
 
     init(
         chapterParser: PodcastChapterParser = PodcastChapterParser(),
-        showInfoCoordinator: ShowInfoCoordinating = ShowInfoCoordinator.shared) {
+        showInfoCoordinator: ShowInfoCoordinating = ShowInfoCoordinator.shared,
+        skipPatternsProvider: ((BaseEpisode) -> [String])? = nil) {
         self.chapterParser = chapterParser
         self.showInfoCoordinator = showInfoCoordinator
+        self.skipPatternsProvider = skipPatternsProvider ?? { episode in
+            DataManager.sharedManager.findPodcast(uuid: episode.parentIdentifier())?.settings.skipChapterTitles ?? []
+        }
+    }
+
+    /// Records that the user re-enabled a chapter so smart-skip rules leave it alone for the
+    /// rest of the session, even if the chapter list reloads.
+    func registerSessionReEnable(chapterIndex: Int, episodeUuid: String) {
+        sessionReEnabledChapters[episodeUuid, default: []].insert(chapterIndex)
+        ruleSkippedIndices.remove(chapterIndex)
+    }
+
+    /// Removes a session re-enable exception (the user deselected the chapter again).
+    func unregisterSessionReEnable(chapterIndex: Int, episodeUuid: String) {
+        sessionReEnabledChapters[episodeUuid]?.remove(chapterIndex)
+    }
+
+    /// Whether the given chapter index was deselected by a smart-skip rule (not by the user).
+    func isRuleSkipped(chapterIndex: Int) -> Bool {
+        ruleSkippedIndices.contains(chapterIndex)
     }
 
     func visibleChapterCount() -> Int {
@@ -241,6 +275,7 @@ class ChapterManager {
         chapters.removeAll()
         currentChapters = Chapters()
         chaptersOrigin = .unknown
+        ruleSkippedIndices.removeAll()
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastChaptersDidUpdate)
     }
@@ -260,6 +295,13 @@ class ChapterManager {
             .split(separator: ",")
             .compactMap { Int($0) }
             .forEach { self.chapters[safe: $0]?.shouldPlay = false }
+
+        // Smart skip runs after the merged sources and the user's manual deselections are applied:
+        // rule-matched chapters auto-deselect unless re-enabled by the user this session.
+        ruleSkippedIndices = ChapterSkipRules.apply(
+            to: self.chapters,
+            patterns: skipPatternsProvider(episode),
+            reEnabledIndices: sessionReEnabledChapters[episode.uuid] ?? [])
 
         updateCurrentChapter(time: PlaybackManager.shared.currentTime())
 

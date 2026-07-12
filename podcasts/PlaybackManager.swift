@@ -37,6 +37,31 @@ final class PlaybackManager {
     /// non-main contexts (Phase 5 D1: real-time-adjacent code can't await).
     /// PlaybackManager updates it on the main actor whenever effects change.
     nonisolated final class EngineStateMirror: Sendable {
+        /// Immutable value snapshot consumed by the audio engines. Keeping only Sendable
+        /// scalars here prevents the lock from handing a mutable `PlaybackEffects` reference
+        /// to background threads after the critical section has ended.
+        nonisolated struct PlaybackEffectsSnapshot: Equatable, Sendable {
+            let playbackSpeed: Double
+            let trimSilenceRawValue: Int32
+            let volumeBoost: Bool
+
+            var trimSilence: TrimSilenceAmount {
+                TrimSilenceAmount(rawValue: trimSilenceRawValue) ?? .off
+            }
+
+            init() {
+                playbackSpeed = 1
+                trimSilenceRawValue = TrimSilenceAmount.off.rawValue
+                volumeBoost = false
+            }
+
+            init(_ effects: PlaybackEffects) {
+                self.playbackSpeed = effects.playbackSpeed
+                self.trimSilenceRawValue = effects.trimSilence.rawValue
+                self.volumeBoost = effects.volumeBoost
+            }
+        }
+
         /// Live VoiceBoostN meter readouts written from the audio read/tap
         /// threads for the Advanced Audio screen; nil while VBN is inactive.
         nonisolated struct VoiceBoostMeters: Equatable, Sendable {
@@ -45,17 +70,17 @@ final class PlaybackManager {
             var limiterReductionDB: Float
         }
 
-        // tuning / pendingStartingPosition are Sendable value types, so they move to
-        // `Mutex` (compiler-enforced access). PlaybackEffects is a non-Sendable reference
-        // type — its `sending` semantics keep it out of a `Mutex` — so it keeps the lock +
-        // escape hatch. Live meters are written from the real-time read/tap threads, so
-        // they use a non-blocking unfair lock (see `publishVoiceBoostMeters`) below.
-        private let effectsLock = NSLock()
-        // nonisolated(unsafe): only ever accessed through effectsLock
-        nonisolated(unsafe) private var _effects = PlaybackEffects()
-        var effects: PlaybackEffects {
-            get { effectsLock.withLock { _effects } }
-            set { effectsLock.withLock { _effects = newValue } }
+        // Effects, tuning, and pendingStartingPosition are Sendable value types, so `Mutex`
+        // makes their synchronization compiler-enforced. Live meters are written from the
+        // real-time read/tap threads, so they use a non-blocking unfair lock below.
+        private let _effects = Mutex(PlaybackEffectsSnapshot())
+        var effects: PlaybackEffectsSnapshot {
+            _effects.withLock { $0 }
+        }
+
+        func publish(effects: PlaybackEffects) {
+            let snapshot = PlaybackEffectsSnapshot(effects)
+            _effects.withLock { $0 = snapshot }
         }
 
         private let _tuning = Mutex(AudioTuning.default)
@@ -85,10 +110,20 @@ final class PlaybackManager {
         /// drop the frame if the (~2 Hz) UI reader holds the lock; the reader blocks.
         private let _voiceBoostMeters = OSAllocatedUnfairLock<VoiceBoostMeters?>(initialState: nil)
 
-        /// Real-time-safe publish from the audio threads. Never blocks: a dropped
-        /// meter frame is imperceptible against the 2 Hz Advanced Audio screen read.
-        func publishVoiceBoostMeters(_ meters: VoiceBoostMeters?) {
-            _voiceBoostMeters.withLockIfAvailable { $0 = meters }
+        /// Real-time-safe publish from the audio threads. Never blocks: a dropped sample
+        /// is imperceptible against the 2 Hz Advanced Audio screen read. The return value
+        /// lets one-shot state transitions retry until they are observed.
+        @discardableResult
+        func publishVoiceBoostMeters(_ meters: VoiceBoostMeters?) -> Bool {
+            _voiceBoostMeters.withLockIfAvailable { state in
+                state = meters
+                return true
+            } ?? false
+        }
+
+        /// Reliable clear for non-real-time teardown paths.
+        func clearVoiceBoostMeters() {
+            _voiceBoostMeters.withLock { $0 = nil }
         }
 
         /// Read by the Advanced Audio screen on the main thread (~2 Hz).
@@ -373,8 +408,6 @@ final class PlaybackManager {
         if autoPlay {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarting)
             play(completion: completion)
-
-            checkIfStreamBufferRequired(episode: episode, effects: effects())
         } else if episodeIsChanging {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
         }
@@ -563,6 +596,17 @@ final class PlaybackManager {
         }
     }
 
+    /// The user re-enabled a chapter in the chapters UI: exempt it from smart-skip rules for the
+    /// rest of the session so a chapter reload doesn't immediately re-deselect it.
+    func registerChapterSessionReEnable(chapterIndex: Int, episodeUuid: String) {
+        chapterManager.registerSessionReEnable(chapterIndex: chapterIndex, episodeUuid: episodeUuid)
+    }
+
+    /// The user deselected a chapter again: drop any session smart-skip exemption for it.
+    func unregisterChapterSessionReEnable(chapterIndex: Int, episodeUuid: String) {
+        chapterManager.unregisterSessionReEnable(chapterIndex: chapterIndex, episodeUuid: episodeUuid)
+    }
+
     private func checkForChapterChange() {
         guard let episodeUuid = currentEpisode()?.uuid else { return }
 
@@ -612,7 +656,7 @@ final class PlaybackManager {
         seekingTo = time
         FileLog.shared.addMessage("seek to \(time) startPlaybackAfterSeek \(startPlaybackAfterSeek)")
 
-        let isReadyToPlay = FeatureFlag.playerIsReadyToPlay.enabled ? (player?.isReadyToPlay() == true) : true
+        let isReadyToPlay = player?.isReadyToPlay() == true
         if let player, isReadyToPlay {
             player.seekTo(time, completion: { [weak self] () in
                 guard let strongSelf = self else { return }
@@ -802,7 +846,7 @@ final class PlaybackManager {
         if queueCount == 0 { return }
 
         var index = 0
-        if FeatureFlag.upNextShuffle.enabled, queueCount > 1, Settings.upNextShuffleEnabled() {
+        if queueCount > 1, Settings.upNextShuffleEnabled() {
             index = Int.random(in: 0..<queueCount)
             FileLog.shared.addMessage("Play Next Episode with Shuffle enabled: playing episode \(index) out of \(queueCount)")
         }
@@ -811,7 +855,7 @@ final class PlaybackManager {
 
         FileLog.shared.addMessage("Play Next Episode \(nextEpisode.displayableTitle())")
 
-        if FeatureFlag.upNextShuffle.enabled, queueCount > 1, index > 0 {
+        if queueCount > 1, index > 0 {
             queue.move(episode: nextEpisode, to: 0)
         }
 
@@ -965,7 +1009,7 @@ final class PlaybackManager {
         }
         let effects = loadEffects()
         currentEffects = effects
-        Self.engineState.effects = effects
+        Self.engineState.publish(effects: effects)
         return effects
     }
 
@@ -1007,7 +1051,7 @@ final class PlaybackManager {
         }
 
         currentEffects = effects
-        Self.engineState.effects = effects
+        Self.engineState.publish(effects: effects)
         handlePlaybackEffectsChanged(effects: effects)
     }
 
@@ -1037,7 +1081,7 @@ final class PlaybackManager {
     func effectsChangedExternally() {
         let newEffects = loadEffects()
         currentEffects = newEffects
-        Self.engineState.effects = newEffects
+        Self.engineState.publish(effects: newEffects)
         handlePlaybackEffectsChanged(effects: newEffects)
     }
 
@@ -1092,7 +1136,6 @@ final class PlaybackManager {
             player.effectsDidChange()
         }
         updateAllNowPlayingData()
-        checkIfStreamBufferRequired(episode: episode, effects: effects)
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEffectsChanged)
     }
@@ -1550,18 +1593,14 @@ final class PlaybackManager {
     func activateAudioSession(completion: ((Bool) -> Void)?) {
         shouldDeactivateSession.value = false
 
-        if FeatureFlag.activateAudioSessionInBackground.enabled {
-            // Perform audio session activation on a background queue to avoid blocking the main thread
-            let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self else {
-                    boxedCompletion.value?(false)
-                    return
-                }
-                self.activateSession(completion: boxedCompletion.value)
+        // Perform audio session activation on a background queue to avoid blocking the main thread
+        let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else {
+                boxedCompletion.value?(false)
+                return
             }
-        } else {
-            self.activateSession(completion: completion)
+            self.activateSession(completion: boxedCompletion.value)
         }
     }
 
@@ -1886,11 +1925,9 @@ final class PlaybackManager {
                     FileLog.shared.addMessage("Remote control: playCommand, treating as play because playing over AirPlay")
                     if !strongSelf.playing() { strongSelf.play() }
                 } else {
-                    if FeatureFlag.ignorePlayWithOtherAudio.enabled {
-                        if AVAudioSession.sharedInstance().isOtherAudioPlaying {
-                            FileLog.shared.addMessage("Remote control: playCommand, ignored because other audio is playing")
-                            return .commandFailed
-                        }
+                    if AVAudioSession.sharedInstance().isOtherAudioPlaying {
+                        FileLog.shared.addMessage("Remote control: playCommand, ignored because other audio is playing")
+                        return .commandFailed
                     }
                     // we hook play up to play/pause because that's how some headphones/car stereos do it instead of sending distinct play/pause events
                     FileLog.shared.addMessage("Remote control: playCommand, treating as playPause")
@@ -1982,13 +2019,11 @@ final class PlaybackManager {
                     } else {
                         FileLog.shared.addMessage("Remote control: changePlaybackPositionCommand to \(seekEvent.positionTime)")
 
-                        if FeatureFlag.limitPlaybackPositionChanges.enabled {
-                            // Check if we're still in the limiting window after an episode change
-                            if let switchTime = episodeSwitchTime,
-                               Date.now.timeIntervalSince(switchTime) < 2.0 {
-                                FileLog.shared.addMessage("Remote control: ignoring changePlaybackPositionCommand due to recent episode switch")
-                                return .commandFailed
-                            }
+                        // Check if we're still in the limiting window after an episode change
+                        if let switchTime = episodeSwitchTime,
+                           Date.now.timeIntervalSince(switchTime) < 2.0 {
+                            FileLog.shared.addMessage("Remote control: ignoring changePlaybackPositionCommand due to recent episode switch")
+                            return .commandFailed
                         }
 
                         seekTo(time: seekEvent.positionTime)
@@ -2143,24 +2178,35 @@ final class PlaybackManager {
 
         let reason = changeReason.uintValue
         if let currEpisode = currentEpisode(), playingOverAirplay() && playerSwitchRequired() {
+            // Never autoplay on an AirPlay player switch unless we were already playing
+            // (previously gated by the retired dontAutoplayOnRouteChange flag)
             let wasPlaying = player?.shouldBePlaying() ?? false
-            let autoPlay: Bool
-            if FeatureFlag.dontAutoplayOnRouteChange.enabled {
-                // When flag is enabled: only autoplay if we were already playing
-                autoPlay = wasPlaying
-                if autoPlay {
-                    FileLog.shared.addMessage("PlaybackManager: Route change with active playback, preserving autoPlay=true")
-                }
-            } else {
-                // When flag is disabled: always autoplay (original behavior)
-                autoPlay = true
+            if wasPlaying {
+                FileLog.shared.addMessage("PlaybackManager: Route change with active playback, preserving autoPlay=true")
             }
-            load(episode: currEpisode, autoPlay: autoPlay, overrideUpNext: false)
+            load(episode: currEpisode, autoPlay: wasPlaying, overrideUpNext: false)
         } else if reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue {
-            player?.routeDidChange(shouldPause: true)
+            // Route rules: pause only if the disconnecting route's rule says so (default: pause)
+            let disconnectedPort = (userInfo[AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription)?.outputs.first
+            let rule = disconnectedPort.map { RouteRulesStore.shared.rule(for: RouteRulesStore.identity(portType: $0.portType.rawValue, portName: $0.portName)) } ?? RouteRule()
+            let action = RouteChangeDecider.action(for: .disconnect, rule: rule, isPlaying: playing(), hasCurrentEpisode: currentEpisode() != nil)
+            if action != .pause {
+                FileLog.shared.addMessage("PlaybackManager: not pausing on disconnect of \(disconnectedPort?.portName ?? "unknown route") per route rule")
+            }
+            player?.routeDidChange(shouldPause: action == .pause)
         } else if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue || reason == AVAudioSession.RouteChangeReason.override.rawValue || reason == AVAudioSession.RouteChangeReason.categoryChange.rawValue {
             player?.routeDidChange(shouldPause: false)
             updateAllNowPlayingData()
+
+            // Route rules: optionally auto-resume when a configured route connects
+            if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue,
+               let newPort = AVAudioSession.sharedInstance().currentRoute.outputs.first {
+                let rule = RouteRulesStore.shared.rule(for: RouteRulesStore.identity(portType: newPort.portType.rawValue, portName: newPort.portName))
+                if RouteChangeDecider.action(for: .connect, rule: rule, isPlaying: playing(), hasCurrentEpisode: currentEpisode() != nil) == .resume {
+                    FileLog.shared.addMessage("PlaybackManager: auto-resuming for connect of \(newPort.portName) per route rule")
+                    play(userInitiated: false)
+                }
+            }
         }
     }
 
@@ -2175,6 +2221,16 @@ final class PlaybackManager {
         let currentOutputDescriptions = currentRoute.outputs.map { $0.portName }.joined(separator: ", ")
         if let reason = AVAudioSession.RouteChangeReason(rawValue: UInt(changeReason.intValue)) {
             FileLog.shared.addMessage("PlaybackManager: Handle route change \(reason) | Previous Outputs: [\(previousOutputDescriptions)] | Current Outputs: [\(currentOutputDescriptions)]")
+        }
+
+        // Both sides of the change go into the recently-seen routes list so a just-disconnected
+        // device can still be configured in Settings → Devices. Built-in outputs are skipped:
+        // they never connect/disconnect, so rules for them can't apply.
+        let builtInPorts: Set<AVAudioSession.Port> = [.builtInSpeaker, .builtInReceiver]
+        for output in previousRoute.outputs + currentRoute.outputs where !builtInPorts.contains(output.portType) {
+            RouteRulesStore.shared.noteSeen(
+                identity: RouteRulesStore.identity(portType: output.portType.rawValue, portName: output.portName),
+                displayName: output.portName)
         }
     }
 
@@ -2198,16 +2254,7 @@ final class PlaybackManager {
             // subsequent InterruptionType.ended notification, to set interruptInProgress correctly.
             // When routes are disconnected, there is no associated end event though. If the route reconnects, we'll
             // receive a different notification which is already handled elsewhere.
-            // Keep this check behind a feature flag so we can remotely revert to the old logic if
-            // we run into any issues.
-            if FeatureFlag.ignoreRouteDisconnectedInterruption.enabled {
-                if interruptionReason != AVAudioSession.InterruptionReason.routeDisconnected.rawValue {
-                    interruptInProgress = true
-                }
-            } else {
-                // We do not get the InterruptionReason.routeDisconnected notification on older versions, so
-                // no need to perform the same check for older versions.
-                // Also, will default to the old behaviour if the feature flag is disabled on newer versions.
+            if interruptionReason != AVAudioSession.InterruptionReason.routeDisconnected.rawValue {
                 interruptInProgress = true
             }
 
@@ -2294,9 +2341,7 @@ final class PlaybackManager {
     func needsToReloadPlayingEpisode(_ refreshedEpisode: BaseEpisode) -> Bool {
         let episodeIsChanging = refreshedEpisode.uuid != currentEpisode()?.uuid
 
-        if FeatureFlag.doNotSwitchToDownloadedFile.enabled,
-           FeatureFlag.streamAndCachePlayingEpisode.enabled,
-           !episodeIsChanging,
+        if !episodeIsChanging,
            effects().trimSilence == .off,
            !playerSwitchRequired(),
            !refreshedEpisode.videoPodcast() {
@@ -2318,9 +2363,7 @@ final class PlaybackManager {
 
     @objc private func handleCurrentlyPlayingEpisodeUpdated() {
         // Update episode switch time when the currently playing episode changes
-        if FeatureFlag.limitPlaybackPositionChanges.enabled {
-            episodeSwitchTime = Date()
-        }
+        episodeSwitchTime = Date()
     }
 
     // MARK: - Interruptions
@@ -2330,14 +2373,6 @@ final class PlaybackManager {
     }
 
     // MARK: - Private helpers
-
-    private func checkIfStreamBufferRequired(episode: BaseEpisode, effects: PlaybackEffects) {
-        let downloadEpisode = effects.trimSilence.isEnabled() && !FeatureFlag.streamAndCachePlayingEpisode.enabled
-        if downloadEpisode, !episode.downloaded(pathFinder: DownloadManager.shared) {
-            // the user is streaming and has turned on remove silence, kick off a download so we can fulfill that request
-            DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: false, autoDownloadStatus: .playerDownloadedForStreaming)
-        }
-    }
 
     private func startFromTimeForCurrentEpisode() -> TimeInterval {
         guard let episode = currentEpisode() as? Episode, let parentPodcast = episode.parentPodcast() else { return 0 }
@@ -2485,7 +2520,13 @@ extension PlaybackManager {
     // MARK: - Analytics
 
     private func trackChapterSkipped() {
-        analyticsPlaybackHelper.chapterSkipped(properties: chapterManager.chaptersAnalyticsProperties)
+        var properties = chapterManager.chaptersAnalyticsProperties
+        if let skippedIndex = currentChapters().visibleChapter?.index {
+            // Whether the chapter being skipped was deselected by a podcast smart-skip title rule
+            // rather than manually by the user
+            properties["skipped_by_rule"] = chapterManager.isRuleSkipped(chapterIndex: skippedIndex)
+        }
+        analyticsPlaybackHelper.chapterSkipped(properties: properties)
     }
 
     func trackChapterEvent(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {

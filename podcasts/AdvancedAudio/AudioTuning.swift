@@ -142,8 +142,7 @@ nonisolated struct TrimTuning: Codable, Equatable, Sendable {
 /// mirror the constants in VoiceBoostN_Internal.h so default tuning behaves
 /// exactly like the shipped DSP.
 nonisolated struct VoiceBoostTuning: Codable, Equatable, Sendable {
-    /// Effective only while `FeatureFlag.voiceBoostN` is enabled; when false the
-    /// legacy AudioUnit chain handles volume boost.
+    /// When false the legacy AudioUnit chain handles volume boost.
     var useVoiceBoostN = true
 
     var targetLUFS: Double = -17
@@ -276,6 +275,24 @@ nonisolated struct TimeStretchTuning: Codable, Equatable, Sendable {
 /// The full advanced-audio tuning snapshot. Persisted as one JSON blob (see
 /// `Settings.audioTuning`) so the audio engine always reads one consistent value
 /// through `PlaybackManager.engineState`.
+/// "Normalize volume": pure gain-to-target-LUFS playback (meter + gain +
+/// true-peak safety limiter) with none of VoiceBoost's compression or filtering
+/// character. When both VoiceBoost and Normalize are on, VoiceBoost wins — it
+/// already normalizes loudness as part of its chain.
+nonisolated struct NormalizeTuning: Codable, Equatable, Sendable {
+    var enabled = false
+
+    var targetLUFS: Double = -16
+
+    static let targetLUFSRange: ClosedRange<Double> = -30 ... -8
+
+    func clamped() -> NormalizeTuning {
+        var clamped = self
+        clamped.targetLUFS = min(max(targetLUFS, Self.targetLUFSRange.lowerBound), Self.targetLUFSRange.upperBound)
+        return clamped
+    }
+}
+
 nonisolated struct AudioTuning: Codable, Equatable, Sendable {
     static let currentVersion = 1
 
@@ -283,6 +300,7 @@ nonisolated struct AudioTuning: Codable, Equatable, Sendable {
     var trim = TrimTuning()
     var voiceBoost = VoiceBoostTuning()
     var timeStretch = TimeStretchTuning()
+    var normalize = NormalizeTuning()
 
     nonisolated static let `default` = AudioTuning()
 
@@ -297,6 +315,7 @@ nonisolated struct AudioTuning: Codable, Equatable, Sendable {
         trim = (try container.decodeIfPresent(TrimTuning.self, forKey: .trim) ?? TrimTuning()).clamped()
         voiceBoost = (try container.decodeIfPresent(VoiceBoostTuning.self, forKey: .voiceBoost) ?? VoiceBoostTuning()).clamped()
         timeStretch = try container.decodeIfPresent(TimeStretchTuning.self, forKey: .timeStretch) ?? TimeStretchTuning()
+        normalize = (try container.decodeIfPresent(NormalizeTuning.self, forKey: .normalize) ?? NormalizeTuning()).clamped()
         migrate(fromVersion: decodedVersion)
         version = AudioTuning.currentVersion
     }

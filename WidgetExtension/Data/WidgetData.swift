@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Reloaded and read synchronously inside each timeline-provider callback;
 /// WidgetKit serializes those per provider, so access is effectively serial.
+/// @unchecked Sendable: mutated only inside WidgetKit's serialized timeline-provider callbacks (see above).
 final class WidgetData: ObservableObject, @unchecked Sendable {
     static let shared = WidgetData()
 

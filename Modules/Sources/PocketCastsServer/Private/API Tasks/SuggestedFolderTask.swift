@@ -6,6 +6,7 @@ public struct SuggestedFoldersResponse: Sendable {
     public let suggestions: [String: [String]]
 }
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class SuggestedFoldersTask: ApiBaseTask, @unchecked Sendable {
     var uuids: [String]
     var language: String

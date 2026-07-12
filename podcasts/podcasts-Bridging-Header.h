@@ -4,6 +4,5 @@
 
 #import "SJCommonUtils.h"
 #import "SJMediaMetadataHelper.h"
-#import "MNAVChapterReader.h"
 #include "VoiceBoostN.h"
 #include "AdvancedAudio/VoiceBoostNMeter.h"

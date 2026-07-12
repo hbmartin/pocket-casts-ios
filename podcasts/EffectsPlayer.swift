@@ -6,6 +6,7 @@ import UIKit
 
 /// AVAudioEngine effects pipeline driven by PlaybackManager; state is guarded
 /// by playerLock and the serial seek queue.
+/// @unchecked Sendable: mutable state is guarded by playerLock, atomics, or the serial seek queue.
 nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private var engine: AVAudioEngine?
     private var player: AVAudioPlayerNode?
@@ -20,6 +21,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var dynamicsProcessor: AVAudioUnitEffect?
     private var peakLimiter: AVAudioUnitEffect?
     private let useVoiceBoostN = AtomicBool()
+    private let useNormalize = AtomicBool()
     private var audioFileSampleRate: Double = 0
 
     private var playBufferManager: PlayBufferManager?
@@ -30,7 +32,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     // Read live from the engine-state mirror (thread-safe) instead of keeping
     // locally-mutated copies, so the main-actor `effectsDidChange` writes no longer
     // race the background `play()` reads (A5). Both were only ever re-synced from here.
-    private var effects: PlaybackEffects { PlaybackManager.engineState.effects }
+    private var effects: PlaybackManager.EngineStateMirror.PlaybackEffectsSnapshot { PlaybackManager.engineState.effects }
     private var tuning: AudioTuning { PlaybackManager.engineState.tuning }
 
     private let shouldKeepPlaying = AtomicBool()
@@ -96,6 +98,9 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             // Set useVoiceBoostN before setVolumeBoostSettings so bypass is configured correctly
             strongSelf.useVoiceBoostN.value = Settings.isVoiceBoostNEnabled && strongSelf.effects.volumeBoost
+            // Normalize is suppressed whenever Volume Boost is on — boost already
+            // normalizes loudness as part of its chain (the documented interlock).
+            strongSelf.useNormalize.value = strongSelf.tuning.normalize.enabled && !strongSelf.effects.volumeBoost
 
             strongSelf.audioMixerNode = strongSelf.createAudioMixerNode()
             strongSelf.engine?.attach(strongSelf.audioMixerNode!)
@@ -295,6 +300,12 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
             FileLog.shared.addMessage("[EffectsPlayer] VoiceBoostN flag changed to \(shouldUseVoiceBoostN)")
         }
 
+        let shouldNormalize = tuning.normalize.enabled && !effects.volumeBoost
+        if shouldNormalize != useNormalize.value {
+            useNormalize.value = shouldNormalize
+            FileLog.shared.addMessage("[EffectsPlayer] Normalize flag changed to \(shouldNormalize)")
+        }
+
         setVolumeBoostSettings()
     }
 
@@ -394,7 +405,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
         }
 
         let requiredStartTime = PlaybackManager.engineState.consumePendingStartingPosition() ?? 0
-        audioReadTask = AudioReadTask(trimSilence: effects.trimSilence, audioFile: audioFile, outputFormat: audioFile.processingFormat, bufferManager: playBufferManager, playPositionHint: requiredStartTime, frameCount: cachedFrameCount, useVoiceBoostN: useVoiceBoostN, sampleRate: audioFileSampleRate, tuning: PlaybackManager.engineState.tuning, knownLUFS: knownLUFS)
+        audioReadTask = AudioReadTask(trimSilence: effects.trimSilence, audioFile: audioFile, outputFormat: audioFile.processingFormat, bufferManager: playBufferManager, playPositionHint: requiredStartTime, frameCount: cachedFrameCount, useVoiceBoostN: useVoiceBoostN, useNormalize: useNormalize, sampleRate: audioFileSampleRate, tuning: PlaybackManager.engineState.tuning, knownLUFS: knownLUFS)
         audioPlayTask = AudioPlayTask(player: player, bufferManager: playBufferManager)
 
         audioReadTask?.startup()

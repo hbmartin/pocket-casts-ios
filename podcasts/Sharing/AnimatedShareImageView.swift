@@ -6,7 +6,7 @@ class AnimationProgress: ObservableObject {
     @Published var progress: Double = 0 // O-1
 }
 
-// @unchecked: SwiftUI view value with reference-typed wrappers; rendered and
+// @unchecked Sendable: SwiftUI view value with reference-typed wrappers; rendered and
 // updated on the main actor only
 struct AnimatedShareImageView: AnimatableContent, @unchecked Sendable {
     let info: ShareImageInfo

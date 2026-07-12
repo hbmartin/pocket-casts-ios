@@ -5,7 +5,7 @@
 The user asked for a plan to migrate to Swift 6.3 and "fully migrate to take advantage of iOS 26", accompanied by a generic migration guide. Exploration showed this repo is far ahead of the guide's assumptions, so most of the guide's big-ticket items **do not apply**:
 
 - Xcode is pinned to **26.4.1** (`.xcode-version`) — the Swift 6.3 compiler is already in use. `config/PocketCasts.base.xcconfig` sets `SWIFT_VERSION = 6.0` (language mode — 6.0 IS the latest mode) with `SWIFT_STRICT_CONCURRENCY = complete` and an **empty** warning baseline (`scripts/ci/concurrency-baseline.txt`). The app target already adopted `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` + `SWIFT_APPROACHABLE_CONCURRENCY = YES` (MODERNIZATION.md, 2026-07-05).
-- **UIScene lifecycle fully adopted** (`podcasts/SceneDelegate.swift`); no StoreKit 1 (subscriptions are server-side, only `AppStore.requestReview` used); no CLGeocoder; GRDB persistence (no Core Data). SPM-only, no CocoaPods/Carthage. No watch/App Clip/CarPlay targets.
+- **UIScene lifecycle fully adopted** (`podcasts/SceneDelegate.swift`); no CLGeocoder; GRDB persistence (no Core Data). SPM-only, no CocoaPods/Carthage. No watch/App Clip/CarPlay targets.
 - Liquid Glass adoption is already in progress behind `FeatureFlag.liquidGlass` (default true) with ~21 `#available(iOS 26)` guards and central gate `podcasts/LiquidGlass.swift`.
 - Nightly CI already runs the unit suite on the iOS 26.5 runtime.
 
@@ -92,7 +92,7 @@ Order (heaviest shared observers land with their domain):
 - **5.2 Playback** (~15 names): `PlaybackManager.swift` (12 observers), `DefaultPlayer.swift`, player VC stack, `MiniPlayerViewController`.
 - **5.3 Up Next** (4 names incl. `upNextEpisodeAdded` with `addedToTop` payload from `PlaybackQueue.swift:105` → `MainTabBarController+Animations.swift:22`): `UpNextViewController.swift` (13), `MainTabBarController.swift` (12).
 - **5.4 Podcast/folder/filter/discover** (~15 names).
-- **5.5 Server module** (17 `ServerNotifications` + `serverUserWillBeSignedOut`): posts in `ServerNotificationsHelper.swift`, refresh/API tasks, `UploadManager.swift`; app-side observers (`WidgetHelper.swift` (9), `BadgeHelper`, profile/sync UI). Server is nonisolated-by-default — posts go through the typed `postOnMainThread` helper.
+- **5.5 Server module** (17 `ServerNotifications` + `serverUserWillBeSignedOut`): posts in `ServerNotificationsHelper.swift`, refresh/API tasks; app-side observers (`WidgetHelper.swift` (9), `BadgeHelper`, profile/sync UI). Server is nonisolated-by-default — posts go through the typed `postOnMainThread` helper.
 - **5.6 UI chrome + account** (theme, textEditing, tab taps, mini-player appear/disappear, `podcasts/Notifications.swift`, locals in `ShareProfileViewModel.swift`/`PodcastFeedViewModel.swift`) + system-notification typed adoption where the SDK provides messages.
 
 ## Phase 6 — Typed-notification cleanup (1 PR)

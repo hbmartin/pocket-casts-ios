@@ -154,7 +154,7 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
         }
 
         if response.statusCode >= 400, response.statusCode < 600 {
-            if shouldRetryWithoutUserAgent(task: downloadTask), FeatureFlag.retryWithoutUserAgent.enabled {
+            if shouldRetryWithoutUserAgent(task: downloadTask) {
                 fileLog.addMessage("DownloadManager: Retrying download without User-Agent for episode: \(episode.uuid), status code: \(response.statusCode)")
                 Task {
                     await retryDownloadWithoutUserAgent(episode: episode)
@@ -174,18 +174,13 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
             return
         }
         downloadAttempts.removeValue(forKey: downloadTask.taskIdentifier)
-        let responseContentType = response.allHeaderFields[ServerConstants.HttpHeaders.contentType] as? String
-        processEpisode(episode, downloadedFile: location, reportedContentType: responseContentType, copyFile: false)
+        processEpisode(episode, downloadedFile: location, copyFile: false)
     }
 
-    func processEpisode(_ episode: BaseEpisode, downloadedFile location: URL, reportedContentType: String?, copyFile: Bool) {
-        var contentType = reportedContentType
-
-        if FeatureFlag.useMimetypePackage.enabled {
-            contentType = MimetypeHelper.contetType(for: location)
-            if let contentType, contentType != episode.contentType {
-                DataManager.sharedManager.saveEpisode(contentType: contentType, episode: episode)
-            }
+    func processEpisode(_ episode: BaseEpisode, downloadedFile location: URL, copyFile: Bool) {
+        let contentType = MimetypeHelper.contetType(for: location)
+        if let contentType, contentType != episode.contentType {
+            DataManager.sharedManager.saveEpisode(contentType: contentType, episode: episode)
         }
 
         let fileSize = FileManager.default.fileSize(of: location) ?? 0
@@ -218,7 +213,7 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
 
             // Publish full podcast downloads into the FileSync mirror area (no-op unless
             // sync + mirroring are enabled). Streaming buffers aren't durable downloads.
-            if FeatureFlag.fileSync.enabled, newDownloadStatus == .downloaded, episode is Episode {
+            if newDownloadStatus == .downloaded, episode is Episode {
                 let episodeUuid = episode.uuid
                 Task {
                     await FileSyncManager.shared.mirrorDownloadedEpisode(episodeUuid: episodeUuid)
@@ -241,37 +236,35 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
         }
 
         // Track network data usage
-        if FeatureFlag.trackNetworkDataUsage.enabled {
-            let bytesReceived = task.countOfBytesReceived
-            let connectionType = NetworkDataUsageManager.connectionType(from: metrics)
+        let bytesReceived = task.countOfBytesReceived
+        let connectionType = NetworkDataUsageManager.connectionType(from: metrics)
 
-            if bytesReceived > 0 {
-                let autoDownloadStatus = AutoDownloadStatus(rawValue: episode.autoDownloadStatus)
-                let operationType: NetworkDataUsageManager.OperationType
-                switch autoDownloadStatus {
-                case .playerDownloadedForStreaming:
-                    operationType = .stream
-                default:
-                    operationType = .download
-                }
-
-                let sessionType: NetworkDataUsageManager.SessionType =
-                    session === wifiOnlyBackgroundSession ? .background :
-                    (session === cellularBackgroundSession ? .background : .foreground)
-
-                let bytesDownloaded = operationType != .stream ? bytesReceived : 0
-                let bytesStreamed = operationType == .stream ? bytesReceived : 0
-
-                dataManager.networkDataUsageManager.add(
-                    episodeUuid: episode.uuid,
-                    podcastUuid: episode.parentIdentifier(),
-                    bytesDownloaded: bytesDownloaded,
-                    bytesStreamed: bytesStreamed,
-                    operationType: operationType,
-                    connectionType: connectionType,
-                    sessionType: sessionType
-                )
+        if bytesReceived > 0 {
+            let autoDownloadStatus = AutoDownloadStatus(rawValue: episode.autoDownloadStatus)
+            let operationType: NetworkDataUsageManager.OperationType
+            switch autoDownloadStatus {
+            case .playerDownloadedForStreaming:
+                operationType = .stream
+            default:
+                operationType = .download
             }
+
+            let sessionType: NetworkDataUsageManager.SessionType =
+                session === wifiOnlyBackgroundSession ? .background :
+                (session === cellularBackgroundSession ? .background : .foreground)
+
+            let bytesDownloaded = operationType != .stream ? bytesReceived : 0
+            let bytesStreamed = operationType == .stream ? bytesReceived : 0
+
+            dataManager.networkDataUsageManager.add(
+                episodeUuid: episode.uuid,
+                podcastUuid: episode.parentIdentifier(),
+                bytesDownloaded: bytesDownloaded,
+                bytesStreamed: bytesStreamed,
+                operationType: operationType,
+                connectionType: connectionType,
+                sessionType: sessionType
+            )
         }
 
         if let failure = taskFailure[episode.uuid] {

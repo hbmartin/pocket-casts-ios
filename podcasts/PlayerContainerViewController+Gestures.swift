@@ -47,7 +47,10 @@ extension PlayerContainerViewController: UIGestureRecognizerDelegate {
                 // return travel, clamped like PlayerZoomAnimator) so a hard upward
                 // flick settles instead of hitting a wall.
                 let travel = max(view.frame.origin.y, 1)
-                let springVelocity = min(abs(velocity.y) / travel, 6)
+                // The animation travels upward (negative y), so normalize the gesture
+                // velocity against that direction and retain its sign. A downward
+                // release starts by continuing down before the spring pulls it home.
+                let springVelocity = (-velocity.y / travel).clamped(to: -6 ... 6)
                 UIView.animate(withDuration: 0.35, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: springVelocity, options: [.beginFromCurrentState, .allowUserInteraction], animations: {
                     self.view.frame = CGRect(x: 0,
                                              y: 0,

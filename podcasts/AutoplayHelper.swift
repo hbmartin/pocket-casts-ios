@@ -5,6 +5,7 @@ import PocketCastsServer
 
 /// Reponsible for handling the Autoplay of episodes
 /// State is a thread-safe UserDefaults reference plus constants.
+/// @unchecked Sendable: all stored properties are immutable; UserDefaults is thread-safe.
 nonisolated final class AutoplayHelper: @unchecked Sendable {
     enum Playlist: Codable, AnalyticsDescribable, Equatable {
         case podcast(uuid: String)

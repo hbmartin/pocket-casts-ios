@@ -7,7 +7,6 @@ import XCTest
 @MainActor
 final class PlaybackQueueTests: XCTestCase {
 
-    private let featureFlagMock = FeatureFlagMock()
     private var originalDataManager: DataManager!
 
     override func setUp() async throws {
@@ -16,8 +15,6 @@ final class PlaybackQueueTests: XCTestCase {
     }
 
     func testOverrideAllEpisodesWith_shouldNotIncludeStaleEpisodesInReplace() {
-        featureFlagMock.set(.replaceSpecificEpisode, value: true)
-
         let playbackQueue = PlaybackQueue()
         let mockDataManager = MockDataManager()
         DataManager.sharedManager = mockDataManager
@@ -135,7 +132,6 @@ final class PlaybackQueueTests: XCTestCase {
 
     override func tearDown() async throws {
         DataManager.sharedManager = originalDataManager
-        featureFlagMock.reset()
         try await super.tearDown()
     }
 

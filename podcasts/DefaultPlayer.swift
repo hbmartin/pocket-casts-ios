@@ -7,6 +7,7 @@ import PocketCastsUtils
 
 /// AVPlayer wrapper driven by PlaybackManager's queues plus KVO/main callbacks;
 /// mutable state is confined to that flow by design.
+/// @unchecked Sendable: mutable state is confined to PlaybackManager's playback queue and KVO/main callbacks as described above.
 nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Sendable {
     private var audioMix: AVAudioMix?
     private var assetTrack: AVAssetTrack?
@@ -18,6 +19,10 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var requiredPlaybackRate: Double = 0
     private var shouldKeepPlaying = false
     private var volumeBoostEnabled = false
+    /// Normalize-volume effect (gain to target LUFS, no compression). Read on the
+    /// tap thread the same way `volumeBoostEnabled` is; both are only written on
+    /// the playback flow.
+    private var normalizeEnabled = false
 
     private var lastBackgroundedDate: Date?
 
@@ -84,6 +89,9 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var appliedTapConfigGeneration: UInt64 = 0
     /// Tap-thread only: whether VBN processing ran last buffer (enable-edge detection).
     private var tapVoiceBoostNActive = false
+    /// Tap-thread only: a one-shot nil meter publication that must be retried when the
+    /// UI reader momentarily owns the non-blocking meter lock.
+    private var tapVoiceBoostMetersNeedClear = false
 
     init() {
         backgroundTaskId = .invalid
@@ -99,11 +107,14 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
     /// Re-snapshots the tuning-derived values the tap thread consumes. Runs on the
     /// playback flow / main thread (never real-time), so a blocking `withLock` is fine.
+    /// Normalize-only playback rides the VBN engine with the normalize configuration
+    /// (compressor and filter bypassed), so the tap's VBN branch handles both modes.
     private func refreshTapTuning() {
         let tuning = PlaybackManager.engineState.tuning
+        let normalizeOnly = normalizeEnabled && !volumeBoostEnabled
         tapConfig.withLock { config in
-            config.useVoiceBoostN = FeatureFlag.voiceBoostN.enabled && tuning.voiceBoost.useVoiceBoostN
-            config.vbnConfig = tuning.vbnConfig()
+            config.useVoiceBoostN = normalizeOnly ? true : tuning.voiceBoost.useVoiceBoostN
+            config.vbnConfig = normalizeOnly ? tuning.vbnNormalizeConfig() : tuning.vbnConfig()
             config.generation &+= 1
         }
     }
@@ -144,8 +155,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         } else {
             DispatchQueue.main.sync { MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playerItem.asset as? AVURLAsset) } }
         }
-        if FeatureFlag.trackNetworkDataUsage.enabled,
-           let urlAsset = boxedAsset.value,
+        if let urlAsset = boxedAsset.value,
            !urlAsset.url.isFileURL,
            !(urlAsset.url.scheme?.hasPrefix(MediaExporterResourceLoaderDelegate.schemePrefix) ?? false) {
             cellularTracker = StreamingCellularTracker()
@@ -281,6 +291,9 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
         setPlaybackRate(effects.playbackSpeed)
         volumeBoostEnabled = effects.volumeBoost
+        // Normalize is suppressed while Volume Boost is on (boost already
+        // normalizes loudness as part of its chain — the documented interlock).
+        normalizeEnabled = PlaybackManager.engineState.tuning.normalize.enabled && !effects.volumeBoost
         refreshTapTuning()
     }
 
@@ -335,8 +348,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         let playerNSError = playerError as? NSError
 
         var retryUuid: String?
-        if FeatureFlag.whenPlayingOnlyUpdateEpisodeIfPlaybackFails.enabled,
-           let playerNSError, playerNSError.domain == NSURLErrorDomain, playerNSError.code != NSURLErrorNotConnectedToInternet,
+        if let playerNSError, playerNSError.domain == NSURLErrorDomain, playerNSError.code != NSURLErrorNotConnectedToInternet,
            let episodeUuid {
             retryUuid = episodeUuid
         }
@@ -443,15 +455,9 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     private static func unretainedDefaultPlayer(for pointer: UnsafeMutableRawPointer) -> DefaultPlayer? {
-        if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-            let cookie = Unmanaged<AudioProcessingTapProxy>.fromOpaque(pointer).takeUnretainedValue()
-            guard let player = cookie.input else { return nil }
-            return player
-        } else if FeatureFlag.defaultPlayerFilterCallbackFix.enabled {
-            return Unmanaged<DefaultPlayer>.fromOpaque(pointer).takeUnretainedValue()
-        } else {
-            return unsafeBitCast(pointer, to: DefaultPlayer.self)
-        }
+        let cookie = Unmanaged<AudioProcessingTapProxy>.fromOpaque(pointer).takeUnretainedValue()
+        guard let player = cookie.input else { return nil }
+        return player
     }
 
         private func createAudioMix() {
@@ -460,11 +466,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             let mutableMix = AVMutableAudioMix()
             let audioMixInputParameters = AVMutableAudioMixInputParameters(track: assetTrack)
 
-            var clientInfo = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let tapCookie = AudioProcessingTapProxy(input: self)
-                clientInfo = UnsafeMutableRawPointer(Unmanaged.passRetained(tapCookie).toOpaque())
-            }
+            let tapCookie = AudioProcessingTapProxy(input: self)
+            let clientInfo = UnsafeMutableRawPointer(Unmanaged.passRetained(tapCookie).toOpaque())
 
             var callbacks = MTAudioProcessingTapCallbacks(
                 version: kMTAudioProcessingTapCallbacksVersion_0,
@@ -510,10 +513,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         }
 
         let tapFinalize: MTAudioProcessingTapFinalizeCallback = { tap in
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                FileLog.shared.console("[AudioProcessingTapProxy] Finalize tap: \(tap)\n")
-                Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).release()
-            }
+            FileLog.shared.console("[AudioProcessingTapProxy] Finalize tap: \(tap)\n")
+            Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).release()
         }
 
         let tapPrepare: MTAudioProcessingTapPrepareCallback = { tap, maxFrames, processingFormat in
@@ -544,11 +545,11 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             // Create the VoiceBoostN state HERE (prepare runs once, before the first
             // real-time render callback) rather than lazily inside `tapProcess`, so the
-            // render thread never allocates. It is created whenever the feature could be
-            // toggled on during this playback; `tapProcess` gates actual processing on the
-            // live `useVoiceBoostN` flag. Seeded from the precomputed loudness so playback
-            // starts at the right level instead of adapting over the first seconds.
-            if referenceToSelf.voiceBoostNState == nil, FeatureFlag.voiceBoostN.enabled {
+            // render thread never allocates. It is always created because the feature can
+            // be toggled on during any playback; `tapProcess` gates actual processing on
+            // the live `useVoiceBoostN` flag. Seeded from the precomputed loudness so
+            // playback starts at the right level instead of adapting over the first seconds.
+            if referenceToSelf.voiceBoostNState == nil {
                 let snapshot = referenceToSelf.tapConfig.withLock { $0 }
                 referenceToSelf.lastTapConfig = snapshot
                 var config = snapshot.vbnConfig
@@ -572,7 +573,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 VBN_Destroy(vbnState)
                 referenceToSelf.voiceBoostNState = nil
                 referenceToSelf.tapVoiceBoostNActive = false
-                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                referenceToSelf.tapVoiceBoostMetersNeedClear = false
+                PlaybackManager.engineState.clearVoiceBoostMeters()
                 FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN state destroyed")
             }
 
@@ -602,7 +604,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
             let currentSampleCount = referenceToSelf.sampleCount
             referenceToSelf.sampleCount += Float64(numberFrames)
-            guard referenceToSelf.volumeBoostEnabled, let peakLimiter = referenceToSelf.peakLimiter, referenceToSelf.highPassFilter != nil, referenceToSelf.dynamicsProcessor != nil else {
+            guard referenceToSelf.volumeBoostEnabled || referenceToSelf.normalizeEnabled, let peakLimiter = referenceToSelf.peakLimiter, referenceToSelf.highPassFilter != nil, referenceToSelf.dynamicsProcessor != nil else {
                 // no effects enabled, so just play normally
                 guard MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut) == noErr else {
                     referenceToSelf.handlePlaybackError("MTAudioProcessingTapGetSourceAudio failed")
@@ -620,6 +622,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             let shouldUseVoiceBoostN = snapshot.useVoiceBoostN
 
             if shouldUseVoiceBoostN, let vbnState = referenceToSelf.voiceBoostNState {
+                referenceToSelf.tapVoiceBoostMetersNeedClear = false
+
                 // Live-apply any staged tuning change (allocation-free).
                 if referenceToSelf.appliedTapConfigGeneration != snapshot.generation {
                     var config = snapshot.vbnConfig
@@ -665,10 +669,15 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
                 numberFramesOut.pointee = numberFrames
             } else {
-                // VoiceBoostN inactive: clear the live meters once on the disable edge.
+                // VoiceBoostN inactive: begin a one-shot clear on the disable edge, then
+                // retry every buffer until the non-blocking publication succeeds.
                 if referenceToSelf.tapVoiceBoostNActive {
                     referenceToSelf.tapVoiceBoostNActive = false
-                    PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                    referenceToSelf.tapVoiceBoostMetersNeedClear = true
+                }
+                if referenceToSelf.tapVoiceBoostMetersNeedClear,
+                   PlaybackManager.engineState.publishVoiceBoostMeters(nil) {
+                    referenceToSelf.tapVoiceBoostMetersNeedClear = false
                 }
 
                 // Use previous voice boost (AudioUnit chain): the peak limiter is
@@ -708,13 +717,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
 
             // Set audio unit render callback
-            var renderCallback: AURenderCallbackStruct
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
-                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.peakLimiterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
-            } else {
-                renderCallback = AURenderCallbackStruct(inputProc: peakLimiterRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
-            }
+            let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+            var renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.peakLimiterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
 
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
 
@@ -775,13 +779,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
 
             // Set audio unit render callback
-            var renderCallback: AURenderCallbackStruct
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
-                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.dynamicsProcessorRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
-            } else {
-                renderCallback = AURenderCallbackStruct(inputProc: dynamicsProcessorRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
-            }
+            let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+            var renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.dynamicsProcessorRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
 
             // Set audio unit maximum frames per slice to max frames
@@ -849,13 +848,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &format, UInt32(MemoryLayout<AudioStreamBasicDescription>.stride)) == noErr else { return nil }
 
             // Set audio unit render callback
-            var renderCallback: AURenderCallbackStruct
-            if FeatureFlag.useDefaultPlayerTapCookie.enabled {
-                let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
-                renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.highPassFilterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
-            } else {
-                renderCallback = AURenderCallbackStruct(inputProc: highPassFilterRenderCallback, inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
-            }
+            let inputProcRefCon = Unmanaged<AudioProcessingTapProxy>.fromOpaque(MTAudioProcessingTapGetStorage(tap))
+            var renderCallback = AURenderCallbackStruct(inputProc: referenceToSelf.highPassFilterRenderCallback, inputProcRefCon: inputProcRefCon.toOpaque())
             guard AudioUnitSetProperty(createdUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &renderCallback, UInt32(MemoryLayout<AURenderCallbackStruct>.stride)) == noErr else { return nil }
 
             // Set audio unit maximum frames per slice to max frames
@@ -1054,10 +1048,6 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         playToEndObserver = nc.addObserver(forName: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil, queue: nil) { [weak self] notification in
             guard let self else { return }
 
-            if !FeatureFlag.checkFinishedTimeBeforeShouldKeepPlaying.enabled {
-                self.shouldKeepPlaying = false
-            }
-
             if let itemThatFinished = notification.object as? AVPlayerItem {
                 let duration = CMTimeGetSeconds(itemThatFinished.duration)
                 let upTo = CMTimeGetSeconds(itemThatFinished.currentTime())
@@ -1078,19 +1068,15 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                     return
                 }
 
-                if FeatureFlag.checkFinishedTimeBeforeShouldKeepPlaying.enabled {
-                    // Additional safeguard: check if buffer is empty (shouldn't be if truly finished)
-                    // A truly finished item should have reached the end naturally, not due to buffer exhaustion
-                    if itemThatFinished.isPlaybackBufferEmpty && !itemThatFinished.isPlaybackLikelyToKeepUp {
-                        FileLog.shared.addMessage("Item reports finished but buffer is empty and playback unlikely to keep up - ignoring")
-                        return
-                    }
+                // Additional safeguard: check if buffer is empty (shouldn't be if truly finished)
+                // A truly finished item should have reached the end naturally, not due to buffer exhaustion
+                if itemThatFinished.isPlaybackBufferEmpty && !itemThatFinished.isPlaybackLikelyToKeepUp {
+                    FileLog.shared.addMessage("Item reports finished but buffer is empty and playback unlikely to keep up - ignoring")
+                    return
                 }
             }
 
-            if FeatureFlag.checkFinishedTimeBeforeShouldKeepPlaying.enabled {
-                self.shouldKeepPlaying = false
-            }
+            self.shouldKeepPlaying = false
 
             Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
         }

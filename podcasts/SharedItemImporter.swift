@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 
+// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; stored properties are immutable and the async lookup is joined via dispatchGroup.
 nonisolated class SharedItemImporter: Operation, @unchecked Sendable {
     private let urlToImport: String
     private let completion: (IncomingShareItem?) -> Void

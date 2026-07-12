@@ -5,9 +5,15 @@ import Foundation
 /// Seeded into `ShowInfoDataRetriever`'s cache so show notes, `<podcast:chapters>` and
 /// `<podcast:transcript>` resolve for local-feed podcasts without any server.
 public enum LocalFeedShowInfo {
-    public static func data(from feed: ParsedFeed, podcastUuid: String) -> Data? {
+    /// `resolvedUuidOverrides` maps an item's deterministic hash UUID to the UUID the
+    /// episode is actually stored under (server-canonical for signed-out subscribes of
+    /// server-sourced podcasts). Entries must be keyed by the stored identity or the
+    /// cache-only read path (`ShowInfoCoordinator` for `.localFeed` podcasts) can never
+    /// find them. The default identity mapping covers pure-local podcasts.
+    public static func data(from feed: ParsedFeed, podcastUuid: String, resolvedUuidOverrides: [String: String] = [:]) -> Data? {
         let episodes: [[String: Any]] = feed.items.compactMap { item in
-            guard let uuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL) else { return nil }
+            guard let hashUuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL) else { return nil }
+            let uuid = resolvedUuidOverrides[hashUuid] ?? hashUuid
 
             var episode: [String: Any] = ["uuid": uuid]
             if let showNotes = item.itemDescriptionHTML ?? item.itemDescription {
