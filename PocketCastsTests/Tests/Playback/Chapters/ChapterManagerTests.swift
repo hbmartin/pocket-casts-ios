@@ -4,6 +4,7 @@ import XCTest
 @testable import PocketCastsDataModel
 @testable import PocketCastsServer
 @testable import PocketCastsUtils
+import CoreMedia
 
 @MainActor
 class ChapterManagerTests: XCTestCase {

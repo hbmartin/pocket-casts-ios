@@ -4788,7 +4788,7 @@ rules:
         - "**/*.swift"
       exclude:
         - "**/*.pb.swift"
-        - "Modules/Sources/PocketCastsDataModelTesting/**"
+        - "**/Modules/Sources/PocketCastsDataModelTesting/**"
     patterns:
       - pattern-regex: '@unchecked[ \t]+Sendable'
       # Mirrors pocketcasts.nonisolated-unsafe-requires-justification: longest alternative first.

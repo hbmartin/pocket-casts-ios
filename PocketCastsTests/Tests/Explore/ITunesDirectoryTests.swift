@@ -265,6 +265,7 @@ final class ITunesDirectoryTests: XCTestCase {
 /// Serves canned responses keyed by absolute URL so `ITunesDirectory` can be
 /// exercised end-to-end (request building through decoding) without a network.
 private final class StubURLProtocol: URLProtocol {
+    // @unchecked Sendable: all mutable state is guarded by the NSLock below.
     final class Registry: @unchecked Sendable {
         private let lock = NSLock()
         private var responses = [String: (statusCode: Int, data: Data)]()

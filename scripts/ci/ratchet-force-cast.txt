@@ -4,7 +4,7 @@
 # with: mise run ratchets:baseline
 Modules/Sources/PocketCastsDataModel/Public/DataManager.swift: 1
 Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift: 5
-podcasts/AccountViewController+TableView.swift: 7
+podcasts/AccountViewController+TableView.swift: 6
 podcasts/AddCustomViewController+CollectionView.swift: 2
 podcasts/AddCustomViewController+ImagePicker.swift: 2
 podcasts/AppDelegate+SiriShortcuts.swift: 7
@@ -27,7 +27,7 @@ podcasts/EpisodeFilterOverlayController.swift: 2
 podcasts/Extensions/UIView+Nib.swift: 1
 podcasts/FilterEditOptionsViewController.swift: 5
 podcasts/Folders/FolderViewController+CollectionView.swift: 2
-podcasts/GeneralSettingsViewController.swift: 20
+podcasts/GeneralSettingsViewController.swift: 21
 podcasts/IconSelectorCell.swift: 1
 podcasts/ImageManager.swift: 1
 podcasts/ListeningHistoryViewController+Table.swift: 1
@@ -46,7 +46,7 @@ podcasts/PodcastShortcutsViewController.swift: 1
 podcasts/Podcasts/All Podcasts/PodcastListViewController+CollectionView.swift: 4
 podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastArchiveViewController+Table.swift: 4
 podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastEffectsViewController+Table.swift: 5
-podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastSettingsViewController+Table.swift: 14
+podcasts/Podcasts/Podcast Page/Podcast Settings/PodcastSettingsViewController+Table.swift: 15
 podcasts/Podcasts/Podcast Page/PodcastViewController+TableData.swift: 11
 podcasts/Podcasts/Share Podcast List/IncomingShareListViewController.swift: 2
 podcasts/Podcasts/Share Podcast List/SharePodcastsViewController.swift: 1

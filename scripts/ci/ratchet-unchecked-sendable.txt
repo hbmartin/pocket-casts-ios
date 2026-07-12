@@ -49,6 +49,7 @@ Modules/Sources/PocketCastsUtils/General/TimedActionHelper.swift: 2
 Modules/Sources/PocketCastsUtils/General/UncheckedSendable.swift: 2
 Modules/Sources/PocketCastsUtils/General/UncheckedSendableBox.swift: 2
 Modules/Sources/PocketCastsUtils/Logging/FileLog.swift: 2
+Modules/Tests/PocketCastsServerTests/FeedParserTestSupport.swift: 2
 Modules/Tests/PocketCastsServerTests/PodcastExistsHelperTests.swift: 2
 Modules/Tests/PocketCastsServerTests/SyncTaskPlaylistOrderingTests.swift: 2
 Modules/Tests/PocketCastsUtilsTests/FileLogDependencyTests.swift: 2
@@ -57,6 +58,7 @@ PocketCastsTests/PlaybackQueueTests.swift: 2
 PocketCastsTests/Tests/Analytics/AnalyticsPlaybackHelperTests.swift: 2
 PocketCastsTests/Tests/AppIntents/PlaybackIntentActionHandlerTests.swift: 2
 PocketCastsTests/Tests/DownloadManagerDependencyTests.swift: 2
+PocketCastsTests/Tests/Explore/ITunesDirectoryTests.swift: 2
 PocketCastsTests/Tests/Playback/Chapters/ChapterManagerTests.swift: 2
 WidgetExtension/Data/WidgetData.swift: 2
 podcasts/AdvancedAudio/TrimVoiceActivityAnalyzer.swift: 4

@@ -286,6 +286,18 @@ nonisolated struct NormalizeTuning: Codable, Equatable, Sendable {
 
     static let targetLUFSRange: ClosedRange<Double> = -30 ... -8
 
+    init() {}
+
+    /// Resilient decode: a partial payload (older build, hand-edited blob) must
+    /// never throw — that would discard the entire surrounding tuning blob via
+    /// the `try?` in `Settings.audioTuning`.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? defaults.enabled
+        targetLUFS = try container.decodeIfPresent(Double.self, forKey: .targetLUFS) ?? defaults.targetLUFS
+    }
+
     func clamped() -> NormalizeTuning {
         var clamped = self
         clamped.targetLUFS = min(max(targetLUFS, Self.targetLUFSRange.lowerBound), Self.targetLUFSRange.upperBound)

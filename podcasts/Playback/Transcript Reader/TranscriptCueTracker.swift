@@ -22,7 +22,14 @@ nonisolated struct TranscriptCueTracker: Sendable {
         let cached = min(cachedCueIndex, cues.count - 1)
 
         if cues[cached].contains(timeInSeconds: position) {
-            return cached
+            // Earliest-match semantics: overlapping earlier cues win, exactly as
+            // the view controller's `first { contains }` scan behaves.
+            var index = cached
+            while index > 0, cues[index - 1].contains(timeInSeconds: position) {
+                index -= 1
+            }
+            cachedCueIndex = index
+            return index
         }
 
         // Backward seek — match `first { contains }` semantics so overlapping
@@ -42,6 +49,13 @@ nonisolated struct TranscriptCueTracker: Sendable {
                 return i
             }
             i += 1
+        }
+
+        // Overlap edge case: an earlier long cue can contain a position the
+        // cached-and-forward walk missed. Full scan preserves exact semantics.
+        if let index = cues.firstIndex(where: { $0.contains(timeInSeconds: position) }) {
+            cachedCueIndex = index
+            return index
         }
         return nil
     }
