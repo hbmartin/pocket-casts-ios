@@ -59,6 +59,8 @@ extension NowPlayingPlayerItemViewController {
         skipFwdBtn.skipAmount = skipFwdAmount
 
         updatePlayPauseButton(isPlaying: PlaybackManager.shared.playing())
+        let artworkAnimationNotifications = Set([Constants.Notifications.playbackStarted, Constants.Notifications.playbackPaused])
+        updateArtworkState(animated: notification.map { artworkAnimationNotifications.contains($0.name) } ?? false)
         updateUpTo(upTo: PlaybackManager.shared.currentTime(), duration: PlaybackManager.shared.duration(), moveSlider: true)
         reloadShelfActions()
         updateChaptersControls()
@@ -95,6 +97,40 @@ extension NowPlayingPlayerItemViewController {
 
     func updatePlayPauseButton(isPlaying: Bool) {
         playPauseBtn.isPlaying = isPlaying
+    }
+
+    /// Apple-Music-style paused state: the artwork rests slightly shrunken and
+    /// dimmed while paused, so playback state is readable at a glance.
+    func updateArtworkState(animated: Bool) {
+        if artworkDimView.superview == nil {
+            episodeImage.addSubview(artworkDimView)
+            NSLayoutConstraint.activate([
+                artworkDimView.leadingAnchor.constraint(equalTo: episodeImage.leadingAnchor),
+                artworkDimView.trailingAnchor.constraint(equalTo: episodeImage.trailingAnchor),
+                artworkDimView.topAnchor.constraint(equalTo: episodeImage.topAnchor),
+                artworkDimView.bottomAnchor.constraint(equalTo: episodeImage.bottomAnchor)
+            ])
+        }
+
+        // The floating video view owns this space for video episodes.
+        let isVideo = PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false
+        let playing = PlaybackManager.shared.playing()
+        // Reduce Motion: crossfade the dim only, never scale.
+        let shouldShrink = !playing && !isVideo && !UIAccessibility.isReduceMotionEnabled
+        let targetTransform = shouldShrink ? CGAffineTransform(scaleX: 0.8, y: 0.8) : .identity
+        let targetDim: CGFloat = (playing || isVideo) ? 0 : 0.2
+
+        let changes = {
+            self.episodeImage.transform = targetTransform
+            self.artworkDimView.alpha = targetDim
+        }
+
+        guard animated else {
+            changes()
+            return
+        }
+
+        UIView.animate(withDuration: 0.35, delay: 0, usingSpringWithDamping: 0.75, initialSpringVelocity: 1, options: [.beginFromCurrentState, .allowUserInteraction], animations: changes)
     }
 
     @objc func updateChapterInfo() {

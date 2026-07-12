@@ -52,6 +52,18 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         }
     }
 
+    /// Dims the artwork in the paused state. Lives inside `episodeImage` so it
+    /// inherits the rounded-corner clipping and the paused scale transform.
+    /// The image view's own alpha can't be used — it is the video-mode switch.
+    lazy var artworkDimView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black
+        view.alpha = 0
+        view.isUserInteractionEnabled = false
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
     @IBOutlet var episodeName: ThemeableLabel! {
         didSet {
 #if APPCLIP

@@ -227,6 +227,9 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(update))
         addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update))
+        // Podcast colors load async on first play; recolor the background and
+        // tab fades when they arrive instead of keeping the black fallback.
+        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(update))
         addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(themeDidChange))
     }
 

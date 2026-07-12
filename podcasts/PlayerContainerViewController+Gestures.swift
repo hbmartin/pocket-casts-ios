@@ -43,7 +43,12 @@ extension PlayerContainerViewController: UIGestureRecognizerDelegate {
                 finalYPositionWhenDismissing = touchPoint.y - initialTouchPoint.y
                 miniPlayer.closeFullScreenPlayer()
             } else {
-                UIView.animate(withDuration: 0.2, animations: {
+                // Spring back, carrying the release velocity in (normalized to the
+                // return travel, clamped like PlayerZoomAnimator) so a hard upward
+                // flick settles instead of hitting a wall.
+                let travel = max(view.frame.origin.y, 1)
+                let springVelocity = min(abs(velocity.y) / travel, 6)
+                UIView.animate(withDuration: 0.35, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: springVelocity, options: [.beginFromCurrentState, .allowUserInteraction], animations: {
                     self.view.frame = CGRect(x: 0,
                                              y: 0,
                                              width: self.view.frame.size.width,
