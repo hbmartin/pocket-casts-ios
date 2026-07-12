@@ -113,7 +113,12 @@ nonisolated class AudioUtils {
     /// Drops the first `frames` frames of the buffer in place.
     class func trimLeadingFrames(_ buffer: AVAudioPCMBuffer, frames: Int) {
         let currentLength = Int(buffer.frameLength)
-        guard frames > 0, frames < currentLength, let data = buffer.floatChannelData else { return }
+        guard frames > 0 else { return }
+        guard frames < currentLength else {
+            buffer.frameLength = 0
+            return
+        }
+        guard let data = buffer.floatChannelData else { return }
 
         let remaining = currentLength - frames
         for channel in 0 ..< Int(buffer.format.channelCount) {

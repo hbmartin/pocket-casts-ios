@@ -18,7 +18,13 @@ public final class ApiServerHandler: Sendable {
     public class func saveUpTo(time: TimeInterval, duration: TimeInterval, episode: BaseEpisode) {
         // Fetched outside the lock so no delegate code runs while it is held.
         let minTimeBetweenProgressSaves = ServerConfig.shared.syncDelegate?.minTimeBetweenProgressSaves()
-        let shouldSave = shared.lastUpToSaved.withLock { lastSaved in
+        shared.saveUpTo(time: time, duration: duration, episode: episode, minTimeBetweenProgressSaves: minTimeBetweenProgressSaves)
+    }
+
+    func saveUpTo(time: TimeInterval, duration: TimeInterval, episode: BaseEpisode, minTimeBetweenProgressSaves: TimeInterval?) {
+        guard let episode = episode as? Episode else { return }
+
+        let shouldSave = lastUpToSaved.withLock { lastSaved in
             if let lastSaved, let minTimeBetweenProgressSaves, fabs(lastSaved.timeIntervalSinceNow) < minTimeBetweenProgressSaves {
                 return false
             }
@@ -27,10 +33,8 @@ public final class ApiServerHandler: Sendable {
         }
         guard shouldSave else { return }
 
-        if let episode = episode as? Episode {
-            let saveOperation = PositionSyncTask(upTo: time, duration: duration, episode: episode)
-            shared.apiQueue.addOperation(saveOperation)
-        }
+        let saveOperation = PositionSyncTask(upTo: time, duration: duration, episode: episode)
+        apiQueue.addOperation(saveOperation)
     }
 
     public func saveCompleted(episode: BaseEpisode) {
