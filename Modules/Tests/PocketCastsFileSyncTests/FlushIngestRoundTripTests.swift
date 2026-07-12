@@ -143,4 +143,27 @@ final class FlushIngestRoundTripTests: XCTestCase {
         }
         XCTAssertGreaterThan(result.headSeq, 0)
     }
+
+    func testFlusherStampsStatsEnvelopeWithInjectedClock() async throws {
+        // Unique device id so the flush digest persisted in UserDefaults by
+        // earlier runs can never suppress this flush.
+        let deviceID = "device-clock-\(UUID().uuidString)"
+        defer { UserDefaults.standard.removeObject(forKey: "FileSync.flushDigest.\(deviceID)") }
+
+        var stats = Filesync_StatsCumulative()
+        stats.timeListened = 42
+
+        let flusher = OpJournalFlusher(
+            folder: folder, dataManager: deviceA, deviceID: deviceID,
+            now: { 1_234_567 })
+        let result = try await flusher.flush(settings: [], stats: stats)
+        XCTAssertEqual(result.flushedOps, 1)
+
+        let logPath = "\(FileSyncFormat.deviceDirectory(deviceID: deviceID))/\(FileSyncFormat.logFileName(index: 1))"
+        let data = await folder.contents(of: logPath)
+        let decoded = try OpLogFile.decode(data ?? Data())
+        XCTAssertEqual(decoded.envelopes.count, 1)
+        XCTAssertEqual(decoded.envelopes.first?.wallClockMs, 1_234_567,
+                       "the stats envelope must be stamped by the injected clock, not Date()")
+    }
 }
