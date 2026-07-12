@@ -97,13 +97,21 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
 
     /// Copies channel 0 of the buffer and queues it for analysis. Non-blocking.
     func append(_ buffer: AVAudioPCMBuffer, atFramePosition framePosition: Int64) {
-        guard let source = buffer.floatChannelData?[0],
-              let copy = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: buffer.frameLength) else { return }
+        guard let source = buffer.floatChannelData?[0] else { return }
+        let frameLength = Int(buffer.frameLength)
+        let samples = Array(UnsafeBufferPointer(start: source, count: frameLength))
 
-        copy.frameLength = buffer.frameLength
-        copy.floatChannelData?[0].update(from: source, count: Int(buffer.frameLength))
+        // Only Sendable sample values cross the queue boundary. The non-Sendable
+        // AVAudioPCMBuffer and SNAudioStreamAnalyzer remain confined to analysisQueue.
+        analysisQueue.async { [self] in
+            guard let copy = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: AVAudioFrameCount(samples.count)),
+                  let destination = copy.floatChannelData?[0] else { return }
 
-        analysisQueue.async { [analyzer] in
+            copy.frameLength = AVAudioFrameCount(samples.count)
+            samples.withUnsafeBufferPointer { source in
+                guard let baseAddress = source.baseAddress else { return }
+                destination.update(from: baseAddress, count: source.count)
+            }
             analyzer.analyze(copy, atAudioFramePosition: framePosition)
         }
     }
@@ -135,7 +143,7 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     /// Flushes pending analysis. Call before discarding the analyzer (seek or
     /// shutdown) — stream analyzers cannot rewind, so seeks recreate it.
     func finish() {
-        analysisQueue.async { [analyzer] in
+        analysisQueue.async { [self] in
             analyzer.completeAnalysis()
         }
     }

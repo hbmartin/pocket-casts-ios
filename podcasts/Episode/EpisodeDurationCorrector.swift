@@ -10,9 +10,9 @@ import PocketCastsUtils
 /// (`EpisodeFileSizeUpdater`), so an episode that is merely browsed keeps a
 /// wrong duration everywhere rows render it. This runs when the episode detail
 /// sheet opens: downloaded files are re-measured locally, and streaming
-/// episodes are probed over the network only when the stored value is missing
-/// or absurd — cheap enough per sheet-open, and rows refresh for free via the
-/// `episodeDurationChanged` notification they already observe.
+/// episodes are probed over the network because a plausible feed value can
+/// still be wrong. Rows refresh for free via the `episodeDurationChanged`
+/// notification they already observe.
 nonisolated enum EpisodeDurationCorrector {
     static func correctDurationIfNeeded(for episode: BaseEpisode) {
         if episode.downloaded(pathFinder: DownloadManager.shared) {
@@ -20,11 +20,7 @@ nonisolated enum EpisodeDurationCorrector {
             return
         }
 
-        // Only probe the network when the stored value can't be trusted at all.
-        guard episode.duration <= 0 || episode.duration > 36000,
-              let urlString = (episode as? Episode)?.downloadUrl, let url = URL(string: urlString) else {
-            return
-        }
+        guard let url = remoteProbeURL(for: episode) else { return }
 
         let boxed = PocketCastsUtils.UncheckedSendable((episode, AVURLAsset(url: url)))
         Task {
@@ -36,6 +32,18 @@ nonisolated enum EpisodeDurationCorrector {
             DataManager.sharedManager.saveEpisode(duration: corrected.duration, episode: episode, updateSyncFlag: corrected.syncFlag)
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDurationChanged, object: episode.uuid)
         }
+    }
+
+    /// A normal-looking feed duration is not proof that it is correct, so every remote
+    /// HTTP(S) episode is eligible for the lazy detail-screen probe.
+    static func remoteProbeURL(for episode: BaseEpisode) -> URL? {
+        guard let urlString = (episode as? Episode)?.downloadUrl,
+              let url = URL(string: urlString),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else {
+            return nil
+        }
+        return url
     }
 
     /// Thresholds match `EpisodeFileSizeUpdater` / `playerDidCalculateDuration`:

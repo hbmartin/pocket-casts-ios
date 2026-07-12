@@ -27,7 +27,6 @@ production Pocket Casts services — the app needs **no changes** to talk to it.
 8. [Authentication & Account service](#8-authentication--account-service)  *(api host)*
 9. [Sync engine & named settings](#9-sync-engine--named-settings)  *(api host)*
 10. [Up Next, History & playback position](#10-up-next-history--playback-position)  *(api host)*
-11. [User Files (custom uploads)](#11-user-files-custom-uploads)  *(api + files hosts)*
 12. [Search, Ratings, Stats, Bookmarks, Subscriptions, Sharing, Feedback](#12-search-ratings-stats-bookmarks-subscriptions-sharing-feedback)
 13. [Podcasts, Refresh, Cache, Discover & Recommendations](#13-podcasts-refresh-cache-discover--recommendations)  *(refresh + cache + static hosts)*
 14. [Protobuf schema conventions](#14-protobuf-schema-conventions)
@@ -44,7 +43,6 @@ production Pocket Casts services — the app needs **no changes** to talk to it.
 - The sync engine: incremental + full sync of podcasts, episodes, playlists (filters), folders,
   bookmarks; named user settings.
 - Up Next queue sync, listening history sync, per-episode playback-position/star/archive sync.
-- User Files: presigned uploads of custom audio/video, artwork, metadata, playback, quota.
 - Podcast/episode metadata: refresh service, cache/metadata service, show notes.
 - Search (podcasts, episodes, combined, autocomplete/predictive).
 - Discover feed (static JSON), recommendations, suggested folders.
@@ -69,12 +67,11 @@ A re-implementation must serve the production hostnames (or the app must be repo
 
 | Logical service | Production base URL | Staging base URL | Protocol | Purpose |
 |---|---|---|---|---|
-| **api** | `https://api.pocketcasts.com/` | `https://api.pocketcasts.net/` | Protobuf over HTTPS | Auth, sync, files metadata, ratings, stats, subscriptions |
+| **api** | `https://api.pocketcasts.com/` | `https://api.pocketcasts.net/` | Protobuf over HTTPS | Auth, sync, ratings, stats, subscriptions |
 | **refresh** (aka "main") | `https://refresh.pocketcasts.com/` | `https://refresh.pocketcasts.net/` | JSON + form over HTTPS | Podcast refresh, search-by-url, OPML import/export, user/update |
 | **cache** | `https://cache.pocketcasts.com/` | `https://podcast-api.pocketcasts.net/` | JSON over HTTPS | Podcast/episode metadata, show notes, combined search, suggested folders |
 | **search** | `https://search.pocketcasts.com/` | `https://search.pocketcasts.net/` | JSON over HTTPS | Autocomplete / predictive search |
 | **sharing** | `https://sharing.pocketcasts.com/` | `https://sharing.pocketcasts.net/` | JSON over HTTPS | Create/retrieve shared episode/podcast lists |
-| **files** | `https://files.pocketcasts.com/files/` | `https://files.pocketcasts.net/files/` | Binary (presigned upload targets) | User file byte storage |
 | **discover / static** | `https://static.pocketcasts.com/discover/` | `https://static.pocketcasts.net/discover/` | Static JSON | Discover feed layout & content |
 | **image** | `https://static.pocketcasts.com/` | `https://static.pocketcasts.net/` | Static images | Artwork, colors, metadata JSON |
 | **lists** | `https://lists.pocketcasts.com/` | `https://lists.pocketcasts.net/` | Static JSON | Bundle/curated list JSON |
@@ -100,10 +97,10 @@ Most `api` host endpoints exchange **binary Protocol Buffers** (proto3). The cli
 - Deserializes the response body as the corresponding proto message when status is `200`.
 
 The full `.proto` schema is embedded in the generated Swift at
-`Private/Protobuffer/api.pb.swift` (18,989 lines) and `Private/Protobuffer/files.pb.swift`.
+`Private/Protobuffer/api.pb.swift` (18,989 lines).
 **The backend MUST reproduce these messages with identical field numbers and types.** Field numbers
 are documented per-endpoint in the sections below; §14 explains how to read them from the generated
-Swift. The proto package prefix is `api.` (Swift symbol prefix `Api_`) and `files.` respectively.
+Swift. The proto package prefix is `api.` (Swift symbol prefix `Api_`)..
 
 - **API version:** the client sets `apiVersion = "2"` (see `ApiBaseTask`). Where a version appears
   in a path or header, it is `2`.
@@ -239,18 +236,6 @@ The backend **must** emit these exact string codes so the client can localize th
 | `login_email_invalid` | Malformed email |
 | `login_email_taken` | Email already registered |
 | `login_user_register_failed` | Generic registration failure |
-
-**User files**
-
-| Code string | Meaning |
-|---|---|
-| `files_invalid_content_type` | Unsupported MIME type |
-| `files_invalid_user` | File not owned by user |
-| `files_file_too_large` | Exceeds per-file size limit |
-| `files_storage_limit_exceeded` | Exceeds account storage quota |
-| `files_title_required` | Missing title |
-| `files_uuid_required` | Missing file uuid |
-| `files_upload_failed_generic` | Generic upload failure |
 
 **Promotions / device grant**
 
@@ -433,7 +418,7 @@ folders, bookmarks, and per-account settings across devices.*
 
 - **Home-grid (no folder) sentinel:** `973df93c-e4dc-41fb-879e-0c7b532ebb70`. A podcast whose
   `folder_uuid` equals this is "top-level, not in any folder."
-- **Fake podcast UUID for user-uploaded files:** `da7aba5e-f11e-f11e-f11e-da7aba5ef11e`.
+- **Fake podcast UUID for local custom files:** `da7aba5e-f11e-f11e-f11e-da7aba5ef11e`.
 
 ### Endpoint summary
 
@@ -595,16 +580,16 @@ Field numbers **10 and 13 are unused/reserved**. Each entry's type is the wrappe
 | 26 | media_actions | Bool | 74 | auto_download_unmetered_only | Bool |
 | 27 | media_actions_order | String | 75 | auto_download_only_when_charging | Bool |
 | 28 | keep_screen_awake | Bool | 76 | auto_download_up_next | Bool |
-| 29 | open_player | Bool | 77 | cloud_auto_upload | Bool |
-| 30 | intelligent_resumption | Bool | 78 | cloud_auto_download | Bool |
-| 31 | play_up_next_on_tap | Bool | 79 | cloud_download_unmetered_only | Bool |
+| 29 | open_player | Bool | | | |
+| 30 | intelligent_resumption | Bool | | | |
+| 31 | play_up_next_on_tap | Bool | | | |
 | 32 | remote_skip_chapters | Bool | 80 | use_rss_artwork | Bool |
 | 33 | playback_actions | Bool | 81 | bookmarks_sort_order | Int32 |
 | 34 | legacy_bluetooth | Bool | 82 | auto_archive_played_episodes_global | Bool |
 | 35 | multi_select_gesture | Bool | 83 | auto_archive_includes_starred_global | Bool |
 | 36 | chapter_titles | Bool | 84 | files_auto_up_next_global | Bool |
 | 37 | notifications | Bool | 85 | files_after_playing_delete_local_global | Bool |
-| 38 | notification_actions | String | 86 | files_after_playing_delete_cloud_global | Bool |
+| 38 | notification_actions | String | | | |
 | 39 | play_over_notifications | Int32 | 87 | player_shelf_global | String |
 | 40 | hide_notification_on_pause | Bool | 88 | row_action_global | Int32 |
 | 41 | app_badge | Int32 | 89 | use_embedded_artwork_global | Bool |
@@ -616,13 +601,11 @@ Field numbers **10 and 13 are unused/reserved**. Each entry's type is the wrappe
 | 47 | warn_data_usage | Bool | 95 | smart_folders_number_of_times_shown | Int32 |
 | 48 | files_auto_up_next | Bool | 96 | smart_folders_last_date_shown | String |
 | 49 | files_after_playing_delete_local | Bool | 97 | save_up_next_on_playlists_play_all | Bool |
-| 50 | files_after_playing_delete_cloud | Bool | 98 | do_not_sell_or_share | Bool |
-| | | | 99 | live_analytics_url | String |
+| | | | 98 | do_not_sell_or_share | Bool |
 | | | | 100 | listening_time_stats | Bool |
 
 **`*_global` split (82–93):** several settings have both a per-podcast-defaultable value and a `_global`
-variant; the current iOS client reads/writes the **global** variants for those. `live_analytics_url` (99)
-is stored client-side as the live-analytics endpoint.
+variant; the current iOS client reads/writes the **global** variants for those.
 
 ### 9.8 Conflict resolution (last-write-wins by `modified_at`)
 
@@ -789,111 +772,6 @@ seeks the player when a paused now-playing episode's `playedUpTo` changes.
 
 ---
 
-## 11. User Files (custom uploads)
-
-*Hosts: **api** (metadata, presigned-URL brokering) + presigned **S3** targets (byte storage) + **files**
-CDN. Wire format: protobuf (`files.proto`, package `files`); JSON error bodies.*
-
-The "Files" feature lets a user upload custom audio/video (`UserEpisode`s) and artwork. The api host
-only brokers metadata and presigned URLs; the actual bytes are `PUT` to a presigned storage URL (S3),
-and uploads are confirmed via an S3→SNS→backend pipeline that the client polls.
-
-### Endpoint summary
-
-| Method | Path | Auth | Request | Success response |
-|---|---|---|---|---|
-| GET | `files` | Bearer | *(empty `FileListRequest`)* | `Files_FileListResponse` |
-| POST | `files` | Bearer | `Files_FileListUpdateRequest` | *(status only)* |
-| POST | `files/upload/request` | Bearer | `Files_FileUploadRequest` | `Files_FileUploadResponse` (presigned PUT url) |
-| POST | `files/upload/image` | Bearer | `Files_ImageUploadRequest` | `Files_ImageUploadResponse` (presigned PUT url) |
-| GET | `files/upload/status/{uuid}` | Bearer | — | `Files_SuccessResponse` |
-| GET | `files/play/{uuid}` | Bearer | — | `Files_FilePlayResponse` (playback url) |
-| DELETE | `files/image/{uuid}` | Bearer | `Files_FileDeleteRequest` | *(empty)* |
-| DELETE | `files/{uuid}` | Bearer | `Files_FileDeleteRequest` | *(empty)* |
-| GET | `files/usage/` | Bearer | — | `Files_AccountUsage` |
-
-Conditional caching: `GET files` and `GET files/usage/` send `If-Modified-Since` and honor
-`Last-Modified`/`304` (separate stored values per endpoint). `DELETE` endpoints treat `404` as success
-(already gone). On `401`, GET/POST re-auth+retry once; DELETE does not retry.
-
-### Protobuf messages (`files.proto`)
-
-**`Files_File`** (canonical record) — `1 uuid:string, 2 title:string, 3 size:int64,
-4 contentType:string, 5 playedUpTo:int32, 6 playedUpToModified:int64, 7 playingStatus:int32
-(1=notPlayed,2=inProgress,3=completed,4=old), 8 playingStatusModified:int64, 9 duration:int64,
-10 published:google.protobuf.Timestamp, 11 colour:int32, 12 imageUrl:string,
-13 hasCustomImage:bool, 14 modifiedAt:google.protobuf.Timestamp, 15 imageStatus:int32,
-16 bookmarks:repeated Api_BookmarkResponse`. Read path consumes 1,2,3,4,5,7,9,11,12.
-
-**`Files_FileUpdate`** (sparse patch — wrapper types distinguish unset from 0) — `1 uuid:string,
-2 title:string, 3 playedUpTo:google.protobuf.Int32Value, 4 playingStatus:Int32Value,
-5 duration:Int64Value, 6 colour:Int32Value`. Only fields whose local `*Modified` marker > 0 are sent.
-
-**`Files_AccountUsage`** — `1 totalSize:int64` (quota → `customStorageUserLimit`),
-`2 usedSize:int64` (→ `customStorageUsed`), `3 totalFiles:int64` (→ `customStorageNumFiles`).
-
-**`Files_FileListRequest`** — empty. **`Files_FileListResponse`** — `1 files:repeated Files_File,
-2 account:Files_AccountUsage`. **`Files_FileListUpdateRequest`** — `1 files:repeated Files_FileUpdate`.
-
-**`Files_FileUploadRequest`** — `1 uuid:string, 2 title:string (client sends "No Title" if empty),
-3 size:int64, 4 contentType:string (falls back to audio/mp3), 5 duration:int64,
-6 colour:Int32Value, 7 hasCustomImage:bool`. **`Files_FileUploadResponse`** — `1 uuid:string,
-2 url:string` (presigned S3 PUT).
-
-**`Files_ImageUploadRequest`** — `1 uuid:string, 2 size:int64, 3 contentType:string ("image/jpeg")`.
-**`Files_ImageUploadResponse`** — `1 url:string` (presigned S3 PUT).
-
-**`Files_FilePlayRequest`** — empty. **`Files_FilePlayResponse`** — `1 url:string` (playback URL,
-fetched on demand; not persisted client-side).
-
-**`Files_FileRequest`** / **`Files_FileDeleteRequest`** — `1 uuid:string`.
-**`Files_FileDeleteResponse`** — empty. **`Files_SuccessResponse`** — `1 success:bool`.
-
-**`Files_FileUploadedStatusRequest`** — the standard **Amazon SNS HTTP-notification** envelope
-(`1 Type, 2 MessageId, 3 TopicArn, 4 Subject, 5 Token, 6 Message, 7 SubscribeURL, 8 Timestamp,
-9 SignatureVersion, 10 Signature, 11 SigningCertURL, 12 UnsubscribeURL` — all string). This is the
-server-side hook: the storage bucket notifies the backend via SNS when a presigned upload completes,
-and the backend then flips the file to "uploaded" so `files/upload/status/{uuid}` returns `success=true`.
-
-### Upload flow (end to end)
-
-1. **Request presigned URL** — `POST files/upload/request` with metadata → `url`. MIME detected
-   locally (sniffs up to 4500 bytes; falls back to `application/octet-stream`, then `audio/mp3`).
-   Validation errors (`files_title_required`, `files_uuid_required`, `files_invalid_content_type`,
-   `files_file_too_large`, `files_storage_limit_exceeded`, `files_invalid_user`) are raised here.
-2. **PUT bytes to the presigned S3 URL** (NOT api host) — `PUT`, `Content-Type: <fileType|audio/mp3>`,
-   no Bearer token (URL is self-signed), 30s timeout, one connection/host. Background `URLSession`s:
-   WiFi-only `au.com.shiftyjelly.PCUploadBackgroundSession` and cellular `...PCUploadManualSession`.
-3. **Artwork (optional, only if `colour==0`)** — `POST files/upload/image` → presigned url → `PUT` the
-   JPEG from `<Documents>/custom_images/<uuid>.jpg`. Then client marks image uploaded.
-4. **Confirm** — ~1s after the byte-PUT completes with no error, poll `GET files/upload/status/{uuid}`;
-   `success=true`→local `uploaded`, `false`/error→`uploadFailed`.
-5. **Sync edits** — `POST files` pushes later metadata edits (sparse `FileUpdate`s); `GET files`
-   re-syncs the authoritative list + quota, reconciling deletions.
-6. **Playback** — `GET files/play/{uuid}` returns a fresh URL each time (not cached).
-7. **Delete** — `DELETE files/{uuid}` (file) or `DELETE files/image/{uuid}` (artwork only).
-
-Local upload statuses (client-side, informative): `notUploaded=1, queued=2, uploading=3,
-uploadFailed=4, uploaded=5, waitingForWifi=6, missing=7, deleteFromCloudPending=8,
-deleteFromCloudAndLocalPending=9`.
-
-### `files_*` error taxonomy
-
-JSON envelope `{ "errorMessageId": "files_...", "error": "..." }` (see §5.3 for the full table).
-The client keys on `errorMessageId` regardless of HTTP status, but a re-implementation should use:
-validation (`files_title_required`, `files_uuid_required`, `files_invalid_content_type`,
-`files_file_too_large`) → `400`; `files_storage_limit_exceeded`/`files_invalid_user` → `403`;
-`files_upload_failed_generic` → `500`. Emitted primarily on `files/upload/request` and
-`files/upload/image`.
-
-> **`colour`** is a small palette index, not RGB. `0` = "no custom colour" and signals the client may
-> upload a custom image instead. There is no separate `tintColor` field on the wire.
-
-*Sources: `files.pb.swift`, `ApiServerHandler+UserFiles.swift`, `Upload/*`, `MimetypeHelper.swift`,
-the `Upload*`/`RetrieveCustomFiles`/`RetrieveFileUsage`/`RetrieveFileUploadStatus` tasks.*
-
----
-
 ## 12. Search, Ratings, Stats, Bookmarks, Subscriptions, Sharing, Feedback
 
 *Mixed hosts and wire formats. `api` host = protobuf + Bearer; `cache`/`search`/`sharing` = JSON.*
@@ -959,8 +837,7 @@ Response `Api_BookmarksResponse{1 bookmarks:repeated Api_BookmarkResponse}`.
 ### 12.5 Subscriptions / IAP (protobuf schema — implement for cross-platform parity)
 
 > These messages are fully defined in the proto but **not wired to any endpoint in this iOS client** —
-> the app's live entitlement path is StoreKit + account sync. Implement them to spec so Android/Web (and
-> future iOS) work; suggested paths below follow Pocket Casts naming.
+> the client receives entitlement state through account sync. The suggested paths below are schema-derived and are not observed iOS endpoints.
 
 - **Eligibility** `POST subscription/check_eligible` — `Api_CheckEligibleRequest{oneof store_receipt:
   android|apple|web}` → `Api_CheckEligibleResponse{1 platform:int32, 2 eligible:bool}`.
@@ -1218,9 +1095,9 @@ Cache-bypassing (`reloadIgnoringCacheData`): `user/update`, `podcasts/refresh`, 
 
 ## 14. Protobuf schema conventions
 
-The api host and files host speak proto3. To re-derive or verify field numbers against the client,
+The api hostThe api host speaks proto3. To re-derive or verify field numbers against the client,
 read the generated Swift at `Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift`
-(package `api.`, Swift prefix `Api_`) and `files.pb.swift` (package `files.`, prefix `Files_`).
+(package `api.`, Swift prefix `Api_`).
 
 **How to read field numbers from the generated Swift.** Each message has a `decodeMessage` and a
 `traverse` function containing a `switch` on the field number:
@@ -1311,10 +1188,7 @@ A backend is client-complete when all of the following hold. Ordered roughly by 
 - [ ] Discover static JSON (`ios/content_v3.json` + dynamic source shapes) with `Expires`/`Cache-Control`.
 - [ ] Artwork/color image endpoints; `recommend_episodes` (protobuf); `recommendations/podcast/{uuid}`.
 
-### Phase 5 — files, search & the rest
-- [ ] User Files: `files`, `files/upload/request`, `files/upload/image`, `files/upload/status/{uuid}`,
-      `files/play/{uuid}`, `files/{uuid}`, `files/image/{uuid}`, `files/usage/` + presigned-URL byte
-      storage + SNS upload-confirmation pipeline + `files_*` error codes (§11).
+### Phase 5 — search & the rest
 - [ ] Search: `search/combined`, `podcasts/search` (**pollable**), `autocomplete/search`, `episode/search`.
 - [ ] Ratings (`podcast/rating/{uuid}`, `user/podcast_rating/{list,add,show}`), stats
       (`user/stats/summary`), bookmarks (`user/bookmark/list`).

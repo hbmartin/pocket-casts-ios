@@ -46,8 +46,8 @@ It is intended as a reference for engineers and security reviewers: where reques
 ┌──────────────────────────────────────────────────────────────────────┐
 │  podcasts/ (main app + extensions)                                     │
 │   • DownloadManager        → podcast CDN audio/video                   │
-│   • ImageManager (Kingfisher) → static.pocketcasts artwork, Gravatar   │
-│   • Analytics adapters     → Bitdrift, TelemetryDeck, LiveAnalytics    │
+│   • ImageManager (Kingfisher) → static.pocketcasts artwork   │
+│   • Analytics adapters     → Bitdrift, TelemetryDeck                   │
 │   • NotificationsHelper    → APNs registration                         │
 │   • Transcript / Chapter retrievers → per-episode URLs                 │
 └───────────────────────────────┬──────────────────────────────────────┘
@@ -61,18 +61,16 @@ It is intended as a reference for engineers and security reviewers: where reques
 │   DiscoverServerHandler ──► static.pocketcasts.com/discover            │
 │   CacheServerHandler / ShowInfoDataRetriever ──► cache.pocketcasts.com │
 │   Search tasks ──► refresh / cache / search hosts                      │
-│   UploadManager ──► api host (presign) + S3-style presigned PUT        │
 │   SharingServerHandler ──► sharing.pocketcasts.com / lists host        │
 │                                                                        │
 │   TokenHelper (Bearer auth, 401 refresh) · ServerHelper (request       │
-│   builders) · URLConnection (URLSession wrapper) · protobuf (api.pb,   │
-│   files.pb)                                                            │
+│   builders) · URLConnection (URLSession wrapper) · protobuf (api.pb)   │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
 Two wire formats are in use:
 
-- **Protocol Buffers** (`application/octet-stream`) for almost everything on the `api` host (auth, sync, files, ratings, stats, bookmarks).
+- **Protocol Buffers** (`application/octet-stream`) for almost everything on the `api` host (auth, sync, ratings, stats, bookmarks).
 - **JSON** for the `refresh`, `cache`, `static`/discover, `search`, `sharing`, and `lists` hosts, plus error envelopes.
 
 ---
@@ -89,7 +87,6 @@ All base URLs are defined in **`ServerConstants.Urls`** (`Public/Sharing/Structs
 | `sharing()` | `https://sharing.pocketcasts.com/` | `https://sharing.pocketcasts.net/` | Create shareable podcast lists |
 | `discover()` | `https://static.pocketcasts.com/discover/` | `https://static.pocketcasts.net/discover/` | Discover layout JSON + thumbnails |
 | `image()` | `https://static.pocketcasts.com/` | `https://static.pocketcasts.net/` | Static image host |
-| `files()` | `https://files.pocketcasts.com/files/` | `https://files.pocketcasts.net/files/` | User‑uploaded file host |
 | `share()` | `https://pca.st/` | `https://pcast.pocketcasts.net/` | Short share links |
 | `lists()` | `https://lists.pocketcasts.com/` | `https://lists.pocketcasts.net/` | Curated lists / bundle JSON |
 | `search` | `https://search.pocketcasts.com/` | `https://search.pocketcasts.net/` | Predictive/autocomplete search |
@@ -192,7 +189,7 @@ Standard timeouts (`ServerConstants.Timeouts`): `sync` = 60 s, `general` = 60 s,
 
 ### 4.5 Error model
 
-`ErrorResponse.swift` defines `APIError` covering login/auth (`INCORRECT_PASSWORD`, `EMAIL_NOT_FOUND`, `ACCOUNT_LOCKED`, …), account creation (`EMAIL_TAKEN`, `USER_REGISTER_FAILED`, …), file uploads (`FILES_EXCEEDS_STORAGE`, `FILES_INVALID_CONTENT_TYPE`, …), OAuth/device (`AUTHORIZATION_PENDING`, `EXPIRED_TOKEN`, `ACCESS_DENIED`, `INVALID_GRANT`), promo codes, and client‑side states (`NO_CONNECTION`, `TOKEN_DEAUTH`, `PERMISSION_DENIED`, `UNKNOWN`). HTTP codes are mapped from `ServerConstants.HttpConstants` (200/304/400/401/403/404/409/500).
+`ErrorResponse.swift` defines `APIError` covering login/auth (`INCORRECT_PASSWORD`, `EMAIL_NOT_FOUND`, `ACCOUNT_LOCKED`, …), account creation (`EMAIL_TAKEN`, `USER_REGISTER_FAILED`, …), OAuth/device (`AUTHORIZATION_PENDING`, `EXPIRED_TOKEN`, `ACCESS_DENIED`, `INVALID_GRANT`), promo codes, and client‑side states (`NO_CONNECTION`, `TOKEN_DEAUTH`, `PERMISSION_DENIED`, `UNKNOWN`). HTTP codes are mapped from `ServerConstants.HttpConstants` (200/304/400/401/403/404/409/500).
 
 ---
 
@@ -275,7 +272,7 @@ Source: `Public/Sync/`. The sync engine reconciles the local GRDB database with 
 
 - **Up Next** (`UpNextSyncTask`, `up_next/sync`): sends `Api_UpNextChanges` against a `serverModified` token (`SJUpNextServerLastModified`). On **login** (`syncReason == .login`) it performs a non‑destructive merge (keeps local episodes not on server); otherwise it sends local add/remove/replace changes.
 - **History** (`SyncHistoryTask`, `history/sync`): sends `Api_HistoryChange` (add/delete/clearAll) against `SJHistoryServerLastModified`; supports cross‑device clear via `lastClearHistoryDate`. Capped at `maxHistoryItems = 100`.
-- **Settings** (`SyncSettingsTask`, `user/named_settings/update`): when `FeatureFlag.settingsSync` is on, sends `Api_ChangeableSettings` (only modified keys); legacy mode syncs a small subset (skip times, marketing opt‑in, grid order). Per‑podcast settings ride along inside `Api_SyncUserPodcast.settings`. Response can include a `liveAnalyticsURL`.
+- **Settings** (`SyncSettingsTask`, `user/named_settings/update`): when `FeatureFlag.settingsSync` is on, sends `Api_ChangeableSettings` (only modified keys); legacy mode syncs a small subset (skip times, marketing opt‑in, grid order). Per‑podcast settings ride along inside `Api_SyncUserPodcast.settings`.
 
 ### 6.4 Real‑time position/star
 
@@ -287,7 +284,7 @@ During playback, `ApiServerHandler.saveUpTo/saveCompleted/saveStarred` enqueue `
 
 ### 6.6 Triggers & cadence
 
-The sync cycle is kicked off **after a refresh** (`RefreshOperation`) when logged in, in order: custom files → Up Next → main sync → history → settings → remote stats. Refresh itself fires on: pull‑to‑refresh, app foreground, scheduled background refresh, and login. `RefreshManager` throttles to a minimum 15 s between refreshes. `SyncingReason` (`accountCreated`/`login`/`replace`/`remove`/`add`) modulates Up Next behavior.
+The sync cycle is kicked off **after a refresh** (`RefreshOperation`) when logged in, in order: Up Next → main sync → history → settings → remote stats. Refresh itself fires on: pull‑to‑refresh, app foreground, scheduled background refresh, and login. `RefreshManager` throttles to a minimum 15 s between refreshes. `SyncingReason` (`accountCreated`/`login`/`replace`/`remove`/`add`) modulates Up Next behavior.
 
 ### 6.7 Conflict resolution highlights
 
@@ -421,7 +418,6 @@ Source: `podcasts/ImageManager.swift`, `PodcastImage.swift`, `EpisodeArtwork.swi
 
 - **Podcast artwork:** `static.pocketcasts.com/discover/images/{size}/{uuid}.jpg` (sizes 130–960). Episode artwork URLs come from show notes (`ShowInfoCoordinator`), preferring publisher image over embedded ID3 art.
 - **Caches** (Kingfisher `ImageCache`): subscribed artwork `Documents/artworkv3` (≈400 MB, 1 yr), network images (8 wk), search (10 MB), user‑episode (10 MB, 1 yr), discover (10 MB, 10 d), discover video thumbnails (50 MB, 10 d).
-- **Gravatar (third party):** `https://www.gravatar.com/avatar/{sha256(email)}?d=404&s={size}` for profile avatars (loaded via Kingfisher); `https://gravatar.com/profile` opened in an in‑app `SFSafariViewController` for editing.
 
 ---
 
@@ -474,11 +470,9 @@ Opt‑in/opt‑out transitions (`analyticsOptIn`/`analyticsOptOut`) are themselv
 
 ## 23. Protocol Buffers catalog
 
-Generated Swift lives in `Private/Protobuffer/api.pb.swift` (~149 message types) and `files.pb.swift` (~17 types). The proto is regenerated with `mise run generate:proto /path/to/pocketcasts-api/api/modules/protobuf/src/main/proto` (see `README.md` and `AGENTS.md`).
+Generated Swift lives in `Private/Protobuffer/api.pb.swift` (~149 message types). The proto is regenerated with `mise run generate:proto /path/to/pocketcasts-api/api/modules/protobuf/src/main/proto` (see `README.md` and `AGENTS.md`).
 
 **`api.pb.swift` groups:** auth (`Api_UserLoginRequest/Response`, `Api_UserTokenRequest`, `Api_TokenLoginResponse`, `Api_DeviceAuthorize*`), account (`Api_RegisterRequest/Response`, `Api_UserChange*`, `Api_EmailRequest`, `Api_UserLastSyncAtResponse`), sync (`Api_SyncUpdateRequest/Response`, `Api_Record`, `Api_SyncUser{Podcast,Episode,Playlist,Folder,Device,Bookmark}`), Up Next/history/settings (`Api_UpNext*`, `Api_History*`, `Api_NamedSettings*`, `Api_ChangeableSettings`, `Api_{Bool,Int32,Double,String}Setting`), episodes (`Api_Episode(s)Response`, `Api_UpdateEpisode*`, `Api_StarredEpisode(s)Response`), podcasts/folders/playlists/bookmarks/ratings/stats, search,  and misc (`Api_BasicRequest`, `Api_EmptyRequest/Response`, `Api_SupportFeedbackRequest`, legacy types).
-
-**`files.pb.swift`:** `Files_File`, `Files_FileUpdate`, `Files_FileList(Request|Response|UpdateRequest)`, `Files_File{Request,DeleteRequest/Response,PlayRequest/Response,UploadRequest/Response}`, `Files_Image{UploadRequest,UploadResponse}`, `Files_FileUploadedStatusRequest`, `Files_AccountUsage`, `Files_SuccessResponse`.
 
 > Not every defined message is wired to an active endpoint (notably the commerce types).
 
@@ -495,7 +489,6 @@ Posted by `ServerNotifications` / `ServerNotificationsHelper` so the UI can reac
 | `syncProgressPodcastCount` / `…ImportedPodcasts` / `…PodcastUpto` | `PCSyncCount` / `PCSyncPodcastsDone` / `PCSyncUpto` | Full‑sync progress |
 | `episodeTypeOrLengthChanged` | `SJEpisodeTypeChanged` | Metadata (`HEAD`) update |
 | `subscriptionStatusChanged` | `SJSubscriptionStatusChanged` | Plus status changed |
-| `userEpisodeUploadProgress` / `…UploadStatusChanged` / `userEpisodesRefreshed` / `…RefreshFailed` | `SJUserEpisode…` | Custom file uploads/refresh |
 | (`NSNotification.Name`) `serverUserWillBeSignedOut` | `Server.User.WillBeSignedOut` | Token deauth → sign‑out |
 
 ---
@@ -504,7 +497,7 @@ Posted by `ServerNotifications` / `ServerNotificationsHelper` so the UI can reac
 
 **Keychain** (`ServerConstants.Values`): `SJSyncV2Token`, `SJRefreshToken`, `SJSyncingEmail`, `SJSyncingPwd`, `SJPushToken`, `SJAppleAuthUserID`.
 
-**UserDefaults** (`ServerConstants.UserDefaults`, sync‑relevant subset): `PCLastModifiedServerDate`, `PCLastSyncStartDate`, `SJLastRefreshDate`, `SJLastSyncDate`, `SJHistoryServerLastModified`, `SJUpNextServerLastModified`, `SJLastClearHistoryDate`, `SJPushToken`, `SJMarketingOptIn`(+`…NeedsSync`), `UserFilesLastModified`, the `Stats*` (local) and `Stats*Server` (remote) family, and `UserId`.
+**UserDefaults** (`ServerConstants.UserDefaults`, sync‑relevant subset): `PCLastModifiedServerDate`, `PCLastSyncStartDate`, `SJLastRefreshDate`, `SJLastSyncDate`, `SJHistoryServerLastModified`, `SJUpNextServerLastModified`, `SJLastClearHistoryDate`, `SJPushToken`, `SJMarketingOptIn`(+`…NeedsSync`), the `Stats*` (local) and `Stats*Server` (remote) family, and `UserId`.
 
 **Limits:** `maxHistoryItems = 100`, `maxEpisodesToSync = 2000`. **Misc:** `oldEpisodeCutoff = 2 weeks`, `deviceTypeiOS = 1`.
 
@@ -521,7 +514,6 @@ Posted by `ServerNotifications` / `ServerNotificationsHelper` so the UI can reac
 | `cache.pocketcasts.com` (staging `podcast-api.pocketcasts.net`) | Podcast/show‑notes JSON, episode URLs, suggest folders, aggregate ratings |
 | `static.pocketcasts.com` (+`/discover/`) | Artwork, color metadata, discover layout |
 | `sharing.pocketcasts.com` | Create shareable lists |
-| `files.pocketcasts.com` | User‑uploaded files host |
 | `lists.pocketcasts.com` | Curated lists / bundles |
 | `search.pocketcasts.com` | Predictive/autocomplete search |
 | `shownotes.pocketcasts.com` | Generated transcripts |
@@ -554,14 +546,14 @@ Posted by `ServerNotifications` / `ServerNotificationsHelper` so the UI can reac
 | Sync | `Public/Sync/SyncManager.swift`, `SyncTask*.swift`, `UpNextSyncTask.swift`, `SyncHistoryTask.swift`, `SyncSettingsTask.swift`, `BackgroundSyncManager*.swift` |
 | Refresh | `Public/Refresh/RefreshManager.swift`, `RefreshOperation.swift`, `MainServerHandler.swift`, `PodcastSearchOperation.swift` |
 | Discover / Search / Cache | `Public/Discover/DiscoverServerHandler.swift`, `Public/Search/*`, `Public/Cache/*`, `Public/ServerPodcastManager*.swift` |
-| Uploads / Sharing / Stats / Ratings | `Public/Upload/*`, `Public/Sharing/*`, `Public/StatsManager.swift`, `Public/Ratings/PodcastRatingTask.swift` |
+| Sharing / Stats / Ratings | `Public/Sharing/*`, `Public/StatsManager.swift`, `Public/Ratings/PodcastRatingTask.swift` |
 | Settings model | `Public/AppSettings.swift`, `SettingsStore.swift`, `CodableStore.swift`, `ApiSetting*.swift` |
-| Protobuf | `Private/Protobuffer/api.pb.swift`, `files.pb.swift` |
+| Protobuf | `Private/Protobuffer/api.pb.swift` |
 | Downloads (app) | `podcasts/DownloadManager*.swift` |
 | Images (app) | `podcasts/ImageManager.swift`, `PodcastImage.swift`, `EpisodeArtwork.swift` |
 | Transcripts/Chapters (app) | `podcasts/TranscriptsDataRetriever.swift`, `PodcastIndexChapterDataRetriever.swift`, `Episode Info Coordinator/ShowInfoCoordinator.swift` |
 | Push (app) | `podcasts/Utilities/NotificationsHelper.swift`, `AppDelegate.swift` |
-| Analytics (app) | `podcasts/Analytics/Adapters/*` (`BitdriftAnalyticsAdapter`, `TelemetryDeckAnalyticsAdapter`, `LiveAnalyticsStreamer`) |
+| Analytics (app) | `podcasts/Analytics/Adapters/*` (`BitdriftAnalyticsAdapter`, `TelemetryDeckAnalyticsAdapter`) |
 | Status page (app) | `podcasts/StatusPageViewModel.swift` |
 
 ---

@@ -30,7 +30,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     // Read live from the engine-state mirror (thread-safe) instead of keeping
     // locally-mutated copies, so the main-actor `effectsDidChange` writes no longer
     // race the background `play()` reads (A5). Both were only ever re-synced from here.
-    private var effects: PlaybackEffects { PlaybackManager.engineState.effects }
+    private var effects: PlaybackManager.EngineStateMirror.PlaybackEffectsSnapshot { PlaybackManager.engineState.effects }
     private var tuning: AudioTuning { PlaybackManager.engineState.tuning }
 
     private let shouldKeepPlaying = AtomicBool()

@@ -84,6 +84,9 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var appliedTapConfigGeneration: UInt64 = 0
     /// Tap-thread only: whether VBN processing ran last buffer (enable-edge detection).
     private var tapVoiceBoostNActive = false
+    /// Tap-thread only: a one-shot nil meter publication that must be retried when the
+    /// UI reader momentarily owns the non-blocking meter lock.
+    private var tapVoiceBoostMetersNeedClear = false
 
     init() {
         backgroundTaskId = .invalid
@@ -572,7 +575,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 VBN_Destroy(vbnState)
                 referenceToSelf.voiceBoostNState = nil
                 referenceToSelf.tapVoiceBoostNActive = false
-                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                referenceToSelf.tapVoiceBoostMetersNeedClear = false
+                PlaybackManager.engineState.clearVoiceBoostMeters()
                 FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN state destroyed")
             }
 
@@ -620,6 +624,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             let shouldUseVoiceBoostN = snapshot.useVoiceBoostN
 
             if shouldUseVoiceBoostN, let vbnState = referenceToSelf.voiceBoostNState {
+                referenceToSelf.tapVoiceBoostMetersNeedClear = false
+
                 // Live-apply any staged tuning change (allocation-free).
                 if referenceToSelf.appliedTapConfigGeneration != snapshot.generation {
                     var config = snapshot.vbnConfig
@@ -665,10 +671,15 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
 
                 numberFramesOut.pointee = numberFrames
             } else {
-                // VoiceBoostN inactive: clear the live meters once on the disable edge.
+                // VoiceBoostN inactive: begin a one-shot clear on the disable edge, then
+                // retry every buffer until the non-blocking publication succeeds.
                 if referenceToSelf.tapVoiceBoostNActive {
                     referenceToSelf.tapVoiceBoostNActive = false
-                    PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                    referenceToSelf.tapVoiceBoostMetersNeedClear = true
+                }
+                if referenceToSelf.tapVoiceBoostMetersNeedClear,
+                   PlaybackManager.engineState.publishVoiceBoostMeters(nil) {
+                    referenceToSelf.tapVoiceBoostMetersNeedClear = false
                 }
 
                 // Use previous voice boost (AudioUnit chain): the peak limiter is

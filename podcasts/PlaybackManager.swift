@@ -37,6 +37,31 @@ final class PlaybackManager {
     /// non-main contexts (Phase 5 D1: real-time-adjacent code can't await).
     /// PlaybackManager updates it on the main actor whenever effects change.
     nonisolated final class EngineStateMirror: Sendable {
+        /// Immutable value snapshot consumed by the audio engines. Keeping only Sendable
+        /// scalars here prevents the lock from handing a mutable `PlaybackEffects` reference
+        /// to background threads after the critical section has ended.
+        nonisolated struct PlaybackEffectsSnapshot: Equatable, Sendable {
+            let playbackSpeed: Double
+            let trimSilenceRawValue: Int32
+            let volumeBoost: Bool
+
+            var trimSilence: TrimSilenceAmount {
+                TrimSilenceAmount(rawValue: trimSilenceRawValue) ?? .off
+            }
+
+            init() {
+                playbackSpeed = 1
+                trimSilenceRawValue = TrimSilenceAmount.off.rawValue
+                volumeBoost = false
+            }
+
+            init(_ effects: PlaybackEffects) {
+                self.playbackSpeed = effects.playbackSpeed
+                self.trimSilenceRawValue = effects.trimSilence.rawValue
+                self.volumeBoost = effects.volumeBoost
+            }
+        }
+
         /// Live VoiceBoostN meter readouts written from the audio read/tap
         /// threads for the Advanced Audio screen; nil while VBN is inactive.
         nonisolated struct VoiceBoostMeters: Equatable, Sendable {
@@ -45,17 +70,17 @@ final class PlaybackManager {
             var limiterReductionDB: Float
         }
 
-        // tuning / pendingStartingPosition are Sendable value types, so they move to
-        // `Mutex` (compiler-enforced access). PlaybackEffects is a non-Sendable reference
-        // type — its `sending` semantics keep it out of a `Mutex` — so it keeps the lock +
-        // escape hatch. Live meters are written from the real-time read/tap threads, so
-        // they use a non-blocking unfair lock (see `publishVoiceBoostMeters`) below.
-        private let effectsLock = NSLock()
-        // nonisolated(unsafe): only ever accessed through effectsLock
-        nonisolated(unsafe) private var _effects = PlaybackEffects()
-        var effects: PlaybackEffects {
-            get { effectsLock.withLock { _effects } }
-            set { effectsLock.withLock { _effects = newValue } }
+        // Effects, tuning, and pendingStartingPosition are Sendable value types, so `Mutex`
+        // makes their synchronization compiler-enforced. Live meters are written from the
+        // real-time read/tap threads, so they use a non-blocking unfair lock below.
+        private let _effects = Mutex(PlaybackEffectsSnapshot())
+        var effects: PlaybackEffectsSnapshot {
+            _effects.withLock { $0 }
+        }
+
+        func publish(effects: PlaybackEffects) {
+            let snapshot = PlaybackEffectsSnapshot(effects)
+            _effects.withLock { $0 = snapshot }
         }
 
         private let _tuning = Mutex(AudioTuning.default)
@@ -85,10 +110,20 @@ final class PlaybackManager {
         /// drop the frame if the (~2 Hz) UI reader holds the lock; the reader blocks.
         private let _voiceBoostMeters = OSAllocatedUnfairLock<VoiceBoostMeters?>(initialState: nil)
 
-        /// Real-time-safe publish from the audio threads. Never blocks: a dropped
-        /// meter frame is imperceptible against the 2 Hz Advanced Audio screen read.
-        func publishVoiceBoostMeters(_ meters: VoiceBoostMeters?) {
-            _voiceBoostMeters.withLockIfAvailable { $0 = meters }
+        /// Real-time-safe publish from the audio threads. Never blocks: a dropped sample
+        /// is imperceptible against the 2 Hz Advanced Audio screen read. The return value
+        /// lets one-shot state transitions retry until they are observed.
+        @discardableResult
+        func publishVoiceBoostMeters(_ meters: VoiceBoostMeters?) -> Bool {
+            _voiceBoostMeters.withLockIfAvailable { state in
+                state = meters
+                return true
+            } ?? false
+        }
+
+        /// Reliable clear for non-real-time teardown paths.
+        func clearVoiceBoostMeters() {
+            _voiceBoostMeters.withLock { $0 = nil }
         }
 
         /// Read by the Advanced Audio screen on the main thread (~2 Hz).
@@ -965,7 +1000,7 @@ final class PlaybackManager {
         }
         let effects = loadEffects()
         currentEffects = effects
-        Self.engineState.effects = effects
+        Self.engineState.publish(effects: effects)
         return effects
     }
 
@@ -1007,7 +1042,7 @@ final class PlaybackManager {
         }
 
         currentEffects = effects
-        Self.engineState.effects = effects
+        Self.engineState.publish(effects: effects)
         handlePlaybackEffectsChanged(effects: effects)
     }
 
@@ -1037,7 +1072,7 @@ final class PlaybackManager {
     func effectsChangedExternally() {
         let newEffects = loadEffects()
         currentEffects = newEffects
-        Self.engineState.effects = newEffects
+        Self.engineState.publish(effects: newEffects)
         handlePlaybackEffectsChanged(effects: newEffects)
     }
 

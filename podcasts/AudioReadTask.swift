@@ -137,7 +137,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             if let vbnState = voiceBoostNState {
                 VBN_Destroy(vbnState)
                 voiceBoostNState = nil
-                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                PlaybackManager.engineState.clearVoiceBoostMeters()
                 FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state destroyed on shutdown")
             }
         }
@@ -320,7 +320,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             } else if !shouldUseVoiceBoostN && voiceBoostNState != nil {
                 VBN_Destroy(voiceBoostNState)
                 voiceBoostNState = nil
-                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                PlaybackManager.engineState.clearVoiceBoostMeters()
                 FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN disabled mid-playback - switching to previous voice boost")
             }
             hasProcessedFirstBuffer = true

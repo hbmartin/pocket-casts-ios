@@ -1,3 +1,4 @@
+import PocketCastsDataModel
 import XCTest
 
 @testable import podcasts
@@ -30,5 +31,20 @@ final class EpisodeDurationCorrectorTests: XCTestCase {
         let result = EpisodeDurationCorrector.correction(current: 60, calculated: 139)
         XCTAssertEqual(result?.duration, 139)
         XCTAssertEqual(result?.syncFlag, true)
+    }
+
+    func testPlausibleStoredDurationStillAllowsRemoteProbe() {
+        var episode = Episode()
+        episode.duration = 60
+        episode.downloadUrl = "https://example.com/trailer.mp3"
+
+        XCTAssertEqual(EpisodeDurationCorrector.remoteProbeURL(for: episode)?.absoluteString, episode.downloadUrl)
+    }
+
+    func testRemoteProbeRejectsNonNetworkURLs() {
+        var episode = Episode()
+        episode.downloadUrl = "file:///tmp/episode.mp3"
+
+        XCTAssertNil(EpisodeDurationCorrector.remoteProbeURL(for: episode))
     }
 }
