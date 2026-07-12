@@ -4773,6 +4773,30 @@ rules:
       # appearing inside any comment is not itself flagged as an unjustified declaration.
       - pattern-not-regex: '(?://[^\n]*nonisolated\(unsafe\)[ \t]*:?[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*nonisolated\(unsafe\))|(?:nonisolated\(unsafe\)[^\n]*//[^\n]*nonisolated\(unsafe\)[ \t]*:?[ \t]*\S)|(?://[^\n]*nonisolated\(unsafe\))'
 
+  - id: pocketcasts.unchecked-sendable-requires-justification
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: '@unchecked Sendable disables compiler concurrency checking for the whole type. Prefer a real fix (immutable state, Mutex/OSAllocatedUnfairLock-guarded storage, an actor, or a Sendable value type). If the conformance is genuinely safe, explain why in a comment mentioning @unchecked Sendable on the same or an immediately preceding line, e.g. `// @unchecked Sendable:` followed by the reason. The count ratchet (scripts/ci/ratchet-unchecked-sendable.txt) separately caps total usage.'
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+      exclude:
+        - "**/*.pb.swift"
+        - "Modules/Sources/PocketCastsDataModelTesting/**"
+    patterns:
+      - pattern-regex: '@unchecked[ \t]+Sendable'
+      # Mirrors pocketcasts.nonisolated-unsafe-requires-justification: longest alternative first.
+      # A justifying comment must carry an actual reason after the keyword (optionally after ':');
+      # a bare `// @unchecked Sendable` repeats the keyword without justifying anything. The final
+      # loose alternative keeps the token inside ordinary comments from being flagged itself.
+      - pattern-not-regex: '(?://[^\n]*@unchecked[ \t]+Sendable[ \t]*:?[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*@unchecked[ \t]+Sendable)|(?:@unchecked[ \t]+Sendable[^\n]*//[^\n]*@unchecked[ \t]+Sendable[ \t]*:?[ \t]*\S)|(?://[^\n]*@unchecked[ \t]+Sendable)'
+
   - id: pocketcasts.grdb-record-no-unchecked-sendable-class
     severity: ERROR
     metadata:

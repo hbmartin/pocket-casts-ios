@@ -77,6 +77,12 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                         uuid = try container.decodeIfPresent(String.self, forKey: .uuid) ?? ""
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["title"] = title
+                        container["uuid"] = uuid
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let title = Column(CodingKeys.title)
@@ -84,7 +90,7 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                 }
             }
 
-            extension Episode: FetchableRecord, TableRecord, Decodable {
+            extension Episode: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -145,6 +151,16 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                         uuid = try container.decodeIfPresent(String.self, forKey: .uuid) ?? ""
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["addedDate"] = addedDate?.timeIntervalSince1970
+                        container["autoDownloadSetting"] = autoDownloadSetting
+                        container["playbackSpeed"] = playbackSpeed
+                        container["boostVolume"] = boostVolume
+                        container["title"] = title
+                        container["uuid"] = uuid
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let addedDate = Column(CodingKeys.addedDate)
@@ -156,7 +172,7 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                 }
             }
 
-            extension Podcast: FetchableRecord, TableRecord, Decodable {
+            extension Podcast: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -182,7 +198,8 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
             """
             public class Podcast: NSObject {
                 @objc public var id = 0 as Int64
-                @objc public var autoArchiveEpisodeLimit = 0 as Int32
+                @objc 
+                public var autoArchiveEpisodeLimit = 0 as Int32
 
                 public static let databaseTableName = "SJPodcast"
 
@@ -198,13 +215,18 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                         autoArchiveEpisodeLimit = try container.decodeIfPresent(Int32.self, forKey: .autoArchiveEpisodeLimit) ?? 0
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["episodeKeepSetting"] = autoArchiveEpisodeLimit
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let autoArchiveEpisodeLimit = Column(CodingKeys.autoArchiveEpisodeLimit)
                 }
             }
 
-            extension Podcast: FetchableRecord, TableRecord, Decodable {
+            extension Podcast: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -247,13 +269,18 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                         filterFinished = try container.decodeIfPresent(Bool.self, forKey: .filterFinished) ?? false
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["filterFinished"] = filterFinished
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let filterFinished = Column(CodingKeys.filterFinished)
                 }
             }
 
-            extension EpisodeFilter: FetchableRecord, TableRecord, Decodable {
+            extension EpisodeFilter: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -289,6 +316,8 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                 enum CodingKeys: String, CodingKey {
                     case id
                         case uuid
+                        case cachedUnreadCount
+                        case forceRefreshEpisodeFrom
                 }
 
                 public required init(from decoder: Decoder) throws {
@@ -296,15 +325,26 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     id = try container.decodeIfPresent(Int64.self, forKey: .id) ?? 0
                         uuid = try container.decodeIfPresent(String.self, forKey: .uuid) ?? ""
+                        cachedUnreadCount = try container.decodeIfPresent(Any.self, forKey: .cachedUnreadCount) ?? 0
+                        forceRefreshEpisodeFrom = try container.decodeIfPresent(String.self, forKey: .forceRefreshEpisodeFrom)
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["uuid"] = uuid
+                        container["cachedUnreadCount"] = cachedUnreadCount
+                        container["forceRefreshEpisodeFrom"] = forceRefreshEpisodeFrom
                 }
 
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let uuid = Column(CodingKeys.uuid)
+                        public static let cachedUnreadCount = Column(CodingKeys.cachedUnreadCount)
+                        public static let forceRefreshEpisodeFrom = Column(CodingKeys.forceRefreshEpisodeFrom)
                 }
             }
 
-            extension Podcast: FetchableRecord, TableRecord, Decodable {
+            extension Podcast: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -333,7 +373,9 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
             public class TestModel: NSObject {
                 @objc public var id = 0 as Int64
                 @objc public var name = ""
-                @objc public var cachedValue: String? = nil
+                @objc 
+
+                public var cachedValue: String? = nil
 
                 public static let databaseTableName = "TestTable"
 
@@ -349,13 +391,18 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["name"] = name
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let name = Column(CodingKeys.name)
                 }
             }
 
-            extension TestModel: FetchableRecord, TableRecord, Decodable {
+            extension TestModel: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -392,12 +439,16 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                     id = try container.decodeIfPresent(Int64.self, forKey: .id) ?? 0
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                 }
             }
 
-            extension TestModel: FetchableRecord, TableRecord, Decodable {
+            extension TestModel: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -445,6 +496,16 @@ final class GRDBRecordCodableClassTests: GRDBMacroTestCase {
             }
 
             extension PlaylistEpisode: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    id = try container.decodeIfPresent(Int64.self, forKey: .id)
+                        episodeUuid = try container.decodeIfPresent(String.self, forKey: .episodeUuid) ?? ""
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["episodeUuid"] = episodeUuid
+                }
             }
             """
         }
@@ -531,13 +592,18 @@ final class GRDBRecordAccessLevelTests: GRDBMacroTestCase {
                         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
                 }
 
+                func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["name"] = name
+                }
+
                 enum Columns {
                     static let id = Column(CodingKeys.id)
                         static let name = Column(CodingKeys.name)
                 }
             }
 
-            extension InternalModel: FetchableRecord, TableRecord, Decodable {
+            extension InternalModel: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -578,6 +644,16 @@ final class GRDBRecordAccessLevelTests: GRDBMacroTestCase {
             }
 
             extension InternalCodable: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    id = try container.decodeIfPresent(Int64.self, forKey: .id)
+                        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+                }
+
+                func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["name"] = name
+                }
             }
             """
         }
@@ -624,6 +700,16 @@ final class GRDBRecordStaticPropertyTests: GRDBMacroTestCase {
             }
 
             extension PlaylistEpisode: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    id = try container.decodeIfPresent(Int64.self, forKey: .id)
+                        episodeUuid = try container.decodeIfPresent(String.self, forKey: .episodeUuid) ?? ""
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["episodeUuid"] = episodeUuid
+                }
             }
             """
         }
@@ -668,6 +754,16 @@ final class GRDBRecordStaticPropertyTests: GRDBMacroTestCase {
             }
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    id = try container.decodeIfPresent(Int64.self, forKey: .id)
+                        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["title"] = title
+                }
             }
             """
         }
@@ -726,6 +822,20 @@ final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
             }
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    uuid = try container.decode(String.self, forKey: .uuid)
+                        title = try container.decode(String.self, forKey: .title)
+                        created = try container.decode(Date.self, forKey: .created)
+                        episodeUuid = try container.decode(String.self, forKey: .episodeUuid)
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["uuid"] = uuid
+                        container["title"] = title
+                        container["date_added"] = created.timeIntervalSince1970
+                        container["episode_uuid"] = episodeUuid
+                }
             }
             """
         }
@@ -773,6 +883,16 @@ final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
             }
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    uuid = try container.decode(String.self, forKey: .uuid)
+                        title = try container.decode(String.self, forKey: .title)
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["uuid"] = uuid
+                        container["title"] = title
+                }
             }
             """
         }
@@ -829,6 +949,20 @@ final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
             }
 
             extension Bookmark: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    uuid = try container.decode(String.self, forKey: .uuid)
+                        title = try container.decode(String.self, forKey: .title)
+                        created = try container.decode(Date.self, forKey: .created)
+                        episodeUuid = try container.decode(String.self, forKey: .episodeUuid)
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["uuid"] = uuid
+                        container["title"] = title
+                        container["date_added"] = created.timeIntervalSince1970
+                        container["episode_uuid"] = episodeUuid
+                }
             }
             """
         }
@@ -879,6 +1013,12 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                         inferredDouble = try container.decodeIfPresent(Double.self, forKey: .inferredDouble) ?? 1
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["inferredInt64"] = inferredInt64
+                        container["inferredInt32"] = inferredInt32
+                        container["inferredDouble"] = inferredDouble
+                }
+
                 public enum Columns {
                     public static let inferredInt64 = Column(CodingKeys.inferredInt64)
                         public static let inferredInt32 = Column(CodingKeys.inferredInt32)
@@ -886,7 +1026,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                 }
             }
 
-            extension TestModel: FetchableRecord, TableRecord, Decodable {
+            extension TestModel: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -935,6 +1075,13 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                         lastPlaybackInteractionDate = try container.decodeIfPresent(Date.self, forKey: .lastPlaybackInteractionDate)
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["addedDate"] = addedDate?.timeIntervalSince1970
+                        container["publishedDate"] = publishedDate?.timeIntervalSince1970
+                        container["lastPlaybackInteractionDate"] = lastPlaybackInteractionDate?.timeIntervalSince1970
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let addedDate = Column(CodingKeys.addedDate)
@@ -943,7 +1090,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                 }
             }
 
-            extension Episode: FetchableRecord, TableRecord, Decodable {
+            extension Episode: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -988,6 +1135,12 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                         seasonNumber = try container.decodeIfPresent(Int64.self, forKey: .seasonNumber) ?? -1
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["id"] = id
+                        container["episodeNumber"] = episodeNumber
+                        container["seasonNumber"] = seasonNumber
+                }
+
                 public enum Columns {
                     public static let id = Column(CodingKeys.id)
                         public static let episodeNumber = Column(CodingKeys.episodeNumber)
@@ -995,7 +1148,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                 }
             }
 
-            extension Episode: FetchableRecord, TableRecord, Decodable {
+            extension Episode: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }
@@ -1036,13 +1189,18 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                         defaultString = try container.decodeIfPresent(String.self, forKey: .defaultString) ?? "default"
                 }
 
+                public func encode(to container: inout PersistenceContainer) {
+                    container["emptyString"] = emptyString
+                        container["defaultString"] = defaultString
+                }
+
                 public enum Columns {
                     public static let emptyString = Column(CodingKeys.emptyString)
                         public static let defaultString = Column(CodingKeys.defaultString)
                 }
             }
 
-            extension TestModel: FetchableRecord, TableRecord, Decodable {
+            extension TestModel: FetchableRecord, PersistableRecord, TableRecord, Decodable {
             }
             """
         }

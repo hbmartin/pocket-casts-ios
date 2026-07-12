@@ -61,6 +61,13 @@
         "identifier" : "ModulesTests",
         "name" : "ModulesTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules",
+        "identifier" : "SnapshotTests",
+        "name" : "SnapshotTests"
+      }
     }
   ],
   "version" : 1

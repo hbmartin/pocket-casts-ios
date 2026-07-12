@@ -24,7 +24,9 @@ let strictConcurrencyTestableSettings: [SwiftSetting] = strictConcurrencySetting
 let package = Package(
     name: "Modules",
     platforms: [
-        .iOS("26.0"), .macOS(.v10_15)
+        // The macOS floor exists for host-side builds (the macro plugin and the
+        // GRDBMacrosTests CI job); v14 satisfies the strictest dependency.
+        .iOS("26.0"), .macOS(.v14)
     ],
     products: XcodeSupport.products + [
         .library(
