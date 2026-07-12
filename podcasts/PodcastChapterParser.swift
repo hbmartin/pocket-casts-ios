@@ -3,6 +3,7 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 import PocketCastsDataModel
+import UIKit
 
 /// @unchecked Sendable: stateless; unchecked (rather than plain Sendable) because the class stays non-final for test mocks.
 nonisolated class PodcastChapterParser: @unchecked Sendable {
@@ -96,54 +97,149 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
     }
 
     private func parseChapters(url: URL, episodeDuration: TimeInterval, completion: @escaping @Sendable ([ChapterInfo]) -> Void) {
-        DispatchQueue.global().async { [weak self] in
-            guard let strongSelf = self else {
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else {
                 completion([])
                 return
             }
 
-            do {
-                // wrap chapter parsing in an Objective-C try catch block because we don't want errors from this library to propagate up
-                try SJCommonUtils.catchException {
-                    let customHeaders = [ServerConstants.HttpHeaders.userAgent: ServerConstants.Values.appUserAgent]
-                    let movieAsset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": customHeaders])
-                    guard let chapters = MNAVChapterReader.chapters(from: movieAsset) as? [MNAVChapter], !chapters.isEmpty else {
-                        completion([])
-                        return
-                    }
-
-                    if chapters.allSatisfy({ $0.hidden }) {
-                        chapters.forEach { $0.hidden = false }
-                    }
-
-                    var parsedChapters = [ChapterInfo]()
-                    var index = 0
-                    for chapter in chapters {
-                        let convertedChapter = ChapterInfo()
-                        convertedChapter.title = chapter.title ?? ""
-                            convertedChapter.image = chapter.artwork
-
-                        convertedChapter.startTime = chapter.time
-                        convertedChapter.duration = chapter.duration.seconds
-                        convertedChapter.isHidden = chapter.hidden
-                        if !convertedChapter.isHidden {
-                            convertedChapter.index = index
-                            index += 1
-                        }
-                        if strongSelf.isValidUrl(chapter.url) {
-                            convertedChapter.url = chapter.url
-                        }
-
-                        parsedChapters.append(convertedChapter)
-                    }
-                    parsedChapters.first(where: {!$0.isHidden})?.isFirst = true
-                    parsedChapters.last(where: {!$0.isHidden})?.isLast = true
-                    completion(parsedChapters)
-                }
-            } catch {
-                FileLog.shared.addMessage("Encountered crash while trying to parse chapters \(error)")
-            }
+            completion(await self.parseEmbeddedChapters(at: url))
         }
+    }
+
+    /// Extracts embedded chapters: ID3v2 CHAP/CTOC frames for MP3-style files (recognised by their
+    /// leading ID3 tag), MP4 chapter tracks for everything else.
+    private func parseEmbeddedChapters(at url: URL) async -> [ChapterInfo] {
+        if let tagData = await loadLeadingID3Tag(from: url) {
+            return convertID3Chapters(ID3ChapterParser.parseChapters(from: tagData))
+        }
+
+        return await parseMP4Chapters(at: url)
+    }
+
+    // MARK: - ID3 (MP3)
+
+    /// Ceiling on how much of a file we're willing to buffer for a declared ID3 tag; chapter-heavy
+    /// tags with per-chapter artwork run to a few MB, so anything past this is treated as corrupt.
+    private static let maxID3TagLength = 64 * 1024 * 1024
+
+    /// Returns the file's leading ID3v2 tag bytes (header included), or nil when the file doesn't
+    /// start with one. Only the tag's declared length is read, never the whole file.
+    private func loadLeadingID3Tag(from url: URL) async -> Data? {
+        url.isFileURL ? loadLocalID3Tag(from: url) : await loadRemoteID3Tag(from: url)
+    }
+
+    private func loadLocalID3Tag(from url: URL) -> Data? {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+
+        guard let header = try? handle.read(upToCount: ID3ChapterParser.tagHeaderLength),
+              let tagLength = ID3ChapterParser.declaredTagLength(fromHeader: header),
+              tagLength <= Self.maxID3TagLength,
+              (try? handle.seek(toOffset: 0)) != nil
+        else { return nil }
+
+        return try? handle.read(upToCount: tagLength)
+    }
+
+    private func loadRemoteID3Tag(from url: URL) async -> Data? {
+        var request = URLRequest(url: url)
+        request.setValue(ServerConstants.Values.appUserAgent, forHTTPHeaderField: ServerConstants.HttpHeaders.userAgent)
+        guard let (byteStream, response) = try? await URLSession.shared.bytes(for: request),
+              let httpResponse = response as? HTTPURLResponse, (200 ... 299).contains(httpResponse.statusCode)
+        else { return nil }
+
+        var data = Data()
+        var tagLength: Int?
+        do {
+            for try await byte in byteStream {
+                data.append(byte)
+                if tagLength == nil, data.count == ID3ChapterParser.tagHeaderLength {
+                    guard let declaredLength = ID3ChapterParser.declaredTagLength(fromHeader: data),
+                          declaredLength <= Self.maxID3TagLength
+                    else { return nil } // not an ID3-tagged file (or an absurd tag): stop the download
+                    tagLength = declaredLength
+                    data.reserveCapacity(declaredLength)
+                }
+                if let tagLength, data.count >= tagLength { break }
+            }
+        } catch {
+            // Connection dropped mid-tag: fall through, the parser copes with truncated tags
+            FileLog.shared.addMessage("Embedded chapter fetch interrupted for \(url): \(error)")
+        }
+
+        return tagLength != nil ? data : nil
+    }
+
+    private func convertID3Chapters(_ id3Chapters: [ID3Chapter]) -> [ChapterInfo] {
+        guard !id3Chapters.isEmpty else { return [] }
+
+        // If the table of contents hid every chapter, ignore it and show them all
+        let unhideAll = id3Chapters.allSatisfy(\.isHidden)
+
+        var parsedChapters = [ChapterInfo]()
+        var index = 0
+        for chapter in id3Chapters {
+            let convertedChapter = ChapterInfo()
+            convertedChapter.title = chapter.title ?? ""
+            convertedChapter.image = chapter.artworkData.flatMap { UIImage(data: $0) }
+            convertedChapter.startTime = CMTime(value: CMTimeValue(chapter.startTimeMs), timescale: 1000)
+            convertedChapter.duration = (Double(chapter.endTimeMs) - Double(chapter.startTimeMs)) / 1000
+            convertedChapter.isHidden = unhideAll ? false : chapter.isHidden
+            if !convertedChapter.isHidden {
+                convertedChapter.index = index
+                index += 1
+            }
+            if isValidUrl(chapter.url) {
+                convertedChapter.url = chapter.url
+            }
+
+            parsedChapters.append(convertedChapter)
+        }
+        parsedChapters.first(where: { !$0.isHidden })?.isFirst = true
+        parsedChapters.last(where: { !$0.isHidden })?.isLast = true
+        return parsedChapters
+    }
+
+    // MARK: - MP4 chapter tracks
+
+    private func parseMP4Chapters(at url: URL) async -> [ChapterInfo] {
+        let customHeaders = [ServerConstants.HttpHeaders.userAgent: ServerConstants.Values.appUserAgent]
+        let asset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": customHeaders])
+
+        var languages = Locale.preferredLanguages
+        if let chapterLocales = try? await asset.load(.availableChapterLocales) {
+            languages.append(contentsOf: chapterLocales.map(\.identifier))
+        }
+        guard let groups = try? await asset.loadChapterMetadataGroups(bestMatchingPreferredLanguages: languages), !groups.isEmpty else {
+            return []
+        }
+
+        var parsedChapters = [ChapterInfo]()
+        for (index, group) in groups.enumerated() {
+            let chapter = ChapterInfo()
+            chapter.index = index
+            chapter.startTime = group.timeRange.start
+            chapter.duration = group.timeRange.duration.seconds
+
+            if let titleItem = AVMetadataItem.metadataItems(from: group.items, filteredByIdentifier: .commonIdentifierTitle).first {
+                chapter.title = (try? await titleItem.load(.stringValue)) ?? ""
+                if let extraAttributes = try? await titleItem.load(.extraAttributes),
+                   let href = extraAttributes[AVMetadataExtraAttributeKey(rawValue: "HREF")] as? String,
+                   isValidUrl(href) {
+                    chapter.url = href
+                }
+            }
+            if let artworkItem = AVMetadataItem.metadataItems(from: group.items, filteredByIdentifier: .commonIdentifierArtwork).first,
+               let artworkData = try? await artworkItem.load(.dataValue) {
+                chapter.image = UIImage(data: artworkData)
+            }
+
+            parsedChapters.append(chapter)
+        }
+        parsedChapters.first?.isFirst = true
+        parsedChapters.last?.isLast = true
+        return parsedChapters
     }
 
     private func isValidUrl(_ urlStr: String?) -> Bool {
