@@ -148,9 +148,6 @@ class SnapshotCoverageCheck
   DEFAULT_THRESHOLD = 90.0
   DEFAULT_GROUPS = {
     'ui' => [
-      'CircularProgressView.swift',
-      'StoryIndicator.swift',
-      'ImageView.swift',
       'GradientView.swift'
     ],
     'logic' => [

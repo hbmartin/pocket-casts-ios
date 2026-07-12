@@ -12,9 +12,6 @@ module SnapshotCoverageFixtures
 
   def default_files
     {
-      'CircularProgressView.swift' => [90, 100],
-      'StoryIndicator.swift' => [95, 100],
-      'ImageView.swift' => [90, 100],
       'GradientView.swift' => [95, 100],
       'PlaylistQueryBuilder.swift' => [92, 100],
       'SignificantDigitsFormatStyle.swift' => [90, 100],
@@ -75,7 +72,7 @@ class CheckSnapshotCoverageTest < Minitest::Test
     )
 
     assert status.success?, stdout + stderr
-    assert_includes stdout, 'ui: 92.5% (370/400)'
+    assert_includes stdout, 'ui: 95.0% (95/100)'
     assert_includes stdout, 'logic: 91.7% (275/300)'
     assert_includes stdout, 'Overall linked target coverage: 20.0% (200/1000) [reported only]'
     assert_empty stderr
@@ -87,8 +84,8 @@ class CheckSnapshotCoverageTest < Minitest::Test
     stdout, stderr, status = run_script(report_with(files: files))
 
     refute status.success?, stdout + stderr
-    assert_includes stdout, 'ui: 78.8% (315/400)'
-    assert_includes stderr, 'ui coverage is 78.8%, below 90.0%'
+    assert_includes stdout, 'ui: 40.0% (40/100)'
+    assert_includes stderr, 'ui coverage is 40.0%, below 90.0%'
   end
 
   def test_fails_when_required_file_is_missing
@@ -111,11 +108,11 @@ class CheckSnapshotCoverageTest < Minitest::Test
 
   def test_allows_custom_groups_and_threshold
     stdout, stderr, status = run_script(
-      report_with(files: { 'CircularProgressView.swift' => [8, 10], 'PlaylistQueryBuilder.swift' => [7, 10] }),
+      report_with(files: { 'GradientView.swift' => [8, 10], 'PlaylistQueryBuilder.swift' => [7, 10] }),
       '--threshold',
       '70',
       '--ui',
-      'CircularProgressView.swift',
+      'GradientView.swift',
       '--logic',
       'PlaylistQueryBuilder.swift'
     )

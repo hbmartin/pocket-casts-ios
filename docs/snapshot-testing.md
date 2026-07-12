@@ -14,13 +14,11 @@ This document covers the pilot setup, the recording workflow, and how to extend 
   no new package is fetched — the declaration just exposes the `SnapshotTesting` product to test
   targets.
 - **Target**: a `SnapshotTests` SwiftPM test target (`Modules/Tests/SnapshotTests`) depending on
-  `EndOfYear`, `PocketCastsDataModel`, `PocketCastsUtils`, and `SnapshotTesting`.
+  `PocketCastsDataModel`, `PocketCastsUtils`, and `SnapshotTesting`.
 - **Helper**: `assertThemedSnapshots(...)` renders a view across a matrix of appearance
   (`light`/`dark`) and Dynamic Type sizes, writing one suffixed reference image per combination.
-- **Pilot**: `CircularProgressViewSnapshotTests` snapshots the real `EndOfYear/CircularProgressView`
-  — a deterministic, dependency-light view — in light and dark.
-- **Expanded UI coverage**: `StoryIndicatorSnapshotTests` and `ImageViewSnapshotTests` cover
-  deterministic EndOfYear views with stable inputs and no network/image-loading side effects.
+- **UI pilot**: `GradientViewSnapshotTests` snapshots `PocketCastsUtils/GradientView` — a
+  deterministic, dependency-light view — in light and dark.
 - **Logic snapshots**: `PlaylistQueryBuilderSnapshotTests` snapshots high-risk SQL generation as
   `.lines` text files, so query shape and bound arguments are reviewed together without adding
   binary fixtures.

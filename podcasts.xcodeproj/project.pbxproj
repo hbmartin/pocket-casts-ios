@@ -547,7 +547,6 @@
 		BD74F15327F28F6F00222785 /* HomeGridItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD74F15227F28F6F00222785 /* HomeGridItem.swift */; };
 		BD7641332588272B0070CBF3 /* ThemeableSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7641322588272B0070CBF3 /* ThemeableSwitch.swift */; };
 		BD7BCF111F6A4F110006E008 /* SharingHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7BCF101F6A4F110006E008 /* SharingHelper.swift */; };
-		BD7BCF131F6A4F920006E008 /* SharingItemProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7BCF121F6A4F920006E008 /* SharingItemProvider.swift */; };
 		BD7BCF151F6A5C510006E008 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7BCF141F6A5C510006E008 /* VideoPlayerView.swift */; };
 		BD7EA4DC1E52D4320014EAC5 /* PlayPauseButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7EA4DB1E52D4320014EAC5 /* PlayPauseButton.swift */; };
 		BD8032D32123EAD600BFBB03 /* EffectsButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8032D22123EAD600BFBB03 /* EffectsButton.swift */; };
@@ -1639,7 +1638,6 @@
 		BD7641322588272B0070CBF3 /* ThemeableSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeableSwitch.swift; sourceTree = "<group>"; };
 		BD7A7DB1177C054300844265 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		BD7BCF101F6A4F110006E008 /* SharingHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingHelper.swift; sourceTree = "<group>"; };
-		BD7BCF121F6A4F920006E008 /* SharingItemProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingItemProvider.swift; sourceTree = "<group>"; };
 		BD7BCF141F6A5C510006E008 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		BD7D337619F7D48E00B907EA /* podcasts.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = podcasts.entitlements; sourceTree = "<group>"; };
 		BD7EA4DB1E52D4320014EAC5 /* PlayPauseButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlayPauseButton.swift; sourceTree = "<group>"; };
@@ -3702,7 +3700,6 @@
 				45ECEF8727E9253900C65030 /* ShowNotesFormatterUtils.swift */,
 				BD7BCF101F6A4F110006E008 /* SharingHelper.swift */,
 				8BD256D12A5C7090006648BE /* SharingHelper+swipeButton.swift */,
-				BD7BCF121F6A4F920006E008 /* SharingItemProvider.swift */,
 				F561A6E92F68F81C0014889E /* StreamingCellularTracker.swift */,
 				BDCE1D601FBC1C4100100A86 /* UrlHelper.swift */,
 				BDD6297E200EE26200168DF7 /* PlaybackActionHelper.swift */,
@@ -5992,7 +5989,6 @@
 				9A466E402E8C26C1005D9E07 /* ManualPlaylistsChooserViewController.swift in Sources */,
 				8B317BA028906A8900A26A13 /* main.swift in Sources */,
 				BDC86830238251B0004C998F /* NowPlayingPlayerItemViewController+UpNextPan.swift in Sources */,
-				BD7BCF131F6A4F920006E008 /* SharingItemProvider.swift in Sources */,
 				BDE7409A2060CE1B00FB22C7 /* EpisodeManager.swift in Sources */,
 				4053CDF9214F3583001C92B1 /* PodcastFilterOverlayController.swift in Sources */,
 				BDF5FD1E1FD8D38900F2A339 /* DownloadsViewController+Table.swift in Sources */,

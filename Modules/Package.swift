@@ -52,10 +52,6 @@ let package = Package(
             targets: ["PocketCastsFileSync"]
         ),
         .library(
-            name: "EndOfYear",
-            targets: ["EndOfYear"]
-        ),
-        .library(
             name: "Modules",
             targets: ["Modules"]
         )
@@ -209,17 +205,6 @@ let package = Package(
             swiftSettings: strictConcurrencySettings
         ),
         .target(
-            name: "EndOfYear",
-            dependencies: [
-                "PocketCastsDataModel",
-                "PocketCastsServer",
-                "PocketCastsUtils",
-                .product(name: "Kingfisher", package: "Kingfisher"),
-            ],
-            path: "Sources/EndOfYear",
-            swiftSettings: strictConcurrencySettings
-        ),
-        .target(
             name: "Modules",
             path: "Sources/Modules",
             swiftSettings: strictConcurrencySettings
@@ -238,7 +223,6 @@ let package = Package(
         .testTarget(
             name: "SnapshotTests",
             dependencies: [
-                "EndOfYear",
                 "PocketCastsDataModel",
                 "PocketCastsUtils",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
@@ -292,7 +276,6 @@ enum XcodeSupport {
                     .product(name: "TelemetryDeck", package: "SwiftSDK"),
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
                     .product(name: "Fingerprint", package: "pocket-casts-ios-fingerprint"),
-                    "EndOfYear",
                 ]
             ),
             .xcodeTarget(
