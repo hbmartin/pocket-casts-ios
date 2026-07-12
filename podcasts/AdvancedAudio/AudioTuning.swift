@@ -1,6 +1,18 @@
 import AVFoundation
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
+
+/// Decodes a `RawRepresentable` enum resiliently: a missing key OR an unrecognized raw
+/// value (e.g. a case added by a newer build, seen after a downgrade) both fall back to
+/// `default` instead of throwing — which would otherwise discard the entire surrounding
+/// tuning blob via the `try?` in `Settings.audioTuning`.
+private extension KeyedDecodingContainer {
+    nonisolated func decodeEnum<T: RawRepresentable>(_ type: T.Type, forKey key: Key, default fallback: T) -> T where T.RawValue: Decodable {
+        guard let raw = (try? decodeIfPresent(T.RawValue.self, forKey: key))else { return fallback }
+        return T(rawValue: raw) ?? fallback
+    }
+}
 
 /// Which signal features the trim-silence gate uses to decide speech vs silence.
 nonisolated enum TrimDiscriminator: String, Codable, Equatable, Sendable, CaseIterable {
@@ -68,7 +80,7 @@ nonisolated struct TrimTuning: Codable, Equatable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = Self()
         useCustomGate = try container.decodeIfPresent(Bool.self, forKey: .useCustomGate) ?? defaults.useCustomGate
-        discriminator = try container.decodeIfPresent(TrimDiscriminator.self, forKey: .discriminator) ?? defaults.discriminator
+        discriminator = container.decodeEnum(TrimDiscriminator.self, forKey: .discriminator, default: defaults.discriminator)
         thresholdDB = try container.decodeIfPresent(Double.self, forKey: .thresholdDB) ?? defaults.thresholdDB
         adaptiveNoiseFloor = try container.decodeIfPresent(Bool.self, forKey: .adaptiveNoiseFloor) ?? defaults.adaptiveNoiseFloor
         adaptiveOffsetDB = try container.decodeIfPresent(Double.self, forKey: .adaptiveOffsetDB) ?? defaults.adaptiveOffsetDB
@@ -84,6 +96,45 @@ nonisolated struct TrimTuning: Codable, Equatable, Sendable {
         zcrThreshold = try container.decodeIfPresent(Double.self, forKey: .zcrThreshold) ?? defaults.zcrThreshold
         zcrLevelMarginDB = try container.decodeIfPresent(Double.self, forKey: .zcrLevelMarginDB) ?? defaults.zcrLevelMarginDB
         vadSpeechConfidenceThreshold = try container.decodeIfPresent(Double.self, forKey: .vadSpeechConfidenceThreshold) ?? defaults.vadSpeechConfidenceThreshold
+    }
+
+    // Valid ranges — the single source of truth shared by the settings-screen sliders
+    // and `clamped()`. Every default above sits inside its range.
+    static let thresholdDBRange: ClosedRange<Double> = -70 ... -20
+    static let adaptiveOffsetDBRange: ClosedRange<Double> = 3 ... 24
+    static let adaptiveWindowSecondsRange: ClosedRange<Double> = 5 ... 30
+    static let hysteresisDBRange: ClosedRange<Double> = 0 ... 12
+    static let holdTimeMsRange: ClosedRange<Double> = 0 ... 500
+    static let minGapMsRange: ClosedRange<Double> = 0 ... 1500
+    static let keepGapMsRange: ClosedRange<Double> = 0 ... 1000
+    static let crossfadeMsRange: ClosedRange<Double> = 0 ... 200
+    static let endGuardSecondsRange: ClosedRange<Double> = 0 ... 30
+    static let maxGapHoldSecondsRange: ClosedRange<Double> = 1 ... 120
+    static let flatnessThresholdRange: ClosedRange<Double> = 0 ... 1
+    static let zcrThresholdRange: ClosedRange<Double> = 0 ... 0.5
+    static let zcrLevelMarginDBRange: ClosedRange<Double> = 0 ... 12
+    static let vadSpeechConfidenceThresholdRange: ClosedRange<Double> = 0 ... 1
+
+    /// Clamps every stored value to its valid range so a corrupt or hand-edited persisted
+    /// blob can't feed out-of-range numbers to the DSP. Sliders clamp the thumb, not the
+    /// stored/decoded value.
+    func clamped() -> TrimTuning {
+        var c = self
+        c.thresholdDB = thresholdDB.clamped(to: Self.thresholdDBRange)
+        c.adaptiveOffsetDB = adaptiveOffsetDB.clamped(to: Self.adaptiveOffsetDBRange)
+        c.adaptiveWindowSeconds = adaptiveWindowSeconds.clamped(to: Self.adaptiveWindowSecondsRange)
+        c.hysteresisDB = hysteresisDB.clamped(to: Self.hysteresisDBRange)
+        c.holdTimeMs = holdTimeMs.clamped(to: Self.holdTimeMsRange)
+        c.minGapMs = minGapMs.clamped(to: Self.minGapMsRange)
+        c.keepGapMs = keepGapMs.clamped(to: Self.keepGapMsRange)
+        c.crossfadeMs = crossfadeMs.clamped(to: Self.crossfadeMsRange)
+        c.endGuardSeconds = endGuardSeconds.clamped(to: Self.endGuardSecondsRange)
+        c.maxGapHoldSeconds = maxGapHoldSeconds.clamped(to: Self.maxGapHoldSecondsRange)
+        c.flatnessThreshold = flatnessThreshold.clamped(to: Self.flatnessThresholdRange)
+        c.zcrThreshold = zcrThreshold.clamped(to: Self.zcrThresholdRange)
+        c.zcrLevelMarginDB = zcrLevelMarginDB.clamped(to: Self.zcrLevelMarginDBRange)
+        c.vadSpeechConfidenceThreshold = vadSpeechConfidenceThreshold.clamped(to: Self.vadSpeechConfidenceThresholdRange)
+        return c
     }
 }
 
@@ -147,6 +198,42 @@ nonisolated struct VoiceBoostTuning: Codable, Equatable, Sendable {
         limiterReleaseMs = try container.decodeIfPresent(Double.self, forKey: .limiterReleaseMs) ?? defaults.limiterReleaseMs
         truePeakEnabled = try container.decodeIfPresent(Bool.self, forKey: .truePeakEnabled) ?? defaults.truePeakEnabled
     }
+
+    // Valid ranges — shared by the settings-screen sliders and `clamped()`.
+    static let targetLUFSRange: ClosedRange<Double> = -30 ... -10
+    static let maxGainDBRange: ClosedRange<Double> = 0 ... 36
+    static let minGainDBRange: ClosedRange<Double> = -24 ... 0
+    static let gainSmoothingTauSecondsRange: ClosedRange<Double> = 0.05 ... 2
+    static let hpFrequencyRange: ClosedRange<Double> = 40 ... 300
+    static let hpQRange: ClosedRange<Double> = 0.3 ... 2
+    static let compThresholdDBRange: ClosedRange<Double> = -40 ... 0
+    static let compRatioRange: ClosedRange<Double> = 1 ... 20
+    static let compAttackMsRange: ClosedRange<Double> = 1 ... 500
+    static let compReleaseMsRange: ClosedRange<Double> = 10 ... 2000
+    static let compKneeWidthDBRange: ClosedRange<Double> = 0 ... 24
+    static let limiterCeilingDBRange: ClosedRange<Double> = -6 ... -0.1
+    static let limiterLookaheadMsRange: ClosedRange<Double> = 1 ... 20
+    static let limiterReleaseMsRange: ClosedRange<Double> = 10 ... 1000
+
+    /// Clamps every stored value to its valid range (see `TrimTuning.clamped()`).
+    func clamped() -> VoiceBoostTuning {
+        var c = self
+        c.targetLUFS = targetLUFS.clamped(to: Self.targetLUFSRange)
+        c.maxGainDB = maxGainDB.clamped(to: Self.maxGainDBRange)
+        c.minGainDB = minGainDB.clamped(to: Self.minGainDBRange)
+        c.gainSmoothingTauSeconds = gainSmoothingTauSeconds.clamped(to: Self.gainSmoothingTauSecondsRange)
+        c.hpFrequency = hpFrequency.clamped(to: Self.hpFrequencyRange)
+        c.hpQ = hpQ.clamped(to: Self.hpQRange)
+        c.compThresholdDB = compThresholdDB.clamped(to: Self.compThresholdDBRange)
+        c.compRatio = compRatio.clamped(to: Self.compRatioRange)
+        c.compAttackMs = compAttackMs.clamped(to: Self.compAttackMsRange)
+        c.compReleaseMs = compReleaseMs.clamped(to: Self.compReleaseMsRange)
+        c.compKneeWidthDB = compKneeWidthDB.clamped(to: Self.compKneeWidthDBRange)
+        c.limiterCeilingDB = limiterCeilingDB.clamped(to: Self.limiterCeilingDBRange)
+        c.limiterLookaheadMs = limiterLookaheadMs.clamped(to: Self.limiterLookaheadMsRange)
+        c.limiterReleaseMs = limiterReleaseMs.clamped(to: Self.limiterReleaseMsRange)
+        return c
+    }
 }
 
 /// Time-stretch algorithm choices per player backend.
@@ -181,8 +268,8 @@ nonisolated struct TimeStretchTuning: Codable, Equatable, Sendable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = Self()
-        effectsPlayerAlgorithm = try container.decodeIfPresent(EffectsPlayerAlgorithm.self, forKey: .effectsPlayerAlgorithm) ?? defaults.effectsPlayerAlgorithm
-        defaultPlayerAlgorithm = try container.decodeIfPresent(DefaultPlayerAlgorithm.self, forKey: .defaultPlayerAlgorithm) ?? defaults.defaultPlayerAlgorithm
+        effectsPlayerAlgorithm = container.decodeEnum(EffectsPlayerAlgorithm.self, forKey: .effectsPlayerAlgorithm, default: defaults.effectsPlayerAlgorithm)
+        defaultPlayerAlgorithm = container.decodeEnum(DefaultPlayerAlgorithm.self, forKey: .defaultPlayerAlgorithm, default: defaults.defaultPlayerAlgorithm)
     }
 }
 
@@ -205,10 +292,20 @@ nonisolated struct AudioTuning: Codable, Equatable, Sendable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        version = try container.decodeIfPresent(Int.self, forKey: .version) ?? AudioTuning.currentVersion
-        trim = try container.decodeIfPresent(TrimTuning.self, forKey: .trim) ?? TrimTuning()
-        voiceBoost = try container.decodeIfPresent(VoiceBoostTuning.self, forKey: .voiceBoost) ?? VoiceBoostTuning()
+        let decodedVersion = try container.decodeIfPresent(Int.self, forKey: .version) ?? AudioTuning.currentVersion
+        version = decodedVersion
+        trim = (try container.decodeIfPresent(TrimTuning.self, forKey: .trim) ?? TrimTuning()).clamped()
+        voiceBoost = (try container.decodeIfPresent(VoiceBoostTuning.self, forKey: .voiceBoost) ?? VoiceBoostTuning()).clamped()
         timeStretch = try container.decodeIfPresent(TimeStretchTuning.self, forKey: .timeStretch) ?? TimeStretchTuning()
+        migrate(fromVersion: decodedVersion)
+        version = AudioTuning.currentVersion
+    }
+
+    /// Migration seam for future schema bumps. Field-level `decodeIfPresent` already
+    /// tolerates added fields, so there are no migrations at v1; this is where a future
+    /// `currentVersion` increment would transform older payloads before use.
+    private mutating func migrate(fromVersion oldVersion: Int) {
+        // No migrations yet (currentVersion == 1).
     }
 }
 

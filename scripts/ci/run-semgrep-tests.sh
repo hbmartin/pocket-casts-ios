@@ -26,6 +26,7 @@ for fixture in \
   semgrep/tests/pocket-casts-keychain.swift \
   semgrep/tests/swift-security-urlhelper.swift \
   semgrep/tests/swift-security-concurrency.swift \
+  semgrep/tests/swift-security-audio-realtime.swift \
   semgrep/tests/swift-security-crypto.swift \
   semgrep/tests/swift-security-pr-feedback.swift \
   semgrep/tests/swift-security-sql-interpolation.swift \

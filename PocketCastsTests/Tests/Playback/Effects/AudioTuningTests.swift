@@ -127,4 +127,48 @@ final class AudioTuningTests: XCTestCase {
         expected.trim.thresholdDB = -50
         XCTAssertEqual(decoded, expected)
     }
+
+    // MARK: - Resilient enum decode (C1)
+
+    func testUnknownDiscriminatorDegradesOnlyThatField() throws {
+        // An unrecognized enum raw value (e.g. a case a newer build added, decoded after a
+        // downgrade) must fall back to the default for that one field WITHOUT discarding the
+        // rest of the trim block or the other sections.
+        let json = """
+        {"trim": {"thresholdDB": -52, "discriminator": "someFutureAlgo"}, "voiceBoost": {"targetLUFS": -14}}
+        """
+        let decoded = try JSONDecoder().decode(AudioTuning.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.trim.discriminator, AudioTuning.default.trim.discriminator, "unknown enum falls back to default")
+        XCTAssertEqual(decoded.trim.thresholdDB, -52, "a sibling field survives the unknown enum")
+        XCTAssertEqual(decoded.voiceBoost.targetLUFS, -14, "other sections survive the unknown enum")
+    }
+
+    func testUnknownTimeStretchAlgorithmDegradesOnlyThatField() throws {
+        let json = """
+        {"timeStretch": {"effectsPlayerAlgorithm": "goneCase", "defaultPlayerAlgorithm": "spectral"}}
+        """
+        let decoded = try JSONDecoder().decode(AudioTuning.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.timeStretch.effectsPlayerAlgorithm, AudioTuning.default.timeStretch.effectsPlayerAlgorithm)
+        XCTAssertEqual(decoded.timeStretch.defaultPlayerAlgorithm, .spectral, "a valid sibling enum still decodes")
+    }
+
+    // MARK: - Clamping (C3)
+
+    func testDecodingClampsOutOfRangeValues() throws {
+        let json = """
+        {"trim": {"thresholdDB": 999, "minGapMs": -100}, "voiceBoost": {"maxGainDB": 1000, "compRatio": 0}}
+        """
+        let decoded = try JSONDecoder().decode(AudioTuning.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.trim.thresholdDB, TrimTuning.thresholdDBRange.upperBound)
+        XCTAssertEqual(decoded.trim.minGapMs, TrimTuning.minGapMsRange.lowerBound)
+        XCTAssertEqual(decoded.voiceBoost.maxGainDB, VoiceBoostTuning.maxGainDBRange.upperBound)
+        XCTAssertEqual(decoded.voiceBoost.compRatio, VoiceBoostTuning.compRatioRange.lowerBound)
+    }
+
+    func testDefaultsAreWithinClampRanges() {
+        // Guards against clamped() silently altering a default (every default must sit inside
+        // its range, else decoding a default-valued blob would change behavior).
+        XCTAssertEqual(AudioTuning.default.trim, AudioTuning.default.trim.clamped())
+        XCTAssertEqual(AudioTuning.default.voiceBoost, AudioTuning.default.voiceBoost.clamped())
+    }
 }

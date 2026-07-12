@@ -4919,3 +4919,36 @@ rules:
           - pattern: '$POINTER.update(from: $POINTER.advanced(by: $OFFSET), count: $COUNT)'
           - pattern: '($POINTER + $OFFSET).update(from: $POINTER, count: $COUNT)'
           - pattern: '$POINTER.advanced(by: $OFFSET).update(from: $POINTER, count: $COUNT)'
+
+  - id: pocketcasts.no-blocking-work-in-audio-tap-process
+    severity: WARNING
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Do not lock, allocate, log, or create/destroy VoiceBoostN state inside an
+      MTAudioProcessingTap process (render) callback — it runs on a real-time audio thread
+      where blocking is forbidden. Publish tuning through a non-blocking trylock
+      (OSAllocatedUnfairLock.withLockIfAvailable), and create/destroy state and log in the
+      prepare/unprepare callbacks instead.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      # Semgrep's experimental Swift parser can't match a closure body with `{ ... }`, but it
+      # matches the whole closure captured as a metavariable, which still scopes pattern-inside.
+      - pattern-inside: 'let $CB: MTAudioProcessingTapProcessCallback = $CLOSURE'
+      - pattern-either:
+          - pattern: $L.lock()
+          - pattern: objc_sync_enter(...)
+          - pattern: FileLog.shared.addMessage(...)
+          - pattern: FileLog.shared.console(...)
+          - pattern: VBN_Create(...)
+          - pattern: VBN_CreateWithConfig(...)
+          - pattern: VBN_Destroy(...)
+          - pattern: AVAudioPCMBuffer(...)
+          - pattern: AVAudioConverter(...)

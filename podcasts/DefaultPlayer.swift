@@ -1,6 +1,7 @@
 @preconcurrency import AVFoundation
 import CoreAudioTypes
 import Foundation
+import os
 import PocketCastsDataModel
 import PocketCastsUtils
 
@@ -61,15 +62,28 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     /// Written before playback starts, read by the tap on VBN state creation.
     private var cachedLoudness: Double = 0
 
+    /// Snapshot the real-time tap thread consumes.
+    private struct TapConfig: Sendable {
+        var useVoiceBoostN: Bool
+        var vbnConfig: VBNConfig
+        var generation: UInt64
+    }
+
     /// Tuning snapshot for the tap thread: written on the playback flow
-    /// (loadEpisode / effectsDidChange), read per tap callback. Guarded by
-    /// tapStateLock so the tap never touches UserDefaults or the main actor.
-    private let tapStateLock = NSLock()
-    private var tapUseVoiceBoostN = false
-    private var tapVBNConfig = VBN_GetDefaultConfig()
-    private var tapConfigGeneration: UInt64 = 0
+    /// (loadEpisode / effectsDidChange) via a blocking `withLock`, and read from the
+    /// real-time render callback via a non-blocking `withLockIfAvailable` so that
+    /// thread never blocks. An `OSAllocatedUnfairLock` (not a `Mutex`) precisely
+    /// because one side is real-time and must use a trylock.
+    private let tapConfig = OSAllocatedUnfairLock<TapConfig>(
+        initialState: TapConfig(useVoiceBoostN: false, vbnConfig: VBN_GetDefaultConfig(), generation: 0)
+    )
+    /// Tap-thread only: last snapshot successfully read from `tapConfig`; reused when a
+    /// writer momentarily holds the lock so the render callback proceeds without blocking.
+    private var lastTapConfig = TapConfig(useVoiceBoostN: false, vbnConfig: VBN_GetDefaultConfig(), generation: 0)
     /// Tap-thread only: the generation last pushed into the VBN state.
     private var appliedTapConfigGeneration: UInt64 = 0
+    /// Tap-thread only: whether VBN processing ran last buffer (enable-edge detection).
+    private var tapVoiceBoostNActive = false
 
     init() {
         backgroundTaskId = .invalid
@@ -77,14 +91,21 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         refreshTapTuning()
     }
 
-    /// Re-snapshots the tuning-derived values the tap thread consumes.
+    deinit {
+        // The didEnterBackground selector observer is added in init; remove it explicitly
+        // for symmetry with the block observers cleaned up in cleanupPlayer.
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    /// Re-snapshots the tuning-derived values the tap thread consumes. Runs on the
+    /// playback flow / main thread (never real-time), so a blocking `withLock` is fine.
     private func refreshTapTuning() {
         let tuning = PlaybackManager.engineState.tuning
-        tapStateLock.lock()
-        tapUseVoiceBoostN = FeatureFlag.voiceBoostN.enabled && tuning.voiceBoost.useVoiceBoostN
-        tapVBNConfig = tuning.vbnConfig()
-        tapConfigGeneration &+= 1
-        tapStateLock.unlock()
+        tapConfig.withLock { config in
+            config.useVoiceBoostN = FeatureFlag.voiceBoostN.enabled && tuning.voiceBoost.useVoiceBoostN
+            config.vbnConfig = tuning.vbnConfig()
+            config.generation &+= 1
+        }
     }
 
     func loadEpisode(_ episode: BaseEpisode) {
@@ -518,8 +539,28 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             }
             referenceToSelf.peakLimiter = limiter
 
-            // Store sample rate for dynamic VoiceBoostN creation
+            // Store sample rate for VoiceBoostN creation
             referenceToSelf.cachedSampleRate = Double(processingFormat.pointee.mSampleRate)
+
+            // Create the VoiceBoostN state HERE (prepare runs once, before the first
+            // real-time render callback) rather than lazily inside `tapProcess`, so the
+            // render thread never allocates. It is created whenever the feature could be
+            // toggled on during this playback; `tapProcess` gates actual processing on the
+            // live `useVoiceBoostN` flag. Seeded from the precomputed loudness so playback
+            // starts at the right level instead of adapting over the first seconds.
+            if referenceToSelf.voiceBoostNState == nil, FeatureFlag.voiceBoostN.enabled {
+                let snapshot = referenceToSelf.tapConfig.withLock { $0 }
+                referenceToSelf.lastTapConfig = snapshot
+                var config = snapshot.vbnConfig
+                if let state = VBN_CreateWithConfig(referenceToSelf.cachedSampleRate, &config) {
+                    referenceToSelf.voiceBoostNState = state
+                    referenceToSelf.appliedTapConfigGeneration = snapshot.generation
+                    if referenceToSelf.cachedLoudness != 0 {
+                        VBN_SetInitialGainDB(state, config.targetLUFS - Float(referenceToSelf.cachedLoudness))
+                    }
+                    FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN state created at \(referenceToSelf.cachedSampleRate) Hz")
+                }
+            }
         }
 
         let tapUnprepare: MTAudioProcessingTapUnprepareCallback = { tap in
@@ -530,7 +571,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
             if let vbnState = referenceToSelf.voiceBoostNState {
                 VBN_Destroy(vbnState)
                 referenceToSelf.voiceBoostNState = nil
-                PlaybackManager.engineState.voiceBoostMeters = nil
+                referenceToSelf.tapVoiceBoostNActive = false
+                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
                 FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN state destroyed")
             }
 
@@ -569,41 +611,32 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 return
             }
 
-            // Snapshot the tuning state; the tap never reads UserDefaults
-            referenceToSelf.tapStateLock.lock()
-            let shouldUseVoiceBoostN = referenceToSelf.tapUseVoiceBoostN
-            var vbnConfig = referenceToSelf.tapVBNConfig
-            let configGeneration = referenceToSelf.tapConfigGeneration
-            referenceToSelf.tapStateLock.unlock()
+            // Real-time-safe read of the published tuning snapshot. A non-blocking
+            // trylock: if a writer momentarily holds the lock we reuse the last
+            // snapshot rather than block the render thread. The VBN state itself was
+            // created in `tapPrepare`, so nothing is allocated, freed, or logged here.
+            let snapshot = referenceToSelf.tapConfig.withLockIfAvailable { $0 } ?? referenceToSelf.lastTapConfig
+            referenceToSelf.lastTapConfig = snapshot
+            let shouldUseVoiceBoostN = snapshot.useVoiceBoostN
 
-            // Handle dynamic state creation/destruction
-            if shouldUseVoiceBoostN && referenceToSelf.voiceBoostNState == nil {
-                let isInitial = referenceToSelf.sampleCount == Float64(numberFrames) // First buffer
-                referenceToSelf.voiceBoostNState = VBN_CreateWithConfig(referenceToSelf.cachedSampleRate, &vbnConfig)
-                referenceToSelf.appliedTapConfigGeneration = configGeneration
-                if let vbnState = referenceToSelf.voiceBoostNState, referenceToSelf.cachedLoudness != 0 {
-                    // seed the gain from the precomputed loudness so playback
-                    // starts at the right level instead of adapting live
-                    VBN_SetInitialGainDB(vbnState, vbnConfig.targetLUFS - Float(referenceToSelf.cachedLoudness))
+            if shouldUseVoiceBoostN, let vbnState = referenceToSelf.voiceBoostNState {
+                // Live-apply any staged tuning change (allocation-free).
+                if referenceToSelf.appliedTapConfigGeneration != snapshot.generation {
+                    var config = snapshot.vbnConfig
+                    VBN_SetConfig(vbnState, &config)
+                    referenceToSelf.appliedTapConfigGeneration = snapshot.generation
                 }
-                if isInitial {
-                    FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN enabled - created state at \(referenceToSelf.cachedSampleRate) Hz")
-                } else {
-                    FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN enabled mid-playback - created state at \(referenceToSelf.cachedSampleRate) Hz")
-                }
-            } else if !shouldUseVoiceBoostN && referenceToSelf.voiceBoostNState != nil {
-                VBN_Destroy(referenceToSelf.voiceBoostNState)
-                referenceToSelf.voiceBoostNState = nil
-                PlaybackManager.engineState.voiceBoostMeters = nil
-                FileLog.shared.addMessage("[DefaultPlayer] VoiceBoostN disabled mid-playback - switching to previous voice boost")
-            }
 
-            if let vbnState = referenceToSelf.voiceBoostNState {
-                // Live-apply any staged tuning change (VBN_SetConfig is safe here;
-                // the tap thread owns the state pointer)
-                if referenceToSelf.appliedTapConfigGeneration != configGeneration {
-                    VBN_SetConfig(vbnState, &vbnConfig)
-                    referenceToSelf.appliedTapConfigGeneration = configGeneration
+                // Enable edge: restart adaptation from the loudness seed so a
+                // mid-playback toggle behaves like a fresh start (matches the old
+                // destroy/recreate path, but without allocating on the render thread).
+                if !referenceToSelf.tapVoiceBoostNActive {
+                    VBN_Reset(vbnState)
+                    if referenceToSelf.cachedLoudness != 0 {
+                        var config = snapshot.vbnConfig
+                        VBN_SetInitialGainDB(vbnState, config.targetLUFS - Float(referenceToSelf.cachedLoudness))
+                    }
+                    referenceToSelf.tapVoiceBoostNActive = true
                 }
 
                 // Use VoiceBoostN processing
@@ -624,14 +657,20 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                     VBN_Process(vbnState, ptr.baseAddress, Int32(numberFrames), channelCount)
                 }
 
-                PlaybackManager.engineState.voiceBoostMeters = .init(
+                PlaybackManager.engineState.publishVoiceBoostMeters(.init(
                     gainDB: VBN_GetCurrentGainDB(vbnState),
                     measuredLUFS: VBN_GetMeasuredLUFS(vbnState),
                     limiterReductionDB: VBN_GetLimiterReductionDB(vbnState)
-                )
+                ))
 
                 numberFramesOut.pointee = numberFrames
             } else {
+                // VoiceBoostN inactive: clear the live meters once on the disable edge.
+                if referenceToSelf.tapVoiceBoostNActive {
+                    referenceToSelf.tapVoiceBoostNActive = false
+                    PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                }
+
                 // Use previous voice boost (AudioUnit chain): the peak limiter is
                 // the end of the pull chain source → high-pass → dynamics → limiter,
                 // matching EffectsPlayer's legacy graph
@@ -838,6 +877,10 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         let highPassFilterRenderCallback: AURenderCallback = { inRefCon, _, _, _, inNumberFrames, ioData -> OSStatus in
             guard
                 let referenceToSelf = DefaultPlayer.unretainedDefaultPlayer(for: inRefCon),
+                // TODO(A2d): this reads `self.audioMix` on the real-time render thread while
+                // cleanupPlayer nils it on main — an unsynchronized ARC read/release. Deferred
+                // fix: cache the tap as `Unmanaged<MTAudioProcessingTap>` set in createAudioMix
+                // and read that here. Gate on on-device Thread Sanitizer verification first.
                 let tap = referenceToSelf.audioMix?.inputParameters.first?.audioTapProcessor,
                 let ioData
             else {
@@ -880,21 +923,22 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     private func startBackgroundTask() {
-            guard backgroundTaskId == .invalid else { return } // already started
-
-            // Playback calls this from its own queues; bridge the UIKit call
-            let begin: @Sendable () -> UIBackgroundTaskIdentifier = { [weak self] in
-                MainActor.assumeIsolated {
-                    UIApplication.shared.beginBackgroundTask(expirationHandler: {
-                        self?.endBackgroundTask()
-                    })
-                }
+            // Playback can call this from its own queues (including AVPlayer KVO callbacks
+            // delivered on an internal AVFoundation queue). A blocking `main.sync` from
+            // there risks deadlock, so bounce off-main callers to the main queue async and
+            // keep `backgroundTaskId` main-thread-only, which also closes the double-start race.
+            guard Thread.isMainThread else {
+                DispatchQueue.main.async { [weak self] in self?.startBackgroundTask() }
+                return
             }
-            backgroundTaskId = Thread.isMainThread ? begin() : DispatchQueue.main.sync(execute: begin)
+            MainActor.assumeIsolated {
+                guard backgroundTaskId == .invalid else { return } // already started
 
-            // schedule a timer to cancel the background task as soon as bufferring is done or we don't need to play anymore
-            // do this on the main thread because timers require run loops
-            DispatchQueue.main.async {
+                backgroundTaskId = UIApplication.shared.beginBackgroundTask(expirationHandler: { [weak self] in
+                    self?.endBackgroundTask()
+                })
+
+                // schedule a timer to cancel the background task as soon as bufferring is done or we don't need to play anymore
                 Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
                     guard let self else {
                         timer.invalidate()
@@ -910,16 +954,17 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     private func endBackgroundTask() {
-            if backgroundTaskId == .invalid { return } // already cancelled
-
-            let task = backgroundTaskId
-            backgroundTaskId = .invalid
-            let end: @Sendable () -> Void = {
-                MainActor.assumeIsolated {
-                    UIApplication.shared.endBackgroundTask(task)
-                }
+            guard Thread.isMainThread else {
+                DispatchQueue.main.async { [weak self] in self?.endBackgroundTask() }
+                return
             }
-            if Thread.isMainThread { end() } else { DispatchQueue.main.sync(execute: end) }
+            MainActor.assumeIsolated {
+                if backgroundTaskId == .invalid { return } // already cancelled
+
+                let task = backgroundTaskId
+                backgroundTaskId = .invalid
+                UIApplication.shared.endBackgroundTask(task)
+            }
     }
 
     // MARK: - Error Handling

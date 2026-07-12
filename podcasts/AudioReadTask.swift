@@ -9,7 +9,10 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     private let cancelled = AtomicBool()
 
     private let readQueue: DispatchQueue
-    private let lock = NSObject()
+    /// Guards the reader's mutable state. Every mutator takes it via `withLock` so an
+    /// early return can never leak the lock (which is what let `shutdown()` race the
+    /// read loop and free the VBN state mid-`VBN_Process`).
+    private let lock = NSLock()
 
     private var trimSilence: TrimSilenceAmount = .off
 
@@ -24,6 +27,8 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     private var trimParameters = TrimSilenceParameters.preset(for: .off)
     private let flatnessBox = SpectralFlatnessBox()
     private var vadAnalyzer: TrimVoiceActivityAnalyzer?
+    /// True while an analyzer is being built off-thread, to avoid duplicate builds.
+    private var vadAnalyzerBuilding = false
     private var gapStartFramePosition: AVAudioFramePosition = 0
 
     private var channelCount = 0 as UInt32
@@ -38,6 +43,10 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     private var useVoiceBoostN: AtomicBool?
     private var voiceBoostNSampleRate: Double = 0
     private var hasProcessedFirstBuffer = false
+    /// Cached mono→stereo conversion objects, created once and reused per buffer
+    /// (rebuilding an AVAudioConverter every read buffer is wasteful).
+    private var stereoFormat: AVAudioFormat?
+    private var monoToStereoConverter: AVAudioConverter?
     private var tuning: AudioTuning
     /// Integrated LUFS precomputed for this episode; 0 = unknown (adapt live).
     private let knownLUFS: Double
@@ -112,40 +121,45 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     }
 
     func shutdown() {
+        // Signal first so a semaphore-parked read thread wakes and exits its loop
+        // (`cancelled` is now set). THEN take `lock` to tear down: this blocks only
+        // until any in-flight `readFromFile` iteration finishes, so we never free the
+        // VBN state or analyzer while the read thread is using them. No deadlock: the
+        // read thread never holds `lock` while blocked on a semaphore.
         cancelled.value = true
         bufferManager.bufferSemaphore.signal()
         endOfFileSemaphore.signal()
 
-        vadAnalyzer?.finish()
-        vadAnalyzer = nil
+        lock.withLock {
+            vadAnalyzer?.finish()
+            vadAnalyzer = nil
 
-        if let vbnState = voiceBoostNState {
-            VBN_Destroy(vbnState)
-            voiceBoostNState = nil
-            PlaybackManager.engineState.voiceBoostMeters = nil
-            FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state destroyed on shutdown")
+            if let vbnState = voiceBoostNState {
+                VBN_Destroy(vbnState)
+                voiceBoostNState = nil
+                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state destroyed on shutdown")
+            }
         }
     }
 
     func setTrimSilence(_ trimSilence: TrimSilenceAmount) {
-        objc_sync_enter(lock)
-        defer { objc_sync_exit(lock) }
-
-        self.trimSilence = trimSilence
-        reconfigureDetector()
+        lock.withLock {
+            self.trimSilence = trimSilence
+            reconfigureDetector()
+        }
     }
 
     /// Live-applies a new tuning snapshot: restages the VoiceBoostN config and
     /// updates the trim gate parameters.
     func setTuning(_ tuning: AudioTuning) {
-        objc_sync_enter(lock)
-        defer { objc_sync_exit(lock) }
-
-        self.tuning = tuning
-        reconfigureDetector()
-        if let vbnState = voiceBoostNState {
-            var config = tuning.vbnConfig()
-            VBN_SetConfig(vbnState, &config)
+        lock.withLock {
+            self.tuning = tuning
+            reconfigureDetector()
+            if let vbnState = voiceBoostNState {
+                var config = tuning.vbnConfig()
+                VBN_SetConfig(vbnState, &config)
+            }
         }
     }
 
@@ -155,16 +169,44 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         detector.configure(parameters: trimParameters, sampleRate: audioFile.fileFormat.sampleRate, framesPerBuffer: Int(bufferLength))
 
         let wantsVAD = trimSilence != .off && trimParameters.discriminator == .vad
-        if wantsVAD, vadAnalyzer == nil {
-            do {
-                vadAnalyzer = try TrimVoiceActivityAnalyzer(sampleRate: audioFile.processingFormat.sampleRate)
-                FileLog.shared.addMessage("[AudioReadTask] system VAD analyzer active for trim silence")
-            } catch {
-                FileLog.shared.addMessage("[AudioReadTask] system VAD unavailable, falling back to heuristic gating: \(error.localizedDescription)")
-            }
-        } else if !wantsVAD, let analyzer = vadAnalyzer {
+        if wantsVAD {
+            if vadAnalyzer == nil { startBuildingVADAnalyzer() }
+        } else if let analyzer = vadAnalyzer {
             analyzer.finish()
             vadAnalyzer = nil
+        }
+    }
+
+    /// Builds the system VAD analyzer off the caller's thread. Its init synchronously
+    /// loads a CoreML sound-classifier model, which must not run on the main actor
+    /// (`setTuning`/`setTrimSilence` are called there) or while holding `lock` (that
+    /// stalls the read thread). Installs the finished analyzer under `lock`; until then
+    /// the detector runs with the heuristic features it already computes.
+    /// Called with `lock` held (or from init).
+    private func startBuildingVADAnalyzer() {
+        guard !vadAnalyzerBuilding else { return }
+        vadAnalyzerBuilding = true
+        let sampleRate = audioFile.processingFormat.sampleRate
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            let built: TrimVoiceActivityAnalyzer?
+            do {
+                built = try TrimVoiceActivityAnalyzer(sampleRate: sampleRate)
+            } catch {
+                built = nil
+                FileLog.shared.addMessage("[AudioReadTask] system VAD unavailable, falling back to heuristic gating: \(error.localizedDescription)")
+            }
+            self.lock.withLock {
+                self.vadAnalyzerBuilding = false
+                let stillWantsVAD = self.trimSilence != .off && self.trimParameters.discriminator == .vad
+                guard let built else { return }
+                if stillWantsVAD, self.vadAnalyzer == nil {
+                    self.vadAnalyzer = built
+                    FileLog.shared.addMessage("[AudioReadTask] system VAD analyzer active for trim silence")
+                } else {
+                    built.finish()
+                }
+            }
         }
     }
 
@@ -178,44 +220,43 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     }
 
     private func performSeek(_ time: TimeInterval) -> Bool {
-        objc_sync_enter(lock)
-        defer { objc_sync_exit(lock) }
+        lock.withLock {
+            let positionRequired = framePositionForTime(time)
+            var seekedToEnd = false
 
-        let positionRequired = framePositionForTime(time)
-        var seekedToEnd = false
+            if positionRequired.passedEndOfFile {
+                bufferManager.removeAll()
+                bufferManager.readToEOFSuccessfully.value = true
 
-        if positionRequired.passedEndOfFile {
-            bufferManager.removeAll()
-            bufferManager.readToEOFSuccessfully.value = true
+                seekedToEnd = true
+            } else {
+                currentFramePosition = positionRequired.framePosition
+                audioFile.framePosition = currentFramePosition
+                bufferManager.aboutToSeek()
+                detector.reset()
+                buffersSavedDuringGap.removeAll()
+                fadeInNextFrame = true
 
-            seekedToEnd = true
-        } else {
-            currentFramePosition = positionRequired.framePosition
-            audioFile.framePosition = currentFramePosition
-            bufferManager.aboutToSeek()
-            detector.reset()
-            buffersSavedDuringGap.removeAll()
-            fadeInNextFrame = true
+                // stream analyzers can't rewind; recreate after the seek
+                if let analyzer = vadAnalyzer {
+                    analyzer.finish()
+                    vadAnalyzer = nil
+                    reconfigureDetector()
+                }
 
-            // stream analyzers can't rewind; recreate after the seek
-            if let analyzer = vadAnalyzer {
-                analyzer.finish()
-                vadAnalyzer = nil
-                reconfigureDetector()
+                if let vbnState = voiceBoostNState {
+                    VBN_Reset(vbnState)
+                    FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state reset after seek")
+                }
+
+                // if we've finished reading this file, wake the reading thread back up
+                if bufferManager.readToEOFSuccessfully.value {
+                    endOfFileSemaphore.signal()
+                }
             }
 
-            if let vbnState = voiceBoostNState {
-                VBN_Reset(vbnState)
-                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN state reset after seek")
-            }
-
-            // if we've finished reading this file, wake the reading thread back up
-            if bufferManager.readToEOFSuccessfully.value {
-                endOfFileSemaphore.signal()
-            }
+            return seekedToEnd
         }
-
-        return seekedToEnd
     }
 
     private func handleReachedEndOfFile() {
@@ -225,168 +266,198 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         endOfFileSemaphore.wait()
     }
 
+    /// Result of one locked read pass. `reachedEndOfFile` handling waits on a
+    /// semaphore and so is performed by the caller AFTER `lock` is released.
+    private enum ReadOutcome {
+        case reachedEndOfFile
+        case readError
+        case buffers([BufferedAudio])
+    }
+
     private func readFromFile() throws -> [BufferedAudio]? {
-        objc_sync_enter(lock)
-
-        // are we at the end of the file?
-        currentFramePosition = audioFile.framePosition
-        if currentFramePosition >= cachedFrameCount {
-            objc_sync_exit(lock)
-            handleReachedEndOfFile()
-
-            return nil
-        }
-
-        let audioPCMBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: bufferLength)
-        do {
-            try audioFile.read(into: audioPCMBuffer!)
-        } catch {
-            objc_sync_exit(lock)
-            FileLog.shared.addMessage("[AudioReadTask] read failed: \(error.localizedDescription)")
-            throw error
-        }
-
-        // check that we actually read something
-        if audioPCMBuffer?.frameLength == 0 {
-            objc_sync_exit(lock)
-            handleReachedEndOfFile()
-
-            return nil
-        }
-
-        // Handle dynamic VoiceBoostN state creation/destruction
-        let shouldUseVoiceBoostN = useVoiceBoostN?.value == true
-        if shouldUseVoiceBoostN && voiceBoostNState == nil {
-            var config = tuning.vbnConfig()
-            voiceBoostNState = VBN_CreateWithConfig(voiceBoostNSampleRate, &config)
-            if let vbnState = voiceBoostNState, knownLUFS != 0 {
-                // seed the gain from the precomputed loudness so playback starts
-                // at the right level instead of adapting over the first seconds
-                VBN_SetInitialGainDB(vbnState, Float(tuning.voiceBoost.targetLUFS - knownLUFS))
-            }
-            if hasProcessedFirstBuffer {
-                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled mid-playback - created state at \(voiceBoostNSampleRate) Hz")
-            } else {
-                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled - created state at \(voiceBoostNSampleRate) Hz\(knownLUFS != 0 ? " (seeded from \(knownLUFS) LUFS)" : "")")
-            }
-        } else if !shouldUseVoiceBoostN && voiceBoostNState != nil {
-            VBN_Destroy(voiceBoostNState)
-            voiceBoostNState = nil
-            PlaybackManager.engineState.voiceBoostMeters = nil
-            FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN disabled mid-playback - switching to previous voice boost")
-        }
-        hasProcessedFirstBuffer = true
-
-        // Process through VoiceBoostN if enabled
-        if let vbnState = voiceBoostNState, let buffer = audioPCMBuffer,
-           let channelData = buffer.floatChannelData {
-            let frameCount = Int32(buffer.frameLength)
-            let bufferChannelCount = Int32(buffer.format.channelCount)
-
-            var channelPointers: [UnsafeMutablePointer<Float>?] = []
-            for i in 0..<Int(bufferChannelCount) {
-                channelPointers.append(channelData[i])
+        let outcome: ReadOutcome = try lock.withLock {
+            // are we at the end of the file?
+            currentFramePosition = audioFile.framePosition
+            if currentFramePosition >= cachedFrameCount {
+                return .reachedEndOfFile
             }
 
-            channelPointers.withUnsafeMutableBufferPointer { ptr in
-                VBN_Process(vbnState, ptr.baseAddress, frameCount, bufferChannelCount)
+            guard let audioPCMBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: bufferLength) else {
+                FileLog.shared.addMessage("[AudioReadTask] failed to allocate read buffer")
+                bufferManager.readErrorOccurred.value = true
+                cancelled.value = true
+                return .readError
             }
 
-            PlaybackManager.engineState.voiceBoostMeters = .init(
-                gainDB: VBN_GetCurrentGainDB(vbnState),
-                measuredLUFS: VBN_GetMeasuredLUFS(vbnState),
-                limiterReductionDB: VBN_GetLimiterReductionDB(vbnState)
-            )
-        }
-
-        currentFramePosition = audioFile.framePosition
-        fadeInNextFrame = false
-        if channelCount == 0 { channelCount = (audioPCMBuffer?.audioBufferList.pointee.mNumberBuffers)! }
-
-        if channelCount == 0 {
-            bufferManager.readErrorOccurred.value = true
-            cancelled.value = true
-            objc_sync_exit(lock)
-
-            return nil
-        }
-
-        // iOS 16 has an issue in which if the conditions below are met, the playback will fail:
-        // Audio file has a single channel and spatial audio is enabled
-        // In order to prevent this issue, we convert a mono buffer to stereo buffer
-        // For more info, see: https://github.com/Automattic/pocket-casts-ios/issues/62
-        var audioBuffer: BufferedAudio
-        if let audioPCMBuffer,
-           audioPCMBuffer.audioBufferList.pointee.mNumberBuffers == 1,
-           let twoChannelsFormat = AVAudioFormat(standardFormatWithSampleRate: audioFile.processingFormat.sampleRate, channels: 2),
-           let twoChannnelBuffer = AVAudioPCMBuffer(pcmFormat: twoChannelsFormat, frameCapacity: audioPCMBuffer.frameCapacity) {
-            let converter = AVAudioConverter(from: audioFile.processingFormat, to: twoChannelsFormat)
-            try? converter?.convert(to: twoChannnelBuffer, from: audioPCMBuffer)
-            audioBuffer = BufferedAudio(audioBuffer: twoChannnelBuffer, framePosition: currentFramePosition, shouldFadeOut: false, shouldFadeIn: fadeInNextFrame)
-        } else {
-            audioBuffer = BufferedAudio(audioBuffer: audioPCMBuffer!, framePosition: currentFramePosition, shouldFadeOut: false, shouldFadeIn: fadeInNextFrame)
-        }
-
-        var buffers = [BufferedAudio]()
-        if trimSilence != .off {
-            guard let bufferListPointer = UnsafeMutableAudioBufferListPointer(audioPCMBuffer?.mutableAudioBufferList) else {
-                buffers.append(audioBuffer)
-                objc_sync_exit(lock)
-
-                return buffers
+            do {
+                try audioFile.read(into: audioPCMBuffer)
+            } catch {
+                FileLog.shared.addMessage("[AudioReadTask] read failed: \(error.localizedDescription)")
+                throw error
             }
 
-            let currPosition = currentFramePosition / Int64(audioFile.fileFormat.sampleRate)
-            let totalDuration = cachedFrameCount / Int64(audioFile.fileFormat.sampleRate)
-            let timeLeft = totalDuration - currPosition
-
-            let rms = (channelCount == 1) ? AudioUtils.calculateRms(bufferListPointer[0]) : AudioUtils.calculateStereoRms(bufferListPointer[0], rightBuffer: bufferListPointer[1])
-            var features = TrimFeatureFrame(rmsDB: 20 * log10(max(rms, 1e-7)))
-
-            if trimParameters.discriminator != .rms {
-                features.zeroCrossingRate = AudioUtils.calculateZeroCrossingRate(bufferListPointer[0])
-                features.spectralFlatness = flatnessBox.spectralFlatness(of: bufferListPointer[0])
-            }
-            if trimParameters.discriminator == .vad, let analyzer = vadAnalyzer, let sourceBuffer = audioPCMBuffer {
-                analyzer.append(sourceBuffer, atFramePosition: currentFramePosition)
-                features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: currentFramePosition)
+            // check that we actually read something
+            if audioPCMBuffer.frameLength == 0 {
+                return .reachedEndOfFile
             }
 
-            let stashedCount = buffersSavedDuringGap.count()
-            if stashedCount == 0 {
-                gapStartFramePosition = currentFramePosition
-            }
-
-            var decision = detector.analyze(features, stashedCount: stashedCount, timeLeft: TimeInterval(timeLeft))
-
-            // retrospective VAD veto: never drop a gap the classifier heard speech in
-            if case .endGapTrim = decision,
-               let analyzer = vadAnalyzer,
-               analyzer.speechDetected(inFrameRange: gapStartFramePosition ..< currentFramePosition, aboveConfidence: Float(trimParameters.vadSpeechConfidenceThreshold)) == true {
-                decision = .endGapEmitAll
-                FileLog.shared.addMessage("[AudioReadTask] VAD vetoed a silence trim (speech detected in gap)")
-            }
-
-            switch decision {
-            case .passthrough:
-                buffers.append(audioBuffer)
-            case .stash:
-                buffersSavedDuringGap.push(audioBuffer)
-            case .endGapEmitAll:
-                // the gap was too short to trim, push it all back
-                while buffersSavedDuringGap.canPop() {
-                    buffers.append(buffersSavedDuringGap.pop()!)
+            // Handle dynamic VoiceBoostN state creation/destruction (single-threaded
+            // under `lock`; `shutdown()` takes the same lock before freeing this state).
+            let shouldUseVoiceBoostN = useVoiceBoostN?.value == true
+            if shouldUseVoiceBoostN && voiceBoostNState == nil {
+                var config = tuning.vbnConfig()
+                voiceBoostNState = VBN_CreateWithConfig(voiceBoostNSampleRate, &config)
+                if let vbnState = voiceBoostNState, knownLUFS != 0 {
+                    // seed the gain from the precomputed loudness so playback starts
+                    // at the right level instead of adapting over the first seconds
+                    VBN_SetInitialGainDB(vbnState, Float(tuning.voiceBoost.targetLUFS - knownLUFS))
                 }
-                buffers.append(audioBuffer)
-            case .endGapTrim(let keepBuffers):
-                appendTrimmedGap(keepBuffers: keepBuffers, resume: audioBuffer, into: &buffers)
+                if hasProcessedFirstBuffer {
+                    FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled mid-playback - created state at \(voiceBoostNSampleRate) Hz")
+                } else {
+                    FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN enabled - created state at \(voiceBoostNSampleRate) Hz\(knownLUFS != 0 ? " (seeded from \(knownLUFS) LUFS)" : "")")
+                }
+            } else if !shouldUseVoiceBoostN && voiceBoostNState != nil {
+                VBN_Destroy(voiceBoostNState)
+                voiceBoostNState = nil
+                PlaybackManager.engineState.publishVoiceBoostMeters(nil)
+                FileLog.shared.addMessage("[AudioReadTask] VoiceBoostN disabled mid-playback - switching to previous voice boost")
             }
-        } else {
-            buffers.append(audioBuffer)
+            hasProcessedFirstBuffer = true
+
+            // Process through VoiceBoostN if enabled
+            if let vbnState = voiceBoostNState, let channelData = audioPCMBuffer.floatChannelData {
+                let frameCount = Int32(audioPCMBuffer.frameLength)
+                let bufferChannelCount = Int32(audioPCMBuffer.format.channelCount)
+
+                var channelPointers: [UnsafeMutablePointer<Float>?] = []
+                for i in 0..<Int(bufferChannelCount) {
+                    channelPointers.append(channelData[i])
+                }
+
+                channelPointers.withUnsafeMutableBufferPointer { ptr in
+                    VBN_Process(vbnState, ptr.baseAddress, frameCount, bufferChannelCount)
+                }
+
+                PlaybackManager.engineState.publishVoiceBoostMeters(.init(
+                    gainDB: VBN_GetCurrentGainDB(vbnState),
+                    measuredLUFS: VBN_GetMeasuredLUFS(vbnState),
+                    limiterReductionDB: VBN_GetLimiterReductionDB(vbnState)
+                ))
+            }
+
+            currentFramePosition = audioFile.framePosition
+            fadeInNextFrame = false
+            if channelCount == 0 { channelCount = audioPCMBuffer.audioBufferList.pointee.mNumberBuffers }
+
+            if channelCount == 0 {
+                bufferManager.readErrorOccurred.value = true
+                cancelled.value = true
+                return .readError
+            }
+
+            // iOS 16 has an issue in which if the conditions below are met, the playback will fail:
+            // Audio file has a single channel and spatial audio is enabled
+            // In order to prevent this issue, we convert a mono buffer to stereo buffer
+            // For more info, see: https://github.com/Automattic/pocket-casts-ios/issues/62
+            let audioBuffer: BufferedAudio
+            if audioPCMBuffer.audioBufferList.pointee.mNumberBuffers == 1,
+               let stereoBuffer = makeStereoBuffer(from: audioPCMBuffer) {
+                audioBuffer = BufferedAudio(audioBuffer: stereoBuffer, framePosition: currentFramePosition, shouldFadeOut: false, shouldFadeIn: fadeInNextFrame)
+            } else {
+                audioBuffer = BufferedAudio(audioBuffer: audioPCMBuffer, framePosition: currentFramePosition, shouldFadeOut: false, shouldFadeIn: fadeInNextFrame)
+            }
+
+            var buffers = [BufferedAudio]()
+            if trimSilence != .off {
+                let bufferListPointer = UnsafeMutableAudioBufferListPointer(audioPCMBuffer.mutableAudioBufferList)
+
+                let currPosition = currentFramePosition / Int64(audioFile.fileFormat.sampleRate)
+                let totalDuration = cachedFrameCount / Int64(audioFile.fileFormat.sampleRate)
+                let timeLeft = totalDuration - currPosition
+
+                let rms = (channelCount == 1) ? AudioUtils.calculateRms(bufferListPointer[0]) : AudioUtils.calculateStereoRms(bufferListPointer[0], rightBuffer: bufferListPointer[1])
+                var features = TrimFeatureFrame(rmsDB: 20 * log10(max(rms, 1e-7)))
+
+                if trimParameters.discriminator != .rms {
+                    features.zeroCrossingRate = AudioUtils.calculateZeroCrossingRate(bufferListPointer[0])
+                    features.spectralFlatness = flatnessBox.spectralFlatness(of: bufferListPointer[0])
+                }
+                if trimParameters.discriminator == .vad, let analyzer = vadAnalyzer {
+                    analyzer.append(audioPCMBuffer, atFramePosition: currentFramePosition)
+                    features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: currentFramePosition)
+                }
+
+                let stashedCount = buffersSavedDuringGap.count()
+                if stashedCount == 0 {
+                    gapStartFramePosition = currentFramePosition
+                }
+
+                var decision = detector.analyze(features, stashedCount: stashedCount, timeLeft: TimeInterval(timeLeft))
+
+                // retrospective VAD veto: never drop a gap the classifier heard speech in
+                if case .endGapTrim = decision,
+                   let analyzer = vadAnalyzer,
+                   analyzer.speechDetected(inFrameRange: gapStartFramePosition ..< currentFramePosition, aboveConfidence: Float(trimParameters.vadSpeechConfidenceThreshold)) == true {
+                    decision = .endGapEmitAll
+                    FileLog.shared.addMessage("[AudioReadTask] VAD vetoed a silence trim (speech detected in gap)")
+                }
+
+                switch decision {
+                case .passthrough:
+                    buffers.append(audioBuffer)
+                case .stash:
+                    buffersSavedDuringGap.push(audioBuffer)
+                case .endGapEmitAll:
+                    // the gap was too short to trim, push it all back
+                    while buffersSavedDuringGap.canPop() {
+                        buffers.append(buffersSavedDuringGap.pop()!)
+                    }
+                    buffers.append(audioBuffer)
+                case .endGapTrim(let keepBuffers):
+                    appendTrimmedGap(keepBuffers: keepBuffers, resume: audioBuffer, into: &buffers)
+                }
+            } else {
+                buffers.append(audioBuffer)
+            }
+
+            return .buffers(buffers)
         }
 
-        objc_sync_exit(lock)
-        return buffers
+        switch outcome {
+        case .reachedEndOfFile:
+            // Waits on the end-of-file semaphore; must run with `lock` released.
+            handleReachedEndOfFile()
+            return nil
+        case .readError:
+            return nil
+        case .buffers(let buffers):
+            return buffers
+        }
+    }
+
+    /// Converts a mono buffer to stereo (working around an iOS 16 spatial-audio bug for
+    /// single-channel files), reusing a cached converter/format instead of allocating an
+    /// `AVAudioConverter` per buffer. Returns nil (caller falls back to the mono buffer)
+    /// if setup or conversion fails, rather than emitting a silent buffer. Called with `lock` held.
+    private func makeStereoBuffer(from monoBuffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        if stereoFormat == nil {
+            stereoFormat = AVAudioFormat(standardFormatWithSampleRate: audioFile.processingFormat.sampleRate, channels: 2)
+        }
+        guard let stereoFormat,
+              let stereoBuffer = AVAudioPCMBuffer(pcmFormat: stereoFormat, frameCapacity: monoBuffer.frameCapacity) else {
+            return nil
+        }
+        if monoToStereoConverter == nil {
+            monoToStereoConverter = AVAudioConverter(from: audioFile.processingFormat, to: stereoFormat)
+        }
+        do {
+            try monoToStereoConverter?.convert(to: stereoBuffer, from: monoBuffer)
+        } catch {
+            FileLog.shared.addMessage("[AudioReadTask] mono→stereo conversion failed, using mono buffer: \(error.localizedDescription)")
+            return nil
+        }
+        return stereoBuffer
     }
 
     /// Reassembles a trimmed gap: keeps the head of the gap (start of the

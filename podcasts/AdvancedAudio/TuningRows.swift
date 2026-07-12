@@ -22,11 +22,11 @@ struct TuningSliderRow: View {
             HStack {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                    .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
                 Spacer()
                 Text(formattedValue)
                     .font(.subheadline.monospacedDigit())
-                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
             }
             Slider(value: $value, in: range, step: step)
                 .tint(AppTheme.color(for: .primaryInteractive01, theme: theme))
@@ -46,7 +46,7 @@ struct TuningToggleRow: View {
         Toggle(isOn: $isOn) {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
         }
         .tint(AppTheme.color(for: .primaryInteractive01, theme: theme))
     }
@@ -68,7 +68,7 @@ struct TuningPickerRow<Value: Hashable>: View {
         } label: {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
         }
         .pickerStyle(.menu)
         .tint(AppTheme.color(for: .primaryInteractive01, theme: theme))
@@ -86,7 +86,7 @@ struct TuningResetButton: View {
         Button(role: .destructive, action: action) {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(AppTheme.color(for: .support05, theme: theme))
+                .foregroundStyle(AppTheme.color(for: .support05, theme: theme))
         }
     }
 }
@@ -102,11 +102,11 @@ struct TuningMeterRow: View {
         HStack {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
             Spacer()
             Text(value)
                 .font(.subheadline.monospacedDigit())
-                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
         }
     }
 }

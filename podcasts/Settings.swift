@@ -1428,7 +1428,9 @@ nonisolated class Settings: NSObject {
             var tuning = audioTuning
             tuning.voiceBoost.useVoiceBoostN = newValue
             audioTuning = tuning
-            UserDefaults.standard.set(newValue, forKey: Constants.UserDefaults.voiceBoostNEnabled)
+            // The audioTuning blob is authoritative; its getter honors the legacy
+            // `voiceBoostNEnabled` key only as a one-time fallback. Writing it here too
+            // resurrected an old opt-out and left the two sources able to diverge.
             FileLog.shared.addMessage("[Settings] VoiceBoostN \(newValue ? "enabled" : "disabled")")
         }
     }
