@@ -16,7 +16,7 @@ class FolderModel: ObservableObject {
             updateFoldersBasedOnSelection()
 
             DataManager.sharedManager.bulkSetFolderUuid(folderUuid: folderUuid, podcastUuids: selectedPodcastUuids)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folderUuid)
+            NotificationCenter.postOnMainThread(FolderChanged(uuid: folderUuid))
         }
     }
 
@@ -28,7 +28,7 @@ class FolderModel: ObservableObject {
                 folder.name = nameForFolder()
                 folder.syncModified = TimeFormatter.currentUTCTimeInMillis()
                 DataManager.sharedManager.save(folder: folder)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folderUuid)
+                NotificationCenter.postOnMainThread(FolderChanged(uuid: folderUuid))
                 didChangeName = true
             }
         }
@@ -41,7 +41,7 @@ class FolderModel: ObservableObject {
             guard let folderUuid, saveOnChange else { return }
 
             DataManager.sharedManager.updateFolderColor(folderUuid: folderUuid, color: Int32(colorInt), syncModified: TimeFormatter.currentUTCTimeInMillis())
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folderUuid)
+            NotificationCenter.postOnMainThread(FolderChanged(uuid: folderUuid))
 
             didChangeColor = true
         }
@@ -85,7 +85,7 @@ class FolderModel: ObservableObject {
         // update all the podcasts in the folder to move them into it
         DataManager.sharedManager.bulkSetFolderUuid(folderUuid: folder.uuid, podcastUuids: selectedPodcastUuids)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: folder.uuid))
 
         return folder.uuid
     }
@@ -94,7 +94,7 @@ class FolderModel: ObservableObject {
         guard let folderUuid else { return }
 
         DataManager.sharedManager.delete(folderUuid: folderUuid, markAsDeleted: SyncManager.isUserLoggedIn())
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderDeleted, object: folderUuid)
+        NotificationCenter.postOnMainThread(FolderDeleted(uuid: folderUuid))
     }
 
     func nameForFolder() -> String {

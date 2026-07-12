@@ -111,7 +111,7 @@ class ShelfActionsViewController: UIViewController, CheckTranscriptAvailability 
     @IBAction func doneTapped(_ sender: UIButton) {
         if actionsTable.isEditing {
             Analytics.track(.playerShelfOverflowMenuRearrangeFinished)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playerActionsUpdated)
+            NotificationCenter.postOnMainThread(PlayerActionsUpdated())
             dismiss(animated: true, completion: nil)
             return
         }

@@ -219,8 +219,12 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         (view as? ThemeableView)?.style = .primaryUi04
         (view as? ThemeableView)?.themeOverride = themeOverride
 
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.playbackEnded, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackEnded.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
             self?.upNextChanged()
         })
@@ -230,10 +234,18 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
             self?.upNextChanged()
         })
-        NotificationCenter.default.addObserver(self, selector: #selector(updateTimeRemainingLabel), name: Constants.Notifications.playbackProgress, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(reorderingDidBegin), name: .tableViewReorderWillBegin, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(reorderingDidEnd), name: .tableViewReorderDidEnd, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+            self?.updateTimeRemainingLabel()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UIApplication.DidBecomeActiveMessage.self) { [weak self] _ in
+            self?.appDidBecomeActive()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: TableViewReorderWillBegin.self) { [weak self] _ in
+            self?.reorderingDidBegin()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: TableViewReorderDidEnd.self) { [weak self] _ in
+            self?.reorderingDidEnd()
+        })
 
         if showingInTab {
             messageTokens.append(NotificationCenter.default.addObserver(for: UpNextShuffleToggled.self) { [weak self] _ in
@@ -329,7 +341,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         track(.upNextShuffleEnabled, properties: ["value": upNextShuffleEnabled])
     }
 
-    @objc private func themeDidChange() {
+    private func themeDidChange() {
         if !SyncManager.isUserLoggedIn() {
             shuffleButton.setImage(UIImage(named: "shuffle-plus"), for: .normal)
             shuffleButton.isSelected = false
@@ -345,7 +357,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         shuffleButton.imageView?.translatesAutoresizingMaskIntoConstraints = false
     }
 
-    @objc private func subscriptionStatusDidChange() {
+    private func subscriptionStatusDidChange() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             // Update UI
@@ -358,8 +370,12 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 
     private func setupActionButtonsIfNecessary() {
         if shuffleButton.allTargets.isEmpty {
-            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(subscriptionStatusDidChange), name: ServerNotifications.subscriptionStatusChanged, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.themeDidChange()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: SubscriptionStatusChanged.self) { [weak self] _ in
+                self?.subscriptionStatusDidChange()
+            })
             themeDidChange()
             shuffleButton.addTarget(self, action: #selector(shuffleButtonTapped), for: .touchUpInside)
         }
@@ -368,12 +384,14 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 
     private func setupSortButtonIfNecessary() {
         guard sortButton.allTargets.isEmpty else { return }
-        NotificationCenter.default.addObserver(self, selector: #selector(updateSortButtonImage), name: Constants.Notifications.themeChanged, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateSortButtonImage()
+        })
         updateSortButtonImage()
         sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
     }
 
-    @objc private func updateSortButtonImage() {
+    private func updateSortButtonImage() {
         let image = UIImage(named: "podcast-sort")?
             .withTintColor(AppTheme.colorForStyle(.primaryIcon02, themeOverride: themeOverride), renderingMode: .alwaysOriginal)
         sortButton.setImage(image, for: .normal)
@@ -476,7 +494,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
 
-    @objc func updateTimeRemainingLabel() {
+    func updateTimeRemainingLabel() {
         var totalDuration = PlaybackManager.shared.upNextTotalDuration(includePlayingEpisode: false)
         if let episode = PlaybackManager.shared.currentEpisode() {
             totalDuration += episode.duration.seconds - PlaybackManager.shared.currentTime()
@@ -579,12 +597,12 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
 // MARK: - Reordering Notifications
 
 extension UpNextViewController {
-    @objc func reorderingDidBegin() {
+    func reorderingDidBegin() {
         isReorderInProgress = true
         PlaybackManager.shared.recordUpNextUserInteraction()
     }
 
-    @objc func reorderingDidEnd() {
+    func reorderingDidEnd() {
         isReorderInProgress = false
     }
 }

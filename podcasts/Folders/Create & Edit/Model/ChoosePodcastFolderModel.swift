@@ -83,7 +83,7 @@ class ChoosePodcastFolderModel: ObservableObject {
         currentFolder = folder.uuid
         loadFolders()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: currentFolder)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: currentFolder))
 
         didMoveToFolder = true
     }
@@ -98,7 +98,7 @@ class ChoosePodcastFolderModel: ObservableObject {
         currentFolder = rootFolder.uuid
         loadFolders()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: nil))
 
         didRemoveFromFolder = true
     }

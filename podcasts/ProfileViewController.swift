@@ -139,18 +139,32 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshComplete))
+        addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
         addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(handleDataChangedNotification))
         addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(ServerNotifications.podcastRefreshFailed, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.podcastRefreshThrottled, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.syncFailed, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(handleDataChangedNotification))
+        addCustomObserver(PodcastRefreshFailed.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(PodcastRefreshThrottled.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(SyncCompleted.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(SyncFailed.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(SubscriptionStatusChanged.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
         addCustomObserver(UserLoginDidChange.self) { [weak self] _ in
             self?.handleDataChangedNotification()
         }
-        addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
+        addCustomObserver(UserWillBeSignedOut.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
 
         addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
             self?.checkForScrollTap(message)
@@ -200,7 +214,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     // MARK: - Data Updates
 
-    @objc private func refreshComplete() {
+    private func refreshComplete() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 

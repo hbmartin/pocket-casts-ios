@@ -154,7 +154,7 @@ struct BackupRestoreView: View {
             return
         }
 
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.podcastsRefreshed, object: nil)
+        NotificationCenter.postOnMainThread(PodcastsRefreshed())
         FileLog.shared.addMessage("BackupRestore: restore completed")
         resultAlert = ResultAlert(title: L10n.settingsRestoreDoneTitle, message: L10n.settingsRestoreDoneMessage)
     }

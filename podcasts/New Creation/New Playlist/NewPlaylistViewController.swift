@@ -240,7 +240,7 @@ class NewPlaylistViewController: PCViewController {
         if creationType == .default {
             UserDefaults.standard.set(playlist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
             delegate?.filterCreated(newFilter: playlist)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: playlist))
         } else if case let .addEpisode(episode) = creationType {
             let didAdd = DataManager.sharedManager.add(episodes: [episode], to: playlist)
             guard didAdd else {
@@ -251,7 +251,7 @@ class NewPlaylistViewController: PCViewController {
 
             Analytics.track(.addToPlaylistsCreateNewPlaylistTapped, properties: ["source": analyticsSource ?? "unknown"])
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: playlist))
 
             Analytics.track(.filterCreated)
             Analytics.track(.filterCreateAsManualPlaylistTapped)
@@ -289,7 +289,7 @@ class NewPlaylistViewController: PCViewController {
 
             Analytics.track(.addToPlaylistsCreateNewPlaylistTapped, properties: ["source": analyticsSource ?? "unknown"])
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: playlist))
 
             Analytics.track(.filterCreated)
             Analytics.track(.filterCreateAsManualPlaylistTapped)

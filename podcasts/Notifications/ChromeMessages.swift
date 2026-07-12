@@ -26,6 +26,26 @@ nonisolated struct ThemeChanged: NotificationCenter.MainActorMessage {
     }
 }
 
+/// The system light/dark appearance may have flipped (scene trait change,
+/// foregrounding, or first appearance). `isDark` is `true` when the system is
+/// now dark; nil when a string-based post carried none. The bridged
+/// representation is frozen during the migration: the `Bool` rides in
+/// `Notification.object`.
+nonisolated struct SystemThemeMayHaveChanged: NotificationCenter.MainActorMessage {
+    typealias Subject = AnyObject
+    static var name: Notification.Name { Constants.Notifications.systemThemeMayHaveChanged }
+
+    let isDark: Bool?
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        Self(isDark: notification.object as? Bool)
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name, object: message.isDark)
+    }
+}
+
 /// The user turned on "follow system theme" in Appearance settings. No payload.
 nonisolated struct FollowSystemThemeTurnedOn: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject

@@ -377,14 +377,28 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     }
 
     func addUINotificationObservers() {
-        addCustomObserver(Constants.Notifications.playbackStarting, selector: #selector(playbackStarting))
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(playbackStarted))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(playbackStateDidChange))
-        addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(playbackStateDidChange))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackStateDidChange))
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(playbackProgressDidChange))
+        addCustomObserver(PlaybackStarting.self) { [weak self] _ in
+            self?.playbackStarting()
+        }
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.playbackStarted()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.playbackStateDidChange()
+        }
+        addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+            self?.playbackStateDidChange()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.playbackStateDidChange()
+        }
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.playbackProgressDidChange()
+        }
 
-        addCustomObserver(Constants.Notifications.podcastImageReCacheRequired, selector: #selector(updateRequired))
+        addCustomObserver(PodcastImageReCacheRequired.self) { [weak self] _ in
+            self?.updateRequired()
+        }
 
         addCustomObserver(EpisodeEmbeddedArtworkLoaded.self) { [weak self] _ in
             self?.updateRequired()
@@ -393,7 +407,9 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         addCustomObserver(UpNextQueueChanged.self) { [weak self] _ in
             self?.upNextListChanged()
         }
-        addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(upNextListChanged))
+        addCustomObserver(PodcastDeleted.self) { [weak self] _ in
+            self?.upNextListChanged()
+        }
 
         addCustomObserver(UIApplication.DidBecomeActiveMessage.self) { [weak self] _ in
             self?.playbackStateDidChange()
@@ -402,10 +418,16 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         addCustomObserver(ThemeChanged.self) { [weak self] _ in
             self?.updateColors()
         }
-        addCustomObserver(Constants.Notifications.currentlyPlayingEpisodeUpdated, selector: #selector(updateRequired))
+        addCustomObserver(CurrentlyPlayingEpisodeUpdated.self) { [weak self] _ in
+            self?.updateRequired()
+        }
 
-        addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(chapterDidChange))
-        addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(chapterDidChange))
+        addCustomObserver(PodcastChapterChanged.self) { [weak self] _ in
+            self?.chapterDidChange()
+        }
+        addCustomObserver(PodcastChaptersDidUpdate.self) { [weak self] _ in
+            self?.chapterDidChange()
+        }
     }
 
     func rootViewController() -> MainTabBarController? {
@@ -470,14 +492,14 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         }
     }
 
-    @objc private func chapterDidChange() {
+    private func chapterDidChange() {
         updateTitle()
         if let episode = PlaybackManager.shared.currentEpisode() {
             updateArtwork(for: episode)
         }
     }
 
-    @objc private func playbackStarted() {
+    private func playbackStarted() {
         if let episode = PlaybackManager.shared.currentEpisode() {
             setupForEpisode(episode)
             showMiniPlayer()
@@ -500,15 +522,15 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         }
     }
 
-    @objc private func playbackStarting() {
+    private func playbackStarting() {
         playbackStateDidChange()
     }
 
-    @objc private func upNextListChanged() {
+    private func upNextListChanged() {
         playbackStateDidChange()
     }
 
-    @objc private func playbackStateDidChange() {
+    private func playbackStateDidChange() {
         guard let episodePlaying = PlaybackManager.shared.currentEpisode() else {
             hideMiniPlayer(true)
 
@@ -520,7 +542,7 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         playbackProgressDidChange()
     }
 
-    @objc private func playbackProgressDidChange() {
+    private func playbackProgressDidChange() {
         if playerOpenState == .open { return } // don't update the mini player while the full screen player is open
 
         let currentTime = PlaybackManager.shared.currentTime()
@@ -612,7 +634,7 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         return nil
     }
 
-    @objc private func updateRequired() {
+    private func updateRequired() {
         guard let episode = PlaybackManager.shared.currentEpisode() else { return }
 
         updateColors()

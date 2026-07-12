@@ -8,7 +8,7 @@ extension PlayerContainerViewController {
         view.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
     }
 
-    @objc func update() {
+    func update() {
         guard PlaybackManager.shared.currentEpisode() != nil else {
             closeNowPlaying()
 

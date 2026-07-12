@@ -137,11 +137,21 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         updateTabBarColor()
         setupKeyboardShortcuts()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(textEditingDidStart), name: Constants.Notifications.textEditingDidStart, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(textEditingDidEnd), name: Constants.Notifications.textEditingDidEnd, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleFollowSystemThemeTurnedOn), name: Constants.Notifications.followSystemThemeTurnedOn, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(willEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: TextEditingDidStart.self) { [weak self] _ in
+            self?.textEditingDidStart()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: TextEditingDidEnd.self) { [weak self] _ in
+            self?.textEditingDidEnd()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: FollowSystemThemeTurnedOn.self) { [weak self] _ in
+            self?.handleFollowSystemThemeTurnedOn()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.willEnterForeground()
+        })
 
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
             self?.upNextQueueDidChange()
@@ -149,7 +159,9 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
             self?.upNextQueueDidChange()
         })
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.playbackTrackChanged, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.upNextQueueDidChange()
+        })
         // `UpNextEpisodeAdded` refreshes the count via the genie animation's tail, not here.
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeAdded.self) { [weak self] message in
             self?.animateEpisodeAddedToUpNext(message)
@@ -242,7 +254,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             }
         }
     }
-    @objc func themeDidChange() {
+    func themeDidChange() {
         updateTabBarColor()
         updateErrorColor()
         setNeedsStatusBarAppearanceUpdate()
@@ -269,7 +281,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         if tabIndex == selectedIndex, let navController = selectedViewController as? UINavigationController, navController.visibleViewController == navController.viewControllers.first {
             // the user has tapped on a tab they are already at the root of, so trigger an action so we can handle this
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.tappedOnSelectedTab, object: tabIndex)
+            NotificationCenter.postOnMainThread(TappedOnSelectedTab(tabIndex: tabIndex))
         }
 
         if tabIndex != selectedIndex {
@@ -691,7 +703,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         // appearance to configure here; only the theme tint above applies.
     }
 
-    @objc private func willEnterForeground() {
+    private func willEnterForeground() {
         fireSystemThemeMayHaveChanged()
     }
 
@@ -717,11 +729,11 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let isDark = Theme.systemIsDark
         if lastNotifiedAboutDark == nil || isDark != lastNotifiedAboutDark {
             lastNotifiedAboutDark = isDark
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.systemThemeMayHaveChanged, object: isDark)
+            NotificationCenter.postOnMainThread(SystemThemeMayHaveChanged(isDark: isDark))
         }
     }
 
-    @objc private func handleFollowSystemThemeTurnedOn() {
+    private func handleFollowSystemThemeTurnedOn() {
         lastNotifiedAboutDark = nil
         fireSystemThemeMayHaveChanged()
     }
@@ -874,14 +886,20 @@ extension MainTabBarController {
     }
 
     private func setupErrorObservers() {
-        let errorRelevantNotifications = Set([Constants.Notifications.playbackFailed, Constants.Notifications.playbackStarted, Constants.Notifications.playbackPaused])
-
-        for notificationName in errorRelevantNotifications {
-            NotificationCenter.default.addObserver(self, selector: #selector(updateError(notification:)), name: notificationName, object: nil)
-        }
+        // Only events that can change the active playback error are relevant:
+        // failure, start, and pause.
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackFailed.self) { [weak self] _ in
+            self?.updateError()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+            self?.updateError()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+            self?.updateError()
+        })
     }
 
-    @objc private func updateError(notification: NSNotification) {
+    private func updateError() {
         DispatchQueue.main.async { [weak self] in
             guard let error = PlaybackManager.shared.activeError else {
                 self?.hideError()
@@ -924,7 +942,7 @@ extension MainTabBarController {
         }
     }
 
-    @objc private func hideError() {
+    private func hideError() {
         errorBottomSpacing?.priority = .defaultLow
         UIView.animate(withDuration: 0.3,
                        delay: 0,
@@ -961,7 +979,7 @@ extension MainTabBarController {
 // MARK: - Up Next queue pulse
 
 extension MainTabBarController {
-    @objc func upNextQueueDidChange() {
+    func upNextQueueDidChange() {
         let count = PlaybackManager.shared.upNextCount()
         let previous = previousUpNextCount
         previousUpNextCount = count

@@ -34,7 +34,7 @@ public class SyncManager {
         FileLog.shared.addMessage("SyncManager.signout – userInitiated: \(userInitiated)")
 
         // Notify any listeners that the user login state will be changing
-        NotificationCenter.postOnMainThread(notification: .serverUserWillBeSignedOut, userInfo: ["user_initiated": userInitiated])
+        NotificationCenter.postOnMainThread(UserWillBeSignedOut(userInitiated: userInitiated))
 
         clearTokensFromKeyChain()
         FileLog.shared.addMessage("SyncManager.signout clearTokensFromKeyChain")

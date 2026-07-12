@@ -177,7 +177,7 @@ class PodcastFilterOverlayController: PodcastChooserViewController, PodcastSelec
 
         filterToEdit.syncStatus = SyncStatus.notSynced.rawValue
         filterToEdit = DataManager.sharedManager.save(playlist: filterToEdit)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filterToEdit)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: filterToEdit))
         navigationController?.popViewController(animated: true)
 
         if !filterToEdit.isNew {

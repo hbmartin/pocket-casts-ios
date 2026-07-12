@@ -19,23 +19,35 @@ class FolderPreviewView: UIView {
     private var nameLabelVerticalPositionConstraint: NSLayoutConstraint?
     private var nameLabelBottomConstraint: NSLayoutConstraint?
     private var currentFolder: Folder?
+    private var folderChangedToken: NotificationCenter.ObservationToken?
 
-    private func addObservers() {
-        NotificationCenter.default.removeObserver(self)
-
-        guard let currentFolder else {
-            return
+    deinit {
+        let token = folderChangedToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
         }
-
-        NotificationCenter.default.addObserver(self, selector: #selector(folderChanged(_:)), name: Constants.Notifications.folderChanged, object: currentFolder.uuid)
     }
 
-    @objc private func folderChanged(_ notification: Notification) {
-        guard let currentFolder else {
+    private func addObservers() {
+        guard currentFolder != nil else {
+            if let folderChangedToken {
+                NotificationCenter.default.removeObserver(folderChangedToken)
+                self.folderChangedToken = nil
+            }
             return
         }
 
-        populateFromAsync(folder: currentFolder)
+        guard folderChangedToken == nil else { return }
+
+        // The legacy registration filtered on `object: currentFolder.uuid`; the folder
+        // this view previews can change on reuse, so filter by uuid at delivery time.
+        folderChangedToken = NotificationCenter.default.addObserver(for: FolderChanged.self) { [weak self] message in
+            guard let self, let currentFolder = self.currentFolder, message.uuid == currentFolder.uuid else {
+                return
+            }
+
+            self.populateFromAsync(folder: currentFolder)
+        }
     }
 
     func populateFrom(folder: Folder) {

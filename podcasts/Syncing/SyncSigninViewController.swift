@@ -118,12 +118,24 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         super.viewDidAppear(animated)
 
         emailField.becomeFirstResponder()
-        addCustomObserver(ServerNotifications.syncProgressPodcastCount, selector: #selector(syncProgressCountKnown(_:)))
-        addCustomObserver(ServerNotifications.syncProgressPodcastUpto, selector: #selector(syncUpToChanged(_:)))
-        addCustomObserver(ServerNotifications.syncProgressImportedPodcasts, selector: #selector(podcastsImported))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(syncCompleted))
-        addCustomObserver(ServerNotifications.syncFailed, selector: #selector(syncCompleted))
-        addCustomObserver(ServerNotifications.podcastRefreshFailed, selector: #selector(syncCompleted))
+        addCustomObserver(SyncProgressPodcastCountKnown.self) { [weak self] message in
+            self?.totalPodcastsToImport = message.count
+        }
+        addCustomObserver(SyncProgressPodcastUptoChanged.self) { [weak self] message in
+            self?.syncUpToChanged(message.upTo)
+        }
+        addCustomObserver(SyncProgressPodcastsImported.self) { [weak self] _ in
+            self?.podcastsImported()
+        }
+        addCustomObserver(SyncCompleted.self) { [weak self] _ in
+            self?.syncCompleted()
+        }
+        addCustomObserver(SyncFailed.self) { [weak self] _ in
+            self?.syncCompleted()
+        }
+        addCustomObserver(PodcastRefreshFailed.self) { [weak self] _ in
+            self?.syncCompleted()
+        }
 
         if loginAgain, let syncingEmail = ServerSettings.syncingEmail(), let password = ServerSettings.syncingPassword() {
             startSignIn(syncingEmail, password: password)
@@ -161,19 +173,12 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
 
     // MARK: - Syncing Progress
 
-    @objc private func syncProgressCountKnown(_ notification: Notification) {
-        if let number = notification.object as? NSNumber {
-            totalPodcastsToImport = number.intValue
-        }
-    }
-
-    @objc private func syncUpToChanged(_ notification: Notification) {
-        guard let progressAlert, let number = notification.object as? NSNumber else { return }
+    private func syncUpToChanged(_ upTo: Int) {
+        guard let progressAlert else { return }
 
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
-            let upTo = number.intValue
             if self.totalPodcastsToImport > 0 {
                 progressAlert.title = L10n.syncProgress(upTo.localized(), self.totalPodcastsToImport.localized())
                 progressAlert.progress = CGFloat(upTo / self.totalPodcastsToImport)
@@ -184,7 +189,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @objc private func podcastsImported() {
+    private func podcastsImported() {
         guard let progressAlert else { return }
 
         DispatchQueue.main.async {
@@ -192,7 +197,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @objc private func syncCompleted() {
+    private func syncCompleted() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 

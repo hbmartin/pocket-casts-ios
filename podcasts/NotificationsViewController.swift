@@ -126,7 +126,9 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         super.viewDidLoad()
 
         title = L10n.settingsNotifications
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastUpdated(_:)), name: Constants.Notifications.podcastUpdated, object: nil)
+        podcastUpdatedToken = NotificationCenter.default.addObserver(for: PodcastUpdated.self) { [weak self] _ in
+            self?.podcastUpdated()
+        }
 
         Analytics.track(.settingsNotificationsShown)
 
@@ -248,7 +250,16 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
 
     // MARK: - Notification handler
 
-    @objc func podcastUpdated(_ notification: Notification) {
+    private var podcastUpdatedToken: NotificationCenter.ObservationToken?
+
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
+    isolated deinit {
+        if let podcastUpdatedToken {
+            NotificationCenter.default.removeObserver(podcastUpdatedToken)
+        }
+    }
+
+    private func podcastUpdated() {
         guard let podcastChooserController else { return }
         let allPodcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
         podcastChooserController.selectedUuids = allPodcasts.filter(\.isPushEnabled).map(\.uuid)
@@ -260,17 +271,17 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     func bulkSelectionChange(selected: Bool) {
         DataManager.sharedManager.setPushForAllPodcasts(pushEnabled: selected)
         let allPodcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
-        allPodcasts.forEach { NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: $0.uuid) }
+        allPodcasts.forEach { NotificationCenter.postOnMainThread(PodcastUpdated(uuid: $0.uuid)) }
     }
 
     func podcastSelected(podcast: String) {
         DataManager.sharedManager.savePushSetting(podcastUuid: podcast, pushEnabled: true)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast))
     }
 
     func podcastUnselected(podcast: String) {
         DataManager.sharedManager.savePushSetting(podcastUuid: podcast, pushEnabled: false)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast))
     }
 
     func didChangePodcasts(numberSelected: Int) {

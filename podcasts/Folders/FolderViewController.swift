@@ -65,8 +65,12 @@ class FolderViewController: PCViewController {
         reloadFolder()
         miniPlayerStatusDidChange()
 
-        addCustomObserver(Constants.Notifications.podcastUpdated, selector: #selector(reloadFolder))
-        addCustomObserver(Constants.Notifications.folderChanged, selector: #selector(reloadFolder))
+        addCustomObserver(PodcastUpdated.self) { [weak self] _ in
+            self?.reloadFolder()
+        }
+        addCustomObserver(FolderChanged.self) { [weak self] _ in
+            self?.reloadFolder()
+        }
         addCustomObserver(MiniPlayerDidAppear.self) { [weak self] _ in
             self?.miniPlayerStatusDidChange()
         }
@@ -109,7 +113,7 @@ class FolderViewController: PCViewController {
         Analytics.track(.folderAddPodcastsButtonTapped)
     }
 
-    @objc private func reloadFolder() {
+    private func reloadFolder() {
         guard let updatedFolder = DataManager.sharedManager.findFolder(uuid: folder.uuid) else { return }
 
         folder = updatedFolder
@@ -241,7 +245,7 @@ class FolderViewController: PCViewController {
         folder.syncModified = TimeFormatter.currentUTCTimeInMillis()
         DataManager.sharedManager.save(folder: folder)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: folder.uuid))
 
         Analytics.track(.folderSortByChanged, properties: ["sort_order": order])
     }

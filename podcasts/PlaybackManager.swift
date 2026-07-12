@@ -171,7 +171,7 @@ final class PlaybackManager {
                 sleepTimerManager.recordSleepTimerDuration(duration: nil, onEpisodeEnd: true)
                 FileLog.shared.addMessage("Sleep Timer: starting with \(numberOfEpisodesToSleepAfter) episodes")
             }
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+            NotificationCenter.postOnMainThread(SleepTimerChanged())
         }
     }
 
@@ -219,6 +219,9 @@ final class PlaybackManager {
     private var episodeSwitchTime: Date?
     private var audioSessionNotificationObservers: AudioSessionNotificationObservers?
 
+    /// Typed-message observations, registered once in `init` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     init() {
         queue = PlaybackQueue()
         queue.loadPersistedQueue()
@@ -249,16 +252,34 @@ final class PlaybackManager {
 
         Self.engineState.tuning = Settings.audioTuning
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleAudioTuningChanged), name: Constants.Notifications.audioTuningDidChange, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSkipTimesChanged), name: Constants.Notifications.skipTimesChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidUpdate(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidDownload(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateExtraActions), name: Constants.Notifications.extraMediaSessionActionsChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshRemoteCommands), name: Constants.Notifications.remoteCommandSettingsChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateNowPlayingInfo), name: Constants.Notifications.userEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: .episodeEmbeddedArtworkLoaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentlyPlayingEpisodeUpdated), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: AudioTuningDidChange.self) { [weak self] _ in
+            self?.handleAudioTuningChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: SkipTimesChanged.self) { [weak self] _ in
+            self?.handleSkipTimesChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UserEpisodeUpdated.self) { [weak self] message in
+            self?.handleEpisodeDidUpdate(episodeUuid: message.uuid)
+            self?.updateNowPlayingInfo()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+            self?.handleEpisodeDidDownload(episodeUuid: message.uuid)
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: ExtraMediaSessionActionsChanged.self) { [weak self] _ in
+            self?.updateExtraActions()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: RemoteCommandSettingsChanged.self) { [weak self] _ in
+            self?.refreshRemoteCommands()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeEmbeddedArtworkLoaded.self) { [weak self] _ in
+            self?.updateAllNowPlayingData()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PodcastChaptersDidUpdate.self) { [weak self] _ in
+            self?.updateAllNowPlayingData()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: CurrentlyPlayingEpisodeUpdated.self) { [weak self] _ in
+            self?.handleCurrentlyPlayingEpisodeUpdated()
+        })
 
         // deferred because some of these call our singleton instance back, which would
         // crash if run inside init (PlaybackManager.shared re-entry); the task only
@@ -271,7 +292,12 @@ final class PlaybackManager {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Read isolated stored properties into locals before any observer removal
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     nonisolated static func observeAudioSessionNotifications(
@@ -406,10 +432,10 @@ final class PlaybackManager {
         activeError = nil
 
         if autoPlay {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarting)
+            NotificationCenter.postOnMainThread(PlaybackStarting())
             play(completion: completion)
         } else if episodeIsChanging {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+            NotificationCenter.postOnMainThread(UpNextQueueChanged())
         }
     }
 
@@ -449,7 +475,7 @@ final class PlaybackManager {
             self.updateCommandCenterSkipTimes(addTarget: false)
             self.updateExtraActions()
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarted)
+            NotificationCenter.postOnMainThread(PlaybackStarted())
 
             if currEpisode.videoPodcast() {
                 self.setAudioSessionVideoProperties()
@@ -482,7 +508,7 @@ final class PlaybackManager {
         updateNowPlayingInfo()
 
         catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
+        NotificationCenter.postOnMainThread(PlaybackPaused())
         cancelUpdateTimer()
         deactiveAudioSession()
 
@@ -678,7 +704,7 @@ final class PlaybackManager {
                 DataManager.sharedManager.saveEpisode(playedUpTo: time, episode: playingEpisode, updateSyncFlag: syncChanges)
 
                 seekingTo = PlaybackManager.notSeeking
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPositionSaved, object: playingEpisode.uuid)
+                NotificationCenter.postOnMainThread(PlaybackPositionSaved(uuid: playingEpisode.uuid))
                 checkForChapterChange()
                 fireProgressNotification()
                 updateNowPlayingInfo()
@@ -873,11 +899,11 @@ final class PlaybackManager {
         if autoPlay {
             play(userInitiated: false)
         } else {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+            NotificationCenter.postOnMainThread(UpNextQueueChanged())
         }
 
         numberOfEpisodesToSleepAfter -= 1
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackTrackChanged)
+        NotificationCenter.postOnMainThread(PlaybackTrackChanged())
     }
 
     private func switchTo(episodeToPlay: BaseEpisode, moveExistingToUpNext: Bool, autoPlay: Bool, completion: (() -> Void)? = nil) {
@@ -891,8 +917,8 @@ final class PlaybackManager {
         load(episode: episodeToPlay, autoPlay: autoPlay, overrideUpNext: false, completion: completion)
         switchingToDifferentUpNextEpisode = false
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackTrackChanged)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(PlaybackTrackChanged())
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func play(playlist: EpisodeFilter) {
@@ -939,7 +965,7 @@ final class PlaybackManager {
         cleanupCurrentPlayer(permanent: true)
             NowPlayingHelper.clearNowPlayingInfo()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEnded)
+        NotificationCenter.postOnMainThread(PlaybackEnded())
     }
 
     private var deactivateTimedActionHelper = TimedActionHelper()
@@ -982,7 +1008,7 @@ final class PlaybackManager {
     }
 
     func connectedToRemotePlayerWithEpisode(_ episode: Episode) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarted)
+        NotificationCenter.postOnMainThread(PlaybackStarted())
     }
 
     func playingOverAirplay() -> Bool {
@@ -1047,7 +1073,7 @@ final class PlaybackManager {
             podcast.boostVolume = effects.volumeBoost
 
             DataManager.sharedManager.save(podcast: podcast)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+            NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
         }
 
         currentEffects = effects
@@ -1085,7 +1111,7 @@ final class PlaybackManager {
         handlePlaybackEffectsChanged(effects: newEffects)
     }
 
-    @objc private func handleAudioTuningChanged() {
+    private func handleAudioTuningChanged() {
         let oldTuning = Self.engineState.tuning
         let newTuning = Settings.audioTuning
         guard oldTuning != newTuning else { return }
@@ -1116,7 +1142,7 @@ final class PlaybackManager {
         podcast.isEffectsOverridden = applyLocalSettings
 
         DataManager.sharedManager.save(podcast: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
 
         effectsChangedExternally()
     }
@@ -1137,7 +1163,7 @@ final class PlaybackManager {
         }
         updateAllNowPlayingData()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEffectsChanged)
+        NotificationCenter.postOnMainThread(PlaybackEffectsChanged())
     }
 
     func silenceRemovalAvailable() -> Bool {
@@ -1315,7 +1341,7 @@ final class PlaybackManager {
             AnalyticsPlaybackHelper.shared.currentSource = .playbackFailed
             pause(userInitiated: false)
             AnalyticsPlaybackHelper.shared.currentSource = previousSource
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
+            NotificationCenter.postOnMainThread(PlaybackPaused())
             activeError = error
             let message = error.userMessage
             DataManager.sharedManager.saveEpisode(playbackError: message, episode: episode)
@@ -1324,7 +1350,7 @@ final class PlaybackManager {
                 cleanupCurrentPlayer(permanent: false)
             }
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackFailed)
+            NotificationCenter.postOnMainThread(PlaybackFailed())
 
             return
         }
@@ -1340,7 +1366,7 @@ final class PlaybackManager {
 
         if currentDuration < 10 || abs(currentDuration - playerDuration) > 10 {
             DataManager.sharedManager.saveEpisode(duration: playerDuration, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDurationChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDurationChanged(uuid: episode.uuid))
         }
 
         fireProgressNotification()
@@ -1349,7 +1375,7 @@ final class PlaybackManager {
 
     func playerDidChangeNowPlayingInfo() {
         updateNowPlayingInfo()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.currentlyPlayingEpisodeUpdated)
+        NotificationCenter.postOnMainThread(CurrentlyPlayingEpisodeUpdated())
     }
 
     func playerDidFinishPlayingEpisode() {
@@ -1420,7 +1446,7 @@ final class PlaybackManager {
             if let episode = currentEpisode() {
                 queue.remove(episode: episode, fireNotification: false)
             }
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEnded)
+            NotificationCenter.postOnMainThread(PlaybackEnded())
             cleanupCurrentPlayer(permanent: true)
 
                 NowPlayingHelper.clearNowPlayingInfo()
@@ -1439,7 +1465,7 @@ final class PlaybackManager {
 
         cleanupCurrentPlayer(permanent: true)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPositionSaved, object: currEpisode.uuid)
+        NotificationCenter.postOnMainThread(PlaybackPositionSaved(uuid: currEpisode.uuid))
         updateNowPlayingInfo()
     }
 
@@ -1481,7 +1507,7 @@ final class PlaybackManager {
         } else {
             // there's a new list of episodes to play, so clear what's currently playing and play that
             load(episode: startingAtEpisode, autoPlay: true, overrideUpNext: true)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackTrackChanged)
+            NotificationCenter.postOnMainThread(PlaybackTrackChanged())
 
             let filteredEpisodes = episodes!.filter { $0.uuid != startingAtEpisode.uuid }
             if filteredEpisodes.isEmpty {
@@ -1653,7 +1679,7 @@ final class PlaybackManager {
     }
 
     func upNextQueueChanged() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func upNextQueueCount() -> Int {
@@ -1683,7 +1709,7 @@ final class PlaybackManager {
         }
 
         if fireNotifications {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPositionSaved, object: currEpisode.uuid)
+            NotificationCenter.postOnMainThread(PlaybackPositionSaved(uuid: currEpisode.uuid))
             updateNowPlayingInfo()
         }
 
@@ -1777,18 +1803,18 @@ final class PlaybackManager {
         if Thread.isMainThread {
             if isBackgrounded() { return }
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackProgress)
+            NotificationCenter.postOnMainThread(PlaybackProgressed())
         } else {
             DispatchQueue.main.sync {
                 if isBackgrounded() { return }
 
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackProgress)
+                NotificationCenter.postOnMainThread(PlaybackProgressed())
             }
         }
     }
 
     private func fireChapterChangeNotification() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastChapterChanged)
+        NotificationCenter.postOnMainThread(PodcastChapterChanged())
     }
 
     private func isBackgrounded() -> Bool {
@@ -1815,7 +1841,7 @@ final class PlaybackManager {
         playing() ? player?.playbackRate() : nil
     }
 
-    @objc private func updateNowPlayingInfo() {
+    private func updateNowPlayingInfo() {
         guard let episode = currentEpisode() else {
                 NowPlayingHelper.clearNowPlayingInfo()
 
@@ -1838,7 +1864,7 @@ final class PlaybackManager {
         chapterManager.parseChapters(episode: episode, duration: duration())
     }
 
-    @objc private func updateAllNowPlayingData() {
+    private func updateAllNowPlayingData() {
         guard let episode = currentEpisode() else {
                 NowPlayingHelper.clearNowPlayingInfo()
             return
@@ -1853,7 +1879,7 @@ final class PlaybackManager {
         sleepTimerManager.cancelSleepTimer(userInitiated: userInitiated)
         sleepTimeRemaining = -1
         numberOfEpisodesToSleepAfter = 0
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+        NotificationCenter.postOnMainThread(SleepTimerChanged())
     }
 
     func sleepTimerActive() -> Bool {
@@ -1864,7 +1890,7 @@ final class PlaybackManager {
         FileLog.shared.addMessage("Sleep Timer: starting with \(stopIn)")
         sleepTimerManager.recordSleepTimerDuration(duration: stopIn, onEpisodeEnd: nil)
         sleepTimeRemaining = stopIn
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+        NotificationCenter.postOnMainThread(SleepTimerChanged())
         Analytics.track(.playerSleepTimerEnabled, properties: ["time": Int(stopIn)])
     }
 
@@ -2002,7 +2028,7 @@ final class PlaybackManager {
         refreshRemoteCommands()
     }
 
-    @objc private func refreshRemoteCommands() {
+    private func refreshRemoteCommands() {
         let commandCenter = MPRemoteCommandCenter.shared()
 
         commandCenter.changePlaybackPositionCommand.removeTarget(nil)
@@ -2039,7 +2065,7 @@ final class PlaybackManager {
         }
     }
 
-    @objc private func updateExtraActions() {
+    private func updateExtraActions() {
         let actionsEnabled = Settings.extraMediaSessionActionsEnabled()
 
         let markPlayedCommand = MPRemoteCommandCenter.shared().dislikeCommand
@@ -2090,7 +2116,7 @@ final class PlaybackManager {
 
     // MARK: - Skip Time Changes
 
-    @objc private func handleSkipTimesChanged() {
+    private func handleSkipTimesChanged() {
         updateCommandCenterSkipTimes(addTarget: false)
     }
 
@@ -2267,7 +2293,7 @@ final class PlaybackManager {
             if let episode = currentEpisode() {
                 catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
             }
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
+            NotificationCenter.postOnMainThread(PlaybackPaused())
         }
     }
 
@@ -2316,8 +2342,8 @@ final class PlaybackManager {
 
     // MARK: - Downloading a streamed episode check
 
-    @objc private func handleEpisodeDidDownload(_ notification: Notification) {
-        guard let playingEpisode = currentEpisode(), let uuid = notification.object as? String else { return }
+    private func handleEpisodeDidDownload(episodeUuid: String?) {
+        guard let playingEpisode = currentEpisode(), let uuid = episodeUuid else { return }
 
         if uuid != playingEpisode.uuid { return } // download isn't the episode we're playing
 
@@ -2333,7 +2359,7 @@ final class PlaybackManager {
 
             load(episode: refreshedEpisode, autoPlay: currentlyPlaying, overrideUpNext: false, saveCurrentEpisode: false)
             if refreshedEpisode.videoPodcast() {
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.videoPlaybackEngineSwitched)
+                NotificationCenter.postOnMainThread(VideoPlaybackEngineSwitched())
             }
         }
     }
@@ -2354,14 +2380,14 @@ final class PlaybackManager {
         }
     }
 
-    @objc private func handleEpisodeDidUpdate(_ notification: Notification) {
-        guard let playingEpisode = currentEpisode(), let uuid = notification.object as? String, uuid == playingEpisode.uuid else { return }
+    private func handleEpisodeDidUpdate(episodeUuid: String?) {
+        guard let playingEpisode = currentEpisode(), let uuid = episodeUuid, uuid == playingEpisode.uuid else { return }
 
         // update the cached copy of the now playing episode so we have the latest version of it
         queue.nowPlayingEpisodeChanged()
     }
 
-    @objc private func handleCurrentlyPlayingEpisodeUpdated() {
+    private func handleCurrentlyPlayingEpisodeUpdated() {
         // Update episode switch time when the currently playing episode changes
         episodeSwitchTime = Date()
     }

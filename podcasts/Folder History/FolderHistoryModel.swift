@@ -36,7 +36,7 @@ class FolderHistoryModel: ObservableObject {
             podcast.folderUuid = folder.uuid
             podcast.syncStatus = SyncStatus.notSynced.rawValue
             podcastRepository.save(podcast: podcast)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
+            NotificationCenter.postOnMainThread(FolderChanged(uuid: folder.uuid))
         }
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
         Toast.show(L10n.restoreFoldersSuccess)

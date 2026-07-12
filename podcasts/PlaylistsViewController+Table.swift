@@ -114,7 +114,7 @@ extension PlaylistsViewController: UITableViewDelegate, UITableViewDataSource {
             DataManager.sharedManager.updatePosition(playlist: filter.playlist, newPosition: Int32(index))
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
         Analytics.track(.filterListReordered)
     }
@@ -326,7 +326,7 @@ extension PlaylistsViewController: UITableViewDragDelegate, UITableViewDropDeleg
             DataManager.sharedManager.updatePosition(playlist: playlist.playlist, newPosition: Int32(index))
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
         Analytics.track(.filterListReordered)
     }

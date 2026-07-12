@@ -93,16 +93,22 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     /// UI reader momentarily owns the non-blocking meter lock.
     private var tapVoiceBoostMetersNeedClear = false
 
+    /// Owns the did-enter-background observation added in `init`; removed in deinit
+    /// for symmetry with the block observers cleaned up in `cleanupPlayer`.
+    private var backgroundObservationToken: NotificationCenter.ObservationToken?
+
     init() {
         backgroundTaskId = .invalid
-        NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        backgroundObservationToken = NotificationCenter.default.addObserver(for: UIApplication.DidEnterBackgroundMessage.self) { [weak self] _ in
+            self?.didEnterBackground()
+        }
         refreshTapTuning()
     }
 
     deinit {
-        // The didEnterBackground selector observer is added in init; remove it explicitly
-        // for symmetry with the block observers cleaned up in cleanupPlayer.
-        NotificationCenter.default.removeObserver(self)
+        if let backgroundObservationToken {
+            NotificationCenter.default.removeObserver(backgroundObservationToken)
+        }
     }
 
     /// Re-snapshots the tuning-derived values the tap thread consumes. Runs on the
@@ -331,7 +337,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         player
     }
 
-    @objc private func didEnterBackground() {
+    private func didEnterBackground() {
         lastBackgroundedDate = Date()
     }
 

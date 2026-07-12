@@ -4847,6 +4847,31 @@ rules:
     patterns:
       - pattern-regex: 'NotificationCenter\.default\.post\('
 
+  - id: pocketcasts.no-direct-typed-notification-post
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: HIGH
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      The SDK's typed NotificationCenter.post(_:) invokes makeNotification but DISCARDS its
+      object/userInfo when delivering to string-based observers (probe-verified on the 26.5
+      SDK), silently breaking every unconverted observer that reads the frozen bridged payload
+      during the typed-notification migration. Post typed messages via
+      NotificationCenter.postOnMainThread(_:) (PocketCastsUtils) instead — it posts the bridged
+      legacy Notification, reaching typed and string observers alike with the blocking
+      main-sync delivery semantics posters rely on.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/Modules/Sources/**/*.swift"
+    patterns:
+      - pattern-regex: 'NotificationCenter\.default\.post\([A-Z][A-Za-z0-9_]*\('
+      - pattern-not-regex: 'NotificationCenter\.default\.post\((Notification|NSNotification)\('
+
   - id: pocketcasts.filemanager-urls-no-force-index
     severity: WARNING
     metadata:

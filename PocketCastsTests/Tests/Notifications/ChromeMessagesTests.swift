@@ -37,6 +37,29 @@ final class ChromeMessagesTests: XCTestCase {
         XCTAssertEqual(message.tabIndex, 3)
     }
 
+    // MARK: - SystemThemeMayHaveChanged (isDark payload)
+
+    func testSystemThemeMayHaveChangedRoundTripsIsDark() throws {
+        XCTAssertEqual(SystemThemeMayHaveChanged.name.rawValue, "SystemThemeChanged", "raw names are effectively ABI and must never change")
+
+        for isDark in [true, false] {
+            let notification = SystemThemeMayHaveChanged.makeNotification(SystemThemeMayHaveChanged(isDark: isDark))
+
+            // Frozen bridged shape: the Bool rides in `object` (read by the
+            // still-string-based Theme observer).
+            XCTAssertEqual(notification.name, Constants.Notifications.systemThemeMayHaveChanged)
+            XCTAssertEqual(notification.object as? Bool, isDark)
+
+            let roundTripped = try XCTUnwrap(SystemThemeMayHaveChanged.makeMessage(notification))
+            XCTAssertEqual(roundTripped.isDark, isDark)
+        }
+    }
+
+    func testSystemThemeMayHaveChangedBridgesFromBareStringPost() throws {
+        let message = try XCTUnwrap(SystemThemeMayHaveChanged.makeMessage(Notification(name: Constants.Notifications.systemThemeMayHaveChanged)))
+        XCTAssertNil(message.isDark)
+    }
+
     // MARK: - No-payload messages
 
     func testThemeChangedBridgesBothWays() {

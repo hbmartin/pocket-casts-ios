@@ -43,6 +43,7 @@ for fixture in \
   semgrep/tests/podcasts/RemovedPlusLockedInfo.swift \
   semgrep/tests/podcasts/RemovedLegacyPayment.swift \
   semgrep/tests/podcasts/RemovedUserSatisfactionSurvey.swift \
+  semgrep/tests/Modules/Sources/PocketCastsServer/TypedMessagePostFixture.swift \
   semgrep/tests/generate-credentials-placeholder-regex.sh
 do
   run_fixture semgrep/swift-security.yml "$fixture"

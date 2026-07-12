@@ -89,11 +89,11 @@ extension MainTabBarController {
         NavigationManager.sharedManager.miniPlayer?.closeFullScreenPlayer()
     }
 
-    @objc func textEditingDidStart() {
+    func textEditingDidStart() {
         removeKeyCommand(playPauseCommand)
     }
 
-    @objc func textEditingDidEnd() {
+    func textEditingDidEnd() {
         addKeyCommand(playPauseCommand)
     }
 }

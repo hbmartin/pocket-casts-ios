@@ -35,7 +35,7 @@ nonisolated class PlaylistManager {
         // don't create the rest of these if the user already has playlists
         let playlistsCount = DataManager.sharedManager.playlistsCount(includeDeleted: false)
         if playlistsCount > 1 {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
             return
         }
@@ -61,7 +61,7 @@ nonisolated class PlaylistManager {
             DataManager.sharedManager.save(playlist: inProgress)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
     }
 
     class func delete(playlist: EpisodeFilter?, fireEvent: Bool) {
@@ -76,7 +76,7 @@ nonisolated class PlaylistManager {
         }
 
         if fireEvent {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
         }
     }
 

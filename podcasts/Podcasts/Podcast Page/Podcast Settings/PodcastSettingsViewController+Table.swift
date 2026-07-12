@@ -251,7 +251,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
                 playlist.addPodcast(podcastUuid: self.podcast.uuid)
                 DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+                NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
                 Analytics.track(.filterUpdated, properties: ["group": "podcasts", "source": "podcast_settings"])
             }
@@ -261,7 +261,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
                 playlist.removePodcast(podcastUuid: self.podcast.uuid)
                 DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+                NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
                 Analytics.track(.filterUpdated, properties: ["group": "podcasts", "source": "podcast_settings"])
             }
@@ -344,7 +344,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             podcast.autoDownloadSetting = AutoDownloadSetting.off.rawValue
         }
         DataManager.sharedManager.save(podcast: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
 
         Analytics.track(.podcastSettingsAutoDownloadToggled, properties: ["enabled": sender.isOn])
     }
@@ -379,7 +379,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
                     return
                 }
                 self.podcast = PodcastManager.shared.setNotificationsEnabled(podcast: self.podcast, enabled: isOn)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: self.podcast.uuid)
+                NotificationCenter.postOnMainThread(PodcastUpdated(uuid: self.podcast.uuid))
             }
         }
     }

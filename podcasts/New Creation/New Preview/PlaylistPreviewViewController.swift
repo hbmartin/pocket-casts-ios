@@ -226,7 +226,7 @@ class PlaylistPreviewViewController: PCViewController {
         let savedPlaylist = DataManager.sharedManager.save(playlist: viewModel.newPlaylist)
         UserDefaults.standard.set(savedPlaylist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
         delegate?.filterCreated(newFilter: savedPlaylist)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: savedPlaylist))
 
         PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
 

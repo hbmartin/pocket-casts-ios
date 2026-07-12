@@ -2,6 +2,9 @@ import PocketCastsUtils
 import UIKit
 
 class SleepTimerViewController: SimpleNotificationsViewController {
+    /// Owns the app-active observation registered in `viewDidLoad`; the box
+    /// deregisters it on dealloc (this class cannot declare the deinit itself).
+    private let tokenBox = ObservationTokenBox()
 
     @IBOutlet var settingsBtn: UIButton! {
         didSet {
@@ -188,7 +191,12 @@ class SleepTimerViewController: SimpleNotificationsViewController {
         super.viewDidLoad()
         self.view.translatesAutoresizingMaskIntoConstraints = false
         updateColors()
-        NotificationCenter.default.addObserver(self, selector: #selector(dismissIfNeeded), name: UIApplication.didBecomeActiveNotification, object: nil)
+        // Held in a token box (not the custom-observer bag) so it survives the
+        // bag's viewDidDisappear clear-out, matching the old selector observer's
+        // viewDidLoad-to-dealloc lifetime.
+        tokenBox.token = NotificationCenter.default.addObserver(for: UIApplication.DidBecomeActiveMessage.self) { [weak self] _ in
+            self?.dismissIfNeeded()
+        }
         setupButtonsForDynamicType()
     }
 
@@ -205,7 +213,9 @@ class SleepTimerViewController: SimpleNotificationsViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(progressUpdated))
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.progressUpdated()
+        }
         addCustomObserver(ThemeChanged.self) { [weak self] _ in
             self?.updateColors()
         }
@@ -219,7 +229,7 @@ class SleepTimerViewController: SimpleNotificationsViewController {
         removeAllCustomObservers()
     }
 
-    @objc private func progressUpdated() {
+    private func progressUpdated() {
         updateSleepRemainingTime()
     }
 
@@ -298,7 +308,7 @@ class SleepTimerViewController: SimpleNotificationsViewController {
 
     // When the user unlocks the phone and the timer count is active, we check
     // if it's still going on. If not, the view is dismissed.
-    @objc private func dismissIfNeeded() {
+    private func dismissIfNeeded() {
         if !PlaybackManager.shared.sleepTimerActive(), !sleepTimerActiveView.isHidden {
             dismiss(animated: true)
         }

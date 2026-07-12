@@ -16,9 +16,13 @@ class PCSearchBarController: UIViewController {
         if let themeToken {
             NotificationCenter.default.removeObserver(themeToken)
         }
+        if let searchRequestToken {
+            NotificationCenter.default.removeObserver(searchRequestToken)
+        }
     }
 
     private var themeToken: NotificationCenter.ObservationToken?
+    private var searchRequestToken: NotificationCenter.ObservationToken?
     @IBOutlet var roundedBackgroundView: UIView!
     @IBOutlet var searchTextField: UITextField! {
         didSet {
@@ -97,7 +101,9 @@ class PCSearchBarController: UIViewController {
         themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
             self?.updateColors()
         }
-        NotificationCenter.default.addObserver(self, selector: #selector(searchRequest), name: Constants.Notifications.podcastSearchRequest, object: nil)
+        searchRequestToken = NotificationCenter.default.addObserver(for: PodcastSearchRequested.self) { [weak self] message in
+            self?.searchRequest(message)
+        }
         updateSize()
         updateCollapseAppearance()
     }
@@ -153,8 +159,8 @@ class PCSearchBarController: UIViewController {
         isVisible = false
     }
 
-    @objc private func searchRequest(notification: Notification) {
-        if isVisible, let searchTerm = notification.object as? String {
+    private func searchRequest(_ message: PodcastSearchRequested) {
+        if isVisible, let searchTerm = message.term {
             searchTextField.text = searchTerm
             clearSearchBtn.isHidden = false
             view.endEditing(true)

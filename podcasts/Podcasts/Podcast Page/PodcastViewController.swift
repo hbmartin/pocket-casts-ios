@@ -275,7 +275,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
     isolated deinit {
         operationQueue.cancelAllOperations()
-        for token in miniPlayerTokens {
+        for token in observationTokens {
             NotificationCenter.default.removeObserver(token)
         }
     }
@@ -335,8 +335,12 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
         loadPodcastInfo()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastUpdated(_:)), name: Constants.Notifications.podcastUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(folderChanged(_:)), name: Constants.Notifications.folderChanged, object: nil)
+        observationTokens.append(NotificationCenter.default.addObserver(for: PodcastUpdated.self) { [weak self] message in
+            self?.podcastUpdated(message)
+        })
+        observationTokens.append(NotificationCenter.default.addObserver(for: FolderChanged.self) { [weak self] _ in
+            self?.folderChanged()
+        })
 
         listenForBookmarkChanges()
         setupLogin()
@@ -345,15 +349,15 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         setupRefreshControl()
 
         // Keep external action bar aligned with mini player
-        miniPlayerTokens.append(NotificationCenter.default.addObserver(for: MiniPlayerDidAppear.self) { [weak self] _ in
+        observationTokens.append(NotificationCenter.default.addObserver(for: MiniPlayerDidAppear.self) { [weak self] _ in
             self?.miniPlayerStatusDidChange()
         })
-        miniPlayerTokens.append(NotificationCenter.default.addObserver(for: MiniPlayerDidDisappear.self) { [weak self] _ in
+        observationTokens.append(NotificationCenter.default.addObserver(for: MiniPlayerDidDisappear.self) { [weak self] _ in
             self?.miniPlayerStatusDidChange()
         })
     }
 
-    private var miniPlayerTokens = [NotificationCenter.ObservationToken]()
+    private var observationTokens = [NotificationCenter.ObservationToken]()
 
     private var isScrolledPastHeader = false
     private var isNavBarBlurred = false
@@ -469,7 +473,9 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(colorsDidDownload(_:)))
+        addCustomObserver(PodcastColorsDownloaded.self) { [weak self] message in
+            self?.colorsDidDownload(message)
+        }
         addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
             self?.refreshEpisodes()
         }
@@ -581,8 +587,8 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         searchBar.becomeFirstResponder()
     }
 
-    @objc private func colorsDidDownload(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
+    private func colorsDidDownload(_ message: PodcastColorsDownloaded) {
+        guard let uuidLoaded = message.uuid else { return }
 
         if let uuid = podcast?.uuid, uuid == uuidLoaded {
             if let podcast = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) {
@@ -606,8 +612,8 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         updateColors()
     }
 
-    @objc private func podcastUpdated(_ notification: Notification) {
-        guard let podcastUuid = notification.object as? String, podcastUuid == podcast?.uuid else { return }
+    private func podcastUpdated(_ message: PodcastUpdated) {
+        guard let podcastUuid = message.uuid, podcastUuid == podcast?.uuid else { return }
 
         podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)
         if viewIfLoaded?.window != nil {
@@ -615,7 +621,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         }
     }
 
-    @objc private func folderChanged(_ notification: Notification) {
+    private func folderChanged() {
         guard let podcastUuid = podcast?.uuid else { return }
 
         podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)
@@ -1341,7 +1347,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
             DataManager.sharedManager.updateFolderSyncModified(folderUuid: currentFolderUuid, syncModified: TimeFormatter.currentUTCTimeInMillis())
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: currentFolderUuid)
+            NotificationCenter.postOnMainThread(FolderChanged(uuid: currentFolderUuid))
 
             Analytics.track(.folderPodcastModalOptionTapped, properties: ["option": "remove"])
         }

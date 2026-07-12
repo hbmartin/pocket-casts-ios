@@ -295,7 +295,9 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
         addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] message in
             self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
         }
-        addCustomObserver(ServerNotifications.episodeTypeOrLengthChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
+        addCustomObserver(EpisodeTypeOrLengthChanged.self) { [weak self] message in
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
+        }
 
         addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
             self?.updateDisplayedData()
@@ -334,10 +336,6 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     }
 
     // MARK: - Event Based Updates
-
-    @objc private func specificEpisodeEventDidFire(_ notification: Notification) {
-        specificEpisodeEventDidFire(episodeUuid: notification.object as? String)
-    }
 
     private func specificEpisodeEventDidFire(episodeUuid: String?) {
         guard let episodeUuid, episodeUuid == episode.uuid else {

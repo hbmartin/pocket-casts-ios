@@ -37,7 +37,6 @@ nonisolated struct Constants {
         static let playlistChanged = NSNotification.Name(rawValue: "FilterChanged")
         static let statusBarHeightChanged = NSNotification.Name(rawValue: "SJBarHeightChanged")
         static let podcastSearchRequest = NSNotification.Name(rawValue: "PodcastSearchRequest")
-        static let podcastSearchCancelled = NSNotification.Name(rawValue: "PodcastSearchCancelled")
         static let removeUpcomingFromCell = NSNotification.Name(rawValue: "RemoveUpcomingFromCell")
         static let sideConstraintUpdated = NSNotification.Name(rawValue: "SJSideConstraintUpdated")
         static let themeChanged = NSNotification.Name(rawValue: "ThemeChanged")
@@ -94,8 +93,6 @@ nonisolated struct Constants {
         static let folderDeleted = NSNotification.Name(rawValue: "SJFolderDeleted")
         /// This is triggered just once after a folder finishes editing
         static let folderEdited = NSNotification.Name(rawValue: "SJFolderEdited")
-
-        static let discoverNavigateToCategory = Notification.Name(rawValue: "DiscoverNavigateToCategory")
     }
 
     enum UserDefaults {

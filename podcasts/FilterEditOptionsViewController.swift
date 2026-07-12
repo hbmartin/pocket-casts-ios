@@ -60,7 +60,7 @@ class FilterEditOptionsViewController: PCViewController, UITableViewDelegate, UI
         filterToEdit.setTitle(filterNameTextField.text, defaultTitle: L10n.filtersDefaultNewFilter.localizedCapitalized)
         filterToEdit.syncStatus = SyncStatus.notSynced.rawValue
         filterToEdit = DataManager.sharedManager.save(playlist: filterToEdit)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filterToEdit)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: filterToEdit))
 
         let properties = ["did_change_name": didChangeName,
                           "did_change_auto_download": didChangeAutoDownload,

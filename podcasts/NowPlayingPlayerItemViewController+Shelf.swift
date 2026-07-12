@@ -23,7 +23,7 @@ protocol NowPlayingActionsDelegate: AnyObject {
 
 extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
-    @objc func reloadShelfActions() {
+    func reloadShelfActions() {
         guard let playingEpisode = PlaybackManager.shared.currentEpisode() else { return }
 
         #if APPCLIP
@@ -409,7 +409,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
     // MARK: - Sleep Timer
 
-    @objc func sleepTimerUpdated() {
+    func sleepTimerUpdated() {
         reloadShelfActions()
     }
 

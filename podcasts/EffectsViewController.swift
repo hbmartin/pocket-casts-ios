@@ -235,8 +235,12 @@ class EffectsViewController: SimpleNotificationsViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(updateControls))
-        addCustomObserver(Constants.Notifications.playbackEffectsChanged, selector: #selector(updateControls))
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.updateControls()
+        }
+        addCustomObserver(PlaybackEffectsChanged.self) { [weak self] _ in
+            self?.updateControls()
+        }
         addCustomObserver(ThemeChanged.self) { [weak self] _ in
             self?.updateColors()
         }
@@ -366,7 +370,7 @@ class EffectsViewController: SimpleNotificationsViewController {
         }
     }
 
-    @objc private func updateControls() {
+    private func updateControls() {
         trimSilenceSwitch.isEnabled = PlaybackManager.shared.silenceRemovalAvailable()
         volumeBoostSwitch.isEnabled = PlaybackManager.shared.volumeBoostAvailable()
 

@@ -75,7 +75,7 @@ extension FolderViewController {
         folder.syncModified = TimeFormatter.currentUTCTimeInMillis()
         folder.sortType = Int32(LibrarySort.Old.custom.rawValue)
         DataManager.sharedManager.save(folder: folder)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: folder.uuid))
     }
 
     // MARK: Reorder handle (list)

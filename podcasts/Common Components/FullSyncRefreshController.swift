@@ -13,6 +13,8 @@ final class FullSyncRefreshController {
 
     private let source: AnalyticsSource
 
+    private var messageTokens: [NotificationCenter.ObservationToken] = []
+
     init(source: AnalyticsSource) {
         self.source = source
 
@@ -21,16 +23,35 @@ final class FullSyncRefreshController {
         }
 
         let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(podcastsRefreshed), name: ServerNotifications.podcastsRefreshed, object: nil)
-        center.addObserver(self, selector: #selector(podcastRefreshFailed), name: ServerNotifications.podcastRefreshFailed, object: nil)
+        // opmlImportCompleted has no typed message struct yet; the bridge keeps
+        // the string observer working.
         center.addObserver(self, selector: #selector(podcastsRefreshed), name: Constants.Notifications.opmlImportCompleted, object: nil)
-        center.addObserver(self, selector: #selector(syncCompleted), name: ServerNotifications.syncCompleted, object: nil)
-        center.addObserver(self, selector: #selector(syncCompleted), name: ServerNotifications.podcastRefreshThrottled, object: nil)
-        center.addObserver(self, selector: #selector(syncFailed), name: ServerNotifications.syncFailed, object: nil)
+
+        messageTokens = [
+            center.addObserver(for: PodcastsRefreshed.self) { [weak self] _ in
+                self?.podcastsRefreshed()
+            },
+            center.addObserver(for: PodcastRefreshFailed.self) { [weak self] _ in
+                self?.podcastRefreshFailed()
+            },
+            center.addObserver(for: SyncCompleted.self) { [weak self] _ in
+                self?.syncCompleted()
+            },
+            center.addObserver(for: PodcastRefreshThrottled.self) { [weak self] _ in
+                self?.syncCompleted()
+            },
+            center.addObserver(for: SyncFailed.self) { [weak self] _ in
+                self?.syncFailed()
+            }
+        ]
     }
 
-    deinit {
+    // isolated deinit: main-actor-owned helper; deinit removes isolated observation tokens
+    isolated deinit {
         NotificationCenter.default.removeObserver(self)
+        for token in messageTokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func beginRefreshing() {
@@ -50,15 +71,15 @@ final class FullSyncRefreshController {
         finishRefreshing(message: L10n.refreshControlRefreshComplete)
     }
 
-    @objc private func podcastRefreshFailed() {
+    private func podcastRefreshFailed() {
         finishRefreshing(message: L10n.refreshControlRefreshFailed)
     }
 
-    @objc private func syncCompleted() {
+    private func syncCompleted() {
         finishRefreshing(message: L10n.refreshControlRefreshComplete)
     }
 
-    @objc private func syncFailed() {
+    private func syncFailed() {
         finishRefreshing(message: L10n.refreshControlSyncFailed)
     }
 

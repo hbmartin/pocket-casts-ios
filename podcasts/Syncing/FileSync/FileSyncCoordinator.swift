@@ -80,12 +80,13 @@ final class FileSyncCoordinator {
 
     private func addObservers() {
         let center = NotificationCenter.default
-        for name in [
-            Constants.Notifications.playbackPaused,
-            Constants.Notifications.playbackTrackChanged
-        ] {
-            center.addObserver(self, selector: #selector(syncTriggerFired), name: name, object: nil)
-        }
+        messageTokens.append(center.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+            self?.syncTriggerFired()
+            self?.playbackStopped()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.syncTriggerFired()
+        })
         messageTokens.append(center.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
             self?.syncTriggerFired()
         })
@@ -95,13 +96,18 @@ final class FileSyncCoordinator {
         messageTokens.append(center.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
             self?.syncTriggerFired()
         })
-        center.addObserver(self, selector: #selector(playbackStarted), name: Constants.Notifications.playbackStarted, object: nil)
-        center.addObserver(self, selector: #selector(playbackStopped), name: Constants.Notifications.playbackPaused, object: nil)
-        center.addObserver(self, selector: #selector(playbackStopped), name: Constants.Notifications.playbackEnded, object: nil)
-        center.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        messageTokens.append(center.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+            self?.playbackStarted()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackEnded.self) { [weak self] _ in
+            self?.playbackStopped()
+        })
+        messageTokens.append(center.addObserver(for: UIApplication.DidEnterBackgroundMessage.self) { [weak self] _ in
+            self?.appDidEnterBackground()
+        })
     }
 
-    @objc private func syncTriggerFired() {
+    private func syncTriggerFired() {
         debounceTimer?.invalidate()
         debounceTimer = Timer.scheduledTimer(withTimeInterval: Self.debounceInterval, repeats: false) { _ in
             Task { @MainActor in
@@ -113,19 +119,19 @@ final class FileSyncCoordinator {
         }
     }
 
-    @objc private func playbackStarted() {
+    private func playbackStarted() {
         guard heartbeatTimer == nil else { return }
         heartbeatTimer = Timer.scheduledTimer(withTimeInterval: Self.heartbeatInterval, repeats: true) { _ in
             Task { await FileSyncManager.shared.syncNow() }
         }
     }
 
-    @objc private func playbackStopped() {
+    private func playbackStopped() {
         heartbeatTimer?.invalidate()
         heartbeatTimer = nil
     }
 
-    @objc private func appDidEnterBackground() {
+    private func appDidEnterBackground() {
         backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "au.com.pocketcasts.filesync.flush") { [weak self] in
             Task { @MainActor [weak self] in
                 self?.endBackgroundTaskIfNeeded()
@@ -145,13 +151,12 @@ final class FileSyncCoordinator {
 
     #if DEBUG
     private func exerciseNotificationHandlersForUITesting() {
-        let center = NotificationCenter.default
         NotificationCenter.postOnMainThread(UpNextQueueChanged())
         NotificationCenter.postOnMainThread(UpNextQueueChanged())
-        center.post(name: Constants.Notifications.playbackStarted, object: nil)
-        center.post(name: Constants.Notifications.playbackStarted, object: nil)
-        center.post(name: Constants.Notifications.playbackPaused, object: nil)
-        center.post(name: Constants.Notifications.playbackEnded, object: nil)
+        NotificationCenter.postOnMainThread(PlaybackStarted())
+        NotificationCenter.postOnMainThread(PlaybackStarted())
+        NotificationCenter.postOnMainThread(PlaybackPaused())
+        NotificationCenter.postOnMainThread(PlaybackEnded())
     }
 
     private static func markDebounceCompletedForUITesting() {

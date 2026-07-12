@@ -223,7 +223,9 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
             }
         }
 
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(setupUserAccess))
+        addCustomObserver(SubscriptionStatusChanged.self) { [weak self] _ in
+            self?.setupUserAccess()
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -290,7 +292,7 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         avFileUtil = nil
     }
 
-    @objc private func setupUserAccess() {
+    private func setupUserAccess() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 

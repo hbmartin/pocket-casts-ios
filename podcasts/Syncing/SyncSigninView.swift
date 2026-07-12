@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
@@ -190,7 +189,7 @@ final class SyncSigninViewModel: ObservableObject {
 
     // Progress tracking
     private var totalPodcastsToImport: Int = -1
-    private var cancellables = Set<AnyCancellable>()
+    private var messageTokens: [NotificationCenter.ObservationToken] = []
 
     var isValid: Bool {
         email.contains("@") && email.count >= 3 && password.count >= 3
@@ -199,27 +198,26 @@ final class SyncSigninViewModel: ObservableObject {
     func onAppear(loginAgain: Bool) {
         Analytics.track(.signInShown)
 
-        NotificationCenter.default.publisher(for: ServerNotifications.syncProgressPodcastCount)
-            .compactMap { $0.object as? NSNumber }
-            .sink { [weak self] number in
-                self?.totalPodcastsToImport = number.intValue
-            }
-            .store(in: &cancellables)
+        if messageTokens.isEmpty {
+            messageTokens = [
+                NotificationCenter.default.addObserver(for: SyncProgressPodcastCountKnown.self) { [weak self] message in
+                    self?.totalPodcastsToImport = message.count
+                },
 
-        // Note: SyncLoadingAlert handles progress notifications automatically via its own subscriptions
+                // Note: SyncLoadingAlert handles progress notifications automatically via its own subscriptions
 
-        // Complete on any of these
-        let completions = [
-            ServerNotifications.syncCompleted,
-            ServerNotifications.syncFailed,
-            ServerNotifications.podcastRefreshFailed
-        ]
-        Publishers.MergeMany(completions.map {
-            NotificationCenter.default.publisher(for: $0)
-        })
-        .receive(on: DispatchQueue.main)
-        .sink { [weak self] _ in self?.syncCompleted() }
-        .store(in: &cancellables)
+                // Complete on any of these
+                NotificationCenter.default.addObserver(for: SyncCompleted.self) { [weak self] _ in
+                    self?.syncCompleted()
+                },
+                NotificationCenter.default.addObserver(for: SyncFailed.self) { [weak self] _ in
+                    self?.syncCompleted()
+                },
+                NotificationCenter.default.addObserver(for: PodcastRefreshFailed.self) { [weak self] _ in
+                    self?.syncCompleted()
+                }
+            ]
+        }
 
         // Auto-login if requested
         if loginAgain,
@@ -230,7 +228,20 @@ final class SyncSigninViewModel: ObservableObject {
     }
 
     func onDisappear() {
-        cancellables.removeAll()
+        let tokens = messageTokens
+        messageTokens = []
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
+    // Property reads must precede any call that copies self; a plain deinit
+    // may read stored state directly (Swift 6.2 isolated-deinit rule).
+    deinit {
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func toggleShowPassword() { showPassword.toggle() }

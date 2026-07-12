@@ -89,7 +89,7 @@ final class PodcastSkipChaptersViewModel: ObservableObject {
 
     private func persist() {
         DataManager.sharedManager.saveSkipChapterTitles(patterns, podcastUuid: podcastUuid)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcastUuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcastUuid))
         Analytics.track(.podcastSettingsSkipChaptersRulesChanged, properties: ["count": patterns.count])
 
         // Re-apply the rules to the currently loaded chapters if this podcast is playing

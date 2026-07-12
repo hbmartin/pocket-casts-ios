@@ -117,7 +117,9 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         updateNavTintColors()
-        addCustomObserver(Constants.Notifications.playlistChanged, selector: #selector(filtersUpdated))
+        addCustomObserver(PlaylistChanged.self) { [weak self] _ in
+            self?.filtersUpdated()
+        }
         addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
             self?.checkForScrollTap(message)
         }
@@ -143,7 +145,7 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         }
     }
 
-    @objc private func filtersUpdated() {
+    private func filtersUpdated() {
         if !firstTimeLoading {
             debounce.call { [weak self] in
                 self?.reloadFilters()

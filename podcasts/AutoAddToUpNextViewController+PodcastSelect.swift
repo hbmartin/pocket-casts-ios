@@ -19,7 +19,7 @@ extension AutoAddToUpNextViewController: PodcastSelectionDelegate {
             DataManager.sharedManager.saveAutoAddToUpNextForAllPodcasts(autoAddToUpNext: setting)
         }
 
-        allPodcasts.forEach { NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: $0.uuid) }
+        allPodcasts.forEach { NotificationCenter.postOnMainThread(PodcastUpdated(uuid: $0.uuid)) }
 
         reloadDownloadedPodcasts()
         mainTable.reloadData()
@@ -27,7 +27,7 @@ extension AutoAddToUpNextViewController: PodcastSelectionDelegate {
 
     func podcastSelected(podcast: String) {
         DataManager.sharedManager.saveAutoAddToUpNext(podcastUuid: podcast, autoAddToUpNext: AutoAddToUpNextSetting.addLast.rawValue)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast))
 
         reloadDownloadedPodcasts()
         mainTable.reloadData()
@@ -35,7 +35,7 @@ extension AutoAddToUpNextViewController: PodcastSelectionDelegate {
 
     func podcastUnselected(podcast: String) {
         DataManager.sharedManager.saveAutoAddToUpNext(podcastUuid: podcast, autoAddToUpNext: AutoAddToUpNextSetting.off.rawValue)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast))
 
         reloadDownloadedPodcasts()
         mainTable.reloadData()

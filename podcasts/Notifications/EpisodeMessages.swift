@@ -76,6 +76,31 @@ nonisolated struct EpisodeDurationChanged: UuidBridgedMessage {
     }
 }
 
+/// A user (uploaded-files) episode's metadata changed (title, image, colors,
+/// etc). `uuid` is the user episode uuid.
+nonisolated struct UserEpisodeUpdated: UuidBridgedMessage {
+    static var name: Notification.Name { Constants.Notifications.userEpisodeUpdated }
+
+    let uuid: String?
+
+    init(uuid: String?) {
+        self.uuid = uuid
+    }
+}
+
+/// An in-flight download made progress (fires frequently while anything is
+/// downloading). `uuid` is the episode uuid; listeners read the actual
+/// progress from `DownloadManager.shared.progressManager`.
+nonisolated struct DownloadProgressChanged: UuidBridgedMessage {
+    static var name: Notification.Name { Constants.Notifications.downloadProgress }
+
+    let uuid: String?
+
+    init(uuid: String?) {
+        self.uuid = uuid
+    }
+}
+
 /// A bulk episode change (mark all played, archive all, auto download pass,
 /// restore cleanup, etc). Carries no payload — listeners should re-query.
 nonisolated struct ManyEpisodesChanged: NotificationCenter.MainActorMessage {

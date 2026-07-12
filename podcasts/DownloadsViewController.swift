@@ -198,7 +198,9 @@ class DownloadsViewController: PCViewController {
     }
 
     private func addEventObservers() {
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshView))
+        addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
+            self?.refreshView()
+        }
         addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshView))
 
         addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in

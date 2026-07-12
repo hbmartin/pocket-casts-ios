@@ -198,7 +198,9 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
     private func addGeneratedTranscriptsObservers() {
         if shouldShowPremiumView {
-            addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(subscriptionStatusDidChange))
+            addCustomObserver(SubscriptionStatusChanged.self) { [weak self] _ in
+                self?.subscriptionStatusDidChange()
+            }
         }
         addCustomObserver(Constants.Notifications.episodeTranscriptAvailabilityChanged, selector: #selector(updateGeneratedTranscriptState))
     }
@@ -728,7 +730,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         }
     }
 
-    @objc private func subscriptionStatusDidChange() {
+    private func subscriptionStatusDidChange() {
         if shouldShowPremiumView {
             return
         }

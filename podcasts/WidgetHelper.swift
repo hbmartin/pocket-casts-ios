@@ -9,20 +9,43 @@ nonisolated final class WidgetHelper: Sendable {
     static let appGroupId = SharedConstants.GroupUserDefaults.groupContainerId
     static let maxUpNextToPublish = 10
     static let maxFilterToPublish = 5
+
+    /// Typed-notification tokens.
+    // nonisolated(unsafe): written exactly once, at the end of `init` (before `self`
+    // can be visible to any other thread), then only read in `deinit` — no concurrent
+    // access is possible despite the `Sendable` conformance.
+    nonisolated(unsafe) private var messageTokens: [NotificationCenter.ObservationToken] = []
+
     init() {
+        // Playback, playlist and podcast names still use the string API: their
+        // domains (5.2/5.4) have no typed message structs yet; the bridge keeps
+        // these observers working either way.
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackStarted, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackEnded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackTrackChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackPaused, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleFilterChanged), name: Constants.Notifications.playlistChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleFilterChanged), name: Constants.Notifications.podcastAdded, object: nil)
+
+        messageTokens = [
+            NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+                self?.updateSharedUpNext()
+            },
+            NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+                self?.updateSharedUpNext()
+            }
+        ]
     }
 
     deinit {
+        // Property reads must precede the self-copy removeObserver makes; after it,
+        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
         NotificationCenter.default.removeObserver(self)
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func updateAllWidgets() {

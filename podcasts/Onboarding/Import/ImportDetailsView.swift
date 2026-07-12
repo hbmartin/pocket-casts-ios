@@ -14,6 +14,7 @@ struct ImportDetailsView: View {
     @State var opmlURLImportResult: OPMLImportResult = .none
     @State var opmlImportInProgress: Bool = false
     @State var opmlButtonTitle: String = L10n.import
+    @State private var importTokenBox = ObservationTokenBox()
 
     let importSource: ImportViewModel.ImportSource
     let viewModel: ImportViewModel
@@ -107,17 +108,17 @@ struct ImportDetailsView: View {
                 return
             }
             opmlURLImportResult = .none
-            NotificationCenter.default.addObserver(forName: Notification.Name("SJOpmlImportCompleted"), object: nil, queue: .main) { _ in
-                Task { @MainActor in
-                    opmlURLImportResult = .success
-                    opmlImportInProgress = false
-                }
-            }
-            NotificationCenter.default.addObserver(forName: Notification.Name("SJOpmlImportFailed"), object: nil, queue: .main) { _ in
-                Task { @MainActor in
-                    opmlURLImportResult = .failure
-                    opmlImportInProgress = false
-                }
+            if importTokenBox.tokens.isEmpty {
+                importTokenBox.tokens = [
+                    NotificationCenter.default.addObserver(for: OpmlImportCompleted.self) { _ in
+                        opmlURLImportResult = .success
+                        opmlImportInProgress = false
+                    },
+                    NotificationCenter.default.addObserver(for: OpmlImportFailed.self) { _ in
+                        opmlURLImportResult = .failure
+                        opmlImportInProgress = false
+                    }
+                ]
             }
 
             guard let url = URL(string: opmlURLText) else {

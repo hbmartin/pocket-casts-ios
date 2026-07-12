@@ -54,7 +54,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
             // refresh is done, now perform a sync if the user has a sync account
             if SyncManager.isUserLoggedIn() {
-                NotificationCenter.postOnMainThread(notification: ServerNotifications.syncStarted, object: nil)
+                NotificationCenter.postOnMainThread(SyncStarted())
 
                 apiQueue.addOperation(UpNextSyncTask())
                 let syncTask = SyncTask()

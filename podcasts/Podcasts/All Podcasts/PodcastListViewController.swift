@@ -128,9 +128,15 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     private func addEventObservers() {
         addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshGridItems))
+        addCustomObserver(PodcastAdded.self) { [weak self] _ in
+            self?.refreshGridItems()
+        }
+        addCustomObserver(PodcastDeleted.self) { [weak self] _ in
+            self?.refreshGridItems()
+        }
+        addCustomObserver(OpmlImportCompleted.self) { [weak self] _ in
+            self?.refreshGridItems()
+        }
         addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshGridItems))
@@ -141,8 +147,12 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
             self?.refreshGridItems()
         }
 
-        addCustomObserver(Constants.Notifications.folderChanged, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.folderDeleted, selector: #selector(refreshGridItems))
+        addCustomObserver(FolderChanged.self) { [weak self] _ in
+            self?.refreshGridItems()
+        }
+        addCustomObserver(FolderDeleted.self) { [weak self] _ in
+            self?.refreshGridItems()
+        }
 
         addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
             self?.checkForScrollTap(message)

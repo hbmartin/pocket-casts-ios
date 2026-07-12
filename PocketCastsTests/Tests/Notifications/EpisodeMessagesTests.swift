@@ -35,6 +35,14 @@ final class EpisodeMessagesTests: XCTestCase {
         assertUuidRoundTrip(EpisodeDurationChanged.self, expectedRawName: "SJEpDurationChanged")
     }
 
+    func testUserEpisodeUpdatedRoundTrip() {
+        assertUuidRoundTrip(UserEpisodeUpdated.self, expectedRawName: "SJUserEpisodeUpdated")
+    }
+
+    func testDownloadProgressChangedRoundTrip() {
+        assertUuidRoundTrip(DownloadProgressChanged.self, expectedRawName: "SJDwnProg")
+    }
+
     // MARK: - Payload-free messages
 
     func testManyEpisodesChangedRoundTrip() throws {

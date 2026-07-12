@@ -88,8 +88,8 @@ struct EditFolderView: View {
                 Analytics.track(.folderEditShown)
             }
             .onDisappear {
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: model.folderUuid)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderEdited, object: model.folderUuid)
+                NotificationCenter.postOnMainThread(FolderChanged(uuid: model.folderUuid))
+                NotificationCenter.postOnMainThread(FolderEdited(uuid: model.folderUuid))
                 Analytics.track(.folderEditDismissed, properties: ["did_change_name": model.didChangeName, "did_change_color": model.didChangeColor])
             }
             .applyDefaultThemeOptions()

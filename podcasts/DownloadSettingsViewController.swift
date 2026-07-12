@@ -26,7 +26,9 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
         super.viewDidLoad()
 
         title = L10n.settingsAutoDownload
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastUpdated(_:)), name: Constants.Notifications.podcastUpdated, object: nil)
+        podcastUpdatedToken = NotificationCenter.default.addObserver(for: PodcastUpdated.self) { [weak self] _ in
+            self?.podcastUpdated()
+        }
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
         Analytics.track(.settingsAutoDownloadShown)
     }
@@ -189,14 +191,14 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
                 playlist.autoDownloadEpisodes = true
                 playlist.autoDownloadLimit = playlist.maxAutoDownloadEpisodes()
                 let savedPlaylist = DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
+                NotificationCenter.postOnMainThread(PlaylistChanged(playlist: savedPlaylist))
             }
             playlistSelectionViewController.playlistUnselected = { playlist in
                 var playlist = playlist
                 Analytics.track(.filterAutoDownloadUpdated, properties: ["enabled": false, "source": AnalyticsSource.autoDownloadSettings])
                 playlist.autoDownloadEpisodes = false
                 let savedPlaylist = DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
+                NotificationCenter.postOnMainThread(PlaylistChanged(playlist: savedPlaylist))
             }
             playlistSelectionViewController.didChangePlaylist = {
                 Analytics.track(.settingsAutoDownloadFiltersChanged)
@@ -221,7 +223,16 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
 
     // MARK: - Notification handler
 
-    @objc func podcastUpdated(_ notification: Notification) {
+    private var podcastUpdatedToken: NotificationCenter.ObservationToken?
+
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
+    isolated deinit {
+        if let podcastUpdatedToken {
+            NotificationCenter.default.removeObserver(podcastUpdatedToken)
+        }
+    }
+
+    private func podcastUpdated() {
         guard let podcastChooserController else { return }
         let allPodcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
         podcastChooserController.selectedUuids = allPodcasts.filter { $0.autoDownloadOn() }.map(\.uuid)
@@ -234,17 +245,17 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
         let setting: AutoDownloadSetting = selected ? .latest : .off
         DataManager.sharedManager.setDownloadSettingForAllPodcasts(setting: setting)
         let allPodcastsChanged = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
-        allPodcastsChanged.forEach { NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: $0.uuid) }
+        allPodcastsChanged.forEach { NotificationCenter.postOnMainThread(PodcastUpdated(uuid: $0.uuid)) }
     }
 
     func podcastSelected(podcast: String) {
         DataManager.sharedManager.savePodcastDownloadSetting(.latest, podcastUuid: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast))
     }
 
     func podcastUnselected(podcast: String) {
         DataManager.sharedManager.savePodcastDownloadSetting(.off, podcastUuid: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast))
     }
 
     func didChangePodcasts(numberSelected: Int) {

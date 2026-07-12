@@ -328,7 +328,7 @@ class EpisodeListSearchController: SimpleNotificationsViewController, UISearchBa
         podcast.episodeSortOrder = setting.old.rawValue
         DataManager.sharedManager.save(podcast: podcast)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
     }
 
     private func setGroupingSetting(_ setting: PodcastGrouping) {
@@ -340,6 +340,6 @@ class EpisodeListSearchController: SimpleNotificationsViewController, UISearchBa
         podcast.episodeGrouping = setting.rawValue
         DataManager.sharedManager.save(podcast: podcast)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
     }
 }
