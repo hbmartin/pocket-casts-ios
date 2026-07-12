@@ -295,10 +295,15 @@ class AppLifecycleAnalyticsTests: XCTestCase {
     }
 }
 
-private class MockAnalytics: Analytics, @unchecked Sendable {
+@MainActor
+private final class MockAnalytics: AnalyticsTracking {
     var didTrack: ((_ event: AnalyticsEvent, _ properties: [String: Sendable]?) -> Void)?
 
-    override func track(_ event: AnalyticsEvent, properties: [String: Sendable]? = nil) {
-        didTrack?(event, properties)
+    // The protocol requirement is nonisolated; the tests drive it synchronously
+    // on the main thread through the MainActor-isolated AppLifecycleAnalytics.
+    nonisolated func track(_ event: AnalyticsEvent, properties: [String: Sendable]?) {
+        MainActor.assumeIsolated {
+            didTrack?(event, properties)
+        }
     }
 }

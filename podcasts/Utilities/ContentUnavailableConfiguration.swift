@@ -1,5 +1,4 @@
 import SwiftUI
-import EndOfYear
 import UIKit
 
 // Bespoke states stay SwiftUI-hosted until their native UIKit equivalents have exact visual parity.

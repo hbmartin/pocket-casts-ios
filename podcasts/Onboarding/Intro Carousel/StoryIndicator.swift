@@ -1,15 +1,15 @@
 import SwiftUI
 import PocketCastsUtils
 
-public struct StoryIndicatorStyle {
-    public let height: CGFloat
-    public let borderRadius: CGFloat
-    public let backgroundOpacity: CGFloat
-    public let foregroundOpacity: CGFloat
-    public let backgroundColor: Color
-    public let foregroundColor: Color
+struct StoryIndicatorStyle {
+    let height: CGFloat
+    let borderRadius: CGFloat
+    let backgroundOpacity: CGFloat
+    let foregroundOpacity: CGFloat
+    let backgroundColor: Color
+    let foregroundColor: Color
 
-    public init(
+    init(
         height: CGFloat = 2,
         borderRadius: CGFloat = 5,
         backgroundOpacity: CGFloat = 0.3,
@@ -26,18 +26,18 @@ public struct StoryIndicatorStyle {
     }
 }
 
-public struct StoryIndicator: View {
+struct StoryIndicator: View {
     let index: Int
     let style: StoryIndicatorStyle
     @ObservedObject var progressModel: StoriesProgressModel
 
-    public init(index: Int, style: StoryIndicatorStyle = StoryIndicatorStyle(), progressModel: StoriesProgressModel) {
+    init(index: Int, style: StoryIndicatorStyle = StoryIndicatorStyle(), progressModel: StoriesProgressModel) {
         self.index = index
         self.style = style
         self.progressModel = progressModel
     }
 
-    public var body: some View {
+    var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 Rectangle()

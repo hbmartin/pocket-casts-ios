@@ -6,6 +6,8 @@ import PocketCastsUtils
 nonisolated struct TranscriptCue: Sendable {
     let startTime: Double
     let endTime: Double
+    /// UTF-16 offsets (NSRange convention) into the transcript text — valid against
+    /// `TranscriptModel.nsAttributedText` and the UTF-16 view of `plainText`.
     let characterRange: NSRange
 
     @inlinable public func contains(timeInSeconds seconds: Double) -> Bool {
@@ -13,12 +15,25 @@ nonisolated struct TranscriptCue: Sendable {
     }
 }
 
-extension NSAttributedString: @retroactive @unchecked Sendable {
+/// Marks speaker-header runs. `name` must equal the ObjC key so the attribute
+/// survives scoped AttributedString <-> NSAttributedString conversion.
+nonisolated enum TranscriptSpeakerAttribute: AttributedStringKey {
+    typealias Value = String
+    static let name = NSAttributedString.Key.transcriptSpeaker.rawValue
+}
+
+nonisolated struct TranscriptAttributes: AttributeScope {
+    let transcriptSpeaker: TranscriptSpeakerAttribute
+    let foundation: AttributeScopes.FoundationAttributes
+}
+
+nonisolated extension AttributeScopes {
+    var transcript: TranscriptAttributes.Type { TranscriptAttributes.self }
 }
 
 nonisolated struct TranscriptModel: Sendable {
 
-    let attributedText: NSAttributedString
+    let attributedText: AttributedString
     let cues: [TranscriptCue]
     let type: String
     let hasJavascript: Bool
@@ -30,7 +45,7 @@ nonisolated struct TranscriptModel: Sendable {
         }
         if format == .textHTML {
             let filteredText = ComposeFilter.htmlFilter.filter(transcriptText).trim()
-            return TranscriptModel(attributedText: NSAttributedString(string: filteredText), cues: [], type: format.rawValue, hasJavascript: transcriptText.contains("<script type=\"text/javascript\">"))
+            return TranscriptModel(attributedText: AttributedString(filteredText), cues: [], type: format.rawValue, hasJavascript: transcriptText.contains("<script type=\"text/javascript\">"))
         }
         let subtitles: Subtitles? = {
             do {
@@ -69,15 +84,32 @@ nonisolated struct TranscriptModel: Sendable {
             cues.append(entry)
         }
 
-        return TranscriptModel(attributedText: resultText, cues: cues, type: format.rawValue, hasJavascript: false)
+        guard let attributedText = try? AttributedString(resultText, including: \.transcript) else {
+            return nil
+        }
+        return TranscriptModel(attributedText: attributedText, cues: cues, type: format.rawValue, hasJavascript: false)
     }
 
     @inlinable public func firstCue(containing secondsValue: Double) -> TranscriptCue? {
         self.cues.first { $0.contains(timeInSeconds: secondsValue) }
     }
 
+    /// The transcript as plain text (exactly what `attributedText.string` returned).
+    var plainText: String {
+        String(attributedText.characters)
+    }
+
+    /// TextKit view of the transcript. Conversion preserves string content exactly,
+    /// so `TranscriptCue.characterRange` offsets stay valid. Scoped so the
+    /// `.transcriptSpeaker` attribute survives; falls back to plain text (styling
+    /// degrades, never crashes) if conversion ever fails.
+    var nsAttributedText: NSAttributedString {
+        (try? NSAttributedString(attributedText, including: \.transcript))
+            ?? NSAttributedString(string: plainText)
+    }
+
     var isEmtpy: Bool {
-        return attributedText.string.trim().isEmpty
+        return plainText.trim().isEmpty
     }
 
     private static func extractSpeaker(from cue: Subtitles.Cue, format: TranscriptFormat) -> String? {

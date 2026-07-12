@@ -6,7 +6,7 @@ class AppLifecycleAnalytics {
     nonisolated deinit {}
     // Dependencies
     private let userDefaults: UserDefaults
-    private let analytics: Analytics
+    private let analytics: any AnalyticsTracking
 
     /// The date the app was last opened, used for calculating time in app
     private var applicationOpenedTime: Date?
@@ -15,7 +15,7 @@ class AppLifecycleAnalytics {
     private lazy var widgetAnalytics = WidgetAnalytics()
 #endif
 
-    init(userDefaults: UserDefaults = .standard, analytics: Analytics = Analytics.shared) {
+    init(userDefaults: UserDefaults = .standard, analytics: any AnalyticsTracking = Analytics.shared) {
         self.userDefaults = userDefaults
         self.analytics = analytics
     }

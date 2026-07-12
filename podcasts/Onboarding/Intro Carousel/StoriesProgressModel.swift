@@ -4,10 +4,10 @@ import Combine
 ///
 /// This is a singleton because it's shared between different views.
 @MainActor
-public class StoriesProgressModel: ObservableObject {
-    @Published public var progress: Double
+class StoriesProgressModel: ObservableObject {
+    @Published var progress: Double
 
-    public static let shared = StoriesProgressModel()
+    static let shared = StoriesProgressModel()
 
     private init() {
         progress = 0

@@ -3,7 +3,7 @@ import SwiftUI
 extension View {
     /// Returns a `UIImage` from a SwiftUI View
     @MainActor
-    public func snapshot(scale: CGFloat = 2) -> UIImage {
+    func snapshot(scale: CGFloat = 2) -> UIImage {
         let renderer = ImageRenderer(content: self)
         renderer.scale = scale
         guard let renderedImage = renderer.uiImage else {
@@ -14,7 +14,7 @@ extension View {
     }
 
     @MainActor
-    public func snapshotUIKit(origin: CGPoint = .zero, size: CGSize = .zero) -> UIImage {
+    func snapshotUIKit(origin: CGPoint = .zero, size: CGSize = .zero) -> UIImage {
         let controller = UIHostingController(rootView: self)
         let view = controller.view
 

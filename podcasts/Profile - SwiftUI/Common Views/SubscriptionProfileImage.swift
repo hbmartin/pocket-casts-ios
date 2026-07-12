@@ -1,6 +1,5 @@
 import SwiftUI
 import PocketCastsUtils
-import EndOfYear
 
 struct SubscriptionProfileImage: View {
     @ObservedObject var viewModel: ProfileDataViewModel

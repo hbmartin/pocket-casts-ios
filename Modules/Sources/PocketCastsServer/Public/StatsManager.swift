@@ -17,7 +17,10 @@ public final class StatsManager: Sendable {
 
     private let stats: Mutex<Stats>
     private let persistenceQueue: DispatchQueue
-    private let userDefaults: UserDefaults
+    // nonisolated(unsafe): UserDefaults is documented thread-safe; its Sendable
+    // conformance is explicitly unavailable in the SDK, so opt this one
+    // immutable property out of checking.
+    nonisolated(unsafe) private let userDefaults: UserDefaults
 
     public convenience init() {
         self.init(userDefaults: .standard)
@@ -32,12 +35,14 @@ public final class StatsManager: Sendable {
             userDefaults.synchronize()
         }
 
+        let isSynced = userDefaults.object(forKey: ServerConstants.UserDefaults.statsSyncStatus) as? Bool ?? true
         stats = Mutex(Stats(
             savedDynamicSpeed: userDefaults.double(forKey: ServerConstants.UserDefaults.statsDynamicSpeedSeconds),
             savedVariableSpeed: userDefaults.double(forKey: ServerConstants.UserDefaults.statsVariableSpeed),
             totalListenedTo: userDefaults.double(forKey: ServerConstants.UserDefaults.statsListenedTo),
             totalSkipped: userDefaults.double(forKey: ServerConstants.UserDefaults.statsSkipped),
-            savedAutoSkipping: userDefaults.double(forKey: ServerConstants.UserDefaults.statsAutoSkip)
+            savedAutoSkipping: userDefaults.double(forKey: ServerConstants.UserDefaults.statsAutoSkip),
+            isSynced: isSynced
         ))
     }
 
@@ -167,7 +172,7 @@ public final class StatsManager: Sendable {
     }
 
     public func syncStatus() -> SyncStatus {
-        let isSynced = userDefaults.bool(forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        let isSynced = stats.withLock { $0.isSynced }
 
         return isSynced ? SyncStatus.synced : SyncStatus.notSynced
     }
@@ -175,7 +180,10 @@ public final class StatsManager: Sendable {
     public func setSyncStatus(_ syncStatus: SyncStatus) {
         let isSynced = (syncStatus == SyncStatus.synced)
 
-        userDefaults.set(isSynced, forKey: ServerConstants.UserDefaults.statsSyncStatus)
+        stats.withLock { stats in
+            stats.isSynced = isSynced
+            enqueuePersistence(stats)
+        }
     }
 
     // MARK: - Remote Stats

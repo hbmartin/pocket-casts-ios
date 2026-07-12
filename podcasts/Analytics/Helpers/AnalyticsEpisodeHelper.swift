@@ -1,13 +1,16 @@
 import Dependencies
 import Foundation
 import PocketCastsDataModel
+import Synchronization
 
+// @unchecked Sendable: restates AnalyticsCoordinator's conformance, as Swift requires
+// of subclasses; own state is guarded by a Mutex / ThreadSafeDictionary.
 nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsEpisodeHelper()
 
     @Dependency(\.episodeRepository) private var episodeRepository: any EpisodeRepository
     // Internally track the episode UUIDs that the user is downloading.
-    private var episodeDownloadQueue: Set<String> = []
+    private let episodeDownloadQueue = Mutex<Set<String>>([])
     // Keep track of where a download was initiated so completion/failure logs use the same source
     private let episodeDownloadSources = ThreadSafeDictionary<String, AnalyticsSource>()
 
@@ -48,7 +51,7 @@ nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Senda
 
     func downloaded(episodeUUID: String) {
         let source = cacheDownloadSource(for: episodeUUID)
-        episodeDownloadQueue.insert(episodeUUID)
+        episodeDownloadQueue.withLock { _ = $0.insert(episodeUUID) }
         currentSource = source
         episodeEvent(.episodeDownloadQueued, uuid: episodeUUID)
     }
@@ -76,7 +79,7 @@ nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Senda
     func bulkDownloadEpisodes(episodes: [BaseEpisode]) {
         let uuids = episodes.map { $0.uuid }
         let source = cacheDownloadSource(for: uuids)
-        episodeDownloadQueue.formUnion(uuids)
+        episodeDownloadQueue.withLock { $0.formUnion(uuids) }
         currentSource = source
         bulkEvent(.episodeBulkDownloadQueued, count: episodes.count)
     }
@@ -189,7 +192,7 @@ nonisolated private extension AnalyticsEpisodeHelper {
     func addNotificationObservers() {
             NotificationCenter.default.addObserver(forName: Constants.Notifications.episodeDownloaded, object: nil, queue: .main) { notification in
                 // Verify the UUID is one that we're tracking
-                guard let uuid = notification.object as? String, self.episodeDownloadQueue.contains(uuid) else {
+                guard let uuid = notification.object as? String, self.episodeDownloadQueue.withLock({ $0.contains(uuid) }) else {
                     return
                 }
 
@@ -202,7 +205,7 @@ nonisolated private extension AnalyticsEpisodeHelper {
                     return
                 }
 
-                self.episodeDownloadQueue.remove(uuid)
+                self.episodeDownloadQueue.withLock { _ = $0.remove(uuid) }
                 self.downloadFinished(episodeUUID: uuid)
             }
     }

@@ -4,7 +4,6 @@ import UIKit
 import Foundation
 import PocketCastsDataModel
 #if !APPCLIP && !os(tvOS)
-import EndOfYear
 #endif
 
 nonisolated extension EpisodeFilter {
