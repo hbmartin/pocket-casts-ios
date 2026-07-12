@@ -116,9 +116,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Retry failed downloads and stream without the user agent
     case retryWithoutUserAgent
 
-    /// Whether to use database concurrent reads or not
-    case concurrentDatabaseReads
-
     /// Limit playback position changes when switching episodes
     case limitPlaybackPositionChanges
 
@@ -293,8 +290,6 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .useDescriptiveActionAttributedTextView:
             true
         case .retryWithoutUserAgent:
-            true
-        case .concurrentDatabaseReads:
             true
         case .limitPlaybackPositionChanges:
             true

@@ -47,11 +47,6 @@ final class GRDBQueue: PCDBQueue, Sendable {
         #if DEBUG
         MainThreadDBReporter.reportIfNeeded()
         #endif
-        guard FeatureFlag.concurrentDatabaseReads.enabled else {
-            performWrite(block)
-            return
-        }
-
         do {
             try dbPool.read { db in
                 let dbWrapper = GRDBDatabase(database: db)
@@ -81,10 +76,6 @@ final class GRDBQueue: PCDBQueue, Sendable {
     }
 
     func read<T>(_ block: @Sendable @escaping (any PCDatabase) throws -> T) async throws -> T {
-        guard FeatureFlag.concurrentDatabaseReads.enabled else {
-            return try await write(block)
-        }
-
         let box = try await dbPool.read { db in
             UncheckedSendableBox(value: try block(GRDBDatabase(database: db)))
         }

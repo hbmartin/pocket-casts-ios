@@ -47,7 +47,7 @@ Assessment meanings:
 | `useDescriptiveActionAttributedTextView` | true | 1 | DescriptiveActionView.swift | candidate | |
 | `useMimetypePackage` | true | 1 | DownloadManager+URLSessionDelegate.swift | candidate | |
 | `cleanUpTmpFiles` | true | 2 | DownloadedFilesViewController.swift | candidate | |
-| `concurrentDatabaseReads` | true | 2 | GRDBQueue.swift | candidate | |
+| ~~`concurrentDatabaseReads`~~ | true | 0 | — | removed (data-layer track B0 — DatabasePool concurrent reads are the only path; ValueObservation depends on this) | ✅ code removed 2026-07-12; retire remote `concurrent_database_reads` key server-side |
 | `customPlaybackSettings` | true | 2 | EffectsViewController.swift, PodcastEffectsViewController+Ta | candidate | |
 | `downloadsThreadSafeCache` | true | 2 | DownloadManager.swift | candidate | |
 | `enableLocalizationHeaders` | true | 2 | AppDelegate.swift, Settings.swift | candidate | |
