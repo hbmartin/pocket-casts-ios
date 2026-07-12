@@ -230,8 +230,10 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let miniPlayer = MiniPlayerViewController(nibName: "MiniPlayerViewController", bundle: nil)
         NavigationManager.sharedManager.miniPlayer = miniPlayer
 
-        addChild(miniPlayer)
-        miniPlayer.didMove(toParent: self)
+        // NOT addChild: on a UITabBarController that would register the mini
+        // player as a fourth (unlabeled) tab. The accessory only needs the
+        // view; NavigationManager keeps the controller alive.
+        miniPlayer.containingTabController = self
         // Load the view so XIB outlets and observers are wired up before
         // it's installed as a tab accessory contentView.
         miniPlayer.loadViewIfNeeded()

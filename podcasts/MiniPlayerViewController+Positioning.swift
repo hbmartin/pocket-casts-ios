@@ -3,7 +3,7 @@ import PocketCastsUtils
 
 extension MiniPlayerViewController {
     func hideMiniPlayer(_ animated: Bool) {
-        guard let tabBarController = parent as? UITabBarController, tabBarController.bottomAccessory != nil else { return }
+        guard let tabBarController = containingTabController, tabBarController.bottomAccessory != nil else { return }
         tabBarController.setBottomAccessory(nil, animated: animated)
         tabBarController.tabBarMinimizeBehavior = .never
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.miniPlayerDidDisappear)
@@ -13,7 +13,7 @@ extension MiniPlayerViewController {
         // only show if something is playing
         if PlaybackManager.shared.currentEpisode() == nil { return }
 
-        guard let tabBarController = parent as? UITabBarController, tabBarController.bottomAccessory == nil else { return }
+        guard let tabBarController = containingTabController, tabBarController.bottomAccessory == nil else { return }
         let accessory = UITabAccessory(contentView: view)
         tabBarController.setBottomAccessory(accessory, animated: true)
         tabBarController.tabBarMinimizeBehavior = Settings.tabBarMinimizingEnabled ? .onScrollDown : .never
@@ -80,7 +80,7 @@ extension MiniPlayerViewController {
     /// Re-applies `tabBarMinimizeBehavior` from the current `Settings.tabBarMinimizingEnabled`
     /// so a toggle flip in Appearance takes effect right away while the mini player is showing.
     func applyTabBarMinimizingPreference() {
-        guard let tabBarController = parent as? UITabBarController, tabBarController.bottomAccessory != nil else { return }
+        guard let tabBarController = containingTabController, tabBarController.bottomAccessory != nil else { return }
         tabBarController.tabBarMinimizeBehavior = Settings.tabBarMinimizingEnabled ? .onScrollDown : .never
     }
 

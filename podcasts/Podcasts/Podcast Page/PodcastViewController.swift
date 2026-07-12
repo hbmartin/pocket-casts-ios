@@ -527,7 +527,10 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        episodesTable.contentInset.bottom = Constants.effectiveMiniPlayerOffset + (isMultiSelectEnabled ? 80 : 0)
+        let miniPlayerShowing = tabBarController?.bottomAccessory != nil
+        episodesTable.contentInset.bottom = Constants.effectiveMiniPlayerOffset
+            + (isMultiSelectEnabled ? 80 : 0)
+            + (miniPlayerShowing ? Constants.miniPlayerRestingClearance : 0)
         episodesTable.verticalScrollIndicatorInsets.bottom = episodesTable.contentInset.bottom
     }
 
@@ -863,6 +866,8 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
 
     @objc private func miniPlayerStatusDidChange() {
         updateBookmarksActionBarBottomConstraint()
+        // Recompute the table's bottom clearance for the accessory pill.
+        view.setNeedsLayout()
     }
 
     func tableView() -> UITableView {

@@ -11,6 +11,12 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
 
     var playerOpenState = PlayerOpenState.closed
 
+    /// The tab bar controller hosting the mini player as a `UITabAccessory`.
+    /// Deliberately not this controller's `parent`: `addChild` on a
+    /// `UITabBarController` registers the child as a tab, which produced a
+    /// phantom, unlabeled fourth tab in the accessibility tree.
+    weak var containingTabController: UITabBarController?
+
     @IBOutlet var playPauseBtn: PlayPauseButton!
     @IBOutlet var skipBackBtn: UIButton!
     @IBOutlet var skipFwdBtn: UIButton!
