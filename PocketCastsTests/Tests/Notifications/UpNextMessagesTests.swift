@@ -6,6 +6,7 @@ import XCTest
 /// Phase 5.3). The bridged representations are frozen while string-based
 /// posters/observers still exist, so these assert the exact `object`/`userInfo`
 /// shapes as well as the typed round trip.
+@MainActor
 final class UpNextMessagesTests: XCTestCase {
     // MARK: - UpNextEpisodeAdded (payload-carrying)
 

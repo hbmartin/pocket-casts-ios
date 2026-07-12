@@ -60,23 +60,17 @@ class PCViewController: SimpleNotificationsViewController {
         }
         setupNavBar(animated: false)
 
-        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+        themeTokenBox.token = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
             self?.themeDidChange()
         }
     }
 
-    private var themeToken: NotificationCenter.ObservationToken?
-    private var backgroundToken: NotificationCenter.ObservationToken?
-    private var foregroundToken: NotificationCenter.ObservationToken?
-
-    deinit {
-        let tokens = [themeToken, backgroundToken, foregroundToken]
-        for token in tokens {
-            if let token {
-                NotificationCenter.default.removeObserver(token)
-            }
-        }
-    }
+    // Token teardown lives in the boxes: neither a plain nor an isolated deinit
+    // compiles for this class's inferred deinit isolation (see ObservationTokenBox).
+    // The lifecycle box also covers dealloc-while-visible, when viewDidDisappear
+    // never ran to remove the background/foreground observers.
+    private let themeTokenBox = ObservationTokenBox()
+    private let lifecycleTokenBox = ObservationTokenBox()
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -95,15 +89,15 @@ class PCViewController: SimpleNotificationsViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        if backgroundToken == nil {
-            backgroundToken = NotificationCenter.default.addObserver(for: UIApplication.DidEnterBackgroundMessage.self) { [weak self] _ in
-                self?.handleAppDidEnterBackground()
-            }
-        }
-        if foregroundToken == nil {
-            foregroundToken = NotificationCenter.default.addObserver(for: UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
-                self?.handleAppWillBecomeActive()
-            }
+        if lifecycleTokenBox.tokens.isEmpty {
+            lifecycleTokenBox.tokens = [
+                NotificationCenter.default.addObserver(for: UIApplication.DidEnterBackgroundMessage.self) { [weak self] _ in
+                    self?.handleAppDidEnterBackground()
+                },
+                NotificationCenter.default.addObserver(for: UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+                    self?.handleAppWillBecomeActive()
+                }
+            ]
         }
     }
 
@@ -121,14 +115,10 @@ class PCViewController: SimpleNotificationsViewController {
 
         navigationController?.delegate = nil
 
-        if let backgroundToken {
-            NotificationCenter.default.removeObserver(backgroundToken)
-            self.backgroundToken = nil
+        for token in lifecycleTokenBox.tokens {
+            NotificationCenter.default.removeObserver(token)
         }
-        if let foregroundToken {
-            NotificationCenter.default.removeObserver(foregroundToken)
-            self.foregroundToken = nil
-        }
+        lifecycleTokenBox.tokens = []
     }
 
     func refreshRightButtons(animated: Bool = false) {

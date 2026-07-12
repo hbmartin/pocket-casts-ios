@@ -146,8 +146,8 @@ final class FileSyncCoordinator {
     #if DEBUG
     private func exerciseNotificationHandlersForUITesting() {
         let center = NotificationCenter.default
-        center.post(UpNextQueueChanged())
-        center.post(UpNextQueueChanged())
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
         center.post(name: Constants.Notifications.playbackStarted, object: nil)
         center.post(name: Constants.Notifications.playbackStarted, object: nil)
         center.post(name: Constants.Notifications.playbackPaused, object: nil)

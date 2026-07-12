@@ -7,6 +7,7 @@ import XCTest
 /// bridge to a `Notification` that string-based observers understand (uuid in
 /// `object`, legacy raw name) and back to an identical typed message, so
 /// posters and observers can migrate independently.
+@MainActor
 final class EpisodeMessagesTests: XCTestCase {
     // MARK: - Uuid-carrying messages
 

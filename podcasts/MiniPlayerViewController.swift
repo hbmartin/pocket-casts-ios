@@ -114,7 +114,7 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         setupLiquidGlassLayout()
         addUINotificationObservers()
         playbackStateDidChange()
-        themeChanged()
+        updateColors()
     }
 
     private func setupLiquidGlassLayout() {

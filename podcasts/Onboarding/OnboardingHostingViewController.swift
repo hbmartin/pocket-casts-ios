@@ -46,19 +46,14 @@ class OnboardingHostingViewController<Content>: UIHostingController<Content>, UI
         navigationItem.backButtonDisplayMode = .minimal
         navigationController?.navigationBar.tintColor = iconTintColor
 
-        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+        themeTokenBox.token = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
             self?.updateNavigationBarStyle(animated: false)
         }
     }
 
-    private var themeToken: NotificationCenter.ObservationToken?
-
-    deinit {
-        let token = themeToken
-        if let token {
-            NotificationCenter.default.removeObserver(token)
-        }
-    }
+    // Token teardown lives in the box: this generic UIHostingController subclass
+    // can't declare the isolated deinit it would need (see ObservationTokenBox).
+    private let themeTokenBox = ObservationTokenBox()
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)

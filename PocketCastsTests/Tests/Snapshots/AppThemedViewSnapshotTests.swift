@@ -26,8 +26,8 @@ final class AppThemedViewSnapshotTests: XCTestCase {
     func testInterestButtonSelectedAndNot() {
         assertAppThemedSnapshots(
             of: VStack(spacing: 8) {
-                InterestButton(name: "Technology", icon: nil, isSelected: false, style: .interest, action: nil)
-                InterestButton(name: "Technology", icon: nil, isSelected: true, style: .interest, action: nil)
+                InterestButton(name: "Technology", icon: nil, isSelected: false, style: .red, action: nil)
+                InterestButton(name: "Technology", icon: nil, isSelected: true, style: .red, action: nil)
             },
             layout: .fixed(width: 220, height: 120)
         )

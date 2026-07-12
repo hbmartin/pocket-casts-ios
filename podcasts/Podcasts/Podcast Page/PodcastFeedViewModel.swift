@@ -3,7 +3,7 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-enum PodcastFeedReloadNotification {
+nonisolated enum PodcastFeedReloadNotification {
     public static let loading = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationLoading")
     public static let episodesFound = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationEpisodesFound")
     public static let noEpisodesFound = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationNoEpisodesFound")
@@ -96,7 +96,7 @@ class PodcastFeedViewModel {
             Analytics.track(.podcastScreenRefreshEpisodeList, properties: ["action": source.analyticsValue, "podcast_uuid": uuid])
 
             if source == .refreshControl {
-                NotificationCenter.default.post(PodcastFeedReloadLoading())
+                NotificationCenter.postOnMainThread(PodcastFeedReloadLoading())
             } else {
                 Toast.show(L10n.podcastFeedReloadLoading, dismissAfter: .never)
             }
@@ -120,9 +120,9 @@ class PodcastFeedViewModel {
 
                 if source == .refreshControl {
                     if success {
-                        NotificationCenter.default.post(PodcastFeedReloadEpisodesFound())
+                        NotificationCenter.postOnMainThread(PodcastFeedReloadEpisodesFound())
                     } else {
-                        NotificationCenter.default.post(PodcastFeedReloadNoEpisodesFound())
+                        NotificationCenter.postOnMainThread(PodcastFeedReloadNoEpisodesFound())
                     }
                 } else {
                     let message = success ? L10n.podcastFeedReloadNewEpisodesFound : L10n.podcastFeedReloadNoEpisodesFound

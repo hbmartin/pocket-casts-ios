@@ -1,3 +1,6 @@
+// Expected macro expansions below reproduce the plugin's emitted text exactly,
+// including attribute-line trailing spaces.
+// swiftlint:disable trailing_whitespace
 import MacroTesting
 import SwiftSyntaxMacros
 import XCTest
@@ -1209,3 +1212,5 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
         #endif
     }
 }
+
+// swiftlint:enable trailing_whitespace

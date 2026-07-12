@@ -40,7 +40,9 @@ class SyncLoadingAlert: ShiftyLoadingAlert {
         }
     }
 
-    deinit {
+    // isolated deinit: ShiftyLoadingAlert is @MainActor so its deinit is isolated and this
+    // override must match; it tears down an isolated observation token.
+    isolated deinit {
         let token = loginToken
         if let token {
             NotificationCenter.default.removeObserver(token)

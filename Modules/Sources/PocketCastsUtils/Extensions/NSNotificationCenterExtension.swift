@@ -22,14 +22,20 @@ public extension NotificationCenter {
     /// so posters and observers migrate independently. Messages must be Sendable value
     /// types — they cross from the posting thread to the main actor.
     static func postOnMainThread<M: NotificationCenter.MainActorMessage & Sendable>(_ message: M) {
+        // Post the bridged legacy Notification rather than the message itself: the SDK's
+        // typed post(_:) invokes makeNotification but discards its object/userInfo when
+        // delivering to string-based observers (probe-verified on the 26.5 SDK), which
+        // would silently break every unconverted observer reading the frozen payload
+        // shape. A legacy post still reaches typed observers — they rebuild the message
+        // via makeMessage.
         if Thread.isMainThread {
             MainActor.assumeIsolated {
-                NotificationCenter.default.post(message)
+                NotificationCenter.default.post(M.makeNotification(message))
             }
         } else {
             DispatchQueue.main.sync {
                 MainActor.assumeIsolated {
-                    NotificationCenter.default.post(message)
+                    NotificationCenter.default.post(M.makeNotification(message))
                 }
             }
         }

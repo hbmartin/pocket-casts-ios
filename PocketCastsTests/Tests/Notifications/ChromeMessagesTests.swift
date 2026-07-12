@@ -6,6 +6,7 @@ import XCTest
 /// (migration Phase 5.6). The bridged representations are frozen while
 /// string-based posters/observers still exist, so these assert the exact
 /// `object` shapes as well as the typed round trip.
+@MainActor
 final class ChromeMessagesTests: XCTestCase {
     // MARK: - TappedOnSelectedTab (tab index payload)
 

@@ -42,20 +42,15 @@ class ThemedHostingController<Content>: ModifedHostingController<Content, Themed
         super.init(rootView: rootView, modifier: ThemedEnvironment(theme: theme))
     }
 
-    private var themeToken: NotificationCenter.ObservationToken?
+    // Token teardown lives in the box: this generic UIHostingController subclass
+    // can't declare the isolated deinit it would need (see ObservationTokenBox).
+    private let themeTokenBox = ObservationTokenBox()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         themeDidChange()
-        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+        themeTokenBox.token = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
             self?.themeDidChange()
-        }
-    }
-
-    deinit {
-        let token = themeToken
-        if let token {
-            NotificationCenter.default.removeObserver(token)
         }
     }
 
