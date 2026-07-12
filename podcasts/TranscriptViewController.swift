@@ -373,7 +373,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     @objc private func shareEpisode() {
         guard let transcript else { return }
 
-        let transcriptText = transcript.attributedText.string
+        let transcriptText = transcript.plainText
         let activityViewController = UIActivityViewController(activityItems: [transcriptText], applicationActivities: nil)
 
         if let popover = activityViewController.popoverPresentationController {
@@ -803,7 +803,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     private func styleText(transcript: TranscriptModel, position: Double = -1) -> NSAttributedString {
-        let formattedText = NSMutableAttributedString(attributedString: transcript.attributedText)
+        let formattedText = NSMutableAttributedString(attributedString: transcript.nsAttributedText)
         formattedText.beginEditing()
         let normalStyle = makeStyle()
         var highlightStyle = normalStyle
@@ -1054,7 +1054,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     func findOccurrences(of term: String) {
-        guard let transcriptText = transcript?.attributedText.string,
+        guard let transcriptText = transcript?.plainText,
               !term.isEmpty else {
             resetSearch()
             return

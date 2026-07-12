@@ -55,7 +55,7 @@ final class TranscriptModelFilterTests: XCTestCase {
             XCTFail("Model should be created")
             return
         }
-        let filtered = model.attributedText.string
+        let filtered = model.plainText
 
         let expected = """
         Speaker 1
@@ -69,6 +69,17 @@ final class TranscriptModelFilterTests: XCTestCase {
         But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?
         """
         XCTAssertEqual(filtered.trim(), expected)
+
+        // Round-trip guard: the custom .transcriptSpeaker attribute and the exact
+        // string content (hence UTF-16 cue offsets) must survive the scoped
+        // AttributedString -> NSAttributedString conversion.
+        let ns = model.nsAttributedText
+        var speakerRuns = 0
+        ns.enumerateAttribute(.transcriptSpeaker, in: NSRange(location: 0, length: ns.length)) { value, _, _ in
+            if value != nil { speakerRuns += 1 }
+        }
+        XCTAssertEqual(speakerRuns, 2)
+        XCTAssertEqual(ns.string, model.plainText)
     }
 
     func testSRT() throws {
@@ -134,7 +145,7 @@ final class TranscriptModelFilterTests: XCTestCase {
             XCTFail("Model should be created")
             return
         }
-        let filtered = model.attributedText.string
+        let filtered = model.plainText
 
         let expected = """
         Speaker 1
@@ -160,7 +171,7 @@ final class TranscriptModelFilterTests: XCTestCase {
             XCTFail("Model should be created")
             return
         }
-        let filtered = model.attributedText.string
+        let filtered = model.plainText
 
         let expected = """
         But I must explain to you how all this mistaken idea of reprobating pleasure and extolling pain arose.

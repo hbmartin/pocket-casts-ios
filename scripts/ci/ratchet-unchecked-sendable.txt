@@ -90,7 +90,6 @@ podcasts/Sharing/AnimatedShareImageView.swift: 1
 podcasts/Sharing/Clip/VideoExporter.swift: 1
 podcasts/StreamingCellularTracker.swift: 1
 podcasts/ThreadSafeDictionary.swift: 1
-podcasts/TranscriptModel.swift: 1
 podcasts/Utilities/AVFileUtil.swift: 1
 podcasts/Utilities/DatabaseExport.swift: 1
 podcasts/Utilities/DownloadManager+Dependency.swift: 1
