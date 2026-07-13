@@ -870,8 +870,6 @@ enum AnalyticsEvent: String {
     case transcriptionSettingsShown
     case transcriptionKeyValidated
     case transcriptionSpeakerRenamed
-    case transcriptionSearchShown
-    case transcriptionSearchResultTapped
     case transcriptionModelDownloaded
     case transcriptionModelDeleted
 

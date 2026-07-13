@@ -20,6 +20,8 @@ nonisolated struct TranscriptSearchHitDisplay: Hashable, Sendable, Identifiable 
     let episodeTitle: String
     let runs: [Run]
     let startTime: TimeInterval
+    /// Diarized speaker label for generated-transcript hits; nil for provided ones.
+    let speaker: String?
 
     var id: String { "\(episodeUuid)-\(segmentIndex)" }
 
@@ -36,7 +38,8 @@ nonisolated struct TranscriptSearchHitDisplay: Hashable, Sendable, Identifiable 
                 segmentIndex: hit.segmentIndex,
                 episodeTitle: episode.displayableTitle(),
                 runs: runs(from: hit.snippet),
-                startTime: hit.startTime
+                startTime: hit.startTime,
+                speaker: hit.speaker
             )
         }
     }
@@ -106,6 +109,12 @@ struct TranscriptSearchResultRow: View {
                             .font(.caption2)
                         Text(L10n.searchTranscriptsResultAtTime(TimeFormatter.shared.playTimeFormat(time: display.startTime)))
                             .font(style: .caption, weight: .semibold)
+                        if let speaker = display.speaker, !speaker.isEmpty {
+                            Text(verbatim: "· \(speaker)")
+                                .font(style: .caption, weight: .regular)
+                                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                                .lineLimit(1)
+                        }
                     }
                     .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
                 }

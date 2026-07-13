@@ -3604,7 +3604,7 @@ nonisolated internal enum L10n {
     return L10n.tr("Localizable", "search_results_view_all", String(describing: p1), fallback: "View all results for \"%1$@\"")
   }
   /// Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable.
-  internal static var searchTranscriptsEmptyMessage: String { return L10n.tr("Localizable", "search_transcripts_empty_message", fallback: "Transcripts become searchable here after you view them on an episode.") }
+  internal static var searchTranscriptsEmptyMessage: String { return L10n.tr("Localizable", "search_transcripts_empty_message", fallback: "Episodes become searchable here when they download or when you view their transcript.") }
   /// Title shown in search results when no transcript matches the search term
   internal static var searchTranscriptsEmptyTitle: String { return L10n.tr("Localizable", "search_transcripts_empty_title", fallback: "No Transcript Matches") }
   /// Search results filter pill that shows matches found inside episode transcripts
@@ -4751,24 +4751,6 @@ nonisolated internal enum L10n {
   internal static var transcriptionRenameSave: String { return L10n.tr("Localizable", "transcription_rename_save", fallback: "Save") }
   /// Title of the menu action and sheet for renaming the numbered speakers of a generated transcript
   internal static var transcriptionRenameSpeakers: String { return L10n.tr("Localizable", "transcription_rename_speakers", fallback: "Rename Speakers") }
-  /// Accessibility label of the button that clears the transcript search field
-  internal static var transcriptionSearchClear: String { return L10n.tr("Localizable", "transcription_search_clear", fallback: "Clear search") }
-  /// Message shown on the transcript search screen before the user has typed a search
-  internal static var transcriptionSearchEmptyMessage: String { return L10n.tr("Localizable", "transcription_search_empty_message", fallback: "Find any moment across the episodes you've transcribed on this device.") }
-  /// Title shown on the transcript search screen before the user has typed a search
-  internal static var transcriptionSearchEmptyTitle: String { return L10n.tr("Localizable", "transcription_search_empty_title", fallback: "Search Your Transcripts") }
-  /// Message shown when a transcript search returns no matches. '%1$@' is a placeholder for the user's search term.
-  internal static func transcriptionSearchNoResultsMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "transcription_search_no_results_message", String(describing: p1), fallback: "Nothing in your transcripts matches \"%1$@\".")
-  }
-  /// Title shown when a transcript search returns no matches
-  internal static var transcriptionSearchNoResultsTitle: String { return L10n.tr("Localizable", "transcription_search_no_results_title", fallback: "No Results Found") }
-  /// Placeholder text of the transcript search input field
-  internal static var transcriptionSearchPrompt: String { return L10n.tr("Localizable", "transcription_search_prompt", fallback: "Search your transcripts") }
-  /// Title of the cross-episode transcript search screen and of its row in the Profile tab
-  internal static var transcriptionSearchTitle: String { return L10n.tr("Localizable", "transcription_search_title", fallback: "Search Transcripts") }
-  /// Fallback episode title for a transcript search result whose episode is no longer in the library
-  internal static var transcriptionSearchUnknownEpisode: String { return L10n.tr("Localizable", "transcription_search_unknown_episode", fallback: "Unknown Episode") }
   /// Title of the Transcription page in Settings and of its row in the settings list
   internal static var transcriptionSettingsTitle: String { return L10n.tr("Localizable", "transcription_settings_title", fallback: "Transcription") }
   /// Title of the transcript source menu option that shows the locally generated transcript
