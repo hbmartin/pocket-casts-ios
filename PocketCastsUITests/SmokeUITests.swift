@@ -723,3 +723,78 @@ final class SmokeUITests: PocketCastsUITestCase {
                       "App lost its main UI after theme and artwork changes")
     }
 }
+
+/// Reporting-only performance baselines (Deferred Item 39): cold launch, podcast
+/// page entry and episode card entry over the deterministic seeded library — no
+/// scrolling (simulator scroll timings are too noisy to baseline). Runs in its
+/// own PerformanceUITests plan; `scripts/ci/perf-report.rb` turns the measured
+/// output into a delta table against `scripts/ci/perf-baselines.json`. Nothing
+/// here gates CI until variance is characterized.
+///
+/// Lives in this file rather than its own because PocketCastsUITests is not a
+/// file-system-synchronized folder — new files need project surgery, new types
+/// don't.
+@MainActor
+final class PerformanceUITests: PocketCastsUITestCase {
+    private static let scenarioEnvironment = ["UI_TEST_SCENARIO": "libraryWithQueue"]
+
+    func testColdLaunchPerformance() {
+        // First launch seeds the scenario; measured relaunches preserve it so the
+        // timing covers launch work, not the destructive DB wipe + reseed.
+        let app = launchApp(additionalEnvironment: Self.scenarioEnvironment)
+        waitForTabBar(in: app)
+        app.terminate()
+
+        let options = XCTMeasureOptions()
+        options.iterationCount = 3
+        measure(metrics: [XCTApplicationLaunchMetric()], options: options) {
+            let measured = XCUIApplication()
+            measured.launchArguments += ["-shouldShowInitialOnboardingFlow", "0"]
+            measured.launchEnvironment["UI_TEST_SCENARIO"] = "libraryWithQueue"
+            measured.launchEnvironment["UI_TEST_SCENARIO_MODE"] = "preserve"
+            measured.launch()
+        }
+    }
+
+    func testPodcastPageEntryPerformance() {
+        let app = launchApp(additionalEnvironment: Self.scenarioEnvironment)
+        waitForTabBar(in: app)
+        waitForScenario("libraryWithQueue", in: app, containing: [])
+
+        let podcastCell = app.staticTexts["UI Test Library"].firstMatch
+        XCTAssertTrue(podcastCell.waitForExistence(timeout: 30), "Seeded podcast not visible in the grid")
+
+        let options = XCTMeasureOptions()
+        options.iterationCount = 5
+        measure(metrics: [XCTClockMetric()], options: options) {
+            podcastCell.tap()
+            let episodeRow = app.staticTexts["Queued Episode One"].firstMatch
+            XCTAssertTrue(episodeRow.waitForExistence(timeout: 30), "Podcast page did not show its episodes")
+            app.navigationBars.buttons.firstMatch.tap()
+            XCTAssertTrue(podcastCell.waitForExistence(timeout: 30), "Did not return to the podcast grid")
+        }
+    }
+
+    func testEpisodeCardEntryPerformance() {
+        let app = launchApp(additionalEnvironment: Self.scenarioEnvironment)
+        waitForTabBar(in: app)
+        waitForScenario("libraryWithQueue", in: app, containing: [])
+
+        let podcastCell = app.staticTexts["UI Test Library"].firstMatch
+        XCTAssertTrue(podcastCell.waitForExistence(timeout: 30))
+        podcastCell.tap()
+        let episodeRow = app.staticTexts["Queued Episode One"].firstMatch
+        XCTAssertTrue(episodeRow.waitForExistence(timeout: 30))
+
+        let options = XCTMeasureOptions()
+        options.iterationCount = 5
+        measure(metrics: [XCTClockMetric()], options: options) {
+            episodeRow.tap()
+            // The episode card is a sheet; its action strip is the readiness signal.
+            let card = app.buttons["Play"].firstMatch
+            _ = card.waitForExistence(timeout: 30)
+            app.swipeDown(velocity: .fast)
+            XCTAssertTrue(episodeRow.waitForExistence(timeout: 30), "Episode card did not dismiss")
+        }
+    }
+}

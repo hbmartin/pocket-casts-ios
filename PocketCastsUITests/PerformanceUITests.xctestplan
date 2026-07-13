@@ -1,9 +1,11 @@
 {
   "configurations" : [
     {
-      "id" : "07A5B124-2026-0710-0000-0000000000B3",
-      "name" : "Live Staging",
-      "options" : {}
+      "id" : "2E7C9B10-4F5A-4D8B-9C21-B3D4E5F60718",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
     }
   ],
   "defaultOptions" : {
@@ -11,17 +13,15 @@
   },
   "testTargets" : [
     {
-      "selectedTests" : [
-        "LiveStagingUITests"
+      "skippedTests" : [
+        "LiveStagingUITests",
+        "SmokeUITests"
       ],
       "target" : {
         "containerPath" : "container:podcasts.xcodeproj",
         "identifier" : "7A5B124020260706000000A1",
         "name" : "PocketCastsUITests"
-      },
-      "skippedTests" : [
-        "PerformanceUITests"
-      ]
+      }
     }
   ],
   "version" : 1

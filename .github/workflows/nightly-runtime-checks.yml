@@ -92,6 +92,30 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  ui_performance:
+    name: Performance baselines, reporting-only (iOS 26.5)
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - name: Run PerformanceUITests plan
+        env:
+          RUNTIME_VERSION: "26.5"
+        run: scripts/ci/nightly-runtime-checks.sh perf-ui
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nightly-ui-perf-${{ github.run_id }}
+          path: build/github/logs/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14
+
   ui_live_staging:
     name: Live staging UI canary (iOS 26.5)
     runs-on: [self-hosted, macOS, ARM64]

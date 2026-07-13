@@ -9,6 +9,7 @@
 #   tsan            Thread Sanitizer over the UnitTests plan (RUNTIME_VERSION env)
 #   runtime-matrix  plain unit suite on RUNTIME_VERSION (env, required)
 #   smoke-ui        SmokeUITests test plan on RUNTIME_VERSION
+#   perf-ui         PerformanceUITests plan + reporting-only delta table
 #   live-staging-ui LiveStagingUITests test plan on RUNTIME_VERSION
 set -euo pipefail
 
@@ -62,6 +63,9 @@ case "$MODE" in
   live-staging-ui)
     XCODEBUILD_ARGS+=(-testPlan LiveStagingUITests)
     ;;
+  perf-ui)
+    XCODEBUILD_ARGS+=(-testPlan PerformanceUITests)
+    ;;
   *)
     echo "nightly-runtime-checks: unknown mode '$MODE'" >&2
     exit 2
@@ -72,6 +76,12 @@ TEST_STATUS=0
 set -o pipefail
 xcodebuild "${XCODEBUILD_ARGS[@]}" \
   2>&1 | tee "build/github/logs/nightly-$MODE-${RUNTIME_VERSION:-18.6}.log" || TEST_STATUS=$?
+
+# Reporting-only perf table (Deferred Item 39): never affects TEST_STATUS.
+if [ "$MODE" = "perf-ui" ]; then
+  /usr/bin/ruby "$SCRIPT_DIR/perf-report.rb" "build/github/logs/nightly-$MODE-${RUNTIME_VERSION:-18.6}.log" \
+    | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}" || true
+fi
 
 echo "Check for crash reports left behind by the run"
 "$SCRIPT_DIR/check-crash-reports.sh" check "$CRASH_STATE"
