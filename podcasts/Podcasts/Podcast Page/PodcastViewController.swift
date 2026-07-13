@@ -1011,6 +1011,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         guard var podcast else { return }
 
         podcast.shouldShowArchived = !podcast.shouldShowArchived
+        podcast.syncStatus = SyncStatus.notSynced.rawValue
         // Write the saved copy back so showingArchived() (a synchronous read of self.podcast) is correct.
         podcast = DataManager.sharedManager.save(podcast: podcast)
         self.podcast = podcast

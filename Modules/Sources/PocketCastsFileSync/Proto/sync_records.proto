@@ -129,7 +129,9 @@ message SyncUserBookmark {
     // Fork extension (not part of the upstream schema): smart-highlight
     // enrichment — the transcript excerpt around the bookmark position and
     // the end of that excerpt window (seconds, same domain as `time`).
-    // Written once by the enriching device; first writer wins on merge.
+    // Merged last-writer-wins by op stamp (fields 1000/1001 in the snapshot
+    // stamp map): devices can compute different excerpts for the same
+    // bookmark, so a first-writer fill-in would diverge across replay orders.
     google.protobuf.StringValue excerpt = 1000;
     google.protobuf.DoubleValue end_time = 1001;
 }

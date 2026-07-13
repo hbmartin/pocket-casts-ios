@@ -79,7 +79,10 @@ final class SharingServerHandlerTests: XCTestCase {
             })
         )
 
-        XCTAssertNil(shareList(with: handler))
+        guard case .requiresSignIn = shareListResult(with: handler) else {
+            XCTFail("Signed-out sharing on the bearer path must surface .requiresSignIn so the UI can route to sign-in")
+            return
+        }
     }
 
     // MARK: - Legacy path (FeatureFlag.sharingListBearerAuth off)
@@ -124,17 +127,24 @@ final class SharingServerHandlerTests: XCTestCase {
     }
 
     private func shareList(with handler: SharingServerHandler) -> String? {
+        if case .shared(let url) = shareListResult(with: handler) {
+            return url
+        }
+        return nil
+    }
+
+    private func shareListResult(with handler: SharingServerHandler) -> SharingServerHandler.PodcastShareListResult {
         let listInfo = SharingServerHandler.PodcastShareInfo(title: "My list", description: "A few favorites", podcasts: ["uuid-1", "uuid-2"])
-        let receivedUrl = Mutex<String?>(nil)
+        let received = Mutex<SharingServerHandler.PodcastShareListResult>(.failed)
         let shareCompleted = expectation(description: "share completes")
 
-        handler.sharePodcastList(listInfo: listInfo) { shareUrl in
-            receivedUrl.withLock { $0 = shareUrl }
+        handler.sharePodcastList(listInfo: listInfo) { result in
+            received.withLock { $0 = result }
             shareCompleted.fulfill()
         }
 
         wait(for: [shareCompleted], timeout: 5)
-        return receivedUrl.withLock { $0 }
+        return received.withLock { $0 }
     }
 
     private static func okResponse(for request: URLRequest) -> HTTPURLResponse? {

@@ -138,6 +138,8 @@ extension PodcastArchiveViewController: UITableViewDataSource, UITableViewDelega
             podcast.autoArchivePlayedAfterTime = Settings.autoArchivePlayedAfter()
             podcast.autoArchiveInactiveAfterTime = Settings.autoArchiveInactiveAfter()
         }
+        // Auto-archive settings sync; the dirty mark is what gets them uploaded.
+        podcast.syncStatus = SyncStatus.notSynced.rawValue
 
         DataManager.sharedManager.save(podcast: podcast)
 
@@ -153,6 +155,7 @@ extension PodcastArchiveViewController: UITableViewDataSource, UITableViewDelega
             guard let self else { return }
 
             self.podcast.autoArchiveEpisodeLimitCount = limit
+            self.podcast.syncStatus = SyncStatus.notSynced.rawValue
             DataManager.sharedManager.saveAutoArchiveLimit(podcast: self.podcast, limit: limit)
             DataManager.sharedManager.save(podcast: self.podcast)
 
@@ -170,6 +173,7 @@ extension PodcastArchiveViewController: UITableViewDataSource, UITableViewDelega
             guard let self else { return }
 
             self.podcast.autoArchivePlayedAfterTime = time
+            self.podcast.syncStatus = SyncStatus.notSynced.rawValue
             DataManager.sharedManager.save(podcast: self.podcast)
 
             self.archiveTable.reloadData()
@@ -188,6 +192,7 @@ extension PodcastArchiveViewController: UITableViewDataSource, UITableViewDelega
             guard let self else { return }
 
             self.podcast.autoArchiveInactiveAfterTime = time
+            self.podcast.syncStatus = SyncStatus.notSynced.rawValue
             DataManager.sharedManager.save(podcast: self.podcast)
 
             self.archiveTable.reloadData()

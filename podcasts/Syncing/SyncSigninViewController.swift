@@ -1,4 +1,3 @@
-import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -10,8 +9,6 @@ protocol SyncSigninDelegate: AnyObject {
 }
 
 class SyncSigninViewController: PCViewController, UITextFieldDelegate {
-    @Dependency(\.podcastRepository) private var podcastRepository
-
     @IBOutlet var emailField: ThemeableTextField! {
         didSet {
             emailField.placeholder = L10n.signInEmailAddressPrompt
@@ -272,36 +269,37 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         activityIndicatorView.isHidden = false
 
         mainButton.setTitle("", for: .normal)
-        ApiServerHandler.shared.validateLogin(username: username, password: password) { success, userId, error in
-            DispatchQueue.main.async {
-                if !success {
-                    Analytics.track(.userSignInFailed, properties: ["source": "password", "error_code": (error ?? .UNKNOWN).rawValue])
+        Task { [weak self] in
+            do {
+                // AuthenticationHelper is the canonical sign-in path: it clears
+                // stale keychain tokens, persists the access/refresh tokens (or
+                // the legacy password with refreshTokenForPasswordAuth off),
+                // marks podcasts unsynced, posts UserLoginDidChange and kicks a
+                // refresh. The old callback API discarded the returned tokens.
+                _ = try await AuthenticationHelper.validateLogin(username: username, password: password, scope: .mobile)
 
-                    if error != .UNKNOWN, let message = error?.localizedDescription, !message.isEmpty {
-                        self.showErrorMessage(message)
-                    } else {
-                        self.showErrorMessage(L10n.syncAccountError)
-                    }
-
-                    self.mainButton.setTitle(L10n.signIn, for: .normal)
-                    self.contentView.alpha = 1
-                    self.activityIndicatorView.stopAnimating()
-                    self.progressAlert?.hideAlert(false)
-                    self.progressAlert = nil
-                    return
-                }
-
+                guard let self else { return }
+                Analytics.track(.userSignedIn, properties: ["source": "password"])
                 self.progressAlert = ShiftyLoadingAlert(title: L10n.syncAccountLogin)
                 self.progressAlert?.showAlert(self, hasProgress: false, completion: {
-                    // clear any previously stored tokens as we're signing in again and we might have one in Keychain already
-                    SyncManager.clearTokensFromKeyChain()
-                    FileLog.shared.addMessage("SyncSigninViewController.startSignIn clearTokensFromKeyChain")
-
-                    self.handleSuccessfulSignIn(username, password: password, userId: userId)
-                    RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-
                     NotificationCenter.postOnMainThread(UserSignedIn())
                 })
+            } catch {
+                guard let self else { return }
+                let apiError = error as? APIError
+                Analytics.track(.userSignInFailed, properties: ["source": "password", "error_code": (apiError ?? .UNKNOWN).rawValue])
+
+                if let apiError, apiError != .UNKNOWN, !apiError.localizedDescription.isEmpty {
+                    self.showErrorMessage(apiError.localizedDescription)
+                } else {
+                    self.showErrorMessage(L10n.syncAccountError)
+                }
+
+                self.mainButton.setTitle(L10n.signIn, for: .normal)
+                self.contentView.alpha = 1
+                self.activityIndicatorView.stopAnimating()
+                self.progressAlert?.hideAlert(false)
+                self.progressAlert = nil
             }
         }
     }
@@ -325,32 +323,6 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
     }
 
     // MARK: - Private Helpers
-
-    private func handleSuccessfulSignIn(_ username: String, password: String, userId: String?) {
-        ServerSettings.userId = userId
-        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
-            ServerSettings.accountAuthMethod = .password
-        } else {
-            // Legacy credential persistence until refresh-token auth for password accounts
-            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
-            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
-        }
-
-        // we've signed in, set all our existing podcasts to
-        // be non synced if the user never logged in before
-        if (FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled && ServerSettings.lastSyncTime == nil)
-            || !FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled {
-            podcastRepository.markAllPodcastsUnsynced()
-        }
-
-        SyncManager.syncReason = .login
-        ServerSettings.clearLastSyncTime()
-        ServerSettings.setSyncingEmail(email: username)
-
-        NotificationCenter.postOnMainThread(UserLoginDidChange())
-
-        Analytics.track(.userSignedIn, properties: ["source": "password"])
-    }
 
     private func showErrorMessage(_ message: String) {
         errorLabel.text = message

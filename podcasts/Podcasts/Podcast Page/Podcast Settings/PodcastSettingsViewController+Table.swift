@@ -380,6 +380,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         } else {
             podcast.setAutoAddToUpNext(setting: .off)
         }
+        podcast.syncStatus = SyncStatus.notSynced.rawValue
 
         settingsTable.reloadData()
         DataManager.sharedManager.save(podcast: podcast)

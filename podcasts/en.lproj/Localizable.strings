@@ -3145,6 +3145,9 @@
 /* Error message for when sharing fails. */
 "share_podcasts_sharing_failed_msg" = "Something went wrong creating your share page";
 
+/* Message of an alert shown when a signed-out user tries to share a list of podcasts; the alert offers a Sign In button. */
+"share_podcasts_signin_required_msg" = "Sharing a list of podcasts requires an account. Sign in and try again.";
+
 /* Title indicating that sharing has failed. */
 "share_podcasts_sharing_failed_title" = "Sharing Failed";
 

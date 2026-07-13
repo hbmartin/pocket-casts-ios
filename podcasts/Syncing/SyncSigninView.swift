@@ -1,5 +1,4 @@
 import SwiftUI
-import Dependencies
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -168,7 +167,6 @@ struct SyncSigninView: View {
 final class SyncSigninViewModel: ObservableObject {
     // Dependencies
     private let coordinator: LoginCoordinator
-    @Dependency(\.podcastRepository) private var podcastRepository
 
     // Inputs
     @Published var email: String = ""
@@ -267,26 +265,17 @@ final class SyncSigninViewModel: ObservableObject {
         errorMessage = nil
 
         // show "signing in..." spinner inline; progress HUD appears *after* success like the original
-        ApiServerHandler.shared.validateLogin(username: username, password: password) { [weak self] success, userId, error in
-            Task { @MainActor in
+        Task { @MainActor [weak self] in
+            do {
+                // AuthenticationHelper is the canonical sign-in path: it clears
+                // stale keychain tokens, persists the access/refresh tokens (or
+                // the legacy password with refreshTokenForPasswordAuth off),
+                // marks podcasts unsynced, posts UserLoginDidChange and kicks a
+                // refresh. The old callback API discarded the returned tokens.
+                _ = try await AuthenticationHelper.validateLogin(username: username, password: password, scope: .mobile)
+
                 guard let self else { return }
-                if !success {
-                    Analytics.track(.userSignInFailed, properties: [
-                        "source": "password",
-                        "error_code": (error ?? .UNKNOWN).rawValue
-                    ])
-
-                    if let err = error, err != .UNKNOWN, !err.localizedDescription.isEmpty {
-                        self.errorMessage = err.localizedDescription
-                    } else {
-                        self.errorMessage = L10n.syncAccountError
-                    }
-
-                    self.isSigningIn = false
-                    self.progressAlert?.hideAlert(false)
-                    self.progressAlert = nil
-                    return
-                }
+                Analytics.track(.userSignedIn, properties: ["source": "password"])
 
                 // Show SyncLoadingAlert
                 self.progressAlert = SyncLoadingAlert()
@@ -294,16 +283,25 @@ final class SyncSigninViewModel: ObservableObject {
                     self.progressAlert?.showAlert(navigationController, hasProgress: false, completion: nil)
                 }
 
-                // Clear any previously stored tokens
-                SyncManager.clearTokensFromKeyChain()
-                FileLog.shared.addMessage("SyncSigninViewController.startSignIn clearTokensFromKeyChain")
-
-                self.handleSuccessfulSignIn(username: username, password: password, userId: userId)
-
-                RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-
                 NotificationCenter.postOnMainThread(UserSignedIn())
                 self.isSigningIn = false
+            } catch {
+                guard let self else { return }
+                let apiError = error as? APIError
+                Analytics.track(.userSignInFailed, properties: [
+                    "source": "password",
+                    "error_code": (apiError ?? .UNKNOWN).rawValue
+                ])
+
+                if let apiError, apiError != .UNKNOWN, !apiError.localizedDescription.isEmpty {
+                    self.errorMessage = apiError.localizedDescription
+                } else {
+                    self.errorMessage = L10n.syncAccountError
+                }
+
+                self.isSigningIn = false
+                self.progressAlert?.hideAlert(false)
+                self.progressAlert = nil
             }
         }
     }
@@ -313,30 +311,6 @@ final class SyncSigninViewModel: ObservableObject {
             self?.progressAlert = nil
             self?.onCompleted?()
         }
-    }
-
-    private func handleSuccessfulSignIn(username: String, password: String, userId: String?) {
-        ServerSettings.userId = userId
-        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
-            ServerSettings.accountAuthMethod = .password
-        } else {
-            // Legacy credential persistence until refresh-token auth for password accounts
-            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
-            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
-        }
-
-        if (FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled && ServerSettings.lastSyncTime == nil)
-            || !FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled {
-            podcastRepository.markAllPodcastsUnsynced()
-        }
-
-        SyncManager.syncReason = .login
-        ServerSettings.clearLastSyncTime()
-        ServerSettings.setSyncingEmail(email: username)
-
-        NotificationCenter.postOnMainThread(UserLoginDidChange())
-
-        Analytics.track(.userSignedIn, properties: ["source": "password"])
     }
 }
 

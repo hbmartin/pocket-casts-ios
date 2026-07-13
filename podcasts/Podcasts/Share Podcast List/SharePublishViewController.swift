@@ -116,15 +116,16 @@ class SharePublishViewController: PCViewController, UICollectionViewDelegate, UI
         Analytics.track(.sharePodcastsListPublishStarted, properties: ["count": selectedPodcasts.count])
 
         let listInfo = SharingServerHandler.PodcastShareInfo(title: title, description: listDescription.text, podcasts: shareUuids)
-        SharingServerHandler.shared.sharePodcastList(listInfo: listInfo) { shareUrl in
+        SharingServerHandler.shared.sharePodcastList(listInfo: listInfo) { result in
             DispatchQueue.main.async {
-                guard let shareUrl else {
+                switch result {
+                case .shared(let shareUrl):
+                    self.sharingDidSucceed(shareUrl)
+                case .requiresSignIn:
+                    self.sharingRequiresSignIn()
+                case .failed:
                     self.sharingDidFail()
-
-                    return
                 }
-
-                self.sharingDidSucceed(shareUrl)
             }
         }
     }
@@ -245,6 +246,24 @@ class SharePublishViewController: PCViewController, UICollectionViewDelegate, UI
         SJUIUtils.showAlert(title: L10n.sharePodcastsSharingFailedTitle, message: L10n.sharePodcastsSharingFailedMsg, from: self)
 
         Analytics.track(.sharePodcastsListPublishFailed, properties: ["count": selectedPodcasts.count])
+    }
+
+    /// Creating a list requires an account on the bearer path: offer sign-in
+    /// instead of the generic failure alert.
+    private func sharingRequiresSignIn() {
+        sharingFailed = true
+        sharingUrl = ""
+        transitionToShareFailed()
+
+        let alert = UIAlertController(title: L10n.sharePodcastsSharingFailedTitle, message: L10n.sharePodcastsSigninRequiredMsg, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: L10n.signIn, style: .default) { [weak self] _ in
+            let signInController = SyncSigninViewController()
+            self?.present(SJUIUtils.navController(for: signInController), animated: true)
+        })
+        alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
+        present(alert, animated: true)
+
+        Analytics.track(.sharePodcastsListPublishFailed, properties: ["count": selectedPodcasts.count, "reason": "requires_sign_in"])
     }
 
     private func sharingDidSucceed(_ shareUrl: String) {

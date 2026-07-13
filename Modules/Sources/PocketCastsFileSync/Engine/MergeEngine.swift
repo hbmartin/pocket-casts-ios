@@ -403,14 +403,6 @@ public enum MergeEngine {
         if !merged.record.hasTime, incoming.hasTime {
             merged.record.time = incoming.time
         }
-        // Smart-highlight enrichment: written once by the enriching device,
-        // so it merges like the creation fields — first writer fills it in.
-        if !merged.record.hasExcerpt, incoming.hasExcerpt {
-            merged.record.excerpt = incoming.excerpt
-        }
-        if !merged.record.hasEndTime, incoming.hasEndTime {
-            merged.record.endTime = incoming.endTime
-        }
 
         func take(_ fieldNumber: UInt32, _ isPresent: Bool, embeddedMs: Int64,
                   _ copy: (inout Api_SyncUserBookmark) -> Void) {
@@ -430,6 +422,15 @@ public enum MergeEngine {
         take(8, incoming.hasIsDeleted, embeddedMs: incoming.isDeletedModified.value) {
             $0.isDeleted = incoming.isDeleted
             $0.isDeletedModified = incoming.isDeletedModified
+        }
+        // Smart-highlight enrichment: stamped LWW like title. Two devices can
+        // compute different excerpts for the same bookmark, and a first-writer
+        // fill-in would make the winner depend on replay/snapshot order.
+        take(1000, incoming.hasExcerpt, embeddedMs: 0) {
+            $0.excerpt = incoming.excerpt
+        }
+        take(1001, incoming.hasEndTime, embeddedMs: 0) {
+            $0.endTime = incoming.endTime
         }
 
         records[incoming.bookmarkUuid] = merged
@@ -507,7 +508,26 @@ public enum MergeEngine {
         case .folder(let folder)?:
             mergeWhole(folder, uuid: folder.folderUuid, stamp: stampFor(0), into: &state.folders)
         case .bookmark(let bookmark)?:
-            merge(bookmark: bookmark, stamp: fallback, into: &state.bookmarks)
+            // Title/isDeleted carry their stamps inline and the creation fields
+            // are first-writer, so the base record replays as one op; the
+            // enrichment fields replay with their persisted snapshot stamps so
+            // fold and live replay pick the same winner.
+            var base = bookmark
+            base.clearExcerpt()
+            base.clearEndTime()
+            merge(bookmark: base, stamp: fallback, into: &state.bookmarks)
+            if bookmark.hasExcerpt {
+                var single = Api_SyncUserBookmark()
+                single.bookmarkUuid = bookmark.bookmarkUuid
+                single.excerpt = bookmark.excerpt
+                merge(bookmark: single, stamp: stampFor(1000), into: &state.bookmarks)
+            }
+            if bookmark.hasEndTime {
+                var single = Api_SyncUserBookmark()
+                single.bookmarkUuid = bookmark.bookmarkUuid
+                single.endTime = bookmark.endTime
+                merge(bookmark: single, stamp: stampFor(1001), into: &state.bookmarks)
+            }
         case .device?, nil:
             break
         }
