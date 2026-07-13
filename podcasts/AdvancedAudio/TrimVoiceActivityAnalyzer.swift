@@ -22,6 +22,9 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     private struct SpeechResult {
         let frameRange: Range<Int64>
         let confidence: Float
+        /// Confidence of the classifier's "music" class over the same window
+        /// (drives adaptive effects switching; 0 when the class is absent).
+        let musicConfidence: Float
     }
 
     /// How far analysis may fall behind the read position before results stop
@@ -48,15 +51,18 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     /// Kept separate so the analyzer never retains its owner.
     /// @unchecked Sendable: onResult is assigned once in the owner's init before analysis starts; callbacks arrive serially on the analysis queue.
     private final class Observer: NSObject, SNResultsObserving, @unchecked Sendable {
-        var onResult: ((_ startSeconds: Double, _ endSeconds: Double, _ confidence: Float) -> Void)?
+        var onResult: ((_ startSeconds: Double, _ endSeconds: Double, _ confidence: Float, _ musicConfidence: Float) -> Void)?
 
         func request(_ request: SNRequest, didProduce result: SNResult) {
             guard let classification = result as? SNClassificationResult else { return }
             let confidence = Float(classification.classification(forIdentifier: "speech")?.confidence ?? 0)
+            // Same classifier pass exposes ~300 classes; reading "music" costs no
+            // extra inference and drives adaptive effects switching.
+            let musicConfidence = Float(classification.classification(forIdentifier: "music")?.confidence ?? 0)
             let start = classification.timeRange.start.seconds
             let duration = classification.timeRange.duration.seconds
             guard start.isFinite, duration.isFinite, duration > 0 else { return }
-            onResult?(start, start + duration, confidence)
+            onResult?(start, start + duration, confidence, musicConfidence)
         }
 
         func request(_ request: SNRequest, didFailWithError error: Error) {
@@ -81,15 +87,15 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
         request.overlapFactor = 0.5
         try analyzer.add(request, withObserver: observer)
 
-        observer.onResult = { [weak self] startSeconds, endSeconds, confidence in
-            self?.record(startSeconds: startSeconds, endSeconds: endSeconds, confidence: confidence)
+        observer.onResult = { [weak self] startSeconds, endSeconds, confidence, musicConfidence in
+            self?.record(startSeconds: startSeconds, endSeconds: endSeconds, confidence: confidence, musicConfidence: musicConfidence)
         }
     }
 
-    private func record(startSeconds: Double, endSeconds: Double, confidence: Float) {
+    private func record(startSeconds: Double, endSeconds: Double, confidence: Float, musicConfidence: Float) {
         let frameRange = Int64(startSeconds * sampleRate) ..< Int64(endSeconds * sampleRate)
         store.withLock { store in
-            store.results.append(SpeechResult(frameRange: frameRange, confidence: confidence))
+            store.results.append(SpeechResult(frameRange: frameRange, confidence: confidence, musicConfidence: musicConfidence))
             if store.results.count > Self.maxStoredResults {
                 store.results.removeFirst(store.results.count - Self.maxStoredResults)
             }
@@ -124,6 +130,17 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
         store.withLock { store in
             guard isFresh(around: framePosition, latestAnalyzedFrame: store.latestAnalyzedFrame) else { return nil }
             return store.results.last(where: { $0.frameRange.contains(framePosition) })?.confidence
+        }
+    }
+
+    /// The freshest speech/music confidence pair covering `framePosition`, or nil
+    /// when no non-stale result covers it (the adaptive classifier then holds its
+    /// current state).
+    func classification(atFramePosition framePosition: Int64) -> (speech: Float, music: Float)? {
+        store.withLock { store in
+            guard isFresh(around: framePosition, latestAnalyzedFrame: store.latestAnalyzedFrame),
+                  let result = store.results.last(where: { $0.frameRange.contains(framePosition) }) else { return nil }
+            return (result.confidence, result.musicConfidence)
         }
     }
 

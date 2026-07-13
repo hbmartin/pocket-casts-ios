@@ -11,6 +11,7 @@ struct AdvancedAudioSettingsView: View {
     var body: some View {
         List {
             LiveStatusSection(model: model)
+            AdaptiveEffectsSection(model: model)
             TrimSilenceSection(model: model)
             NormalizeSection(model: model)
             VoiceBoostSection(model: model)
@@ -51,6 +52,25 @@ private struct LiveStatusSection: View {
 
     private func header(_ title: String) -> some View {
         Text(title).foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+    }
+}
+
+// MARK: - Adaptive effects (Item 14)
+
+private struct AdaptiveEffectsSection: View {
+    @EnvironmentObject private var theme: Theme
+    @Bindable var model: AdvancedAudioSettingsViewModel
+
+    var body: some View {
+        Section(
+            header: Text(L10n.adaptiveEffectsHeader)
+                .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(L10n.adaptiveEffectsFooter)
+                .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+        ) {
+            Toggle(L10n.adaptiveEffectsToggle, isOn: $model.adaptiveEffects)
+                .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
+        }
     }
 }
 

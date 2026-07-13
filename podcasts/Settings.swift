@@ -1545,6 +1545,22 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    private static let adaptiveEffectsKey = "SJAdaptiveEffects"
+
+    /// Adaptive effects switching (Deferred Item 14): suspend trim silence and
+    /// voice boost during detected music segments. Default off while the
+    /// false-positive rate is being characterized from the FileLog telemetry.
+    class func adaptiveEffects() -> Bool {
+        UserDefaults.standard.bool(forKey: Settings.adaptiveEffectsKey)
+    }
+
+    class func setAdaptiveEffects(_ enabled: Bool) {
+        guard enabled != adaptiveEffects() else { return }
+        UserDefaults.standard.set(enabled, forKey: Settings.adaptiveEffectsKey)
+        // Rides the tuning-change pipeline so a playing episode re-applies live.
+        NotificationCenter.postOnMainThread(AudioTuningDidChange())
+    }
+
     // MARK: - Database (internal)
 
     class var lastAppVersionThatRunVacuum: String? {

@@ -24,6 +24,13 @@ final class AdvancedAudioSettingsViewModel {
     private(set) var isPlaying = false
     var showingResetConfirmation = false
 
+    /// Adaptive effects switching (Item 14). Lives outside the tuning blob — a
+    /// runtime override, not a tuning value — and applies immediately (its
+    /// setter rides the tuning-change notification).
+    var adaptiveEffects: Bool = Settings.adaptiveEffects() {
+        didSet { Settings.setAdaptiveEffects(adaptiveEffects) }
+    }
+
     @ObservationIgnored private let commitDebounce: TimeInterval
     @ObservationIgnored private var commitTask: Task<Void, Never>?
     @ObservationIgnored private var meterTimer: AnyCancellable?

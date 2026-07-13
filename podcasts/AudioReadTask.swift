@@ -28,6 +28,12 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     private var trimParameters = TrimSilenceParameters.preset(for: .off)
     private let flatnessBox = SpectralFlatnessBox()
     private var vadAnalyzer: TrimVoiceActivityAnalyzer?
+    /// Adaptive effects switching (Item 14): user toggle snapshot, the hysteresis
+    /// classifier and the current music-segment flag. The classifier and flag are
+    /// only touched from the read loop; the toggle refreshes with each tuning apply.
+    private var adaptiveEffectsEnabled = Settings.adaptiveEffects()
+    private var musicClassifier = MusicSegmentClassifier()
+    private var musicSegmentActive = false
     /// True while an analyzer is being built off-thread, to avoid duplicate builds.
     private var vadAnalyzerBuilding = false
     private var gapStartFramePosition: AVAudioFramePosition = 0
@@ -167,12 +173,33 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         trimParameters = tuning.trimParameters(for: trimSilence)
         detector.configure(parameters: trimParameters, sampleRate: audioFile.fileFormat.sampleRate, framesPerBuffer: Int(bufferLength))
 
-        let wantsVAD = trimSilence != .off && trimParameters.discriminator == .vad
+        adaptiveEffectsEnabled = Settings.adaptiveEffects()
+        let wantsVAD = trimSilence != .off && (trimParameters.discriminator == .vad || adaptiveEffectsEnabled)
         if wantsVAD {
             if vadAnalyzer == nil { startBuildingVADAnalyzer() }
         } else if let analyzer = vadAnalyzer {
             analyzer.finish()
             vadAnalyzer = nil
+        }
+    }
+
+    /// Feeds the hysteresis classifier with the freshest speech/music confidences
+    /// and logs every profile switch (Item 14 telemetry: timestamp, confidences,
+    /// segment duration) so false-positive rates can be reviewed from the logs.
+    private func updateMusicSegment(analyzer: TrimVoiceActivityAnalyzer, framePosition: Int64) {
+        let classification = analyzer.classification(atFramePosition: framePosition)
+        let seconds = TimeInterval(framePosition) / audioFile.fileFormat.sampleRate
+        guard musicClassifier.analyze(speechConfidence: classification?.speech,
+                                      musicConfidence: classification?.music,
+                                      at: seconds) else { return }
+
+        musicSegmentActive = musicClassifier.isMusicActive
+        let confidences = classification.map { String(format: "speech %.2f music %.2f", $0.speech, $0.music) } ?? "no coverage"
+        if musicSegmentActive {
+            FileLog.shared.addMessage(String(format: "[AdaptiveEffects] music segment started at %.1fs (%@) — trim and voice boost suspended", seconds, confidences))
+        } else {
+            let duration = musicClassifier.endedSegmentDuration ?? 0
+            FileLog.shared.addMessage(String(format: "[AdaptiveEffects] music segment ended at %.1fs after %.1fs (%@) — effects restored", seconds, duration, confidences))
         }
     }
 
@@ -197,7 +224,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             }
             self.lock.withLock {
                 self.vadAnalyzerBuilding = false
-                let stillWantsVAD = self.trimSilence != .off && self.trimParameters.discriminator == .vad
+                let stillWantsVAD = self.trimSilence != .off && (self.trimParameters.discriminator == .vad || self.adaptiveEffectsEnabled)
                 guard let built else { return }
                 if stillWantsVAD, self.vadAnalyzer == nil {
                     self.vadAnalyzer = built
@@ -242,6 +269,8 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
                     vadAnalyzer = nil
                     reconfigureDetector()
                 }
+                musicClassifier.reset()
+                musicSegmentActive = false
 
                 if let vbnState = voiceBoostNState {
                     VBN_Reset(vbnState)
@@ -338,8 +367,9 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             activeVBNMode = requestedMode
             hasProcessedFirstBuffer = true
 
-            // Process through VoiceBoostN if enabled
-            if let vbnState = voiceBoostNState, let channelData = audioPCMBuffer.floatChannelData {
+            // Process through VoiceBoostN if enabled — suspended inside music
+            // segments (adaptive effects): boosting music squashes its dynamics.
+            if let vbnState = voiceBoostNState, !musicSegmentActive, let channelData = audioPCMBuffer.floatChannelData {
                 let frameCount = Int32(audioPCMBuffer.frameLength)
                 let bufferChannelCount = Int32(audioPCMBuffer.format.channelCount)
 
@@ -396,9 +426,14 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
                     features.zeroCrossingRate = AudioUtils.calculateZeroCrossingRate(bufferListPointer[0])
                     features.spectralFlatness = flatnessBox.spectralFlatness(of: bufferListPointer[0])
                 }
-                if trimParameters.discriminator == .vad, let analyzer = vadAnalyzer {
+                if let analyzer = vadAnalyzer, trimParameters.discriminator == .vad || adaptiveEffectsEnabled {
                     analyzer.append(audioPCMBuffer, atFramePosition: currentFramePosition)
-                    features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: currentFramePosition)
+                    if trimParameters.discriminator == .vad {
+                        features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: currentFramePosition)
+                    }
+                    if adaptiveEffectsEnabled {
+                        updateMusicSegment(analyzer: analyzer, framePosition: currentFramePosition)
+                    }
                 }
 
                 let stashedCount = buffersSavedDuringGap.count()
@@ -414,6 +449,17 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
                    analyzer.speechDetected(inFrameRange: gapStartFramePosition ..< currentFramePosition, aboveConfidence: Float(trimParameters.vadSpeechConfidenceThreshold)) == true {
                     decision = .endGapEmitAll
                     FileLog.shared.addMessage("[AudioReadTask] VAD vetoed a silence trim (speech detected in gap)")
+                }
+
+                // Adaptive effects: never open or close a trim gap inside a music
+                // segment — musical quiet is content, not silence.
+                if musicSegmentActive {
+                    switch decision {
+                    case .stash, .endGapTrim:
+                        decision = stashedCount > 0 ? .endGapEmitAll : .passthrough
+                    case .passthrough, .endGapEmitAll:
+                        break
+                    }
                 }
 
                 switch decision {
