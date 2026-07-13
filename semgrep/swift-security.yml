@@ -1038,6 +1038,8 @@ rules:
           regex: ^(resume|playUpNext|playSuggested|playPodcast|playFilter|playAllFilter|setSleepTimer|extendSleepTimer)$
       - pattern-not-inside: |
           try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.$ACTION(...))
+      - pattern-not-inside: |
+          try requireSuccessfulPlaybackAction(await PlaybackIntentActionHandler.shared.$ACTION(...))
 
   - id: pocketcasts.data-manager-entity-query-mainactor
     severity: WARNING

@@ -12,6 +12,19 @@ struct ExplorePodcastPreviewView: View {
     @State private var subscribeFailed = false
 
     var body: some View {
+        // Scrollable with a .large fallback detent: at accessibility text sizes
+        // the fixed-height medium sheet can't fit artwork + titles + button, and
+        // without scrolling the subscribe button ends up unreachable.
+        ScrollView {
+            content
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppTheme.color(for: .primaryUi01, theme: theme).ignoresSafeArea())
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private var content: some View {
         VStack(spacing: 16) {
             ExploreArtworkView(urlString: podcast.artworkURL)
                 .frame(width: 180, height: 180)
@@ -46,10 +59,7 @@ struct ExplorePodcastPreviewView: View {
             Spacer(minLength: 0)
         }
         .padding(.top, 32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppTheme.color(for: .primaryUi01, theme: theme).ignoresSafeArea())
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
+        .frame(maxWidth: .infinity)
     }
 
     private var isSubscribing: Bool {

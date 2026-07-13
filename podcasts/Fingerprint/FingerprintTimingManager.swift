@@ -295,6 +295,36 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
         }
     }
 
+    /// Episode-bound mapping: converts only while the manager's alignment still
+    /// belongs to `episodeUuid`, atomically with the lookup. Callers that hold a
+    /// bookmark/episode across an await must use these — a track change mid-wait
+    /// otherwise maps their times through the NEXT episode's alignment.
+    func referenceTime(forPlaybackTime playbackTime: Double, episodeUuid: String) -> Double? {
+        dispatchPrecondition(condition: .notOnQueue(queue))
+        return queue.sync {
+            guard context?.episodeUuid == episodeUuid else { return nil }
+            return Self.interpolate(
+                time: playbackTime,
+                in: playbackToReference,
+                keyPath: \.playbackTime,
+                valuePath: \.referenceTime
+            )
+        }
+    }
+
+    func playbackTime(forReferenceTime referenceTime: Double, episodeUuid: String) -> Double? {
+        dispatchPrecondition(condition: .notOnQueue(queue))
+        return queue.sync {
+            guard context?.episodeUuid == episodeUuid else { return nil }
+            return Self.interpolate(
+                time: referenceTime,
+                in: referenceToPlayback,
+                keyPath: \.referenceTime,
+                valuePath: \.playbackTime
+            )
+        }
+    }
+
     /// Whether `playbackTime` sits on confidently-matched content — bracketed by
     /// committed anchors no more than `highlightMaxGapSeconds` apart.
     ///

@@ -22,7 +22,9 @@ nonisolated protocol PlaybackFacade: Sendable {
     func skipToNextChapter()
     func skipToPreviousChapter()
     func removeCurrentEpisodeFromUpNext()
-    func loadSuggestedEpisode() -> Bool
+    /// Async because the episode may need fetching first — the result must
+    /// reflect whether playback actually started, not whether a fetch began.
+    func loadSuggestedEpisode() async -> Bool
     func loadTopEpisode(forFilterUuid uuid: String) -> Bool
     func playAllEpisodes(forFilterUuid uuid: String) -> Bool
     func loadTopEpisode(forPodcastUuid uuid: String) -> Bool
@@ -100,8 +102,8 @@ nonisolated struct PlaybackIntentActionHandler {
     }
 
     @discardableResult
-    func playSuggested() -> Bool {
-        let didLoad = facade.loadSuggestedEpisode()
+    func playSuggested() async -> Bool {
+        let didLoad = await facade.loadSuggestedEpisode()
         if didLoad { facade.refreshWidgets() }
         return didLoad
     }
@@ -194,17 +196,22 @@ nonisolated struct LivePlaybackFacade: PlaybackFacade {
         }
     }
 
-    func loadSuggestedEpisode() -> Bool {
+    func loadSuggestedEpisode() async -> Bool {
         guard let suggested = RecommendationHelper().recommendEpisode() else { return false }
         if let episode = DataManager.sharedManager.findEpisode(uuid: suggested.uuid) {
             PlaybackManager.onMainSync { $0.load(episode: episode, autoPlay: true, overrideUpNext: false) }
-        } else {
+            return true
+        }
+
+        // Await the podcast fetch so Siri/Shortcuts reports the real outcome —
+        // an unconditional true here made failures read as success.
+        let added = await withCheckedContinuation { continuation in
             ServerPodcastManager.shared.addFromUuid(podcastUuid: suggested.podcastUuid, subscribe: false) { success in
-                if success, let episode = DataManager.sharedManager.findEpisode(uuid: suggested.uuid) {
-                    Task { @MainActor in PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false) }
-                }
+                continuation.resume(returning: success)
             }
         }
+        guard added, let episode = DataManager.sharedManager.findEpisode(uuid: suggested.uuid) else { return false }
+        await MainActor.run { PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false) }
         return true
     }
 

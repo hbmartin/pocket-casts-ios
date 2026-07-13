@@ -445,6 +445,13 @@ class ChapterManager {
         updateCurrentChapter(time: PlaybackManager.shared.currentTime())
         fetchRemoteArtworkIfNeeded()
 
+        // A rule-skipped chapter may already be playing when parsing finishes;
+        // without this the time observer only re-evaluates at the next chapter
+        // boundary, so the whole unwanted chapter plays through.
+        if PlaybackManager.shared.currentEpisode()?.uuid == episode.uuid {
+            PlaybackManager.shared.playableChaptersUpdated()
+        }
+
         NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }
 }
