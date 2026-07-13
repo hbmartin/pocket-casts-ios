@@ -149,9 +149,9 @@ nonisolated struct OnDeviceChapterStore: Sendable {
     private let directoryURL: URL
 
     init(directoryURL: URL? = nil) {
-        self.directoryURL = directoryURL ?? FileManager.default
-            .urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("generated_chapters", isDirectory: true)
+        let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        self.directoryURL = directoryURL ?? cachesDirectory.appendingPathComponent("generated_chapters", isDirectory: true)
     }
 
     func load(episodeUuid: String) -> [GeneratedChapter]? {
