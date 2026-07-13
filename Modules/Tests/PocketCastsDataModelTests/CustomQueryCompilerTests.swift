@@ -135,6 +135,16 @@ final class CustomQueryCompilerTests: XCTestCase {
         XCTAssertEqual(compiled.arguments, [expected.databaseValue])
     }
 
+    func testInLastDaysAcceptsTheBridgeDateShape() throws {
+        // CustomPlaylistQueryBridge (the builder UI) emits .date(.relativeDays(n));
+        // it must compile exactly like the compiler-native .number shape —
+        // rejecting it made the whole playlist render "(0)".
+        let compiled = try compile(condition(.publishedDate, .inLastDays, .date(.relativeDays(7))))
+        XCTAssertEqual(compiled.sql, "(episode.publishedDate > ?)")
+        let expected = now.timeIntervalSince1970 - 7 * 24 * 3600
+        XCTAssertEqual(compiled.arguments, [expected.databaseValue])
+    }
+
     func testBeforeAndAfterWithAbsoluteEpoch() throws {
         let before = try compile(condition(.addedDate, .before, .date(.epoch(1_700_000_000))))
         XCTAssertEqual(before.sql, "(episode.addedDate < ?)")

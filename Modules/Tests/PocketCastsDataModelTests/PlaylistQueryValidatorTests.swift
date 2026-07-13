@@ -93,6 +93,15 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
         }
     }
 
+    func testStatementSeparatorScannerIsLiteralAware() {
+        // Runtime re-check used by customRuleFragment: a ';' inside a string
+        // literal is data, one outside is a statement separator.
+        XCTAssertFalse(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'Science; Vs'"))
+        XCTAssertFalse(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'It''s; complicated'"))
+        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("1=1; DROP TABLE SJEpisode"))
+        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'x'; DELETE FROM SJEpisode"))
+    }
+
     func testStatementSmugglingIsRejectedAndTableSurvives() throws {
         let result = dataManager.validateCustomQueryFragment("1=1); DROP TABLE SJEpisode;--")
         switch result {
