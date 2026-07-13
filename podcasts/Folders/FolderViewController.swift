@@ -256,7 +256,7 @@ class FolderViewController: PCViewController {
         mainGrid.contentInset = UIEdgeInsets(top: mainGrid.contentInset.top, left: horizontalMargin, bottom: bottomMargin, right: horizontalMargin)
     }
 
-    // TODO: change this to be diff based and see if we can use the new iOS diffable stuff
+    // Diffable data source adoption tracked in hbmartin/pocket-casts-ios#283
     private func reloadPodcasts() {
         podcasts = DataManager.sharedManager.allPodcastsInFolder(folder: folder)
 

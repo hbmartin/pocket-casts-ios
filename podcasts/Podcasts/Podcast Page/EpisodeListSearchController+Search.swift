@@ -88,7 +88,6 @@ extension EpisodeListSearchController: UITextFieldDelegate {
         searching = true
         searchIcon.isHidden = true
         loadingSpinner.startAnimating()
-        print("Searching for \(searchQuery)")
         podcastDelegate?.searchEpisodes(query: searchQuery)
     }
 }

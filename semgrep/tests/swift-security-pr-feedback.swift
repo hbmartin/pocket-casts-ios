@@ -347,7 +347,7 @@ final class UnsafeTimerRunLoopAssumption {
     func startTimer() {
         timer = Timer(timeInterval: 1, repeats: false) { _ in
             MainActor.assumeIsolated {
-                print("tick")
+                handleTick()
             }
         }
 
@@ -362,7 +362,7 @@ final class SafeTimerRunLoopAssumption {
     func startTimer() {
         timer = Timer(timeInterval: 1, repeats: false) { _ in
             MainActor.assumeIsolated {
-                print("tick")
+                handleTick()
             }
         }
 
@@ -406,7 +406,7 @@ final class SafePodcastRetryBackoff {
     func retry(nextTry: Int) {
         DispatchQueue.global().asyncAfter(deadline: .now() + nextTry.pollWaitingTime) {
             // ok: pocketcasts.no-podcast-retry-thread-sleep
-            print("retry")
+            retryConnection()
         }
     }
 }
@@ -572,7 +572,7 @@ final class UnsafeNativeEmptyStateActionViewController {
             // ruleid: pocketcasts.native-empty-state-action-weak-self
             action: .init(title: "Add") {
                 if Bool.random() {
-                    print("nested")
+                    handleNested()
                 }
 
                 self.addPodcastsTapped(self)
@@ -777,7 +777,7 @@ final class UnsafePlaylistCellViewModelTaskGroupCapture {
                 // ruleid: pocketcasts.playlist-cell-task-group-image-manager-self-capture
                 group.addTask {
                     if Bool.random() {
-                        print("nested")
+                        handleNested()
                     }
 
                     let url = self.imageManager.podcastUrl(imageSize: .grid, uuid: podcastUuid)
@@ -838,7 +838,7 @@ final class UnsafePlaylistCellViewModelEpisodeObjectCapture {
                 // ruleid: pocketcasts.playlist-cell-task-group-episode-object-capture
                 group.addTask {
                     if Bool.random() {
-                        print("nested")
+                        handleNested()
                     }
 
                     let url = imageManager.podcastUrl(imageSize: .grid, uuid: episode.uuid)

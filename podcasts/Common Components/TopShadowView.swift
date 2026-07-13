@@ -12,10 +12,15 @@ class TopShadowView: ThemeableView {
             layer.shadowRadius = 0
         } else {
             layer.masksToBounds = false
-            layer.shadowColor = UIColor.black.cgColor // TODO: fix for theme
+            // Themed: dark themes get a lighter shadow so the edge stays visible.
+            layer.shadowColor = ThemeColor.primaryUi05().cgColor
             layer.shadowOffset = CGSize(width: 0, height: -2)
             layer.shadowOpacity = 0.15
             layer.shadowRadius = 2
         }
+    }
+
+    override func handleThemeDidChange() {
+        setNeedsLayout()
     }
 }

@@ -401,7 +401,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         guard let urlString = chapters.url, let url = URL(string: urlString) else { return }
 
         #if APPCLIP
-        //TODO: Prompt to install app
+        // App Clip install prompt: decision tracked in hbmartin/pocket-casts-ios#282
         #else
             URLHelper.open(
                 url,

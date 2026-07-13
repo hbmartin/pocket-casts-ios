@@ -48,7 +48,7 @@ class OptionsPicker {
 
     func show(statusBarStyle: UIStatusBarStyle? = nil) {
         guard let rootController = optionsController else { return }
-        //TODO: Figure this out and fix it
+        // Root cause of the layout workaround below tracked in hbmartin/pocket-casts-ios#285
         #if !APPCLIP
         window = SceneHelper.newMainScreenWindow()
         #endif

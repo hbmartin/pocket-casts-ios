@@ -5202,3 +5202,27 @@ rules:
           - pattern: $Q.read { ... } == nil
           - pattern: $Q.write { ... } != nil
           - pattern: $Q.write { ... } == nil
+
+  - id: pocketcasts.no-bare-print
+    severity: ERROR
+    metadata:
+      category: maintainability
+      confidence: HIGH
+      likelihood: LOW
+      impact: LOW
+      technology: [ios]
+    message: >-
+      Bare print() output is invisible in release builds and support logs — route
+      diagnostics through FileLog.shared.addMessage instead (Deferred Item 55).
+      Preview/demo code inside a PreviewProvider is exempt.
+    languages: [swift]
+    paths:
+      include:
+        - "podcasts/**/*.swift"
+        - "WidgetExtension/**/*.swift"
+      exclude:
+        - "**/Strings+Generated.swift"
+    patterns:
+      - pattern: print(...)
+      - pattern-not-inside: |
+          struct $NAME: PreviewProvider { ... }

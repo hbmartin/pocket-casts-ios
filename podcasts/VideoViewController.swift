@@ -245,7 +245,7 @@ class VideoViewController: SimpleNotificationsViewController, @preconcurrency AV
     }
 
     func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, failedToStartPictureInPictureWithError error: Error) {
-        print("PiP Did Fail")
+        FileLog.shared.addMessage("VideoViewController: picture-in-picture failed to start")
     }
 
     // MARK: - Event Handling

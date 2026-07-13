@@ -1,4 +1,5 @@
 import PocketCastsServer
+import PocketCastsUtils
 import UIKit
 
 class IncomingShareListViewController: PCViewController, UITableViewDelegate, UITableViewDataSource {
@@ -153,7 +154,8 @@ class IncomingShareListViewController: PCViewController, UITableViewDelegate, UI
     }
 
     private func handleLoadFailed() {
-        // TODO:
+        // The list simply stays empty; at minimum the failure must not be silent.
+        FileLog.shared.addMessage("IncomingShareListViewController: failed to load shared podcast list")
     }
 
     private func populateList(_ podcastList: SharingServerHandler.PodcastList) {

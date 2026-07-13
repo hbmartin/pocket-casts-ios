@@ -87,14 +87,14 @@ class AVFileUtil: NSObject {
     func startsUnstoredTask() {
         // ruleid: pocketcasts.avfileutil-unstored-task
         Task {
-            print("metadata")
+            loadMetadata()
         }
     }
 
     // ok: pocketcasts.avfileutil-unstored-task
     func startsStoredTask() {
         metadataTask = Task {
-            print("metadata")
+            loadMetadata()
         }
     }
 
@@ -229,4 +229,21 @@ final class AudioSessionObserverFixtures: NSObject {
     }
 
     @objc private func routeChanged() {}
+}
+
+
+// MARK: - no-bare-print (Item 55)
+
+func logsSomething(value: Int) {
+    // ruleid: pocketcasts.no-bare-print
+    print("value is \(value)")
+}
+
+struct DemoView_Previews: PreviewProvider {
+    static var previews: some View {
+        Button("Tap Me") {
+            // ok: pocketcasts.no-bare-print
+            print("Tapped")
+        }
+    }
 }

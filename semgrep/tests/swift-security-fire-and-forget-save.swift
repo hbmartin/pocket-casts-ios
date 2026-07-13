@@ -21,7 +21,7 @@ class FireAndForgetSaveFixture {
         DispatchQueue.global(qos: .background).async {
             let uuid = episodeUuid
             DataManager.sharedManager.delete(episodeUuid: uuid)
-            print(uuid)
+            performWork()
         }
     }
 

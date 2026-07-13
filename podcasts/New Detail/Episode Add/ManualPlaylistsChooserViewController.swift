@@ -325,7 +325,7 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
     }
 
     func searchWasCleared() {
-        // TODO: Add analytics
+        // Analytics tracked in hbmartin/pocket-casts-ios#284
 
         manualPlaylists = tempManualPlaylists
         tableView.reload(section: .playlists, with: .automatic)
@@ -334,7 +334,7 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
     func searchTermChanged(_ searchTerm: String) { }
 
     func performSearch(searchTerm: String, triggeredByTimer: Bool, completion: @escaping (() -> Void)) {
-        // TODO: Add analytics
+        // Analytics tracked in hbmartin/pocket-casts-ios#284
 
         manualPlaylists = tempManualPlaylists.filter {
             $0.playlistName.localizedCaseInsensitiveContains(searchTerm)

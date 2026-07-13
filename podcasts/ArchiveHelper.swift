@@ -22,7 +22,7 @@ nonisolated class ArchiveHelper {
         } else if time == 90.days {
             return L10n.settingsAutoArchive3Months
         } else {
-            return "TODO"
+            return TimeFormatter.shared.singleUnitFormattedShortestTime(time: time)
         }
     }
 
