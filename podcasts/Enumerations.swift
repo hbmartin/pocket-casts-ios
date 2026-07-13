@@ -258,7 +258,7 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
     static var defaultActions: [PlayerAction] {
         [
             .effects, .sleepTimer, .stopAfterEpisode, .routePicker, .shareEpisode, .addToPlaylist, .download,
-            .transcript, .goToPodcast, .addBookmark, .markPlayed,
+            .transcript, .catchMeUp, .goToPodcast, .addBookmark, .markPlayed,
             .starEpisode, .archive
         ]
     }
@@ -291,6 +291,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             self = .addToPlaylist
         case 14:
             self = .stopAfterEpisode
+        case 15:
+            self = .catchMeUp
         default:
             return nil
         }
@@ -325,6 +327,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
         case .stopAfterEpisode:
             // 14: 13 is the current max and 7 is retired — don't reuse it
             return 14
+        case .catchMeUp:
+            return 15
         }
     }
 
@@ -372,6 +376,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return L10n.playlistManualEpisodeAddToPlaylist
         case .stopAfterEpisode:
             return L10n.playerActionTitleStopAfterEpisode
+        case .catchMeUp:
+            return L10n.catchMeUpTitle
         }
     }
 
@@ -419,6 +425,9 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             // deliberately not sleep-menu (indistinguishable from Sleep Timer); reusing the
             // existing template clock asset instead of adding a new imageset
             return "filter_clock"
+        case .catchMeUp:
+            // reusing the smart-playlist sparkle asset instead of adding a new imageset
+            return "cs-sparkle-black"
         }
     }
 
@@ -453,6 +462,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return "playlist-add-episode"
         case .stopAfterEpisode:
             return "filter_clock"
+        case .catchMeUp:
+            return "cs-sparkle-black"
         }
     }
 
@@ -460,6 +471,9 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
         switch self {
         case .starEpisode, .shareEpisode:
             return episode is Episode
+        case .catchMeUp:
+            // Only meaningful mid-episode: enough heard to recap, not nearly done.
+            return CatchMeUpGenerator.isEligible(playedUpTo: episode.playedUpTo, duration: episode.duration)
         default:
             return true
         }
@@ -468,7 +482,12 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
     /// Determines whether the action should be available as an option
     /// If false, the action will be hidden from the player shelf and overflow menu
     var isAvailable: Bool {
-        true
+        switch self {
+        case .catchMeUp:
+            FeatureFlag.catchMeUp.enabled
+        default:
+            true
+        }
     }
 
     var analyticsDescription: String {
@@ -499,6 +518,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return "add_to_playlist"
         case .stopAfterEpisode:
             return "stop_after_episode"
+        case .catchMeUp:
+            return "catch_me_up"
         }
     }
 }

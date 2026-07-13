@@ -98,6 +98,16 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see plans/AI UX Improvements.md Phase 6.
     case episodeCredits
 
+    /// Catch Me Up: on-device recap of an in-progress episode's already-played
+    /// portion, from the player shelf and the episode summary card (Deferred
+    /// Work Item 19).
+    case catchMeUp
+
+    /// On-device chapter generation from the local transcript when an episode
+    /// has no chapters from any other source (Deferred Work Item 19; completes
+    /// Item 2's on-device path).
+    case onDeviceChapters
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -165,6 +175,10 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .promptedPlaylists:
             BuildEnvironment.current != .appStore
         case .episodeCredits:
+            BuildEnvironment.current != .appStore
+        case .catchMeUp:
+            BuildEnvironment.current != .appStore
+        case .onDeviceChapters:
             BuildEnvironment.current != .appStore
         }
     }

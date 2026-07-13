@@ -4874,6 +4874,15 @@
 /* Footer under the podcast settings on-device-only transcription switch, explaining that this show's automatic transcripts skip the remote provider */
 "podcast_settings_local_transcription_only_footer" = "Automatic transcripts for this podcast will be generated on-device instead of using your configured transcription provider.";
 
+/* Title of the Catch Me Up feature: shelf action, summary-card button and sheet header. Recaps the already-played part of an in-progress episode */
+"catch_me_up_title" = "Catch Me Up";
+
+/* Shown with a spinner while the catch-up recap is being generated on-device */
+"catch_me_up_generating" = "Catching you up…";
+
+/* Shown in the Catch Me Up sheet when a recap could not be generated */
+"catch_me_up_failed" = "A recap isn't available for this episode yet. Try again after the transcript finishes processing.";
+
 /* Section header in Transcription settings for the battery policy picker controlling when on-device transcription may run */
 "transcription_battery_policy_header" = "Transcribe on Battery";
 

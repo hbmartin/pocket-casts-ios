@@ -638,6 +638,12 @@ nonisolated internal enum L10n {
   internal static var cancelSubscriptionYearlyPromotionTitle: String { return L10n.tr("Localizable", "cancel_subscription_yearly_promotion_title", fallback: "Get 50%% off your next year") }
   /// An activity message indicating that the process to cancel is running.
   internal static var canceling: String { return L10n.tr("Localizable", "canceling", fallback: "Canceling...") }
+  /// Shown in the Catch Me Up sheet when a recap could not be generated
+  internal static var catchMeUpFailed: String { return L10n.tr("Localizable", "catch_me_up_failed", fallback: "A recap isn't available for this episode yet. Try again after the transcript finishes processing.") }
+  /// Shown with a spinner while the catch-up recap is being generated on-device
+  internal static var catchMeUpGenerating: String { return L10n.tr("Localizable", "catch_me_up_generating", fallback: "Catching you up…") }
+  /// Title of the Catch Me Up feature: shelf action, summary-card button and sheet header. Recaps the already-played part of an in-progress episode
+  internal static var catchMeUpTitle: String { return L10n.tr("Localizable", "catch_me_up_title", fallback: "Catch Me Up") }
   /// Button label that changes the users chosen app icon
   internal static var changeAppIcon: String { return L10n.tr("Localizable", "change_app_icon", fallback: "Change App Icon") }
   /// The subtitle of a view where the user can edit their bookmark title

@@ -336,9 +336,33 @@ class ChapterManager {
             FileLog.shared.addMessage("ChapterManager: using file chapters because there was an error retrieving external sources")
         }
 
+        // Lowest precedence of all: when no source produced chapters, segment
+        // the episode's own transcript on-device (Deferred Item 19; cached per
+        // episode). Behaves as `.generated` downstream, like server-generated.
+        if chapters.isEmpty, FeatureFlag.onDeviceChapters.enabled {
+            let boxedManager = PocketCastsUtils.UncheckedSendable(
+                TranscriptManager(episodeUUID: episodeUuid, podcastUUID: podcastUuid)
+            )
+            if let model = try? await Self.loadTranscript(boxedManager) {
+                let cues = SummaryTakeawayGenerator.timedCues(from: model)
+                let generated = await TranscriptChapterGenerator().chapters(episodeUuid: episodeUuid, cues: cues, duration: duration)
+                if !generated.isEmpty, lastEpisodeUuid == episode.uuid {
+                    chapters = chapterParser.parseGeneratedChapters(generated, episodeDuration: duration)
+                    chaptersOrigin = .generated
+                    FileLog.shared.addMessage("ChapterManager: using on-device generated chapters")
+                }
+            }
+        }
+
         if lastEpisodeUuid == episode.uuid {
             handleChaptersLoaded(chapters, for: episode)
         }
+    }
+
+    nonisolated private static func loadTranscript(
+        _ manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
+    ) async throws -> TranscriptModel {
+        try await manager.value.loadTranscript()
     }
 
     nonisolated private static func loadFileChapters(_ boxed: PocketCastsUtils.UncheckedSendable<(ChapterManager, BaseEpisode)>, duration: TimeInterval) async -> [ChapterInfo] {

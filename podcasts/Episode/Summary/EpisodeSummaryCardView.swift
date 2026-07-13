@@ -19,6 +19,7 @@ struct EpisodeSummaryCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             summary
+            catchMeUp
             takeaways
         }
         .padding(16)
@@ -84,6 +85,43 @@ struct EpisodeSummaryCardView: View {
                         .foregroundStyle(theme.primaryInteractive01)
                 }
                 .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Catch Me Up
+
+    /// "Catch Me Up" for in-progress episodes: recaps the already-played
+    /// portion in a sheet (Deferred Item 19). Shares the generator with the
+    /// player shelf action.
+    @ViewBuilder
+    private var catchMeUp: some View {
+        if viewModel.isCatchMeUpAvailable {
+            Button {
+                viewModel.catchMeUpTapped()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.caption)
+                    Text(L10n.catchMeUpTitle)
+                        .font(size: 13, style: .footnote, weight: .semibold)
+                }
+                .foregroundStyle(theme.primaryInteractive01)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(theme.primaryUi05))
+            }
+            .buttonStyle(.plain)
+            .sheet(isPresented: $viewModel.isShowingCatchMeUp) {
+                CatchMeUpView(model: CatchMeUpViewModel(
+                    episodeUuid: viewModel.episodeUuid,
+                    podcastUuid: viewModel.podcastUuid,
+                    episodeTitle: viewModel.episodeTitle,
+                    playedUpTo: viewModel.playedUpTo
+                ))
+                .environmentObject(theme)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
         }
     }

@@ -848,6 +848,9 @@ enum AnalyticsEvent: String {
     case episodeDetailSummaryCardShown
     case episodeDetailSummaryTakeawayTapped
     case episodeDetailSummaryGenerationFailed
+    case episodeDetailSummaryCatchMeUpTapped
+    case catchMeUpShown
+    case catchMeUpFailed
 
     // MARK: - Episode Credits (people credits card on episode detail)
 
