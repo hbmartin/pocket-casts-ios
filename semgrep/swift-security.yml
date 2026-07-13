@@ -5226,3 +5226,25 @@ rules:
       - pattern: print(...)
       - pattern-not-inside: |
           struct $NAME: PreviewProvider { ... }
+
+  - id: pocketcasts.no-raw-feed-url-in-logs
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      Feed URLs can carry auth secrets (userinfo or ?token= query params) and
+      FileLog output ships in shareable diagnostics. Interpolate
+      LocalFeedURL.redactedForLogging(...) instead of the raw URL (review
+      finding P2-2).
+    languages: [generic]
+    options:
+      generic_ellipsis_max_span: 2
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/Public/LocalFeed/*.swift"
+    patterns:
+      - pattern-regex: 'FileLog\.shared\.addMessage\([^\n]*\\\((feedURL|urlString|podcastUrl)\)'

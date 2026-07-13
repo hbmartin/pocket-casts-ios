@@ -27,6 +27,13 @@ public enum LocalFeedEpisodeMatcher {
 
     /// One entry per input item, in order. `nil` means the item carries no derivable
     /// identity (no guid and no enclosure URL) and must be skipped entirely.
+    ///
+    /// Two passes: exact matches (hash UUID, enclosure URL) claim their stored
+    /// episodes first, then the title+day fallback runs — and never resolves to
+    /// an episode another item already claimed exactly. Without that guard, two
+    /// distinct same-day episodes sharing a title (daily news briefs) collapse:
+    /// the first matches by hash, the second false-merges onto it via the
+    /// fallback and is silently never ingested.
     public static func match(items: [ParsedFeedItem], existing: [Episode]) -> [Match?] {
         var uuids = Set<String>()
         var uuidByDownloadUrl = [String: String]()
@@ -43,18 +50,35 @@ public enum LocalFeedEpisodeMatcher {
             }
         }
 
-        return items.map { item in
+        // Pass 1: exact identity only.
+        var exactMatches = [Match??](repeating: nil, count: items.count)
+        var claimedUuids = Set<String>()
+        for (index, item) in items.enumerated() {
+            guard let hashUuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL) else {
+                exactMatches[index] = Match?.none // no identity: skip entirely
+                continue
+            }
+            if uuids.contains(hashUuid) {
+                exactMatches[index] = .existing(uuid: hashUuid)
+                claimedUuids.insert(hashUuid)
+            } else if let enclosureURL = item.enclosureURL, let uuid = uuidByDownloadUrl[enclosureURL] {
+                exactMatches[index] = .existing(uuid: uuid)
+                claimedUuids.insert(uuid)
+            }
+        }
+
+        // Pass 2: the fallback, restricted to stored episodes no other item
+        // claimed exactly (and each usable at most once per refresh).
+        return items.enumerated().map { index, item in
+            if let resolved = exactMatches[index] {
+                return resolved
+            }
             guard let hashUuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL) else {
                 return nil
             }
-            if uuids.contains(hashUuid) {
-                return .existing(uuid: hashUuid)
-            }
-            if let enclosureURL = item.enclosureURL, let uuid = uuidByDownloadUrl[enclosureURL] {
-                return .existing(uuid: uuid)
-            }
             if let key = TitleDayKey(title: item.title, date: item.publishedDate),
-               let uuid = uuidByTitleAndDay[key] {
+               let uuid = uuidByTitleAndDay[key], !claimedUuids.contains(uuid) {
+                claimedUuids.insert(uuid)
                 FileLog.shared.addMessage("LocalFeedEpisodeMatcher: title+date fallback matched \"\(item.title ?? "")\" to existing episode \(uuid)")
                 return .existing(uuid: uuid)
             }
