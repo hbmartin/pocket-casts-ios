@@ -27,6 +27,7 @@ public class DataManager {
     public let bookmarks: BookmarkDataManager
     public let ratings: RatingsDataManager
     public let networkDataUsageManager: NetworkDataUsageManager
+    public let transcriptions: TranscriptionDataManager
 
     let dbQueue: GRDBQueue
 
@@ -99,6 +100,7 @@ public class DataManager {
         bookmarks = BookmarkDataManager(dbQueue: dbQueue, fileSyncJournalManager: fileSyncJournalManager)
         ratings = RatingsDataManager()
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
+        transcriptions = TranscriptionDataManager(dbQueue: dbQueue)
     }
 
     private var databaseSize: String? {
@@ -1473,12 +1475,22 @@ extension DataManager {
         }
         defer { try? sourceDbQueue.close() }
 
+        // Virtual-table shadow tables (FTS5 *_data/_idx/_content/_docsize/_config) are
+        // maintained by SQLite and cannot be written directly; the virtual table itself
+        // is copied through its declared columns instead, which rebuilds its index.
         guard let tableNames: [String] = try? sourceDbQueue.read({ db in
-            try String.fetchAll(db,
+            let all = try String.fetchAll(db,
                 sql: """
                 SELECT name FROM sqlite_master
                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
                 """)
+            let virtualTables = try String.fetchAll(db,
+                sql: """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'
+                """)
+            let shadowPrefixes = virtualTables.map { $0 + "_" }
+            return all.filter { name in !shadowPrefixes.contains { name.hasPrefix($0) } }
         }) else {
             return false
         }
@@ -1523,13 +1535,21 @@ extension DataManager {
 
         let destinationDbQueue = dbQueue.dbPool
 
-        // Fetch all table names (excluding SQLite internal tables and SJEpisode)
+        // Fetch all table names (excluding SQLite internal tables, SJEpisode, and
+        // virtual-table shadow tables, which SQLite maintains and forbids writing).
         let tableNames: [String]? = try? sourceDbQueue.read { db in
-            try? String.fetchAll(db,
+            let all = try String.fetchAll(db,
                 sql: """
                 SELECT name FROM sqlite_master
                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'SJEpisode'
                 """)
+            let virtualTables = try String.fetchAll(db,
+                sql: """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'
+                """)
+            let shadowPrefixes = virtualTables.map { $0 + "_" }
+            return all.filter { name in !shadowPrefixes.contains { name.hasPrefix($0) } }
         }
 
         for tableName in tableNames ?? [] {

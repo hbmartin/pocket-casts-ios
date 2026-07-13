@@ -32,7 +32,7 @@ class TranscriptErrorView: UIView {
     }
 
     private lazy var containerView: UIView = {
-        let view = UIStackView(arrangedSubviews: [icon, label, retryButton])
+        let view = UIStackView(arrangedSubviews: [icon, label, retryButton, generateButton])
         view.spacing = 16
         view.translatesAutoresizingMaskIntoConstraints = false
         view.axis = .vertical
@@ -93,6 +93,50 @@ class TranscriptErrorView: UIView {
             }
             label.attributedText = NSAttributedString(string: text, attributes: updatedAttributes)
         }
+    }
+
+    /// Secondary affordance under the retry button, used to offer generating an
+    /// on-device transcript when none is available. Hidden until shown.
+    private var generateCallback: (() -> Void)?
+
+    private lazy var generateButton: UIView = {
+        var configuration = UIButton.Configuration.filled()
+        configuration.contentInsets = .init(top: 4, leading: 12, bottom: 4, trailing: 12)
+
+        let generateButton = RoundButton(type: .system)
+        generateButton.addTarget(self, action: #selector(generateTapped), for: .touchUpInside)
+
+        if viewSource == .episode {
+            generateButton.setTitleColor(ThemeColor.primaryText01(), for: .normal)
+            generateButton.tintColor = ThemeColor.primaryUi05()
+        } else {
+            generateButton.setTitleColor(.white, for: .normal)
+            generateButton.tintColor = .white.withAlphaComponent(0.2)
+        }
+        generateButton.layer.masksToBounds = true
+        generateButton.configuration = configuration
+        generateButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .callout)
+        generateButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        generateButton.isHidden = true
+        return generateButton
+    }()
+
+    func showGenerateButton(title: String, action: @escaping () -> Void) {
+        generateCallback = action
+        (generateButton as? UIButton)?.setTitle(title, for: .normal)
+        generateButton.isHidden = false
+    }
+
+    func hideGenerateButton() {
+        generateButton.isHidden = true
+    }
+
+    func setRetryButtonHidden(_ hidden: Bool) {
+        retryButton.isHidden = hidden
+    }
+
+    @objc private func generateTapped() {
+        generateCallback?()
     }
 
     @objc func retryLoad() {

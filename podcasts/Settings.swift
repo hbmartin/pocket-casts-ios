@@ -127,6 +127,52 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(enabled, forKey: Settings.localFeedIngestEnabledKey)
     }
 
+    // MARK: - Diarized Transcription
+
+    private static let transcriptionEngineModeKey = "SJTranscriptionEngineMode"
+
+    /// Raw `TranscriptionEngineMode` value for locally generated transcripts
+    /// (0 = Apple built-in, 1 = local model, 2 = remote provider). Defaults to 0.
+    class func transcriptionEngineMode() -> Int32 {
+        Int32(UserDefaults.standard.integer(forKey: Settings.transcriptionEngineModeKey))
+    }
+
+    class func setTranscriptionEngineMode(_ mode: Int32) {
+        UserDefaults.standard.set(Int(mode), forKey: Settings.transcriptionEngineModeKey)
+    }
+
+    private static let transcriptionLanguageOverrideKey = "SJTranscriptionLanguageOverride"
+
+    /// BCP-47 language tag override for transcription. nil (or empty, which reads
+    /// back as nil) means the device locale.
+    class func transcriptionLanguageOverride() -> String? {
+        guard let value = UserDefaults.standard.string(forKey: Settings.transcriptionLanguageOverrideKey),
+              !value.isEmpty else {
+            return nil
+        }
+        return value
+    }
+
+    class func setTranscriptionLanguageOverride(_ language: String?) {
+        if let language, !language.isEmpty {
+            UserDefaults.standard.set(language, forKey: Settings.transcriptionLanguageOverrideKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Settings.transcriptionLanguageOverrideKey)
+        }
+    }
+
+    private static let transcriptionMaxSpeakersKey = "SJTranscriptionMaxSpeakers"
+
+    /// Diarizer speaker cap; 0 means auto-detect. Stored now, consumed when a
+    /// diarizer ships (transcription Phase 2).
+    class func transcriptionMaxSpeakers() -> Int {
+        UserDefaults.standard.integer(forKey: Settings.transcriptionMaxSpeakersKey)
+    }
+
+    class func setTranscriptionMaxSpeakers(_ count: Int) {
+        UserDefaults.standard.set(count, forKey: Settings.transcriptionMaxSpeakersKey)
+    }
+
     // MARK: - Mobile Data
 
     static let allowCellularDownloadKey = "SJUserCellular"

@@ -38,6 +38,22 @@ extension EpisodeDetailViewController {
         }
         addPicker.addAction(action: addToPlaylistAction)
 
+        if FeatureFlag.diarizedTranscription.enabled,
+           episode.downloaded(pathFinder: DownloadManager.shared),
+           DataManager.sharedManager.transcriptions.find(episodeUuid: episode.uuid)?.transcriptionStatus != .completed {
+            let generateTranscriptAction = OptionAction(label: L10n.transcriptionGenerate, icon: "transcript") { [weak self] in
+                guard let self else { return }
+                let episodeUuid = self.episode.uuid
+                let podcastUuid = self.episode.podcastUuid
+                Analytics.track(.transcriptionGenerateTapped, properties: ["source": "episode_detail", "episode_uuid": episodeUuid])
+                Task {
+                    await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+                }
+                Toast.show(L10n.transcriptionGenerating)
+            }
+            addPicker.addAction(action: generateTranscriptAction)
+        }
+
         addPicker.show(statusBarStyle: preferredStatusBarStyle)
     }
 

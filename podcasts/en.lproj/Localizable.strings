@@ -4742,6 +4742,45 @@
 /* Title of the Transcript excerpt in Episode detail */
 "view_transcript" = "View Transcript";
 
+/* Title of the button/action that starts generating an on-device transcript for a downloaded episode */
+"transcription_generate" = "Generate Transcript";
+
+/* Shown (as a toast and as progress text in the transcript screen) while an on-device transcript is being generated */
+"transcription_generating" = "Generating…";
+
+/* Title of the Transcription page in Settings and of its row in the settings list */
+"transcription_settings_title" = "Transcription";
+
+/* Header of the transcription settings section where the user picks which speech-to-text engine to use */
+"transcription_engine_mode" = "Engine";
+
+/* Name of the transcription engine option that uses Apple's built-in on-device speech recognition */
+"transcription_engine_apple" = "Apple Built-in";
+
+/* Name of the (not yet available) transcription engine option that uses downloadable on-device models */
+"transcription_engine_local_model" = "Downloaded Model";
+
+/* Name of the (not yet available) transcription engine option that uses a remote transcription API */
+"transcription_engine_remote" = "Remote Provider";
+
+/* Footer under the transcription engine picker explaining that the disabled engine options will become available later */
+"transcription_engine_coming_soon" = "Downloaded models and remote providers are coming soon.";
+
+/* Header of the transcription settings section (and label of its text field) where the user can force a transcription language */
+"transcription_language_override" = "Language Override";
+
+/* Footer under the transcription language override text field. The quoted example is a BCP-47 language tag and should not be translated. */
+"transcription_language_override_footer" = "Enter a language tag such as \"en-US\" to force a transcription language. Leave empty to use the device language.";
+
+/* Title of the destructive menu action that deletes the locally generated transcript for an episode */
+"transcription_delete_generated" = "Delete Generated Transcript";
+
+/* Title of the transcript source menu option that shows the transcript provided by the podcast feed */
+"transcription_source_podcast" = "Podcast Transcript";
+
+/* Title of the transcript source menu option that shows the locally generated transcript */
+"transcription_source_generated" = "Generated Transcript";
+
 /* Upgrade Experiment Paywall button title */
 "upgrade_experiment_paywall_button" = "Get Pocket Casts Plus";
 

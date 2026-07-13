@@ -823,6 +823,16 @@ enum AnalyticsEvent: String {
     case syncedTranscriptSeekFailed
     case syncedTranscriptAutoScrollResumed
 
+    // MARK: - Diarized Transcription (locally generated transcripts)
+
+    case transcriptionGenerateTapped
+    case transcriptionStarted
+    case transcriptionCompleted
+    case transcriptionFailed
+    case transcriptionCancelled
+    case transcriptionSourceSwitched
+    case transcriptionSettingsShown
+
     // MARK: - Widgets
 
     case widgetInstalled

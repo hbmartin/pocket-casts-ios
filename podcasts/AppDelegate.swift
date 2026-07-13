@@ -124,6 +124,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         setupSignOutListener()
 
+        if FeatureFlag.diarizedTranscription.enabled {
+            Task.detached(priority: .utility) {
+                // Resume queued transcription jobs (and reset any a crash left
+                // mid-flight), then ask for a charging-time pass if work remains.
+                await TranscriptionQueueManager.shared.restorePendingJobs()
+                TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
+            }
+        }
+
         return true
     }
 
@@ -181,6 +190,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func handleEnterBackground() {
         scheduleNextBackgroundRefresh()
+        if FeatureFlag.diarizedTranscription.enabled {
+            Task.detached(priority: .utility) {
+                TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
+            }
+        }
         FileLog.shared.forceFlush()
 
         UserDefaults.standard.set(Date(), forKey: Constants.UserDefaults.lastAppCloseDate)
@@ -303,6 +317,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             Task { @MainActor in
                 self.handleAppRefresh(task: boxedTask.value)
             }
+        }
+
+        if FeatureFlag.diarizedTranscription.enabled {
+            TranscriptionQueueManager.registerBackgroundTask()
         }
     }
 

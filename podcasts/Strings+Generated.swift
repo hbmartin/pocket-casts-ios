@@ -4383,6 +4383,32 @@ nonisolated internal enum L10n {
   internal static var transcriptReaderTextSize: String { return L10n.tr("Localizable", "transcript_reader_text_size", fallback: "Text size") }
   /// Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target.
   internal static var transcriptTapToSeekStreamingUnavailable: String { return L10n.tr("Localizable", "transcript_tap_to_seek_streaming_unavailable", fallback: "Download the episode to tap to seek") }
+  /// Title of the destructive menu action that deletes the locally generated transcript for an episode
+  internal static var transcriptionDeleteGenerated: String { return L10n.tr("Localizable", "transcription_delete_generated", fallback: "Delete Generated Transcript") }
+  /// Name of the transcription engine option that uses Apple's built-in on-device speech recognition
+  internal static var transcriptionEngineApple: String { return L10n.tr("Localizable", "transcription_engine_apple", fallback: "Apple Built-in") }
+  /// Footer under the transcription engine picker explaining that the disabled engine options will become available later
+  internal static var transcriptionEngineComingSoon: String { return L10n.tr("Localizable", "transcription_engine_coming_soon", fallback: "Downloaded models and remote providers are coming soon.") }
+  /// Name of the (not yet available) transcription engine option that uses downloadable on-device models
+  internal static var transcriptionEngineLocalModel: String { return L10n.tr("Localizable", "transcription_engine_local_model", fallback: "Downloaded Model") }
+  /// Header of the transcription settings section where the user picks which speech-to-text engine to use
+  internal static var transcriptionEngineMode: String { return L10n.tr("Localizable", "transcription_engine_mode", fallback: "Engine") }
+  /// Name of the (not yet available) transcription engine option that uses a remote transcription API
+  internal static var transcriptionEngineRemote: String { return L10n.tr("Localizable", "transcription_engine_remote", fallback: "Remote Provider") }
+  /// Title of the button/action that starts generating an on-device transcript for a downloaded episode
+  internal static var transcriptionGenerate: String { return L10n.tr("Localizable", "transcription_generate", fallback: "Generate Transcript") }
+  /// Shown (as a toast and as progress text in the transcript screen) while an on-device transcript is being generated
+  internal static var transcriptionGenerating: String { return L10n.tr("Localizable", "transcription_generating", fallback: "Generating…") }
+  /// Header of the transcription settings section (and label of its text field) where the user can force a transcription language
+  internal static var transcriptionLanguageOverride: String { return L10n.tr("Localizable", "transcription_language_override", fallback: "Language Override") }
+  /// Footer under the transcription language override text field. The quoted example is a BCP-47 language tag and should not be translated.
+  internal static var transcriptionLanguageOverrideFooter: String { return L10n.tr("Localizable", "transcription_language_override_footer", fallback: "Enter a language tag such as \"en-US\" to force a transcription language. Leave empty to use the device language.") }
+  /// Title of the Transcription page in Settings and of its row in the settings list
+  internal static var transcriptionSettingsTitle: String { return L10n.tr("Localizable", "transcription_settings_title", fallback: "Transcription") }
+  /// Title of the transcript source menu option that shows the locally generated transcript
+  internal static var transcriptionSourceGenerated: String { return L10n.tr("Localizable", "transcription_source_generated", fallback: "Generated Transcript") }
+  /// Title of the transcript source menu option that shows the transcript provided by the podcast feed
+  internal static var transcriptionSourcePodcast: String { return L10n.tr("Localizable", "transcription_source_podcast", fallback: "Podcast Transcript") }
   /// Label indicating that the trial period for the subscription or promotion has ended.
   internal static var trialFinished: String { return L10n.tr("Localizable", "trial_finished", fallback: "Trial Finished") }
   /// The Trim Silence feature, removes silence from podcasts to make them shorter.

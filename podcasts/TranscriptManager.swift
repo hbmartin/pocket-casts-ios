@@ -1,8 +1,19 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
 #if !os(tvOS)
 import Capture
 #endif
+
+/// Which transcript to prefer when both a podcast-provided transcript and a
+/// locally generated (on-device) transcript exist for an episode.
+nonisolated enum TranscriptSource {
+    /// Prefer the locally generated transcript when one exists, otherwise fall
+    /// back to the podcast-provided flow.
+    case automatic
+    case podcastProvided
+    case localGenerated
+}
 
 enum TranscriptError: Error {
     case notAvailable
@@ -40,6 +51,25 @@ nonisolated class TranscriptManager {
     private(set) var hasGeneratedTranscripts: Bool = false
     private(set) var isDisplayingGeneratedTranscript: Bool = false
 
+    /// Which transcript source `loadTranscript()` should prefer. Set by the
+    /// transcript UI's source switcher before loading.
+    var sourcePreference: TranscriptSource = .automatic
+
+    /// True when a completed locally generated transcription record exists for
+    /// this episode (regardless of which source is being displayed).
+    private(set) var hasLocalTranscription: Bool = false
+
+    /// True when the model returned by the last `loadTranscript()` call came from
+    /// the locally generated VTT artifact. Local transcripts are cut from the
+    /// exact audio file the user plays, so callers skip fingerprint timing.
+    private(set) var isDisplayingLocalTranscription: Bool = false
+
+    /// True when the episode metadata advertises at least one podcast-provided
+    /// transcript. Best-effort when a local transcript short-circuits the load.
+    private(set) var hasPodcastProvidedTranscripts: Bool = false
+
+    private let artifactStore = TranscriptionArtifactStore()
+
     init(episodeUUID: String, podcastUUID: String, showCoordinator: ShowInfoCoordinating = ShowInfoCoordinator.shared) {
         self.episodeUUID = episodeUUID
         self.podcastUUID = podcastUUID
@@ -47,11 +77,30 @@ nonisolated class TranscriptManager {
     }
 
     public func loadTranscript() async throws -> TranscriptModel {
+        isDisplayingLocalTranscription = false
+
+        if FeatureFlag.diarizedTranscription.enabled {
+            let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUUID)
+            hasLocalTranscription = record?.transcriptionStatus == .completed
+            if sourcePreference != .podcastProvided,
+               let record, record.transcriptionStatus == .completed,
+               let localModel = loadLocalTranscript(record: record) {
+                // Best-effort probe so the source switcher knows whether a
+                // podcast-provided transcript also exists; failures just mean
+                // the switcher won't offer the podcast source this time.
+                let metadata = try? await showCoordinator.loadTranscriptsMetadata(podcastUuid: podcastUUID, episodeUuid: episodeUUID)
+                hasPodcastProvidedTranscripts = metadata.map { !$0.transcripts.isEmpty } ?? false
+                isDisplayingLocalTranscription = true
+                return localModel
+            }
+        }
+
         guard
             let metadata = try? await showCoordinator.loadTranscriptsMetadata(podcastUuid: podcastUUID, episodeUuid: episodeUUID),
             !metadata.transcripts.isEmpty else {
             throw TranscriptError.notAvailable
         }
+        hasPodcastProvidedTranscripts = true
         var transcriptsAvailable = metadata.transcripts
         hasGeneratedTranscripts = metadata.hasGeneratedTranscripts
         isDisplayingGeneratedTranscript = metadata.isDisplayingGeneratedTranscript
@@ -68,6 +117,20 @@ nonisolated class TranscriptManager {
             }
         }
         throw TranscriptError.failedToLoad
+    }
+
+    /// Builds a model from the locally generated VTT artifact, applying any user
+    /// speaker renames on the raw VTT before parsing. Returns nil (falling back
+    /// to the podcast-provided flow) when the artifact is missing or unparseable.
+    private func loadLocalTranscript(record: EpisodeTranscriptionRecord) -> TranscriptModel? {
+        guard let rawVTT = artifactStore.read(episodeUuid: episodeUUID) else {
+            return nil
+        }
+        let vtt = TranscriptionArtifactStore.applyingSpeakerNames(vtt: rawVTT, namesJSON: record.speakerNames)
+        guard let model = TranscriptModel.makeModel(from: vtt, format: .vtt), !model.isEmtpy else {
+            return nil
+        }
+        return model
     }
 
     private func loadTranscript(_ transcript: Transcript) async throws -> TranscriptModel {

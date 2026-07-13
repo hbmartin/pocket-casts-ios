@@ -54,6 +54,10 @@ let package = Package(
             targets: ["PocketCastsFileSync"]
         ),
         .library(
+            name: "PocketCastsTranscription",
+            targets: ["PocketCastsTranscription"]
+        ),
+        .library(
             name: "Modules",
             targets: ["Modules"]
         )
@@ -206,6 +210,26 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrencySettings
         ),
+        // Diarized transcription: domain types, speaker/ASR merge algorithm, VTT
+        // serializer, and the Apple SpeechAnalyzer engine (`#if os(iOS)`). System
+        // frameworks only, with NO package dependencies: the pure alignment and
+        // serialization code is tested host-side (`swift test` on macOS), so
+        // nothing that fails to build for macOS (PocketCastsUtils imports UIKit)
+        // may be attached here — and WhisperKit/SpeakerKit/FluidAudio products
+        // must NOT be added either; they attach only to `XcodeTarget_podcasts`.
+        .target(
+            name: "PocketCastsTranscription",
+            path: "Sources/PocketCastsTranscription",
+            swiftSettings: strictConcurrencyTestableSettings
+        ),
+        .testTarget(
+            name: "PocketCastsTranscriptionTests",
+            dependencies: [
+                "PocketCastsTranscription",
+            ],
+            path: "Tests/PocketCastsTranscriptionTests",
+            swiftSettings: strictConcurrencySettings
+        ),
         .target(
             name: "Modules",
             path: "Sources/Modules",
@@ -263,6 +287,7 @@ enum XcodeSupport {
                     "PocketCastsDataModel",
                     "PocketCastsServer",
                     "PocketCastsFileSync",
+                    "PocketCastsTranscription",
                     "PocketCastsUtils",
                     .product(name: "Dependencies", package: "swift-dependencies"),
                     .product(name: "DifferenceKit", package: "DifferenceKit"),

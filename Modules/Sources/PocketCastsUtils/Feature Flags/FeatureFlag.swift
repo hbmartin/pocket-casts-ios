@@ -37,6 +37,9 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Enable synced transcripts with playback timing
     case syncedTranscripts
 
+    /// Enable on-device diarized transcription (speech-to-text with speaker labels)
+    case diarizedTranscription
+
     /// Enable the new podcast sorting options
     case podcastsSortChanges
 
@@ -92,6 +95,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             true
         case .syncedTranscripts:
             true
+        case .diarizedTranscription:
+            BuildEnvironment.current != .appStore
         case .podcastsSortChanges:
             true
         case .newOnboardingAccountCreation:

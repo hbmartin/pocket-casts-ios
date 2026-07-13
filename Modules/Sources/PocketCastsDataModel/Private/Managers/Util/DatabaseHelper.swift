@@ -72,6 +72,44 @@ class DatabaseHelper {
         SchemaMigration(toVersion: 77) { db in
             try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN cachedLoudness REAL NOT NULL DEFAULT 0;", values: nil)
             try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN cachedLoudness REAL NOT NULL DEFAULT 0;", values: nil)
+        },
+        // Diarized transcription (device-local, no sync): per-episode transcription
+        // state rows, plus an FTS5 index over transcript segments powering
+        // cross-episode search. The VTT artifact itself lives on disk (filePath);
+        // the app layer owns writing/deleting it.
+        SchemaMigration(toVersion: 78) { db in
+            try db.executeUpdate("""
+            CREATE TABLE EpisodeTranscription (
+                episodeUuid TEXT PRIMARY KEY,
+                podcastUuid TEXT,
+                status INTEGER NOT NULL DEFAULT 0,
+                engineMode INTEGER NOT NULL DEFAULT 0,
+                provider TEXT,
+                modelId TEXT,
+                language TEXT,
+                createdAt REAL NOT NULL DEFAULT 0,
+                updatedAt REAL NOT NULL DEFAULT 0,
+                durationSecs REAL NOT NULL DEFAULT 0,
+                speakerCount INTEGER NOT NULL DEFAULT 0,
+                speakerNames TEXT,
+                errorMessage TEXT,
+                remoteJobId TEXT,
+                filePath TEXT
+            );
+            """, values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX episode_transcription_status ON EpisodeTranscription (status);", values: nil)
+            try db.executeUpdate("""
+            CREATE VIRTUAL TABLE TranscriptionSegmentFTS USING fts5(
+                text,
+                episodeUuid UNINDEXED,
+                podcastUuid UNINDEXED,
+                segmentIndex UNINDEXED,
+                startTime UNINDEXED,
+                speaker UNINDEXED,
+                tokenize = 'unicode61 remove_diacritics 2'
+            );
+            """, values: nil)
         }
     ]
 
