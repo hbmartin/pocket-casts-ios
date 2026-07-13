@@ -87,7 +87,16 @@ public final class SharingServerHandler: Sendable {
         }
     }
 
-    public func sharePodcastList(listInfo: PodcastShareInfo, completion: @escaping @Sendable (_ shareUrl: String?) -> Void) {
+    /// Outcome of a share-list publish. `requiresSignIn` is produced only on the
+    /// bearer path when no user is signed in — the UI should route to sign-in
+    /// instead of showing a generic failure.
+    public enum PodcastShareListResult: Sendable {
+        case shared(url: String)
+        case failed
+        case requiresSignIn
+    }
+
+    public func sharePodcastList(listInfo: PodcastShareInfo, completion: @escaping @Sendable (PodcastShareListResult) -> Void) {
         let url = ServerHelper.asUrl(ServerConstants.Urls.sharing() + "share/list")
 
         let convertedPodcasts = listInfo.podcasts.compactMap { uuid -> [String: String] in
@@ -100,25 +109,23 @@ public final class SharingServerHandler: Sendable {
             // authorized by the user's access token, attached by TokenHelper as
             // `Authorization: Bearer`. The legacy `datetime`/`h` params are not sent.
             guard SyncManager.isUserLoggedIn() else {
-                // Creating a list requires an account on the bearer path. Callers
-                // already surface a share-failed alert on a nil share URL
-                // (SharePublishViewController.sharingDidFail); routing signed-out
-                // users through a sign-in prompt is a UI-layer follow-up that needs
-                // the product sign-off recorded in the plan (§3.2).
+                // Creating a list requires an account on the bearer path; the
+                // typed result lets the UI route to sign-in.
                 FileLog.shared.addMessage("SharingServerHandler: share list requires sign-in when sharingListBearerAuth is enabled")
-                completion(nil)
+                completion(.requiresSignIn)
 
                 return
             }
 
             guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
-                completion(nil)
+                completion(.failed)
 
                 return
             }
 
             tokenHelper.callSecureUrl(request: request) { response, data, error in
-                completion(Self.parseShareResponse(statusCode: response?.statusCode, data: data, error: error))
+                let shareUrl = Self.parseShareResponse(statusCode: response?.statusCode, data: data, error: error)
+                completion(shareUrl.map { .shared(url: $0) } ?? .failed)
             }
 
             return
@@ -134,13 +141,14 @@ public final class SharingServerHandler: Sendable {
         shareRequest.h = Self.legacySharingServerSignature(for: dateStr)
 
         guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
-            completion(nil)
+            completion(.failed)
 
             return
         }
 
         urlConnection.send(request: request) { data, response, error in
-            completion(Self.parseShareResponse(statusCode: (response as? HTTPURLResponse)?.statusCode, data: data, error: error))
+            let shareUrl = Self.parseShareResponse(statusCode: (response as? HTTPURLResponse)?.statusCode, data: data, error: error)
+            completion(shareUrl.map { .shared(url: $0) } ?? .failed)
         }
     }
 

@@ -1232,6 +1232,8 @@ final class PlaybackManager {
     func overrideEffectsToggled(applyLocalSettings: Bool, for podcast: Podcast) {
         var podcast = podcast
         podcast.isEffectsOverridden = applyLocalSettings
+        // customEffects is a synced setting; mark dirty so the change uploads.
+        podcast.syncStatus = SyncStatus.notSynced.rawValue
 
         DataManager.sharedManager.save(podcast: podcast)
         NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))

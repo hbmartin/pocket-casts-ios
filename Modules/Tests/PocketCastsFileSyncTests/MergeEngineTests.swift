@@ -200,7 +200,7 @@ final class MergeEngineTests: XCTestCase {
         XCTAssertEqual(bookmark.endTime.value, 42.5)
     }
 
-    func testBookmarkEnrichmentIsWriteOnceFirstWriterWins() {
+    func testBookmarkEnrichmentIsLastWriterWins() {
         let ops = [
             bookmarkOp(device: "a", seq: 1, wallClockMs: 1000, excerpt: "first", endTime: 10),
             bookmarkOp(device: "b", seq: 1, wallClockMs: 2000, excerpt: "second", endTime: 20),
@@ -208,9 +208,24 @@ final class MergeEngineTests: XCTestCase {
         let state = MergeEngine.merged(snapshots: [], ops: ops)
         let bookmark = state.bookmarks["bm-1"]!.record
 
-        XCTAssertEqual(bookmark.excerpt.value, "first",
-                       "enrichment is write-once — a later conflicting excerpt must not clobber it")
-        XCTAssertEqual(bookmark.endTime.value, 10)
+        XCTAssertEqual(bookmark.excerpt.value, "second",
+                       "conflicting enrichments resolve by op stamp, like title")
+        XCTAssertEqual(bookmark.endTime.value, 20)
+    }
+
+    func testBookmarkEnrichmentConflictIsOrderIndependent() {
+        // Two devices enrich the same bookmark with different excerpts; every
+        // replay order must converge on the same winner or devices diverge
+        // permanently after compaction.
+        let older = bookmarkOp(device: "a", seq: 1, wallClockMs: 1000, excerpt: "first", endTime: 10)
+        let newer = bookmarkOp(device: "b", seq: 1, wallClockMs: 2000, excerpt: "second", endTime: 20)
+
+        let forward = MergeEngine.merged(snapshots: [], ops: [older, newer]).bookmarks["bm-1"]!.record
+        let reversed = MergeEngine.merged(snapshots: [], ops: [newer, older]).bookmarks["bm-1"]!.record
+
+        XCTAssertEqual(forward.excerpt.value, reversed.excerpt.value)
+        XCTAssertEqual(forward.endTime.value, reversed.endTime.value)
+        XCTAssertEqual(forward.excerpt.value, "second")
     }
 
     // MARK: Tombstones and resurrection

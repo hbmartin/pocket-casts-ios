@@ -4229,6 +4229,8 @@ nonisolated internal enum L10n {
   internal static var sharePodcastsSharingFailedMsg: String { return L10n.tr("Localizable", "share_podcasts_sharing_failed_msg", fallback: "Something went wrong creating your share page") }
   /// Title indicating that sharing has failed.
   internal static var sharePodcastsSharingFailedTitle: String { return L10n.tr("Localizable", "share_podcasts_sharing_failed_title", fallback: "Sharing Failed") }
+  /// Message of an alert shown when a signed-out user tries to share a list of podcasts; the alert offers a Sign In button.
+  internal static var sharePodcastsSigninRequiredMsg: String { return L10n.tr("Localizable", "share_podcasts_signin_required_msg", fallback: "Sharing a list of podcasts requires an account. Sign in and try again.") }
   /// Title for the share profile screen
   internal static var shareProfile: String { return L10n.tr("Localizable", "share_profile", fallback: "Share profile") }
   /// Title for the add photo and name step

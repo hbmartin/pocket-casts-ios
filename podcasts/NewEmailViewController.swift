@@ -199,15 +199,28 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
                 }
 
                 FileLog.shared.addMessage("Registered new account for \(username)")
-                self.saveUsernameAndPassword(username, password: password, userId: userId)
 
-                SyncManager.syncReason = .accountCreated
-                RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
+                Task { @MainActor in
+                    // Registration returns no tokens, so sign in through the
+                    // canonical path: AuthenticationHelper persists the
+                    // access/refresh tokens (or the legacy password with
+                    // refreshTokenForPasswordAuth off) and posts UserLoginDidChange.
+                    do {
+                        _ = try await AuthenticationHelper.validateLogin(username: username, password: password, scope: .mobile)
+                        NotificationCenter.postOnMainThread(UserSignedIn())
+                    } catch {
+                        // The account exists but the follow-up sign-in failed
+                        // (e.g. network blip): fall back to the legacy
+                        // persistence so the user isn't left half signed in.
+                        FileLog.shared.addMessage("Post-registration sign-in failed, falling back to legacy persistence: \(error)")
+                        self.saveUsernameAndPassword(username, password: password, userId: userId)
+                        RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
+                    }
 
-                // Let a delegate decide what to do next
-                if let delegate = self.delegate {
-                    delegate.handleAccountCreated()
-                    return
+                    SyncManager.syncReason = .accountCreated
+
+                    // Let a delegate decide what to do next
+                    self.delegate?.handleAccountCreated()
                 }
             }
         }

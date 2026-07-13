@@ -143,6 +143,9 @@ class AutoAddToUpNextViewController: PCViewController, UITableViewDelegate, UITa
         var podcast = podcast
         let action = OptionAction(label: label, selected: podcast.autoAddToUpNextSetting() == setting) { [weak self] in
             podcast.setAutoAddToUpNext(setting: setting)
+            // addToUpNext is a synced setting; without the dirty mark the change
+            // never uploads (SyncTask only sends unsynced podcasts).
+            podcast.syncStatus = SyncStatus.notSynced.rawValue
             DataManager.sharedManager.save(podcast: podcast)
             NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
             self?.reloadDownloadedPodcasts()
