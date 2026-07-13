@@ -142,6 +142,21 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(Int(mode), forKey: Settings.transcriptionEngineModeKey)
     }
 
+    private static let transcriptionBatteryPolicyKey = "SJTranscriptionBatteryPolicy"
+
+    /// When LOCAL transcription may run on battery (see `TranscriptionBatteryPolicy`).
+    /// Defaults to `.above30Percent`; unknown persisted values also read back as the default.
+    class func transcriptionBatteryPolicy() -> TranscriptionBatteryPolicy {
+        guard let value = UserDefaults.standard.object(forKey: Settings.transcriptionBatteryPolicyKey) as? Int else {
+            return .default
+        }
+        return TranscriptionBatteryPolicy(rawValue: Int32(value)) ?? .default
+    }
+
+    class func setTranscriptionBatteryPolicy(_ policy: TranscriptionBatteryPolicy) {
+        UserDefaults.standard.set(Int(policy.rawValue), forKey: Settings.transcriptionBatteryPolicyKey)
+    }
+
     private static let transcriptionLanguageOverrideKey = "SJTranscriptionLanguageOverride"
 
     /// BCP-47 language tag override for transcription. nil (or empty, which reads

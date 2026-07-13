@@ -439,8 +439,8 @@ public class DataManager {
 
     /// Persists the per-podcast auto-transcribe-on-download opt-in into the settings JSON payload.
     /// Device-local behavior — the field never syncs to the server.
-    public func saveAutoTranscribe(_ enabled: Bool, podcastUuid: String) {
-        podcastManager.saveAutoTranscribe(enabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    public func saveDisableRemoteTranscription(_ disabled: Bool, podcastUuid: String) {
+        podcastManager.saveDisableRemoteTranscription(disabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
     public func savePodcastDownloadSetting(_ setting: AutoDownloadSetting, podcastUuid: String) {

@@ -598,11 +598,11 @@ class PodcastDataManager {
         saveSingleSetting("skipChapterTitles", value: titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
-    /// The auto-transcribe-on-download opt-in lives only in the settings JSON payload (no legacy
-    /// column) and is device-local, so the json_set writer runs unconditionally rather than behind
-    /// `newSettingsStorage`.
-    func saveAutoTranscribe(_ enabled: Bool, podcastUuid: String, dbQueue: GRDBQueue) {
-        saveSingleSetting("autoTranscribe", value: enabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    /// The per-podcast remote-transcription opt-out lives only in the settings JSON payload (no
+    /// legacy column) and is device-local, so the json_set writer runs unconditionally rather than
+    /// behind `newSettingsStorage`.
+    func saveDisableRemoteTranscription(_ disabled: Bool, podcastUuid: String, dbQueue: GRDBQueue) {
+        saveSingleSetting("disableRemoteTranscription", value: disabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
     func delete(podcast: Podcast, dbQueue: GRDBQueue) {

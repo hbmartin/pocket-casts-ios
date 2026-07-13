@@ -31,11 +31,12 @@ public struct PodcastSettings: JSONCodable, Equatable, Sendable {
     /// (see the `KeyedDecodingContainer` overload in `ModifiedDate.swift`).
     @ModifiedDate public var skipChapterTitles: [String]? = nil
 
-    /// Per-podcast opt-in: automatically transcribe new episode downloads on this device.
-    /// Device-local behavior (never synced to the server). Settings payloads written before this
-    /// field existed decode via the module-scoped `KeyedDecodingContainer` overload below
-    /// (missing key → `false`).
-    @ModifiedDate public var autoTranscribe: Bool = false
+    /// Per-podcast opt-OUT of remote/API transcription: when true, this show's automatic
+    /// transcription jobs use the on-device engines even while a remote provider is configured
+    /// globally. Device-local behavior (never synced to the server). Must stay a `false`-default
+    /// Bool: payloads written before this field existed decode via the module-scoped
+    /// `KeyedDecodingContainer` overload below (missing key → `false`).
+    @ModifiedDate public var disableRemoteTranscription: Bool = false
 
     public static var defaults: Self {
         return PodcastSettings(trimSilence: .off, boostVolume: false, playbackSpeed: 1)

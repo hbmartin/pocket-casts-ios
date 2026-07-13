@@ -34,16 +34,30 @@ nonisolated final class TranscriptSearchIndexer: Sendable {
         guard index.isAvailable else { return }
 
         Task.detached(priority: .utility) {
-            // Dedupe: an episode already in TranscriptSearchIndexMeta keeps its rows.
-            guard !index.isIndexed(episodeUuid: episodeUuid, source: .provided) else { return }
-
-            let cues = Self.indexableCues(from: model)
-            guard !cues.isEmpty else { return }
-
-            if index.replaceSegments(episodeUuid: episodeUuid, podcastUuid: podcastUuid, source: .provided, segments: cues) {
-                FileLog.shared.addMessage("TranscriptSearchIndexer: indexed \(cues.count) segments for episode \(episodeUuid)")
-            }
+            _ = await self.index(episodeUuid: episodeUuid, podcastUuid: podcastUuid, model: model)
         }
+    }
+
+    /// Awaitable single entry point shared by the view trigger above and the
+    /// download-triggered `TranscriptAcquisitionCoordinator`. Dedupes against the
+    /// unified index and returns whether new segments were written. The write is
+    /// transactionally idempotent, so a benign race between the two triggers can
+    /// at worst duplicate the tokenize work, never the rows.
+    func index(episodeUuid: String, podcastUuid: String, model: TranscriptModel) async -> Bool {
+        let index = DataManager.sharedManager.transcriptSearch
+        guard index.isAvailable else { return false }
+
+        // Dedupe: an episode already in TranscriptSearchIndexMeta keeps its rows.
+        guard !index.isIndexed(episodeUuid: episodeUuid, source: .provided) else { return false }
+
+        let cues = Self.indexableCues(from: model)
+        guard !cues.isEmpty else { return false }
+
+        let indexed = index.replaceSegments(episodeUuid: episodeUuid, podcastUuid: podcastUuid, source: .provided, segments: cues)
+        if indexed {
+            FileLog.shared.addMessage("TranscriptSearchIndexer: indexed \(cues.count) segments for episode \(episodeUuid)")
+        }
+        return indexed
     }
 
     // MARK: - Cue extraction and merging (pure)

@@ -61,6 +61,8 @@ final class TranscriptionQueueManagerDiarizerTests: XCTestCase {
             engineMode: { .appleBuiltIn },
             audioFileURL: { _ in audioURL },
             thermalState: { .nominal },
+            powerState: { TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false) },
+            batteryPolicy: { .always },
             maxSpeakers: { maxSpeakers }
         )
     }

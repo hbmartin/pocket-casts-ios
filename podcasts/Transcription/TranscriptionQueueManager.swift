@@ -94,6 +94,10 @@ actor TranscriptionQueueManager {
     private let engineMode: @Sendable () -> TranscriptionEngineMode
     private let audioFileURL: @Sendable (String) -> URL?
     private let thermalState: @Sendable () -> ProcessInfo.ThermalState
+    private let powerState: @Sendable () async -> TranscriptionPowerState
+    private let batteryPolicy: @Sendable () -> TranscriptionBatteryPolicy
+    private let podcastDisablesRemote: @Sendable (String?) -> Bool
+    private let remoteConsent: @Sendable (String) -> Bool
     private let maxSpeakers: @Sendable () -> Int
     private let remoteProviderId: @Sendable () -> String
     private let remoteAPIKey: @Sendable (String) -> String?
@@ -119,6 +123,13 @@ actor TranscriptionQueueManager {
              return URL(fileURLWithPath: episode.pathToDownloadedFile(pathFinder: DownloadManager.shared))
          },
          thermalState: @escaping @Sendable () -> ProcessInfo.ThermalState = { ProcessInfo.processInfo.thermalState },
+         powerState: @escaping @Sendable () async -> TranscriptionPowerState = { await TranscriptionPowerState.current() },
+         batteryPolicy: @escaping @Sendable () -> TranscriptionBatteryPolicy = { Settings.transcriptionBatteryPolicy() },
+         podcastDisablesRemote: @escaping @Sendable (String?) -> Bool = { podcastUuid in
+             guard let podcastUuid, let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) else { return false }
+             return podcast.settings.disableRemoteTranscription
+         },
+         remoteConsent: @escaping @Sendable (String) -> Bool = { TranscriptionConsentGate.hasConsent(providerId: $0) },
          maxSpeakers: @escaping @Sendable () -> Int = { Settings.transcriptionMaxSpeakers() },
          remoteProviderId: @escaping @Sendable () -> String = { Settings.transcriptionRemoteProvider() },
          remoteAPIKey: @escaping @Sendable (String) -> String? = { TranscriptionKeyStore.apiKey(providerId: $0) },
@@ -140,6 +151,10 @@ actor TranscriptionQueueManager {
         self.engineMode = engineMode
         self.audioFileURL = audioFileURL
         self.thermalState = thermalState
+        self.powerState = powerState
+        self.batteryPolicy = batteryPolicy
+        self.podcastDisablesRemote = podcastDisablesRemote
+        self.remoteConsent = remoteConsent
         self.maxSpeakers = maxSpeakers
         self.remoteProviderId = remoteProviderId
         self.remoteAPIKey = remoteAPIKey
@@ -304,7 +319,7 @@ actor TranscriptionQueueManager {
             switch error {
             case .cancelled:
                 finishCancelledOrRequeued(episodeUuid: episodeUuid)
-            case .thermalThrottled:
+            case .thermalThrottled, .powerDeferred:
                 requeue(episodeUuid: episodeUuid)
             default:
                 finishFailed(episodeUuid: episodeUuid, error: error)
@@ -324,11 +339,22 @@ actor TranscriptionQueueManager {
             return
         }
 
-        let mode = engineMode()
-        if mode == .remoteProvider {
+        // Engine resolution: the remote provider is used only when it is the
+        // global mode, the user has consented to it, and the podcast hasn't
+        // opted out — otherwise the job falls back to the on-device pipeline.
+        // Re-resolved on every run so setting changes apply to queued jobs.
+        let globalMode = engineMode()
+        if globalMode == .remoteProvider,
+           !podcastDisablesRemote(record.podcastUuid),
+           remoteConsent(remoteProviderId()) {
             try await runRemote(episodeUuid: episodeUuid, record: record)
             return
         }
+
+        let mode = globalMode == .remoteProvider ? .appleBuiltIn : globalMode
+        // Local transcription is compute-heavy: the battery policy defers it
+        // (remote jobs cost network, not battery, and return above).
+        try await checkPower()
 
         let engine = try engineFactory.makeEngine(for: mode)
         guard let audioURL = audioFileURL(episodeUuid) else {
@@ -352,6 +378,7 @@ actor TranscriptionQueueManager {
                                  progress: progressHandler(episodeUuid: episodeUuid) { .preparingModel($0) })
         try Task.checkCancellation()
         try checkThermal()
+        try await checkPower()
 
         setState(episodeUuid: episodeUuid, state: .transcribing(0), forcePost: true)
         let segments = try await engine.transcribe(audioFile: audioURL,
@@ -359,6 +386,7 @@ actor TranscriptionQueueManager {
                                                    progress: progressHandler(episodeUuid: episodeUuid) { .transcribing($0) })
         try Task.checkCancellation()
         try checkThermal()
+        try await checkPower()
 
         setState(episodeUuid: episodeUuid, state: .diarizing(0), forcePost: true)
         let turns = try await diarize(episodeUuid: episodeUuid, audioURL: audioURL)
@@ -604,6 +632,20 @@ actor TranscriptionQueueManager {
         if isThermallyThrottled {
             throw TranscriptionError.thermalThrottled
         }
+    }
+
+    /// Local-pipeline checkpoints only; remote jobs never consult the battery.
+    private func checkPower() async throws {
+        if TranscriptionPowerState.isDeferred(policy: batteryPolicy(), state: await powerState()) {
+            FileLog.shared.addMessage("[Transcription] deferred by battery policy; job stays queued")
+            throw TranscriptionError.powerDeferred
+        }
+    }
+
+    /// Battery level/charging state/Low Power Mode changed: a power-deferred
+    /// queue may be runnable again. Called from the app-level observers.
+    func powerConditionsChanged() {
+        drainIfNeeded()
     }
 
     // MARK: - Progress
