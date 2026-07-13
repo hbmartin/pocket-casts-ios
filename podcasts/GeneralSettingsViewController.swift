@@ -12,9 +12,9 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case skipForward, skipBack, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN, normalizeVolume, localFeedIngest }
+    enum TableRow { case skipForward, skipBack, seekAcceleration, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, tapToPlay, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN, normalizeVolume, localFeedIngest }
     private var tableData: [[TableRow]] {
-        [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay], [.localFeedIngest], [.voiceBoostN, .normalizeVolume]]
+        [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .seekAcceleration, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.tapToPlay], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay], [.localFeedIngest], [.voiceBoostN, .normalizeVolume]]
     }
 
     @IBOutlet var settingsTable: UITableView! {
@@ -232,6 +232,22 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
             cell.cellSwitch.isOn = Settings.playUpNextOnTap()
             cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
             cell.cellSwitch.addTarget(self, action: #selector(playUpNextOnTapToggled(_:)), for: .valueChanged)
+
+            return cell
+        case .tapToPlay:
+            let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
+            cell.cellLabel.text = L10n.settingsGeneralTapToPlay
+            cell.cellSwitch.isOn = Settings.tapToPlay()
+            cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
+            cell.cellSwitch.addTarget(self, action: #selector(tapToPlayToggled(_:)), for: .valueChanged)
+
+            return cell
+        case .seekAcceleration:
+            let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
+            cell.cellLabel.text = L10n.settingsGeneralSeekAcceleration
+            cell.cellSwitch.isOn = Settings.seekAccelerationEnabled()
+            cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
+            cell.cellSwitch.addTarget(self, action: #selector(seekAccelerationToggled(_:)), for: .valueChanged)
 
             return cell
         case .extraMediaActions:
@@ -464,6 +480,10 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
             return L10n.settingsGeneralSmartPlaybackSubtitle
         case .playUpNextOnTap:
             return Settings.playUpNextOnTap() ? L10n.settingsGeneralUpNextTapOnSubtitle : L10n.settingsGeneralUpNextTapOffSubtitle
+        case .tapToPlay:
+            return Settings.tapToPlay() ? L10n.settingsGeneralTapToPlayOnSubtitle : L10n.settingsGeneralTapToPlayOffSubtitle
+        case .seekAcceleration:
+            return L10n.settingsGeneralSeekAccelerationSubtitle
         case .extraMediaActions:
             return L10n.settingsGeneralPlayBackActionsSubtitle
         case .legacyBluetooth:
@@ -581,6 +601,17 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
         Settings.setPlayUpNextOnTap(sender.isOn)
         settingsTable.reloadData()
         Settings.trackValueToggled(.settingsGeneralPlayUpNextOnTapToggled, enabled: sender.isOn)
+    }
+
+    @objc private func tapToPlayToggled(_ sender: UISwitch) {
+        Settings.setTapToPlay(sender.isOn)
+        settingsTable.reloadData()
+        Settings.trackValueToggled(.settingsGeneralTapToPlayToggled, enabled: sender.isOn)
+    }
+
+    @objc private func seekAccelerationToggled(_ sender: UISwitch) {
+        Settings.setSeekAccelerationEnabled(sender.isOn)
+        Settings.trackValueToggled(.settingsGeneralSeekAccelerationToggled, enabled: sender.isOn)
     }
 
     @objc private func publishChapterTitlesToggled(_ sender: UISwitch) {

@@ -40,6 +40,7 @@ protocol SwipeHandler: AnyObject {
     func actionPerformed(willBeRemoved: Bool)
     func deleteRequested(uuid: String)
     func share(episode: Episode, at: IndexPath)
+    func showDetails(episode: BaseEpisode, at: IndexPath)
     func addToManualPlaylist(episode: Episode, at: IndexPath)
     func removeFromManualPlaylist(episode: Episode, at: IndexPath)
 }
@@ -121,6 +122,12 @@ enum SwipeActionsHelper {
                 return true
             })
             tableSwipeActions.addAction(deleteAction)
+
+            // Appended after delete: right-orientation full swipes trigger actions[0], which must stay destructive.
+            if Settings.tapToPlay() {
+                tableSwipeActions.addAction(detailsAction(episodeUuid: storedUuid, tableView: tableView, indexPath: indexPath, swipeHandler: swipeHandler))
+            }
+
             return tableSwipeActions
         } else if episode.archived {
             let unarchiveAction = TableSwipeAction(indexPath: indexPath, title: L10n.unarchive, removesFromList: true, backgroundColor: ThemeColor.support06(), icon: UIImage(named: "list_unarchive"), tableView: tableView, handler: { _ -> Bool in
@@ -167,7 +174,25 @@ enum SwipeActionsHelper {
             }
         }
 
+        // Appended LAST: right-orientation full swipes trigger actions[0], which must stay the destructive action.
+        if Settings.tapToPlay() {
+            tableSwipeActions.addAction(detailsAction(episodeUuid: storedUuid, tableView: tableView, indexPath: indexPath, swipeHandler: swipeHandler))
+        }
+
         return tableSwipeActions
+    }
+
+    /// The Details swipe action opens the episode detail sheet — the row tap plays the
+    /// episode instead when tap to play is on, so this is the alternate route to details.
+    private static func detailsAction(episodeUuid: String, tableView: UITableView, indexPath: IndexPath, swipeHandler: SwipeHandler) -> TableSwipeAction {
+        TableSwipeAction(indexPath: indexPath, title: L10n.episodeDetailsTitle, removesFromList: false, backgroundColor: ThemeColor.support01(), icon: UIImage(named: "more"), tableView: tableView, hidesWhenSelected: true, handler: { indexPath -> Bool in
+            if let loadedEpisode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid) {
+                swipeHandler.showDetails(episode: loadedEpisode, at: indexPath)
+                Self.performAction(.details, handler: swipeHandler, willBeRemoved: false)
+            }
+
+            return true
+        })
     }
 
     fileprivate static func performAction(_ action: SwipeActions, handler: SwipeHandler, willBeRemoved: Bool) {
@@ -203,6 +228,7 @@ enum SwipeActionsHelper {
         case share
         case addToManualPlaylist
         case removeFromManualPlaylist
+        case details
 
         var analyticsDescription: String {
             switch self {
@@ -224,6 +250,8 @@ enum SwipeActionsHelper {
                 return "add_to_playlist"
             case .removeFromManualPlaylist:
                 return "remove_from_playlist"
+            case .details:
+                return "details"
             }
         }
     }

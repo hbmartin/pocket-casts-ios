@@ -94,12 +94,27 @@ extension ListeningHistoryViewController: UITableViewDelegate, UITableViewDataSo
         } else {
             tableView.deselectRow(at: indexPath, animated: true)
 
-            if let parentPodcast = episode.parentPodcast() {
-                let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .listeningHistory)
-                episodeController.modalPresentationStyle = .formSheet
-                present(episodeController, animated: true, completion: nil)
+            let playOnTap = Settings.tapToPlay()
+            Analytics.track(.episodeTapped, properties: ["source": AnalyticsSource.listeningHistory, "will_play": playOnTap])
+
+            if playOnTap {
+                AnalyticsPlaybackHelper.shared.currentSource = .listeningHistory
+                PlaybackActionHelper.play(episode: episode)
+                return
             }
+
+            presentEpisodeDetails(for: episode)
         }
+    }
+
+    /// Presents the episode detail sheet. Single source of truth for this screen —
+    /// used by both row taps (when tap to play is off) and the Details swipe action.
+    func presentEpisodeDetails(for episode: Episode) {
+        guard let parentPodcast = episode.parentPodcast() else { return }
+
+        let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .listeningHistory)
+        episodeController.modalPresentationStyle = .formSheet
+        present(episodeController, animated: true, completion: nil)
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
