@@ -317,7 +317,13 @@ final class SyncSigninViewModel: ObservableObject {
 
     private func handleSuccessfulSignIn(username: String, password: String, userId: String?) {
         ServerSettings.userId = userId
-        ServerSettings.saveSyncingPassword(password)
+        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
+            ServerSettings.accountAuthMethod = .password
+        } else {
+            // Legacy credential persistence until refresh-token auth for password accounts
+            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
+            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
+        }
 
         if (FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled && ServerSettings.lastSyncTime == nil)
             || !FeatureFlag.onlyMarkPodcastsUnsyncedForNewUsers.enabled {

@@ -13,10 +13,12 @@ class ApiBaseTask: Operation, @unchecked Sendable {
     private let urlConnection: URLConnection
     private let tokenHelper: TokenHelper
 
-    init(dataManager: DataManager = .sharedManager, urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+    // The shared TokenHelper (not a per-task instance) so all tasks funnel token
+    // acquisition through one single-flight gate; injectable for tests.
+    init(dataManager: DataManager = .sharedManager, urlConnection: URLConnection = URLConnection(handler: URLSession.shared), tokenHelper: TokenHelper = .shared) {
         self.dataManager = dataManager
         self.urlConnection = urlConnection
-        self.tokenHelper = TokenHelper(urlConnection: urlConnection)
+        self.tokenHelper = tokenHelper
         super.init()
     }
 
@@ -35,7 +37,9 @@ class ApiBaseTask: Operation, @unchecked Sendable {
     }
 
     func acquiredToken() -> String? {
-        if let token = try? KeychainHelper.string(for: ServerConstants.Values.syncingV2TokenKey) {
+        // A stored token past its expiry hint counts as absent, so the task refreshes
+        // proactively instead of burning a request to collect the 401.
+        if let token = ServerSettings.validSyncingV2Token() {
             return token
         } else if let token = tokenHelper.acquireToken() {
             return token
@@ -47,7 +51,7 @@ class ApiBaseTask: Operation, @unchecked Sendable {
         return performPostToServer(url: url, token: token, data: data)
     }
 
-    func performPostToServer(url: String, token: String?, data: Data, retryOnUnauthorized: Bool = true) -> (Data?, Int) {
+    func performPostToServer(url: String, token: String?, data: Data, retryOnUnauthorized: Bool = true, retryOnTooManyRequests: Bool = true) -> (Data?, Int) {
         let requestUrl = ServerHelper.asUrl(url)
         let method = "POST"
         var request = createRequest(url: requestUrl, method: method, token: token)
@@ -59,13 +63,22 @@ class ApiBaseTask: Operation, @unchecked Sendable {
             if httpResponse.statusCode == ServerConstants.HttpConstants.unauthorized {
                 if retryOnUnauthorized, let newToken = tokenHelper.acquireToken() {
                     FileLog.shared.addMessage("ApiBaseTask: Retrying 401 unauthorized POST to \(url)")
-                    return performPostToServer(url: url, token: newToken, data: data, retryOnUnauthorized: false)
+                    return performPostToServer(url: url, token: newToken, data: data, retryOnUnauthorized: false, retryOnTooManyRequests: retryOnTooManyRequests)
                 }
 
                 // our token may have expired, remove it so next time a sync happens we'll acquire a new one
                 KeychainHelper.removeKey(ServerConstants.Values.syncingV2TokenKey)
                 FileLog.shared.addMessage("ApiBaseTask: Removed syncingV2TokenKey due to 401 unauthorized POST from \(url)")
                 return (nil, httpResponse.statusCode)
+            }
+
+            if httpResponse.statusCode == ServerConstants.HttpConstants.tooManyRequests, retryOnTooManyRequests {
+                // Honor Retry-After with a single capped retry, not a loop. Blocking is
+                // fine here: this always runs on an Operation's worker thread.
+                let delay = httpResponse.tooManyRequestsRetryDelay()
+                FileLog.shared.addMessage("ApiBaseTask: 429 rate limited POST to \(url), retrying once in \(delay)s")
+                Thread.sleep(forTimeInterval: delay)
+                return performPostToServer(url: url, token: token, data: data, retryOnUnauthorized: retryOnUnauthorized, retryOnTooManyRequests: false)
             }
 
             return (responseData, httpResponse.statusCode)
@@ -80,7 +93,7 @@ class ApiBaseTask: Operation, @unchecked Sendable {
         return performGetToServer(url: url, token: token, customHeaders: customHeaders)
     }
 
-    func performGetToServer(url: String, token: String, retryOnUnauthorized: Bool = true, customHeaders: [String: String]? = nil) -> (Data?, HTTPURLResponse?) {
+    func performGetToServer(url: String, token: String, retryOnUnauthorized: Bool = true, retryOnTooManyRequests: Bool = true, customHeaders: [String: String]? = nil) -> (Data?, HTTPURLResponse?) {
         let requestUrl = ServerHelper.asUrl(url)
         let method = "GET"
         var request = createRequest(url: requestUrl, method: method, token: token)
@@ -96,13 +109,22 @@ class ApiBaseTask: Operation, @unchecked Sendable {
             if httpResponse.statusCode == ServerConstants.HttpConstants.unauthorized {
                 if retryOnUnauthorized, let newToken = tokenHelper.acquireToken() {
                     FileLog.shared.addMessage("ApiBaseTask: Retrying 401 unauthorized GET to \(url)")
-                    return performGetToServer(url: url, token: newToken, retryOnUnauthorized: false, customHeaders: customHeaders)
+                    return performGetToServer(url: url, token: newToken, retryOnUnauthorized: false, retryOnTooManyRequests: retryOnTooManyRequests, customHeaders: customHeaders)
                 }
 
                 // our token may have expired, remove it so next time a sync happens we'll acquire a new one
                 KeychainHelper.removeKey(ServerConstants.Values.syncingV2TokenKey)
                 FileLog.shared.addMessage("ApiBaseTask: Removed syncingV2TokenKey due to 401 unauthorized GET from \(url)")
                 return (nil, httpResponse)
+            }
+
+            if httpResponse.statusCode == ServerConstants.HttpConstants.tooManyRequests, retryOnTooManyRequests {
+                // Honor Retry-After with a single capped retry, not a loop. Blocking is
+                // fine here: this always runs on an Operation's worker thread.
+                let delay = httpResponse.tooManyRequestsRetryDelay()
+                FileLog.shared.addMessage("ApiBaseTask: 429 rate limited GET to \(url), retrying once in \(delay)s")
+                Thread.sleep(forTimeInterval: delay)
+                return performGetToServer(url: url, token: token, retryOnUnauthorized: retryOnUnauthorized, retryOnTooManyRequests: false, customHeaders: customHeaders)
             }
 
             return (responseData, httpResponse)

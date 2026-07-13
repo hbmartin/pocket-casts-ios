@@ -146,28 +146,43 @@ public extension ApiServerHandler {
     }
 
     func obtainToken(request: URLRequest, usingRefreshToken: Bool) async throws -> AuthenticationResponse {
-        try await withUnsafeThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, error in
-                guard let responseData = data, error == nil, response?.extractStatusCode() == ServerConstants.HttpConstants.ok else {
-                    let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response, error: error)
-                    FileLog.shared.addMessage("Unable to obtain token, status code: \(response?.extractStatusCode() ?? -1), server error: \(errorResponse?.rawValue ?? "none")")
-                    continuation.resume(throwing: errorResponse ?? .UNKNOWN)
-                    return
-                }
+        try await obtainToken(request: request, usingRefreshToken: usingRefreshToken, retryOnTooManyRequests: true)
+    }
 
-                do {
-                    if usingRefreshToken {
-                        let response = try Api_TokenLoginResponse(serializedBytes: responseData)
-                        continuation.resume(returning: AuthenticationResponse(from: response))
-                    } else {
-                        let userLoginResponse = try Api_UserLoginResponse(serializedBytes: responseData)
-                        continuation.resume(returning: AuthenticationResponse(from: userLoginResponse))
-                    }
-                } catch {
-                    FileLog.shared.addMessage("Error occurred while trying to unpack token request \(error.localizedDescription)")
-                    continuation.resume(throwing: APIError.UNKNOWN)
-                }
+    private func obtainToken(request: URLRequest, usingRefreshToken: Bool, retryOnTooManyRequests: Bool) async throws -> AuthenticationResponse {
+        let (data, response, requestError): (Data?, URLResponse?, Error?) = await withUnsafeContinuation { continuation in
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                continuation.resume(returning: (data, response, error))
             }.resume()
+        }
+
+        // Rate limited: honor Retry-After with a single capped retry, not a loop (C.0-4).
+        if response?.extractStatusCode() == ServerConstants.HttpConstants.tooManyRequests,
+           retryOnTooManyRequests,
+           let httpResponse = response as? HTTPURLResponse {
+            let delay = httpResponse.tooManyRequestsRetryDelay()
+            FileLog.shared.addMessage("obtainToken rate limited (429), retrying once in \(delay)s")
+            try await Task.sleep(for: .seconds(delay))
+            return try await obtainToken(request: request, usingRefreshToken: usingRefreshToken, retryOnTooManyRequests: false)
+        }
+
+        guard let responseData = data, requestError == nil, response?.extractStatusCode() == ServerConstants.HttpConstants.ok else {
+            let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response, error: requestError)
+            FileLog.shared.addMessage("Unable to obtain token, status code: \(response?.extractStatusCode() ?? -1), server error: \(errorResponse?.rawValue ?? "none")")
+            throw errorResponse ?? APIError.UNKNOWN
+        }
+
+        do {
+            if usingRefreshToken {
+                let response = try Api_TokenLoginResponse(serializedBytes: responseData)
+                return AuthenticationResponse(from: response)
+            } else {
+                let userLoginResponse = try Api_UserLoginResponse(serializedBytes: responseData)
+                return AuthenticationResponse(from: userLoginResponse)
+            }
+        } catch {
+            FileLog.shared.addMessage("Error occurred while trying to unpack token request \(error.localizedDescription)")
+            throw APIError.UNKNOWN
         }
     }
 

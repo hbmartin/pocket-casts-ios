@@ -29,7 +29,13 @@ class AuthenticationHelper {
             ServerSettings.setSyncingEmail(email: username)
         }
 
-        ServerSettings.saveSyncingPassword(password)
+        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
+            ServerSettings.accountAuthMethod = .password
+        } else {
+            // Legacy credential persistence until refresh-token auth for password accounts
+            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
+            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
+        }
 
         return response
     }
@@ -38,22 +44,38 @@ class AuthenticationHelper {
 
     static func validateLogin(identityToken: String, scope: AuthenticationScope = .mobile)  async throws -> AuthenticationResponse {
         let response = try await ApiServerHandler.shared.validateLogin(identityToken: identityToken, scope: scope)
+        // handleSuccessfulSignIn persists the refresh token (guarded against empty values) —
+        // the duplicate unguarded write that used to live here is gone.
         handleSuccessfulSignIn(response)
 
-        ServerSettings.setRefreshToken(response.refreshToken)
+        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
+            ServerSettings.accountAuthMethod = .sso
+        }
 
         return response
     }
 
     // MARK: Common
 
+    /// Persists the credential material from an authentication response.
+    /// Internal (not private) so the empty-refresh-token guard is unit-testable.
+    static func persistSignInCredentials(from response: AuthenticationResponse) {
+        ServerSettings.userId = response.uuid
+        ServerSettings.syncingV2Token = response.token
+        // Proto strings default to "" when omitted — never clobber a stored refresh token
+        // with an empty value (it would silently brick future refreshes).
+        if let refreshToken = response.refreshToken, !refreshToken.isEmpty {
+            ServerSettings.setRefreshToken(refreshToken)
+        }
+        // Expiry is a hint; nil clears any stale hint from a previous token.
+        ServerSettings.setTokenExpiry(expiresIn: response.expiresIn)
+    }
+
     private static func handleSuccessfulSignIn(_ response: AuthenticationResponse) {
         SyncManager.clearTokensFromKeyChain()
         FileLog.shared.addMessage("AuthenticationHelper.handleSuccessfulSignIn clearTokensFromKeyChain")
 
-        ServerSettings.userId = response.uuid
-        ServerSettings.syncingV2Token = response.token
-        ServerSettings.setRefreshToken(response.refreshToken)
+        persistSignInCredentials(from: response)
 
         // we've signed in, set all our existing podcasts to
         // be non synced if the user never logged in before

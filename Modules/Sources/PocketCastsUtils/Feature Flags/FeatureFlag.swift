@@ -60,6 +60,19 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// account sync and file sync).
     case customPlaylists
 
+    /// Auth hardening workstream A: password accounts authenticate via rotating
+    /// refresh tokens (refresh grant tried first, one-shot password-to-refresh-token
+    /// migration) and stop persisting the account password in the Keychain.
+    /// Default OFF until the M1 server contract (user/login and user/register
+    /// issuing refresh tokens) is live; see plans/API Auth Hardening Plan.md.
+    case refreshTokenForPasswordAuth
+
+    /// Auth hardening workstream B: share-list creation authenticates with the
+    /// user's bearer token instead of the legacy static SHA-1 signature.
+    /// Default OFF until the sharing service dual-accept window is live;
+    /// see plans/API Auth Hardening Plan.md.
+    case sharingListBearerAuth
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -114,6 +127,10 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             false
         case .customPlaylists:
             BuildEnvironment.current == .debug
+        case .refreshTokenForPasswordAuth:
+            false
+        case .sharingListBearerAuth:
+            false
         }
     }
 

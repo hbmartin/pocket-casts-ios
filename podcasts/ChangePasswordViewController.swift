@@ -212,7 +212,10 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
             if success {
                 Analytics.track(.userPasswordUpdated)
 
-                ServerSettings.saveSyncingPassword(newPassword)
+                // Legacy site kept in sync deliberately (even during the refresh-token
+                // migration window a stale stored password would break the one-shot
+                // migration login); removed at plan M2 with the in-memory re-auth flow.
+                ServerSettings.saveSyncingPassword(newPassword) // nosemgrep: pocketcasts.no-persisted-account-password
                 DispatchQueue.main.async {
                     let updatedVC = AccountUpdatedViewController()
                     updatedVC.titleText = L10n.changePasswordConf

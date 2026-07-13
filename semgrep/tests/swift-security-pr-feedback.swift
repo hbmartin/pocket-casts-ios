@@ -285,7 +285,7 @@ final class SafeReorderedKeychainGenericPasswordHelper {
 
 final class UnsafeServerCredentialsConfiguration {
     func setupSecrets() {
-        // ruleid: pocketcasts.servercredentials-use-configure-sharing
+        // ruleid: pocketcasts.servercredentials-use-configure-sharing, pocketcasts.sharing-no-static-secret-signing
         ServerCredentials.sharing = "secret"
     }
 }

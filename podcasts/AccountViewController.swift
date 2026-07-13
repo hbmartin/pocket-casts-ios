@@ -9,7 +9,14 @@ class AccountViewController: UIViewController, ChangeEmailDelegate {
     static let actionCellId = "AccountActionCellId"
 
     private var isUsernamePasswordLogin: Bool {
-        ServerSettings.syncingPassword() != nil
+        // Prefer the explicit auth-method marker (written at sign-in/migration once
+        // refresh-token auth is on); fall back to inferring from the stored password
+        // for accounts signed in before the marker existed.
+        if let authMethod = ServerSettings.accountAuthMethod {
+            return authMethod == .password
+        }
+
+        return ServerSettings.syncingPassword() != nil
     }
 
     @IBOutlet var tableView: ThemeableTable! {

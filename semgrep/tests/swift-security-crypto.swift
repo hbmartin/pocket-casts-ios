@@ -7,12 +7,12 @@ func badMD5Checksum(data: Data) {
 }
 
 func badSHA1Checksum(data: Data) {
-    // ruleid: pocketcasts.no-insecure-cryptokit-hashes
+    // ruleid: pocketcasts.no-insecure-cryptokit-hashes, pocketcasts.sharing-no-static-secret-signing
     _ = Insecure.SHA1.hash(data: data)
 }
 
 func badQualifiedSHA1Checksum(data: Data) {
-    // ruleid: pocketcasts.no-insecure-cryptokit-hashes
+    // ruleid: pocketcasts.no-insecure-cryptokit-hashes, pocketcasts.sharing-no-static-secret-signing
     _ = CryptoKit.Insecure.SHA1.hash(data: data)
 }
 
@@ -21,9 +21,11 @@ func goodSHA256Digest(data: Data) {
     _ = SHA256.hash(data: data)
 }
 
+// M3: delete this block together with legacySharingServerSignature when the sharing
+// server's dual-accept window closes — plans/API Auth Hardening Plan.md §3.4.
 enum CopiedSharingServerHandler {
     static func legacySharingServerSignature(for dateString: String, credential: String) -> String {
-        // ruleid: pocketcasts.no-insecure-cryptokit-hashes
+        // ruleid: pocketcasts.no-insecure-cryptokit-hashes, pocketcasts.sharing-no-static-secret-signing
         let hashDigest = CryptoKit.Insecure.SHA1.hash(data: Data("\(dateString)\(credential)".utf8))
         return hashDigest.map { String(format: "%02hhx", $0) }.joined()
     }
