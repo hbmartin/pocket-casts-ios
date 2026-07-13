@@ -146,11 +146,11 @@ final class PlaybackQueueTests: XCTestCase {
         episode.podcastUuid = "podcast-uuid"
 
         let expectedUuid = episode.uuid
-        let expectation = XCTNSNotificationExpectation(name: Constants.Notifications.upNextEpisodeAdded)
+        let expectation = XCTNSNotificationExpectation(name: Notification.Name("SJUpNextEpisodeAdded"))
         expectation.handler = { notification in
             XCTAssertEqual(notification.object as? String, expectedUuid, file: file, line: line)
             XCTAssertEqual(
-                notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool,
+                notification.userInfo?["PCUpNextAddedToTop"] as? Bool,
                 toTop,
                 file: file,
                 line: line

@@ -43,7 +43,7 @@ nonisolated struct EpisodeStarredChanged: UuidBridgedMessage {
 /// An episode finished downloading and its file is on disk. `uuid` is the
 /// episode uuid.
 nonisolated struct EpisodeDownloaded: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.episodeDownloaded }
+    static var name: Notification.Name { Notification.Name("SJEpisodeDownloaded") }
 
     let uuid: String?
 
@@ -67,7 +67,7 @@ nonisolated struct EpisodeDownloadStatusChanged: UuidBridgedMessage {
 /// An episode's duration was recalculated from the media file (or corrected via
 /// a remote probe). `uuid` is the episode uuid.
 nonisolated struct EpisodeDurationChanged: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.episodeDurationChanged }
+    static var name: Notification.Name { Notification.Name("SJEpDurationChanged") }
 
     let uuid: String?
 
@@ -79,7 +79,7 @@ nonisolated struct EpisodeDurationChanged: UuidBridgedMessage {
 /// A user (uploaded-files) episode's metadata changed (title, image, colors,
 /// etc). `uuid` is the user episode uuid.
 nonisolated struct UserEpisodeUpdated: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.userEpisodeUpdated }
+    static var name: Notification.Name { Notification.Name("SJUserEpisodeUpdated") }
 
     let uuid: String?
 
@@ -91,7 +91,7 @@ nonisolated struct UserEpisodeUpdated: UuidBridgedMessage {
 /// A user (uploaded-files) episode was deleted from the device and database.
 /// `uuid` is the user episode uuid.
 nonisolated struct UserEpisodeDeleted: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.userEpisodeDeleted }
+    static var name: Notification.Name { Notification.Name("SJUserEpisodeDeleted") }
 
     let uuid: String?
 
@@ -104,7 +104,7 @@ nonisolated struct UserEpisodeDeleted: UuidBridgedMessage {
 /// downloading). `uuid` is the episode uuid; listeners read the actual
 /// progress from `DownloadManager.shared.progressManager`.
 nonisolated struct DownloadProgressChanged: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.downloadProgress }
+    static var name: Notification.Name { Notification.Name("SJDwnProg") }
 
     let uuid: String?
 
@@ -134,7 +134,7 @@ nonisolated struct ManyEpisodesChanged: NotificationCenter.MainActorMessage {
 nonisolated struct ListeningHistoryChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
 
-    static var name: Notification.Name { Constants.Notifications.listeningHistoryChanged }
+    static var name: Notification.Name { Notification.Name("SJListeningHistoryChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -151,7 +151,7 @@ nonisolated struct ListeningHistoryChanged: NotificationCenter.MainActorMessage 
 nonisolated struct FileSyncUploadsChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
 
-    static var name: Notification.Name { Constants.Notifications.fileSyncUploadsChanged }
+    static var name: Notification.Name { Notification.Name("PCFileSyncUploadsChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()

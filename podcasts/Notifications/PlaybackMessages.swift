@@ -15,7 +15,7 @@ import PocketCastsUtils
 /// not begun yet); loading UI shows a buffering state. No payload.
 nonisolated struct PlaybackStarting: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.playbackStarting }
+    static var name: Notification.Name { Notification.Name("SJPlaybackStarting") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -74,7 +74,7 @@ nonisolated struct PlaybackEnded: NotificationCenter.MainActorMessage {
 /// `PlaybackManager.shared.activeError`. No payload.
 nonisolated struct PlaybackFailed: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.playbackFailed }
+    static var name: Notification.Name { Notification.Name("playbackFailed") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -118,7 +118,7 @@ nonisolated struct PlaybackTrackChanged: NotificationCenter.MainActorMessage {
 /// The playback position for an episode was persisted to the database. `uuid`
 /// is the episode uuid.
 nonisolated struct PlaybackPositionSaved: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.playbackPositionSaved }
+    static var name: Notification.Name { Notification.Name("SJPlayPosSaved") }
 
     let uuid: String?
 
@@ -131,7 +131,7 @@ nonisolated struct PlaybackPositionSaved: UuidBridgedMessage {
 /// current episode. No payload; listeners re-query `PlaybackManager.effects()`.
 nonisolated struct PlaybackEffectsChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.playbackEffectsChanged }
+    static var name: Notification.Name { Notification.Name("SJEffectsChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -146,7 +146,7 @@ nonisolated struct PlaybackEffectsChanged: NotificationCenter.MainActorMessage {
 /// payload; listeners re-query `PlaybackManager.currentChapters()`.
 nonisolated struct PodcastChaptersDidUpdate: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.podcastChaptersDidUpdate }
+    static var name: Notification.Name { Notification.Name("SJChaptersChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -161,7 +161,7 @@ nonisolated struct PodcastChaptersDidUpdate: NotificationCenter.MainActorMessage
 /// payload.
 nonisolated struct PodcastChapterChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.podcastChapterChanged }
+    static var name: Notification.Name { Notification.Name("SJChapterChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -176,7 +176,7 @@ nonisolated struct PodcastChapterChanged: NotificationCenter.MainActorMessage {
 /// database row changed). No payload.
 nonisolated struct CurrentlyPlayingEpisodeUpdated: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.currentlyPlayingEpisodeUpdated }
+    static var name: Notification.Name { Notification.Name("SJCurrentlyPlayingEpisodeUpdated") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -191,7 +191,7 @@ nonisolated struct CurrentlyPlayingEpisodeUpdated: NotificationCenter.MainActorM
 /// `PlaybackManager`. No payload.
 nonisolated struct SleepTimerChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.sleepTimerChanged }
+    static var name: Notification.Name { Notification.Name("SJSleepTimerChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -206,7 +206,7 @@ nonisolated struct SleepTimerChanged: NotificationCenter.MainActorMessage {
 /// file replaced its stream); video UI re-attaches its player. No payload.
 nonisolated struct VideoPlaybackEngineSwitched: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.videoPlaybackEngineSwitched }
+    static var name: Notification.Name { Notification.Name("SJVideoPlaybackEngineSwitched") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -221,7 +221,7 @@ nonisolated struct VideoPlaybackEngineSwitched: NotificationCenter.MainActorMess
 /// `Settings.audioTuning`. No payload.
 nonisolated struct AudioTuningDidChange: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.audioTuningDidChange }
+    static var name: Notification.Name { Notification.Name("SJAudioTuningDidChange") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -236,7 +236,7 @@ nonisolated struct AudioTuningDidChange: NotificationCenter.MainActorMessage {
 /// re-read `Settings.skipForwardTime`/`Settings.skipBackTime`.
 nonisolated struct SkipTimesChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.skipTimesChanged }
+    static var name: Notification.Name { Notification.Name("SJSkipTimesChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -251,7 +251,7 @@ nonisolated struct SkipTimesChanged: NotificationCenter.MainActorMessage {
 /// lock screen / CarPlay). No payload.
 nonisolated struct ExtraMediaSessionActionsChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.extraMediaSessionActionsChanged }
+    static var name: Notification.Name { Notification.Name("SJMediaSessionActionsChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -266,7 +266,7 @@ nonisolated struct ExtraMediaSessionActionsChanged: NotificationCenter.MainActor
 /// payload.
 nonisolated struct RemoteCommandSettingsChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.remoteCommandSettingsChanged }
+    static var name: Notification.Name { Notification.Name("SJRemoteCommandSettingsChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -281,7 +281,7 @@ nonisolated struct RemoteCommandSettingsChanged: NotificationCenter.MainActorMes
 /// rebuilds its shelf. No payload.
 nonisolated struct PlayerActionsUpdated: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.playerActionsUpdated }
+    static var name: Notification.Name { Notification.Name("SJPlayerActionsUpdated") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()

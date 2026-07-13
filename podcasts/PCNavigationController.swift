@@ -81,7 +81,6 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
         super.viewWillTransition(to: size, with: coordinator)
 
         topViewController?.viewWillTransition(to: size, with: coordinator)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.viewWillTransitionToSize, object: NSCoder.string(for: size))
     }
 
     // MARK: - Orientation

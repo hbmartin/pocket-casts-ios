@@ -81,7 +81,6 @@ class SmallListCell: ThemeableCollectionCell {
         if !subscribeButton.currentlyOn {
             subscribeButton.currentlyOn = true
             onSubscribe?()
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.subscribeRequestedFromCell, object: self)
         }
     }
 

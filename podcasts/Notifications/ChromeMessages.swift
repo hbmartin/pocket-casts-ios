@@ -33,7 +33,7 @@ nonisolated struct ThemeChanged: NotificationCenter.MainActorMessage {
 /// `Notification.object`.
 nonisolated struct SystemThemeMayHaveChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.systemThemeMayHaveChanged }
+    static var name: Notification.Name { Notification.Name("SystemThemeChanged") }
 
     let isDark: Bool?
 
@@ -49,7 +49,7 @@ nonisolated struct SystemThemeMayHaveChanged: NotificationCenter.MainActorMessag
 /// The user turned on "follow system theme" in Appearance settings. No payload.
 nonisolated struct FollowSystemThemeTurnedOn: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.followSystemThemeTurnedOn }
+    static var name: Notification.Name { Notification.Name("FollowSystemThemeTurnedOn") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -64,7 +64,7 @@ nonisolated struct FollowSystemThemeTurnedOn: NotificationCenter.MainActorMessag
 /// hides while editing is active. No payload.
 nonisolated struct TextEditingDidStart: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.textEditingDidStart }
+    static var name: Notification.Name { Notification.Name("SJTextEditingStarted") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -79,7 +79,7 @@ nonisolated struct TextEditingDidStart: NotificationCenter.MainActorMessage {
 /// becomes visible again. No payload.
 nonisolated struct TextEditingDidEnd: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.textEditingDidEnd }
+    static var name: Notification.Name { Notification.Name("SJTextEditingEnded") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -96,7 +96,7 @@ nonisolated struct TextEditingDidEnd: NotificationCenter.MainActorMessage {
 /// rides in `Notification.object`.
 nonisolated struct TappedOnSelectedTab: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.tappedOnSelectedTab }
+    static var name: Notification.Name { Notification.Name("SJTappedOnSelectedTab") }
 
     let tabIndex: Int?
 
@@ -113,7 +113,7 @@ nonisolated struct TappedOnSelectedTab: NotificationCenter.MainActorMessage {
 /// the visible list scrolls to and focuses its search field. No payload.
 nonisolated struct SearchRequested: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.searchRequested }
+    static var name: Notification.Name { Notification.Name("SJTriggerSearch") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -127,7 +127,7 @@ nonisolated struct SearchRequested: NotificationCenter.MainActorMessage {
 /// The mini player became visible; lists adjust bottom insets. No payload.
 nonisolated struct MiniPlayerDidAppear: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.miniPlayerDidAppear }
+    static var name: Notification.Name { Notification.Name("SJMiniPlayerAppeared") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -141,7 +141,7 @@ nonisolated struct MiniPlayerDidAppear: NotificationCenter.MainActorMessage {
 /// The mini player was hidden; lists adjust bottom insets. No payload.
 nonisolated struct MiniPlayerDidDisappear: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.miniPlayerDidDisappear }
+    static var name: Notification.Name { Notification.Name("SJMiniPlayerDisappeared") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()

@@ -237,7 +237,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didChangeStatusBarFrame oldStatusBarFrame: CGRect) {
         ImageManager.refreshScreenMetrics()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.statusBarHeightChanged)
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

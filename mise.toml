@@ -295,6 +295,10 @@ run = "./scripts/ci/check-count-ratchets.sh"
 description = "Fail on UIImage(named:)/Image(_:)/IB image references whose asset name has no imageset/symbolset in any tracked catalog"
 run = "./scripts/ci/check-asset-references.sh"
 
+[tasks."check:legacy-notifications"]
+description = "Fail on new selector-based NotificationCenter observers or string-name postOnMainThread posts outside scripts/ci/legacy-notification-allowlist.txt"
+run = "./scripts/ci/check-legacy-notification-api.sh"
+
 [tasks."ratchets:baseline"]
 description = "Regenerate scripts/ci/ratchet-*.txt count-ratchet baselines (deletion-only ratchet; run after removing usages)"
 run = "./scripts/ci/check-count-ratchets.sh --update-baselines"
@@ -310,6 +314,7 @@ depends = [
     "semgrep:pocket-casts",
     "check:ratchets",
     "check:assets",
+    "check:legacy-notifications",
     "check:analyzer",
 ]
 

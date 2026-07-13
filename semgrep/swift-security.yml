@@ -1160,7 +1160,7 @@ rules:
       - pattern-not-inside: |
           func extendSleepTimer(bySeconds seconds: TimeInterval) {
             ...
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+            NotificationCenter.postOnMainThread(SleepTimerChanged())
             ...
           }
 
@@ -4837,8 +4837,8 @@ rules:
       selector-based observers synchronously on the posting thread. Under the app target's
       default MainActor isolation, @objc selector observers are main-actor and trap a
       dispatch_assert_queue when called off-main (this crashed the app at launch via
-      RefreshOperation -> podcastsRefreshed -> FullSyncRefreshController). Post with
-      NotificationCenter.postOnMainThread(notification:object:userInfo:) instead — it is
+      RefreshOperation -> podcastsRefreshed -> FullSyncRefreshController). Post the typed
+      message with NotificationCenter.postOnMainThread(_:) (PocketCastsUtils) instead — it is
       synchronous (main.sync off-main, direct post on main), so ordering is preserved.
     languages: [generic]
     paths:

@@ -14,7 +14,7 @@ import PocketCastsUtils
 /// replace). No payload; listeners re-query the queue.
 nonisolated struct UpNextQueueChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.upNextQueueChanged }
+    static var name: Notification.Name { Notification.Name("SJUpNextChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -29,10 +29,13 @@ nonisolated struct UpNextQueueChanged: NotificationCenter.MainActorMessage {
 /// a string-based post carried none); `addedToTop` is `true` for a "Play Next"
 /// (top of queue) add, `false` for "Play Last". The bridged representation is
 /// frozen during the migration: uuid rides in `object` and `addedToTop` in
-/// `userInfo` under `Constants.Notifications.upNextEpisodeAddedToTopKey`.
+/// `userInfo` under `Self.addedToTopUserInfoKey`.
 nonisolated struct UpNextEpisodeAdded: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.upNextEpisodeAdded }
+    static var name: Notification.Name { Notification.Name("SJUpNextEpisodeAdded") }
+
+    /// `userInfo` key carrying `addedToTop` in the frozen bridged representation.
+    static let addedToTopUserInfoKey = "PCUpNextAddedToTop"
 
     let uuid: String?
     let addedToTop: Bool
@@ -40,7 +43,7 @@ nonisolated struct UpNextEpisodeAdded: NotificationCenter.MainActorMessage {
     static func makeMessage(_ notification: Notification) -> Self? {
         Self(
             uuid: notification.object as? String,
-            addedToTop: notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool ?? false
+            addedToTop: notification.userInfo?[Self.addedToTopUserInfoKey] as? Bool ?? false
         )
     }
 
@@ -48,7 +51,7 @@ nonisolated struct UpNextEpisodeAdded: NotificationCenter.MainActorMessage {
         Notification(
             name: Self.name,
             object: message.uuid,
-            userInfo: [Constants.Notifications.upNextEpisodeAddedToTopKey: message.addedToTop]
+            userInfo: [Self.addedToTopUserInfoKey: message.addedToTop]
         )
     }
 }
@@ -56,7 +59,7 @@ nonisolated struct UpNextEpisodeAdded: NotificationCenter.MainActorMessage {
 /// A single episode was removed from Up Next. `uuid` is the episode uuid; nil
 /// when a string-based post carried none.
 nonisolated struct UpNextEpisodeRemoved: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.upNextEpisodeRemoved }
+    static var name: Notification.Name { Notification.Name("SJUpNextEpisodeRemoved") }
 
     let uuid: String?
 
@@ -69,7 +72,7 @@ nonisolated struct UpNextEpisodeRemoved: UuidBridgedMessage {
 /// `Settings.upNextShuffleEnabled()`. No payload.
 nonisolated struct UpNextShuffleToggled: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.upNextShuffleToggle }
+    static var name: Notification.Name { Notification.Name("SJUpNextShuffleToggle") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()

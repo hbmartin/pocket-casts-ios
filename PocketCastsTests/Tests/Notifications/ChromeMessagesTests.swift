@@ -15,7 +15,7 @@ final class ChromeMessagesTests: XCTestCase {
 
         // Frozen bridged shape: the tab index rides in `object` (posted by the
         // still-string-based MainTabBarController).
-        XCTAssertEqual(notification.name, Constants.Notifications.tappedOnSelectedTab)
+        XCTAssertEqual(notification.name, Notification.Name("SJTappedOnSelectedTab"))
         XCTAssertEqual(notification.object as? Int, 2)
 
         let roundTripped = try XCTUnwrap(TappedOnSelectedTab.makeMessage(notification))
@@ -23,15 +23,15 @@ final class ChromeMessagesTests: XCTestCase {
     }
 
     func testTappedOnSelectedTabBridgesFromBareStringPost() throws {
-        let notification = Notification(name: Constants.Notifications.tappedOnSelectedTab)
+        let notification = Notification(name: Notification.Name("SJTappedOnSelectedTab"))
 
         let message = try XCTUnwrap(TappedOnSelectedTab.makeMessage(notification))
         XCTAssertNil(message.tabIndex)
     }
 
     func testTappedOnSelectedTabBridgesFromStringPostWithIntObject() throws {
-        // Matches MainTabBarController's `postOnMainThread(notification:object: tabIndex)`.
-        let notification = Notification(name: Constants.Notifications.tappedOnSelectedTab, object: 3)
+        // Matches the frozen bridged shape: the tab index rides in `object`.
+        let notification = Notification(name: Notification.Name("SJTappedOnSelectedTab"), object: 3)
 
         let message = try XCTUnwrap(TappedOnSelectedTab.makeMessage(notification))
         XCTAssertEqual(message.tabIndex, 3)
@@ -47,7 +47,7 @@ final class ChromeMessagesTests: XCTestCase {
 
             // Frozen bridged shape: the Bool rides in `object` (read by the
             // still-string-based Theme observer).
-            XCTAssertEqual(notification.name, Constants.Notifications.systemThemeMayHaveChanged)
+            XCTAssertEqual(notification.name, Notification.Name("SystemThemeChanged"))
             XCTAssertEqual(notification.object as? Bool, isDark)
 
             let roundTripped = try XCTUnwrap(SystemThemeMayHaveChanged.makeMessage(notification))
@@ -56,7 +56,7 @@ final class ChromeMessagesTests: XCTestCase {
     }
 
     func testSystemThemeMayHaveChangedBridgesFromBareStringPost() throws {
-        let message = try XCTUnwrap(SystemThemeMayHaveChanged.makeMessage(Notification(name: Constants.Notifications.systemThemeMayHaveChanged)))
+        let message = try XCTUnwrap(SystemThemeMayHaveChanged.makeMessage(Notification(name: Notification.Name("SystemThemeChanged"))))
         XCTAssertNil(message.isDark)
     }
 
@@ -68,29 +68,29 @@ final class ChromeMessagesTests: XCTestCase {
     }
 
     func testFollowSystemThemeTurnedOnBridgesBothWays() {
-        XCTAssertNotNil(FollowSystemThemeTurnedOn.makeMessage(Notification(name: Constants.Notifications.followSystemThemeTurnedOn)))
-        XCTAssertEqual(FollowSystemThemeTurnedOn.makeNotification(FollowSystemThemeTurnedOn()).name, Constants.Notifications.followSystemThemeTurnedOn)
+        XCTAssertNotNil(FollowSystemThemeTurnedOn.makeMessage(Notification(name: Notification.Name("FollowSystemThemeTurnedOn"))))
+        XCTAssertEqual(FollowSystemThemeTurnedOn.makeNotification(FollowSystemThemeTurnedOn()).name, Notification.Name("FollowSystemThemeTurnedOn"))
     }
 
     func testTextEditingMessagesBridgeBothWays() {
-        XCTAssertNotNil(TextEditingDidStart.makeMessage(Notification(name: Constants.Notifications.textEditingDidStart)))
-        XCTAssertEqual(TextEditingDidStart.makeNotification(TextEditingDidStart()).name, Constants.Notifications.textEditingDidStart)
+        XCTAssertNotNil(TextEditingDidStart.makeMessage(Notification(name: Notification.Name("SJTextEditingStarted"))))
+        XCTAssertEqual(TextEditingDidStart.makeNotification(TextEditingDidStart()).name, Notification.Name("SJTextEditingStarted"))
 
-        XCTAssertNotNil(TextEditingDidEnd.makeMessage(Notification(name: Constants.Notifications.textEditingDidEnd)))
-        XCTAssertEqual(TextEditingDidEnd.makeNotification(TextEditingDidEnd()).name, Constants.Notifications.textEditingDidEnd)
+        XCTAssertNotNil(TextEditingDidEnd.makeMessage(Notification(name: Notification.Name("SJTextEditingEnded"))))
+        XCTAssertEqual(TextEditingDidEnd.makeNotification(TextEditingDidEnd()).name, Notification.Name("SJTextEditingEnded"))
     }
 
     func testSearchRequestedBridgesBothWays() {
-        XCTAssertNotNil(SearchRequested.makeMessage(Notification(name: Constants.Notifications.searchRequested)))
-        XCTAssertEqual(SearchRequested.makeNotification(SearchRequested()).name, Constants.Notifications.searchRequested)
+        XCTAssertNotNil(SearchRequested.makeMessage(Notification(name: Notification.Name("SJTriggerSearch"))))
+        XCTAssertEqual(SearchRequested.makeNotification(SearchRequested()).name, Notification.Name("SJTriggerSearch"))
     }
 
     func testMiniPlayerMessagesBridgeBothWays() {
-        XCTAssertNotNil(MiniPlayerDidAppear.makeMessage(Notification(name: Constants.Notifications.miniPlayerDidAppear)))
-        XCTAssertEqual(MiniPlayerDidAppear.makeNotification(MiniPlayerDidAppear()).name, Constants.Notifications.miniPlayerDidAppear)
+        XCTAssertNotNil(MiniPlayerDidAppear.makeMessage(Notification(name: Notification.Name("SJMiniPlayerAppeared"))))
+        XCTAssertEqual(MiniPlayerDidAppear.makeNotification(MiniPlayerDidAppear()).name, Notification.Name("SJMiniPlayerAppeared"))
 
-        XCTAssertNotNil(MiniPlayerDidDisappear.makeMessage(Notification(name: Constants.Notifications.miniPlayerDidDisappear)))
-        XCTAssertEqual(MiniPlayerDidDisappear.makeNotification(MiniPlayerDidDisappear()).name, Constants.Notifications.miniPlayerDidDisappear)
+        XCTAssertNotNil(MiniPlayerDidDisappear.makeMessage(Notification(name: Notification.Name("SJMiniPlayerDisappeared"))))
+        XCTAssertEqual(MiniPlayerDidDisappear.makeNotification(MiniPlayerDidDisappear()).name, Notification.Name("SJMiniPlayerDisappeared"))
     }
 
     // MARK: - Account (Notifications.swift names)

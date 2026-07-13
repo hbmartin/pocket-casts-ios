@@ -16,9 +16,9 @@ final class UpNextMessagesTests: XCTestCase {
             let notification = UpNextEpisodeAdded.makeNotification(message)
 
             // Frozen bridged shape: uuid in `object`, addedToTop in `userInfo`.
-            XCTAssertEqual(notification.name, Constants.Notifications.upNextEpisodeAdded)
+            XCTAssertEqual(notification.name, Notification.Name("SJUpNextEpisodeAdded"))
             XCTAssertEqual(notification.object as? String, "episode-uuid")
-            XCTAssertEqual(notification.userInfo?[Constants.Notifications.upNextEpisodeAddedToTopKey] as? Bool, toTop)
+            XCTAssertEqual(notification.userInfo?["PCUpNextAddedToTop"] as? Bool, toTop)
 
             let roundTripped = try XCTUnwrap(UpNextEpisodeAdded.makeMessage(notification))
             XCTAssertEqual(roundTripped.uuid, "episode-uuid")
@@ -29,7 +29,7 @@ final class UpNextMessagesTests: XCTestCase {
     func testEpisodeAddedBridgesFromBareStringPost() throws {
         // A legacy string-based post with no object/userInfo must still produce
         // a message, with nil uuid and addedToTop defaulting to false.
-        let notification = Notification(name: Constants.Notifications.upNextEpisodeAdded)
+        let notification = Notification(name: Notification.Name("SJUpNextEpisodeAdded"))
 
         let message = try XCTUnwrap(UpNextEpisodeAdded.makeMessage(notification))
         XCTAssertNil(message.uuid)
@@ -41,7 +41,7 @@ final class UpNextMessagesTests: XCTestCase {
     func testEpisodeRemovedRoundTripsUuid() throws {
         let notification = UpNextEpisodeRemoved.makeNotification(UpNextEpisodeRemoved(uuid: "removed-uuid"))
 
-        XCTAssertEqual(notification.name, Constants.Notifications.upNextEpisodeRemoved)
+        XCTAssertEqual(notification.name, Notification.Name("SJUpNextEpisodeRemoved"))
         XCTAssertEqual(notification.object as? String, "removed-uuid")
 
         let roundTripped = try XCTUnwrap(UpNextEpisodeRemoved.makeMessage(notification))
@@ -53,13 +53,13 @@ final class UpNextMessagesTests: XCTestCase {
     func testQueueChangedBridgesBothWays() {
         // String posts (e.g. PlaybackManager's, still unconverted) must reach
         // typed observers...
-        XCTAssertNotNil(UpNextQueueChanged.makeMessage(Notification(name: Constants.Notifications.upNextQueueChanged)))
+        XCTAssertNotNil(UpNextQueueChanged.makeMessage(Notification(name: Notification.Name("SJUpNextChanged"))))
         // ...and typed posts must keep the legacy raw name for string observers.
-        XCTAssertEqual(UpNextQueueChanged.makeNotification(UpNextQueueChanged()).name, Constants.Notifications.upNextQueueChanged)
+        XCTAssertEqual(UpNextQueueChanged.makeNotification(UpNextQueueChanged()).name, Notification.Name("SJUpNextChanged"))
     }
 
     func testShuffleToggledBridgesBothWays() {
-        XCTAssertNotNil(UpNextShuffleToggled.makeMessage(Notification(name: Constants.Notifications.upNextShuffleToggle)))
-        XCTAssertEqual(UpNextShuffleToggled.makeNotification(UpNextShuffleToggled()).name, Constants.Notifications.upNextShuffleToggle)
+        XCTAssertNotNil(UpNextShuffleToggled.makeMessage(Notification(name: Notification.Name("SJUpNextShuffleToggle"))))
+        XCTAssertEqual(UpNextShuffleToggled.makeNotification(UpNextShuffleToggled()).name, Notification.Name("SJUpNextShuffleToggle"))
     }
 }

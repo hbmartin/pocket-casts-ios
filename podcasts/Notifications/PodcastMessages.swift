@@ -41,7 +41,7 @@ nonisolated struct PodcastAdded: UuidBridgedMessage {
 /// A podcast was unsubscribed from / deleted from the library. `uuid` is the
 /// podcast uuid.
 nonisolated struct PodcastDeleted: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.podcastDeleted }
+    static var name: Notification.Name { Notification.Name("SJPodDeleted") }
 
     let uuid: String?
 
@@ -53,7 +53,7 @@ nonisolated struct PodcastDeleted: UuidBridgedMessage {
 /// A podcast's theme colors finished downloading and are cached. `uuid` is the
 /// podcast uuid.
 nonisolated struct PodcastColorsDownloaded: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.podcastColorsDownloaded }
+    static var name: Notification.Name { Notification.Name("SJPodcastColorsReady") }
 
     let uuid: String?
 
@@ -66,7 +66,7 @@ nonisolated struct PodcastColorsDownloaded: UuidBridgedMessage {
 /// clear); artwork views should re-request their images. No payload.
 nonisolated struct PodcastImageReCacheRequired: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.podcastImageReCacheRequired }
+    static var name: Notification.Name { Notification.Name("PCPodcastImageReCacheRequired") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -81,7 +81,7 @@ nonisolated struct PodcastImageReCacheRequired: NotificationCenter.MainActorMess
 /// moved between folders). `uuid` is the folder uuid; nil when a podcast was
 /// removed to the home grid and every listener should re-query.
 nonisolated struct FolderChanged: UuidBridgedMessage {
-    static var name: Notification.Name { Constants.Notifications.folderChanged }
+    static var name: Notification.Name { Notification.Name("SJFolderChanged") }
 
     let uuid: String?
 
@@ -136,7 +136,7 @@ nonisolated struct PlaylistChanged: NotificationCenter.MainActorMessage {
 /// An OPML import finished and its podcasts were added. No payload.
 nonisolated struct OpmlImportCompleted: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.opmlImportCompleted }
+    static var name: Notification.Name { Notification.Name("SJOpmlImportCompleted") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -150,7 +150,7 @@ nonisolated struct OpmlImportCompleted: NotificationCenter.MainActorMessage {
 /// An OPML import failed. No payload.
 nonisolated struct OpmlImportFailed: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.opmlImportFailed }
+    static var name: Notification.Name { Notification.Name("SJOpmlImportFailed") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()
@@ -167,7 +167,7 @@ nonisolated struct OpmlImportFailed: NotificationCenter.MainActorMessage {
 /// migration: the term rides in `Notification.object`.
 nonisolated struct PodcastSearchRequested: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.podcastSearchRequest }
+    static var name: Notification.Name { Notification.Name("PodcastSearchRequest") }
 
     let term: String?
 
@@ -184,7 +184,7 @@ nonisolated struct PodcastSearchRequested: NotificationCenter.MainActorMessage {
 /// payload.
 nonisolated struct ChartRegionChanged: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject
-    static var name: Notification.Name { Constants.Notifications.chartRegionChanged }
+    static var name: Notification.Name { Notification.Name("SJChartRegionChanged") }
 
     static func makeMessage(_ notification: Notification) -> Self? {
         Self()

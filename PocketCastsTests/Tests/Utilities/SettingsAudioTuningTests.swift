@@ -44,7 +44,7 @@ final class SettingsAudioTuningTests: XCTestCase {
         var tuning = AudioTuning.default
         tuning.voiceBoost.compRatio = 3
 
-        let notified = expectation(forNotification: Constants.Notifications.audioTuningDidChange, object: nil)
+        let notified = expectation(forNotification: Notification.Name("SJAudioTuningDidChange"), object: nil)
         notified.expectedFulfillmentCount = 1
         Settings.audioTuning = tuning
         wait(for: [notified], timeout: 1)
@@ -55,7 +55,7 @@ final class SettingsAudioTuningTests: XCTestCase {
         tuning.voiceBoost.compRatio = 3
         Settings.audioTuning = tuning
 
-        let notNotified = expectation(forNotification: Constants.Notifications.audioTuningDidChange, object: nil)
+        let notNotified = expectation(forNotification: Notification.Name("SJAudioTuningDidChange"), object: nil)
         notNotified.isInverted = true
         Settings.audioTuning = tuning
         wait(for: [notNotified], timeout: 0.2)
