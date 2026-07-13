@@ -95,8 +95,16 @@ public enum TranscriptionError: Error, Sendable, Equatable {
     case audioTooLarge(limitMB: Int)
     /// The audio format can't be handled by the selected engine/provider.
     case unsupportedAudio
-    /// Remote job reached a terminal failure state; payload is the provider's message.
+    /// Remote job reached a terminal failure state; payload is a developer-authored
+    /// reason. Never put provider response content here — the payload reaches
+    /// analytics, file logs and the persisted record. Provider-generated messages
+    /// belong in `remoteResponseFailure`.
     case remoteJobFailed(String)
+    /// Remote provider rejected the request or job. `providerMessage` is
+    /// provider-generated (an error-body excerpt or job error) and can echo
+    /// request identifiers or user data, so it stays in the in-memory failure
+    /// state only — `sanitizedDescription` drops it.
+    case remoteResponseFailure(status: Int?, providerMessage: String)
     case networkUnavailable
     /// Episode audio is not downloaded and the engine requires a local file.
     case notDownloaded
@@ -112,6 +120,20 @@ public enum TranscriptionError: Error, Sendable, Equatable {
     /// Mode); job stays queued for a charging pass or a policy-clearing change.
     case powerDeferred
     case cancelled
+}
+
+public extension TranscriptionError {
+    /// Description safe for analytics, file logs and persisted records: static
+    /// case content only, with provider-generated payloads reduced to the HTTP
+    /// status.
+    var sanitizedDescription: String {
+        switch self {
+        case .remoteResponseFailure(let status, _):
+            status.map { "remoteResponseFailure(HTTP \($0))" } ?? "remoteResponseFailure"
+        default:
+            String(describing: self)
+        }
+    }
 }
 
 /// How a remote provider receives the episode audio.

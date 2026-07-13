@@ -19,7 +19,7 @@ struct ElevenLabsProviderTests {
         MockURLProtocol.register(apiKey: apiKey) { request in
             guard request.url?.path == "/v1/speech-to-text" else { return .respond(statusCode: 404) }
             let body = String(decoding: MockURLProtocol.bodyData(of: request), as: UTF8.self)
-            guard body.contains("scribe_v1"), body.contains("name=\"diarize\"") else {
+            guard body.contains("scribe_v2"), body.contains("name=\"diarize\"") else {
                 return .respond(statusCode: 400, body: Data("missing multipart fields".utf8))
             }
             // Word stream carries its own "spacing" tokens between words.
@@ -56,7 +56,7 @@ struct ElevenLabsProviderTests {
         ])
         #expect(transcript.speakerCount == 2)
         #expect(transcript.language == "en")
-        #expect(transcript.engineDescription == "elevenlabs.scribe_v1")
+        #expect(transcript.engineDescription == "elevenlabs.scribe_v2")
     }
 
     @Test func submitSingleSpeakerEmitsUnlabeledCues() async throws {

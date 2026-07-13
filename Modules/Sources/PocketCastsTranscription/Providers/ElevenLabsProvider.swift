@@ -26,7 +26,7 @@ public struct ElevenLabsProvider: RemoteTranscriptionProvider {
         }
 
         var builder = MultipartFormBuilder()
-        builder.appendField(name: "model_id", value: "scribe_v1")
+        builder.appendField(name: "model_id", value: "scribe_v2")
         builder.appendField(name: "diarize", value: "true")
         if let language = Self.languageCode(from: language) {
             builder.appendField(name: "language_code", value: language)
@@ -78,7 +78,7 @@ public struct ElevenLabsProvider: RemoteTranscriptionProvider {
 
         return RemoteCueBuilder.finalizeTranscript(cues: cues,
                                                    language: response.languageCode ?? requestedLanguage,
-                                                   engineDescription: "elevenlabs.scribe_v1")
+                                                   engineDescription: "elevenlabs.scribe_v2")
     }
 
     /// ElevenLabs expects an ISO language code ("en"); reduce a BCP-47 tag to

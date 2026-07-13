@@ -1,5 +1,6 @@
 import XCTest
 @testable import PocketCastsDataModel
+@testable import PocketCastsUtils
 @testable import podcasts
 
 final class TranscriptManagerTests: XCTestCase {
@@ -83,5 +84,32 @@ final class TranscriptManagerTests: XCTestCase {
         } catch {
             XCTAssertTrue(error is TranscriptError)
         }
+    }
+
+    /// A restore brings back the transcription record but not the VTT artifact
+    /// (the artifact directory is excluded from backups). The phantom completed
+    /// record must be dropped so Generate is offered again, and the load must
+    /// fall through to the podcast-provided transcript.
+    func testCompletedRecordWithoutArtifactSelfHeals() async throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.diarizedTranscription, withValue: true)
+
+        let episodeUuid = UUID().uuidString
+        var record = EpisodeTranscriptionRecord()
+        record.episodeUuid = episodeUuid
+        record.transcriptionStatus = .completed
+        record.createdAt = Date().timeIntervalSince1970
+        DataManager.sharedManager.transcriptions.upsert(record)
+        defer { DataManager.sharedManager.transcriptions.delete(episodeUuid: episodeUuid) }
+
+        let manager = TranscriptManager(episodeUUID: episodeUuid, podcastUUID: UUID().uuidString, showCoordinator: MockShowCoordinator())
+        let model = try await manager.loadTranscript()
+
+        XCTAssertFalse(model.cues.isEmpty, "Load should fall through to the podcast-provided transcript")
+        XCTAssertFalse(manager.hasLocalTranscription)
+        XCTAssertFalse(manager.isDisplayingLocalTranscription)
+        XCTAssertNil(DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid),
+                     "The phantom completed record should have been deleted")
     }
 }

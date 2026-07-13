@@ -223,6 +223,26 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         XCTAssertEqual(record.transcriptionStatus, .failed)
         XCTAssertEqual(record.errorMessage, "quotaExceeded")
     }
+
+    func testProviderResponseBodyIsKeptOutOfThePersistedRecord() async throws {
+        let provider = MockRemoteProvider(
+            submitResult: .failure(.remoteResponseFailure(status: 500, providerMessage: "request id abc123, user@example.com"))
+        )
+        let manager = makeManager(provider: provider)
+
+        await manager.enqueue(episodeUuid: "episode-body", podcastUuid: nil)
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-body"))
+        XCTAssertEqual(record.transcriptionStatus, .failed)
+        XCTAssertEqual(record.errorMessage, "remoteResponseFailure(HTTP 500)",
+                       "Provider-generated response text must not reach the persisted record")
+
+        // The full error (with the provider message) stays available in memory
+        // for the failure UI.
+        let state = await manager.state(for: "episode-body")
+        XCTAssertEqual(state, .failed(.remoteResponseFailure(status: 500, providerMessage: "request id abc123, user@example.com")))
+    }
 }
 
 // MARK: - Mocks

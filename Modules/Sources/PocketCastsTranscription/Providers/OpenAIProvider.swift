@@ -41,6 +41,8 @@ public struct OpenAIProvider: RemoteTranscriptionProvider {
         var builder = MultipartFormBuilder()
         builder.appendField(name: "model", value: "gpt-4o-transcribe-diarize")
         builder.appendField(name: "response_format", value: "diarized_json")
+        // Required by the diarize model for audio longer than 30 seconds.
+        builder.appendField(name: "chunking_strategy", value: "auto")
         if let language = Self.languageCode(from: language) {
             builder.appendField(name: "language", value: language)
         }

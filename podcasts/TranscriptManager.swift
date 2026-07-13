@@ -82,9 +82,17 @@ nonisolated class TranscriptManager {
         if FeatureFlag.diarizedTranscription.enabled {
             let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUUID)
             hasLocalTranscription = record?.transcriptionStatus == .completed
-            if sourcePreference != .podcastProvided,
-               let record, record.transcriptionStatus == .completed,
-               let localModel = loadLocalTranscript(record: record) {
+            if let record, record.transcriptionStatus == .completed,
+               !artifactStore.hasArtifact(episodeUuid: episodeUUID) {
+                // A completed record whose VTT artifact is gone — the artifact
+                // directory is excluded from device backups while the record is
+                // restored with the database. Drop the phantom record so the
+                // Generate affordance comes back.
+                await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUUID)
+                hasLocalTranscription = false
+            } else if sourcePreference != .podcastProvided,
+                      let record, record.transcriptionStatus == .completed,
+                      let localModel = loadLocalTranscript(record: record) {
                 // Best-effort probe so the source switcher knows whether a
                 // podcast-provided transcript also exists; failures just mean
                 // the switcher won't offer the podcast source this time.

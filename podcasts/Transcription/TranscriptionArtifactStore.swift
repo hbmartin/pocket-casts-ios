@@ -37,6 +37,13 @@ nonisolated struct TranscriptionArtifactStore: Sendable {
         try? String(contentsOf: fileURL(forEpisodeUuid: episodeUuid), encoding: .utf8)
     }
 
+    /// Whether the episode's VTT artifact exists on disk. A completed record
+    /// without its artifact (the directory is excluded from device backups, the
+    /// database is not) must not be treated as a usable transcript.
+    func hasArtifact(episodeUuid: String) -> Bool {
+        FileManager.default.fileExists(atPath: fileURL(forEpisodeUuid: episodeUuid).path)
+    }
+
     func delete(episodeUuid: String) {
         try? FileManager.default.removeItem(at: fileURL(forEpisodeUuid: episodeUuid))
     }
