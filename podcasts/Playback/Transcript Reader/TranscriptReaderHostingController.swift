@@ -11,6 +11,7 @@ final class TranscriptReaderHostingController: ThemedHostingController<Transcrip
     init(transcript: TranscriptModel,
          playbackManager: TranscriptPlaybackManaging,
          isGeneratedTranscript: Bool,
+         isLocalTranscript: Bool = false,
          source: AnalyticsSource) {
         let episode = playbackManager.episodeUUID.flatMap { DataManager.sharedManager.findEpisode(uuid: $0) }
         let router = TranscriptReaderActionRouter(episode: episode, source: source)
@@ -20,6 +21,7 @@ final class TranscriptReaderHostingController: ThemedHostingController<Transcrip
             transcript: transcript,
             playback: playbackManager,
             isGeneratedTranscript: isGeneratedTranscript,
+            isLocalTranscript: isLocalTranscript,
             episodeTitle: episode?.title,
             episodeShareURLString: episode?.shareURL
         )

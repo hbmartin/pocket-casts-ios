@@ -71,14 +71,14 @@ struct NewSearchResultsView: View {
                 .scrollContentBackground(.hidden)
             } else {
                 VStack(spacing: 0) {
-                    if searchResults.combinedResults.count > 1 || !searchResults.transcriptHits.isEmpty {
+                    if isFilterPickerVisible {
                         filterPicker
                     }
                     List {
-                        if displayMode == .transcripts {
+                        if effectiveDisplayMode == .transcripts {
                             transcriptResults
                         } else {
-                            if displayMode != .episodes {
+                            if effectiveDisplayMode != .episodes {
                                 localResults
                             }
                             combinedList
@@ -90,12 +90,28 @@ struct NewSearchResultsView: View {
                     .scrollContentBackground(.hidden)
                     .ignoresSafeArea(.keyboard, edges: .bottom)
                     .onAppear() {
-                        self.searchAnalyticsHelper.trackListShown(displayMode)
+                        self.searchAnalyticsHelper.trackListShown(effectiveDisplayMode)
                     }
                 }
             }
         }
         .background(theme.primaryUi01.ignoresSafeArea())
+        // A mode selected for one query doesn't carry meaning for the next
+        // (its transcript hits or result mix may be gone) — new search, fresh mode.
+        .onChange(of: searchResults.currentSearchTerm) { _, _ in
+            displayMode = .allResults
+        }
+    }
+
+    private var isFilterPickerVisible: Bool {
+        searchResults.combinedResults.count > 1 || !searchResults.transcriptHits.isEmpty
+    }
+
+    /// What actually renders. When the picker is hidden there is no control to
+    /// leave a leftover mode, so fall back to All Results instead of stranding
+    /// the user on an empty filtered view.
+    private var effectiveDisplayMode: SearchResultsListView.DisplayMode {
+        isFilterPickerVisible ? displayMode : .allResults
     }
 
     @ViewBuilder var showFullResultsButton: some View {

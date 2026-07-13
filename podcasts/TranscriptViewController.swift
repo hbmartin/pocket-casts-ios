@@ -581,6 +581,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
             transcript: transcript,
             playbackManager: playbackManager,
             isGeneratedTranscript: transcriptManager?.isDisplayingGeneratedTranscript == true,
+            isLocalTranscript: transcriptManager?.isDisplayingLocalTranscription == true,
             source: analyticsSource
         )
         present(reader, animated: true)
@@ -701,6 +702,12 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     private var currentEpisodeUUID: String?
+    private var loadTask: Task<Void, Never>?
+    /// Monotonic id for transcript loads. Each load captures its generation and
+    /// applies its result only while still current, so a slow superseded load
+    /// (e.g. a network fetch racing a local source switch) can't overwrite a
+    /// newer choice.
+    private var loadGeneration = 0
 
     private func loadTranscript() {
         guard let episodeUUID = playbackManager.episodeUUID, let podcastUUID = playbackManager.podcastUUID else {
@@ -720,7 +727,10 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
         setupLoadingState()
 
-        Task.detached { [weak self, boxedManager = PocketCastsUtils.UncheckedSendable(transcriptManager)] in
+        loadGeneration += 1
+        let generation = loadGeneration
+        loadTask?.cancel()
+        loadTask = Task.detached { [weak self, boxedManager = PocketCastsUtils.UncheckedSendable(transcriptManager)] in
             guard let self, let transcriptManager = boxedManager.value else {
                 return
             }
@@ -731,6 +741,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
                 let isDisplayingGenerated = transcriptManager.isDisplayingGeneratedTranscript
                 let isDisplayingLocal = transcriptManager.isDisplayingLocalTranscription
                 await MainActor.run {
+                    guard generation == self.loadGeneration else { return }
                     self.setHasGeneratedTranscripts(hasGeneratedTranscripts)
                     self.updateSourceMenu()
                     if isDisplayingLocal {
@@ -762,12 +773,15 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
                         }
                         self.bannerView.isHidden = !hasGeneratedTranscripts
                     }
+                    self.show(transcript: transcript, resetPosition: shouldResetPosition)
                 }
-                await show(transcript: transcript, resetPosition: shouldResetPosition)
             } catch {
-                await stopSyncedTranscripts()
-                await track(.transcriptError, properties: ["error_code": (error as NSError).code])
-                await show(error: error)
+                await MainActor.run {
+                    guard generation == self.loadGeneration else { return }
+                    self.stopSyncedTranscripts()
+                    self.track(.transcriptError, properties: ["error_code": (error as NSError).code])
+                    self.show(error: error)
+                }
             }
         }
     }
