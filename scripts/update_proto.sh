@@ -5,13 +5,10 @@
 
 set -e
 
-API_BASE_FOLDER=$1
-if [[ -z $API_BASE_FOLDER ]];
-then
-    echo "Missing argument, please specify the full path to the protobuffer files for the API project."
-    echo "Eg: update_proto.sh ~/pocketcasts-api/api/modules/protobuf/src/main/proto"
-    exit 1
-fi
+# Defaults to the unified schema at the repo root (canonical copy lives in
+# podcast-backend/protos/api.proto — keep the two byte-identical). An argument
+# overrides the folder for regenerating against a different checkout.
+API_BASE_FOLDER=${1:-.}
 
 if command -v brew &> /dev/null; then
     for pkg in protobuf swift-protobuf; do
@@ -36,4 +33,3 @@ done
 
 PROTO_OUT=./Modules/Sources/PocketCastsServer/Private/Protobuffer
 protoc --swift_out="$PROTO_OUT" --proto_path="$API_BASE_FOLDER" "$API_BASE_FOLDER/api.proto"
-protoc --swift_out="$PROTO_OUT" --proto_path="$API_BASE_FOLDER" "$API_BASE_FOLDER/files.proto"
