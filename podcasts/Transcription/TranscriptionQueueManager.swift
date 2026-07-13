@@ -229,6 +229,7 @@ actor TranscriptionQueueManager {
             currentJob.task.cancel()
         }
         dataManager.transcriptions.delete(episodeUuid: episodeUuid)
+        dataManager.transcriptSearch.delete(episodeUuid: episodeUuid, source: .generated)
         artifactStore.delete(episodeUuid: episodeUuid)
         states[episodeUuid] = nil
     }
@@ -530,11 +531,12 @@ actor TranscriptionQueueManager {
         let artifactURL = try artifactStore.write(transcript: transcript, episodeUuid: episodeUuid)
 
         let searchSegments = transcript.cues.enumerated().map { index, cue in
-            TranscriptionSegment(index: index, text: cue.text, startTime: cue.start, speaker: cue.speaker)
+            TranscriptSearchSegment(index: index, text: cue.text, startTime: cue.start, endTime: cue.end, speaker: cue.speaker)
         }
-        dataManager.transcriptions.replaceSegments(episodeUuid: episodeUuid,
-                                                   podcastUuid: record.podcastUuid,
-                                                   segments: searchSegments)
+        dataManager.transcriptSearch.replaceSegments(episodeUuid: episodeUuid,
+                                                     podcastUuid: record.podcastUuid,
+                                                     source: .generated,
+                                                     segments: searchSegments)
 
         record.transcriptionStatus = .completed
         record.errorMessage = nil

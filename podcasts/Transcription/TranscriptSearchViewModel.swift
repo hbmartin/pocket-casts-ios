@@ -87,9 +87,9 @@ final class TranscriptSearchViewModel: ObservableObject {
 
     private func performSearch(term: String) async {
         phase = .searching
-        let transcriptions = DataManager.sharedManager.transcriptions
+        let transcriptSearch = DataManager.sharedManager.transcriptSearch
         let sections = await Task.detached(priority: .userInitiated) {
-            let results = transcriptions.searchSegments(query: term, limit: Self.resultLimit)
+            let results = transcriptSearch.search(term: term, limit: Self.resultLimit, source: .generated)
             return Self.makeSections(from: results, context: Self.databaseEpisodeContext)
         }.value
 
@@ -129,10 +129,10 @@ final class TranscriptSearchViewModel: ObservableObject {
     /// Groups flat FTS hits — already ordered by relevance (BM25) — into
     /// per-episode sections. Sections keep the relevance order of each episode's
     /// best hit; rows within a section run in playback order.
-    nonisolated static func makeSections(from results: [TranscriptionSearchResult],
+    nonisolated static func makeSections(from results: [TranscriptSearchHit],
                                          context: (_ episodeUuid: String, _ podcastUuid: String?) -> EpisodeContext?) -> [EpisodeSection] {
         var order: [String] = []
-        var grouped: [String: [TranscriptionSearchResult]] = [:]
+        var grouped: [String: [TranscriptSearchHit]] = [:]
         for result in results where !result.episodeUuid.isEmpty {
             if grouped[result.episodeUuid] == nil {
                 order.append(result.episodeUuid)
@@ -160,8 +160,8 @@ final class TranscriptSearchViewModel: ObservableObject {
     /// runs. Degenerate input degrades gracefully: an unterminated start marker
     /// renders the remainder as plain text (markers stripped).
     nonisolated static func snippetRuns(from snippet: String) -> [SnippetRun] {
-        let startMarker = TranscriptionSearchResult.highlightStart
-        let endMarker = TranscriptionSearchResult.highlightEnd
+        let startMarker = TranscriptSearchHit.highlightStart
+        let endMarker = TranscriptSearchHit.highlightEnd
 
         var runs: [SnippetRun] = []
         var remainder = Substring(snippet)

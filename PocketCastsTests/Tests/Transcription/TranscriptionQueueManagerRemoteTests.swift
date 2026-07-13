@@ -89,7 +89,7 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         let vtt = try String(contentsOfFile: try XCTUnwrap(record.filePath), encoding: .utf8)
         XCTAssertTrue(vtt.contains("<v Speaker 1>Hello from the mock provider."))
 
-        let hits = dataManager.transcriptions.searchSegments(query: "transcribed", limit: 10)
+        let hits = dataManager.transcriptSearch.search(term: "transcribed", limit: 10, source: .generated)
         XCTAssertEqual(hits.first?.episodeUuid, "episode-sync")
 
         // Public URL provider + parseable download URL → no upload happened.

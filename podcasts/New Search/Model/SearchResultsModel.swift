@@ -188,15 +188,15 @@ class SearchResultsModel: ObservableObject {
     private func searchTranscriptIndex(term: String) {
         guard FeatureFlag.transcriptSearch.enabled else { return }
 
-        let transcriptIndex = dataMangager.transcriptIndex
-        guard transcriptIndex.isAvailable, !isTermAnURL(term) else {
+        let transcriptSearch = dataMangager.transcriptSearch
+        guard transcriptSearch.isAvailable, !isTermAnURL(term) else {
             transcriptHits = []
             return
         }
 
         Task {
             let hits = await Task.detached(priority: .userInitiated) {
-                TranscriptSearchHitDisplay.displays(for: transcriptIndex.search(term: term))
+                TranscriptSearchHitDisplay.displays(for: transcriptSearch.search(term: term))
             }.value
 
             // A newer search superseded this one while the query ran.

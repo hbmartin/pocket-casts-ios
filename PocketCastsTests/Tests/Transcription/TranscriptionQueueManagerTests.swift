@@ -85,7 +85,7 @@ final class TranscriptionQueueManagerTests: XCTestCase {
         XCTAssertTrue(vtt.hasPrefix("WEBVTT"))
         XCTAssertTrue(vtt.contains("Hello and welcome to the show."))
 
-        let hits = dataManager.transcriptions.searchSegments(query: "ducks", limit: 10)
+        let hits = dataManager.transcriptSearch.search(term: "ducks", limit: 10, source: .generated)
         XCTAssertEqual(hits.first?.episodeUuid, "episode-1")
         XCTAssertEqual(hits.first?.podcastUuid, "podcast-1")
 

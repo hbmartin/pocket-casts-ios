@@ -26,10 +26,6 @@ final class TranscriptionDataManagerTests: XCTestCase {
             let names = try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type IN ('table', 'index')")
             XCTAssertTrue(names.contains("EpisodeTranscription"))
             XCTAssertTrue(names.contains("episode_transcription_status"))
-            XCTAssertTrue(names.contains("TranscriptionSegmentFTS"))
-
-            // The FTS5 virtual table is actually queryable, not just present in sqlite_master
-            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM TranscriptionSegmentFTS"), 0)
         }
     }
 
@@ -139,151 +135,16 @@ final class TranscriptionDataManagerTests: XCTestCase {
         XCTAssertEqual(dataManager.transcriptions.completedCount(), 2)
     }
 
-    // MARK: - Segments
-
-    func testReplaceSegmentsIsIdempotent() {
-        let segments = [
-            TranscriptionSegment(index: 0, text: "hello world", startTime: 0, speaker: "Speaker 1"),
-            TranscriptionSegment(index: 1, text: "goodbye moon", startTime: 5.5, speaker: "Speaker 2")
-        ]
-
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", segments: segments))
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-1"), 2)
-
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", segments: segments))
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-1"), 2, "Re-running replaceSegments must not duplicate rows")
-
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", segments: [segments[0]]))
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-1"), 1, "Replacing with fewer segments should shrink the set")
-    }
-
-    func testReplaceSegmentsLeavesOtherEpisodesUntouched() {
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-1", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "alpha", startTime: 0)]))
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-2", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "beta", startTime: 0)]))
-
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", segments: []))
-
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-1"), 0)
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-2"), 1)
-    }
-
-    // MARK: - Search
-
-    func testSearchSegmentsReturnsHighlightedSnippetAndFields() throws {
-        let segments = [
-            TranscriptionSegment(index: 3, text: "The quick brown fox jumps over the lazy dog", startTime: 12.5, speaker: "Speaker 1")
-        ]
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", segments: segments))
-
-        let results = dataManager.transcriptions.searchSegments(query: "fox")
-        XCTAssertEqual(results.count, 1)
-
-        let result = try XCTUnwrap(results.first)
-        XCTAssertEqual(result.episodeUuid, "ep-1")
-        XCTAssertEqual(result.podcastUuid, "pod-1")
-        XCTAssertEqual(result.segmentIndex, 3)
-        XCTAssertEqual(result.startTime, 12.5)
-        XCTAssertEqual(result.speaker, "Speaker 1")
-        let highlighted = TranscriptionSearchResult.highlightStart + "fox" + TranscriptionSearchResult.highlightEnd
-        XCTAssertTrue(result.snippet.contains(highlighted), "Snippet should wrap the match in highlight markers: \(result.snippet)")
-    }
-
-    func testSearchSegmentsMatchesLastTokenAsPrefix() throws {
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-1", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "The quick brown fox", startTime: 0)]))
-
-        let results = dataManager.transcriptions.searchSegments(query: "qui")
-        XCTAssertEqual(results.count, 1, "The final query token should match as a prefix while the user is typing")
-        let highlighted = TranscriptionSearchResult.highlightStart + "quick" + TranscriptionSearchResult.highlightEnd
-        XCTAssertTrue(try XCTUnwrap(results.first).snippet.contains(highlighted))
-    }
-
-    func testSearchSegmentsOrdersByRelevance() {
-        // ep-dense mentions the term repeatedly in a short segment; ep-sparse mentions it
-        // once diluted by many other words, so BM25 must rank ep-dense first.
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-dense", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "swift swift swift swift", startTime: 0)]))
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-sparse", podcastUuid: "pod-2",
-            segments: [TranscriptionSegment(index: 0, text: "swift is mentioned only once in a much longer rambling segment full of unrelated words about the weather and lunch", startTime: 0)]))
-
-        let results = dataManager.transcriptions.searchSegments(query: "swift")
-        XCTAssertEqual(results.map(\.episodeUuid), ["ep-dense", "ep-sparse"])
-    }
-
-    func testSearchSegmentsRespectsLimit() {
-        let segments = (0..<5).map { TranscriptionSegment(index: $0, text: "apple pie number \($0)", startTime: Double($0)) }
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", segments: segments))
-
-        XCTAssertEqual(dataManager.transcriptions.searchSegments(query: "apple", limit: 3).count, 3)
-        XCTAssertEqual(dataManager.transcriptions.searchSegments(query: "apple").count, 5)
-    }
-
     // MARK: - Delete
 
-    func testDeleteRemovesRecordRowAndFTSRows() {
+    func testDeleteRemovesOnlyTheGivenRecord() {
         upsertRecord(episodeUuid: "ep-1", status: .completed)
         upsertRecord(episodeUuid: "ep-2", status: .completed)
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-1", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "delete me", startTime: 0)]))
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-2", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "keep me", startTime: 0)]))
 
         XCTAssertTrue(dataManager.transcriptions.delete(episodeUuid: "ep-1"))
 
         XCTAssertNil(dataManager.transcriptions.find(episodeUuid: "ep-1"))
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-1"), 0)
         XCTAssertNotNil(dataManager.transcriptions.find(episodeUuid: "ep-2"))
-        XCTAssertEqual(ftsRowCount(episodeUuid: "ep-2"), 1)
-    }
-
-    // MARK: - FTS query sanitizing
-
-    func testSanitizeFTSQueryQuotesTokensAndAddsPrefixStar() {
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("swift"), "\"swift\"*")
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("hello world"), "\"hello\" \"world\"*")
-    }
-
-    func testSanitizeFTSQueryNeutralizesHostileInput() {
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("\"quoted\""), "\"quoted\"*")
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("a AND b"), "\"a\" \"AND\" \"b\"*")
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("weird(paren"), "\"weird(paren\"*")
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("NEAR/2"), "\"NEAR/2\"*")
-        XCTAssertEqual(TranscriptionDataManager.sanitizeFTSQuery("naïve café"), "\"naïve\" \"café\"*")
-
-        // Nothing searchable: whitespace, bare operators/punctuation, emoji-only input
-        // (unicode61 has no emoji tokens), and quote-only strings all collapse to nil.
-        XCTAssertNil(TranscriptionDataManager.sanitizeFTSQuery(""))
-        XCTAssertNil(TranscriptionDataManager.sanitizeFTSQuery("   "))
-        XCTAssertNil(TranscriptionDataManager.sanitizeFTSQuery("🔥🔥"))
-        XCTAssertNil(TranscriptionDataManager.sanitizeFTSQuery("\"\"\""))
-        XCTAssertNil(TranscriptionDataManager.sanitizeFTSQuery("* ( ) -"))
-    }
-
-    func testSearchSegmentsSurvivesHostileQueries() {
-        XCTAssertTrue(dataManager.transcriptions.replaceSegments(
-            episodeUuid: "ep-1", podcastUuid: "pod-1",
-            segments: [TranscriptionSegment(index: 0, text: "a and b walked into a bar", startTime: 0)]))
-
-        // Operators are treated as plain (case-folded) terms, so this still matches sensibly.
-        XCTAssertEqual(dataManager.transcriptions.searchSegments(query: "a AND b").count, 1)
-
-        // The rest must not crash or throw a MATCH syntax error; empty results are fine.
-        let hostileQueries = ["\"quoted\"", "weird(paren", "NEAR/2", "NOT", "-bar", "col:val", "🔥", "", "(((", "*", "bar\"", "b OR nothing"]
-        for query in hostileQueries {
-            _ = dataManager.transcriptions.searchSegments(query: query)
-        }
-
-        XCTAssertEqual(dataManager.transcriptions.searchSegments(query: "").count, 0)
-        XCTAssertEqual(dataManager.transcriptions.searchSegments(query: "🔥").count, 0)
     }
 
     // MARK: - Helpers
@@ -301,16 +162,5 @@ final class TranscriptionDataManagerTests: XCTestCase {
 
     private func recordCount() -> Int {
         dataManager.count(query: "SELECT COUNT(*) FROM \(TranscriptionDataManager.tableName)", values: nil)
-    }
-
-    private func ftsRowCount(episodeUuid: String) -> Int {
-        let count = try? dataManager.testDbQueue.dbPool.read { db in
-            try Int.fetchOne(
-                db,
-                sql: "SELECT COUNT(*) FROM \(TranscriptionDataManager.ftsTableName) WHERE episodeUuid = ?",
-                arguments: [episodeUuid]
-            )
-        }
-        return count.flatMap { $0 } ?? 0
     }
 }

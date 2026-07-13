@@ -133,8 +133,9 @@ class DatabaseHelper {
         //
         // The FTS5 CREATE is caught rather than propagated so an SQLite build without
         // the FTS5 module can't fail the whole migration chain: on failure neither
-        // table is created, TranscriptIndexDataManager's meta-table probe reports the
-        // index unavailable, and the feature self-disables.
+        // table is created, the manager's meta-table probe reports the index
+        // unavailable, and the feature self-disables. (Both tables were later merged
+        // into the unified index by migration 82.)
         SchemaMigration(toVersion: 81) { db in
             do {
                 try db.executeUpdate("""
@@ -161,6 +162,96 @@ class DatabaseHelper {
                 textBytes INTEGER NOT NULL DEFAULT 0
             );
             """, values: nil)
+        },
+        // Unified transcript search index (device-local, no sync): merges the two
+        // former corpora — locally generated transcription segments
+        // (TranscriptionSegmentFTS, migration 78) and viewed podcast-provided
+        // transcript cues (TranscriptCueIndex, migration 81) — into one FTS5 table
+        // with a `source` column, plus one bookkeeping table keyed
+        // (episodeUuid, source). Existing rows are backfilled from both corpora
+        // (each guarded by an existence check: migration 81 self-disables on
+        // FTS5-less builds, so its tables may be absent while 78's are present),
+        // then the old tables are dropped. EpisodeTranscription stays — it is
+        // pipeline state, not index data. See docs/adr/0001-unified-transcript-index.md.
+        //
+        // The FTS5 CREATE is caught rather than propagated for the same reason as
+        // migration 81: on failure neither new table is created, nothing is
+        // backfilled or dropped, and TranscriptSearchDataManager's meta-table probe
+        // reports the index unavailable, so the feature self-disables.
+        SchemaMigration(toVersion: 82) { db in
+            do {
+                try db.executeUpdate("""
+                CREATE VIRTUAL TABLE TranscriptSegmentIndex USING fts5(
+                    text,
+                    episodeUuid UNINDEXED,
+                    podcastUuid UNINDEXED,
+                    segmentIndex UNINDEXED,
+                    startTime UNINDEXED,
+                    endTime UNINDEXED,
+                    speaker UNINDEXED,
+                    source UNINDEXED,
+                    tokenize = 'unicode61 remove_diacritics 2'
+                );
+                """, values: nil)
+            } catch {
+                FileLog.shared.addMessage("Migration 82: FTS5 unavailable, unified transcript search index not created: \(error)")
+                return
+            }
+            try db.executeUpdate("""
+            CREATE TABLE TranscriptSearchIndexMeta (
+                episodeUuid TEXT NOT NULL,
+                source TEXT NOT NULL,
+                podcastUuid TEXT,
+                indexedDate REAL NOT NULL DEFAULT 0,
+                segmentCount INTEGER NOT NULL DEFAULT 0,
+                textBytes INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (episodeUuid, source)
+            );
+            """, values: nil)
+
+            func tableExists(_ name: String) throws -> Bool {
+                let resultSet = try db.executeQuery(
+                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", values: [name])
+                defer { resultSet.close() }
+                return resultSet.next()
+            }
+
+            if try tableExists("TranscriptionSegmentFTS") {
+                try db.executeUpdate("""
+                INSERT INTO TranscriptSegmentIndex (text, episodeUuid, podcastUuid, segmentIndex, startTime, endTime, speaker, source)
+                SELECT text, episodeUuid, podcastUuid, segmentIndex, startTime, NULL, speaker, 'generated'
+                FROM TranscriptionSegmentFTS;
+                """, values: nil)
+                // indexedDate comes from the transcription record's updatedAt when one
+                // still exists; orphaned segments get the migration time.
+                try db.executeUpdate("""
+                INSERT INTO TranscriptSearchIndexMeta (episodeUuid, source, podcastUuid, indexedDate, segmentCount, textBytes)
+                SELECT f.episodeUuid, 'generated', MAX(f.podcastUuid),
+                       COALESCE(MAX(t.updatedAt), CAST(strftime('%s', 'now') AS REAL)),
+                       COUNT(*), SUM(LENGTH(CAST(f.text AS BLOB)))
+                FROM TranscriptionSegmentFTS f
+                LEFT JOIN EpisodeTranscription t ON t.episodeUuid = f.episodeUuid
+                GROUP BY f.episodeUuid;
+                """, values: nil)
+                try db.executeUpdate("DROP TABLE TranscriptionSegmentFTS;", values: nil)
+            }
+
+            if try tableExists("TranscriptCueIndex") {
+                try db.executeUpdate("""
+                INSERT INTO TranscriptSegmentIndex (text, episodeUuid, podcastUuid, segmentIndex, startTime, endTime, speaker, source)
+                SELECT text, episodeUuid, podcastUuid, cueIndex, startTime, endTime, NULL, 'provided'
+                FROM TranscriptCueIndex;
+                """, values: nil)
+                try db.executeUpdate("DROP TABLE TranscriptCueIndex;", values: nil)
+            }
+            if try tableExists("TranscriptIndexMeta") {
+                try db.executeUpdate("""
+                INSERT INTO TranscriptSearchIndexMeta (episodeUuid, source, podcastUuid, indexedDate, segmentCount, textBytes)
+                SELECT episodeUuid, 'provided', podcastUuid, indexedDate, cueCount, textBytes
+                FROM TranscriptIndexMeta;
+                """, values: nil)
+                try db.executeUpdate("DROP TABLE TranscriptIndexMeta;", values: nil)
+            }
         }
     ]
 

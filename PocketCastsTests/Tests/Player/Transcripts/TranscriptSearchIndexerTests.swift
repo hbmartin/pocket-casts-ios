@@ -115,7 +115,7 @@ final class TranscriptSearchIndexerTests: XCTestCase {
         XCTAssertEqual(segments.map(\.index), Array(0 ..< segments.count), "Segment indexes should be ordinal")
         for segment in segments {
             XCTAssertFalse(segment.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            XCTAssertLessThanOrEqual(segment.startTime, segment.endTime)
+            XCTAssertLessThanOrEqual(segment.startTime, try XCTUnwrap(segment.endTime))
         }
         XCTAssertEqual(segments.first?.startTime, 0)
         XCTAssertEqual(segments.last?.endTime, 6)

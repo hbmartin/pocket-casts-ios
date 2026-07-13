@@ -28,7 +28,7 @@ public class DataManager {
     public let ratings: RatingsDataManager
     public let networkDataUsageManager: NetworkDataUsageManager
     public let transcriptions: TranscriptionDataManager
-    public let transcriptIndex: TranscriptIndexDataManager
+    public let transcriptSearch: TranscriptSearchDataManager
 
     let dbQueue: GRDBQueue
 
@@ -102,7 +102,7 @@ public class DataManager {
         ratings = RatingsDataManager()
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
         transcriptions = TranscriptionDataManager(dbQueue: dbQueue)
-        transcriptIndex = TranscriptIndexDataManager(dbQueue: dbQueue)
+        transcriptSearch = TranscriptSearchDataManager(dbQueue: dbQueue)
     }
 
     private var databaseSize: String? {

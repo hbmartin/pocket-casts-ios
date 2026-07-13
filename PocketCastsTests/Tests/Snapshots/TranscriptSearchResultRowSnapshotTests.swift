@@ -14,7 +14,7 @@ final class TranscriptSearchResultRowSnapshotTests: XCTestCase {
         TranscriptSearchHitDisplay(
             episodeUuid: "fixture-episode",
             podcastUuid: nil,
-            cueIndex: 3,
+            segmentIndex: 3,
             episodeTitle: "142: The Quiet Art of Shipping",
             runs: runs,
             startTime: startTime
