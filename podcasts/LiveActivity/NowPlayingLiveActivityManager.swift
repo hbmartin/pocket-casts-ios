@@ -14,6 +14,16 @@ final class NowPlayingLiveActivityManager {
 
     private var activity: Activity<NowPlayingActivityAttributes>?
 
+    /// The last state pushed, for detecting seeks: a progress tick whose actual
+    /// position drifts from this state's wall-clock projection means the user
+    /// jumped, and the projection needs re-anchoring.
+    private var lastContentState: NowPlayingActivityAttributes.ContentState?
+
+    /// Playback seconds of divergence between actual and projected position
+    /// before a progress tick counts as a seek. Generous enough that timer
+    /// jitter and rate rounding never trip it.
+    private static let seekDriftThreshold: TimeInterval = 3
+
     private var messageTokens = [NotificationCenter.ObservationToken]()
 
     func setup() {
@@ -29,6 +39,12 @@ final class NowPlayingLiveActivityManager {
         })
         messageTokens.append(center.addObserver(for: PodcastChapterChanged.self) { [weak self] _ in
             self?.playbackChanged()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackEffectsChanged.self) { [weak self] _ in
+            self?.playbackChanged()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+            self?.progressTicked()
         })
         messageTokens.append(center.addObserver(for: PlaybackEnded.self) { [weak self] _ in
             self?.playbackEnded()
@@ -64,8 +80,10 @@ final class NowPlayingLiveActivityManager {
             position: PlaybackManager.shared.currentTime(),
             duration: PlaybackManager.shared.duration(),
             capturedAt: Date(),
+            playbackRate: PlaybackManager.shared.effects().playbackSpeed,
             artworkFileName: publishArtwork(for: episode)
         )
+        lastContentState = state
 
         if let activity {
             // Activity's async methods are @concurrent and the type carries no
@@ -84,6 +102,25 @@ final class NowPlayingLiveActivityManager {
         }
     }
 
+    /// Seeks have no dedicated notification; they surface as a progress tick
+    /// whose position no longer matches the last pushed state's wall-clock
+    /// projection. Ordinary ticks stay inside the threshold, so this adds no
+    /// periodic activity updates.
+    private func progressTicked() {
+        guard activity != nil, let lastContentState else { return }
+
+        let projected: TimeInterval
+        if lastContentState.isPlaying {
+            let elapsed = Date().timeIntervalSince(lastContentState.capturedAt)
+            projected = lastContentState.position + elapsed * (lastContentState.playbackRate ?? 1)
+        } else {
+            projected = lastContentState.position
+        }
+        if abs(PlaybackManager.shared.currentTime() - projected) > Self.seekDriftThreshold {
+            playbackChanged()
+        }
+    }
+
     private func playbackEnded() {
         endActivity()
     }
@@ -91,6 +128,7 @@ final class NowPlayingLiveActivityManager {
     private func endActivity() {
         guard let activity else { return }
         self.activity = nil
+        lastContentState = nil
         let boxed = UncheckedSendable(activity)
         Task { await boxed.value.end(nil, dismissalPolicy: .immediate) }
     }

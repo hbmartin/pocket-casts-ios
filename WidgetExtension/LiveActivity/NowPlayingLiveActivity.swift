@@ -105,8 +105,11 @@ private struct ActivityProgressView: View {
     var body: some View {
         if state.duration > 0 {
             if state.isPlaying {
-                let start = state.capturedAt.addingTimeInterval(-state.position)
-                let end = start.addingTimeInterval(state.duration)
+                // Scale by playback rate so the bar advances at the audio's
+                // pace (2× speed covers the episode in half the wall time).
+                let rate = max(state.playbackRate ?? 1, 0.1)
+                let start = state.capturedAt.addingTimeInterval(-state.position / rate)
+                let end = start.addingTimeInterval(state.duration / rate)
                 ProgressView(timerInterval: start ... end, countsDown: false)
                     .progressViewStyle(.linear)
                     .tint(.accentColor)

@@ -42,9 +42,11 @@ nonisolated final class MetricKitCollector: NSObject, MXMetricManagerSubscriber,
     private func persist(_ data: Data, prefix: String) {
         let directory = Self.payloadDirectory
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        formatter.dateFormat = "yyyyMMdd-HHmmss-SSS"
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        let name = "\(prefix)-\(formatter.string(from: Date())).json"
+        // A short random suffix on top of millisecond precision: payloads arrive
+        // in batches, and a same-instant collision would silently overwrite one.
+        let name = "\(prefix)-\(formatter.string(from: Date()))-\(UUID().uuidString.prefix(4)).json"
 
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -55,13 +57,17 @@ nonisolated final class MetricKitCollector: NSObject, MXMetricManagerSubscriber,
         }
     }
 
-    /// Timestamped names sort lexically, so pruning by name drops the oldest first.
+    /// Prunes per prefix: within one prefix the timestamped names sort lexically
+    /// oldest-first. One global sort would order "diagnostics-*" before every
+    /// "metrics-*" and sacrifice fresh crash diagnostics to keep old metrics.
     private func pruneOldPayloads(in directory: URL) {
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return }
-        let sorted = names.filter { $0.hasSuffix(".json") }.sorted()
-        guard sorted.count > Self.maxStoredPayloads else { return }
-        for name in sorted.prefix(sorted.count - Self.maxStoredPayloads) {
-            try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
+        for prefix in ["diagnostics-", "metrics-"] {
+            let sorted = names.filter { $0.hasPrefix(prefix) && $0.hasSuffix(".json") }.sorted()
+            guard sorted.count > Self.maxStoredPayloads else { continue }
+            for name in sorted.prefix(sorted.count - Self.maxStoredPayloads) {
+                try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
+            }
         }
     }
 

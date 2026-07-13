@@ -57,8 +57,9 @@ nonisolated protocol IntelligenceProviding: Sendable {
 ///   fallback layer.
 /// - Each request creates a short-lived `LanguageModelSession` — no shared
 ///   conversation state, no cross-feature context bleed.
-/// - Every call races a timeout so a hung generation can never wedge a
-///   feature's loading state.
+/// - Every call races a timeout that resumes the caller even when the
+///   generation ignores cancellation (the hung call is abandoned, not
+///   awaited), so a wedged model can't hold a feature's loading state.
 /// - FoundationModels errors are mapped onto the stable `IntelligenceError`
 ///   surface at the boundary.
 actor OnDeviceIntelligence: IntelligenceProviding {
@@ -105,25 +106,56 @@ actor OnDeviceIntelligence: IntelligenceProviding {
         let session = LanguageModelSession(model: .default, instructions: instructions)
         let timeout = timeout
         do {
-            return try await withThrowingTaskGroup(of: T.self) { group in
-                group.addTask {
-                    try await session.respond(to: prompt, generating: T.self).content
-                }
-                group.addTask {
-                    try await Task.sleep(for: timeout)
-                    throw IntelligenceError.timedOut
-                }
-                guard let first = try await group.next() else {
-                    throw IntelligenceError.timedOut
-                }
-                group.cancelAll()
-                return first
+            return try await Self.raceAgainstTimeout(timeout: timeout) {
+                try await session.respond(to: prompt, generating: T.self).content
             }
         } catch let error as IntelligenceError {
             throw error
         } catch {
             throw Self.mapped(error)
         }
+    }
+
+    /// Races `work` against the timeout without awaiting a hung child on the
+    /// way out: a task-group race implicitly awaits its cancelled children
+    /// before returning, so a generation call that ignores cancellation would
+    /// still wedge the caller past the deadline. Here the loser is cancelled
+    /// and abandoned — a truly non-cooperative generation keeps running in the
+    /// background, but the caller gets its timeout on time.
+    nonisolated private static func raceAgainstTimeout<T: Sendable>(
+        timeout: Duration,
+        _ work: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        // A stream continuation is Sendable and finish-once by design, so the
+        // two racers can both try to settle it without a hand-rolled guard.
+        let (stream, continuation) = AsyncThrowingStream<T, Error>.makeStream()
+
+        let workTask = Task {
+            do {
+                continuation.yield(try await work())
+                continuation.finish()
+            } catch {
+                continuation.finish(throwing: error)
+            }
+        }
+        let timerTask = Task {
+            try? await Task.sleep(for: timeout)
+            continuation.finish(throwing: IntelligenceError.timedOut)
+        }
+        defer {
+            // No-ops for the finished winner; the timed-out (or abandoned)
+            // generation gets its cancellation signal here.
+            workTask.cancel()
+            timerTask.cancel()
+        }
+
+        guard let first = try await stream.first(where: { _ in true }) else {
+            // The stream ended without a value: either the caller was
+            // cancelled (iteration stops on task cancellation) or the timer won.
+            if Task.isCancelled { throw CancellationError() }
+            throw IntelligenceError.timedOut
+        }
+        return first
     }
 
     /// Maps FoundationModels generation errors onto the stable `IntelligenceError` surface.

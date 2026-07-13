@@ -41,7 +41,7 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
         func skipToNextChapter() { nextChapterCount += 1 }
         func skipToPreviousChapter() { previousChapterCount += 1 }
         func removeCurrentEpisodeFromUpNext() { removedCurrentFromUpNext += 1 }
-        func loadSuggestedEpisode() -> Bool { suggestedLoads }
+        func loadSuggestedEpisode() async -> Bool { suggestedLoads }
         func loadTopEpisode(forFilterUuid _: String) -> Bool { filterTopLoads }
         func playAllEpisodes(forFilterUuid _: String) -> Bool { filterAllStarts }
         func loadTopEpisode(forPodcastUuid _: String) -> Bool { podcastTopLoads }
@@ -176,15 +176,17 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
 
     // MARK: Conditional loads
 
-    func testPlaySuggestedReflectsFacadeResult() {
+    func testPlaySuggestedReflectsFacadeResult() async {
         let failing = FakePlaybackFacade()
         failing.suggestedLoads = false
-        XCTAssertFalse(makeHandler(failing).playSuggested())
+        let failed = await makeHandler(failing).playSuggested()
+        XCTAssertFalse(failed)
         XCTAssertEqual(failing.refreshCount, 0)
 
         let succeeding = FakePlaybackFacade()
         succeeding.suggestedLoads = true
-        XCTAssertTrue(makeHandler(succeeding).playSuggested())
+        let succeeded = await makeHandler(succeeding).playSuggested()
+        XCTAssertTrue(succeeded)
         XCTAssertEqual(succeeding.refreshCount, 1)
     }
 

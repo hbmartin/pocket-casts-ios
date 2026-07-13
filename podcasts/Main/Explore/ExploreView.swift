@@ -114,7 +114,10 @@ struct ExploreView: View {
                     .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .frame(height: Layout.titleHeight, alignment: .top)
+                    // minHeight (not a fixed height) keeps single-line titles
+                    // aligned while letting large Dynamic Type sizes grow past
+                    // 32pt instead of clipping the second line.
+                    .frame(minHeight: Layout.titleHeight, alignment: .top)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

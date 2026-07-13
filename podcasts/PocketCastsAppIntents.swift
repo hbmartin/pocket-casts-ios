@@ -73,7 +73,7 @@ struct PlaySuggestedEpisodeIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.playSuggested())
+        try requireSuccessfulPlaybackAction(await PlaybackIntentActionHandler.shared.playSuggested())
         return .result()
     }
 }

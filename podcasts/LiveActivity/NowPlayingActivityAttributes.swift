@@ -18,6 +18,9 @@ nonisolated struct NowPlayingActivityAttributes: ActivityAttributes {
         var position: TimeInterval
         var duration: TimeInterval
         var capturedAt: Date
+        /// Playback-seconds per wall-clock second (speed effect). Optional so
+        /// states encoded before the field existed still decode; nil means 1×.
+        var playbackRate: Double?
         /// File name (inside the shared app-group container) of the current
         /// episode's downscaled artwork; nil when no artwork is cached yet.
         var artworkFileName: String?

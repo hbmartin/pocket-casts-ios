@@ -169,10 +169,13 @@ final class HighlightEnricher {
             && transcriptManager.isDisplayingGeneratedTranscript
             && !transcriptManager.isDisplayingLocalTranscription
 
+        // The transcript download above can outlive a track change, after which
+        // the shared fingerprint manager holds the NEXT episode's alignment —
+        // the episode-bound calls return nil instead of mapping through it.
         var anchor = bookmark.time
         var usedTimeMapping = false
         if mappingApplies,
-           let mapped = FingerprintTimingManager.shared.referenceTime(forPlaybackTime: bookmark.time) {
+           let mapped = FingerprintTimingManager.shared.referenceTime(forPlaybackTime: bookmark.time, episodeUuid: bookmark.episodeUuid) {
             anchor = mapped
             usedTimeMapping = true
         }
@@ -188,9 +191,15 @@ final class HighlightEnricher {
         // Store endTime in the same domain as `time` (playback), mapping the cue
         // window's end back when the anchor was mapped out.
         var endTime = excerpt.endTime
-        if usedTimeMapping,
-           let mappedBack = FingerprintTimingManager.shared.playbackTime(forReferenceTime: excerpt.endTime) {
-            endTime = mappedBack
+        if usedTimeMapping {
+            if let mappedBack = FingerprintTimingManager.shared.playbackTime(forReferenceTime: excerpt.endTime, episodeUuid: bookmark.episodeUuid) {
+                endTime = mappedBack
+            } else {
+                // The mapping vanished between the two calls (track change):
+                // approximate with the window's duration — both times are on the
+                // reference timeline, so the span carries over closely enough.
+                endTime = bookmark.time + max(0, excerpt.endTime - anchor)
+            }
         }
         endTime = max(endTime, bookmark.time)
 

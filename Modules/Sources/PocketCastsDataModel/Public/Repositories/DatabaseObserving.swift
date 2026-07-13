@@ -18,6 +18,11 @@ public struct HomeGridSnapshot: Equatable, Sendable {
         public let folderUuid: String?
         public let sortOrder: Int32
         public let addedDate: Double?
+        /// The podcast row's own newest-episode date — the episode-date sort's
+        /// key. Distinct from the aggregate below: an episode that syncs in
+        /// already played/archived moves this without touching the unfinished
+        /// aggregate, and the sort must still re-emit.
+        public let latestEpisodeDate: Double?
         /// Unplayed/in-progress, unarchived episode count (the grid's unplayed badge).
         public let unfinishedCount: Int
         /// Newest unfinished episode date (episode-date sorts and latest-episode badges).
@@ -165,7 +170,7 @@ extension HomeGridSnapshot {
             db,
             Podcast
                 .filter(Podcast.Columns.subscribed == 1)
-                .select(Podcast.Columns.id, Podcast.Columns.uuid, Podcast.Columns.title, Podcast.Columns.folderUuid, Podcast.Columns.sortOrder, Podcast.Columns.addedDate)
+                .select(Podcast.Columns.id, Podcast.Columns.uuid, Podcast.Columns.title, Podcast.Columns.folderUuid, Podcast.Columns.sortOrder, Podcast.Columns.addedDate, Podcast.Columns.latestEpisodeDate)
                 .order(Podcast.Columns.uuid)
                 .asRequest(of: Row.self)
         )
@@ -177,6 +182,7 @@ extension HomeGridSnapshot {
                 folderUuid: row["folderUuid"],
                 sortOrder: row["sortOrder"],
                 addedDate: row["addedDate"],
+                latestEpisodeDate: row["latestEpisodeDate"],
                 unfinishedCount: aggregate?.count ?? 0,
                 latestUnfinishedEpisodeDate: aggregate?.latest
             )

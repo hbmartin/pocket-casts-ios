@@ -97,6 +97,23 @@ final class ValueObservationTests: DataManagerTestCase {
         let afterEpisode = try await recorder.value(at: 2)
         XCTAssertEqual(afterEpisode.podcasts.first?.unfinishedCount, 1, "unplayed-badge input changes should re-emit the snapshot")
     }
+
+    func testHomeGridObservationEmitsOnLatestEpisodeDateChange() async throws {
+        let dataManager = DataManager.newTestDataManager()
+        var podcast = createTestPodcast(dataManager: dataManager)
+
+        let recorder = StreamRecorder(dataManager.observeHomeGrid())
+        _ = try await recorder.value(at: 0)
+
+        // An episode that syncs in already played/archived moves the podcast's
+        // latestEpisodeDate (the episode-date sort key) without touching the
+        // unfinished aggregate — the snapshot must still re-emit.
+        podcast.latestEpisodeDate = Date(timeIntervalSince1970: 1_800_000_000)
+        _ = dataManager.save(podcast: podcast)
+
+        let afterDateChange = try await recorder.value(at: 1)
+        XCTAssertEqual(afterDateChange.podcasts.first?.latestEpisodeDate, 1_800_000_000)
+    }
 }
 
 // MARK: - Stream recording
