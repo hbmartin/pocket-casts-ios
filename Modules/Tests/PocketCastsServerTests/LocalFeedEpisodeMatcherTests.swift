@@ -219,3 +219,70 @@ struct LocalFeedShowInfoOverrideTests {
         #expect(episodes.first?["uuid"] as? String == LocalFeedIdentity.uuid(seed: "guid-1"))
     }
 }
+
+@Suite("LocalFeedShowInfo persons")
+struct LocalFeedShowInfoPersonsTests {
+    private func firstEpisode(from feed: ParsedFeed) throws -> [String: Any] {
+        let data = try #require(LocalFeedShowInfo.data(from: feed, podcastUuid: "podcast-uuid"))
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let podcast = try #require(json["podcast"] as? [String: Any])
+        let episodes = try #require(podcast["episodes"] as? [[String: Any]])
+        return try #require(episodes.first)
+    }
+
+    private func makeItem() -> ParsedFeedItem {
+        var item = ParsedFeedItem()
+        item.guid = "guid-1"
+        item.enclosureURL = "https://example.com/1.mp3"
+        return item
+    }
+
+    @Test("item-level persons are emitted with only the attributes they carry")
+    func itemPersons() throws {
+        var item = makeItem()
+        item.persons = [
+            ParsedFeedPerson(name: "Gina Guest", role: "guest", group: "cast", img: "https://example.com/g.jpg", href: "https://example.com/g"),
+            ParsedFeedPerson(name: "Plain Name")
+        ]
+        var feed = ParsedFeed()
+        feed.persons = [ParsedFeedPerson(name: "Channel Host", role: "host")]
+        feed.items = [item]
+
+        let episode = try firstEpisode(from: feed)
+        let persons = try #require(episode["persons"] as? [[String: Any]])
+        #expect(persons.count == 2)
+
+        let gina = try #require(persons.first)
+        #expect(gina["name"] as? String == "Gina Guest")
+        #expect(gina["role"] as? String == "guest")
+        #expect(gina["group"] as? String == "cast")
+        #expect(gina["img"] as? String == "https://example.com/g.jpg")
+        #expect(gina["href"] as? String == "https://example.com/g")
+
+        let plain = try #require(persons.last)
+        #expect(plain["name"] as? String == "Plain Name")
+        #expect(plain.count == 1, "optional attributes must be omitted, not emitted as null")
+    }
+
+    @Test("items without persons inherit the channel-level credits")
+    func channelFallback() throws {
+        var feed = ParsedFeed()
+        feed.persons = [ParsedFeedPerson(name: "Channel Host", role: "host")]
+        feed.items = [makeItem()]
+
+        let episode = try firstEpisode(from: feed)
+        let persons = try #require(episode["persons"] as? [[String: Any]])
+        #expect(persons.count == 1)
+        #expect(persons.first?["name"] as? String == "Channel Host")
+        #expect(persons.first?["role"] as? String == "host")
+    }
+
+    @Test("no persons key when neither the item nor the channel declares credits")
+    func omittedWhenEmpty() throws {
+        var feed = ParsedFeed()
+        feed.items = [makeItem()]
+
+        let episode = try firstEpisode(from: feed)
+        #expect(episode["persons"] == nil)
+    }
+}

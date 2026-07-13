@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import SafariServices
@@ -81,6 +82,17 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             downloadingShowNotes = false
             showNotesDidLoad(showNotes: showNotes ?? CacheServerHandler.noShowNotesMessage)
 
+            // The show-info payload is already cached from the loads above, so the
+            // credits card costs no extra request; it never attaches when the
+            // episode has no credits (the card "self-hides when empty").
+            if FeatureFlag.episodeCredits.enabled,
+               let persons = (try? await ShowInfoCoordinator.shared.loadShowInfo(podcastUuid: parentIdentifier, episodeUuid: episodeUUID))?.persons,
+               !persons.isEmpty {
+                await MainActor.run { [weak self] in
+                    self?.attachCreditsCardIfNeeded(persons: persons)
+                }
+            }
+
             // After the show notes render so the extra -meta.json request never
             // delays them; the card slots in whenever the summary arrives.
             if FeatureFlag.episodeSummaries.enabled,
@@ -134,6 +146,67 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
         hostedView.anchorToAllSidesOf(view: container)
 
         episodeSummaryContainer = container
+    }
+
+    /// Hosts the people-credits card after the summary card (or the transcript
+    /// excerpt when no summary attached yet) and before the show notes, using
+    /// the same container pattern as `attachSummaryCardIfNeeded`
+    /// (plans/AI UX Improvements.md Phase 6). Order stays deterministic no
+    /// matter which card's data arrives first: the summary always inserts right
+    /// after the excerpt, credits insert after whichever of the two is present.
+    /// Idempotent — `loadShowNotes()` can run again via the retry button.
+    private func attachCreditsCardIfNeeded(persons: [Episode.Metadata.Person]) {
+        guard episodeCreditsContainer == nil,
+              let excerptView = transcriptExcerpt,
+              let stack = excerptView.superview as? UIStackView else {
+            return
+        }
+
+        let viewModel = EpisodeCreditsViewModel(
+            persons: persons,
+            episodeUuid: episode.uuid,
+            podcastUuid: episode.parentIdentifier()
+        ) { [weak self] term in
+            self?.startPersonSearch(term: term)
+        }
+
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let hostingController = ThemedHostingController(rootView: EpisodeCreditsView(viewModel: viewModel))
+        hostingController.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+        let hostedView = hostingController.view!
+        hostedView.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        container.addSubview(hostedView)
+
+        let anchorView = episodeSummaryContainer ?? excerptView
+        if let index = stack.arrangedSubviews.firstIndex(of: anchorView) {
+            stack.insertArrangedSubview(container, at: index + 1)
+        } else {
+            stack.addArrangedSubview(container)
+        }
+
+        hostingController.didMove(toParent: self)
+        hostedView.anchorToAllSidesOf(view: container)
+
+        episodeCreditsContainer = container
+    }
+
+    /// Launches a catalog search for a credited person: dismisses this episode
+    /// card, lands on the Podcasts tab, and hands the term to its search UI
+    /// (`ExternalSearchRequested` → `SearchResultsViewController.startExternalSearch`).
+    private func startPersonSearch(term: String) {
+        dismiss(animated: true) {
+            NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, animated: false)
+            // One runloop turn so the tab switch's view hierarchy settles before
+            // the search bar takes focus and adopts the term.
+            DispatchQueue.main.async {
+                NotificationCenter.postOnMainThread(ExternalSearchRequested(term: term))
+            }
+        }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

@@ -151,6 +151,9 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         addCustomObserver(SearchRequested.self) { [weak self] _ in
             self?.searchRequested()
         }
+        addCustomObserver(ExternalSearchRequested.self) { [weak self] message in
+            self?.startExternalSearch(term: message.term)
+        }
     }
 
     /// Reloads the grid whenever the database inputs it renders (subscribed
@@ -213,6 +216,14 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         let topOffset = view.safeAreaInsets.top
         podcastsCollectionView.setContentOffset(CGPoint(x: 0, y: -searchController.view.bounds.height - topOffset), animated: false)
         searchController.searchTextField.becomeFirstResponder()
+    }
+
+    /// A search launched from outside the search UI (see `ExternalSearchRequested`):
+    /// focusing the field installs the results controller (`searchDidBegin`),
+    /// then the term is searched directly and the bar adopts it.
+    private func startExternalSearch(term: String) {
+        searchRequested()
+        searchResultsController.startExternalSearch(term: term)
     }
 
     private var horizontalMargin: CGFloat {

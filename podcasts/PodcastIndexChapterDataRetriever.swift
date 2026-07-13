@@ -11,6 +11,13 @@ struct PodcastIndexChapter: Decodable, Sendable {
     let number: Int?
     let endTime: TimeInterval?
     let startTime: TimeInterval
+
+    /// External link attached to the chapter (Podcast Index chapters spec `url`).
+    let url: String?
+
+    /// Chapter artwork URL (spec `img`). Decoded and stored, but artwork fetch
+    /// is a follow-up — see plans/AI UX Improvements.md Phase 6.
+    let img: String?
 }
 
 /// Request information about an episode using the show notes endpoint

@@ -124,6 +124,25 @@ nonisolated struct SearchRequested: NotificationCenter.MainActorMessage {
     }
 }
 
+/// A catalog search for `term` was requested from outside the search UI (e.g.
+/// tapping a person chip on the episode-detail credits card). The Podcasts tab
+/// opens its search UI and runs the search
+/// (`SearchResultsViewController.startExternalSearch(term:)`).
+nonisolated struct ExternalSearchRequested: NotificationCenter.MainActorMessage {
+    typealias Subject = AnyObject
+    static var name: Notification.Name { Notification.Name("SJExternalSearchRequested") }
+
+    let term: String
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        (notification.object as? String).map(Self.init)
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name, object: message.term)
+    }
+}
+
 /// The mini player became visible; lists adjust bottom insets. No payload.
 nonisolated struct MiniPlayerDidAppear: NotificationCenter.MainActorMessage {
     typealias Subject = AnyObject

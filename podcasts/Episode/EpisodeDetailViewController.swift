@@ -60,6 +60,11 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     /// the transcript excerpt and the show notes (see +ShowNotes).
     var episodeSummaryContainer: UIView?
 
+    /// Container for the flag-gated people-credits card, inserted in code after
+    /// the summary card (or the transcript excerpt) and before the show notes
+    /// (see +ShowNotes).
+    var episodeCreditsContainer: UIView?
+
     @IBOutlet var mainScrollView: UIScrollView! {
         didSet {
             mainScrollView.contentInset = UIEdgeInsets(top: EpisodeDetailConstants.topPadding, left: 0, bottom: Constants.effectiveMiniPlayerOffset, right: 0)

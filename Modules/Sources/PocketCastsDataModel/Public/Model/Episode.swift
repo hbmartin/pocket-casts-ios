@@ -215,6 +215,67 @@ public struct Episode: BaseEpisode, Identifiable, Equatable, Hashable, Sendable 
             public let startTime: TimeInterval
             public let title: String?
             public let endTime: TimeInterval?
+
+            /// External link attached to the chapter. The Podlove Simple Chapters
+            /// JSON key is `href`, but `url` is accepted too (some feeds and the
+            /// cache server use it); when both are present `url` wins.
+            public let url: String?
+
+            /// Chapter artwork URL. Decoded and stored, but artwork fetch is a
+            /// follow-up — see plans/AI UX Improvements.md Phase 6.
+            public let image: String?
+
+            public init(startTime: TimeInterval, title: String?, endTime: TimeInterval?, url: String? = nil, image: String? = nil) {
+                self.startTime = startTime
+                self.title = title
+                self.endTime = endTime
+                self.url = url
+                self.image = image
+            }
+
+            // Keys are post-conversion (the decoder runs convertFromSnakeCase
+            // before matching, so `start_time` arrives here as `startTime`).
+            private enum CodingKeys: String, CodingKey {
+                case startTime
+                case title
+                case endTime
+                case url
+                case href
+                case image
+            }
+
+            public init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                startTime = try container.decode(TimeInterval.self, forKey: .startTime)
+                title = try container.decodeIfPresent(String.self, forKey: .title)
+                endTime = try container.decodeIfPresent(TimeInterval.self, forKey: .endTime)
+                url = try container.decodeIfPresent(String.self, forKey: .url)
+                    ?? container.decodeIfPresent(String.self, forKey: .href)
+                image = try container.decodeIfPresent(String.self, forKey: .image)
+            }
+        }
+
+        /// People credited on the episode (`<podcast:person>`): item-level tags,
+        /// falling back to the channel-level list when an item declares none.
+        /// Optional so payloads without the key keep decoding unchanged; `name`
+        /// is required per entry (a nameless entry fails the array, matching the
+        /// `Transcript.type` convention above).
+        public let persons: [Person]?
+
+        public struct Person: Decodable, Sendable {
+            public let name: String
+            public let role: String?
+            public let group: String?
+            public let img: String?
+            public let href: String?
+
+            public init(name: String, role: String? = nil, group: String? = nil, img: String? = nil, href: String? = nil) {
+                self.name = name
+                self.role = role
+                self.group = group
+                self.img = img
+                self.href = href
+            }
         }
 
         public let transcripts: [Transcript]

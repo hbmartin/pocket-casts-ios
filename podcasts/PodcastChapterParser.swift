@@ -48,6 +48,9 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
             chapterInfo.title = chapter.title ?? ""
             chapterInfo.index = index
             chapterInfo.startTime = CMTime(seconds: chapter.startTime, preferredTimescale: 1000000)
+            if Self.isValidUrl(chapter.url) {
+                chapterInfo.url = chapter.url
+            }
 
             // Calculate chapter duration based on the info we have
             if let endTime = chapter.endTime {
@@ -68,6 +71,9 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
             chapterInfo.title = chapter.title ?? ""
             chapterInfo.index = chapter.number ?? index
             chapterInfo.startTime = CMTime(seconds: chapter.startTime, preferredTimescale: 1000000)
+            if Self.isValidUrl(chapter.url) {
+                chapterInfo.url = chapter.url
+            }
             if let endTime = chapter.endTime {
                 chapterInfo.duration = endTime - chapter.startTime
             } else if let nextChapterStartTime = podcastIndexChapters[safe: index + 1]?.startTime {
@@ -190,7 +196,7 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
                 convertedChapter.index = index
                 index += 1
             }
-            if isValidUrl(chapter.url) {
+            if Self.isValidUrl(chapter.url) {
                 convertedChapter.url = chapter.url
             }
 
@@ -226,7 +232,7 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
                 chapter.title = (try? await titleItem.load(.stringValue)) ?? ""
                 if let extraAttributes = try? await titleItem.load(.extraAttributes),
                    let href = extraAttributes[AVMetadataExtraAttributeKey(rawValue: "HREF")] as? String,
-                   isValidUrl(href) {
+                   Self.isValidUrl(href) {
                     chapter.url = href
                 }
             }
@@ -242,7 +248,10 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
         return parsedChapters
     }
 
-    private func isValidUrl(_ urlStr: String?) -> Bool {
+    /// Shared link validation for every chapter source (embedded ID3/MP4,
+    /// Podlove metadata, Podcast Index): only http(s) URLs reach the chapter
+    /// link UI. Static so it stays pure logic, testable without a parser.
+    static func isValidUrl(_ urlStr: String?) -> Bool {
         // first check can we actually make a URL out of this string and does it have a scheme?
         guard let urlStr, let url = URL(string: urlStr), let scheme = url.scheme else { return false }
 
