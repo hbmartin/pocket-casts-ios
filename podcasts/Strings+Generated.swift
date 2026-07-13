@@ -158,6 +158,12 @@ nonisolated internal enum L10n {
   internal static var accountWelcome: String { return L10n.tr("Localizable", "account_welcome", fallback: "Welcome to Pocket Casts!") }
   /// Welcome message presented after a user has signed up for Pocket Casts Plus
   internal static var accountWelcomePlus: String { return L10n.tr("Localizable", "account_welcome_plus", fallback: "Welcome to Pocket Casts Plus!") }
+  /// Footer under the adaptive effects toggle explaining the behavior
+  internal static var adaptiveEffectsFooter: String { return L10n.tr("Localizable", "adaptive_effects_footer", fallback: "Pauses Trim Silence and Voice Boost while music is playing, so songs keep their dynamics and quiet passages aren't skipped. Uses the on-device sound classifier.") }
+  /// Section header in Advanced Audio settings for adaptive effects switching
+  internal static var adaptiveEffectsHeader: String { return L10n.tr("Localizable", "adaptive_effects_header", fallback: "Adaptive Effects") }
+  /// Toggle in Advanced Audio settings enabling automatic effects suspension during music
+  internal static var adaptiveEffectsToggle: String { return L10n.tr("Localizable", "adaptive_effects_toggle", fallback: "Auto-Adjust for Music") }
   /// Title for an action that allows a user to create a new bookmark
   internal static var addBookmark: String { return L10n.tr("Localizable", "add_bookmark", fallback: "Add Bookmark") }
   /// The subtitle of a view where the user can edit their bookmark title

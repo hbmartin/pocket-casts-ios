@@ -4874,6 +4874,15 @@
 /* Footer under the podcast settings on-device-only transcription switch, explaining that this show's automatic transcripts skip the remote provider */
 "podcast_settings_local_transcription_only_footer" = "Automatic transcripts for this podcast will be generated on-device instead of using your configured transcription provider.";
 
+/* Section header in Advanced Audio settings for adaptive effects switching */
+"adaptive_effects_header" = "Adaptive Effects";
+
+/* Toggle in Advanced Audio settings enabling automatic effects suspension during music */
+"adaptive_effects_toggle" = "Auto-Adjust for Music";
+
+/* Footer under the adaptive effects toggle explaining the behavior */
+"adaptive_effects_footer" = "Pauses Trim Silence and Voice Boost while music is playing, so songs keep their dynamics and quiet passages aren't skipped. Uses the on-device sound classifier.";
+
 /* Title of the Catch Me Up feature: shelf action, summary-card button and sheet header. Recaps the already-played part of an in-progress episode */
 "catch_me_up_title" = "Catch Me Up";
 
