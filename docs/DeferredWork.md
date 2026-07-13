@@ -40,22 +40,7 @@ order: `Settings.swift` (pure accessor groups → extensions in files), `Podcast
 (list/data-source/actions), `TranscriptViewController` (highlight engine is shared with the reader
 by then), `PlaybackManager` last (needs the E-track features stable).
 
-## Item 9 — Swift Testing migration
-
-**Why deferred:** no functional payoff; churns test files other tracks are adding to.
-
-**Current state:** ~1,256 XCTest methods vs 37 `@Test` methods. Locked decision from the iOS-26
-migration plan: SPM module suites migrate; app-target `PocketCastsTests` and `SnapshotTests` stay
-XCTest (simulator/hosting constraints).
-
-**Re-entry:** per-suite mechanical conversion starting with pure-logic suites (FeedParser is
-already `@Suite`); keep `XCTestCase` fixtures where `setUp` manages databases/directories until a
-fixture-trait pattern is established.
-
 ## Item 14 — Adaptive effects switching (music/speech auto-profiles)
-
-**Why deferred:** depends on listening-time heuristics that need real-world VBN/trim telemetry
-first (both only just un-gated/shipped).
 
 **Concept:** auto-suspend trim-silence and voice boost during music segments using the existing
 SoundAnalysis VAD discriminator (`podcasts/AdvancedAudio/TrimSilenceDetector.swift` — the system
@@ -63,25 +48,16 @@ VAD mode with retrospective veto). Entry point: `AudioReadTask` already consults
 per-buffer; an "effects profile" toggle would swap `AudioTuning` snapshots when the
 music/speech classification is stable for N seconds.
 
-**Re-entry:** prototype behind a debug flag; measure false-positive rate on music-heavy shows
+**Re-entry:** configurable, default off, in the user settings; measure false-positive rate on music-heavy shows
 before any UI.
 
-## Item 18 — On-device transcription (`SpeechAnalyzer`)
-
-**Superseded 2026-07-12:** being implemented as its own program — see
-`plans/podcast transcription plan.md` (three engine modes, diarization, FTS search). This register
-entry is retained only as a pointer.
-
 ## Item 19 — FoundationModels episode intelligence
-
-**Why deferred:** wants the transcription pipeline (item 18 successor) to exist first — summaries
-and catch-me-up read transcripts.
 
 **Concept:** on-device summaries ("catch me up" for partially-played episodes), chapter-title
 generation for chapterless episodes (UX slot already exists: `generatedChapters`, un-gated in
 Track A4). Storage would mirror the transcription artifacts (device-local, no sync).
 
-**Re-entry:** after transcription Phase 1 ships, spike `FoundationModels` summarization over VTT
+**Re-entry:** user option to use Apple's `FoundationModels` summarization over VTT
 cue text; measure quality/latency per device class before productizing.
 
 ## Item 24 — `ObservableObject` → `@Observable` migration
@@ -95,17 +71,6 @@ cue text; measure quality/latency per device class before productizing.
 `didSet` on stored properties; `@ObservationIgnored` for non-state; `@Bindable` at use sites;
 `environmentObject` → `environment` where Theme is involved must be coordinated with the theme
 system). Convert leaf view models first; `Theme` itself last (69 files inject it).
-
-## Item 29 — SharePlay listening sessions
-
-**Why deferred:** niche; large surface (GroupActivities session management, drift correction,
-invite UX) for uncertain demand in a single-user fork.
-
-**Concept:** `GroupActivity` describing (episode uuid, position, rate); participants' players
-follow the session clock; Up Next stays local. Playback control fan-in via
-`PlaybackManager` facade only.
-
-**Re-entry:** demand-driven. Prototype = activity definition + join/leave + play/pause sync only.
 
 ## Item 33 — Coverage floor raise + coverage upload
 
@@ -134,31 +99,12 @@ cheapest first coverage for SwiftUI portions; VC logic tests follow DI conversio
 
 ## Item 39 — Performance regression tests
 
-**Why deferred:** needs stable CI hardware timing variance data before baselines are trustworthy.
-
 **Concept:** XCTMetric baselines for cold start (`XCTApplicationLaunchMetric`), database migrations
 (production fixtures already exist: `ProductionDatabaseMigrationFixtureTests.swift`), and
 large-library grid scroll (`XCTOSSignpostMetric`).
 
 **Re-entry:** land baselines as *reporting-only* first (Danger table of deltas), enforce after
 variance is characterized (~2 weeks of runs).
-
-## Item 45 — Automated dependency updates
-
-**Why deferred:** `spm-version-updates.yml` already reports available updates; full automation
-(auto-PRs + vulnerability scanning + SBOM) is process work parked behind program features.
-
-**Re-entry sketch:** Renovate with `rangeStrategy: pin` for SPM; `osv-scanner` job over
-`Package.resolved`; CycloneDX SBOM artifact on release builds. All three are independent,
-adoptable one at a time.
-
-## Item 49 — Organize the flat root of `podcasts/`
-
-**Why deferred:** 367-file move-only churn; breaks every open PR; Xcode project is not a
-synchronized group so each move edits the pbxproj.
-
-**Re-entry:** move-only PR series by feature area (Player, Effects, Settings, Sharing…), one area
-per PR, merged in a quiet window. Do NOT combine with code changes.
 
 ## Item 50 — Extract features into SPM modules
 
@@ -169,8 +115,6 @@ Sharing, Onboarding. `PocketCastsFileSync` is the extraction template (protocol-
 dependencies, no UIKit in module).
 
 ## Item 55 — Small-stuff sweep (with the specific inventory)
-
-**Why deferred:** individually trivial; batched here so nothing is lost.
 
 **TODO/FIXME inventory (19 sites, re-verified):** notable ones —
 `OptionsPicker.swift:51` (layout mystery), `UserEpisodeDetailViewController.swift:106`
@@ -188,7 +132,7 @@ needs on-device TSan).
 **Also:** ~28 stray `print(` calls to route through `FileLog`; ~60 commented-out code lines to
 delete or justify.
 
-**Re-entry:** one cleanup PR per bullet class (TODOs triaged to fix/delete/issue; prints; dead
+**Re-entry:**  cleanup PR  (TODOs triaged to fix/delete/issue; prints; dead
 code). `ArchiveHelper.swift:25` should be fixed on sight next time that file is touched.
 
 ## Item 57 — Podping / WebSub instant feed updates
@@ -204,8 +148,6 @@ podcast. WebSub as fallback for feeds advertising hubs.
 relay vs push-via-server is likely the realistic iOS answer).
 
 ## Item 67 — Shake-to-report in beta
-
-**Why deferred:** nice-to-have; wants MetricKit (F4) landed so reports carry diagnostics.
 
 **Concept:** extend `podcasts/BackgroundShakeObserver.swift` (exists — currently sleep-timer
 restart) to present a feedback sheet in TestFlight builds, attaching the bitdrift session ID and
@@ -225,3 +167,18 @@ mechanical per-area PRs; one-time legacy→AppSettings migration audit; remove t
 `SceneDelegate` UI-test override for the flag.
 
 **Re-entry:** one release after A6a ships with no kill-switch activation.
+
+## Item 1 — Download-triggered background transcript indexing
+
+v1 indexes transcripts when viewed; auto-transcribe-on-download exists for the *generated* corpus only.
+This app must have complete and comprehensive transcription and indexing.
+
+**Unify two transcript-search surfaces** — generated transcripts search from Profile (`TranscriptionSegmentFTS`), viewed podcast transcripts from New Search (`TranscriptCueIndex`). Unifying them into one surface (and one corpus policy)
+
+## Item 2 — Auto-chapterization based on the transcript
+
+Requires an API key for LLM's to call or use Apple's Foundation models, or a backend call (update proto and server spec), user selectable
+
+## Item 3 — Chapter image support with progressive image changes in Apple AV
+
+ `image` is decoded and stored; no UI yet.

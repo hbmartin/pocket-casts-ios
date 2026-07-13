@@ -2,55 +2,14 @@ import PocketCastsUtils
 import Foundation
 import GRDB
 
-/// One searchable transcript segment (an FTS5 row in `TranscriptionSegmentFTS`).
-/// Segments are FTS-only: the canonical transcript artifact is the VTT file on disk.
-public struct TranscriptionSegment: Equatable, Sendable {
-    public let index: Int
-    public let text: String
-    public let startTime: Double
-    public let speaker: String?
-
-    public init(index: Int, text: String, startTime: Double, speaker: String? = nil) {
-        self.index = index
-        self.text = text
-        self.startTime = startTime
-        self.speaker = speaker
-    }
-}
-
-/// A cross-episode transcript search hit. `snippet` is the matched excerpt with the
-/// matched terms wrapped in ``highlightStart``/``highlightEnd`` markers.
-public struct TranscriptionSearchResult: Equatable, Sendable {
-    public static let highlightStart = "<b>"
-    public static let highlightEnd = "</b>"
-
-    public let episodeUuid: String
-    public let podcastUuid: String?
-    public let segmentIndex: Int
-    public let startTime: Double
-    public let speaker: String?
-    public let snippet: String
-
-    public init(episodeUuid: String, podcastUuid: String?, segmentIndex: Int, startTime: Double, speaker: String?, snippet: String) {
-        self.episodeUuid = episodeUuid
-        self.podcastUuid = podcastUuid
-        self.segmentIndex = segmentIndex
-        self.startTime = startTime
-        self.speaker = speaker
-        self.snippet = snippet
-    }
-}
-
 /// Data access for locally generated diarized transcriptions: the per-episode
-/// `EpisodeTranscription` state row plus the `TranscriptionSegmentFTS` FTS5 index that
-/// powers cross-episode transcript search. Device-local only — nothing here syncs.
+/// `EpisodeTranscription` state row. Device-local only — nothing here syncs.
 ///
-/// FTS5 virtual tables, `snippet()` and `bm25()` have no GRDB query-interface
-/// equivalent, so the segment operations use raw SQL; everything on the record table
-/// goes through the query interface.
+/// The searchable segments live in the unified transcript search index (see
+/// `TranscriptSearchDataManager`, `source: .generated`); callers deleting a
+/// transcription are responsible for removing its index rows there too.
 public struct TranscriptionDataManager: Sendable {
     static let tableName = "EpisodeTranscription"
-    static let ftsTableName = "TranscriptionSegmentFTS"
 
     private let dbQueue: GRDBQueue
 
