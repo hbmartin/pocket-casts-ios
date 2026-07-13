@@ -809,8 +809,11 @@ class PodcastDataManager {
             return
         }
 
+        // Deliberately leaves syncStatus untouched: save(podcast:) must persist the object
+        // as the caller built it (the sync import path saves server state and must stay
+        // synced). Setting-specific writers mark notSynced themselves.
         try db.execute(
-            sql: "UPDATE \(DataManager.podcastTableName) SET settings = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?",
+            sql: "UPDATE \(DataManager.podcastTableName) SET settings = ? WHERE uuid = ?",
             arguments: StatementArguments([jsonString, podcast.uuid])!) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - settings JSON writer; Swift re-encode would drop unmodeled payload fields
     }
 
