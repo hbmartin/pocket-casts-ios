@@ -6538,3 +6538,270 @@
 
 /* Footer showing when an audio device was last seen. '%1$@' is a placeholder for a relative date like 'yesterday'. */
 "settings_devices_last_seen_format" = "Last seen %1$@";
+
+/* Title for the button on the new playlist screen that creates a custom (advanced query) playlist */
+"playlist_custom_creation_button_title" = "Make into custom playlist";
+
+/* Subtitle for the custom playlist creation button explaining the feature */
+"playlist_custom_creation_button_subtitle" = "Build advanced rules or write your own query.";
+
+/* Segmented control option showing the visual rule builder in the custom playlist editor */
+"playlist_custom_mode_builder" = "Builder";
+
+/* Segmented control option showing the SQL editor in the custom playlist editor */
+"playlist_custom_mode_sql" = "SQL";
+
+/* Save button at the bottom of the custom playlist editor when creating a new playlist */
+"playlist_custom_save_button" = "Create custom playlist";
+
+/* Navigation bar save button in the custom playlist editor when editing an existing playlist */
+"playlist_custom_save" = "Save";
+
+/* Footer in the custom playlist editor explaining that custom playlists stay on this device */
+"playlist_custom_only_on_device_footer" = "Only on this device. Custom playlists don't sync to your other devices.";
+
+/* Segmented option for a rule group where every rule must match */
+"playlist_custom_group_all" = "All";
+
+/* Segmented option for a rule group where any rule may match */
+"playlist_custom_group_any" = "Any";
+
+/* Caption next to a rule group set to require every rule to match */
+"playlist_custom_group_match_all_description" = "of the following are true";
+
+/* Caption next to a rule group set to require any rule to match */
+"playlist_custom_group_match_any_description" = "of the following is true";
+
+/* Button that adds a new condition row to a rule group */
+"playlist_custom_add_condition" = "Add condition";
+
+/* Button that adds a nested rule group inside a rule group */
+"playlist_custom_add_group" = "Add group";
+
+/* Shown inside an empty rule group before any conditions are added */
+"playlist_custom_builder_empty_description" = "Add conditions to choose which episodes appear in this playlist.";
+
+/* Warning shown when some builder conditions still need a value before saving */
+"playlist_custom_builder_incomplete_warning" = "Fill in every condition to save this playlist.";
+
+/* Accessibility label for the button that removes a rule or rule group */
+"playlist_custom_remove_rule" = "Remove rule";
+
+/* Menu label for choosing which episode or podcast field a condition applies to */
+"playlist_custom_condition_field" = "Field";
+
+/* Menu label for choosing a condition's comparison operator */
+"playlist_custom_condition_operator" = "Operator";
+
+/* Placeholder for a condition's value input */
+"playlist_custom_value_placeholder" = "Value";
+
+/* Placeholder for the lower bound of a numeric between condition */
+"playlist_custom_value_min" = "Min";
+
+/* Placeholder for the upper bound of a numeric between condition */
+"playlist_custom_value_max" = "Max";
+
+/* Placeholder for the number-of-days input of an 'in the last N days' condition */
+"playlist_custom_value_days" = "Days";
+
+/* Suffix label after the number-of-days input, completing 'in the last N days' */
+"playlist_custom_value_days_suffix" = "days";
+
+/* Label for a condition's date picker */
+"playlist_custom_value_date" = "Date";
+
+/* Label for the start date of a date range condition */
+"playlist_custom_value_start_date" = "From";
+
+/* Label for the end date of a date range condition */
+"playlist_custom_value_end_date" = "To";
+
+/* Button that opens the podcast multi-select for a podcast condition */
+"playlist_custom_choose_podcasts" = "Choose podcasts";
+
+/* Number of podcasts chosen for a podcast condition; '%1$@' is the count */
+"playlist_custom_podcasts_selected" = "%1$@ selected";
+
+/* Button that checks the SQL query for errors */
+"playlist_custom_validate_button" = "Validate";
+
+/* Shown while the SQL query is being checked */
+"playlist_custom_validating" = "Validating…";
+
+/* Hint under the SQL editor before the query has been validated */
+"playlist_custom_validation_needed" = "Validate your query to enable saving.";
+
+/* Hint explaining what to type in the SQL editor */
+"playlist_custom_sql_hint" = "Write the conditions of a query over the episode and podcast tables. The playlist updates automatically as your library changes.";
+
+/* Button that opens a reference sheet listing the queryable fields */
+"playlist_custom_schema_reference" = "Schema reference";
+
+/* Button that pre-fills the SQL editor from the playlist's current smart rules */
+"playlist_custom_start_from_rules" = "Start from current rules";
+
+/* Intro text of the schema reference sheet listing queryable fields */
+"playlist_custom_schema_description" = "Query these fields using the episode and podcast table aliases. Values are compared with standard SQL operators.";
+
+/* Schema reference type label for text fields */
+"playlist_custom_schema_type_text" = "Text";
+
+/* Schema reference type label for numeric fields */
+"playlist_custom_schema_type_number" = "Number";
+
+/* Schema reference type label for true/false fields */
+"playlist_custom_schema_type_boolean" = "Boolean";
+
+/* Schema reference type label for date fields */
+"playlist_custom_schema_type_date" = "Date";
+
+/* Schema reference type label for fields with a fixed set of values */
+"playlist_custom_schema_type_enum" = "Choice";
+
+/* Schema reference type label for the podcast picker field */
+"playlist_custom_schema_type_podcast" = "Podcasts";
+
+/* One matching episode for the current query; '%1$@' is the number 1 formatted */
+"playlist_custom_match_count_singular" = "%1$@ matching episode";
+
+/* Number of matching episodes for the current query; '%1$@' is the count */
+"playlist_custom_match_count_plural" = "%1$@ matching episodes";
+
+/* Validation error: the query is empty */
+"playlist_custom_error_empty" = "Enter a query to validate.";
+
+/* Validation error: the query exceeds the maximum length; '%1$@' is the character limit */
+"playlist_custom_error_too_long" = "This query is too long. Keep it under %1$@ characters.";
+
+/* Validation error: the query contains parameter placeholders which aren't allowed */
+"playlist_custom_error_placeholders" = "Remove parameter placeholders like '?' or ':name' — custom queries can't take parameters.";
+
+/* Validation error for a SQL syntax problem; '%1$@' is the database's error message */
+"playlist_custom_error_syntax" = "Syntax error: %1$@";
+
+/* Validation error: more than one SQL statement was entered */
+"playlist_custom_error_multiple_statements" = "Only a single query is allowed.";
+
+/* Validation error: the query tries to modify data */
+"playlist_custom_error_not_read_only" = "Only read-only queries are allowed.";
+
+/* Validation error: the query failed while running; '%1$@' is the database's error message */
+"playlist_custom_error_execution" = "The query failed to run: %1$@";
+
+/* Condition operator: text field contains the value */
+"playlist_custom_op_contains" = "contains";
+
+/* Condition operator: text field does not contain the value */
+"playlist_custom_op_not_contains" = "doesn't contain";
+
+/* Condition operator: field equals the value */
+"playlist_custom_op_equals" = "is";
+
+/* Condition operator: field does not equal the value */
+"playlist_custom_op_not_equals" = "is not";
+
+/* Condition operator: text field starts with the value */
+"playlist_custom_op_starts_with" = "starts with";
+
+/* Condition operator: text field ends with the value */
+"playlist_custom_op_ends_with" = "ends with";
+
+/* Condition operator: numeric field is greater than the value */
+"playlist_custom_op_greater_than" = "is more than";
+
+/* Condition operator: numeric field is less than the value */
+"playlist_custom_op_less_than" = "is less than";
+
+/* Condition operator: numeric field is greater than or equal to the value */
+"playlist_custom_op_at_least" = "is at least";
+
+/* Condition operator: numeric field is less than or equal to the value */
+"playlist_custom_op_at_most" = "is at most";
+
+/* Condition operator: field is between two values */
+"playlist_custom_op_between" = "is between";
+
+/* Condition operator: field has any value at all */
+"playlist_custom_op_is_set" = "is set";
+
+/* Condition operator: field has no value */
+"playlist_custom_op_is_not_set" = "is not set";
+
+/* Condition operator: field matches any of the chosen values */
+"playlist_custom_op_in" = "is any of";
+
+/* Condition operator: field matches none of the chosen values */
+"playlist_custom_op_not_in" = "is none of";
+
+/* Condition operator: date field falls within the last N days; the day count input follows this label */
+"playlist_custom_op_in_last_days" = "is in the last";
+
+/* Condition operator: date field is before the value */
+"playlist_custom_op_before" = "is before";
+
+/* Condition operator: date field is after the value */
+"playlist_custom_op_after" = "is after";
+
+/* Queryable field: the episode's title */
+"playlist_custom_field_episode_title" = "Episode title";
+
+/* Queryable field: the episode's show notes description */
+"playlist_custom_field_episode_description" = "Episode description";
+
+/* Queryable field: the podcast's title */
+"playlist_custom_field_podcast_title" = "Podcast title";
+
+/* Queryable field: the podcast the episode belongs to */
+"playlist_custom_field_podcast" = "Podcast";
+
+/* Queryable field: the episode's duration in seconds */
+"playlist_custom_field_duration" = "Duration (seconds)";
+
+/* Queryable field: how far the episode has been played, in seconds */
+"playlist_custom_field_played_up_to" = "Played up to (seconds)";
+
+/* Queryable field: the episode's file size in bytes */
+"playlist_custom_field_file_size" = "File size (bytes)";
+
+/* Queryable field: the episode's season number */
+"playlist_custom_field_season_number" = "Season number";
+
+/* Queryable field: the episode's number within its season */
+"playlist_custom_field_episode_number" = "Episode number";
+
+/* Queryable field: percentage of the episode already played */
+"playlist_custom_field_progress_percent" = "Progress (%)";
+
+/* Queryable field: whether the episode is unplayed, in progress or played */
+"playlist_custom_field_playing_status" = "Play status";
+
+/* Queryable field: whether the episode is downloaded */
+"playlist_custom_field_download_status" = "Download status";
+
+/* Queryable field: the episode's type (full episode, trailer or bonus) */
+"playlist_custom_field_episode_type" = "Episode type";
+
+/* Queryable field: whether the episode is audio or video */
+"playlist_custom_field_media_type" = "Media type";
+
+/* Queryable field: whether the episode's podcast is one the user follows */
+"playlist_custom_field_podcast_subscribed" = "Following podcast";
+
+/* Queryable field: when the episode was published */
+"playlist_custom_field_published_date" = "Published date";
+
+/* Queryable field: when the episode was added to the library */
+"playlist_custom_field_added_date" = "Added date";
+
+/* Queryable field: when the episode was last played */
+"playlist_custom_field_last_played_date" = "Last played date";
+
+/* Episode type choice: a regular full-length episode */
+"playlist_custom_episode_type_full" = "Full episode";
+
+/* Episode type choice: a trailer episode */
+"playlist_custom_episode_type_trailer" = "Trailer";
+
+/* Episode type choice: a bonus episode */
+"playlist_custom_episode_type_bonus" = "Bonus";

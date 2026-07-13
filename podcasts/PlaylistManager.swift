@@ -67,7 +67,9 @@ nonisolated class PlaylistManager {
     class func delete(playlist: EpisodeFilter?, fireEvent: Bool) {
         guard var playlist else { return }
 
-        if SyncManager.isUserLoggedIn() {
+        // Custom playlists hard-delete even when signed in: they are device-local, so
+        // there is no server record to tombstone (the uuid never left this device).
+        if SyncManager.isUserLoggedIn(), !playlist.isCustom {
             playlist.wasDeleted = true
             playlist.syncStatus = SyncStatus.notSynced.rawValue
             DataManager.sharedManager.save(playlist: playlist)

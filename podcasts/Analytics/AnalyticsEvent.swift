@@ -254,6 +254,8 @@ enum AnalyticsEvent: String {
     case filterCreateShown
     case filterCreateAsManualPlaylistTapped
     case filterCreateAsSmartPlaylistTapped
+    case filterCreateAsCustomPlaylistTapped
+    case filterCustomQueryValidated
     case filterCreateCancelled
     case filterDeleteTriggered
     case filterDeleteDismissed

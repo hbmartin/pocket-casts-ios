@@ -2583,6 +2583,196 @@ nonisolated internal enum L10n {
   internal static var playlistCreationCreateSmartPlaylistButtonSubtitle: String { return L10n.tr("Localizable", "playlist_creation_create_smart_playlist_button_subtitle", fallback: "Automatically add episodes based on rules.") }
   /// Title for the button used to open the rules during the Playlist creation
   internal static var playlistCreationCreateSmartPlaylistButtonTitle: String { return L10n.tr("Localizable", "playlist_creation_create_smart_playlist_button_title", fallback: "Make into smart playlist") }
+  /// Button that adds a new condition row to a rule group
+  internal static var playlistCustomAddCondition: String { return L10n.tr("Localizable", "playlist_custom_add_condition", fallback: "Add condition") }
+  /// Button that adds a nested rule group inside a rule group
+  internal static var playlistCustomAddGroup: String { return L10n.tr("Localizable", "playlist_custom_add_group", fallback: "Add group") }
+  /// Shown inside an empty rule group before any conditions are added
+  internal static var playlistCustomBuilderEmptyDescription: String { return L10n.tr("Localizable", "playlist_custom_builder_empty_description", fallback: "Add conditions to choose which episodes appear in this playlist.") }
+  /// Warning shown when some builder conditions still need a value before saving
+  internal static var playlistCustomBuilderIncompleteWarning: String { return L10n.tr("Localizable", "playlist_custom_builder_incomplete_warning", fallback: "Fill in every condition to save this playlist.") }
+  /// Button that opens the podcast multi-select for a podcast condition
+  internal static var playlistCustomChoosePodcasts: String { return L10n.tr("Localizable", "playlist_custom_choose_podcasts", fallback: "Choose podcasts") }
+  /// Menu label for choosing which episode or podcast field a condition applies to
+  internal static var playlistCustomConditionField: String { return L10n.tr("Localizable", "playlist_custom_condition_field", fallback: "Field") }
+  /// Menu label for choosing a condition's comparison operator
+  internal static var playlistCustomConditionOperator: String { return L10n.tr("Localizable", "playlist_custom_condition_operator", fallback: "Operator") }
+  /// Subtitle for the custom playlist creation button explaining the feature
+  internal static var playlistCustomCreationButtonSubtitle: String { return L10n.tr("Localizable", "playlist_custom_creation_button_subtitle", fallback: "Build advanced rules or write your own query.") }
+  /// Title for the button on the new playlist screen that creates a custom (advanced query) playlist
+  internal static var playlistCustomCreationButtonTitle: String { return L10n.tr("Localizable", "playlist_custom_creation_button_title", fallback: "Make into custom playlist") }
+  /// Episode type choice: a bonus episode
+  internal static var playlistCustomEpisodeTypeBonus: String { return L10n.tr("Localizable", "playlist_custom_episode_type_bonus", fallback: "Bonus") }
+  /// Episode type choice: a regular full-length episode
+  internal static var playlistCustomEpisodeTypeFull: String { return L10n.tr("Localizable", "playlist_custom_episode_type_full", fallback: "Full episode") }
+  /// Episode type choice: a trailer episode
+  internal static var playlistCustomEpisodeTypeTrailer: String { return L10n.tr("Localizable", "playlist_custom_episode_type_trailer", fallback: "Trailer") }
+  /// Validation error: the query is empty
+  internal static var playlistCustomErrorEmpty: String { return L10n.tr("Localizable", "playlist_custom_error_empty", fallback: "Enter a query to validate.") }
+  /// Validation error: the query failed while running; '%1$@' is the database's error message
+  internal static func playlistCustomErrorExecution(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_error_execution", String(describing: p1), fallback: "The query failed to run: %1$@")
+  }
+  /// Validation error: more than one SQL statement was entered
+  internal static var playlistCustomErrorMultipleStatements: String { return L10n.tr("Localizable", "playlist_custom_error_multiple_statements", fallback: "Only a single query is allowed.") }
+  /// Validation error: the query tries to modify data
+  internal static var playlistCustomErrorNotReadOnly: String { return L10n.tr("Localizable", "playlist_custom_error_not_read_only", fallback: "Only read-only queries are allowed.") }
+  /// Validation error: the query contains parameter placeholders which aren't allowed
+  internal static var playlistCustomErrorPlaceholders: String { return L10n.tr("Localizable", "playlist_custom_error_placeholders", fallback: "Remove parameter placeholders like '?' or ':name' — custom queries can't take parameters.") }
+  /// Validation error for a SQL syntax problem; '%1$@' is the database's error message
+  internal static func playlistCustomErrorSyntax(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_error_syntax", String(describing: p1), fallback: "Syntax error: %1$@")
+  }
+  /// Validation error: the query exceeds the maximum length; '%1$@' is the character limit
+  internal static func playlistCustomErrorTooLong(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_error_too_long", String(describing: p1), fallback: "This query is too long. Keep it under %1$@ characters.")
+  }
+  /// Queryable field: when the episode was added to the library
+  internal static var playlistCustomFieldAddedDate: String { return L10n.tr("Localizable", "playlist_custom_field_added_date", fallback: "Added date") }
+  /// Queryable field: whether the episode is downloaded
+  internal static var playlistCustomFieldDownloadStatus: String { return L10n.tr("Localizable", "playlist_custom_field_download_status", fallback: "Download status") }
+  /// Queryable field: the episode's duration in seconds
+  internal static var playlistCustomFieldDuration: String { return L10n.tr("Localizable", "playlist_custom_field_duration", fallback: "Duration (seconds)") }
+  /// Queryable field: the episode's show notes description
+  internal static var playlistCustomFieldEpisodeDescription: String { return L10n.tr("Localizable", "playlist_custom_field_episode_description", fallback: "Episode description") }
+  /// Queryable field: the episode's number within its season
+  internal static var playlistCustomFieldEpisodeNumber: String { return L10n.tr("Localizable", "playlist_custom_field_episode_number", fallback: "Episode number") }
+  /// Queryable field: the episode's title
+  internal static var playlistCustomFieldEpisodeTitle: String { return L10n.tr("Localizable", "playlist_custom_field_episode_title", fallback: "Episode title") }
+  /// Queryable field: the episode's type (full episode, trailer or bonus)
+  internal static var playlistCustomFieldEpisodeType: String { return L10n.tr("Localizable", "playlist_custom_field_episode_type", fallback: "Episode type") }
+  /// Queryable field: the episode's file size in bytes
+  internal static var playlistCustomFieldFileSize: String { return L10n.tr("Localizable", "playlist_custom_field_file_size", fallback: "File size (bytes)") }
+  /// Queryable field: when the episode was last played
+  internal static var playlistCustomFieldLastPlayedDate: String { return L10n.tr("Localizable", "playlist_custom_field_last_played_date", fallback: "Last played date") }
+  /// Queryable field: whether the episode is audio or video
+  internal static var playlistCustomFieldMediaType: String { return L10n.tr("Localizable", "playlist_custom_field_media_type", fallback: "Media type") }
+  /// Queryable field: how far the episode has been played, in seconds
+  internal static var playlistCustomFieldPlayedUpTo: String { return L10n.tr("Localizable", "playlist_custom_field_played_up_to", fallback: "Played up to (seconds)") }
+  /// Queryable field: whether the episode is unplayed, in progress or played
+  internal static var playlistCustomFieldPlayingStatus: String { return L10n.tr("Localizable", "playlist_custom_field_playing_status", fallback: "Play status") }
+  /// Queryable field: the podcast the episode belongs to
+  internal static var playlistCustomFieldPodcast: String { return L10n.tr("Localizable", "playlist_custom_field_podcast", fallback: "Podcast") }
+  /// Queryable field: whether the episode's podcast is one the user follows
+  internal static var playlistCustomFieldPodcastSubscribed: String { return L10n.tr("Localizable", "playlist_custom_field_podcast_subscribed", fallback: "Following podcast") }
+  /// Queryable field: the podcast's title
+  internal static var playlistCustomFieldPodcastTitle: String { return L10n.tr("Localizable", "playlist_custom_field_podcast_title", fallback: "Podcast title") }
+  /// Queryable field: percentage of the episode already played
+  internal static var playlistCustomFieldProgressPercent: String { return L10n.tr("Localizable", "playlist_custom_field_progress_percent", fallback: "Progress (%)") }
+  /// Queryable field: when the episode was published
+  internal static var playlistCustomFieldPublishedDate: String { return L10n.tr("Localizable", "playlist_custom_field_published_date", fallback: "Published date") }
+  /// Queryable field: the episode's season number
+  internal static var playlistCustomFieldSeasonNumber: String { return L10n.tr("Localizable", "playlist_custom_field_season_number", fallback: "Season number") }
+  /// Segmented option for a rule group where every rule must match
+  internal static var playlistCustomGroupAll: String { return L10n.tr("Localizable", "playlist_custom_group_all", fallback: "All") }
+  /// Segmented option for a rule group where any rule may match
+  internal static var playlistCustomGroupAny: String { return L10n.tr("Localizable", "playlist_custom_group_any", fallback: "Any") }
+  /// Caption next to a rule group set to require every rule to match
+  internal static var playlistCustomGroupMatchAllDescription: String { return L10n.tr("Localizable", "playlist_custom_group_match_all_description", fallback: "of the following are true") }
+  /// Caption next to a rule group set to require any rule to match
+  internal static var playlistCustomGroupMatchAnyDescription: String { return L10n.tr("Localizable", "playlist_custom_group_match_any_description", fallback: "of the following is true") }
+  /// Number of matching episodes for the current query; '%1$@' is the count
+  internal static func playlistCustomMatchCountPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_match_count_plural", String(describing: p1), fallback: "%1$@ matching episodes")
+  }
+  /// One matching episode for the current query; '%1$@' is the number 1 formatted
+  internal static func playlistCustomMatchCountSingular(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_match_count_singular", String(describing: p1), fallback: "%1$@ matching episode")
+  }
+  /// Segmented control option showing the visual rule builder in the custom playlist editor
+  internal static var playlistCustomModeBuilder: String { return L10n.tr("Localizable", "playlist_custom_mode_builder", fallback: "Builder") }
+  /// Segmented control option showing the SQL editor in the custom playlist editor
+  internal static var playlistCustomModeSql: String { return L10n.tr("Localizable", "playlist_custom_mode_sql", fallback: "SQL") }
+  /// Footer in the custom playlist editor explaining that custom playlists stay on this device
+  internal static var playlistCustomOnlyOnDeviceFooter: String { return L10n.tr("Localizable", "playlist_custom_only_on_device_footer", fallback: "Only on this device. Custom playlists don't sync to your other devices.") }
+  /// Condition operator: date field is after the value
+  internal static var playlistCustomOpAfter: String { return L10n.tr("Localizable", "playlist_custom_op_after", fallback: "is after") }
+  /// Condition operator: numeric field is greater than or equal to the value
+  internal static var playlistCustomOpAtLeast: String { return L10n.tr("Localizable", "playlist_custom_op_at_least", fallback: "is at least") }
+  /// Condition operator: numeric field is less than or equal to the value
+  internal static var playlistCustomOpAtMost: String { return L10n.tr("Localizable", "playlist_custom_op_at_most", fallback: "is at most") }
+  /// Condition operator: date field is before the value
+  internal static var playlistCustomOpBefore: String { return L10n.tr("Localizable", "playlist_custom_op_before", fallback: "is before") }
+  /// Condition operator: field is between two values
+  internal static var playlistCustomOpBetween: String { return L10n.tr("Localizable", "playlist_custom_op_between", fallback: "is between") }
+  /// Condition operator: text field contains the value
+  internal static var playlistCustomOpContains: String { return L10n.tr("Localizable", "playlist_custom_op_contains", fallback: "contains") }
+  /// Condition operator: text field ends with the value
+  internal static var playlistCustomOpEndsWith: String { return L10n.tr("Localizable", "playlist_custom_op_ends_with", fallback: "ends with") }
+  /// Condition operator: field equals the value
+  internal static var playlistCustomOpEquals: String { return L10n.tr("Localizable", "playlist_custom_op_equals", fallback: "is") }
+  /// Condition operator: numeric field is greater than the value
+  internal static var playlistCustomOpGreaterThan: String { return L10n.tr("Localizable", "playlist_custom_op_greater_than", fallback: "is more than") }
+  /// Condition operator: field matches any of the chosen values
+  internal static var playlistCustomOpIn: String { return L10n.tr("Localizable", "playlist_custom_op_in", fallback: "is any of") }
+  /// Condition operator: date field falls within the last N days; the day count input follows this label
+  internal static var playlistCustomOpInLastDays: String { return L10n.tr("Localizable", "playlist_custom_op_in_last_days", fallback: "is in the last") }
+  /// Condition operator: field has no value
+  internal static var playlistCustomOpIsNotSet: String { return L10n.tr("Localizable", "playlist_custom_op_is_not_set", fallback: "is not set") }
+  /// Condition operator: field has any value at all
+  internal static var playlistCustomOpIsSet: String { return L10n.tr("Localizable", "playlist_custom_op_is_set", fallback: "is set") }
+  /// Condition operator: numeric field is less than the value
+  internal static var playlistCustomOpLessThan: String { return L10n.tr("Localizable", "playlist_custom_op_less_than", fallback: "is less than") }
+  /// Condition operator: text field does not contain the value
+  internal static var playlistCustomOpNotContains: String { return L10n.tr("Localizable", "playlist_custom_op_not_contains", fallback: "doesn't contain") }
+  /// Condition operator: field does not equal the value
+  internal static var playlistCustomOpNotEquals: String { return L10n.tr("Localizable", "playlist_custom_op_not_equals", fallback: "is not") }
+  /// Condition operator: field matches none of the chosen values
+  internal static var playlistCustomOpNotIn: String { return L10n.tr("Localizable", "playlist_custom_op_not_in", fallback: "is none of") }
+  /// Condition operator: text field starts with the value
+  internal static var playlistCustomOpStartsWith: String { return L10n.tr("Localizable", "playlist_custom_op_starts_with", fallback: "starts with") }
+  /// Number of podcasts chosen for a podcast condition; '%1$@' is the count
+  internal static func playlistCustomPodcastsSelected(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_podcasts_selected", String(describing: p1), fallback: "%1$@ selected")
+  }
+  /// Accessibility label for the button that removes a rule or rule group
+  internal static var playlistCustomRemoveRule: String { return L10n.tr("Localizable", "playlist_custom_remove_rule", fallback: "Remove rule") }
+  /// Navigation bar save button in the custom playlist editor when editing an existing playlist
+  internal static var playlistCustomSave: String { return L10n.tr("Localizable", "playlist_custom_save", fallback: "Save") }
+  /// Save button at the bottom of the custom playlist editor when creating a new playlist
+  internal static var playlistCustomSaveButton: String { return L10n.tr("Localizable", "playlist_custom_save_button", fallback: "Create custom playlist") }
+  /// Intro text of the schema reference sheet listing queryable fields
+  internal static var playlistCustomSchemaDescription: String { return L10n.tr("Localizable", "playlist_custom_schema_description", fallback: "Query these fields using the episode and podcast table aliases. Values are compared with standard SQL operators.") }
+  /// Button that opens a reference sheet listing the queryable fields
+  internal static var playlistCustomSchemaReference: String { return L10n.tr("Localizable", "playlist_custom_schema_reference", fallback: "Schema reference") }
+  /// Schema reference type label for true/false fields
+  internal static var playlistCustomSchemaTypeBoolean: String { return L10n.tr("Localizable", "playlist_custom_schema_type_boolean", fallback: "Boolean") }
+  /// Schema reference type label for date fields
+  internal static var playlistCustomSchemaTypeDate: String { return L10n.tr("Localizable", "playlist_custom_schema_type_date", fallback: "Date") }
+  /// Schema reference type label for fields with a fixed set of values
+  internal static var playlistCustomSchemaTypeEnum: String { return L10n.tr("Localizable", "playlist_custom_schema_type_enum", fallback: "Choice") }
+  /// Schema reference type label for numeric fields
+  internal static var playlistCustomSchemaTypeNumber: String { return L10n.tr("Localizable", "playlist_custom_schema_type_number", fallback: "Number") }
+  /// Schema reference type label for the podcast picker field
+  internal static var playlistCustomSchemaTypePodcast: String { return L10n.tr("Localizable", "playlist_custom_schema_type_podcast", fallback: "Podcasts") }
+  /// Schema reference type label for text fields
+  internal static var playlistCustomSchemaTypeText: String { return L10n.tr("Localizable", "playlist_custom_schema_type_text", fallback: "Text") }
+  /// Hint explaining what to type in the SQL editor
+  internal static var playlistCustomSqlHint: String { return L10n.tr("Localizable", "playlist_custom_sql_hint", fallback: "Write the conditions of a query over the episode and podcast tables. The playlist updates automatically as your library changes.") }
+  /// Button that pre-fills the SQL editor from the playlist's current smart rules
+  internal static var playlistCustomStartFromRules: String { return L10n.tr("Localizable", "playlist_custom_start_from_rules", fallback: "Start from current rules") }
+  /// Button that checks the SQL query for errors
+  internal static var playlistCustomValidateButton: String { return L10n.tr("Localizable", "playlist_custom_validate_button", fallback: "Validate") }
+  /// Shown while the SQL query is being checked
+  internal static var playlistCustomValidating: String { return L10n.tr("Localizable", "playlist_custom_validating", fallback: "Validating…") }
+  /// Hint under the SQL editor before the query has been validated
+  internal static var playlistCustomValidationNeeded: String { return L10n.tr("Localizable", "playlist_custom_validation_needed", fallback: "Validate your query to enable saving.") }
+  /// Label for a condition's date picker
+  internal static var playlistCustomValueDate: String { return L10n.tr("Localizable", "playlist_custom_value_date", fallback: "Date") }
+  /// Placeholder for the number-of-days input of an 'in the last N days' condition
+  internal static var playlistCustomValueDays: String { return L10n.tr("Localizable", "playlist_custom_value_days", fallback: "Days") }
+  /// Suffix label after the number-of-days input, completing 'in the last N days'
+  internal static var playlistCustomValueDaysSuffix: String { return L10n.tr("Localizable", "playlist_custom_value_days_suffix", fallback: "days") }
+  /// Label for the end date of a date range condition
+  internal static var playlistCustomValueEndDate: String { return L10n.tr("Localizable", "playlist_custom_value_end_date", fallback: "To") }
+  /// Placeholder for the upper bound of a numeric between condition
+  internal static var playlistCustomValueMax: String { return L10n.tr("Localizable", "playlist_custom_value_max", fallback: "Max") }
+  /// Placeholder for the lower bound of a numeric between condition
+  internal static var playlistCustomValueMin: String { return L10n.tr("Localizable", "playlist_custom_value_min", fallback: "Min") }
+  /// Placeholder for a condition's value input
+  internal static var playlistCustomValuePlaceholder: String { return L10n.tr("Localizable", "playlist_custom_value_placeholder", fallback: "Value") }
+  /// Label for the start date of a date range condition
+  internal static var playlistCustomValueStartDate: String { return L10n.tr("Localizable", "playlist_custom_value_start_date", fallback: "From") }
   /// Playlist detail description. %1$@ represent the number of total episodes. %2$@ represents the total time.
   internal static func playlistDetailDescription(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "playlist_detail_description", String(describing: p1), String(describing: p2), fallback: "%1$@ episodes • %2$@")

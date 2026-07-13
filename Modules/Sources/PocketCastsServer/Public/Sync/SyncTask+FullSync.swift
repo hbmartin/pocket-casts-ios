@@ -11,6 +11,13 @@ extension SyncTask {
             var playlist = playlist
             // if we have this playlist locally, assume the server version is more up to date, so blow ours away
             if let localPlaylist = DataManager.sharedManager.findPlaylist(uuid: playlist.uuid) {
+                // ...unless it's a custom playlist: those are device-local (the server
+                // never saw their customQuery), so a full sync must not delete-rewrite
+                // them on a uuid collision.
+                if localPlaylist.isCustom {
+                    FileLog.shared.addMessage("SyncTask: preserving local custom playlist \(localPlaylist.uuid) during full sync")
+                    return
+                }
                 DataManager.sharedManager.delete(playlist: localPlaylist)
             }
 

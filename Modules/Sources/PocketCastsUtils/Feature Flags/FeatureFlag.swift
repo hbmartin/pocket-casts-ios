@@ -55,6 +55,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Show explicit content badges on podcasts
     case showExplicitBadges
 
+    /// Custom playlists: user-defined query playlists built either with the visual
+    /// condition builder or a raw SQL WHERE fragment. Device-local (excluded from
+    /// account sync and file sync).
+    case customPlaylists
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -107,6 +112,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             true
         case .showExplicitBadges:
             false
+        case .customPlaylists:
+            BuildEnvironment.current == .debug
         }
     }
 

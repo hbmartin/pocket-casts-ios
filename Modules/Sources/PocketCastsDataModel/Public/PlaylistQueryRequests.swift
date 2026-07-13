@@ -95,6 +95,13 @@ public extension PlaylistQueryBuilder {
         episodeUuidToAdd: String?,
         limit: Int
     ) -> SQLRequest<Episode> {
+        // Custom playlists compile to fragments over the `episode.`/`podcast.` aliases,
+        // which this legacy single-table shape cannot satisfy; serve the full joined
+        // episode query instead (flag off / unreadable envelopes render empty there).
+        if filter.isCustom {
+            return episodesRequest(.episodes, for: filter, episodeUuidToAdd: episodeUuidToAdd, limit: limit)
+        }
+
         var query: SQL = "SELECT * FROM \(sql: DataManager.episodeTableName) WHERE archived = 0"
 
         let rules = smartRuleFragments(for: filter, prefix: "")
@@ -187,7 +194,15 @@ extension PlaylistQueryBuilder {
                 )
             }
         } else {
-            let rules = smartRuleFragments(for: playlist, prefix: "episode.")
+            // Custom playlists substitute the smart-rule group with the compiled
+            // envelope fragment; everything downstream (episodeUuidToAdd OR-arm,
+            // first-distinct CTE, count CTEs, search, sort, LIMIT) is shared.
+            let rules: [SQL]
+            if playlist.isCustom {
+                rules = [customRuleFragment(for: playlist)]
+            } else {
+                rules = smartRuleFragments(for: playlist, prefix: "episode.")
+            }
             let whereFragment = combinedRuleFragment(rules: rules, episodeUuidToAdd: episodeUuidToAdd, prefix: "episode.")
 
             switch clause {
@@ -631,7 +646,9 @@ extension PlaylistQueryBuilder {
 
     /// Legacy `smartPlaylistEpisodesCount`: counts distinct episode uuids matching the
     /// smart rules, deduplicated the same way as the episode listing.
-    private static func smartCountFragment(
+    /// Internal (not private): `PlaylistQueryValidator` reuses it so SQL-mode
+    /// fragments are validated in the exact shape they later execute in.
+    static func smartCountFragment(
         shouldShowArchived: Bool,
         allEpisodesCount: Bool,
         whereFragment: SQL
@@ -667,6 +684,50 @@ extension PlaylistQueryBuilder {
         )
         SELECT COUNT(*) FROM deduped
         """
+    }
+
+    // MARK: Custom playlists
+
+    /// The rule fragment for a custom (query-envelope) playlist: a single boolean
+    /// expression substituted for the whole smart-rule group.
+    ///
+    /// Render-empty contract: the always-false `(0)` is returned whenever the
+    /// envelope can't be executed — feature flag off, missing/undecodable JSON,
+    /// unsupported version, an AST the compiler rejects (caps, bad conditions), or a
+    /// SQL fragment that is empty/oversized/contains a statement separator. The
+    /// playlist then shows no episodes instead of misbehaving or crashing.
+    ///
+    /// Builder mode recompiles on every call so relative dates track `now`; SQL mode
+    /// splices the validator-approved fragment as raw SQL (it is zero-argument by
+    /// validation, and executes on read-only connections).
+    static func customRuleFragment(for playlist: EpisodeFilter, now: Date = Date()) -> SQL {
+        guard FeatureFlag.customPlaylists.enabled,
+              let envelope = CustomPlaylistQuery(envelopeJSON: playlist.customQuery),
+              envelope.isSupported else {
+            return "(0)"
+        }
+
+        switch envelope.mode {
+        case .builder:
+            guard let root = envelope.root,
+                  let compiled = try? CustomQueryCompiler.compile(root: root, now: now) else {
+                return "(0)"
+            }
+            let arguments = StatementArguments(compiled.arguments.map { $0 as DatabaseValueConvertible? })
+            return SQL(sql: compiled.sql, arguments: arguments)
+        case .sql:
+            let fragment = envelope.sql?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            // Belt-and-braces re-checks of what the validator guaranteed at save
+            // time, in case the stored row was edited out-of-band. `;` can never
+            // appear in a valid expression-position fragment.
+            guard !fragment.isEmpty,
+                  fragment.count <= PlaylistQueryValidator.maxFragmentLength,
+                  !fragment.contains(";"),
+                  !PlaylistQueryValidator.containsPlaceholders(fragment) else {
+                return "(0)"
+            }
+            return "(\(sql: fragment))"
+        }
     }
 
     // MARK: Smart rules

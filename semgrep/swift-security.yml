@@ -5030,3 +5030,37 @@ rules:
           - pattern: PlaylistQueryBuilder.query(...)
           - pattern: PlaylistQueryBuilder.queryFor(...)
           - pattern: PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesQuery(...)
+
+  - id: pocketcasts.custom-query-sql-through-validator
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Custom playlist SQL (the EpisodeFilter.customQuery envelope and editor-entered
+      fragments) may only reach the database through the typed PlaylistQueryBuilder
+      requests (which compile the envelope internally, rendering unreadable ones as
+      an empty playlist) or DataManager.validateCustomQueryFragment (the save-time
+      gate). Splicing customQuery text into raw query APIs, or executing raw
+      playlist-episode SQL in app code, bypasses the validator's read-only,
+      single-statement and zero-placeholder guarantees.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/WidgetExtension/**/*.swift"
+        - "**/AppClip/**/*.swift"
+        - "**/semgrep/tests/swift-custom-query-validator.swift"
+      exclude:
+        - "**/PocketCastsTests/**"
+    patterns:
+      - pattern-either:
+          - pattern: $DM.findPlaylistEpisodesWhere(...)
+          - pattern: '$DM.findEpisodesWhere(customWhere: $F.customQuery, arguments: $ARGS)'
+          - pattern: '$DM.findEpisodeWhere(customWhere: $F.customQuery, arguments: $ARGS)'
+          - pattern: '$DM.findEpisodesWhere(customWhere: $Q, arguments: $F.customQuery)'
+          - pattern: '$DM.count(query: $F.customQuery, values: $ARGS)'
+          - pattern: $DM.executeQuery($F.customQuery, ...)

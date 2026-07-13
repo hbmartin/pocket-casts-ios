@@ -1148,6 +1148,15 @@ public class DataManager {
         playlistManager.deleteDeletedPlaylists(dbQueue: dbQueue)
     }
 
+    /// Validates a SQL-mode custom playlist fragment (a WHERE-clause body over the
+    /// `episode`/`podcast` aliases) and returns its current match count on success.
+    /// This is the only approved path for user-entered SQL to reach the database —
+    /// see `PlaylistQueryValidator` for the pipeline. Call off the main thread: the
+    /// final step trial-executes a count query.
+    public func validateCustomQueryFragment(_ fragment: String) -> Result<Int, CustomQueryValidationError> {
+        PlaylistQueryValidator.validate(fragment: fragment, dbQueue: dbQueue)
+    }
+
     public func allUnsyncedPlaylists() -> [EpisodeFilter] {
         playlistManager.allUnsyncedPlaylists(dbQueue: dbQueue)
     }

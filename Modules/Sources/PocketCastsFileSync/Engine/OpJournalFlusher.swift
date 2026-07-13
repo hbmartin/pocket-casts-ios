@@ -174,7 +174,10 @@ struct OpJournalFlusher {
 
         case (.playlist, .upsert):
             guard let uuid = group.entityUuid,
-                  let playlist = dataManager.findPlaylist(uuid: uuid) else { return nil }
+                  let playlist = dataManager.findPlaylist(uuid: uuid),
+                  // Custom playlists are device-local: peers can't represent the
+                  // customQuery envelope, so their upserts never leave this device.
+                  !playlist.isCustom else { return nil }
             return .record(RecordConverters.record(from: playlist))
 
         case (.folder, .upsert):

@@ -32,6 +32,15 @@ public struct EpisodeFilter: Equatable, Hashable, Sendable {
     public var manual: Bool = false
     public var showArchivedEpisodes: Bool = false
     public var playlistUpdateDate: Date?
+    /// Custom playlists: the versioned JSON envelope (`CustomPlaylistQuery`) describing a
+    /// builder AST or validated SQL WHERE fragment. `nil` = regular smart/manual playlist.
+    /// Device-local: rows with a non-nil value are excluded from account sync and file sync.
+    public var customQuery: String?
+
+    /// Whether this playlist is a custom (query-envelope) playlist. Computed, not persisted.
+    /// `manual` wins over a stray envelope so manual playlists can never lose their
+    /// episode-membership semantics.
+    public var isCustom: Bool { customQuery != nil && !manual }
 
     // Internal tracking
     @GRDBIgnore

@@ -110,6 +110,13 @@ class DatabaseHelper {
                 tokenize = 'unicode61 remove_diacritics 2'
             );
             """, values: nil)
+        },
+        // Custom playlists (device-local, excluded from account sync and file sync):
+        // the versioned JSON envelope describing either a builder AST or a validated
+        // SQL WHERE fragment (see CustomPlaylistQuery). NULL = regular smart/manual
+        // playlist.
+        SchemaMigration(toVersion: 79) { db in
+            try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN customQuery TEXT;", values: nil)
         }
     ]
 
