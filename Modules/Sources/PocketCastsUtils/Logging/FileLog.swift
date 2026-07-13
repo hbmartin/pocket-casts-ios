@@ -68,6 +68,18 @@ actor LogBuffer {
         writeLogBufferToDisk()
     }
 
+    /// The last `maxLines` lines of the current log, newest last — sized for
+    /// attaching to a feedback report without shipping the whole file.
+    public func tailOfLogFile(maxLines: Int = 200) -> String {
+        forceFlush()
+
+        guard let contents = try? String(contentsOfFile: LogFilePaths.mainLogFilePath) else {
+            return ""
+        }
+        let lines = contents.split(separator: "\n", omittingEmptySubsequences: false)
+        return lines.suffix(maxLines).joined(separator: "\n")
+    }
+
     public func loadLogFileAsString() -> String {
         forceFlush()
 
@@ -156,6 +168,12 @@ public final class FileLog: @unchecked Sendable {
         Task {
             await logBuffer.forceFlush()
         }
+    }
+
+    /// The last `maxLines` lines of the current log, newest last — sized for
+    /// attaching to a feedback report without shipping the whole file.
+    public func tailOfLogFile(maxLines: Int = 200) async -> String {
+        await logBuffer.tailOfLogFile(maxLines: maxLines)
     }
 
     public func loadLogFileAsString(completion: @escaping @Sendable (String) -> Void) {
