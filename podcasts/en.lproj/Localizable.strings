@@ -4889,29 +4889,6 @@
 /* Battery policy option: on-device transcription runs only while the device is charging */
 "transcription_battery_policy_charging" = "Only While Charging";
 
-/* Title of the cross-episode transcript search screen and of its row in the Profile tab */
-"transcription_search_title" = "Search Transcripts";
-
-/* Placeholder text of the transcript search input field */
-"transcription_search_prompt" = "Search your transcripts";
-
-/* Title shown on the transcript search screen before the user has typed a search */
-"transcription_search_empty_title" = "Search Your Transcripts";
-
-/* Message shown on the transcript search screen before the user has typed a search */
-"transcription_search_empty_message" = "Find any moment across the episodes you've transcribed on this device.";
-
-/* Title shown when a transcript search returns no matches */
-"transcription_search_no_results_title" = "No Results Found";
-
-/* Message shown when a transcript search returns no matches. '%1$@' is a placeholder for the user's search term. */
-"transcription_search_no_results_message" = "Nothing in your transcripts matches \"%1$@\".";
-
-/* Fallback episode title for a transcript search result whose episode is no longer in the library */
-"transcription_search_unknown_episode" = "Unknown Episode";
-
-/* Accessibility label of the button that clears the transcript search field */
-"transcription_search_clear" = "Clear search";
 
 /* Title of the menu action and sheet for renaming the numbered speakers of a generated transcript */
 "transcription_rename_speakers" = "Rename Speakers";
@@ -6882,7 +6859,7 @@
 "search_transcripts_empty_title" = "No Transcript Matches";
 
 /* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
-"search_transcripts_empty_message" = "Transcripts become searchable here after you view them on an episode.";
+"search_transcripts_empty_message" = "Episodes become searchable here when they download or when you view their transcript.";
 
 /* Timestamp label on a transcript search result showing where in the episode the match occurs. '%1$@' is a placeholder for a time like 12:34. */
 "search_transcripts_result_at_time" = "At %1$@";

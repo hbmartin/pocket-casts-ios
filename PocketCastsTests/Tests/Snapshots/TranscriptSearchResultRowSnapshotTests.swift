@@ -10,14 +10,15 @@ import XCTest
 /// loads from the network or database).
 @MainActor
 final class TranscriptSearchResultRowSnapshotTests: XCTestCase {
-    private func display(runs: [TranscriptSearchHitDisplay.Run], startTime: TimeInterval = 754) -> TranscriptSearchHitDisplay {
+    private func display(runs: [TranscriptSearchHitDisplay.Run], startTime: TimeInterval = 754, speaker: String? = nil) -> TranscriptSearchHitDisplay {
         TranscriptSearchHitDisplay(
             episodeUuid: "fixture-episode",
             podcastUuid: nil,
             segmentIndex: 3,
             episodeTitle: "142: The Quiet Art of Shipping",
             runs: runs,
-            startTime: startTime
+            startTime: startTime,
+            speaker: speaker
         )
     }
 
@@ -30,6 +31,22 @@ final class TranscriptSearchResultRowSnapshotTests: XCTestCase {
                     .init(text: " small beats planning big, every single time…", isHighlighted: false)
                 ]),
                 position: 0
+            )
+            .frame(width: 390)
+            .background(Color(UIColor.systemBackground)),
+            layout: .fixed(width: 390, height: 96)
+        )
+    }
+
+    func testRowWithSpeakerLabelFromGeneratedTranscript() {
+        assertAppThemedSnapshots(
+            of: TranscriptSearchResultRow(
+                display: display(runs: [
+                    .init(text: "…we should talk about the ", isHighlighted: false),
+                    .init(text: "roadmap", isHighlighted: true),
+                    .init(text: " before the next release…", isHighlighted: false)
+                ], speaker: "Speaker 2"),
+                position: 1
             )
             .frame(width: 390)
             .background(Color(UIColor.systemBackground)),
