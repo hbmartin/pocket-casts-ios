@@ -1,12 +1,29 @@
 # Deferred Work Register
 
 The consolidated record of every item the 2026-07-12 program review (see
-`plans/Pocket Casts iOS — Local-First & Product Modernization Program.md`, Decision Register)
-deferred rather than scheduled or rejected. One section per item: why it was deferred, current
-state (metrics re-verified 2026-07-12), and a concrete re-entry plan.
+`plans/old/Pocket Casts iOS — Local-First & Product Modernization Program.md`, Decision Register)
+deferred rather than scheduled or rejected, updated for the 2026-07-13 deferred-work program
+that shipped seven of them. One section per still-deferred item: why it was deferred, current
+state, and a concrete re-entry plan.
 
 Items the review rejected outright (SKIP/NO) are recorded only in the program plan's Decision
 Register, not here.
+
+---
+
+## Shipped by the 2026-07-13 deferred-work program
+
+| Item | Outcome | PRs |
+|---|---|---|
+| **1 — Complete transcript indexing + unified search** | One FTS5 corpus (`TranscriptSegmentIndex`, migration 82) with a `source` column; download-triggered acquisition (feed-provided transcript first, generation as fallback); transcription **always on** with consent-gated remote auto-run and a per-podcast on-device-only opt-out; battery policy picker for local jobs; New Search is the sole surface (Profile screen retired); 200 MB byte cap with provided-only eviction. Decisions that changed the register's premises: **no backfill** of existing downloads (organic completion), remote providers **are** auto-run once consented. | #275 #276 #277 |
+| **3 — Chapter images** | Chapter-list thumbnails; Podcast Index/Podlove artwork URLs captured and lazily fetched into every artwork sink; progressive `AVPlayerItemMetadataOutput` fills gaps mid-stream and grows synthetic chapters for chapterless streams. (The register's "no UI yet" was stale — player/mini/lock-screen art already worked.) | #279 |
+| **19 — FoundationModels episode intelligence** | Catch Me Up (tail-weighted recap of the played portion; player shelf action + summary-card button, flag `catchMeUp`) and on-device chapter generation from the local transcript at lowest precedence (flag `onDeviceChapters`, cached per episode) — the latter completes **Item 2's on-device path**. | #280 |
+| **14 — Adaptive effects switching** | Full mechanism shipped **default off** with FileLog switch telemetry per the measure-first mandate: "music" class read from the existing classifier pass, hysteresis segment classifier, trim + Voice Boost suspended during music as a runtime override (tuning blob untouched). Toggle in Advanced Audio. Flip the default only after reviewing `[AdaptiveEffects]` logs on music-heavy shows. | #281 |
+| **55 — Small-stuff sweep** | Every TODO fixed or tracked: trivial ones fixed on sight (incl. `ArchiveHelper`'s user-visible literal "TODO"), non-trivial ones became issues #282–#286, production `print()` routed through FileLog with a Semgrep rule (`no-bare-print`) keeping it that way. Only `TODO(A2d)` remains, deliberately. | #287 |
+| **39 — Performance regression tests** | Reporting-only baselines per the re-entry plan, scoped to cold start + podcast-page entry + episode-card entry (no scrolling): `PerformanceUITests` plan on the seeded scenario, nightly `perf-ui` job, `perf-report.rb` delta table vs `scripts/ci/perf-baselines.json`. Record baselines after ~2 weeks of runs, then consider gating. | #288 |
+| *(infra)* Auto-format fix | `redundant_nil_coalescing` autocorrect removed (it stripped a semantic `?? nil` and shipped a real bug) + Semgrep guard for nil-checks on `dbQueue.read/write` results. | #278 |
+
+Item 57 (Podping) was deliberately skipped this round — see below.
 
 ---
 
@@ -40,32 +57,14 @@ order: `Settings.swift` (pure accessor groups → extensions in files), `Podcast
 (list/data-source/actions), `TranscriptViewController` (highlight engine is shared with the reader
 by then), `PlaybackManager` last (needs the E-track features stable).
 
-## Item 14 — Adaptive effects switching (music/speech auto-profiles)
-
-**Concept:** auto-suspend trim-silence and voice boost during music segments using the existing
-SoundAnalysis VAD discriminator (`podcasts/AdvancedAudio/TrimSilenceDetector.swift` — the system
-VAD mode with retrospective veto). Entry point: `AudioReadTask` already consults the detector
-per-buffer; an "effects profile" toggle would swap `AudioTuning` snapshots when the
-music/speech classification is stable for N seconds.
-
-**Re-entry:** configurable, default off, in the user settings; measure false-positive rate on music-heavy shows
-before any UI.
-
-## Item 19 — FoundationModels episode intelligence
-
-**Concept:** on-device summaries ("catch me up" for partially-played episodes), chapter-title
-generation for chapterless episodes (UX slot already exists: `generatedChapters`, un-gated in
-Track A4). Storage would mirror the transcription artifacts (device-local, no sync).
-
-**Re-entry:** user option to use Apple's `FoundationModels` summarization over VTT
-cue text; measure quality/latency per device class before productizing.
-
 ## Item 24 — `ObservableObject` → `@Observable` migration
 
 **Why deferred:** mechanical; zero user value; conflicts with any track touching view models.
 
 **Current state:** ~160 `@Published` / ~54 `ObservableObject` conformances / 1 `@Observable`
-(`AdvancedAudioSettingsViewModel`, migrated 2026-07-11 as the pattern-setter).
+(`AdvancedAudioSettingsViewModel`, migrated 2026-07-11 as the pattern-setter). The deferred-work
+program added new `ObservableObject`s (`CatchMeUpViewModel`, `EpisodeSummaryViewModel` extensions)
+that should ride along when this converts.
 
 **Re-entry:** use `AdvancedAudioSettingsViewModel` as the template (notably: `@Observable` supports
 `didSet` on stored properties; `@ObservationIgnored` for non-state; `@Bindable` at use sites;
@@ -91,20 +90,14 @@ and rely on the floor + Danger table.
 the program prioritizes tests around code it *changes*.
 
 **Current state (untested areas):** Player UIKit stack (~40 files), Onboarding (34), Settings VCs,
-New Detail (26), Sharing UI (21).
+New Detail (26), Sharing UI (21). The deferred-work program added seams worth reusing: injected
+coordinator/queue closures (`TranscriptAcquisitionCoordinator`, `TranscriptionQueueManager`'s
+`powerState`), pure decision types (`TranscriptAcquisitionDecision`, `MusicSegmentClassifier`,
+`TranscriptionBatteryPolicy`) that show the extract-and-test pattern.
 
 **Re-entry lever:** repository protocols + `@Dependency` mocks
 (`Modules/Sources/PocketCastsDataModelTesting/`); themed snapshot coverage (H2 helper) gives the
 cheapest first coverage for SwiftUI portions; VC logic tests follow DI conversion per area.
-
-## Item 39 — Performance regression tests
-
-**Concept:** XCTMetric baselines for cold start (`XCTApplicationLaunchMetric`), database migrations
-(production fixtures already exist: `ProductionDatabaseMigrationFixtureTests.swift`), and
-large-library grid scroll (`XCTOSSignpostMetric`).
-
-**Re-entry:** land baselines as *reporting-only* first (Danger table of deltas), enforce after
-variance is characterized (~2 weeks of runs).
 
 ## Item 50 — Extract features into SPM modules
 
@@ -114,31 +107,11 @@ variance is characterized (~2 weeks of runs).
 Sharing, Onboarding. `PocketCastsFileSync` is the extraction template (protocol-injected app
 dependencies, no UIKit in module).
 
-## Item 55 — Small-stuff sweep (with the specific inventory)
-
-**TODO/FIXME inventory (19 sites, re-verified):** notable ones —
-`OptionsPicker.swift:51` (layout mystery), `UserEpisodeDetailViewController.swift:106`
-(force-unwrap TODO), `TopShadowView.swift:15` (theme-blind shadow color),
-`PlayerContainerViewController.swift:169/209/268` ("Show install banner" ×3 — decide feature or
-delete), `AppTheme.swift:538` (inelegant lookup), `FolderViewController.swift:251` (diffable
-data source), `AddCustomViewController.swift:222` (error copy), missing-analytics TODOs at
-`ManualPlaylistsChooserViewController.swift:328/337`, `PlaylistsViewController+Table.swift:237`,
-`PodcastViewController.swift:1413`, `IncomingShareListViewController.swift:156` (empty TODO),
-`DownloadManager+URLSessionDelegate.swift:17`, `NowPlayingPlayerItemViewController.swift:404`
-(install prompt), `UploadedViewController.swift:168` (table diff), `ArchiveHelper.swift:25`
-(literal "TODO" string returned!), `DefaultPlayer.swift:891` (`TODO(A2d)` — tracked separately,
-needs on-device TSan).
-
-**Also:** ~28 stray `print(` calls to route through `FileLog`; ~60 commented-out code lines to
-delete or justify.
-
-**Re-entry:**  cleanup PR  (TODOs triaged to fix/delete/issue; prints; dead
-code). `ArchiveHelper.swift:25` should be fixed on sight next time that file is touched.
-
 ## Item 57 — Podping / WebSub instant feed updates
 
 **Why deferred:** Track A's polling refresh must ship and soak first; instant-update plumbing is an
-optimization on top.
+optimization on top. Deliberately skipped by the 2026-07-13 program (a draft plan exists at
+`plans/podping.md`).
 
 **Concept:** subscribe to Podping (podcast-index socket/relay) for followed feeds with
 `refreshSource == .localFeed`; on ping, trigger `RefreshManager.refresh(podcast:)` for just that
@@ -149,11 +122,19 @@ relay vs push-via-server is likely the realistic iOS answer).
 
 ## Item 67 — Shake-to-report in beta
 
-**Concept:** extend `podcasts/BackgroundShakeObserver.swift` (exists — currently sleep-timer
-restart) to present a feedback sheet in TestFlight builds, attaching the bitdrift session ID and
-recent `FileLog` tail into `SupportFeedbackRequest`.
+**Concept:** extend `podcasts/BackgroundShakeObserver.swift` (currently sleep-timer restart) to
+present a feedback sheet in TestFlight builds, attaching diagnostics to the fork's own
+`support/feedback` endpoint.
 
-**Re-entry:** after F4; gate to `BuildEnvironment.current == .testFlight`.
+**Premises corrected by the 2026-07-13 review:** `BuildEnvironment` has no `.testFlight` case
+(sandbox-receipt detection must be built); bitdrift only starts under `#if DEBUG` (extend to
+TestFlight and expose the session ID); `FileLog` has no tail API; `Api_SupportFeedbackRequest`
+carries only `message`/`subject`/`inbox`.
+
+**Blocked on:** the `pocketcasts-api` repo (not checked out on this machine) — the agreed design
+extends `Api_SupportFeedbackRequest` with structured fields (`logs`, `bitdrift_session_id`,
+`device_info`, `app_version`) and regenerates via `mise run generate:proto`. Sleep-timer shake
+keeps priority when a timer is active.
 
 ## A6b — Delete `newSettingsStorage`/`settingsSync` and collapse call sites
 
@@ -168,17 +149,9 @@ mechanical per-area PRs; one-time legacy→AppSettings migration audit; remove t
 
 **Re-entry:** one release after A6a ships with no kill-switch activation.
 
-## Item 1 — Download-triggered background transcript indexing
+## Item 2 — Auto-chapterization (backend variant)
 
-v1 indexes transcripts when viewed; auto-transcribe-on-download exists for the *generated* corpus only.
-This app must have complete and comprehensive transcription and indexing.
-
-**Unify two transcript-search surfaces** — generated transcripts search from Profile (`TranscriptionSegmentFTS`), viewed podcast transcripts from New Search (`TranscriptCueIndex`). Unifying them into one surface (and one corpus policy)
-
-## Item 2 — Auto-chapterization based on the transcript
-
-Requires an API key for LLM's to call or use Apple's Foundation models, or a backend call (update proto and server spec), user selectable
-
-## Item 3 — Chapter image support with progressive image changes in Apple AV
-
- `image` is decoded and stored; no UI yet.
+The on-device path shipped with Item 19 (#280, flag `onDeviceChapters`). What remains deferred is
+the backend/API-key variant: a server-side chapterization call (proto + server spec update,
+user-selectable provider), worth revisiting only if on-device quality disappoints on longer
+episodes or older devices.
