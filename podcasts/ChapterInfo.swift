@@ -10,7 +10,11 @@ nonisolated class ChapterInfo: Equatable, @unchecked Sendable {
     var title = ""
     var url: String?
     var startTime = CMTime(seconds: 0, preferredTimescale: 0)
-        var image: UIImage?
+    var image: UIImage?
+    /// Remote artwork for chapters whose source carries a URL instead of embedded
+    /// bytes (Podcast Index `img`, Podlove `image`). Fetched lazily; a successful
+    /// fetch lands in `image`, which every artwork sink reads.
+    var imageURL: URL?
     var isFirst = false
     var isLast = false
     var index = 0

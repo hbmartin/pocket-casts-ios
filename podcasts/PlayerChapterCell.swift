@@ -1,8 +1,26 @@
+import Kingfisher
 import PocketCastsUtils
 import PocketCastsDataModel
 import UIKit
 
 class PlayerChapterCell: UITableViewCell {
+    /// Chapter artwork shown in place of the chapter number when the chapter
+    /// carries an image (embedded bytes or a fetched remote URL).
+    private lazy var artworkView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 4
+        imageView.clipsToBounds = true
+        contentView.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.centerXAnchor.constraint(equalTo: chapterNumber.centerXAnchor),
+            imageView.centerYAnchor.constraint(equalTo: chapterNumber.centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 28),
+            imageView.heightAnchor.constraint(equalToConstant: 28)
+        ])
+        return imageView
+    }()
     @IBOutlet var chapterName: UILabel! {
         didSet {
             chapterName.font = .font(ofSize: 14, weight: .medium, scalingWith: .subheadline)
@@ -99,6 +117,7 @@ class PlayerChapterCell: UITableViewCell {
         chapterName.text = chapter.title
         chapterLength.text = TimeFormatter.shared.singleUnitFormattedShortestTime(time: chapter.duration)
         chapterNumber.text = "\(chapter.index + 1)"
+        updateArtwork(for: chapter)
         linkView.isHidden = (chapter.url == nil || isChapterToggleEnabled)
 
         nowPlayingAnimation.animating = false
@@ -120,6 +139,32 @@ class PlayerChapterCell: UITableViewCell {
         toggleChapterButton.currentlyOn = chapter.shouldPlay
 
         isChapterToggleEnabled ? showSelectedChapterButton() : hideSelectedChapterButton()
+    }
+
+    /// Shows the chapter's artwork over the number when it has any: embedded
+    /// bytes directly, remote URLs via Kingfisher (cached; reused cells cancel
+    /// the previous load by setting a new source). No artwork → plain number.
+    private func updateArtwork(for chapter: ChapterInfo) {
+        if let image = chapter.image {
+            artworkView.kf.cancelDownloadTask()
+            artworkView.image = image
+            artworkView.isHidden = false
+            chapterNumber.alpha = 0
+        } else if let imageURL = chapter.imageURL {
+            artworkView.isHidden = false
+            chapterNumber.alpha = 0
+            artworkView.kf.setImage(with: imageURL, options: [.transition(.fade(Constants.Animation.defaultAnimationTime))]) { [weak self] result in
+                if case .failure = result {
+                    self?.artworkView.isHidden = true
+                    self?.chapterNumber.alpha = 1
+                }
+            }
+        } else {
+            artworkView.kf.cancelDownloadTask()
+            artworkView.image = nil
+            artworkView.isHidden = true
+            chapterNumber.alpha = 1
+        }
     }
 
     private func setUpSelectedChapterButton() {

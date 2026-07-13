@@ -686,6 +686,13 @@ final class PlaybackManager {
         chapterManager.chaptersForTime(time)
     }
 
+    /// Timed metadata pushed by the player mid-stream (see
+    /// `StreamedChapterMetadataHandler`): fills artwork/title gaps in the chapter
+    /// playing at `time`, or grows a synthetic chapter list for chapterless streams.
+    func ingestStreamedChapterMetadata(title: String?, artworkData: Data?, at time: TimeInterval) {
+        chapterManager.ingestStreamedMetadata(title: title, artworkData: artworkData, at: time)
+    }
+
     func playableChaptersUpdated() {
         // Check if current chapter still needs to be played
         if currentChapters().visibleChapter?.isPlayable() == false {

@@ -1,13 +1,17 @@
 import Foundation
+import Kingfisher
 import PocketCastsDataModel
 import PocketCastsUtils
 import CoreMedia
+import UIKit
 
 enum ChapterOrigin {
     case podcastIndex
     case nativeMedia
     case generated
     case showNotes
+    /// Synthesized progressively from AVPlayer timed metadata mid-stream.
+    case streamedMetadata
     case unknown
 
     var analyticsDescription: String {
@@ -20,6 +24,8 @@ enum ChapterOrigin {
             "show_notes"
         case .podcastIndex:
             "podcast_index"
+        case .streamedMetadata:
+            "streamed_metadata"
         case .unknown:
             "unknown"
         }
@@ -161,9 +167,116 @@ class ChapterManager {
 
         if hasChanged {
             currentChapters = chapters
+            fetchRemoteArtworkIfNeeded()
         }
 
         return hasChanged
+    }
+
+    // MARK: - Remote chapter artwork
+
+    /// URLs with a fetch in flight or already failed this session — retried at
+    /// most once per chapter load, never in a loop.
+    private var artworkFetchesAttempted = Set<URL>()
+
+    /// Resolves `imageURL`-only artwork (Podcast Index / Podlove chapters) for the
+    /// current chapter and the next visible one (so the boundary crossing swaps
+    /// art without a flash). A successful fetch lands in `chapter.image` — the
+    /// slot every sink (player, mini player, lock screen, chapter list) reads —
+    /// and re-posts the chapters-updated notification so they refresh.
+    private func fetchRemoteArtworkIfNeeded() {
+        let candidates = [currentChapters.visibleChapter, nextVisiblePlayableChapter()]
+        for chapter in candidates {
+            guard let chapter, chapter.image == nil, let url = chapter.imageURL,
+                  !artworkFetchesAttempted.contains(url) else { continue }
+            artworkFetchesAttempted.insert(url)
+
+            KingfisherManager.shared.retrieveImage(with: url) { [weak self] result in
+                guard let self, case .success(let value) = result else { return }
+                Task { @MainActor [weak self] in
+                    guard let self, chapter.image == nil else { return }
+                    chapter.image = value.image
+                    // Only announce when the artwork is on screen; prefetched
+                    // next-chapter art gets announced by its boundary crossing.
+                    if self.currentChapters.visibleChapter === chapter {
+                        NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Streamed timed metadata
+
+    /// Progressive chapter metadata pushed by AVPlayer mid-stream
+    /// (`AVPlayerItemMetadataOutput`): artwork and titles that weren't available
+    /// when the chapter list was parsed. Fills gaps in the chapter playing at
+    /// `time` — embedded bytes still win — and, for an episode with no chapters
+    /// at all, grows a synthetic list so timed metadata alone yields per-chapter
+    /// art and titles.
+    func ingestStreamedMetadata(title: String?, artworkData: Data?, at time: TimeInterval) {
+        let artwork = artworkData.flatMap { UIImage(data: $0) }
+        guard artwork != nil || !(title ?? "").isEmpty else { return }
+
+        if chapters.isEmpty {
+            appendStreamedChapter(title: title, artwork: artwork, at: time)
+            return
+        }
+
+        // On a synthetic list the last chapter is open-ended, so it covers every
+        // later time — a titled group meaningfully past the last boundary is a
+        // new chapter, not a gap-fill of the current one.
+        if chaptersOrigin == .streamedMetadata, let title, !title.isEmpty,
+           let last = chapters.last, time > last.startTime.seconds + 1 {
+            appendStreamedChapter(title: title, artwork: artwork, at: time)
+            return
+        }
+
+        guard let chapter = chaptersForTime(time).visibleChapter else { return }
+        var changed = false
+        if let artwork, chapter.image == nil {
+            chapter.image = artwork
+            changed = true
+        }
+        if let title, !title.isEmpty, chapter.title.isEmpty {
+            chapter.title = title
+            changed = true
+        }
+        if changed, currentChapters.visibleChapter === chapter {
+            NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
+        }
+    }
+
+    /// Appends a synthetic chapter starting at `time`, closing the previous
+    /// synthetic chapter's open-ended duration at the new boundary.
+    private func appendStreamedChapter(title: String?, artwork: UIImage?, at time: TimeInterval) {
+        guard chapters.isEmpty || chaptersOrigin == .streamedMetadata else { return }
+
+        if let last = chapters.last {
+            // Metadata can re-announce the current group (seeks, output resets):
+            // same boundary means update, not append.
+            if abs(last.startTime.seconds - time) < 1 {
+                if let artwork, last.image == nil { last.image = artwork }
+                if let title, !title.isEmpty, last.title.isEmpty { last.title = title }
+                NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
+                return
+            }
+            guard time > last.startTime.seconds else { return }
+            last.duration = time - last.startTime.seconds
+        }
+
+        let chapter = ChapterInfo()
+        chapter.title = title ?? ""
+        chapter.image = artwork
+        chapter.index = chapters.count
+        chapter.startTime = CMTime(seconds: time, preferredTimescale: 1000000)
+        // Open-ended until the next metadata group closes it.
+        chapter.duration = .greatestFiniteMagnitude
+
+        chaptersOrigin = .streamedMetadata
+        chapters.append(chapter)
+        updateCurrentChapter(time: PlaybackManager.shared.currentTime())
+        NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }
 
     func parseChapters(episode: BaseEpisode, duration: TimeInterval) {
@@ -276,6 +389,7 @@ class ChapterManager {
         currentChapters = Chapters()
         chaptersOrigin = .unknown
         ruleSkippedIndices.removeAll()
+        artworkFetchesAttempted.removeAll()
 
         NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }
@@ -303,7 +417,9 @@ class ChapterManager {
             patterns: skipPatternsProvider(episode),
             reEnabledIndices: sessionReEnabledChapters[episode.uuid] ?? [])
 
+        artworkFetchesAttempted.removeAll()
         updateCurrentChapter(time: PlaybackManager.shared.currentTime())
+        fetchRemoteArtworkIfNeeded()
 
         NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }
