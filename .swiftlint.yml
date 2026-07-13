@@ -107,8 +107,11 @@ only_rules:
   # Prefer `reduce(into:_:)` over `reduce(_:_:)` for non-trivial accumulator types.
   - reduce_into
 
-  # `nil` coalescing on a non-optional is redundant.
-  - redundant_nil_coalescing
+  # NOTE: redundant_nil_coalescing is deliberately NOT enabled. Its autocorrect
+  # strips `?? nil`, which is a semantic double-optional flatten on GRDBQueue
+  # read/write results (the queue wraps the closure's return in its own
+  # optional) — removing it once turned "no row found" into "row exists" and
+  # shipped a real bug. See semgrep rule swift-no-nil-check-on-dbqueue-result.
 
   # Type annotations are redundant when the type can be inferred.
   - redundant_type_annotation
