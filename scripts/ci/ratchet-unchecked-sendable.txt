@@ -6,6 +6,7 @@ Modules/Sources/PocketCastsDataModel/Private/DB/GRDB/GRDBQueue.swift: 2
 Modules/Sources/PocketCastsDataModel/Public/Model/PlaylistEpisode.swift: 2
 Modules/Sources/PocketCastsDataModel/Public/Repositories/Repositories+Dependency.swift: 2
 Modules/Sources/PocketCastsDataModelTesting/DataMaintenanceMock.swift: 2
+Modules/Sources/PocketCastsDataModelTesting/DatabaseObservingMock.swift: 2
 Modules/Sources/PocketCastsDataModelTesting/EpisodeRepositoryMock.swift: 2
 Modules/Sources/PocketCastsDataModelTesting/FolderRepositoryMock.swift: 2
 Modules/Sources/PocketCastsDataModelTesting/PlaylistRepositoryMock.swift: 2
@@ -49,6 +50,7 @@ Modules/Sources/PocketCastsUtils/General/TimedActionHelper.swift: 2
 Modules/Sources/PocketCastsUtils/General/UncheckedSendable.swift: 2
 Modules/Sources/PocketCastsUtils/General/UncheckedSendableBox.swift: 2
 Modules/Sources/PocketCastsUtils/Logging/FileLog.swift: 2
+Modules/Tests/PocketCastsDataModelTests/ValueObservationTests.swift: 2
 Modules/Tests/PocketCastsServerTests/FeedParserTestSupport.swift: 2
 Modules/Tests/PocketCastsServerTests/PodcastExistsHelperTests.swift: 2
 Modules/Tests/PocketCastsServerTests/SyncTaskPlaylistOrderingTests.swift: 2
