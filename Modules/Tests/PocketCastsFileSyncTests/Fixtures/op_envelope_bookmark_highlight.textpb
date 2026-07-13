@@ -1,0 +1,17 @@
+op_id: "cccc1c2e-1111-2222-3333-444455556666"
+device_id: "device-a"
+seq: 44
+wall_clock_ms: 1767225900000
+record {
+  bookmark {
+    bookmark_uuid: "bm-uuid-1"
+    podcast_uuid: "pod-uuid-1"
+    episode_uuid: "ep-uuid-1"
+    created_at { seconds: 1767225600 }
+    time { value: 30 }
+    title { value: "A moment" }
+    title_modified { value: 1767225600000 }
+    excerpt { value: "Something worth quoting" }
+    end_time { value: 42.5 }
+  }
+}

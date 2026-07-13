@@ -117,6 +117,13 @@ class DatabaseHelper {
         // playlist.
         SchemaMigration(toVersion: 79) { db in
             try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN customQuery TEXT;", values: nil)
+        },
+        // Smart highlights (AI UX plan phase 3): the transcript excerpt around a
+        // bookmark's position and the end of that excerpt window, written once by
+        // HighlightEnricher after creation. NULL = plain (un-enriched) bookmark.
+        SchemaMigration(toVersion: 80) { db in
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN excerpt TEXT;", values: nil)
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN endTime REAL;", values: nil)
         }
     ]
 

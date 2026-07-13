@@ -217,6 +217,89 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
         }
     }
 
+    // MARK: - Smart Highlight Enrichment
+
+    func testNewBookmarksHaveNoEnrichment() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(dataManager: dataManager)
+
+            XCTAssertNil(bookmark.excerpt, "\(impl): excerpt should default to nil")
+            XCTAssertNil(bookmark.endTime, "\(impl): endTime should default to nil")
+        }
+    }
+
+    func testAddingBookmarkWithEnrichmentRoundTrips() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let uuid = try XCTUnwrap(
+                dataManager.bookmarks.add(
+                    episodeUuid: "episode-uuid",
+                    podcastUuid: "podcast-uuid",
+                    title: "Title",
+                    time: 30,
+                    excerpt: "Something worth quoting",
+                    endTime: 35.5
+                ),
+                "\(impl): should return bookmark uuid"
+            )
+
+            let bookmark = dataManager.bookmarks.bookmark(for: uuid)
+            XCTAssertEqual(bookmark?.excerpt, "Something worth quoting", "\(impl): excerpt should round-trip")
+            XCTAssertEqual(bookmark?.endTime, 35.5, "\(impl): endTime should round-trip")
+        }
+    }
+
+    func testUpdateEnrichmentPersistsExcerptAndEndTime() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(time: 60, dataManager: dataManager)
+
+            let success = await dataManager.bookmarks.updateEnrichment(
+                uuid: bookmark.uuid,
+                excerpt: "The excerpt",
+                endTime: 65
+            )
+            XCTAssertTrue(success, "\(impl): updateEnrichment should succeed")
+
+            let updated = dataManager.bookmarks.bookmark(for: bookmark.uuid)
+            XCTAssertEqual(updated?.excerpt, "The excerpt", "\(impl): excerpt should persist")
+            XCTAssertEqual(updated?.endTime, 65, "\(impl): endTime should persist")
+        }
+    }
+
+    func testUpdateEnrichmentDoesNotTouchTitleOrItsModifiedDate() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let created = Date(timeIntervalSince1970: 1234)
+            let bookmark = addBookmark(title: "User title", created: created, dataManager: dataManager)
+
+            _ = await dataManager.bookmarks.updateEnrichment(uuid: bookmark.uuid, excerpt: "Excerpt", endTime: 5)
+
+            let updated = dataManager.bookmarks.bookmark(for: bookmark.uuid)
+            XCTAssertEqual(updated?.title, "User title", "\(impl): title should be untouched")
+            XCTAssertEqual(updated?.titleModified, created, "\(impl): title modified date should be untouched")
+        }
+    }
+
+    func testUpdateEnrichmentAffectsOnlyTargetBookmark() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let target = addBookmark(time: 1, dataManager: dataManager)
+            let other = addBookmark(time: 2, dataManager: dataManager)
+
+            _ = await dataManager.bookmarks.updateEnrichment(uuid: target.uuid, excerpt: "Excerpt", endTime: 3)
+
+            XCTAssertEqual(dataManager.bookmarks.bookmark(for: target.uuid)?.excerpt, "Excerpt", "\(impl): target should be enriched")
+            XCTAssertNil(dataManager.bookmarks.bookmark(for: other.uuid)?.excerpt, "\(impl): other bookmarks should be untouched")
+        }
+    }
+
+    func testUpdateEnrichmentMarksForSync() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(syncStatus: .synced, dataManager: dataManager)
+
+            _ = await dataManager.bookmarks.updateEnrichment(uuid: bookmark.uuid, excerpt: "Excerpt", endTime: 2)
+
+            XCTAssertEqual(dataManager.bookmarks.bookmarksToSync().map(\.uuid), [bookmark.uuid], "\(impl): enrichment should mark for sync")
+        }
+    }
+
     // MARK: - Deletion
 
     func testRemovingBookmarksSucceeds() async throws {

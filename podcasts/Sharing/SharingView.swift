@@ -54,7 +54,16 @@ struct SharingView: View {
 
     init(destinations: [ShareDestination], selectedOption: SharingModal.Option, selectedStyle: ShareImageStyle = .large, source: AnalyticsSource) {
         self.destinations = destinations
-        self.shareable = Shareable(option: selectedOption, style: selectedStyle)
+
+        // Highlights lead with their quote card unless the caller asked for
+        // something specific.
+        let initialStyle: ShareImageStyle
+        if case .highlight = selectedOption, selectedStyle == .large {
+            initialStyle = .quote
+        } else {
+            initialStyle = selectedStyle
+        }
+        self.shareable = Shareable(option: selectedOption, style: initialStyle)
 
         switch selectedOption {
         case .clip(let episode, let time):
@@ -104,6 +113,9 @@ struct SharingView: View {
             case .currentPosition(let episode, _), .bookmark(let episode, _):
                 properties["episode_uuid"] = episode.uuid
                 type = "episode_timestamp"
+            case .highlight(let episode, _):
+                properties["episode_uuid"] = episode.uuid
+                type = "highlight"
             }
             properties["clip_uuid"] = clipUUID
             properties["type"] = type
@@ -155,9 +167,12 @@ struct SharingView: View {
         case .clipShare(_, _, let style):
             [style]
         case .clip:
-            ShareImageStyle.allCases
+            ShareImageStyle.allCases.filter { $0 != .quote }
+        case .highlight:
+            // The quote card leads, and only highlights offer it.
+            [.quote, .large, .medium, .small]
         default:
-            ShareImageStyle.allCases.filter { $0 != .audio }
+            ShareImageStyle.allCases.filter { $0 != .audio && $0 != .quote }
         }
     }
 

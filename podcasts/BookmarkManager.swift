@@ -20,12 +20,17 @@ final class BookmarkManager {
     /// Called when a value of the bookmark changes
     let onBookmarkChanged = PassthroughSubject<Event.Changed, Never>()
 
+    /// Enriches new bookmarks into smart highlights (transcript excerpt + auto
+    /// title); it subscribes to this manager's `onBookmarkCreated` events.
+    private var highlightEnricher: HighlightEnricher?
+
     @MainActor init(dataManager: BookmarkDataManager = DataManager.sharedManager.bookmarks,
          generalManager: DataManager = .sharedManager,
          playbackManager: PlaybackManager = .shared) {
         self.dataManager = dataManager
         self.generalManager = generalManager
         self.playbackManager = playbackManager
+        self.highlightEnricher = HighlightEnricher(bookmarkManager: self, dataManager: generalManager)
     }
 
     /// Plays the "bookmark created" tone
@@ -139,6 +144,10 @@ final class BookmarkManager {
                 /// The title of the bookmark was changed
                 /// The new value is passed as a value
                 case title(String)
+
+                /// The bookmark was enriched with a smart-highlight transcript excerpt
+                /// The new excerpt is passed as a value
+                case excerpt(String)
             }
         }
 

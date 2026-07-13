@@ -74,6 +74,14 @@ struct BookmarkRow<Style: BookmarksStyle>: View {
                     .foregroundStyle(style.primaryText)
                     .font(style: .subheadline, weight: .medium)
 
+                // Smart highlight: a short preview of the transcript excerpt
+                if FeatureFlag.smartHighlights.enabled, let excerpt = bookmark.excerpt, !excerpt.isEmpty {
+                    Text(excerpt)
+                        .foregroundStyle(style.secondaryText)
+                        .font(style: .footnote)
+                        .lineLimit(2)
+                }
+
                 Text(rowModel.subtitle)
                     .foregroundStyle(style.tertiaryText)
                     .font(style: .caption, weight: .semibold)

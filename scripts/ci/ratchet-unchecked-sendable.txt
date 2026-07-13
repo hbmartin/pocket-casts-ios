@@ -63,6 +63,7 @@ PocketCastsTests/Tests/AppIntents/PlaybackIntentActionHandlerTests.swift: 2
 PocketCastsTests/Tests/DownloadManagerDependencyTests.swift: 2
 PocketCastsTests/Tests/Explore/ITunesDirectoryTests.swift: 2
 PocketCastsTests/Tests/Playback/Chapters/ChapterManagerTests.swift: 2
+PocketCastsTests/Tests/Utilities/ApiBaseTaskRetryTests.swift: 2
 PocketCastsTests/Tests/Utilities/TokenHelperTests.swift: 2
 WidgetExtension/Data/WidgetData.swift: 2
 podcasts/AdvancedAudio/TrimVoiceActivityAnalyzer.swift: 4

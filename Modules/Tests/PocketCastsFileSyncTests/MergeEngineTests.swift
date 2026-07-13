@@ -160,6 +160,59 @@ final class MergeEngineTests: XCTestCase {
         XCTAssertEqual(state.podcasts["pod-1"]!.record.feedURL, "https://example.com/feed.rss")
     }
 
+    // MARK: Bookmarks
+
+    private func bookmarkOp(
+        uuid: String = "bm-1", device: String, seq: UInt64, wallClockMs: Int64,
+        title: String? = nil, titleModified: Int64? = nil,
+        excerpt: String? = nil, endTime: Double? = nil
+    ) -> Filesync_OpEnvelope {
+        var bookmark = Api_SyncUserBookmark()
+        bookmark.bookmarkUuid = uuid
+        bookmark.episodeUuid = "ep-1"
+        if let title {
+            bookmark.title = .with { $0.value = title }
+            bookmark.titleModified = .with { $0.value = titleModified ?? wallClockMs }
+        }
+        if let excerpt { bookmark.excerpt = .with { $0.value = excerpt } }
+        if let endTime { bookmark.endTime = .with { $0.value = endTime } }
+        var record = Api_Record()
+        record.bookmark = bookmark
+        var envelope = Filesync_OpEnvelope()
+        envelope.opID = "op-\(device)-\(seq)"
+        envelope.deviceID = device
+        envelope.seq = seq
+        envelope.wallClockMs = wallClockMs
+        envelope.record = record
+        return envelope
+    }
+
+    func testBookmarkEnrichmentFillsInFromLaterOp() {
+        let ops = [
+            bookmarkOp(device: "a", seq: 1, wallClockMs: 1000, title: "Bookmark"),
+            bookmarkOp(device: "a", seq: 2, wallClockMs: 2000, excerpt: "The quote", endTime: 42.5),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        let bookmark = state.bookmarks["bm-1"]!.record
+
+        XCTAssertEqual(bookmark.title.value, "Bookmark")
+        XCTAssertEqual(bookmark.excerpt.value, "The quote")
+        XCTAssertEqual(bookmark.endTime.value, 42.5)
+    }
+
+    func testBookmarkEnrichmentIsWriteOnceFirstWriterWins() {
+        let ops = [
+            bookmarkOp(device: "a", seq: 1, wallClockMs: 1000, excerpt: "first", endTime: 10),
+            bookmarkOp(device: "b", seq: 1, wallClockMs: 2000, excerpt: "second", endTime: 20),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        let bookmark = state.bookmarks["bm-1"]!.record
+
+        XCTAssertEqual(bookmark.excerpt.value, "first",
+                       "enrichment is write-once — a later conflicting excerpt must not clobber it")
+        XCTAssertEqual(bookmark.endTime.value, 10)
+    }
+
     // MARK: Tombstones and resurrection
 
     func testTombstoneDeletesEntity() {
