@@ -31,7 +31,29 @@ public struct PodcastSettings: JSONCodable, Equatable, Sendable {
     /// (see the `KeyedDecodingContainer` overload in `ModifiedDate.swift`).
     @ModifiedDate public var skipChapterTitles: [String]? = nil
 
+    /// Per-podcast opt-in: automatically transcribe new episode downloads on this device.
+    /// Device-local behavior (never synced to the server). Settings payloads written before this
+    /// field existed decode via the module-scoped `KeyedDecodingContainer` overload below
+    /// (missing key → `false`).
+    @ModifiedDate public var autoTranscribe: Bool = false
+
     public static var defaults: Self {
         return PodcastSettings(trimSilence: .off, boostVolume: false, playbackSpeed: 1)
+    }
+}
+
+/// Missing-key rescue for `@ModifiedDate` Bool fields added to `PodcastSettings` after payloads
+/// already existed on disk: the synthesized `init(from:)` picks this more specific overload, so a
+/// missing key decodes as `false` instead of throwing `keyNotFound` — which would discard the
+/// podcast's ENTIRE settings payload (`Podcast.from` falls back to `PodcastSettings.defaults` on
+/// any decode error). Companion to the `ModifiedDate<T?>` overload in `ModifiedDate.swift`.
+///
+/// Deliberately internal (module-scoped): every `ModifiedDate<Bool>` field in this module defaults
+/// to `false`, so the fallback is always correct here. Other modules (e.g. `AppSettings` in
+/// PocketCastsServer) have `true`-default Bool fields and must not inherit this behavior — and a
+/// future `PodcastSettings` Bool defaulting to `true` must NOT rely on this overload.
+extension KeyedDecodingContainer {
+    func decode(_ type: ModifiedDate<Bool>.Type, forKey key: Key) throws -> ModifiedDate<Bool> {
+        try decodeIfPresent(type, forKey: key) ?? ModifiedDate(wrappedValue: false)
     }
 }

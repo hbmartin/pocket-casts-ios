@@ -9,7 +9,7 @@ class PodcastSettingsViewController: PCViewController {
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case autoDownload, notifications, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, skipChapters, autoArchive, inFilters, unsubscribe, feedError }
+    enum TableRow { case autoDownload, notifications, autoTranscribe, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, skipChapters, autoArchive, inFilters, unsubscribe, feedError }
 
     @IBOutlet var settingsTable: UITableView! {
         didSet {

@@ -435,6 +435,12 @@ public class DataManager {
         podcastManager.saveSkipChapterTitles(titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
+    /// Persists the per-podcast auto-transcribe-on-download opt-in into the settings JSON payload.
+    /// Device-local behavior — the field never syncs to the server.
+    public func saveAutoTranscribe(_ enabled: Bool, podcastUuid: String) {
+        podcastManager.saveAutoTranscribe(enabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    }
+
     public func savePodcastDownloadSetting(_ setting: AutoDownloadSetting, podcastUuid: String) {
         podcastManager.savePodcastDownloadSetting(setting, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }

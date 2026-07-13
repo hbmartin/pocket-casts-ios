@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, searchTranscripts }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -346,6 +346,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             cell.settingsImage.image = UIImage(named: "bookmarks-profile")
             cell.settingsLabel.text = L10n.bookmarks
+        case .searchTranscripts:
+            cell.settingsImage.image = UIImage(named: "search")
+            cell.settingsLabel.text = L10n.transcriptionSearchTitle
         }
 
         return cell
@@ -403,6 +406,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             let bookmarksController = BookmarksProfileListController()
             navigationController?.pushViewController(bookmarksController, animated: true)
+        case .searchTranscripts:
+            let searchView = TranscriptSearchView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: searchView)
+            hostingController.title = L10n.transcriptionSearchTitle
+            navigationController?.pushViewController(hostingController, animated: true)
         }
     }
 
@@ -423,6 +431,14 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     private func refreshTableData() {
         var data: [[ProfileViewController.TableRow]]
         data = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help, .uploadedFiles]]
+
+        // Cross-episode transcript search only earns a row once something is
+        // searchable (completedCount is a cheap indexed COUNT).
+        if FeatureFlag.diarizedTranscription.enabled,
+           DataManager.sharedManager.transcriptions.completedCount() > 0,
+           let helpIndex = data[0].firstIndex(of: .help) {
+            data[0].insert(.searchTranscripts, at: helpIndex)
+        }
 
         if informationalBannerCoordinator.shouldShowBanner() {
             data[0].insert(.informationalBanner, at: 0)

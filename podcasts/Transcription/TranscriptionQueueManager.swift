@@ -65,6 +65,18 @@ actor TranscriptionQueueManager {
         }
     }
 
+    /// Polling cadence for asynchronous remote-provider jobs: 3s, backing off
+    /// ×1.5 per poll to a 30s cap, bounded overall at 30 minutes. Tests inject a
+    /// near-zero schedule.
+    nonisolated struct PollSchedule: Sendable {
+        var initialInterval: TimeInterval = 3
+        var backoffFactor: Double = 1.5
+        var maxInterval: TimeInterval = 30
+        var overallTimeout: TimeInterval = 30 * 60
+
+        static let `default` = PollSchedule()
+    }
+
     static let shared = TranscriptionQueueManager()
 
     /// Must match the BGTaskSchedulerPermittedIdentifiers entry in podcasts-Info.plist.
@@ -82,6 +94,11 @@ actor TranscriptionQueueManager {
     private let engineMode: @Sendable () -> TranscriptionEngineMode
     private let audioFileURL: @Sendable (String) -> URL?
     private let thermalState: @Sendable () -> ProcessInfo.ThermalState
+    private let remoteProviderId: @Sendable () -> String
+    private let remoteAPIKey: @Sendable (String) -> String?
+    private let episodeDownloadURL: @Sendable (String) -> URL?
+    private let transcodeForUpload: @Sendable (URL) async throws -> AudioTranscodeHelper.Output
+    private let pollSchedule: PollSchedule
 
     private var states: [String: JobState] = [:]
     private var pendingEpisodeUuids: [String] = []
@@ -100,13 +117,32 @@ actor TranscriptionQueueManager {
                    episode.downloaded(pathFinder: DownloadManager.shared) else { return nil }
              return URL(fileURLWithPath: episode.pathToDownloadedFile(pathFinder: DownloadManager.shared))
          },
-         thermalState: @escaping @Sendable () -> ProcessInfo.ThermalState = { ProcessInfo.processInfo.thermalState }) {
+         thermalState: @escaping @Sendable () -> ProcessInfo.ThermalState = { ProcessInfo.processInfo.thermalState },
+         remoteProviderId: @escaping @Sendable () -> String = { Settings.transcriptionRemoteProvider() },
+         remoteAPIKey: @escaping @Sendable (String) -> String? = { TranscriptionKeyStore.apiKey(providerId: $0) },
+         episodeDownloadURL: @escaping @Sendable (String) -> URL? = { episodeUuid in
+             guard let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid),
+                   let urlString = episode.downloadUrl,
+                   let url = URL(string: urlString),
+                   let scheme = url.scheme?.lowercased(),
+                   scheme == "http" || scheme == "https" else { return nil }
+             return url
+         },
+         transcodeForUpload: @escaping @Sendable (URL) async throws -> AudioTranscodeHelper.Output = {
+             try await AudioTranscodeHelper().transcodeForUpload(sourceURL: $0)
+         },
+         pollSchedule: PollSchedule = .default) {
         self.dataManager = dataManager
         self.engineFactory = engineFactory
         self.artifactStore = artifactStore
         self.engineMode = engineMode
         self.audioFileURL = audioFileURL
         self.thermalState = thermalState
+        self.remoteProviderId = remoteProviderId
+        self.remoteAPIKey = remoteAPIKey
+        self.episodeDownloadURL = episodeDownloadURL
+        self.transcodeForUpload = transcodeForUpload
+        self.pollSchedule = pollSchedule
     }
 
     // MARK: - Public API
@@ -126,6 +162,9 @@ actor TranscriptionQueueManager {
         }
         record.transcriptionStatus = .queued
         record.errorMessage = nil
+        // A fresh enqueue never resumes an old remote job; only requeue/restore
+        // paths (which bypass enqueue) keep the job id for poll resumption.
+        record.remoteJobId = nil
         record.updatedAt = Date().timeIntervalSince1970
         dataManager.transcriptions.upsert(record)
 
@@ -274,6 +313,11 @@ actor TranscriptionQueueManager {
         }
 
         let mode = engineMode()
+        if mode == .remoteProvider {
+            try await runRemote(episodeUuid: episodeUuid, record: record)
+            return
+        }
+
         let engine = try engineFactory.makeEngine(for: mode)
         guard let audioURL = audioFileURL(episodeUuid) else {
             throw TranscriptionError.notDownloaded
@@ -309,15 +353,141 @@ actor TranscriptionQueueManager {
         guard !cues.isEmpty else { throw TranscriptionError.engineFailure }
         setState(episodeUuid: episodeUuid, state: .diarizing(1))
 
-        setState(episodeUuid: episodeUuid, state: .saving, forcePost: true)
         let speakerCount = Set(cues.compactMap(\.speaker)).count
         let transcript = DiarizedTranscript(cues: cues,
                                             language: languageOverride,
                                             speakerCount: speakerCount,
                                             engineDescription: engine.id)
+        try complete(episodeUuid: episodeUuid, record: record, transcript: transcript)
+    }
+
+    // MARK: - Remote pipeline
+
+    /// Mode 2: the transcript is produced by a hosted API using the user's own
+    /// key. Stages map as: `preparingModel` = source resolution + transcode +
+    /// upload, `transcribing` = provider-side processing (poll loop for async
+    /// providers), then the shared `saving` path.
+    private func runRemote(episodeUuid: String, record: EpisodeTranscriptionRecord) async throws {
+        var record = record
+
+        // A job id left on the record (crash/expiration mid-poll) means audio was
+        // already submitted — resume polling instead of paying for a second job.
+        let resumeJobId = record.engineMode == TranscriptionEngineMode.remoteProvider.rawValue
+            ? record.remoteJobId : nil
+        let providerId = (resumeJobId != nil ? record.provider : nil) ?? remoteProviderId()
+
+        guard let provider = engineFactory.makeRemoteProvider(id: providerId) else {
+            throw TranscriptionError.remoteJobFailed("Unknown transcription provider: \(providerId)")
+        }
+        guard let apiKey = remoteAPIKey(providerId) else {
+            throw TranscriptionError.invalidAPIKey
+        }
+
+        record.transcriptionStatus = .processing
+        record.engineMode = TranscriptionEngineMode.remoteProvider.rawValue
+        record.provider = providerId
+        record.errorMessage = nil
+        record.updatedAt = Date().timeIntervalSince1970
+        dataManager.transcriptions.upsert(record)
+
+        let language = Settings.transcriptionLanguageOverride()
+
+        if let resumeJobId {
+            FileLog.shared.addMessage("[Transcription] resuming remote job \(resumeJobId) (\(providerId)) for \(episodeUuid)")
+            setState(episodeUuid: episodeUuid, state: .transcribing(0), forcePost: true)
+            let handle = RemoteJobHandle(providerId: providerId, jobId: resumeJobId)
+            let transcript = try await pollUntilComplete(provider: provider, handle: handle, apiKey: apiKey, episodeUuid: episodeUuid)
+            try complete(episodeUuid: episodeUuid, record: record, transcript: transcript)
+            return
+        }
+
+        setState(episodeUuid: episodeUuid, state: .preparingModel(0), forcePost: true)
+        Analytics.track(.transcriptionStarted, properties: ["episode_uuid": episodeUuid, "engine": providerId])
+
+        let (source, temporaryUploadFile) = try await resolveRemoteSource(episodeUuid: episodeUuid, provider: provider)
+        defer {
+            if let temporaryUploadFile {
+                try? FileManager.default.removeItem(at: temporaryUploadFile)
+            }
+        }
+        try Task.checkCancellation()
+
+        setState(episodeUuid: episodeUuid, state: .transcribing(0), forcePost: true)
+        let outcome = try await provider.submit(source: source, language: language, apiKey: apiKey)
+
+        switch outcome {
+        case .completed(let transcript):
+            try complete(episodeUuid: episodeUuid, record: record, transcript: transcript)
+        case .job(let handle):
+            // Persist before the first poll so a crash/expiration can resume
+            // the job instead of re-submitting it.
+            dataManager.transcriptions.setRemoteJobId(episodeUuid: episodeUuid, jobId: handle.jobId)
+            record.remoteJobId = handle.jobId
+            let transcript = try await pollUntilComplete(provider: provider, handle: handle, apiKey: apiKey, episodeUuid: episodeUuid)
+            try complete(episodeUuid: episodeUuid, record: record, transcript: transcript)
+        }
+    }
+
+    /// Prefers the episode's public URL for providers that can fetch it (also
+    /// covers non-downloaded episodes); otherwise transcodes the downloaded file
+    /// for upload. Returns the temp transcode URL (if any) for cleanup.
+    private func resolveRemoteSource(episodeUuid: String,
+                                     provider: any RemoteTranscriptionProvider) async throws -> (RemoteAudioSource, temporaryUploadFile: URL?) {
+        if provider.supportsPublicURL, let downloadURL = episodeDownloadURL(episodeUuid) {
+            return (.publicURL(downloadURL), nil)
+        }
+        guard let audioURL = audioFileURL(episodeUuid) else {
+            throw TranscriptionError.notDownloaded
+        }
+        let output = try await transcodeForUpload(audioURL)
+        return (.fileUpload(output.url, mimeType: output.mimeType), output.isTemporary ? output.url : nil)
+    }
+
+    /// Polls an asynchronous remote job on `pollSchedule` (default 3s ×1.5 → 30s
+    /// cap) until it completes, fails, or the 30-minute overall deadline passes.
+    /// Cancellation is honored between every wait and request.
+    private func pollUntilComplete(provider: any RemoteTranscriptionProvider,
+                                   handle: RemoteJobHandle,
+                                   apiKey: String,
+                                   episodeUuid: String) async throws -> DiarizedTranscript {
+        let deadline = Date().addingTimeInterval(pollSchedule.overallTimeout)
+        var interval = pollSchedule.initialInterval
+        var lastFraction: Double = 0
+
+        while true {
+            try Task.checkCancellation()
+            try await Task.sleep(nanoseconds: UInt64(max(interval, 0) * 1_000_000_000))
+            try Task.checkCancellation()
+
+            switch try await provider.poll(handle: handle, apiKey: apiKey) {
+            case .completed(let transcript):
+                return transcript
+            case .failed(let error):
+                throw error
+            case .processing(let fraction):
+                lastFraction = fraction ?? lastFraction
+                setState(episodeUuid: episodeUuid, state: .transcribing(lastFraction))
+            }
+
+            guard Date() < deadline else {
+                throw TranscriptionError.remoteJobFailed("timeout")
+            }
+            interval = min(interval * pollSchedule.backoffFactor, pollSchedule.maxInterval)
+        }
+    }
+
+    // MARK: - Completion
+
+    /// Shared tail of both pipelines: write the VTT artifact, replace the FTS
+    /// segments, finalize the record and announce completion.
+    private func complete(episodeUuid: String, record: EpisodeTranscriptionRecord, transcript: DiarizedTranscript) throws {
+        guard !transcript.cues.isEmpty else { throw TranscriptionError.engineFailure }
+
+        var record = record
+        setState(episodeUuid: episodeUuid, state: .saving, forcePost: true)
         let artifactURL = try artifactStore.write(transcript: transcript, episodeUuid: episodeUuid)
 
-        let searchSegments = cues.enumerated().map { index, cue in
+        let searchSegments = transcript.cues.enumerated().map { index, cue in
             TranscriptionSegment(index: index, text: cue.text, startTime: cue.start, speaker: cue.speaker)
         }
         dataManager.transcriptions.replaceSegments(episodeUuid: episodeUuid,
@@ -326,9 +496,10 @@ actor TranscriptionQueueManager {
 
         record.transcriptionStatus = .completed
         record.errorMessage = nil
-        record.durationSecs = cues.last?.end ?? 0
-        record.speakerCount = Int32(speakerCount)
-        record.language = languageOverride
+        record.durationSecs = transcript.cues.last?.end ?? 0
+        record.speakerCount = Int32(transcript.speakerCount)
+        record.language = transcript.language
+        record.remoteJobId = nil
         record.filePath = artifactURL.path
         record.updatedAt = Date().timeIntervalSince1970
         dataManager.transcriptions.upsert(record)
@@ -337,11 +508,11 @@ actor TranscriptionQueueManager {
         NotificationCenter.postOnMainThread(EpisodeTranscriptionCompleted(episodeUuid: episodeUuid, succeeded: true))
         Analytics.track(.transcriptionCompleted, properties: [
             "episode_uuid": episodeUuid,
-            "engine": engine.id,
-            "cue_count": cues.count,
+            "engine": transcript.engineDescription,
+            "cue_count": transcript.cues.count,
             "duration_seconds": Int(record.durationSecs)
         ])
-        FileLog.shared.addMessage("[Transcription] completed \(episodeUuid) (\(cues.count) cues)")
+        FileLog.shared.addMessage("[Transcription] completed \(episodeUuid) (\(transcript.cues.count) cues)")
     }
 
     // MARK: - Terminal states

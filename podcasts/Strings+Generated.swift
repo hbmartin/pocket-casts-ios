@@ -3045,6 +3045,10 @@ nonisolated internal enum L10n {
   internal static func podcastSeasonFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_season_format", String(describing: p1), fallback: "Season %1$@")
   }
+  /// Podcast settings switch: automatically generate an on-device transcript for each newly downloaded episode of this podcast
+  internal static var podcastSettingsAutoTranscribe: String { return L10n.tr("Localizable", "podcast_settings_auto_transcribe", fallback: "Auto-Transcribe on Download") }
+  /// Footer under the podcast settings auto-transcribe switch, explaining the behavior is on-device only
+  internal static var podcastSettingsAutoTranscribeFooter: String { return L10n.tr("Localizable", "podcast_settings_auto_transcribe_footer", fallback: "New downloads from this podcast will be transcribed automatically on this device.") }
   /// Podcast settings row and screen title for the chapter smart-skip rules editor.
   internal static var podcastSettingsSkipChapters: String { return L10n.tr("Localizable", "podcast_settings_skip_chapters", fallback: "Skip Chapters") }
   /// Prompt to allow the user to share the currently selected episode.
@@ -4383,12 +4387,24 @@ nonisolated internal enum L10n {
   internal static var transcriptReaderTextSize: String { return L10n.tr("Localizable", "transcript_reader_text_size", fallback: "Text size") }
   /// Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target.
   internal static var transcriptTapToSeekStreamingUnavailable: String { return L10n.tr("Localizable", "transcript_tap_to_seek_streaming_unavailable", fallback: "Download the episode to tap to seek") }
+  /// Title of the consent prompt button that grants consent and starts the remote transcription
+  internal static var transcriptionConsentAllow: String { return L10n.tr("Localizable", "transcription_consent_allow", fallback: "Allow and Generate") }
+  /// Consent prompt body for upload-based remote transcription providers. %1$@ is the provider name, e.g. "OpenAI"
+  internal static func transcriptionConsentMessageUpload(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_consent_message_upload", String(describing: p1), fallback: "The episode's audio will be uploaded to %1$@ and transcribed using your API key. Usage may incur charges on your %1$@ account.")
+  }
+  /// Consent prompt body for URL-based remote transcription providers. %1$@ is the provider name, e.g. "AssemblyAI"
+  internal static func transcriptionConsentMessageUrl(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_consent_message_url", String(describing: p1), fallback: "The episode's public audio link will be shared with %1$@, which downloads and transcribes the audio using your API key. Usage may incur charges on your %1$@ account.")
+  }
+  /// Title of the consent prompt shown before the first transcription with a remote provider
+  internal static var transcriptionConsentTitle: String { return L10n.tr("Localizable", "transcription_consent_title", fallback: "Send this episode to a remote service?") }
   /// Title of the destructive menu action that deletes the locally generated transcript for an episode
   internal static var transcriptionDeleteGenerated: String { return L10n.tr("Localizable", "transcription_delete_generated", fallback: "Delete Generated Transcript") }
   /// Name of the transcription engine option that uses Apple's built-in on-device speech recognition
   internal static var transcriptionEngineApple: String { return L10n.tr("Localizable", "transcription_engine_apple", fallback: "Apple Built-in") }
   /// Footer under the transcription engine picker explaining that the disabled engine options will become available later
-  internal static var transcriptionEngineComingSoon: String { return L10n.tr("Localizable", "transcription_engine_coming_soon", fallback: "Downloaded models and remote providers are coming soon.") }
+  internal static var transcriptionEngineComingSoon: String { return L10n.tr("Localizable", "transcription_engine_coming_soon", fallback: "Downloaded models are coming soon.") }
   /// Name of the (not yet available) transcription engine option that uses downloadable on-device models
   internal static var transcriptionEngineLocalModel: String { return L10n.tr("Localizable", "transcription_engine_local_model", fallback: "Downloaded Model") }
   /// Header of the transcription settings section where the user picks which speech-to-text engine to use
@@ -4399,16 +4415,60 @@ nonisolated internal enum L10n {
   internal static var transcriptionGenerate: String { return L10n.tr("Localizable", "transcription_generate", fallback: "Generate Transcript") }
   /// Shown (as a toast and as progress text in the transcript screen) while an on-device transcript is being generated
   internal static var transcriptionGenerating: String { return L10n.tr("Localizable", "transcription_generating", fallback: "Generating…") }
+  /// Shown next to the validate-key button when the key check could not be completed (e.g. no network)
+  internal static var transcriptionKeyCheckFailed: String { return L10n.tr("Localizable", "transcription_key_check_failed", fallback: "Couldn't check the key. Try again.") }
+  /// Shown next to the validate-key button when the provider rejected the entered API key
+  internal static var transcriptionKeyInvalid: String { return L10n.tr("Localizable", "transcription_key_invalid", fallback: "Key was rejected") }
+  /// Shown next to the validate-key button when the entered API key was accepted by the provider
+  internal static var transcriptionKeyValid: String { return L10n.tr("Localizable", "transcription_key_valid", fallback: "Key is valid") }
+  /// Shown next to the validate-key button while the key check request is running
+  internal static var transcriptionKeyValidating: String { return L10n.tr("Localizable", "transcription_key_validating", fallback: "Checking key…") }
   /// Header of the transcription settings section (and label of its text field) where the user can force a transcription language
   internal static var transcriptionLanguageOverride: String { return L10n.tr("Localizable", "transcription_language_override", fallback: "Language Override") }
   /// Footer under the transcription language override text field. The quoted example is a BCP-47 language tag and should not be translated.
   internal static var transcriptionLanguageOverrideFooter: String { return L10n.tr("Localizable", "transcription_language_override_footer", fallback: "Enter a language tag such as \"en-US\" to force a transcription language. Leave empty to use the device language.") }
+  /// Label and placeholder of the secure text field where the user enters their remote transcription service API key
+  internal static var transcriptionRemoteApiKey: String { return L10n.tr("Localizable", "transcription_remote_api_key", fallback: "API Key") }
+  /// Footer under the remote transcription API key field. %1$@ is the provider name, e.g. "AssemblyAI"
+  internal static func transcriptionRemoteKeyFooter(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_remote_key_footer", String(describing: p1), fallback: "Your key is stored securely in the device keychain and is only ever sent to %1$@.")
+  }
+  /// Header of the transcription settings section where the user picks which remote transcription service to use
+  internal static var transcriptionRemoteProvider: String { return L10n.tr("Localizable", "transcription_remote_provider", fallback: "Provider") }
+  /// Footer of the speaker rename sheet, explaining that empty fields keep the numbered speaker name
+  internal static var transcriptionRenameFooter: String { return L10n.tr("Localizable", "transcription_rename_footer", fallback: "Leave a field empty to keep the numbered speaker name.") }
+  /// Placeholder of a speaker name text field in the rename sheet
+  internal static var transcriptionRenamePlaceholder: String { return L10n.tr("Localizable", "transcription_rename_placeholder", fallback: "Custom name") }
+  /// Save button of the speaker rename sheet
+  internal static var transcriptionRenameSave: String { return L10n.tr("Localizable", "transcription_rename_save", fallback: "Save") }
+  /// Title of the menu action and sheet for renaming the numbered speakers of a generated transcript
+  internal static var transcriptionRenameSpeakers: String { return L10n.tr("Localizable", "transcription_rename_speakers", fallback: "Rename Speakers") }
+  /// Accessibility label of the button that clears the transcript search field
+  internal static var transcriptionSearchClear: String { return L10n.tr("Localizable", "transcription_search_clear", fallback: "Clear search") }
+  /// Message shown on the transcript search screen before the user has typed a search
+  internal static var transcriptionSearchEmptyMessage: String { return L10n.tr("Localizable", "transcription_search_empty_message", fallback: "Find any moment across the episodes you've transcribed on this device.") }
+  /// Title shown on the transcript search screen before the user has typed a search
+  internal static var transcriptionSearchEmptyTitle: String { return L10n.tr("Localizable", "transcription_search_empty_title", fallback: "Search Your Transcripts") }
+  /// Message shown when a transcript search returns no matches. '%1$@' is a placeholder for the user's search term.
+  internal static func transcriptionSearchNoResultsMessage(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_search_no_results_message", String(describing: p1), fallback: "Nothing in your transcripts matches \"%1$@\".")
+  }
+  /// Title shown when a transcript search returns no matches
+  internal static var transcriptionSearchNoResultsTitle: String { return L10n.tr("Localizable", "transcription_search_no_results_title", fallback: "No Results Found") }
+  /// Placeholder text of the transcript search input field
+  internal static var transcriptionSearchPrompt: String { return L10n.tr("Localizable", "transcription_search_prompt", fallback: "Search your transcripts") }
+  /// Title of the cross-episode transcript search screen and of its row in the Profile tab
+  internal static var transcriptionSearchTitle: String { return L10n.tr("Localizable", "transcription_search_title", fallback: "Search Transcripts") }
+  /// Fallback episode title for a transcript search result whose episode is no longer in the library
+  internal static var transcriptionSearchUnknownEpisode: String { return L10n.tr("Localizable", "transcription_search_unknown_episode", fallback: "Unknown Episode") }
   /// Title of the Transcription page in Settings and of its row in the settings list
   internal static var transcriptionSettingsTitle: String { return L10n.tr("Localizable", "transcription_settings_title", fallback: "Transcription") }
   /// Title of the transcript source menu option that shows the locally generated transcript
   internal static var transcriptionSourceGenerated: String { return L10n.tr("Localizable", "transcription_source_generated", fallback: "Generated Transcript") }
   /// Title of the transcript source menu option that shows the transcript provided by the podcast feed
   internal static var transcriptionSourcePodcast: String { return L10n.tr("Localizable", "transcription_source_podcast", fallback: "Podcast Transcript") }
+  /// Title of the button that checks whether the entered remote transcription API key works
+  internal static var transcriptionValidateKey: String { return L10n.tr("Localizable", "transcription_validate_key", fallback: "Validate Key") }
   /// Label indicating that the trial period for the subscription or promotion has ended.
   internal static var trialFinished: String { return L10n.tr("Localizable", "trial_finished", fallback: "Trial Finished") }
   /// The Trim Silence feature, removes silence from podcasts to make them shorter.

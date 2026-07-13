@@ -4764,7 +4764,7 @@
 "transcription_engine_remote" = "Remote Provider";
 
 /* Footer under the transcription engine picker explaining that the disabled engine options will become available later */
-"transcription_engine_coming_soon" = "Downloaded models and remote providers are coming soon.";
+"transcription_engine_coming_soon" = "Downloaded models are coming soon.";
 
 /* Header of the transcription settings section (and label of its text field) where the user can force a transcription language */
 "transcription_language_override" = "Language Override";
@@ -4780,6 +4780,84 @@
 
 /* Title of the transcript source menu option that shows the locally generated transcript */
 "transcription_source_generated" = "Generated Transcript";
+
+/* Header of the transcription settings section where the user picks which remote transcription service to use */
+"transcription_remote_provider" = "Provider";
+
+/* Label and placeholder of the secure text field where the user enters their remote transcription service API key */
+"transcription_remote_api_key" = "API Key";
+
+/* Footer under the remote transcription API key field. %1$@ is the provider name, e.g. "AssemblyAI" */
+"transcription_remote_key_footer" = "Your key is stored securely in the device keychain and is only ever sent to %1$@.";
+
+/* Title of the button that checks whether the entered remote transcription API key works */
+"transcription_validate_key" = "Validate Key";
+
+/* Shown next to the validate-key button while the key check request is running */
+"transcription_key_validating" = "Checking key…";
+
+/* Shown next to the validate-key button when the entered API key was accepted by the provider */
+"transcription_key_valid" = "Key is valid";
+
+/* Shown next to the validate-key button when the provider rejected the entered API key */
+"transcription_key_invalid" = "Key was rejected";
+
+/* Shown next to the validate-key button when the key check could not be completed (e.g. no network) */
+"transcription_key_check_failed" = "Couldn't check the key. Try again.";
+
+/* Title of the consent prompt shown before the first transcription with a remote provider */
+"transcription_consent_title" = "Send this episode to a remote service?";
+
+/* Consent prompt body for URL-based remote transcription providers. %1$@ is the provider name, e.g. "AssemblyAI" */
+"transcription_consent_message_url" = "The episode's public audio link will be shared with %1$@, which downloads and transcribes the audio using your API key. Usage may incur charges on your %1$@ account.";
+
+/* Consent prompt body for upload-based remote transcription providers. %1$@ is the provider name, e.g. "OpenAI" */
+"transcription_consent_message_upload" = "The episode's audio will be uploaded to %1$@ and transcribed using your API key. Usage may incur charges on your %1$@ account.";
+
+/* Title of the consent prompt button that grants consent and starts the remote transcription */
+"transcription_consent_allow" = "Allow and Generate";
+
+/* Podcast settings switch: automatically generate an on-device transcript for each newly downloaded episode of this podcast */
+"podcast_settings_auto_transcribe" = "Auto-Transcribe on Download";
+
+/* Footer under the podcast settings auto-transcribe switch, explaining the behavior is on-device only */
+"podcast_settings_auto_transcribe_footer" = "New downloads from this podcast will be transcribed automatically on this device.";
+
+/* Title of the cross-episode transcript search screen and of its row in the Profile tab */
+"transcription_search_title" = "Search Transcripts";
+
+/* Placeholder text of the transcript search input field */
+"transcription_search_prompt" = "Search your transcripts";
+
+/* Title shown on the transcript search screen before the user has typed a search */
+"transcription_search_empty_title" = "Search Your Transcripts";
+
+/* Message shown on the transcript search screen before the user has typed a search */
+"transcription_search_empty_message" = "Find any moment across the episodes you've transcribed on this device.";
+
+/* Title shown when a transcript search returns no matches */
+"transcription_search_no_results_title" = "No Results Found";
+
+/* Message shown when a transcript search returns no matches. '%1$@' is a placeholder for the user's search term. */
+"transcription_search_no_results_message" = "Nothing in your transcripts matches \"%1$@\".";
+
+/* Fallback episode title for a transcript search result whose episode is no longer in the library */
+"transcription_search_unknown_episode" = "Unknown Episode";
+
+/* Accessibility label of the button that clears the transcript search field */
+"transcription_search_clear" = "Clear search";
+
+/* Title of the menu action and sheet for renaming the numbered speakers of a generated transcript */
+"transcription_rename_speakers" = "Rename Speakers";
+
+/* Save button of the speaker rename sheet */
+"transcription_rename_save" = "Save";
+
+/* Placeholder of a speaker name text field in the rename sheet */
+"transcription_rename_placeholder" = "Custom name";
+
+/* Footer of the speaker rename sheet, explaining that empty fields keep the numbered speaker name */
+"transcription_rename_footer" = "Leave a field empty to keep the numbered speaker name.";
 
 /* Upgrade Experiment Paywall button title */
 "upgrade_experiment_paywall_button" = "Get Pocket Casts Plus";

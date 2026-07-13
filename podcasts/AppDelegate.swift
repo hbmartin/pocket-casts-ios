@@ -91,6 +91,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // start observing episode downloads so loudness gets measured in the background
         _ = EpisodeLoudnessScanner.shared
 
+        // start observing episode downloads so opted-in podcasts get transcribed
+        // automatically (the coordinator re-checks the feature flag per download)
+        _ = TranscriptionAutoRunCoordinator.shared
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in

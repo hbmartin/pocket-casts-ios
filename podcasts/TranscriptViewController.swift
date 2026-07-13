@@ -3,6 +3,7 @@ import Combine
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
+import SwiftUI
 
 class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvider {
     let analyticsSource: AnalyticsSource
@@ -994,9 +995,13 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         guard let episodeUuid = playbackManager.episodeUUID else { return }
         let podcastUuid = playbackManager.podcastUUID
         track(.transcriptionGenerateTapped)
-        showGenerationProgress(fraction: 0)
-        Task {
-            await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+        // Remote engine mode requires one-time per-provider consent before any
+        // audio (or its URL) leaves the device; local modes enqueue directly.
+        TranscriptionConsentGate.requestConsentIfNeeded { [weak self] in
+            self?.showGenerationProgress(fraction: 0)
+            Task {
+                await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+            }
         }
     }
 
@@ -1030,10 +1035,36 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
                 self?.switchSource(to: .localGenerated)
             })
         }
+        if let episodeUuid = playbackManager.episodeUUID,
+           let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid),
+           record.transcriptionStatus == .completed, record.speakerCount > 0 {
+            // Renaming only makes sense for diarized transcripts (speaker-tagged
+            // cues); monologue transcripts have no "Speaker N" headers to rename.
+            children.append(UIAction(title: L10n.transcriptionRenameSpeakers) { [weak self] _ in
+                self?.showSpeakerRename()
+            })
+        }
         children.append(UIAction(title: L10n.transcriptionDeleteGenerated, attributes: .destructive) { [weak self] _ in
             self?.deleteGeneratedTranscript()
         })
         sourceButton.menu = UIMenu(children: children)
+    }
+
+    /// Presents the speaker rename sheet for the current episode's generated
+    /// transcript. The record is re-fetched at presentation time so the sheet
+    /// always seeds from the latest saved names; after a save the transcript
+    /// reloads through the normal pipeline, re-substituting the renamed voice tags.
+    private func showSpeakerRename() {
+        guard let episodeUuid = playbackManager.episodeUUID,
+              let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid),
+              record.speakerCount > 0 else { return }
+
+        let renameView = SpeakerRenameView(episodeUuid: episodeUuid,
+                                           speakerCount: Int(record.speakerCount),
+                                           currentNames: SpeakerRenameView.decodeNames(record.speakerNames)) { [weak self] in
+            self?.update()
+        }.environmentObject(Theme.sharedTheme)
+        present(PCHostingController(rootView: renameView), animated: true)
     }
 
     private func switchSource(to source: TranscriptSource) {

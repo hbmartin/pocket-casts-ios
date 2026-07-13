@@ -548,6 +548,7 @@ enum AnalyticsEvent: String {
 
     case podcastSettingsAutoDownloadToggled
     case podcastSettingsNotificationsToggled
+    case podcastSettingsAutoTranscribeToggled
     case podcastSettingsAutoAddUpNextToggled
     case podcastSettingsAutoAddUpNextPositionOptionChanged
 
@@ -832,6 +833,10 @@ enum AnalyticsEvent: String {
     case transcriptionCancelled
     case transcriptionSourceSwitched
     case transcriptionSettingsShown
+    case transcriptionKeyValidated
+    case transcriptionSpeakerRenamed
+    case transcriptionSearchShown
+    case transcriptionSearchResultTapped
 
     // MARK: - Widgets
 

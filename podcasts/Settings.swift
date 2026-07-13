@@ -1,5 +1,6 @@
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsTranscription
 import UIKit
 import SwiftUI
 import PocketCastsUtils
@@ -159,6 +160,22 @@ nonisolated class Settings: NSObject {
         } else {
             UserDefaults.standard.removeObject(forKey: Settings.transcriptionLanguageOverrideKey)
         }
+    }
+
+    private static let transcriptionRemoteProviderKey = "SJTranscriptionRemoteProvider"
+
+    /// Selected remote transcription provider id (see `RemoteProviderRegistry`).
+    /// Defaults to AssemblyAI; unknown persisted ids also read back as the default.
+    class func transcriptionRemoteProvider() -> String {
+        guard let value = UserDefaults.standard.string(forKey: Settings.transcriptionRemoteProviderKey),
+              RemoteProviderRegistry.info(id: value) != nil else {
+            return RemoteProviderRegistry.defaultProviderId
+        }
+        return value
+    }
+
+    class func setTranscriptionRemoteProvider(_ providerId: String) {
+        UserDefaults.standard.set(providerId, forKey: Settings.transcriptionRemoteProviderKey)
     }
 
     private static let transcriptionMaxSpeakersKey = "SJTranscriptionMaxSpeakers"

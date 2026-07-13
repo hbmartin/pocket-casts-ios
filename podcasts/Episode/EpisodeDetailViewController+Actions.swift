@@ -46,10 +46,14 @@ extension EpisodeDetailViewController {
                 let episodeUuid = self.episode.uuid
                 let podcastUuid = self.episode.podcastUuid
                 Analytics.track(.transcriptionGenerateTapped, properties: ["source": "episode_detail", "episode_uuid": episodeUuid])
-                Task {
-                    await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+                // Remote engine mode requires one-time per-provider consent before
+                // any audio (or its URL) leaves the device.
+                TranscriptionConsentGate.requestConsentIfNeeded {
+                    Task {
+                        await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+                    }
+                    Toast.show(L10n.transcriptionGenerating)
                 }
-                Toast.show(L10n.transcriptionGenerating)
             }
             addPicker.addAction(action: generateTranscriptAction)
         }
