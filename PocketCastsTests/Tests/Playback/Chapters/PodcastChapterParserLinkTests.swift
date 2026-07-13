@@ -56,6 +56,29 @@ final class PodcastChapterParserLinkTests: XCTestCase {
         XCTAssertEqual(chapters.map(\.url), ["http://example.com/a", nil, nil])
     }
 
+    // MARK: - Chapter artwork URLs
+
+    func testPodloveChapterImagePassthrough() {
+        let chapters = parser.parsePodloveChapters([
+            Episode.Metadata.EpisodeChapter(startTime: 0, title: "Art", endTime: 60, url: nil, image: "https://example.com/art.jpg"),
+            Episode.Metadata.EpisodeChapter(startTime: 60, title: "Bad art", endTime: 120, url: nil, image: "ftp://example.com/art.jpg"),
+            Episode.Metadata.EpisodeChapter(startTime: 120, title: "No art", endTime: 180)
+        ], episodeDuration: 240)
+
+        XCTAssertEqual(chapters.map(\.imageURL), [URL(string: "https://example.com/art.jpg"), nil, nil])
+        XCTAssertEqual(chapters.map(\.image), [nil, nil, nil], "Remote artwork is fetched lazily, never at parse time")
+    }
+
+    func testPodcastIndexChapterImgPassthrough() {
+        let chapters = parser.parsePodcastIndexChapters([
+            PodcastIndexChapter(title: "Art", number: nil, endTime: 60, startTime: 0, url: nil, img: "https://example.com/a.png"),
+            PodcastIndexChapter(title: "Bad art", number: nil, endTime: 120, startTime: 60, url: nil, img: "javascript:alert(1)"),
+            PodcastIndexChapter(title: "No art", number: nil, endTime: 180, startTime: 120, url: nil, img: nil)
+        ], episodeDuration: 240)
+
+        XCTAssertEqual(chapters.map(\.imageURL), [URL(string: "https://example.com/a.png"), nil, nil])
+    }
+
     // MARK: - Shared validation
 
     func testIsValidUrl() {

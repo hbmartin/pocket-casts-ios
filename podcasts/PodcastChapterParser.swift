@@ -51,6 +51,9 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
             if Self.isValidUrl(chapter.url) {
                 chapterInfo.url = chapter.url
             }
+            if Self.isValidUrl(chapter.image), let image = chapter.image {
+                chapterInfo.imageURL = URL(string: image)
+            }
 
             // Calculate chapter duration based on the info we have
             if let endTime = chapter.endTime {
@@ -73,6 +76,9 @@ nonisolated class PodcastChapterParser: @unchecked Sendable {
             chapterInfo.startTime = CMTime(seconds: chapter.startTime, preferredTimescale: 1000000)
             if Self.isValidUrl(chapter.url) {
                 chapterInfo.url = chapter.url
+            }
+            if Self.isValidUrl(chapter.img), let img = chapter.img {
+                chapterInfo.imageURL = URL(string: img)
             }
             if let endTime = chapter.endTime {
                 chapterInfo.duration = endTime - chapter.startTime

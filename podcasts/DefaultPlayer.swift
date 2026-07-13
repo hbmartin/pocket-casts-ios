@@ -145,6 +145,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         isWaitingForInitialPlayback = true
 
         player = AVPlayer(playerItem: playerItem)
+        attachStreamedMetadataOutput(to: playerItem)
 
         episodeUuid = episode.uuid
         podcastUuid = episode.parentIdentifier()
@@ -1106,6 +1107,19 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 self.play(completion: nil)
             }
         }
+    }
+
+    private let streamedMetadataHandler = StreamedChapterMetadataHandler()
+
+    /// Streams push chapter metadata (artwork, titles) as timed ID3 frames that
+    /// aren't available when the chapter list is parsed up front. The output
+    /// pushes every group to the chapter manager, which fills gaps in existing
+    /// chapters or grows a synthetic list for chapterless streams. The output's
+    /// lifetime is tied to the player item; only the delegate handler is retained.
+    private func attachStreamedMetadataOutput(to item: AVPlayerItem) {
+        let output = AVPlayerItemMetadataOutput(identifiers: nil)
+        output.setDelegate(streamedMetadataHandler, queue: .main)
+        item.add(output)
     }
 
     private func cleanupPlayer() {
