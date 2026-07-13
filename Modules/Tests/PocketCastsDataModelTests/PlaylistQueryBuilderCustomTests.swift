@@ -179,6 +179,27 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         XCTAssertEqual(dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
     }
 
+    func testSQLModeSemicolonInsideStringLiteralExecutes() throws {
+        // The runtime separator re-check must not reject a ';' inside a string
+        // literal the validator accepted at save time — that rendered valid
+        // playlists permanently empty.
+        let envelope = try CustomPlaylistQuery(sql: "episode.duration > 1800 AND episode.title != 'Science; Vs'").envelopeJSON()
+        let playlist = makeCustomPlaylist(envelopeJSON: envelope)
+
+        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-b1"])
+    }
+
+    func testBuilderInLastDaysAcceptsTheBridgeDateShape() throws {
+        // The builder UI's bridge emits .date(.relativeDays(n)); one such rule
+        // used to make compilation throw, nulling the entire playlist to "(0)".
+        let root = CustomQueryNode.condition(CustomQueryCondition(field: .publishedDate, op: .inLastDays, value: .date(.relativeDays(2000))))
+        let playlist = makeCustomPlaylist(envelopeJSON: try CustomPlaylistQuery(root: root).envelopeJSON())
+
+        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-a2", "ep-b1", "ep-b2"])
+    }
+
     // MARK: - Render-empty states
 
     func testFlagOffRendersEmptyAcrossAllClauses() throws {

@@ -208,10 +208,19 @@ public enum CustomQueryCompiler {
         case .isNotSet:
             return "(NOT \(isSetExpression(for: field)))"
         case .inLastDays:
-            guard case .number(let days)? = value else {
+            // The builder UI's bridge emits .date(.relativeDays(n)); .number(n)
+            // is the compiler-native shape. Both must compile — rejecting one
+            // nulls the entire playlist to "(0)".
+            let days: Int
+            switch value {
+            case .number(let number)?:
+                days = Int(number)
+            case .date(.relativeDays(let relativeDays))?:
+                days = relativeDays
+            default:
                 throw CustomQueryCompileError.invalidCondition(field: field, op: op)
             }
-            let cutoff = CustomQueryDateValue.relativeDays(Int(days)).resolved(now: now)
+            let cutoff = CustomQueryDateValue.relativeDays(days).resolved(now: now)
             arguments.append(cutoff.databaseValue)
             return "(\(column) > ?)"
         case .before:

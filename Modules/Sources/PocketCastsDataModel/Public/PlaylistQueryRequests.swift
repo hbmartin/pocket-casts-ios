@@ -718,11 +718,12 @@ extension PlaylistQueryBuilder {
         case .sql:
             let fragment = envelope.sql?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             // Belt-and-braces re-checks of what the validator guaranteed at save
-            // time, in case the stored row was edited out-of-band. `;` can never
-            // appear in a valid expression-position fragment.
+            // time, in case the stored row was edited out-of-band. A statement
+            // separator can never appear in a valid expression-position fragment,
+            // but `;` inside a string literal ('Science; Vs') is ordinary data.
             guard !fragment.isEmpty,
                   fragment.count <= PlaylistQueryValidator.maxFragmentLength,
-                  !fragment.contains(";"),
+                  !PlaylistQueryValidator.containsStatementSeparator(fragment),
                   !PlaylistQueryValidator.containsPlaceholders(fragment) else {
                 return "(0)"
             }

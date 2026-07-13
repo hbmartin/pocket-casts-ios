@@ -119,6 +119,24 @@ enum PlaylistQueryValidator {
         return fragment.range(of: "[:@$][A-Za-z_][A-Za-z0-9_]*", options: .regularExpression) != nil
     }
 
+    /// True when the fragment contains a statement separator outside of a
+    /// single-quoted SQL string literal: `episode.title = 'Science; Vs'` is a
+    /// valid expression, `1); DELETE ...` is not. SQL escapes a quote inside a
+    /// literal by doubling it (`''`), which the scanner handles by toggling on
+    /// every quote. A `;` after an unterminated quote counts as literal text —
+    /// such fragments already fail statement preparation at save time.
+    static func containsStatementSeparator(_ fragment: String) -> Bool {
+        var insideLiteral = false
+        for character in fragment {
+            if character == "'" {
+                insideLiteral.toggle()
+            } else if character == ";", !insideLiteral {
+                return true
+            }
+        }
+        return false
+    }
+
     private static func databaseErrorMessage(_ error: Error) -> String {
         if let databaseError = error as? DatabaseError {
             return databaseError.message ?? databaseError.description
