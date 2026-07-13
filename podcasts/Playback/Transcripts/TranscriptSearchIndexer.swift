@@ -2,15 +2,16 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-/// Feeds the library-wide transcript search index (AI UX plan Phase 4): whenever a
-/// podcast-provided transcript loads successfully, its cue text is merged into
-/// FTS-friendly segments and written to `TranscriptCueIndex` in the background.
+/// Feeds the unified transcript search index with podcast-provided transcripts:
+/// whenever one loads successfully, its cue text is merged into FTS-friendly
+/// segments and written to `TranscriptSegmentIndex` (`source: .provided`) in the
+/// background.
 ///
-/// The corpus is deliberately "transcripts the app has loaded" — there is no
-/// download-triggered background indexing in v1. Locally generated (on-device)
+/// The provided corpus is currently "transcripts the app has loaded" — there is no
+/// download-triggered background indexing yet. Locally generated (on-device)
 /// transcripts are never indexed here: `TranscriptManager.loadTranscript()` returns
-/// them before the hook runs, and they already have their own FTS index
-/// (`TranscriptionSegmentFTS`) behind the Profile-tab transcript search.
+/// them before the hook runs, and the transcription pipeline writes them into the
+/// same unified index as `source: .generated`.
 nonisolated final class TranscriptSearchIndexer: Sendable {
     static let shared = TranscriptSearchIndexer()
 
@@ -27,19 +28,19 @@ nonisolated final class TranscriptSearchIndexer: Sendable {
         // XCTest (TranscriptManager is exercised with random UUIDs there).
         guard !isRunningTests else { return }
 
-        let index = DataManager.sharedManager.transcriptIndex
-        // Migration 81 couldn't create the FTS5 tables on this device; the feature
-        // self-disables (see TranscriptIndexDataManager.isAvailable).
+        let index = DataManager.sharedManager.transcriptSearch
+        // Migration 82 couldn't create the FTS5 tables on this device; the feature
+        // self-disables (see TranscriptSearchDataManager.isAvailable).
         guard index.isAvailable else { return }
 
         Task.detached(priority: .utility) {
-            // Dedupe: an episode already in TranscriptIndexMeta keeps its rows.
-            guard !index.isIndexed(episodeUuid: episodeUuid) else { return }
+            // Dedupe: an episode already in TranscriptSearchIndexMeta keeps its rows.
+            guard !index.isIndexed(episodeUuid: episodeUuid, source: .provided) else { return }
 
             let cues = Self.indexableCues(from: model)
             guard !cues.isEmpty else { return }
 
-            if index.index(episodeUuid: episodeUuid, podcastUuid: podcastUuid, cues: cues) {
+            if index.replaceSegments(episodeUuid: episodeUuid, podcastUuid: podcastUuid, source: .provided, segments: cues) {
                 FileLog.shared.addMessage("TranscriptSearchIndexer: indexed \(cues.count) segments for episode \(episodeUuid)")
             }
         }
@@ -51,19 +52,19 @@ nonisolated final class TranscriptSearchIndexer: Sendable {
     /// until segments reach ``minimumSegmentLength`` characters. Cues with invalid
     /// ranges (out of the text's UTF-16 bounds) or whitespace-only text are
     /// skipped. Segment start/end times span the merged cues.
-    static func indexableCues(from model: TranscriptModel) -> [TranscriptIndexCue] {
+    static func indexableCues(from model: TranscriptModel) -> [TranscriptSearchSegment] {
         // characterRange offsets are UTF-16 (NSRange convention), so extraction
         // goes through NSString to keep the offsets honest.
         let fullText = model.plainText as NSString
 
-        var segments = [TranscriptIndexCue]()
+        var segments = [TranscriptSearchSegment]()
         var pendingText = ""
         var pendingStart = 0.0
         var pendingEnd = 0.0
 
         func flushPending() {
             guard !pendingText.isEmpty else { return }
-            segments.append(TranscriptIndexCue(index: segments.count, text: pendingText, startTime: pendingStart, endTime: pendingEnd))
+            segments.append(TranscriptSearchSegment(index: segments.count, text: pendingText, startTime: pendingStart, endTime: pendingEnd))
             pendingText = ""
         }
 

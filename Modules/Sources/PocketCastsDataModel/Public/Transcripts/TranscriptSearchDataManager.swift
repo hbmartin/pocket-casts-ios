@@ -170,7 +170,15 @@ public struct TranscriptSearchDataManager: Sendable {
     /// indexer's dedupe check).
     public func isIndexed(episodeUuid: String, source: TranscriptSource) -> Bool {
         guard isAvailable else { return false }
-        return dbQueue.fetchOne(TranscriptSearchIndexMetaRecord.self, key: ["episodeUuid": episodeUuid, "source": source.rawValue]) != nil
+        // fetchCount keeps the read's return type non-optional: dbQueue.read wraps
+        // the result in its own optional, and Record?? would make "no row" != nil.
+        let found = dbQueue.read { db in
+            try TranscriptSearchIndexMetaRecord
+                .filter(TranscriptSearchIndexMetaRecord.Columns.episodeUuid == episodeUuid)
+                .filter(TranscriptSearchIndexMetaRecord.Columns.source == source.rawValue)
+                .fetchCount(db) > 0
+        }
+        return found ?? false
     }
 
     /// Number of indexed (episode, source) pairs, optionally for one source only.
@@ -239,7 +247,7 @@ public struct TranscriptSearchDataManager: Sendable {
         ORDER BY bm25(\(Self.ftsTableName))
         LIMIT ?
         """
-        var arguments: [DatabaseValueConvertible] = [match]
+        var arguments: [(any DatabaseValueConvertible)?] = [match]
         if let source { arguments.append(source.rawValue) }
         arguments.append(limit)
 

@@ -133,8 +133,9 @@ class DatabaseHelper {
         //
         // The FTS5 CREATE is caught rather than propagated so an SQLite build without
         // the FTS5 module can't fail the whole migration chain: on failure neither
-        // table is created, TranscriptIndexDataManager's meta-table probe reports the
-        // index unavailable, and the feature self-disables.
+        // table is created, the manager's meta-table probe reports the index
+        // unavailable, and the feature self-disables. (Both tables were later merged
+        // into the unified index by migration 82.)
         SchemaMigration(toVersion: 81) { db in
             do {
                 try db.executeUpdate("""

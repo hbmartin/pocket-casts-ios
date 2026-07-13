@@ -83,91 +83,18 @@ public struct TranscriptionDataManager: Sendable {
                       filter: EpisodeTranscriptionRecord.Columns.status == TranscriptionStatus.completed.rawValue)
     }
 
-    /// Deletes the episode's record and all of its FTS segment rows in one transaction.
-    /// Deleting the VTT artifact on disk is the app layer's job (it owns `filePath`).
+    /// Deletes the episode's record. Deleting the VTT artifact on disk and the
+    /// unified search-index rows (`TranscriptSearchDataManager`, `.generated`) is
+    /// the app layer's job.
     @discardableResult
     public func delete(episodeUuid: String) -> Bool {
         let success = dbQueue.write { db in
-            try EpisodeTranscriptionRecord
+            _ = try EpisodeTranscriptionRecord
                 .filter(EpisodeTranscriptionRecord.Columns.episodeUuid == episodeUuid)
                 .deleteAll(db)
-            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
-            try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ?", arguments: [episodeUuid])
         }
         if !success { FileLog.shared.addMessage("TranscriptionDataManager.delete failed") }
         return success
-    }
-
-    // MARK: - Segments (FTS)
-
-    /// Replaces the episode's searchable segments: deletes any existing FTS rows and
-    /// batch-inserts the new ones inside a single write transaction, so a re-run
-    /// (or a crash mid-way) can never leave duplicated or partial segment sets.
-    @discardableResult
-    public func replaceSegments(episodeUuid: String, podcastUuid: String?, segments: [TranscriptionSegment]) -> Bool {
-        let success = dbQueue.write { db in
-            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
-            try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ?", arguments: [episodeUuid])
-
-            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
-            let insert = try db.cachedStatement(sql: """
-            INSERT INTO \(Self.ftsTableName) (text, episodeUuid, podcastUuid, segmentIndex, startTime, speaker)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """)
-            for segment in segments {
-                try insert.execute(arguments: [segment.text, episodeUuid, podcastUuid, segment.index, segment.startTime, segment.speaker])
-            }
-        }
-        if !success { FileLog.shared.addMessage("TranscriptionDataManager.replaceSegments failed") }
-        return success
-    }
-
-    /// Full-text search across every transcribed episode, most relevant first
-    /// (BM25). The last token matches as a prefix so results appear while typing.
-    /// Returns [] for queries with no searchable tokens.
-    public func searchSegments(query: String, limit: Int = 50) -> [TranscriptionSearchResult] {
-        guard let match = Self.sanitizeFTSQuery(query) else { return [] }
-
-        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 MATCH/snippet()/bm25() have no GRDB query-interface equivalent
-        let sql = """
-        SELECT episodeUuid, podcastUuid, segmentIndex, startTime, speaker,
-               snippet(\(Self.ftsTableName), 0, '\(TranscriptionSearchResult.highlightStart)', '\(TranscriptionSearchResult.highlightEnd)', '…', 12) AS snippet
-        FROM \(Self.ftsTableName)
-        WHERE \(Self.ftsTableName) MATCH ?
-        ORDER BY bm25(\(Self.ftsTableName))
-        LIMIT ?
-        """
-        let rows = dbQueue.read { db in
-            try Row.fetchAll(db, sql: sql, arguments: [match, limit])
-        } ?? []
-
-        return rows.map { row in
-            TranscriptionSearchResult(
-                episodeUuid: row["episodeUuid"] ?? "",
-                podcastUuid: row["podcastUuid"],
-                segmentIndex: row["segmentIndex"] ?? 0,
-                startTime: row["startTime"] ?? 0,
-                speaker: row["speaker"],
-                snippet: row["snippet"] ?? ""
-            )
-        }
-    }
-
-    /// Turns arbitrary user input into a safe FTS5 MATCH expression: every
-    /// whitespace-separated token is double-quoted (neutralizing operators like
-    /// AND/OR/NEAR, parentheses and column filters), and the last token gets a `*`
-    /// prefix marker. Tokens with no letters or digits are dropped (the unicode61
-    /// tokenizer can't match them anyway). Returns nil when nothing searchable remains.
-    static func sanitizeFTSQuery(_ query: String) -> String? {
-        let tokens = query
-            .split(whereSeparator: \.isWhitespace)
-            .map { $0.replacingOccurrences(of: "\"", with: "") }
-            .filter { $0.contains(where: { $0.isLetter || $0.isNumber }) }
-        guard !tokens.isEmpty else { return nil }
-
-        var quoted = tokens.map { "\"\($0)\"" }
-        quoted[quoted.count - 1] += "*"
-        return quoted.joined(separator: " ")
     }
 }
 

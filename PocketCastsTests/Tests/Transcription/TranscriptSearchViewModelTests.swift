@@ -13,13 +13,15 @@ final class TranscriptSearchViewModelTests: XCTestCase {
                         podcast: String? = "podcast-1",
                         segmentIndex: Int,
                         startTime: Double,
-                        snippet: String = "plain") -> TranscriptionSearchResult {
-        TranscriptionSearchResult(episodeUuid: episode,
-                                  podcastUuid: podcast,
-                                  segmentIndex: segmentIndex,
-                                  startTime: startTime,
-                                  speaker: nil,
-                                  snippet: snippet)
+                        snippet: String = "plain") -> TranscriptSearchHit {
+        TranscriptSearchHit(episodeUuid: episode,
+                            podcastUuid: podcast,
+                            segmentIndex: segmentIndex,
+                            startTime: startTime,
+                            endTime: nil,
+                            speaker: nil,
+                            source: .generated,
+                            snippet: snippet)
     }
 
     // MARK: - Snippet parsing

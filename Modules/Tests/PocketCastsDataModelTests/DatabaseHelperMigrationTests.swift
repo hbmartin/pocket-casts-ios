@@ -143,6 +143,113 @@ final class DatabaseHelperMigrationTests: XCTestCase {
         }
     }
 
+    /// Upgrade path for migration 82 (unified transcript index): a database at
+    /// version 81 with rows in both former corpora — generated segments
+    /// (TranscriptionSegmentFTS) and provided cues (TranscriptCueIndex +
+    /// TranscriptIndexMeta) — ends with everything in TranscriptSegmentIndex,
+    /// meta preserved, the old tables gone, and both corpora searchable.
+    func testMigration82MergesBothTranscriptCorpora() throws {
+        let dbPool = try XCTUnwrap(DatabasePool.newTestDatabase(databaseName: "\(UUID().uuidString).sqlite3"))
+        let queue = GRDBQueue(dbPool: dbPool)
+
+        let priorMigrations = DatabaseHelper.migrations.filter { $0.toVersion <= 81 }
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: priorMigrations))
+
+        try dbPool.write { db in
+            try db.execute(sql: """
+            INSERT INTO EpisodeTranscription (episodeUuid, podcastUuid, status, updatedAt)
+            VALUES ('ep-gen', 'pod-1', 2, 1234.0)
+            """)
+            try db.execute(sql: """
+            INSERT INTO TranscriptionSegmentFTS (text, episodeUuid, podcastUuid, segmentIndex, startTime, speaker)
+            VALUES ('a generated segment about zebras', 'ep-gen', 'pod-1', 0, 10.0, 'Speaker 1')
+            """)
+            try db.execute(sql: """
+            INSERT INTO TranscriptionSegmentFTS (text, episodeUuid, podcastUuid, segmentIndex, startTime, speaker)
+            VALUES ('an orphaned segment with no record row', 'ep-orphan', NULL, 0, 0.0, NULL)
+            """)
+            try db.execute(sql: """
+            INSERT INTO TranscriptCueIndex (text, episodeUuid, podcastUuid, cueIndex, startTime, endTime)
+            VALUES ('a provided cue about aardvarks', 'ep-prov', 'pod-2', 3, 20.0, 25.0)
+            """)
+            try db.execute(sql: """
+            INSERT INTO TranscriptIndexMeta (episodeUuid, podcastUuid, indexedDate, cueCount, textBytes)
+            VALUES ('ep-prov', 'pod-2', 555.0, 1, 30)
+            """)
+        }
+
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: DatabaseHelper.migrations))
+
+        try dbPool.read { db in
+            XCTAssertGreaterThanOrEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 82)
+
+            let tables = try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'table'")
+            XCTAssertFalse(tables.contains("TranscriptionSegmentFTS"))
+            XCTAssertFalse(tables.contains("TranscriptCueIndex"))
+            XCTAssertFalse(tables.contains("TranscriptIndexMeta"))
+            XCTAssertTrue(tables.contains("EpisodeTranscription"), "The pipeline-state table must survive")
+
+            let generated = try Row.fetchOne(db, sql: "SELECT * FROM TranscriptSegmentIndex WHERE episodeUuid = 'ep-gen'")
+            XCTAssertEqual(generated?["source"] as String?, "generated")
+            XCTAssertEqual(generated?["speaker"] as String?, "Speaker 1")
+            XCTAssertNil(generated?["endTime"] as Double?)
+
+            let provided = try Row.fetchOne(db, sql: "SELECT * FROM TranscriptSegmentIndex WHERE episodeUuid = 'ep-prov'")
+            XCTAssertEqual(provided?["source"] as String?, "provided")
+            XCTAssertEqual(provided?["segmentIndex"] as Int?, 3, "cueIndex must map onto segmentIndex")
+            XCTAssertEqual(provided?["endTime"] as Double?, 25.0)
+
+            // Meta: generated rows take indexedDate from the record's updatedAt
+            // (orphans get the migration time); provided rows copy 1:1.
+            let genMeta = try Row.fetchOne(db, sql: "SELECT * FROM TranscriptSearchIndexMeta WHERE episodeUuid = 'ep-gen' AND source = 'generated'")
+            XCTAssertEqual(genMeta?["indexedDate"] as Double?, 1234.0)
+            XCTAssertEqual(genMeta?["segmentCount"] as Int?, 1)
+
+            let orphanMeta = try Row.fetchOne(db, sql: "SELECT * FROM TranscriptSearchIndexMeta WHERE episodeUuid = 'ep-orphan' AND source = 'generated'")
+            XCTAssertGreaterThan(orphanMeta?["indexedDate"] as Double? ?? 0, 0)
+
+            let provMeta = try Row.fetchOne(db, sql: "SELECT * FROM TranscriptSearchIndexMeta WHERE episodeUuid = 'ep-prov' AND source = 'provided'")
+            XCTAssertEqual(provMeta?["indexedDate"] as Double?, 555.0)
+            XCTAssertEqual(provMeta?["segmentCount"] as Int?, 1)
+            XCTAssertEqual(provMeta?["textBytes"] as Int64?, 30)
+        }
+
+        // Both backfilled corpora are searchable through the unified manager.
+        let search = TranscriptSearchDataManager(dbQueue: queue)
+        XCTAssertTrue(search.isAvailable)
+        XCTAssertEqual(search.search(term: "zebras").map(\.episodeUuid), ["ep-gen"])
+        XCTAssertEqual(search.search(term: "aardvarks").map(\.episodeUuid), ["ep-prov"])
+        XCTAssertTrue(search.isIndexed(episodeUuid: "ep-prov", source: .provided))
+        XCTAssertTrue(search.isIndexed(episodeUuid: "ep-gen", source: .generated))
+    }
+
+    /// Migration 82 on a database where migration 81 self-disabled (no
+    /// TranscriptCueIndex/TranscriptIndexMeta): the generated corpus still
+    /// backfills and the migration succeeds.
+    func testMigration82SucceedsWhenMigration81TablesAreAbsent() throws {
+        let dbPool = try XCTUnwrap(DatabasePool.newTestDatabase(databaseName: "\(UUID().uuidString).sqlite3"))
+        let queue = GRDBQueue(dbPool: dbPool)
+
+        let priorMigrations = DatabaseHelper.migrations.filter { $0.toVersion <= 81 }
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: priorMigrations))
+
+        try dbPool.write { db in
+            try db.execute(sql: "DROP TABLE TranscriptCueIndex")
+            try db.execute(sql: "DROP TABLE TranscriptIndexMeta")
+            try db.execute(sql: """
+            INSERT INTO TranscriptionSegmentFTS (text, episodeUuid, podcastUuid, segmentIndex, startTime, speaker)
+            VALUES ('a generated segment about zebras', 'ep-gen', 'pod-1', 0, 10.0, NULL)
+            """)
+        }
+
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: DatabaseHelper.migrations))
+
+        let search = TranscriptSearchDataManager(dbQueue: queue)
+        XCTAssertTrue(search.isAvailable)
+        XCTAssertEqual(search.search(term: "zebras").map(\.episodeUuid), ["ep-gen"])
+        XCTAssertEqual(search.indexedEpisodeCount(source: .provided), 0)
+    }
+
     /// Stable, comparable representation of every table and index in the database.
     private static func schemaObjects(in db: Database) throws -> [String] {
         try String.fetchAll(

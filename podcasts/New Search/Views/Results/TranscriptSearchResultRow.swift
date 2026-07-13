@@ -16,12 +16,12 @@ nonisolated struct TranscriptSearchHitDisplay: Hashable, Sendable, Identifiable 
 
     let episodeUuid: String
     let podcastUuid: String?
-    let cueIndex: Int
+    let segmentIndex: Int
     let episodeTitle: String
     let runs: [Run]
     let startTime: TimeInterval
 
-    var id: String { "\(episodeUuid)-\(cueIndex)" }
+    var id: String { "\(episodeUuid)-\(segmentIndex)" }
 
     /// Resolves hits into display rows, dropping hits whose episode row no longer
     /// exists in the library (the index can outlive an episode; without the row
@@ -33,7 +33,7 @@ nonisolated struct TranscriptSearchHitDisplay: Hashable, Sendable, Identifiable 
             return TranscriptSearchHitDisplay(
                 episodeUuid: hit.episodeUuid,
                 podcastUuid: hit.podcastUuid ?? (episode as? Episode)?.podcastUuid,
-                cueIndex: hit.cueIndex,
+                segmentIndex: hit.segmentIndex,
                 episodeTitle: episode.displayableTitle(),
                 runs: runs(from: hit.snippet),
                 startTime: hit.startTime
