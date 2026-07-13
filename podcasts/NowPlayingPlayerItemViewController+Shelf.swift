@@ -17,6 +17,7 @@ protocol NowPlayingActionsDelegate: AnyObject {
     func archiveTapped()
     func bookmarkTapped()
     func transcriptTapped()
+    func catchMeUpTapped()
     func downloadTapped()
     func sharedRoutePicker(largeSize: Bool) -> PCRoutePickerView
     func presentManualPlaylistsChooser()
@@ -90,6 +91,15 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             button.imageView?.tintColor = stopAfterEpisodeOn ? PlayerColorHelper.playerHighlightColor01(for: .dark) : ThemeColor.playerContrast02()
             button.addTarget(self, action: #selector(stopAfterEpisodeTapped(_:)), for: .touchUpInside)
             button.accessibilityLabel = stopAfterEpisodeOn ? L10n.playerAccessibilityStopAfterEpisodeOn : L10n.playerActionTitleStopAfterEpisode
+
+            addToShelf(on: button)
+        case .catchMeUp:
+            let button = UIButton(frame: CGRect.zero)
+            button.isPointerInteractionEnabled = true
+            button.setImage(UIImage(named: action.largeIconName(episode: playingEpisode))?.withRenderingMode(.alwaysTemplate), for: .normal)
+            button.imageView?.tintColor = ThemeColor.playerContrast02()
+            button.addTarget(self, action: #selector(catchMeUpTapped(_:)), for: .touchUpInside)
+            button.accessibilityLabel = L10n.catchMeUpTitle
 
             addToShelf(on: button)
         case .routePicker:
@@ -219,6 +229,23 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             PlaybackManager.shared.numberOfEpisodesToSleepAfter = 1
             Analytics.track(.playerSleepTimerEnabled, properties: ["time": "end_of_episode", "number_of_episodes": 1])
         }
+    }
+
+    func catchMeUpTapped() {
+        guard let episode = PlaybackManager.shared.currentEpisode() else { return }
+
+        let model = CatchMeUpViewModel(
+            episodeUuid: episode.uuid,
+            podcastUuid: episode.parentIdentifier(),
+            episodeTitle: episode.displayableTitle(),
+            playedUpTo: PlaybackManager.shared.currentTime()
+        )
+        let sheet = ThemedHostingController(rootView: CatchMeUpView(model: model))
+        if let presentation = sheet.sheetPresentationController {
+            presentation.detents = [.medium(), .large()]
+            presentation.prefersGrabberVisible = true
+        }
+        present(sheet, animated: true)
     }
 
     func routePickerTapped(from _: PlayerAction) {
@@ -371,6 +398,11 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     @objc private func stopAfterEpisodeTapped(_ sender: UIButton) {
         shelfButtonTapped(.stopAfterEpisode)
         stopAfterEpisodeTapped()
+    }
+
+    @objc private func catchMeUpTapped(_ sender: UIButton) {
+        shelfButtonTapped(.catchMeUp)
+        catchMeUpTapped()
     }
 
     @objc private func effectsBtnTapped(_ sender: UIButton) {

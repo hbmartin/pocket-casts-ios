@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsDataModel
 import PocketCastsUtils
 import SwiftUI
 
@@ -16,6 +17,15 @@ class EpisodeSummaryViewModel: ObservableObject {
 
     @Published private(set) var takeawayState: TakeawayState = .loading
     @Published var isExpanded = false
+
+    // MARK: Catch Me Up (Deferred Item 19)
+
+    /// Whether the in-progress episode is in the catch-up window; drives the
+    /// card's "Catch Me Up" button.
+    @Published private(set) var isCatchMeUpAvailable = false
+    @Published var isShowingCatchMeUp = false
+    private(set) var playedUpTo: TimeInterval = 0
+    private(set) var episodeTitle = ""
 
     let episodeUuid: String
     let podcastUuid: String
@@ -92,11 +102,29 @@ class EpisodeSummaryViewModel: ObservableObject {
             hasTrackedShown = true
             track(.episodeDetailSummaryCardShown)
         }
+        refreshCatchMeUpAvailability()
         guard !hasStartedLoading else { return }
         hasStartedLoading = true
         Task { [weak self] in
             await self?.loadTakeaways()
         }
+    }
+
+    private func refreshCatchMeUpAvailability() {
+        guard FeatureFlag.catchMeUp.enabled, !episodeUuid.isEmpty,
+              let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid),
+              episode.inProgress() else {
+            isCatchMeUpAvailable = false
+            return
+        }
+        playedUpTo = episode.playedUpTo
+        episodeTitle = episode.displayableTitle()
+        isCatchMeUpAvailable = CatchMeUpGenerator.isEligible(playedUpTo: episode.playedUpTo, duration: episode.duration)
+    }
+
+    func catchMeUpTapped() {
+        track(.episodeDetailSummaryCatchMeUpTapped)
+        isShowingCatchMeUp = true
     }
 
     private func loadTakeaways() async {

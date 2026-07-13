@@ -22,6 +22,7 @@ final class SettingsTests: XCTestCase {
             .addToPlaylist,
             .download,
             .transcript,
+            .catchMeUp,
             .goToPodcast,
             .starEpisode,
             .archive
