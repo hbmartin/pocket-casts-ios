@@ -218,6 +218,24 @@ class NewPlaylistViewController: PCViewController {
                 lastCard = customCard
             }
 
+            if FeatureFlag.promptedPlaylists.enabled {
+                let promptedCard = addCreationCard(SmartPlaylistCreationView(
+                    icon: "rename",
+                    title: L10n.promptedPlaylistEntryButton,
+                    subtitle: L10n.promptedPlaylistEntrySubtitle
+                ) { [weak self] in
+                    self?.presentPromptedPlaylistSheet()
+                })
+
+                constraints.append(contentsOf: [
+                    promptedCard.topAnchor.constraint(equalTo: lastCard.bottomAnchor, constant: 12.0),
+                    promptedCard.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
+                    promptedCard.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16.0),
+                    promptedCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 59.0)
+                ])
+                lastCard = promptedCard
+            }
+
             constraints.append(saveButton.topAnchor.constraint(equalTo: lastCard.bottomAnchor, constant: 24))
         } else {
             constraints.append(contentsOf: [
@@ -355,6 +373,34 @@ class NewPlaylistViewController: PCViewController {
         editorVC.delegate = delegate
         let navVC = SJUIUtils.navController(for: editorVC)
         present(navVC, animated: true, completion: nil)
+    }
+
+    /// Prompted playlists: the "Describe your playlist" sheet interprets a
+    /// natural-language description on device and hands back a configured,
+    /// unsaved draft that the standard preview screen reviews before saving.
+    private func presentPromptedPlaylistSheet() {
+        Analytics.track(.promptedPlaylistShown)
+
+        let viewModel = PromptedPlaylistViewModel(typedName: playlistName) { [weak self] playlist in
+            self?.showPromptedPreview(for: playlist)
+        }
+        let sheetVC = ThemedHostingController(rootView: PromptedPlaylistSheetView(viewModel: viewModel), background: \.primaryUi01)
+        if let sheet = sheetVC.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(sheetVC, animated: true)
+    }
+
+    private func showPromptedPreview(for playlist: EpisodeFilter) {
+        dismiss(animated: true) { [weak self] in
+            guard let self else { return }
+
+            let previewVC = PlaylistPreviewViewController(prefilled: playlist)
+            previewVC.delegate = delegate
+            let navVC = SJUIUtils.navController(for: previewVC)
+            present(navVC, animated: true)
+        }
     }
 
     /// Hosts a creation card (smart / custom playlist entry) below the name field.
