@@ -38,6 +38,10 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     private var homeGridDataHelper = HomeGridDataHelper()
 
+    /// Long-lived consumer of `DataManager.observeHomeGrid()` (B6 pilot); started
+    /// with the event observers and cancelled whenever they're removed.
+    private var homeGridObservationTask: Task<Void, Never>?
+
     private lazy var refreshQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
@@ -108,6 +112,7 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     }
 
     override func handleAppDidEnterBackground() {
+        stopHomeGridObservation()
         removeAllCustomObservers()
     }
 
@@ -120,6 +125,7 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         navigationController?.navigationBar.shadowImage = nil
+        stopHomeGridObservation()
         removeAllCustomObservers()
         if isEditingOrder {
             setEditingOrder(false)
@@ -127,32 +133,17 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     }
 
     private func addEventObservers() {
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshGridItems))
-        addCustomObserver(PodcastAdded.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
-        addCustomObserver(PodcastDeleted.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
-        addCustomObserver(OpmlImportCompleted.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshGridItems))
+        // B6 ValueObservation pilot: the home-grid database observation below replaces
+        // the DB-derived observers this screen used to poll on (podcastsRefreshed,
+        // podcastAdded, podcastDeleted, opmlImportCompleted, syncCompleted,
+        // episodeArchiveStatusChanged, episodePlayStatusChanged, folderChanged,
+        // folderDeleted) — those writes now reach the grid straight from the database.
+        // The playback observers stay: the recently-played sort and now-playing state
+        // read PlaybackManager, which isn't database state.
+        startHomeGridObservation()
+
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshGridItems))
-        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
-        addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
-
-        addCustomObserver(FolderChanged.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
-        addCustomObserver(FolderDeleted.self) { [weak self] _ in
-            self?.refreshGridItems()
-        }
 
         addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
             self?.checkForScrollTap(message)
@@ -160,6 +151,26 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         addCustomObserver(SearchRequested.self) { [weak self] _ in
             self?.searchRequested()
         }
+    }
+
+    /// Reloads the grid whenever the database inputs it renders (subscribed
+    /// podcasts, folders, unplayed badges) change. Pilot depth: the snapshot is
+    /// used purely as a change signal — `refreshGridItems()` remains the single
+    /// render path and re-queries via `HomeGridDataHelper` as before.
+    private func startHomeGridObservation() {
+        guard homeGridObservationTask == nil else { return }
+
+        homeGridObservationTask = Task { [weak self] in
+            for await _ in DataManager.sharedManager.observeHomeGrid() {
+                guard let self else { return }
+                self.refreshGridItems()
+            }
+        }
+    }
+
+    private func stopHomeGridObservation() {
+        homeGridObservationTask?.cancel()
+        homeGridObservationTask = nil
     }
 
     private func makeBadge(size: CGFloat) -> UIView {

@@ -646,12 +646,19 @@ public class DataManager {
     /// Count of unplayed, unarchived episodes belonging to subscribed podcasts,
     /// optionally restricted to episodes added after a date. Backs the app icon badge.
     public func subscribedUnplayedEpisodeCount(addedAfter: Date? = nil) -> Int {
+        count(matching: Self.subscribedUnplayedCountRequest(addedAfter: addedAfter))
+    }
+
+    /// Single source of truth for the badge's unplayed-count SQL: the synchronous
+    /// `subscribedUnplayedEpisodeCount` and `observeBadgeCount(.subscribedUnplayed)`
+    /// both run exactly this request.
+    static func subscribedUnplayedCountRequest(addedAfter: Date?) -> SQLRequest<Int> {
         var query: SQL = "SELECT COUNT(e.id) FROM \(sql: DataManager.episodeTableName) e LEFT JOIN \(sql: DataManager.podcastTableName) p ON p.id = e.podcast_id WHERE p.subscribed = 1 AND e.playingStatus = \(PlayingStatus.notPlayed.rawValue) AND e.archived = 0"
         if let addedAfter {
             // addedDate is stored as epoch seconds (REAL), matching the legacy Date binding
             query = query + " AND e.addedDate > \(addedAfter.timeIntervalSince1970)"
         }
-        return count(matching: SQLRequest(literal: query))
+        return SQLRequest(literal: query)
     }
 
     public func save(episode: BaseEpisode) {

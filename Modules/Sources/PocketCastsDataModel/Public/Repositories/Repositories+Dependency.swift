@@ -54,6 +54,10 @@ enum DataMaintenanceKey: MirroredTestDependencyKey {
     static var liveValue: any DataMaintenance { DataManager.sharedManager }
 }
 
+enum DatabaseObserverKey: MirroredTestDependencyKey {
+    static var liveValue: any DatabaseObserving { DataManager.sharedManager }
+}
+
 public extension DependencyValues {
     var upNextRepository: any UpNextRepository {
         get { self[UpNextRepositoryKey.self] }
@@ -88,5 +92,10 @@ public extension DependencyValues {
     var dataMaintenance: any DataMaintenance {
         get { self[DataMaintenanceKey.self] }
         set { self[DataMaintenanceKey.self] = newValue }
+    }
+
+    var databaseObserver: any DatabaseObserving {
+        get { self[DatabaseObserverKey.self] }
+        set { self[DatabaseObserverKey.self] = newValue }
     }
 }
