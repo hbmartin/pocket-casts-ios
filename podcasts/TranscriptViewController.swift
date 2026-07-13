@@ -961,13 +961,18 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     /// Whether the current episode qualifies for on-device generation: flag on,
-    /// audio downloaded, and no completed transcription record yet.
+    /// audio downloaded, and no completed transcription record yet. A completed
+    /// record only counts while its VTT artifact is still on disk — a restore
+    /// brings back the record but not the (backup-excluded) artifact.
     private var canGenerateTranscription: Bool {
         guard FeatureFlag.diarizedTranscription.enabled,
               let episodeUuid = playbackManager.episodeUUID,
               let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid),
               episode.downloaded(pathFinder: DownloadManager.shared) else { return false }
-        return DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid)?.transcriptionStatus != .completed
+        guard DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid)?.transcriptionStatus == .completed else {
+            return true
+        }
+        return !TranscriptionArtifactStore().hasArtifact(episodeUuid: episodeUuid)
     }
 
     /// Offers the Generate button in the error/empty state — or, when a job for

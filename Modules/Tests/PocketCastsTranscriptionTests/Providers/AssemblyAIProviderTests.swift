@@ -187,7 +187,7 @@ struct AssemblyAIProviderTests {
         #expect(transcript.speakerCount == 1)
     }
 
-    @Test func pollErrorStatusMapsToRemoteJobFailed() async throws {
+    @Test func pollErrorStatusMapsToRemoteResponseFailure() async throws {
         let (provider, apiKey) = makeProvider()
         defer { MockURLProtocol.unregister(apiKey: apiKey) }
         MockURLProtocol.register(apiKey: apiKey) { _ in
@@ -199,7 +199,7 @@ struct AssemblyAIProviderTests {
             Issue.record("Expected .failed, got \(status)")
             return
         }
-        #expect(error == .remoteJobFailed("Audio file could not be downloaded"))
+        #expect(error == .remoteResponseFailure(status: nil, providerMessage: "Audio file could not be downloaded"))
     }
 
     @Test func pollWith401ThrowsInvalidAPIKey() async throws {

@@ -4,5 +4,6 @@ PocketCastsDataModelTests
 PocketCastsServerTests
 PocketCastsFileSyncTests
 PocketCastsUtilsTests
+PocketCastsTranscriptionTests
 ModulesTests
 SnapshotTests

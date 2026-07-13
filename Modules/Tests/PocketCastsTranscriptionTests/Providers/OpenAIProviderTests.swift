@@ -36,7 +36,9 @@ struct OpenAIProviderTests {
         MockURLProtocol.register(apiKey: apiKey) { request in
             guard request.url?.path == "/v1/audio/transcriptions" else { return .respond(statusCode: 404) }
             let body = String(decoding: MockURLProtocol.bodyData(of: request), as: UTF8.self)
-            guard body.contains("gpt-4o-transcribe-diarize"), body.contains("diarized_json") else {
+            guard body.contains("gpt-4o-transcribe-diarize"),
+                  body.contains("diarized_json"),
+                  body.contains("name=\"chunking_strategy\"\r\n\r\nauto") else {
                 return .respond(statusCode: 400, body: Data("missing multipart fields".utf8))
             }
             return .json("""

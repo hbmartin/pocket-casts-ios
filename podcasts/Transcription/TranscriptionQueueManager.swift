@@ -590,11 +590,15 @@ actor TranscriptionQueueManager {
     // MARK: - Terminal states
 
     private func finishFailed(episodeUuid: String, error: TranscriptionError) {
-        dataManager.transcriptions.setStatus(episodeUuid: episodeUuid, status: .failed, errorMessage: String(describing: error))
+        // Provider-generated failure text can echo request ids or user data, so
+        // only the sanitized description crosses into the record, analytics and
+        // the shareable file log; the full error stays in the in-memory state.
+        let sanitized = error.sanitizedDescription
+        dataManager.transcriptions.setStatus(episodeUuid: episodeUuid, status: .failed, errorMessage: sanitized)
         setState(episodeUuid: episodeUuid, state: .failed(error), forcePost: true)
         NotificationCenter.postOnMainThread(EpisodeTranscriptionCompleted(episodeUuid: episodeUuid, succeeded: false))
-        Analytics.track(.transcriptionFailed, properties: ["episode_uuid": episodeUuid, "error": String(describing: error)])
-        FileLog.shared.addMessage("[Transcription] failed \(episodeUuid): \(error)")
+        Analytics.track(.transcriptionFailed, properties: ["episode_uuid": episodeUuid, "error": sanitized])
+        FileLog.shared.addMessage("[Transcription] failed \(episodeUuid): \(sanitized)")
     }
 
     private func finishCancelledOrRequeued(episodeUuid: String) {

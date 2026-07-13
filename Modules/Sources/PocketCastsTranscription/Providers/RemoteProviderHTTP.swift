@@ -5,7 +5,7 @@ import Foundation
 /// defensive JSON decoding. Pure Foundation — no package dependencies — and no
 /// logging, so an API key can never leak into a log message.
 enum RemoteProviderHTTP {
-    /// How much of an error response body is surfaced in `remoteJobFailed`
+    /// How much of an error response body is surfaced in `remoteResponseFailure`
     /// messages. Bodies are provider error JSON, never key material.
     private static let bodyExcerptLimit = 300
 
@@ -62,7 +62,8 @@ enum RemoteProviderHTTP {
 
     /// Maps an HTTP status to the matching `TranscriptionError`:
     /// 401/403 → `.invalidAPIKey`, 402/429 → `.quotaExceeded`, everything else
-    /// (other 4xx, 5xx) → `.remoteJobFailed` carrying a response-body excerpt.
+    /// (other 4xx, 5xx) → `.remoteResponseFailure` carrying a response-body
+    /// excerpt that only the in-memory failure state may surface.
     static func error(status: Int, body: Data?) -> TranscriptionError {
         switch status {
         case 401, 403:
@@ -70,7 +71,7 @@ enum RemoteProviderHTTP {
         case 402, 429:
             return .quotaExceeded
         default:
-            return .remoteJobFailed("HTTP \(status): \(bodyExcerpt(body))")
+            return .remoteResponseFailure(status: status, providerMessage: bodyExcerpt(body))
         }
     }
 
