@@ -4868,11 +4868,26 @@
 /* Title of the consent prompt button that grants consent and starts the remote transcription */
 "transcription_consent_allow" = "Allow and Generate";
 
-/* Podcast settings switch: automatically generate an on-device transcript for each newly downloaded episode of this podcast */
-"podcast_settings_auto_transcribe" = "Auto-Transcribe on Download";
+/* Podcast settings switch: opt this podcast out of the remote transcription provider, so its automatic transcripts are generated on-device instead */
+"podcast_settings_local_transcription_only" = "Transcribe On-Device Only";
 
-/* Footer under the podcast settings auto-transcribe switch, explaining the behavior is on-device only */
-"podcast_settings_auto_transcribe_footer" = "New downloads from this podcast will be transcribed automatically on this device.";
+/* Footer under the podcast settings on-device-only transcription switch, explaining that this show's automatic transcripts skip the remote provider */
+"podcast_settings_local_transcription_only_footer" = "Automatic transcripts for this podcast will be generated on-device instead of using your configured transcription provider.";
+
+/* Section header in Transcription settings for the battery policy picker controlling when on-device transcription may run */
+"transcription_battery_policy_header" = "Transcribe on Battery";
+
+/* Footer under the battery policy picker; explains deferral behavior and that remote providers are unaffected */
+"transcription_battery_policy_footer" = "Controls when on-device transcription runs while unplugged. Deferred episodes stay queued and transcribe once you charge. Low Power Mode always pauses transcription; remote providers are unaffected.";
+
+/* Battery policy option: on-device transcription may always run on battery */
+"transcription_battery_policy_always" = "Always";
+
+/* Battery policy option: on-device transcription runs on battery only above a 30% charge */
+"transcription_battery_policy_above_30" = "Above 30%% Charge";
+
+/* Battery policy option: on-device transcription runs only while the device is charging */
+"transcription_battery_policy_charging" = "Only While Charging";
 
 /* Title of the cross-episode transcript search screen and of its row in the Profile tab */
 "transcription_search_title" = "Search Transcripts";

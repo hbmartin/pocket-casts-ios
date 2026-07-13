@@ -3261,10 +3261,10 @@ nonisolated internal enum L10n {
   internal static func podcastSeasonFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_season_format", String(describing: p1), fallback: "Season %1$@")
   }
-  /// Podcast settings switch: automatically generate an on-device transcript for each newly downloaded episode of this podcast
-  internal static var podcastSettingsAutoTranscribe: String { return L10n.tr("Localizable", "podcast_settings_auto_transcribe", fallback: "Auto-Transcribe on Download") }
-  /// Footer under the podcast settings auto-transcribe switch, explaining the behavior is on-device only
-  internal static var podcastSettingsAutoTranscribeFooter: String { return L10n.tr("Localizable", "podcast_settings_auto_transcribe_footer", fallback: "New downloads from this podcast will be transcribed automatically on this device.") }
+  /// Podcast settings switch: opt this podcast out of the remote transcription provider, so its automatic transcripts are generated on-device instead
+  internal static var podcastSettingsLocalTranscriptionOnly: String { return L10n.tr("Localizable", "podcast_settings_local_transcription_only", fallback: "Transcribe On-Device Only") }
+  /// Footer under the podcast settings on-device-only transcription switch, explaining that this show's automatic transcripts skip the remote provider
+  internal static var podcastSettingsLocalTranscriptionOnlyFooter: String { return L10n.tr("Localizable", "podcast_settings_local_transcription_only_footer", fallback: "Automatic transcripts for this podcast will be generated on-device instead of using your configured transcription provider.") }
   /// Podcast settings row and screen title for the chapter smart-skip rules editor.
   internal static var podcastSettingsSkipChapters: String { return L10n.tr("Localizable", "podcast_settings_skip_chapters", fallback: "Skip Chapters") }
   /// Prompt to allow the user to share the currently selected episode.
@@ -4653,6 +4653,16 @@ nonisolated internal enum L10n {
   internal static var transcriptionAllowCellularDownloads: String { return L10n.tr("Localizable", "transcription_allow_cellular_downloads", fallback: "Download Over Cellular") }
   /// Footer under the cellular downloads toggle explaining model downloads wait for Wi-Fi when it is off
   internal static var transcriptionAllowCellularFooter: String { return L10n.tr("Localizable", "transcription_allow_cellular_footer", fallback: "Model downloads can be large. When off, downloads wait for an unmetered connection like Wi-Fi.") }
+  /// Battery policy option: on-device transcription runs on battery only above a 30% charge
+  internal static var transcriptionBatteryPolicyAbove30: String { return L10n.tr("Localizable", "transcription_battery_policy_above_30", fallback: "Above 30%% Charge") }
+  /// Battery policy option: on-device transcription may always run on battery
+  internal static var transcriptionBatteryPolicyAlways: String { return L10n.tr("Localizable", "transcription_battery_policy_always", fallback: "Always") }
+  /// Battery policy option: on-device transcription runs only while the device is charging
+  internal static var transcriptionBatteryPolicyCharging: String { return L10n.tr("Localizable", "transcription_battery_policy_charging", fallback: "Only While Charging") }
+  /// Footer under the battery policy picker; explains deferral behavior and that remote providers are unaffected
+  internal static var transcriptionBatteryPolicyFooter: String { return L10n.tr("Localizable", "transcription_battery_policy_footer", fallback: "Controls when on-device transcription runs while unplugged. Deferred episodes stay queued and transcribe once you charge. Low Power Mode always pauses transcription; remote providers are unaffected.") }
+  /// Section header in Transcription settings for the battery policy picker controlling when on-device transcription may run
+  internal static var transcriptionBatteryPolicyHeader: String { return L10n.tr("Localizable", "transcription_battery_policy_header", fallback: "Transcribe on Battery") }
   /// Title of the consent prompt button that grants consent and starts the remote transcription
   internal static var transcriptionConsentAllow: String { return L10n.tr("Localizable", "transcription_consent_allow", fallback: "Allow and Generate") }
   /// Consent prompt body for upload-based remote transcription providers. %1$@ is the provider name, e.g. "OpenAI"

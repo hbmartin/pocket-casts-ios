@@ -15,7 +15,9 @@ enum TranscriptionConsentGate {
         "transcription.consent.\(providerId)"
     }
 
-    static func hasConsent(providerId: String) -> Bool {
+    /// nonisolated: also consulted off-main by the acquisition coordinator and
+    /// the transcription queue (UserDefaults is thread-safe).
+    nonisolated static func hasConsent(providerId: String) -> Bool {
         UserDefaults.standard.bool(forKey: consentDefaultsKey(providerId: providerId))
     }
 

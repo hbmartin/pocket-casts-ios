@@ -91,9 +91,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // start observing episode downloads so loudness gets measured in the background
         _ = EpisodeLoudnessScanner.shared
 
-        // start observing episode downloads so opted-in podcasts get transcribed
-        // automatically (the coordinator re-checks the feature flag per download)
-        _ = TranscriptionAutoRunCoordinator.shared
+        // start observing episode downloads so every episode gains a transcript:
+        // the feed-provided one is indexed when the show publishes one, otherwise
+        // a transcription job is enqueued (flags re-checked per download)
+        _ = TranscriptAcquisitionCoordinator.shared
 
         NotificationsHelper.shared.register(checkToken: false)
 
@@ -129,6 +130,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupSignOutListener()
 
         if FeatureFlag.diarizedTranscription.enabled {
+            // The battery policy reads UIDevice.batteryLevel, which returns -1
+            // until monitoring is enabled.
+            UIDevice.current.isBatteryMonitoringEnabled = true
+            observePowerChangesForTranscription()
             Task.detached(priority: .utility) {
                 // Resume queued transcription jobs (and reset any a crash left
                 // mid-flight), then ask for a charging-time pass if work remains.
@@ -138,6 +143,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         return true
+    }
+
+    /// Kicks the transcription queue when charging state, battery level or Low
+    /// Power Mode changes, so a battery-deferred queue resumes without a relaunch.
+    /// Observers live for the process lifetime (never removed). The kick is cheap:
+    /// `drainIfNeeded` no-ops when nothing is queued or a drain is already running.
+    private func observePowerChangesForTranscription() {
+        let kick: (Notification) -> Void = { _ in
+            Task { await TranscriptionQueueManager.shared.powerConditionsChanged() }
+        }
+        let center = NotificationCenter.default
+        center.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main, using: kick)
+        center.addObserver(forName: UIDevice.batteryLevelDidChangeNotification, object: nil, queue: .main, using: kick)
+        center.addObserver(forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main, using: kick)
     }
 
     // MARK: - TipKit

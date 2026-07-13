@@ -32,6 +32,7 @@ struct TranscriptionSettingsView: View {
                 diarizationSection
             }
 
+            batterySection
             languageSection
             storageSection
         }
@@ -70,6 +71,26 @@ struct TranscriptionSettingsView: View {
                          isSelected: model.engineMode == .remoteProvider,
                          isEnabled: true) {
                 model.select(mode: .remoteProvider)
+            }
+        }
+    }
+
+    /// When LOCAL transcription may run on battery. Applies to the on-device
+    /// engines only (remote jobs cost network, not compute); deferred jobs stay
+    /// queued and drain when power conditions clear.
+    private var batterySection: some View {
+        Section(
+            header: Text(L10n.transcriptionBatteryPolicyHeader)
+                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
+            footer: Text(L10n.transcriptionBatteryPolicyFooter)
+                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+        ) {
+            ForEach(TranscriptionBatteryPolicy.allCases, id: \.rawValue) { policy in
+                CheckmarkRow(title: policy.localizedTitle,
+                             isSelected: model.batteryPolicy == policy,
+                             isEnabled: true) {
+                    model.select(batteryPolicy: policy)
+                }
             }
         }
     }

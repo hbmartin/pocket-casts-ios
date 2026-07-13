@@ -108,6 +108,9 @@ public enum TranscriptionError: Error, Sendable, Equatable {
     case engineFailure
     /// Device is too hot; job stays queued for a cooler/charging pass.
     case thermalThrottled
+    /// The battery policy defers local transcription (low battery / Low Power
+    /// Mode); job stays queued for a charging pass or a policy-clearing change.
+    case powerDeferred
     case cancelled
 }
 

@@ -41,15 +41,24 @@ final class TranscriptionQueueManagerTests: XCTestCase {
     }
 
     private func makeManager(engine: MockSpeechEngine,
-                             thermalState: ProcessInfo.ThermalState = .nominal) -> TranscriptionQueueManager {
+                             thermalState: ProcessInfo.ThermalState = .nominal,
+                             engineMode: TranscriptionEngineMode = .appleBuiltIn,
+                             powerState: @escaping @Sendable () -> TranscriptionPowerState = { TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false) },
+                             batteryPolicy: TranscriptionBatteryPolicy = .always,
+                             podcastDisablesRemote: Bool = false,
+                             remoteConsent: Bool = true) -> TranscriptionQueueManager {
         let audioURL = audioURL
         return TranscriptionQueueManager(
             dataManager: dataManager,
             engineFactory: MockEngineFactory(engine: engine),
             artifactStore: TranscriptionArtifactStore(directoryURL: workDirectory.appendingPathComponent("artifacts", isDirectory: true)),
-            engineMode: { .appleBuiltIn },
+            engineMode: { engineMode },
             audioFileURL: { _ in audioURL },
-            thermalState: { thermalState }
+            thermalState: { thermalState },
+            powerState: { powerState() },
+            batteryPolicy: { batteryPolicy },
+            podcastDisablesRemote: { _ in podcastDisablesRemote },
+            remoteConsent: { _ in remoteConsent }
         )
     }
 
@@ -176,6 +185,73 @@ final class TranscriptionQueueManagerTests: XCTestCase {
 
         let stillQueued = await manager.isEpisodeQueued("episode-hot")
         XCTAssertTrue(stillQueued)
+    }
+
+    // MARK: - Battery policy
+
+    func testPowerDeferralLeavesLocalJobQueuedWithoutRunningEngine() async throws {
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "hi", start: 0, end: 1)])
+        let manager = makeManager(engine: engine,
+                                  powerState: { TranscriptionPowerState(batteryLevel: 0.2, isCharging: false, isLowPowerModeEnabled: false) },
+                                  batteryPolicy: .above30Percent)
+
+        await manager.enqueue(episodeUuid: "episode-drained", podcastUuid: nil)
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-drained"))
+        XCTAssertEqual(record.transcriptionStatus, .queued, "A power-deferred job is requeued, never cancelled or failed")
+        XCTAssertFalse(engine.prepareCalled)
+
+        let stillQueued = await manager.isEpisodeQueued("episode-drained")
+        XCTAssertTrue(stillQueued)
+    }
+
+    func testPowerDeferredJobResumesWhenConditionsClear() async throws {
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "resumed after charging", start: 0, end: 2)])
+        let power = Mutex(TranscriptionPowerState(batteryLevel: 0.1, isCharging: false, isLowPowerModeEnabled: false))
+        let manager = makeManager(engine: engine,
+                                  powerState: { power.withLock { $0 } },
+                                  batteryPolicy: .onlyWhileCharging)
+
+        await manager.enqueue(episodeUuid: "episode-resumes", podcastUuid: nil)
+        await manager.drainUntilIdle()
+        XCTAssertFalse(engine.prepareCalled)
+
+        power.withLock { $0 = TranscriptionPowerState(batteryLevel: 0.1, isCharging: true, isLowPowerModeEnabled: false) }
+        await manager.powerConditionsChanged()
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-resumes"))
+        XCTAssertEqual(record.transcriptionStatus, .completed)
+    }
+
+    // MARK: - Engine fallback (always-on policy)
+
+    func testRemoteModeWithPodcastOptOutFallsBackToLocalEngine() async throws {
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "local fallback words", start: 0, end: 2)])
+        let manager = makeManager(engine: engine, engineMode: .remoteProvider, podcastDisablesRemote: true)
+
+        await manager.enqueue(episodeUuid: "episode-optout", podcastUuid: "pod-optout")
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-optout"))
+        XCTAssertEqual(record.transcriptionStatus, .completed)
+        XCTAssertEqual(record.engineMode, TranscriptionEngineMode.appleBuiltIn.rawValue,
+                       "The opted-out podcast must transcribe on-device despite the remote global mode")
+        XCTAssertTrue(engine.prepareCalled)
+    }
+
+    func testRemoteModeWithoutConsentFallsBackToLocalEngine() async throws {
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "no consent yet", start: 0, end: 2)])
+        let manager = makeManager(engine: engine, engineMode: .remoteProvider, remoteConsent: false)
+
+        await manager.enqueue(episodeUuid: "episode-noconsent", podcastUuid: nil)
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-noconsent"))
+        XCTAssertEqual(record.transcriptionStatus, .completed)
+        XCTAssertEqual(record.engineMode, TranscriptionEngineMode.appleBuiltIn.rawValue,
+                       "Auto-runs must never spend remote credits before the user consented to the provider")
     }
 
     // MARK: - Helpers

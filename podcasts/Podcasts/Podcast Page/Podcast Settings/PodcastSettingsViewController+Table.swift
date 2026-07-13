@@ -58,16 +58,16 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             cell.cellSwitch.addTarget(self, action: #selector(notificationChanged(_:)), for: UIControl.Event.valueChanged)
 
             return cell
-        case .autoTranscribe:
+        case .localTranscriptionOnly:
             // Conditional cast (unlike the file's older rows): the force-cast ratchet forbids new force casts.
             guard let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.switchCellId, for: indexPath) as? SwitchCell else { return UITableViewCell() }
-            cell.cellLabel.text = L10n.podcastSettingsAutoTranscribe
+            cell.cellLabel.text = L10n.podcastSettingsLocalTranscriptionOnly
             cell.cellSwitch.onTintColor = podcast.switchTintColor()
             cell.setImage(imageName: "transcript")
-            cell.cellSwitch.isOn = podcast.settings.autoTranscribe
+            cell.cellSwitch.isOn = podcast.settings.disableRemoteTranscription
 
-            cell.cellSwitch.removeTarget(self, action: #selector(autoTranscribeChanged(_:)), for: UIControl.Event.valueChanged)
-            cell.cellSwitch.addTarget(self, action: #selector(autoTranscribeChanged(_:)), for: UIControl.Event.valueChanged)
+            cell.cellSwitch.removeTarget(self, action: #selector(localTranscriptionOnlyChanged(_:)), for: UIControl.Event.valueChanged)
+            cell.cellSwitch.addTarget(self, action: #selector(localTranscriptionOnlyChanged(_:)), for: UIControl.Event.valueChanged)
 
             return cell
         case .upNext:
@@ -305,8 +305,10 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             }
         } else if firstRow == .feedError {
             return L10n.settingsFeedErrorMsg
-        } else if firstRow == .autoDownload, FeatureFlag.diarizedTranscription.enabled {
-            return L10n.podcastSettingsAutoTranscribeFooter
+        } else if firstRow == .autoDownload,
+                  FeatureFlag.diarizedTranscription.enabled,
+                  TranscriptionEngineFactory.currentMode() == .remoteProvider {
+            return L10n.podcastSettingsLocalTranscriptionOnlyFooter
         } else if firstRow == .autoArchive {
             return nil
         } else if firstRow == .playbackEffects {
@@ -363,12 +365,12 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         Analytics.track(.podcastSettingsAutoDownloadToggled, properties: ["enabled": sender.isOn])
     }
 
-    @objc private func autoTranscribeChanged(_ sender: UISwitch) {
+    @objc private func localTranscriptionOnlyChanged(_ sender: UISwitch) {
         // Settings-JSON-only field: write through the json_set settings path
         // (skipChapterTitles precedent), keeping the in-memory copy in step for
         // table reloads.
-        podcast.settings.autoTranscribe = sender.isOn
-        DataManager.sharedManager.saveAutoTranscribe(sender.isOn, podcastUuid: podcast.uuid)
+        podcast.settings.disableRemoteTranscription = sender.isOn
+        DataManager.sharedManager.saveDisableRemoteTranscription(sender.isOn, podcastUuid: podcast.uuid)
         Analytics.track(.podcastSettingsAutoTranscribeToggled, properties: ["enabled": sender.isOn])
     }
 
@@ -410,8 +412,11 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
     private func tableData() -> [[TableRow]] {
         var data: [[TableRow]] = [[.autoDownload, .notifications], [.upNext], [.playbackEffects, .skipFirst, .skipLast, .skipChapters], [.autoArchive]]
 
-        if FeatureFlag.diarizedTranscription.enabled {
-            data[0].append(.autoTranscribe)
+        // Only meaningful while a remote provider is the global engine: the row
+        // opts this show out of it (jobs fall back to the on-device engines).
+        if FeatureFlag.diarizedTranscription.enabled,
+           TranscriptionEngineFactory.currentMode() == .remoteProvider {
+            data[0].append(.localTranscriptionOnly)
         }
 
         if podcast.refreshAvailable {

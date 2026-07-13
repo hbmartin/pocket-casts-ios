@@ -44,6 +44,8 @@ final class TranscriptionSettingsViewModel: ObservableObject {
     @Published var allowCellularModelDownloads: Bool
     /// 0 = auto-detect; otherwise a cap on distinct transcript speakers.
     @Published var maxSpeakers: Int
+    /// When LOCAL transcription may run on battery. Remote jobs are unaffected.
+    @Published var batteryPolicy: TranscriptionBatteryPolicy
 
     // MARK: Generated transcript storage state
 
@@ -75,6 +77,7 @@ final class TranscriptionSettingsViewModel: ObservableObject {
         selectedModelVariant = Settings.transcriptionWhisperModel()
         allowCellularModelDownloads = Settings.transcriptionAllowCellularModelDownloads()
         maxSpeakers = Settings.transcriptionMaxSpeakers()
+        batteryPolicy = Settings.transcriptionBatteryPolicy()
         refreshStorage()
     }
 
@@ -96,6 +99,13 @@ final class TranscriptionSettingsViewModel: ObservableObject {
         if mode == .localModel {
             refreshStorage()
         }
+    }
+
+    func select(batteryPolicy policy: TranscriptionBatteryPolicy) {
+        batteryPolicy = policy
+        Settings.setTranscriptionBatteryPolicy(policy)
+        // A relaxed policy may make a deferred queue runnable right away.
+        Task { await TranscriptionQueueManager.shared.powerConditionsChanged() }
     }
 
     func select(providerId: String) {

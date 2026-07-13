@@ -43,7 +43,9 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
 
     private func makeManager(provider: MockRemoteProvider,
                              apiKey: String? = "unit-test-key",
-                             downloadURL: URL? = URL(string: "https://example.com/episode.mp3")) -> TranscriptionQueueManager {
+                             downloadURL: URL? = URL(string: "https://example.com/episode.mp3"),
+                             batteryPolicy: TranscriptionBatteryPolicy = .always,
+                             powerState: TranscriptionPowerState = TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false)) -> TranscriptionQueueManager {
         let audioURL = audioURL
         return TranscriptionQueueManager(
             dataManager: dataManager,
@@ -52,6 +54,10 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
             engineMode: { .remoteProvider },
             audioFileURL: { _ in audioURL },
             thermalState: { .nominal },
+            powerState: { powerState },
+            batteryPolicy: { batteryPolicy },
+            podcastDisablesRemote: { _ in false },
+            remoteConsent: { _ in true },
             remoteProviderId: { "mock" },
             remoteAPIKey: { _ in apiKey },
             episodeDownloadURL: { _ in downloadURL },
@@ -95,6 +101,22 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         // Public URL provider + parseable download URL → no upload happened.
         XCTAssertEqual(provider.submittedSources, ["publicURL(https://example.com/episode.mp3)"])
         XCTAssertEqual(provider.pollCount, 0)
+    }
+
+    func testRemoteJobIgnoresBatteryPolicy() async throws {
+        // Remote jobs cost network, not compute: even the strictest battery
+        // policy must not defer them.
+        let provider = MockRemoteProvider(submitResult: .success(.completed(Self.makeTranscript())))
+        let manager = makeManager(provider: provider,
+                                  batteryPolicy: .onlyWhileCharging,
+                                  powerState: TranscriptionPowerState(batteryLevel: 0.1, isCharging: false, isLowPowerModeEnabled: false))
+
+        await manager.enqueue(episodeUuid: "episode-battery", podcastUuid: "podcast-1")
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-battery"))
+        XCTAssertEqual(record.transcriptionStatus, .completed)
+        XCTAssertEqual(record.engineMode, TranscriptionEngineMode.remoteProvider.rawValue)
     }
 
     func testUploadProviderReceivesTranscodedFile() async throws {
