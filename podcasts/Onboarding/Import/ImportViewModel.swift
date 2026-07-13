@@ -170,7 +170,7 @@ extension ImportViewModel {
     func importFromURL(_ url: URL, completion: @escaping @Sendable (Bool) -> Void) {
         let task = URLSession.shared.dataTask(with: url) { data, _, error in
             guard let data else {
-                print("Error downloading data: \(error?.localizedDescription ?? "Unknown error")")
+                FileLog.shared.addMessage("ImportViewModel: error downloading data: \(error?.localizedDescription ?? "Unknown error")")
                 completion(false)
                 return
             }
@@ -180,10 +180,10 @@ extension ImportViewModel {
 
             do {
                 try data.write(to: fileURL)
-                print("File downloaded to: \(fileURL)")
+                FileLog.shared.addMessage("ImportViewModel: file downloaded to \(fileURL)")
                 self.importPodcastsFromOPML(url: fileURL)
             } catch {
-                print("Error saving file: \(error.localizedDescription)")
+                FileLog.shared.addMessage("ImportViewModel: error saving file: \(error.localizedDescription)")
                 completion(false)
             }
         }

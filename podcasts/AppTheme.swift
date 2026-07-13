@@ -535,7 +535,7 @@ class AppTheme {
         return colorForStyle(style, themeOverride: theme?.nonisolatedActiveTheme).color
     }
 
-    // TODO: there probably is a more elegant way to do this...
+    // Lookup-table refactor tracked in hbmartin/pocket-casts-ios#286
     nonisolated class func colorForStyle(_ style: ThemeStyle, themeOverride: Theme.ThemeType? = nil) -> UIColor {
         switch style {
         case .primaryText01: return ThemeColor.primaryText01(for: themeOverride)

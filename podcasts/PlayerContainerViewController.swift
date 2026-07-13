@@ -168,7 +168,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
 
     @objc private func showUpNext() {
         #if APPCLIP
-        //TODO: Show install banner
+        // App Clip install banner: decision tracked in hbmartin/pocket-casts-ios#282
         #else
         let navController = SJUIUtils.navController(for: upNextViewController, iconStyle: .secondaryText01, themeOverride: upNextViewController.themeOverride)
         present(navController, animated: true, completion: nil)
@@ -208,7 +208,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         }
 
         #if APPCLIP
-        //TODO: Show install banner
+        // App Clip install banner: decision tracked in hbmartin/pocket-casts-ios#282
         #else
         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
         #endif
@@ -279,7 +279,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
 
     func closeNowPlaying() {
         #if APPCLIP
-        //TODO: Show install banner
+        // App Clip install banner: decision tracked in hbmartin/pocket-casts-ios#282
         #else
         appDelegate()?.miniPlayer()?.closeFullScreenPlayer()
         #endif

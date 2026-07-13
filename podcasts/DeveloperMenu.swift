@@ -28,13 +28,13 @@ struct DeveloperMenu: View {
                 .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.pcasts]) { result in
                     switch result {
                     case .success(let url):
-                        print("Selected: \(url)")
+                        FileLog.shared.addMessage("DeveloperMenu: selected \(url)")
                         Task {
                             let fileWrapper = try FileWrapper(url: url)
                             try PCBundleDoc.performImport(from: fileWrapper)
                         }
                     case .failure(let error):
-                        print("Failed to import pcasts: \(error)")
+                        FileLog.shared.addMessage("DeveloperMenu: failed to import pcasts: \(error)")
                     }
                 }
                 Button(action: {
@@ -45,9 +45,9 @@ struct DeveloperMenu: View {
                 .fileExporter(isPresented: $showingExporter, document: PCBundleDoc()) { result in
                     switch result {
                     case .success(let url):
-                        print("Saved to: \(url)")
+                        FileLog.shared.addMessage("DeveloperMenu: saved to \(url)")
                     case .failure(let error):
-                        print("Failed to export pcasts: \(error)")
+                        FileLog.shared.addMessage("DeveloperMenu: failed to export pcasts: \(error)")
                     }
                 }
                 Button(action: {

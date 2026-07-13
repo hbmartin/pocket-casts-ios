@@ -45,9 +45,6 @@ struct SFSafariViewModifier: ViewModifier {
             )) {
                 if case .presenting(let url) = presentationState {
                     SFSafariView(url: url, context: .externalContent)
-                        .onAppear {
-                            print("Opening URL: \(url)")
-                        }
                 }
             }
     }

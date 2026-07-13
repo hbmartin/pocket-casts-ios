@@ -165,7 +165,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     private func addUIObservers() {
-        // TODO: a table diff might be more efficient here (and have nicer animations)
+        // Diffable table diff tracked in hbmartin/pocket-casts-ios#283
 
         addCustomObserver(UserEpisodeDeleted.self) { [weak self] _ in
             self?.handleReloadFromNotification()

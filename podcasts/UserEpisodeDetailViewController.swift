@@ -102,11 +102,6 @@ class UserEpisodeDetailViewController: UIViewController {
 
     // MARK: - Init
 
-    init(episodeUuid: String) {
-        episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid)! // TODO: consider making this optional
-        super.init(nibName: "UserEpisodeDetailViewController", bundle: nil)
-    }
-
     init(episode: UserEpisode) {
         self.episode = episode
 

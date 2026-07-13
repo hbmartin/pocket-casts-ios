@@ -94,7 +94,7 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
     /// Presents the episode detail sheet. Single source of truth for this screen —
     /// used by both row taps (when tap to play is off) and the Details swipe action.
     func presentEpisodeDetails(for episode: UserEpisode) {
-        userEpisodeDetailVC = UserEpisodeDetailViewController(episodeUuid: episode.uuid)
+        userEpisodeDetailVC = UserEpisodeDetailViewController(episode: episode)
         userEpisodeDetailVC?.playlist = .files
         userEpisodeDetailVC?.delegate = self
         userEpisodeDetailVC?.present(from: self)
