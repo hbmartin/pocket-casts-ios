@@ -79,7 +79,7 @@ Assessment meanings:
 | `appThemePropertiesLogging` | conditional | 1 | Analytics.swift | keep (default not unconditionally true) | |
 | `runVacuumOnVersionUpdate` | false | 1 | MainTabBarController.swift | keep (default not unconditionally true) | |
 | ~~`voiceBoostN`~~ | false | 0 | — | removed (local-first program A5 — DSP available in all builds; user toggle `useVoiceBoostN` stays opt-in) | ✅ code removed 2026-07-12; retire remote `voice_boost_n` key server-side |
-| `settingsSync` | conditional | 5 | SyncSettingsTask.swift, SyncTask+LocalChanges.swift, SyncTas | keep (default not unconditionally true) | |
+| `settingsSync` | **true** (A6a, 2026-07-12) | 5 | SyncSettingsTask.swift, SyncTask+LocalChanges.swift, SyncTas | enabled — remote `settings_sync` key is a live kill switch; delete via A6b after one release of soak (docs/DeferredWork.md) | |
 | ~~`shareProfile`~~ | conditional | 0 | — | removed (local-first program A4 — available in all builds; renders signed-out with local data) | ✅ code removed 2026-07-12; retire remote `share_profile` key server-side |
 | ~~`upNextSort`~~ | conditional | 0 | — | removed (local-first program A4) | ✅ code removed 2026-07-12; retire remote `up_next_sort` key server-side |
 | ~~`generatedChapters`~~ | conditional | 0 | — | removed (local-first program A4 — AI chapters for server-sourced podcasts in all builds; unavailable for `.localFeed` podcasts by design) | ✅ code removed 2026-07-12; retire remote `generated_chapters` key server-side |
@@ -100,4 +100,4 @@ Assessment meanings:
 | ~~`streamAndCachePlayingEpisode`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `stream_and_cache_playing_episode` key server-side |
 | ~~`trackNetworkDataUsage`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `track_network_data_usage` key server-side |
 | ~~`upNextShuffle`~~ | true | 0 | — | removed (program D2 playback batch) | ✅ code removed 2026-07-12; retire remote `up_next_shuffle` key server-side |
-| `newSettingsStorage` | conditional | 153 | AppDelegate+Defaults.swift, AutoAddQueueDataManager.swift, A | defer-playback | |
+| `newSettingsStorage` | **true** (A6a, 2026-07-12) | 153 | AppDelegate+Defaults.swift, AutoAddQueueDataManager.swift, A | enabled — remote `new_settings_storage` key is a live kill switch; collapse the 153 call sites via A6b after one release of soak (docs/DeferredWork.md) | |
