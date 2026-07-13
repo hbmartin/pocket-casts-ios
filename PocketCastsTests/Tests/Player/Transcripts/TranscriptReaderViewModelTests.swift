@@ -34,12 +34,14 @@ final class TranscriptReaderViewModelTests: XCTestCase {
 
     private func makeViewModel(playback: MockTranscriptPlayback = MockTranscriptPlayback(),
                                isGenerated: Bool = true,
+                               isLocal: Bool = false,
                                timing: TranscriptReaderViewModel.TimingProvider? = nil,
                                isDownloaded: Bool = false) -> TranscriptReaderViewModel {
         TranscriptReaderViewModel(
             transcript: TranscriptReaderFixture.makeModel(),
             playback: playback,
             isGeneratedTranscript: isGenerated,
+            isLocalTranscript: isLocal,
             episodeTitle: "Episode One",
             episodeShareURLString: "https://pca.st/episode/abc",
             timing: timing ?? self.timing(),
@@ -119,6 +121,21 @@ final class TranscriptReaderViewModelTests: XCTestCase {
         viewModel.refreshCurrentCue()
 
         XCTAssertNil(viewModel.currentCueBlockID)
+    }
+
+    func testRefreshCurrentCueUsesRawPlaybackTimeForLocalTranscript() {
+        let playback = MockTranscriptPlayback()
+        playback.time = 12 // cue 0 window, no mapping applied
+        // Local transcripts are cut from the played audio: highlighting must
+        // work with the fingerprint manager inactive and no mapping at all.
+        let viewModel = makeViewModel(playback: playback,
+                                      isGenerated: false,
+                                      isLocal: true,
+                                      timing: timing(active: false, offset: nil))
+
+        viewModel.refreshCurrentCue()
+
+        XCTAssertEqual(viewModel.currentCueBlockID, 1)
     }
 
     // MARK: - Seeking
@@ -291,6 +308,48 @@ final class TranscriptReaderViewModelTests: XCTestCase {
 
         XCTAssertNil(viewModel.clipRange(forBlock: 3))
         XCTAssertNil(viewModel.clipRange(forBlock: 99))
+    }
+
+    func testQuoteTextMapsGeneratedCueTimeToPlaybackTimeline() {
+        let viewModel = makeViewModel(timing: timing(offset: 30))
+
+        let quote = viewModel.quoteText(forBlock: 1)
+
+        // Cue starts at reference 10; the shared link must anchor to the
+        // playback timeline (10 + 30), like tap-to-seek does.
+        XCTAssertEqual(quote, "\u{201C}Hello and welcome to the show.\u{201D} — Episode One\nhttps://pca.st/episode/abc?t=40")
+    }
+
+    func testQuoteTextOmitsTimestampWhenGeneratedMappingUnavailable() {
+        let viewModel = makeViewModel(timing: timing(offset: nil))
+
+        let quote = viewModel.quoteText(forBlock: 1)
+
+        XCTAssertEqual(quote, "\u{201C}Hello and welcome to the show.\u{201D} — Episode One\nhttps://pca.st/episode/abc")
+    }
+
+    func testClipRangeMapsGeneratedCueTimesToPlaybackTimeline() {
+        let viewModel = makeViewModel(timing: timing(offset: 30))
+
+        let range = viewModel.clipRange(forBlock: 4)
+
+        XCTAssertEqual(range?.start, 51)
+        XCTAssertEqual(range?.end, 55)
+    }
+
+    func testClipRangeIsNilForGeneratedTranscriptWithoutMapping() {
+        let viewModel = makeViewModel(timing: timing(offset: nil))
+
+        XCTAssertNil(viewModel.clipRange(forBlock: 4))
+    }
+
+    func testClipRangeUsesPlainTimesForExternalTranscript() {
+        let viewModel = makeViewModel(isGenerated: false, timing: timing(offset: nil))
+
+        let range = viewModel.clipRange(forBlock: 4)
+
+        XCTAssertEqual(range?.start, 21)
+        XCTAssertEqual(range?.end, 25)
     }
 
     // MARK: - Follow state

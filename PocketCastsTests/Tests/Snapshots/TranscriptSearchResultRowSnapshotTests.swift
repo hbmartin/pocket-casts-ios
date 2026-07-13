@@ -1,3 +1,4 @@
+import PocketCastsDataModel
 import SnapshotTesting
 import SwiftUI
 import XCTest
@@ -18,7 +19,8 @@ final class TranscriptSearchResultRowSnapshotTests: XCTestCase {
             episodeTitle: "142: The Quiet Art of Shipping",
             runs: runs,
             startTime: startTime,
-            speaker: speaker
+            speaker: speaker,
+            source: speaker == nil ? .provided : .generated
         )
     }
 

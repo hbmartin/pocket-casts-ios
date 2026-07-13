@@ -63,6 +63,10 @@ final class TranscriptReaderViewModel: ObservableObject {
     let episodeTitle: String?
     let episodeShareURLString: String?
     let isGeneratedTranscript: Bool
+    /// Locally generated (on-device) transcript: cut from the exact audio file
+    /// being played, so cue times ARE playback times and no fingerprint mapping
+    /// applies (mirrors the VC's `isDisplayingLocalTranscription` handling).
+    let isLocalTranscript: Bool
 
     // MARK: - Published state
 
@@ -96,6 +100,7 @@ final class TranscriptReaderViewModel: ObservableObject {
     init(transcript: TranscriptModel,
          playback: TranscriptPlaybackManaging,
          isGeneratedTranscript: Bool,
+         isLocalTranscript: Bool = false,
          episodeTitle: String?,
          episodeShareURLString: String?,
          timing: TimingProvider = .fingerprint,
@@ -103,6 +108,7 @@ final class TranscriptReaderViewModel: ObservableObject {
         self.transcript = transcript
         self.playback = playback
         self.isGeneratedTranscript = isGeneratedTranscript
+        self.isLocalTranscript = isLocalTranscript
         self.episodeTitle = episodeTitle
         self.episodeShareURLString = episodeShareURLString
         self.timing = timing
@@ -132,11 +138,17 @@ final class TranscriptReaderViewModel: ObservableObject {
 
     // MARK: - Follow-along highlighting
 
-    /// Called at ~4 Hz by the view's timer. Highlighting is opt-in exactly like
-    /// the VC's display-link loop: only while the fingerprint manager is
-    /// `.active` and playback maps onto matched reference content; otherwise the
-    /// highlight clears.
+    /// Called at ~4 Hz by the view's timer. For locally generated transcripts
+    /// the raw playback time is the cue timeline (mirrors the VC's
+    /// `updateTranscriptPosition` local branch). Otherwise highlighting is
+    /// opt-in exactly like the VC's display-link loop: only while the
+    /// fingerprint manager is `.active` and playback maps onto matched
+    /// reference content; otherwise the highlight clears.
     func refreshCurrentCue() {
+        if isLocalTranscript {
+            updateCurrentCue(forReferenceTime: playback.currentTime())
+            return
+        }
         guard timing.isActive(), let reference = timing.matchedReferenceTime(playback.currentTime()) else {
             if currentCueBlockID != nil {
                 currentCueBlockID = nil
@@ -270,12 +282,17 @@ final class TranscriptReaderViewModel: ObservableObject {
 
     // MARK: - Sharing
 
-    /// The share-sheet text for quoting a paragraph block.
+    /// The share-sheet text for quoting a paragraph block. Generated-transcript
+    /// cue times are mapped to the playback timeline (as `seek` does); when no
+    /// mapping is available the quote is shared without a timestamp rather than
+    /// with one that lands on different audio.
     func quoteText(forBlock blockID: Int) -> String? {
         guard blocks.indices.contains(blockID) else { return nil }
         let block = blocks[blockID]
         guard case .paragraph(let cueIndex) = block.kind else { return nil }
-        let startTime = cueIndex.flatMap { transcript.cues.indices.contains($0) ? transcript.cues[$0].startTime : nil }
+        let startTime = cueIndex
+            .flatMap { transcript.cues.indices.contains($0) ? transcript.cues[$0].startTime : nil }
+            .flatMap { playbackTimelineTime(forCueTime: $0) }
         return TranscriptQuoteBuilder.quoteText(
             cueText: block.text,
             episodeTitle: episodeTitle,
@@ -284,7 +301,10 @@ final class TranscriptReaderViewModel: ObservableObject {
         )
     }
 
-    /// The cue's time window, for pre-seeding the clip-share flow.
+    /// The cue's time window on the playback timeline, for pre-seeding the
+    /// clip-share flow. Returns nil for a generated transcript without an
+    /// active mapping — a clip trimmed against unmapped reference times would
+    /// cut the wrong audio.
     func clipRange(forBlock blockID: Int) -> (start: TimeInterval, end: TimeInterval)? {
         guard blocks.indices.contains(blockID),
               let cueIndex = blocks[blockID].cueIndex,
@@ -292,7 +312,18 @@ final class TranscriptReaderViewModel: ObservableObject {
             return nil
         }
         let cue = transcript.cues[cueIndex]
-        guard cue.endTime > cue.startTime else { return nil }
-        return (cue.startTime, cue.endTime)
+        guard cue.endTime > cue.startTime,
+              let start = playbackTimelineTime(forCueTime: cue.startTime),
+              let end = playbackTimelineTime(forCueTime: cue.endTime),
+              end > start else { return nil }
+        return (start, end)
+    }
+
+    /// Converts a cue-timeline time to the playback timeline: identity for
+    /// external and local transcripts, fingerprint-mapped for generated ones
+    /// (the same conversion `seek` applies).
+    private func playbackTimelineTime(forCueTime time: TimeInterval) -> TimeInterval? {
+        guard isGeneratedTranscript else { return time }
+        return timing.playbackTime(time)
     }
 }
