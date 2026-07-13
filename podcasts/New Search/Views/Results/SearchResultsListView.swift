@@ -1,11 +1,13 @@
 import SwiftUI
 import PocketCastsServer
+import PocketCastsUtils
 
 struct SearchResultsListView: View {
     enum DisplayMode: String, AnalyticsDescribable, CaseIterable, Identifiable {
         case allResults
         case podcasts
         case episodes
+        case transcripts
 
         var analyticsDescription: String {
             rawValue
@@ -23,7 +25,15 @@ struct SearchResultsListView: View {
                     return L10n.podcastsPlural
                 case .episodes:
                     return L10n.episodes
+                case .transcripts:
+                    return L10n.searchTranscriptsPill
             }
+        }
+
+        /// The pills offered by the results filter: `.transcripts` only exists
+        /// while the library transcript search flag is on.
+        static var availableCases: [DisplayMode] {
+            allCases.filter { $0 != .transcripts || FeatureFlag.transcriptSearch.enabled }
         }
     }
 
@@ -57,6 +67,11 @@ struct SearchResultsListView: View {
                         }
                         ForEach(searchResults.episodes, id: \.self) { episode in
                             SearchResultCell(episode: episode, result: nil)
+                        }
+                    case .transcripts:
+                        ForEach(Array(searchResults.transcriptHits.enumerated()), id: \.element) { position, hit in
+                            TranscriptSearchResultRow(display: hit, position: position)
+                                .padding(.horizontal, 16)
                         }
                     }
                     if displayMode == .podcasts && searchResults.isSearchingForPodcasts || displayMode == .episodes && searchResults.isSearchingForEpisodes {

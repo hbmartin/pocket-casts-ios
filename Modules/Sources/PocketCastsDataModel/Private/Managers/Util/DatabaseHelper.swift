@@ -124,6 +124,43 @@ class DatabaseHelper {
         SchemaMigration(toVersion: 80) { db in
             try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN excerpt TEXT;", values: nil)
             try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN endTime REAL;", values: nil)
+        },
+        // Library-wide transcript search (AI UX plan phase 4, device-local, no sync):
+        // an FTS5 index over the cue text of viewed podcast-provided transcripts, plus
+        // a bookkeeping table (one row per indexed episode) driving dedupe and LRU
+        // eviction. Locally generated transcripts have their own index
+        // (TranscriptionSegmentFTS, migration 78) — this is a separate corpus.
+        //
+        // The FTS5 CREATE is caught rather than propagated so an SQLite build without
+        // the FTS5 module can't fail the whole migration chain: on failure neither
+        // table is created, TranscriptIndexDataManager's meta-table probe reports the
+        // index unavailable, and the feature self-disables.
+        SchemaMigration(toVersion: 81) { db in
+            do {
+                try db.executeUpdate("""
+                CREATE VIRTUAL TABLE TranscriptCueIndex USING fts5(
+                    text,
+                    episodeUuid UNINDEXED,
+                    podcastUuid UNINDEXED,
+                    cueIndex UNINDEXED,
+                    startTime UNINDEXED,
+                    endTime UNINDEXED,
+                    tokenize = 'unicode61 remove_diacritics 2'
+                );
+                """, values: nil)
+            } catch {
+                FileLog.shared.addMessage("Migration 81: FTS5 unavailable, transcript search index not created: \(error)")
+                return
+            }
+            try db.executeUpdate("""
+            CREATE TABLE TranscriptIndexMeta (
+                episodeUuid TEXT PRIMARY KEY,
+                podcastUuid TEXT,
+                indexedDate REAL NOT NULL DEFAULT 0,
+                cueCount INTEGER NOT NULL DEFAULT 0,
+                textBytes INTEGER NOT NULL DEFAULT 0
+            );
+            """, values: nil)
         }
     ]
 

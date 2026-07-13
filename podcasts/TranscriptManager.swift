@@ -107,6 +107,11 @@ nonisolated class TranscriptManager {
         while let transcript = TranscriptFormat.bestTranscript(from: transcriptsAvailable) {
             do {
                 let model = try await loadTranscript(transcript)
+                // Library transcript search (AI UX plan Phase 4): index the viewed
+                // podcast-provided transcript, fire-and-forget. Locally generated
+                // transcripts return earlier above and are deliberately skipped —
+                // they are indexed by the transcription feature's own FTS table.
+                TranscriptSearchIndexer.shared.indexIfNeeded(episodeUuid: episodeUUID, podcastUuid: podcastUUID, model: model)
                 return model
             } catch TranscriptError.empty, TranscriptError.failedToParse {
                 transcriptsAvailable.removeAll { other in

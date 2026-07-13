@@ -256,6 +256,11 @@ enum AnalyticsEvent: String {
     case filterCreateAsSmartPlaylistTapped
     case filterCreateAsCustomPlaylistTapped
     case filterCustomQueryValidated
+
+    // Prompted playlists (natural language -> smart playlist draft)
+    case promptedPlaylistShown
+    case promptedPlaylistGenerated
+    case promptedPlaylistGenerationFailed
     case filterCreateCancelled
     case filterDeleteTriggered
     case filterDeleteDismissed
@@ -837,6 +842,16 @@ enum AnalyticsEvent: String {
     case episodeDetailSummaryCardShown
     case episodeDetailSummaryTakeawayTapped
     case episodeDetailSummaryGenerationFailed
+
+    // MARK: - Episode Credits (people credits card on episode detail)
+
+    case episodeDetailCreditsShown
+    case episodeDetailCreditTapped
+
+    // MARK: - Library Transcript Search (viewed podcast-provided transcripts)
+
+    case librarySearchTranscriptsShown
+    case librarySearchTranscriptResultTapped
 
     // MARK: - Diarized Transcription (locally generated transcripts)
 

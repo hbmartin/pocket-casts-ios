@@ -4766,6 +4766,12 @@
 /* Button that collapses the expanded episode summary text back to a preview */
 "episode_summary_card_show_less" = "Show less";
 
+/* Title of the credits card on the episode detail screen listing the people (hosts, guests) featured on the episode */
+"episode_credits_title" = "Credits";
+
+/* Accessibility hint on a person chip on the episode credits card; tapping searches the podcast catalog for that person's name */
+"episode_credits_find_more" = "Find more episodes featuring this person";
+
 /* Title of the button/action that starts generating an on-device transcript for a downloaded episode */
 "transcription_generate" = "Generate Transcript";
 
@@ -6829,3 +6835,48 @@
 
 /* Episode type choice: a bonus episode */
 "playlist_custom_episode_type_bonus" = "Bonus";
+
+/* Search results filter pill that shows matches found inside episode transcripts */
+"search_transcripts_pill" = "Transcripts";
+
+/* Title shown in search results when no transcript matches the search term */
+"search_transcripts_empty_title" = "No Transcript Matches";
+
+/* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
+"search_transcripts_empty_message" = "Transcripts become searchable here after you view them on an episode.";
+
+/* Timestamp label on a transcript search result showing where in the episode the match occurs. '%1$@' is a placeholder for a time like 12:34. */
+"search_transcripts_result_at_time" = "At %1$@";
+
+/* Title for the button on the new playlist screen that opens the natural-language playlist creator */
+"prompted_playlist_entry_button" = "Describe your playlist";
+
+/* Subtitle for the describe-your-playlist creation button explaining the feature */
+"prompted_playlist_entry_subtitle" = "Tell us what to include and we'll set up the rules.";
+
+/* Title of the natural-language playlist creation sheet */
+"prompted_playlist_sheet_title" = "Describe your playlist";
+
+/* Placeholder in the playlist description text field showing an example description */
+"prompted_playlist_placeholder" = "e.g. Unplayed episodes under 30 minutes from this week";
+
+/* Button that interprets the playlist description and opens the playlist preview */
+"prompted_playlist_generate" = "Generate Preview";
+
+/* Notice shown on the playlist description sheet when on-device Apple Intelligence is unavailable */
+"prompted_playlist_fallback_notice" = "Apple Intelligence isn't available on this device, so a simpler built-in interpreter will read your description.";
+
+/* Notice listing podcast names from the description that couldn't be found in the user's library. '%1$@' is a placeholder for the comma-separated list of names. */
+"prompted_playlist_unmatched_podcasts" = "Couldn't find these podcasts in your library: %1$@. Tap Generate Preview again to continue without them.";
+
+/* Footnote on the playlist description sheet explaining that processing happens on device */
+"prompted_playlist_intelligence_footnote" = "Uses on-device intelligence. Your description never leaves this device.";
+
+/* Example playlist description chip: play state and duration rules */
+"prompted_playlist_example_1" = "Unplayed episodes under 30 minutes";
+
+/* Example playlist description chip: download state and release date rules */
+"prompted_playlist_example_2" = "Downloaded episodes from this week";
+
+/* Example playlist description chip: starred and duration rules */
+"prompted_playlist_example_3" = "Starred episodes longer than an hour";

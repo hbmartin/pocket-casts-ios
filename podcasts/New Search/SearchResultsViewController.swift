@@ -37,6 +37,23 @@ class SearchResultsViewController: UIHostingController<AnyView> {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Programmatic entry point for searches launched from outside the search
+    /// bar (e.g. a person chip on the episode-detail credits card). Mirrors the
+    /// search-history cell flow: shows the results, runs the local + remote
+    /// searches, records history, and hands the term to the visible search bar.
+    func startExternalSearch(term: String) {
+        let term = term.trim()
+        guard !term.isEmpty else { return }
+
+        displaySearch.isSearching = true
+        if searchResults.showLocalResults {
+            searchResults.searchLocally(term: term)
+        }
+        searchResults.search(term: term)
+        searchHistoryModel.add(searchTerm: term)
+        NotificationCenter.postOnMainThread(PodcastSearchRequested(term: term))
+    }
+
     func searchShown() {
         searchAnalyticsHelper.trackShown()
     }

@@ -1294,6 +1294,10 @@ nonisolated internal enum L10n {
   internal static func episodeCountPluralFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "episode_count_plural_format", String(describing: p1), fallback: "%1$@ episodes")
   }
+  /// Accessibility hint on a person chip on the episode credits card; tapping searches the podcast catalog for that person's name
+  internal static var episodeCreditsFindMore: String { return L10n.tr("Localizable", "episode_credits_find_more", fallback: "Find more episodes featuring this person") }
+  /// Title of the credits card on the episode detail screen listing the people (hosts, guests) featured on the episode
+  internal static var episodeCreditsTitle: String { return L10n.tr("Localizable", "episode_credits_title", fallback: "Credits") }
   /// Title of the Episode description
   internal static var episodeDescriptionTitle: String { return L10n.tr("Localizable", "episode_description_title", fallback: "Episode Description") }
   /// Label for the Add button on the episode detail page. Opens a bottom sheet with options to add to Up Next or playlist.
@@ -3423,6 +3427,30 @@ nonisolated internal enum L10n {
   internal static var profileStarredNoEpisodesDesc: String { return L10n.tr("Localizable", "profile_starred_no_episodes_desc", fallback: "Star episodes you love and come back to them at anytime.") }
   /// Title for the empty state on screen where the user can review their starred (favorited) podcast episodes
   internal static var profileStarredNoEpisodesTitle: String { return L10n.tr("Localizable", "profile_starred_no_episodes_title", fallback: "Save your favorites") }
+  /// Title for the button on the new playlist screen that opens the natural-language playlist creator
+  internal static var promptedPlaylistEntryButton: String { return L10n.tr("Localizable", "prompted_playlist_entry_button", fallback: "Describe your playlist") }
+  /// Subtitle for the describe-your-playlist creation button explaining the feature
+  internal static var promptedPlaylistEntrySubtitle: String { return L10n.tr("Localizable", "prompted_playlist_entry_subtitle", fallback: "Tell us what to include and we'll set up the rules.") }
+  /// Example playlist description chip: play state and duration rules
+  internal static var promptedPlaylistExample1: String { return L10n.tr("Localizable", "prompted_playlist_example_1", fallback: "Unplayed episodes under 30 minutes") }
+  /// Example playlist description chip: download state and release date rules
+  internal static var promptedPlaylistExample2: String { return L10n.tr("Localizable", "prompted_playlist_example_2", fallback: "Downloaded episodes from this week") }
+  /// Example playlist description chip: starred and duration rules
+  internal static var promptedPlaylistExample3: String { return L10n.tr("Localizable", "prompted_playlist_example_3", fallback: "Starred episodes longer than an hour") }
+  /// Notice shown on the playlist description sheet when on-device Apple Intelligence is unavailable
+  internal static var promptedPlaylistFallbackNotice: String { return L10n.tr("Localizable", "prompted_playlist_fallback_notice", fallback: "Apple Intelligence isn't available on this device, so a simpler built-in interpreter will read your description.") }
+  /// Button that interprets the playlist description and opens the playlist preview
+  internal static var promptedPlaylistGenerate: String { return L10n.tr("Localizable", "prompted_playlist_generate", fallback: "Generate Preview") }
+  /// Footnote on the playlist description sheet explaining that processing happens on device
+  internal static var promptedPlaylistIntelligenceFootnote: String { return L10n.tr("Localizable", "prompted_playlist_intelligence_footnote", fallback: "Uses on-device intelligence. Your description never leaves this device.") }
+  /// Placeholder in the playlist description text field showing an example description
+  internal static var promptedPlaylistPlaceholder: String { return L10n.tr("Localizable", "prompted_playlist_placeholder", fallback: "e.g. Unplayed episodes under 30 minutes from this week") }
+  /// Title of the natural-language playlist creation sheet
+  internal static var promptedPlaylistSheetTitle: String { return L10n.tr("Localizable", "prompted_playlist_sheet_title", fallback: "Describe your playlist") }
+  /// Notice listing podcast names from the description that couldn't be found in the user's library. '%1$@' is a placeholder for the comma-separated list of names.
+  internal static func promptedPlaylistUnmatchedPodcasts(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "prompted_playlist_unmatched_podcasts", String(describing: p1), fallback: "Couldn't find these podcasts in your library: %1$@. Tap Generate Preview again to continue without them.")
+  }
   /// The purchase agreement terms, the %1$@, %2$@ are intended to be "Privacy Policy" and "Terms of Use"
   internal static func purchaseTerms(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "purchase_terms", String(describing: p1), String(describing: p2), fallback: "By continuing, you agree to our %1$@ and %2$@")
@@ -3568,6 +3596,16 @@ nonisolated internal enum L10n {
   /// View all results for "%1$@"
   internal static func searchResultsViewAll(_ p1: Any) -> String {
     return L10n.tr("Localizable", "search_results_view_all", String(describing: p1), fallback: "View all results for \"%1$@\"")
+  }
+  /// Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable.
+  internal static var searchTranscriptsEmptyMessage: String { return L10n.tr("Localizable", "search_transcripts_empty_message", fallback: "Transcripts become searchable here after you view them on an episode.") }
+  /// Title shown in search results when no transcript matches the search term
+  internal static var searchTranscriptsEmptyTitle: String { return L10n.tr("Localizable", "search_transcripts_empty_title", fallback: "No Transcript Matches") }
+  /// Search results filter pill that shows matches found inside episode transcripts
+  internal static var searchTranscriptsPill: String { return L10n.tr("Localizable", "search_transcripts_pill", fallback: "Transcripts") }
+  /// Timestamp label on a transcript search result showing where in the episode the match occurs. '%1$@' is a placeholder for a time like 12:34.
+  internal static func searchTranscriptsResultAtTime(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "search_transcripts_result_at_time", String(describing: p1), fallback: "At %1$@")
   }
   /// Header for the shelf of the user's own podcasts shown on the empty search screen.
   internal static var searchYourPodcasts: String { return L10n.tr("Localizable", "search_your_podcasts", fallback: "Your Podcasts") }

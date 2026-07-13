@@ -83,6 +83,21 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see plans/AI UX Improvements.md Phase 3.
     case smartHighlights
 
+    /// Library-wide transcript search: viewed podcast-provided transcripts are
+    /// FTS-indexed on device and surfaced as a Transcripts section in search;
+    /// see plans/AI UX Improvements.md Phase 4.
+    case transcriptSearch
+
+    /// Prompted playlists: natural language description -> smart playlist draft
+    /// (on-device FoundationModels with a deterministic rule-parser fallback);
+    /// see plans/AI UX Improvements.md Phase 5.
+    case promptedPlaylists
+
+    /// People credits on episode detail (parsed from `<podcast:person>` for
+    /// local feeds; server payloads documented in docs/ServerAPISurface.md);
+    /// see plans/AI UX Improvements.md Phase 6.
+    case episodeCredits
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -144,6 +159,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .episodeSummaries:
             BuildEnvironment.current != .appStore
         case .smartHighlights:
+            BuildEnvironment.current != .appStore
+        case .transcriptSearch:
+            BuildEnvironment.current != .appStore
+        case .promptedPlaylists:
+            BuildEnvironment.current != .appStore
+        case .episodeCredits:
             BuildEnvironment.current != .appStore
         }
     }
