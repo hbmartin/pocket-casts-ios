@@ -21,6 +21,7 @@ Register, not here.
 | **14 — Adaptive effects switching** | Full mechanism shipped **default off** with FileLog switch telemetry per the measure-first mandate: "music" class read from the existing classifier pass, hysteresis segment classifier, trim + Voice Boost suspended during music as a runtime override (tuning blob untouched). Toggle in Advanced Audio. Flip the default only after reviewing `[AdaptiveEffects]` logs on music-heavy shows. | #281 |
 | **55 — Small-stuff sweep** | Every TODO fixed or tracked: trivial ones fixed on sight (incl. `ArchiveHelper`'s user-visible literal "TODO"), non-trivial ones became issues #282–#286, production `print()` routed through FileLog with a Semgrep rule (`no-bare-print`) keeping it that way. Only `TODO(A2d)` remains, deliberately. | #287 |
 | **39 — Performance regression tests** | Reporting-only baselines per the re-entry plan, scoped to cold start + podcast-page entry + episode-card entry (no scrolling): `PerformanceUITests` plan on the seeded scenario, nightly `perf-ui` job, `perf-report.rb` delta table vs `scripts/ci/perf-baselines.json`. Record baselines after ~2 weeks of runs, then consider gating. | #288 |
+| **67 — Shake-to-report** | Shake in debug/TestFlight builds opens a feedback sheet posting to the fork's own endpoint with structured diagnostics (`Api_SupportFeedbackRequest` fields 6–9: logs tail, bitdrift session ID, device info, app version). New `BuildEnvironment.testFlight` (sandbox receipt; also enables beta flags on TestFlight), bitdrift extended to TestFlight, `FileLog.tailOfLogFile`. Sleep-timer restart keeps the shake while a timer runs. Backend half: podcast-backend#10. | #290 |
 | *(infra)* Auto-format fix | `redundant_nil_coalescing` autocorrect removed (it stripped a semantic `?? nil` and shipped a real bug) + Semgrep guard for nil-checks on `dbQueue.read/write` results. | #278 |
 
 Item 57 (Podping) was deliberately skipped this round — see below.
@@ -119,22 +120,6 @@ podcast. WebSub as fallback for feeds advertising hubs.
 
 **Re-entry:** after A2/A3 soak. Needs a battery/socket strategy decision (BGAppRefresh polling of a
 relay vs push-via-server is likely the realistic iOS answer).
-
-## Item 67 — Shake-to-report in beta
-
-**Concept:** extend `podcasts/BackgroundShakeObserver.swift` (currently sleep-timer restart) to
-present a feedback sheet in TestFlight builds, attaching diagnostics to the fork's own
-`support/feedback` endpoint.
-
-**Premises corrected by the 2026-07-13 review:** `BuildEnvironment` has no `.testFlight` case
-(sandbox-receipt detection must be built); bitdrift only starts under `#if DEBUG` (extend to
-TestFlight and expose the session ID); `FileLog` has no tail API; `Api_SupportFeedbackRequest`
-carries only `message`/`subject`/`inbox`.
-
-**Blocked on:** the `pocketcasts-api` repo (not checked out on this machine) — the agreed design
-extends `Api_SupportFeedbackRequest` with structured fields (`logs`, `bitdrift_session_id`,
-`device_info`, `app_version`) and regenerates via `mise run generate:proto`. Sleep-timer shake
-keeps priority when a timer is active.
 
 ## A6b — Delete `newSettingsStorage`/`settingsSync` and collapse call sites
 
