@@ -5176,3 +5176,29 @@ rules:
         - "**/Modules/Tests/**"
     patterns:
       - pattern: ServerSettings.setRefreshToken($R.refreshToken)
+
+  - id: pocketcasts.swift-no-nil-check-on-dbqueue-result
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: HIGH
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      GRDBQueue.read/write wrap the closure's return value in their own optional,
+      so comparing the result directly against nil tests "did the database call
+      succeed", not "did the query find something" — a fetchOne closure yields a
+      double optional whose .some(nil) is != nil. Flatten explicitly (e.g. return
+      fetchCount > 0 from the closure, or `?? nil`) before nil-checking. This
+      exact confusion shipped an isIndexed() that always returned true.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: $Q.read { ... } != nil
+          - pattern: $Q.read { ... } == nil
+          - pattern: $Q.write { ... } != nil
+          - pattern: $Q.write { ... } == nil
