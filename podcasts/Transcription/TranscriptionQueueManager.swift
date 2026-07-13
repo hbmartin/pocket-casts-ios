@@ -94,6 +94,7 @@ actor TranscriptionQueueManager {
     private let engineMode: @Sendable () -> TranscriptionEngineMode
     private let audioFileURL: @Sendable (String) -> URL?
     private let thermalState: @Sendable () -> ProcessInfo.ThermalState
+    private let maxSpeakers: @Sendable () -> Int
     private let remoteProviderId: @Sendable () -> String
     private let remoteAPIKey: @Sendable (String) -> String?
     private let episodeDownloadURL: @Sendable (String) -> URL?
@@ -118,6 +119,7 @@ actor TranscriptionQueueManager {
              return URL(fileURLWithPath: episode.pathToDownloadedFile(pathFinder: DownloadManager.shared))
          },
          thermalState: @escaping @Sendable () -> ProcessInfo.ThermalState = { ProcessInfo.processInfo.thermalState },
+         maxSpeakers: @escaping @Sendable () -> Int = { Settings.transcriptionMaxSpeakers() },
          remoteProviderId: @escaping @Sendable () -> String = { Settings.transcriptionRemoteProvider() },
          remoteAPIKey: @escaping @Sendable (String) -> String? = { TranscriptionKeyStore.apiKey(providerId: $0) },
          episodeDownloadURL: @escaping @Sendable (String) -> URL? = { episodeUuid in
@@ -138,6 +140,7 @@ actor TranscriptionQueueManager {
         self.engineMode = engineMode
         self.audioFileURL = audioFileURL
         self.thermalState = thermalState
+        self.maxSpeakers = maxSpeakers
         self.remoteProviderId = remoteProviderId
         self.remoteAPIKey = remoteAPIKey
         self.episodeDownloadURL = episodeDownloadURL
@@ -228,6 +231,14 @@ actor TranscriptionQueueManager {
         dataManager.transcriptions.delete(episodeUuid: episodeUuid)
         artifactStore.delete(episodeUuid: episodeUuid)
         states[episodeUuid] = nil
+    }
+
+    /// Settings "Clear All": removes every generated transcription — records,
+    /// FTS rows and VTT artifacts — cancelling any queued or in-flight jobs.
+    func deleteAllTranscriptions() {
+        for record in dataManager.transcriptions.allRecords() where !record.episodeUuid.isEmpty {
+            deleteTranscription(episodeUuid: record.episodeUuid)
+        }
     }
 
     /// Suspends until the drain loop goes idle (queue empty, or deferred by
@@ -325,6 +336,9 @@ actor TranscriptionQueueManager {
 
         record.transcriptionStatus = .processing
         record.engineMode = mode.rawValue
+        // Provenance: which engine build produced this transcript (e.g.
+        // "whisperkit.openai_whisper-small" or "apple.speechanalyzer").
+        record.modelId = engine.id
         record.errorMessage = nil
         record.updatedAt = Date().timeIntervalSince1970
         dataManager.transcriptions.upsert(record)
@@ -345,10 +359,8 @@ actor TranscriptionQueueManager {
         try Task.checkCancellation()
         try checkThermal()
 
-        // Phase 1 ships no diarizer: empty turns make the aligner emit untagged
-        // (monologue) cues, which the serializer writes without <v> voice tags.
         setState(episodeUuid: episodeUuid, state: .diarizing(0), forcePost: true)
-        let turns: [SpeakerTurn] = []
+        let turns = try await diarize(episodeUuid: episodeUuid, audioURL: audioURL)
         let cues = SpeakerAligner.align(segments: segments, turns: turns)
         guard !cues.isEmpty else { throw TranscriptionError.engineFailure }
         setState(episodeUuid: episodeUuid, state: .diarizing(1))
@@ -359,6 +371,36 @@ actor TranscriptionQueueManager {
                                             speakerCount: speakerCount,
                                             engineDescription: engine.id)
         try complete(episodeUuid: episodeUuid, record: record, transcript: transcript)
+    }
+
+    /// The shared SpeakerKit diarizer stage, run for BOTH local pipeline modes
+    /// (Apple ASR + SpeakerKit is the diarized built-in mode, WhisperKit +
+    /// SpeakerKit the local-model one).
+    ///
+    /// Diarization is best-effort: any failure — diarizer model download blocked
+    /// by the cellular gate, engine error, no diarizer configured — logs and
+    /// falls back to empty turns so the job still completes as a monologue.
+    /// Only cancellation propagates and fails the job.
+    private func diarize(episodeUuid: String, audioURL: URL) async throws -> [SpeakerTurn] {
+        guard let diarizer = engineFactory.makeDiarizer() else { return [] }
+
+        do {
+            // Model download/load is a small share of the stage; the analysis
+            // pass over the full episode dominates.
+            try await diarizer.prepare(progress: progressHandler(episodeUuid: episodeUuid) { .diarizing(0.2 * $0) })
+            try Task.checkCancellation()
+            let cap = maxSpeakers()
+            return try await diarizer.diarize(audioFile: audioURL,
+                                              maxSpeakers: cap > 0 ? cap : nil,
+                                              progress: progressHandler(episodeUuid: episodeUuid) { .diarizing(0.2 + 0.8 * $0) })
+        } catch is CancellationError {
+            throw TranscriptionError.cancelled
+        } catch TranscriptionError.cancelled {
+            throw TranscriptionError.cancelled
+        } catch {
+            FileLog.shared.addMessage("[Transcription] diarization failed for \(episodeUuid), continuing as monologue: \(error)")
+            return []
+        }
     }
 
     // MARK: - Remote pipeline

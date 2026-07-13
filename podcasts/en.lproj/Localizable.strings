@@ -4757,14 +4757,11 @@
 /* Name of the transcription engine option that uses Apple's built-in on-device speech recognition */
 "transcription_engine_apple" = "Apple Built-in";
 
-/* Name of the (not yet available) transcription engine option that uses downloadable on-device models */
+/* Name of the transcription engine option that uses downloadable on-device models */
 "transcription_engine_local_model" = "Downloaded Model";
 
-/* Name of the (not yet available) transcription engine option that uses a remote transcription API */
+/* Name of the transcription engine option that uses a remote transcription API */
 "transcription_engine_remote" = "Remote Provider";
-
-/* Footer under the transcription engine picker explaining that the disabled engine options will become available later */
-"transcription_engine_coming_soon" = "Downloaded models are coming soon.";
 
 /* Header of the transcription settings section (and label of its text field) where the user can force a transcription language */
 "transcription_language_override" = "Language Override";
@@ -4858,6 +4855,72 @@
 
 /* Footer of the speaker rename sheet, explaining that empty fields keep the numbered speaker name */
 "transcription_rename_footer" = "Leave a field empty to keep the numbered speaker name.";
+
+/* Header of the transcription settings section listing the downloadable on-device speech-to-text models */
+"transcription_model_picker_header" = "Speech Model";
+
+/* Name of the smallest downloadable transcription model (fastest, least accurate) */
+"transcription_model_tiny" = "Tiny";
+
+/* Name of the second-smallest downloadable transcription model */
+"transcription_model_base" = "Base";
+
+/* Name of the mid-size downloadable transcription model (the recommended default) */
+"transcription_model_small" = "Small";
+
+/* Name of the largest downloadable transcription model (most accurate) */
+"transcription_model_large_turbo" = "Large v3 Turbo";
+
+/* Badge shown next to a transcription model that is already downloaded to the device */
+"transcription_model_downloaded" = "Downloaded";
+
+/* Title of the button that downloads the selected transcription model. '%1$@' is a placeholder for the approximate download size, e.g. "500 MB" */
+"transcription_model_download" = "Download Model (~%1$@)";
+
+/* Progress label shown while a transcription model is downloading */
+"transcription_model_downloading" = "Downloading…";
+
+/* Title of the button that deletes the selected transcription model from the device */
+"transcription_model_delete" = "Delete Model";
+
+/* Label of the row showing how much disk space all downloaded transcription models use */
+"transcription_model_disk_usage" = "Models on Disk";
+
+/* Title of the toggle allowing transcription model downloads over cellular connections */
+"transcription_allow_cellular_downloads" = "Download Over Cellular";
+
+/* Footer under the cellular downloads toggle explaining model downloads wait for Wi-Fi when it is off */
+"transcription_allow_cellular_footer" = "Model downloads can be large. When off, downloads wait for an unmetered connection like Wi-Fi.";
+
+/* Alert message when a transcription model download is refused because the device is on a cellular connection */
+"transcription_model_cellular_blocked" = "You're on a cellular connection. Enable Download Over Cellular or connect to Wi-Fi to download models.";
+
+/* Alert message when a transcription model download fails for network or server reasons */
+"transcription_model_download_failed" = "The model couldn't be downloaded. Check your connection and try again.";
+
+/* Header of the transcription settings section with speaker detection options */
+"transcription_diarization_header" = "Speaker Detection";
+
+/* Label of the stepper that caps how many distinct speakers a transcript can label */
+"transcription_max_speakers" = "Max Speakers";
+
+/* Value shown on the max-speakers stepper when speaker count detection is automatic */
+"transcription_max_speakers_auto" = "Auto";
+
+/* Footer under the max-speakers stepper. Explains the cap and the automatic mode */
+"transcription_max_speakers_footer" = "Caps how many different speakers a transcript can label. Auto lets the model decide.";
+
+/* Header of the transcription settings section showing storage used by generated transcripts */
+"transcription_storage_header" = "Generated Transcripts";
+
+/* Label of the row showing how much disk space generated transcripts use. */
+"transcription_storage_usage" = "Storage Used";
+
+/* Title of the button (and its confirmation action) that deletes all generated transcripts from the device */
+"transcription_storage_clear_all" = "Clear All Transcripts";
+
+/* Confirmation message shown before deleting all generated transcripts. '%1$@' is a placeholder for the number of transcribed episodes */
+"transcription_storage_clear_all_confirmation" = "This removes the generated transcripts for %1$@ episodes from this device. Episodes can be transcribed again later.";
 
 /* Upgrade Experiment Paywall button title */
 "upgrade_experiment_paywall_button" = "Get Pocket Casts Plus";

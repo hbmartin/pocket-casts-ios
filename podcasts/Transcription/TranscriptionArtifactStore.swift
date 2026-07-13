@@ -41,6 +41,20 @@ nonisolated struct TranscriptionArtifactStore: Sendable {
         try? FileManager.default.removeItem(at: fileURL(forEpisodeUuid: episodeUuid))
     }
 
+    /// Total bytes of all generated transcript artifacts on disk. Backs the
+    /// storage accounting row in transcription settings.
+    func totalDiskUsage() -> Int64 {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: directoryURL,
+                                                                       includingPropertiesForKeys: [.fileSizeKey],
+                                                                       options: [.skipsHiddenFiles]) else {
+            return 0
+        }
+        return files.reduce(into: Int64(0)) { total, fileURL in
+            let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            total += Int64(size)
+        }
+    }
+
     /// Applies user speaker renames (`{"Speaker 1":"Alice"}` JSON from the
     /// transcription record) to a raw VTT string before parsing.
     ///

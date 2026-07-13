@@ -110,6 +110,14 @@ public struct TranscriptionDataManager: Sendable {
         return dbQueue.fetchAll(request)
     }
 
+    /// Every transcription record regardless of status, newest first. Powers the
+    /// settings storage accounting and its "Clear All" action.
+    public func allRecords() -> [EpisodeTranscriptionRecord] {
+        let request = EpisodeTranscriptionRecord
+            .order(EpisodeTranscriptionRecord.Columns.createdAt.desc)
+        return dbQueue.fetchAll(request)
+    }
+
     /// Number of episodes with a completed transcription.
     public func completedCount() -> Int {
         dbQueue.count(EpisodeTranscriptionRecord.self,

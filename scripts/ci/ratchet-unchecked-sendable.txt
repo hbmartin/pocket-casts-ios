@@ -54,6 +54,7 @@ Modules/Tests/PocketCastsDataModelTests/ValueObservationTests.swift: 2
 Modules/Tests/PocketCastsServerTests/FeedParserTestSupport.swift: 2
 Modules/Tests/PocketCastsServerTests/PodcastExistsHelperTests.swift: 2
 Modules/Tests/PocketCastsServerTests/SyncTaskPlaylistOrderingTests.swift: 2
+Modules/Tests/PocketCastsTranscriptionTests/Providers/MockURLProtocol.swift: 2
 Modules/Tests/PocketCastsUtilsTests/FileLogDependencyTests.swift: 2
 PocketCastsTests/Mocks/DataManagerMock.swift: 2
 PocketCastsTests/PlaybackQueueTests.swift: 2

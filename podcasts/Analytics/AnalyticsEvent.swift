@@ -837,6 +837,8 @@ enum AnalyticsEvent: String {
     case transcriptionSpeakerRenamed
     case transcriptionSearchShown
     case transcriptionSearchResultTapped
+    case transcriptionModelDownloaded
+    case transcriptionModelDeleted
 
     // MARK: - Widgets
 

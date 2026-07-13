@@ -1,5 +1,7 @@
 import Foundation
+import PocketCastsDataModel
 import PocketCastsTranscription
+import PocketCastsUtils
 
 /// Backs `TranscriptionSettingsView`, bridging the UserDefaults-backed
 /// transcription settings (and the keychain-backed provider API keys) into
@@ -16,6 +18,12 @@ final class TranscriptionSettingsViewModel: ObservableObject {
         case checkFailed
     }
 
+    /// Progress of the selected local model's download, driving the button row.
+    enum ModelDownloadState: Equatable {
+        case idle
+        case downloading(Double)
+    }
+
     @Published var engineMode: TranscriptionEngineMode
     @Published var languageOverride: String
     @Published var selectedProviderId: String
@@ -25,28 +33,69 @@ final class TranscriptionSettingsViewModel: ObservableObject {
     @Published var apiKeyInput: String
     @Published var keyValidation: KeyValidationState = .idle
 
+    // MARK: Local model state
+
+    @Published var selectedModelVariant: String
+    @Published var downloadedModelIds: Set<String> = []
+    @Published var modelDownload: ModelDownloadState = .idle
+    /// Non-nil shows the download error alert (cellular gate or network failure).
+    @Published var modelDownloadError: String?
+    @Published var modelsDiskUsage: Int64 = 0
+    @Published var allowCellularModelDownloads: Bool
+    /// 0 = auto-detect; otherwise a cap on distinct transcript speakers.
+    @Published var maxSpeakers: Int
+
+    // MARK: Generated transcript storage state
+
+    @Published var transcriptsDiskUsage: Int64 = 0
+    @Published var transcriptCount: Int = 0
+    @Published var showClearAllConfirmation = false
+
+    /// The stepper's upper bound; podcasts beyond ~10 voices are out of scope
+    /// for on-device diarization.
+    static let maxSpeakersCap = 10
+
     let providers = RemoteProviderRegistry.providers
+    let modelVariants = WhisperKitModelStore.curatedVariants
 
+    private let modelStore: WhisperKitModelStore
+    private let artifactStore: TranscriptionArtifactStore
     private var validationTask: Task<Void, Never>?
+    private var downloadTask: Task<Void, Never>?
 
-    init() {
+    init(modelStore: WhisperKitModelStore = WhisperKitModelStore(),
+         artifactStore: TranscriptionArtifactStore = TranscriptionArtifactStore()) {
+        self.modelStore = modelStore
+        self.artifactStore = artifactStore
         engineMode = TranscriptionEngineFactory.currentMode()
         languageOverride = Settings.transcriptionLanguageOverride() ?? ""
         let providerId = Settings.transcriptionRemoteProvider()
         selectedProviderId = providerId
         apiKeyInput = TranscriptionKeyStore.apiKey(providerId: providerId) ?? ""
+        selectedModelVariant = Settings.transcriptionWhisperModel()
+        allowCellularModelDownloads = Settings.transcriptionAllowCellularModelDownloads()
+        maxSpeakers = Settings.transcriptionMaxSpeakers()
+        refreshStorage()
     }
 
     var selectedProvider: RemoteProviderInfo? {
         RemoteProviderRegistry.info(id: selectedProviderId)
     }
 
-    /// The local-model (WhisperKit) mode ships with transcription Phase 2; it is
-    /// shown but not selectable, so selecting it is ignored defensively here too.
+    var selectedVariantInfo: WhisperKitModelStore.Variant? {
+        modelVariants.first { $0.id == selectedModelVariant }
+    }
+
+    var isSelectedModelDownloaded: Bool {
+        downloadedModelIds.contains(selectedModelVariant)
+    }
+
     func select(mode: TranscriptionEngineMode) {
-        guard mode != .localModel else { return }
         engineMode = mode
         Settings.setTranscriptionEngineMode(mode.rawValue)
+        if mode == .localModel {
+            refreshStorage()
+        }
     }
 
     func select(providerId: String) {
@@ -101,6 +150,102 @@ final class TranscriptionSettingsViewModel: ObservableObject {
             }
             // Provider id and outcome only — key material must never be tracked.
             Analytics.track(.transcriptionKeyValidated, properties: ["provider": providerId, "result": resultName])
+        }
+    }
+
+    // MARK: - Local model management
+
+    func select(modelVariant: String) {
+        guard modelVariant != selectedModelVariant, modelDownload == .idle else { return }
+        selectedModelVariant = modelVariant
+        Settings.setTranscriptionWhisperModel(modelVariant)
+    }
+
+    func setAllowCellularModelDownloads(_ allowed: Bool) {
+        allowCellularModelDownloads = allowed
+        Settings.setTranscriptionAllowCellularModelDownloads(allowed)
+    }
+
+    func setMaxSpeakers(_ count: Int) {
+        let clamped = min(max(count, 0), Self.maxSpeakersCap)
+        maxSpeakers = clamped
+        Settings.setTranscriptionMaxSpeakers(clamped)
+    }
+
+    func downloadSelectedModel() {
+        guard modelDownload == .idle else { return }
+
+        // Pre-check the cellular gate so the user gets the specific explanation
+        // rather than the generic failure (the store enforces the same gate).
+        if !NetworkUtils.shared.isConnectedToUnexpensiveConnection(), !allowCellularModelDownloads {
+            modelDownloadError = L10n.transcriptionModelCellularBlocked
+            return
+        }
+
+        let variant = selectedModelVariant
+        let store = modelStore
+        modelDownload = .downloading(0)
+        downloadTask = Task { [weak self] in
+            // Strong self for the duration of the download: capturing the outer
+            // weak `var` binding in the @Sendable progress closure is a Swift 6
+            // error, and the settings page owning the download should stay alive.
+            guard let self else { return }
+            do {
+                try await store.download(variant: variant) { fraction in
+                    Task { @MainActor [weak self] in
+                        guard let self, case .downloading = self.modelDownload else { return }
+                        self.modelDownload = .downloading(fraction)
+                    }
+                }
+                modelDownload = .idle
+                Analytics.track(.transcriptionModelDownloaded, properties: ["model": variant])
+                refreshStorage()
+            } catch {
+                guard !Task.isCancelled else { return }
+                modelDownload = .idle
+                modelDownloadError = L10n.transcriptionModelDownloadFailed
+                refreshStorage()
+            }
+        }
+    }
+
+    func deleteSelectedModel() {
+        let variant = selectedModelVariant
+        do {
+            try modelStore.delete(variant: variant)
+            Analytics.track(.transcriptionModelDeleted, properties: ["model": variant])
+        } catch {
+            FileLog.shared.addMessage("[Transcription] failed to delete model \(variant): \(error.localizedDescription)")
+        }
+        refreshStorage()
+    }
+
+    // MARK: - Generated transcript storage
+
+    func clearAllTranscriptions() {
+        Task { [weak self] in
+            await TranscriptionQueueManager.shared.deleteAllTranscriptions()
+            self?.refreshStorage()
+        }
+    }
+
+    /// Re-reads the on-disk facts (downloaded models, disk usage, transcript
+    /// count) off the main thread and publishes them back.
+    func refreshStorage() {
+        let modelStore = modelStore
+        let artifactStore = artifactStore
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let downloaded = Set(modelStore.downloadedVariants().map(\.id))
+            let modelsUsage = modelStore.diskUsage()
+            let transcriptsUsage = artifactStore.totalDiskUsage()
+            let transcriptCount = DataManager.sharedManager.transcriptions.allRecords().count
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.downloadedModelIds = downloaded
+                self.modelsDiskUsage = modelsUsage
+                self.transcriptsDiskUsage = transcriptsUsage
+                self.transcriptCount = transcriptCount
+            }
         }
     }
 }

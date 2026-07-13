@@ -84,6 +84,10 @@ let package = Package(
         .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0"),
         .package(url: "https://github.com/ksemianov/WrappingHStack", from: "0.2.0"),
         .package(url: "https://github.com/Automattic/pocket-casts-ios-fingerprint", revision: "b696bd9a4a495604532b1b7a484ab140c144eccc"),
+        // On-device ASR (WhisperKit) + diarization (SpeakerKit). App-target only —
+        // must never become a dependency of PocketCastsTranscription, whose tests
+        // run on the macOS host.
+        .package(url: "https://github.com/argmaxinc/argmax-oss-swift", from: "1.0.0"),
     ],
     targets: XcodeSupport.targets + [
         .target(
@@ -301,6 +305,8 @@ enum XcodeSupport {
                     .product(name: "TelemetryDeck", package: "SwiftSDK"),
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
                     .product(name: "Fingerprint", package: "pocket-casts-ios-fingerprint"),
+                    .product(name: "WhisperKit", package: "argmax-oss-swift"),
+                    .product(name: "SpeakerKit", package: "argmax-oss-swift"),
                 ]
             ),
             .xcodeTarget(

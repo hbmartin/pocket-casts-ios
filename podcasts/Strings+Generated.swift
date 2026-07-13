@@ -4387,6 +4387,10 @@ nonisolated internal enum L10n {
   internal static var transcriptReaderTextSize: String { return L10n.tr("Localizable", "transcript_reader_text_size", fallback: "Text size") }
   /// Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target.
   internal static var transcriptTapToSeekStreamingUnavailable: String { return L10n.tr("Localizable", "transcript_tap_to_seek_streaming_unavailable", fallback: "Download the episode to tap to seek") }
+  /// Title of the toggle allowing transcription model downloads over cellular connections
+  internal static var transcriptionAllowCellularDownloads: String { return L10n.tr("Localizable", "transcription_allow_cellular_downloads", fallback: "Download Over Cellular") }
+  /// Footer under the cellular downloads toggle explaining model downloads wait for Wi-Fi when it is off
+  internal static var transcriptionAllowCellularFooter: String { return L10n.tr("Localizable", "transcription_allow_cellular_footer", fallback: "Model downloads can be large. When off, downloads wait for an unmetered connection like Wi-Fi.") }
   /// Title of the consent prompt button that grants consent and starts the remote transcription
   internal static var transcriptionConsentAllow: String { return L10n.tr("Localizable", "transcription_consent_allow", fallback: "Allow and Generate") }
   /// Consent prompt body for upload-based remote transcription providers. %1$@ is the provider name, e.g. "OpenAI"
@@ -4401,15 +4405,15 @@ nonisolated internal enum L10n {
   internal static var transcriptionConsentTitle: String { return L10n.tr("Localizable", "transcription_consent_title", fallback: "Send this episode to a remote service?") }
   /// Title of the destructive menu action that deletes the locally generated transcript for an episode
   internal static var transcriptionDeleteGenerated: String { return L10n.tr("Localizable", "transcription_delete_generated", fallback: "Delete Generated Transcript") }
+  /// Header of the transcription settings section with speaker detection options
+  internal static var transcriptionDiarizationHeader: String { return L10n.tr("Localizable", "transcription_diarization_header", fallback: "Speaker Detection") }
   /// Name of the transcription engine option that uses Apple's built-in on-device speech recognition
   internal static var transcriptionEngineApple: String { return L10n.tr("Localizable", "transcription_engine_apple", fallback: "Apple Built-in") }
-  /// Footer under the transcription engine picker explaining that the disabled engine options will become available later
-  internal static var transcriptionEngineComingSoon: String { return L10n.tr("Localizable", "transcription_engine_coming_soon", fallback: "Downloaded models are coming soon.") }
-  /// Name of the (not yet available) transcription engine option that uses downloadable on-device models
+  /// Name of the transcription engine option that uses downloadable on-device models
   internal static var transcriptionEngineLocalModel: String { return L10n.tr("Localizable", "transcription_engine_local_model", fallback: "Downloaded Model") }
   /// Header of the transcription settings section where the user picks which speech-to-text engine to use
   internal static var transcriptionEngineMode: String { return L10n.tr("Localizable", "transcription_engine_mode", fallback: "Engine") }
-  /// Name of the (not yet available) transcription engine option that uses a remote transcription API
+  /// Name of the transcription engine option that uses a remote transcription API
   internal static var transcriptionEngineRemote: String { return L10n.tr("Localizable", "transcription_engine_remote", fallback: "Remote Provider") }
   /// Title of the button/action that starts generating an on-device transcript for a downloaded episode
   internal static var transcriptionGenerate: String { return L10n.tr("Localizable", "transcription_generate", fallback: "Generate Transcript") }
@@ -4427,6 +4431,38 @@ nonisolated internal enum L10n {
   internal static var transcriptionLanguageOverride: String { return L10n.tr("Localizable", "transcription_language_override", fallback: "Language Override") }
   /// Footer under the transcription language override text field. The quoted example is a BCP-47 language tag and should not be translated.
   internal static var transcriptionLanguageOverrideFooter: String { return L10n.tr("Localizable", "transcription_language_override_footer", fallback: "Enter a language tag such as \"en-US\" to force a transcription language. Leave empty to use the device language.") }
+  /// Label of the stepper that caps how many distinct speakers a transcript can label
+  internal static var transcriptionMaxSpeakers: String { return L10n.tr("Localizable", "transcription_max_speakers", fallback: "Max Speakers") }
+  /// Value shown on the max-speakers stepper when speaker count detection is automatic
+  internal static var transcriptionMaxSpeakersAuto: String { return L10n.tr("Localizable", "transcription_max_speakers_auto", fallback: "Auto") }
+  /// Footer under the max-speakers stepper. Explains the cap and the automatic mode
+  internal static var transcriptionMaxSpeakersFooter: String { return L10n.tr("Localizable", "transcription_max_speakers_footer", fallback: "Caps how many different speakers a transcript can label. Auto lets the model decide.") }
+  /// Name of the second-smallest downloadable transcription model
+  internal static var transcriptionModelBase: String { return L10n.tr("Localizable", "transcription_model_base", fallback: "Base") }
+  /// Alert message when a transcription model download is refused because the device is on a cellular connection
+  internal static var transcriptionModelCellularBlocked: String { return L10n.tr("Localizable", "transcription_model_cellular_blocked", fallback: "You're on a cellular connection. Enable Download Over Cellular or connect to Wi-Fi to download models.") }
+  /// Title of the button that deletes the selected transcription model from the device
+  internal static var transcriptionModelDelete: String { return L10n.tr("Localizable", "transcription_model_delete", fallback: "Delete Model") }
+  /// Label of the row showing how much disk space all downloaded transcription models use
+  internal static var transcriptionModelDiskUsage: String { return L10n.tr("Localizable", "transcription_model_disk_usage", fallback: "Models on Disk") }
+  /// Title of the button that downloads the selected transcription model. '%1$@' is a placeholder for the approximate download size, e.g. "500 MB"
+  internal static func transcriptionModelDownload(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_model_download", String(describing: p1), fallback: "Download Model (~%1$@)")
+  }
+  /// Alert message when a transcription model download fails for network or server reasons
+  internal static var transcriptionModelDownloadFailed: String { return L10n.tr("Localizable", "transcription_model_download_failed", fallback: "The model couldn't be downloaded. Check your connection and try again.") }
+  /// Badge shown next to a transcription model that is already downloaded to the device
+  internal static var transcriptionModelDownloaded: String { return L10n.tr("Localizable", "transcription_model_downloaded", fallback: "Downloaded") }
+  /// Progress label shown while a transcription model is downloading
+  internal static var transcriptionModelDownloading: String { return L10n.tr("Localizable", "transcription_model_downloading", fallback: "Downloading…") }
+  /// Name of the largest downloadable transcription model (most accurate)
+  internal static var transcriptionModelLargeTurbo: String { return L10n.tr("Localizable", "transcription_model_large_turbo", fallback: "Large v3 Turbo") }
+  /// Header of the transcription settings section listing the downloadable on-device speech-to-text models
+  internal static var transcriptionModelPickerHeader: String { return L10n.tr("Localizable", "transcription_model_picker_header", fallback: "Speech Model") }
+  /// Name of the mid-size downloadable transcription model (the recommended default)
+  internal static var transcriptionModelSmall: String { return L10n.tr("Localizable", "transcription_model_small", fallback: "Small") }
+  /// Name of the smallest downloadable transcription model (fastest, least accurate)
+  internal static var transcriptionModelTiny: String { return L10n.tr("Localizable", "transcription_model_tiny", fallback: "Tiny") }
   /// Label and placeholder of the secure text field where the user enters their remote transcription service API key
   internal static var transcriptionRemoteApiKey: String { return L10n.tr("Localizable", "transcription_remote_api_key", fallback: "API Key") }
   /// Footer under the remote transcription API key field. %1$@ is the provider name, e.g. "AssemblyAI"
@@ -4467,6 +4503,16 @@ nonisolated internal enum L10n {
   internal static var transcriptionSourceGenerated: String { return L10n.tr("Localizable", "transcription_source_generated", fallback: "Generated Transcript") }
   /// Title of the transcript source menu option that shows the transcript provided by the podcast feed
   internal static var transcriptionSourcePodcast: String { return L10n.tr("Localizable", "transcription_source_podcast", fallback: "Podcast Transcript") }
+  /// Title of the button (and its confirmation action) that deletes all generated transcripts from the device
+  internal static var transcriptionStorageClearAll: String { return L10n.tr("Localizable", "transcription_storage_clear_all", fallback: "Clear All Transcripts") }
+  /// Confirmation message shown before deleting all generated transcripts. '%1$@' is a placeholder for the number of transcribed episodes
+  internal static func transcriptionStorageClearAllConfirmation(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_storage_clear_all_confirmation", String(describing: p1), fallback: "This removes the generated transcripts for %1$@ episodes from this device. Episodes can be transcribed again later.")
+  }
+  /// Header of the transcription settings section showing storage used by generated transcripts
+  internal static var transcriptionStorageHeader: String { return L10n.tr("Localizable", "transcription_storage_header", fallback: "Generated Transcripts") }
+  /// Label of the row showing how much disk space generated transcripts use.
+  internal static var transcriptionStorageUsage: String { return L10n.tr("Localizable", "transcription_storage_usage", fallback: "Storage Used") }
   /// Title of the button that checks whether the entered remote transcription API key works
   internal static var transcriptionValidateKey: String { return L10n.tr("Localizable", "transcription_validate_key", fallback: "Validate Key") }
   /// Label indicating that the trial period for the subscription or promotion has ended.

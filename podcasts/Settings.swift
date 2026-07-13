@@ -180,14 +180,61 @@ nonisolated class Settings: NSObject {
 
     private static let transcriptionMaxSpeakersKey = "SJTranscriptionMaxSpeakers"
 
-    /// Diarizer speaker cap; 0 means auto-detect. Stored now, consumed when a
-    /// diarizer ships (transcription Phase 2).
+    /// Diarizer speaker cap; 0 means auto-detect. Consumed by the SpeakerKit
+    /// diarizer stage that runs for the Apple built-in and local-model modes.
     class func transcriptionMaxSpeakers() -> Int {
         UserDefaults.standard.integer(forKey: Settings.transcriptionMaxSpeakersKey)
     }
 
     class func setTranscriptionMaxSpeakers(_ count: Int) {
         UserDefaults.standard.set(count, forKey: Settings.transcriptionMaxSpeakersKey)
+    }
+
+    private static let transcriptionWhisperModelKey = "SJTranscriptionWhisperModel"
+
+    /// The WhisperKit model variant used by `TranscriptionEngineMode.localModel`
+    /// (full repo folder name, e.g. "openai_whisper-small"). Defaults to the
+    /// package's small multilingual variant; unknown persisted values also read
+    /// back as that default so a removed variant can't wedge the engine.
+    class func transcriptionWhisperModel() -> String {
+        guard let value = UserDefaults.standard.string(forKey: Settings.transcriptionWhisperModelKey),
+              WhisperKitModelStore.curatedVariants.contains(where: { $0.id == value }) else {
+            return WhisperKitModelStore.defaultVariantId
+        }
+        return value
+    }
+
+    class func setTranscriptionWhisperModel(_ variant: String) {
+        UserDefaults.standard.set(variant, forKey: Settings.transcriptionWhisperModelKey)
+    }
+
+    private static let transcriptionAllowCellularModelDownloadsKey = "SJTranscriptionAllowCellularModelDownloads"
+
+    /// Whether transcription model downloads (WhisperKit variants, SpeakerKit
+    /// diarizer) may run over cellular/expensive connections. Defaults to false:
+    /// models are large, so downloads wait for Wi-Fi unless the user opts in.
+    class func transcriptionAllowCellularModelDownloads() -> Bool {
+        UserDefaults.standard.bool(forKey: Settings.transcriptionAllowCellularModelDownloadsKey)
+    }
+
+    class func setTranscriptionAllowCellularModelDownloads(_ allowed: Bool) {
+        UserDefaults.standard.set(allowed, forKey: Settings.transcriptionAllowCellularModelDownloadsKey)
+    }
+
+    private static let transcriptionLocalStackKey = "SJTranscriptionLocalStack"
+    static let transcriptionLocalStackWhisperKit = "whisperKit"
+
+    /// Which local stack backs `TranscriptionEngineMode.localModel`. Only
+    /// "whisperKit" (WhisperKit ASR + SpeakerKit diarizer) is implemented; the
+    /// FluidAudio alternate (Parakeet TDT + pyannote, value "fluidAudio") is
+    /// deferred as transcription Phase 2b. Unknown values read back as the
+    /// WhisperKit default so `TranscriptionEngineFactory` never dead-ends.
+    class func transcriptionLocalStack() -> String {
+        UserDefaults.standard.string(forKey: Settings.transcriptionLocalStackKey) ?? Settings.transcriptionLocalStackWhisperKit
+    }
+
+    class func setTranscriptionLocalStack(_ stack: String) {
+        UserDefaults.standard.set(stack, forKey: Settings.transcriptionLocalStackKey)
     }
 
     // MARK: - Mobile Data
