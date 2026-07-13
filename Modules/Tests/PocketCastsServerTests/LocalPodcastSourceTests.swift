@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsUtils
 import Testing
 @testable import PocketCastsServer
 
@@ -73,5 +74,50 @@ struct LocalPodcastSourceTests {
         let info = LocalPodcastSource().podcastInfoDict(from: feed, podcastUuid: "uuid", feedURL: "https://example.com/feed.xml")
         let podcastJson = info["podcast"] as? [String: Any]
         #expect((podcastJson?["episodes"] as? [[String: Any]])?.isEmpty == true)
+    }
+}
+
+@Suite("LocalFeedURL")
+struct LocalFeedURLTests {
+    @Test("log redaction strips userinfo and blanks every query value")
+    func redactionCoversUserinfoAndQueryTokens() {
+        #expect(LocalFeedURL.redactedForLogging("https://user:secret@example.com/feed.xml") == "https://example.com/feed.xml")
+        #expect(LocalFeedURL.redactedForLogging("https://example.com/feed.xml?token=abc123&x=1") == "https://example.com/feed.xml?token=REDACTED&x=REDACTED")
+        #expect(LocalFeedURL.redactedForLogging("https://example.com/feed.xml") == "https://example.com/feed.xml")
+    }
+
+    @Test("removingCredentials keeps query items (token auth must keep working)")
+    func removingCredentialsKeepsQuery() {
+        #expect(LocalFeedURL.removingCredentials(from: "https://u:p@example.com/feed.xml?token=abc") == "https://example.com/feed.xml?token=abc")
+    }
+
+    @Test("userinfo credentials extract for keychain persistence")
+    func credentialsExtraction() {
+        // URLComponents percent-decodes the userinfo — the decoded form is what
+        // Basic auth headers are built from.
+        let credentials = LocalFeedURL.credentials(from: "https://user:pa%40ss@example.com/feed.xml")
+        #expect(credentials?.user == "user")
+        #expect(credentials?.password == "pa@ss")
+        #expect(LocalFeedURL.credentials(from: "https://example.com/feed.xml") == nil)
+    }
+}
+
+@Suite("LocalFeedCredentials", .serialized)
+struct LocalFeedCredentialsTests {
+    @Test("round-trips through the keychain keyed by podcast uuid")
+    func roundTrip() throws {
+        let previous = KeychainHelper.store
+        defer { KeychainHelper.store = previous }
+        KeychainHelper.store = InMemoryKeychainStore()
+
+        LocalFeedCredentials.save(user: "user", password: "p:ss:word", podcastUuid: "pod-1")
+
+        let restored = try #require(LocalFeedCredentials.credentials(podcastUuid: "pod-1"))
+        #expect(restored.user == "user")
+        #expect(restored.password == "p:ss:word", "only the first ':' separates user from password")
+        #expect(LocalFeedCredentials.credentials(podcastUuid: "pod-2") == nil)
+
+        LocalFeedCredentials.delete(podcastUuid: "pod-1")
+        #expect(LocalFeedCredentials.credentials(podcastUuid: "pod-1") == nil)
     }
 }

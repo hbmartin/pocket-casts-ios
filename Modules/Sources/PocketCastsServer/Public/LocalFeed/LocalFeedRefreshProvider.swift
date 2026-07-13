@@ -47,7 +47,7 @@ public struct LocalFeedRefreshProvider: FeedRefreshProviding {
                 let podcastId = podcast.id
                 group.addTask {
                     do {
-                        let feed = try await fetcher.fetchFeed(url: feedURL)
+                        let feed = try await fetcher.fetchFeed(url: feedURL, credentials: LocalFeedCredentials.credentials(podcastUuid: podcastUuid))
 
                         // One fetch of the existing catalog per podcast; the matcher
                         // resolves every parsed item against it in memory, so podcasts
@@ -66,7 +66,7 @@ public struct LocalFeedRefreshProvider: FeedRefreshProviding {
 
                         return resolution.newEpisodes.isEmpty ? nil : (podcastUuid, resolution.newEpisodes)
                     } catch {
-                        FileLog.shared.addMessage("LocalFeedRefresh: failed to refresh \(podcastUuid) from \(feedURL): \(error)")
+                        FileLog.shared.addMessage("LocalFeedRefresh: failed to refresh \(podcastUuid) from \(LocalFeedURL.redactedForLogging(feedURL)): \(error)")
                         return nil
                     }
                 }

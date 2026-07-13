@@ -63,6 +63,43 @@ struct LocalFeedEpisodeMatcherTests {
         #expect(matches == [.new(hashUuid: LocalFeedIdentity.uuid(seed: "guid-1"))])
     }
 
+    @Test("same-title same-day episode with a distinct guid is NOT collapsed onto its sibling")
+    func distinctGuidSameTitleSameDayIngests() {
+        // Daily-brief shape: episode one already ingested under its hash uuid;
+        // episode two shares the title and UTC day but is a different item.
+        let published = Date(timeIntervalSince1970: 1_700_000_000)
+        let storedUuid = LocalFeedIdentity.uuid(seed: "guid-1")
+        let matches = LocalFeedEpisodeMatcher.match(
+            items: [
+                item(guid: "guid-1", title: "Live Update", enclosure: "https://example.com/1.mp3", published: published),
+                item(guid: "guid-2", title: "Live Update", enclosure: "https://example.com/2.mp3", published: published.addingTimeInterval(3600))
+            ],
+            existing: [episode(uuid: storedUuid, title: "Live Update", downloadUrl: "https://example.com/1.mp3", published: published)]
+        )
+        #expect(matches == [
+            .existing(uuid: storedUuid),
+            .new(hashUuid: LocalFeedIdentity.uuid(seed: "guid-2"))
+        ])
+    }
+
+    @Test("the fallback claims a stored episode at most once per refresh")
+    func fallbackClaimsAtMostOnce() {
+        // Both items miss exactly (new guids, new enclosures) and share the
+        // stored episode's title+day: only one may merge onto it.
+        let published = Date(timeIntervalSince1970: 1_700_000_000)
+        let matches = LocalFeedEpisodeMatcher.match(
+            items: [
+                item(guid: "guid-a", title: "Live Update", enclosure: "https://cdn2.example.com/a.mp3", published: published),
+                item(guid: "guid-b", title: "Live Update", enclosure: "https://cdn2.example.com/b.mp3", published: published.addingTimeInterval(3600))
+            ],
+            existing: [episode(uuid: "server-uuid-1", title: "Live Update", downloadUrl: "https://cdn1.example.com/1.mp3", published: published)]
+        )
+        #expect(matches == [
+            .existing(uuid: "server-uuid-1"),
+            .new(hashUuid: LocalFeedIdentity.uuid(seed: "guid-b"))
+        ])
+    }
+
     @Test("genuinely new item mints exactly its deterministic hash uuid")
     func newItem() {
         let matches = LocalFeedEpisodeMatcher.match(

@@ -32,6 +32,10 @@ extension PodcastManager {
         }
         PodcastExistsHelper.shared.invalidate(uuid: podcast.uuid)
 
+        if podcast.feedRefreshSource == .localFeed {
+            LocalFeedCredentials.delete(podcastUuid: podcast.uuid)
+        }
+
         PlaylistManager.handlePodcastUnsubscribed(podcastUuid: podcast.uuid)
 
         // additionally if this podcast was in a folder, update the folder

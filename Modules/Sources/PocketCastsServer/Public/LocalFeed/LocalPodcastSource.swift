@@ -16,11 +16,17 @@ public struct LocalPodcastSource: Sendable {
 
     public func loadPodcastInfo(feedURL: String) async -> [String: Any]? {
         guard let feed = try? await fetcher.fetchFeed(url: feedURL, followingPages: true) else {
-            FileLog.shared.addMessage("LocalPodcastSource: failed to fetch or parse feed \(LocalFeedURL.removingCredentials(from: feedURL))")
+            FileLog.shared.addMessage("LocalPodcastSource: failed to fetch or parse feed \(LocalFeedURL.redactedForLogging(feedURL))")
             return nil
         }
 
         let podcastUuid = LocalFeedIdentity.uuid(seed: LocalFeedURL.removingCredentials(from: feedURL))
+
+        // The podcast row stores the credential-stripped URL, so basic-auth
+        // userinfo would be lost after this point — persist it for refreshes.
+        if let credentials = LocalFeedURL.credentials(from: feedURL) {
+            LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: podcastUuid)
+        }
 
         // Seed the offline show-notes/chapters/transcripts cache while the parsed feed
         // is in hand — the display path reads it cache-only for local podcasts.
