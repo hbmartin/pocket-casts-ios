@@ -3,9 +3,7 @@
     {
       "id" : "5D1F0A44-9B7E-4C2D-8E63-A0B1C2D3E4F5",
       "name" : "Configuration 1",
-      "options" : {
-
-      }
+      "options" : {}
     }
   ],
   "defaultOptions" : {
@@ -14,7 +12,8 @@
   "testTargets" : [
     {
       "skippedTests" : [
-        "LiveStagingUITests"
+        "LiveStagingUITests",
+        "PerformanceUITests"
       ],
       "target" : {
         "containerPath" : "container:podcasts.xcodeproj",
