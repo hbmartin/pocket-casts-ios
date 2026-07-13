@@ -257,7 +257,7 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
     /// Specify default actions and their order
     static var defaultActions: [PlayerAction] {
         [
-            .effects, .sleepTimer, .routePicker, .shareEpisode, .addToPlaylist, .download,
+            .effects, .sleepTimer, .stopAfterEpisode, .routePicker, .shareEpisode, .addToPlaylist, .download,
             .transcript, .goToPodcast, .addBookmark, .markPlayed,
             .starEpisode, .archive
         ]
@@ -289,6 +289,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             self = .download
         case 13:
             self = .addToPlaylist
+        case 14:
+            self = .stopAfterEpisode
         default:
             return nil
         }
@@ -320,6 +322,9 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return 12
         case .addToPlaylist:
             return 13
+        case .stopAfterEpisode:
+            // 14: 13 is the current max and 7 is retired — don't reuse it
+            return 14
         }
     }
 
@@ -365,6 +370,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return episode.downloaded(pathFinder: DownloadManager.shared) ? L10n.removeDownload : (episode.isInDownloadProcess ? L10n.statusDownloading : L10n.download)
         case .addToPlaylist:
             return L10n.playlistManualEpisodeAddToPlaylist
+        case .stopAfterEpisode:
+            return L10n.playerActionTitleStopAfterEpisode
         }
     }
 
@@ -408,6 +415,10 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return episode.downloaded(pathFinder: DownloadManager.shared) ? "episode-downloaded" : "episode-download"
         case .addToPlaylist:
             return "playlist-add-episode"
+        case .stopAfterEpisode:
+            // deliberately not sleep-menu (indistinguishable from Sleep Timer); reusing the
+            // existing template clock asset instead of adding a new imageset
+            return "filter_clock"
         }
     }
 
@@ -440,6 +451,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return episode.downloaded(pathFinder: DownloadManager.shared) ? "episode-downloaded" : "episode-download"
         case .addToPlaylist:
             return "playlist-add-episode"
+        case .stopAfterEpisode:
+            return "filter_clock"
         }
     }
 
@@ -484,6 +497,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return "download"
         case .addToPlaylist:
             return "add_to_playlist"
+        case .stopAfterEpisode:
+            return "stop_after_episode"
         }
     }
 }

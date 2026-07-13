@@ -484,6 +484,40 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(isOn, forKey: Settings.playUpNextOnTapKey)
     }
 
+    // MARK: - Tap To Play
+
+    static let tapToPlayKey = "SJTapToPlay"
+    class func tapToPlay() -> Bool {
+        guard FeatureFlag.newSettingsStorage.enabled == false else {
+            return SettingsStore.appSettings.tapToPlay
+        }
+        return UserDefaults.standard.bool(forKey: Settings.tapToPlayKey)
+    }
+
+    class func setTapToPlay(_ isOn: Bool) {
+        if FeatureFlag.newSettingsStorage.enabled {
+            SettingsStore.appSettings.tapToPlay = isOn
+        }
+        UserDefaults.standard.set(isOn, forKey: Settings.tapToPlayKey)
+    }
+
+    // MARK: - Seek Acceleration
+
+    static let seekAccelerationKey = "SJSeekAcceleration"
+    class func seekAccelerationEnabled() -> Bool {
+        guard FeatureFlag.newSettingsStorage.enabled == false else {
+            return SettingsStore.appSettings.seekAcceleration
+        }
+        return UserDefaults.standard.bool(forKey: Settings.seekAccelerationKey)
+    }
+
+    class func setSeekAccelerationEnabled(_ isOn: Bool) {
+        if FeatureFlag.newSettingsStorage.enabled {
+            SettingsStore.appSettings.seekAcceleration = isOn
+        }
+        UserDefaults.standard.set(isOn, forKey: Settings.seekAccelerationKey)
+    }
+
     static let upNextShuffleKey = "SJUpNextShuffleKey"
     class func upNextShuffleToggle() {
         let isOn = upNextShuffleEnabled()
@@ -1598,6 +1632,10 @@ nonisolated extension HeadphoneControl {
             self = .skipBack
         case .skipForward:
             self = .skipForward
+        case .nextEpisode:
+            self = .nextEpisode
+        case .previousEpisode:
+            self = .previousEpisode
         }
     }
 
@@ -1613,6 +1651,10 @@ nonisolated extension HeadphoneControl {
             return .skipBack
         case .skipForward:
             return .skipForward
+        case .nextEpisode:
+            return .nextEpisode
+        case .previousEpisode:
+            return .previousEpisode
         }
     }
 }

@@ -87,4 +87,101 @@ class SyncSettingsTaskTests: XCTestCase {
         XCTAssertEqual(store.openLinks, changedValue, "Value should be changed")
         XCTAssertNil(store.$openLinks.modifiedAt, "Modified date should be nil")
     }
+
+    // MARK: - FORK fields (1001 tap_to_play / 1002 seek_acceleration)
+
+    /// Tests that changed fork settings are uploaded in the request
+    func testRequestIncludesForkFields() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: userDefaultsSuiteName), "User Defaults suite should load")
+
+        let store = SettingsStore(userDefaults: defaults, key: defaultsKey, value: AppSettings.defaults)
+        store.tapToPlay = true
+        store.seekAcceleration = true
+
+        let expectation = XCTestExpectation(description: "Request method should be called")
+        let task = SyncSettingsTask(appSettings: store, urlConnection: URLConnection { urlRequest in
+
+            let data = try XCTUnwrap(urlRequest.httpBody, "Request body should exist")
+            let request = try Api_NamedSettingsRequest(serializedBytes: data)
+
+            XCTAssertTrue(request.changedSettings.tapToPlay.hasValue, "Changed tapToPlay should be included")
+            XCTAssertTrue(request.changedSettings.tapToPlay.value.value, "tapToPlay value should be uploaded")
+            XCTAssertTrue(request.changedSettings.seekAcceleration.hasValue, "Changed seekAcceleration should be included")
+            XCTAssertTrue(request.changedSettings.seekAcceleration.value.value, "seekAcceleration value should be uploaded")
+
+            let response = HTTPURLResponse(url: urlRequest.url!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
+            expectation.fulfill()
+            return (Data(), response)
+        })
+
+        task.apiTokenAcquired(token: token)
+
+        wait(for: [expectation])
+    }
+
+    /// Tests that fork settings in the response are applied to the store
+    func testResponseAppliesForkFields() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: userDefaultsSuiteName), "User Defaults suite should load")
+
+        let store = SettingsStore(userDefaults: defaults, key: defaultsKey, value: AppSettings.defaults)
+
+        XCTAssertFalse(store.tapToPlay, "Initial value should be false")
+        XCTAssertFalse(store.seekAcceleration, "Initial value should be false")
+
+        let expectation = XCTestExpectation(description: "Request method should be called")
+        let task = SyncSettingsTask(appSettings: store, urlConnection: URLConnection { urlRequest in
+
+            var serverResponse = Api_NamedSettingsResponse()
+            serverResponse.tapToPlay.value.value = true
+            serverResponse.tapToPlay.modifiedAt = Google_Protobuf_Timestamp(date: Date())
+            serverResponse.seekAcceleration.value.value = true
+            serverResponse.seekAcceleration.modifiedAt = Google_Protobuf_Timestamp(date: Date())
+            let response = HTTPURLResponse(url: urlRequest.url!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
+            let data = try! XCTUnwrap(serverResponse.serializedData(), "Response should serialize to Data")
+
+            expectation.fulfill()
+
+            return (data, response)
+        })
+
+        task.apiTokenAcquired(token: token)
+
+        wait(for: [expectation])
+
+        XCTAssertTrue(store.tapToPlay, "tapToPlay should be applied from the response")
+        XCTAssertTrue(store.seekAcceleration, "seekAcceleration should be applied from the response")
+    }
+
+    /// A server that strips the unknown fork fields responds with epoch modifiedAt values;
+    /// the local (newer) values must survive the merge.
+    func testServerStrippingForkFieldsPreservesLocalValues() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: userDefaultsSuiteName), "User Defaults suite should load")
+
+        let store = SettingsStore(userDefaults: defaults, key: defaultsKey, value: AppSettings.defaults)
+        store.tapToPlay = true
+        store.seekAcceleration = true
+
+        let expectation = XCTestExpectation(description: "Request method should be called")
+        let task = SyncSettingsTask(appSettings: store, urlConnection: URLConnection { urlRequest in
+
+            // response without the fork fields, as the production server would send
+            let serverResponse = Api_NamedSettingsResponse()
+            let response = HTTPURLResponse(url: urlRequest.url!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
+            let data = try! XCTUnwrap(serverResponse.serializedData(), "Response should serialize to Data")
+
+            expectation.fulfill()
+
+            return (data, response)
+        })
+
+        task.apiTokenAcquired(token: token)
+
+        wait(for: [expectation])
+
+        XCTAssertTrue(store.tapToPlay, "Local tapToPlay should survive a server that drops the field")
+        XCTAssertTrue(store.seekAcceleration, "Local seekAcceleration should survive a server that drops the field")
+    }
 }

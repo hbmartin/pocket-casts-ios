@@ -220,6 +220,8 @@ enum AnalyticsEvent: String {
     case playbackPause
     case playbackSkipBack
     case playbackSkipForward
+    case playbackNextEpisode
+    case playbackPreviousEpisode
     case playbackSeek
 
     case playbackEffectSettingsViewAppeared
@@ -476,6 +478,8 @@ enum AnalyticsEvent: String {
 
     // MARK: - Episode Events
 
+    case episodeTapped
+
     case episodeStarred
     case episodeBulkStarred
 
@@ -600,6 +604,8 @@ enum AnalyticsEvent: String {
     case settingsGeneralAutoplayToggled
     case settingsGeneralAutoSleepTimerRestartToggled
     case settingsGeneralShakeToResetSleepTimerToggled
+    case settingsGeneralTapToPlayToggled
+    case settingsGeneralSeekAccelerationToggled
 
     // MARK: - Settings: Devices (route-aware playback rules)
 

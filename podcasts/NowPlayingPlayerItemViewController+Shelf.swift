@@ -9,6 +9,7 @@ protocol NowPlayingActionsDelegate: AnyObject {
     func starEpisodeTapped()
     func effectsTapped()
     func sleepTimerTapped()
+    func stopAfterEpisodeTapped()
     func routePickerTapped(from action: PlayerAction)
     func shareTapped()
     func goToTapped()
@@ -33,7 +34,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         #endif
 
         // don't reload the actions unless we need to
-        if !lastShelfLoadState.updateRequired(shelfActions: actions, episodeUuid: playingEpisode.uuid, effectsOn: PlaybackManager.shared.effects().effectsEnabled(), sleepTimerOn: PlaybackManager.shared.sleepTimerActive(), episodeStarred: playingEpisode.keepEpisode, episodeStatus: playingEpisode.episodeStatus) { return }
+        if !lastShelfLoadState.updateRequired(shelfActions: actions, episodeUuid: playingEpisode.uuid, effectsOn: PlaybackManager.shared.effects().effectsEnabled(), sleepTimerOn: PlaybackManager.shared.sleepTimerActive(), stopAfterEpisodeOn: PlaybackManager.shared.numberOfEpisodesToSleepAfter > 0, episodeStarred: playingEpisode.keepEpisode, episodeStatus: playingEpisode.episodeStatus) { return }
 
         // load the first 4 actions into the player, followed by an overflow icon
         playerControlsStackView.removeAllSubviews()
@@ -81,6 +82,16 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             sleepBtn.accessibilityLabel = sleepTimerActive ? L10n.playerAccessibilitySleepTimerOn : L10n.playerActionTitleSleepTimer
             addToShelf(on: sleepBtn)
             sleepBtn.setupAnimation()
+        case .stopAfterEpisode:
+            let button = UIButton(frame: CGRect.zero)
+            button.isPointerInteractionEnabled = true
+            let stopAfterEpisodeOn = PlaybackManager.shared.numberOfEpisodesToSleepAfter > 0
+            button.setImage(UIImage(named: action.largeIconName(episode: playingEpisode)), for: .normal)
+            button.imageView?.tintColor = stopAfterEpisodeOn ? PlayerColorHelper.playerHighlightColor01(for: .dark) : ThemeColor.playerContrast02()
+            button.addTarget(self, action: #selector(stopAfterEpisodeTapped(_:)), for: .touchUpInside)
+            button.accessibilityLabel = stopAfterEpisodeOn ? L10n.playerAccessibilityStopAfterEpisodeOn : L10n.playerActionTitleStopAfterEpisode
+
+            addToShelf(on: button)
         case .routePicker:
             let picker = sharedRoutePicker(largeSize: true)
             playerControlsStackView.addArrangedSubview(picker)
@@ -196,6 +207,18 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
     func sleepTimerTapped() {
         showSleepPanel()
+    }
+
+    func stopAfterEpisodeTapped() {
+        if PlaybackManager.shared.numberOfEpisodesToSleepAfter > 0 {
+            Analytics.track(.playerSleepTimerCancelled)
+            PlaybackManager.shared.cancelSleepTimer(userInitiated: true)
+        } else {
+            // the numberOfEpisodesToSleepAfter didSet clears any running time-based sleep
+            // timer, matching what the sleep panel's end-of-episode option does
+            PlaybackManager.shared.numberOfEpisodesToSleepAfter = 1
+            Analytics.track(.playerSleepTimerEnabled, properties: ["time": "end_of_episode", "number_of_episodes": 1])
+        }
     }
 
     func routePickerTapped(from _: PlayerAction) {
@@ -343,6 +366,11 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     @objc private func sleepBtnTapped(_ sender: UIButton) {
         shelfButtonTapped(.sleepTimer)
         showSleepPanel()
+    }
+
+    @objc private func stopAfterEpisodeTapped(_ sender: UIButton) {
+        shelfButtonTapped(.stopAfterEpisode)
+        stopAfterEpisodeTapped()
     }
 
     @objc private func effectsBtnTapped(_ sender: UIButton) {

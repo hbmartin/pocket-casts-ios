@@ -47,7 +47,7 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
                 cell.actionIcon.image = nil
             }
 
-            if (action == .effects && PlaybackManager.shared.effects().effectsEnabled()) || (action == .sleepTimer && PlaybackManager.shared.sleepTimerActive()) || (action == .starEpisode && playingEpisode.keepEpisode) {
+            if (action == .effects && PlaybackManager.shared.effects().effectsEnabled()) || (action == .sleepTimer && PlaybackManager.shared.sleepTimerActive()) || (action == .stopAfterEpisode && PlaybackManager.shared.numberOfEpisodesToSleepAfter > 0) || (action == .starEpisode && playingEpisode.keepEpisode) {
                 cell.actionIcon.tintColor = PlayerColorHelper.playerHighlightColor01(for: .dark)
             } else {
                 cell.actionIcon.tintColor = ThemeColor.playerContrast02()
@@ -95,6 +95,8 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
                 self.playerActionsDelegate?.effectsTapped()
             case .sleepTimer:
                 self.playerActionsDelegate?.sleepTimerTapped()
+            case .stopAfterEpisode:
+                self.playerActionsDelegate?.stopAfterEpisodeTapped()
             case .routePicker:
                 self.playerActionsDelegate?.routePickerTapped(from: action)
             case .shareEpisode:

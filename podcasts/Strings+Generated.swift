@@ -2514,6 +2514,8 @@ nonisolated internal enum L10n {
   }
   /// Accessibility hint text informing the user that the Sleep timer is enabled.
   internal static var playerAccessibilitySleepTimerOn: String { return L10n.tr("Localizable", "player_accessibility_sleep_timer_on", fallback: "Sleep timer on") }
+  /// Accessibility hint text informing the user that playback will stop when the current episode ends.
+  internal static var playerAccessibilityStopAfterEpisodeOn: String { return L10n.tr("Localizable", "player_accessibility_stop_after_episode_on", fallback: "Stop after this episode on") }
   /// Subtitle for settings indicating this item operates as delete for files.
   internal static var playerActionSubtitleDelete: String { return L10n.tr("Localizable", "player_action_subtitle_delete", fallback: "Shown as Delete for custom episodes") }
   /// Subtitle for settings indicating this item is hidden for files.
@@ -2526,6 +2528,8 @@ nonisolated internal enum L10n {
   internal static var playerActionTitleOutputOptions: String { return L10n.tr("Localizable", "player_action_title_output_options", fallback: "Output Device") }
   /// Header for the available timer options for auto-pausing playback.
   internal static var playerActionTitleSleepTimer: String { return L10n.tr("Localizable", "player_action_title_sleep_timer", fallback: "Sleep Timer") }
+  /// Title for the player shelf action that stops playback when the current episode ends.
+  internal static var playerActionTitleStopAfterEpisode: String { return L10n.tr("Localizable", "player_action_title_stop_after_episode", fallback: "Stop After This Episode") }
   /// Title for the prompt to remove an episode from the favorites.
   internal static var playerActionTitleUnstarEpisode: String { return L10n.tr("Localizable", "player_action_title_unstar_episode", fallback: "Unstar Episode") }
   /// Title for a page where you can rearrange common actions (eg sort/reorder and move the ones you like more to the top)
@@ -3379,6 +3383,8 @@ nonisolated internal enum L10n {
   internal static var podcastsSort: String { return L10n.tr("Localizable", "podcasts_sort", fallback: "Sort Podcasts") }
   /// Common word to denote a preview of something is being shown
   internal static var preview: String { return L10n.tr("Localizable", "preview", fallback: "Preview") }
+  /// A common string used throughout the app. Prompt to move to the previously played episode.
+  internal static var previousEpisode: String { return L10n.tr("Localizable", "previous_episode", fallback: "Previous Episode") }
   /// Pricing terms explaining that the user will have a discount in the first period then will pay full price, %1$@ is the full price, %2$@ the discount duration, %3$@ the date the user will pay full price
   internal static func pricingTermsAfterDiscount(_ p1: Any, _ p2: Any, _ p3: Any) -> String {
     return L10n.tr("Localizable", "pricing_terms_after_discount", String(describing: p1), String(describing: p2), String(describing: p3), fallback: "Recurring payments at %1$@ after %2$@ (%3$@)")
@@ -3945,6 +3951,10 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralRemoveGroupsApplyAll: String { return L10n.tr("Localizable", "settings_general_remove_groups_apply_all", fallback: "Would you like to change all your existing podcasts to be not be grouped as well?") }
   /// Setting option to choose the default action when selecting an episode row.
   internal static var settingsGeneralRowAction: String { return L10n.tr("Localizable", "settings_general_row_action", fallback: "Row Action") }
+  /// Setting toggle that makes repeated skip button taps grow the skip interval.
+  internal static var settingsGeneralSeekAcceleration: String { return L10n.tr("Localizable", "settings_general_seek_acceleration", fallback: "Skip Acceleration") }
+  /// Subtitle explaining the toggle that makes repeated skip button taps grow the skip interval.
+  internal static var settingsGeneralSeekAccelerationSubtitle: String { return L10n.tr("Localizable", "settings_general_seek_acceleration_subtitle", fallback: "Quickly tapping skip several times in a row increases how far each skip jumps.") }
   /// Prompt to ask the user if they'd like to apply the grouping to all podcasts. '%1$@' is a placeholder for a localized name for the grouping type.
   internal static func settingsGeneralSelectedGroupApplyAll(_ p1: Any) -> String {
     return L10n.tr("Localizable", "settings_general_selected_group_apply_all", String(describing: p1), fallback: "Would you like to change all your existing podcasts to be grouped by %1$@?")
@@ -3955,6 +3965,12 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralSmartPlayback: String { return L10n.tr("Localizable", "settings_general_smart_playback", fallback: "Intelligent Playback Resumption") }
   /// Subtitle explaining the feature that adjusts the playback position when resuming.
   internal static var settingsGeneralSmartPlaybackSubtitle: String { return L10n.tr("Localizable", "settings_general_smart_playback_subtitle", fallback: "If on, Pocket Casts will go back a little in episodes you resume so you can catch up more comfortably.") }
+  /// Setting toggle that makes tapping an episode row play it immediately instead of opening the episode details.
+  internal static var settingsGeneralTapToPlay: String { return L10n.tr("Localizable", "settings_general_tap_to_play", fallback: "Play Episodes On Tap") }
+  /// Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is off.
+  internal static var settingsGeneralTapToPlayOffSubtitle: String { return L10n.tr("Localizable", "settings_general_tap_to_play_off_subtitle", fallback: "Tapping an episode in a list opens its details. Turn on to play episodes with a single tap instead.") }
+  /// Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is on.
+  internal static var settingsGeneralTapToPlayOnSubtitle: String { return L10n.tr("Localizable", "settings_general_tap_to_play_on_subtitle", fallback: "Tapping an episode in a list plays it immediately. Swipe on an episode and choose Details to see its options. Turn off to open episode details on tap.") }
   /// Setting option to choose how to handle swiping to add something to the queue.
   internal static var settingsGeneralUpNextSwipe: String { return L10n.tr("Localizable", "settings_general_up_next_swipe", fallback: "Up Next Swipe") }
   /// Setting toggle to modify how a tap is handled in the up next queue.

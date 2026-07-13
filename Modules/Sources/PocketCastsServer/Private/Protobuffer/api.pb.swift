@@ -1205,6 +1205,26 @@ struct Api_ChangeableSettings: @unchecked Sendable {
   /// Clears the value of `listeningTimeStats`. Subsequent reads from it will return its default value.
   mutating func clearListeningTimeStats() {_uniqueStorage()._listeningTimeStats = nil}
 
+  // FORK: fork-reserved field 1001 (tap_to_play); the production server drops unknown fields.
+  var tapToPlay: Api_BoolSetting {
+    get {_storage._tapToPlay ?? Api_BoolSetting()}
+    set {_uniqueStorage()._tapToPlay = newValue}
+  }
+  /// Returns true if `tapToPlay` has been explicitly set.
+  var hasTapToPlay: Bool {_storage._tapToPlay != nil}
+  /// Clears the value of `tapToPlay`. Subsequent reads from it will return its default value.
+  mutating func clearTapToPlay() {_uniqueStorage()._tapToPlay = nil}
+
+  // FORK: fork-reserved field 1002 (seek_acceleration); the production server drops unknown fields.
+  var seekAcceleration: Api_BoolSetting {
+    get {_storage._seekAcceleration ?? Api_BoolSetting()}
+    set {_uniqueStorage()._seekAcceleration = newValue}
+  }
+  /// Returns true if `seekAcceleration` has been explicitly set.
+  var hasSeekAcceleration: Bool {_storage._seekAcceleration != nil}
+  /// Clears the value of `seekAcceleration`. Subsequent reads from it will return its default value.
+  mutating func clearSeekAcceleration() {_uniqueStorage()._seekAcceleration = nil}
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -2988,6 +3008,26 @@ struct Api_NamedSettingsResponse: @unchecked Sendable {
   var hasListeningTimeStats: Bool {_storage._listeningTimeStats != nil}
   /// Clears the value of `listeningTimeStats`. Subsequent reads from it will return its default value.
   mutating func clearListeningTimeStats() {_uniqueStorage()._listeningTimeStats = nil}
+
+  // FORK: fork-reserved field 1001 (tap_to_play); the production server drops unknown fields.
+  var tapToPlay: Api_BoolSetting {
+    get {_storage._tapToPlay ?? Api_BoolSetting()}
+    set {_uniqueStorage()._tapToPlay = newValue}
+  }
+  /// Returns true if `tapToPlay` has been explicitly set.
+  var hasTapToPlay: Bool {_storage._tapToPlay != nil}
+  /// Clears the value of `tapToPlay`. Subsequent reads from it will return its default value.
+  mutating func clearTapToPlay() {_uniqueStorage()._tapToPlay = nil}
+
+  // FORK: fork-reserved field 1002 (seek_acceleration); the production server drops unknown fields.
+  var seekAcceleration: Api_BoolSetting {
+    get {_storage._seekAcceleration ?? Api_BoolSetting()}
+    set {_uniqueStorage()._seekAcceleration = newValue}
+  }
+  /// Returns true if `seekAcceleration` has been explicitly set.
+  var hasSeekAcceleration: Bool {_storage._seekAcceleration != nil}
+  /// Clears the value of `seekAcceleration`. Subsequent reads from it will return its default value.
+  mutating func clearSeekAcceleration() {_uniqueStorage()._seekAcceleration = nil}
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -8765,7 +8805,7 @@ extension Api_NamedSettingsRequest: SwiftProtobuf.Message, SwiftProtobuf._Messag
 
 extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".ChangeableSettings"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{4}\u{2}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{b}stream_by_default\0\u{b}silence_removal\0\u{c}\u{a}\u{1}\u{c}\u{d}\u{1}")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{4}\u{2}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{4}E\u{e}tap_to_play\0\u{3}seek_acceleration\0\u{b}stream_by_default\0\u{b}silence_removal\0\u{c}\u{a}\u{1}\u{c}\u{d}\u{1}")
 
   fileprivate class _StorageClass {
     var _gridLayout: Api_Int32Setting? = nil
@@ -8865,6 +8905,8 @@ extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     var _doNotSellOrShare: Api_BoolSetting? = nil
     var _liveAnalyticsURL: Api_StringSetting? = nil
     var _listeningTimeStats: Api_BoolSetting? = nil
+    var _tapToPlay: Api_BoolSetting? = nil // FORK: field 1001
+    var _seekAcceleration: Api_BoolSetting? = nil // FORK: field 1002
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -8972,6 +9014,8 @@ extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       _doNotSellOrShare = source._doNotSellOrShare
       _liveAnalyticsURL = source._liveAnalyticsURL
       _listeningTimeStats = source._listeningTimeStats
+      _tapToPlay = source._tapToPlay // FORK
+      _seekAcceleration = source._seekAcceleration // FORK
     }
   }
 
@@ -9087,6 +9131,8 @@ extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         case 98: try { try decoder.decodeSingularMessageField(value: &_storage._doNotSellOrShare) }()
         case 99: try { try decoder.decodeSingularMessageField(value: &_storage._liveAnalyticsURL) }()
         case 100: try { try decoder.decodeSingularMessageField(value: &_storage._listeningTimeStats) }()
+        case 1001: try { try decoder.decodeSingularMessageField(value: &_storage._tapToPlay) }() // FORK
+        case 1002: try { try decoder.decodeSingularMessageField(value: &_storage._seekAcceleration) }() // FORK
         default: break
         }
       }
@@ -9390,6 +9436,13 @@ extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       try { if let v = _storage._listeningTimeStats {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 100)
       } }()
+      // FORK: fork-reserved fields 1001/1002, visited in ascending field order.
+      try { if let v = _storage._tapToPlay {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+      } }()
+      try { if let v = _storage._seekAcceleration {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1002)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -9496,6 +9549,8 @@ extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         if _storage._doNotSellOrShare != rhs_storage._doNotSellOrShare {return false}
         if _storage._liveAnalyticsURL != rhs_storage._liveAnalyticsURL {return false}
         if _storage._listeningTimeStats != rhs_storage._listeningTimeStats {return false}
+        if _storage._tapToPlay != rhs_storage._tapToPlay {return false} // FORK
+        if _storage._seekAcceleration != rhs_storage._seekAcceleration {return false} // FORK
         return true
       }
       if !storagesAreEqual {return false}
@@ -10249,7 +10304,7 @@ extension Api_NamedSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
 
 extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".NamedSettingsResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{1}developer\0\u{3}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{b}stream_by_default\0\u{b}silence_removal\0\u{c}\u{a}\u{1}\u{c}\u{d}\u{1}")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{1}developer\0\u{3}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{4}E\u{e}tap_to_play\0\u{3}seek_acceleration\0\u{b}stream_by_default\0\u{b}silence_removal\0\u{c}\u{a}\u{1}\u{c}\u{d}\u{1}")
 
   fileprivate class _StorageClass {
     var _gridLayout: Api_Int32Setting? = nil
@@ -10350,6 +10405,8 @@ extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
     var _doNotSellOrShare: Api_BoolSetting? = nil
     var _liveAnalyticsURL: Api_StringSetting? = nil
     var _listeningTimeStats: Api_BoolSetting? = nil
+    var _tapToPlay: Api_BoolSetting? = nil // FORK: field 1001
+    var _seekAcceleration: Api_BoolSetting? = nil // FORK: field 1002
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -10458,6 +10515,8 @@ extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
       _doNotSellOrShare = source._doNotSellOrShare
       _liveAnalyticsURL = source._liveAnalyticsURL
       _listeningTimeStats = source._listeningTimeStats
+      _tapToPlay = source._tapToPlay // FORK
+      _seekAcceleration = source._seekAcceleration // FORK
     }
   }
 
@@ -10574,6 +10633,8 @@ extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
         case 98: try { try decoder.decodeSingularMessageField(value: &_storage._doNotSellOrShare) }()
         case 99: try { try decoder.decodeSingularMessageField(value: &_storage._liveAnalyticsURL) }()
         case 100: try { try decoder.decodeSingularMessageField(value: &_storage._listeningTimeStats) }()
+        case 1001: try { try decoder.decodeSingularMessageField(value: &_storage._tapToPlay) }() // FORK
+        case 1002: try { try decoder.decodeSingularMessageField(value: &_storage._seekAcceleration) }() // FORK
         default: break
         }
       }
@@ -10880,6 +10941,13 @@ extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
       try { if let v = _storage._listeningTimeStats {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 100)
       } }()
+      // FORK: fork-reserved fields 1001/1002, visited in ascending field order.
+      try { if let v = _storage._tapToPlay {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+      } }()
+      try { if let v = _storage._seekAcceleration {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1002)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -10987,6 +11055,8 @@ extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
         if _storage._doNotSellOrShare != rhs_storage._doNotSellOrShare {return false}
         if _storage._liveAnalyticsURL != rhs_storage._liveAnalyticsURL {return false}
         if _storage._listeningTimeStats != rhs_storage._listeningTimeStats {return false}
+        if _storage._tapToPlay != rhs_storage._tapToPlay {return false} // FORK
+        if _storage._seekAcceleration != rhs_storage._seekAcceleration {return false} // FORK
         return true
       }
       if !storagesAreEqual {return false}

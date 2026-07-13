@@ -17,6 +17,8 @@ nonisolated extension SettingsStore<AppSettings> {
         self.update(\.$showArchived, value: UserDefaults.standard.bool(forKey: Settings.defaultArchiveBehaviour))
         self.update(\.$upNextSwipe, value: Int32(UserDefaults.standard.integer(forKey: Settings.primaryUpNextSwipeActionKey)))
         self.update(\.$playUpNextOnTap, value: UserDefaults.standard.bool(forKey: Settings.playUpNextOnTapKey))
+        self.update(\.$tapToPlay, value: UserDefaults.standard.bool(forKey: Settings.tapToPlayKey))
+        self.update(\.$seekAcceleration, value: UserDefaults.standard.bool(forKey: Settings.seekAccelerationKey))
         self.update(\.$playbackActions, value: UserDefaults.standard.bool(forKey: Settings.mediaSessionActionsKey))
         self.update(\.$legacyBluetooth, value: UserDefaults.standard.bool(forKey: Settings.legacyBtSupportKey))
         self.update(\.$multiSelectGesture, value: UserDefaults.standard.bool(forKey: Settings.multiSelectGestureKey))

@@ -21,6 +21,9 @@ public struct AppSettings: JSONCodable {
     @ModifiedDate public var intelligentResumption: Bool
 
     @ModifiedDate public var playUpNextOnTap: Bool
+    // FORK: synced via fork-reserved proto fields 1001/1002; the production server drops them.
+    @ModifiedDate public var tapToPlay: Bool = false
+    @ModifiedDate public var seekAcceleration: Bool = false
     @ModifiedDate public var playbackActions: Bool
     @ModifiedDate public var legacyBluetooth: Bool
     @ModifiedDate public var multiSelectGesture: Bool

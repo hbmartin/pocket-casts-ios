@@ -198,6 +198,13 @@ final class PlaybackManager {
 
     private let catchUpHelper = PlaybackCatchUpHelper()
 
+    /// Grows the skip interval on rapid repeated skip taps (see `Settings.seekAccelerationEnabled()`).
+    private var seekAcceleration = SeekAccelerationTracker()
+
+    /// Session history of played episodes for the headphone previous-episode action.
+    private var episodeHistory = PlayedEpisodeHistory()
+    private var isNavigatingBackInHistory = false
+
     private let analyticsPlaybackHelper = AnalyticsPlaybackHelper.shared
 
     #if !APPCLIP
@@ -393,6 +400,14 @@ final class PlaybackManager {
             }
         }
 
+        seekAcceleration.reset()
+
+        // Session history for the headphone previous-episode action. Recording after the
+        // switchTo early-return above avoids double-recording (switchTo re-enters load).
+        if episodeIsChanging, !isNavigatingBackInHistory, let outgoingUuid = currentEpisode()?.uuid {
+            episodeHistory.record(uuid: outgoingUuid)
+        }
+
         if let uuid = currentEpisode()?.uuid, uuid != episode.uuid {
             chapterManager.clearChapterInfo()
         }
@@ -507,6 +522,7 @@ final class PlaybackManager {
         }
         updateNowPlayingInfo()
 
+        seekAcceleration.reset()
         catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
         NotificationCenter.postOnMainThread(PlaybackPaused())
         cancelUpdateTimer()
@@ -524,7 +540,10 @@ final class PlaybackManager {
     }
 
     func skipBack() {
-        let skipBackAmount = TimeInterval(Settings.skipBackTime)
+        var skipBackAmount = TimeInterval(Settings.skipBackTime)
+        if Settings.seekAccelerationEnabled() {
+            skipBackAmount = seekAcceleration.amount(for: .back, baseAmount: skipBackAmount)
+        }
         skipBack(amount: skipBackAmount)
     }
 
@@ -537,7 +556,10 @@ final class PlaybackManager {
     }
 
     func skipForward() {
-        let skipForwardAmount = TimeInterval(Settings.skipForwardTime)
+        var skipForwardAmount = TimeInterval(Settings.skipForwardTime)
+        if Settings.seekAccelerationEnabled() {
+            skipForwardAmount = seekAcceleration.amount(for: .forward, baseAmount: skipForwardAmount)
+        }
         skipForward(amount: skipForwardAmount)
     }
 
@@ -545,7 +567,7 @@ final class PlaybackManager {
         analyticsPlaybackHelper.skipForward()
 
         let forwardTime = min(currentTime() + amount, duration())
-        seekTo(time: forwardTime)
+        seekTo(time: forwardTime, seekHint: .forward)
 
         StatsManager.shared.addSkippedTime(amount)
     }
@@ -579,6 +601,55 @@ final class PlaybackManager {
 
     func skipToChapter(_ chapter: ChapterInfo, startPlaybackAfterSkip: Bool = false) {
         seekTo(time: ceil(chapter.startTime.seconds), startPlaybackAfterSeek: startPlaybackAfterSkip)
+    }
+
+    /// Jumps to the next episode in Up Next (headphone/lock-screen next-episode action).
+    /// A no-op when the queue is empty.
+    func skipToNextEpisode() {
+        guard queue.upNextCount() > 0 else {
+            FileLog.shared.addMessage("skipToNextEpisode ignored: Up Next is empty")
+            return
+        }
+
+        analyticsPlaybackHelper.track(.playbackNextEpisode)
+        playNextEpisode(autoPlay: true)
+    }
+
+    /// Music-player-style previous action (headphone/lock-screen previous-episode action):
+    /// more than `restartThreshold` seconds into the episode → restart it from 0; otherwise pop
+    /// the session history and return to the previously played episode (fallback: restart).
+    func skipToPreviousEpisodeOrRestart(restartThreshold: TimeInterval = 15) {
+        analyticsPlaybackHelper.track(.playbackPreviousEpisode)
+
+        if currentTime() > restartThreshold {
+            seekTo(time: 0)
+            return
+        }
+
+        var previousEpisode: BaseEpisode?
+        while let uuid = episodeHistory.popPrevious() {
+            if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid) {
+                previousEpisode = episode
+                break
+            }
+        }
+
+        guard let previousEpisode else {
+            FileLog.shared.addMessage("skipToPreviousEpisodeOrRestart: no usable history, restarting current episode")
+            seekTo(time: 0)
+            return
+        }
+
+        FileLog.shared.addMessage("skipToPreviousEpisodeOrRestart: returning to \(previousEpisode.displayableTitle())")
+
+        // Deliberately not load(episode:): with an empty Up Next, load would hit
+        // overrideAllEpisodesWith and drop the current episode instead of re-queueing it.
+        // Inserting at the queue front and switching pushes the current episode to the
+        // front of Up Next (via pushNewCurrentlyPlaying), so "next" returns to it.
+        isNavigatingBackInHistory = true
+        queue.insert(episode: previousEpisode, position: 0)
+        switchToPlaying(upNextIndex: 0)
+        isNavigatingBackInHistory = false
     }
 
     func skipToEndOfLastChapter() {
@@ -666,6 +737,11 @@ final class PlaybackManager {
     }
 
     func seekTo(time: TimeInterval, syncChanges: Bool, startPlaybackAfterSeek: Bool = false, seekHint: SeekHint? = nil) {
+        // any non-skip seek (scrubber, chapter jump, bookmark, sync) breaks a skip-acceleration streak
+        if seekHint == nil {
+            seekAcceleration.reset()
+        }
+
         guard let playingEpisode = currentEpisode() else { return } // nothing to actually seek
 
         if seekHint == .back, !isValidSeek(time: time) {
@@ -885,6 +961,13 @@ final class PlaybackManager {
             queue.move(episode: nextEpisode, to: 0)
         }
 
+        seekAcceleration.reset()
+
+        // this path bypasses load(episode:), so record the outgoing episode here
+        if let outgoingUuid = currentEpisode()?.uuid {
+            episodeHistory.record(uuid: outgoingUuid)
+        }
+
         queue.removeTopEpisode(fireNotification: false)
         chapterManager.clearChapterInfo()
         cleanupCurrentPlayer(permanent: !autoPlay)
@@ -956,6 +1039,8 @@ final class PlaybackManager {
         cancelUpdateTimer()
         cancelSleepTimer()
         chapterManager.clearChapterInfo()
+        seekAcceleration.reset()
+        episodeHistory.removeAll()
 
         if saveCurrentEpisode {
             recordPlaybackPosition(sendToServerImmediately: false, fireNotifications: true)
@@ -1983,6 +2068,7 @@ final class PlaybackManager {
             if let skipEvent = event as? MPSkipIntervalCommandEvent, skipEvent.interval > 0 {
                 strongSelf.skipBack(amount: skipEvent.interval)
             } else {
+                strongSelf.analyticsPlaybackHelper.currentSource = strongSelf.commandCenterSource
                 strongSelf.handleRemoteAction(Settings.headphonesPreviousAction)
             }
 
@@ -1998,6 +2084,7 @@ final class PlaybackManager {
             if let skipEvent = event as? MPSkipIntervalCommandEvent, skipEvent.interval > 0 {
                 strongSelf.skipForward(amount: skipEvent.interval)
             } else {
+                strongSelf.analyticsPlaybackHelper.currentSource = strongSelf.commandCenterSource
                 strongSelf.handleRemoteAction(Settings.headphonesNextAction)
             }
 
@@ -2139,6 +2226,18 @@ final class PlaybackManager {
                     }
                 }
 
+                // same hijack for the previous-episode headphone action; a mismatched
+                // interval is a Siri custom skip and passes through to a plain skip
+                if Settings.headphonesPreviousAction == .previousEpisode {
+                    let interval = (event as? MPSkipIntervalCommandEvent)?.interval ?? TimeInterval(Settings.skipBackTime)
+                    if Int(interval) == Settings.skipBackTime {
+                        self.analyticsPlaybackHelper.currentSource = self.commandCenterSource
+                        self.handleRemoteAction(.previousEpisode)
+
+                        return .success
+                    }
+                }
+
                 self.analyticsPlaybackHelper.currentSource = self.commandCenterSource
 
                 if let skipEvent = event as? MPSkipIntervalCommandEvent, skipEvent.interval > 0 {
@@ -2164,6 +2263,18 @@ final class PlaybackManager {
                     if Int(interval) == Settings.skipForwardTime {
                         FileLog.shared.addMessage("Skipping to next chapter because Remote Skip Chapters is turned on")
                         self.seekTo(time: ceil(nextChapter.startTime.seconds))
+
+                        return .success
+                    }
+                }
+
+                // same hijack for the next-episode headphone action; a mismatched
+                // interval is a Siri custom skip and passes through to a plain skip
+                if Settings.headphonesNextAction == .nextEpisode {
+                    let interval = (event as? MPSkipIntervalCommandEvent)?.interval ?? TimeInterval(Settings.skipForwardTime)
+                    if Int(interval) == Settings.skipForwardTime {
+                        self.analyticsPlaybackHelper.currentSource = self.commandCenterSource
+                        self.handleRemoteAction(.nextEpisode)
 
                         return .success
                     }
@@ -2527,18 +2638,33 @@ private extension PlaybackManager {
 
         case .skipForward:
             skipFromRemote(isBack: false)
+
+        case .nextEpisode:
+            guard debounceRemoteEpisodeSkip("nextTrackCommand") else { return }
+            skipToNextEpisode()
+
+        case .previousEpisode:
+            guard debounceRemoteEpisodeSkip("previousTrackCommand") else { return }
+            skipToPreviousEpisodeOrRestart()
         }
     }
 
     func skipFromRemote(isBack: Bool) {
+        guard debounceRemoteEpisodeSkip(isBack ? "previousTrackCommand" : "nextTrackCommand") else { return }
+
+        isBack ? skipBack() : skipForward()
+    }
+
+    /// Some headphones deliver duplicate next/previous-track events in quick succession;
+    /// drop repeats inside the remote-skip debounce window so one tap never acts twice.
+    func debounceRemoteEpisodeSkip(_ command: String) -> Bool {
         guard fabs(lastSeekTime.timeIntervalSinceNow) > Constants.Limits.minTimeBetweenRemoteSkips else {
-            let command = isBack ? "previousTrackCommand" : "nextTrackCommand"
             FileLog.shared.addMessage("Remote control: \(command) ignored, too soon since previous command")
-            return
+            return false
         }
 
         lastSeekTime = Date()
-        isBack ? skipBack() : skipForward()
+        return true
     }
 }
 

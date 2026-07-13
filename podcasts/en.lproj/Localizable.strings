@@ -1351,6 +1351,9 @@
 /* A common string used throughout the app. Format used to call out when the associated subscription will be renewed. '%1$@' is a placeholder for a localized date indicating when the renewal will process. */
 "next_payment_format" = "Next payment: %1$@";
 
+/* A common string used throughout the app. Prompt to move to the previously played episode. */
+"previous_episode" = "Previous Episode";
+
 /* A common string used throughout the app. Default 'not set' option mostly used with group settings. */
 "none" = "None";
 
@@ -1501,6 +1504,9 @@
 /* Accessibility hint text informing the user that the Sleep timer is enabled. */
 "player_accessibility_sleep_timer_on" = "Sleep timer on";
 
+/* Accessibility hint text informing the user that playback will stop when the current episode ends. */
+"player_accessibility_stop_after_episode_on" = "Stop after this episode on";
+
 /* Subtitle for settings indicating this item operates as delete for files. */
 "player_action_subtitle_delete" = "Shown as Delete for custom episodes";
 
@@ -1518,6 +1524,9 @@
 
 /* Header for the available timer options for auto-pausing playback. */
 "player_action_title_sleep_timer" = "Sleep Timer";
+
+/* Title for the player shelf action that stops playback when the current episode ends. */
+"player_action_title_stop_after_episode" = "Stop After This Episode";
 
 /* Title for the prompt to remove an episode from the favorites. */
 "player_action_title_unstar_episode" = "Unstar Episode";
@@ -2775,6 +2784,21 @@
 
 /* Subtitle explaining the toggle to modify how a tap is handled in the up next queue. This is used when the toggle is on. */
 "settings_general_up_next_tap_on_subtitle" = "Tapping an episode in Up Next will play it. Long press shows episode options. Turn off to switch these around.";
+
+/* Setting toggle that makes tapping an episode row play it immediately instead of opening the episode details. */
+"settings_general_tap_to_play" = "Play Episodes On Tap";
+
+/* Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is off. */
+"settings_general_tap_to_play_off_subtitle" = "Tapping an episode in a list opens its details. Turn on to play episodes with a single tap instead.";
+
+/* Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is on. */
+"settings_general_tap_to_play_on_subtitle" = "Tapping an episode in a list plays it immediately. Swipe on an episode and choose Details to see its options. Turn off to open episode details on tap.";
+
+/* Setting toggle that makes repeated skip button taps grow the skip interval. */
+"settings_general_seek_acceleration" = "Skip Acceleration";
+
+/* Subtitle explaining the toggle that makes repeated skip button taps grow the skip interval. */
+"settings_general_seek_acceleration_subtitle" = "Quickly tapping skip several times in a row increases how far each skip jumps.";
 
 /* Subtitle explaining the toggle to modify if a new episode will be reproduced after the current one ends. */
 "settings_general_autoplay_subtitle" = "If your Up Next queue is empty, we'll play episodes from the same podcast or list you're currently listening to.";

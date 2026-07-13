@@ -26,7 +26,7 @@ podcasts/EpisodeFilterOverlayController.swift: 2
 podcasts/Extensions/UIView+Nib.swift: 1
 podcasts/FilterEditOptionsViewController.swift: 4
 podcasts/Folders/FolderViewController+CollectionView.swift: 2
-podcasts/GeneralSettingsViewController.swift: 21
+podcasts/GeneralSettingsViewController.swift: 23
 podcasts/IconSelectorCell.swift: 1
 podcasts/ImageManager.swift: 1
 podcasts/ListeningHistoryViewController+Table.swift: 1

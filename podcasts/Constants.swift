@@ -311,6 +311,12 @@ enum HeadphoneControlAction: JSONCodable {
 
     /// Create a new bookmark for the currently playing episode
     case addBookmark
+
+    /// Jump to the next episode in Up Next (no-op when the queue is empty)
+    case nextEpisode
+
+    /// Restart the episode, or return to the previously played episode near its start
+    case previousEpisode
 }
 
 // MARK: - Bookmark Sorting
