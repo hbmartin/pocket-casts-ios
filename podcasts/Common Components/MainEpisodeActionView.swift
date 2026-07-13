@@ -64,11 +64,20 @@ class MainEpisodeActionView: UIView {
 
         enablePointerInteraction()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(playbackDidProgress), name: Constants.Notifications.playbackProgress, object: nil)
+        playbackProgressToken = NotificationCenter.default.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+            self?.playbackDidProgress()
+        }
     }
 
+    private var playbackProgressToken: NotificationCenter.ObservationToken?
+
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let token = playbackProgressToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     // MARK: - User Actions
@@ -135,7 +144,7 @@ class MainEpisodeActionView: UIView {
 
     // MARK: - Update Events
 
-    @objc private func playbackDidProgress() {
+    private func playbackDidProgress() {
         guard let playingEpisode = PlaybackManager.shared.currentEpisode(), let uuid = episodeUuid, uuid == playingEpisode.uuid else { return }
 
         // don't update the progress of episodes that are downloading

@@ -93,10 +93,7 @@ nonisolated struct UserEpisodeManager {
         }
 
         DataManager.sharedManager.delete(userEpisodeUuid: userEpisode.uuid)
-        NotificationCenter.postOnMainThread(
-            notification: Constants.Notifications.userEpisodeDeleted,
-            object: userEpisode.uuid
-        )
+        NotificationCenter.postOnMainThread(UserEpisodeDeleted(uuid: userEpisode.uuid))
     }
 
     static func deleteFromEverywhere(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) {
@@ -142,10 +139,7 @@ nonisolated struct UserEpisodeManager {
         }
 
         DataManager.sharedManager.save(episode: episode)
-        NotificationCenter.postOnMainThread(
-            notification: Constants.Notifications.userEpisodeUpdated,
-            object: episode.uuid
-        )
+        NotificationCenter.postOnMainThread(UserEpisodeUpdated(uuid: episode.uuid))
 
         if episodeSyncRequired, episode.folderRelativePath != nil {
             DataManager.sharedManager.journalFileSyncUpsert(
@@ -191,10 +185,7 @@ nonisolated struct UserEpisodeManager {
                 }
 
                 DataManager.sharedManager.save(episode: episode)
-                NotificationCenter.postOnMainThread(
-                    notification: Constants.Notifications.userEpisodeUpdated,
-                    object: episode.uuid
-                )
+                NotificationCenter.postOnMainThread(UserEpisodeUpdated(uuid: episode.uuid))
                 completion()
             }
         }

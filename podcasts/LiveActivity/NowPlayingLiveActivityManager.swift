@@ -14,19 +14,40 @@ final class NowPlayingLiveActivityManager {
 
     private var activity: Activity<NowPlayingActivityAttributes>?
 
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     func setup() {
         let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(playbackChanged), name: Constants.Notifications.playbackStarted, object: nil)
-        center.addObserver(self, selector: #selector(playbackChanged), name: Constants.Notifications.playbackPaused, object: nil)
-        center.addObserver(self, selector: #selector(playbackChanged), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        center.addObserver(self, selector: #selector(playbackChanged), name: Constants.Notifications.podcastChapterChanged, object: nil)
-        center.addObserver(self, selector: #selector(playbackEnded), name: Constants.Notifications.playbackEnded, object: nil)
+        messageTokens.append(center.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+            self?.playbackChanged()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+            self?.playbackChanged()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.playbackChanged()
+        })
+        messageTokens.append(center.addObserver(for: PodcastChapterChanged.self) { [weak self] _ in
+            self?.playbackChanged()
+        })
+        messageTokens.append(center.addObserver(for: PlaybackEnded.self) { [weak self] _ in
+            self?.playbackEnded()
+        })
 
         // Playback may already be stopped from a previous run; reap stale activities.
         endAllActivities()
     }
 
-    @objc private func playbackChanged() {
+    deinit {
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
+    private func playbackChanged() {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         guard let episode = PlaybackManager.shared.currentEpisode() else {
@@ -63,7 +84,7 @@ final class NowPlayingLiveActivityManager {
         }
     }
 
-    @objc private func playbackEnded() {
+    private func playbackEnded() {
         endActivity()
     }
 

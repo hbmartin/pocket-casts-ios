@@ -259,11 +259,21 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
 
         bookmarksController.view.isHidden = false
 
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackEventDidFire))
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
         addCustomObserver(UpNextQueueChanged.self) { [weak self] _ in
             self?.playbackEventDidFire()
         }
@@ -273,9 +283,15 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
         addCustomObserver(UpNextEpisodeRemoved.self) { [weak self] _ in
             self?.playbackEventDidFire()
         }
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(playbackProgressDidChange))
+        // Inert both before and after the typed migration: playbackProgress is already
+        // registered above (to playbackEventDidFire) and registrations dedupe by name.
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.playbackProgressDidChange()
+        }
 
-        addCustomObserver(Constants.Notifications.downloadProgress, selector: #selector(updateDownloadProgress))
+        addCustomObserver(DownloadProgressChanged.self) { [weak self] _ in
+            self?.updateDownloadProgress()
+        }
         addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
             self?.episodeDownloadedEvent()
         }
@@ -345,11 +361,11 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
         updateDisplayedData()
     }
 
-    @objc private func playbackEventDidFire() {
+    private func playbackEventDidFire() {
         updateDisplayedData()
     }
 
-    @objc private func updateDownloadProgress() {
+    private func updateDownloadProgress() {
         updateDisplayedData(reloadingEpisode: false)
     }
 
@@ -460,7 +476,7 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
         }
     }
 
-    @objc private func playbackProgressDidChange() {
+    private func playbackProgressDidChange() {
         updateProgress()
     }
 

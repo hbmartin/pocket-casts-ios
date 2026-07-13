@@ -380,10 +380,6 @@ class PlaylistDetailViewController: PCViewController, UIScrollViewDelegate {
         navTitleLabel.text = viewModel.playlist.playlistName
     }
 
-    @objc func refreshEpisodesFromNotification(notification: Notification) {
-        reloader.request(.episodes)
-    }
-
     private func reload(with scopes: PlaylistReloadScope) {
         if scopes.contains(.playlist) {
             reloadNavTitle()

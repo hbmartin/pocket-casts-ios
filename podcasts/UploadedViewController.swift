@@ -167,8 +167,12 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private func addUIObservers() {
         // TODO: a table diff might be more efficient here (and have nicer animations)
 
-        addCustomObserver(Constants.Notifications.userEpisodeDeleted, selector: #selector(handleReloadFromNotification))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(handleReloadFromNotification))
+        addCustomObserver(UserEpisodeDeleted.self) { [weak self] _ in
+            self?.handleReloadFromNotification()
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.handleReloadFromNotification()
+        }
         addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
             self?.handleReloadFromNotification()
         }
@@ -178,7 +182,9 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
             self?.handleReloadFromNotification()
         }
-        addCustomObserver(Constants.Notifications.fileSyncUploadsChanged, selector: #selector(handleReloadFromNotification))
+        addCustomObserver(FileSyncUploadsChanged.self) { [weak self] _ in
+            self?.handleReloadFromNotification()
+        }
     }
 
     func setupNavBar() {
@@ -223,7 +229,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         optionsPicker.present(from: self)
     }
 
-    @objc private func handleReloadFromNotification() {
+    private func handleReloadFromNotification() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 

@@ -303,7 +303,7 @@ class PlaybackQueue: NSObject {
 
     func nowPlayingEpisodeChanged() {
         cacheTopEpisode()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.currentlyPlayingEpisodeUpdated)
+        NotificationCenter.postOnMainThread(CurrentlyPlayingEpisodeUpdated())
     }
 
     // MARK: - Querying

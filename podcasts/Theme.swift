@@ -140,7 +140,7 @@ class Theme: ObservableObject {
             UserDefaults.standard.set(newValue.old.rawValue, forKey: Theme.themeKey)
 
             // if the user is changing from or to the radioactive theme, we need to clear our memory cache because processing is applied to these images
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastImageReCacheRequired)
+            NotificationCenter.postOnMainThread(PodcastImageReCacheRequired())
 
             NotificationCenter.postOnMainThread(ThemeChanged())
         }
@@ -160,7 +160,11 @@ class Theme: ObservableObject {
         themeSubject = CurrentValueSubject(initialTheme)
         activeThemeSnapshot.value = initialTheme
 
-        NotificationCenter.default.addObserver(self, selector: #selector(systemThemeDidChange(_:)), name: Constants.Notifications.systemThemeMayHaveChanged, object: nil)
+        systemThemeToken = NotificationCenter.default.addObserver(for: SystemThemeMayHaveChanged.self) { [weak self] _ in
+            guard let self, Settings.shouldFollowSystemTheme() else { return }
+
+            self.toggleTheme()
+        }
     }
 
     nonisolated init(previewTheme: ThemeType) {
@@ -168,13 +172,15 @@ class Theme: ObservableObject {
         activeThemeSnapshot.value = previewTheme
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
+    /// Typed-notification token.
+    // nonisolated(unsafe): written exactly once, at the end of `init` (before `self`
+    // can be visible to any other thread), then only read in `deinit` — no concurrent
+    // access is possible.
+    nonisolated(unsafe) private var systemThemeToken: NotificationCenter.ObservationToken?
 
-    @objc private func systemThemeDidChange(_ notification: Notification) {
-        if Settings.shouldFollowSystemTheme() {
-            toggleTheme()
+    deinit {
+        if let systemThemeToken {
+            NotificationCenter.default.removeObserver(systemThemeToken)
         }
     }
 

@@ -90,7 +90,7 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
                 cell.cellSecondaryLabel.text = L10n.timeShorthand(newValue)
                 cell.configureAccessibilityLabel(text: cellLabelText, time: newValue)
 
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.skipTimesChanged)
+                NotificationCenter.postOnMainThread(SkipTimesChanged())
 
                 self?.debounce.call {
                     Settings.trackValueChanged(.settingsGeneralSkipForwardChanged, value: value)
@@ -118,7 +118,7 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
                 cell.cellSecondaryLabel.text = L10n.timeShorthand(newValue)
                 cell.configureAccessibilityLabel(text: cellLabelText, time: newValue)
 
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.skipTimesChanged)
+                NotificationCenter.postOnMainThread(SkipTimesChanged())
 
                 self?.debounce.call {
                     Settings.trackValueChanged(.settingsGeneralSkipBackChanged, value: value)

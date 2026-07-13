@@ -39,6 +39,10 @@ final class EpisodeMessagesTests: XCTestCase {
         assertUuidRoundTrip(UserEpisodeUpdated.self, expectedRawName: "SJUserEpisodeUpdated")
     }
 
+    func testUserEpisodeDeletedRoundTrip() {
+        assertUuidRoundTrip(UserEpisodeDeleted.self, expectedRawName: "SJUserEpisodeDeleted")
+    }
+
     func testDownloadProgressChangedRoundTrip() {
         assertUuidRoundTrip(DownloadProgressChanged.self, expectedRawName: "SJDwnProg")
     }
@@ -51,6 +55,47 @@ final class EpisodeMessagesTests: XCTestCase {
 
     func testListeningHistoryChangedRoundTrip() throws {
         try assertPayloadFreeRoundTrip(ListeningHistoryChanged.self, expectedRawName: "SJListeningHistoryChanged")
+    }
+
+    func testFileSyncUploadsChangedRoundTrip() throws {
+        try assertPayloadFreeRoundTrip(FileSyncUploadsChanged.self, expectedRawName: "PCFileSyncUploadsChanged")
+    }
+
+    // MARK: - Transcript availability
+
+    /// message -> Notification -> message preserves the payload, and the bridged
+    /// Notification carries the frozen `userInfo` shape string-based observers
+    /// still read (`episodeUuid` / `isAvailable` / `hasGeneratedTranscripts`).
+    func testEpisodeTranscriptAvailabilityChangedRoundTrip() throws {
+        XCTAssertEqual(EpisodeTranscriptAvailabilityChanged.name.rawValue, "SJEpisodeTranscriptAvailabilityChanged", "raw names are effectively ABI and must never change")
+
+        let uuid = UUID().uuidString
+        let notification = EpisodeTranscriptAvailabilityChanged.makeNotification(
+            EpisodeTranscriptAvailabilityChanged(episodeUuid: uuid, isAvailable: true, hasGeneratedTranscripts: false)
+        )
+        XCTAssertEqual(notification.name, EpisodeTranscriptAvailabilityChanged.name)
+        XCTAssertNil(notification.object)
+        XCTAssertEqual(notification.userInfo?["episodeUuid"] as? String, uuid)
+        XCTAssertEqual(notification.userInfo?["isAvailable"] as? Bool, true)
+        XCTAssertEqual(notification.userInfo?["hasGeneratedTranscripts"] as? Bool, false)
+
+        let message = try XCTUnwrap(EpisodeTranscriptAvailabilityChanged.makeMessage(notification))
+        XCTAssertEqual(message.episodeUuid, uuid)
+        XCTAssertTrue(message.isAvailable)
+        XCTAssertFalse(message.hasGeneratedTranscripts)
+    }
+
+    /// A notification missing the frozen keys decodes to nil rather than a
+    /// half-filled message.
+    func testEpisodeTranscriptAvailabilityChangedRejectsMissingPayload() {
+        XCTAssertNil(EpisodeTranscriptAvailabilityChanged.makeMessage(Notification(name: EpisodeTranscriptAvailabilityChanged.name)))
+
+        let partial = Notification(
+            name: EpisodeTranscriptAvailabilityChanged.name,
+            object: nil,
+            userInfo: ["episodeUuid": UUID().uuidString, "isAvailable": true]
+        )
+        XCTAssertNil(EpisodeTranscriptAvailabilityChanged.makeMessage(partial))
     }
 
     // MARK: - Helpers

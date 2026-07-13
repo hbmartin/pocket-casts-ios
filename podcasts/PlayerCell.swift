@@ -104,7 +104,9 @@ class PlayerCell: ThemeableSwipeCell {
         MainActor.assumeIsolated {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadProgressChange), name: Constants.Notifications.downloadProgress, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: DownloadProgressChanged.self) { [weak self] _ in
+                self?.updateCellForDownloadProgressChange()
+            })
             messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
                 self?.updateCellForDownloadStatusChange(episodeUuid: message.uuid)
             })
@@ -138,10 +140,9 @@ class PlayerCell: ThemeableSwipeCell {
     }
 
     deinit {
-        // Property reads must precede the self-copy removeObserver makes; after it,
-        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
         let tokens = messageTokens
-        NotificationCenter.default.removeObserver(self)
         for token in tokens {
             NotificationCenter.default.removeObserver(token)
         }
@@ -187,7 +188,7 @@ class PlayerCell: ThemeableSwipeCell {
         return desc.joined(separator: ". ")
     }
 
-    @objc private func updateCellForDownloadProgressChange() {
+    private func updateCellForDownloadProgressChange() {
         guard let ourEpisode = episode, let _ = DownloadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
 
         if !ourEpisode.downloading() {

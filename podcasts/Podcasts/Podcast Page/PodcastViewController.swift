@@ -485,10 +485,18 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
             self?.refreshEpisodes()
         }
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshEpisodes))
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(hideSearchKeyboard))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshEpisodes))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodes))
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.refreshEpisodes()
+        }
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.hideSearchKeyboard()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.refreshEpisodes()
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.refreshEpisodes()
+        }
         addCustomObserver(SearchRequested.self) { [weak self] _ in
             self?.searchRequested()
         }
@@ -630,7 +638,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         }
     }
 
-    @objc private func refreshEpisodes() {
+    private func refreshEpisodes() {
         guard let podcast else { return }
 
         loadLocalEpisodes(podcast: podcast, animated: true)
@@ -762,7 +770,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
         operationQueue.addOperation(refreshOperation)
     }
 
-    @objc func hideSearchKeyboard() {
+    func hideSearchKeyboard() {
         searchController?.hideKeyboard()
     }
 

@@ -106,9 +106,15 @@ class ListeningHistoryViewController: PCViewController {
         addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
             self?.refreshEpisodesFromNotification()
         }
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
         addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
             self?.refreshEpisodesFromNotification()
         }
@@ -129,7 +135,7 @@ class ListeningHistoryViewController: PCViewController {
         }
     }
 
-    @objc private func refreshEpisodesFromNotification() {
+    private func refreshEpisodesFromNotification() {
         refreshEpisodes(animated: true)
     }
 

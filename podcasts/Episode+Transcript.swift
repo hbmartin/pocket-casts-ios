@@ -5,14 +5,11 @@ extension Episode {
     func checkTranscriptAvailability() {
         Task {
             if let metadata = try? await ShowInfoCoordinator.shared.loadTranscriptsMetadata(podcastUuid: parentIdentifier(), episodeUuid: uuid) {
-                let transcriptsAvailable = !metadata.transcripts.isEmpty
-                let hasGeneratedTranscripts = metadata.hasGeneratedTranscripts
-                let userInfo = [
-                    "episodeUuid": uuid,
-                    "isAvailable": transcriptsAvailable,
-                    "hasGeneratedTranscripts": hasGeneratedTranscripts
-                ]
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeTranscriptAvailabilityChanged, userInfo: userInfo)
+                NotificationCenter.postOnMainThread(EpisodeTranscriptAvailabilityChanged(
+                    episodeUuid: uuid,
+                    isAvailable: !metadata.transcripts.isEmpty,
+                    hasGeneratedTranscripts: metadata.hasGeneratedTranscripts
+                ))
             }
         }
     }

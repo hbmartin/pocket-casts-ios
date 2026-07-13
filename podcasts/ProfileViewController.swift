@@ -142,8 +142,12 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
             self?.refreshComplete()
         }
-        addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(handleDataChangedNotification))
+        addCustomObserver(PodcastAdded.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
+        addCustomObserver(PodcastDeleted.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
         addCustomObserver(PodcastRefreshFailed.self) { [weak self] _ in
             self?.refreshComplete()
         }
@@ -223,7 +227,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    @objc private func handleDataChangedNotification() {
+    private func handleDataChangedNotification() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 

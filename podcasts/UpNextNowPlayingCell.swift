@@ -61,10 +61,18 @@ class UpNextNowPlayingCell: ThemeableCell {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
             style = .primaryUi04
 
-            NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.playbackProgress, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updatePlayingAnimation), name: Constants.Notifications.playbackPaused, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updatePlayingAnimation), name: Constants.Notifications.playbackStarted, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadProgressChange), name: Constants.Notifications.downloadProgress, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+                self?.progressUpdated()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+                self?.updatePlayingAnimation()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+                self?.updatePlayingAnimation()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: DownloadProgressChanged.self) { [weak self] _ in
+                self?.updateCellForDownloadProgressChange()
+            })
             messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
                 self?.updateCellForDownloadStatusChange(episodeUuid: message.uuid)
             })
@@ -79,10 +87,9 @@ class UpNextNowPlayingCell: ThemeableCell {
     private var messageTokens = [NotificationCenter.ObservationToken]()
 
     deinit {
-        // Property reads must precede the self-copy removeObserver makes; after it,
-        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
         let tokens = messageTokens
-        NotificationCenter.default.removeObserver(self)
         for token in tokens {
             NotificationCenter.default.removeObserver(token)
         }
@@ -112,7 +119,7 @@ class UpNextNowPlayingCell: ThemeableCell {
         updateDownloadStatus()
     }
 
-    @objc func progressUpdated(animated: Bool = true) {
+    func progressUpdated(animated: Bool = true) {
         layoutIfNeeded()
 
         let duration: Double
@@ -146,7 +153,7 @@ class UpNextNowPlayingCell: ThemeableCell {
         } else { layoutIfNeeded() }
     }
 
-    @objc func updatePlayingAnimation() {
+    func updatePlayingAnimation() {
         playingAnimationView.animating = PlaybackManager.shared.playing()
     }
 
@@ -223,7 +230,7 @@ class UpNextNowPlayingCell: ThemeableCell {
         }
     }
 
-    @objc private func updateCellForDownloadProgressChange() {
+    private func updateCellForDownloadProgressChange() {
         guard let ourEpisode = episode, let _ = DownloadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
 
         if !ourEpisode.downloading() {

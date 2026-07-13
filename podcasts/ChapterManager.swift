@@ -277,7 +277,7 @@ class ChapterManager {
         chaptersOrigin = .unknown
         ruleSkippedIndices.removeAll()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastChaptersDidUpdate)
+        NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }
 
     func chaptersForTime(_ time: TimeInterval) -> Chapters {
@@ -305,6 +305,6 @@ class ChapterManager {
 
         updateCurrentChapter(time: PlaybackManager.shared.currentTime())
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastChaptersDidUpdate)
+        NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }
 }

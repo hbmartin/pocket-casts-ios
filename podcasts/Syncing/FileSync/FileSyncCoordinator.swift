@@ -52,7 +52,7 @@ final class FileSyncCoordinator {
                     NetworkUtils.shared.isConnectedToUnexpensiveConnection()
                 },
                 onUploadsChanged: {
-                    NotificationCenter.postOnMainThread(notification: Constants.Notifications.fileSyncUploadsChanged)
+                    NotificationCenter.postOnMainThread(FileSyncUploadsChanged())
                 }
             )
             await FileSyncManager.shared.configureDelegate(FileSyncAppDelegate())

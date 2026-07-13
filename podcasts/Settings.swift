@@ -12,7 +12,7 @@ nonisolated class Settings: NSObject {
     static var isLockScreenScrubbingDisabled: Bool {
         set {
             UserDefaults.standard.set(newValue, forKey: Constants.UserDefaults.isLockScreenScrubbingDisabled)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.remoteCommandSettingsChanged, object: nil)
+            NotificationCenter.postOnMainThread(RemoteCommandSettingsChanged())
         }
         get {
             return UserDefaults.standard.bool(forKey: Constants.UserDefaults.isLockScreenScrubbingDisabled)
@@ -420,7 +420,7 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(region, forKey: chartRegion)
         UserDefaults.standard.synchronize()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.chartRegionChanged)
+        NotificationCenter.postOnMainThread(ChartRegionChanged())
 
         LocalizationHelper.update(userRegion: region)
     }
@@ -555,7 +555,7 @@ nonisolated class Settings: NSObject {
         }
         UserDefaults.standard.set(enabled, forKey: Settings.mediaSessionActionsKey)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.extraMediaSessionActionsChanged)
+        NotificationCenter.postOnMainThread(ExtraMediaSessionActionsChanged())
 
         Settings.trackValueToggled(.settingsGeneralExtraPlaybackActionsToggled, enabled: enabled)
     }
@@ -734,7 +734,7 @@ nonisolated class Settings: NSObject {
             UserDefaults.standard.set(actionInts, forKey: Settings.playerActionsKey)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playerActionsUpdated)
+        NotificationCenter.postOnMainThread(PlayerActionsUpdated())
     }
 
     // MARK: Multi Select Gesture
@@ -1382,7 +1382,7 @@ nonisolated class Settings: NSObject {
                 UserDefaults.standard.set(data, forKey: Constants.UserDefaults.audioTuning)
             }
             FileLog.shared.addMessage("[Settings] AudioTuning changed (default: \(newValue == .default))")
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.audioTuningDidChange)
+            NotificationCenter.postOnMainThread(AudioTuningDidChange())
         }
     }
 

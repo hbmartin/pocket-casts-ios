@@ -23,11 +23,10 @@ final class FullSyncRefreshController {
         }
 
         let center = NotificationCenter.default
-        // opmlImportCompleted has no typed message struct yet; the bridge keeps
-        // the string observer working.
-        center.addObserver(self, selector: #selector(podcastsRefreshed), name: Constants.Notifications.opmlImportCompleted, object: nil)
-
         messageTokens = [
+            center.addObserver(for: OpmlImportCompleted.self) { [weak self] _ in
+                self?.podcastsRefreshed()
+            },
             center.addObserver(for: PodcastsRefreshed.self) { [weak self] _ in
                 self?.podcastsRefreshed()
             },
@@ -48,7 +47,6 @@ final class FullSyncRefreshController {
 
     // isolated deinit: main-actor-owned helper; deinit removes isolated observation tokens
     isolated deinit {
-        NotificationCenter.default.removeObserver(self)
         for token in messageTokens {
             NotificationCenter.default.removeObserver(token)
         }
@@ -60,7 +58,7 @@ final class FullSyncRefreshController {
         Analytics.track(.pulledToRefresh, properties: ["source": source])
     }
 
-    @objc private func podcastsRefreshed() {
+    private func podcastsRefreshed() {
         if SyncManager.isUserLoggedIn() {
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.refreshControl.isRefreshing else { return }

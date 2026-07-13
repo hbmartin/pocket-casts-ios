@@ -37,7 +37,9 @@ class UpNextButton: UIButton {
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
             self?.upNextChanged()
         })
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.playbackTrackChanged, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
         messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
             self?.setNeedsDisplay()
         })
@@ -48,10 +50,9 @@ class UpNextButton: UIButton {
     }
 
     deinit {
-        // Read isolated stored properties into locals before removeObserver(self)
+        // Read isolated stored properties into locals before any nonisolated work
         // (Swift 6.2 isolated-deinit rule).
         let tokens = messageTokens
-        NotificationCenter.default.removeObserver(self)
         for token in tokens {
             NotificationCenter.default.removeObserver(token)
         }
@@ -67,7 +68,7 @@ class UpNextButton: UIButton {
         }
     }
 
-    @objc private func upNextChanged() {
+    private func upNextChanged() {
         setNeedsDisplay()
     }
 

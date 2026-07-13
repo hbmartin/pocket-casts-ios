@@ -237,7 +237,7 @@ nonisolated struct LivePlaybackFacade: PlaybackFacade {
 
     func extendSleepTimer(bySeconds seconds: TimeInterval) {
         PlaybackManager.onMainSync { $0.sleepTimeRemaining += seconds }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+        NotificationCenter.postOnMainThread(SleepTimerChanged())
     }
 
     func refreshWidgets() {

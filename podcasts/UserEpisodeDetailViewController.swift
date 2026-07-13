@@ -175,15 +175,16 @@ class UserEpisodeDetailViewController: UIViewController {
             messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
                 self?.updateColors()
             })
+            messageTokens.append(NotificationCenter.default.addObserver(for: DownloadProgressChanged.self) { [weak self] _ in
+                self?.updateDownloadProgress()
+            })
         }
-        NotificationCenter.default.addObserver(self, selector: #selector(updateDownloadProgress), name: Constants.Notifications.downloadProgress, object: nil)
     }
 
     deinit {
-        // Property reads must precede the self-copy removeObserver makes; after it,
-        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
         let tokens = messageTokens
-        NotificationCenter.default.removeObserver(self)
         for token in tokens {
             NotificationCenter.default.removeObserver(token)
         }
@@ -260,7 +261,7 @@ class UserEpisodeDetailViewController: UIViewController {
         updateDownloadProgress()
     }
 
-    @objc func updateDownloadProgress() {
+    func updateDownloadProgress() {
         guard let _ = DownloadManager.shared.progressManager.progressForEpisode(episode.uuid) else { return }
 
         if !episode.downloading() {

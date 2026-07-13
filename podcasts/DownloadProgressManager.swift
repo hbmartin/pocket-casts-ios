@@ -68,7 +68,7 @@ nonisolated class DownloadProgressManager {
             progressItems[uuid] = progressItem
         }
         if update {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.downloadProgress, object: uuid)
+            NotificationCenter.postOnMainThread(DownloadProgressChanged(uuid: uuid))
         }
     }
 

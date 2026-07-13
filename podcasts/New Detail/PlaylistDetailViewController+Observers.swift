@@ -10,16 +10,24 @@ extension PlaylistDetailViewController {
     }
 
     func addObservers() {
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
         addCustomObserver(OpmlImportCompleted.self) { [weak self] _ in
             self?.reloader.request(.episodes)
         }
         addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
             self?.reloader.request(.episodes)
         }
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
         addCustomObserver(PlaylistChanged.self) { [weak self] _ in
             self?.reloader.request(.playlist)
         }

@@ -171,7 +171,7 @@ class DownloadsViewController: PCViewController {
         removeAllCustomObservers()
     }
 
-    @objc private func refreshView() {
+    private func refreshView() {
         reloadEpisodes()
     }
 
@@ -201,13 +201,19 @@ class DownloadsViewController: PCViewController {
         addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
             self?.refreshView()
         }
-        addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshView))
+        addCustomObserver(OpmlImportCompleted.self) { [weak self] _ in
+            self?.refreshView()
+        }
 
         addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
             self?.refreshView()
         }
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshView))
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.refreshView()
+        }
         addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
             self?.refreshView()
         }

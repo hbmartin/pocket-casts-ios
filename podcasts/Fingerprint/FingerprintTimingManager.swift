@@ -124,27 +124,23 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
 
     // MARK: - Init
 
-    private var episodeDownloadedToken: NotificationCenter.ObservationToken?
+    private var messageTokens = [NotificationCenter.ObservationToken]()
 
     override init() {
         super.init()
-        episodeDownloadedToken = NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+        messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
             self?.handleEpisodeDownloaded(episodeUuid: message.uuid)
-        }
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePlaybackProgress),
-            name: Constants.Notifications.playbackProgress,
-            object: nil
-        )
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+            self?.handlePlaybackProgress()
+        })
     }
 
     deinit {
-        // Property reads must precede the self-copy removeObserver makes; after it,
-        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
-        let token = episodeDownloadedToken
-        NotificationCenter.default.removeObserver(self)
-        if let token {
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
             NotificationCenter.default.removeObserver(token)
         }
     }
@@ -195,7 +191,7 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
     /// Re-anchor fingerprint generation to wherever the listener is now: if playback
     /// jumps suddenly (seek/skip), or drifts beyond the mapped range, restart the
     /// stream from the new position so coverage stays close to what's playing.
-    @objc private func handlePlaybackProgress() {
+    private func handlePlaybackProgress() {
         let playbackTime = PlaybackManager.onMainSync { $0.currentTime() }
         guard playbackTime >= 0 else { return }
 

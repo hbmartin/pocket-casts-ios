@@ -17,18 +17,28 @@ nonisolated final class WidgetHelper: Sendable {
     nonisolated(unsafe) private var messageTokens: [NotificationCenter.ObservationToken] = []
 
     init() {
-        // Playback, playlist and podcast names still use the string API: their
-        // domains (5.2/5.4) have no typed message structs yet; the bridge keeps
-        // these observers working either way.
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackStarted, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackEnded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackPaused, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleFilterChanged), name: Constants.Notifications.playlistChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleFilterChanged), name: Constants.Notifications.podcastAdded, object: nil)
-
         messageTokens = [
+            NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaybackEnded.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: CurrentlyPlayingEpisodeUpdated.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaylistChanged.self) { [weak self] _ in
+                self?.handleFilterChanged()
+            },
+            NotificationCenter.default.addObserver(for: PodcastAdded.self) { [weak self] _ in
+                self?.handleFilterChanged()
+            },
             NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
                 self?.updateSharedUpNext()
             },
@@ -39,11 +49,7 @@ nonisolated final class WidgetHelper: Sendable {
     }
 
     deinit {
-        // Property reads must precede the self-copy removeObserver makes; after it,
-        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
-        let tokens = messageTokens
-        NotificationCenter.default.removeObserver(self)
-        for token in tokens {
+        for token in messageTokens {
             NotificationCenter.default.removeObserver(token)
         }
     }
@@ -62,7 +68,7 @@ nonisolated final class WidgetHelper: Sendable {
         }
     }
 
-    @objc func updateFromNotification() {
+    func updateFromNotification() {
         updateSharedUpNext()
     }
 
@@ -88,7 +94,7 @@ nonisolated final class WidgetHelper: Sendable {
         }
     }
 
-    @objc func handleFilterChanged() {
+    func handleFilterChanged() {
         guard PlaybackManager.onMainSync({ $0.currentEpisode() }) == nil else {
             return
         }

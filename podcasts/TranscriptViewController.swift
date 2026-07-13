@@ -157,7 +157,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     /// display-link level is what trapped the manager in `.preparing` on the
     /// prior POC-546 attempt (the link would pause before the manager could
     /// post a state change).
-    @objc private func updateHighlightDisplayLinkPauseState() {
+    private func updateHighlightDisplayLinkPauseState() {
         highlightDisplayLink?.isPaused = !playbackManager.isPlayingEpisode
     }
 
@@ -202,16 +202,9 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
                 self?.subscriptionStatusDidChange()
             }
         }
-        addCustomObserver(Constants.Notifications.episodeTranscriptAvailabilityChanged, selector: #selector(updateGeneratedTranscriptState))
-    }
-
-    @objc private func updateGeneratedTranscriptState(_ notification: Notification) {
-        guard
-            let hasGeneratedTranscripts = notification.userInfo?["hasGeneratedTranscripts"] as? Bool
-        else {
-            return
+        addCustomObserver(EpisodeTranscriptAvailabilityChanged.self) { [weak self] message in
+            self?.setHasGeneratedTranscripts(message.hasGeneratedTranscripts)
         }
-        setHasGeneratedTranscripts(hasGeneratedTranscripts)
     }
 
     private func setupViews() {
@@ -644,7 +637,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         bottomGradient.updateColors(firstColor: gradientColor.withAlphaComponent(0), secondColor: gradientColor)
     }
 
-    @objc private func update() {
+    private func update() {
         updateColors()
         resetKmp()
         resetSearch()
@@ -888,19 +881,29 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
     private func addObservers() {
         if !showFromEpisode {
-            addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(update))
+            addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+                self?.update()
+            }
         }
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         if FeatureFlag.syncedTranscripts.enabled {
-            addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(updateTranscriptPosition))
-            addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(updateHighlightDisplayLinkPauseState))
-            addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(updateHighlightDisplayLinkPauseState))
-            addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(updateHighlightDisplayLinkPauseState))
+            addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+                self?.updateTranscriptPosition()
+            }
+            addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+                self?.updateHighlightDisplayLinkPauseState()
+            }
+            addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+                self?.updateHighlightDisplayLinkPauseState()
+            }
+            addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+                self?.updateHighlightDisplayLinkPauseState()
+            }
         }
     }
 
-    @objc private func updateTranscriptPosition() {
+    private func updateTranscriptPosition() {
         guard let transcript else { return }
 
         let rawTime = playbackManager.currentTime()
