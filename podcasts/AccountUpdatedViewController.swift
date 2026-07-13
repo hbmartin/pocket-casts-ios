@@ -39,9 +39,20 @@ class AccountUpdatedViewController: UIViewController {
         closeButton.accessibilityLabel = L10n.accessibilityCloseDialog
         navigationItem.leftBarButtonItem = closeButton
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
 
         Analytics.track(.accountUpdatedShown)
+    }
+
+    private var themeToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let token = themeToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -61,7 +72,7 @@ class AccountUpdatedViewController: UIViewController {
         Analytics.track(.accountUpdatedDismissed)
     }
 
-    @objc private func themeDidChange() {
+    private func themeDidChange() {
         if let imageNameFunc = imageName {
             imageView.image = UIImage(named: imageNameFunc())
         }

@@ -58,6 +58,12 @@ extension DownloadsViewController: @preconcurrency SwipeTableViewCellDelegate, S
         SharingHelper.shared.shareLinkTo(episode: episode, fromController: self, fromTableView: downloadsTable, at: indexPath)
     }
 
+    func showDetails(episode: BaseEpisode, at: IndexPath) {
+        guard let episode = episode as? Episode else { return }
+
+        presentEpisodeDetails(for: episode)
+    }
+
     func addToManualPlaylist(episode: PocketCastsDataModel.Episode, at: IndexPath) {
         NavigationManager.sharedManager.navigateTo(
             NavigationManager.manualPlaylistsChooserKey,

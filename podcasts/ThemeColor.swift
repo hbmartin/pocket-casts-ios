@@ -3,413 +3,8 @@ import PocketCastsServer
 import UIKit
 
 // ************ WARNING AUTO GENERATED, DO NOT EDIT ************
+// Simple tokens resolve through ThemeColorTable, backed by Theme/ThemeColors.json.
 nonisolated struct ThemeColor {
-    private static let primaryUi01Light = UIColor(hex: "#FFFFFF")
-    private static let primaryUi01Dark = UIColor(hex: "#292B2E")
-    private static let primaryUi01ExtraDark = UIColor(hex: "#222427")
-    private static let primaryUi01ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let primaryUi01Electric = UIColor(hex: "#19232B")
-    private static let primaryUi01Indigo = UIColor(hex: "#ECEDE6")
-    private static let primaryUi01Rosé = UIColor(hex: "#fff0eb")
-    private static let primaryUi01ContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryUi01ContrastDark = UIColor(hex: "#000000")
-    private static let primaryUi01ActiveLight = UIColor(hex: "#F7F9FA")
-    private static let primaryUi01ActiveDark = UIColor(hex: "#383A3D")
-    private static let primaryUi01ActiveExtraDark = UIColor(hex: "#E0E6EA").withAlphaComponent(0.1)
-    private static let primaryUi01ActiveClassicLight = UIColor(hex: "#F7F9FA")
-    private static let primaryUi01ActiveElectric = UIColor(hex: "#171C24")
-    private static let primaryUi01ActiveIndigo = UIColor(hex: "#F1F2EF")
-    private static let primaryUi01ActiveRosé = UIColor(hex: "#fff9f7")
-    private static let primaryUi01ActiveContrastLight = UIColor(hex: "#f7f9fa")
-    private static let primaryUi01ActiveContrastDark = UIColor(hex: "#1b1b1b")
-    private static let primaryUi02Light = UIColor(hex: "#FFFFFF")
-    private static let primaryUi02Dark = UIColor(hex: "#1A1B1D")
-    private static let primaryUi02ExtraDark = UIColor(hex: "#000000")
-    private static let primaryUi02ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let primaryUi02Electric = UIColor(hex: "#161A20")
-    private static let primaryUi02Indigo = UIColor(hex: "#F4F5F2")
-    private static let primaryUi02Rosé = UIColor(hex: "#FFEEED")
-    private static let primaryUi02ContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryUi02ContrastDark = UIColor(hex: "#000000")
-    private static let primaryUi02SelectedLight = UIColor(hex: "#E6F6FE")
-    private static let primaryUi02SelectedDark = UIColor(hex: "#1E333D")
-    private static let primaryUi02SelectedExtraDark = UIColor(hex: "#1F1F1F")
-    private static let primaryUi02SelectedClassicLight = UIColor(hex: "#FEECEB")
-    private static let primaryUi02SelectedElectric = UIColor(hex: "#1A2C34")
-    private static let primaryUi02SelectedIndigo = UIColor(hex: "#E2E4E5")
-    private static let primaryUi02SelectedRosé = UIColor(hex: "#f7caca")
-    private static let primaryUi02SelectedContrastLight = UIColor(hex: "#e5e5e5")
-    private static let primaryUi02SelectedContrastDark = UIColor(hex: "#262626")
-    private static let primaryUi02ActiveLight = UIColor(hex: "#F7F9FA")
-    private static let primaryUi02ActiveDark = UIColor(hex: "#222427")
-    private static let primaryUi02ActiveExtraDark = UIColor(hex: "#161717")
-    private static let primaryUi02ActiveClassicLight = UIColor(hex: "#F7F9FA")
-    private static let primaryUi02ActiveElectric = UIColor(hex: "#1B212A")
-    private static let primaryUi02ActiveIndigo = UIColor(hex: "#F7F9FA")
-    private static let primaryUi02ActiveRosé = UIColor(hex: "#fce2de")
-    private static let primaryUi02ActiveContrastLight = UIColor(hex: "#f2f2f2")
-    private static let primaryUi02ActiveContrastDark = UIColor(hex: "#1b1b1b")
-    private static let primaryUi03Light = UIColor(hex: "#FAFAFA")
-    private static let primaryUi03Dark = UIColor(hex: "#202124")
-    private static let primaryUi03ExtraDark = UIColor(hex: "#080808")
-    private static let primaryUi03ClassicLight = UIColor(hex: "#FAFAF9")
-    private static let primaryUi03Electric = UIColor(hex: "#171C25")
-    private static let primaryUi03Indigo = UIColor(hex: "#EFEFEF")
-    private static let primaryUi03Rosé = UIColor(hex: "#F7E2E2")
-    private static let primaryUi03ContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryUi03ContrastDark = UIColor(hex: "#000000")
-    private static let primaryUi04Light = UIColor(hex: "#F7F9FA")
-    private static let primaryUi04Dark = UIColor(hex: "#161718")
-    private static let primaryUi04ExtraDark = UIColor(hex: "#000000")
-    private static let primaryUi04ClassicLight = UIColor(hex: "#F7F9FA")
-    private static let primaryUi04Electric = UIColor(hex: "#111419")
-    private static let primaryUi04Indigo = UIColor(hex: "#ECEDE6")
-    private static let primaryUi04Rosé = UIColor(hex: "#FCE6E6")
-    private static let primaryUi04ContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryUi04ContrastDark = UIColor(hex: "#000000")
-    private static let primaryUi05Light = UIColor(hex: "#E0E6EA")
-    private static let primaryUi05Dark = UIColor(hex: "#393A3C")
-    private static let primaryUi05ExtraDark = UIColor(hex: "#393A3C").withAlphaComponent(0.5)
-    private static let primaryUi05ClassicLight = UIColor(hex: "#E0E6EA")
-    private static let primaryUi05Electric = UIColor(hex: "#1E3C4A")
-    private static let primaryUi05Indigo = UIColor(hex: "#D8DCDC")
-    private static let primaryUi05Rosé = UIColor(hex: "#f5d1c4")
-    private static let primaryUi05ContrastLight = UIColor(hex: "#e4e4e4")
-    private static let primaryUi05ContrastDark = UIColor(hex: "#333333")
-    private static let primaryUi05SelectedLight = UIColor(hex: "#8F97A4")
-    private static let primaryUi05SelectedDark = UIColor(hex: "#8F97A4")
-    private static let primaryUi05SelectedExtraDark = UIColor(hex: "#686C74")
-    private static let primaryUi05SelectedClassicLight = UIColor(hex: "#8F97A4")
-    private static let primaryUi05SelectedElectric = UIColor(hex: "#3FD2E6")
-    private static let primaryUi05SelectedIndigo = UIColor(hex: "#556675")
-    private static let primaryUi05SelectedRosé = UIColor(hex: "#e53958")
-    private static let primaryUi05SelectedContrastLight = UIColor(hex: "#000000")
-    private static let primaryUi05SelectedContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryUi06Light = UIColor(hex: "#F7F9FA")
-    private static let primaryUi06Dark = UIColor(hex: "#303337")
-    private static let primaryUi06ExtraDark = UIColor(hex: "#2D2F31")
-    private static let primaryUi06ClassicLight = UIColor(hex: "#F7F9FA")
-    private static let primaryUi06Electric = UIColor(hex: "#1B2933")
-    private static let primaryUi06Indigo = UIColor(hex: "#E8E8DF")
-    private static let primaryUi06Rosé = UIColor(hex: "#fff8f7")
-    private static let primaryUi06ContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryUi06ContrastDark = UIColor(hex: "#000000")
-    private static let primaryIcon01Light = UIColor(hex: "#03A9F4")
-    private static let primaryIcon01Dark = UIColor(hex: "#33B8F4")
-    private static let primaryIcon01ExtraDark = UIColor(hex: "#50D0F1")
-    private static let primaryIcon01ClassicLight = UIColor(hex: "#F43E37")
-    private static let primaryIcon01Electric = UIColor(hex: "#3FD2E6")
-    private static let primaryIcon01Indigo = UIColor(hex: "#3D4E70")
-    private static let primaryIcon01Rosé = UIColor(hex: "#f05d54")
-    private static let primaryIcon01ContrastLight = UIColor(hex: "#000000")
-    private static let primaryIcon01ContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryIcon01ActiveLight = UIColor(hex: "#8AE9FF")
-    private static let primaryIcon01ActiveDark = UIColor(hex: "#64C7F4")
-    private static let primaryIcon01ActiveExtraDark = UIColor(hex: "#80DAF1")
-    private static let primaryIcon01ActiveClassicLight = UIColor(hex: "#F49D9A")
-    private static let primaryIcon01ActiveElectric = UIColor(hex: "#8AE9FF")
-    private static let primaryIcon01ActiveIndigo = UIColor(hex: "#586784")
-    private static let primaryIcon01ActiveRosé = UIColor(hex: "#ff6f66")
-    private static let primaryIcon01ActiveContrastLight = UIColor(hex: "#3f3f3f")
-    private static let primaryIcon01ActiveContrastDark = UIColor(hex: "#bebebe")
-    private static let primaryIcon02Light = UIColor(hex: "#B8C3C9")
-    private static let primaryIcon02Dark = UIColor(hex: "#8F97A4")
-    private static let primaryIcon02ExtraDark = UIColor(hex: "#686C74")
-    private static let primaryIcon02ClassicLight = UIColor(hex: "#B8C3C9")
-    private static let primaryIcon02Electric = UIColor(hex: "#16698C")
-    private static let primaryIcon02Indigo = UIColor(hex: "#9DA7B5")
-    private static let primaryIcon02Rosé = UIColor(hex: "#F58C87")
-    private static let primaryIcon02ContrastLight = UIColor(hex: "#808080")
-    private static let primaryIcon02ContrastDark = UIColor(hex: "#b2b2b2")
-    private static let primaryIcon02SelectedLight = UIColor(hex: "#03A9F4")
-    private static let primaryIcon02SelectedDark = UIColor(hex: "#33B8F4")
-    private static let primaryIcon02SelectedExtraDark = UIColor(hex: "#50D0F1")
-    private static let primaryIcon02SelectedClassicLight = UIColor(hex: "#F43E37")
-    private static let primaryIcon02SelectedElectric = UIColor(hex: "#3FD2E6")
-    private static let primaryIcon02SelectedIndigo = UIColor(hex: "#3F4B6A")
-    private static let primaryIcon02SelectedRosé = UIColor(hex: "#f22469")
-    private static let primaryIcon02SelectedContrastLight = UIColor(hex: "#0225C2")
-    private static let primaryIcon02SelectedContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryIcon02ActiveLight = UIColor(hex: "#8F97A4")
-    private static let primaryIcon02ActiveDark = UIColor(hex: "#EFF3F5")
-    private static let primaryIcon02ActiveExtraDark = UIColor(hex: "#EFF3F5")
-    private static let primaryIcon02ActiveClassicLight = UIColor(hex: "#8F97A4")
-    private static let primaryIcon02ActiveElectric = UIColor(hex: "#3FD2E6")
-    private static let primaryIcon02ActiveIndigo = UIColor(hex: "#8F97A4")
-    private static let primaryIcon02ActiveRosé = UIColor(hex: "#f55c53")
-    private static let primaryIcon02ActiveContrastLight = UIColor(hex: "#000000").withAlphaComponent(0.75)
-    private static let primaryIcon02ActiveContrastDark = UIColor(hex: "#000000").withAlphaComponent(0.75)
-    private static let primaryIcon03Light = UIColor(hex: "#8F97A4")
-    private static let primaryIcon03Dark = UIColor(hex: "#686C74")
-    private static let primaryIcon03ExtraDark = UIColor(hex: "#686C74")
-    private static let primaryIcon03ClassicLight = UIColor(hex: "#8F97A4")
-    private static let primaryIcon03Electric = UIColor(hex: "#2A7683")
-    private static let primaryIcon03Indigo = UIColor(hex: "#6D7B87")
-    private static let primaryIcon03Rosé = UIColor(hex: "#e54558")
-    private static let primaryIcon03ContrastLight = UIColor(hex: "#656565")
-    private static let primaryIcon03ContrastDark = UIColor(hex: "#656565")
-    private static let primaryIcon03ActiveLight = UIColor(hex: "#03A9F4")
-    private static let primaryIcon03ActiveDark = UIColor(hex: "#33B8F4")
-    private static let primaryIcon03ActiveExtraDark = UIColor(hex: "#50D0F1")
-    private static let primaryIcon03ActiveClassicLight = UIColor(hex: "#03A9F4")
-    private static let primaryIcon03ActiveElectric = UIColor(hex: "#8AE9FF")
-    private static let primaryIcon03ActiveIndigo = UIColor(hex: "#70ADD1")
-    private static let primaryIcon03ActiveRosé = UIColor(hex: "#ff7373")
-    private static let primaryIcon03ActiveContrastLight = UIColor(hex: "#000000")
-    private static let primaryIcon03ActiveContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryText01Light = UIColor(hex: "#292B2E")
-    private static let primaryText01Dark = UIColor(hex: "#FFFFFF")
-    private static let primaryText01ExtraDark = UIColor(hex: "#B8C3C9")
-    private static let primaryText01ClassicLight = UIColor(hex: "#292B2E")
-    private static let primaryText01Electric = UIColor(hex: "#FFFFFF")
-    private static let primaryText01Indigo = UIColor(hex: "#323E5C")
-    private static let primaryText01Rosé = UIColor(hex: "#990038")
-    private static let primaryText01ContrastLight = UIColor(hex: "#000000")
-    private static let primaryText01ContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryText02Light = UIColor(hex: "#8F97A4")
-    private static let primaryText02Dark = UIColor(hex: "#9C9FA4")
-    private static let primaryText02ExtraDark = UIColor(hex: "#686C74")
-    private static let primaryText02ClassicLight = UIColor(hex: "#8F97A4")
-    private static let primaryText02Electric = UIColor(hex: "#21ADDB")
-    private static let primaryText02Indigo = UIColor(hex: "#7E8999")
-    private static let primaryText02Rosé = UIColor(hex: "#E52535")
-    private static let primaryText02ContrastLight = UIColor(hex: "#595959")
-    private static let primaryText02ContrastDark = UIColor(hex: "#d9d9d9")
-    private static let primaryText02SelectedLight = UIColor(hex: "#03A9F4")
-    private static let primaryText02SelectedDark = UIColor(hex: "#33B8F4")
-    private static let primaryText02SelectedExtraDark = UIColor(hex: "#50D0F1")
-    private static let primaryText02SelectedClassicLight = UIColor(hex: "#F43E37")
-    private static let primaryText02SelectedElectric = UIColor(hex: "#3FD2E6")
-    private static let primaryText02SelectedIndigo = UIColor(hex: "#333D58")
-    private static let primaryText02SelectedRosé = UIColor(hex: "#d90048")
-    private static let primaryText02SelectedContrastLight = UIColor(hex: "#023087")
-    private static let primaryText02SelectedContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryField01Light = UIColor(hex: "#EFF3F5")
-    private static let primaryField01Dark = UIColor(hex: "#EFF3F5").withAlphaComponent(0.1)
-    private static let primaryField01ExtraDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.1)
-    private static let primaryField01ClassicLight = UIColor(hex: "#EFF3F5")
-    private static let primaryField01Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.09)
-    private static let primaryField01Indigo = UIColor(hex: "#E7E8E1")
-    private static let primaryField01Rosé = UIColor(hex: "#fffdfc")
-    private static let primaryField01ContrastLight = UIColor(hex: "#f1f1f1")
-    private static let primaryField01ContrastDark = UIColor(hex: "#272727")
-    private static let primaryField01ActiveLight = UIColor(hex: "#E0E6EA")
-    private static let primaryField01ActiveDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.15)
-    private static let primaryField01ActiveExtraDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.15)
-    private static let primaryField01ActiveClassicLight = UIColor(hex: "#E0E6EA")
-    private static let primaryField01ActiveElectric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.14)
-    private static let primaryField01ActiveIndigo = UIColor(hex: "#EBEADA")
-    private static let primaryField01ActiveRosé = UIColor(hex: "#ffffff")
-    private static let primaryField01ActiveContrastLight = UIColor(hex: "#e4e4e4")
-    private static let primaryField01ActiveContrastDark = UIColor(hex: "#181818")
-    private static let primaryField02Light = UIColor(hex: "#FBFBFC")
-    private static let primaryField02Dark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.11)
-    private static let primaryField02ExtraDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.1)
-    private static let primaryField02ClassicLight = UIColor(hex: "#FBFBFC")
-    private static let primaryField02Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.09)
-    private static let primaryField02Indigo = UIColor(hex: "#FBFBFC")
-    private static let primaryField02Rosé = UIColor(hex: "#fffbfa")
-    private static let primaryField02ContrastLight = UIColor(hex: "#fbfbfc")
-    private static let primaryField02ContrastDark = UIColor(hex: "#1a1a1a")
-    private static let primaryField02ActiveLight = UIColor(hex: "#FFFFFF")
-    private static let primaryField02ActiveDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.15)
-    private static let primaryField02ActiveExtraDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.15)
-    private static let primaryField02ActiveClassicLight = UIColor(hex: "#FFFFFF")
-    private static let primaryField02ActiveElectric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.14)
-    private static let primaryField02ActiveIndigo = UIColor(hex: "#FFFFFF")
-    private static let primaryField02ActiveRosé = UIColor(hex: "#ffffff")
-    private static let primaryField02ActiveContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryField02ActiveContrastDark = UIColor(hex: "#0c0c0c")
-    private static let primaryField03Light = UIColor(hex: "#B8C3C9")
-    private static let primaryField03Dark = UIColor(hex: "#B8C3C9").withAlphaComponent(0.5)
-    private static let primaryField03ExtraDark = UIColor(hex: "#B8C3C9").withAlphaComponent(0.2)
-    private static let primaryField03ClassicLight = UIColor(hex: "#B8C3C9")
-    private static let primaryField03Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.18)
-    private static let primaryField03Indigo = UIColor(hex: "#B8C3C9")
-    private static let primaryField03Rosé = UIColor(hex: "#f7caca")
-    private static let primaryField03ContrastLight = UIColor(hex: "#7e7e7e")
-    private static let primaryField03ContrastDark = UIColor(hex: "#808080")
-    private static let primaryField03ActiveLight = UIColor(hex: "#03A9F4")
-    private static let primaryField03ActiveDark = UIColor(hex: "#33B8F4")
-    private static let primaryField03ActiveExtraDark = UIColor(hex: "#33B8F4")
-    private static let primaryField03ActiveClassicLight = UIColor(hex: "#03A9F4")
-    private static let primaryField03ActiveElectric = UIColor(hex: "#3FD2E6")
-    private static let primaryField03ActiveIndigo = UIColor(hex: "#70ADD1")
-    private static let primaryField03ActiveRosé = UIColor(hex: "#ffaebd")
-    private static let primaryField03ActiveContrastLight = UIColor(hex: "#000000")
-    private static let primaryField03ActiveContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryInteractive01Light = UIColor(hex: "#03A9F4")
-    private static let primaryInteractive01Dark = UIColor(hex: "#40C3FF")
-    private static let primaryInteractive01ExtraDark = UIColor(hex: "#50D0F1")
-    private static let primaryInteractive01ClassicLight = UIColor(hex: "#F43E37")
-    private static let primaryInteractive01Electric = UIColor(hex: "#3FD2E6")
-    private static let primaryInteractive01Indigo = UIColor(hex: "#639ED6")
-    private static let primaryInteractive01Rosé = UIColor(hex: "#ff7978")
-    private static let primaryInteractive01ContrastLight = UIColor(hex: "#000000")
-    private static let primaryInteractive01ContrastDark = UIColor(hex: "#ffffff")
-    private static let primaryInteractive01HoverLight = UIColor(hex: "#50D0F1")
-    private static let primaryInteractive01HoverDark = UIColor(hex: "#50D0F1")
-    private static let primaryInteractive01HoverExtraDark = UIColor(hex: "#6EE1FF")
-    private static let primaryInteractive01HoverClassicLight = UIColor(hex: "#03A9F4")
-    private static let primaryInteractive01HoverElectric = UIColor(hex: "#64DDF2")
-    private static let primaryInteractive01HoverIndigo = UIColor(hex: "#AECBE5")
-    private static let primaryInteractive01HoverRosé = UIColor(hex: "#ff9f9e")
-    private static let primaryInteractive01HoverContrastLight = UIColor(hex: "#212121")
-    private static let primaryInteractive01HoverContrastDark = UIColor(hex: "#212121")
-    private static let primaryInteractive01ActiveLight = UIColor(hex: "#8AE9FF")
-    private static let primaryInteractive01ActiveDark = UIColor(hex: "#8AE9FF")
-    private static let primaryInteractive01ActiveExtraDark = UIColor(hex: "#A1ECFF")
-    private static let primaryInteractive01ActiveClassicLight = UIColor(hex: "#F43E37")
-    private static let primaryInteractive01ActiveElectric = UIColor(hex: "#3FD2E6")
-    private static let primaryInteractive01ActiveIndigo = UIColor(hex: "#94B4D1")
-    private static let primaryInteractive01ActiveRosé = UIColor(hex: "#ffc5c4")
-    private static let primaryInteractive01ActiveContrastLight = UIColor(hex: "#404040")
-    private static let primaryInteractive01ActiveContrastDark = UIColor(hex: "#404040")
-    private static let primaryInteractive01DisabledLight = UIColor(hex: "#03A9F4").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledDark = UIColor(hex: "#33B8F4").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledExtraDark = UIColor(hex: "#50D0F1").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledClassicLight = UIColor(hex: "#F43E37").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledElectric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledIndigo = UIColor(hex: "#8395A7").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledRosé = UIColor(hex: "#997272").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledContrastLight = UIColor(hex: "#F43E37").withAlphaComponent(0.25)
-    private static let primaryInteractive01DisabledContrastDark = UIColor(hex: "#FB5146").withAlphaComponent(0.25)
-    private static let primaryInteractive02Light = UIColor(hex: "#FFFFFF")
-    private static let primaryInteractive02Dark = UIColor(hex: "#17181A")
-    private static let primaryInteractive02ExtraDark = UIColor(hex: "#09090A")
-    private static let primaryInteractive02ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let primaryInteractive02Electric = UIColor(hex: "#13171C")
-    private static let primaryInteractive02Indigo = UIColor(hex: "#F8FAF2")
-    private static let primaryInteractive02Rosé = UIColor(hex: "#fdfaf9")
-    private static let primaryInteractive02ContrastLight = UIColor(hex: "#ffffff")
-    private static let primaryInteractive02ContrastDark = UIColor(hex: "#000000")
-    private static let primaryInteractive02HoverLight = UIColor(hex: "#03A9F4").withAlphaComponent(0.05)
-    private static let primaryInteractive02HoverDark = UIColor(hex: "#33B8F4").withAlphaComponent(0.05)
-    private static let primaryInteractive02HoverExtraDark = UIColor(hex: "#03A9F4").withAlphaComponent(0.1)
-    private static let primaryInteractive02HoverClassicLight = UIColor(hex: "#03A9F4").withAlphaComponent(0.1)
-    private static let primaryInteractive02HoverElectric = UIColor(hex: "#03A9F4").withAlphaComponent(0.1)
-    private static let primaryInteractive02HoverIndigo = UIColor(hex: "#03A9F4").withAlphaComponent(0.1)
-    private static let primaryInteractive02HoverRosé = UIColor(hex: "#f4032b").withAlphaComponent(0.1)
-    private static let primaryInteractive02HoverContrastLight = UIColor(hex: "#cccccc")
-    private static let primaryInteractive02HoverContrastDark = UIColor(hex: "#cccccc")
-    private static let primaryInteractive02ActiveLight = UIColor(hex: "#03A9F4").withAlphaComponent(0.1)
-    private static let primaryInteractive02ActiveDark = UIColor(hex: "#33B8F4").withAlphaComponent(0.1)
-    private static let primaryInteractive02ActiveExtraDark = UIColor(hex: "#50D0F1").withAlphaComponent(0.1)
-    private static let primaryInteractive02ActiveClassicLight = UIColor(hex: "#F43E37").withAlphaComponent(0.1)
-    private static let primaryInteractive02ActiveElectric = UIColor(hex: "#9FE8F2").withAlphaComponent(0.1)
-    private static let primaryInteractive02ActiveIndigo = UIColor(hex: "#94A6B4").withAlphaComponent(0.2)
-    private static let primaryInteractive02ActiveRosé = UIColor(hex: "#ffffff").withAlphaComponent(0.8)
-    private static let primaryInteractive02ActiveContrastLight = UIColor(hex: "#000000").withAlphaComponent(0.1)
-    private static let primaryInteractive02ActiveContrastDark = UIColor(hex: "#000000").withAlphaComponent(0.1)
-    private static let primaryInteractive03Light = UIColor(hex: "#D9D9D9")
-    private static let primaryInteractive03Dark = UIColor(hex: "#595959")
-    private static let primaryInteractive03ExtraDark = UIColor(hex: "#595959")
-    private static let primaryInteractive03ClassicLight = UIColor(hex: "#D9D9D9")
-    private static let primaryInteractive03Electric = UIColor(hex: "#284D5C")
-    private static let primaryInteractive03Indigo = UIColor(hex: "#D1D8DE")
-    private static let primaryInteractive03Rosé = UIColor(hex: "#E0CED1")
-    private static let primaryInteractive03ContrastLight = UIColor(hex: "#D9D9D9")
-    private static let primaryInteractive03ContrastDark = UIColor(hex: "#595959")
-    private static let secondaryUi01Light = UIColor(hex: "#FFFFFF")
-    private static let secondaryUi01Dark = UIColor(hex: "#292B2E")
-    private static let secondaryUi01ExtraDark = UIColor(hex: "#000000")
-    private static let secondaryUi01ClassicLight = UIColor(hex: "#F43E37")
-    private static let secondaryUi01Electric = UIColor(hex: "#212835")
-    private static let secondaryUi01Indigo = UIColor(hex: "#32364F")
-    private static let secondaryUi01Rosé = UIColor(hex: "#FFC2C0")
-    private static let secondaryUi01ContrastLight = UIColor(hex: "#ffffff")
-    private static let secondaryUi01ContrastDark = UIColor(hex: "#000000")
-    private static let secondaryUi02Light = UIColor(hex: "#E0E6EA")
-    private static let secondaryUi02Dark = UIColor(hex: "#383A3C")
-    private static let secondaryUi02ExtraDark = UIColor(hex: "#1A1C1E")
-    private static let secondaryUi02ClassicLight = UIColor(hex: "#F43E37")
-    private static let secondaryUi02Electric = UIColor(hex: "#2C384B")
-    private static let secondaryUi02Indigo = UIColor(hex: "#32364F")
-    private static let secondaryUi02Rosé = UIColor(hex: "#FCB3B1")
-    private static let secondaryUi02ContrastLight = UIColor(hex: "#bfbfbf")
-    private static let secondaryUi02ContrastDark = UIColor(hex: "#333333")
-    private static let secondaryIcon01Light = UIColor(hex: "#03A9F4")
-    private static let secondaryIcon01Dark = UIColor(hex: "#33B8F4")
-    private static let secondaryIcon01ExtraDark = UIColor(hex: "#50D0F1")
-    private static let secondaryIcon01ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let secondaryIcon01Electric = UIColor(hex: "#3FD2E6")
-    private static let secondaryIcon01Indigo = UIColor(hex: "#F3F1E4")
-    private static let secondaryIcon01Rosé = UIColor(hex: "#d40019")
-    private static let secondaryIcon01ContrastLight = UIColor(hex: "#000000")
-    private static let secondaryIcon01ContrastDark = UIColor(hex: "#ffffff")
-    private static let secondaryIcon02Light = UIColor(hex: "#8F97A4")
-    private static let secondaryIcon02Dark = UIColor(hex: "#686C74")
-    private static let secondaryIcon02ExtraDark = UIColor(hex: "#686C74")
-    private static let secondaryIcon02ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let secondaryIcon02Electric = UIColor(hex: "#16698C")
-    private static let secondaryIcon02Indigo = UIColor(hex: "#DEDEDE")
-    private static let secondaryIcon02Rosé = UIColor(hex: "#de3e59")
-    private static let secondaryIcon02ContrastLight = UIColor(hex: "#000000")
-    private static let secondaryIcon02ContrastDark = UIColor(hex: "#cdcdcd")
-    private static let secondaryText01Light = UIColor(hex: "#292B2E")
-    private static let secondaryText01Dark = UIColor(hex: "#FFFFFF")
-    private static let secondaryText01ExtraDark = UIColor(hex: "#B8C3C9")
-    private static let secondaryText01ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let secondaryText01Electric = UIColor(hex: "#3FD2E6")
-    private static let secondaryText01Indigo = UIColor(hex: "#EAE8DC")
-    private static let secondaryText01Rosé = UIColor(hex: "#990059")
-    private static let secondaryText01ContrastLight = UIColor(hex: "#000000")
-    private static let secondaryText01ContrastDark = UIColor(hex: "#ffffff")
-    private static let secondaryText02Light = UIColor(hex: "#8F97A4")
-    private static let secondaryText02Dark = UIColor(hex: "#686C74")
-    private static let secondaryText02ExtraDark = UIColor(hex: "#686C74")
-    private static let secondaryText02ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let secondaryText02Electric = UIColor(hex: "#16698C")
-    private static let secondaryText02Indigo = UIColor(hex: "#DEDEDE")
-    private static let secondaryText02Rosé = UIColor(hex: "#ab494d")
-    private static let secondaryText02ContrastLight = UIColor(hex: "#000000").withAlphaComponent(0.8)
-    private static let secondaryText02ContrastDark = UIColor(hex: "#d9d9d9")
-    private static let secondaryField01Light = UIColor(hex: "#EFF3F5")
-    private static let secondaryField01Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let secondaryField01ExtraDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.1)
-    private static let secondaryField01ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.2)
-    private static let secondaryField01Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.09)
-    private static let secondaryField01Indigo = UIColor(hex: "#EFF3F5").withAlphaComponent(0.15)
-    private static let secondaryField01Rosé = UIColor(hex: "#fbf0ef").withAlphaComponent(0.5)
-    private static let secondaryField01ContrastLight = UIColor(hex: "#f2f2f2")
-    private static let secondaryField01ContrastDark = UIColor(hex: "#252525")
-    private static let secondaryField01ActiveLight = UIColor(hex: "#E0E6EA")
-    private static let secondaryField01ActiveDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.15)
-    private static let secondaryField01ActiveExtraDark = UIColor(hex: "#FBFBFC").withAlphaComponent(0.15)
-    private static let secondaryField01ActiveClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.3)
-    private static let secondaryField01ActiveElectric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.14)
-    private static let secondaryField01ActiveIndigo = UIColor(hex: "#FFFFFF").withAlphaComponent(0.3)
-    private static let secondaryField01ActiveRosé = UIColor(hex: "#fbf0ef")
-    private static let secondaryField01ActiveContrastLight = UIColor(hex: "#f8f8f8")
-    private static let secondaryField01ActiveContrastDark = UIColor(hex: "#1a1a1a")
-    private static let secondaryInteractive01Light = UIColor(hex: "#03A9F4")
-    private static let secondaryInteractive01Dark = UIColor(hex: "#33B8F4")
-    private static let secondaryInteractive01ExtraDark = UIColor(hex: "#50D0F1")
-    private static let secondaryInteractive01ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let secondaryInteractive01Electric = UIColor(hex: "#3FD2E6")
-    private static let secondaryInteractive01Indigo = UIColor(hex: "#FFFFFF")
-    private static let secondaryInteractive01Rosé = UIColor(hex: "#cf1133")
-    private static let secondaryInteractive01ContrastLight = UIColor(hex: "#000000")
-    private static let secondaryInteractive01ContrastDark = UIColor(hex: "#ffffff")
-    private static let secondaryInteractive01HoverLight = UIColor(hex: "#50D0F1")
-    private static let secondaryInteractive01HoverDark = UIColor(hex: "#64C7F4")
-    private static let secondaryInteractive01HoverExtraDark = UIColor(hex: "#6EE1FF")
-    private static let secondaryInteractive01HoverClassicLight = UIColor(hex: "#50D0F1")
-    private static let secondaryInteractive01HoverElectric = UIColor(hex: "#64DDF2")
-    private static let secondaryInteractive01HoverIndigo = UIColor(hex: "#C9CFDA")
-    private static let secondaryInteractive01HoverRosé = UIColor(hex: "#c9cfda")
-    private static let secondaryInteractive01HoverContrastLight = UIColor(hex: "#212121")
-    private static let secondaryInteractive01HoverContrastDark = UIColor(hex: "#212121")
-    private static let secondaryInteractive01ActiveLight = UIColor(hex: "#8AE9FF")
-    private static let secondaryInteractive01ActiveDark = UIColor(hex: "#8AE9FF")
-    private static let secondaryInteractive01ActiveExtraDark = UIColor(hex: "#A1ECFF")
-    private static let secondaryInteractive01ActiveClassicLight = UIColor(hex: "#F99F9B")
-    private static let secondaryInteractive01ActiveElectric = UIColor(hex: "#9FE8F2")
-    private static let secondaryInteractive01ActiveIndigo = UIColor(hex: "#949FB5")
-    private static let secondaryInteractive01ActiveRosé = UIColor(hex: "#e8415f")
-    private static let secondaryInteractive01ActiveContrastLight = UIColor(hex: "#404040")
-    private static let secondaryInteractive01ActiveContrastDark = UIColor(hex: "#c0c0c0")
-
     static func podcastUi01Light(podcastColor: UIColor) -> UIColor { UIColor(hex: "#FFFFFF") }
 
     static func podcastUi01Dark(podcastColor: UIColor) -> UIColor { UIColor(hex: "#292B2E") }
@@ -1437,96 +1032,6 @@ nonisolated struct ThemeColor {
     static func filterInteractive06ContrastLight(filterColor: UIColor) -> UIColor { UIColor(hex: "#000001") }
 
     static func filterInteractive06ContrastDark(filterColor: UIColor) -> UIColor { UIColor(hex: "#ffffff") }
-    private static let support01Light = UIColor(hex: "#03A9F4")
-    private static let support01Dark = UIColor(hex: "#33B8F4")
-    private static let support01ExtraDark = UIColor(hex: "#50D0F1")
-    private static let support01ClassicLight = UIColor(hex: "#03A9F4")
-    private static let support01Electric = UIColor(hex: "#3FD2E6")
-    private static let support01Indigo = UIColor(hex: "#4BA1D6")
-    private static let support01Rosé = UIColor(hex: "#D93F99")
-    private static let support01ContrastLight = UIColor(hex: "#03a9f4")
-    private static let support01ContrastDark = UIColor(hex: "#03a9f4")
-    private static let support02Light = UIColor(hex: "#78D549")
-    private static let support02Dark = UIColor(hex: "#78D549")
-    private static let support02ExtraDark = UIColor(hex: "#78D549")
-    private static let support02ClassicLight = UIColor(hex: "#78D549")
-    private static let support02Electric = UIColor(hex: "#3FE664")
-    private static let support02Indigo = UIColor(hex: "#54C483")
-    private static let support02Rosé = UIColor(hex: "#899c12")
-    private static let support02ContrastLight = UIColor(hex: "#78d549")
-    private static let support02ContrastDark = UIColor(hex: "#78d549")
-    private static let support03Light = UIColor(hex: "#03A9F4")
-    private static let support03Dark = UIColor(hex: "#33B8F4")
-    private static let support03ExtraDark = UIColor(hex: "#33B8F4")
-    private static let support03ClassicLight = UIColor(hex: "#03A9F4")
-    private static let support03Electric = UIColor(hex: "#0B3C50")
-    private static let support03Indigo = UIColor(hex: "#3D4363")
-    private static let support03Rosé = UIColor(hex: "#bf3950")
-    private static let support03ContrastLight = UIColor(hex: "#343434")
-    private static let support03ContrastDark = UIColor(hex: "#333333")
-    private static let support04Light = UIColor(hex: "#187ADC")
-    private static let support04Dark = UIColor(hex: "#4490DC")
-    private static let support04ExtraDark = UIColor(hex: "#4490DC")
-    private static let support04ClassicLight = UIColor(hex: "#187ADC")
-    private static let support04Electric = UIColor(hex: "#093243")
-    private static let support04Indigo = UIColor(hex: "#25273E")
-    private static let support04Rosé = UIColor(hex: "#991f3d")
-    private static let support04ContrastLight = UIColor(hex: "#000000")
-    private static let support04ContrastDark = UIColor(hex: "#262626")
-    private static let support05Light = UIColor(hex: "#F43E37")
-    private static let support05Dark = UIColor(hex: "#F43E37")
-    private static let support05ExtraDark = UIColor(hex: "#F43E37")
-    private static let support05ClassicLight = UIColor(hex: "#F43E37")
-    private static let support05Electric = UIColor(hex: "#F84F44")
-    private static let support05Indigo = UIColor(hex: "#D44A5A")
-    private static let support05Rosé = UIColor(hex: "#d44a5a")
-    private static let support05ContrastLight = UIColor(hex: "#f43e37")
-    private static let support05ContrastDark = UIColor(hex: "#FF6557")
-    private static let support06Light = UIColor(hex: "#4C5052")
-    private static let support06Dark = UIColor(hex: "#7C8A94")
-    private static let support06ExtraDark = UIColor(hex: "#7C8A94")
-    private static let support06ClassicLight = UIColor(hex: "#686C74")
-    private static let support06Electric = UIColor(hex: "#093243")
-    private static let support06Indigo = UIColor(hex: "#90A5B8")
-    private static let support06Rosé = UIColor(hex: "#ad86a0")
-    private static let support06ContrastLight = UIColor(hex: "#1a1a1a")
-    private static let support06ContrastDark = UIColor(hex: "#262626")
-    private static let support07Light = UIColor(hex: "#FFFFFF")
-    private static let support07Dark = UIColor(hex: "#292B2E")
-    private static let support07ExtraDark = UIColor(hex: "#161718")
-    private static let support07ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let support07Electric = UIColor(hex: "#FFFFFF")
-    private static let support07Indigo = UIColor(hex: "#FFFFFF")
-    private static let support07Rosé = UIColor(hex: "#ffffff")
-    private static let support07ContrastLight = UIColor(hex: "#ffffff")
-    private static let support07ContrastDark = UIColor(hex: "#ffffff")
-    private static let support08Light = UIColor(hex: "#FF9D3B")
-    private static let support08Dark = UIColor(hex: "#EB9D4F")
-    private static let support08ExtraDark = UIColor(hex: "#FF9D3B")
-    private static let support08ClassicLight = UIColor(hex: "#FF9D3B")
-    private static let support08Electric = UIColor(hex: "#F6A935")
-    private static let support08Indigo = UIColor(hex: "#B26428")
-    private static let support08Rosé = UIColor(hex: "#b26428")
-    private static let support08ContrastLight = UIColor(hex: "#ff9d3b")
-    private static let support08ContrastDark = UIColor(hex: "#ff9d3b")
-    private static let support09Light = UIColor(hex: "#080808")
-    private static let support09Dark = UIColor(hex: "#161718")
-    private static let support09ExtraDark = UIColor(hex: "#1A1C1E")
-    private static let support09ClassicLight = UIColor(hex: "#080808")
-    private static let support09Electric = UIColor(hex: "#212835")
-    private static let support09Indigo = UIColor(hex: "#232637")
-    private static let support09Rosé = UIColor(hex: "#FD4D90")
-    private static let support09ContrastLight = UIColor(hex: "#000000")
-    private static let support09ContrastDark = UIColor(hex: "#000000")
-    private static let support10Light = UIColor(hex: "#FEB700")
-    private static let support10Dark = UIColor(hex: "#F5CA5B")
-    private static let support10ExtraDark = UIColor(hex: "#F5CA5B")
-    private static let support10ClassicLight = UIColor(hex: "#FEB700")
-    private static let support10Electric = UIColor(hex: "#FEEC4C")
-    private static let support10Indigo = UIColor(hex: "#F5C167")
-    private static let support10Rosé = UIColor(hex: "#FF4FE2")
-    private static let support10ContrastLight = UIColor(hex: "#FEB700")
-    private static let support10ContrastDark = UIColor(hex: "#F5CA5B")
 
     static func playerBackground01Light(podcastColor: UIColor) -> UIColor {
         UIColor.calculateColor(orgColor: UIColor(hex: "#000000"), overlayColor: podcastColor.withAlphaComponent(0.2))
@@ -1835,1590 +1340,186 @@ nonisolated struct ThemeColor {
     static func playerHighlight07ContrastDark(podcastColor: UIColor) -> UIColor {
         podcastColor.withAlphaComponent(0.2)
     }
-    private static let playerContrast01Light = UIColor(hex: "#FFFFFF")
-    private static let playerContrast01Dark = UIColor(hex: "#FFFFFF")
-    private static let playerContrast01ExtraDark = UIColor(hex: "#FFFFFF")
-    private static let playerContrast01ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let playerContrast01Electric = UIColor(hex: "#FFFFFF")
-    private static let playerContrast01Indigo = UIColor(hex: "#C1C2BC")
-    private static let playerContrast01Rosé = UIColor(hex: "#ffd9d9")
-    private static let playerContrast01ContrastLight = UIColor(hex: "#ffffff")
-    private static let playerContrast01ContrastDark = UIColor(hex: "#ffffff")
-    private static let playerContrast02Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let playerContrast02Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let playerContrast02ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.4)
-    private static let playerContrast02ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let playerContrast02Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.7)
-    private static let playerContrast02Indigo = UIColor(hex: "#DBDBCE").withAlphaComponent(0.5)
-    private static let playerContrast02Rosé = UIColor(hex: "#FFDCD6").withAlphaComponent(0.6)
-    private static let playerContrast02ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.8)
-    private static let playerContrast02ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.8)
-    private static let playerContrast03Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.4)
-    private static let playerContrast03Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.4)
-    private static let playerContrast03ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.32)
-    private static let playerContrast03ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.4)
-    private static let playerContrast03Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.55)
-    private static let playerContrast03Indigo = UIColor(hex: "#CFCCBE").withAlphaComponent(0.4)
-    private static let playerContrast03Rosé = UIColor(hex: "#ffdcd6").withAlphaComponent(0.5)
-    private static let playerContrast03ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.65)
-    private static let playerContrast03ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.65)
-    private static let playerContrast04Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.3)
-    private static let playerContrast04Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.3)
-    private static let playerContrast04ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.24)
-    private static let playerContrast04ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.3)
-    private static let playerContrast04Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.3)
-    private static let playerContrast04Indigo = UIColor(hex: "#DADBD7").withAlphaComponent(0.3)
-    private static let playerContrast04Rosé = UIColor(hex: "#ffe0db").withAlphaComponent(0.4)
-    private static let playerContrast04ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.5)
-    private static let playerContrast04ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.5)
-    private static let playerContrast05Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.2)
-    private static let playerContrast05Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.2)
-    private static let playerContrast05ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.16)
-    private static let playerContrast05ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.2)
-    private static let playerContrast05Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.2)
-    private static let playerContrast05Indigo = UIColor(hex: "#B1B5AA").withAlphaComponent(0.2)
-    private static let playerContrast05Rosé = UIColor(hex: "#FFDCD6").withAlphaComponent(0.25)
-    private static let playerContrast05ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.2)
-    private static let playerContrast05ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.2)
-    private static let playerContrast06Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let playerContrast06Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let playerContrast06ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.08)
-    private static let playerContrast06ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let playerContrast06Electric = UIColor(hex: "#3FD2E6").withAlphaComponent(0.1)
-    private static let playerContrast06Indigo = UIColor(hex: "#C2C0B6").withAlphaComponent(0.1)
-    private static let playerContrast06Rosé = UIColor(hex: "#ffdcd6").withAlphaComponent(0.1)
-    private static let playerContrast06ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.1)
-    private static let playerContrast06ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.1)
-    private static let contrast01Light = UIColor(hex: "#FFFFFF")
-    private static let contrast01Dark = UIColor(hex: "#FFFFFF")
-    private static let contrast01ExtraDark = UIColor(hex: "#FFFFFF")
-    private static let contrast01ClassicLight = UIColor(hex: "#FFFFFF")
-    private static let contrast01Electric = UIColor(hex: "#FFFFFF")
-    private static let contrast01Indigo = UIColor(hex: "#E2E3DC")
-    private static let contrast01Rosé = UIColor(hex: "#ffffff")
-    private static let contrast01ContrastLight = UIColor(hex: "#ffffff")
-    private static let contrast01ContrastDark = UIColor(hex: "#ffffff")
-    private static let contrast02Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.7)
-    private static let contrast02Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.7)
-    private static let contrast02ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.7)
-    private static let contrast02ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.7)
-    private static let contrast02Electric = UIColor(hex: "#B2F6FF").withAlphaComponent(0.8)
-    private static let contrast02Indigo = UIColor(hex: "#DBDBCE").withAlphaComponent(0.7)
-    private static let contrast02Rosé = UIColor(hex: "#ffffff").withAlphaComponent(0.85)
-    private static let contrast02ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.85)
-    private static let contrast02ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.8)
-    private static let contrast03Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let contrast03Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let contrast03ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let contrast03ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.5)
-    private static let contrast03Electric = UIColor(hex: "#B2F6FF").withAlphaComponent(0.6)
-    private static let contrast03Indigo = UIColor(hex: "#DBDBCE").withAlphaComponent(0.5)
-    private static let contrast03Rosé = UIColor(hex: "#ffffff").withAlphaComponent(0.7)
-    private static let contrast03ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.7)
-    private static let contrast03ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.6)
-    private static let contrast04Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let contrast04Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let contrast04ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let contrast04ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.1)
-    private static let contrast04Electric = UIColor(hex: "#B2F6FF").withAlphaComponent(0.2)
-    private static let contrast04Indigo = UIColor(hex: "#DBDBCE").withAlphaComponent(0.1)
-    private static let contrast04Rosé = UIColor(hex: "#ffffff").withAlphaComponent(0.2)
-    private static let contrast04ContrastLight = UIColor(hex: "#ffffff").withAlphaComponent(0.2)
-    private static let contrast04ContrastDark = UIColor(hex: "#ffffff").withAlphaComponent(0.2)
-    private static let filter01Light = UIColor(hex: "#F43E37")
-    private static let filter01Dark = UIColor(hex: "#DF514C")
-    private static let filter01ExtraDark = UIColor(hex: "#DF514C")
-    private static let filter01ClassicLight = UIColor(hex: "#F43E37")
-    private static let filter01Electric = UIColor(hex: "#F84F44")
-    private static let filter01Indigo = UIColor(hex: "#8E656B")
-    private static let filter01Rosé = UIColor(hex: "#d66e6c")
-    private static let filter01ContrastLight = UIColor(hex: "#F43E37")
-    private static let filter01ContrastDark = UIColor(hex: "#FF6557")
-    private static let filter02Light = UIColor(hex: "#FF9D3B")
-    private static let filter02Dark = UIColor(hex: "#EB9D4F")
-    private static let filter02ExtraDark = UIColor(hex: "#EB9D4F")
-    private static let filter02ClassicLight = UIColor(hex: "#FF9D3B")
-    private static let filter02Electric = UIColor(hex: "#F6A935")
-    private static let filter02Indigo = UIColor(hex: "#A08B7B")
-    private static let filter02Rosé = UIColor(hex: "#dfa280")
-    private static let filter02ContrastLight = UIColor(hex: "#E87400")
-    private static let filter02ContrastDark = UIColor(hex: "#EB8118")
-    private static let filter03Light = UIColor(hex: "#FEC635")
-    private static let filter03Dark = UIColor(hex: "#EABD49")
-    private static let filter03ExtraDark = UIColor(hex: "#EABD49")
-    private static let filter03ClassicLight = UIColor(hex: "#FEC635")
-    private static let filter03Electric = UIColor(hex: "#CFE63F")
-    private static let filter03Indigo = UIColor(hex: "#A59C80")
-    private static let filter03Rosé = UIColor(hex: "#e0b985")
-    private static let filter03ContrastLight = UIColor(hex: "#BF8C00")
-    private static let filter03ContrastDark = UIColor(hex: "#FFBF1A")
-    private static let filter04Light = UIColor(hex: "#78D549")
-    private static let filter04Dark = UIColor(hex: "#7FBF5F")
-    private static let filter04ExtraDark = UIColor(hex: "#7FBF5F")
-    private static let filter04ClassicLight = UIColor(hex: "#78D549")
-    private static let filter04Electric = UIColor(hex: "#3FE664")
-    private static let filter04Indigo = UIColor(hex: "#7C987D")
-    private static let filter04Rosé = UIColor(hex: "#b1b676")
-    private static let filter04ContrastLight = UIColor(hex: "#39A800")
-    private static let filter04ContrastDark = UIColor(hex: "#99FF66")
-    private static let filter05Light = UIColor(hex: "#03A9F4")
-    private static let filter05Dark = UIColor(hex: "#1BA0DC")
-    private static let filter05ExtraDark = UIColor(hex: "#1BA0DC")
-    private static let filter05ClassicLight = UIColor(hex: "#03A9F4")
-    private static let filter05Electric = UIColor(hex: "#3FD2E6")
-    private static let filter05Indigo = UIColor(hex: "#54829D")
-    private static let filter05Rosé = UIColor(hex: "#8196bc")
-    private static let filter05ContrastLight = UIColor(hex: "#039DE3")
-    private static let filter05ContrastDark = UIColor(hex: "#1AB8FF")
-    private static let filter06Light = UIColor(hex: "#5D31C4")
-    private static let filter06Dark = UIColor(hex: "#9D79F2")
-    private static let filter06ExtraDark = UIColor(hex: "#9D79F2")
-    private static let filter06ClassicLight = UIColor(hex: "#5D31C4")
-    private static let filter06Electric = UIColor(hex: "#B65BFD")
-    private static let filter06Indigo = UIColor(hex: "#5F5885")
-    private static let filter06Rosé = UIColor(hex: "#9b5c9e")
-    private static let filter06ContrastLight = UIColor(hex: "#5D31C4")
-    private static let filter06ContrastDark = UIColor(hex: "#CC73FF")
-    private static let filter07Light = UIColor(hex: "#E93673")
-    private static let filter07Dark = UIColor(hex: "#D24D7A")
-    private static let filter07ExtraDark = UIColor(hex: "#D24D7A")
-    private static let filter07ClassicLight = UIColor(hex: "#E93673")
-    private static let filter07Electric = UIColor(hex: "#FF4BB7")
-    private static let filter07Indigo = UIColor(hex: "#8B637A")
-    private static let filter07Rosé = UIColor(hex: "#d26c80")
-    private static let filter07ContrastLight = UIColor(hex: "#E93673")
-    private static let filter07ContrastDark = UIColor(hex: "#FF6680")
-    private static let filter08Light = UIColor(hex: "#B8C3C9")
-    private static let filter08Dark = UIColor(hex: "#BDC2C4")
-    private static let filter08ExtraDark = UIColor(hex: "#BDC2C4")
-    private static let filter08ClassicLight = UIColor(hex: "#B8C3C9")
-    private static let filter08Electric = UIColor(hex: "#BFBFBF")
-    private static let filter08Indigo = UIColor(hex: "#9299A2")
-    private static let filter08Rosé = UIColor(hex: "#b8b8d8")
-    private static let filter08ContrastLight = UIColor(hex: "#8C9499")
-    private static let filter08ContrastDark = UIColor(hex: "#B8C3C9")
-    private static let filter09Light = UIColor(hex: "#A177D9")
-    private static let filter09Dark = UIColor(hex: "#FAA5C1")
-    private static let filter09ExtraDark = UIColor(hex: "#FAA5C1")
-    private static let filter09ClassicLight = UIColor(hex: "#A177D9")
-    private static let filter09Electric = UIColor(hex: "#FF94F1")
-    private static let filter09Indigo = UIColor(hex: "#998A9E")
-    private static let filter09Rosé = UIColor(hex: "#6883BA")
-    private static let filter09ContrastLight = UIColor(hex: "#A177D9")
-    private static let filter09ContrastDark = UIColor(hex: "#9BA2FF")
-    private static let filter10Light = UIColor(hex: "#3DAD88")
-    private static let filter10Dark = UIColor(hex: "#03CEA4")
-    private static let filter10ExtraDark = UIColor(hex: "#03CEA4")
-    private static let filter10ClassicLight = UIColor(hex: "#3DAD88")
-    private static let filter10Electric = UIColor(hex: "#58EDAC")
-    private static let filter10Indigo = UIColor(hex: "#A4B391")
-    private static let filter10Rosé = UIColor(hex: "#546A76")
-    private static let filter10ContrastLight = UIColor(hex: "#3DAD88")
-    private static let filter10ContrastDark = UIColor(hex: "#32D9A9")
-    private static let filter11Light = UIColor(hex: "#2555CF")
-    private static let filter11Dark = UIColor(hex: "#5584FA")
-    private static let filter11ExtraDark = UIColor(hex: "#5584FA")
-    private static let filter11ClassicLight = UIColor(hex: "#2555CF")
-    private static let filter11Electric = UIColor(hex: "#0A9AFA")
-    private static let filter11Indigo = UIColor(hex: "#84A0B0")
-    private static let filter11Rosé = UIColor(hex: "#998E87")
-    private static let filter11ContrastLight = UIColor(hex: "#2555CF")
-    private static let filter11ContrastDark = UIColor(hex: "#21E6ED")
-    private static let filter12Light = UIColor(hex: "#945712")
-    private static let filter12Dark = UIColor(hex: "#A3863B")
-    private static let filter12ExtraDark = UIColor(hex: "#A3863B")
-    private static let filter12ClassicLight = UIColor(hex: "#945712")
-    private static let filter12Electric = UIColor(hex: "#CCA083")
-    private static let filter12Indigo = UIColor(hex: "#8C8C80")
-    private static let filter12Rosé = UIColor(hex: "#997F7F")
-    private static let filter12ContrastLight = UIColor(hex: "#945712")
-    private static let filter12ContrastDark = UIColor(hex: "#AD753D")
-    private static let veilLight = UIColor(hex: "#000000").withAlphaComponent(0.3)
-    private static let veilDark = UIColor(hex: "#000000").withAlphaComponent(0.5)
-    private static let veilExtraDark = UIColor(hex: "#000000").withAlphaComponent(0.5)
-    private static let veilClassicLight = UIColor(hex: "#000000").withAlphaComponent(0.3)
-    private static let veilElectric = UIColor(hex: "#000000").withAlphaComponent(0.5)
-    private static let veilIndigo = UIColor(hex: "#25273E").withAlphaComponent(0.3)
-    private static let veilRosé = UIColor(hex: "#f2ccc7").withAlphaComponent(0.75)
-    private static let veilContrastLight = UIColor(hex: "#000000").withAlphaComponent(0.3)
-    private static let veilContrastDark = UIColor(hex: "#000000").withAlphaComponent(0.6)
-    private static let gradient01ALight = UIColor(hex: "#FED745")
-    private static let gradient01ADark = UIColor(hex: "#D7B32E")
-    private static let gradient01AExtraDark = UIColor(hex: "#D7B32E")
-    private static let gradient01AClassicLight = UIColor(hex: "#FED745")
-    private static let gradient01AElectric = UIColor(hex: "#D7B32E")
-    private static let gradient01AIndigo = UIColor(hex: "#F2D672")
-    private static let gradient01ARosé = UIColor(hex: "#ffcb78")
-    private static let gradient01AContrastLight = UIColor(hex: "#FED745")
-    private static let gradient01AContrastDark = UIColor(hex: "#D7B32E")
-    private static let gradient01ELight = UIColor(hex: "#FEB525")
-    private static let gradient01EDark = UIColor(hex: "#C18000")
-    private static let gradient01EExtraDark = UIColor(hex: "#C18000")
-    private static let gradient01EClassicLight = UIColor(hex: "#FEB525")
-    private static let gradient01EElectric = UIColor(hex: "#C18000")
-    private static let gradient01EIndigo = UIColor(hex: "#F2B03D")
-    private static let gradient01ERosé = UIColor(hex: "#ffaf4d")
-    private static let gradient01EContrastLight = UIColor(hex: "#FEB525")
-    private static let gradient01EContrastDark = UIColor(hex: "#C18000")
-    private static let gradient02ALight = UIColor(hex: "#03A9F4")
-    private static let gradient02ADark = UIColor(hex: "#3993AA")
-    private static let gradient02AExtraDark = UIColor(hex: "#3993AA")
-    private static let gradient02AClassicLight = UIColor(hex: "#03A9F4")
-    private static let gradient02AElectric = UIColor(hex: "#54B29E")
-    private static let gradient02AIndigo = UIColor(hex: "#5C8BCC")
-    private static let gradient02ARosé = UIColor(hex: "#f0546e")
-    private static let gradient02AContrastLight = UIColor(hex: "#03A9F4")
-    private static let gradient02AContrastDark = UIColor(hex: "#3993AA")
-    private static let gradient02ELight = UIColor(hex: "#50D0F1")
-    private static let gradient02EDark = UIColor(hex: "#008CCB")
-    private static let gradient02EExtraDark = UIColor(hex: "#008CCB")
-    private static let gradient02EClassicLight = UIColor(hex: "#50D0F1")
-    private static let gradient02EElectric = UIColor(hex: "#3FB7E6")
-    private static let gradient02EIndigo = UIColor(hex: "#95B0E5")
-    private static let gradient02ERosé = UIColor(hex: "#ff938c")
-    private static let gradient02EContrastLight = UIColor(hex: "#50D0F1")
-    private static let gradient02EContrastDark = UIColor(hex: "#008CCB")
-    private static let gradient03ALight = UIColor(hex: "#F43769")
-    private static let gradient03ADark = UIColor(hex: "#C9522E")
-    private static let gradient03AExtraDark = UIColor(hex: "#C9522E")
-    private static let gradient03AClassicLight = UIColor(hex: "#F43769")
-    private static let gradient03AElectric = UIColor(hex: "#DE4010")
-    private static let gradient03AIndigo = UIColor(hex: "#D96F8B")
-    private static let gradient03ARosé = UIColor(hex: "#c4459a")
-    private static let gradient03AContrastLight = UIColor(hex: "#F43769")
-    private static let gradient03AContrastDark = UIColor(hex: "#C9522E")
-    private static let gradient03ELight = UIColor(hex: "#FB5246")
-    private static let gradient03EDark = UIColor(hex: "#B82E3C")
-    private static let gradient03EExtraDark = UIColor(hex: "#B82E3C")
-    private static let gradient03EClassicLight = UIColor(hex: "#FB5246")
-    private static let gradient03EElectric = UIColor(hex: "#AB5068")
-    private static let gradient03EIndigo = UIColor(hex: "#D94860")
-    private static let gradient03ERosé = UIColor(hex: "#de435c")
-    private static let gradient03EContrastLight = UIColor(hex: "#FB5246")
-    private static let gradient03EContrastDark = UIColor(hex: "#B82E3C")
-    private static let gradient04ALight = UIColor(hex: "#78D549")
-    private static let gradient04ADark = UIColor(hex: "#7FB74F")
-    private static let gradient04AExtraDark = UIColor(hex: "#7FB74F")
-    private static let gradient04AClassicLight = UIColor(hex: "#78D549")
-    private static let gradient04AElectric = UIColor(hex: "#38CC71")
-    private static let gradient04AIndigo = UIColor(hex: "#66CC91")
-    private static let gradient04ARosé = UIColor(hex: "#c1c917")
-    private static let gradient04AContrastLight = UIColor(hex: "#78D549")
-    private static let gradient04AContrastDark = UIColor(hex: "#7FB74F")
-    private static let gradient04ELight = UIColor(hex: "#9BE45E")
-    private static let gradient04EDark = UIColor(hex: "#508D32")
-    private static let gradient04EExtraDark = UIColor(hex: "#508D32")
-    private static let gradient04EClassicLight = UIColor(hex: "#9BE45E")
-    private static let gradient04EElectric = UIColor(hex: "#519948")
-    private static let gradient04EIndigo = UIColor(hex: "#90D977")
-    private static let gradient04ERosé = UIColor(hex: "#bbde47")
-    private static let gradient04EContrastLight = UIColor(hex: "#9BE45E")
-    private static let gradient04EContrastDark = UIColor(hex: "#508D32")
-    private static let gradient05ALight = UIColor(hex: "#E74B8A")
-    private static let gradient05ADark = UIColor(hex: "#BC4E7B")
-    private static let gradient05AExtraDark = UIColor(hex: "#BC4E7B")
-    private static let gradient05AClassicLight = UIColor(hex: "#E74B8A")
-    private static let gradient05AElectric = UIColor(hex: "#CC3C92")
-    private static let gradient05AIndigo = UIColor(hex: "#CC70A4")
-    private static let gradient05ARosé = UIColor(hex: "#e5679a")
-    private static let gradient05AContrastLight = UIColor(hex: "#E74B8A")
-    private static let gradient05AContrastDark = UIColor(hex: "#BC4E7B")
-    private static let gradient05ELight = UIColor(hex: "#6046E9")
-    private static let gradient05EDark = UIColor(hex: "#6B59C7")
-    private static let gradient05EExtraDark = UIColor(hex: "#6B59C7")
-    private static let gradient05EClassicLight = UIColor(hex: "#6046E9")
-    private static let gradient05EElectric = UIColor(hex: "#8163B0")
-    private static let gradient05EIndigo = UIColor(hex: "#7B73BF")
-    private static let gradient05ERosé = UIColor(hex: "#af73bf")
-    private static let gradient05EContrastLight = UIColor(hex: "#6046E9")
-    private static let gradient05EContrastDark = UIColor(hex: "#6B59C7")
-    private static let imageFilter01Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter01Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter01ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter01ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter01Electric = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter01Indigo = UIColor(hex: "#FFFFFF")
-    private static let imageFilter01Rosé = UIColor(hex: "#FFFFFF")
-    private static let imageFilter01ContrastLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter01ContrastDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02Electric = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02Indigo = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02Rosé = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02ContrastLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter02ContrastDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03Electric = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03Indigo = UIColor(hex: "#FFFFFF")
-    private static let imageFilter03Rosé = UIColor(hex: "#FFFFFF")
-    private static let imageFilter03ContrastLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter03ContrastDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04Light = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04Dark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04ExtraDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04ClassicLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04Electric = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04Indigo = UIColor(hex: "#FFFFFF")
-    private static let imageFilter04Rosé = UIColor(hex: "#FFFFFF")
-    private static let imageFilter04ContrastLight = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let imageFilter04ContrastDark = UIColor(hex: "#FFFFFF").withAlphaComponent(0.0)
-    private static let category01Light = UIColor(hex: "#F43E37")
-    private static let category01Dark = UIColor(hex: "#F8574D")
-    private static let category01ExtraDark = UIColor(hex: "#F8574D")
-    private static let category01ClassicLight = UIColor(hex: "#F43E37")
-    private static let category01Electric = UIColor(hex: "#3FD2E6")
-    private static let category01Indigo = UIColor(hex: "#CE4A4E")
-    private static let category01Rosé = UIColor(hex: "#CE4A4E")
-    private static let category01ContrastLight = UIColor(hex: "#F43E37")
-    private static let category01ContrastDark = UIColor(hex: "#F8574D")
-    private static let category02Light = UIColor(hex: "#03A9F4")
-    private static let category02Dark = UIColor(hex: "#09B7DF")
-    private static let category02ExtraDark = UIColor(hex: "#09B7DF")
-    private static let category02ClassicLight = UIColor(hex: "#03A9F4")
-    private static let category02Electric = UIColor(hex: "#3FD2E6")
-    private static let category02Indigo = UIColor(hex: "#2998D0")
-    private static let category02Rosé = UIColor(hex: "#2998D0")
-    private static let category02ContrastLight = UIColor(hex: "#03A9F4")
-    private static let category02ContrastDark = UIColor(hex: "#09B7DF")
-    private static let category03Light = UIColor(hex: "#FEC635")
-    private static let category03Dark = UIColor(hex: "#FEDD4A")
-    private static let category03ExtraDark = UIColor(hex: "#FEDD4A")
-    private static let category03ClassicLight = UIColor(hex: "#FEC635")
-    private static let category03Electric = UIColor(hex: "#3FD2E6")
-    private static let category03Indigo = UIColor(hex: "#EEC465")
-    private static let category03Rosé = UIColor(hex: "#EEC465")
-    private static let category03ContrastLight = UIColor(hex: "#FEC635")
-    private static let category03ContrastDark = UIColor(hex: "#FEDD4A")
-    private static let category04Light = UIColor(hex: "#187ADC")
-    private static let category04Dark = UIColor(hex: "#22ABEA")
-    private static let category04ExtraDark = UIColor(hex: "#22ABEA")
-    private static let category04ClassicLight = UIColor(hex: "#187ADC")
-    private static let category04Electric = UIColor(hex: "#3FD2E6")
-    private static let category04Indigo = UIColor(hex: "#2C6EBC")
-    private static let category04Rosé = UIColor(hex: "#2C6EBC")
-    private static let category04ContrastLight = UIColor(hex: "#187ADC")
-    private static let category04ContrastDark = UIColor(hex: "#22ABEA")
-    private static let category05Light = UIColor(hex: "#3B862D")
-    private static let category05Dark = UIColor(hex: "#53B63F")
-    private static let category05ExtraDark = UIColor(hex: "#53B63F")
-    private static let category05ClassicLight = UIColor(hex: "#3B862D")
-    private static let category05Electric = UIColor(hex: "#3FD2E6")
-    private static let category05Indigo = UIColor(hex: "#397B39")
-    private static let category05Rosé = UIColor(hex: "#397B39")
-    private static let category05ContrastLight = UIColor(hex: "#3B862D")
-    private static let category05ContrastDark = UIColor(hex: "#53B63F")
-    private static let category06Light = UIColor(hex: "#8F97A4")
-    private static let category06Dark = UIColor(hex: "#BCC0C8")
-    private static let category06ExtraDark = UIColor(hex: "#BCC0C8")
-    private static let category06ClassicLight = UIColor(hex: "#8F97A4")
-    private static let category06Electric = UIColor(hex: "#3FD2E6")
-    private static let category06Indigo = UIColor(hex: "#8091B3")
-    private static let category06Rosé = UIColor(hex: "#8091B3")
-    private static let category06ContrastLight = UIColor(hex: "#8F97A4")
-    private static let category06ContrastDark = UIColor(hex: "#BCC0C8")
-    private static let category07Light = UIColor(hex: "#B25900")
-    private static let category07Dark = UIColor(hex: "#D17D00")
-    private static let category07ExtraDark = UIColor(hex: "#D17D00")
-    private static let category07ClassicLight = UIColor(hex: "#B25900")
-    private static let category07Electric = UIColor(hex: "#3FD2E6")
-    private static let category07Indigo = UIColor(hex: "#96581C")
-    private static let category07Rosé = UIColor(hex: "#96581C")
-    private static let category07ContrastLight = UIColor(hex: "#B25900")
-    private static let category07ContrastDark = UIColor(hex: "#D17D00")
-    private static let category08Light = UIColor(hex: "#78D549")
-    private static let category08Dark = UIColor(hex: "#A8E666")
-    private static let category08ExtraDark = UIColor(hex: "#A8E666")
-    private static let category08ClassicLight = UIColor(hex: "#78D549")
-    private static let category08Electric = UIColor(hex: "#3FD2E6")
-    private static let category08Indigo = UIColor(hex: "#77C868")
-    private static let category08Rosé = UIColor(hex: "#77C868")
-    private static let category08ContrastLight = UIColor(hex: "#78D549")
-    private static let category08ContrastDark = UIColor(hex: "#A8E666")
-    private static let category09Light = UIColor(hex: "#FB8ECE")
-    private static let category09Dark = UIColor(hex: "#FDBBE1")
-    private static let category09ExtraDark = UIColor(hex: "#FDBBE1")
-    private static let category09ClassicLight = UIColor(hex: "#FB8ECE")
-    private static let category09Electric = UIColor(hex: "#3FD2E6")
-    private static let category09Indigo = UIColor(hex: "#EA90CE")
-    private static let category09Rosé = UIColor(hex: "#EA90CE")
-    private static let category09ContrastLight = UIColor(hex: "#FB8ECE")
-    private static let category09ContrastDark = UIColor(hex: "#FDBBE1")
-    private static let category10Light = UIColor(hex: "#A866DB")
-    private static let category10Dark = UIColor(hex: "#CB8FE9")
-    private static let category10ExtraDark = UIColor(hex: "#CB8FE9")
-    private static let category10ClassicLight = UIColor(hex: "#A866DB")
-    private static let category10Electric = UIColor(hex: "#3FD2E6")
-    private static let category10Indigo = UIColor(hex: "#9668CA")
-    private static let category10Rosé = UIColor(hex: "#9668CA")
-    private static let category10ContrastLight = UIColor(hex: "#A866DB")
-    private static let category10ContrastDark = UIColor(hex: "#CB8FE9")
-    private static let category11Light = UIColor(hex: "#D61F59")
-    private static let category11Dark = UIColor(hex: "#E62B7D")
-    private static let category11ExtraDark = UIColor(hex: "#E62B7D")
-    private static let category11ClassicLight = UIColor(hex: "#D61F59")
-    private static let category11Electric = UIColor(hex: "#3FD2E6")
-    private static let category11Indigo = UIColor(hex: "#B02F64")
-    private static let category11Rosé = UIColor(hex: "#B02F64")
-    private static let category11ContrastLight = UIColor(hex: "#D61F59")
-    private static let category11ContrastDark = UIColor(hex: "#E62B7D")
-    private static let category12Light = UIColor(hex: "#686C74")
-    private static let category12Dark = UIColor(hex: "#9297A2")
-    private static let category12ExtraDark = UIColor(hex: "#9297A2")
-    private static let category12ClassicLight = UIColor(hex: "#686C74")
-    private static let category12Electric = UIColor(hex: "#3FD2E6")
-    private static let category12Indigo = UIColor(hex: "#5A6689")
-    private static let category12Rosé = UIColor(hex: "#5A6689")
-    private static let category12ContrastLight = UIColor(hex: "#686C74")
-    private static let category12ContrastDark = UIColor(hex: "#9297A2")
-    private static let category13Light = UIColor(hex: "#FF9D3B")
-    private static let category13Dark = UIColor(hex: "#FFC453")
-    private static let category13ExtraDark = UIColor(hex: "#FFC453")
-    private static let category13ClassicLight = UIColor(hex: "#FF9D3B")
-    private static let category13Electric = UIColor(hex: "#3FD2E6")
-    private static let category13Indigo = UIColor(hex: "#E79D62")
-    private static let category13Rosé = UIColor(hex: "#E79D62")
-    private static let category13ContrastLight = UIColor(hex: "#FF9D3B")
-    private static let category13ContrastDark = UIColor(hex: "#FFC453")
-    private static let category14Light = UIColor(hex: "#50D0F1")
-    private static let category14Dark = UIColor(hex: "#70E3F7")
-    private static let category14ExtraDark = UIColor(hex: "#70E3F7")
-    private static let category14ClassicLight = UIColor(hex: "#50D0F1")
-    private static let category14Electric = UIColor(hex: "#3FD2E6")
-    private static let category14Indigo = UIColor(hex: "#61C3DE")
-    private static let category14Rosé = UIColor(hex: "#61C3DE")
-    private static let category14ContrastLight = UIColor(hex: "#50D0F1")
-    private static let category14ContrastDark = UIColor(hex: "#70E3F7")
-    private static let category15Light = UIColor(hex: "#E93673")
-    private static let category15Dark = UIColor(hex: "#E62B7D")
-    private static let category15ExtraDark = UIColor(hex: "#E62B7D")
-    private static let category15ClassicLight = UIColor(hex: "#E93673")
-    private static let category15Electric = UIColor(hex: "#3FD2E6")
-    private static let category15Indigo = UIColor(hex: "#B02F64")
-    private static let category15Rosé = UIColor(hex: "#B02F64")
-    private static let category15ContrastLight = UIColor(hex: "#E93673")
-    private static let category15ContrastDark = UIColor(hex: "#E62B7D")
-    private static let category16Light = UIColor(hex: "#0059B2")
-    private static let category16Dark = UIColor(hex: "#007DD1")
-    private static let category16ExtraDark = UIColor(hex: "#007DD1")
-    private static let category16ClassicLight = UIColor(hex: "#0059B2")
-    private static let category16Electric = UIColor(hex: "#3FD2E6")
-    private static let category16Indigo = UIColor(hex: "#14509C")
-    private static let category16Rosé = UIColor(hex: "#14509C")
-    private static let category16ContrastLight = UIColor(hex: "#0059B2")
-    private static let category16ContrastDark = UIColor(hex: "#007DD1")
-    private static let category17Light = UIColor(hex: "#CC98F0")
-    private static let category17Dark = UIColor(hex: "#E0C1F6")
-    private static let category17ExtraDark = UIColor(hex: "#E0C1F6")
-    private static let category17ClassicLight = UIColor(hex: "#CC98F0")
-    private static let category17Electric = UIColor(hex: "#3FD2E6")
-    private static let category17Indigo = UIColor(hex: "#C197E5")
-    private static let category17Rosé = UIColor(hex: "#C197E5")
-    private static let category17ContrastLight = UIColor(hex: "#CC98F0")
-    private static let category17ContrastDark = UIColor(hex: "#E0C1F6")
-    private static let category18Light = UIColor(hex: "#D9201C")
-    private static let category18Dark = UIColor(hex: "#E82D27")
-    private static let category18ExtraDark = UIColor(hex: "#E82D27")
-    private static let category18ClassicLight = UIColor(hex: "#D9201C")
-    private static let category18Electric = UIColor(hex: "#3FD2E6")
-    private static let category18Indigo = UIColor(hex: "#B02E2F")
-    private static let category18Rosé = UIColor(hex: "#B02E2F")
-    private static let category18ContrastLight = UIColor(hex: "#D9201C")
-    private static let category18ContrastDark = UIColor(hex: "#E82D27")
-    private static let category19Light = UIColor(hex: "#5D31C4")
-    private static let category19Dark = UIColor(hex: "#8245DC")
-    private static let category19ExtraDark = UIColor(hex: "#8245DC")
-    private static let category19ClassicLight = UIColor(hex: "#5D31C4")
-    private static let category19Electric = UIColor(hex: "#3FD2E6")
-    private static let category19Indigo = UIColor(hex: "#5036AA")
-    private static let category19Rosé = UIColor(hex: "#5036AA")
-    private static let category19ContrastLight = UIColor(hex: "#5D31C4")
-    private static let category19ContrastDark = UIColor(hex: "#8245DC")
 
 
     static func primaryUi01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi01Light
-        case .dark:
-            return ThemeColor.primaryUi01Dark
-        case .extraDark:
-            return ThemeColor.primaryUi01ExtraDark
-        case .electric:
-            return ThemeColor.primaryUi01Electric
-        case .classic:
-            return ThemeColor.primaryUi01ClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi01Indigo
-        case .rosé:
-            return ThemeColor.primaryUi01Rosé
-        case .contrastLight:
-            return ThemeColor.primaryUi01ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi01ContrastDark
-        }
+        ThemeColorTable.color("primaryUi01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi01ActiveLight
-        case .dark:
-            return ThemeColor.primaryUi01ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryUi01ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryUi01ActiveElectric
-        case .classic:
-            return ThemeColor.primaryUi01ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi01ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryUi01ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryUi01ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi01ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryUi01Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi02Light
-        case .dark:
-            return ThemeColor.primaryUi02Dark
-        case .extraDark:
-            return ThemeColor.primaryUi02ExtraDark
-        case .electric:
-            return ThemeColor.primaryUi02Electric
-        case .classic:
-            return ThemeColor.primaryUi02ClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi02Indigo
-        case .rosé:
-            return ThemeColor.primaryUi02Rosé
-        case .contrastLight:
-            return ThemeColor.primaryUi02ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi02ContrastDark
-        }
+        ThemeColorTable.color("primaryUi02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi02Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi02SelectedLight
-        case .dark:
-            return ThemeColor.primaryUi02SelectedDark
-        case .extraDark:
-            return ThemeColor.primaryUi02SelectedExtraDark
-        case .electric:
-            return ThemeColor.primaryUi02SelectedElectric
-        case .classic:
-            return ThemeColor.primaryUi02SelectedClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi02SelectedIndigo
-        case .rosé:
-            return ThemeColor.primaryUi02SelectedRosé
-        case .contrastLight:
-            return ThemeColor.primaryUi02SelectedContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi02SelectedContrastDark
-        }
+        ThemeColorTable.color("primaryUi02Selected", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi02ActiveLight
-        case .dark:
-            return ThemeColor.primaryUi02ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryUi02ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryUi02ActiveElectric
-        case .classic:
-            return ThemeColor.primaryUi02ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi02ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryUi02ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryUi02ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi02ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryUi02Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi03Light
-        case .dark:
-            return ThemeColor.primaryUi03Dark
-        case .extraDark:
-            return ThemeColor.primaryUi03ExtraDark
-        case .electric:
-            return ThemeColor.primaryUi03Electric
-        case .classic:
-            return ThemeColor.primaryUi03ClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi03Indigo
-        case .rosé:
-            return ThemeColor.primaryUi03Rosé
-        case .contrastLight:
-            return ThemeColor.primaryUi03ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi03ContrastDark
-        }
+        ThemeColorTable.color("primaryUi03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi04Light
-        case .dark:
-            return ThemeColor.primaryUi04Dark
-        case .extraDark:
-            return ThemeColor.primaryUi04ExtraDark
-        case .electric:
-            return ThemeColor.primaryUi04Electric
-        case .classic:
-            return ThemeColor.primaryUi04ClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi04Indigo
-        case .rosé:
-            return ThemeColor.primaryUi04Rosé
-        case .contrastLight:
-            return ThemeColor.primaryUi04ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi04ContrastDark
-        }
+        ThemeColorTable.color("primaryUi04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi05Light
-        case .dark:
-            return ThemeColor.primaryUi05Dark
-        case .extraDark:
-            return ThemeColor.primaryUi05ExtraDark
-        case .electric:
-            return ThemeColor.primaryUi05Electric
-        case .classic:
-            return ThemeColor.primaryUi05ClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi05Indigo
-        case .rosé:
-            return ThemeColor.primaryUi05Rosé
-        case .contrastLight:
-            return ThemeColor.primaryUi05ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi05ContrastDark
-        }
+        ThemeColorTable.color("primaryUi05", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi05Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi05SelectedLight
-        case .dark:
-            return ThemeColor.primaryUi05SelectedDark
-        case .extraDark:
-            return ThemeColor.primaryUi05SelectedExtraDark
-        case .electric:
-            return ThemeColor.primaryUi05SelectedElectric
-        case .classic:
-            return ThemeColor.primaryUi05SelectedClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi05SelectedIndigo
-        case .rosé:
-            return ThemeColor.primaryUi05SelectedRosé
-        case .contrastLight:
-            return ThemeColor.primaryUi05SelectedContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi05SelectedContrastDark
-        }
+        ThemeColorTable.color("primaryUi05Selected", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryUi06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryUi06Light
-        case .dark:
-            return ThemeColor.primaryUi06Dark
-        case .extraDark:
-            return ThemeColor.primaryUi06ExtraDark
-        case .electric:
-            return ThemeColor.primaryUi06Electric
-        case .classic:
-            return ThemeColor.primaryUi06ClassicLight
-        case .indigo:
-            return ThemeColor.primaryUi06Indigo
-        case .rosé:
-            return ThemeColor.primaryUi06Rosé
-        case .contrastLight:
-            return ThemeColor.primaryUi06ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryUi06ContrastDark
-        }
+        ThemeColorTable.color("primaryUi06", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon01Light
-        case .dark:
-            return ThemeColor.primaryIcon01Dark
-        case .extraDark:
-            return ThemeColor.primaryIcon01ExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon01Electric
-        case .classic:
-            return ThemeColor.primaryIcon01ClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon01Indigo
-        case .rosé:
-            return ThemeColor.primaryIcon01Rosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon01ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon01ContrastDark
-        }
+        ThemeColorTable.color("primaryIcon01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon01ActiveLight
-        case .dark:
-            return ThemeColor.primaryIcon01ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryIcon01ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon01ActiveElectric
-        case .classic:
-            return ThemeColor.primaryIcon01ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon01ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryIcon01ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon01ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon01ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryIcon01Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon02Light
-        case .dark:
-            return ThemeColor.primaryIcon02Dark
-        case .extraDark:
-            return ThemeColor.primaryIcon02ExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon02Electric
-        case .classic:
-            return ThemeColor.primaryIcon02ClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon02Indigo
-        case .rosé:
-            return ThemeColor.primaryIcon02Rosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon02ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon02ContrastDark
-        }
+        ThemeColorTable.color("primaryIcon02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon02Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon02SelectedLight
-        case .dark:
-            return ThemeColor.primaryIcon02SelectedDark
-        case .extraDark:
-            return ThemeColor.primaryIcon02SelectedExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon02SelectedElectric
-        case .classic:
-            return ThemeColor.primaryIcon02SelectedClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon02SelectedIndigo
-        case .rosé:
-            return ThemeColor.primaryIcon02SelectedRosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon02SelectedContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon02SelectedContrastDark
-        }
+        ThemeColorTable.color("primaryIcon02Selected", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon02ActiveLight
-        case .dark:
-            return ThemeColor.primaryIcon02ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryIcon02ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon02ActiveElectric
-        case .classic:
-            return ThemeColor.primaryIcon02ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon02ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryIcon02ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon02ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon02ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryIcon02Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon03Light
-        case .dark:
-            return ThemeColor.primaryIcon03Dark
-        case .extraDark:
-            return ThemeColor.primaryIcon03ExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon03Electric
-        case .classic:
-            return ThemeColor.primaryIcon03ClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon03Indigo
-        case .rosé:
-            return ThemeColor.primaryIcon03Rosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon03ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon03ContrastDark
-        }
+        ThemeColorTable.color("primaryIcon03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryIcon03Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryIcon03ActiveLight
-        case .dark:
-            return ThemeColor.primaryIcon03ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryIcon03ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryIcon03ActiveElectric
-        case .classic:
-            return ThemeColor.primaryIcon03ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryIcon03ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryIcon03ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryIcon03ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryIcon03ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryIcon03Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryText01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryText01Light
-        case .dark:
-            return ThemeColor.primaryText01Dark
-        case .extraDark:
-            return ThemeColor.primaryText01ExtraDark
-        case .electric:
-            return ThemeColor.primaryText01Electric
-        case .classic:
-            return ThemeColor.primaryText01ClassicLight
-        case .indigo:
-            return ThemeColor.primaryText01Indigo
-        case .rosé:
-            return ThemeColor.primaryText01Rosé
-        case .contrastLight:
-            return ThemeColor.primaryText01ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryText01ContrastDark
-        }
+        ThemeColorTable.color("primaryText01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryText02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryText02Light
-        case .dark:
-            return ThemeColor.primaryText02Dark
-        case .extraDark:
-            return ThemeColor.primaryText02ExtraDark
-        case .electric:
-            return ThemeColor.primaryText02Electric
-        case .classic:
-            return ThemeColor.primaryText02ClassicLight
-        case .indigo:
-            return ThemeColor.primaryText02Indigo
-        case .rosé:
-            return ThemeColor.primaryText02Rosé
-        case .contrastLight:
-            return ThemeColor.primaryText02ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryText02ContrastDark
-        }
+        ThemeColorTable.color("primaryText02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryText02Selected(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryText02SelectedLight
-        case .dark:
-            return ThemeColor.primaryText02SelectedDark
-        case .extraDark:
-            return ThemeColor.primaryText02SelectedExtraDark
-        case .electric:
-            return ThemeColor.primaryText02SelectedElectric
-        case .classic:
-            return ThemeColor.primaryText02SelectedClassicLight
-        case .indigo:
-            return ThemeColor.primaryText02SelectedIndigo
-        case .rosé:
-            return ThemeColor.primaryText02SelectedRosé
-        case .contrastLight:
-            return ThemeColor.primaryText02SelectedContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryText02SelectedContrastDark
-        }
+        ThemeColorTable.color("primaryText02Selected", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryField01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryField01Light
-        case .dark:
-            return ThemeColor.primaryField01Dark
-        case .extraDark:
-            return ThemeColor.primaryField01ExtraDark
-        case .electric:
-            return ThemeColor.primaryField01Electric
-        case .classic:
-            return ThemeColor.primaryField01ClassicLight
-        case .indigo:
-            return ThemeColor.primaryField01Indigo
-        case .rosé:
-            return ThemeColor.primaryField01Rosé
-        case .contrastLight:
-            return ThemeColor.primaryField01ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryField01ContrastDark
-        }
+        ThemeColorTable.color("primaryField01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryField01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryField01ActiveLight
-        case .dark:
-            return ThemeColor.primaryField01ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryField01ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryField01ActiveElectric
-        case .classic:
-            return ThemeColor.primaryField01ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryField01ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryField01ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryField01ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryField01ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryField01Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryField02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryField02Light
-        case .dark:
-            return ThemeColor.primaryField02Dark
-        case .extraDark:
-            return ThemeColor.primaryField02ExtraDark
-        case .electric:
-            return ThemeColor.primaryField02Electric
-        case .classic:
-            return ThemeColor.primaryField02ClassicLight
-        case .indigo:
-            return ThemeColor.primaryField02Indigo
-        case .rosé:
-            return ThemeColor.primaryField02Rosé
-        case .contrastLight:
-            return ThemeColor.primaryField02ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryField02ContrastDark
-        }
+        ThemeColorTable.color("primaryField02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryField02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryField02ActiveLight
-        case .dark:
-            return ThemeColor.primaryField02ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryField02ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryField02ActiveElectric
-        case .classic:
-            return ThemeColor.primaryField02ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryField02ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryField02ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryField02ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryField02ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryField02Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryField03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryField03Light
-        case .dark:
-            return ThemeColor.primaryField03Dark
-        case .extraDark:
-            return ThemeColor.primaryField03ExtraDark
-        case .electric:
-            return ThemeColor.primaryField03Electric
-        case .classic:
-            return ThemeColor.primaryField03ClassicLight
-        case .indigo:
-            return ThemeColor.primaryField03Indigo
-        case .rosé:
-            return ThemeColor.primaryField03Rosé
-        case .contrastLight:
-            return ThemeColor.primaryField03ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryField03ContrastDark
-        }
+        ThemeColorTable.color("primaryField03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryField03Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryField03ActiveLight
-        case .dark:
-            return ThemeColor.primaryField03ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryField03ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryField03ActiveElectric
-        case .classic:
-            return ThemeColor.primaryField03ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryField03ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryField03ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryField03ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryField03ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryField03Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive01Light
-        case .dark:
-            return ThemeColor.primaryInteractive01Dark
-        case .extraDark:
-            return ThemeColor.primaryInteractive01ExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive01Electric
-        case .classic:
-            return ThemeColor.primaryInteractive01ClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive01Indigo
-        case .rosé:
-            return ThemeColor.primaryInteractive01Rosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive01ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive01ContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive01Hover(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive01HoverLight
-        case .dark:
-            return ThemeColor.primaryInteractive01HoverDark
-        case .extraDark:
-            return ThemeColor.primaryInteractive01HoverExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive01HoverElectric
-        case .classic:
-            return ThemeColor.primaryInteractive01HoverClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive01HoverIndigo
-        case .rosé:
-            return ThemeColor.primaryInteractive01HoverRosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive01HoverContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive01HoverContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive01Hover", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive01ActiveLight
-        case .dark:
-            return ThemeColor.primaryInteractive01ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryInteractive01ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive01ActiveElectric
-        case .classic:
-            return ThemeColor.primaryInteractive01ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive01ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryInteractive01ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive01ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive01ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive01Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive01Disabled(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive01DisabledLight
-        case .dark:
-            return ThemeColor.primaryInteractive01DisabledDark
-        case .extraDark:
-            return ThemeColor.primaryInteractive01DisabledExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive01DisabledElectric
-        case .classic:
-            return ThemeColor.primaryInteractive01DisabledClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive01DisabledIndigo
-        case .rosé:
-            return ThemeColor.primaryInteractive01DisabledRosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive01DisabledContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive01DisabledContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive01Disabled", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive02Light
-        case .dark:
-            return ThemeColor.primaryInteractive02Dark
-        case .extraDark:
-            return ThemeColor.primaryInteractive02ExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive02Electric
-        case .classic:
-            return ThemeColor.primaryInteractive02ClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive02Indigo
-        case .rosé:
-            return ThemeColor.primaryInteractive02Rosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive02ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive02ContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive02Hover(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive02HoverLight
-        case .dark:
-            return ThemeColor.primaryInteractive02HoverDark
-        case .extraDark:
-            return ThemeColor.primaryInteractive02HoverExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive02HoverElectric
-        case .classic:
-            return ThemeColor.primaryInteractive02HoverClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive02HoverIndigo
-        case .rosé:
-            return ThemeColor.primaryInteractive02HoverRosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive02HoverContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive02HoverContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive02Hover", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive02Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive02ActiveLight
-        case .dark:
-            return ThemeColor.primaryInteractive02ActiveDark
-        case .extraDark:
-            return ThemeColor.primaryInteractive02ActiveExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive02ActiveElectric
-        case .classic:
-            return ThemeColor.primaryInteractive02ActiveClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive02ActiveIndigo
-        case .rosé:
-            return ThemeColor.primaryInteractive02ActiveRosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive02ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive02ActiveContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive02Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func primaryInteractive03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.primaryInteractive03Light
-        case .dark:
-            return ThemeColor.primaryInteractive03Dark
-        case .extraDark:
-            return ThemeColor.primaryInteractive03ExtraDark
-        case .electric:
-            return ThemeColor.primaryInteractive03Electric
-        case .classic:
-            return ThemeColor.primaryInteractive03ClassicLight
-        case .indigo:
-            return ThemeColor.primaryInteractive03Indigo
-        case .rosé:
-            return ThemeColor.primaryInteractive03Rosé
-        case .contrastLight:
-            return ThemeColor.primaryInteractive03ContrastLight
-        case .contrastDark:
-            return ThemeColor.primaryInteractive03ContrastDark
-        }
+        ThemeColorTable.color("primaryInteractive03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryUi01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryUi01Light
-        case .dark:
-            return ThemeColor.secondaryUi01Dark
-        case .extraDark:
-            return ThemeColor.secondaryUi01ExtraDark
-        case .electric:
-            return ThemeColor.secondaryUi01Electric
-        case .classic:
-            return ThemeColor.secondaryUi01ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryUi01Indigo
-        case .rosé:
-            return ThemeColor.secondaryUi01Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryUi01ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryUi01ContrastDark
-        }
+        ThemeColorTable.color("secondaryUi01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryUi02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryUi02Light
-        case .dark:
-            return ThemeColor.secondaryUi02Dark
-        case .extraDark:
-            return ThemeColor.secondaryUi02ExtraDark
-        case .electric:
-            return ThemeColor.secondaryUi02Electric
-        case .classic:
-            return ThemeColor.secondaryUi02ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryUi02Indigo
-        case .rosé:
-            return ThemeColor.secondaryUi02Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryUi02ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryUi02ContrastDark
-        }
+        ThemeColorTable.color("secondaryUi02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryIcon01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryIcon01Light
-        case .dark:
-            return ThemeColor.secondaryIcon01Dark
-        case .extraDark:
-            return ThemeColor.secondaryIcon01ExtraDark
-        case .electric:
-            return ThemeColor.secondaryIcon01Electric
-        case .classic:
-            return ThemeColor.secondaryIcon01ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryIcon01Indigo
-        case .rosé:
-            return ThemeColor.secondaryIcon01Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryIcon01ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryIcon01ContrastDark
-        }
+        ThemeColorTable.color("secondaryIcon01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryIcon02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryIcon02Light
-        case .dark:
-            return ThemeColor.secondaryIcon02Dark
-        case .extraDark:
-            return ThemeColor.secondaryIcon02ExtraDark
-        case .electric:
-            return ThemeColor.secondaryIcon02Electric
-        case .classic:
-            return ThemeColor.secondaryIcon02ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryIcon02Indigo
-        case .rosé:
-            return ThemeColor.secondaryIcon02Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryIcon02ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryIcon02ContrastDark
-        }
+        ThemeColorTable.color("secondaryIcon02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryText01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryText01Light
-        case .dark:
-            return ThemeColor.secondaryText01Dark
-        case .extraDark:
-            return ThemeColor.secondaryText01ExtraDark
-        case .electric:
-            return ThemeColor.secondaryText01Electric
-        case .classic:
-            return ThemeColor.secondaryText01ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryText01Indigo
-        case .rosé:
-            return ThemeColor.secondaryText01Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryText01ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryText01ContrastDark
-        }
+        ThemeColorTable.color("secondaryText01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryText02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryText02Light
-        case .dark:
-            return ThemeColor.secondaryText02Dark
-        case .extraDark:
-            return ThemeColor.secondaryText02ExtraDark
-        case .electric:
-            return ThemeColor.secondaryText02Electric
-        case .classic:
-            return ThemeColor.secondaryText02ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryText02Indigo
-        case .rosé:
-            return ThemeColor.secondaryText02Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryText02ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryText02ContrastDark
-        }
+        ThemeColorTable.color("secondaryText02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryField01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryField01Light
-        case .dark:
-            return ThemeColor.secondaryField01Dark
-        case .extraDark:
-            return ThemeColor.secondaryField01ExtraDark
-        case .electric:
-            return ThemeColor.secondaryField01Electric
-        case .classic:
-            return ThemeColor.secondaryField01ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryField01Indigo
-        case .rosé:
-            return ThemeColor.secondaryField01Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryField01ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryField01ContrastDark
-        }
+        ThemeColorTable.color("secondaryField01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryField01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryField01ActiveLight
-        case .dark:
-            return ThemeColor.secondaryField01ActiveDark
-        case .extraDark:
-            return ThemeColor.secondaryField01ActiveExtraDark
-        case .electric:
-            return ThemeColor.secondaryField01ActiveElectric
-        case .classic:
-            return ThemeColor.secondaryField01ActiveClassicLight
-        case .indigo:
-            return ThemeColor.secondaryField01ActiveIndigo
-        case .rosé:
-            return ThemeColor.secondaryField01ActiveRosé
-        case .contrastLight:
-            return ThemeColor.secondaryField01ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryField01ActiveContrastDark
-        }
+        ThemeColorTable.color("secondaryField01Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryInteractive01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryInteractive01Light
-        case .dark:
-            return ThemeColor.secondaryInteractive01Dark
-        case .extraDark:
-            return ThemeColor.secondaryInteractive01ExtraDark
-        case .electric:
-            return ThemeColor.secondaryInteractive01Electric
-        case .classic:
-            return ThemeColor.secondaryInteractive01ClassicLight
-        case .indigo:
-            return ThemeColor.secondaryInteractive01Indigo
-        case .rosé:
-            return ThemeColor.secondaryInteractive01Rosé
-        case .contrastLight:
-            return ThemeColor.secondaryInteractive01ContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryInteractive01ContrastDark
-        }
+        ThemeColorTable.color("secondaryInteractive01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryInteractive01Hover(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryInteractive01HoverLight
-        case .dark:
-            return ThemeColor.secondaryInteractive01HoverDark
-        case .extraDark:
-            return ThemeColor.secondaryInteractive01HoverExtraDark
-        case .electric:
-            return ThemeColor.secondaryInteractive01HoverElectric
-        case .classic:
-            return ThemeColor.secondaryInteractive01HoverClassicLight
-        case .indigo:
-            return ThemeColor.secondaryInteractive01HoverIndigo
-        case .rosé:
-            return ThemeColor.secondaryInteractive01HoverRosé
-        case .contrastLight:
-            return ThemeColor.secondaryInteractive01HoverContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryInteractive01HoverContrastDark
-        }
+        ThemeColorTable.color("secondaryInteractive01Hover", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func secondaryInteractive01Active(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.secondaryInteractive01ActiveLight
-        case .dark:
-            return ThemeColor.secondaryInteractive01ActiveDark
-        case .extraDark:
-            return ThemeColor.secondaryInteractive01ActiveExtraDark
-        case .electric:
-            return ThemeColor.secondaryInteractive01ActiveElectric
-        case .classic:
-            return ThemeColor.secondaryInteractive01ActiveClassicLight
-        case .indigo:
-            return ThemeColor.secondaryInteractive01ActiveIndigo
-        case .rosé:
-            return ThemeColor.secondaryInteractive01ActiveRosé
-        case .contrastLight:
-            return ThemeColor.secondaryInteractive01ActiveContrastLight
-        case .contrastDark:
-            return ThemeColor.secondaryInteractive01ActiveContrastDark
-        }
+        ThemeColorTable.color("secondaryInteractive01Active", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func podcastUi01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
@@ -4286,243 +2387,43 @@ nonisolated struct ThemeColor {
     }
 
     static func support01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support01Light
-        case .dark:
-            return ThemeColor.support01Dark
-        case .extraDark:
-            return ThemeColor.support01ExtraDark
-        case .electric:
-            return ThemeColor.support01Electric
-        case .classic:
-            return ThemeColor.support01ClassicLight
-        case .indigo:
-            return ThemeColor.support01Indigo
-        case .rosé:
-            return ThemeColor.support01Rosé
-        case .contrastLight:
-            return ThemeColor.support01ContrastLight
-        case .contrastDark:
-            return ThemeColor.support01ContrastDark
-        }
+        ThemeColorTable.color("support01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support02Light
-        case .dark:
-            return ThemeColor.support02Dark
-        case .extraDark:
-            return ThemeColor.support02ExtraDark
-        case .electric:
-            return ThemeColor.support02Electric
-        case .classic:
-            return ThemeColor.support02ClassicLight
-        case .indigo:
-            return ThemeColor.support02Indigo
-        case .rosé:
-            return ThemeColor.support02Rosé
-        case .contrastLight:
-            return ThemeColor.support02ContrastLight
-        case .contrastDark:
-            return ThemeColor.support02ContrastDark
-        }
+        ThemeColorTable.color("support02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support03Light
-        case .dark:
-            return ThemeColor.support03Dark
-        case .extraDark:
-            return ThemeColor.support03ExtraDark
-        case .electric:
-            return ThemeColor.support03Electric
-        case .classic:
-            return ThemeColor.support03ClassicLight
-        case .indigo:
-            return ThemeColor.support03Indigo
-        case .rosé:
-            return ThemeColor.support03Rosé
-        case .contrastLight:
-            return ThemeColor.support03ContrastLight
-        case .contrastDark:
-            return ThemeColor.support03ContrastDark
-        }
+        ThemeColorTable.color("support03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support04Light
-        case .dark:
-            return ThemeColor.support04Dark
-        case .extraDark:
-            return ThemeColor.support04ExtraDark
-        case .electric:
-            return ThemeColor.support04Electric
-        case .classic:
-            return ThemeColor.support04ClassicLight
-        case .indigo:
-            return ThemeColor.support04Indigo
-        case .rosé:
-            return ThemeColor.support04Rosé
-        case .contrastLight:
-            return ThemeColor.support04ContrastLight
-        case .contrastDark:
-            return ThemeColor.support04ContrastDark
-        }
+        ThemeColorTable.color("support04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support05Light
-        case .dark:
-            return ThemeColor.support05Dark
-        case .extraDark:
-            return ThemeColor.support05ExtraDark
-        case .electric:
-            return ThemeColor.support05Electric
-        case .classic:
-            return ThemeColor.support05ClassicLight
-        case .indigo:
-            return ThemeColor.support05Indigo
-        case .rosé:
-            return ThemeColor.support05Rosé
-        case .contrastLight:
-            return ThemeColor.support05ContrastLight
-        case .contrastDark:
-            return ThemeColor.support05ContrastDark
-        }
+        ThemeColorTable.color("support05", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support06Light
-        case .dark:
-            return ThemeColor.support06Dark
-        case .extraDark:
-            return ThemeColor.support06ExtraDark
-        case .electric:
-            return ThemeColor.support06Electric
-        case .classic:
-            return ThemeColor.support06ClassicLight
-        case .indigo:
-            return ThemeColor.support06Indigo
-        case .rosé:
-            return ThemeColor.support06Rosé
-        case .contrastLight:
-            return ThemeColor.support06ContrastLight
-        case .contrastDark:
-            return ThemeColor.support06ContrastDark
-        }
+        ThemeColorTable.color("support06", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support07(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support07Light
-        case .dark:
-            return ThemeColor.support07Dark
-        case .extraDark:
-            return ThemeColor.support07ExtraDark
-        case .electric:
-            return ThemeColor.support07Electric
-        case .classic:
-            return ThemeColor.support07ClassicLight
-        case .indigo:
-            return ThemeColor.support07Indigo
-        case .rosé:
-            return ThemeColor.support07Rosé
-        case .contrastLight:
-            return ThemeColor.support07ContrastLight
-        case .contrastDark:
-            return ThemeColor.support07ContrastDark
-        }
+        ThemeColorTable.color("support07", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support08(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support08Light
-        case .dark:
-            return ThemeColor.support08Dark
-        case .extraDark:
-            return ThemeColor.support08ExtraDark
-        case .electric:
-            return ThemeColor.support08Electric
-        case .classic:
-            return ThemeColor.support08ClassicLight
-        case .indigo:
-            return ThemeColor.support08Indigo
-        case .rosé:
-            return ThemeColor.support08Rosé
-        case .contrastLight:
-            return ThemeColor.support08ContrastLight
-        case .contrastDark:
-            return ThemeColor.support08ContrastDark
-        }
+        ThemeColorTable.color("support08", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support09(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support09Light
-        case .dark:
-            return ThemeColor.support09Dark
-        case .extraDark:
-            return ThemeColor.support09ExtraDark
-        case .electric:
-            return ThemeColor.support09Electric
-        case .classic:
-            return ThemeColor.support09ClassicLight
-        case .indigo:
-            return ThemeColor.support09Indigo
-        case .rosé:
-            return ThemeColor.support09Rosé
-        case .contrastLight:
-            return ThemeColor.support09ContrastLight
-        case .contrastDark:
-            return ThemeColor.support09ContrastDark
-        }
+        ThemeColorTable.color("support09", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func support10(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.support10Light
-        case .dark:
-            return ThemeColor.support10Dark
-        case .extraDark:
-            return ThemeColor.support10ExtraDark
-        case .electric:
-            return ThemeColor.support10Electric
-        case .classic:
-            return ThemeColor.support10ClassicLight
-        case .indigo:
-            return ThemeColor.support10Indigo
-        case .rosé:
-            return ThemeColor.support10Rosé
-        case .contrastLight:
-            return ThemeColor.support10ContrastLight
-        case .contrastDark:
-            return ThemeColor.support10ContrastDark
-        }
+        ThemeColorTable.color("support10", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func playerBackground01(podcastColor: UIColor, for theme: Theme.ThemeType? = nil) -> UIColor {
@@ -4742,1346 +2643,226 @@ nonisolated struct ThemeColor {
     }
 
     static func playerContrast01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.playerContrast01Light
-        case .dark:
-            return ThemeColor.playerContrast01Dark
-        case .extraDark:
-            return ThemeColor.playerContrast01ExtraDark
-        case .electric:
-            return ThemeColor.playerContrast01Electric
-        case .classic:
-            return ThemeColor.playerContrast01ClassicLight
-        case .indigo:
-            return ThemeColor.playerContrast01Indigo
-        case .rosé:
-            return ThemeColor.playerContrast01Rosé
-        case .contrastLight:
-            return ThemeColor.playerContrast01ContrastLight
-        case .contrastDark:
-            return ThemeColor.playerContrast01ContrastDark
-        }
+        ThemeColorTable.color("playerContrast01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func playerContrast02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.playerContrast02Light
-        case .dark:
-            return ThemeColor.playerContrast02Dark
-        case .extraDark:
-            return ThemeColor.playerContrast02ExtraDark
-        case .electric:
-            return ThemeColor.playerContrast02Electric
-        case .classic:
-            return ThemeColor.playerContrast02ClassicLight
-        case .indigo:
-            return ThemeColor.playerContrast02Indigo
-        case .rosé:
-            return ThemeColor.playerContrast02Rosé
-        case .contrastLight:
-            return ThemeColor.playerContrast02ContrastLight
-        case .contrastDark:
-            return ThemeColor.playerContrast02ContrastDark
-        }
+        ThemeColorTable.color("playerContrast02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func playerContrast03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.playerContrast03Light
-        case .dark:
-            return ThemeColor.playerContrast03Dark
-        case .extraDark:
-            return ThemeColor.playerContrast03ExtraDark
-        case .electric:
-            return ThemeColor.playerContrast03Electric
-        case .classic:
-            return ThemeColor.playerContrast03ClassicLight
-        case .indigo:
-            return ThemeColor.playerContrast03Indigo
-        case .rosé:
-            return ThemeColor.playerContrast03Rosé
-        case .contrastLight:
-            return ThemeColor.playerContrast03ContrastLight
-        case .contrastDark:
-            return ThemeColor.playerContrast03ContrastDark
-        }
+        ThemeColorTable.color("playerContrast03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func playerContrast04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.playerContrast04Light
-        case .dark:
-            return ThemeColor.playerContrast04Dark
-        case .extraDark:
-            return ThemeColor.playerContrast04ExtraDark
-        case .electric:
-            return ThemeColor.playerContrast04Electric
-        case .classic:
-            return ThemeColor.playerContrast04ClassicLight
-        case .indigo:
-            return ThemeColor.playerContrast04Indigo
-        case .rosé:
-            return ThemeColor.playerContrast04Rosé
-        case .contrastLight:
-            return ThemeColor.playerContrast04ContrastLight
-        case .contrastDark:
-            return ThemeColor.playerContrast04ContrastDark
-        }
+        ThemeColorTable.color("playerContrast04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func playerContrast05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.playerContrast05Light
-        case .dark:
-            return ThemeColor.playerContrast05Dark
-        case .extraDark:
-            return ThemeColor.playerContrast05ExtraDark
-        case .electric:
-            return ThemeColor.playerContrast05Electric
-        case .classic:
-            return ThemeColor.playerContrast05ClassicLight
-        case .indigo:
-            return ThemeColor.playerContrast05Indigo
-        case .rosé:
-            return ThemeColor.playerContrast05Rosé
-        case .contrastLight:
-            return ThemeColor.playerContrast05ContrastLight
-        case .contrastDark:
-            return ThemeColor.playerContrast05ContrastDark
-        }
+        ThemeColorTable.color("playerContrast05", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func playerContrast06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.playerContrast06Light
-        case .dark:
-            return ThemeColor.playerContrast06Dark
-        case .extraDark:
-            return ThemeColor.playerContrast06ExtraDark
-        case .electric:
-            return ThemeColor.playerContrast06Electric
-        case .classic:
-            return ThemeColor.playerContrast06ClassicLight
-        case .indigo:
-            return ThemeColor.playerContrast06Indigo
-        case .rosé:
-            return ThemeColor.playerContrast06Rosé
-        case .contrastLight:
-            return ThemeColor.playerContrast06ContrastLight
-        case .contrastDark:
-            return ThemeColor.playerContrast06ContrastDark
-        }
+        ThemeColorTable.color("playerContrast06", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func contrast01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.contrast01Light
-        case .dark:
-            return ThemeColor.contrast01Dark
-        case .extraDark:
-            return ThemeColor.contrast01ExtraDark
-        case .electric:
-            return ThemeColor.contrast01Electric
-        case .classic:
-            return ThemeColor.contrast01ClassicLight
-        case .indigo:
-            return ThemeColor.contrast01Indigo
-        case .rosé:
-            return ThemeColor.contrast01Rosé
-        case .contrastLight:
-            return ThemeColor.contrast01ContrastLight
-        case .contrastDark:
-            return ThemeColor.contrast01ContrastDark
-        }
+        ThemeColorTable.color("contrast01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func contrast02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.contrast02Light
-        case .dark:
-            return ThemeColor.contrast02Dark
-        case .extraDark:
-            return ThemeColor.contrast02ExtraDark
-        case .electric:
-            return ThemeColor.contrast02Electric
-        case .classic:
-            return ThemeColor.contrast02ClassicLight
-        case .indigo:
-            return ThemeColor.contrast02Indigo
-        case .rosé:
-            return ThemeColor.contrast02Rosé
-        case .contrastLight:
-            return ThemeColor.contrast02ContrastLight
-        case .contrastDark:
-            return ThemeColor.contrast02ContrastDark
-        }
+        ThemeColorTable.color("contrast02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func contrast03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.contrast03Light
-        case .dark:
-            return ThemeColor.contrast03Dark
-        case .extraDark:
-            return ThemeColor.contrast03ExtraDark
-        case .electric:
-            return ThemeColor.contrast03Electric
-        case .classic:
-            return ThemeColor.contrast03ClassicLight
-        case .indigo:
-            return ThemeColor.contrast03Indigo
-        case .rosé:
-            return ThemeColor.contrast03Rosé
-        case .contrastLight:
-            return ThemeColor.contrast03ContrastLight
-        case .contrastDark:
-            return ThemeColor.contrast03ContrastDark
-        }
+        ThemeColorTable.color("contrast03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func contrast04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.contrast04Light
-        case .dark:
-            return ThemeColor.contrast04Dark
-        case .extraDark:
-            return ThemeColor.contrast04ExtraDark
-        case .electric:
-            return ThemeColor.contrast04Electric
-        case .classic:
-            return ThemeColor.contrast04ClassicLight
-        case .indigo:
-            return ThemeColor.contrast04Indigo
-        case .rosé:
-            return ThemeColor.contrast04Rosé
-        case .contrastLight:
-            return ThemeColor.contrast04ContrastLight
-        case .contrastDark:
-            return ThemeColor.contrast04ContrastDark
-        }
+        ThemeColorTable.color("contrast04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter01Light
-        case .dark:
-            return ThemeColor.filter01Dark
-        case .extraDark:
-            return ThemeColor.filter01ExtraDark
-        case .electric:
-            return ThemeColor.filter01Electric
-        case .classic:
-            return ThemeColor.filter01ClassicLight
-        case .indigo:
-            return ThemeColor.filter01Indigo
-        case .rosé:
-            return ThemeColor.filter01Rosé
-        case .contrastLight:
-            return ThemeColor.filter01ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter01ContrastDark
-        }
+        ThemeColorTable.color("filter01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter02Light
-        case .dark:
-            return ThemeColor.filter02Dark
-        case .extraDark:
-            return ThemeColor.filter02ExtraDark
-        case .electric:
-            return ThemeColor.filter02Electric
-        case .classic:
-            return ThemeColor.filter02ClassicLight
-        case .indigo:
-            return ThemeColor.filter02Indigo
-        case .rosé:
-            return ThemeColor.filter02Rosé
-        case .contrastLight:
-            return ThemeColor.filter02ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter02ContrastDark
-        }
+        ThemeColorTable.color("filter02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter03Light
-        case .dark:
-            return ThemeColor.filter03Dark
-        case .extraDark:
-            return ThemeColor.filter03ExtraDark
-        case .electric:
-            return ThemeColor.filter03Electric
-        case .classic:
-            return ThemeColor.filter03ClassicLight
-        case .indigo:
-            return ThemeColor.filter03Indigo
-        case .rosé:
-            return ThemeColor.filter03Rosé
-        case .contrastLight:
-            return ThemeColor.filter03ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter03ContrastDark
-        }
+        ThemeColorTable.color("filter03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter04Light
-        case .dark:
-            return ThemeColor.filter04Dark
-        case .extraDark:
-            return ThemeColor.filter04ExtraDark
-        case .electric:
-            return ThemeColor.filter04Electric
-        case .classic:
-            return ThemeColor.filter04ClassicLight
-        case .indigo:
-            return ThemeColor.filter04Indigo
-        case .rosé:
-            return ThemeColor.filter04Rosé
-        case .contrastLight:
-            return ThemeColor.filter04ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter04ContrastDark
-        }
+        ThemeColorTable.color("filter04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter05Light
-        case .dark:
-            return ThemeColor.filter05Dark
-        case .extraDark:
-            return ThemeColor.filter05ExtraDark
-        case .electric:
-            return ThemeColor.filter05Electric
-        case .classic:
-            return ThemeColor.filter05ClassicLight
-        case .indigo:
-            return ThemeColor.filter05Indigo
-        case .rosé:
-            return ThemeColor.filter05Rosé
-        case .contrastLight:
-            return ThemeColor.filter05ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter05ContrastDark
-        }
+        ThemeColorTable.color("filter05", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter06Light
-        case .dark:
-            return ThemeColor.filter06Dark
-        case .extraDark:
-            return ThemeColor.filter06ExtraDark
-        case .electric:
-            return ThemeColor.filter06Electric
-        case .classic:
-            return ThemeColor.filter06ClassicLight
-        case .indigo:
-            return ThemeColor.filter06Indigo
-        case .rosé:
-            return ThemeColor.filter06Rosé
-        case .contrastLight:
-            return ThemeColor.filter06ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter06ContrastDark
-        }
+        ThemeColorTable.color("filter06", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter07(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter07Light
-        case .dark:
-            return ThemeColor.filter07Dark
-        case .extraDark:
-            return ThemeColor.filter07ExtraDark
-        case .electric:
-            return ThemeColor.filter07Electric
-        case .classic:
-            return ThemeColor.filter07ClassicLight
-        case .indigo:
-            return ThemeColor.filter07Indigo
-        case .rosé:
-            return ThemeColor.filter07Rosé
-        case .contrastLight:
-            return ThemeColor.filter07ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter07ContrastDark
-        }
+        ThemeColorTable.color("filter07", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter08(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter08Light
-        case .dark:
-            return ThemeColor.filter08Dark
-        case .extraDark:
-            return ThemeColor.filter08ExtraDark
-        case .electric:
-            return ThemeColor.filter08Electric
-        case .classic:
-            return ThemeColor.filter08ClassicLight
-        case .indigo:
-            return ThemeColor.filter08Indigo
-        case .rosé:
-            return ThemeColor.filter08Rosé
-        case .contrastLight:
-            return ThemeColor.filter08ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter08ContrastDark
-        }
+        ThemeColorTable.color("filter08", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter09(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter09Light
-        case .dark:
-            return ThemeColor.filter09Dark
-        case .extraDark:
-            return ThemeColor.filter09ExtraDark
-        case .electric:
-            return ThemeColor.filter09Electric
-        case .classic:
-            return ThemeColor.filter09ClassicLight
-        case .indigo:
-            return ThemeColor.filter09Indigo
-        case .rosé:
-            return ThemeColor.filter09Rosé
-        case .contrastLight:
-            return ThemeColor.filter09ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter09ContrastDark
-        }
+        ThemeColorTable.color("filter09", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter10(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter10Light
-        case .dark:
-            return ThemeColor.filter10Dark
-        case .extraDark:
-            return ThemeColor.filter10ExtraDark
-        case .electric:
-            return ThemeColor.filter10Electric
-        case .classic:
-            return ThemeColor.filter10ClassicLight
-        case .indigo:
-            return ThemeColor.filter10Indigo
-        case .rosé:
-            return ThemeColor.filter10Rosé
-        case .contrastLight:
-            return ThemeColor.filter10ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter10ContrastDark
-        }
+        ThemeColorTable.color("filter10", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter11(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter11Light
-        case .dark:
-            return ThemeColor.filter11Dark
-        case .extraDark:
-            return ThemeColor.filter11ExtraDark
-        case .electric:
-            return ThemeColor.filter11Electric
-        case .classic:
-            return ThemeColor.filter11ClassicLight
-        case .indigo:
-            return ThemeColor.filter11Indigo
-        case .rosé:
-            return ThemeColor.filter11Rosé
-        case .contrastLight:
-            return ThemeColor.filter11ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter11ContrastDark
-        }
+        ThemeColorTable.color("filter11", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func filter12(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.filter12Light
-        case .dark:
-            return ThemeColor.filter12Dark
-        case .extraDark:
-            return ThemeColor.filter12ExtraDark
-        case .electric:
-            return ThemeColor.filter12Electric
-        case .classic:
-            return ThemeColor.filter12ClassicLight
-        case .indigo:
-            return ThemeColor.filter12Indigo
-        case .rosé:
-            return ThemeColor.filter12Rosé
-        case .contrastLight:
-            return ThemeColor.filter12ContrastLight
-        case .contrastDark:
-            return ThemeColor.filter12ContrastDark
-        }
+        ThemeColorTable.color("filter12", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func veil(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.veilLight
-        case .dark:
-            return ThemeColor.veilDark
-        case .extraDark:
-            return ThemeColor.veilExtraDark
-        case .electric:
-            return ThemeColor.veilElectric
-        case .classic:
-            return ThemeColor.veilClassicLight
-        case .indigo:
-            return ThemeColor.veilIndigo
-        case .rosé:
-            return ThemeColor.veilRosé
-        case .contrastLight:
-            return ThemeColor.veilContrastLight
-        case .contrastDark:
-            return ThemeColor.veilContrastDark
-        }
+        ThemeColorTable.color("veil", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient01A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient01ALight
-        case .dark:
-            return ThemeColor.gradient01ADark
-        case .extraDark:
-            return ThemeColor.gradient01AExtraDark
-        case .electric:
-            return ThemeColor.gradient01AElectric
-        case .classic:
-            return ThemeColor.gradient01AClassicLight
-        case .indigo:
-            return ThemeColor.gradient01AIndigo
-        case .rosé:
-            return ThemeColor.gradient01ARosé
-        case .contrastLight:
-            return ThemeColor.gradient01AContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient01AContrastDark
-        }
+        ThemeColorTable.color("gradient01A", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient01E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient01ELight
-        case .dark:
-            return ThemeColor.gradient01EDark
-        case .extraDark:
-            return ThemeColor.gradient01EExtraDark
-        case .electric:
-            return ThemeColor.gradient01EElectric
-        case .classic:
-            return ThemeColor.gradient01EClassicLight
-        case .indigo:
-            return ThemeColor.gradient01EIndigo
-        case .rosé:
-            return ThemeColor.gradient01ERosé
-        case .contrastLight:
-            return ThemeColor.gradient01EContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient01EContrastDark
-        }
+        ThemeColorTable.color("gradient01E", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient02A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient02ALight
-        case .dark:
-            return ThemeColor.gradient02ADark
-        case .extraDark:
-            return ThemeColor.gradient02AExtraDark
-        case .electric:
-            return ThemeColor.gradient02AElectric
-        case .classic:
-            return ThemeColor.gradient02AClassicLight
-        case .indigo:
-            return ThemeColor.gradient02AIndigo
-        case .rosé:
-            return ThemeColor.gradient02ARosé
-        case .contrastLight:
-            return ThemeColor.gradient02AContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient02AContrastDark
-        }
+        ThemeColorTable.color("gradient02A", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient02E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient02ELight
-        case .dark:
-            return ThemeColor.gradient02EDark
-        case .extraDark:
-            return ThemeColor.gradient02EExtraDark
-        case .electric:
-            return ThemeColor.gradient02EElectric
-        case .classic:
-            return ThemeColor.gradient02EClassicLight
-        case .indigo:
-            return ThemeColor.gradient02EIndigo
-        case .rosé:
-            return ThemeColor.gradient02ERosé
-        case .contrastLight:
-            return ThemeColor.gradient02EContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient02EContrastDark
-        }
+        ThemeColorTable.color("gradient02E", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient03A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient03ALight
-        case .dark:
-            return ThemeColor.gradient03ADark
-        case .extraDark:
-            return ThemeColor.gradient03AExtraDark
-        case .electric:
-            return ThemeColor.gradient03AElectric
-        case .classic:
-            return ThemeColor.gradient03AClassicLight
-        case .indigo:
-            return ThemeColor.gradient03AIndigo
-        case .rosé:
-            return ThemeColor.gradient03ARosé
-        case .contrastLight:
-            return ThemeColor.gradient03AContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient03AContrastDark
-        }
+        ThemeColorTable.color("gradient03A", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient03E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient03ELight
-        case .dark:
-            return ThemeColor.gradient03EDark
-        case .extraDark:
-            return ThemeColor.gradient03EExtraDark
-        case .electric:
-            return ThemeColor.gradient03EElectric
-        case .classic:
-            return ThemeColor.gradient03EClassicLight
-        case .indigo:
-            return ThemeColor.gradient03EIndigo
-        case .rosé:
-            return ThemeColor.gradient03ERosé
-        case .contrastLight:
-            return ThemeColor.gradient03EContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient03EContrastDark
-        }
+        ThemeColorTable.color("gradient03E", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient04A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient04ALight
-        case .dark:
-            return ThemeColor.gradient04ADark
-        case .extraDark:
-            return ThemeColor.gradient04AExtraDark
-        case .electric:
-            return ThemeColor.gradient04AElectric
-        case .classic:
-            return ThemeColor.gradient04AClassicLight
-        case .indigo:
-            return ThemeColor.gradient04AIndigo
-        case .rosé:
-            return ThemeColor.gradient04ARosé
-        case .contrastLight:
-            return ThemeColor.gradient04AContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient04AContrastDark
-        }
+        ThemeColorTable.color("gradient04A", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient04E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient04ELight
-        case .dark:
-            return ThemeColor.gradient04EDark
-        case .extraDark:
-            return ThemeColor.gradient04EExtraDark
-        case .electric:
-            return ThemeColor.gradient04EElectric
-        case .classic:
-            return ThemeColor.gradient04EClassicLight
-        case .indigo:
-            return ThemeColor.gradient04EIndigo
-        case .rosé:
-            return ThemeColor.gradient04ERosé
-        case .contrastLight:
-            return ThemeColor.gradient04EContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient04EContrastDark
-        }
+        ThemeColorTable.color("gradient04E", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient05A(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient05ALight
-        case .dark:
-            return ThemeColor.gradient05ADark
-        case .extraDark:
-            return ThemeColor.gradient05AExtraDark
-        case .electric:
-            return ThemeColor.gradient05AElectric
-        case .classic:
-            return ThemeColor.gradient05AClassicLight
-        case .indigo:
-            return ThemeColor.gradient05AIndigo
-        case .rosé:
-            return ThemeColor.gradient05ARosé
-        case .contrastLight:
-            return ThemeColor.gradient05AContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient05AContrastDark
-        }
+        ThemeColorTable.color("gradient05A", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func gradient05E(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.gradient05ELight
-        case .dark:
-            return ThemeColor.gradient05EDark
-        case .extraDark:
-            return ThemeColor.gradient05EExtraDark
-        case .electric:
-            return ThemeColor.gradient05EElectric
-        case .classic:
-            return ThemeColor.gradient05EClassicLight
-        case .indigo:
-            return ThemeColor.gradient05EIndigo
-        case .rosé:
-            return ThemeColor.gradient05ERosé
-        case .contrastLight:
-            return ThemeColor.gradient05EContrastLight
-        case .contrastDark:
-            return ThemeColor.gradient05EContrastDark
-        }
+        ThemeColorTable.color("gradient05E", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func imageFilter01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.imageFilter01Light
-        case .dark:
-            return ThemeColor.imageFilter01Dark
-        case .extraDark:
-            return ThemeColor.imageFilter01ExtraDark
-        case .electric:
-            return ThemeColor.imageFilter01Electric
-        case .classic:
-            return ThemeColor.imageFilter01ClassicLight
-        case .indigo:
-            return ThemeColor.imageFilter01Indigo
-        case .rosé:
-            return ThemeColor.imageFilter01Rosé
-        case .contrastLight:
-            return ThemeColor.imageFilter01ContrastLight
-        case .contrastDark:
-            return ThemeColor.imageFilter01ContrastDark
-        }
+        ThemeColorTable.color("imageFilter01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func imageFilter02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.imageFilter02Light
-        case .dark:
-            return ThemeColor.imageFilter02Dark
-        case .extraDark:
-            return ThemeColor.imageFilter02ExtraDark
-        case .electric:
-            return ThemeColor.imageFilter02Electric
-        case .classic:
-            return ThemeColor.imageFilter02ClassicLight
-        case .indigo:
-            return ThemeColor.imageFilter02Indigo
-        case .rosé:
-            return ThemeColor.imageFilter02Rosé
-        case .contrastLight:
-            return ThemeColor.imageFilter02ContrastLight
-        case .contrastDark:
-            return ThemeColor.imageFilter02ContrastDark
-        }
+        ThemeColorTable.color("imageFilter02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func imageFilter03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.imageFilter03Light
-        case .dark:
-            return ThemeColor.imageFilter03Dark
-        case .extraDark:
-            return ThemeColor.imageFilter03ExtraDark
-        case .electric:
-            return ThemeColor.imageFilter03Electric
-        case .classic:
-            return ThemeColor.imageFilter03ClassicLight
-        case .indigo:
-            return ThemeColor.imageFilter03Indigo
-        case .rosé:
-            return ThemeColor.imageFilter03Rosé
-        case .contrastLight:
-            return ThemeColor.imageFilter03ContrastLight
-        case .contrastDark:
-            return ThemeColor.imageFilter03ContrastDark
-        }
+        ThemeColorTable.color("imageFilter03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func imageFilter04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.imageFilter04Light
-        case .dark:
-            return ThemeColor.imageFilter04Dark
-        case .extraDark:
-            return ThemeColor.imageFilter04ExtraDark
-        case .electric:
-            return ThemeColor.imageFilter04Electric
-        case .classic:
-            return ThemeColor.imageFilter04ClassicLight
-        case .indigo:
-            return ThemeColor.imageFilter04Indigo
-        case .rosé:
-            return ThemeColor.imageFilter04Rosé
-        case .contrastLight:
-            return ThemeColor.imageFilter04ContrastLight
-        case .contrastDark:
-            return ThemeColor.imageFilter04ContrastDark
-        }
+        ThemeColorTable.color("imageFilter04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category01(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category01Light
-        case .dark:
-            return ThemeColor.category01Dark
-        case .extraDark:
-            return ThemeColor.category01ExtraDark
-        case .electric:
-            return ThemeColor.category01Electric
-        case .classic:
-            return ThemeColor.category01ClassicLight
-        case .indigo:
-            return ThemeColor.category01Indigo
-        case .rosé:
-            return ThemeColor.category01Rosé
-        case .contrastLight:
-            return ThemeColor.category01ContrastLight
-        case .contrastDark:
-            return ThemeColor.category01ContrastDark
-        }
+        ThemeColorTable.color("category01", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category02(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category02Light
-        case .dark:
-            return ThemeColor.category02Dark
-        case .extraDark:
-            return ThemeColor.category02ExtraDark
-        case .electric:
-            return ThemeColor.category02Electric
-        case .classic:
-            return ThemeColor.category02ClassicLight
-        case .indigo:
-            return ThemeColor.category02Indigo
-        case .rosé:
-            return ThemeColor.category02Rosé
-        case .contrastLight:
-            return ThemeColor.category02ContrastLight
-        case .contrastDark:
-            return ThemeColor.category02ContrastDark
-        }
+        ThemeColorTable.color("category02", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category03(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category03Light
-        case .dark:
-            return ThemeColor.category03Dark
-        case .extraDark:
-            return ThemeColor.category03ExtraDark
-        case .electric:
-            return ThemeColor.category03Electric
-        case .classic:
-            return ThemeColor.category03ClassicLight
-        case .indigo:
-            return ThemeColor.category03Indigo
-        case .rosé:
-            return ThemeColor.category03Rosé
-        case .contrastLight:
-            return ThemeColor.category03ContrastLight
-        case .contrastDark:
-            return ThemeColor.category03ContrastDark
-        }
+        ThemeColorTable.color("category03", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category04(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category04Light
-        case .dark:
-            return ThemeColor.category04Dark
-        case .extraDark:
-            return ThemeColor.category04ExtraDark
-        case .electric:
-            return ThemeColor.category04Electric
-        case .classic:
-            return ThemeColor.category04ClassicLight
-        case .indigo:
-            return ThemeColor.category04Indigo
-        case .rosé:
-            return ThemeColor.category04Rosé
-        case .contrastLight:
-            return ThemeColor.category04ContrastLight
-        case .contrastDark:
-            return ThemeColor.category04ContrastDark
-        }
+        ThemeColorTable.color("category04", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category05(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category05Light
-        case .dark:
-            return ThemeColor.category05Dark
-        case .extraDark:
-            return ThemeColor.category05ExtraDark
-        case .electric:
-            return ThemeColor.category05Electric
-        case .classic:
-            return ThemeColor.category05ClassicLight
-        case .indigo:
-            return ThemeColor.category05Indigo
-        case .rosé:
-            return ThemeColor.category05Rosé
-        case .contrastLight:
-            return ThemeColor.category05ContrastLight
-        case .contrastDark:
-            return ThemeColor.category05ContrastDark
-        }
+        ThemeColorTable.color("category05", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category06(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category06Light
-        case .dark:
-            return ThemeColor.category06Dark
-        case .extraDark:
-            return ThemeColor.category06ExtraDark
-        case .electric:
-            return ThemeColor.category06Electric
-        case .classic:
-            return ThemeColor.category06ClassicLight
-        case .indigo:
-            return ThemeColor.category06Indigo
-        case .rosé:
-            return ThemeColor.category06Rosé
-        case .contrastLight:
-            return ThemeColor.category06ContrastLight
-        case .contrastDark:
-            return ThemeColor.category06ContrastDark
-        }
+        ThemeColorTable.color("category06", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category07(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category07Light
-        case .dark:
-            return ThemeColor.category07Dark
-        case .extraDark:
-            return ThemeColor.category07ExtraDark
-        case .electric:
-            return ThemeColor.category07Electric
-        case .classic:
-            return ThemeColor.category07ClassicLight
-        case .indigo:
-            return ThemeColor.category07Indigo
-        case .rosé:
-            return ThemeColor.category07Rosé
-        case .contrastLight:
-            return ThemeColor.category07ContrastLight
-        case .contrastDark:
-            return ThemeColor.category07ContrastDark
-        }
+        ThemeColorTable.color("category07", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category08(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category08Light
-        case .dark:
-            return ThemeColor.category08Dark
-        case .extraDark:
-            return ThemeColor.category08ExtraDark
-        case .electric:
-            return ThemeColor.category08Electric
-        case .classic:
-            return ThemeColor.category08ClassicLight
-        case .indigo:
-            return ThemeColor.category08Indigo
-        case .rosé:
-            return ThemeColor.category08Rosé
-        case .contrastLight:
-            return ThemeColor.category08ContrastLight
-        case .contrastDark:
-            return ThemeColor.category08ContrastDark
-        }
+        ThemeColorTable.color("category08", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category09(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category09Light
-        case .dark:
-            return ThemeColor.category09Dark
-        case .extraDark:
-            return ThemeColor.category09ExtraDark
-        case .electric:
-            return ThemeColor.category09Electric
-        case .classic:
-            return ThemeColor.category09ClassicLight
-        case .indigo:
-            return ThemeColor.category09Indigo
-        case .rosé:
-            return ThemeColor.category09Rosé
-        case .contrastLight:
-            return ThemeColor.category09ContrastLight
-        case .contrastDark:
-            return ThemeColor.category09ContrastDark
-        }
+        ThemeColorTable.color("category09", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category10(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category10Light
-        case .dark:
-            return ThemeColor.category10Dark
-        case .extraDark:
-            return ThemeColor.category10ExtraDark
-        case .electric:
-            return ThemeColor.category10Electric
-        case .classic:
-            return ThemeColor.category10ClassicLight
-        case .indigo:
-            return ThemeColor.category10Indigo
-        case .rosé:
-            return ThemeColor.category10Rosé
-        case .contrastLight:
-            return ThemeColor.category10ContrastLight
-        case .contrastDark:
-            return ThemeColor.category10ContrastDark
-        }
+        ThemeColorTable.color("category10", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category11(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category11Light
-        case .dark:
-            return ThemeColor.category11Dark
-        case .extraDark:
-            return ThemeColor.category11ExtraDark
-        case .electric:
-            return ThemeColor.category11Electric
-        case .classic:
-            return ThemeColor.category11ClassicLight
-        case .indigo:
-            return ThemeColor.category11Indigo
-        case .rosé:
-            return ThemeColor.category11Rosé
-        case .contrastLight:
-            return ThemeColor.category11ContrastLight
-        case .contrastDark:
-            return ThemeColor.category11ContrastDark
-        }
+        ThemeColorTable.color("category11", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category12(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category12Light
-        case .dark:
-            return ThemeColor.category12Dark
-        case .extraDark:
-            return ThemeColor.category12ExtraDark
-        case .electric:
-            return ThemeColor.category12Electric
-        case .classic:
-            return ThemeColor.category12ClassicLight
-        case .indigo:
-            return ThemeColor.category12Indigo
-        case .rosé:
-            return ThemeColor.category12Rosé
-        case .contrastLight:
-            return ThemeColor.category12ContrastLight
-        case .contrastDark:
-            return ThemeColor.category12ContrastDark
-        }
+        ThemeColorTable.color("category12", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category13(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category13Light
-        case .dark:
-            return ThemeColor.category13Dark
-        case .extraDark:
-            return ThemeColor.category13ExtraDark
-        case .electric:
-            return ThemeColor.category13Electric
-        case .classic:
-            return ThemeColor.category13ClassicLight
-        case .indigo:
-            return ThemeColor.category13Indigo
-        case .rosé:
-            return ThemeColor.category13Rosé
-        case .contrastLight:
-            return ThemeColor.category13ContrastLight
-        case .contrastDark:
-            return ThemeColor.category13ContrastDark
-        }
+        ThemeColorTable.color("category13", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category14(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category14Light
-        case .dark:
-            return ThemeColor.category14Dark
-        case .extraDark:
-            return ThemeColor.category14ExtraDark
-        case .electric:
-            return ThemeColor.category14Electric
-        case .classic:
-            return ThemeColor.category14ClassicLight
-        case .indigo:
-            return ThemeColor.category14Indigo
-        case .rosé:
-            return ThemeColor.category14Rosé
-        case .contrastLight:
-            return ThemeColor.category14ContrastLight
-        case .contrastDark:
-            return ThemeColor.category14ContrastDark
-        }
+        ThemeColorTable.color("category14", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category15(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category15Light
-        case .dark:
-            return ThemeColor.category15Dark
-        case .extraDark:
-            return ThemeColor.category15ExtraDark
-        case .electric:
-            return ThemeColor.category15Electric
-        case .classic:
-            return ThemeColor.category15ClassicLight
-        case .indigo:
-            return ThemeColor.category15Indigo
-        case .rosé:
-            return ThemeColor.category15Rosé
-        case .contrastLight:
-            return ThemeColor.category15ContrastLight
-        case .contrastDark:
-            return ThemeColor.category15ContrastDark
-        }
+        ThemeColorTable.color("category15", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category16(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category16Light
-        case .dark:
-            return ThemeColor.category16Dark
-        case .extraDark:
-            return ThemeColor.category16ExtraDark
-        case .electric:
-            return ThemeColor.category16Electric
-        case .classic:
-            return ThemeColor.category16ClassicLight
-        case .indigo:
-            return ThemeColor.category16Indigo
-        case .rosé:
-            return ThemeColor.category16Rosé
-        case .contrastLight:
-            return ThemeColor.category16ContrastLight
-        case .contrastDark:
-            return ThemeColor.category16ContrastDark
-        }
+        ThemeColorTable.color("category16", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category17(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category17Light
-        case .dark:
-            return ThemeColor.category17Dark
-        case .extraDark:
-            return ThemeColor.category17ExtraDark
-        case .electric:
-            return ThemeColor.category17Electric
-        case .classic:
-            return ThemeColor.category17ClassicLight
-        case .indigo:
-            return ThemeColor.category17Indigo
-        case .rosé:
-            return ThemeColor.category17Rosé
-        case .contrastLight:
-            return ThemeColor.category17ContrastLight
-        case .contrastDark:
-            return ThemeColor.category17ContrastDark
-        }
+        ThemeColorTable.color("category17", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category18(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category18Light
-        case .dark:
-            return ThemeColor.category18Dark
-        case .extraDark:
-            return ThemeColor.category18ExtraDark
-        case .electric:
-            return ThemeColor.category18Electric
-        case .classic:
-            return ThemeColor.category18ClassicLight
-        case .indigo:
-            return ThemeColor.category18Indigo
-        case .rosé:
-            return ThemeColor.category18Rosé
-        case .contrastLight:
-            return ThemeColor.category18ContrastLight
-        case .contrastDark:
-            return ThemeColor.category18ContrastDark
-        }
+        ThemeColorTable.color("category18", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 
     static func category19(for theme: Theme.ThemeType? = nil) -> UIColor {
-        let theme = theme ?? Theme.sharedTheme.nonisolatedActiveTheme
-        switch theme {
-        case .light:
-            return ThemeColor.category19Light
-        case .dark:
-            return ThemeColor.category19Dark
-        case .extraDark:
-            return ThemeColor.category19ExtraDark
-        case .electric:
-            return ThemeColor.category19Electric
-        case .classic:
-            return ThemeColor.category19ClassicLight
-        case .indigo:
-            return ThemeColor.category19Indigo
-        case .rosé:
-            return ThemeColor.category19Rosé
-        case .contrastLight:
-            return ThemeColor.category19ContrastLight
-        case .contrastDark:
-            return ThemeColor.category19ContrastDark
-        }
+        ThemeColorTable.color("category19", for: theme ?? Theme.sharedTheme.nonisolatedActiveTheme)
     }
 }

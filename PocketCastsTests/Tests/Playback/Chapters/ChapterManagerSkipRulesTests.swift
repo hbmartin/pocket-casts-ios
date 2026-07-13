@@ -118,4 +118,8 @@ private class SkipRulesShowInfoCoordinatorMock: ShowInfoCoordinating {
     func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
         (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
     }
+
+    func loadEpisodeSummary(podcastUuid: String, episodeUuid: String) async throws -> String? {
+        nil
+    }
 }

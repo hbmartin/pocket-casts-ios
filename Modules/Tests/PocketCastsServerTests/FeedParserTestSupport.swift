@@ -17,6 +17,7 @@ enum TimeBoxedParseOutcome {
 
 /// Written by the parse thread before it signals the semaphore, read by the waiter
 /// only after a successful wait — the semaphore provides the happens-before edge.
+// @unchecked Sendable: single write happens-before the semaphore-gated read.
 private final class ParseResultBox: @unchecked Sendable {
     var outcome: TimeBoxedParseOutcome = .timedOut
 }

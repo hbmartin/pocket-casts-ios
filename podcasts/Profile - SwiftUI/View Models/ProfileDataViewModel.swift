@@ -17,17 +17,24 @@ class ProfileDataViewModel: ObservableObject {
     /// Listening Stats
     var stats: UserInfo.Stats = .init()
 
-    private var notifications = Set<AnyCancellable>()
+    private var refreshedToken: NotificationCenter.ObservationToken?
 
     init() {
         update()
 
         // Listen for the refresh event to update the view
-        NotificationCenter.default
-            .publisher(for: ServerNotifications.podcastsRefreshed)
-            .receive(on: RunLoop.main)
-            .sink(receiveValue: { [weak self] _ in self?.update() })
-            .store(in: &notifications)
+        refreshedToken = NotificationCenter.default.addObserver(for: PodcastsRefreshed.self) { [weak self] _ in
+            self?.update()
+        }
+    }
+
+    deinit {
+        // Property reads must precede any call that copies self; a plain deinit
+        // may read stored state directly (Swift 6.2 isolated-deinit rule).
+        let token = refreshedToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     /// Refresh the store data

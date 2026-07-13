@@ -29,16 +29,24 @@ class ThemeableUIButton: UIButton {
         }
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setup() {
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
         updateColors()
     }
 
-    @objc private func themeDidChange() {
+    private func themeDidChange() {
         updateColors()
         handleThemeDidChange()
     }

@@ -380,14 +380,6 @@ class PlaylistDetailViewController: PCViewController, UIScrollViewDelegate {
         navTitleLabel.text = viewModel.playlist.playlistName
     }
 
-    @objc func refreshFilterFromNotification(notification: Notification) {
-        reloader.request(.playlist)
-    }
-
-    @objc func refreshEpisodesFromNotification(notification: Notification) {
-        reloader.request(.episodes)
-    }
-
     private func reload(with scopes: PlaylistReloadScope) {
         if scopes.contains(.playlist) {
             reloadNavTitle()
@@ -400,8 +392,15 @@ class PlaylistDetailViewController: PCViewController, UIScrollViewDelegate {
     func editPlaylist() {
         track(.filterEditRulesTapped)
 
-        let vc = PlaylistPreviewViewController(playlist: self.viewModel.playlist) { [weak self] in
-            self?.viewModel.reloadPlaylistAndEpisodes()
+        let vc: UIViewController
+        if viewModel.playlist.isCustom {
+            vc = CustomPlaylistEditorViewController(playlist: viewModel.playlist) { [weak self] in
+                self?.viewModel.reloadPlaylistAndEpisodes()
+            }
+        } else {
+            vc = PlaylistPreviewViewController(playlist: self.viewModel.playlist) { [weak self] in
+                self?.viewModel.reloadPlaylistAndEpisodes()
+            }
         }
         let navVC = SJUIUtils.navController(for: vc)
         present(navVC, animated: true, completion: nil)

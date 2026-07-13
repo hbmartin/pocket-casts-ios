@@ -25,8 +25,8 @@
     },
     {
       "skippedTests" : [
-        "AutoAddCandidatesDataManagerTests\/testNewQueryPerformance()",
-        "AutoAddCandidatesDataManagerTests\/testSyncableUpNextSetting()"
+        "AutoAddCandidatesDataManagerTests/testNewQueryPerformance()",
+        "AutoAddCandidatesDataManagerTests/testSyncableUpNextSetting()"
       ],
       "target" : {
         "containerPath" : "container:Modules",
@@ -67,6 +67,13 @@
         "containerPath" : "container:Modules",
         "identifier" : "SnapshotTests",
         "name" : "SnapshotTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules",
+        "identifier" : "PocketCastsTranscriptionTests",
+        "name" : "PocketCastsTranscriptionTests"
       }
     }
   ],

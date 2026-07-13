@@ -154,7 +154,7 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
                         SJUIUtils.showAlert(title: L10n.opmlImportFailedTitle, message: L10n.opmlImportFailedMessage, from: controller)
                     } else {
-                        NotificationCenter.postOnMainThread(notification: Constants.Notifications.opmlImportFailed)
+                        NotificationCenter.postOnMainThread(OpmlImportFailed())
                     }
 
                     Analytics.track(.opmlImportFailed)
@@ -200,7 +200,7 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                     progressWindow.hideAlert(true)
                 }
 
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.opmlImportCompleted)
+                NotificationCenter.postOnMainThread(OpmlImportCompleted())
 
                 Analytics.track(.opmlImportFinished, properties: ["count": self.initialPodcastCount, "number_parsed": self.initialPodcastCount])
             }

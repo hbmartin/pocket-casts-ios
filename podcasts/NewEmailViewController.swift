@@ -234,7 +234,13 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
 
     private func saveUsernameAndPassword(_ username: String, password: String, userId: String?) {
         ServerSettings.userId = userId
-        ServerSettings.saveSyncingPassword(password)
+        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
+            ServerSettings.accountAuthMethod = .password
+        } else {
+            // Legacy credential persistence until refresh-token auth for password accounts
+            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
+            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
+        }
 
         // we've signed in, set all our existing podcasts to be non synced
         DataManager.sharedManager.markAllPodcastsUnsynced()
@@ -242,8 +248,8 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         ServerSettings.clearLastSyncTime()
         ServerSettings.setSyncingEmail(email: username)
 
-        NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
-        NotificationCenter.postOnMainThread(notification: .userSignedIn)
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
+        NotificationCenter.postOnMainThread(UserSignedIn())
     }
 
     // MARK: - UITextField Methods
@@ -259,7 +265,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
         if textField == emailField {
             emailBorderView.selectedStyle =
                 .primaryField03Active
@@ -273,7 +279,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     @objc func emailFieldDidChange() {

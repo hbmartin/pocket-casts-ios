@@ -12,7 +12,17 @@ protocol PCSearchBarDelegate: AnyObject {
 
 class PCSearchBarController: UIViewController {
     // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
-    nonisolated deinit {}
+    nonisolated deinit {
+        if let themeToken {
+            NotificationCenter.default.removeObserver(themeToken)
+        }
+        if let searchRequestToken {
+            NotificationCenter.default.removeObserver(searchRequestToken)
+        }
+    }
+
+    private var themeToken: NotificationCenter.ObservationToken?
+    private var searchRequestToken: NotificationCenter.ObservationToken?
     @IBOutlet var roundedBackgroundView: UIView!
     @IBOutlet var searchTextField: UITextField! {
         didSet {
@@ -88,8 +98,12 @@ class PCSearchBarController: UIViewController {
         super.viewDidLoad()
         registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
         updateColors()
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(searchRequest), name: Constants.Notifications.podcastSearchRequest, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
+        searchRequestToken = NotificationCenter.default.addObserver(for: PodcastSearchRequested.self) { [weak self] message in
+            self?.searchRequest(message)
+        }
         updateSize()
         updateCollapseAppearance()
     }
@@ -145,12 +159,8 @@ class PCSearchBarController: UIViewController {
         isVisible = false
     }
 
-    @objc private func themeDidChange() {
-        updateColors()
-    }
-
-    @objc private func searchRequest(notification: Notification) {
-        if isVisible, let searchTerm = notification.object as? String {
+    private func searchRequest(_ message: PodcastSearchRequested) {
+        if isVisible, let searchTerm = message.term {
             searchTextField.text = searchTerm
             clearSearchBtn.isHidden = false
             view.endEditing(true)

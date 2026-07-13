@@ -12,7 +12,7 @@ class SignOutHelper {
         SyncManager.signout(userInitiated: true)
         paidPodcasts.forEach { PodcastManager.shared.unsubscribe(podcast: $0) }
 
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.subscriptionStatusChanged)
-        NotificationCenter.postOnMainThread(notification: .userLoginDidChange)
+        NotificationCenter.postOnMainThread(SubscriptionStatusChanged())
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
     }
 }

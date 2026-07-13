@@ -1,4 +1,5 @@
 import PocketCastsDataModel
+import PocketCastsUtils
 import SwipeCellKit
 import UIKit
 
@@ -103,14 +104,24 @@ class PlayerCell: ThemeableSwipeCell {
         MainActor.assumeIsolated {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadProgressChange), name: Constants.Notifications.downloadProgress, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadStatusChange(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForDownloadStatusChange(_:)), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellForStarredChange(_:)), name: Constants.Notifications.episodeStarredChanged, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: DownloadProgressChanged.self) { [weak self] _ in
+                self?.updateCellForDownloadProgressChange()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+                self?.updateCellForDownloadStatusChange(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloadStatusChanged.self) { [weak self] message in
+                self?.updateCellForDownloadStatusChange(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeStarredChanged.self) { [weak self] message in
+                self?.updateCellForStarredChange(episodeUuid: message.uuid)
+            })
 
             updateSize()
         }
     }
+
+    private var messageTokens = [NotificationCenter.ObservationToken]()
 
     override func addSubview(_ view: UIView) {
         super.addSubview(view)
@@ -129,7 +140,12 @@ class PlayerCell: ThemeableSwipeCell {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func populateFrom(episode: BaseEpisode) {
@@ -172,7 +188,7 @@ class PlayerCell: ThemeableSwipeCell {
         return desc.joined(separator: ". ")
     }
 
-    @objc private func updateCellForDownloadProgressChange() {
+    private func updateCellForDownloadProgressChange() {
         guard let ourEpisode = episode, let _ = DownloadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
 
         if !ourEpisode.downloading() {
@@ -182,9 +198,9 @@ class PlayerCell: ThemeableSwipeCell {
         updateDownloadStatus()
     }
 
-    @objc private func updateCellForDownloadStatusChange(_ notification: Notification) {
+    private func updateCellForDownloadStatusChange(episodeUuid: String?) {
         // make sure this event is related to our episode
-        guard let ourEpisode = episode, let uuid = notification.object as? String, ourEpisode.uuid == uuid else { return }
+        guard let ourEpisode = episode, let episodeUuid, ourEpisode.uuid == episodeUuid else { return }
 
         // if it is, reload our episode so we get the latest status for it
         refreshEpisodeFromDatabase(uuid: ourEpisode.uuid)
@@ -202,9 +218,9 @@ class PlayerCell: ThemeableSwipeCell {
         }
     }
 
-    @objc private func updateCellForStarredChange(_ notification: Notification) {
+    private func updateCellForStarredChange(episodeUuid: String?) {
         // make sure this event is related to our episode
-        guard let ourEpisode = episode, let uuid = notification.object as? String, ourEpisode.uuid == uuid else { return }
+        guard let ourEpisode = episode, let episodeUuid, ourEpisode.uuid == episodeUuid else { return }
 
         // reload our episode so we get the latest starred status for it
         episode = DataManager.sharedManager.findBaseEpisode(uuid: ourEpisode.uuid)
@@ -320,9 +336,9 @@ private extension PlayerCell {
     @objc func didTouchHandle(gesture: UILongPressGestureRecognizer) {
         switch gesture.state {
         case .began:
-            NotificationCenter.default.post(name: .tableViewReorderWillBegin, object: nil)
+            NotificationCenter.postOnMainThread(TableViewReorderWillBegin())
         case .ended, .cancelled:
-            NotificationCenter.default.post(name: .tableViewReorderDidEnd, object: nil)
+            NotificationCenter.postOnMainThread(TableViewReorderDidEnd())
         default: break
         }
     }

@@ -33,6 +33,10 @@ struct BookmarkRow: Equatable, Sendable {
     @GRDBColumn("sync_status")
     var syncStatus: Int32 = 0
 
+    var excerpt: String?
+
+    var endTime: Double?
+
     var asBookmark: Bookmark {
         Bookmark(
             uuid: uuid,
@@ -41,6 +45,8 @@ struct BookmarkRow: Equatable, Sendable {
             created: Date(timeIntervalSince1970: dateAdded),
             episodeUuid: episodeUuid,
             podcastUuid: podcastUuid,
+            excerpt: excerpt,
+            endTime: endTime,
             titleModified: titleModifiedDate.map { Date(timeIntervalSince1970: $0) },
             deletedModified: deletedModifiedDate.map { Date(timeIntervalSince1970: $0) },
             deleted: deleted
@@ -76,7 +82,7 @@ public struct BookmarkDataManager: Sendable {
     ///   - time: The playback time for the bookmark
     ///   - transcription: A transcription of the clip if available
     @discardableResult
-    public func add(uuid: String? = nil, episodeUuid: String, podcastUuid: String?, title: String, time: TimeInterval, dateCreated: Date = Date(), syncStatus: SyncStatus = .notSynced) -> String? {
+    public func add(uuid: String? = nil, episodeUuid: String, podcastUuid: String?, title: String, time: TimeInterval, dateCreated: Date = Date(), excerpt: String? = nil, endTime: TimeInterval? = nil, syncStatus: SyncStatus = .notSynced) -> String? {
         var row = BookmarkRow()
         row.uuid = uuid ?? UUID().uuidString.lowercased()
         row.title = title
@@ -85,6 +91,8 @@ public struct BookmarkDataManager: Sendable {
         row.titleModifiedDate = dateCreated.timeIntervalSince1970
         row.episodeUuid = episodeUuid
         row.podcastUuid = podcastUuid
+        row.excerpt = excerpt
+        row.endTime = endTime
         row.syncStatus = syncStatus.rawValue
         let rowToSave = row
 
@@ -119,6 +127,26 @@ public struct BookmarkDataManager: Sendable {
             try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
         }
         if !success { FileLog.shared.addMessage("BookmarkManager.update failed") }
+        return success
+    }
+
+    /// Writes the smart-highlight enrichment (transcript excerpt + window end) for a
+    /// bookmark. Unlike `update`, this doesn't touch the title or its modified date,
+    /// so a concurrent rename can't be clobbered.
+    @discardableResult
+    public func updateEnrichment(uuid: String, excerpt: String?, endTime: TimeInterval?, syncStatus: SyncStatus = .notSynced) async -> Bool {
+        let syncStatusValue = syncStatus.rawValue
+
+        let success = dbQueue.write { db in
+            try BookmarkRow
+                .filter(BookmarkRow.Columns.uuid == uuid)
+                .updateAll(db,
+                           BookmarkRow.Columns.excerpt.set(to: excerpt),
+                           BookmarkRow.Columns.endTime.set(to: endTime),
+                           BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+        }
+        if !success { FileLog.shared.addMessage("BookmarkDataManager.updateEnrichment failed") }
         return success
     }
 

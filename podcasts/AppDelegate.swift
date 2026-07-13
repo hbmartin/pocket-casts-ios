@@ -91,6 +91,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // start observing episode downloads so loudness gets measured in the background
         _ = EpisodeLoudnessScanner.shared
 
+        // start observing episode downloads so opted-in podcasts get transcribed
+        // automatically (the coordinator re-checks the feature flag per download)
+        _ = TranscriptionAutoRunCoordinator.shared
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in
@@ -109,11 +113,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             ImageManager.sharedManager.updatePodcastImagesIfRequired()
             WidgetHelper.shared.cleanupAppGroupImages()
-            // CustomObserver's initializer and observer registration are main-actor;
-            // touching .shared from this background block traps an executor assertion.
-            Task { @MainActor in
-                SiriShortcutsManager.shared.setup()
-            }
 
             DownloadManager.shared.startAllQueued()
 
@@ -128,6 +127,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupBackgroundRefresh()
 
         setupSignOutListener()
+
+        if FeatureFlag.diarizedTranscription.enabled {
+            Task.detached(priority: .utility) {
+                // Resume queued transcription jobs (and reset any a crash left
+                // mid-flight), then ask for a charging-time pass if work remains.
+                await TranscriptionQueueManager.shared.restorePendingJobs()
+                TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
+            }
+        }
 
         return true
     }
@@ -186,6 +194,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func handleEnterBackground() {
         scheduleNextBackgroundRefresh()
+        if FeatureFlag.diarizedTranscription.enabled {
+            Task.detached(priority: .utility) {
+                TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
+            }
+        }
         FileLog.shared.forceFlush()
 
         UserDefaults.standard.set(Date(), forKey: Constants.UserDefaults.lastAppCloseDate)
@@ -242,7 +255,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didChangeStatusBarFrame oldStatusBarFrame: CGRect) {
         ImageManager.refreshScreenMetrics()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.statusBarHeightChanged)
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -310,6 +322,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 self.handleAppRefresh(task: boxedTask.value)
             }
         }
+
+        if FeatureFlag.diarizedTranscription.enabled {
+            TranscriptionQueueManager.registerBackgroundTask()
+        }
     }
 
     private func scheduleNextBackgroundRefresh() {
@@ -371,7 +387,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
     }
 
     nonisolated private func convertRefreshResult(result: RefreshFetchResult) -> UIBackgroundFetchResult {

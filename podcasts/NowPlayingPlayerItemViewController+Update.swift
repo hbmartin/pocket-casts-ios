@@ -6,38 +6,77 @@ import SafariServices
 
 extension NowPlayingPlayerItemViewController {
     func addObservers() {
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(progressUpdated))
-        addCustomObserver(Constants.Notifications.episodeDurationChanged, selector: #selector(progressUpdated))
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update(notification:)))
-        addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(update(notification:)))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackTrackChanged))
-        addCustomObserver(Constants.Notifications.videoPlaybackEngineSwitched, selector: #selector(videoPlaybackEngineSwitched))
-        addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update(notification:)))
-        addCustomObserver(Constants.Notifications.playbackEffectsChanged, selector: #selector(update(notification:)))
-        addCustomObserver(.episodeEmbeddedArtworkLoaded, selector: #selector(update(notification:)))
-        addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(updateChapterInfo))
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(update(notification:)))
-        addCustomObserver(UIApplication.willEnterForegroundNotification, selector: #selector(update(notification:)))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(update(notification:)))
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.progressUpdated()
+        }
+        addCustomObserver(EpisodeDurationChanged.self) { [weak self] _ in
+            self?.progressUpdated()
+        }
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.update(animatingArtwork: true, errorRelevant: true)
+        }
+        addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+            self?.update(animatingArtwork: true, errorRelevant: true)
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.playbackTrackChanged()
+        }
+        addCustomObserver(VideoPlaybackEngineSwitched.self) { [weak self] _ in
+            self?.videoPlaybackEngineSwitched()
+        }
+        addCustomObserver(PodcastChaptersDidUpdate.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackEffectsChanged.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(EpisodeEmbeddedArtworkLoaded.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PodcastChapterChanged.self) { [weak self] _ in
+            self?.updateChapterInfo()
+        }
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.update(errorRelevant: true)
+        }
 
-        addCustomObserver(Constants.Notifications.sleepTimerChanged, selector: #selector(sleepTimerUpdated))
-        addCustomObserver(Constants.Notifications.playerActionsUpdated, selector: #selector(reloadShelfActions))
+        addCustomObserver(SleepTimerChanged.self) { [weak self] _ in
+            self?.sleepTimerUpdated()
+        }
+        addCustomObserver(PlayerActionsUpdated.self) { [weak self] _ in
+            self?.reloadShelfActions()
+        }
         #if !APPCLIP
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(reloadShelfActions))
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(reloadShelfActions))
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
+            self?.reloadShelfActions()
+        }
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.reloadShelfActions()
+        }
         #endif
     }
 
-    @objc private func playbackTrackChanged() {
+    private func playbackTrackChanged() {
         floatingVideoView.isHidden = true
-        update(notification: nil)
+        update()
     }
 
-    @objc private func videoPlaybackEngineSwitched() {
+    private func videoPlaybackEngineSwitched() {
         floatingVideoView.player = PlaybackManager.shared.internalPlayerForVideoPlayback()
     }
 
-    @objc func update(notification: NSNotification?) {
+    /// - Parameters:
+    ///   - animatingArtwork: `true` for play/pause events, whose artwork
+    ///     shrink/dim change should animate rather than snap.
+    ///   - errorRelevant: `true` for events that can change the active
+    ///     playback error (start/pause/failure), so the error banner updates.
+    func update(animatingArtwork: Bool = false, errorRelevant: Bool = false) {
         guard let playingEpisode = PlaybackManager.shared.currentEpisode() else { return }
 
         if playingEpisode.videoPodcast() {
@@ -59,16 +98,14 @@ extension NowPlayingPlayerItemViewController {
         skipFwdBtn.skipAmount = skipFwdAmount
 
         updatePlayPauseButton(isPlaying: PlaybackManager.shared.playing())
-        let artworkAnimationNotifications = Set([Constants.Notifications.playbackStarted, Constants.Notifications.playbackPaused])
-        updateArtworkState(animated: notification.map { artworkAnimationNotifications.contains($0.name) } ?? false)
+        updateArtworkState(animated: animatingArtwork)
         updateUpTo(upTo: PlaybackManager.shared.currentTime(), duration: PlaybackManager.shared.duration(), moveSlider: true)
         reloadShelfActions()
         updateChaptersControls()
         updateChapterInfo()
         updateChapterProgress()
         updateColors()
-        let errorRelevantNotifications = Set([Constants.Notifications.playbackFailed, Constants.Notifications.playbackStarted, Constants.Notifications.playbackPaused])
-        if let notificationName = notification?.name, errorRelevantNotifications.contains(notificationName) {
+        if errorRelevant {
             updateError()
         }
         if !showingCustomImage {
@@ -133,7 +170,7 @@ extension NowPlayingPlayerItemViewController {
         UIView.animate(withDuration: 0.35, delay: 0, usingSpringWithDamping: 0.75, initialSpringVelocity: 1, options: [.beginFromCurrentState, .allowUserInteraction], animations: changes)
     }
 
-    @objc func updateChapterInfo() {
+    func updateChapterInfo() {
         updateChapterInfoWithChapters(PlaybackManager.shared.currentChapters())
     }
 
@@ -211,7 +248,7 @@ extension NowPlayingPlayerItemViewController {
         return errorBottomSpacing.constant == 0
     }
 
-    @objc func updateError() {
+    func updateError() {
         guard PlaybackManager.shared.currentEpisode() != nil,
               let error = PlaybackManager.shared.activeError else {
             hideError()
@@ -300,7 +337,7 @@ extension NowPlayingPlayerItemViewController {
 
     // MARK: - Progress
 
-    @objc func progressUpdated() {
+    func progressUpdated() {
         if timeSlider.isScrubbing() || PlaybackManager.shared.isSeeking() { return }
 
         updateUpTo(upTo: PlaybackManager.shared.currentTime(), duration: PlaybackManager.shared.duration(), moveSlider: true)

@@ -12,35 +12,37 @@ final class PodcastFeedRefreshController {
 
     var perform: (() -> Void)?
 
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     init() {
         refreshControl.perform = { [weak self] _ in
             self?.perform?()
         }
 
         let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(loading), name: PodcastFeedReloadNotification.loading, object: nil)
-        center.addObserver(self, selector: #selector(episodesFound), name: PodcastFeedReloadNotification.episodesFound, object: nil)
-        center.addObserver(self, selector: #selector(noEpisodesFound), name: PodcastFeedReloadNotification.noEpisodesFound, object: nil)
+        messageTokens.append(center.addObserver(for: PodcastFeedReloadLoading.self) { [weak self] _ in
+            self?.refreshControl.set(text: L10n.podcastFeedReloadLoading.uppercased())
+        })
+        messageTokens.append(center.addObserver(for: PodcastFeedReloadEpisodesFound.self) { [weak self] _ in
+            self?.processRefreshCompleted(L10n.podcastFeedReloadNewEpisodesFound)
+        })
+        messageTokens.append(center.addObserver(for: PodcastFeedReloadNoEpisodesFound.self) { [weak self] _ in
+            self?.processRefreshCompleted(L10n.podcastFeedReloadNoEpisodesFound)
+        })
     }
 
     deinit {
+        // Property reads must precede removeObserver(self); after it, deinit may
+        // only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
         NotificationCenter.default.removeObserver(self)
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func processRefreshCompleted(_ message: String) {
         refreshControl.set(text: message.uppercased())
         refreshControl.endRefreshing()
-    }
-
-    @objc private func loading() {
-        refreshControl.set(text: L10n.podcastFeedReloadLoading.uppercased())
-    }
-
-    @objc private func episodesFound() {
-        processRefreshCompleted(L10n.podcastFeedReloadNewEpisodesFound)
-    }
-
-    @objc private func noEpisodesFound() {
-        processRefreshCompleted(L10n.podcastFeedReloadNoEpisodesFound)
     }
 }

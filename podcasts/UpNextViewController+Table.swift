@@ -260,7 +260,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
         upNextTable.reloadData()
     }
 
-    @objc func upNextChanged() {
+    func upNextChanged() {
         if changedViaSwipeToRemove { return }
 
         if isMultiSelectEnabled {
@@ -286,7 +286,7 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-    @objc func appDidBecomeActive() {
+    func appDidBecomeActive() {
         // there's a weird issue with the drag handle tints disappearing on the app coming back from being backgrounded, so reload the table in that case
         self.reloadTable()
     }

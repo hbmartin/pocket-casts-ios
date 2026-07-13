@@ -7,9 +7,12 @@ struct ShareImageInfo {
     let description: String
     let artwork: URL
     let gradient: Gradient
+    /// Smart highlights: the transcript excerpt rendered by the `.quote` style.
+    var excerpt: String? = nil
 }
 
 enum ShareImageStyle: CaseIterable {
+    case quote
     case large
     case medium
     case small
@@ -17,6 +20,8 @@ enum ShareImageStyle: CaseIterable {
 
     var tabString: String {
         switch self {
+        case .quote:
+            return "quote"
         case .large:
             return "large"
         case .medium:
@@ -30,6 +35,8 @@ enum ShareImageStyle: CaseIterable {
 
     var previewSize: CGSize {
         switch self {
+        case .quote:
+            CGSize(width: 292, height: 360)
         case .large:
             CGSize(width: 292, height: 422)
         case .medium:
@@ -43,6 +50,8 @@ enum ShareImageStyle: CaseIterable {
 
     func shareDescription(option: SharingModal.Option) -> String? {
         switch (option, self) {
+        case (.highlight, .quote):
+            L10n.highlightQuoteShareStyle
         case (.episode, _), (.podcast, _):
             L10n.shareDescription
         case (.clip, .audio):
@@ -63,6 +72,40 @@ struct ShareImageView: View {
     var body: some View {
         ZStack {
             switch style {
+            case .quote:
+                background()
+                VStack(alignment: .leading, spacing: 16) {
+                    Image(systemName: "quote.opening")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.8))
+                    Text(info.excerpt ?? L10n.highlightExcerptUnavailable)
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .foregroundStyle(.white)
+                        .lineLimit(8)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Spacer(minLength: 0)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(info.title)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                        Text(info.description)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white.opacity(0.5))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    PocketCastsLogoPill()
+                        .frame(maxWidth: .infinity)
+                }
+                .multilineTextAlignment(.leading)
+                .padding(24)
+                .aspectRatio(style.previewSize.width/style.previewSize.height, contentMode: .fit)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(L10n.highlightQuoteCardA11y(info.excerpt ?? L10n.highlightExcerptUnavailable))
             case .large:
                 background()
                 VStack(spacing: 32) {

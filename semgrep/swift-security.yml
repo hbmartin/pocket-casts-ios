@@ -471,6 +471,10 @@ rules:
           - pattern-regex: '(?s)\[[^\]]*kSecAttrService\s+as\s+String\s*:[^\]]*kSecClass\s+as\s+String\s*:\s*kSecClassGenericPassword[^\]]*\]'
       - pattern-not-regex: '(?s)\[[^\]]*kSecAttrAccount\s+as\s+String\s*:[^\]]*\]'
 
+  # M3: retire this rule (and its swift-security-pr-feedback.swift fixture block) when
+  # ServerCredentials is deleted at the sharing dual-accept sunset —
+  # plans/API Auth Hardening Plan.md §3.4. pocketcasts.sharing-no-static-secret-signing
+  # below is its replacement guardrail.
   - id: pocketcasts.servercredentials-use-configure-sharing
     severity: ERROR
     metadata:
@@ -487,6 +491,32 @@ rules:
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
       - pattern: ServerCredentials.sharing = $VALUE
+
+  - id: pocketcasts.sharing-no-static-secret-signing
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Do not sign sharing (or any server-module) requests with the static shared
+      secret: the embedded credential is extractable from every shipped IPA and
+      unkeyed SHA-1 is not a MAC. Authenticate the request with the user's access
+      token instead by routing it through TokenHelper.callSecureUrl behind
+      FeatureFlag.sharingListBearerAuth (plans/API Auth Hardening Plan.md §3.4).
+      Only the existing legacySharingServerSignature site may carry a nosemgrep
+      suppression, and it is deleted at the M3 dual-accept sunset.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/**/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: CryptoKit.Insecure.SHA1.hash(...)
+          - pattern: Insecure.SHA1.hash(...)
+          - pattern: ServerCredentials.sharing
 
   - id: pocketcasts.no-notificationdelegate-mainactor-assumeisolated
     severity: ERROR
@@ -1160,7 +1190,7 @@ rules:
       - pattern-not-inside: |
           func extendSleepTimer(bySeconds seconds: TimeInterval) {
             ...
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+            NotificationCenter.postOnMainThread(SleepTimerChanged())
             ...
           }
 
@@ -4788,7 +4818,7 @@ rules:
         - "**/*.swift"
       exclude:
         - "**/*.pb.swift"
-        - "Modules/Sources/PocketCastsDataModelTesting/**"
+        - "**/Modules/Sources/PocketCastsDataModelTesting/**"
     patterns:
       - pattern-regex: '@unchecked[ \t]+Sendable'
       # Mirrors pocketcasts.nonisolated-unsafe-requires-justification: longest alternative first.
@@ -4837,8 +4867,8 @@ rules:
       selector-based observers synchronously on the posting thread. Under the app target's
       default MainActor isolation, @objc selector observers are main-actor and trap a
       dispatch_assert_queue when called off-main (this crashed the app at launch via
-      RefreshOperation -> podcastsRefreshed -> FullSyncRefreshController). Post with
-      NotificationCenter.postOnMainThread(notification:object:userInfo:) instead — it is
+      RefreshOperation -> podcastsRefreshed -> FullSyncRefreshController). Post the typed
+      message with NotificationCenter.postOnMainThread(_:) (PocketCastsUtils) instead — it is
       synchronous (main.sync off-main, direct post on main), so ordering is preserved.
     languages: [generic]
     paths:
@@ -4846,6 +4876,31 @@ rules:
         - "**/Modules/Sources/PocketCastsServer/**/*.swift"
     patterns:
       - pattern-regex: 'NotificationCenter\.default\.post\('
+
+  - id: pocketcasts.no-direct-typed-notification-post
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      likelihood: HIGH
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      The SDK's typed NotificationCenter.post(_:) invokes makeNotification but DISCARDS its
+      object/userInfo when delivering to string-based observers (probe-verified on the 26.5
+      SDK), silently breaking every unconverted observer that reads the frozen bridged payload
+      during the typed-notification migration. Post typed messages via
+      NotificationCenter.postOnMainThread(_:) (PocketCastsUtils) instead — it posts the bridged
+      legacy Notification, reaching typed and string observers alike with the blocking
+      main-sync delivery semantics posters rely on.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/Modules/Sources/**/*.swift"
+    patterns:
+      - pattern-regex: 'NotificationCenter\.default\.post\([A-Z][A-Za-z0-9_]*\('
+      - pattern-not-regex: 'NotificationCenter\.default\.post\((Notification|NSNotification)\('
 
   - id: pocketcasts.filemanager-urls-no-force-index
     severity: WARNING
@@ -4976,3 +5031,148 @@ rules:
           - pattern: VBN_Destroy(...)
           - pattern: AVAudioPCMBuffer(...)
           - pattern: AVAudioConverter(...)
+
+  - id: pocketcasts.playlist-queries-use-typed-requests
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      The string-based PlaylistQueryBuilder APIs (query/queryFor/
+      podcastExistsInPlaylistEpisodesQuery) are legacy golden references kept only
+      for the parity and snapshot tests. Production code must use the typed
+      SQLRequest APIs (episodesRequest/countRequest/filterEpisodesRequest/
+      podcastExistsInPlaylistEpisodesRequest) with DataManager's
+      episodes(matching:)/count(matching:)/exists(matching:).
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+      exclude:
+        - "**/Modules/Tests/**"
+        - "**/PocketCastsTests/**"
+        - "**/Modules/Sources/PocketCastsDataModel/Public/PlaylistQueryBuilder.swift"
+    patterns:
+      - pattern-either:
+          - pattern: PlaylistQueryBuilder.query(...)
+          - pattern: PlaylistQueryBuilder.queryFor(...)
+          - pattern: PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesQuery(...)
+
+  - id: pocketcasts.custom-query-sql-through-validator
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Custom playlist SQL (the EpisodeFilter.customQuery envelope and editor-entered
+      fragments) may only reach the database through the typed PlaylistQueryBuilder
+      requests (which compile the envelope internally, rendering unreadable ones as
+      an empty playlist) or DataManager.validateCustomQueryFragment (the save-time
+      gate). Splicing customQuery text into raw query APIs, or executing raw
+      playlist-episode SQL in app code, bypasses the validator's read-only,
+      single-statement and zero-placeholder guarantees.
+    languages: [swift]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/WidgetExtension/**/*.swift"
+        - "**/AppClip/**/*.swift"
+        - "**/semgrep/tests/swift-custom-query-validator.swift"
+      exclude:
+        - "**/PocketCastsTests/**"
+    patterns:
+      - pattern-either:
+          - pattern: $DM.findPlaylistEpisodesWhere(...)
+          - pattern: '$DM.findEpisodesWhere(customWhere: $F.customQuery, arguments: $ARGS)'
+          - pattern: '$DM.findEpisodeWhere(customWhere: $F.customQuery, arguments: $ARGS)'
+          - pattern: '$DM.findEpisodesWhere(customWhere: $Q, arguments: $F.customQuery)'
+          - pattern: '$DM.count(query: $F.customQuery, values: $ARGS)'
+          - pattern: $DM.executeQuery($F.customQuery, ...)
+
+  - id: pocketcasts.no-persisted-account-password
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Do not add new writes of the stored account password (SJSyncingPwd). The
+      password is a permanent replayable credential; re-auth is moving to rotating
+      refresh tokens (plans/API Auth Hardening Plan.md, workstream A). The only
+      allowed writers are the flag-gated legacy sign-in sites and the
+      ServerSettings.saveSyncingPassword definition, each carrying a justified
+      nosemgrep allowlist comment.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+      exclude:
+        - "**/PocketCastsTests/**"
+        - "**/Modules/Tests/**"
+    patterns:
+      - pattern-either:
+          - pattern: ServerSettings.saveSyncingPassword($P)
+          - pattern: 'KeychainHelper.save(string: $V, key: ServerConstants.Values.syncingLoginItemName, accessibility: $A)'
+          - pattern: 'KeychainHelper.save(string: $V, key: "SJSyncingPwd", accessibility: $A)'
+
+  - id: pocketcasts.auth-keychain-items-device-only
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Credential Keychain items (sync access token, refresh token) must use a
+      ThisDeviceOnly accessibility class so sessions cannot be restored from a
+      device backup onto another machine. Keep AfterFirstUnlock semantics
+      (background sync reads while locked) — use
+      kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/**/*.swift"
+        - "**/semgrep/tests/swift-security-auth-tokens.swift"
+    patterns:
+      - pattern-either:
+          - pattern: 'KeychainHelper.save(string: $V, key: ServerConstants.Values.refreshTokenKey, accessibility: $ACC)'
+          - pattern: 'KeychainHelper.save(string: $V, key: ServerConstants.Values.syncingV2TokenKey, accessibility: $ACC)'
+          - pattern: 'KeychainHelper.save(string: $V, key: "SJRefreshToken", accessibility: $ACC)'
+          - pattern: 'KeychainHelper.save(string: $V, key: "SJSyncV2Token", accessibility: $ACC)'
+      - metavariable-pattern:
+          metavariable: $ACC
+          patterns:
+            - pattern-not: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+
+  - id: pocketcasts.no-empty-refresh-token-persist
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Never persist a response's refresh token field directly — proto strings
+      default to "" when the field is omitted, and an empty write clobbers the
+      stored refresh token, bricking future refreshes (plan C.0-1). Bind the field
+      first and only call ServerSettings.setRefreshToken with a value checked
+      non-empty (the unit tests are the authoritative guard for this invariant).
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+      exclude:
+        - "**/PocketCastsTests/**"
+        - "**/Modules/Tests/**"
+    patterns:
+      - pattern: ServerSettings.setRefreshToken($R.refreshToken)

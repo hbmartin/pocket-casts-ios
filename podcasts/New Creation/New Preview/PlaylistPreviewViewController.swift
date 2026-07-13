@@ -11,6 +11,9 @@ class PlaylistPreviewViewController: PCViewController {
     private var playlistUUID: String = ""
     private var onEditPlaylist: (() -> Void)?
     private let mode: PlaylistPreviewViewModel.PlaylistMode
+    /// Prompted playlists: a creation draft that arrives already configured
+    /// (rules + transient `*SmartRuleApplied` flags) instead of starting empty.
+    private let prefilledPlaylist: EpisodeFilter?
     private(set) var viewModel: PlaylistPreviewViewModel!
     private var cancellables = Set<AnyCancellable>()
 
@@ -41,13 +44,27 @@ class PlaylistPreviewViewController: PCViewController {
     init(playlistName: String) {
         self.playlistName = playlistName
         self.mode = .creation
+        self.prefilledPlaylist = nil
         super.init(nibName: nil, bundle: nil)
+    }
+
+    /// Creation-mode preview seeded from an interpreted natural-language draft
+    /// (prompted playlists). The draft is persisted on load — exactly what
+    /// saving from a rule overlay does — so cancel/delete and save semantics
+    /// match the regular creation flow; nothing is kept unless the user saves.
+    init(prefilled: EpisodeFilter) {
+        self.playlistName = prefilled.playlistName
+        self.mode = .creation
+        self.prefilledPlaylist = prefilled
+        super.init(nibName: nil, bundle: nil)
+        self.playlistUUID = prefilled.uuid
     }
 
     init(playlist: EpisodeFilter, onEditPlaylist: @escaping () -> Void) {
         self.playlistName = playlist.playlistName
         self.mode = .edit
         self.onEditPlaylist = onEditPlaylist
+        self.prefilledPlaylist = nil
         super.init(nibName: nil, bundle: nil)
         self.playlistUUID = playlist.uuid
     }
@@ -75,8 +92,12 @@ class PlaylistPreviewViewController: PCViewController {
 
         switch mode {
             case .creation:
-            playlist = PlaylistManager.createNewPlaylist()
-            playlist.setTitle(playlistName, defaultTitle: L10n.playlistsDefaultNewPlaylist.localizedCapitalized)
+            if let prefilledPlaylist {
+                playlist = prefilledPlaylist
+            } else {
+                playlist = PlaylistManager.createNewPlaylist()
+                playlist.setTitle(playlistName, defaultTitle: L10n.playlistsDefaultNewPlaylist.localizedCapitalized)
+            }
             playlistUUID = playlist.uuid
         case .edit:
             let result = DataManager.sharedManager.findPlaylist(uuid: playlistUUID)
@@ -102,6 +123,18 @@ class PlaylistPreviewViewController: PCViewController {
                 }
             }
             .store(in: &cancellables)
+
+        // Prompted-playlist prefill: persist the interpreted draft and announce
+        // it so the standard PlaylistChanged pipeline enables the rule chips and
+        // previews matching episodes — the exact effect of saving from a rule
+        // overlay. The posted copy (not the DB round-trip) is what carries the
+        // transient *SmartRuleApplied flags to the view model.
+        if var draft = prefilledPlaylist {
+            draft.syncStatus = SyncStatus.notSynced.rawValue
+            let saved = DataManager.sharedManager.save(playlist: draft)
+            draft.id = saved.id
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: draft))
+        }
     }
 
     private func setupNavBar() {
@@ -226,7 +259,7 @@ class PlaylistPreviewViewController: PCViewController {
         let savedPlaylist = DataManager.sharedManager.save(playlist: viewModel.newPlaylist)
         UserDefaults.standard.set(savedPlaylist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
         delegate?.filterCreated(newFilter: savedPlaylist)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: savedPlaylist)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: savedPlaylist))
 
         PlaylistDragAndDropTip.didCreateManualPlaylist.sendDonation()
 

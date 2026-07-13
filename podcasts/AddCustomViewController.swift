@@ -223,7 +223,9 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
             }
         }
 
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(setupUserAccess))
+        addCustomObserver(SubscriptionStatusChanged.self) { [weak self] _ in
+            self?.setupUserAccess()
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -290,7 +292,7 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         avFileUtil = nil
     }
 
-    @objc private func setupUserAccess() {
+    private func setupUserAccess() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
@@ -419,11 +421,11 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
         textField.resignFirstResponder()
     }
 

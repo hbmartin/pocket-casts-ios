@@ -60,6 +60,58 @@ final class RecordConvertersTests: XCTestCase {
         XCTAssertFalse(item.hasIsDeleted)
     }
 
+    func testBookmarkRecordCarriesHighlightEnrichmentThroughWireRoundTrip() throws {
+        let bookmark = Bookmark(
+            uuid: "bm-1",
+            title: "A moment",
+            time: 30,
+            created: Date(timeIntervalSince1970: 1_700_000_000),
+            episodeUuid: "ep-1",
+            podcastUuid: "pod-1",
+            excerpt: "Something worth quoting",
+            endTime: 42.5,
+            titleModified: Date(timeIntervalSince1970: 1_700_000_100)
+        )
+
+        let record = RecordConverters.record(from: bookmark)
+        guard case .bookmark(let item)? = record.record else {
+            XCTFail("expected a bookmark record")
+            return
+        }
+        XCTAssertTrue(item.hasExcerpt)
+        XCTAssertEqual(item.excerpt.value, "Something worth quoting")
+        XCTAssertTrue(item.hasEndTime)
+        XCTAssertEqual(item.endTime.value, 42.5)
+
+        // Wire round-trip: the fork-extension fields (1000/1001) must survive
+        // serialization exactly.
+        let decoded = try Api_Record(serializedBytes: record.serializedData())
+        guard case .bookmark(let decodedItem)? = decoded.record else {
+            XCTFail("expected a bookmark record after decode")
+            return
+        }
+        XCTAssertEqual(decodedItem, item)
+    }
+
+    func testBookmarkRecordOmitsEnrichmentWhenAbsent() {
+        let bookmark = Bookmark(
+            uuid: "bm-2",
+            title: "Plain",
+            time: 10,
+            created: Date(timeIntervalSince1970: 1_700_000_000),
+            episodeUuid: "ep-1",
+            podcastUuid: nil
+        )
+
+        let record = RecordConverters.record(from: bookmark)
+        guard case .bookmark(let item)? = record.record else {
+            XCTFail("expected a bookmark record")
+            return
+        }
+        XCTAssertFalse(item.hasExcerpt)
+        XCTAssertFalse(item.hasEndTime)
+    }
+
     func testFolderAndPlaylistRoundTrip() {
         var folder = Folder()
         folder.uuid = "folder-1"

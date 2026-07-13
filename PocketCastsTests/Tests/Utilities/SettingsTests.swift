@@ -16,6 +16,7 @@ final class SettingsTests: XCTestCase {
             .markPlayed,
             .effects,
             .sleepTimer,
+            .stopAfterEpisode,
             .routePicker,
             .shareEpisode,
             .addToPlaylist,
@@ -132,6 +133,128 @@ final class SettingsTests: XCTestCase {
         PlayerAction.allCases.forEach { action in
             XCTAssertEqual(PlayerAction(rawValue: action.rawValue), action)
         }
+    }
+
+    func testPlayerActionIntValuesAreStable() {
+        XCTAssertEqual(PlayerAction.stopAfterEpisode.intValue, 14, "stopAfterEpisode must keep int value 14 (persisted in UserDefaults)")
+        XCTAssertEqual(PlayerAction(int: 14), .stopAfterEpisode)
+        XCTAssertNil(PlayerAction(int: 7), "7 is a retired int value and must not be reused")
+
+        PlayerAction.allCases.forEach { action in
+            XCTAssertEqual(PlayerAction(int: action.intValue), action, "\(action) should round-trip through its int value")
+        }
+    }
+
+    func testTapToPlayRoundTripsInBothStorageModes() throws {
+        defer { UserDefaults.standard.removeObject(forKey: Settings.tapToPlayKey) }
+
+        try override(flag: .newSettingsStorage, value: false)
+        XCTAssertFalse(Settings.tapToPlay(), "Should default to off")
+        Settings.setTapToPlay(true)
+        XCTAssertTrue(Settings.tapToPlay(), "UserDefaults storage should round-trip")
+
+        try FeatureFlagOverrideStore().override(FeatureFlag.newSettingsStorage, withValue: true)
+        try setupSettingsStore()
+        XCTAssertFalse(Settings.tapToPlay(), "Fresh synced storage should default to off")
+
+        SettingsStore.appSettings.importUserDefaults()
+        XCTAssertTrue(Settings.tapToPlay(), "Import should carry the old UserDefaults value across")
+
+        Settings.setTapToPlay(false)
+        XCTAssertFalse(Settings.tapToPlay(), "Synced storage should round-trip")
+
+        try reset(flag: .newSettingsStorage)
+    }
+
+    func testSeekAccelerationRoundTripsInBothStorageModes() throws {
+        defer { UserDefaults.standard.removeObject(forKey: Settings.seekAccelerationKey) }
+
+        try override(flag: .newSettingsStorage, value: false)
+        XCTAssertFalse(Settings.seekAccelerationEnabled(), "Should default to off")
+        Settings.setSeekAccelerationEnabled(true)
+        XCTAssertTrue(Settings.seekAccelerationEnabled(), "UserDefaults storage should round-trip")
+
+        try FeatureFlagOverrideStore().override(FeatureFlag.newSettingsStorage, withValue: true)
+        try setupSettingsStore()
+        XCTAssertFalse(Settings.seekAccelerationEnabled(), "Fresh synced storage should default to off")
+
+        SettingsStore.appSettings.importUserDefaults()
+        XCTAssertTrue(Settings.seekAccelerationEnabled(), "Import should carry the old UserDefaults value across")
+
+        Settings.setSeekAccelerationEnabled(false)
+        XCTAssertFalse(Settings.seekAccelerationEnabled(), "Synced storage should round-trip")
+
+        try reset(flag: .newSettingsStorage)
+    }
+
+    func testTapToPlayRoundTripInOldStorage() throws {
+        try override(flag: .newSettingsStorage, value: false)
+
+        Settings.setTapToPlay(true)
+        XCTAssertTrue(Settings.tapToPlay(), "Tap to play should round-trip via UserDefaults")
+
+        Settings.setTapToPlay(false)
+        XCTAssertFalse(Settings.tapToPlay(), "Tap to play should round-trip via UserDefaults")
+
+        try reset(flag: .newSettingsStorage)
+    }
+
+    func testTapToPlayRoundTripInNewStorage() throws {
+        try override(flag: .newSettingsStorage, value: true)
+        try setupSettingsStore()
+
+        Settings.setTapToPlay(true)
+        XCTAssertTrue(Settings.tapToPlay(), "Tap to play should round-trip via the settings store")
+
+        Settings.setTapToPlay(false)
+        XCTAssertFalse(Settings.tapToPlay(), "Tap to play should round-trip via the settings store")
+
+        UserDefaults.standard.removeObject(forKey: Settings.tapToPlayKey)
+        try reset(flag: .newSettingsStorage)
+    }
+
+    func testTapToPlayImportsFromOldDefaults() throws {
+        // Start with disabled settingsSync
+        try override(flag: .newSettingsStorage, value: false)
+
+        Settings.setTapToPlay(true)
+
+        // Enable settingsSync to flip `Settings` to use the new value
+        try FeatureFlagOverrideStore().override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        try setupSettingsStore()
+        SettingsStore.appSettings.importUserDefaults()
+
+        XCTAssertTrue(Settings.tapToPlay(), "Tap to play should be imported from old defaults")
+
+        UserDefaults.standard.removeObject(forKey: Settings.tapToPlayKey)
+        try reset(flag: .newSettingsStorage)
+    }
+
+    func testSeekAccelerationRoundTripInOldStorage() throws {
+        try override(flag: .newSettingsStorage, value: false)
+
+        Settings.setSeekAccelerationEnabled(true)
+        XCTAssertTrue(Settings.seekAccelerationEnabled(), "Seek acceleration should round-trip via UserDefaults")
+
+        Settings.setSeekAccelerationEnabled(false)
+        XCTAssertFalse(Settings.seekAccelerationEnabled(), "Seek acceleration should round-trip via UserDefaults")
+
+        try reset(flag: .newSettingsStorage)
+    }
+
+    func testSeekAccelerationRoundTripInNewStorage() throws {
+        try override(flag: .newSettingsStorage, value: true)
+        try setupSettingsStore()
+
+        Settings.setSeekAccelerationEnabled(true)
+        XCTAssertTrue(Settings.seekAccelerationEnabled(), "Seek acceleration should round-trip via the settings store")
+
+        Settings.setSeekAccelerationEnabled(false)
+        XCTAssertFalse(Settings.seekAccelerationEnabled(), "Seek acceleration should round-trip via the settings store")
+
+        UserDefaults.standard.removeObject(forKey: Settings.seekAccelerationKey)
+        try reset(flag: .newSettingsStorage)
     }
 
     func testConfigurableDefaultsUseUserDefaultsOverrides() throws {

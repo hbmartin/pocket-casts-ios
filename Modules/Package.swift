@@ -54,6 +54,10 @@ let package = Package(
             targets: ["PocketCastsFileSync"]
         ),
         .library(
+            name: "PocketCastsTranscription",
+            targets: ["PocketCastsTranscription"]
+        ),
+        .library(
             name: "Modules",
             targets: ["Modules"]
         )
@@ -80,6 +84,10 @@ let package = Package(
         .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0"),
         .package(url: "https://github.com/ksemianov/WrappingHStack", from: "0.2.0"),
         .package(url: "https://github.com/Automattic/pocket-casts-ios-fingerprint", revision: "b696bd9a4a495604532b1b7a484ab140c144eccc"),
+        // On-device ASR (WhisperKit) + diarization (SpeakerKit). App-target only —
+        // must never become a dependency of PocketCastsTranscription, whose tests
+        // run on the macOS host.
+        .package(url: "https://github.com/argmaxinc/argmax-oss-swift", from: "1.0.0"),
     ],
     targets: XcodeSupport.targets + [
         .target(
@@ -206,6 +214,26 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrencySettings
         ),
+        // Diarized transcription: domain types, speaker/ASR merge algorithm, VTT
+        // serializer, and the Apple SpeechAnalyzer engine (`#if os(iOS)`). System
+        // frameworks only, with NO package dependencies: the pure alignment and
+        // serialization code is tested host-side (`swift test` on macOS), so
+        // nothing that fails to build for macOS (PocketCastsUtils imports UIKit)
+        // may be attached here — and WhisperKit/SpeakerKit/FluidAudio products
+        // must NOT be added either; they attach only to `XcodeTarget_podcasts`.
+        .target(
+            name: "PocketCastsTranscription",
+            path: "Sources/PocketCastsTranscription",
+            swiftSettings: strictConcurrencyTestableSettings
+        ),
+        .testTarget(
+            name: "PocketCastsTranscriptionTests",
+            dependencies: [
+                "PocketCastsTranscription",
+            ],
+            path: "Tests/PocketCastsTranscriptionTests",
+            swiftSettings: strictConcurrencySettings
+        ),
         .target(
             name: "Modules",
             path: "Sources/Modules",
@@ -241,9 +269,8 @@ let package = Package(
 enum XcodeTargetNames {
     static let podcasts = "podcasts"
     static let notificationExtension = "NotificationExtension"
-    static let podcastsIntents = "PodcastsIntents"
-    static let podcastsIntentsUI = "PodcastsIntentsUI"
     static let widgetExtension = "WidgetExtension"
+    static let pocketCastsTests = "PocketCastsTests"
 }
 
 enum XcodeSupport {
@@ -251,9 +278,8 @@ enum XcodeSupport {
         [
             XcodeTargetNames.podcasts,
             XcodeTargetNames.notificationExtension,
-            XcodeTargetNames.podcastsIntents,
-            XcodeTargetNames.podcastsIntentsUI,
             XcodeTargetNames.widgetExtension,
+            XcodeTargetNames.pocketCastsTests,
         ].map { .supportingProduct(forXcodeTarget: $0) }
     }
 
@@ -265,6 +291,7 @@ enum XcodeSupport {
                     "PocketCastsDataModel",
                     "PocketCastsServer",
                     "PocketCastsFileSync",
+                    "PocketCastsTranscription",
                     "PocketCastsUtils",
                     .product(name: "Dependencies", package: "swift-dependencies"),
                     .product(name: "DifferenceKit", package: "DifferenceKit"),
@@ -278,6 +305,8 @@ enum XcodeSupport {
                     .product(name: "TelemetryDeck", package: "SwiftSDK"),
                     .product(name: "WrappingHStack", package: "WrappingHStack"),
                     .product(name: "Fingerprint", package: "pocket-casts-ios-fingerprint"),
+                    .product(name: "WhisperKit", package: "argmax-oss-swift"),
+                    .product(name: "SpeakerKit", package: "argmax-oss-swift"),
                 ]
             ),
             .xcodeTarget(
@@ -287,16 +316,19 @@ enum XcodeSupport {
                 ]
             ),
             .xcodeTarget(
-                XcodeTargetNames.podcastsIntents,
-                dependencies: [
-                    .product(name: "Fuse", package: "fuse-swift"),
-                ]
-            ),
-            .xcodeTarget(XcodeTargetNames.podcastsIntentsUI, dependencies: []),
-            .xcodeTarget(
                 XcodeTargetNames.widgetExtension,
                 dependencies: [
                     "PocketCastsUtils",
+                ]
+            ),
+            // The app-test target's themed snapshot coverage (program item H2)
+            // renders through swift-snapshot-testing; routing the dependency via
+            // this supporting product keeps the Xcode project free of direct
+            // package references.
+            .xcodeTarget(
+                XcodeTargetNames.pocketCastsTests,
+                dependencies: [
+                    .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
                 ]
             ),
         ]

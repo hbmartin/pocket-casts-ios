@@ -9,9 +9,7 @@ class PodcastSettingsViewController: PCViewController {
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case autoDownload, notifications, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, skipChapters, autoArchive, inFilters, siriShortcut, unsubscribe, feedError }
-
-    var existingShortcut: Any?
+    enum TableRow { case autoDownload, notifications, autoTranscribe, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, skipChapters, autoArchive, inFilters, unsubscribe, feedError }
 
     @IBOutlet var settingsTable: UITableView! {
         didSet {
@@ -31,7 +29,6 @@ class PodcastSettingsViewController: PCViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateExistingSortcutData()
         title = L10n.settingsTitle
 
         settingsTable.rowHeight = UITableView.automaticDimension
@@ -39,7 +36,18 @@ class PodcastSettingsViewController: PCViewController {
 
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastUpdated(_:)), name: Constants.Notifications.podcastUpdated, object: nil)
+        podcastUpdatedToken = NotificationCenter.default.addObserver(for: PodcastUpdated.self) { [weak self] message in
+            self?.podcastUpdated(message)
+        }
+    }
+
+    private var podcastUpdatedToken: NotificationCenter.ObservationToken?
+
+    // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
+    isolated deinit {
+        if let podcastUpdatedToken {
+            NotificationCenter.default.removeObserver(podcastUpdatedToken)
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -52,7 +60,9 @@ class PodcastSettingsViewController: PCViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(colorsDidDownload))
+        addCustomObserver(PodcastColorsDownloaded.self) { [weak self] message in
+            self?.colorsDidDownload(message)
+        }
         settingsTable.reloadData()
     }
 
@@ -66,8 +76,8 @@ class PodcastSettingsViewController: PCViewController {
         updateColors()
     }
 
-    @objc private func colorsDidDownload(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
+    private func colorsDidDownload(_ message: PodcastColorsDownloaded) {
+        guard let uuidLoaded = message.uuid else { return }
 
         if podcast.uuid == uuidLoaded {
             if let updatedPodcast = DataManager.sharedManager.findPodcast(uuid: podcast.uuid) {
@@ -80,17 +90,6 @@ class PodcastSettingsViewController: PCViewController {
     private func updateColors() {
         changeNavTint(titleColor: nil, iconsColor: podcast.navIconTintColor(), backgroundColor: podcast.navigationBarTintColor())
         settingsTable.reloadData()
-    }
-
-    func updateExistingSortcutData() {
-        SiriShortcutsManager.shared.voiceShortcutForPodcast(podcast: podcast, completion: { voiceShortcut in
-            // The shortcuts callback is off-main; state and table belong to the main actor
-            let boxed = PocketCastsUtils.UncheckedSendable(voiceShortcut)
-            Task { @MainActor in
-                self.existingShortcut = boxed.value
-                self.settingsTable.reloadData()
-            }
-        })
     }
 
     func unsubscribe() {
@@ -127,8 +126,8 @@ class PodcastSettingsViewController: PCViewController {
         Analytics.track(.podcastUnsubscribed, properties: ["source": analyticsSource, "uuid": podcast.uuid])
     }
 
-    @objc func podcastUpdated(_ notification: Notification) {
-        guard let podcastUuid = notification.object as? String, podcastUuid == podcast.uuid, let updatedPodcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) else { return }
+    private func podcastUpdated(_ message: PodcastUpdated) {
+        guard let podcastUuid = message.uuid, podcastUuid == podcast.uuid, let updatedPodcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) else { return }
 
         podcast = updatedPodcast
     }

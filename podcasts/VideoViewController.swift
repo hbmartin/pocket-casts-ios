@@ -251,29 +251,41 @@ class VideoViewController: SimpleNotificationsViewController, @preconcurrency AV
     // MARK: - Event Handling
 
     private func addUiNotificationObservers() {
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(progressUpdated))
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.videoPlaybackEngineSwitched, selector: #selector(videoPlaybackEngineSwitched))
-        addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(playbackFinished))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(trackChanged))
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.progressUpdated()
+        }
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(VideoPlaybackEngineSwitched.self) { [weak self] _ in
+            self?.videoPlaybackEngineSwitched()
+        }
+        addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.playbackFinished()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.trackChanged()
+        }
     }
 
     private func removeUiNotificationObservers() {
         removeAllCustomObservers()
     }
 
-    @objc private func playbackFinished() {
+    private func playbackFinished() {
         dismiss(animated: true, completion: nil)
     }
 
-    @objc private func progressUpdated() {
+    private func progressUpdated() {
         if timeSlider.isScrubbing() || PlaybackManager.shared.isSeeking() { return }
 
         updateUpTo(upTo: PlaybackManager.shared.currentTime(), duration: PlaybackManager.shared.duration(), moveSlider: true)
     }
 
-    @objc private func trackChanged() {
+    private func trackChanged() {
         guard let currentEpisode = PlaybackManager.shared.currentEpisode(), currentEpisode.videoPodcast() else {
             dismiss(animated: true, completion: nil)
             return
@@ -284,7 +296,7 @@ class VideoViewController: SimpleNotificationsViewController, @preconcurrency AV
         update()
     }
 
-    @objc private func videoPlaybackEngineSwitched() {
+    private func videoPlaybackEngineSwitched() {
         // grab the new player and attach it
         attachPlayer()
         update()
@@ -292,7 +304,7 @@ class VideoViewController: SimpleNotificationsViewController, @preconcurrency AV
 
     // MARK: - Updates
 
-    @objc private func update() {
+    private func update() {
         updatePlayPauseButton()
         progressUpdated()
         updateFillScreenBtn()

@@ -2,6 +2,7 @@ import SwiftUI
 import PocketCastsServer
 import PocketCastsDataModel
 import PocketCastsUtils
+import UniformTypeIdentifiers
 
 struct DeveloperMenu: View {
     @State var showingImporter = false
@@ -77,7 +78,7 @@ struct DeveloperMenu: View {
                 Button("Force Reload Discover") {
                     DiscoverServerHandler.shared.discoveryCache.removeAllCachedResponses()
                     URLSession.shared.configuration.urlCache?.removeAllCachedResponses()
-                    NotificationCenter.postOnMainThread(notification: Constants.Notifications.chartRegionChanged)
+                    NotificationCenter.postOnMainThread(ChartRegionChanged())
                 }
 
                 Button("Unsubscribe from all Podcasts") {

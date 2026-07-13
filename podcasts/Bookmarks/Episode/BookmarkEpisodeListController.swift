@@ -61,7 +61,7 @@ extension BookmarkEpisodeListController: BookmarkListRouter {
         }
         Analytics.track(.bookmarkShareTapped, source: viewModel.analyticsSource, properties: ["podcast_uuid": episode.podcastUuid, "episode_uuid": bookmark.episodeUuid])
 
-        SharingModal.show(option: .bookmark(episode, bookmark.time), from: .episodeDetail, in: self)
+        SharingModal.show(option: .option(for: bookmark, episode: episode), from: .episodeDetail, in: self)
     }
 
     func dismissBookmarksList() {

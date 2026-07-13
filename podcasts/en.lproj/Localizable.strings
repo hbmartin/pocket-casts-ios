@@ -1351,6 +1351,9 @@
 /* A common string used throughout the app. Format used to call out when the associated subscription will be renewed. '%1$@' is a placeholder for a localized date indicating when the renewal will process. */
 "next_payment_format" = "Next payment: %1$@";
 
+/* A common string used throughout the app. Prompt to move to the previously played episode. */
+"previous_episode" = "Previous Episode";
+
 /* A common string used throughout the app. Default 'not set' option mostly used with group settings. */
 "none" = "None";
 
@@ -1501,6 +1504,9 @@
 /* Accessibility hint text informing the user that the Sleep timer is enabled. */
 "player_accessibility_sleep_timer_on" = "Sleep timer on";
 
+/* Accessibility hint text informing the user that playback will stop when the current episode ends. */
+"player_accessibility_stop_after_episode_on" = "Stop after this episode on";
+
 /* Subtitle for settings indicating this item operates as delete for files. */
 "player_action_subtitle_delete" = "Shown as Delete for custom episodes";
 
@@ -1518,6 +1524,9 @@
 
 /* Header for the available timer options for auto-pausing playback. */
 "player_action_title_sleep_timer" = "Sleep Timer";
+
+/* Title for the player shelf action that stops playback when the current episode ends. */
+"player_action_title_stop_after_episode" = "Stop After This Episode";
 
 /* Title for the prompt to remove an episode from the favorites. */
 "player_action_title_unstar_episode" = "Unstar Episode";
@@ -2775,6 +2784,21 @@
 
 /* Subtitle explaining the toggle to modify how a tap is handled in the up next queue. This is used when the toggle is on. */
 "settings_general_up_next_tap_on_subtitle" = "Tapping an episode in Up Next will play it. Long press shows episode options. Turn off to switch these around.";
+
+/* Setting toggle that makes tapping an episode row play it immediately instead of opening the episode details. */
+"settings_general_tap_to_play" = "Play Episodes On Tap";
+
+/* Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is off. */
+"settings_general_tap_to_play_off_subtitle" = "Tapping an episode in a list opens its details. Turn on to play episodes with a single tap instead.";
+
+/* Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is on. */
+"settings_general_tap_to_play_on_subtitle" = "Tapping an episode in a list plays it immediately. Swipe on an episode and choose Details to see its options. Turn off to open episode details on tap.";
+
+/* Setting toggle that makes repeated skip button taps grow the skip interval. */
+"settings_general_seek_acceleration" = "Skip Acceleration";
+
+/* Subtitle explaining the toggle that makes repeated skip button taps grow the skip interval. */
+"settings_general_seek_acceleration_subtitle" = "Quickly tapping skip several times in a row increases how far each skip jumps.";
 
 /* Subtitle explaining the toggle to modify if a new episode will be reproduced after the current one ends. */
 "settings_general_autoplay_subtitle" = "If your Up Next queue is empty, we'll play episodes from the same podcast or list you're currently listening to.";
@@ -4397,6 +4421,15 @@
 /* The default title to use for a bookmark */
 "bookmark_default_title" = "Bookmark";
 
+/* Name of the quote-card style offered when sharing a highlight (a bookmark enriched with a transcript excerpt) */
+"highlight_quote_share_style" = "Quote";
+
+/* Shown on the shareable quote card when a bookmark has no transcript excerpt */
+"highlight_excerpt_unavailable" = "No transcript excerpt available";
+
+/* Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card. */
+"highlight_quote_card_a11y" = "Quote card: %1$@";
+
 /* The title of a view where the user can edit their bookmark title */
 "change_bookmark_title" = "Change title";
 
@@ -4721,8 +4754,227 @@
 /* Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target. */
 "transcript_tap_to_seek_streaming_unavailable" = "Download the episode to tap to seek";
 
+/* Title of the button in the transcript screen that opens the full-screen transcript reader */
+"transcript_reader" = "Reader";
+
+/* Accessibility label for the transcript reader control that cycles through the available text sizes */
+"transcript_reader_text_size" = "Text size";
+
+/* Label for a toggle in the transcript reader that switches the reading font between serif and sans-serif */
+"transcript_reader_font_serif" = "Serif font";
+
+/* Title of a context-menu action in the transcript reader that shares the selected transcript line as a text quote */
+"transcript_reader_share_quote" = "Share quote";
+
+/* Title of a context-menu action in the transcript reader that shares the selected transcript line as an audio/video clip */
+"transcript_reader_share_as_clip" = "Share as clip";
+
+/* Title of a button that resumes auto-scrolling the transcript reader to follow the current playback position */
+"transcript_reader_resume_following" = "Resume following";
+
 /* Title of the Transcript excerpt in Episode detail */
 "view_transcript" = "View Transcript";
+
+/* Title of the AI episode summary card on the episode detail screen */
+"episode_summary_card_title" = "Episode Summary";
+
+/* Caption on the episode summary card disclosing that the summary and takeaways are AI-generated and may not be perfectly accurate */
+"episode_summary_card_generated_disclaimer" = "AI-generated";
+
+/* Header for the list of chapter-based key moments on the episode summary card, shown when on-device takeaway generation is unavailable */
+"episode_summary_card_key_moments" = "Key moments";
+
+/* Button that expands the truncated episode summary text to show it in full */
+"episode_summary_card_show_more" = "Show more";
+
+/* Button that collapses the expanded episode summary text back to a preview */
+"episode_summary_card_show_less" = "Show less";
+
+/* Title of the credits card on the episode detail screen listing the people (hosts, guests) featured on the episode */
+"episode_credits_title" = "Credits";
+
+/* Accessibility hint on a person chip on the episode credits card; tapping searches the podcast catalog for that person's name */
+"episode_credits_find_more" = "Find more episodes featuring this person";
+
+/* Title of the button/action that starts generating an on-device transcript for a downloaded episode */
+"transcription_generate" = "Generate Transcript";
+
+/* Shown (as a toast and as progress text in the transcript screen) while an on-device transcript is being generated */
+"transcription_generating" = "Generating…";
+
+/* Title of the Transcription page in Settings and of its row in the settings list */
+"transcription_settings_title" = "Transcription";
+
+/* Header of the transcription settings section where the user picks which speech-to-text engine to use */
+"transcription_engine_mode" = "Engine";
+
+/* Name of the transcription engine option that uses Apple's built-in on-device speech recognition */
+"transcription_engine_apple" = "Apple Built-in";
+
+/* Name of the transcription engine option that uses downloadable on-device models */
+"transcription_engine_local_model" = "Downloaded Model";
+
+/* Name of the transcription engine option that uses a remote transcription API */
+"transcription_engine_remote" = "Remote Provider";
+
+/* Header of the transcription settings section (and label of its text field) where the user can force a transcription language */
+"transcription_language_override" = "Language Override";
+
+/* Footer under the transcription language override text field. The quoted example is a BCP-47 language tag and should not be translated. */
+"transcription_language_override_footer" = "Enter a language tag such as \"en-US\" to force a transcription language. Leave empty to use the device language.";
+
+/* Title of the destructive menu action that deletes the locally generated transcript for an episode */
+"transcription_delete_generated" = "Delete Generated Transcript";
+
+/* Title of the transcript source menu option that shows the transcript provided by the podcast feed */
+"transcription_source_podcast" = "Podcast Transcript";
+
+/* Title of the transcript source menu option that shows the locally generated transcript */
+"transcription_source_generated" = "Generated Transcript";
+
+/* Header of the transcription settings section where the user picks which remote transcription service to use */
+"transcription_remote_provider" = "Provider";
+
+/* Label and placeholder of the secure text field where the user enters their remote transcription service API key */
+"transcription_remote_api_key" = "API Key";
+
+/* Footer under the remote transcription API key field. %1$@ is the provider name, e.g. "AssemblyAI" */
+"transcription_remote_key_footer" = "Your key is stored securely in the device keychain and is only ever sent to %1$@.";
+
+/* Title of the button that checks whether the entered remote transcription API key works */
+"transcription_validate_key" = "Validate Key";
+
+/* Shown next to the validate-key button while the key check request is running */
+"transcription_key_validating" = "Checking key…";
+
+/* Shown next to the validate-key button when the entered API key was accepted by the provider */
+"transcription_key_valid" = "Key is valid";
+
+/* Shown next to the validate-key button when the provider rejected the entered API key */
+"transcription_key_invalid" = "Key was rejected";
+
+/* Shown next to the validate-key button when the key check could not be completed (e.g. no network) */
+"transcription_key_check_failed" = "Couldn't check the key. Try again.";
+
+/* Title of the consent prompt shown before the first transcription with a remote provider */
+"transcription_consent_title" = "Send this episode to a remote service?";
+
+/* Consent prompt body for URL-based remote transcription providers. %1$@ is the provider name, e.g. "AssemblyAI" */
+"transcription_consent_message_url" = "The episode's public audio link will be shared with %1$@, which downloads and transcribes the audio using your API key. Usage may incur charges on your %1$@ account.";
+
+/* Consent prompt body for upload-based remote transcription providers. %1$@ is the provider name, e.g. "OpenAI" */
+"transcription_consent_message_upload" = "The episode's audio will be uploaded to %1$@ and transcribed using your API key. Usage may incur charges on your %1$@ account.";
+
+/* Title of the consent prompt button that grants consent and starts the remote transcription */
+"transcription_consent_allow" = "Allow and Generate";
+
+/* Podcast settings switch: automatically generate an on-device transcript for each newly downloaded episode of this podcast */
+"podcast_settings_auto_transcribe" = "Auto-Transcribe on Download";
+
+/* Footer under the podcast settings auto-transcribe switch, explaining the behavior is on-device only */
+"podcast_settings_auto_transcribe_footer" = "New downloads from this podcast will be transcribed automatically on this device.";
+
+/* Title of the cross-episode transcript search screen and of its row in the Profile tab */
+"transcription_search_title" = "Search Transcripts";
+
+/* Placeholder text of the transcript search input field */
+"transcription_search_prompt" = "Search your transcripts";
+
+/* Title shown on the transcript search screen before the user has typed a search */
+"transcription_search_empty_title" = "Search Your Transcripts";
+
+/* Message shown on the transcript search screen before the user has typed a search */
+"transcription_search_empty_message" = "Find any moment across the episodes you've transcribed on this device.";
+
+/* Title shown when a transcript search returns no matches */
+"transcription_search_no_results_title" = "No Results Found";
+
+/* Message shown when a transcript search returns no matches. '%1$@' is a placeholder for the user's search term. */
+"transcription_search_no_results_message" = "Nothing in your transcripts matches \"%1$@\".";
+
+/* Fallback episode title for a transcript search result whose episode is no longer in the library */
+"transcription_search_unknown_episode" = "Unknown Episode";
+
+/* Accessibility label of the button that clears the transcript search field */
+"transcription_search_clear" = "Clear search";
+
+/* Title of the menu action and sheet for renaming the numbered speakers of a generated transcript */
+"transcription_rename_speakers" = "Rename Speakers";
+
+/* Save button of the speaker rename sheet */
+"transcription_rename_save" = "Save";
+
+/* Placeholder of a speaker name text field in the rename sheet */
+"transcription_rename_placeholder" = "Custom name";
+
+/* Footer of the speaker rename sheet, explaining that empty fields keep the numbered speaker name */
+"transcription_rename_footer" = "Leave a field empty to keep the numbered speaker name.";
+
+/* Header of the transcription settings section listing the downloadable on-device speech-to-text models */
+"transcription_model_picker_header" = "Speech Model";
+
+/* Name of the smallest downloadable transcription model (fastest, least accurate) */
+"transcription_model_tiny" = "Tiny";
+
+/* Name of the second-smallest downloadable transcription model */
+"transcription_model_base" = "Base";
+
+/* Name of the mid-size downloadable transcription model (the recommended default) */
+"transcription_model_small" = "Small";
+
+/* Name of the largest downloadable transcription model (most accurate) */
+"transcription_model_large_turbo" = "Large v3 Turbo";
+
+/* Badge shown next to a transcription model that is already downloaded to the device */
+"transcription_model_downloaded" = "Downloaded";
+
+/* Title of the button that downloads the selected transcription model. '%1$@' is a placeholder for the approximate download size, e.g. "500 MB" */
+"transcription_model_download" = "Download Model (~%1$@)";
+
+/* Progress label shown while a transcription model is downloading */
+"transcription_model_downloading" = "Downloading…";
+
+/* Title of the button that deletes the selected transcription model from the device */
+"transcription_model_delete" = "Delete Model";
+
+/* Label of the row showing how much disk space all downloaded transcription models use */
+"transcription_model_disk_usage" = "Models on Disk";
+
+/* Title of the toggle allowing transcription model downloads over cellular connections */
+"transcription_allow_cellular_downloads" = "Download Over Cellular";
+
+/* Footer under the cellular downloads toggle explaining model downloads wait for Wi-Fi when it is off */
+"transcription_allow_cellular_footer" = "Model downloads can be large. When off, downloads wait for an unmetered connection like Wi-Fi.";
+
+/* Alert message when a transcription model download is refused because the device is on a cellular connection */
+"transcription_model_cellular_blocked" = "You're on a cellular connection. Enable Download Over Cellular or connect to Wi-Fi to download models.";
+
+/* Alert message when a transcription model download fails for network or server reasons */
+"transcription_model_download_failed" = "The model couldn't be downloaded. Check your connection and try again.";
+
+/* Header of the transcription settings section with speaker detection options */
+"transcription_diarization_header" = "Speaker Detection";
+
+/* Label of the stepper that caps how many distinct speakers a transcript can label */
+"transcription_max_speakers" = "Max Speakers";
+
+/* Value shown on the max-speakers stepper when speaker count detection is automatic */
+"transcription_max_speakers_auto" = "Auto";
+
+/* Footer under the max-speakers stepper. Explains the cap and the automatic mode */
+"transcription_max_speakers_footer" = "Caps how many different speakers a transcript can label. Auto lets the model decide.";
+
+/* Header of the transcription settings section showing storage used by generated transcripts */
+"transcription_storage_header" = "Generated Transcripts";
+
+/* Label of the row showing how much disk space generated transcripts use. */
+"transcription_storage_usage" = "Storage Used";
+
+/* Title of the button (and its confirmation action) that deletes all generated transcripts from the device */
+"transcription_storage_clear_all" = "Clear All Transcripts";
+
+/* Confirmation message shown before deleting all generated transcripts. '%1$@' is a placeholder for the number of transcribed episodes */
+"transcription_storage_clear_all_confirmation" = "This removes the generated transcripts for %1$@ episodes from this device. Episodes can be transcribed again later.";
 
 /* Upgrade Experiment Paywall button title */
 "upgrade_experiment_paywall_button" = "Get Pocket Casts Plus";
@@ -6340,3 +6592,315 @@
 
 /* Footer showing when an audio device was last seen. '%1$@' is a placeholder for a relative date like 'yesterday'. */
 "settings_devices_last_seen_format" = "Last seen %1$@";
+
+/* Title for the button on the new playlist screen that creates a custom (advanced query) playlist */
+"playlist_custom_creation_button_title" = "Make into custom playlist";
+
+/* Subtitle for the custom playlist creation button explaining the feature */
+"playlist_custom_creation_button_subtitle" = "Build advanced rules or write your own query.";
+
+/* Segmented control option showing the visual rule builder in the custom playlist editor */
+"playlist_custom_mode_builder" = "Builder";
+
+/* Segmented control option showing the SQL editor in the custom playlist editor */
+"playlist_custom_mode_sql" = "SQL";
+
+/* Save button at the bottom of the custom playlist editor when creating a new playlist */
+"playlist_custom_save_button" = "Create custom playlist";
+
+/* Navigation bar save button in the custom playlist editor when editing an existing playlist */
+"playlist_custom_save" = "Save";
+
+/* Footer in the custom playlist editor explaining that custom playlists stay on this device */
+"playlist_custom_only_on_device_footer" = "Only on this device. Custom playlists don't sync to your other devices.";
+
+/* Segmented option for a rule group where every rule must match */
+"playlist_custom_group_all" = "All";
+
+/* Segmented option for a rule group where any rule may match */
+"playlist_custom_group_any" = "Any";
+
+/* Caption next to a rule group set to require every rule to match */
+"playlist_custom_group_match_all_description" = "of the following are true";
+
+/* Caption next to a rule group set to require any rule to match */
+"playlist_custom_group_match_any_description" = "of the following is true";
+
+/* Button that adds a new condition row to a rule group */
+"playlist_custom_add_condition" = "Add condition";
+
+/* Button that adds a nested rule group inside a rule group */
+"playlist_custom_add_group" = "Add group";
+
+/* Shown inside an empty rule group before any conditions are added */
+"playlist_custom_builder_empty_description" = "Add conditions to choose which episodes appear in this playlist.";
+
+/* Warning shown when some builder conditions still need a value before saving */
+"playlist_custom_builder_incomplete_warning" = "Fill in every condition to save this playlist.";
+
+/* Accessibility label for the button that removes a rule or rule group */
+"playlist_custom_remove_rule" = "Remove rule";
+
+/* Menu label for choosing which episode or podcast field a condition applies to */
+"playlist_custom_condition_field" = "Field";
+
+/* Menu label for choosing a condition's comparison operator */
+"playlist_custom_condition_operator" = "Operator";
+
+/* Placeholder for a condition's value input */
+"playlist_custom_value_placeholder" = "Value";
+
+/* Placeholder for the lower bound of a numeric between condition */
+"playlist_custom_value_min" = "Min";
+
+/* Placeholder for the upper bound of a numeric between condition */
+"playlist_custom_value_max" = "Max";
+
+/* Placeholder for the number-of-days input of an 'in the last N days' condition */
+"playlist_custom_value_days" = "Days";
+
+/* Suffix label after the number-of-days input, completing 'in the last N days' */
+"playlist_custom_value_days_suffix" = "days";
+
+/* Label for a condition's date picker */
+"playlist_custom_value_date" = "Date";
+
+/* Label for the start date of a date range condition */
+"playlist_custom_value_start_date" = "From";
+
+/* Label for the end date of a date range condition */
+"playlist_custom_value_end_date" = "To";
+
+/* Button that opens the podcast multi-select for a podcast condition */
+"playlist_custom_choose_podcasts" = "Choose podcasts";
+
+/* Number of podcasts chosen for a podcast condition; '%1$@' is the count */
+"playlist_custom_podcasts_selected" = "%1$@ selected";
+
+/* Button that checks the SQL query for errors */
+"playlist_custom_validate_button" = "Validate";
+
+/* Shown while the SQL query is being checked */
+"playlist_custom_validating" = "Validating…";
+
+/* Hint under the SQL editor before the query has been validated */
+"playlist_custom_validation_needed" = "Validate your query to enable saving.";
+
+/* Hint explaining what to type in the SQL editor */
+"playlist_custom_sql_hint" = "Write the conditions of a query over the episode and podcast tables. The playlist updates automatically as your library changes.";
+
+/* Button that opens a reference sheet listing the queryable fields */
+"playlist_custom_schema_reference" = "Schema reference";
+
+/* Button that pre-fills the SQL editor from the playlist's current smart rules */
+"playlist_custom_start_from_rules" = "Start from current rules";
+
+/* Intro text of the schema reference sheet listing queryable fields */
+"playlist_custom_schema_description" = "Query these fields using the episode and podcast table aliases. Values are compared with standard SQL operators.";
+
+/* Schema reference type label for text fields */
+"playlist_custom_schema_type_text" = "Text";
+
+/* Schema reference type label for numeric fields */
+"playlist_custom_schema_type_number" = "Number";
+
+/* Schema reference type label for true/false fields */
+"playlist_custom_schema_type_boolean" = "Boolean";
+
+/* Schema reference type label for date fields */
+"playlist_custom_schema_type_date" = "Date";
+
+/* Schema reference type label for fields with a fixed set of values */
+"playlist_custom_schema_type_enum" = "Choice";
+
+/* Schema reference type label for the podcast picker field */
+"playlist_custom_schema_type_podcast" = "Podcasts";
+
+/* One matching episode for the current query; '%1$@' is the number 1 formatted */
+"playlist_custom_match_count_singular" = "%1$@ matching episode";
+
+/* Number of matching episodes for the current query; '%1$@' is the count */
+"playlist_custom_match_count_plural" = "%1$@ matching episodes";
+
+/* Validation error: the query is empty */
+"playlist_custom_error_empty" = "Enter a query to validate.";
+
+/* Validation error: the query exceeds the maximum length; '%1$@' is the character limit */
+"playlist_custom_error_too_long" = "This query is too long. Keep it under %1$@ characters.";
+
+/* Validation error: the query contains parameter placeholders which aren't allowed */
+"playlist_custom_error_placeholders" = "Remove parameter placeholders like '?' or ':name' — custom queries can't take parameters.";
+
+/* Validation error for a SQL syntax problem; '%1$@' is the database's error message */
+"playlist_custom_error_syntax" = "Syntax error: %1$@";
+
+/* Validation error: more than one SQL statement was entered */
+"playlist_custom_error_multiple_statements" = "Only a single query is allowed.";
+
+/* Validation error: the query tries to modify data */
+"playlist_custom_error_not_read_only" = "Only read-only queries are allowed.";
+
+/* Validation error: the query failed while running; '%1$@' is the database's error message */
+"playlist_custom_error_execution" = "The query failed to run: %1$@";
+
+/* Condition operator: text field contains the value */
+"playlist_custom_op_contains" = "contains";
+
+/* Condition operator: text field does not contain the value */
+"playlist_custom_op_not_contains" = "doesn't contain";
+
+/* Condition operator: field equals the value */
+"playlist_custom_op_equals" = "is";
+
+/* Condition operator: field does not equal the value */
+"playlist_custom_op_not_equals" = "is not";
+
+/* Condition operator: text field starts with the value */
+"playlist_custom_op_starts_with" = "starts with";
+
+/* Condition operator: text field ends with the value */
+"playlist_custom_op_ends_with" = "ends with";
+
+/* Condition operator: numeric field is greater than the value */
+"playlist_custom_op_greater_than" = "is more than";
+
+/* Condition operator: numeric field is less than the value */
+"playlist_custom_op_less_than" = "is less than";
+
+/* Condition operator: numeric field is greater than or equal to the value */
+"playlist_custom_op_at_least" = "is at least";
+
+/* Condition operator: numeric field is less than or equal to the value */
+"playlist_custom_op_at_most" = "is at most";
+
+/* Condition operator: field is between two values */
+"playlist_custom_op_between" = "is between";
+
+/* Condition operator: field has any value at all */
+"playlist_custom_op_is_set" = "is set";
+
+/* Condition operator: field has no value */
+"playlist_custom_op_is_not_set" = "is not set";
+
+/* Condition operator: field matches any of the chosen values */
+"playlist_custom_op_in" = "is any of";
+
+/* Condition operator: field matches none of the chosen values */
+"playlist_custom_op_not_in" = "is none of";
+
+/* Condition operator: date field falls within the last N days; the day count input follows this label */
+"playlist_custom_op_in_last_days" = "is in the last";
+
+/* Condition operator: date field is before the value */
+"playlist_custom_op_before" = "is before";
+
+/* Condition operator: date field is after the value */
+"playlist_custom_op_after" = "is after";
+
+/* Queryable field: the episode's title */
+"playlist_custom_field_episode_title" = "Episode title";
+
+/* Queryable field: the episode's show notes description */
+"playlist_custom_field_episode_description" = "Episode description";
+
+/* Queryable field: the podcast's title */
+"playlist_custom_field_podcast_title" = "Podcast title";
+
+/* Queryable field: the podcast the episode belongs to */
+"playlist_custom_field_podcast" = "Podcast";
+
+/* Queryable field: the episode's duration in seconds */
+"playlist_custom_field_duration" = "Duration (seconds)";
+
+/* Queryable field: how far the episode has been played, in seconds */
+"playlist_custom_field_played_up_to" = "Played up to (seconds)";
+
+/* Queryable field: the episode's file size in bytes */
+"playlist_custom_field_file_size" = "File size (bytes)";
+
+/* Queryable field: the episode's season number */
+"playlist_custom_field_season_number" = "Season number";
+
+/* Queryable field: the episode's number within its season */
+"playlist_custom_field_episode_number" = "Episode number";
+
+/* Queryable field: percentage of the episode already played */
+"playlist_custom_field_progress_percent" = "Progress (%)";
+
+/* Queryable field: whether the episode is unplayed, in progress or played */
+"playlist_custom_field_playing_status" = "Play status";
+
+/* Queryable field: whether the episode is downloaded */
+"playlist_custom_field_download_status" = "Download status";
+
+/* Queryable field: the episode's type (full episode, trailer or bonus) */
+"playlist_custom_field_episode_type" = "Episode type";
+
+/* Queryable field: whether the episode is audio or video */
+"playlist_custom_field_media_type" = "Media type";
+
+/* Queryable field: whether the episode's podcast is one the user follows */
+"playlist_custom_field_podcast_subscribed" = "Following podcast";
+
+/* Queryable field: when the episode was published */
+"playlist_custom_field_published_date" = "Published date";
+
+/* Queryable field: when the episode was added to the library */
+"playlist_custom_field_added_date" = "Added date";
+
+/* Queryable field: when the episode was last played */
+"playlist_custom_field_last_played_date" = "Last played date";
+
+/* Episode type choice: a regular full-length episode */
+"playlist_custom_episode_type_full" = "Full episode";
+
+/* Episode type choice: a trailer episode */
+"playlist_custom_episode_type_trailer" = "Trailer";
+
+/* Episode type choice: a bonus episode */
+"playlist_custom_episode_type_bonus" = "Bonus";
+
+/* Search results filter pill that shows matches found inside episode transcripts */
+"search_transcripts_pill" = "Transcripts";
+
+/* Title shown in search results when no transcript matches the search term */
+"search_transcripts_empty_title" = "No Transcript Matches";
+
+/* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
+"search_transcripts_empty_message" = "Transcripts become searchable here after you view them on an episode.";
+
+/* Timestamp label on a transcript search result showing where in the episode the match occurs. '%1$@' is a placeholder for a time like 12:34. */
+"search_transcripts_result_at_time" = "At %1$@";
+
+/* Title for the button on the new playlist screen that opens the natural-language playlist creator */
+"prompted_playlist_entry_button" = "Describe your playlist";
+
+/* Subtitle for the describe-your-playlist creation button explaining the feature */
+"prompted_playlist_entry_subtitle" = "Tell us what to include and we'll set up the rules.";
+
+/* Title of the natural-language playlist creation sheet */
+"prompted_playlist_sheet_title" = "Describe your playlist";
+
+/* Placeholder in the playlist description text field showing an example description */
+"prompted_playlist_placeholder" = "e.g. Unplayed episodes under 30 minutes from this week";
+
+/* Button that interprets the playlist description and opens the playlist preview */
+"prompted_playlist_generate" = "Generate Preview";
+
+/* Notice shown on the playlist description sheet when on-device Apple Intelligence is unavailable */
+"prompted_playlist_fallback_notice" = "Apple Intelligence isn't available on this device, so a simpler built-in interpreter will read your description.";
+
+/* Notice listing podcast names from the description that couldn't be found in the user's library. '%1$@' is a placeholder for the comma-separated list of names. */
+"prompted_playlist_unmatched_podcasts" = "Couldn't find these podcasts in your library: %1$@. Tap Generate Preview again to continue without them.";
+
+/* Footnote on the playlist description sheet explaining that processing happens on device */
+"prompted_playlist_intelligence_footnote" = "Uses on-device intelligence. Your description never leaves this device.";
+
+/* Example playlist description chip: play state and duration rules */
+"prompted_playlist_example_1" = "Unplayed episodes under 30 minutes";
+
+/* Example playlist description chip: download state and release date rules */
+"prompted_playlist_example_2" = "Downloaded episodes from this week";
+
+/* Example playlist description chip: starred and duration rules */
+"prompted_playlist_example_3" = "Starred episodes longer than an hour";

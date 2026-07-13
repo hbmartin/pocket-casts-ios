@@ -159,32 +159,38 @@ class UserEpisodeDetailViewController: UIViewController {
         addObservers()
     }
 
-    private var playStatusToken: NotificationCenter.ObservationToken?
+    private var messageTokens = [NotificationCenter.ObservationToken]()
 
     func addObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodeDownloaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
-        if playStatusToken == nil {
-            playStatusToken = NotificationCenter.default.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] _ in
+        if messageTokens.isEmpty {
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] _ in
                 self?.updateFromNotification()
-            }
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloadStatusChanged.self) { [weak self] _ in
+                self?.updateFromNotification()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] _ in
+                self?.updateFromNotification()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.updateColors()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: DownloadProgressChanged.self) { [weak self] _ in
+                self?.updateDownloadProgress()
+            })
         }
-        NotificationCenter.default.addObserver(self, selector: #selector(updateDownloadProgress), name: Constants.Notifications.downloadProgress, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleThemeChanged), name: Constants.Notifications.themeChanged, object: nil)
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
-        if let playStatusToken {
-            NotificationCenter.default.removeObserver(playStatusToken)
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 
-    @objc private func handleThemeChanged() {
-        updateColors()
-    }
-
-    @objc private func updateFromNotification() {
+    private func updateFromNotification() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
@@ -255,7 +261,7 @@ class UserEpisodeDetailViewController: UIViewController {
         updateDownloadProgress()
     }
 
-    @objc func updateDownloadProgress() {
+    func updateDownloadProgress() {
         guard let _ = DownloadManager.shared.progressManager.progressForEpisode(episode.uuid) else { return }
 
         if !episode.downloading() {

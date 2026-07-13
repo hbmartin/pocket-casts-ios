@@ -41,7 +41,7 @@ struct OnboardingFlow: AnalyticsSourceProvider {
         source = .unknown
         currentFlow = .none
 
-        NotificationCenter.default.post(name: .onboardingFlowDidDismiss, object: nil)
+        NotificationCenter.postOnMainThread(OnboardingFlowDidDismiss())
     }
 
     /// Updates the source passed for analytics

@@ -40,7 +40,7 @@ struct SearchHistoryCell: View {
                         searchResults.searchLocally(term: searchTerm)
                     }
                     searchResults.search(term: searchTerm)
-                    NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastSearchRequest, object: searchTerm)
+                    NotificationCenter.postOnMainThread(PodcastSearchRequested(term: searchTerm))
                 }
                 searchAnalyticsHelper.historyItemTapped(entry)
                 searchHistory.moveEntryToTop(entry)

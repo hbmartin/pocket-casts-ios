@@ -220,7 +220,7 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         updateTableAndData()
 
         if sender.isOn {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.followSystemThemeTurnedOn)
+            NotificationCenter.postOnMainThread(FollowSystemThemeTurnedOn())
         } else if Theme.sharedTheme.activeTheme != Theme.preferredLightTheme() {
             Theme.sharedTheme.activeTheme = Theme.preferredLightTheme()
         }

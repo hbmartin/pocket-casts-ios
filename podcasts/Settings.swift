@@ -1,5 +1,6 @@
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsTranscription
 import UIKit
 import SwiftUI
 import PocketCastsUtils
@@ -12,7 +13,7 @@ nonisolated class Settings: NSObject {
     static var isLockScreenScrubbingDisabled: Bool {
         set {
             UserDefaults.standard.set(newValue, forKey: Constants.UserDefaults.isLockScreenScrubbingDisabled)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.remoteCommandSettingsChanged, object: nil)
+            NotificationCenter.postOnMainThread(RemoteCommandSettingsChanged())
         }
         get {
             return UserDefaults.standard.bool(forKey: Constants.UserDefaults.isLockScreenScrubbingDisabled)
@@ -125,6 +126,115 @@ nonisolated class Settings: NSObject {
 
     class func setLocalFeedIngestEnabled(_ enabled: Bool) {
         UserDefaults.standard.set(enabled, forKey: Settings.localFeedIngestEnabledKey)
+    }
+
+    // MARK: - Diarized Transcription
+
+    private static let transcriptionEngineModeKey = "SJTranscriptionEngineMode"
+
+    /// Raw `TranscriptionEngineMode` value for locally generated transcripts
+    /// (0 = Apple built-in, 1 = local model, 2 = remote provider). Defaults to 0.
+    class func transcriptionEngineMode() -> Int32 {
+        Int32(UserDefaults.standard.integer(forKey: Settings.transcriptionEngineModeKey))
+    }
+
+    class func setTranscriptionEngineMode(_ mode: Int32) {
+        UserDefaults.standard.set(Int(mode), forKey: Settings.transcriptionEngineModeKey)
+    }
+
+    private static let transcriptionLanguageOverrideKey = "SJTranscriptionLanguageOverride"
+
+    /// BCP-47 language tag override for transcription. nil (or empty, which reads
+    /// back as nil) means the device locale.
+    class func transcriptionLanguageOverride() -> String? {
+        guard let value = UserDefaults.standard.string(forKey: Settings.transcriptionLanguageOverrideKey),
+              !value.isEmpty else {
+            return nil
+        }
+        return value
+    }
+
+    class func setTranscriptionLanguageOverride(_ language: String?) {
+        if let language, !language.isEmpty {
+            UserDefaults.standard.set(language, forKey: Settings.transcriptionLanguageOverrideKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Settings.transcriptionLanguageOverrideKey)
+        }
+    }
+
+    private static let transcriptionRemoteProviderKey = "SJTranscriptionRemoteProvider"
+
+    /// Selected remote transcription provider id (see `RemoteProviderRegistry`).
+    /// Defaults to AssemblyAI; unknown persisted ids also read back as the default.
+    class func transcriptionRemoteProvider() -> String {
+        guard let value = UserDefaults.standard.string(forKey: Settings.transcriptionRemoteProviderKey),
+              RemoteProviderRegistry.info(id: value) != nil else {
+            return RemoteProviderRegistry.defaultProviderId
+        }
+        return value
+    }
+
+    class func setTranscriptionRemoteProvider(_ providerId: String) {
+        UserDefaults.standard.set(providerId, forKey: Settings.transcriptionRemoteProviderKey)
+    }
+
+    private static let transcriptionMaxSpeakersKey = "SJTranscriptionMaxSpeakers"
+
+    /// Diarizer speaker cap; 0 means auto-detect. Consumed by the SpeakerKit
+    /// diarizer stage that runs for the Apple built-in and local-model modes.
+    class func transcriptionMaxSpeakers() -> Int {
+        UserDefaults.standard.integer(forKey: Settings.transcriptionMaxSpeakersKey)
+    }
+
+    class func setTranscriptionMaxSpeakers(_ count: Int) {
+        UserDefaults.standard.set(count, forKey: Settings.transcriptionMaxSpeakersKey)
+    }
+
+    private static let transcriptionWhisperModelKey = "SJTranscriptionWhisperModel"
+
+    /// The WhisperKit model variant used by `TranscriptionEngineMode.localModel`
+    /// (full repo folder name, e.g. "openai_whisper-small"). Defaults to the
+    /// package's small multilingual variant; unknown persisted values also read
+    /// back as that default so a removed variant can't wedge the engine.
+    class func transcriptionWhisperModel() -> String {
+        guard let value = UserDefaults.standard.string(forKey: Settings.transcriptionWhisperModelKey),
+              WhisperKitModelStore.curatedVariants.contains(where: { $0.id == value }) else {
+            return WhisperKitModelStore.defaultVariantId
+        }
+        return value
+    }
+
+    class func setTranscriptionWhisperModel(_ variant: String) {
+        UserDefaults.standard.set(variant, forKey: Settings.transcriptionWhisperModelKey)
+    }
+
+    private static let transcriptionAllowCellularModelDownloadsKey = "SJTranscriptionAllowCellularModelDownloads"
+
+    /// Whether transcription model downloads (WhisperKit variants, SpeakerKit
+    /// diarizer) may run over cellular/expensive connections. Defaults to false:
+    /// models are large, so downloads wait for Wi-Fi unless the user opts in.
+    class func transcriptionAllowCellularModelDownloads() -> Bool {
+        UserDefaults.standard.bool(forKey: Settings.transcriptionAllowCellularModelDownloadsKey)
+    }
+
+    class func setTranscriptionAllowCellularModelDownloads(_ allowed: Bool) {
+        UserDefaults.standard.set(allowed, forKey: Settings.transcriptionAllowCellularModelDownloadsKey)
+    }
+
+    private static let transcriptionLocalStackKey = "SJTranscriptionLocalStack"
+    static let transcriptionLocalStackWhisperKit = "whisperKit"
+
+    /// Which local stack backs `TranscriptionEngineMode.localModel`. Only
+    /// "whisperKit" (WhisperKit ASR + SpeakerKit diarizer) is implemented; the
+    /// FluidAudio alternate (Parakeet TDT + pyannote, value "fluidAudio") is
+    /// deferred as transcription Phase 2b. Unknown values read back as the
+    /// WhisperKit default so `TranscriptionEngineFactory` never dead-ends.
+    class func transcriptionLocalStack() -> String {
+        UserDefaults.standard.string(forKey: Settings.transcriptionLocalStackKey) ?? Settings.transcriptionLocalStackWhisperKit
+    }
+
+    class func setTranscriptionLocalStack(_ stack: String) {
+        UserDefaults.standard.set(stack, forKey: Settings.transcriptionLocalStackKey)
     }
 
     // MARK: - Mobile Data
@@ -374,12 +484,46 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(isOn, forKey: Settings.playUpNextOnTapKey)
     }
 
+    // MARK: - Tap To Play
+
+    static let tapToPlayKey = "SJTapToPlay"
+    class func tapToPlay() -> Bool {
+        guard FeatureFlag.newSettingsStorage.enabled == false else {
+            return SettingsStore.appSettings.tapToPlay
+        }
+        return UserDefaults.standard.bool(forKey: Settings.tapToPlayKey)
+    }
+
+    class func setTapToPlay(_ isOn: Bool) {
+        if FeatureFlag.newSettingsStorage.enabled {
+            SettingsStore.appSettings.tapToPlay = isOn
+        }
+        UserDefaults.standard.set(isOn, forKey: Settings.tapToPlayKey)
+    }
+
+    // MARK: - Seek Acceleration
+
+    static let seekAccelerationKey = "SJSeekAcceleration"
+    class func seekAccelerationEnabled() -> Bool {
+        guard FeatureFlag.newSettingsStorage.enabled == false else {
+            return SettingsStore.appSettings.seekAcceleration
+        }
+        return UserDefaults.standard.bool(forKey: Settings.seekAccelerationKey)
+    }
+
+    class func setSeekAccelerationEnabled(_ isOn: Bool) {
+        if FeatureFlag.newSettingsStorage.enabled {
+            SettingsStore.appSettings.seekAcceleration = isOn
+        }
+        UserDefaults.standard.set(isOn, forKey: Settings.seekAccelerationKey)
+    }
+
     static let upNextShuffleKey = "SJUpNextShuffleKey"
     class func upNextShuffleToggle() {
         let isOn = upNextShuffleEnabled()
         UserDefaults.standard.set(!isOn, forKey: Settings.upNextShuffleKey)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextShuffleToggle)
+        NotificationCenter.postOnMainThread(UpNextShuffleToggled())
     }
 
     class func upNextShuffleEnabled() -> Bool {
@@ -420,7 +564,7 @@ nonisolated class Settings: NSObject {
         UserDefaults.standard.set(region, forKey: chartRegion)
         UserDefaults.standard.synchronize()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.chartRegionChanged)
+        NotificationCenter.postOnMainThread(ChartRegionChanged())
 
         LocalizationHelper.update(userRegion: region)
     }
@@ -555,7 +699,7 @@ nonisolated class Settings: NSObject {
         }
         UserDefaults.standard.set(enabled, forKey: Settings.mediaSessionActionsKey)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.extraMediaSessionActionsChanged)
+        NotificationCenter.postOnMainThread(ExtraMediaSessionActionsChanged())
 
         Settings.trackValueToggled(.settingsGeneralExtraPlaybackActionsToggled, enabled: enabled)
     }
@@ -734,7 +878,7 @@ nonisolated class Settings: NSObject {
             UserDefaults.standard.set(actionInts, forKey: Settings.playerActionsKey)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playerActionsUpdated)
+        NotificationCenter.postOnMainThread(PlayerActionsUpdated())
     }
 
     // MARK: Multi Select Gesture
@@ -1382,7 +1526,7 @@ nonisolated class Settings: NSObject {
                 UserDefaults.standard.set(data, forKey: Constants.UserDefaults.audioTuning)
             }
             FileLog.shared.addMessage("[Settings] AudioTuning changed (default: \(newValue == .default))")
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.audioTuningDidChange)
+            NotificationCenter.postOnMainThread(AudioTuningDidChange())
         }
     }
 
@@ -1488,6 +1632,10 @@ nonisolated extension HeadphoneControl {
             self = .skipBack
         case .skipForward:
             self = .skipForward
+        case .nextEpisode:
+            self = .nextEpisode
+        case .previousEpisode:
+            self = .previousEpisode
         }
     }
 
@@ -1503,6 +1651,10 @@ nonisolated extension HeadphoneControl {
             return .skipBack
         case .skipForward:
             return .skipForward
+        case .nextEpisode:
+            return .nextEpisode
+        case .previousEpisode:
+            return .previousEpisode
         }
     }
 }

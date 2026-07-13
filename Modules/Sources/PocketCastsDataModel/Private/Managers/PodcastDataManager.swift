@@ -598,6 +598,13 @@ class PodcastDataManager {
         saveSingleSetting("skipChapterTitles", value: titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
+    /// The auto-transcribe-on-download opt-in lives only in the settings JSON payload (no legacy
+    /// column) and is device-local, so the json_set writer runs unconditionally rather than behind
+    /// `newSettingsStorage`.
+    func saveAutoTranscribe(_ enabled: Bool, podcastUuid: String, dbQueue: GRDBQueue) {
+        saveSingleSetting("autoTranscribe", value: enabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    }
+
     func delete(podcast: Podcast, dbQueue: GRDBQueue) {
         let success = dbQueue.write { db in
             try delete(podcast: podcast, db: db)
@@ -809,8 +816,11 @@ class PodcastDataManager {
             return
         }
 
+        // Deliberately leaves syncStatus untouched: save(podcast:) must persist the object
+        // as the caller built it (the sync import path saves server state and must stay
+        // synced). Setting-specific writers mark notSynced themselves.
         try db.execute(
-            sql: "UPDATE \(DataManager.podcastTableName) SET settings = ?, syncStatus = \(SyncStatus.notSynced.rawValue) WHERE uuid = ?",
+            sql: "UPDATE \(DataManager.podcastTableName) SET settings = ? WHERE uuid = ?",
             arguments: StatementArguments([jsonString, podcast.uuid])!) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - settings JSON writer; Swift re-encode would drop unmodeled payload fields
     }
 

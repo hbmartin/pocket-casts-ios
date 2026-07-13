@@ -35,18 +35,25 @@ class PlaylistPreviewViewModel: ObservableObject {
         self.availableRules = SmartPlaylistRule.allCases.map {
             SmartPlaylistRuleInfo(type: $0, description: playlistMode == .creation ? nil : ruleText(for: $0))
         }
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleFilterChanged(_:)),
-            name: Constants.Notifications.playlistChanged,
-            object: nil
-        )
+        playlistChangedToken = NotificationCenter.default.addObserver(for: PlaylistChanged.self) { [weak self] message in
+            self?.handleFilterChanged(message)
+        }
+    }
+
+    private var playlistChangedToken: NotificationCenter.ObservationToken?
+
+    // isolated deinit: reads the isolated token storage to deregister the
+    // observation on the main actor when the model deallocates.
+    isolated deinit {
+        if let playlistChangedToken {
+            NotificationCenter.default.removeObserver(playlistChangedToken)
+        }
     }
 
     func saveFilter(analyticsGroup: String? = nil) {
         newPlaylist.syncStatus = SyncStatus.notSynced.rawValue
         newPlaylist = DataManager.sharedManager.save(playlist: newPlaylist)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: newPlaylist)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: newPlaylist))
 
         if !newPlaylist.isNew, let group = analyticsGroup {
             Analytics.track(.filterUpdated, properties: ["group": group, "source": "filters"])
@@ -126,8 +133,8 @@ class PlaylistPreviewViewModel: ObservableObject {
         }
     }
 
-    @objc private func handleFilterChanged(_ notification: Notification) {
-        guard let playlist = notification.object as? EpisodeFilter,
+    private func handleFilterChanged(_ message: PlaylistChanged) {
+        guard let playlist = message.playlist,
               playlist.uuid == newPlaylist.uuid
         else {
             return
@@ -161,7 +168,10 @@ class PlaylistPreviewViewModel: ObservableObject {
     }
 
     func removeObserver() {
-        NotificationCenter.default.removeObserver(self)
+        if let playlistChangedToken {
+            NotificationCenter.default.removeObserver(playlistChangedToken)
+            self.playlistChangedToken = nil
+        }
     }
 
     private func startOperation() {

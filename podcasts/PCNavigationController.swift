@@ -17,15 +17,23 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
 
         updateNavColors()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateNavColors()
+        }
     }
+
+    private var themeToken: NotificationCenter.ObservationToken?
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override func setNavigationBarHidden(_ hidden: Bool, animated: Bool) {
@@ -39,10 +47,6 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         viewControllers.count > 1
-    }
-
-    @objc private func themeDidChange() {
-        updateNavColors()
     }
 
     private func updateNavColors() {
@@ -77,7 +81,6 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
         super.viewWillTransition(to: size, with: coordinator)
 
         topViewController?.viewWillTransition(to: size, with: coordinator)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.viewWillTransitionToSize, object: NSCoder.string(for: size))
     }
 
     // MARK: - Orientation

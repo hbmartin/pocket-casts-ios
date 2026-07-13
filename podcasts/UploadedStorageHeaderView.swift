@@ -41,18 +41,26 @@ class UploadedStorageHeaderView: UIView {
         commonInit()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     private func commonInit() {
         Bundle.main.loadNibNamed("UploadedStorageHeaderView", owner: self, options: nil)
         addSubview(contentView)
         contentView.frame = bounds
-        NotificationCenter.default.addObserver(self, selector: #selector(update), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.update()
+        }
     }
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
-    @objc func update() {
+    func update() {
         plusView.isHidden = false
 
         let episodes = DataManager.sharedManager.allUserEpisodes(sortedBy: .newestToOldest)

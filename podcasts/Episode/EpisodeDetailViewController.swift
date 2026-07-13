@@ -56,6 +56,15 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     var showNotesWebViewTopConstraint: NSLayoutConstraint?
     @IBOutlet var transcriptExcerpt: UIView?
 
+    /// Container for the flag-gated AI summary card, inserted in code between
+    /// the transcript excerpt and the show notes (see +ShowNotes).
+    var episodeSummaryContainer: UIView?
+
+    /// Container for the flag-gated people-credits card, inserted in code after
+    /// the summary card (or the transcript excerpt) and before the show notes
+    /// (see +ShowNotes).
+    var episodeCreditsContainer: UIView?
+
     @IBOutlet var mainScrollView: UIScrollView! {
         didSet {
             mainScrollView.contentInset = UIEdgeInsets(top: EpisodeDetailConstants.topPadding, left: 0, bottom: Constants.effectiveMiniPlayerOffset, right: 0)
@@ -259,30 +268,65 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
 
         bookmarksController.view.isHidden = false
 
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.upNextQueueChanged, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.upNextEpisodeAdded, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.upNextEpisodeRemoved, selector: #selector(playbackEventDidFire))
-        addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(playbackProgressDidChange))
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(UpNextQueueChanged.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(UpNextEpisodeAdded.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        addCustomObserver(UpNextEpisodeRemoved.self) { [weak self] _ in
+            self?.playbackEventDidFire()
+        }
+        // Inert both before and after the typed migration: playbackProgress is already
+        // registered above (to playbackEventDidFire) and registrations dedupe by name.
+        addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+            self?.playbackProgressDidChange()
+        }
 
-        addCustomObserver(Constants.Notifications.downloadProgress, selector: #selector(updateDownloadProgress))
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(episodeDownloadedEvent))
+        addCustomObserver(DownloadProgressChanged.self) { [weak self] _ in
+            self?.updateDownloadProgress()
+        }
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.episodeDownloadedEvent()
+        }
 
         addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] message in
-            guard let self, let episodeUuid = message.uuid, episodeUuid == self.episode.uuid else { return }
-            self.updateDisplayedData()
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
         }
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
-        addCustomObserver(Constants.Notifications.episodeDurationChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
-        addCustomObserver(ServerNotifications.episodeTypeOrLengthChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
+        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] message in
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
+        }
+        addCustomObserver(EpisodeDurationChanged.self) { [weak self] message in
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
+        }
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] message in
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
+        }
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] message in
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
+        }
+        addCustomObserver(EpisodeTypeOrLengthChanged.self) { [weak self] message in
+            self?.specificEpisodeEventDidFire(episodeUuid: message.uuid)
+        }
 
-        addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(generalEpisodeEventDidFire))
+        addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
+            self?.updateDisplayedData()
+        }
 
         AnalyticsHelper.episodeOpened(podcastUuid: episode.podcastUuid, episodeUuid: episode.uuid)
     }
@@ -318,29 +362,25 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
 
     // MARK: - Event Based Updates
 
-    @objc private func specificEpisodeEventDidFire(_ notification: Notification) {
-        guard let episodeUuid = notification.object as? String, episodeUuid == episode.uuid else {
+    private func specificEpisodeEventDidFire(episodeUuid: String?) {
+        guard let episodeUuid, episodeUuid == episode.uuid else {
             return
         }
 
         updateDisplayedData()
     }
 
-    @objc private func playbackEventDidFire() {
+    private func playbackEventDidFire() {
         updateDisplayedData()
     }
 
-    @objc private func updateDownloadProgress() {
+    private func updateDownloadProgress() {
         updateDisplayedData(reloadingEpisode: false)
     }
 
-    @objc private func episodeDownloadedEvent() {
+    private func episodeDownloadedEvent() {
         updateDisplayedData()
         updateColors()
-    }
-
-    @objc private func generalEpisodeEventDidFire() {
-        updateDisplayedData()
     }
 
     // MARK: - Scroll View Delegate
@@ -445,7 +485,7 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
         }
     }
 
-    @objc private func playbackProgressDidChange() {
+    private func playbackProgressDidChange() {
         updateProgress()
     }
 

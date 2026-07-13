@@ -1294,6 +1294,10 @@ nonisolated internal enum L10n {
   internal static func episodeCountPluralFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "episode_count_plural_format", String(describing: p1), fallback: "%1$@ episodes")
   }
+  /// Accessibility hint on a person chip on the episode credits card; tapping searches the podcast catalog for that person's name
+  internal static var episodeCreditsFindMore: String { return L10n.tr("Localizable", "episode_credits_find_more", fallback: "Find more episodes featuring this person") }
+  /// Title of the credits card on the episode detail screen listing the people (hosts, guests) featured on the episode
+  internal static var episodeCreditsTitle: String { return L10n.tr("Localizable", "episode_credits_title", fallback: "Credits") }
   /// Title of the Episode description
   internal static var episodeDescriptionTitle: String { return L10n.tr("Localizable", "episode_description_title", fallback: "Episode Description") }
   /// Label for the Add button on the episode detail page. Opens a bottom sheet with options to add to Up Next or playlist.
@@ -1322,6 +1326,16 @@ nonisolated internal enum L10n {
   internal static func episodeShorthandFormatShort(_ p1: Any) -> String {
     return L10n.tr("Localizable", "episode_shorthand_format_short", String(describing: p1), fallback: "EP %1$@")
   }
+  /// Caption on the episode summary card disclosing that the summary and takeaways are AI-generated and may not be perfectly accurate
+  internal static var episodeSummaryCardGeneratedDisclaimer: String { return L10n.tr("Localizable", "episode_summary_card_generated_disclaimer", fallback: "AI-generated") }
+  /// Header for the list of chapter-based key moments on the episode summary card, shown when on-device takeaway generation is unavailable
+  internal static var episodeSummaryCardKeyMoments: String { return L10n.tr("Localizable", "episode_summary_card_key_moments", fallback: "Key moments") }
+  /// Button that collapses the expanded episode summary text back to a preview
+  internal static var episodeSummaryCardShowLess: String { return L10n.tr("Localizable", "episode_summary_card_show_less", fallback: "Show less") }
+  /// Button that expands the truncated episode summary text to show it in full
+  internal static var episodeSummaryCardShowMore: String { return L10n.tr("Localizable", "episode_summary_card_show_more", fallback: "Show more") }
+  /// Title of the AI episode summary card on the episode detail screen
+  internal static var episodeSummaryCardTitle: String { return L10n.tr("Localizable", "episode_summary_card_title", fallback: "Episode Summary") }
   /// Message indicating that the episode is unavailable server side but will remain in your manual playlist until removed.
   internal static var episodeUnavailableMessage: String { return L10n.tr("Localizable", "episode_unavailable_message", fallback: "The podcast creator deleted this episode. It will stay in your playlist until you remove it.") }
   /// Title indicating that the episode is unavailable server side
@@ -1739,6 +1753,14 @@ nonisolated internal enum L10n {
   internal static var groupEpisodes: String { return L10n.tr("Localizable", "group_episodes", fallback: "Group Episodes") }
   /// Displayed when doing a heavy task the user has to wait
   internal static var hangOn: String { return L10n.tr("Localizable", "hang_on", fallback: "Hang on!") }
+  /// Shown on the shareable quote card when a bookmark has no transcript excerpt
+  internal static var highlightExcerptUnavailable: String { return L10n.tr("Localizable", "highlight_excerpt_unavailable", fallback: "No transcript excerpt available") }
+  /// Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card.
+  internal static func highlightQuoteCardA11y(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "highlight_quote_card_a11y", String(describing: p1), fallback: "Quote card: %1$@")
+  }
+  /// Name of the quote-card style offered when sharing a highlight (a bookmark enriched with a transcript excerpt)
+  internal static var highlightQuoteShareStyle: String { return L10n.tr("Localizable", "highlight_quote_share_style", fallback: "Quote") }
   /// Prompt to clear the full listening history for the user.
   internal static var historyClearAll: String { return L10n.tr("Localizable", "history_clear_all", fallback: "Clear All") }
   /// Title for the details prompt to confirm the user wants to clear their listening history.
@@ -2492,6 +2514,8 @@ nonisolated internal enum L10n {
   }
   /// Accessibility hint text informing the user that the Sleep timer is enabled.
   internal static var playerAccessibilitySleepTimerOn: String { return L10n.tr("Localizable", "player_accessibility_sleep_timer_on", fallback: "Sleep timer on") }
+  /// Accessibility hint text informing the user that playback will stop when the current episode ends.
+  internal static var playerAccessibilityStopAfterEpisodeOn: String { return L10n.tr("Localizable", "player_accessibility_stop_after_episode_on", fallback: "Stop after this episode on") }
   /// Subtitle for settings indicating this item operates as delete for files.
   internal static var playerActionSubtitleDelete: String { return L10n.tr("Localizable", "player_action_subtitle_delete", fallback: "Shown as Delete for custom episodes") }
   /// Subtitle for settings indicating this item is hidden for files.
@@ -2504,6 +2528,8 @@ nonisolated internal enum L10n {
   internal static var playerActionTitleOutputOptions: String { return L10n.tr("Localizable", "player_action_title_output_options", fallback: "Output Device") }
   /// Header for the available timer options for auto-pausing playback.
   internal static var playerActionTitleSleepTimer: String { return L10n.tr("Localizable", "player_action_title_sleep_timer", fallback: "Sleep Timer") }
+  /// Title for the player shelf action that stops playback when the current episode ends.
+  internal static var playerActionTitleStopAfterEpisode: String { return L10n.tr("Localizable", "player_action_title_stop_after_episode", fallback: "Stop After This Episode") }
   /// Title for the prompt to remove an episode from the favorites.
   internal static var playerActionTitleUnstarEpisode: String { return L10n.tr("Localizable", "player_action_title_unstar_episode", fallback: "Unstar Episode") }
   /// Title for a page where you can rearrange common actions (eg sort/reorder and move the ones you like more to the top)
@@ -2583,6 +2609,196 @@ nonisolated internal enum L10n {
   internal static var playlistCreationCreateSmartPlaylistButtonSubtitle: String { return L10n.tr("Localizable", "playlist_creation_create_smart_playlist_button_subtitle", fallback: "Automatically add episodes based on rules.") }
   /// Title for the button used to open the rules during the Playlist creation
   internal static var playlistCreationCreateSmartPlaylistButtonTitle: String { return L10n.tr("Localizable", "playlist_creation_create_smart_playlist_button_title", fallback: "Make into smart playlist") }
+  /// Button that adds a new condition row to a rule group
+  internal static var playlistCustomAddCondition: String { return L10n.tr("Localizable", "playlist_custom_add_condition", fallback: "Add condition") }
+  /// Button that adds a nested rule group inside a rule group
+  internal static var playlistCustomAddGroup: String { return L10n.tr("Localizable", "playlist_custom_add_group", fallback: "Add group") }
+  /// Shown inside an empty rule group before any conditions are added
+  internal static var playlistCustomBuilderEmptyDescription: String { return L10n.tr("Localizable", "playlist_custom_builder_empty_description", fallback: "Add conditions to choose which episodes appear in this playlist.") }
+  /// Warning shown when some builder conditions still need a value before saving
+  internal static var playlistCustomBuilderIncompleteWarning: String { return L10n.tr("Localizable", "playlist_custom_builder_incomplete_warning", fallback: "Fill in every condition to save this playlist.") }
+  /// Button that opens the podcast multi-select for a podcast condition
+  internal static var playlistCustomChoosePodcasts: String { return L10n.tr("Localizable", "playlist_custom_choose_podcasts", fallback: "Choose podcasts") }
+  /// Menu label for choosing which episode or podcast field a condition applies to
+  internal static var playlistCustomConditionField: String { return L10n.tr("Localizable", "playlist_custom_condition_field", fallback: "Field") }
+  /// Menu label for choosing a condition's comparison operator
+  internal static var playlistCustomConditionOperator: String { return L10n.tr("Localizable", "playlist_custom_condition_operator", fallback: "Operator") }
+  /// Subtitle for the custom playlist creation button explaining the feature
+  internal static var playlistCustomCreationButtonSubtitle: String { return L10n.tr("Localizable", "playlist_custom_creation_button_subtitle", fallback: "Build advanced rules or write your own query.") }
+  /// Title for the button on the new playlist screen that creates a custom (advanced query) playlist
+  internal static var playlistCustomCreationButtonTitle: String { return L10n.tr("Localizable", "playlist_custom_creation_button_title", fallback: "Make into custom playlist") }
+  /// Episode type choice: a bonus episode
+  internal static var playlistCustomEpisodeTypeBonus: String { return L10n.tr("Localizable", "playlist_custom_episode_type_bonus", fallback: "Bonus") }
+  /// Episode type choice: a regular full-length episode
+  internal static var playlistCustomEpisodeTypeFull: String { return L10n.tr("Localizable", "playlist_custom_episode_type_full", fallback: "Full episode") }
+  /// Episode type choice: a trailer episode
+  internal static var playlistCustomEpisodeTypeTrailer: String { return L10n.tr("Localizable", "playlist_custom_episode_type_trailer", fallback: "Trailer") }
+  /// Validation error: the query is empty
+  internal static var playlistCustomErrorEmpty: String { return L10n.tr("Localizable", "playlist_custom_error_empty", fallback: "Enter a query to validate.") }
+  /// Validation error: the query failed while running; '%1$@' is the database's error message
+  internal static func playlistCustomErrorExecution(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_error_execution", String(describing: p1), fallback: "The query failed to run: %1$@")
+  }
+  /// Validation error: more than one SQL statement was entered
+  internal static var playlistCustomErrorMultipleStatements: String { return L10n.tr("Localizable", "playlist_custom_error_multiple_statements", fallback: "Only a single query is allowed.") }
+  /// Validation error: the query tries to modify data
+  internal static var playlistCustomErrorNotReadOnly: String { return L10n.tr("Localizable", "playlist_custom_error_not_read_only", fallback: "Only read-only queries are allowed.") }
+  /// Validation error: the query contains parameter placeholders which aren't allowed
+  internal static var playlistCustomErrorPlaceholders: String { return L10n.tr("Localizable", "playlist_custom_error_placeholders", fallback: "Remove parameter placeholders like '?' or ':name' — custom queries can't take parameters.") }
+  /// Validation error for a SQL syntax problem; '%1$@' is the database's error message
+  internal static func playlistCustomErrorSyntax(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_error_syntax", String(describing: p1), fallback: "Syntax error: %1$@")
+  }
+  /// Validation error: the query exceeds the maximum length; '%1$@' is the character limit
+  internal static func playlistCustomErrorTooLong(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_error_too_long", String(describing: p1), fallback: "This query is too long. Keep it under %1$@ characters.")
+  }
+  /// Queryable field: when the episode was added to the library
+  internal static var playlistCustomFieldAddedDate: String { return L10n.tr("Localizable", "playlist_custom_field_added_date", fallback: "Added date") }
+  /// Queryable field: whether the episode is downloaded
+  internal static var playlistCustomFieldDownloadStatus: String { return L10n.tr("Localizable", "playlist_custom_field_download_status", fallback: "Download status") }
+  /// Queryable field: the episode's duration in seconds
+  internal static var playlistCustomFieldDuration: String { return L10n.tr("Localizable", "playlist_custom_field_duration", fallback: "Duration (seconds)") }
+  /// Queryable field: the episode's show notes description
+  internal static var playlistCustomFieldEpisodeDescription: String { return L10n.tr("Localizable", "playlist_custom_field_episode_description", fallback: "Episode description") }
+  /// Queryable field: the episode's number within its season
+  internal static var playlistCustomFieldEpisodeNumber: String { return L10n.tr("Localizable", "playlist_custom_field_episode_number", fallback: "Episode number") }
+  /// Queryable field: the episode's title
+  internal static var playlistCustomFieldEpisodeTitle: String { return L10n.tr("Localizable", "playlist_custom_field_episode_title", fallback: "Episode title") }
+  /// Queryable field: the episode's type (full episode, trailer or bonus)
+  internal static var playlistCustomFieldEpisodeType: String { return L10n.tr("Localizable", "playlist_custom_field_episode_type", fallback: "Episode type") }
+  /// Queryable field: the episode's file size in bytes
+  internal static var playlistCustomFieldFileSize: String { return L10n.tr("Localizable", "playlist_custom_field_file_size", fallback: "File size (bytes)") }
+  /// Queryable field: when the episode was last played
+  internal static var playlistCustomFieldLastPlayedDate: String { return L10n.tr("Localizable", "playlist_custom_field_last_played_date", fallback: "Last played date") }
+  /// Queryable field: whether the episode is audio or video
+  internal static var playlistCustomFieldMediaType: String { return L10n.tr("Localizable", "playlist_custom_field_media_type", fallback: "Media type") }
+  /// Queryable field: how far the episode has been played, in seconds
+  internal static var playlistCustomFieldPlayedUpTo: String { return L10n.tr("Localizable", "playlist_custom_field_played_up_to", fallback: "Played up to (seconds)") }
+  /// Queryable field: whether the episode is unplayed, in progress or played
+  internal static var playlistCustomFieldPlayingStatus: String { return L10n.tr("Localizable", "playlist_custom_field_playing_status", fallback: "Play status") }
+  /// Queryable field: the podcast the episode belongs to
+  internal static var playlistCustomFieldPodcast: String { return L10n.tr("Localizable", "playlist_custom_field_podcast", fallback: "Podcast") }
+  /// Queryable field: whether the episode's podcast is one the user follows
+  internal static var playlistCustomFieldPodcastSubscribed: String { return L10n.tr("Localizable", "playlist_custom_field_podcast_subscribed", fallback: "Following podcast") }
+  /// Queryable field: the podcast's title
+  internal static var playlistCustomFieldPodcastTitle: String { return L10n.tr("Localizable", "playlist_custom_field_podcast_title", fallback: "Podcast title") }
+  /// Queryable field: percentage of the episode already played
+  internal static var playlistCustomFieldProgressPercent: String { return L10n.tr("Localizable", "playlist_custom_field_progress_percent", fallback: "Progress (%)") }
+  /// Queryable field: when the episode was published
+  internal static var playlistCustomFieldPublishedDate: String { return L10n.tr("Localizable", "playlist_custom_field_published_date", fallback: "Published date") }
+  /// Queryable field: the episode's season number
+  internal static var playlistCustomFieldSeasonNumber: String { return L10n.tr("Localizable", "playlist_custom_field_season_number", fallback: "Season number") }
+  /// Segmented option for a rule group where every rule must match
+  internal static var playlistCustomGroupAll: String { return L10n.tr("Localizable", "playlist_custom_group_all", fallback: "All") }
+  /// Segmented option for a rule group where any rule may match
+  internal static var playlistCustomGroupAny: String { return L10n.tr("Localizable", "playlist_custom_group_any", fallback: "Any") }
+  /// Caption next to a rule group set to require every rule to match
+  internal static var playlistCustomGroupMatchAllDescription: String { return L10n.tr("Localizable", "playlist_custom_group_match_all_description", fallback: "of the following are true") }
+  /// Caption next to a rule group set to require any rule to match
+  internal static var playlistCustomGroupMatchAnyDescription: String { return L10n.tr("Localizable", "playlist_custom_group_match_any_description", fallback: "of the following is true") }
+  /// Number of matching episodes for the current query; '%1$@' is the count
+  internal static func playlistCustomMatchCountPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_match_count_plural", String(describing: p1), fallback: "%1$@ matching episodes")
+  }
+  /// One matching episode for the current query; '%1$@' is the number 1 formatted
+  internal static func playlistCustomMatchCountSingular(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_match_count_singular", String(describing: p1), fallback: "%1$@ matching episode")
+  }
+  /// Segmented control option showing the visual rule builder in the custom playlist editor
+  internal static var playlistCustomModeBuilder: String { return L10n.tr("Localizable", "playlist_custom_mode_builder", fallback: "Builder") }
+  /// Segmented control option showing the SQL editor in the custom playlist editor
+  internal static var playlistCustomModeSql: String { return L10n.tr("Localizable", "playlist_custom_mode_sql", fallback: "SQL") }
+  /// Footer in the custom playlist editor explaining that custom playlists stay on this device
+  internal static var playlistCustomOnlyOnDeviceFooter: String { return L10n.tr("Localizable", "playlist_custom_only_on_device_footer", fallback: "Only on this device. Custom playlists don't sync to your other devices.") }
+  /// Condition operator: date field is after the value
+  internal static var playlistCustomOpAfter: String { return L10n.tr("Localizable", "playlist_custom_op_after", fallback: "is after") }
+  /// Condition operator: numeric field is greater than or equal to the value
+  internal static var playlistCustomOpAtLeast: String { return L10n.tr("Localizable", "playlist_custom_op_at_least", fallback: "is at least") }
+  /// Condition operator: numeric field is less than or equal to the value
+  internal static var playlistCustomOpAtMost: String { return L10n.tr("Localizable", "playlist_custom_op_at_most", fallback: "is at most") }
+  /// Condition operator: date field is before the value
+  internal static var playlistCustomOpBefore: String { return L10n.tr("Localizable", "playlist_custom_op_before", fallback: "is before") }
+  /// Condition operator: field is between two values
+  internal static var playlistCustomOpBetween: String { return L10n.tr("Localizable", "playlist_custom_op_between", fallback: "is between") }
+  /// Condition operator: text field contains the value
+  internal static var playlistCustomOpContains: String { return L10n.tr("Localizable", "playlist_custom_op_contains", fallback: "contains") }
+  /// Condition operator: text field ends with the value
+  internal static var playlistCustomOpEndsWith: String { return L10n.tr("Localizable", "playlist_custom_op_ends_with", fallback: "ends with") }
+  /// Condition operator: field equals the value
+  internal static var playlistCustomOpEquals: String { return L10n.tr("Localizable", "playlist_custom_op_equals", fallback: "is") }
+  /// Condition operator: numeric field is greater than the value
+  internal static var playlistCustomOpGreaterThan: String { return L10n.tr("Localizable", "playlist_custom_op_greater_than", fallback: "is more than") }
+  /// Condition operator: field matches any of the chosen values
+  internal static var playlistCustomOpIn: String { return L10n.tr("Localizable", "playlist_custom_op_in", fallback: "is any of") }
+  /// Condition operator: date field falls within the last N days; the day count input follows this label
+  internal static var playlistCustomOpInLastDays: String { return L10n.tr("Localizable", "playlist_custom_op_in_last_days", fallback: "is in the last") }
+  /// Condition operator: field has no value
+  internal static var playlistCustomOpIsNotSet: String { return L10n.tr("Localizable", "playlist_custom_op_is_not_set", fallback: "is not set") }
+  /// Condition operator: field has any value at all
+  internal static var playlistCustomOpIsSet: String { return L10n.tr("Localizable", "playlist_custom_op_is_set", fallback: "is set") }
+  /// Condition operator: numeric field is less than the value
+  internal static var playlistCustomOpLessThan: String { return L10n.tr("Localizable", "playlist_custom_op_less_than", fallback: "is less than") }
+  /// Condition operator: text field does not contain the value
+  internal static var playlistCustomOpNotContains: String { return L10n.tr("Localizable", "playlist_custom_op_not_contains", fallback: "doesn't contain") }
+  /// Condition operator: field does not equal the value
+  internal static var playlistCustomOpNotEquals: String { return L10n.tr("Localizable", "playlist_custom_op_not_equals", fallback: "is not") }
+  /// Condition operator: field matches none of the chosen values
+  internal static var playlistCustomOpNotIn: String { return L10n.tr("Localizable", "playlist_custom_op_not_in", fallback: "is none of") }
+  /// Condition operator: text field starts with the value
+  internal static var playlistCustomOpStartsWith: String { return L10n.tr("Localizable", "playlist_custom_op_starts_with", fallback: "starts with") }
+  /// Number of podcasts chosen for a podcast condition; '%1$@' is the count
+  internal static func playlistCustomPodcastsSelected(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "playlist_custom_podcasts_selected", String(describing: p1), fallback: "%1$@ selected")
+  }
+  /// Accessibility label for the button that removes a rule or rule group
+  internal static var playlistCustomRemoveRule: String { return L10n.tr("Localizable", "playlist_custom_remove_rule", fallback: "Remove rule") }
+  /// Navigation bar save button in the custom playlist editor when editing an existing playlist
+  internal static var playlistCustomSave: String { return L10n.tr("Localizable", "playlist_custom_save", fallback: "Save") }
+  /// Save button at the bottom of the custom playlist editor when creating a new playlist
+  internal static var playlistCustomSaveButton: String { return L10n.tr("Localizable", "playlist_custom_save_button", fallback: "Create custom playlist") }
+  /// Intro text of the schema reference sheet listing queryable fields
+  internal static var playlistCustomSchemaDescription: String { return L10n.tr("Localizable", "playlist_custom_schema_description", fallback: "Query these fields using the episode and podcast table aliases. Values are compared with standard SQL operators.") }
+  /// Button that opens a reference sheet listing the queryable fields
+  internal static var playlistCustomSchemaReference: String { return L10n.tr("Localizable", "playlist_custom_schema_reference", fallback: "Schema reference") }
+  /// Schema reference type label for true/false fields
+  internal static var playlistCustomSchemaTypeBoolean: String { return L10n.tr("Localizable", "playlist_custom_schema_type_boolean", fallback: "Boolean") }
+  /// Schema reference type label for date fields
+  internal static var playlistCustomSchemaTypeDate: String { return L10n.tr("Localizable", "playlist_custom_schema_type_date", fallback: "Date") }
+  /// Schema reference type label for fields with a fixed set of values
+  internal static var playlistCustomSchemaTypeEnum: String { return L10n.tr("Localizable", "playlist_custom_schema_type_enum", fallback: "Choice") }
+  /// Schema reference type label for numeric fields
+  internal static var playlistCustomSchemaTypeNumber: String { return L10n.tr("Localizable", "playlist_custom_schema_type_number", fallback: "Number") }
+  /// Schema reference type label for the podcast picker field
+  internal static var playlistCustomSchemaTypePodcast: String { return L10n.tr("Localizable", "playlist_custom_schema_type_podcast", fallback: "Podcasts") }
+  /// Schema reference type label for text fields
+  internal static var playlistCustomSchemaTypeText: String { return L10n.tr("Localizable", "playlist_custom_schema_type_text", fallback: "Text") }
+  /// Hint explaining what to type in the SQL editor
+  internal static var playlistCustomSqlHint: String { return L10n.tr("Localizable", "playlist_custom_sql_hint", fallback: "Write the conditions of a query over the episode and podcast tables. The playlist updates automatically as your library changes.") }
+  /// Button that pre-fills the SQL editor from the playlist's current smart rules
+  internal static var playlistCustomStartFromRules: String { return L10n.tr("Localizable", "playlist_custom_start_from_rules", fallback: "Start from current rules") }
+  /// Button that checks the SQL query for errors
+  internal static var playlistCustomValidateButton: String { return L10n.tr("Localizable", "playlist_custom_validate_button", fallback: "Validate") }
+  /// Shown while the SQL query is being checked
+  internal static var playlistCustomValidating: String { return L10n.tr("Localizable", "playlist_custom_validating", fallback: "Validating…") }
+  /// Hint under the SQL editor before the query has been validated
+  internal static var playlistCustomValidationNeeded: String { return L10n.tr("Localizable", "playlist_custom_validation_needed", fallback: "Validate your query to enable saving.") }
+  /// Label for a condition's date picker
+  internal static var playlistCustomValueDate: String { return L10n.tr("Localizable", "playlist_custom_value_date", fallback: "Date") }
+  /// Placeholder for the number-of-days input of an 'in the last N days' condition
+  internal static var playlistCustomValueDays: String { return L10n.tr("Localizable", "playlist_custom_value_days", fallback: "Days") }
+  /// Suffix label after the number-of-days input, completing 'in the last N days'
+  internal static var playlistCustomValueDaysSuffix: String { return L10n.tr("Localizable", "playlist_custom_value_days_suffix", fallback: "days") }
+  /// Label for the end date of a date range condition
+  internal static var playlistCustomValueEndDate: String { return L10n.tr("Localizable", "playlist_custom_value_end_date", fallback: "To") }
+  /// Placeholder for the upper bound of a numeric between condition
+  internal static var playlistCustomValueMax: String { return L10n.tr("Localizable", "playlist_custom_value_max", fallback: "Max") }
+  /// Placeholder for the lower bound of a numeric between condition
+  internal static var playlistCustomValueMin: String { return L10n.tr("Localizable", "playlist_custom_value_min", fallback: "Min") }
+  /// Placeholder for a condition's value input
+  internal static var playlistCustomValuePlaceholder: String { return L10n.tr("Localizable", "playlist_custom_value_placeholder", fallback: "Value") }
+  /// Label for the start date of a date range condition
+  internal static var playlistCustomValueStartDate: String { return L10n.tr("Localizable", "playlist_custom_value_start_date", fallback: "From") }
   /// Playlist detail description. %1$@ represent the number of total episodes. %2$@ represents the total time.
   internal static func playlistDetailDescription(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "playlist_detail_description", String(describing: p1), String(describing: p2), fallback: "%1$@ episodes • %2$@")
@@ -3045,6 +3261,10 @@ nonisolated internal enum L10n {
   internal static func podcastSeasonFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "podcast_season_format", String(describing: p1), fallback: "Season %1$@")
   }
+  /// Podcast settings switch: automatically generate an on-device transcript for each newly downloaded episode of this podcast
+  internal static var podcastSettingsAutoTranscribe: String { return L10n.tr("Localizable", "podcast_settings_auto_transcribe", fallback: "Auto-Transcribe on Download") }
+  /// Footer under the podcast settings auto-transcribe switch, explaining the behavior is on-device only
+  internal static var podcastSettingsAutoTranscribeFooter: String { return L10n.tr("Localizable", "podcast_settings_auto_transcribe_footer", fallback: "New downloads from this podcast will be transcribed automatically on this device.") }
   /// Podcast settings row and screen title for the chapter smart-skip rules editor.
   internal static var podcastSettingsSkipChapters: String { return L10n.tr("Localizable", "podcast_settings_skip_chapters", fallback: "Skip Chapters") }
   /// Prompt to allow the user to share the currently selected episode.
@@ -3163,6 +3383,8 @@ nonisolated internal enum L10n {
   internal static var podcastsSort: String { return L10n.tr("Localizable", "podcasts_sort", fallback: "Sort Podcasts") }
   /// Common word to denote a preview of something is being shown
   internal static var preview: String { return L10n.tr("Localizable", "preview", fallback: "Preview") }
+  /// A common string used throughout the app. Prompt to move to the previously played episode.
+  internal static var previousEpisode: String { return L10n.tr("Localizable", "previous_episode", fallback: "Previous Episode") }
   /// Pricing terms explaining that the user will have a discount in the first period then will pay full price, %1$@ is the full price, %2$@ the discount duration, %3$@ the date the user will pay full price
   internal static func pricingTermsAfterDiscount(_ p1: Any, _ p2: Any, _ p3: Any) -> String {
     return L10n.tr("Localizable", "pricing_terms_after_discount", String(describing: p1), String(describing: p2), String(describing: p3), fallback: "Recurring payments at %1$@ after %2$@ (%3$@)")
@@ -3211,6 +3433,30 @@ nonisolated internal enum L10n {
   internal static var profileStarredNoEpisodesDesc: String { return L10n.tr("Localizable", "profile_starred_no_episodes_desc", fallback: "Star episodes you love and come back to them at anytime.") }
   /// Title for the empty state on screen where the user can review their starred (favorited) podcast episodes
   internal static var profileStarredNoEpisodesTitle: String { return L10n.tr("Localizable", "profile_starred_no_episodes_title", fallback: "Save your favorites") }
+  /// Title for the button on the new playlist screen that opens the natural-language playlist creator
+  internal static var promptedPlaylistEntryButton: String { return L10n.tr("Localizable", "prompted_playlist_entry_button", fallback: "Describe your playlist") }
+  /// Subtitle for the describe-your-playlist creation button explaining the feature
+  internal static var promptedPlaylistEntrySubtitle: String { return L10n.tr("Localizable", "prompted_playlist_entry_subtitle", fallback: "Tell us what to include and we'll set up the rules.") }
+  /// Example playlist description chip: play state and duration rules
+  internal static var promptedPlaylistExample1: String { return L10n.tr("Localizable", "prompted_playlist_example_1", fallback: "Unplayed episodes under 30 minutes") }
+  /// Example playlist description chip: download state and release date rules
+  internal static var promptedPlaylistExample2: String { return L10n.tr("Localizable", "prompted_playlist_example_2", fallback: "Downloaded episodes from this week") }
+  /// Example playlist description chip: starred and duration rules
+  internal static var promptedPlaylistExample3: String { return L10n.tr("Localizable", "prompted_playlist_example_3", fallback: "Starred episodes longer than an hour") }
+  /// Notice shown on the playlist description sheet when on-device Apple Intelligence is unavailable
+  internal static var promptedPlaylistFallbackNotice: String { return L10n.tr("Localizable", "prompted_playlist_fallback_notice", fallback: "Apple Intelligence isn't available on this device, so a simpler built-in interpreter will read your description.") }
+  /// Button that interprets the playlist description and opens the playlist preview
+  internal static var promptedPlaylistGenerate: String { return L10n.tr("Localizable", "prompted_playlist_generate", fallback: "Generate Preview") }
+  /// Footnote on the playlist description sheet explaining that processing happens on device
+  internal static var promptedPlaylistIntelligenceFootnote: String { return L10n.tr("Localizable", "prompted_playlist_intelligence_footnote", fallback: "Uses on-device intelligence. Your description never leaves this device.") }
+  /// Placeholder in the playlist description text field showing an example description
+  internal static var promptedPlaylistPlaceholder: String { return L10n.tr("Localizable", "prompted_playlist_placeholder", fallback: "e.g. Unplayed episodes under 30 minutes from this week") }
+  /// Title of the natural-language playlist creation sheet
+  internal static var promptedPlaylistSheetTitle: String { return L10n.tr("Localizable", "prompted_playlist_sheet_title", fallback: "Describe your playlist") }
+  /// Notice listing podcast names from the description that couldn't be found in the user's library. '%1$@' is a placeholder for the comma-separated list of names.
+  internal static func promptedPlaylistUnmatchedPodcasts(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "prompted_playlist_unmatched_podcasts", String(describing: p1), fallback: "Couldn't find these podcasts in your library: %1$@. Tap Generate Preview again to continue without them.")
+  }
   /// The purchase agreement terms, the %1$@, %2$@ are intended to be "Privacy Policy" and "Terms of Use"
   internal static func purchaseTerms(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "purchase_terms", String(describing: p1), String(describing: p2), fallback: "By continuing, you agree to our %1$@ and %2$@")
@@ -3356,6 +3602,16 @@ nonisolated internal enum L10n {
   /// View all results for "%1$@"
   internal static func searchResultsViewAll(_ p1: Any) -> String {
     return L10n.tr("Localizable", "search_results_view_all", String(describing: p1), fallback: "View all results for \"%1$@\"")
+  }
+  /// Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable.
+  internal static var searchTranscriptsEmptyMessage: String { return L10n.tr("Localizable", "search_transcripts_empty_message", fallback: "Transcripts become searchable here after you view them on an episode.") }
+  /// Title shown in search results when no transcript matches the search term
+  internal static var searchTranscriptsEmptyTitle: String { return L10n.tr("Localizable", "search_transcripts_empty_title", fallback: "No Transcript Matches") }
+  /// Search results filter pill that shows matches found inside episode transcripts
+  internal static var searchTranscriptsPill: String { return L10n.tr("Localizable", "search_transcripts_pill", fallback: "Transcripts") }
+  /// Timestamp label on a transcript search result showing where in the episode the match occurs. '%1$@' is a placeholder for a time like 12:34.
+  internal static func searchTranscriptsResultAtTime(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "search_transcripts_result_at_time", String(describing: p1), fallback: "At %1$@")
   }
   /// Header for the shelf of the user's own podcasts shown on the empty search screen.
   internal static var searchYourPodcasts: String { return L10n.tr("Localizable", "search_your_podcasts", fallback: "Your Podcasts") }
@@ -3695,6 +3951,10 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralRemoveGroupsApplyAll: String { return L10n.tr("Localizable", "settings_general_remove_groups_apply_all", fallback: "Would you like to change all your existing podcasts to be not be grouped as well?") }
   /// Setting option to choose the default action when selecting an episode row.
   internal static var settingsGeneralRowAction: String { return L10n.tr("Localizable", "settings_general_row_action", fallback: "Row Action") }
+  /// Setting toggle that makes repeated skip button taps grow the skip interval.
+  internal static var settingsGeneralSeekAcceleration: String { return L10n.tr("Localizable", "settings_general_seek_acceleration", fallback: "Skip Acceleration") }
+  /// Subtitle explaining the toggle that makes repeated skip button taps grow the skip interval.
+  internal static var settingsGeneralSeekAccelerationSubtitle: String { return L10n.tr("Localizable", "settings_general_seek_acceleration_subtitle", fallback: "Quickly tapping skip several times in a row increases how far each skip jumps.") }
   /// Prompt to ask the user if they'd like to apply the grouping to all podcasts. '%1$@' is a placeholder for a localized name for the grouping type.
   internal static func settingsGeneralSelectedGroupApplyAll(_ p1: Any) -> String {
     return L10n.tr("Localizable", "settings_general_selected_group_apply_all", String(describing: p1), fallback: "Would you like to change all your existing podcasts to be grouped by %1$@?")
@@ -3705,6 +3965,12 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralSmartPlayback: String { return L10n.tr("Localizable", "settings_general_smart_playback", fallback: "Intelligent Playback Resumption") }
   /// Subtitle explaining the feature that adjusts the playback position when resuming.
   internal static var settingsGeneralSmartPlaybackSubtitle: String { return L10n.tr("Localizable", "settings_general_smart_playback_subtitle", fallback: "If on, Pocket Casts will go back a little in episodes you resume so you can catch up more comfortably.") }
+  /// Setting toggle that makes tapping an episode row play it immediately instead of opening the episode details.
+  internal static var settingsGeneralTapToPlay: String { return L10n.tr("Localizable", "settings_general_tap_to_play", fallback: "Play Episodes On Tap") }
+  /// Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is off.
+  internal static var settingsGeneralTapToPlayOffSubtitle: String { return L10n.tr("Localizable", "settings_general_tap_to_play_off_subtitle", fallback: "Tapping an episode in a list opens its details. Turn on to play episodes with a single tap instead.") }
+  /// Subtitle explaining the toggle that makes tapping an episode row play it immediately. This is used when the toggle is on.
+  internal static var settingsGeneralTapToPlayOnSubtitle: String { return L10n.tr("Localizable", "settings_general_tap_to_play_on_subtitle", fallback: "Tapping an episode in a list plays it immediately. Swipe on an episode and choose Details to see its options. Turn off to open episode details on tap.") }
   /// Setting option to choose how to handle swiping to add something to the queue.
   internal static var settingsGeneralUpNextSwipe: String { return L10n.tr("Localizable", "settings_general_up_next_swipe", fallback: "Up Next Swipe") }
   /// Setting toggle to modify how a tap is handled in the up next queue.
@@ -4369,8 +4635,148 @@ nonisolated internal enum L10n {
   internal static func transcriptErrorNotSupported(_ p1: Any) -> String {
     return L10n.tr("Localizable", "transcript_error_not_supported", String(describing: p1), fallback: "Sorry, but this transcript format is not supported: %1$@")
   }
+  /// Title of the button in the transcript screen that opens the full-screen transcript reader
+  internal static var transcriptReader: String { return L10n.tr("Localizable", "transcript_reader", fallback: "Reader") }
+  /// Label for a toggle in the transcript reader that switches the reading font between serif and sans-serif
+  internal static var transcriptReaderFontSerif: String { return L10n.tr("Localizable", "transcript_reader_font_serif", fallback: "Serif font") }
+  /// Title of a button that resumes auto-scrolling the transcript reader to follow the current playback position
+  internal static var transcriptReaderResumeFollowing: String { return L10n.tr("Localizable", "transcript_reader_resume_following", fallback: "Resume following") }
+  /// Title of a context-menu action in the transcript reader that shares the selected transcript line as an audio/video clip
+  internal static var transcriptReaderShareAsClip: String { return L10n.tr("Localizable", "transcript_reader_share_as_clip", fallback: "Share as clip") }
+  /// Title of a context-menu action in the transcript reader that shares the selected transcript line as a text quote
+  internal static var transcriptReaderShareQuote: String { return L10n.tr("Localizable", "transcript_reader_share_quote", fallback: "Share quote") }
+  /// Accessibility label for the transcript reader control that cycles through the available text sizes
+  internal static var transcriptReaderTextSize: String { return L10n.tr("Localizable", "transcript_reader_text_size", fallback: "Text size") }
   /// Toast shown when the user taps inside the transcript but the fingerprint mapping has no anchors yet, so we can't resolve an accurate seek target.
   internal static var transcriptTapToSeekStreamingUnavailable: String { return L10n.tr("Localizable", "transcript_tap_to_seek_streaming_unavailable", fallback: "Download the episode to tap to seek") }
+  /// Title of the toggle allowing transcription model downloads over cellular connections
+  internal static var transcriptionAllowCellularDownloads: String { return L10n.tr("Localizable", "transcription_allow_cellular_downloads", fallback: "Download Over Cellular") }
+  /// Footer under the cellular downloads toggle explaining model downloads wait for Wi-Fi when it is off
+  internal static var transcriptionAllowCellularFooter: String { return L10n.tr("Localizable", "transcription_allow_cellular_footer", fallback: "Model downloads can be large. When off, downloads wait for an unmetered connection like Wi-Fi.") }
+  /// Title of the consent prompt button that grants consent and starts the remote transcription
+  internal static var transcriptionConsentAllow: String { return L10n.tr("Localizable", "transcription_consent_allow", fallback: "Allow and Generate") }
+  /// Consent prompt body for upload-based remote transcription providers. %1$@ is the provider name, e.g. "OpenAI"
+  internal static func transcriptionConsentMessageUpload(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_consent_message_upload", String(describing: p1), fallback: "The episode's audio will be uploaded to %1$@ and transcribed using your API key. Usage may incur charges on your %1$@ account.")
+  }
+  /// Consent prompt body for URL-based remote transcription providers. %1$@ is the provider name, e.g. "AssemblyAI"
+  internal static func transcriptionConsentMessageUrl(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_consent_message_url", String(describing: p1), fallback: "The episode's public audio link will be shared with %1$@, which downloads and transcribes the audio using your API key. Usage may incur charges on your %1$@ account.")
+  }
+  /// Title of the consent prompt shown before the first transcription with a remote provider
+  internal static var transcriptionConsentTitle: String { return L10n.tr("Localizable", "transcription_consent_title", fallback: "Send this episode to a remote service?") }
+  /// Title of the destructive menu action that deletes the locally generated transcript for an episode
+  internal static var transcriptionDeleteGenerated: String { return L10n.tr("Localizable", "transcription_delete_generated", fallback: "Delete Generated Transcript") }
+  /// Header of the transcription settings section with speaker detection options
+  internal static var transcriptionDiarizationHeader: String { return L10n.tr("Localizable", "transcription_diarization_header", fallback: "Speaker Detection") }
+  /// Name of the transcription engine option that uses Apple's built-in on-device speech recognition
+  internal static var transcriptionEngineApple: String { return L10n.tr("Localizable", "transcription_engine_apple", fallback: "Apple Built-in") }
+  /// Name of the transcription engine option that uses downloadable on-device models
+  internal static var transcriptionEngineLocalModel: String { return L10n.tr("Localizable", "transcription_engine_local_model", fallback: "Downloaded Model") }
+  /// Header of the transcription settings section where the user picks which speech-to-text engine to use
+  internal static var transcriptionEngineMode: String { return L10n.tr("Localizable", "transcription_engine_mode", fallback: "Engine") }
+  /// Name of the transcription engine option that uses a remote transcription API
+  internal static var transcriptionEngineRemote: String { return L10n.tr("Localizable", "transcription_engine_remote", fallback: "Remote Provider") }
+  /// Title of the button/action that starts generating an on-device transcript for a downloaded episode
+  internal static var transcriptionGenerate: String { return L10n.tr("Localizable", "transcription_generate", fallback: "Generate Transcript") }
+  /// Shown (as a toast and as progress text in the transcript screen) while an on-device transcript is being generated
+  internal static var transcriptionGenerating: String { return L10n.tr("Localizable", "transcription_generating", fallback: "Generating…") }
+  /// Shown next to the validate-key button when the key check could not be completed (e.g. no network)
+  internal static var transcriptionKeyCheckFailed: String { return L10n.tr("Localizable", "transcription_key_check_failed", fallback: "Couldn't check the key. Try again.") }
+  /// Shown next to the validate-key button when the provider rejected the entered API key
+  internal static var transcriptionKeyInvalid: String { return L10n.tr("Localizable", "transcription_key_invalid", fallback: "Key was rejected") }
+  /// Shown next to the validate-key button when the entered API key was accepted by the provider
+  internal static var transcriptionKeyValid: String { return L10n.tr("Localizable", "transcription_key_valid", fallback: "Key is valid") }
+  /// Shown next to the validate-key button while the key check request is running
+  internal static var transcriptionKeyValidating: String { return L10n.tr("Localizable", "transcription_key_validating", fallback: "Checking key…") }
+  /// Header of the transcription settings section (and label of its text field) where the user can force a transcription language
+  internal static var transcriptionLanguageOverride: String { return L10n.tr("Localizable", "transcription_language_override", fallback: "Language Override") }
+  /// Footer under the transcription language override text field. The quoted example is a BCP-47 language tag and should not be translated.
+  internal static var transcriptionLanguageOverrideFooter: String { return L10n.tr("Localizable", "transcription_language_override_footer", fallback: "Enter a language tag such as \"en-US\" to force a transcription language. Leave empty to use the device language.") }
+  /// Label of the stepper that caps how many distinct speakers a transcript can label
+  internal static var transcriptionMaxSpeakers: String { return L10n.tr("Localizable", "transcription_max_speakers", fallback: "Max Speakers") }
+  /// Value shown on the max-speakers stepper when speaker count detection is automatic
+  internal static var transcriptionMaxSpeakersAuto: String { return L10n.tr("Localizable", "transcription_max_speakers_auto", fallback: "Auto") }
+  /// Footer under the max-speakers stepper. Explains the cap and the automatic mode
+  internal static var transcriptionMaxSpeakersFooter: String { return L10n.tr("Localizable", "transcription_max_speakers_footer", fallback: "Caps how many different speakers a transcript can label. Auto lets the model decide.") }
+  /// Name of the second-smallest downloadable transcription model
+  internal static var transcriptionModelBase: String { return L10n.tr("Localizable", "transcription_model_base", fallback: "Base") }
+  /// Alert message when a transcription model download is refused because the device is on a cellular connection
+  internal static var transcriptionModelCellularBlocked: String { return L10n.tr("Localizable", "transcription_model_cellular_blocked", fallback: "You're on a cellular connection. Enable Download Over Cellular or connect to Wi-Fi to download models.") }
+  /// Title of the button that deletes the selected transcription model from the device
+  internal static var transcriptionModelDelete: String { return L10n.tr("Localizable", "transcription_model_delete", fallback: "Delete Model") }
+  /// Label of the row showing how much disk space all downloaded transcription models use
+  internal static var transcriptionModelDiskUsage: String { return L10n.tr("Localizable", "transcription_model_disk_usage", fallback: "Models on Disk") }
+  /// Title of the button that downloads the selected transcription model. '%1$@' is a placeholder for the approximate download size, e.g. "500 MB"
+  internal static func transcriptionModelDownload(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_model_download", String(describing: p1), fallback: "Download Model (~%1$@)")
+  }
+  /// Alert message when a transcription model download fails for network or server reasons
+  internal static var transcriptionModelDownloadFailed: String { return L10n.tr("Localizable", "transcription_model_download_failed", fallback: "The model couldn't be downloaded. Check your connection and try again.") }
+  /// Badge shown next to a transcription model that is already downloaded to the device
+  internal static var transcriptionModelDownloaded: String { return L10n.tr("Localizable", "transcription_model_downloaded", fallback: "Downloaded") }
+  /// Progress label shown while a transcription model is downloading
+  internal static var transcriptionModelDownloading: String { return L10n.tr("Localizable", "transcription_model_downloading", fallback: "Downloading…") }
+  /// Name of the largest downloadable transcription model (most accurate)
+  internal static var transcriptionModelLargeTurbo: String { return L10n.tr("Localizable", "transcription_model_large_turbo", fallback: "Large v3 Turbo") }
+  /// Header of the transcription settings section listing the downloadable on-device speech-to-text models
+  internal static var transcriptionModelPickerHeader: String { return L10n.tr("Localizable", "transcription_model_picker_header", fallback: "Speech Model") }
+  /// Name of the mid-size downloadable transcription model (the recommended default)
+  internal static var transcriptionModelSmall: String { return L10n.tr("Localizable", "transcription_model_small", fallback: "Small") }
+  /// Name of the smallest downloadable transcription model (fastest, least accurate)
+  internal static var transcriptionModelTiny: String { return L10n.tr("Localizable", "transcription_model_tiny", fallback: "Tiny") }
+  /// Label and placeholder of the secure text field where the user enters their remote transcription service API key
+  internal static var transcriptionRemoteApiKey: String { return L10n.tr("Localizable", "transcription_remote_api_key", fallback: "API Key") }
+  /// Footer under the remote transcription API key field. %1$@ is the provider name, e.g. "AssemblyAI"
+  internal static func transcriptionRemoteKeyFooter(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_remote_key_footer", String(describing: p1), fallback: "Your key is stored securely in the device keychain and is only ever sent to %1$@.")
+  }
+  /// Header of the transcription settings section where the user picks which remote transcription service to use
+  internal static var transcriptionRemoteProvider: String { return L10n.tr("Localizable", "transcription_remote_provider", fallback: "Provider") }
+  /// Footer of the speaker rename sheet, explaining that empty fields keep the numbered speaker name
+  internal static var transcriptionRenameFooter: String { return L10n.tr("Localizable", "transcription_rename_footer", fallback: "Leave a field empty to keep the numbered speaker name.") }
+  /// Placeholder of a speaker name text field in the rename sheet
+  internal static var transcriptionRenamePlaceholder: String { return L10n.tr("Localizable", "transcription_rename_placeholder", fallback: "Custom name") }
+  /// Save button of the speaker rename sheet
+  internal static var transcriptionRenameSave: String { return L10n.tr("Localizable", "transcription_rename_save", fallback: "Save") }
+  /// Title of the menu action and sheet for renaming the numbered speakers of a generated transcript
+  internal static var transcriptionRenameSpeakers: String { return L10n.tr("Localizable", "transcription_rename_speakers", fallback: "Rename Speakers") }
+  /// Accessibility label of the button that clears the transcript search field
+  internal static var transcriptionSearchClear: String { return L10n.tr("Localizable", "transcription_search_clear", fallback: "Clear search") }
+  /// Message shown on the transcript search screen before the user has typed a search
+  internal static var transcriptionSearchEmptyMessage: String { return L10n.tr("Localizable", "transcription_search_empty_message", fallback: "Find any moment across the episodes you've transcribed on this device.") }
+  /// Title shown on the transcript search screen before the user has typed a search
+  internal static var transcriptionSearchEmptyTitle: String { return L10n.tr("Localizable", "transcription_search_empty_title", fallback: "Search Your Transcripts") }
+  /// Message shown when a transcript search returns no matches. '%1$@' is a placeholder for the user's search term.
+  internal static func transcriptionSearchNoResultsMessage(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_search_no_results_message", String(describing: p1), fallback: "Nothing in your transcripts matches \"%1$@\".")
+  }
+  /// Title shown when a transcript search returns no matches
+  internal static var transcriptionSearchNoResultsTitle: String { return L10n.tr("Localizable", "transcription_search_no_results_title", fallback: "No Results Found") }
+  /// Placeholder text of the transcript search input field
+  internal static var transcriptionSearchPrompt: String { return L10n.tr("Localizable", "transcription_search_prompt", fallback: "Search your transcripts") }
+  /// Title of the cross-episode transcript search screen and of its row in the Profile tab
+  internal static var transcriptionSearchTitle: String { return L10n.tr("Localizable", "transcription_search_title", fallback: "Search Transcripts") }
+  /// Fallback episode title for a transcript search result whose episode is no longer in the library
+  internal static var transcriptionSearchUnknownEpisode: String { return L10n.tr("Localizable", "transcription_search_unknown_episode", fallback: "Unknown Episode") }
+  /// Title of the Transcription page in Settings and of its row in the settings list
+  internal static var transcriptionSettingsTitle: String { return L10n.tr("Localizable", "transcription_settings_title", fallback: "Transcription") }
+  /// Title of the transcript source menu option that shows the locally generated transcript
+  internal static var transcriptionSourceGenerated: String { return L10n.tr("Localizable", "transcription_source_generated", fallback: "Generated Transcript") }
+  /// Title of the transcript source menu option that shows the transcript provided by the podcast feed
+  internal static var transcriptionSourcePodcast: String { return L10n.tr("Localizable", "transcription_source_podcast", fallback: "Podcast Transcript") }
+  /// Title of the button (and its confirmation action) that deletes all generated transcripts from the device
+  internal static var transcriptionStorageClearAll: String { return L10n.tr("Localizable", "transcription_storage_clear_all", fallback: "Clear All Transcripts") }
+  /// Confirmation message shown before deleting all generated transcripts. '%1$@' is a placeholder for the number of transcribed episodes
+  internal static func transcriptionStorageClearAllConfirmation(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_storage_clear_all_confirmation", String(describing: p1), fallback: "This removes the generated transcripts for %1$@ episodes from this device. Episodes can be transcribed again later.")
+  }
+  /// Header of the transcription settings section showing storage used by generated transcripts
+  internal static var transcriptionStorageHeader: String { return L10n.tr("Localizable", "transcription_storage_header", fallback: "Generated Transcripts") }
+  /// Label of the row showing how much disk space generated transcripts use.
+  internal static var transcriptionStorageUsage: String { return L10n.tr("Localizable", "transcription_storage_usage", fallback: "Storage Used") }
+  /// Title of the button that checks whether the entered remote transcription API key works
+  internal static var transcriptionValidateKey: String { return L10n.tr("Localizable", "transcription_validate_key", fallback: "Validate Key") }
   /// Label indicating that the trial period for the subscription or promotion has ended.
   internal static var trialFinished: String { return L10n.tr("Localizable", "trial_finished", fallback: "Trial Finished") }
   /// The Trim Silence feature, removes silence from podcasts to make them shorter.

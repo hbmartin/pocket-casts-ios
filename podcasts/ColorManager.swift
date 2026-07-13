@@ -176,7 +176,7 @@ nonisolated final class ColorManager: Sendable {
     private func colorsDidSave(podcastUuid: String) {
         removeDownloadingUuid(podcastUuid)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastColorsDownloaded, object: podcastUuid)
+        NotificationCenter.postOnMainThread(PodcastColorsDownloaded(uuid: podcastUuid))
     }
 
     private func handleDownloadError(podcastUuid: String) {

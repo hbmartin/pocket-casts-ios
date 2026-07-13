@@ -49,7 +49,7 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
         upToPodcast = upTo
         progressLock.unlock()
 
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressPodcastCount, object: total)
+        NotificationCenter.postOnMainThread(SyncProgressPodcastCountKnown(count: total))
     }
 
     func incrementAndPostPodcastImportProgress() {
@@ -58,7 +58,7 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
         let currentPodcast = upToPodcast
         progressLock.unlock()
 
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressPodcastUpto, object: currentPodcast)
+        NotificationCenter.postOnMainThread(SyncProgressPodcastUptoChanged(upTo: currentPodcast))
     }
 
     func postPodcastImportProgressThenIncrement() {
@@ -68,8 +68,8 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
         upToPodcast += 1
         progressLock.unlock()
 
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressPodcastUpto, object: currentPodcast)
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressPodcastCount, object: total)
+        NotificationCenter.postOnMainThread(SyncProgressPodcastUptoChanged(upTo: currentPodcast))
+        NotificationCenter.postOnMainThread(SyncProgressPodcastCountKnown(count: total))
     }
 
     func incrementalSyncRequest(token: String) -> URLRequest? {

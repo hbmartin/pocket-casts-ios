@@ -8,6 +8,6 @@ class ServerPostOnMainFixture {
 
     func firesOnMain() {
         // ok: pocketcasts.server-module-post-on-main-thread
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.podcastsRefreshed, object: nil)
+        NotificationCenter.postOnMainThread(PodcastsRefreshed())
     }
 }

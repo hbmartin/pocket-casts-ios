@@ -54,10 +54,25 @@ class PlayerChapterCell: UITableViewCell {
         super.awakeFromNib()
 
         MainActor.assumeIsolated {
-            NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.playbackProgress, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(progressUpdated), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+                self?.progressUpdated()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PodcastChaptersDidUpdate.self) { [weak self] _ in
+                self?.progressUpdated()
+            })
             contentView.backgroundColor = UIColor.clear
             backgroundColor = UIColor.clear
+        }
+    }
+
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
+    deinit {
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 
@@ -174,7 +189,7 @@ class PlayerChapterCell: UITableViewCell {
     private static var chapterSaveTask: Task<Void, Never>?
     private static let chapterSaveDelayNanoseconds: UInt64 = 300_000_000
 
-    @objc func progressUpdated(animated: Bool = true) {
+    func progressUpdated(animated: Bool = true) {
         guard let chapter, chapter == PlaybackManager.shared.currentChapters().visibleChapter else { return }
 
         layoutIfNeeded()

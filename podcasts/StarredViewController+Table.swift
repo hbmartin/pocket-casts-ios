@@ -1,3 +1,4 @@
+import PocketCastsDataModel
 import Foundation
 
 extension StarredViewController: UITableViewDataSource, UITableViewDelegate {
@@ -69,7 +70,7 @@ extension StarredViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let episode = episodes[safe: indexPath.row]?.episode, let parentPodcast = episode.parentPodcast() else { return }
+        guard let episode = episodes[safe: indexPath.row]?.episode else { return }
         if isMultiSelectEnabled {
             // the cell below is optional because cellForRow only returns a cell if it's visible, and we don't need to tick cells that don't exist
             let listEpisode = episodes[indexPath.row]
@@ -88,10 +89,27 @@ extension StarredViewController: UITableViewDataSource, UITableViewDelegate {
         } else {
             tableView.deselectRow(at: indexPath, animated: true)
 
-            let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .starred, playlist: .starred)
-            episodeController.modalPresentationStyle = .formSheet
-            present(episodeController, animated: true, completion: nil)
+            let playOnTap = Settings.tapToPlay()
+            Analytics.track(.episodeTapped, properties: ["source": AnalyticsSource.starred, "will_play": playOnTap])
+
+            if playOnTap {
+                AnalyticsPlaybackHelper.shared.currentSource = .starred
+                PlaybackActionHelper.play(episode: episode, playlist: .starred)
+                return
+            }
+
+            presentEpisodeDetails(for: episode)
         }
+    }
+
+    /// Presents the episode detail sheet. Single source of truth for this screen —
+    /// used by both row taps (when tap to play is off) and the Details swipe action.
+    func presentEpisodeDetails(for episode: Episode) {
+        guard let parentPodcast = episode.parentPodcast() else { return }
+
+        let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .starred, playlist: .starred)
+        episodeController.modalPresentationStyle = .formSheet
+        present(episodeController, animated: true, completion: nil)
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {

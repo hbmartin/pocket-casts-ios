@@ -32,7 +32,7 @@ nonisolated class EpisodeFileSizeUpdater {
             }
 
             DataManager.sharedManager.saveEpisode(duration: calculatedDuration, episode: episode, updateSyncFlag: syncChanges)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDurationChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDurationChanged(uuid: episode.uuid))
         }
     }
 }

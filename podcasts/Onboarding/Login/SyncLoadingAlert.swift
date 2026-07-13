@@ -18,34 +18,45 @@ class SyncLoadingAlert: ShiftyLoadingAlert {
         unsubscribeToSyncChanges()
     }
 
+    private var messageTokens: [NotificationCenter.ObservationToken] = []
+
     private func subscribeToSyncChanges() {
-        NotificationCenter.default.addObserver(self, selector: #selector(syncProgressCountKnown(_:)), name: ServerNotifications.syncProgressPodcastCount, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(syncUpToChanged(_:)), name: ServerNotifications.syncProgressPodcastUpto, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastsImported), name: ServerNotifications.syncProgressImportedPodcasts, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(loggedIn), name: .userLoginDidChange, object: nil)
+        guard messageTokens.isEmpty else { return }
+
+        messageTokens = [
+            NotificationCenter.default.addObserver(for: SyncProgressPodcastCountKnown.self) { [weak self] message in
+                self?.totalPodcastsToImport = message.count
+            },
+            NotificationCenter.default.addObserver(for: SyncProgressPodcastUptoChanged.self) { [weak self] message in
+                self?.syncUpToChanged(message.upTo)
+            },
+            NotificationCenter.default.addObserver(for: SyncProgressPodcastsImported.self) { [weak self] _ in
+                self?.podcastsImported()
+            },
+            NotificationCenter.default.addObserver(for: UserLoginDidChange.self) { [weak self] _ in
+                self?.title = L10n.syncAccountLogin
+            }
+        ]
     }
 
     private func unsubscribeToSyncChanges() {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc private func loggedIn() {
-        DispatchQueue.main.async {
-            self.title = L10n.syncAccountLogin
+        let tokens = messageTokens
+        messageTokens = []
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 
-    @objc private func syncProgressCountKnown(_ notification: Notification) {
-        if let number = notification.object as? NSNumber {
-            totalPodcastsToImport = number.intValue
+    // isolated deinit: ShiftyLoadingAlert is @MainActor so its deinit is isolated and this
+    // override must match; it tears down isolated observation tokens.
+    isolated deinit {
+        for token in messageTokens {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 
-    @objc private func syncUpToChanged(_ notification: Notification) {
-        guard let number = notification.object as? NSNumber else { return }
-
+    private func syncUpToChanged(_ upTo: Int) {
         DispatchQueue.main.async {
-            let upTo = number.intValue
             if self.totalPodcastsToImport > 0 {
                 self.title = L10n.syncProgress(upTo.localized(), self.totalPodcastsToImport.localized())
                 self.progress = CGFloat(upTo / self.totalPodcastsToImport)
@@ -56,7 +67,7 @@ class SyncLoadingAlert: ShiftyLoadingAlert {
         }
     }
 
-    @objc private func podcastsImported() {
+    private func podcastsImported() {
         DispatchQueue.main.async {
             self.title = L10n.syncInProgress
         }

@@ -30,6 +30,21 @@ public enum LocalFeedShowInfo {
                 guard let type = transcript.type else { return nil }
                 return ["url": transcript.url, "type": type]
             }
+            // <podcast:person> credits: item-level tags win; episodes without any
+            // inherit the channel-level list (Podcasting 2.0 semantics). Omitted
+            // entirely when neither declares one — Episode.Metadata.persons is
+            // optional, so absence is the regression-free default.
+            let persons = item.persons.isEmpty ? feed.persons : item.persons
+            if !persons.isEmpty {
+                episode["persons"] = persons.map { person -> [String: Any] in
+                    var entry: [String: Any] = ["name": person.name]
+                    if let role = person.role { entry["role"] = role }
+                    if let group = person.group { entry["group"] = group }
+                    if let img = person.img { entry["img"] = img }
+                    if let href = person.href { entry["href"] = href }
+                    return entry
+                }
+            }
             return episode
         }
 

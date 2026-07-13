@@ -119,7 +119,9 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         setupObservers()
         update()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillBecomeActive), name: UIApplication.willEnterForegroundNotification, object: nil)
+        addCustomObserver(UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.handleAppWillBecomeActive()
+        }
 
         // To avoid weird animations when apearing, we add the transcript view here
         #if !APPCLIP
@@ -223,14 +225,26 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
     }
 
     private func setupObservers() {
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(playbackFinished))
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update))
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.playbackFinished()
+        }
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PodcastChaptersDidUpdate.self) { [weak self] _ in
+            self?.update()
+        }
         // Podcast colors load async on first play; recolor the background and
         // tab fades when they arrive instead of keeping the black fallback.
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(themeDidChange))
+        addCustomObserver(PodcastColorsDownloaded.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
     }
 
     private func setupGestures() {
@@ -246,7 +260,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         #endif
     }
 
-    @objc private func themeDidChange() {
+    private func themeDidChange() {
         updateColors()
         tabsView.themeDidChange()
         nowPlayingItem.themeDidChange()
@@ -257,7 +271,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         #endif
     }
 
-    @objc private func playbackFinished() {
+    private func playbackFinished() {
         if PlaybackManager.shared.currentEpisode() == nil {
             closeNowPlaying()
         }
@@ -317,7 +331,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
 
     // MARK: - App Backgrounding
 
-    @objc func handleAppWillBecomeActive() {
+    func handleAppWillBecomeActive() {
         didSwitchToTab(index: tabsView.currentTab)
     }
 

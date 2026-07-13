@@ -235,9 +235,15 @@ class EffectsViewController: SimpleNotificationsViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(updateControls))
-        addCustomObserver(Constants.Notifications.playbackEffectsChanged, selector: #selector(updateControls))
-        addCustomObserver(Constants.Notifications.themeChanged, selector: #selector(updateColors))
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.updateControls()
+        }
+        addCustomObserver(PlaybackEffectsChanged.self) { [weak self] _ in
+            self?.updateControls()
+        }
+        addCustomObserver(ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
 
         if isCustomPlaybackSettingsEnabled {
             analyticsPlaybackHelper.currentSource = analyticsSource
@@ -364,7 +370,7 @@ class EffectsViewController: SimpleNotificationsViewController {
         }
     }
 
-    @objc private func updateControls() {
+    private func updateControls() {
         trimSilenceSwitch.isEnabled = PlaybackManager.shared.silenceRemovalAvailable()
         volumeBoostSwitch.isEnabled = PlaybackManager.shared.volumeBoostAvailable()
 
@@ -450,7 +456,7 @@ class EffectsViewController: SimpleNotificationsViewController {
         UIAccessibility.post(notification: .announcement, argument: speedBtn.accessibilityLabel)
     }
 
-    @objc private func updateColors() {
+    private func updateColors() {
         view.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
         headingView.backgroundColor = PlayerColorHelper.playerBackgroundColor02()
         volumeBoostSwitch.onTintColor = PlayerColorHelper.playerHighlightColor02(for: .dark)

@@ -9,17 +9,21 @@ class ThemeSecondaryIcon: UIImageView {
         MainActor.assumeIsolated {
             originalImage = image
 
-            NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+            themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.setTintColorForTheme()
+            }
             setTintColorForTheme()
         }
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
+    private var themeToken: NotificationCenter.ObservationToken?
 
-    @objc private func themeDidChange() {
-        setTintColorForTheme()
+    deinit {
+        let token = themeToken
+        NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setTintColorForTheme() {

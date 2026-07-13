@@ -1,6 +1,7 @@
 import Combine
 import PocketCastsDataModel
 import PocketCastsServer
+import PocketCastsUtils
 import SwiftUI
 
 class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
@@ -32,6 +33,16 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
     }
 
     var cancellables = Set<AnyCancellable>()
+    private var syncCompletedToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        // Property reads must precede any call that copies self; a plain deinit
+        // may read stored state directly (Swift 6.2 isolated-deinit rule).
+        let token = syncCompletedToken
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
     @Binding private var sortSettingValue: BookmarkSortOption
 
     var analyticsSource: BookmarkAnalyticsSource = .unknown
@@ -76,12 +87,11 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
             }
             .store(in: &cancellables)
 
-        ServerNotifications.syncCompleted.publisher()
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
+        if syncCompletedToken == nil {
+            syncCompletedToken = NotificationCenter.default.addObserver(for: SyncCompleted.self) { [weak self] _ in
                 self?.reload()
             }
-            .store(in: &cancellables)
+        }
     }
 }
 

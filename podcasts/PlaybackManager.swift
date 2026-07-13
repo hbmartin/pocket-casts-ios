@@ -171,7 +171,7 @@ final class PlaybackManager {
                 sleepTimerManager.recordSleepTimerDuration(duration: nil, onEpisodeEnd: true)
                 FileLog.shared.addMessage("Sleep Timer: starting with \(numberOfEpisodesToSleepAfter) episodes")
             }
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+            NotificationCenter.postOnMainThread(SleepTimerChanged())
         }
     }
 
@@ -198,6 +198,13 @@ final class PlaybackManager {
 
     private let catchUpHelper = PlaybackCatchUpHelper()
 
+    /// Grows the skip interval on rapid repeated skip taps (see `Settings.seekAccelerationEnabled()`).
+    private var seekAcceleration = SeekAccelerationTracker()
+
+    /// Session history of played episodes for the headphone previous-episode action.
+    private var episodeHistory = PlayedEpisodeHistory()
+    private var isNavigatingBackInHistory = false
+
     private let analyticsPlaybackHelper = AnalyticsPlaybackHelper.shared
 
     #if !APPCLIP
@@ -218,6 +225,9 @@ final class PlaybackManager {
     /// The time the episode was last switched as tracked by handleCurrentlyPlayingEpisodeUpdated
     private var episodeSwitchTime: Date?
     private var audioSessionNotificationObservers: AudioSessionNotificationObservers?
+
+    /// Typed-message observations, registered once in `init` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
 
     init() {
         queue = PlaybackQueue()
@@ -249,16 +259,34 @@ final class PlaybackManager {
 
         Self.engineState.tuning = Settings.audioTuning
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleAudioTuningChanged), name: Constants.Notifications.audioTuningDidChange, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSkipTimesChanged), name: Constants.Notifications.skipTimesChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidUpdate(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleEpisodeDidDownload(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateExtraActions), name: Constants.Notifications.extraMediaSessionActionsChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshRemoteCommands), name: Constants.Notifications.remoteCommandSettingsChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateNowPlayingInfo), name: Constants.Notifications.userEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: .episodeEmbeddedArtworkLoaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateAllNowPlayingData), name: Constants.Notifications.podcastChaptersDidUpdate, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentlyPlayingEpisodeUpdated), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: AudioTuningDidChange.self) { [weak self] _ in
+            self?.handleAudioTuningChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: SkipTimesChanged.self) { [weak self] _ in
+            self?.handleSkipTimesChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UserEpisodeUpdated.self) { [weak self] message in
+            self?.handleEpisodeDidUpdate(episodeUuid: message.uuid)
+            self?.updateNowPlayingInfo()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+            self?.handleEpisodeDidDownload(episodeUuid: message.uuid)
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: ExtraMediaSessionActionsChanged.self) { [weak self] _ in
+            self?.updateExtraActions()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: RemoteCommandSettingsChanged.self) { [weak self] _ in
+            self?.refreshRemoteCommands()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeEmbeddedArtworkLoaded.self) { [weak self] _ in
+            self?.updateAllNowPlayingData()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PodcastChaptersDidUpdate.self) { [weak self] _ in
+            self?.updateAllNowPlayingData()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: CurrentlyPlayingEpisodeUpdated.self) { [weak self] _ in
+            self?.handleCurrentlyPlayingEpisodeUpdated()
+        })
 
         // deferred because some of these call our singleton instance back, which would
         // crash if run inside init (PlaybackManager.shared re-entry); the task only
@@ -271,7 +299,12 @@ final class PlaybackManager {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Read isolated stored properties into locals before any observer removal
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     nonisolated static func observeAudioSessionNotifications(
@@ -367,6 +400,14 @@ final class PlaybackManager {
             }
         }
 
+        seekAcceleration.reset()
+
+        // Session history for the headphone previous-episode action. Recording after the
+        // switchTo early-return above avoids double-recording (switchTo re-enters load).
+        if episodeIsChanging, !isNavigatingBackInHistory, let outgoingUuid = currentEpisode()?.uuid {
+            episodeHistory.record(uuid: outgoingUuid)
+        }
+
         if let uuid = currentEpisode()?.uuid, uuid != episode.uuid {
             chapterManager.clearChapterInfo()
         }
@@ -406,10 +447,10 @@ final class PlaybackManager {
         activeError = nil
 
         if autoPlay {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarting)
+            NotificationCenter.postOnMainThread(PlaybackStarting())
             play(completion: completion)
         } else if episodeIsChanging {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+            NotificationCenter.postOnMainThread(UpNextQueueChanged())
         }
     }
 
@@ -449,7 +490,7 @@ final class PlaybackManager {
             self.updateCommandCenterSkipTimes(addTarget: false)
             self.updateExtraActions()
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarted)
+            NotificationCenter.postOnMainThread(PlaybackStarted())
 
             if currEpisode.videoPodcast() {
                 self.setAudioSessionVideoProperties()
@@ -481,8 +522,9 @@ final class PlaybackManager {
         }
         updateNowPlayingInfo()
 
+        seekAcceleration.reset()
         catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
+        NotificationCenter.postOnMainThread(PlaybackPaused())
         cancelUpdateTimer()
         deactiveAudioSession()
 
@@ -498,7 +540,10 @@ final class PlaybackManager {
     }
 
     func skipBack() {
-        let skipBackAmount = TimeInterval(Settings.skipBackTime)
+        var skipBackAmount = TimeInterval(Settings.skipBackTime)
+        if Settings.seekAccelerationEnabled() {
+            skipBackAmount = seekAcceleration.amount(for: .back, baseAmount: skipBackAmount)
+        }
         skipBack(amount: skipBackAmount)
     }
 
@@ -511,7 +556,10 @@ final class PlaybackManager {
     }
 
     func skipForward() {
-        let skipForwardAmount = TimeInterval(Settings.skipForwardTime)
+        var skipForwardAmount = TimeInterval(Settings.skipForwardTime)
+        if Settings.seekAccelerationEnabled() {
+            skipForwardAmount = seekAcceleration.amount(for: .forward, baseAmount: skipForwardAmount)
+        }
         skipForward(amount: skipForwardAmount)
     }
 
@@ -519,7 +567,7 @@ final class PlaybackManager {
         analyticsPlaybackHelper.skipForward()
 
         let forwardTime = min(currentTime() + amount, duration())
-        seekTo(time: forwardTime)
+        seekTo(time: forwardTime, seekHint: .forward)
 
         StatsManager.shared.addSkippedTime(amount)
     }
@@ -553,6 +601,55 @@ final class PlaybackManager {
 
     func skipToChapter(_ chapter: ChapterInfo, startPlaybackAfterSkip: Bool = false) {
         seekTo(time: ceil(chapter.startTime.seconds), startPlaybackAfterSeek: startPlaybackAfterSkip)
+    }
+
+    /// Jumps to the next episode in Up Next (headphone/lock-screen next-episode action).
+    /// A no-op when the queue is empty.
+    func skipToNextEpisode() {
+        guard queue.upNextCount() > 0 else {
+            FileLog.shared.addMessage("skipToNextEpisode ignored: Up Next is empty")
+            return
+        }
+
+        analyticsPlaybackHelper.track(.playbackNextEpisode)
+        playNextEpisode(autoPlay: true)
+    }
+
+    /// Music-player-style previous action (headphone/lock-screen previous-episode action):
+    /// more than `restartThreshold` seconds into the episode → restart it from 0; otherwise pop
+    /// the session history and return to the previously played episode (fallback: restart).
+    func skipToPreviousEpisodeOrRestart(restartThreshold: TimeInterval = 15) {
+        analyticsPlaybackHelper.track(.playbackPreviousEpisode)
+
+        if currentTime() > restartThreshold {
+            seekTo(time: 0)
+            return
+        }
+
+        var previousEpisode: BaseEpisode?
+        while let uuid = episodeHistory.popPrevious() {
+            if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid) {
+                previousEpisode = episode
+                break
+            }
+        }
+
+        guard let previousEpisode else {
+            FileLog.shared.addMessage("skipToPreviousEpisodeOrRestart: no usable history, restarting current episode")
+            seekTo(time: 0)
+            return
+        }
+
+        FileLog.shared.addMessage("skipToPreviousEpisodeOrRestart: returning to \(previousEpisode.displayableTitle())")
+
+        // Deliberately not load(episode:): with an empty Up Next, load would hit
+        // overrideAllEpisodesWith and drop the current episode instead of re-queueing it.
+        // Inserting at the queue front and switching pushes the current episode to the
+        // front of Up Next (via pushNewCurrentlyPlaying), so "next" returns to it.
+        isNavigatingBackInHistory = true
+        queue.insert(episode: previousEpisode, position: 0)
+        switchToPlaying(upNextIndex: 0)
+        isNavigatingBackInHistory = false
     }
 
     func skipToEndOfLastChapter() {
@@ -640,6 +737,11 @@ final class PlaybackManager {
     }
 
     func seekTo(time: TimeInterval, syncChanges: Bool, startPlaybackAfterSeek: Bool = false, seekHint: SeekHint? = nil) {
+        // any non-skip seek (scrubber, chapter jump, bookmark, sync) breaks a skip-acceleration streak
+        if seekHint == nil {
+            seekAcceleration.reset()
+        }
+
         guard let playingEpisode = currentEpisode() else { return } // nothing to actually seek
 
         if seekHint == .back, !isValidSeek(time: time) {
@@ -678,7 +780,7 @@ final class PlaybackManager {
                 DataManager.sharedManager.saveEpisode(playedUpTo: time, episode: playingEpisode, updateSyncFlag: syncChanges)
 
                 seekingTo = PlaybackManager.notSeeking
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPositionSaved, object: playingEpisode.uuid)
+                NotificationCenter.postOnMainThread(PlaybackPositionSaved(uuid: playingEpisode.uuid))
                 checkForChapterChange()
                 fireProgressNotification()
                 updateNowPlayingInfo()
@@ -859,6 +961,13 @@ final class PlaybackManager {
             queue.move(episode: nextEpisode, to: 0)
         }
 
+        seekAcceleration.reset()
+
+        // this path bypasses load(episode:), so record the outgoing episode here
+        if let outgoingUuid = currentEpisode()?.uuid {
+            episodeHistory.record(uuid: outgoingUuid)
+        }
+
         queue.removeTopEpisode(fireNotification: false)
         chapterManager.clearChapterInfo()
         cleanupCurrentPlayer(permanent: !autoPlay)
@@ -873,11 +982,11 @@ final class PlaybackManager {
         if autoPlay {
             play(userInitiated: false)
         } else {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+            NotificationCenter.postOnMainThread(UpNextQueueChanged())
         }
 
         numberOfEpisodesToSleepAfter -= 1
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackTrackChanged)
+        NotificationCenter.postOnMainThread(PlaybackTrackChanged())
     }
 
     private func switchTo(episodeToPlay: BaseEpisode, moveExistingToUpNext: Bool, autoPlay: Bool, completion: (() -> Void)? = nil) {
@@ -891,14 +1000,14 @@ final class PlaybackManager {
         load(episode: episodeToPlay, autoPlay: autoPlay, overrideUpNext: false, completion: completion)
         switchingToDifferentUpNextEpisode = false
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackTrackChanged)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(PlaybackTrackChanged())
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func play(playlist: EpisodeFilter) {
         let playlistEpisodes: [Episode]
-        let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: ServerSettings.autoAddToUpNextLimit(), shouldShowArchived: playlist.showArchivedEpisodes)
-        playlistEpisodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments)
+        let request = PlaylistQueryBuilder.episodesRequest(for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: ServerSettings.autoAddToUpNextLimit(), shouldShowArchived: playlist.showArchivedEpisodes)
+        playlistEpisodes = DataManager.sharedManager.episodes(matching: request)
         if playlist.manual {
             let archivedEpisodes = playlistEpisodes.filter(\.archived)
             EpisodeManager.bulkUnarchive(episodes: archivedEpisodes, trackEvent: false)
@@ -930,6 +1039,8 @@ final class PlaybackManager {
         cancelUpdateTimer()
         cancelSleepTimer()
         chapterManager.clearChapterInfo()
+        seekAcceleration.reset()
+        episodeHistory.removeAll()
 
         if saveCurrentEpisode {
             recordPlaybackPosition(sendToServerImmediately: false, fireNotifications: true)
@@ -939,7 +1050,7 @@ final class PlaybackManager {
         cleanupCurrentPlayer(permanent: true)
             NowPlayingHelper.clearNowPlayingInfo()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEnded)
+        NotificationCenter.postOnMainThread(PlaybackEnded())
     }
 
     private var deactivateTimedActionHelper = TimedActionHelper()
@@ -982,7 +1093,7 @@ final class PlaybackManager {
     }
 
     func connectedToRemotePlayerWithEpisode(_ episode: Episode) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarted)
+        NotificationCenter.postOnMainThread(PlaybackStarted())
     }
 
     func playingOverAirplay() -> Bool {
@@ -1047,7 +1158,7 @@ final class PlaybackManager {
             podcast.boostVolume = effects.volumeBoost
 
             DataManager.sharedManager.save(podcast: podcast)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+            NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
         }
 
         currentEffects = effects
@@ -1085,7 +1196,7 @@ final class PlaybackManager {
         handlePlaybackEffectsChanged(effects: newEffects)
     }
 
-    @objc private func handleAudioTuningChanged() {
+    private func handleAudioTuningChanged() {
         let oldTuning = Self.engineState.tuning
         let newTuning = Settings.audioTuning
         guard oldTuning != newTuning else { return }
@@ -1116,7 +1227,7 @@ final class PlaybackManager {
         podcast.isEffectsOverridden = applyLocalSettings
 
         DataManager.sharedManager.save(podcast: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
 
         effectsChangedExternally()
     }
@@ -1137,7 +1248,7 @@ final class PlaybackManager {
         }
         updateAllNowPlayingData()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEffectsChanged)
+        NotificationCenter.postOnMainThread(PlaybackEffectsChanged())
     }
 
     func silenceRemovalAvailable() -> Bool {
@@ -1315,7 +1426,7 @@ final class PlaybackManager {
             AnalyticsPlaybackHelper.shared.currentSource = .playbackFailed
             pause(userInitiated: false)
             AnalyticsPlaybackHelper.shared.currentSource = previousSource
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
+            NotificationCenter.postOnMainThread(PlaybackPaused())
             activeError = error
             let message = error.userMessage
             DataManager.sharedManager.saveEpisode(playbackError: message, episode: episode)
@@ -1324,7 +1435,7 @@ final class PlaybackManager {
                 cleanupCurrentPlayer(permanent: false)
             }
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackFailed)
+            NotificationCenter.postOnMainThread(PlaybackFailed())
 
             return
         }
@@ -1340,7 +1451,7 @@ final class PlaybackManager {
 
         if currentDuration < 10 || abs(currentDuration - playerDuration) > 10 {
             DataManager.sharedManager.saveEpisode(duration: playerDuration, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDurationChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDurationChanged(uuid: episode.uuid))
         }
 
         fireProgressNotification()
@@ -1349,7 +1460,7 @@ final class PlaybackManager {
 
     func playerDidChangeNowPlayingInfo() {
         updateNowPlayingInfo()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.currentlyPlayingEpisodeUpdated)
+        NotificationCenter.postOnMainThread(CurrentlyPlayingEpisodeUpdated())
     }
 
     func playerDidFinishPlayingEpisode() {
@@ -1420,7 +1531,7 @@ final class PlaybackManager {
             if let episode = currentEpisode() {
                 queue.remove(episode: episode, fireNotification: false)
             }
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackEnded)
+            NotificationCenter.postOnMainThread(PlaybackEnded())
             cleanupCurrentPlayer(permanent: true)
 
                 NowPlayingHelper.clearNowPlayingInfo()
@@ -1439,7 +1550,7 @@ final class PlaybackManager {
 
         cleanupCurrentPlayer(permanent: true)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPositionSaved, object: currEpisode.uuid)
+        NotificationCenter.postOnMainThread(PlaybackPositionSaved(uuid: currEpisode.uuid))
         updateNowPlayingInfo()
     }
 
@@ -1481,7 +1592,7 @@ final class PlaybackManager {
         } else {
             // there's a new list of episodes to play, so clear what's currently playing and play that
             load(episode: startingAtEpisode, autoPlay: true, overrideUpNext: true)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackTrackChanged)
+            NotificationCenter.postOnMainThread(PlaybackTrackChanged())
 
             let filteredEpisodes = episodes!.filter { $0.uuid != startingAtEpisode.uuid }
             if filteredEpisodes.isEmpty {
@@ -1653,7 +1764,7 @@ final class PlaybackManager {
     }
 
     func upNextQueueChanged() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func upNextQueueCount() -> Int {
@@ -1683,7 +1794,7 @@ final class PlaybackManager {
         }
 
         if fireNotifications {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPositionSaved, object: currEpisode.uuid)
+            NotificationCenter.postOnMainThread(PlaybackPositionSaved(uuid: currEpisode.uuid))
             updateNowPlayingInfo()
         }
 
@@ -1777,18 +1888,18 @@ final class PlaybackManager {
         if Thread.isMainThread {
             if isBackgrounded() { return }
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackProgress)
+            NotificationCenter.postOnMainThread(PlaybackProgressed())
         } else {
             DispatchQueue.main.sync {
                 if isBackgrounded() { return }
 
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackProgress)
+                NotificationCenter.postOnMainThread(PlaybackProgressed())
             }
         }
     }
 
     private func fireChapterChangeNotification() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastChapterChanged)
+        NotificationCenter.postOnMainThread(PodcastChapterChanged())
     }
 
     private func isBackgrounded() -> Bool {
@@ -1815,7 +1926,7 @@ final class PlaybackManager {
         playing() ? player?.playbackRate() : nil
     }
 
-    @objc private func updateNowPlayingInfo() {
+    private func updateNowPlayingInfo() {
         guard let episode = currentEpisode() else {
                 NowPlayingHelper.clearNowPlayingInfo()
 
@@ -1838,7 +1949,7 @@ final class PlaybackManager {
         chapterManager.parseChapters(episode: episode, duration: duration())
     }
 
-    @objc private func updateAllNowPlayingData() {
+    private func updateAllNowPlayingData() {
         guard let episode = currentEpisode() else {
                 NowPlayingHelper.clearNowPlayingInfo()
             return
@@ -1853,7 +1964,7 @@ final class PlaybackManager {
         sleepTimerManager.cancelSleepTimer(userInitiated: userInitiated)
         sleepTimeRemaining = -1
         numberOfEpisodesToSleepAfter = 0
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+        NotificationCenter.postOnMainThread(SleepTimerChanged())
     }
 
     func sleepTimerActive() -> Bool {
@@ -1864,7 +1975,7 @@ final class PlaybackManager {
         FileLog.shared.addMessage("Sleep Timer: starting with \(stopIn)")
         sleepTimerManager.recordSleepTimerDuration(duration: stopIn, onEpisodeEnd: nil)
         sleepTimeRemaining = stopIn
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.sleepTimerChanged)
+        NotificationCenter.postOnMainThread(SleepTimerChanged())
         Analytics.track(.playerSleepTimerEnabled, properties: ["time": Int(stopIn)])
     }
 
@@ -1957,6 +2068,7 @@ final class PlaybackManager {
             if let skipEvent = event as? MPSkipIntervalCommandEvent, skipEvent.interval > 0 {
                 strongSelf.skipBack(amount: skipEvent.interval)
             } else {
+                strongSelf.analyticsPlaybackHelper.currentSource = strongSelf.commandCenterSource
                 strongSelf.handleRemoteAction(Settings.headphonesPreviousAction)
             }
 
@@ -1972,6 +2084,7 @@ final class PlaybackManager {
             if let skipEvent = event as? MPSkipIntervalCommandEvent, skipEvent.interval > 0 {
                 strongSelf.skipForward(amount: skipEvent.interval)
             } else {
+                strongSelf.analyticsPlaybackHelper.currentSource = strongSelf.commandCenterSource
                 strongSelf.handleRemoteAction(Settings.headphonesNextAction)
             }
 
@@ -2002,7 +2115,7 @@ final class PlaybackManager {
         refreshRemoteCommands()
     }
 
-    @objc private func refreshRemoteCommands() {
+    private func refreshRemoteCommands() {
         let commandCenter = MPRemoteCommandCenter.shared()
 
         commandCenter.changePlaybackPositionCommand.removeTarget(nil)
@@ -2039,7 +2152,7 @@ final class PlaybackManager {
         }
     }
 
-    @objc private func updateExtraActions() {
+    private func updateExtraActions() {
         let actionsEnabled = Settings.extraMediaSessionActionsEnabled()
 
         let markPlayedCommand = MPRemoteCommandCenter.shared().dislikeCommand
@@ -2090,7 +2203,7 @@ final class PlaybackManager {
 
     // MARK: - Skip Time Changes
 
-    @objc private func handleSkipTimesChanged() {
+    private func handleSkipTimesChanged() {
         updateCommandCenterSkipTimes(addTarget: false)
     }
 
@@ -2108,6 +2221,18 @@ final class PlaybackManager {
                     if Int(interval) == Settings.skipBackTime {
                         FileLog.shared.addMessage("Skipping to previous chapter because Remote Skip Chapters is turned on")
                         self.seekTo(time: ceil(previousChapter.startTime.seconds))
+
+                        return .success
+                    }
+                }
+
+                // same hijack for the previous-episode headphone action; a mismatched
+                // interval is a Siri custom skip and passes through to a plain skip
+                if Settings.headphonesPreviousAction == .previousEpisode {
+                    let interval = (event as? MPSkipIntervalCommandEvent)?.interval ?? TimeInterval(Settings.skipBackTime)
+                    if Int(interval) == Settings.skipBackTime {
+                        self.analyticsPlaybackHelper.currentSource = self.commandCenterSource
+                        self.handleRemoteAction(.previousEpisode)
 
                         return .success
                     }
@@ -2138,6 +2263,18 @@ final class PlaybackManager {
                     if Int(interval) == Settings.skipForwardTime {
                         FileLog.shared.addMessage("Skipping to next chapter because Remote Skip Chapters is turned on")
                         self.seekTo(time: ceil(nextChapter.startTime.seconds))
+
+                        return .success
+                    }
+                }
+
+                // same hijack for the next-episode headphone action; a mismatched
+                // interval is a Siri custom skip and passes through to a plain skip
+                if Settings.headphonesNextAction == .nextEpisode {
+                    let interval = (event as? MPSkipIntervalCommandEvent)?.interval ?? TimeInterval(Settings.skipForwardTime)
+                    if Int(interval) == Settings.skipForwardTime {
+                        self.analyticsPlaybackHelper.currentSource = self.commandCenterSource
+                        self.handleRemoteAction(.nextEpisode)
 
                         return .success
                     }
@@ -2267,7 +2404,7 @@ final class PlaybackManager {
             if let episode = currentEpisode() {
                 catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
             }
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackPaused)
+            NotificationCenter.postOnMainThread(PlaybackPaused())
         }
     }
 
@@ -2316,8 +2453,8 @@ final class PlaybackManager {
 
     // MARK: - Downloading a streamed episode check
 
-    @objc private func handleEpisodeDidDownload(_ notification: Notification) {
-        guard let playingEpisode = currentEpisode(), let uuid = notification.object as? String else { return }
+    private func handleEpisodeDidDownload(episodeUuid: String?) {
+        guard let playingEpisode = currentEpisode(), let uuid = episodeUuid else { return }
 
         if uuid != playingEpisode.uuid { return } // download isn't the episode we're playing
 
@@ -2333,7 +2470,7 @@ final class PlaybackManager {
 
             load(episode: refreshedEpisode, autoPlay: currentlyPlaying, overrideUpNext: false, saveCurrentEpisode: false)
             if refreshedEpisode.videoPodcast() {
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.videoPlaybackEngineSwitched)
+                NotificationCenter.postOnMainThread(VideoPlaybackEngineSwitched())
             }
         }
     }
@@ -2354,14 +2491,14 @@ final class PlaybackManager {
         }
     }
 
-    @objc private func handleEpisodeDidUpdate(_ notification: Notification) {
-        guard let playingEpisode = currentEpisode(), let uuid = notification.object as? String, uuid == playingEpisode.uuid else { return }
+    private func handleEpisodeDidUpdate(episodeUuid: String?) {
+        guard let playingEpisode = currentEpisode(), let uuid = episodeUuid, uuid == playingEpisode.uuid else { return }
 
         // update the cached copy of the now playing episode so we have the latest version of it
         queue.nowPlayingEpisodeChanged()
     }
 
-    @objc private func handleCurrentlyPlayingEpisodeUpdated() {
+    private func handleCurrentlyPlayingEpisodeUpdated() {
         // Update episode switch time when the currently playing episode changes
         episodeSwitchTime = Date()
     }
@@ -2501,18 +2638,33 @@ private extension PlaybackManager {
 
         case .skipForward:
             skipFromRemote(isBack: false)
+
+        case .nextEpisode:
+            guard debounceRemoteEpisodeSkip("nextTrackCommand") else { return }
+            skipToNextEpisode()
+
+        case .previousEpisode:
+            guard debounceRemoteEpisodeSkip("previousTrackCommand") else { return }
+            skipToPreviousEpisodeOrRestart()
         }
     }
 
     func skipFromRemote(isBack: Bool) {
+        guard debounceRemoteEpisodeSkip(isBack ? "previousTrackCommand" : "nextTrackCommand") else { return }
+
+        isBack ? skipBack() : skipForward()
+    }
+
+    /// Some headphones deliver duplicate next/previous-track events in quick succession;
+    /// drop repeats inside the remote-skip debounce window so one tap never acts twice.
+    func debounceRemoteEpisodeSkip(_ command: String) -> Bool {
         guard fabs(lastSeekTime.timeIntervalSinceNow) > Constants.Limits.minTimeBetweenRemoteSkips else {
-            let command = isBack ? "previousTrackCommand" : "nextTrackCommand"
             FileLog.shared.addMessage("Remote control: \(command) ignored, too soon since previous command")
-            return
+            return false
         }
 
         lastSeekTime = Date()
-        isBack ? skipBack() : skipForward()
+        return true
     }
 }
 
@@ -2582,10 +2734,8 @@ extension PlaybackManager {
     func playBookmark(_ bookmark: Bookmark, source: BookmarkAnalyticsSource, firstTry: Bool = true) {
         guard bookmarksEnabled else { return }
 
-        let dataManager = DataManager.sharedManager
-
-        // Get the bookmark's BaseEpisode so we can load it
-        guard let episode = bookmark.episode ?? dataManager.findBaseEpisode(uuid: bookmark.episodeUuid) else {
+        // Make sure the bookmark's episode exists before tracking/seeking; fetch it once if it doesn't
+        guard (bookmark.episode ?? DataManager.sharedManager.findBaseEpisode(uuid: bookmark.episodeUuid)) != nil else {
             if firstTry, let podcastUuid = bookmark.podcastUuid {
                 ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: bookmark.episodeUuid, podcastUuid: podcastUuid) { [weak self] episode in
                     if episode != nil {
@@ -2600,17 +2750,43 @@ extension PlaybackManager {
 
         analyticsPlaybackHelper.currentSource = .bookmark
 
-        // If we're already the now playing episode, then just seek to the bookmark time
-        if isNowPlayingEpisode(episodeUuid: bookmark.episodeUuid) {
-            seekTo(time: bookmark.time, startPlaybackAfterSeek: true)
+        play(episodeUuid: bookmark.episodeUuid, podcastUuid: bookmark.podcastUuid, at: bookmark.time)
+    }
+}
+
+// MARK: - Deep-link seek and play
+
+extension PlaybackManager {
+    /// Canonical seek-and-play for deep links into a moment of an episode
+    /// (bookmarks, summary takeaways, transcript search hits):
+    /// - the now-playing episode gets a direct seek
+    /// - any other local episode has its start position stamped before the
+    ///   standard play pipeline loads it (which resumes from there)
+    /// - a missing episode is fetched from the server once, then retried.
+    func play(episodeUuid: String, podcastUuid: String?, at time: TimeInterval, firstTry: Bool = true) {
+        // If we're already the now playing episode, then just seek
+        if isNowPlayingEpisode(episodeUuid: episodeUuid) {
+            seekTo(time: time, startPlaybackAfterSeek: true)
+            return
+        }
+
+        let dataManager = DataManager.sharedManager
+        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid) else {
+            if firstTry, let podcastUuid {
+                ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: episodeUuid, podcastUuid: podcastUuid) { [weak self] episode in
+                    if episode != nil {
+                        self?.play(episodeUuid: episodeUuid, podcastUuid: podcastUuid, at: time, firstTry: false)
+                    }
+                }
+            }
             return
         }
 
         // Save the playback time before we start playing so the player will jump to the correct starting time when it does load
-        dataManager.saveEpisode(playedUpTo: bookmark.time, episode: episode, updateSyncFlag: false)
+        dataManager.saveEpisode(playedUpTo: time, episode: episode, updateSyncFlag: false)
         dataManager.saveEpisode(playingStatus: .inProgress, episode: episode, updateSyncFlag: false)
         // Start the play process
-        PlaybackActionHelper.play(episode: episode, podcastUuid: bookmark.podcastUuid)
+        PlaybackActionHelper.play(episode: episode)
     }
 }
 
@@ -2632,7 +2808,7 @@ extension PlaybackManager {
         }
 
         // Start the play process
-        PlaybackActionHelper.play(episode: episode, podcastUuid: searchEpisode.podcastUuid)
+        PlaybackActionHelper.play(episode: episode)
     }
 }
 #endif

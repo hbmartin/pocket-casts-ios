@@ -3,10 +3,53 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-enum PodcastFeedReloadNotification {
+nonisolated enum PodcastFeedReloadNotification {
     public static let loading = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationLoading")
     public static let episodesFound = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationEpisodesFound")
     public static let noEpisodesFound = NSNotification.Name(rawValue: "PodcastFeedReloadNotificationNoEpisodesFound")
+}
+
+/// A podcast feed reload started (pull-to-refresh); the refresh control shows
+/// its loading text. No payload.
+nonisolated struct PodcastFeedReloadLoading: NotificationCenter.MainActorMessage {
+    typealias Subject = AnyObject
+    static var name: Notification.Name { PodcastFeedReloadNotification.loading }
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        Self()
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name)
+    }
+}
+
+/// A podcast feed reload finished and found new episodes. No payload.
+nonisolated struct PodcastFeedReloadEpisodesFound: NotificationCenter.MainActorMessage {
+    typealias Subject = AnyObject
+    static var name: Notification.Name { PodcastFeedReloadNotification.episodesFound }
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        Self()
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name)
+    }
+}
+
+/// A podcast feed reload finished without new episodes. No payload.
+nonisolated struct PodcastFeedReloadNoEpisodesFound: NotificationCenter.MainActorMessage {
+    typealias Subject = AnyObject
+    static var name: Notification.Name { PodcastFeedReloadNotification.noEpisodesFound }
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        Self()
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name)
+    }
 }
 
 @MainActor
@@ -53,7 +96,7 @@ class PodcastFeedViewModel {
             Analytics.track(.podcastScreenRefreshEpisodeList, properties: ["action": source.analyticsValue, "podcast_uuid": uuid])
 
             if source == .refreshControl {
-                NotificationCenter.default.post(name: PodcastFeedReloadNotification.loading, object: nil)
+                NotificationCenter.postOnMainThread(PodcastFeedReloadLoading())
             } else {
                 Toast.show(L10n.podcastFeedReloadLoading, dismissAfter: .never)
             }
@@ -76,8 +119,11 @@ class PodcastFeedViewModel {
                 Analytics.track(event, properties: ["action": source.analyticsValue, "podcast_uuid": uuid])
 
                 if source == .refreshControl {
-                    let notification = success ? PodcastFeedReloadNotification.episodesFound : PodcastFeedReloadNotification.noEpisodesFound
-                    NotificationCenter.default.post(name: notification, object: nil)
+                    if success {
+                        NotificationCenter.postOnMainThread(PodcastFeedReloadEpisodesFound())
+                    } else {
+                        NotificationCenter.postOnMainThread(PodcastFeedReloadNoEpisodesFound())
+                    }
                 } else {
                     let message = success ? L10n.podcastFeedReloadNewEpisodesFound : L10n.podcastFeedReloadNoEpisodesFound
                     Toast.show(message)

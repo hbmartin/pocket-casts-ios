@@ -2,6 +2,7 @@ import UIKit
 import SwiftUI
 import TipKit
 import PocketCastsDataModel
+import PocketCastsUtils
 
 @MainActor
 protocol FilterCreatedDelegate: AnyObject {
@@ -185,25 +186,57 @@ class NewPlaylistViewController: PCViewController {
         ]
 
         if creationType == .default {
-            let creationViewUI = SmartPlaylistCreationView() { [weak self] in
+            let creationView = addCreationCard(SmartPlaylistCreationView() { [weak self] in
                 self?.createSmartPlaylist()
-            }
-            let themedVC = ThemedHostingController(rootView: creationViewUI)
-            themedVC.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
-            self.addChild(themedVC)
-            let creationView = themedVC.view!
-            creationView.translatesAutoresizingMaskIntoConstraints = false
-            view.insertSubview(creationView, belowSubview: saveButton)
-            themedVC.didMove(toParent: self)
+            })
             self.creationView = creationView
 
             constraints.append(contentsOf: [
                 creationView.topAnchor.constraint(equalTo: playlistNameTextField.bottomAnchor, constant: 16.0),
                 creationView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
                 creationView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16.0),
-                creationView.heightAnchor.constraint(greaterThanOrEqualToConstant: 59.0),
-                saveButton.topAnchor.constraint(equalTo: creationView.bottomAnchor, constant: 24)
+                creationView.heightAnchor.constraint(greaterThanOrEqualToConstant: 59.0)
             ])
+
+            var lastCard = creationView
+
+            if FeatureFlag.customPlaylists.enabled {
+                let customCard = addCreationCard(SmartPlaylistCreationView(
+                    icon: "filter_list",
+                    title: L10n.playlistCustomCreationButtonTitle,
+                    subtitle: L10n.playlistCustomCreationButtonSubtitle
+                ) { [weak self] in
+                    self?.createCustomPlaylist()
+                })
+
+                constraints.append(contentsOf: [
+                    customCard.topAnchor.constraint(equalTo: creationView.bottomAnchor, constant: 12.0),
+                    customCard.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
+                    customCard.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16.0),
+                    customCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 59.0)
+                ])
+                lastCard = customCard
+            }
+
+            if FeatureFlag.promptedPlaylists.enabled {
+                let promptedCard = addCreationCard(SmartPlaylistCreationView(
+                    icon: "rename",
+                    title: L10n.promptedPlaylistEntryButton,
+                    subtitle: L10n.promptedPlaylistEntrySubtitle
+                ) { [weak self] in
+                    self?.presentPromptedPlaylistSheet()
+                })
+
+                constraints.append(contentsOf: [
+                    promptedCard.topAnchor.constraint(equalTo: lastCard.bottomAnchor, constant: 12.0),
+                    promptedCard.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
+                    promptedCard.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16.0),
+                    promptedCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 59.0)
+                ])
+                lastCard = promptedCard
+            }
+
+            constraints.append(saveButton.topAnchor.constraint(equalTo: lastCard.bottomAnchor, constant: 24))
         } else {
             constraints.append(contentsOf: [
                 saveButton.topAnchor.constraint(equalTo: playlistNameTextField.bottomAnchor, constant: 24)
@@ -240,7 +273,7 @@ class NewPlaylistViewController: PCViewController {
         if creationType == .default {
             UserDefaults.standard.set(playlist.uuid, forKey: Constants.UserDefaults.lastFilterShown)
             delegate?.filterCreated(newFilter: playlist)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: playlist))
         } else if case let .addEpisode(episode) = creationType {
             let didAdd = DataManager.sharedManager.add(episodes: [episode], to: playlist)
             guard didAdd else {
@@ -251,7 +284,7 @@ class NewPlaylistViewController: PCViewController {
 
             Analytics.track(.addToPlaylistsCreateNewPlaylistTapped, properties: ["source": analyticsSource ?? "unknown"])
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: playlist))
 
             Analytics.track(.filterCreated)
             Analytics.track(.filterCreateAsManualPlaylistTapped)
@@ -289,7 +322,7 @@ class NewPlaylistViewController: PCViewController {
 
             Analytics.track(.addToPlaylistsCreateNewPlaylistTapped, properties: ["source": analyticsSource ?? "unknown"])
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: playlist))
 
             Analytics.track(.filterCreated)
             Analytics.track(.filterCreateAsManualPlaylistTapped)
@@ -330,6 +363,56 @@ class NewPlaylistViewController: PCViewController {
         createPlaylistVC.delegate = delegate
         let navVC = SJUIUtils.navController(for: createPlaylistVC)
         present(navVC, animated: true, completion: nil)
+    }
+
+    private func createCustomPlaylist() {
+        Analytics.track(.filterCreateAsCustomPlaylistTapped)
+
+        let playlistName = self.playlistName.isEmpty ? L10n.playlistsDefaultNewPlaylist : self.playlistName
+        let editorVC = CustomPlaylistEditorViewController(playlistName: playlistName)
+        editorVC.delegate = delegate
+        let navVC = SJUIUtils.navController(for: editorVC)
+        present(navVC, animated: true, completion: nil)
+    }
+
+    /// Prompted playlists: the "Describe your playlist" sheet interprets a
+    /// natural-language description on device and hands back a configured,
+    /// unsaved draft that the standard preview screen reviews before saving.
+    private func presentPromptedPlaylistSheet() {
+        Analytics.track(.promptedPlaylistShown)
+
+        let viewModel = PromptedPlaylistViewModel(typedName: playlistName) { [weak self] playlist in
+            self?.showPromptedPreview(for: playlist)
+        }
+        let sheetVC = ThemedHostingController(rootView: PromptedPlaylistSheetView(viewModel: viewModel), background: \.primaryUi01)
+        if let sheet = sheetVC.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(sheetVC, animated: true)
+    }
+
+    private func showPromptedPreview(for playlist: EpisodeFilter) {
+        dismiss(animated: true) { [weak self] in
+            guard let self else { return }
+
+            let previewVC = PlaylistPreviewViewController(prefilled: playlist)
+            previewVC.delegate = delegate
+            let navVC = SJUIUtils.navController(for: previewVC)
+            present(navVC, animated: true)
+        }
+    }
+
+    /// Hosts a creation card (smart / custom playlist entry) below the name field.
+    private func addCreationCard(_ card: some View) -> UIView {
+        let themedVC = ThemedHostingController(rootView: card)
+        themedVC.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+        addChild(themedVC)
+        let cardView = themedVC.view!
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        view.insertSubview(cardView, belowSubview: saveButton)
+        themedVC.didMove(toParent: self)
+        return cardView
     }
 
     @objc private func closeTapped(_ sender: Any) {

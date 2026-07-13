@@ -23,7 +23,7 @@ extension PlaylistDetailViewController: UISheetPresentationControllerDelegate, P
                     self.present(sheet, animated: true)
                 }
             } else if !PlaybackManager.shared.playing() {
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playbackStarting)
+                NotificationCenter.postOnMainThread(PlaybackStarting())
                 PlaybackManager.shared.play()
             }
         }

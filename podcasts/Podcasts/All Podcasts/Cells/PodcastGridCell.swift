@@ -13,12 +13,24 @@ class PodcastGridCell: UICollectionViewCell {
 
     private var podcastUuid: String?
     private var badgeType = BadgeType.off
+    private var observationTokens = [NotificationCenter.ObservationToken]()
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastColorsLoaded(_:)), name: Constants.Notifications.podcastColorsDownloaded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastImageCacheCleared), name: Constants.Notifications.podcastImageReCacheRequired, object: nil)
+        observationTokens.append(NotificationCenter.default.addObserver(for: PodcastColorsDownloaded.self) { [weak self] message in
+            self?.podcastColorsLoaded(message)
+        })
+        observationTokens.append(NotificationCenter.default.addObserver(for: PodcastImageReCacheRequired.self) { [weak self] _ in
+            self?.podcastImageCacheCleared()
+        })
+    }
+
+    deinit {
+        let tokens = observationTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setup() {
@@ -51,12 +63,12 @@ class PodcastGridCell: UICollectionViewCell {
         }
     }
 
-    @objc private func podcastImageCacheCleared() {
+    private func podcastImageCacheCleared() {
         setImage()
     }
 
-    @objc private func podcastColorsLoaded(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
+    private func podcastColorsLoaded(_ message: PodcastColorsDownloaded) {
+        guard let uuidLoaded = message.uuid else { return }
 
         if uuidLoaded == podcastUuid, let podcast = DataManager.sharedManager.findPodcast(uuid: uuidLoaded) {
             setColors(podcast: podcast)

@@ -6,9 +6,10 @@
 // of the Pocket Casts sync record schema (see that file for provenance).
 //
 // Bootstrapped from PocketCastsServer's api.pb.swift with public visibility
-// and the fork's feed_url=1000 field added to SyncUserPodcast. Regenerate
-// with scripts/generate-filesync-proto.sh (requires protoc + protoc-gen-swift);
-// regenerated output replaces this file.
+// and the fork's extension fields added: feed_url=1000 on SyncUserPodcast and
+// excerpt=1000/end_time=1001 on SyncUserBookmark. Regenerate with
+// scripts/generate-filesync-proto.sh (requires the pinned protoc +
+// protoc-gen-swift); regenerated output replaces this file.
 
 import SwiftProtobuf
 
@@ -728,6 +729,26 @@ public struct Api_SyncUserBookmark: Sendable {
   /// Clears the value of `isDeletedModified`. Subsequent reads from it will return its default value.
   public mutating func clearIsDeletedModified() {self._isDeletedModified = nil}
 
+  /// Fork extension (field 1000): smart-highlight transcript excerpt.
+  public var excerpt: SwiftProtobuf.Google_Protobuf_StringValue {
+    get {_excerpt ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_excerpt = newValue}
+  }
+  /// Returns true if `excerpt` has been explicitly set.
+  public var hasExcerpt: Bool {self._excerpt != nil}
+  /// Clears the value of `excerpt`. Subsequent reads from it will return its default value.
+  public mutating func clearExcerpt() {self._excerpt = nil}
+
+  /// Fork extension (field 1001): end of the excerpt window in seconds.
+  public var endTime: SwiftProtobuf.Google_Protobuf_DoubleValue {
+    get {_endTime ?? SwiftProtobuf.Google_Protobuf_DoubleValue()}
+    set {_endTime = newValue}
+  }
+  /// Returns true if `endTime` has been explicitly set.
+  public var hasEndTime: Bool {self._endTime != nil}
+  /// Clears the value of `endTime`. Subsequent reads from it will return its default value.
+  public mutating func clearEndTime() {self._endTime = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -738,6 +759,8 @@ public struct Api_SyncUserBookmark: Sendable {
   fileprivate var _titleModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
   fileprivate var _isDeleted: SwiftProtobuf.Google_Protobuf_BoolValue? = nil
   fileprivate var _isDeletedModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+  fileprivate var _excerpt: SwiftProtobuf.Google_Protobuf_StringValue? = nil
+  fileprivate var _endTime: SwiftProtobuf.Google_Protobuf_DoubleValue? = nil
 }
 
 public struct Api_SyncUserDevice: Sendable {
@@ -1823,7 +1846,19 @@ extension Api_SyncUserFolder: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
 
 extension Api_SyncUserBookmark: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SyncUserBookmark"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}bookmark_uuid\0\u{3}podcast_uuid\0\u{3}episode_uuid\0\u{3}created_at\0\u{1}time\0\u{1}title\0\u{3}title_modified\0\u{3}is_deleted\0\u{3}is_deleted_modified\0")
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "bookmark_uuid"),
+    2: .standard(proto: "podcast_uuid"),
+    3: .standard(proto: "episode_uuid"),
+    4: .standard(proto: "created_at"),
+    5: .same(proto: "time"),
+    6: .same(proto: "title"),
+    7: .standard(proto: "title_modified"),
+    8: .standard(proto: "is_deleted"),
+    9: .standard(proto: "is_deleted_modified"),
+    1000: .same(proto: "excerpt"),
+    1001: .standard(proto: "end_time"),
+  ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1840,6 +1875,8 @@ extension Api_SyncUserBookmark: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
       case 7: try { try decoder.decodeSingularMessageField(value: &self._titleModified) }()
       case 8: try { try decoder.decodeSingularMessageField(value: &self._isDeleted) }()
       case 9: try { try decoder.decodeSingularMessageField(value: &self._isDeletedModified) }()
+      case 1000: try { try decoder.decodeSingularMessageField(value: &self._excerpt) }()
+      case 1001: try { try decoder.decodeSingularMessageField(value: &self._endTime) }()
       default: break
       }
     }
@@ -1877,6 +1914,12 @@ extension Api_SyncUserBookmark: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     try { if let v = self._isDeletedModified {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
     } }()
+    try { if let v = self._excerpt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1000)
+    } }()
+    try { if let v = self._endTime {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1890,6 +1933,8 @@ extension Api_SyncUserBookmark: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     if lhs._titleModified != rhs._titleModified {return false}
     if lhs._isDeleted != rhs._isDeleted {return false}
     if lhs._isDeletedModified != rhs._isDeletedModified {return false}
+    if lhs._excerpt != rhs._excerpt {return false}
+    if lhs._endTime != rhs._endTime {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

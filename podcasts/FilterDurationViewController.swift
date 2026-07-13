@@ -169,7 +169,7 @@ class FilterDurationViewController: PCViewController {
 
         filter.syncStatus = SyncStatus.notSynced.rawValue
         filter = DataManager.sharedManager.save(playlist: filter)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filter)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: filter))
         navigationController?.popViewController(animated: true)
 
         if !filter.isNew {

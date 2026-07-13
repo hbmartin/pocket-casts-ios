@@ -250,7 +250,7 @@ extension PodcastEffectsViewController: UITableViewDataSource, UITableViewDelega
     private func saveUpdates() {
         effectsTable.reloadData()
         DataManager.sharedManager.save(podcast: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
 
         // if we're actively playing this episode, let the player know
         if let episode = PlaybackManager.shared.currentEpisode() as? Episode, podcast.uuid == episode.parentIdentifier() {

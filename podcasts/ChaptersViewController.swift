@@ -54,16 +54,30 @@ class ChaptersViewController: PlayerItemViewController {
     }
 
     private func addObservers() {
-        addCustomObserver(Constants.Notifications.episodeDurationChanged, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update))
-        addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(update))
-        addCustomObserver(UIApplication.willEnterForegroundNotification, selector: #selector(update))
+        addCustomObserver(EpisodeDurationChanged.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PodcastChaptersDidUpdate.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(PodcastChapterChanged.self) { [weak self] _ in
+            self?.update()
+        }
+        addCustomObserver(UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.update()
+        }
     }
 
-    @objc private func update() {
+    private func update() {
         chaptersTable.reloadData()
         updateColors()
         header.update()

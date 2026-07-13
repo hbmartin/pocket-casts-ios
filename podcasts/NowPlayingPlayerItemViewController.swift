@@ -336,7 +336,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
             episodeImage.image = placeholderArtwork
             self.placeholderArtwork = nil
         }
-        update(notification: nil)
+        update()
         addObservers()
     }
 
@@ -346,7 +346,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     override func themeDidChange() {
         lastShelfLoadState = ShelfLoadState()
-        update(notification: nil)
+        update()
     }
 
     private func preferredContentSizeCategoryDidChange() {

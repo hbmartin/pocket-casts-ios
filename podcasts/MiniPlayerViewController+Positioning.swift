@@ -6,7 +6,7 @@ extension MiniPlayerViewController {
         guard let tabBarController = containingTabController, tabBarController.bottomAccessory != nil else { return }
         tabBarController.setBottomAccessory(nil, animated: animated)
         tabBarController.tabBarMinimizeBehavior = .never
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.miniPlayerDidDisappear)
+        NotificationCenter.postOnMainThread(MiniPlayerDidDisappear())
     }
 
     func showMiniPlayer() {
@@ -17,7 +17,7 @@ extension MiniPlayerViewController {
         let accessory = UITabAccessory(contentView: view)
         tabBarController.setBottomAccessory(accessory, animated: true)
         tabBarController.tabBarMinimizeBehavior = Settings.tabBarMinimizingEnabled ? .onScrollDown : .never
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.miniPlayerDidAppear)
+        NotificationCenter.postOnMainThread(MiniPlayerDidAppear())
     }
 
     func openFullScreenPlayer(completion: (() -> Void)? = nil) {

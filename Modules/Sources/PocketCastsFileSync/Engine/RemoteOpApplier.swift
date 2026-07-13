@@ -187,6 +187,8 @@ struct RemoteOpApplier {
                 title: item.title.value,
                 time: TimeInterval(item.time.value),
                 dateCreated: item.hasCreatedAt ? item.createdAt.date : Date(),
+                excerpt: item.hasExcerpt ? item.excerpt.value : nil,
+                endTime: item.hasEndTime ? item.endTime.value : nil,
                 syncStatus: .synced)
             return
         }
@@ -201,6 +203,16 @@ struct RemoteOpApplier {
                     modified: Date(timeIntervalSince1970: Double(incomingModified) / 1000),
                     syncStatus: .synced)
             }
+        }
+
+        // Highlight enrichment is write-once: adopt the remote excerpt only when
+        // this device hasn't produced one of its own.
+        if item.hasExcerpt, existing.excerpt == nil {
+            _ = await dataManager.bookmarks.updateEnrichment(
+                uuid: uuid,
+                excerpt: item.excerpt.value,
+                endTime: item.hasEndTime ? item.endTime.value : nil,
+                syncStatus: .synced)
         }
     }
 

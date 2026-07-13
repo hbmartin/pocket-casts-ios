@@ -7,13 +7,23 @@ import PocketCastsServer
 @MainActor
 class BackgroundSignOutListener {
     // Explicitly nonisolated: default-MainActor synthesized deinits hop executors and crash sync XCTests (swiftlang/swift#87316).
-    nonisolated deinit {}
+    // Property reads must precede any call that copies self; a nonisolated deinit may read stored state directly.
+    nonisolated deinit {
+        let token = signOutToken
+        let center = notificationCenter
+        if let token {
+            center.removeObserver(token)
+        }
+    }
+
     private let notificationCenter: NotificationCenter
     private let navigationManager: NavigationManager
 
     private var presentingViewController: () -> UIViewController?
 
     private var canShowSignOut = true
+
+    private var signOutToken: NotificationCenter.ObservationToken?
 
     init(notificationCenter: NotificationCenter = NotificationCenter.default,
          navigationManager: NavigationManager = NavigationManager.sharedManager,
@@ -35,22 +45,13 @@ class BackgroundSignOutListener {
 
 private extension BackgroundSignOutListener {
     func addNotificationObservers() {
-        notificationCenter.addObserver(forName: .serverUserWillBeSignedOut, object: nil, queue: .main) { [weak self] notification in
-            // Delivered on the main queue per the observer registration; the notification is
-            // handed over wholesale
-            let note = UncheckedSendable(notification)
-            MainActor.assumeIsolated {
-                self?.handleSignOutNotification(note.value)
-            }
+        signOutToken = notificationCenter.addObserver(for: UserWillBeSignedOut.self) { [weak self] message in
+            self?.handleSignOut(message)
         }
     }
 
-    func handleSignOutNotification(_ notification: Notification) {
-        guard
-            let userInfo = notification.userInfo,
-            let userInitiated = userInfo["user_initiated"] as? Bool,
-            userInitiated == false
-        else {
+    func handleSignOut(_ message: UserWillBeSignedOut) {
+        guard message.userInitiated == false else {
             return
         }
 

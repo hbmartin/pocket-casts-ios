@@ -12,11 +12,11 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
     // MARK: - Podcast functions
 
     func podcastUpdated(podcastUuid: String) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcastUuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcastUuid))
     }
 
     func podcastAdded(podcastUuid: String) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastAdded, object: podcastUuid)
+        NotificationCenter.postOnMainThread(PodcastAdded(uuid: podcastUuid))
     }
 
     func checkForUnusedPodcasts() {
@@ -36,7 +36,7 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
     // MARK: - Playlists
 
     func playlistChanged() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
     }
 
     // MARK: - Episode functions
@@ -48,7 +48,7 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
                 PlaybackManager.shared.nowPlayingStarredChanged()
             }
         }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeStarredChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeStarredChanged(uuid: episode.uuid))
     }
 
     func archiveEpisodeExternal(episode: Episode) {

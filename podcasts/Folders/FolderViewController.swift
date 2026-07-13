@@ -65,10 +65,18 @@ class FolderViewController: PCViewController {
         reloadFolder()
         miniPlayerStatusDidChange()
 
-        addCustomObserver(Constants.Notifications.podcastUpdated, selector: #selector(reloadFolder))
-        addCustomObserver(Constants.Notifications.folderChanged, selector: #selector(reloadFolder))
-        addCustomObserver(Constants.Notifications.miniPlayerDidAppear, selector: #selector(miniPlayerStatusDidChange))
-        addCustomObserver(Constants.Notifications.miniPlayerDidDisappear, selector: #selector(miniPlayerStatusDidChange))
+        addCustomObserver(PodcastUpdated.self) { [weak self] _ in
+            self?.reloadFolder()
+        }
+        addCustomObserver(FolderChanged.self) { [weak self] _ in
+            self?.reloadFolder()
+        }
+        addCustomObserver(MiniPlayerDidAppear.self) { [weak self] _ in
+            self?.miniPlayerStatusDidChange()
+        }
+        addCustomObserver(MiniPlayerDidDisappear.self) { [weak self] _ in
+            self?.miniPlayerStatusDidChange()
+        }
 
         Analytics.track(.folderShown, properties: ["number_of_podcasts": podcasts.count, "sort_order": folder.librarySort()])
     }
@@ -105,7 +113,7 @@ class FolderViewController: PCViewController {
         Analytics.track(.folderAddPodcastsButtonTapped)
     }
 
-    @objc private func reloadFolder() {
+    private func reloadFolder() {
         guard let updatedFolder = DataManager.sharedManager.findFolder(uuid: folder.uuid) else { return }
 
         folder = updatedFolder
@@ -237,12 +245,12 @@ class FolderViewController: PCViewController {
         folder.syncModified = TimeFormatter.currentUTCTimeInMillis()
         DataManager.sharedManager.save(folder: folder)
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: folder.uuid))
 
         Analytics.track(.folderSortByChanged, properties: ["sort_order": order])
     }
 
-    @objc private func miniPlayerStatusDidChange() {
+    private func miniPlayerStatusDidChange() {
         let horizontalMargin: CGFloat = Settings.libraryType() == .list ? 0 : 16
         let bottomMargin: CGFloat = Constants.effectiveMiniPlayerOffset + 8
         mainGrid.contentInset = UIEdgeInsets(top: mainGrid.contentInset.top, left: horizontalMargin, bottom: bottomMargin, right: horizontalMargin)

@@ -103,21 +103,39 @@ class ListeningHistoryViewController: PCViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
         addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
             self?.refreshEpisodesFromNotification()
         }
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.listeningHistoryChanged, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
+        addCustomObserver(ListeningHistoryChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromNotification()
+        }
     }
 
-    @objc private func refreshEpisodesFromNotification() {
+    private func refreshEpisodesFromNotification() {
         refreshEpisodes(animated: true)
     }
 

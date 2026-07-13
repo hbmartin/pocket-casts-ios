@@ -2,61 +2,52 @@ import Foundation
 import PocketCastsUtils
 import XCTest
 
+/// Delivery-semantics tests for the typed `NotificationCenter.postOnMainThread(_:)`
+/// helper (the string-name-based variant is retired): observers run on the main
+/// thread, the frozen bridged payload shape is what gets posted, and the call
+/// blocks until observers have run.
 @MainActor
 final class NotificationMainThreadTests: XCTestCase {
-    func test_notification_posts_on_main_thread() {
-        expectation(forNotification: .myAwesomeNotification, object: nil) { _ in
+    func test_message_posts_on_main_thread() {
+        expectation(forNotification: TestMessage.name, object: nil) { _ in
             XCTAssertTrue(Thread.isMainThread)
             return true
         }
 
         DispatchQueue.global(qos: .default).sync {
-            NotificationCenter.postOnMainThread(notification: .myAwesomeNotification, object: nil, userInfo: nil)
+            NotificationCenter.postOnMainThread(TestMessage(uuid: nil))
         }
 
         waitForExpectations(timeout: 1)
     }
 
-    func test_notification_posts_on_object() {
-        let object = NotificationObjectTest(identifier: "Hello")
-
-        expectation(forNotification: .myAwesomeNotification, object: object) { notification in
-            XCTAssertEqual(notification.object as! NotificationObjectTest, object)
+    func test_message_posts_bridged_uuid_in_object() {
+        expectation(forNotification: TestMessage.name, object: nil) { notification in
+            XCTAssertEqual(notification.object as? String, "Hello")
             return true
         }
 
-        NotificationCenter.postOnMainThread(notification: .myAwesomeNotification, object: object, userInfo: nil)
+        NotificationCenter.postOnMainThread(TestMessage(uuid: "Hello"))
         waitForExpectations(timeout: 1)
     }
 
-    func test_notification_passes_user_info() {
-        let userInfo: [String: String] = ["hello": "world"]
+    func test_post_returns_after_observers_ran() {
+        let delivered = expectation(forNotification: TestMessage.name, object: nil)
 
-        expectation(forNotification: .myAwesomeNotification, object: nil) { notification in
-            guard let notificationInfo = try? XCTUnwrap(notification.userInfo) as? [AnyHashable: String] else {
-                return false
-            }
+        NotificationCenter.postOnMainThread(TestMessage(uuid: nil))
 
-            XCTAssert(notificationInfo["hello"] == userInfo["hello"])
-            return true
-        }
-
-        NotificationCenter.postOnMainThread(notification: .myAwesomeNotification, object: nil, userInfo: userInfo)
-        waitForExpectations(timeout: 1)
+        // Blocking main-sync semantics: the observer has already run by the time
+        // postOnMainThread returns, so a zero timeout must succeed.
+        wait(for: [delivered], timeout: 0)
     }
 }
 
-private extension Notification.Name {
-    static let myAwesomeNotification = Notification.Name("Unit.Testing.Is.Awesome")
-}
+private struct TestMessage: UuidBridgedMessage {
+    static var name: Notification.Name { Notification.Name("Unit.Testing.Is.Awesome") }
 
-private final class NotificationObjectTest: Equatable, Sendable {
-    let identifier: String
-    init(identifier: String) {
-        self.identifier = identifier
-    }
+    let uuid: String?
 
-    static func == (lhs: NotificationObjectTest, rhs: NotificationObjectTest) -> Bool {
-        return lhs.identifier == rhs.identifier
+    init(uuid: String?) {
+        self.uuid = uuid
     }
 }

@@ -35,7 +35,7 @@ nonisolated class PlaylistManager {
         // don't create the rest of these if the user already has playlists
         let playlistsCount = DataManager.sharedManager.playlistsCount(includeDeleted: false)
         if playlistsCount > 1 {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
             return
         }
@@ -61,13 +61,15 @@ nonisolated class PlaylistManager {
             DataManager.sharedManager.save(playlist: inProgress)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+        NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
     }
 
     class func delete(playlist: EpisodeFilter?, fireEvent: Bool) {
         guard var playlist else { return }
 
-        if SyncManager.isUserLoggedIn() {
+        // Custom playlists hard-delete even when signed in: they are device-local, so
+        // there is no server record to tombstone (the uuid never left this device).
+        if SyncManager.isUserLoggedIn(), !playlist.isCustom {
             playlist.wasDeleted = true
             playlist.syncStatus = SyncStatus.notSynced.rawValue
             DataManager.sharedManager.save(playlist: playlist)
@@ -76,7 +78,7 @@ nonisolated class PlaylistManager {
         }
 
         if fireEvent {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+            NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
         }
     }
 
@@ -108,8 +110,8 @@ nonisolated class PlaylistManager {
         for playlist in playlists {
             guard playlist.autoDownloadEpisodes else { continue }
 
-            let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: Int(playlist.maxAutoDownloadEpisodes()))
-            let episodes = DataManager.sharedManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments)
+            let request = PlaylistQueryBuilder.episodesRequest(for: playlist, episodeUuidToAdd: playlist.episodeUuidToAddToQueries(), limit: Int(playlist.maxAutoDownloadEpisodes()))
+            let episodes = DataManager.sharedManager.episodes(matching: request)
 
             for episode in episodes {
                 if episode.downloaded(pathFinder: DownloadManager.shared) || episode.queued() { continue }

@@ -45,6 +45,10 @@ public enum HeadphoneControl: Int32, Codable {
     case skipForward = 2
     case nextChapter = 3
     case previousChapter = 4
+    // FORK: raw values 5/6 are fork-invented — Android/Web/the production server don't know them,
+    // so these settings won't round-trip cross-platform until the other platforms adopt the values.
+    case nextEpisode = 5
+    case previousEpisode = 6
 }
 
 /// Android uses different numeric values for these, thus the specific numbers specified here. See `Old` for the original values we used.

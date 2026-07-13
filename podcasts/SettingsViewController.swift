@@ -6,10 +6,11 @@ import UIKit
 class SettingsViewController: PCViewController, UITableViewDataSource, UITableViewDelegate {
     enum TableRow: String {
         case general, notifications, appearance, storageAndDataUse
-        case autoArchive, autoDownload, autoAddToUpNext, siriShortcuts
+        case autoArchive, autoDownload, autoAddToUpNext
         case advancedAudio, devices
         case customFiles, importSteps, opml, backupRestore
         case fileSync
+        case transcription
         case about, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
@@ -17,7 +18,12 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
 
         /// Whether the section should be displayed or not
         var visible: Bool {
-            true
+            switch self {
+            case .transcription:
+                FeatureFlag.diarizedTranscription.enabled
+            default:
+                true
+            }
         }
 
         var display: (text: String, image: UIImage?) {
@@ -44,8 +50,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsBackupRestore, UIImage(named: "settings_storage"))
             case .about:
                 return (L10n.settingsAbout, UIImage(named: "settings_about"))
-            case .siriShortcuts:
-                return (L10n.settingsSiriShortcuts, UIImage(named: "settings_shortcuts"))
             case .customFiles:
                 return (L10n.files, UIImage(named: "profile_files"))
             case .privacy:
@@ -66,6 +70,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsAdvancedAudio, UIImage(systemName: "slider.horizontal.3"))
             case .devices:
                 return (L10n.settingsDevices, UIImage(systemName: "airplayaudio"))
+            case .transcription:
+                return (L10n.transcriptionSettingsTitle, UIImage(named: "transcript"))
             }
         }
     }
@@ -85,7 +91,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
-            [.storageAndDataUse, .siriShortcuts, .headphoneControls, .devices, .advancedAudio, .customFiles],
+            [.storageAndDataUse, .headphoneControls, .devices, .advancedAudio, .transcription, .customFiles],
             [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -181,8 +187,6 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let hostingController = PCHostingController(rootView: aboutView)
 
             navigationController?.present(hostingController, animated: true, completion: nil)
-        case .siriShortcuts:
-            navigationController?.pushViewController(SiriSettingsViewController(), animated: true)
         case .customFiles:
             navigationController?.pushViewController(UploadedSettingsViewController(), animated: true)
         case .privacy:
@@ -216,6 +220,11 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let devicesView = DevicesSettingsView().environmentObject(Theme.sharedTheme)
             let hostingController = PCHostingController(rootView: devicesView)
             hostingController.title = L10n.settingsDevices
+            navigationController?.pushViewController(hostingController, animated: true)
+        case .transcription:
+            let transcriptionView = TranscriptionSettingsView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: transcriptionView)
+            hostingController.title = L10n.transcriptionSettingsTitle
             navigationController?.pushViewController(hostingController, animated: true)
         }
     }

@@ -9,12 +9,24 @@ final class BackgroundShakeObserver {
     private var debounceTimer: Timer?
     var whenShook: (() -> Void)?
 
+    private var sleepTimerToken: NotificationCenter.ObservationToken?
+
     init() {
         #if !APPCLIP
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(sleepTimerChanged), name: Constants.Notifications.sleepTimerChanged, object: nil)
+        sleepTimerToken = NotificationCenter.default.addObserver(for: SleepTimerChanged.self) { [weak self] _ in
+            self?.sleepTimerChanged()
+        }
         #endif
+    }
+
+    // isolated deinit: reads the isolated token storage to deregister the
+    // observation on the main actor when the owner deallocates.
+    isolated deinit {
+        if let sleepTimerToken {
+            NotificationCenter.default.removeObserver(sleepTimerToken)
+        }
     }
 
     @objc private func appMovedToBackground() {
@@ -27,7 +39,7 @@ final class BackgroundShakeObserver {
         stopObserving()
     }
 
-    @objc private func sleepTimerChanged() {
+    private func sleepTimerChanged() {
         if !PlaybackManager.shared.sleepTimerActive() {
             stopObserving()
         }

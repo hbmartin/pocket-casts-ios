@@ -38,8 +38,12 @@ class PodcastEffectsViewController: PCViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(podcastUpdated(_:)))
-        addCustomObserver(Constants.Notifications.podcastUpdated, selector: #selector(podcastUpdated(_:)))
+        addCustomObserver(PodcastColorsDownloaded.self) { [weak self] message in
+            self?.podcastUpdated(uuid: message.uuid)
+        }
+        addCustomObserver(PodcastUpdated.self) { [weak self] message in
+            self?.podcastUpdated(uuid: message.uuid)
+        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -52,8 +56,8 @@ class PodcastEffectsViewController: PCViewController {
         updateColors()
     }
 
-    @objc private func podcastUpdated(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
+    private func podcastUpdated(uuid uuidLoaded: String?) {
+        guard let uuidLoaded else { return }
 
         if podcast.uuid == uuidLoaded {
             if let updatedPodcast = DataManager.sharedManager.findPodcast(uuid: podcast.uuid) {

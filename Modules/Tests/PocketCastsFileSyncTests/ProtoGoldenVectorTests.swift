@@ -84,6 +84,30 @@ final class ProtoGoldenVectorTests: XCTestCase {
         XCTAssertEqual(try envelope.serializedData(), bytes)
     }
 
+    func testBookmarkHighlightEnvelopeRoundTrip() throws {
+        let bytes = try fixture("op_envelope_bookmark_highlight.pb")
+        let envelope = try Filesync_OpEnvelope(serializedBytes: bytes)
+
+        guard case .record(let record)? = envelope.payload,
+              case .bookmark(let bookmark)? = record.record else {
+            XCTFail("expected a bookmark record payload")
+            return
+        }
+        XCTAssertEqual(bookmark.bookmarkUuid, "bm-uuid-1")
+        XCTAssertEqual(bookmark.podcastUuid, "pod-uuid-1")
+        XCTAssertEqual(bookmark.episodeUuid, "ep-uuid-1")
+        XCTAssertEqual(bookmark.createdAt.seconds, 1_767_225_600)
+        XCTAssertEqual(bookmark.time.value, 30)
+        XCTAssertEqual(bookmark.title.value, "A moment")
+        XCTAssertEqual(bookmark.titleModified.value, 1_767_225_600_000)
+        XCTAssertEqual(bookmark.excerpt.value, "Something worth quoting",
+                       "the fork's field 1000 must survive the protoc round trip")
+        XCTAssertEqual(bookmark.endTime.value, 42.5,
+                       "the fork's field 1001 must survive the protoc round trip")
+
+        XCTAssertEqual(try envelope.serializedData(), bytes)
+    }
+
     func testSnapshotRoundTrip() throws {
         let bytes = try fixture("snapshot_small.pb")
         let snapshot = try Filesync_Snapshot(serializedBytes: bytes)

@@ -8,9 +8,12 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, profile }
+    enum Tab: Int { case podcasts, filter, explore, profile }
     private enum LegacyTab: Int { case podcasts, discover, filter, upNext, profile }
+    /// Tab layout before Explore was added (indices persisted in `lastTabOpened`).
+    private enum PreExploreTab: Int { case podcasts, filter, profile }
     private static let removedTabsMigrationKey = "SJLastTabOpenedRemovedDiscoverMigrated"
+    private static let exploreTabMigrationKey = "SJLastTabOpenedExploreTabMigrated"
 
     var pcTabs = [Tab]()
 
@@ -21,6 +24,18 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     /// The last Up Next count observed, used to pulse the mini player artwork only
     /// when the queue actually changes (not on every refresh notification).
     private var previousUpNextCount: Int?
+
+    /// Typed-message observations, registered once in `viewDidLoad` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
+    deinit {
+        // Read isolated stored properties into locals before any observer removal
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
 
     /// `true` while the Up Next "pulse" spring is in flight, so a burst of
     /// rapid adds doesn't stack overlapping transforms on the mini player artwork.
@@ -93,7 +108,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTabBarTraitCollectionOnIpad()
 
-        pcTabs = [.podcasts, .filter, .profile]
+        pcTabs = [.podcasts, .filter, .explore, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -103,10 +118,13 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let filtersViewController = PlaylistsViewController()
         filtersViewController.tabBarItem = UITabBarItem(title: L10n.playlists, image: UIImage(named: "playlists_tab"), tag: pcTabs.firstIndex(of: .filter)!)
 
+        let exploreViewController = ExploreViewController()
+        exploreViewController.tabBarItem = UITabBarItem(title: L10n.exploreTabTitle, image: UIImage(named: "discover_tab"), tag: pcTabs.firstIndex(of: .explore)!)
+
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
-        vcsInTab = [podcastsController, filtersViewController, profileViewController]
+        vcsInTab = [podcastsController, filtersViewController, exploreViewController, profileViewController]
 
         viewControllers = vcsInTab.map { SJUIUtils.navController(for: $0) }
         selectedIndex = restoredLastTabIndex()
@@ -119,17 +137,35 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         updateTabBarColor()
         setupKeyboardShortcuts()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(textEditingDidStart), name: Constants.Notifications.textEditingDidStart, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(textEditingDidEnd), name: Constants.Notifications.textEditingDidEnd, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleFollowSystemThemeTurnedOn), name: Constants.Notifications.followSystemThemeTurnedOn, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(willEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: TextEditingDidStart.self) { [weak self] _ in
+            self?.textEditingDidStart()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: TextEditingDidEnd.self) { [weak self] _ in
+            self?.textEditingDidEnd()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: FollowSystemThemeTurnedOn.self) { [weak self] _ in
+            self?.handleFollowSystemThemeTurnedOn()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.willEnterForeground()
+        })
 
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueDidChange), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        // `upNextEpisodeAdded` refreshes the count via the genie animation's tail, not here.
-        NotificationCenter.default.addObserver(self, selector: #selector(animateEpisodeAddedToUpNext(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+            self?.upNextQueueDidChange()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+            self?.upNextQueueDidChange()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.upNextQueueDidChange()
+        })
+        // `UpNextEpisodeAdded` refreshes the count via the genie animation's tail, not here.
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeAdded.self) { [weak self] message in
+            self?.animateEpisodeAddedToUpNext(message)
+        })
         upNextQueueDidChange()
 
         addBookmarkCreatedToastHandler()
@@ -218,7 +254,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             }
         }
     }
-    @objc func themeDidChange() {
+    func themeDidChange() {
         updateTabBarColor()
         updateErrorColor()
         setNeedsStatusBarAppearanceUpdate()
@@ -245,7 +281,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         if tabIndex == selectedIndex, let navController = selectedViewController as? UINavigationController, navController.visibleViewController == navController.viewControllers.first {
             // the user has tapped on a tab they are already at the root of, so trigger an action so we can handle this
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.tappedOnSelectedTab, object: tabIndex)
+            NotificationCenter.postOnMainThread(TappedOnSelectedTab(tabIndex: tabIndex))
         }
 
         if tabIndex != selectedIndex {
@@ -259,20 +295,32 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     private func restoredLastTabIndex() -> Int {
         guard UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) != nil else {
             UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
+            UserDefaults.standard.set(true, forKey: Self.exploreTabMigrationKey)
             return pcTabs.firstIndex(of: .podcasts) ?? 0
         }
 
         let savedIndex = UserDefaults.standard.integer(forKey: Constants.UserDefaults.lastTabOpened)
 
-        guard !UserDefaults.standard.bool(forKey: Self.removedTabsMigrationKey) else {
-            return clampedTabIndex(savedIndex)
+        // Saved before the discover/up next tabs were removed (5-tab layout)
+        if !UserDefaults.standard.bool(forKey: Self.removedTabsMigrationKey) {
+            let migratedIndex = migratedLastTabIndex(savedIndex)
+
+            UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
+            UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
+            UserDefaults.standard.set(true, forKey: Self.exploreTabMigrationKey)
+            return migratedIndex
         }
 
-        let migratedIndex = migratedLastTabIndex(savedIndex)
+        // Saved before the Explore tab was inserted (3-tab layout)
+        if !UserDefaults.standard.bool(forKey: Self.exploreTabMigrationKey) {
+            let migratedIndex = exploreMigratedLastTabIndex(savedIndex)
 
-        UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
-        UserDefaults.standard.set(true, forKey: Self.removedTabsMigrationKey)
-        return migratedIndex
+            UserDefaults.standard.set(migratedIndex, forKey: Constants.UserDefaults.lastTabOpened)
+            UserDefaults.standard.set(true, forKey: Self.exploreTabMigrationKey)
+            return migratedIndex
+        }
+
+        return clampedTabIndex(savedIndex)
     }
 
     private func migratedLastTabIndex(_ savedIndex: Int) -> Int {
@@ -285,8 +333,27 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             return pcTabs.firstIndex(of: .profile) ?? 0
         case .filter:
             return pcTabs.firstIndex(of: .filter) ?? 0
-        case .podcasts, .discover, .upNext:
+        case .discover:
+            return pcTabs.firstIndex(of: .explore) ?? 0
+        case .podcasts, .upNext:
             return pcTabs.firstIndex(of: .podcasts) ?? 0
+        }
+    }
+
+    /// Maps a tab index persisted by the 3-tab (pre-Explore) layout onto the
+    /// current tab order, so a user restored onto e.g. Profile stays on Profile.
+    private func exploreMigratedLastTabIndex(_ savedIndex: Int) -> Int {
+        guard let preExploreTab = PreExploreTab(rawValue: savedIndex) else {
+            return clampedTabIndex(savedIndex)
+        }
+
+        switch preExploreTab {
+        case .podcasts:
+            return pcTabs.firstIndex(of: .podcasts) ?? 0
+        case .filter:
+            return pcTabs.firstIndex(of: .filter) ?? 0
+        case .profile:
+            return pcTabs.firstIndex(of: .profile) ?? 0
         }
     }
 
@@ -636,7 +703,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         // appearance to configure here; only the theme tint above applies.
     }
 
-    @objc private func willEnterForeground() {
+    private func willEnterForeground() {
         fireSystemThemeMayHaveChanged()
     }
 
@@ -662,11 +729,11 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let isDark = Theme.systemIsDark
         if lastNotifiedAboutDark == nil || isDark != lastNotifiedAboutDark {
             lastNotifiedAboutDark = isDark
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.systemThemeMayHaveChanged, object: isDark)
+            NotificationCenter.postOnMainThread(SystemThemeMayHaveChanged(isDark: isDark))
         }
     }
 
-    @objc private func handleFollowSystemThemeTurnedOn() {
+    private func handleFollowSystemThemeTurnedOn() {
         lastNotifiedAboutDark = nil
         fireSystemThemeMayHaveChanged()
     }
@@ -767,6 +834,8 @@ private extension MainTabBarController {
             event = .podcastsTabOpened
         case .filter:
             event = .filtersTabOpened
+        case .explore:
+            event = .discoverTabOpened
         case .profile:
             event = .profileTabOpened
         }
@@ -817,14 +886,20 @@ extension MainTabBarController {
     }
 
     private func setupErrorObservers() {
-        let errorRelevantNotifications = Set([Constants.Notifications.playbackFailed, Constants.Notifications.playbackStarted, Constants.Notifications.playbackPaused])
-
-        for notificationName in errorRelevantNotifications {
-            NotificationCenter.default.addObserver(self, selector: #selector(updateError(notification:)), name: notificationName, object: nil)
-        }
+        // Only events that can change the active playback error are relevant:
+        // failure, start, and pause.
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackFailed.self) { [weak self] _ in
+            self?.updateError()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+            self?.updateError()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+            self?.updateError()
+        })
     }
 
-    @objc private func updateError(notification: NSNotification) {
+    private func updateError() {
         DispatchQueue.main.async { [weak self] in
             guard let error = PlaybackManager.shared.activeError else {
                 self?.hideError()
@@ -867,7 +942,7 @@ extension MainTabBarController {
         }
     }
 
-    @objc private func hideError() {
+    private func hideError() {
         errorBottomSpacing?.priority = .defaultLow
         UIView.animate(withDuration: 0.3,
                        delay: 0,
@@ -904,7 +979,7 @@ extension MainTabBarController {
 // MARK: - Up Next queue pulse
 
 extension MainTabBarController {
-    @objc func upNextQueueDidChange() {
+    func upNextQueueDidChange() {
         let count = PlaybackManager.shared.upNextCount()
         let previous = previousUpNextCount
         previousUpNextCount = count

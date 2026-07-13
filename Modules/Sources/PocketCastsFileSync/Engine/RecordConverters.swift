@@ -119,6 +119,12 @@ enum RecordConverters {
         if let deletedModified = bookmark.deletedModified {
             item.isDeletedModified = .with { $0.value = Int64(deletedModified.timeIntervalSince1970 * 1000) }
         }
+        if let excerpt = bookmark.excerpt {
+            item.excerpt = .with { $0.value = excerpt }
+        }
+        if let endTime = bookmark.endTime {
+            item.endTime = .with { $0.value = endTime }
+        }
         var record = Api_Record()
         record.bookmark = item
         return record

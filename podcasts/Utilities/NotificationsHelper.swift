@@ -81,7 +81,7 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
             let (podcast, completion) = box.value
             let savedPodcast = PodcastManager.shared.setNotificationsEnabled(podcast: podcast, enabled: enabled)
             completion?(savedPodcast)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: savedPodcast.uuid)
+            NotificationCenter.postOnMainThread(PodcastUpdated(uuid: savedPodcast.uuid))
             var message = enabled ? L10n.notificationsOn : L10n.notificationsOff
             if let title = savedPodcast.title, enabled {
                 message = L10n.notificationsOnForPodcast(title)

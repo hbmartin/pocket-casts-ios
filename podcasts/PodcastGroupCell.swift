@@ -41,7 +41,6 @@ class PodcastGroupCell: ThemeableCell {
     }
 
     @IBAction func subscribeTapped(_ sender: UIButton) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.subscribeRequestedFromCell, object: self)
         subscribeButton.currentlyOn = true
     }
 

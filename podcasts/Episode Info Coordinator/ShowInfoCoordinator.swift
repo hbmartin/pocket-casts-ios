@@ -83,6 +83,16 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
         return (metadata: nil, podcastIndex: nil, generated: nil)
     }
 
+    /// Reuses the generated-metadata retriever's request coalescing and URL
+    /// cache — callers displaying both AI chapters and the summary trigger a
+    /// single `-meta.json` fetch.
+    public func loadEpisodeSummary(
+        podcastUuid: String,
+        episodeUuid: String
+    ) async throws -> String? {
+        try await generatedEpisodeMetadataRetriever.loadMetadata(podcastUuid: podcastUuid, episodeUuid: episodeUuid).summary
+    }
+
     private func buildGeneratedTranscript(podcastUuid: String, episodeUuid: String) -> Episode.Metadata.Transcript {
         let format = TranscriptFormat.vtt
         let urlString = "\(ServerConstants.Urls.generatedTranscripts)\(podcastUuid)/\(episodeUuid).\(format.fileExtension)"

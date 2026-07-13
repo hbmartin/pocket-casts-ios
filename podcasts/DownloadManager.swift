@@ -229,7 +229,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         fileLog.addMessage("DownloadManager: Queued episode \(episode.displayableTitle()) for later download (waitingForWifi), autoDownloadStatus: \(autoDownloadStatus), currently \(networkState)")
 
         if fireNotification {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
         }
     }
 
@@ -283,7 +283,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
 
         if !downloadingToStream { progressManager.updateStatusForEpisode(episode.uuid, status: .queued) }
 
-        if fireNotification { NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid) }
+        if fireNotification { NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid)) }
 
         // try to make sure the download URL is up to date. Authors can change URLs at any time, so this is handy to fix cases where they post the wrong one and update it later
         if let episode = episode as? Episode, let podcast = episode.parentPodcast(dataManager: dataManager) {
@@ -298,10 +298,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             Task {
                 do {
                     try await FileSyncManager.shared.materializeUpload(episodeUuid: episode.uuid)
-                    NotificationCenter.postOnMainThread(
-                        notification: Constants.Notifications.episodeDownloadStatusChanged,
-                        object: episode.uuid
-                    )
+                    NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
                 } catch {
                     dataManager.saveEpisode(
                         downloadStatus: .downloadFailed,
@@ -309,10 +306,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
                         downloadTaskId: nil,
                         episode: episode
                     )
-                    NotificationCenter.postOnMainThread(
-                        notification: Constants.Notifications.episodeDownloadStatusChanged,
-                        object: episode.uuid
-                    )
+                    NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
                 }
             }
         }
@@ -327,7 +321,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             // the local file just changed; stale frame-count/loudness caches must not seed the player
             dataManager.clearCachedAudioMetadata(episode: episode)
             dataManager.saveEpisode(downloadStatus: .downloaded, sizeInBytes: fileSize, downloadTaskId: nil, episode: episode)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloaded, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDownloaded(uuid: episode.uuid))
         } catch {
             fileLog.addMessage("DownloadManager: failed to move streaming file for \(episode.uuid) to new location -> \(error)")
             dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorTryAgain, downloadTaskId: nil, episode: episode)
@@ -414,7 +408,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         episode.lastDownloadAttemptDate = Date.now
         downloadingEpisodesCache[downloadTaskUUID] = episode
         DataManager.sharedManager.save(episode: episode)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
 
         let outputURL = URL(fileURLWithPath: tempPathForEpisode(episode), isDirectory: false)
         fileLog.addMessage("DownloadManager stream and download: start downloading \(episode.uuid)")
@@ -474,7 +468,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
                 if wasDownloadingBefore {
                     DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, autoDownloadStatus: .autoDownloaded)
                 }
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+                NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
             }
         }
         #endif
@@ -533,7 +527,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
 
             logDownload(episode, failure: .malformedHost)
 
-            if fireNotification { NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid) }
+            if fireNotification { NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid)) }
 
             return
         }
@@ -571,7 +565,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         fileLog.addMessage("DownloadManager: Downloading episode \(episode.displayableTitle()), autoDownloadStatus: \(autoDownloadStatus), previousDownloadFailed: \(previousDownloadFailed), \(userAgentDescription), session: \(sessionDescription), network: \(networkDescription)")
         resumeDownload(tempFilePath: tempFilePath, session: sessionToUse, request: request, previousDownloadFailed: previousDownloadFailed, taskId: episode.uuid, estimatedBytes: episode.sizeInBytes, retryWithoutUserAgent: retryWithoutUserAgent)
 
-        if fireNotification { NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid) }
+        if fireNotification { NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid)) }
     }
 
     private func shouldSkipExistingTask(for episode: BaseEpisode, in session: URLSession, matching request: URLRequest) async -> Bool {
@@ -630,7 +624,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
 
         if saveRequired { dataManager.save(episode: episode) }
 
-        if fireNotification { NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid) }
+        if fireNotification { NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid)) }
     }
 
     private func shouldAddDownload(_ episodeUuid: String, autoDownloadStatus: AutoDownloadStatus) -> Bool {
@@ -644,7 +638,7 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             episode.episodeStatus = DownloadStatus.downloading.rawValue
             dataManager.save(episode: episode)
             downloadingEpisodesCache[taskId] = episode
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
             return false
         }
 

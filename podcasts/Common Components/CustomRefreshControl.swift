@@ -35,11 +35,17 @@ class CustomRefreshControl: UIRefreshControl {
     private var isFinishingRefresh = false
     private var isHiding = false
 
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     override init() {
         super.init(frame: .zero)
         setupView()
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(restartAnimationIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateTintColor()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UIApplication.WillEnterForegroundMessage.self) { [weak self] _ in
+            self?.restartAnimationIfNeeded()
+        })
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -47,7 +53,11 @@ class CustomRefreshControl: UIRefreshControl {
     }
 
     deinit {
+        let tokens = messageTokens
         NotificationCenter.default.removeObserver(self)
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func set(text: String) {
@@ -90,16 +100,12 @@ class CustomRefreshControl: UIRefreshControl {
         addTarget(self, action: #selector(didTriggerRefresh), for: .valueChanged)
     }
 
-    @objc private func themeDidChange() {
-        updateTintColor()
-    }
-
     override func didMoveToWindow() {
         super.didMoveToWindow()
         restartAnimationIfNeeded()
     }
 
-    @objc private func restartAnimationIfNeeded() {
+    private func restartAnimationIfNeeded() {
         // CAAnimations are stripped when the layer leaves the window or the app
         // backgrounds; re-add them so the spinner keeps animating on return.
         guard isRefreshing, window != nil else { return }

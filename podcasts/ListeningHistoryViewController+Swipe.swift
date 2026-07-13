@@ -49,6 +49,12 @@ extension ListeningHistoryViewController: @preconcurrency SwipeTableViewCellDele
         SharingHelper.shared.shareLinkTo(episode: episode, fromController: self, fromTableView: listeningHistoryTable, at: indexPath)
     }
 
+    func showDetails(episode: BaseEpisode, at: IndexPath) {
+        guard let episode = episode as? Episode else { return }
+
+        presentEpisodeDetails(for: episode)
+    }
+
     func addToManualPlaylist(episode: PocketCastsDataModel.Episode, at: IndexPath) {
         NavigationManager.sharedManager.navigateTo(
             NavigationManager.manualPlaylistsChooserKey,

@@ -7,7 +7,7 @@ input_format: profdata
 # Xcode's Debug Dylib Support (Debug-style configs) puts the app's code — and the coverage
 # instrumentation — in `podcasts.app/podcasts.debug.dylib`, not the thin `podcasts` launcher stub.
 # Point Slather at the dylib explicitly; `binary_basename: podcasts` otherwise substring-matches the
-# `PodcastsIntents` extension and reports 0/0. Path matches scheme/configuration above (StagingDebug,
+# extension binaries and reports 0/0. Path matches scheme/configuration above (StagingDebug,
 # iphonesimulator) and build_directory below.
 binary_file:
   - build/github/DerivedData/Build/Products/StagingDebug-iphonesimulator/podcasts.app/podcasts.debug.dylib

@@ -3,99 +3,36 @@ import PocketCastsUtils
 import UIKit
 
 nonisolated struct Constants {
+    /// Names that still have string-based observer sites (Combine
+    /// `publisher(for:)`, selector observers, ShortcutManager's merge). Every
+    /// other legacy raw name now lives inside its typed message struct — see
+    /// `podcasts/Notifications/*.swift`. The raw strings are effectively ABI —
+    /// never change them.
     enum Notifications {
-        static let upNextEpisodeAdded = NSNotification.Name(rawValue: "SJUpNextEpisodeAdded")
-        /// `userInfo` key on `upNextEpisodeAdded` — a `Bool` that's `true` when
-        /// the episode was added to the top of the queue (Play Next) rather than
-        /// the bottom (Play Last). Drives the add-animation badge.
-        static let upNextEpisodeAddedToTopKey = "PCUpNextAddedToTop"
-        static let upNextEpisodeRemoved = NSNotification.Name(rawValue: "SJUpNextEpisodeRemoved")
-        static let upNextQueueChanged = NSNotification.Name(rawValue: "SJUpNextChanged")
-        static let upNextShuffleToggle = NSNotification.Name(rawValue: "SJUpNextShuffleToggle")
         static let playbackStarted = NSNotification.Name(rawValue: "SJPlaybackStart")
-        static let playbackStarting = NSNotification.Name(rawValue: "SJPlaybackStarting")
         static let playbackPaused = NSNotification.Name(rawValue: "SJPlaybackPaused")
         static let playbackProgress = NSNotification.Name(rawValue: "SJPlaybackProg")
         static let playbackTrackChanged = NSNotification.Name(rawValue: "SJTrackChanged")
-        static let podcastChaptersDidUpdate = NSNotification.Name(rawValue: "SJChaptersChanged")
-        static let podcastChapterChanged = NSNotification.Name(rawValue: "SJChapterChanged")
-        static let podcastColorsDownloaded = NSNotification.Name(rawValue: "SJPodcastColorsReady")
         static let playbackEnded = NSNotification.Name(rawValue: "SJPlaybackEnd")
-        static let playbackFailed = NSNotification.Name(rawValue: "playbackFailed")
-        static let playbackPositionSaved = NSNotification.Name(rawValue: "SJPlayPosSaved")
-        static let viewWillTransitionToSize = NSNotification.Name(rawValue: "SJViewSizeChange")
-        static let dimmingViewTapped = NSNotification.Name(rawValue: "SJDimViewTapped")
-        static let downloadProgress = NSNotification.Name(rawValue: "SJDwnProg")
-        static let podcastImageReCacheRequired = NSNotification.Name(rawValue: "PCPodcastImageReCacheRequired")
-
-        static let skipTimesChanged = NSNotification.Name(rawValue: "SJSkipTimesChanged")
-        static let subscribeRequestedFromCell = NSNotification.Name(rawValue: "SJSubscribeRequestFromCell")
-        static let chartRegionChanged = NSNotification.Name(rawValue: "SJChartRegionChanged")
-        static let episodeDownloaded = NSNotification.Name(rawValue: "SJEpisodeDownloaded")
-        static let miniPlayerDidDisappear = NSNotification.Name(rawValue: "SJMiniPlayerDisappeared")
-        static let miniPlayerDidAppear = NSNotification.Name(rawValue: "SJMiniPlayerAppeared")
         static let playlistChanged = NSNotification.Name(rawValue: "FilterChanged")
-        static let statusBarHeightChanged = NSNotification.Name(rawValue: "SJBarHeightChanged")
-        static let podcastSearchRequest = NSNotification.Name(rawValue: "PodcastSearchRequest")
-        static let podcastSearchCancelled = NSNotification.Name(rawValue: "PodcastSearchCancelled")
-        static let removeUpcomingFromCell = NSNotification.Name(rawValue: "RemoveUpcomingFromCell")
-        static let sideConstraintUpdated = NSNotification.Name(rawValue: "SJSideConstraintUpdated")
         static let themeChanged = NSNotification.Name(rawValue: "ThemeChanged")
-        static let systemThemeMayHaveChanged = NSNotification.Name(rawValue: "SystemThemeChanged")
-        static let followSystemThemeTurnedOn = NSNotification.Name(rawValue: "FollowSystemThemeTurnedOn")
-        static let playbackEffectsChanged = NSNotification.Name(rawValue: "SJEffectsChanged")
-        static let audioTuningDidChange = NSNotification.Name(rawValue: "SJAudioTuningDidChange")
-        static let extraMediaSessionActionsChanged = NSNotification.Name(rawValue: "SJMediaSessionActionsChanged")
-        static let remoteCommandSettingsChanged = NSNotification.Name(rawValue: "SJRemoteCommandSettingsChanged")
-        static let currentlyPlayingEpisodeUpdated = NSNotification.Name(rawValue: "SJCurrentlyPlayingEpisodeUpdated")
-        static let sleepTimerChanged = NSNotification.Name(rawValue: "SJSleepTimerChanged")
-        static let videoPlaybackEngineSwitched = NSNotification.Name(rawValue: "SJVideoPlaybackEngineSwitched")
-        /// Posted after a file-sync pass changes upload episodes so the Files UI reloads.
-        static let fileSyncUploadsChanged = NSNotification.Name(rawValue: "PCFileSyncUploadsChanged")
 
         // episode notifications
         static let episodePlayStatusChanged = NSNotification.Name(rawValue: "SJEpPlayStatusChanged")
         static let episodeArchiveStatusChanged = NSNotification.Name(rawValue: "SJEpArchiveStatusChanged")
-        static let episodeDurationChanged = NSNotification.Name(rawValue: "SJEpDurationChanged")
         static let episodeStarredChanged = NSNotification.Name(rawValue: "SJEpisodeStarredChanged")
         static let episodeDownloadStatusChanged = NSNotification.Name(rawValue: "SJEpisodeDownloadChanged")
         static let manyEpisodesChanged = NSNotification.Name(rawValue: "SJManyEpisodesChanged")
         static let episodeTranscriptAvailabilityChanged = NSNotification.Name(rawValue: "SJEpisodeTranscriptAvailabilityChanged")
-        static let listeningHistoryChanged = NSNotification.Name(rawValue: "SJListeningHistoryChanged")
 
         // podcast notifications
         static let podcastUpdated = NSNotification.Name(rawValue: "SJPodcastUpdated")
         static let podcastAdded = NSNotification.Name(rawValue: "SJPodcastAdded")
-        static let podcastDeleted = NSNotification.Name(rawValue: "SJPodDeleted")
-
-        // user episode notifications
-        static let userEpisodeDeleted = NSNotification.Name(rawValue: "SJUserEpisodeDeleted")
-        static let userEpisodeUpdated = NSNotification.Name(rawValue: "SJUserEpisodeUpdated")
-
-        // text editing
-        static let textEditingDidStart = NSNotification.Name(rawValue: "SJTextEditingStarted")
-        static let textEditingDidEnd = NSNotification.Name(rawValue: "SJTextEditingEnded")
-
-        // shelf icons
-        static let playerActionsUpdated = NSNotification.Name(rawValue: "SJPlayerActionsUpdated")
-
-        // tabs
-        static let tappedOnSelectedTab = NSNotification.Name(rawValue: "SJTappedOnSelectedTab")
-        static let searchRequested = NSNotification.Name(rawValue: "SJTriggerSearch")
-
-        // modal popups
-
-        static let opmlImportCompleted = NSNotification.Name(rawValue: "SJOpmlImportCompleted")
-        static let opmlImportFailed = NSNotification.Name(rawValue: "SJOpmlImportFailed")
 
         // folders
-        /// This is triggered many times whenever a folder is changed
-        static let folderChanged = NSNotification.Name(rawValue: "SJFolderChanged")
         static let folderDeleted = NSNotification.Name(rawValue: "SJFolderDeleted")
         /// This is triggered just once after a folder finishes editing
         static let folderEdited = NSNotification.Name(rawValue: "SJFolderEdited")
-
-        static let discoverNavigateToCategory = Notification.Name(rawValue: "DiscoverNavigateToCategory")
     }
 
     enum UserDefaults {
@@ -264,19 +201,6 @@ nonisolated struct Constants {
         static let playerTabSwitch: TimeInterval = 0.2
     }
 
-        enum SiriActions {
-            static let resumeId = "Resume ID"
-            static let playPodcastId = "Play podcast ID"
-            static let playSuggestedId = "Play suggested ID"
-            static let playUpNextId = "play up next ID"
-            static let playFilterId = "Play filter ID"
-            static let playAllFilterId = "Play all filter ID"
-            static let pauseId = "Pause ID"
-            static let nextChapterId = "Next Chapter ID"
-            static let previousChapterId = "Previous Chapter ID"
-            static let markAsPlayedId = "Mark As Played ID"
-        }
-
     enum Audio {
         static let defaultFrameSize = 1152
     }
@@ -387,6 +311,12 @@ enum HeadphoneControlAction: JSONCodable {
 
     /// Create a new bookmark for the currently playing episode
     case addBookmark
+
+    /// Jump to the next episode in Up Next (no-op when the queue is empty)
+    case nextEpisode
+
+    /// Restart the episode, or return to the previously played episode near its start
+    case previousEpisode
 }
 
 // MARK: - Bookmark Sorting

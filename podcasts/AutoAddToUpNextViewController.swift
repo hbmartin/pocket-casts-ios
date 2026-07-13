@@ -144,7 +144,7 @@ class AutoAddToUpNextViewController: PCViewController, UITableViewDelegate, UITa
         let action = OptionAction(label: label, selected: podcast.autoAddToUpNextSetting() == setting) { [weak self] in
             podcast.setAutoAddToUpNext(setting: setting)
             DataManager.sharedManager.save(podcast: podcast)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+            NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
             self?.reloadDownloadedPodcasts()
             self?.mainTable.reloadData()
             Settings.trackValueChanged(.settingsAutoAddUpNextPodcastPositionOptionChanged, value: setting)

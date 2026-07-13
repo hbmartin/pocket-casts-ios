@@ -23,17 +23,25 @@ class ThemeableImageView: UIImageView {
         setup()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setup() {
         updateImage()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.themeDidChange()
+        }
     }
 
-    @objc func themeDidChange() {
+    func themeDidChange() {
         updateImage()
     }
 

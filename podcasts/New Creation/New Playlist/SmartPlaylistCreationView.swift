@@ -3,28 +3,43 @@ import SwiftUI
 struct SmartPlaylistCreationView: View {
     @EnvironmentObject var theme: Theme
 
+    let icon: String
+    let title: String
+    let subtitle: String
     let onTap: () -> Void
 
     @ScaledMetric(relativeTo: .largeTitle) var iconSize: CGFloat = 24
+
+    init(
+        icon: String = "cs-sparkle-black",
+        title: String = L10n.playlistCreationCreateSmartPlaylistButtonTitle,
+        subtitle: String = L10n.playlistCreationCreateSmartPlaylistButtonSubtitle,
+        onTap: @escaping () -> Void
+    ) {
+        self.icon = icon
+        self.title = title
+        self.subtitle = subtitle
+        self.onTap = onTap
+    }
 
     var body: some View {
         Button {
             onTap()
         }  label: {
             HStack(spacing: 12.0) {
-                Image("cs-sparkle-black")
+                Image(icon)
                     .renderingMode(.template)
                     .resizable()
                     .foregroundStyle(theme.primaryText01)
                     .scaledToFit()
                     .frame(width: iconSize, height: iconSize)
                 VStack(alignment: .leading, spacing: 2.0) {
-                    Text(L10n.playlistCreationCreateSmartPlaylistButtonTitle)
+                    Text(title)
                         .font(size: 15.0, style: .body, weight: .medium)
                         .fixedSize(horizontal: false, vertical: true)
                         .foregroundStyle(theme.primaryText01)
                         .multilineTextAlignment(.leading)
-                    Text(L10n.playlistCreationCreateSmartPlaylistButtonSubtitle)
+                    Text(subtitle)
                         .font(size: 13.0, style: .body, weight: .regular)
                         .fixedSize(horizontal: false, vertical: true)
                         .foregroundStyle(theme.primaryText02)

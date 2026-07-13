@@ -5,6 +5,7 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>au.com.shiftyjelly.podcasts.Refresh</string>
+		<string>au.com.shiftyjelly.podcasts.Transcription</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
@@ -1007,15 +1008,6 @@
 	<string>Pocket Casts needs permission to save this image to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Pocket Casts needs permission to save this image to your photo library.</string>
-	<key>NSUserActivityTypes</key>
-	<array>
-		<string>ChapterIntent</string>
-		<string>INPlayMediaIntent</string>
-		<string>SJChapterIntent</string>
-		<string>SJExtendSleepTimerIntent</string>
-		<string>SJOpenFilterIntent</string>
-		<string>SJSleepTimerIntent</string>
-	</array>
 	<key>NSUbiquitousContainers</key>
 	<dict>
 		<key>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER_ROOT)</key>

@@ -130,8 +130,6 @@ The App Store bundle identifiers include the main app identifier
 - `Clip`
 - `NotificationContent`
 - `NotificationExtension`
-- `PodcastsIntents`
-- `PodcastsIntentsUI`
 - `Share-Extension`
 - `WidgetExtension`
 

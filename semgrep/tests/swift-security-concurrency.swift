@@ -6,25 +6,25 @@ import UserNotifications
 import UIKit
 
 // ruleid: pocketcasts.unchecked-sendable-lazy-dispatch-group
-class UnsafeLazyDispatchGroupTask: Operation, @unchecked Sendable {
+class UnsafeLazyDispatchGroupTask: Operation, @unchecked Sendable { // @unchecked Sendable: fixture for the lazy-dispatch-group rule.
     private lazy var dispatchGroup: DispatchGroup = {
         DispatchGroup()
     }()
 }
 
-class SafeDispatchGroupTask: Operation, @unchecked Sendable {
+class SafeDispatchGroupTask: Operation, @unchecked Sendable { // @unchecked Sendable: fixture for the lazy-dispatch-group rule.
     // ok: pocketcasts.unchecked-sendable-lazy-dispatch-group
     private let dispatchGroup = DispatchGroup()
 }
 
-class UnsafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable {
+class UnsafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable { // @unchecked Sendable: fixture for the dispatch-group-wait rule.
     func waitForEpisodes(dispatchGroup: DispatchGroup) {
         // ruleid: pocketcasts.dispatch-group-wait-without-timeout
         dispatchGroup.wait()
     }
 }
 
-class SafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable {
+class SafeApiTaskDispatchGroupWait: ApiBaseTask, @unchecked Sendable { // @unchecked Sendable: fixture for the dispatch-group-wait rule.
     func waitForEpisodes(dispatchGroup: DispatchGroup) {
         // ok: pocketcasts.dispatch-group-wait-without-timeout
         _ = dispatchGroup.wait(timeout: .now() + .seconds(30))

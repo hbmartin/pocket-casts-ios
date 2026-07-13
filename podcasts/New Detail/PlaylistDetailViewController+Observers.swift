@@ -10,20 +10,42 @@ extension PlaylistDetailViewController {
     }
 
     func addObservers() {
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.playlistChanged, selector: #selector(refreshFilterFromNotification))
+        addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(OpmlImportCompleted.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(PlaybackFailed.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(PlaylistChanged.self) { [weak self] _ in
+            self?.reloader.request(.playlist)
+        }
         addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
             self?.reloader.request(.episodes)
         }
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshEpisodesFromNotification))
+        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
+        addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
+            self?.reloader.request(.episodes)
+        }
         addCustomObserver(UIResponder.keyboardWillShowNotification, selector: #selector(keyboardWillShow(_:)))
         addCustomObserver(UIResponder.keyboardWillHideNotification, selector: #selector(keyboardWillHide(_:)))
     }

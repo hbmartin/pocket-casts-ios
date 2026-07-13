@@ -171,7 +171,7 @@ class DownloadsViewController: PCViewController {
         removeAllCustomObservers()
     }
 
-    @objc private func refreshView() {
+    private func refreshView() {
         reloadEpisodes()
     }
 
@@ -198,16 +198,34 @@ class DownloadsViewController: PCViewController {
     }
 
     private func addEventObservers() {
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshView))
+        addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(OpmlImportCompleted.self) { [weak self] _ in
+            self?.refreshView()
+        }
 
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshView))
-        addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshView))
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.refreshView()
+        }
+        addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
+            self?.refreshView()
+        }
     }
 
     func reloadEpisodes() {

@@ -38,6 +38,10 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
 
     private var homeGridDataHelper = HomeGridDataHelper()
 
+    /// Long-lived consumer of `DataManager.observeHomeGrid()` (B6 pilot); started
+    /// with the event observers and cancelled whenever they're removed.
+    private var homeGridObservationTask: Task<Void, Never>?
+
     private lazy var refreshQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
@@ -108,6 +112,7 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     }
 
     override func handleAppDidEnterBackground() {
+        stopHomeGridObservation()
         removeAllCustomObservers()
     }
 
@@ -120,6 +125,7 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         navigationController?.navigationBar.shadowImage = nil
+        stopHomeGridObservation()
         removeAllCustomObservers()
         if isEditingOrder {
             setEditingOrder(false)
@@ -127,23 +133,47 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
     }
 
     private func addEventObservers() {
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.opmlImportCompleted, selector: #selector(refreshGridItems))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshGridItems))
+        // B6 ValueObservation pilot: the home-grid database observation below replaces
+        // the DB-derived observers this screen used to poll on (podcastsRefreshed,
+        // podcastAdded, podcastDeleted, opmlImportCompleted, syncCompleted,
+        // episodeArchiveStatusChanged, episodePlayStatusChanged, folderChanged,
+        // folderDeleted) — those writes now reach the grid straight from the database.
+        // The playback observers stay: the recently-played sort and now-playing state
+        // read PlaybackManager, which isn't database state.
+        startHomeGridObservation()
+
         addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(refreshGridItems))
         addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshGridItems))
-        addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
-            self?.refreshGridItems()
+
+        addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
+            self?.checkForScrollTap(message)
         }
+        addCustomObserver(SearchRequested.self) { [weak self] _ in
+            self?.searchRequested()
+        }
+        addCustomObserver(ExternalSearchRequested.self) { [weak self] message in
+            self?.startExternalSearch(term: message.term)
+        }
+    }
 
-        addCustomObserver(Constants.Notifications.folderChanged, selector: #selector(refreshGridItems))
-        addCustomObserver(Constants.Notifications.folderDeleted, selector: #selector(refreshGridItems))
+    /// Reloads the grid whenever the database inputs it renders (subscribed
+    /// podcasts, folders, unplayed badges) change. Pilot depth: the snapshot is
+    /// used purely as a change signal — `refreshGridItems()` remains the single
+    /// render path and re-queries via `HomeGridDataHelper` as before.
+    private func startHomeGridObservation() {
+        guard homeGridObservationTask == nil else { return }
 
-        addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
-        addCustomObserver(Constants.Notifications.searchRequested, selector: #selector(searchRequested))
+        homeGridObservationTask = Task { [weak self] in
+            for await _ in DataManager.sharedManager.observeHomeGrid() {
+                guard let self else { return }
+                self.refreshGridItems()
+            }
+        }
+    }
+
+    private func stopHomeGridObservation() {
+        homeGridObservationTask?.cancel()
+        homeGridObservationTask = nil
     }
 
     private func makeBadge(size: CGFloat) -> UIView {
@@ -167,9 +197,9 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         extraRightButtons = []
     }
 
-    @objc private func checkForScrollTap(_ notification: Notification) {
+    private func checkForScrollTap(_ message: TappedOnSelectedTab) {
         let topOffset = -PCSearchBarController.defaultHeight - view.safeAreaInsets.top
-        if let index = notification.object as? Int, index == tabBarItem.tag, podcastsCollectionView.contentOffset.y.rounded(.down) > topOffset.rounded(.down) {
+        if let index = message.tabIndex, index == tabBarItem.tag, podcastsCollectionView.contentOffset.y.rounded(.down) > topOffset.rounded(.down) {
             podcastsCollectionView.setContentOffset(CGPoint(x: -horizontalMargin, y: topOffset), animated: true)
         } else {
             // When double-tapping on tab bar, dismiss the search if already active
@@ -182,10 +212,18 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         }
     }
 
-    @objc private func searchRequested() {
+    private func searchRequested() {
         let topOffset = view.safeAreaInsets.top
         podcastsCollectionView.setContentOffset(CGPoint(x: 0, y: -searchController.view.bounds.height - topOffset), animated: false)
         searchController.searchTextField.becomeFirstResponder()
+    }
+
+    /// A search launched from outside the search UI (see `ExternalSearchRequested`):
+    /// focusing the field installs the results controller (`searchDidBegin`),
+    /// then the term is searched directly and the bar adopts it.
+    private func startExternalSearch(term: String) {
+        searchRequested()
+        searchResultsController.startExternalSearch(term: term)
     }
 
     private var horizontalMargin: CGFloat {

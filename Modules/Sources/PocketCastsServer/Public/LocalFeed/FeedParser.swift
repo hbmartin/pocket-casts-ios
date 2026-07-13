@@ -14,6 +14,9 @@ public struct ParsedFeed: Sendable {
     public var fundingURL: String?
     /// RFC 5005 `<atom:link rel="next">` for paged feeds; nil on the last (or only) page.
     public var nextPageURL: String?
+    /// Channel-level `<podcast:person>` credits, applying to every episode that
+    /// doesn't declare its own.
+    public var persons: [ParsedFeedPerson] = []
     public var items: [ParsedFeedItem] = []
 
     public init() {}
@@ -34,8 +37,28 @@ public struct ParsedFeedItem: Sendable {
     public var itemDescriptionHTML: String?
     public var chaptersURL: String?
     public var transcripts: [ParsedFeedTranscript] = []
+    /// Item-level `<podcast:person>` credits for this episode.
+    public var persons: [ParsedFeedPerson] = []
 
     public init() {}
+}
+
+/// A `<podcast:person>` credit: the person's name is the element text, the rest
+/// ride as attributes (all optional per the Podcasting 2.0 spec).
+public struct ParsedFeedPerson: Sendable {
+    public var name: String
+    public var role: String?
+    public var group: String?
+    public var img: String?
+    public var href: String?
+
+    public init(name: String, role: String? = nil, group: String? = nil, img: String? = nil, href: String? = nil) {
+        self.name = name
+        self.role = role
+        self.group = group
+        self.img = img
+        self.href = href
+    }
 }
 
 public struct ParsedFeedTranscript: Sendable {
@@ -100,6 +123,10 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
     private var inRssImage = false
     private var inAtomEntryAuthor = false
     private var isAtom = false
+    /// Attributes of the `<podcast:person>` element currently being parsed; the
+    /// person's name arrives as element text, so the credit is assembled at the
+    /// matching end-element.
+    private var currentPersonAttributes: [String: String]?
 
     private func isPodcastIndex(_ namespaceURI: String?) -> Bool {
         guard let namespaceURI else { return false }
@@ -151,6 +178,8 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
             if let url = attributes["url"] ?? attributes["href"] {
                 currentItem?.transcripts.append(ParsedFeedTranscript(url: url, type: attributes["type"]))
             }
+        case "person" where isPodcastIndex(namespaceURI):
+            currentPersonAttributes = attributes
         default:
             break
         }
@@ -257,8 +286,30 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
             currentItem?.seasonNumber = Int64(trimmed)
         case "episodetype" where namespaceURI == Namespace.itunes:
             if currentItem != nil { setIfEmpty(&currentItem!.episodeType, trimmed.lowercased()) }
+        case "person" where isPodcastIndex(namespaceURI):
+            appendPerson(name: trimmed)
         default:
             break
+        }
+    }
+
+    /// Nameless credits are dropped: the name is the only required part of a
+    /// `<podcast:person>`, and downstream consumers key the credit on it.
+    private func appendPerson(name: String) {
+        defer { currentPersonAttributes = nil }
+        guard !name.isEmpty, let attributes = currentPersonAttributes else { return }
+
+        let person = ParsedFeedPerson(
+            name: name,
+            role: attributes["role"],
+            group: attributes["group"],
+            img: attributes["img"],
+            href: attributes["href"]
+        )
+        if currentItem != nil {
+            currentItem?.persons.append(person)
+        } else if inChannel {
+            feed.persons.append(person)
         }
     }
 

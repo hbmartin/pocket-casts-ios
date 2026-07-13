@@ -15,7 +15,7 @@ class SimpleNotificationsViewController: UIViewController {
     /// Typed-message registration; same register-in-viewWillAppear /
     /// remove-in-viewWillDisappear lifecycle and dedupe-by-name behavior as the
     /// selector-based variant above.
-    func addCustomObserver<M: NotificationCenter.MainActorMessage>(_ type: M.Type, handler: @escaping @MainActor (M) -> Void) {
+    final func addCustomObserver<M: NotificationCenter.MainActorMessage>(_ type: M.Type, handler: @escaping @MainActor @Sendable (M) -> Void) where M.Subject: AnyObject {
         guard messageTokens[M.name] == nil else { return } // we already have this one
 
         messageTokens[M.name] = NotificationCenter.default.addObserver(for: type, using: handler)

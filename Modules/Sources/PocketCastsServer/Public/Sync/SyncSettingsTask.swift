@@ -16,6 +16,8 @@ extension Api_ChangeableSettings {
         showArchived.update(settings.$showArchived)
         upNextSwipe.update(settings.$upNextSwipe)
         playUpNextOnTap.update(settings.$playUpNextOnTap)
+        tapToPlay.update(settings.$tapToPlay) // FORK: field 1001
+        seekAcceleration.update(settings.$seekAcceleration) // FORK: field 1002
         playbackActions.update(settings.$playbackActions)
         legacyBluetooth.update(settings.$legacyBluetooth)
         multiSelectGesture.update(settings.$multiSelectGesture)
@@ -72,6 +74,8 @@ extension AppSettings {
         $showArchived.update(setting: settings.showArchived)
         $upNextSwipe.update(setting: settings.upNextSwipe)
         $playUpNextOnTap.update(setting: settings.playUpNextOnTap)
+        $tapToPlay.update(setting: settings.tapToPlay) // FORK: field 1001
+        $seekAcceleration.update(setting: settings.seekAcceleration) // FORK: field 1002
         $playbackActions.update(setting: settings.playbackActions)
         $legacyBluetooth.update(setting: settings.legacyBluetooth)
         $multiSelectGesture.update(setting: settings.multiSelectGesture)
@@ -133,7 +137,9 @@ class SyncSettingsTask: ApiBaseTask, @unchecked Sendable {
 
             if FeatureFlag.settingsSync.enabled {
                 settingsRequest.changedSettings.update(with: appSettings.settings)
-                FileLog.shared.addMessage("Syncing new settings: \(try! settingsRequest.changedSettings.jsonString())")
+                // FORK: defense-in-depth for the hand-edited api.pb.swift nameMap — a missing entry
+                // makes jsonString() throw; don't crash the sync task over a log line.
+                FileLog.shared.addMessage("Syncing new settings: \((try? settingsRequest.changedSettings.jsonString()) ?? "<encoding failed>")")
             } else {
                 if ServerSettings.skipBackNeedsSyncing() {
                     settingsRequest.settings.skipBack.value = Int32(ServerSettings.skipBackTime())

@@ -161,11 +161,11 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
     // MARK: - UITextFieldDelegate
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     // MARK: - Orientation

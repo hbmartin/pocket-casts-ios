@@ -26,6 +26,11 @@ class SearchResultsModel: ObservableObject {
     @Published var predictive: [PredictiveSearchResult] = []
     @Published var combinedResults: [CombinedSearchResultType] = []
 
+    /// Matches from the on-device transcript index (AI UX plan Phase 4), resolved
+    /// into display rows off the main actor. Always empty while the
+    /// `transcriptSearch` flag is off or the FTS index is unavailable.
+    @Published var transcriptHits: [TranscriptSearchHitDisplay] = []
+
     @Published var isShowingLocalResultsOnly = false
     @Published var resultsContainLocalPodcasts = false
 
@@ -47,13 +52,14 @@ class SearchResultsModel: ObservableObject {
     }
 
     var noResults: Bool {
-        return podcasts.isEmpty && episodes.isEmpty && predictive.isEmpty && combinedResults.isEmpty
+        return podcasts.isEmpty && episodes.isEmpty && predictive.isEmpty && combinedResults.isEmpty && transcriptHits.isEmpty
     }
 
     func clearSearch() {
         podcasts = []
         episodes = []
         combinedResults = []
+        transcriptHits = []
         playedEpisodesUUIDs = []
         resultsContainLocalPodcasts = false
         currentSearchTerm = ""
@@ -121,6 +127,8 @@ class SearchResultsModel: ObservableObject {
             isSearchingForPodcasts = false
         }
 
+        searchTranscriptIndex(term: term)
+
         if !isTermAnURL(term) {
             hideEpisodes = false
             Task {
@@ -169,7 +177,32 @@ class SearchResultsModel: ObservableObject {
             isSearchingForPodcasts = false
         }
 
+        searchTranscriptIndex(term: term)
+
         analyticsHelper.trackSearchPerformed()
+    }
+
+    /// Queries the on-device transcript FTS index (flag-gated) and publishes the
+    /// resolved display rows. The database work runs off the main actor.
+    @MainActor
+    private func searchTranscriptIndex(term: String) {
+        guard FeatureFlag.transcriptSearch.enabled else { return }
+
+        let transcriptIndex = dataMangager.transcriptIndex
+        guard transcriptIndex.isAvailable, !isTermAnURL(term) else {
+            transcriptHits = []
+            return
+        }
+
+        Task {
+            let hits = await Task.detached(priority: .userInitiated) {
+                TranscriptSearchHitDisplay.displays(for: transcriptIndex.search(term: term))
+            }.value
+
+            // A newer search superseded this one while the query ran.
+            guard term == currentSearchTerm else { return }
+            transcriptHits = hits
+        }
     }
 
     @MainActor

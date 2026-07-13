@@ -143,7 +143,7 @@ class FoldersCoordinator: NSObject {
             let folder = makeFolder(from: suggestedFolder)
             dataManager.bulkSetFolderUuid(folderUuid: folder.uuid, podcastUuids: suggestedFolder.podcastUuids)
         }
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.podcastsRefreshed, object: nil)
+        NotificationCenter.postOnMainThread(PodcastsRefreshed())
     }
 
     private var currentPodcastsHash: String {

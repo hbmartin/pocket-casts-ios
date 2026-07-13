@@ -94,10 +94,9 @@ record and testers):
 
 - **Bundle identifier root** — reverse-DNS for a domain you control, e.g.
   `ai.sparkedinnovations.pocketcasts`. It must **not** start with
-  `au.com.shiftyjelly.podcasts`; the lane rejects that. The six extension
+  `au.com.shiftyjelly.podcasts`; the lane rejects that. The four extension
   identifiers are derived automatically:
   `<root>.NotificationContent`, `<root>.NotificationExtension`,
-  `<root>.PodcastsIntents`, `<root>.PodcastsIntentsUI`,
   `<root>.Share-Extension`, `<root>.WidgetExtension`.
 - **App Group identifier** — must start with `group.` and be globally unique
   across all Apple developer teams, e.g.
@@ -127,9 +126,8 @@ the capabilities each identifier needs are:
 | --- | --- |
 | `<root>` (main app) | App Groups, Associated Domains, Push Notifications, Sign In with Apple, SiriKit, Access Wi-Fi Information |
 | `<root>.WidgetExtension` | App Groups |
-| `<root>.PodcastsIntents` | App Groups |
 | `<root>.Share-Extension` | App Groups |
-| `<root>.NotificationContent`, `<root>.NotificationExtension`, `<root>.PodcastsIntentsUI` | none |
+| `<root>.NotificationContent`, `<root>.NotificationExtension` | none |
 
 ### 4. Create the app record in App Store Connect
 

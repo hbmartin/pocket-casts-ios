@@ -11,8 +11,7 @@ nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendabl
 
     private let playlistMetadataLoader: PlaylistMetadataLoader
     private let dataManager: DataManager
-    private var notificationObservers: [NSObjectProtocol] = []
-    private var playStatusToken: NotificationCenter.ObservationToken?
+    private var messageTokens: [NotificationCenter.ObservationToken] = []
 
     /// Subject for debouncing change processing
     private let changeSubject = PassthroughSubject<Void, Never>()
@@ -42,75 +41,47 @@ nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendabl
     }
 
     /// Starts observing episode change notifications.
+    ///
+    /// Per-episode messages carry only the episode uuid, from which the legacy
+    /// observers never recovered a podcast uuid (extractPodcastUuid only read
+    /// userInfo["podcastUuid"] or an Episode object, and posters send neither) —
+    /// `podcastUuid: nil` preserves that exactly.
     func startObserving() {
-        guard notificationObservers.isEmpty, playStatusToken == nil else { return }
+        guard messageTokens.isEmpty else { return }
 
         let center = NotificationCenter.default
 
-        // Play status changes. The legacy payload is the episode uuid in `object`,
-        // from which extractPodcastUuid never recovered a podcast uuid (it only reads
-        // userInfo["podcastUuid"] or an Episode object) — nil preserves that exactly.
-        playStatusToken = center.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] _ in
+        // Play status changes
+        messageTokens.append(center.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] _ in
             self?.handleChange(.playStatus, podcastUuid: nil)
-        }
+        })
 
         // Download status changes
-        notificationObservers.append(
-            center.addObserver(
-                forName: Constants.Notifications.episodeDownloadStatusChanged,
-                object: nil,
-                queue: nil
-            ) { [weak self] notification in
-                let podcastUuid = self?.extractPodcastUuid(from: notification)
-                self?.handleChange(.downloadStatus, podcastUuid: podcastUuid)
-            }
-        )
+        messageTokens.append(center.addObserver(for: EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.handleChange(.downloadStatus, podcastUuid: nil)
+        })
 
         // Starred status changes
-        notificationObservers.append(
-            center.addObserver(
-                forName: Constants.Notifications.episodeStarredChanged,
-                object: nil,
-                queue: nil
-            ) { [weak self] notification in
-                let podcastUuid = self?.extractPodcastUuid(from: notification)
-                self?.handleChange(.starred, podcastUuid: podcastUuid)
-            }
-        )
+        messageTokens.append(center.addObserver(for: EpisodeStarredChanged.self) { [weak self] _ in
+            self?.handleChange(.starred, podcastUuid: nil)
+        })
 
         // Archive status changes
-        notificationObservers.append(
-            center.addObserver(
-                forName: Constants.Notifications.episodeArchiveStatusChanged,
-                object: nil,
-                queue: nil
-            ) { [weak self] notification in
-                let podcastUuid = self?.extractPodcastUuid(from: notification)
-                self?.handleChange(.archived, podcastUuid: podcastUuid)
-            }
-        )
+        messageTokens.append(center.addObserver(for: EpisodeArchiveStatusChanged.self) { [weak self] _ in
+            self?.handleChange(.archived, podcastUuid: nil)
+        })
 
         // Bulk changes (many episodes changed)
-        notificationObservers.append(
-            center.addObserver(
-                forName: Constants.Notifications.manyEpisodesChanged,
-                object: nil,
-                queue: nil
-            ) { [weak self] _ in
-                self?.handleChange(.bulkChange, podcastUuid: nil)
-            }
-        )
+        messageTokens.append(center.addObserver(for: ManyEpisodesChanged.self) { [weak self] _ in
+            self?.handleChange(.bulkChange, podcastUuid: nil)
+        })
     }
 
     /// Stops observing episode change notifications.
     func stopObserving() {
         let center = NotificationCenter.default
-        notificationObservers.forEach { center.removeObserver($0) }
-        notificationObservers.removeAll()
-        if let playStatusToken {
-            center.removeObserver(playStatusToken)
-            self.playStatusToken = nil
-        }
+        messageTokens.forEach { center.removeObserver($0) }
+        messageTokens.removeAll()
     }
 
     // MARK: - Private
@@ -175,22 +146,5 @@ nonisolated final class PlaylistCacheInvalidationCoordinator: @unchecked Sendabl
                 }
             }
         }
-    }
-
-    /// Extracts the podcast UUID from an episode notification.
-    /// Prefer using data directly from the notification payload to avoid DB lookups.
-    private func extractPodcastUuid(from notification: Notification) -> String? {
-        // First, try to read the podcast UUID from userInfo, if provided.
-        if let podcastUuid = notification.userInfo?["podcastUuid"] as? String {
-            return podcastUuid
-        }
-
-        // Next, if the object is an Episode, use its podcast UUID directly.
-        if let episode = notification.object as? Episode {
-            return episode.podcastUuid
-        }
-
-        // If we don't have a podcast UUID in the payload, avoid a DB lookup here.
-        return nil
     }
 }

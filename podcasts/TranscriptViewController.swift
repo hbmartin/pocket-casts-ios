@@ -3,6 +3,7 @@ import Combine
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
+import SwiftUI
 
 class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvider {
     let analyticsSource: AnalyticsSource
@@ -61,6 +62,14 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private var autoScrollSuppressedDate: Date?
 
     private var transcriptManager: TranscriptManager?
+
+    /// Source the next `loadTranscript()` should prefer; driven by the source
+    /// switcher menu and reset when the episode changes.
+    private var transcriptSourcePreference: TranscriptSource = .automatic
+
+    /// True while an on-device transcription job for the current episode is
+    /// running (or believed to be); switches the empty state to progress display.
+    private var isGeneratingTranscript = false
 
     #if DEBUG
     private var debugOverlay: FingerprintDebugOverlay?
@@ -157,7 +166,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     /// display-link level is what trapped the manager in `.preparing` on the
     /// prior POC-546 attempt (the link would pause before the manager could
     /// post a state change).
-    @objc private func updateHighlightDisplayLinkPauseState() {
+    private func updateHighlightDisplayLinkPauseState() {
         highlightDisplayLink?.isPaused = !playbackManager.isPlayingEpisode
     }
 
@@ -198,18 +207,13 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
     private func addGeneratedTranscriptsObservers() {
         if shouldShowPremiumView {
-            addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(subscriptionStatusDidChange))
+            addCustomObserver(SubscriptionStatusChanged.self) { [weak self] _ in
+                self?.subscriptionStatusDidChange()
+            }
         }
-        addCustomObserver(Constants.Notifications.episodeTranscriptAvailabilityChanged, selector: #selector(updateGeneratedTranscriptState))
-    }
-
-    @objc private func updateGeneratedTranscriptState(_ notification: Notification) {
-        guard
-            let hasGeneratedTranscripts = notification.userInfo?["hasGeneratedTranscripts"] as? Bool
-        else {
-            return
+        addCustomObserver(EpisodeTranscriptAvailabilityChanged.self) { [weak self] message in
+            self?.setHasGeneratedTranscripts(message.hasGeneratedTranscripts)
         }
-        setHasGeneratedTranscripts(hasGeneratedTranscripts)
     }
 
     private func setupViews() {
@@ -295,6 +299,12 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         stackView.addArrangedSubview(UIView())
 
         stackView.addArrangedSubview(shareButton)
+        stackView.addArrangedSubview(readerButton)
+
+        if FeatureFlag.diarizedTranscription.enabled {
+            sourceButton.isHidden = true
+            stackView.addArrangedSubview(sourceButton)
+        }
 
         if showFromEpisode {
             stackView.addArrangedSubview(playButton)
@@ -520,6 +530,62 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         return shareButton
     }()
 
+    private lazy var readerButton: RoundButton = {
+        let titleColor = showFromEpisode ? ThemeColor.primaryInteractive01() : .white
+        let tintColor = showFromEpisode ? ThemeColor.primaryInteractive01().withAlphaComponent(0.1) : .white.withAlphaComponent(0.2)
+
+        var configuration = UIButton.Configuration.filled()
+        configuration.contentInsets = .init(top: 4, leading: 12, bottom: 4, trailing: 12)
+        configuration.baseForegroundColor = titleColor
+        configuration.baseBackgroundColor = tintColor
+
+        let readerButton = RoundButton(type: .system)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.font(with: .callout, maxSizeCategory: .extraExtraExtraLarge)
+        ]
+        readerButton.setAttributedTitle(NSAttributedString(string: L10n.transcriptReader, attributes: attributes), for: .normal)
+        readerButton.addTarget(self, action: #selector(openReader), for: .touchUpInside)
+        readerButton.setTitleColor(titleColor, for: .normal)
+        readerButton.tintColor = tintColor
+        readerButton.layer.masksToBounds = true
+        readerButton.configuration = configuration
+        readerButton.titleLabel?.adjustsFontForContentSizeCategory = false
+        return readerButton
+    }()
+
+    /// Switches between the podcast-provided and locally generated transcript
+    /// (and offers deleting the generated one). Menu content is rebuilt by
+    /// `updateSourceMenu()` after each load.
+    private lazy var sourceButton: RoundButton = {
+        let titleColor = showFromEpisode ? ThemeColor.primaryInteractive01() : .white
+        let tintColor = showFromEpisode ? ThemeColor.primaryInteractive01().withAlphaComponent(0.1) : .white.withAlphaComponent(0.2)
+
+        var configuration = UIButton.Configuration.filled()
+        configuration.contentInsets = .init(top: 4, leading: 12, bottom: 4, trailing: 12)
+        configuration.baseForegroundColor = titleColor
+        configuration.baseBackgroundColor = tintColor
+
+        let sourceButton = RoundButton(type: .system)
+        let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        sourceButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: symbolConfiguration)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        sourceButton.accessibilityLabel = L10n.accessibilityMoreActions
+        sourceButton.showsMenuAsPrimaryAction = true
+        sourceButton.layer.masksToBounds = true
+        sourceButton.configuration = configuration
+        return sourceButton
+    }()
+
+    @objc private func openReader() {
+        guard let transcript else { return }
+        let reader = TranscriptReaderHostingController(
+            transcript: transcript,
+            playbackManager: playbackManager,
+            isGeneratedTranscript: transcriptManager?.isDisplayingGeneratedTranscript == true,
+            source: analyticsSource
+        )
+        present(reader, animated: true)
+    }
+
     private lazy var hiddenTextView: UITextField = {
         let textView = UITextField()
         textView.layer.opacity = 0
@@ -607,7 +673,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         bottomGradient.updateColors(firstColor: gradientColor.withAlphaComponent(0), secondColor: gradientColor)
     }
 
-    @objc private func update() {
+    private func update() {
         updateColors()
         resetKmp()
         resetSearch()
@@ -621,6 +687,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private func setupLoadingState() {
         transcriptView.isHidden = true
         searchButton.isHidden = true
+        readerButton.isHidden = true
         errorView.isHidden = true
         activityIndicatorView.startAnimating()
     }
@@ -628,6 +695,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private func setupShowTranscriptState() {
         transcriptView.isHidden = false
         searchButton.isHidden = false
+        readerButton.isHidden = false
         errorView.isHidden = true
         activityIndicatorView.stopAnimating()
     }
@@ -640,9 +708,15 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         }
 
         let shouldResetPosition = currentEpisodeUUID != episodeUUID
+        if shouldResetPosition {
+            // A source choice only makes sense for the episode it was made on.
+            transcriptSourcePreference = .automatic
+            isGeneratingTranscript = false
+        }
         currentEpisodeUUID = episodeUUID
 
         transcriptManager = TranscriptManager(episodeUUID: episodeUUID, podcastUUID: podcastUUID)
+        transcriptManager?.sourcePreference = transcriptSourcePreference
 
         setupLoadingState()
 
@@ -655,9 +729,16 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
                 let transcript = try await transcriptManager.loadTranscript()
                 let hasGeneratedTranscripts = FeatureFlag.generatedTranscripts.enabled && transcriptManager.hasGeneratedTranscripts
                 let isDisplayingGenerated = transcriptManager.isDisplayingGeneratedTranscript
+                let isDisplayingLocal = transcriptManager.isDisplayingLocalTranscription
                 await MainActor.run {
                     self.setHasGeneratedTranscripts(hasGeneratedTranscripts)
-                    if isDisplayingGenerated {
+                    self.updateSourceMenu()
+                    if isDisplayingLocal {
+                        // Locally generated transcripts are cut from the exact
+                        // audio file being played, so timestamps align natively —
+                        // no fingerprint preparation needed.
+                        self.startHighlightDisplayLink()
+                    } else if isDisplayingGenerated {
                         if FeatureFlag.syncedTranscripts.enabled, !self.showFromEpisode || PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: self.playbackManager.episodeUUID) {
                             FingerprintTimingManager.shared.prepareForCurrentEpisode()
                         }
@@ -691,7 +772,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         }
     }
 
-    @objc private func subscriptionStatusDidChange() {
+    private func subscriptionStatusDidChange() {
         if shouldShowPremiumView {
             return
         }
@@ -727,6 +808,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         ]
         searchButton.setAttributedTitle(NSAttributedString(string: L10n.search, attributes: attributes), for: .normal)
         shareButton.setAttributedTitle(NSAttributedString(string: L10n.share, attributes: attributes), for: .normal)
+        readerButton.setAttributedTitle(NSAttributedString(string: L10n.transcriptReader, attributes: attributes), for: .normal)
         playButton.updateSize()
 
         bannerLabel.font = .font(ofSize: 13, weight: .medium, scalingWith: .footnote, maxSizeCategory: .extraExtraExtraLarge)
@@ -843,37 +925,213 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
             message = transcriptError.localizedDescription
         }
         errorView.isHidden = false
+        errorView.setRetryButtonHidden(false)
         errorView.setMessage(message, attributes: makeStyle(alignment: .center))
+        updateGenerateAffordance()
+        updateSourceMenu()
+    }
+
+    // MARK: - On-device transcription (diarizedTranscription)
+
+    private func addTranscriptionObservers() {
+        addCustomObserver(TranscriptionProgress.self) { [weak self] message in
+            self?.handleTranscriptionProgress(message)
+        }
+        addCustomObserver(EpisodeTranscriptionCompleted.self) { [weak self] message in
+            self?.handleTranscriptionCompleted(message)
+        }
+    }
+
+    private func handleTranscriptionProgress(_ message: TranscriptionProgress) {
+        guard message.episodeUuid == playbackManager.episodeUUID,
+              transcriptView.isHidden else { return }
+        showGenerationProgress(fraction: message.progress)
+    }
+
+    private func handleTranscriptionCompleted(_ message: EpisodeTranscriptionCompleted) {
+        guard message.episodeUuid == playbackManager.episodeUUID else { return }
+        isGeneratingTranscript = false
+        errorView.setRetryButtonHidden(false)
+        if message.succeeded {
+            transcriptSourcePreference = .automatic
+            retryLoad()
+        } else if transcriptView.isHidden {
+            show(error: TranscriptError.failedToLoad)
+        }
+    }
+
+    /// Whether the current episode qualifies for on-device generation: flag on,
+    /// audio downloaded, and no completed transcription record yet.
+    private var canGenerateTranscription: Bool {
+        guard FeatureFlag.diarizedTranscription.enabled,
+              let episodeUuid = playbackManager.episodeUUID,
+              let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid),
+              episode.downloaded(pathFinder: DownloadManager.shared) else { return false }
+        return DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid)?.transcriptionStatus != .completed
+    }
+
+    /// Offers the Generate button in the error/empty state — or, when a job for
+    /// this episode is already queued/running, shows its progress instead.
+    private func updateGenerateAffordance() {
+        guard !isGeneratingTranscript else { return }
+        errorView.hideGenerateButton()
+        guard canGenerateTranscription, let episodeUuid = playbackManager.episodeUUID else { return }
+
+        Task { [weak self] in
+            let queueManager = TranscriptionQueueManager.shared
+            let isInFlight = await queueManager.isEpisodeQueued(episodeUuid) || queueManager.isEpisodeProcessing(episodeUuid)
+            guard let self, self.playbackManager.episodeUUID == episodeUuid, self.transcriptView.isHidden else { return }
+            if isInFlight {
+                self.showGenerationProgress(fraction: 0)
+            } else {
+                self.errorView.showGenerateButton(title: L10n.transcriptionGenerate) { [weak self] in
+                    self?.generateTranscriptTapped()
+                }
+            }
+        }
+    }
+
+    private func generateTranscriptTapped() {
+        guard let episodeUuid = playbackManager.episodeUUID else { return }
+        let podcastUuid = playbackManager.podcastUUID
+        track(.transcriptionGenerateTapped)
+        // Remote engine mode requires one-time per-provider consent before any
+        // audio (or its URL) leaves the device; local modes enqueue directly.
+        TranscriptionConsentGate.requestConsentIfNeeded { [weak self] in
+            self?.showGenerationProgress(fraction: 0)
+            Task {
+                await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+            }
+        }
+    }
+
+    private func showGenerationProgress(fraction: Double) {
+        isGeneratingTranscript = true
+        errorView.isHidden = false
+        errorView.hideGenerateButton()
+        errorView.setRetryButtonHidden(true)
+        let percent = Int((fraction * 100).rounded())
+        errorView.setMessage("\(L10n.transcriptionGenerating) \(percent)%", attributes: makeStyle(alignment: .center))
+    }
+
+    /// Rebuilds the transcript-source menu. Shown whenever a completed generated
+    /// transcript exists; source switching is offered only when a
+    /// podcast-provided transcript also exists.
+    private func updateSourceMenu() {
+        guard FeatureFlag.diarizedTranscription.enabled else { return }
+        let hasLocal = transcriptManager?.hasLocalTranscription == true
+        sourceButton.isHidden = !hasLocal
+        guard hasLocal else { return }
+
+        let hasPodcastProvided = transcriptManager?.hasPodcastProvidedTranscripts == true
+        let isDisplayingLocal = transcriptManager?.isDisplayingLocalTranscription == true
+
+        var children: [UIMenuElement] = []
+        if hasPodcastProvided {
+            children.append(UIAction(title: L10n.transcriptionSourcePodcast, state: isDisplayingLocal ? .off : .on) { [weak self] _ in
+                self?.switchSource(to: .podcastProvided)
+            })
+            children.append(UIAction(title: L10n.transcriptionSourceGenerated, state: isDisplayingLocal ? .on : .off) { [weak self] _ in
+                self?.switchSource(to: .localGenerated)
+            })
+        }
+        if let episodeUuid = playbackManager.episodeUUID,
+           let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid),
+           record.transcriptionStatus == .completed, record.speakerCount > 0 {
+            // Renaming only makes sense for diarized transcripts (speaker-tagged
+            // cues); monologue transcripts have no "Speaker N" headers to rename.
+            children.append(UIAction(title: L10n.transcriptionRenameSpeakers) { [weak self] _ in
+                self?.showSpeakerRename()
+            })
+        }
+        children.append(UIAction(title: L10n.transcriptionDeleteGenerated, attributes: .destructive) { [weak self] _ in
+            self?.deleteGeneratedTranscript()
+        })
+        sourceButton.menu = UIMenu(children: children)
+    }
+
+    /// Presents the speaker rename sheet for the current episode's generated
+    /// transcript. The record is re-fetched at presentation time so the sheet
+    /// always seeds from the latest saved names; after a save the transcript
+    /// reloads through the normal pipeline, re-substituting the renamed voice tags.
+    private func showSpeakerRename() {
+        guard let episodeUuid = playbackManager.episodeUUID,
+              let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid),
+              record.speakerCount > 0 else { return }
+
+        let renameView = SpeakerRenameView(episodeUuid: episodeUuid,
+                                           speakerCount: Int(record.speakerCount),
+                                           currentNames: SpeakerRenameView.decodeNames(record.speakerNames)) { [weak self] in
+            self?.update()
+        }.environmentObject(Theme.sharedTheme)
+        present(PCHostingController(rootView: renameView), animated: true)
+    }
+
+    private func switchSource(to source: TranscriptSource) {
+        track(.transcriptionSourceSwitched, properties: ["source_type": source == .localGenerated ? "generated" : "podcast"])
+        transcriptSourcePreference = source
+        update()
+    }
+
+    private func deleteGeneratedTranscript() {
+        guard let episodeUuid = playbackManager.episodeUUID else { return }
+        transcriptSourcePreference = .automatic
+        Task { [weak self] in
+            await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUuid)
+            self?.update()
+        }
     }
 
     private func addObservers() {
         if !showFromEpisode {
-            addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(update))
+            addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+                self?.update()
+            }
+        }
+        if FeatureFlag.diarizedTranscription.enabled {
+            addTranscriptionObservers()
         }
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         if FeatureFlag.syncedTranscripts.enabled {
-            addCustomObserver(Constants.Notifications.playbackProgress, selector: #selector(updateTranscriptPosition))
-            addCustomObserver(Constants.Notifications.playbackStarted, selector: #selector(updateHighlightDisplayLinkPauseState))
-            addCustomObserver(Constants.Notifications.playbackPaused, selector: #selector(updateHighlightDisplayLinkPauseState))
-            addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(updateHighlightDisplayLinkPauseState))
+            addCustomObserver(PlaybackProgressed.self) { [weak self] _ in
+                self?.updateTranscriptPosition()
+            }
+            addCustomObserver(PlaybackStarted.self) { [weak self] _ in
+                self?.updateHighlightDisplayLinkPauseState()
+            }
+            addCustomObserver(PlaybackPaused.self) { [weak self] _ in
+                self?.updateHighlightDisplayLinkPauseState()
+            }
+            addCustomObserver(PlaybackEnded.self) { [weak self] _ in
+                self?.updateHighlightDisplayLinkPauseState()
+            }
         }
     }
 
-    @objc private func updateTranscriptPosition() {
+    private func updateTranscriptPosition() {
         guard let transcript else { return }
 
         let rawTime = playbackManager.currentTime()
 
-        // Highlighting is opt-in: only paint while playback is confidently on
-        // matched content. Off it — dynamic ads, unmatched audio, regions not yet
-        // fingerprinted, or before/after the mapped range — we clear and leave it
-        // cleared. Crossing the last matched anchor flips this immediately, so we
-        // never highlight ad words first and retract them.
-        guard case .active = FingerprintTimingManager.shared.state,
-              let position = FingerprintTimingManager.shared.matchedReferenceTime(forPlaybackTime: rawTime) else {
-            clearHighlight(transcript: transcript)
-            return
+        let position: Double
+        if transcriptManager?.isDisplayingLocalTranscription == true {
+            // Locally generated transcripts were produced from the exact audio
+            // file being played, so the raw playback time IS the reference time —
+            // no fingerprint mapping applies.
+            position = rawTime
+        } else {
+            // Highlighting is opt-in: only paint while playback is confidently on
+            // matched content. Off it — dynamic ads, unmatched audio, regions not yet
+            // fingerprinted, or before/after the mapped range — we clear and leave it
+            // cleared. Crossing the last matched anchor flips this immediately, so we
+            // never highlight ad words first and retract them.
+            guard case .active = FingerprintTimingManager.shared.state,
+                  let mappedPosition = FingerprintTimingManager.shared.matchedReferenceTime(forPlaybackTime: rawTime) else {
+                clearHighlight(transcript: transcript)
+                return
+            }
+            position = mappedPosition
         }
 
         let currentCue = currentCue(at: position, in: transcript.cues)
@@ -995,9 +1253,11 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         // analytics or showing toasts for a seek that can't happen).
         guard let transcript, playbackManager.canSeek else { return }
         // Tap-to-seek relies on fingerprint timing that only exists for
-        // Pocket Casts-generated transcripts. Bail out for external ones so
-        // we don't surface the "download to seek" hint that doesn't apply.
-        guard transcriptManager?.isDisplayingGeneratedTranscript == true else { return }
+        // Pocket Casts-generated transcripts — or on the native timestamps of a
+        // locally generated transcript. Bail out for external ones so we don't
+        // surface the "download to seek" hint that doesn't apply.
+        let isDisplayingLocal = transcriptManager?.isDisplayingLocalTranscription == true
+        guard isDisplayingLocal || transcriptManager?.isDisplayingGeneratedTranscript == true else { return }
 
         let location = gesture.location(in: transcriptView)
         let layoutManager = transcriptView.layoutManager
@@ -1015,6 +1275,19 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         guard let cue = transcript.cues.first(where: { NSLocationInRange(charIndex, $0.characterRange) }) else { return }
 
         let referenceTime = cue.startTime
+
+        if isDisplayingLocal {
+            // Native timestamps: seek straight to the cue, no fingerprint mapping.
+            let fromPosition = playbackManager.currentTime()
+            playbackManager.seekTo(time: referenceTime)
+            syncedSeeksCount += 1
+            track(.syncedTranscriptSeekUsed, properties: [
+                "from_position_seconds": Int(fromPosition),
+                "to_position_seconds": Int(referenceTime),
+                "local_transcript": true
+            ])
+            return
+        }
 
         guard let seekTime = FingerprintTimingManager.shared.playbackTime(forReferenceTime: referenceTime) else {
             let syncedState = FingerprintTimingManager.shared.state

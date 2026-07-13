@@ -71,14 +71,18 @@ struct NewSearchResultsView: View {
                 .scrollContentBackground(.hidden)
             } else {
                 VStack(spacing: 0) {
-                    if searchResults.combinedResults.count > 1 {
+                    if searchResults.combinedResults.count > 1 || !searchResults.transcriptHits.isEmpty {
                         filterPicker
                     }
                     List {
-                        if displayMode != .episodes {
-                            localResults
+                        if displayMode == .transcripts {
+                            transcriptResults
+                        } else {
+                            if displayMode != .episodes {
+                                localResults
+                            }
+                            combinedList
                         }
-                        combinedList
                     }
                     .scrollDismissesKeyboard(.immediately)
                     .listStyle(.plain)
@@ -107,13 +111,16 @@ struct NewSearchResultsView: View {
     }
 
     @ViewBuilder var filterPicker: some View {
-        PillSegmentControl(SearchResultsListView.DisplayMode.allCases, selection: $displayMode) { item in
+        PillSegmentControl(SearchResultsListView.DisplayMode.availableCases, selection: $displayMode) { item in
             Text(item.localizedDescription)
         }
         .padding(.bottom, 8)
         .background(theme.secondaryUi01)
         .onChange(of: displayMode) { _, newValue in
             searchAnalyticsHelper.trackFilterTapped(newValue.analyticsDescription)
+            if newValue == .transcripts {
+                Analytics.track(.librarySearchTranscriptsShown, properties: ["count": searchResults.transcriptHits.count])
+            }
         }
     }
 
@@ -122,6 +129,8 @@ struct NewSearchResultsView: View {
             result.uuid
         })
         switch displayMode {
+            case .transcripts:
+                return []
             case .allResults:
                 return searchResults.combinedResults.filter { result in
                     switch result {
@@ -166,6 +175,27 @@ struct NewSearchResultsView: View {
                         .alignmentGuide(.listRowSeparatorLeading) { _ in
                             return 0
                         }
+            }
+        }
+    }
+
+    /// Matches from the on-device transcript index, or its zero state when the
+    /// current term has no transcript hits.
+    @ViewBuilder var transcriptResults: some View {
+        if searchResults.transcriptHits.isEmpty {
+            EmptyStateView(title: L10n.searchTranscriptsEmptyTitle,
+                           message: L10n.searchTranscriptsEmptyMessage,
+                           icon: { Image(systemName: "doc.text.magnifyingglass") })
+                .frame(maxWidth: .infinity)
+                .listRowBackground(theme.primaryUi01)
+                .listRowSeparator(.hidden)
+        } else {
+            ForEach(Array(searchResults.transcriptHits.enumerated()), id: \.element) { position, hit in
+                TranscriptSearchResultRow(display: hit, position: position)
+                    .listRowBackground(theme.primaryUi01)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in
+                        return 0
+                    }
             }
         }
     }

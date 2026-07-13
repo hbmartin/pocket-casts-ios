@@ -101,8 +101,12 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, @preconcurren
     }
 
     private func addObservers() {
-        addCustomObserver(Constants.Notifications.playbackStarting, selector: #selector(updateShowNotes))
-        addCustomObserver(Constants.Notifications.playbackTrackChanged, selector: #selector(updateShowNotes))
+        addCustomObserver(PlaybackStarting.self) { [weak self] _ in
+            self?.updateShowNotes()
+        }
+        addCustomObserver(PlaybackTrackChanged.self) { [weak self] _ in
+            self?.updateShowNotes()
+        }
         addCustomObserver(UIApplication.willEnterForegroundNotification, selector: #selector(handleWillEnterForeground))
     }
 
@@ -112,7 +116,7 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, @preconcurren
         updateShowNotes()
     }
 
-    @objc private func updateShowNotes() {
+    private func updateShowNotes() {
         guard let episode = PlaybackManager.shared.currentEpisode() as? Episode else { return }
         self.episode = episode
         let pubDate = DateFormatHelper.sharedHelper.longLocalizedFormat(episode.publishedDate)

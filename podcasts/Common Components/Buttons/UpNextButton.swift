@@ -13,6 +13,9 @@ class UpNextButton: UIButton {
 
     var themeOverride: Theme.ThemeType?
 
+    /// Typed-message observations, registered once in `setup()` and removed in deinit.
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     // MARK: - Setup
 
     override init(frame: CGRect) {
@@ -28,37 +31,44 @@ class UpNextButton: UIButton {
     }
 
     private func setup() {
-        NotificationCenter.default.addObserver(self, selector: #selector(episodeAdded(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(upNextChanged), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(episodeRemoved(_:)), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeAdded.self) { [weak self] message in
+            self?.episodeAdded(message)
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.upNextChanged()
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+            self?.setNeedsDisplay()
+        })
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        messageTokens.append(NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.setNeedsDisplay()
+        })
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Read isolated stored properties into locals before any nonisolated work
+        // (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     // MARK: - Up Next Events
 
-    @objc private func episodeAdded(_ notification: Notification) {
-        if let episodeUuid = notification.object as? String, let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid) {
+    private func episodeAdded(_ message: UpNextEpisodeAdded) {
+        if let episodeUuid = message.uuid, let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid) {
             playEpisodeAddedAnimation(episode)
         } else {
             playNumberChangeAnimation()
         }
     }
 
-    @objc private func episodeRemoved(_ notification: Notification) {
-        setNeedsDisplay()
-    }
-
-    @objc private func upNextChanged() {
-        setNeedsDisplay()
-    }
-
-    @objc private func themeDidChange() {
+    private func upNextChanged() {
         setNeedsDisplay()
     }
 

@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, searchTranscripts }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -139,18 +139,40 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(refreshComplete))
-        addCustomObserver(Constants.Notifications.podcastAdded, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(ServerNotifications.podcastRefreshFailed, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.podcastRefreshThrottled, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.syncFailed, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(.userLoginDidChange, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
+        addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(PodcastAdded.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
+        addCustomObserver(PodcastDeleted.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
+        addCustomObserver(PodcastRefreshFailed.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(PodcastRefreshThrottled.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(SyncCompleted.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(SyncFailed.self) { [weak self] _ in
+            self?.refreshComplete()
+        }
+        addCustomObserver(SubscriptionStatusChanged.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
+        addCustomObserver(UserLoginDidChange.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
+        addCustomObserver(UserWillBeSignedOut.self) { [weak self] _ in
+            self?.handleDataChangedNotification()
+        }
 
-        addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
+        addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
+            self?.checkForScrollTap(message)
+        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -168,8 +190,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     // MARK: - Actions
 
-    @objc private func checkForScrollTap(_ notification: Notification) {
-        if let index = notification.object as? Int, index == tabBarItem.tag, profileTable.contentOffset.y > 0 {
+    private func checkForScrollTap(_ message: TappedOnSelectedTab) {
+        if let index = message.tabIndex, index == tabBarItem.tag, profileTable.contentOffset.y > 0 {
             profileTable.setContentOffset(CGPoint.zero, animated: true)
         }
     }
@@ -196,7 +218,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     // MARK: - Data Updates
 
-    @objc private func refreshComplete() {
+    private func refreshComplete() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
@@ -205,7 +227,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    @objc private func handleDataChangedNotification() {
+    private func handleDataChangedNotification() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
@@ -324,6 +346,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             cell.settingsImage.image = UIImage(named: "bookmarks-profile")
             cell.settingsLabel.text = L10n.bookmarks
+        case .searchTranscripts:
+            cell.settingsImage.image = UIImage(named: "search")
+            cell.settingsLabel.text = L10n.transcriptionSearchTitle
         }
 
         return cell
@@ -381,6 +406,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             let bookmarksController = BookmarksProfileListController()
             navigationController?.pushViewController(bookmarksController, animated: true)
+        case .searchTranscripts:
+            let searchView = TranscriptSearchView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: searchView)
+            hostingController.title = L10n.transcriptionSearchTitle
+            navigationController?.pushViewController(hostingController, animated: true)
         }
     }
 
@@ -401,6 +431,14 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     private func refreshTableData() {
         var data: [[ProfileViewController.TableRow]]
         data = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help, .uploadedFiles]]
+
+        // Cross-episode transcript search only earns a row once something is
+        // searchable (completedCount is a cheap indexed COUNT).
+        if FeatureFlag.diarizedTranscription.enabled,
+           DataManager.sharedManager.transcriptions.completedCount() > 0,
+           let helpIndex = data[0].firstIndex(of: .help) {
+            data[0].insert(.searchTranscripts, at: helpIndex)
+        }
 
         if informationalBannerCoordinator.shouldShowBanner() {
             data[0].insert(.informationalBanner, at: 0)

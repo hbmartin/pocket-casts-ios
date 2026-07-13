@@ -4,6 +4,7 @@ import XCTest
 @testable import PocketCastsDataModel
 @testable import PocketCastsServer
 @testable import PocketCastsUtils
+import CoreMedia
 
 @MainActor
 class ChapterManagerTests: XCTestCase {
@@ -116,6 +117,10 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
 
     func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
         return (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
+    }
+
+    func loadEpisodeSummary(podcastUuid: String, episodeUuid: String) async throws -> String? {
+        nil
     }
 }
 

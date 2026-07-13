@@ -27,6 +27,8 @@ public class DataManager {
     public let bookmarks: BookmarkDataManager
     public let ratings: RatingsDataManager
     public let networkDataUsageManager: NetworkDataUsageManager
+    public let transcriptions: TranscriptionDataManager
+    public let transcriptIndex: TranscriptIndexDataManager
 
     let dbQueue: GRDBQueue
 
@@ -99,6 +101,8 @@ public class DataManager {
         bookmarks = BookmarkDataManager(dbQueue: dbQueue, fileSyncJournalManager: fileSyncJournalManager)
         ratings = RatingsDataManager()
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
+        transcriptions = TranscriptionDataManager(dbQueue: dbQueue)
+        transcriptIndex = TranscriptIndexDataManager(dbQueue: dbQueue)
     }
 
     private var databaseSize: String? {
@@ -433,6 +437,12 @@ public class DataManager {
         podcastManager.saveSkipChapterTitles(titles, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
 
+    /// Persists the per-podcast auto-transcribe-on-download opt-in into the settings JSON payload.
+    /// Device-local behavior — the field never syncs to the server.
+    public func saveAutoTranscribe(_ enabled: Bool, podcastUuid: String) {
+        podcastManager.saveAutoTranscribe(enabled, podcastUuid: podcastUuid, dbQueue: dbQueue)
+    }
+
     public func savePodcastDownloadSetting(_ setting: AutoDownloadSetting, podcastUuid: String) {
         podcastManager.savePodcastDownloadSetting(setting, podcastUuid: podcastUuid, dbQueue: dbQueue)
     }
@@ -546,6 +556,10 @@ public class DataManager {
         return episodes
     }
 
+    /// RETAINED raw-SQL API: playlist queries moved to the typed `episodes(matching:)`,
+    /// but many non-playlist call sites (download cleanup, podcast episode lists,
+    /// sync history, mirrors) still build WHERE strings. Do not add new callers;
+    /// migrate to typed requests instead.
     public func findEpisodesWhere(customWhere: String, arguments: [Any]?) -> [Episode] {
         episodeManager.findEpisodesWhere(customWhere: customWhere, arguments: arguments, dbQueue: dbQueue)
     }
@@ -554,8 +568,29 @@ public class DataManager {
         episodeManager.findEpisodes(with: term, podcastUUID: podcastUUID, dbQueue: dbQueue)
     }
 
-    public func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode] {
+    /// LEGACY, test-only: executes a full raw playlist SQL string. Kept internal as
+    /// the golden-reference execution path for PlaylistQueryBuilderParityTests; all
+    /// production playlist fetches use `episodes(matching:)`.
+    func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode] {
         episodeManager.findPlaylistEpisodesWhere(query: query, arguments: arguments, dbQueue: dbQueue)
+    }
+
+    /// Fetches episodes matching a typed request (see `PlaylistQueryBuilder`'s
+    /// `episodesRequest`/`filterEpisodesRequest`). Prefer this over the raw-string
+    /// `findEpisodesWhere`/`findPlaylistEpisodesWhere` APIs for playlist queries.
+    public func episodes(matching request: SQLRequest<Episode>) -> [Episode] {
+        dbQueue.fetchAll(request)
+    }
+
+    /// Fetches a single count value from a typed request (see `PlaylistQueryBuilder.countRequest`).
+    public func count(matching request: SQLRequest<Int>) -> Int {
+        dbQueue.fetchValue(request) ?? 0
+    }
+
+    /// Whether a typed existence probe (a `SELECT 1 ... LIMIT 1` request such as
+    /// `PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesRequest`) returns a row.
+    public func exists(matching request: SQLRequest<Int>) -> Bool {
+        dbQueue.fetchValue(request) != nil
     }
 
     public func findEpisodesAndPodcastsWhere(customWhere: String, listenedTo: Bool) -> [Episode] {
@@ -616,6 +651,24 @@ public class DataManager {
         let episodeCount = episodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
         let userEpisodeCount = userEpisodeManager.downloadedEpisodeCount(dbQueue: dbQueue)
         return episodeCount + userEpisodeCount
+    }
+
+    /// Count of unplayed, unarchived episodes belonging to subscribed podcasts,
+    /// optionally restricted to episodes added after a date. Backs the app icon badge.
+    public func subscribedUnplayedEpisodeCount(addedAfter: Date? = nil) -> Int {
+        count(matching: Self.subscribedUnplayedCountRequest(addedAfter: addedAfter))
+    }
+
+    /// Single source of truth for the badge's unplayed-count SQL: the synchronous
+    /// `subscribedUnplayedEpisodeCount` and `observeBadgeCount(.subscribedUnplayed)`
+    /// both run exactly this request.
+    static func subscribedUnplayedCountRequest(addedAfter: Date?) -> SQLRequest<Int> {
+        var query: SQL = "SELECT COUNT(e.id) FROM \(sql: DataManager.episodeTableName) e LEFT JOIN \(sql: DataManager.podcastTableName) p ON p.id = e.podcast_id WHERE p.subscribed = 1 AND e.playingStatus = \(PlayingStatus.notPlayed.rawValue) AND e.archived = 0"
+        if let addedAfter {
+            // addedDate is stored as epoch seconds (REAL), matching the legacy Date binding
+            query = query + " AND e.addedDate > \(addedAfter.timeIntervalSince1970)"
+        }
+        return SQLRequest(literal: query)
     }
 
     public func save(episode: BaseEpisode) {
@@ -1066,14 +1119,13 @@ public class DataManager {
 
     public func playlistEpisodes(for playlist: EpisodeFilter, limit: Int? = nil, sortType: PlaylistSort? = nil) -> [Episode] {
         let limit = limit ?? EpisodeDataManager.Constants.Limits.maxPlaylistItems
-        let query = PlaylistQueryBuilder.query(
-            clause: .episode,
+        let request = PlaylistQueryBuilder.episodesRequest(
             for: playlist,
             episodeUuidToAdd: nil,
             limit: limit,
             sortType: sortType
         )
-        return episodeManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments, dbQueue: dbQueue)
+        return episodes(matching: request)
     }
 
     public func playlistFirstDistinctEpisodes(
@@ -1083,19 +1135,28 @@ public class DataManager {
         search: String? = nil,
         episodeUuidToAdd: String? = nil
     ) -> [Episode] {
-        let query = PlaylistQueryBuilder.query(
-            clause: .firstDistinctEpisodes,
+        let request = PlaylistQueryBuilder.episodesRequest(
+            .firstDistinctEpisodes,
             for: playlist,
             episodeUuidToAdd: episodeUuidToAdd,
             searchTerm: search,
             limit: limit,
             shouldShowArchived: shouldShowArchived
         )
-        return episodeManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments, dbQueue: dbQueue)
+        return episodes(matching: request)
     }
 
     public func deleteDeletedPlaylists() {
         playlistManager.deleteDeletedPlaylists(dbQueue: dbQueue)
+    }
+
+    /// Validates a SQL-mode custom playlist fragment (a WHERE-clause body over the
+    /// `episode`/`podcast` aliases) and returns its current match count on success.
+    /// This is the only approved path for user-entered SQL to reach the database —
+    /// see `PlaylistQueryValidator` for the pipeline. Call off the main thread: the
+    /// final step trial-executes a count query.
+    public func validateCustomQueryFragment(_ fragment: String) -> Result<Int, CustomQueryValidationError> {
+        PlaylistQueryValidator.validate(fragment: fragment, dbQueue: dbQueue)
     }
 
     public func allUnsyncedPlaylists() -> [EpisodeFilter] {
@@ -1265,6 +1326,10 @@ public class DataManager {
 
     // MARK: - Advanced
 
+    /// RETAINED raw-SQL API: playlist counts moved to the typed `count(matching:)`,
+    /// but podcast/episode count sites across the app, Server module and tests
+    /// (push defaults, episode-limit prompts, podcast page counts) still pass raw
+    /// COUNT queries here. Delete once those callers migrate to typed requests.
     public func count(query: String, values: [Any]?) -> Int {
         var count = 0
         dbQueue.read { db in
@@ -1427,12 +1492,22 @@ extension DataManager {
         }
         defer { try? sourceDbQueue.close() }
 
+        // Virtual-table shadow tables (FTS5 *_data/_idx/_content/_docsize/_config) are
+        // maintained by SQLite and cannot be written directly; the virtual table itself
+        // is copied through its declared columns instead, which rebuilds its index.
         guard let tableNames: [String] = try? sourceDbQueue.read({ db in
-            try String.fetchAll(db,
+            let all = try String.fetchAll(db,
                 sql: """
                 SELECT name FROM sqlite_master
                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
                 """)
+            let virtualTables = try String.fetchAll(db,
+                sql: """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'
+                """)
+            let shadowPrefixes = virtualTables.map { $0 + "_" }
+            return all.filter { name in !shadowPrefixes.contains { name.hasPrefix($0) } }
         }) else {
             return false
         }
@@ -1477,13 +1552,21 @@ extension DataManager {
 
         let destinationDbQueue = dbQueue.dbPool
 
-        // Fetch all table names (excluding SQLite internal tables and SJEpisode)
+        // Fetch all table names (excluding SQLite internal tables, SJEpisode, and
+        // virtual-table shadow tables, which SQLite maintains and forbids writing).
         let tableNames: [String]? = try? sourceDbQueue.read { db in
-            try? String.fetchAll(db,
+            let all = try String.fetchAll(db,
                 sql: """
                 SELECT name FROM sqlite_master
                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'SJEpisode'
                 """)
+            let virtualTables = try String.fetchAll(db,
+                sql: """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'
+                """)
+            let shadowPrefixes = virtualTables.map { $0 + "_" }
+            return all.filter { name in !shadowPrefixes.contains { name.hasPrefix($0) } }
         }
 
         for tableName in tableNames ?? [] {

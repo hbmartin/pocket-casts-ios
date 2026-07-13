@@ -888,7 +888,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             XCTAssertEqual(found?.settings.episodeGrouping, .season, "\(impl): Episode grouping setting should be persisted")
             XCTAssertEqual(found?.settings.notification, true, "\(impl): Notification setting should be persisted")
             XCTAssertEqual(found?.settings.autoArchiveEpisodeLimit, 15, "\(impl): Auto archive limit setting should be persisted")
-            XCTAssertEqual(found?.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): Settings save should mark podcast unsynced")
+            XCTAssertEqual(found?.syncStatus, SyncStatus.synced.rawValue, "\(impl): save must preserve the caller's syncStatus (sync import path saves server state as synced)")
         }
     }
 
@@ -1069,7 +1069,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             podcast.showArchived = true
             podcast.episodeGrouping = PodcastGrouping.season.rawValue
             podcast.isPaid = true
-            podcast.overrideGlobalArchive = true
+            podcast.isAutoArchiveOverridden = true
             podcast.pushEnabled = true
             podcast.autoAddToUpNext = AutoAddToUpNextSetting.addFirst.rawValue
             podcast.autoDownloadSetting = AutoDownloadSetting.latest.rawValue
@@ -1223,11 +1223,13 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         podcast.subscribed = subscribed
         podcast.sortOrder = sortOrder
         podcast.folderUuid = folderUuid
-        podcast.syncStatus = syncStatus
         podcast.showArchived = showArchived
         podcast.episodeGrouping = episodeGrouping
         podcast.isPaid = isPaid
-        podcast.overrideGlobalArchive = overrideGlobalArchive
+        podcast.isAutoArchiveOverridden = overrideGlobalArchive
+        // After isAutoArchiveOverridden: its setter marks the podcast unsynced under
+        // newSettingsStorage, and the caller's requested syncStatus must win.
+        podcast.syncStatus = syncStatus
         podcast.addedDate = addedDate
         podcast.pushEnabled = pushEnabled
         podcast.autoAddToUpNext = autoAddToUpNext

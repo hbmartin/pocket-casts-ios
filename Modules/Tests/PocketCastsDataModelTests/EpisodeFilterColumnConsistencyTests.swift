@@ -8,9 +8,39 @@ import GRDB
 /// (or vice versa), causing inconsistent behavior when the feature flag is toggled.
 final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
 
-    /// Access columnNames directly from PlaylistDataManager (the source of truth for legacy SQL).
+    /// The playlist columns every implementation must persist. This used to live on
+    /// PlaylistDataManager for the raw-SQL read path; that path is gone, so the test
+    /// now owns the expected schema surface.
     private var columnNames: Set<String> {
-        Set(PlaylistDataManager().columnNames)
+        [
+            "id",
+            "autoDownloadEpisodes",
+            "customIcon",
+            "filterAllPodcasts",
+            "filterAudioVideoType",
+            "filterDownloaded",
+            "filterFinished",
+            "filterNotDownloaded",
+            "filterPartiallyPlayed",
+            "filterStarred",
+            "filterUnplayed",
+            "filterHours",
+            "playlistName",
+            "sortPosition",
+            "sortType",
+            "uuid",
+            "podcastUuids",
+            "autoDownloadLimit",
+            "syncStatus",
+            "wasDeleted",
+            "filterDuration",
+            "longerThan",
+            "shorterThan",
+            "manual",
+            "showArchivedEpisodes",
+            "playlistUpdateDate",
+            "customQuery"
+        ]
     }
 
     // MARK: - Database Schema Tests
@@ -74,6 +104,43 @@ final class EpisodeFilterColumnConsistencyTests: DataManagerTestCase {
             XCTAssertEqual(loaded.wasDeleted, original.wasDeleted, "\(implementationName): wasDeleted should match")
             XCTAssertEqual(loaded.manual, original.manual, "\(implementationName): manual should match")
             XCTAssertEqual(loaded.showArchivedEpisodes, original.showArchivedEpisodes, "\(implementationName): showArchivedEpisodes should match")
+            XCTAssertEqual(loaded.customQuery, original.customQuery, "\(implementationName): customQuery should match")
+        }
+    }
+
+    /// Migration 79 round-trip: customQuery persists (and stays nil for regular
+    /// playlists), and the computed isCustom derives from it.
+    func testCustomQueryRoundTripAndIsCustom() throws {
+        try runWithBothImplementations { dataManager, implementationName in
+            var custom = EpisodeFilter()
+            custom.uuid = UUID().uuidString.lowercased()
+            custom.playlistName = "Custom Filter"
+            custom.customQuery = #"{"version":1,"mode":"sql","sql":"episode.duration > 1800"}"#
+            dataManager.save(playlist: custom)
+
+            let loadedCustom = try XCTUnwrap(dataManager.findPlaylist(uuid: custom.uuid))
+            XCTAssertEqual(loadedCustom.customQuery, custom.customQuery, "\(implementationName): customQuery should round-trip")
+            XCTAssertTrue(loadedCustom.isCustom, "\(implementationName): non-manual playlist with an envelope is custom")
+
+            var regular = EpisodeFilter()
+            regular.uuid = UUID().uuidString.lowercased()
+            regular.playlistName = "Regular Filter"
+            dataManager.save(playlist: regular)
+
+            let loadedRegular = try XCTUnwrap(dataManager.findPlaylist(uuid: regular.uuid))
+            XCTAssertNil(loadedRegular.customQuery, "\(implementationName): customQuery should stay nil")
+            XCTAssertFalse(loadedRegular.isCustom)
+
+            // manual wins over a stray envelope
+            var manual = EpisodeFilter()
+            manual.uuid = UUID().uuidString.lowercased()
+            manual.playlistName = "Manual Filter"
+            manual.manual = true
+            manual.customQuery = custom.customQuery
+            dataManager.save(playlist: manual)
+
+            let loadedManual = try XCTUnwrap(dataManager.findPlaylist(uuid: manual.uuid))
+            XCTAssertFalse(loadedManual.isCustom, "\(implementationName): manual playlists are never custom")
         }
     }
 

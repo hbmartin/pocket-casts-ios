@@ -1,0 +1,24 @@
+# Mutation testing (program item 38): scoped to the fast, hermetic SPM module
+# suites — DataModel, Utils, FileSync. Run from the nightly/manual workflow
+# (.github/workflows/mutation-tests.yml), never per-PR (runtime is hours).
+# Surviving mutants are test gaps: triage them into issues, don't chase 100%.
+executable: /usr/bin/xcrun
+arguments:
+  - xcodebuild
+  - test
+  - -project
+  - podcasts.xcodeproj
+  - -scheme
+  - Pocket Casts Staging
+  - -destination
+  - platform=iOS Simulator,name=iPhone 16 Pro
+  - -only-testing:PocketCastsDataModelTests
+  - -only-testing:PocketCastsUtilsTests
+  - -only-testing:PocketCastsFileSyncTests
+mutateSourcesInDirectories:
+  - Modules/Sources/PocketCastsDataModel
+  - Modules/Sources/PocketCastsUtils
+  - Modules/Sources/PocketCastsFileSync
+exclude:
+  - "**/*.pb.swift"
+  - "**/Protobuffer/**"

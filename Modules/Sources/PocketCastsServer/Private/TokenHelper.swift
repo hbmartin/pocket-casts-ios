@@ -4,11 +4,35 @@ import PocketCastsUtils
 import UIKit
 #endif
 
+/// Serializes token acquisition so only one credential grant (refresh or login) is ever
+/// in flight per process; concurrent callers await the same in-flight task and share its
+/// result. Single-flight must precede server-side refresh-token rotation (plan C.0-3):
+/// two concurrent refresh grants presenting the same token would race the rotation.
+actor TokenAcquisitionSerializer {
+    private var inFlightTask: Task<AuthenticationResponse?, Error>?
+
+    func acquire(_ operation: @escaping @Sendable () async throws -> AuthenticationResponse?) async throws -> AuthenticationResponse? {
+        if let inFlightTask {
+            return try await inFlightTask.value
+        }
+
+        let task = Task { try await operation() }
+        inFlightTask = task
+        defer { inFlightTask = nil }
+        return try await task.value
+    }
+}
+
 // Token state lives in the keychain/ServerSettings; the only stored property
 // is an immutable URLConnection.
 final class TokenHelper: Sendable {
 
     static let shared = TokenHelper(urlConnection: URLConnection(handler: URLSession.shared))
+
+    // Process-wide on purpose: helpers constructed with their own URLConnection
+    // (DiscoverServerHandler's caching connection, tests) still share one single-flight
+    // gate, so at most one credential grant is in flight regardless of instance.
+    private static let acquisitionSerializer = TokenAcquisitionSerializer()
 
     private let urlConnection: URLConnection
 
@@ -38,7 +62,7 @@ final class TokenHelper: Sendable {
         }
     }
 
-    private func performCallSecureUrl(request: URLRequest, retryOnUnauthorized: Bool = true, completion: @escaping @Sendable (HTTPURLResponse?, Data?, Error?) -> Void) {
+    private func performCallSecureUrl(request: URLRequest, retryOnUnauthorized: Bool = true, retryOnTooManyRequests: Bool = true, completion: @escaping @Sendable (HTTPURLResponse?, Data?, Error?) -> Void) {
         var mutableRequest = request
 
         if let privateUserAgent = ServerConfig.shared.syncDelegate?.privateUserAgent() {
@@ -47,7 +71,9 @@ final class TokenHelper: Sendable {
 
         if SyncManager.isUserLoggedIn() {
             let token: String
-            if let storedToken = try? KeychainHelper.string(for: ServerConstants.Values.syncingV2TokenKey) {
+            // A stored token past its expiry hint counts as absent, so we refresh
+            // proactively instead of burning a request to collect the 401.
+            if let storedToken = ServerSettings.validSyncingV2Token() {
                 token = storedToken
             } else if let newToken = acquireToken() {
                 token = newToken
@@ -69,9 +95,26 @@ final class TokenHelper: Sendable {
                 if SyncManager.isUserLoggedIn(), retryOnUnauthorized {
                     KeychainHelper.removeKey(ServerConstants.Values.syncingV2TokenKey)
                     FileLog.shared.addMessage("TokenHelper: Removed syncingV2TokenKey due to 401 unauthorized retrying url: \(request.url?.absoluteString ?? "unknown")")
-                    self?.performCallSecureUrl(request: request, retryOnUnauthorized: false, completion: completion)
+                    self?.performCallSecureUrl(request: request, retryOnUnauthorized: false, retryOnTooManyRequests: retryOnTooManyRequests, completion: completion)
                 } else {
                     completion(httpResponse, nil, error)
+                }
+
+                return
+            }
+
+            if httpResponse.statusCode == ServerConstants.HttpConstants.tooManyRequests {
+                if let self, retryOnTooManyRequests {
+                    // Honor Retry-After with a single capped retry, not a loop.
+                    let delay = httpResponse.tooManyRequestsRetryDelay()
+                    FileLog.shared.addMessage("TokenHelper: 429 rate limited, retrying once in \(delay)s url: \(request.url?.absoluteString ?? "unknown")")
+                    // Strong capture: a one-shot retry must deliver its completion even if
+                    // no other reference to this helper remains while we wait.
+                    DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+                        self.performCallSecureUrl(request: request, retryOnUnauthorized: retryOnUnauthorized, retryOnTooManyRequests: false, completion: completion)
+                    }
+                } else {
+                    completion(httpResponse, data, error)
                 }
 
                 return
@@ -84,15 +127,13 @@ final class TokenHelper: Sendable {
     func acquireToken() -> String? {
         // The semaphore establishes the happens-before edge for the boxed result.
         let semaphore = DispatchSemaphore(value: 0)
-        let box = UncheckedSendableBox<(token: String?, refreshToken: String?, error: Error?)>((nil, nil, nil))
+        let box = UncheckedSendableBox<(response: AuthenticationResponse?, error: Error?)>((nil, nil))
 
         asyncAcquireToken { result in
             switch result {
             case .success(let authenticationResponse):
-                box.value.token = authenticationResponse?.token
-                box.value.refreshToken = authenticationResponse?.refreshToken
+                box.value.response = authenticationResponse
             case .failure(let resultError):
-                box.value.token = nil
                 box.value.error = resultError
             }
             semaphore.signal()
@@ -100,12 +141,8 @@ final class TokenHelper: Sendable {
 
         semaphore.wait()
 
-        let (refreshedToken, refreshedRefreshToken, error) = box.value
-        if let token = refreshedToken, !token.isEmpty {
-            ServerSettings.syncingV2Token = token
-            ServerSettings.setRefreshToken(refreshedRefreshToken)
-        }
-        else {
+        let (response, error) = box.value
+        guard let refreshedToken = response?.token, !refreshedToken.isEmpty else {
             if isApplicationBackgrounded() {
                 FileLog.shared.addMessage("TokenHelper: Skipped logout in background due to error: \(String(describing: error))")
             } else {
@@ -121,6 +158,17 @@ final class TokenHelper: Sendable {
 
             return nil
         }
+
+        ServerSettings.syncingV2Token = refreshedToken
+        // C.0-1: proto strings default to "" when omitted — never overwrite the stored
+        // refresh token with an empty value (it would silently brick future refreshes).
+        // Keep the previous token when the response didn't carry one.
+        if let refreshedRefreshToken = response?.refreshToken, !refreshedRefreshToken.isEmpty {
+            ServerSettings.setRefreshToken(refreshedRefreshToken)
+        }
+        // C.0-2: persist the expiry hint for the new token; when the server didn't send
+        // expires_in this clears any stale hint (the 401 path remains the authority).
+        ServerSettings.setTokenExpiry(expiresIn: response?.expiresIn)
 
         return refreshedToken
     }
@@ -142,9 +190,84 @@ final class TokenHelper: Sendable {
         return isBackgrounded.value
     }
 
+    // MARK: - Token Acquisition
+
+    func asyncAcquireToken(completion: @escaping @Sendable (Result<AuthenticationResponse?, Error>) -> Void) {
+        Task {
+            do {
+                let response = try await Self.acquisitionSerializer.acquire { [self] in
+                    try await performTokenAcquisition()
+                }
+                completion(.success(response))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
+    /// The single-flight acquisition body. Runs at most once per in-flight window;
+    /// concurrent acquirers share the result.
+    private func performTokenAcquisition() async throws -> AuthenticationResponse? {
+        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
+            return try await performTokenAcquisitionPreferringRefreshGrant()
+        }
+
+        // Legacy order: replay the stored password when present, otherwise the SSO refresh grant.
+        if let authenticationResponse = try await acquirePasswordToken() {
+            return authenticationResponse
+        }
+
+        return try await acquireIdentityToken()
+    }
+
+    /// Workstream A (plan §2.4.1/§2.4.3): the refresh grant comes first whenever a refresh
+    /// token exists, regardless of account type. A stored password is used for at most one
+    /// final user/login to migrate the account to a refresh-token pair.
+    private func performTokenAcquisitionPreferringRefreshGrant() async throws -> AuthenticationResponse? {
+        if let refreshToken = try? ServerSettings.refreshToken(), !refreshToken.isEmpty {
+            return try await acquireIdentityToken()
+        }
+
+        if let authenticationResponse = try await acquirePasswordToken() {
+            migratePasswordAccountIfPossible(response: authenticationResponse)
+            return authenticationResponse
+        }
+
+        // No refresh token and no stored password: not signed in (nothing to recover with).
+        return nil
+    }
+
+    /// §2.4.3 step 2: one-shot upgrade of a password account to refresh-token auth.
+    /// Persists the token pair and deletes the stored password ONLY when the server
+    /// returned a non-empty refresh token (server ≥ M1). Otherwise today's behavior is
+    /// kept — the password stays put and migration retries on a later acquire, which
+    /// makes this client release safe to ship before the server flips and tolerant of
+    /// a server rollback.
+    func migratePasswordAccountIfPossible(response: AuthenticationResponse) {
+        guard FeatureFlag.refreshTokenForPasswordAuth.enabled,
+              let refreshToken = response.refreshToken, !refreshToken.isEmpty
+        else {
+            return
+        }
+
+        if let token = response.token, !token.isEmpty {
+            ServerSettings.syncingV2Token = token
+        }
+        ServerSettings.setRefreshToken(refreshToken)
+        ServerSettings.setTokenExpiry(expiresIn: response.expiresIn)
+        KeychainHelper.removeKey(ServerConstants.Values.syncingLoginItemName)
+        ServerSettings.accountAuthMethod = .password
+        // Migration marker only — never log token or password material.
+        FileLog.shared.addMessage("TokenHelper: password account migrated to refresh-token auth; stored password removed")
+    }
+
     // MARK: - Email / Password Token
 
-    func acquirePasswordToken() throws -> AuthenticationResponse? {
+    func acquirePasswordToken() async throws -> AuthenticationResponse? {
+        try await acquirePasswordToken(retryOnTooManyRequests: true)
+    }
+
+    private func acquirePasswordToken(retryOnTooManyRequests: Bool) async throws -> AuthenticationResponse? {
         guard let email = ServerSettings.syncingEmail(), let password = ServerSettings.syncingPassword() else {
             // if the user doesn't have an email and password, then we'll check if they're using SSO
             return nil
@@ -168,8 +291,22 @@ final class TokenHelper: Sendable {
             let data = try loginRequest.serializedData()
             request.httpBody = data
 
-            let (responseData, response) = try urlConnection.sendSynchronousRequest(with: request)
-            guard let validData = responseData, let httpResponse = response as? HTTPURLResponse else {
+            let (responseData, response) = try await urlConnection.send(request: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                FileLog.shared.addMessage("TokenHelper: Unable to acquire token")
+                return nil
+            }
+
+            // Before the body guard: rate-limit responses legitimately carry no body.
+            if httpResponse.statusCode == ServerConstants.HttpConstants.tooManyRequests, retryOnTooManyRequests {
+                // Honor Retry-After with a single capped retry, not a loop.
+                let delay = httpResponse.tooManyRequestsRetryDelay()
+                FileLog.shared.addMessage("TokenHelper: user/login rate limited (429), retrying once in \(delay)s")
+                try await Task.sleep(for: .seconds(delay))
+                return try await acquirePasswordToken(retryOnTooManyRequests: false)
+            }
+
+            guard let validData = responseData else {
                 FileLog.shared.addMessage("TokenHelper: Unable to acquire token")
                 return nil
             }
@@ -192,30 +329,6 @@ final class TokenHelper: Sendable {
         }
     }
 
-
-    // MARK: - Email / Password Token
-
-    func asyncAcquireToken(completion: @escaping @Sendable (Result<AuthenticationResponse?, Error>) -> Void) {
-        do {
-            if let authenticationResponse = try acquirePasswordToken() {
-                completion(.success(authenticationResponse))
-                return
-            }
-        } catch {
-            completion(.failure(error))
-            return
-        }
-
-        Task {
-            do {
-                let authenticationResponse = try await acquireIdentityToken()
-                completion(.success(authenticationResponse))
-            } catch {
-                completion(.failure(error))
-            }
-        }
-    }
-
     // MARK: - SSO Identity Token
 
     private func acquireIdentityToken() async throws -> AuthenticationResponse {
@@ -235,7 +348,9 @@ final class TokenHelper: Sendable {
             logMessages.append("no email address")
         }
 
-        if ServerSettings.syncingPassword() == nil {
+        // Workstream A: once refresh-token auth is on, "can this account recover?" is a
+        // has-refresh-token question only; the stored password no longer participates.
+        if !FeatureFlag.refreshTokenForPasswordAuth.enabled, ServerSettings.syncingPassword() == nil {
             logMessages.append("no password")
         }
 

@@ -2,6 +2,14 @@ import Foundation
 import PocketCastsUtils
 import RegexBuilder
 
+/// Builds the playlist episode queries (filters, widgets, intents, autoplay).
+///
+/// The string-based `query(clause:...)`, `queryFor(filter:...)` and
+/// `podcastExistsInPlaylistEpisodesQuery(includeDeleted:)` APIs below are LEGACY:
+/// they remain only as the golden reference for `PlaylistQueryBuilderParityTests`
+/// (and for the SQL-text snapshot tests). All production consumers use the typed
+/// `SQLRequest` APIs in PlaylistQueryRequests.swift; do not add new callers of the
+/// string APIs.
 public class PlaylistQueryBuilder {
     static let episodeLimit: Int = 1000
 
@@ -236,7 +244,19 @@ public class PlaylistQueryBuilder {
             var queryValues = [QueryResult]()
             let addedUuid = add(episodeUuidToAdd: episodeUuidToAdd, arguments: &arguments)
             queryValues.append(addedUuid)
-            queryValues.append(add(smartRulesFor: playlist, arguments: &arguments))
+            if playlist.isCustom {
+                // Custom playlists are typed-first by design: the only production
+                // entry points are the SQLRequest builders in
+                // PlaylistQueryRequests.swift, which compile the customQuery
+                // envelope. This legacy golden reference intentionally renders them
+                // as an always-empty rule group instead of duplicating the envelope
+                // compiler. Do NOT add custom-playlist fixtures to
+                // PlaylistQueryBuilderParityTests — the implementations diverge here
+                // on purpose (the parity matrix stays smart/manual only).
+                queryValues.append(.value("0", true))
+            } else {
+                queryValues.append(add(smartRulesFor: playlist, arguments: &arguments))
+            }
             var stringifiedValues = queryValues.map({$0.value}).joined(separator: " ")
             PlaylistQueryBuilder.removeEmptyFilterGroups(from: &stringifiedValues)
 
@@ -287,12 +307,19 @@ public class PlaylistQueryBuilder {
 
     /// Wraps a search term in % wildcards for a LIKE comparison, escaping any
     /// literal %, _ or \ in the term itself (the queries declare ESCAPE '\').
-    private static func likePattern(for searchTerm: String) -> String {
-        let escaped = searchTerm
+    /// Internal (not private) so the typed request builder in
+    /// PlaylistQueryRequests.swift shares the exact same implementation.
+    static func likePattern(for searchTerm: String) -> String {
+        return "%\(likeEscaped(searchTerm).uppercased())%"
+    }
+
+    /// Escapes literal %, _ and \ in a LIKE operand (the queries declare ESCAPE '\').
+    /// Shared by `likePattern(for:)` and `CustomQueryCompiler`'s text operators.
+    static func likeEscaped(_ term: String) -> String {
+        term
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "%", with: "\\%")
             .replacingOccurrences(of: "_", with: "\\_")
-        return "%\(escaped.uppercased())%"
     }
 
     /// Returns a search predicate prefixed with `AND`; callers must append it after a
@@ -917,6 +944,20 @@ public class PlaylistQueryBuilder {
             queryString += "AND ("
         }
 
+        if filter.isCustom {
+            // Same intentional divergence as `query(clause:...)`: custom playlists
+            // are typed-first (see PlaylistQueryRequests.filterEpisodesRequest, which
+            // routes them to the joined episode query), so the legacy fragment
+            // renders an always-empty rule group. Keep custom playlists out of the
+            // parity fixtures.
+            queryString += "0)"
+            if addedUuid { queryString += ")" }
+            if limit > 0 {
+                queryString += " LIMIT \(limit)"
+            }
+            return (queryString, arguments)
+        }
+
         var haveStartedWhere = false
         // Playing Status
         if !(filter.filterUnplayed && filter.filterPartiallyPlayed && filter.filterFinished), filter.filterUnplayed || filter.filterPartiallyPlayed || filter.filterFinished {
@@ -1045,6 +1086,100 @@ public class PlaylistQueryBuilder {
         return (queryString, arguments)
     }
 
+    // MARK: - Custom-playlist seeding
+
+    /// A plain-text rendering of a smart playlist's active rules as a SQL
+    /// WHERE-clause body over the `episode.` alias, used to seed the custom-playlist
+    /// SQL editor ("start from current rules").
+    ///
+    /// Differences from the executable builders, by design:
+    /// - Values are inlined (podcast uuids as quoted literals) so the result is a
+    ///   self-contained, human-editable fragment with no bound arguments.
+    /// - The automatic unsubscribed-podcast exclusion is stripped: custom playlists
+    ///   never force-exclude unsubscribed podcasts (the `podcastSubscribed` field
+    ///   exists for users who want that rule explicitly).
+    /// - The release-date window is rendered against "now" once; the seeded text is a
+    ///   snapshot, not a live rule.
+    ///
+    /// Returns an empty string when the playlist has no active rules.
+    public class func smartRulesFragment(for playlist: EpisodeFilter) -> String {
+        var rules = [String]()
+
+        if !(playlist.filterUnplayed && playlist.filterPartiallyPlayed && playlist.filterFinished),
+           playlist.filterUnplayed || playlist.filterPartiallyPlayed || playlist.filterFinished {
+            var statuses = [String]()
+            if playlist.filterUnplayed {
+                statuses.append("episode.playingStatus = \(PlayingStatus.notPlayed.rawValue)")
+            }
+            if playlist.filterPartiallyPlayed {
+                statuses.append("episode.playingStatus = \(PlayingStatus.inProgress.rawValue)")
+            }
+            if playlist.filterFinished {
+                statuses.append("episode.playingStatus = \(PlayingStatus.completed.rawValue)")
+            }
+            rules.append("(\(statuses.joined(separator: " OR ")))")
+        }
+
+        if playlist.filterAudioVideoType == AudioVideoFilter.videoOnly.rawValue {
+            rules.append("episode.fileType LIKE 'video%'")
+        }
+        if playlist.filterAudioVideoType == AudioVideoFilter.audioOnly.rawValue {
+            rules.append("episode.fileType LIKE 'audio%'")
+        }
+
+        if !(playlist.filterDownloaded && playlist.filterDownloading && playlist.filterNotDownloaded),
+           playlist.filterDownloaded || playlist.filterDownloading || playlist.filterNotDownloaded {
+            var statuses = [String]()
+            if playlist.filterDownloaded {
+                statuses.append("episode.episodeStatus = \(DownloadStatus.downloaded.rawValue)")
+            }
+            if playlist.filterDownloading {
+                statuses.append("episode.episodeStatus = \(DownloadStatus.queued.rawValue)")
+                statuses.append("episode.episodeStatus = \(DownloadStatus.downloading.rawValue)")
+            }
+            if playlist.filterNotDownloaded {
+                statuses.append("episode.episodeStatus = \(DownloadStatus.notDownloaded.rawValue)")
+                statuses.append("episode.episodeStatus = \(DownloadStatus.downloadFailed.rawValue)")
+                statuses.append("episode.episodeStatus = \(DownloadStatus.waitingForWifi.rawValue)")
+            }
+            rules.append("(\(statuses.joined(separator: " OR ")))")
+        }
+
+        if playlist.filterDuration {
+            let longerThanTime = playlist.longerThan * 60
+            // Matches the executable builders: +59s so the SQL window lines up with
+            // the whole-minute UI representation.
+            let shorterThanTime = (playlist.shorterThan * 60) + 59
+            rules.append("(episode.duration >= \(longerThanTime) AND episode.duration <= \(shorterThanTime))")
+        }
+
+        if playlist.filterStarred {
+            rules.append("episode.keepEpisode = 1")
+        }
+
+        if !playlist.filterAllPodcasts, !playlist.podcastUuids.isEmpty, playlist.podcastUuids != "null" {
+            let quoted = playlist.podcastUuids
+                .components(separatedBy: ",")
+                .map(sqlStringLiteral)
+                .joined(separator: ", ")
+            rules.append("episode.podcastUuid IN (" + quoted + ")")
+        }
+
+        // The unsubscribed-podcast exclusion is deliberately not seeded (see doc comment).
+
+        if playlist.filterHours > 0 {
+            rules.append("episode.publishedDate > \(filterTimeFor(hours: playlist.filterHours))")
+        }
+
+        return rules.joined(separator: " AND ")
+    }
+
+    /// A single-quoted SQL string literal with embedded quotes doubled. Only used for
+    /// seeding editor text; executable queries always bind values instead.
+    private class func sqlStringLiteral(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "''") + "'"
+    }
+
     private class func removeEmptyFilterGroups(from string: inout String) {
         func emptyGroup(for keyword: String) -> Regex<Substring> {
             Regex {
@@ -1061,7 +1196,9 @@ public class PlaylistQueryBuilder {
         string = string.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private class func filterTimeFor(hours: Int32) -> TimeInterval {
+    /// Internal (not private) so the typed request builder in
+    /// PlaylistQueryRequests.swift shares the exact same implementation.
+    class func filterTimeFor(hours: Int32) -> TimeInterval {
         let changedTime = Date(timeIntervalSinceNow: TimeInterval(hours * -3600))
 
         return changedTime.timeIntervalSince1970

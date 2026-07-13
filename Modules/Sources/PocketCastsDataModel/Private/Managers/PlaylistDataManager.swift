@@ -21,36 +21,6 @@ struct ManualPlaylistEpisodeRow: Equatable, Sendable {
 }
 
 class PlaylistDataManager {
-    /// Legacy column names for non-GRDB code path.
-    let columnNames = [
-        "id",
-        "autoDownloadEpisodes",
-        "customIcon",
-        "filterAllPodcasts",
-        "filterAudioVideoType",
-        "filterDownloaded",
-        "filterFinished",
-        "filterNotDownloaded",
-        "filterPartiallyPlayed",
-        "filterStarred",
-        "filterUnplayed",
-        "filterHours",
-        "playlistName",
-        "sortPosition",
-        "sortType",
-        "uuid",
-        "podcastUuids",
-        "autoDownloadLimit",
-        "syncStatus",
-        "wasDeleted",
-        "filterDuration",
-        "longerThan",
-        "shorterThan",
-        "manual",
-        "showArchivedEpisodes",
-        "playlistUpdateDate"
-    ]
-
     func count(includeDeleted: Bool, dbQueue: GRDBQueue) -> Int {
         if includeDeleted {
             return dbQueue.count(EpisodeFilter.self)
@@ -58,40 +28,19 @@ class PlaylistDataManager {
         return dbQueue.count(EpisodeFilter.self, filter: EpisodeFilter.Columns.wasDeleted == false)
     }
 
-    func playlistEpisodeCount(clause: PlaylistQueryBuilder.SelectClause, playlist: EpisodeFilter, episodeUuidToAdd: String?, shouldShowArchived: Bool, dbQueue: GRDBQueue) -> Int {
-        var count = 0
-        dbQueue.read { db in
-            do {
-                let query = PlaylistQueryBuilder.query(clause: clause, for: playlist, episodeUuidToAdd: episodeUuidToAdd, shouldShowArchived: shouldShowArchived)
-                let resultSet = try db.executeQuery(query.sql, values: query.arguments) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - PlaylistQueryBuilder generated smart-playlist query, fully parameterized
-                defer { resultSet.close() }
-
-                if resultSet.next() {
-                    count = resultSet.long(forColumnIndex: 0)
-                }
-            } catch {
-                FileLog.shared.addMessage("PlaylistDataManager.smartPlaylistEpisodeCount error: \(error)")
-            }
-        }
-
-        return count
+    func playlistEpisodeCount(clause: PlaylistQueryBuilder.CountSelection, playlist: EpisodeFilter, episodeUuidToAdd: String?, shouldShowArchived: Bool, dbQueue: GRDBQueue) -> Int {
+        let request = PlaylistQueryBuilder.countRequest(
+            clause,
+            for: playlist,
+            episodeUuidToAdd: episodeUuidToAdd,
+            shouldShowArchived: shouldShowArchived
+        )
+        return dbQueue.fetchValue(request) ?? 0
     }
 
     func playlistContainsPodcast(podcastUuid: String, includeDeleted: Bool = false, dbQueue: GRDBQueue) -> Bool {
-        var exists = false
-        dbQueue.read { db in
-            do {
-                let query = PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesQuery(includeDeleted: includeDeleted)
-                let resultSet = try db.executeQuery(query, values: [podcastUuid]) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - PlaylistQueryBuilder generated query, fully parameterized
-                defer { resultSet.close() }
-
-                exists = resultSet.next()
-            } catch {
-                FileLog.shared.addMessage("PlaylistDataManager.playlistContainsPodcast error: \(error)")
-            }
-        }
-
-        return exists
+        let request = PlaylistQueryBuilder.podcastExistsInPlaylistEpisodesRequest(podcastUuid: podcastUuid, includeDeleted: includeDeleted)
+        return dbQueue.fetchValue(request) != nil
     }
 
     /// The GRDB twin of the raw `SELECT *` playlist list queries: optional manual/deleted filters,
@@ -131,6 +80,10 @@ class PlaylistDataManager {
         return dbQueue.fetchAll(
             EpisodeFilter
                 .filter(EpisodeFilter.Columns.syncStatus == SyncStatus.notSynced.rawValue)
+                // Custom playlists are device-local: the sync protocol cannot
+                // represent customQuery, so they are never offered for upload
+                // (SyncTask.changedPlaylists is the sole consumer).
+                .filter(EpisodeFilter.Columns.customQuery == nil)
                 .order(EpisodeFilter.Columns.sortPosition.asc)
         )
     }
@@ -372,27 +325,10 @@ class PlaylistDataManager {
     func markAllUnsynced(dbQueue: GRDBQueue) {
         dbQueue.updateAll(
             EpisodeFilter.self,
-            filter: EpisodeFilter.Columns.syncStatus == SyncStatus.synced.rawValue,
+            // Custom playlists stay out of the upload queue (see allUnsyncedPlaylists).
+            filter: EpisodeFilter.Columns.syncStatus == SyncStatus.synced.rawValue && EpisodeFilter.Columns.customQuery == nil,
             EpisodeFilter.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
         )
-    }
-
-    private func allPlaylists(query: String, values: [Any]?, dbQueue: GRDBQueue) -> [EpisodeFilter] {
-        var allPlaylists = [EpisodeFilter]()
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery(query, values: values) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - caller-supplied-SQL API plumbing for query-builder episode fetches
-                defer { resultSet.close() }
-
-                while resultSet.next() {
-                    let filter = self.createPlaylistFrom(resultSet: resultSet)
-                    allPlaylists.append(filter)
-                }
-            } catch {
-                FileLog.shared.addMessage("PlaylistDataManager.allPlaylists error: \(error)")
-            }
-        }
-        return allPlaylists
     }
 
     func nextSortPositionForPlaylist(dbQueue: GRDBQueue) -> Int {
@@ -475,39 +411,5 @@ class PlaylistDataManager {
         }
 
         return true
-    }
-
-    // MARK: - Conversion
-
-    private func createPlaylistFrom(resultSet rs: PCDBResultSet) -> EpisodeFilter {
-        var playlist = EpisodeFilter()
-        playlist.id = rs.longLongInt(forColumn: "id")
-        playlist.autoDownloadEpisodes = rs.bool(forColumn: "autoDownloadEpisodes")
-        playlist.customIcon = rs.int(forColumn: "customIcon")
-        playlist.filterAllPodcasts = rs.bool(forColumn: "filterAllPodcasts")
-        playlist.filterAudioVideoType = rs.int(forColumn: "filterAudioVideoType")
-        playlist.filterDownloaded = rs.bool(forColumn: "filterDownloaded")
-        playlist.filterFinished = rs.bool(forColumn: "filterFinished")
-        playlist.filterNotDownloaded = rs.bool(forColumn: "filterNotDownloaded")
-        playlist.filterPartiallyPlayed = rs.bool(forColumn: "filterPartiallyPlayed")
-        playlist.filterStarred = rs.bool(forColumn: "filterStarred")
-        playlist.filterUnplayed = rs.bool(forColumn: "filterUnplayed")
-        playlist.filterHours = rs.int(forColumn: "filterHours")
-        playlist.playlistName = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "playlistName")
-        playlist.sortPosition = rs.int(forColumn: "sortPosition")
-        playlist.sortType = rs.int(forColumn: "sortType")
-        playlist.uuid = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "uuid")
-        playlist.podcastUuids = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "podcastUuids")
-        playlist.autoDownloadLimit = rs.int(forColumn: "autoDownloadLimit")
-        playlist.syncStatus = rs.int(forColumn: "syncStatus")
-        playlist.wasDeleted = rs.bool(forColumn: "wasDeleted")
-        playlist.filterDuration = rs.bool(forColumn: "filterDuration")
-        playlist.longerThan = rs.int(forColumn: "longerThan")
-        playlist.shorterThan = rs.int(forColumn: "shorterThan")
-        playlist.manual = rs.bool(forColumn: "manual")
-        playlist.showArchivedEpisodes = rs.bool(forColumn: "showArchivedEpisodes")
-        playlist.playlistUpdateDate = DBUtils.convertDate(value: rs.double(forColumn: "playlistUpdateDate"))
-
-        return playlist
     }
 }

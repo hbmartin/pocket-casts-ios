@@ -42,7 +42,7 @@ extension MainTabBarController {
     }
 
     @objc func handleSearch() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.searchRequested, object: nil)
+        NotificationCenter.postOnMainThread(SearchRequested())
     }
 
     @objc func handlePlayPauseKey() {
@@ -89,11 +89,11 @@ extension MainTabBarController {
         NavigationManager.sharedManager.miniPlayer?.closeFullScreenPlayer()
     }
 
-    @objc func textEditingDidStart() {
+    func textEditingDidStart() {
         removeKeyCommand(playPauseCommand)
     }
 
-    @objc func textEditingDidEnd() {
+    func textEditingDidEnd() {
         addKeyCommand(playPauseCommand)
     }
 }

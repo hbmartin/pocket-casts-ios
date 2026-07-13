@@ -13,6 +13,8 @@ nonisolated class AnalyticsEpisodeHelper: AnalyticsCoordinator, @unchecked Senda
     private let episodeDownloadQueue = Mutex<Set<String>>([])
     // Keep track of where a download was initiated so completion/failure logs use the same source
     private let episodeDownloadSources = ThreadSafeDictionary<String, AnalyticsSource>()
+    // Held for the helper's whole (process-long) lifetime; set once in init.
+    private var episodeDownloadedToken: NotificationCenter.ObservationToken?
 
     override init() {
         super.init()
@@ -190,23 +192,23 @@ nonisolated private extension AnalyticsEpisodeHelper {
 
 nonisolated private extension AnalyticsEpisodeHelper {
     func addNotificationObservers() {
-            NotificationCenter.default.addObserver(forName: Constants.Notifications.episodeDownloaded, object: nil, queue: .main) { notification in
-                // Verify the UUID is one that we're tracking
-                guard let uuid = notification.object as? String, self.episodeDownloadQueue.withLock({ $0.contains(uuid) }) else {
-                    return
-                }
-
-                // Verify that the file has finished downloading
-                guard
-                    let episode = self.episodeRepository.findEpisode(uuid: uuid),
-                    let status = DownloadStatus(rawValue: episode.episodeStatus),
-                    status == .downloaded
-                else {
-                    return
-                }
-
-                self.episodeDownloadQueue.withLock { _ = $0.remove(uuid) }
-                self.downloadFinished(episodeUUID: uuid)
+        episodeDownloadedToken = NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+            // Verify the UUID is one that we're tracking
+            guard let self, let uuid = message.uuid, self.episodeDownloadQueue.withLock({ $0.contains(uuid) }) else {
+                return
             }
+
+            // Verify that the file has finished downloading
+            guard
+                let episode = self.episodeRepository.findEpisode(uuid: uuid),
+                let status = DownloadStatus(rawValue: episode.episodeStatus),
+                status == .downloaded
+            else {
+                return
+            }
+
+            self.episodeDownloadQueue.withLock { _ = $0.remove(uuid) }
+            self.downloadFinished(episodeUUID: uuid)
+        }
     }
 }

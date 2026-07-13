@@ -124,24 +124,25 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
 
     // MARK: - Init
 
+    private var messageTokens = [NotificationCenter.ObservationToken]()
+
     override init() {
         super.init()
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleEpisodeDownloaded(_:)),
-            name: Constants.Notifications.episodeDownloaded,
-            object: nil
-        )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePlaybackProgress),
-            name: Constants.Notifications.playbackProgress,
-            object: nil
-        )
+        messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+            self?.handleEpisodeDownloaded(episodeUuid: message.uuid)
+        })
+        messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackProgressed.self) { [weak self] _ in
+            self?.handlePlaybackProgress()
+        })
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        // Property reads must precede any nonisolated work in deinit (Swift 6.2
+        // isolated-deinit rule).
+        let tokens = messageTokens
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     // MARK: - Public API
@@ -172,8 +173,8 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
     /// When an episode download completes while the transcript flow has already requested
     /// preparation, retry. If we previously gave up because no local file existed, or were
     /// processing a partial streaming buffer, we now have a complete file to fingerprint.
-    @objc private func handleEpisodeDownloaded(_ notification: Notification) {
-        guard let downloadedUuid = notification.object as? String,
+    private func handleEpisodeDownloaded(episodeUuid: String?) {
+        guard let downloadedUuid = episodeUuid,
               let currentUuid = PlaybackManager.onMainSync({ $0.currentEpisode() })?.uuid,
               currentUuid == downloadedUuid else { return }
 
@@ -190,7 +191,7 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
     /// Re-anchor fingerprint generation to wherever the listener is now: if playback
     /// jumps suddenly (seek/skip), or drifts beyond the mapped range, restart the
     /// stream from the new position so coverage stays close to what's playing.
-    @objc private func handlePlaybackProgress() {
+    private func handlePlaybackProgress() {
         let playbackTime = PlaybackManager.onMainSync { $0.currentTime() }
         guard playbackTime >= 0 else { return }
 

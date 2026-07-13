@@ -88,7 +88,7 @@ extension FolderViewController {
 
         DataManager.sharedManager.updateFolderSyncModified(folderUuid: folder.uuid, syncModified: TimeFormatter.currentUTCTimeInMillis())
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
+        NotificationCenter.postOnMainThread(FolderChanged(uuid: folder.uuid))
 
         Analytics.track(.folderPodcastModalOptionTapped, properties: ["option": "remove"])
     }

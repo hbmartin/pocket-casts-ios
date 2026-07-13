@@ -51,6 +51,12 @@ extension UploadedViewController: @preconcurrency SwipeTableViewCellDelegate, Sw
 
     func share(episode: Episode, at: IndexPath) { }
 
+    func showDetails(episode: BaseEpisode, at: IndexPath) {
+        guard let episode = episode as? UserEpisode else { return }
+
+        presentEpisodeDetails(for: episode)
+    }
+
     func addToManualPlaylist(episode: PocketCastsDataModel.Episode, at: IndexPath) { }
 
     func removeFromManualPlaylist(episode: PocketCastsDataModel.Episode, at: IndexPath) { }

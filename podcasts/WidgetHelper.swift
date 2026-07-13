@@ -9,20 +9,49 @@ nonisolated final class WidgetHelper: Sendable {
     static let appGroupId = SharedConstants.GroupUserDefaults.groupContainerId
     static let maxUpNextToPublish = 10
     static let maxFilterToPublish = 5
+
+    /// Typed-notification tokens.
+    // nonisolated(unsafe): written exactly once, at the end of `init` (before `self`
+    // can be visible to any other thread), then only read in `deinit` — no concurrent
+    // access is possible despite the `Sendable` conformance.
+    nonisolated(unsafe) private var messageTokens: [NotificationCenter.ObservationToken] = []
+
     init() {
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackStarted, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackEnded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackTrackChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.playbackPaused, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.currentlyPlayingEpisodeUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.upNextQueueChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleFilterChanged), name: Constants.Notifications.playlistChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleFilterChanged), name: Constants.Notifications.podcastAdded, object: nil)
+        messageTokens = [
+            NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaybackEnded.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: CurrentlyPlayingEpisodeUpdated.self) { [weak self] _ in
+                self?.updateFromNotification()
+            },
+            NotificationCenter.default.addObserver(for: PlaylistChanged.self) { [weak self] _ in
+                self?.handleFilterChanged()
+            },
+            NotificationCenter.default.addObserver(for: PodcastAdded.self) { [weak self] _ in
+                self?.handleFilterChanged()
+            },
+            NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+                self?.updateSharedUpNext()
+            },
+            NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] _ in
+                self?.updateSharedUpNext()
+            }
+        ]
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        for token in messageTokens {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     func updateAllWidgets() {
@@ -39,7 +68,7 @@ nonisolated final class WidgetHelper: Sendable {
         }
     }
 
-    @objc func updateFromNotification() {
+    func updateFromNotification() {
         updateSharedUpNext()
     }
 
@@ -65,7 +94,7 @@ nonisolated final class WidgetHelper: Sendable {
         }
     }
 
-    @objc func handleFilterChanged() {
+    func handleFilterChanged() {
         guard PlaybackManager.onMainSync({ $0.currentEpisode() }) == nil else {
             return
         }
@@ -109,9 +138,9 @@ nonisolated final class WidgetHelper: Sendable {
         var filterName: String?
         if let topFilter = DataManager.sharedManager.allPlaylists(includeDeleted: false).first {
             filterName = topFilter.playlistName
-            let query = PlaylistQueryBuilder.queryFor(filter: topFilter, episodeUuidToAdd: topFilter.episodeUuidToAddToQueries(), limit: WidgetHelper.maxFilterToPublish)
+            let request = PlaylistQueryBuilder.filterEpisodesRequest(for: topFilter, episodeUuidToAdd: topFilter.episodeUuidToAddToQueries(), limit: WidgetHelper.maxFilterToPublish)
 
-            let loadedEpisodes = DataManager.sharedManager.findEpisodesWhere(customWhere: query.sql, arguments: query.arguments)
+            let loadedEpisodes = DataManager.sharedManager.episodes(matching: request)
             for (index, playlistEpisode) in loadedEpisodes.enumerated() {
                 if index >= WidgetHelper.maxFilterToPublish { break }
 

@@ -1,6 +1,7 @@
 import XCTest
 
 @testable import podcasts
+import CoreMedia
 
 final class ChaptersTests: XCTestCase {
 

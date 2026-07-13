@@ -146,39 +146,71 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         MainActor.assumeIsolated {
             registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromGenericEvent), name: Constants.Notifications.playbackStarted, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromGenericEvent), name: Constants.Notifications.playbackEnded, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromGenericEvent), name: Constants.Notifications.playbackPaused, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromGenericEvent), name: Constants.Notifications.playbackFailed, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+                self?.updateCellFromGenericEvent()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackEnded.self) { [weak self] _ in
+                self?.updateCellFromGenericEvent()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+                self?.updateCellFromGenericEvent()
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackFailed.self) { [weak self] _ in
+                self?.updateCellFromGenericEvent()
+            })
 
-            NotificationCenter.default.addObserver(self, selector: #selector(downloadProgressDidUpdate), name: Constants.Notifications.downloadProgress, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: DownloadProgressChanged.self) { [weak self] _ in
+                self?.downloadProgressDidUpdate()
+            })
 
             // events that are specific to an episode
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeDurationChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeStarredChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: ServerNotifications.episodeTypeOrLengthChanged, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.playbackPositionSaved, object: nil)
-            playStatusToken = NotificationCenter.default.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] message in
-                guard let self, let episodeUuid = message.uuid, episodeUuid == self.episode?.uuid else { return }
-                self.updateCell(episodeUuid: episodeUuid)
-            }
-            NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.episodeDownloaded, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(reloadArtwork(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(upNextEpisodeChanged(_:)), name: Constants.Notifications.upNextEpisodeAdded, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(upNextEpisodeChanged(_:)), name: Constants.Notifications.upNextEpisodeRemoved, object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(upNextQueueChanged), name: Constants.Notifications.upNextQueueChanged, object: nil)
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeTypeOrLengthChanged.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: PlaybackPositionSaved.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodePlayStatusChanged.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDurationChanged.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeStarredChanged.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloadStatusChanged.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
+                self?.updateCellFromSpecificMessage(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: UserEpisodeUpdated.self) { [weak self] message in
+                self?.reloadArtwork(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeAdded.self) { [weak self] message in
+                self?.upNextEpisodeChanged(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: UpNextEpisodeRemoved.self) { [weak self] message in
+                self?.upNextEpisodeChanged(episodeUuid: message.uuid)
+            })
+            messageTokens.append(NotificationCenter.default.addObserver(for: UpNextQueueChanged.self) { [weak self] _ in
+                self?.upNextQueueChanged()
+            })
 
             updateSize()
         }
     }
 
-    private var playStatusToken: NotificationCenter.ObservationToken?
+    private var messageTokens = [NotificationCenter.ObservationToken]()
 
     deinit {
+        // Property reads must precede the self-copy removeObserver makes; after it,
+        // deinit may only touch nonisolated state (Swift 6.2 isolated-deinit rule).
+        let tokens = messageTokens
         NotificationCenter.default.removeObserver(self)
-        if let playStatusToken {
-            NotificationCenter.default.removeObserver(playStatusToken)
+        for token in tokens {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 
@@ -414,16 +446,14 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
 
     // MARK: - Event Handling
 
-    @objc private func updateCellFromGenericEvent() {
+    private func updateCellFromGenericEvent() {
         guard let episode else { return }
 
         updateCell(episodeUuid: episode.uuid)
     }
 
-    @objc private func updateCellFromSpecificEvent(_ notification: Notification) {
-        guard let episodeUuid = notification.object as? String, episodeUuid == episode?.uuid else {
-            return
-        }
+    private func updateCellFromSpecificMessage(episodeUuid: String?) {
+        guard let episodeUuid, episodeUuid == episode?.uuid else { return }
 
         updateCell(episodeUuid: episodeUuid)
     }
@@ -442,13 +472,13 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         }
     }
 
-    @objc private func upNextEpisodeChanged(_ notification: Notification) {
-        guard let episodeUuid = notification.object as? String, episodeUuid == episode?.uuid else { return }
+    private func upNextEpisodeChanged(episodeUuid: String?) {
+        guard let episodeUuid, episodeUuid == episode?.uuid else { return }
 
         updateUpNextIndicator(animated: true)
     }
 
-    @objc private func upNextQueueChanged() {
+    private func upNextQueueChanged() {
         // Bulk change with no specific episode, re-evaluate this cell against the queue
         updateUpNextIndicator(animated: true)
     }
@@ -494,7 +524,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         }
     }
 
-    @objc private func downloadProgressDidUpdate() {
+    private func downloadProgressDidUpdate() {
         guard let ourEpisode = episode, let _ = DownloadManager.shared.progressManager.progressForEpisode(ourEpisode.uuid) else { return }
 
         // if this episode isn't listed as downloading, update it from the DB
@@ -505,8 +535,8 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         populate(progressOnly: true)
     }
 
-    @objc func reloadArtwork(_ notification: Notification) {
-        guard let episodeUuid = notification.object as? String,
+    private func reloadArtwork(episodeUuid: String?) {
+        guard let episodeUuid,
               episodeUuid == episode?.uuid,
               let userEpisode = episode as? UserEpisode else { return }
         episodeImage.setUserEpisode(uuid: userEpisode.uuid, size: .list)
@@ -534,7 +564,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
             AnalyticsHelper.podcastEpisodePlayedFromList(listId: listUuid, podcastUuid: podcastUuid)
         }
 
-        PlaybackActionHelper.play(episode: episode, playlistUuid: playlistUuid, podcastUuid: podcastUuid, playlist: playlist)
+        PlaybackActionHelper.play(episode: episode, playlist: playlist)
     }
 
     func pauseTapped() {

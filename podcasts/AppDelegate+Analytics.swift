@@ -58,13 +58,10 @@ extension AppDelegate {
     }
 
     func addAnalyticsObservers() {
-        // Signed out events
-        NotificationCenter.default.addObserver(forName: .serverUserWillBeSignedOut, object: nil, queue: .main) { notification in
-            guard let userInfo = notification.userInfo, let userIniated = userInfo["user_initiated"] as? Bool else {
-                return
-            }
-
-            Analytics.track(.userSignedOut, properties: ["user_initiated": userIniated])
+        // Signed out events. App-lifetime observation; the token is deliberately
+        // not retained for removal, matching the previous string observer.
+        _ = NotificationCenter.default.addObserver(for: UserWillBeSignedOut.self) { message in
+            Analytics.track(.userSignedOut, properties: ["user_initiated": message.userInitiated])
         }
 
         NotificationCenter.default.addObserver(forName: UIApplication.protectedDataDidBecomeAvailableNotification, object: nil, queue: .main) { [weak self] _ in
@@ -94,7 +91,7 @@ extension AppDelegate {
             }
 
             ServerSettings.userId = userId
-            NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
+            NotificationCenter.postOnMainThread(UserLoginDidChange())
         }
     }
 }

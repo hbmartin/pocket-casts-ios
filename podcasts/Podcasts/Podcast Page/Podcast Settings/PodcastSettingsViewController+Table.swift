@@ -1,4 +1,3 @@
-import IntentsUI
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -8,16 +7,12 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
     private static let disclosureCellId = "DisclosureCell"
     private static let switchCellId = "SwitchCell"
     private static let timeStepperCellId = "TimeStepperCell"
-    private static let createSiriShortcutCellId = "CreateSiriShortcutCell"
-    private static let siriEnabledCellId = "siriEnabledCellId"
     private static let destructiveButtonCellId = "destructiveButtonCell"
 
     func registerCells() {
         settingsTable.register(UINib(nibName: "DisclosureCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.disclosureCellId)
         settingsTable.register(UINib(nibName: "SwitchCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.switchCellId)
         settingsTable.register(UINib(nibName: "TimeStepperCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.timeStepperCellId)
-        settingsTable.register(UINib(nibName: "SiriShortcutEnabledCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.siriEnabledCellId)
-        settingsTable.register(UINib(nibName: "CreateSiriShortcutCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.createSiriShortcutCellId)
         settingsTable.register(UINib(nibName: "DestructiveButtonCell", bundle: nil), forCellReuseIdentifier: PodcastSettingsViewController.destructiveButtonCellId)
     }
 
@@ -61,6 +56,18 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
             cell.cellSwitch.removeTarget(self, action: #selector(notificationChanged(_:)), for: UIControl.Event.valueChanged)
             cell.cellSwitch.addTarget(self, action: #selector(notificationChanged(_:)), for: UIControl.Event.valueChanged)
+
+            return cell
+        case .autoTranscribe:
+            // Conditional cast (unlike the file's older rows): the force-cast ratchet forbids new force casts.
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.switchCellId, for: indexPath) as? SwitchCell else { return UITableViewCell() }
+            cell.cellLabel.text = L10n.podcastSettingsAutoTranscribe
+            cell.cellSwitch.onTintColor = podcast.switchTintColor()
+            cell.setImage(imageName: "transcript")
+            cell.cellSwitch.isOn = podcast.settings.autoTranscribe
+
+            cell.cellSwitch.removeTarget(self, action: #selector(autoTranscribeChanged(_:)), for: UIControl.Event.valueChanged)
+            cell.cellSwitch.addTarget(self, action: #selector(autoTranscribeChanged(_:)), for: UIControl.Event.valueChanged)
 
             return cell
         case .upNext:
@@ -189,19 +196,6 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             }
 
             return cell
-        case .siriShortcut:
-            if existingShortcut != nil {
-                let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.siriEnabledCellId) as! SiriShortcutEnabledCell
-                cell.titleLabel.text = L10n.settingsSiriShortcut
-                let existingShortcutPhrase = existingSiriVoiceShortcut().invocationPhrase
-                cell.phraseLabel.text = "\"\(existingShortcutPhrase)\""
-                return cell
-            } else {
-                let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.createSiriShortcutCellId) as! CreateSiriShortcutCell
-                cell.buttonTitle.text = L10n.settingsCreateSiriShortcut
-
-                return cell
-            }
         case .unsubscribe:
             let cell = tableView.dequeueReusableCell(withIdentifier: PodcastSettingsViewController.destructiveButtonCellId, for: indexPath) as! DestructiveButtonCell
             cell.buttonTitle.text = FeatureFlag.useFollowNaming.enabled ? L10n.unfollow : L10n.unsubscribe
@@ -269,7 +263,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
                 playlist.addPodcast(podcastUuid: self.podcast.uuid)
                 DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+                NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
                 Analytics.track(.filterUpdated, properties: ["group": "podcasts", "source": "podcast_settings"])
             }
@@ -279,20 +273,11 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
 
                 playlist.removePodcast(podcastUuid: self.podcast.uuid)
                 DataManager.sharedManager.save(playlist: playlist)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
+                NotificationCenter.postOnMainThread(PlaylistChanged(playlist: nil))
 
                 Analytics.track(.filterUpdated, properties: ["group": "podcasts", "source": "podcast_settings"])
             }
             navigationController?.pushViewController(playlistSelectionViewController, animated: true)
-        } else if row == .siriShortcut {
-            if let voiceShortcut = existingSiriVoiceShortcut() {
-                let viewController = INUIEditVoiceShortcutViewController(voiceShortcut: voiceShortcut)
-                viewController.modalPresentationStyle = .formSheet
-                viewController.delegate = self
-                present(viewController, animated: true, completion: nil)
-            } else {
-                showINAddVoiceShortcutVC()
-            }
         } else if row == .unsubscribe {
             unsubscribe()
         }
@@ -320,13 +305,12 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             }
         } else if firstRow == .feedError {
             return L10n.settingsFeedErrorMsg
+        } else if firstRow == .autoDownload, FeatureFlag.diarizedTranscription.enabled {
+            return L10n.podcastSettingsAutoTranscribeFooter
         } else if firstRow == .autoArchive {
             return nil
         } else if firstRow == .playbackEffects {
             return L10n.settingsSkipMsg
-        } else if firstRow == .siriShortcut, let name = podcast.title {
-            let format = existingShortcut != nil ? L10n.settingsSiriShortcutMsg : L10n.settingsCreateSiriShortcutMsg
-            return format(name)
         }
 
         return nil
@@ -374,9 +358,18 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
             podcast.autoDownloadSetting = AutoDownloadSetting.off.rawValue
         }
         DataManager.sharedManager.save(podcast: podcast)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast.uuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
 
         Analytics.track(.podcastSettingsAutoDownloadToggled, properties: ["enabled": sender.isOn])
+    }
+
+    @objc private func autoTranscribeChanged(_ sender: UISwitch) {
+        // Settings-JSON-only field: write through the json_set settings path
+        // (skipChapterTitles precedent), keeping the in-memory copy in step for
+        // table reloads.
+        podcast.settings.autoTranscribe = sender.isOn
+        DataManager.sharedManager.saveAutoTranscribe(sender.isOn, podcastUuid: podcast.uuid)
+        Analytics.track(.podcastSettingsAutoTranscribeToggled, properties: ["enabled": sender.isOn])
     }
 
     @objc private func addToUpNextChanged(_ sender: UISwitch) {
@@ -409,13 +402,17 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
                     return
                 }
                 self.podcast = PodcastManager.shared.setNotificationsEnabled(podcast: self.podcast, enabled: isOn)
-                NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: self.podcast.uuid)
+                NotificationCenter.postOnMainThread(PodcastUpdated(uuid: self.podcast.uuid))
             }
         }
     }
 
     private func tableData() -> [[TableRow]] {
         var data: [[TableRow]] = [[.autoDownload, .notifications], [.upNext], [.playbackEffects, .skipFirst, .skipLast, .skipChapters], [.autoArchive]]
+
+        if FeatureFlag.diarizedTranscription.enabled {
+            data[0].append(.autoTranscribe)
+        }
 
         if podcast.refreshAvailable {
             data.insert([.feedError], at: 0)
@@ -429,7 +426,6 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         if !playlistsPodcastCanAppearIn().isEmpty {
             data.append([.inFilters])
         }
-        data.append([.siriShortcut])
         data.append([.unsubscribe])
 
         return data
@@ -445,14 +441,5 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         DataManager.sharedManager.allSmartPlaylists(includeDeleted: false).filter { playlist -> Bool in
             playlist.filterAllPodcasts == false
         }
-    }
-
-    // MARK: - Siri shortcuts helper function
-
-    private func showINAddVoiceShortcutVC() {
-        let viewController = INUIAddVoiceShortcutViewController(shortcut: SiriShortcutsManager.shared.playPodcastShortcut(podcast: podcast))
-        viewController.modalPresentationStyle = .formSheet
-        viewController.delegate = self
-        present(viewController, animated: true, completion: nil)
     }
 }

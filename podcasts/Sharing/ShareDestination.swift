@@ -44,6 +44,7 @@ enum ShareDestination: Hashable {
             UIPasteboard.general.string = option.shareURL
             Toast.show(L10n.shareCopiedToClipboard)
             ShareDestination.logClipShared(option: option, style: style, clipUUID: clipUUID, source: source)
+            ShareDestination.logHighlightQuoteShared(option: option, style: style, source: source)
             ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source)
         case .systemSheet(let vc):
             let data = try await option.shareData(style: style, destination: self, clipUUID: clipUUID, progress: progress)
@@ -58,6 +59,7 @@ enum ShareDestination: Hashable {
             }
             vc.presentedViewController?.present(activityViewController, animated: true, completion: {
                 ShareDestination.logClipShared(option: option, style: style, clipUUID: clipUUID, source: source)
+                ShareDestination.logHighlightQuoteShared(option: option, style: style, source: source)
                 ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source)
             })
         }
@@ -105,8 +107,23 @@ extension ShareDestination {
         Analytics.track(.shareScreenClipShared, source: source, properties: properties)
     }
 
+    /// Fires when a highlight's quote card is shared through any destination.
+    private static func logHighlightQuoteShared(option: SharingModal.Option, style: ShareImageStyle, source: AnalyticsSource) {
+        guard case .highlight(let episode, let bookmark) = option, style == .quote else {
+            return
+        }
+
+        Analytics.track(.highlightQuoteShared, source: source, properties: [
+            "episode_uuid": episode.uuid,
+            "podcast_uuid": episode.parentPodcast()?.uuid ?? "unknown",
+            "bookmark_uuid": bookmark.uuid
+        ])
+    }
+
     private static func cardType(style: ShareImageStyle) -> String {
         switch style {
+        case .quote:
+            "quote"
         case .large:
             "vertical"
         case .medium:
@@ -139,6 +156,8 @@ extension ShareDestination {
             return "current_time"
         case (_, .bookmark):
             return "bookmark_time"
+        case (_, .highlight):
+            return "highlight"
         case (.audio, _):
             return "clip_audio"
         case (_, .clip), (_, .clipShare):

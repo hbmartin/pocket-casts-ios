@@ -72,6 +72,95 @@ class DatabaseHelper {
         SchemaMigration(toVersion: 77) { db in
             try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN cachedLoudness REAL NOT NULL DEFAULT 0;", values: nil)
             try db.executeUpdate("ALTER TABLE SJUserEpisode ADD COLUMN cachedLoudness REAL NOT NULL DEFAULT 0;", values: nil)
+        },
+        // Diarized transcription (device-local, no sync): per-episode transcription
+        // state rows, plus an FTS5 index over transcript segments powering
+        // cross-episode search. The VTT artifact itself lives on disk (filePath);
+        // the app layer owns writing/deleting it.
+        SchemaMigration(toVersion: 78) { db in
+            try db.executeUpdate("""
+            CREATE TABLE EpisodeTranscription (
+                episodeUuid TEXT PRIMARY KEY,
+                podcastUuid TEXT,
+                status INTEGER NOT NULL DEFAULT 0,
+                engineMode INTEGER NOT NULL DEFAULT 0,
+                provider TEXT,
+                modelId TEXT,
+                language TEXT,
+                createdAt REAL NOT NULL DEFAULT 0,
+                updatedAt REAL NOT NULL DEFAULT 0,
+                durationSecs REAL NOT NULL DEFAULT 0,
+                speakerCount INTEGER NOT NULL DEFAULT 0,
+                speakerNames TEXT,
+                errorMessage TEXT,
+                remoteJobId TEXT,
+                filePath TEXT
+            );
+            """, values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX episode_transcription_status ON EpisodeTranscription (status);", values: nil)
+            try db.executeUpdate("""
+            CREATE VIRTUAL TABLE TranscriptionSegmentFTS USING fts5(
+                text,
+                episodeUuid UNINDEXED,
+                podcastUuid UNINDEXED,
+                segmentIndex UNINDEXED,
+                startTime UNINDEXED,
+                speaker UNINDEXED,
+                tokenize = 'unicode61 remove_diacritics 2'
+            );
+            """, values: nil)
+        },
+        // Custom playlists (device-local, excluded from account sync and file sync):
+        // the versioned JSON envelope describing either a builder AST or a validated
+        // SQL WHERE fragment (see CustomPlaylistQuery). NULL = regular smart/manual
+        // playlist.
+        SchemaMigration(toVersion: 79) { db in
+            try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN customQuery TEXT;", values: nil)
+        },
+        // Smart highlights (AI UX plan phase 3): the transcript excerpt around a
+        // bookmark's position and the end of that excerpt window, written once by
+        // HighlightEnricher after creation. NULL = plain (un-enriched) bookmark.
+        SchemaMigration(toVersion: 80) { db in
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN excerpt TEXT;", values: nil)
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN endTime REAL;", values: nil)
+        },
+        // Library-wide transcript search (AI UX plan phase 4, device-local, no sync):
+        // an FTS5 index over the cue text of viewed podcast-provided transcripts, plus
+        // a bookkeeping table (one row per indexed episode) driving dedupe and LRU
+        // eviction. Locally generated transcripts have their own index
+        // (TranscriptionSegmentFTS, migration 78) — this is a separate corpus.
+        //
+        // The FTS5 CREATE is caught rather than propagated so an SQLite build without
+        // the FTS5 module can't fail the whole migration chain: on failure neither
+        // table is created, TranscriptIndexDataManager's meta-table probe reports the
+        // index unavailable, and the feature self-disables.
+        SchemaMigration(toVersion: 81) { db in
+            do {
+                try db.executeUpdate("""
+                CREATE VIRTUAL TABLE TranscriptCueIndex USING fts5(
+                    text,
+                    episodeUuid UNINDEXED,
+                    podcastUuid UNINDEXED,
+                    cueIndex UNINDEXED,
+                    startTime UNINDEXED,
+                    endTime UNINDEXED,
+                    tokenize = 'unicode61 remove_diacritics 2'
+                );
+                """, values: nil)
+            } catch {
+                FileLog.shared.addMessage("Migration 81: FTS5 unavailable, transcript search index not created: \(error)")
+                return
+            }
+            try db.executeUpdate("""
+            CREATE TABLE TranscriptIndexMeta (
+                episodeUuid TEXT PRIMARY KEY,
+                podcastUuid TEXT,
+                indexedDate REAL NOT NULL DEFAULT 0,
+                cueCount INTEGER NOT NULL DEFAULT 0,
+                textBytes INTEGER NOT NULL DEFAULT 0
+            );
+            """, values: nil)
         }
     ]
 

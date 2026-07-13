@@ -51,7 +51,9 @@ class DiscoverPodcastTableCell: ThemeableCell {
             subscribeButton.offAccessibilityLabel = FeatureFlag.useFollowNaming.enabled ? L10n.follow : L10n.subscribe
             subscribeButton.onAccessibilityLabel = FeatureFlag.useFollowNaming.enabled ? L10n.unfollow : L10n.subscribed
 
-            NotificationCenter.default.addObserver(self, selector: #selector(podcastWasAdded), name: Constants.Notifications.podcastAdded, object: nil)
+            podcastAddedToken = NotificationCenter.default.addObserver(for: PodcastAdded.self) { [weak self] _ in
+                self?.podcastWasAdded()
+            }
         }
     }
 
@@ -59,9 +61,14 @@ class DiscoverPodcastTableCell: ThemeableCell {
     @IBOutlet var podcastImageLeadingConstraint: NSLayoutConstraint!
 
     private var discoverPodcast: DiscoverPodcast?
+    private var podcastAddedToken: NotificationCenter.ObservationToken?
 
     deinit {
+        let token = podcastAddedToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
@@ -102,7 +109,7 @@ class DiscoverPodcastTableCell: ThemeableCell {
         subscribeButton.shouldAnimate = true
     }
 
-    @objc private func podcastWasAdded() {
+    private func podcastWasAdded() {
         if let headerUuid = discoverPodcast?.uuid {
             if let _ = DataManager.sharedManager.findPodcast(uuid: headerUuid) {
                 if !subscribeButton.currentlyOn { subscribeButton.currentlyOn = true }

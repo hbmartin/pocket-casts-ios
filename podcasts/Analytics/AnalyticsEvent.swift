@@ -220,6 +220,8 @@ enum AnalyticsEvent: String {
     case playbackPause
     case playbackSkipBack
     case playbackSkipForward
+    case playbackNextEpisode
+    case playbackPreviousEpisode
     case playbackSeek
 
     case playbackEffectSettingsViewAppeared
@@ -254,6 +256,13 @@ enum AnalyticsEvent: String {
     case filterCreateShown
     case filterCreateAsManualPlaylistTapped
     case filterCreateAsSmartPlaylistTapped
+    case filterCreateAsCustomPlaylistTapped
+    case filterCustomQueryValidated
+
+    // Prompted playlists (natural language -> smart playlist draft)
+    case promptedPlaylistShown
+    case promptedPlaylistGenerated
+    case promptedPlaylistGenerationFailed
     case filterCreateCancelled
     case filterDeleteTriggered
     case filterDeleteDismissed
@@ -469,6 +478,8 @@ enum AnalyticsEvent: String {
 
     // MARK: - Episode Events
 
+    case episodeTapped
+
     case episodeStarred
     case episodeBulkStarred
 
@@ -548,6 +559,7 @@ enum AnalyticsEvent: String {
 
     case podcastSettingsAutoDownloadToggled
     case podcastSettingsNotificationsToggled
+    case podcastSettingsAutoTranscribeToggled
     case podcastSettingsAutoAddUpNextToggled
     case podcastSettingsAutoAddUpNextPositionOptionChanged
 
@@ -592,6 +604,8 @@ enum AnalyticsEvent: String {
     case settingsGeneralAutoplayToggled
     case settingsGeneralAutoSleepTimerRestartToggled
     case settingsGeneralShakeToResetSleepTimerToggled
+    case settingsGeneralTapToPlayToggled
+    case settingsGeneralSeekAccelerationToggled
 
     // MARK: - Settings: Devices (route-aware playback rules)
 
@@ -796,6 +810,12 @@ enum AnalyticsEvent: String {
     case bookmarkDeleteFormDismissed
     case bookmarkDeleteFormSubmitted
 
+    // MARK: - Smart Highlights
+
+    case highlightEnrichmentCompleted
+    case highlightEnrichmentFailed
+    case highlightQuoteShared
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged
@@ -822,6 +842,38 @@ enum AnalyticsEvent: String {
     case syncedTranscriptUnavailable
     case syncedTranscriptSeekFailed
     case syncedTranscriptAutoScrollResumed
+
+    // MARK: - Episode Summary (AI summary card on episode detail)
+
+    case episodeDetailSummaryCardShown
+    case episodeDetailSummaryTakeawayTapped
+    case episodeDetailSummaryGenerationFailed
+
+    // MARK: - Episode Credits (people credits card on episode detail)
+
+    case episodeDetailCreditsShown
+    case episodeDetailCreditTapped
+
+    // MARK: - Library Transcript Search (viewed podcast-provided transcripts)
+
+    case librarySearchTranscriptsShown
+    case librarySearchTranscriptResultTapped
+
+    // MARK: - Diarized Transcription (locally generated transcripts)
+
+    case transcriptionGenerateTapped
+    case transcriptionStarted
+    case transcriptionCompleted
+    case transcriptionFailed
+    case transcriptionCancelled
+    case transcriptionSourceSwitched
+    case transcriptionSettingsShown
+    case transcriptionKeyValidated
+    case transcriptionSpeakerRenamed
+    case transcriptionSearchShown
+    case transcriptionSearchResultTapped
+    case transcriptionModelDownloaded
+    case transcriptionModelDeleted
 
     // MARK: - Widgets
 

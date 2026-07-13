@@ -75,11 +75,27 @@ class ShelfActionsViewController: UIViewController, CheckTranscriptAvailability 
         reloadActions()
         updateColors()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateColors), name: Constants.Notifications.themeChanged, object: nil)
+        appActiveToken = NotificationCenter.default.addObserver(for: UIApplication.DidBecomeActiveMessage.self) { [weak self] _ in
+            self?.actionsTable.reloadData()
+        }
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.updateColors()
+        }
 
         addTranscriptObservers()
         checkTranscriptAvailability()
+    }
+
+    private var appActiveToken: NotificationCenter.ObservationToken?
+    private var themeToken: NotificationCenter.ObservationToken?
+
+    deinit {
+        let tokens = [appActiveToken, themeToken]
+        for token in tokens {
+            if let token {
+                NotificationCenter.default.removeObserver(token)
+            }
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -92,14 +108,10 @@ class ShelfActionsViewController: UIViewController, CheckTranscriptAvailability 
         setPreferredSize(animated: false)
     }
 
-    @objc func appDidBecomeActive() {
-        actionsTable.reloadData()
-    }
-
     @IBAction func doneTapped(_ sender: UIButton) {
         if actionsTable.isEditing {
             Analytics.track(.playerShelfOverflowMenuRearrangeFinished)
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.playerActionsUpdated)
+            NotificationCenter.postOnMainThread(PlayerActionsUpdated())
             dismiss(animated: true, completion: nil)
             return
         }
@@ -157,7 +169,7 @@ class ShelfActionsViewController: UIViewController, CheckTranscriptAvailability 
         actionsTable.reloadData()
     }
 
-    @objc private func updateColors() {
+    private func updateColors() {
         view.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
         actionsTable.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
         headingView.backgroundColor = PlayerColorHelper.playerBackgroundColor02()

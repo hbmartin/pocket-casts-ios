@@ -93,7 +93,7 @@ nonisolated class EpisodeManager: NSObject {
         if let currentEpisode = currentEpisodeToMarkAsPlayed {
             markAsPlayed(episode: currentEpisode, fireNotification: true, userInitiated: false)
         }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
 
         analyticsHelper.bulkMarkAsPlayed(count: episodesMinusCurrent.count)
     }
@@ -149,7 +149,7 @@ nonisolated class EpisodeManager: NSObject {
 
     class func bulkMarkAsUnPlayed(_ baseEpisodes: [BaseEpisode]) {
         DataManager.sharedManager.bulkMarkAsUnPlayed(baseEpisodes: baseEpisodes, updateSyncFlag: SyncManager.isUserLoggedIn())
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
 
         analyticsHelper.bulkMarkAsUnplayed(count: baseEpisodes.count)
     }
@@ -172,7 +172,7 @@ nonisolated class EpisodeManager: NSObject {
         }
 
         if fireNotification {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeArchiveStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeArchiveStatusChanged(uuid: episode.uuid))
         }
 
         if userInitiated {
@@ -204,7 +204,7 @@ nonisolated class EpisodeManager: NSObject {
             let uuids = episodes.map(\.uuid)
             PlaybackManager.onMainSync { $0.bulkRemoveQueued(uuids: uuids) }
         }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
 
         analyticsHelper.bulkArchiveEpisodes(count: episodes.count)
     }
@@ -220,7 +220,7 @@ nonisolated class EpisodeManager: NSObject {
         }
 
         if fireNotification {
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeArchiveStatusChanged, object: episode.uuid)
+            NotificationCenter.postOnMainThread(EpisodeArchiveStatusChanged(uuid: episode.uuid))
         }
 
         if userInitiated {
@@ -231,7 +231,7 @@ nonisolated class EpisodeManager: NSObject {
     class func bulkUnarchive(episodes: [Episode], trackEvent: Bool = true) {
         DataManager.sharedManager.bulkUnarchive(episodes: episodes, updateSyncFlag: SyncManager.isUserLoggedIn())
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
 
         if trackEvent {
             analyticsHelper.bulkUnarchiveEpisodes(count: episodes.count)
@@ -242,7 +242,7 @@ nonisolated class EpisodeManager: NSObject {
         for episode in episodes {
             DataManager.sharedManager.clearEpisodePlaybackInteractionDate(episodeUuid: episode.uuid)
         }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.listeningHistoryChanged)
+        NotificationCenter.postOnMainThread(ListeningHistoryChanged())
         analyticsHelper.bulkRemoveFromListeningHistory(count: episodes.count)
     }
 
@@ -278,7 +278,7 @@ nonisolated class EpisodeManager: NSObject {
             ApiServerHandler.shared.saveStarred(episode: episode)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeStarredChanged, object: episode.uuid)
+        NotificationCenter.postOnMainThread(EpisodeStarredChanged(uuid: episode.uuid))
 
         if starred {
             analyticsHelper.star(episode: episode)
@@ -295,7 +295,7 @@ nonisolated class EpisodeManager: NSObject {
         if updateSyncStatus {
             RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
         }
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
 
         if starred {
             analyticsHelper.bulkStar(count: episodes.count)
@@ -318,7 +318,7 @@ nonisolated class EpisodeManager: NSObject {
             deleteFilesForEpisodes(episodes)
         }
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
     }
 
     class func downloadSizeOfAllEpisodes() -> UInt64 {
@@ -545,7 +545,7 @@ nonisolated class EpisodeManager: NSObject {
         // If user episodes are only downloaded on this device delete them
         DataManager.sharedManager.deleteUserEpisodes(userEpisodeUuids: userEpisodeUuidsToDelete)
         DataManager.sharedManager.bulkUserFileDelete(baseEpisodes: episodesToMarkAsNotDownloaded)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
+        NotificationCenter.postOnMainThread(ManyEpisodesChanged())
 
         analyticsHelper.bulkDeleteDownloadedEpisodes(count: episodesToRemoveFromQueue.count)
     }

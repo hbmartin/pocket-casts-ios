@@ -47,7 +47,7 @@ class PlaybackQueue: NSObject {
             startSyncTimer()
         }
 
-        refreshAppFiring(notificationName: fireNotification ? Constants.Notifications.upNextEpisodeRemoved : nil, notificationObject: episode.uuid)
+        refreshAppFiring(fireNotification ? UpNextEpisodeRemoved(uuid: episode.uuid) : nil)
     }
 
     func remove(uuid: String, fireNotification: Bool) {
@@ -61,7 +61,7 @@ class PlaybackQueue: NSObject {
             startSyncTimer()
         }
 
-        refreshAppFiring(notificationName: fireNotification ? Constants.Notifications.upNextEpisodeRemoved : nil, notificationObject: uuid)
+        refreshAppFiring(fireNotification ? UpNextEpisodeRemoved(uuid: uuid) : nil)
     }
 
     func removeTopEpisode(fireNotification: Bool) {
@@ -101,8 +101,7 @@ class PlaybackQueue: NSObject {
 
         FileLog.shared.addMessage("PlaybackQueue: added single episode \(episode.title ?? "Untitled")")
 
-        let notificationName = fireNotification ? Constants.Notifications.upNextEpisodeAdded : nil
-        refreshAppFiring(notificationName: notificationName, notificationObject: episode.uuid, notificationUserInfo: [Constants.Notifications.upNextEpisodeAddedToTopKey: toTop])
+        refreshAppFiring(fireNotification ? UpNextEpisodeAdded(uuid: episode.uuid, addedToTop: toTop) : nil)
     }
 
     func bulkOperationDidComplete() {
@@ -110,13 +109,13 @@ class PlaybackQueue: NSObject {
 
         FileLog.shared.addMessage("PlaybackQueue: finished bulk add")
 
-        refreshAppFiring(notificationName: Constants.Notifications.upNextQueueChanged)
+        refreshAppFiring(UpNextQueueChanged())
     }
 
     func bulkDelete(uuids: [String]) {
         DataManager.sharedManager.deleteAllUpNextEpisodesIn(uuids: uuids)
         saveReplaceIfRequired()
-        refreshAppFiring(notificationName: Constants.Notifications.upNextQueueChanged)
+        refreshAppFiring(UpNextQueueChanged())
     }
 
     func bulkAdd(_ episodes: [BaseEpisode], toTop: Bool = false) {
@@ -175,7 +174,7 @@ class PlaybackQueue: NSObject {
             startSyncTimer()
         }
 
-        refreshAppFiring(notificationName: Constants.Notifications.upNextQueueChanged)
+        refreshAppFiring(UpNextQueueChanged())
     }
 
     func moveEpisode(from: Int, to: Int) {
@@ -184,7 +183,7 @@ class PlaybackQueue: NSObject {
 
         saveReplaceIfRequired()
 
-        refreshAppFiring(notificationName: Constants.Notifications.upNextQueueChanged)
+        refreshAppFiring(UpNextQueueChanged())
     }
 
     /// Reorders the Up Next queue to match `sortedEpisodes` (the queued episodes excluding now playing, which stays pinned at the top).
@@ -212,7 +211,7 @@ class PlaybackQueue: NSObject {
 
         saveReplaceIfRequired()
 
-        refreshAppFiring(notificationName: Constants.Notifications.upNextQueueChanged)
+        refreshAppFiring(UpNextQueueChanged())
     }
 
     func insert(episode: BaseEpisode, position: Int) {
@@ -231,7 +230,7 @@ class PlaybackQueue: NSObject {
             saveReplaceIfRequired()
         }
 
-        refreshAppFiring(notificationName: Constants.Notifications.upNextQueueChanged)
+        refreshAppFiring(UpNextQueueChanged())
     }
 
     func move(episode: BaseEpisode, to: Int, fireNotification: Bool = true) {
@@ -242,7 +241,7 @@ class PlaybackQueue: NSObject {
 
         saveReplaceIfRequired()
 
-        refreshAppFiring(notificationName: fireNotification ? Constants.Notifications.upNextQueueChanged : nil)
+        refreshAppFiring(fireNotification ? UpNextQueueChanged() : nil)
     }
 
     func overrideAllEpisodesWith(episode: BaseEpisode) {
@@ -275,7 +274,7 @@ class PlaybackQueue: NSObject {
         topEpisode = nil
         saveReplaceIfRequired()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func clearUpNextList() {
@@ -288,7 +287,7 @@ class PlaybackQueue: NSObject {
 
         saveReplaceIfRequired()
 
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.upNextQueueChanged)
+        NotificationCenter.postOnMainThread(UpNextQueueChanged())
     }
 
     func refreshList(checkForAutoDownload: Bool) {
@@ -304,7 +303,7 @@ class PlaybackQueue: NSObject {
 
     func nowPlayingEpisodeChanged() {
         cacheTopEpisode()
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.currentlyPlayingEpisodeUpdated)
+        NotificationCenter.postOnMainThread(CurrentlyPlayingEpisodeUpdated())
     }
 
     // MARK: - Querying
@@ -422,11 +421,13 @@ class PlaybackQueue: NSObject {
         topEpisode = episodeAt(index: -1)
     }
 
-    private func refreshAppFiring(notificationName: Notification.Name?, notificationObject: Any? = nil, notificationUserInfo: [AnyHashable: Any]? = nil) {
+    /// Refreshes the queue, posts `message` (when non-nil) and kicks the sync timer.
+    /// `final` because generic methods on non-final classes trip a vtable-mangling compiler bug.
+    private final func refreshAppFiring<M: NotificationCenter.MainActorMessage & Sendable>(_ message: M?) {
         refreshList(checkForAutoDownload: true)
 
-        if let name = notificationName {
-            NotificationCenter.postOnMainThread(notification: name, object: notificationObject, userInfo: notificationUserInfo)
+        if let message {
+            NotificationCenter.postOnMainThread(message)
         }
 
         startSyncTimer()

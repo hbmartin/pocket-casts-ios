@@ -109,12 +109,29 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
                 })
                 optionsPicker.addDescriptiveActions(title: L10n.downloadFailed, message: episode.readableErrorMessage(), icon: "option-alert", actions: [retryAction])
                 optionsPicker.show(statusBarStyle: preferredStatusBarStyle)
-            } else if let parentPodcast = episode.parentPodcast() {
-                let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .downloads, playlist: .downloads)
-                episodeController.modalPresentationStyle = .formSheet
-                present(episodeController, animated: true, completion: nil)
+            } else {
+                let playOnTap = Settings.tapToPlay()
+                Analytics.track(.episodeTapped, properties: ["source": AnalyticsSource.downloads, "will_play": playOnTap])
+
+                if playOnTap {
+                    AnalyticsPlaybackHelper.shared.currentSource = .downloads
+                    PlaybackActionHelper.play(episode: episode, playlist: .downloads)
+                    return
+                }
+
+                presentEpisodeDetails(for: episode)
             }
         }
+    }
+
+    /// Presents the episode detail sheet. Single source of truth for this screen —
+    /// used by both row taps (when tap to play is off) and the Details swipe action.
+    func presentEpisodeDetails(for episode: Episode) {
+        guard let parentPodcast = episode.parentPodcast() else { return }
+
+        let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .downloads, playlist: .downloads)
+        episodeController.modalPresentationStyle = .formSheet
+        present(episodeController, animated: true, completion: nil)
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {

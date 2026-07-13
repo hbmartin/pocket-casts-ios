@@ -111,6 +111,38 @@ final class DatabaseHelperMigrationTests: XCTestCase {
         }
     }
 
+    /// Upgrade path for migration 80 (smart highlights): a database migrated up to
+    /// version 79, with a pre-existing bookmark row, gains the enrichment columns
+    /// without disturbing existing data.
+    func testMigration80AddsBookmarkEnrichmentColumns() throws {
+        let dbPool = try XCTUnwrap(DatabasePool.newTestDatabase(databaseName: "\(UUID().uuidString).sqlite3"))
+
+        let priorMigrations = DatabaseHelper.migrations.filter { $0.toVersion <= 79 }
+        XCTAssertTrue(DatabaseHelper.setup(queue: GRDBQueue(dbPool: dbPool), migrations: priorMigrations))
+
+        try dbPool.write { db in
+            try db.execute(sql: """
+            INSERT INTO Bookmark (uuid, title, episode_uuid, time, date_added)
+            VALUES ('bm-1', 'Pre-upgrade row', 'ep-1', 12.0, 0)
+            """)
+        }
+
+        XCTAssertTrue(DatabaseHelper.setup(queue: GRDBQueue(dbPool: dbPool), migrations: DatabaseHelper.migrations))
+
+        try dbPool.read { db in
+            XCTAssertGreaterThanOrEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 80)
+
+            let columns = try Row.fetchAll(db, sql: "PRAGMA table_info(Bookmark)").map { $0["name"] as String }
+            XCTAssertTrue(columns.contains("excerpt"))
+            XCTAssertTrue(columns.contains("endTime"))
+
+            let row = try Row.fetchOne(db, sql: "SELECT title, excerpt, endTime FROM Bookmark WHERE uuid = 'bm-1'")
+            XCTAssertEqual(row?["title"] as String?, "Pre-upgrade row")
+            XCTAssertNil(row?["excerpt"] as String?)
+            XCTAssertNil(row?["endTime"] as Double?)
+        }
+    }
+
     /// Stable, comparable representation of every table and index in the database.
     private static func schemaObjects(in db: Database) throws -> [String] {
         try String.fetchAll(

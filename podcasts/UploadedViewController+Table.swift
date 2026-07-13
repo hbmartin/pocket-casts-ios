@@ -77,11 +77,27 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
         } else {
             tableView.deselectRow(at: indexPath, animated: true)
             guard let episode = episodeAt(indexPath) else { return }
-            userEpisodeDetailVC = UserEpisodeDetailViewController(episodeUuid: episode.uuid)
-            userEpisodeDetailVC?.playlist = .files
-            userEpisodeDetailVC?.delegate = self
-            userEpisodeDetailVC?.present(from: self)
+
+            let playOnTap = Settings.tapToPlay()
+            Analytics.track(.episodeTapped, properties: ["source": AnalyticsSource.files, "will_play": playOnTap])
+
+            if playOnTap {
+                AnalyticsPlaybackHelper.shared.currentSource = .files
+                PlaybackActionHelper.play(episode: episode, playlist: .files)
+                return
+            }
+
+            presentEpisodeDetails(for: episode)
         }
+    }
+
+    /// Presents the episode detail sheet. Single source of truth for this screen —
+    /// used by both row taps (when tap to play is off) and the Details swipe action.
+    func presentEpisodeDetails(for episode: UserEpisode) {
+        userEpisodeDetailVC = UserEpisodeDetailViewController(episodeUuid: episode.uuid)
+        userEpisodeDetailVC?.playlist = .files
+        userEpisodeDetailVC?.delegate = self
+        userEpisodeDetailVC?.present(from: self)
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {

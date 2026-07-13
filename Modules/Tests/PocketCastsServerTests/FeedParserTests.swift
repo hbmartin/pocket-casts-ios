@@ -22,8 +22,12 @@ struct FeedParserTests {
         <itunes:explicit>yes</itunes:explicit>
         <podcast:funding url="https://example.com/support">Support us!</podcast:funding>
         <atom:link rel="next" href="https://example.com/feed.xml?page=2"/>
+        <podcast:person role="host" group="cast" img="https://example.com/jane.jpg" href="https://example.com/jane">Jane Host</podcast:person>
+        <podcast:person>Plain Name</podcast:person>
+        <podcast:person role="host">   </podcast:person>
         <item>
           <title>Episode Two</title>
+          <podcast:person role="guest" href="https://example.com/gina">Gina Guest</podcast:person>
           <guid isPermaLink="false">ep-2-guid</guid>
           <description>Second episode</description>
           <content:encoded><![CDATA[<p>Show notes for two</p>]]></content:encoded>
@@ -108,6 +112,45 @@ struct FeedParserTests {
         #expect(second.guid == nil)
         #expect(second.duration == 1830)
         #expect(second.publishedDate != nil)
+    }
+
+    @Test("parses channel-level podcast:person credits; attributes optional, nameless dropped")
+    func personsChannel() throws {
+        let feed = try FeedParser().parse(data: Data(Self.rssFixture.utf8))
+
+        #expect(feed.persons.count == 2)
+
+        let jane = try #require(feed.persons.first)
+        #expect(jane.name == "Jane Host")
+        #expect(jane.role == "host")
+        #expect(jane.group == "cast")
+        #expect(jane.img == "https://example.com/jane.jpg")
+        #expect(jane.href == "https://example.com/jane")
+
+        let plain = try #require(feed.persons.last)
+        #expect(plain.name == "Plain Name")
+        #expect(plain.role == nil)
+        #expect(plain.group == nil)
+        #expect(plain.img == nil)
+        #expect(plain.href == nil)
+    }
+
+    @Test("parses item-level podcast:person credits without leaking them to the channel or other items")
+    func personsItem() throws {
+        let feed = try FeedParser().parse(data: Data(Self.rssFixture.utf8))
+
+        let first = try #require(feed.items.first)
+        #expect(first.persons.count == 1)
+        let gina = try #require(first.persons.first)
+        #expect(gina.name == "Gina Guest")
+        #expect(gina.role == "guest")
+        #expect(gina.group == nil)
+        #expect(gina.img == nil)
+        #expect(gina.href == "https://example.com/gina")
+
+        let second = try #require(feed.items.last)
+        #expect(second.persons.isEmpty)
+        #expect(!feed.persons.map(\.name).contains("Gina Guest"))
     }
 
     @Test("parses Atom feeds")

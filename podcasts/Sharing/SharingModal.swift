@@ -1,3 +1,4 @@
+import CoreMedia
 import Dependencies
 import PocketCastsDataModel
 import SwiftUI
@@ -11,6 +12,9 @@ enum SharingModal {
         case podcast(Podcast)
         case currentPosition(Episode, TimeInterval)
         case bookmark(Episode, TimeInterval)
+        /// A bookmark enriched with a transcript excerpt (smart highlight); offers
+        /// the quote-card style in addition to the standard image styles.
+        case highlight(Episode, Bookmark)
         case clip(Episode, TimeInterval)
         case clipShare(Episode, ClipTime, ShareImageStyle)
 
@@ -18,11 +22,20 @@ enum SharingModal {
             static let exportedAssetScale: CGFloat = 3
         }
 
+        /// The option bookmark rows should share with: the highlight flow when the
+        /// bookmark has been enriched with an excerpt, the plain timestamp otherwise.
+        static func option(for bookmark: Bookmark, episode: Episode) -> Option {
+            if FeatureFlag.smartHighlights.enabled, bookmark.excerpt != nil {
+                return .highlight(episode, bookmark)
+            }
+            return .bookmark(episode, bookmark.time)
+        }
+
         var buttonTitle: String {
             switch self {
             case .episode:
                 L10n.episode
-            case .currentPosition, .bookmark:
+            case .currentPosition, .bookmark, .highlight:
                 L10n.shareCurrentPosition
             case .podcast:
                 L10n.podcastSingular
@@ -37,6 +50,8 @@ enum SharingModal {
                 L10n.shareEpisode
             case .currentPosition(_, let time), .bookmark(_, let time):
                 L10n.shareEpisodeAt(TimeFormatter.shared.playTimeFormat(time: time))
+            case .highlight(_, let bookmark):
+                L10n.shareEpisodeAt(TimeFormatter.shared.playTimeFormat(time: bookmark.time))
             case .podcast:
                 L10n.sharePodcast
             case .clip:
@@ -139,7 +154,7 @@ extension SharingModal.Option {
 
     private var description: String? {
         switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
+        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _), .highlight(let episode, _):
             episode.parentPodcast()?.title
         case .podcast(let podcast):
             [podcast.episodeCount, podcast.frequency].compactMap { $0 }.joined(separator: " ⋅ ")
@@ -148,7 +163,7 @@ extension SharingModal.Option {
 
     private var title: String? {
         switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
+        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _), .highlight(let episode, _):
             episode.title
         case .podcast(let podcast):
             podcast.title
@@ -157,7 +172,7 @@ extension SharingModal.Option {
 
     private var name: String? {
         switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
+        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _), .highlight(let episode, _):
             if let date = episode.publishedDate {
                 return date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted))
             } else {
@@ -170,7 +185,7 @@ extension SharingModal.Option {
 
     fileprivate var podcast: Podcast {
         switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
+        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _), .highlight(let episode, _):
             return episode.parentPodcast()!
         case .podcast(let podcast):
             return podcast
@@ -179,7 +194,7 @@ extension SharingModal.Option {
 
     private var episode: Episode? {
         switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
+        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _), .highlight(let episode, _):
             episode
         default:
             nil
@@ -193,11 +208,18 @@ extension SharingModal.Option {
             Color(uiColor: UIColor.calculateColor(orgColor: UIColor.black, overlayColor: ColorManager.lightThemeTintForPodcast(podcast).withAlphaComponent(0.8))),
         ])
         let artwork = episodeArtworkUrl ?? ImageManager.podcastUrl(sizeRequired: ImageManager.sizeFor(imageSize: .page), uuid: podcast.uuid)
+        let excerpt: String? = {
+            if case .highlight(_, let bookmark) = self {
+                return bookmark.excerpt
+            }
+            return nil
+        }()
         let imageInfo = ShareImageInfo(name: name ?? "",
                                        title: title ?? "",
                                        description: description ?? "",
                                        artwork: artwork,
-                                       gradient: gradient)
+                                       gradient: gradient,
+                                       excerpt: excerpt)
         return imageInfo
     }
 
@@ -290,6 +312,8 @@ extension SharingModal.Option {
             return episode.shareURL + "?t=\(round(timeInterval))"
         case .bookmark(let episode, let timeInterval):
             return episode.shareURL + "?t=\(round(timeInterval))"
+        case .highlight(let episode, let bookmark):
+            return episode.shareURL + "?t=\(round(bookmark.time))"
         case .clip(let episode, let timeInterval):
             return episode.shareURL + "?t=\(round(timeInterval))"
         case .clipShare(let episode, let clipTime, _):

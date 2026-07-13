@@ -142,18 +142,24 @@ class StarredViewController: PCViewController {
     }
 
     private func addEventObservers() {
-        addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshEpisodesFromNotification(notification:)))
-        addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(refreshEpisodesFromNotification(notification:)))
-        addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(refreshEpisodesFromNotification(notification:)))
-        addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshEpisodesFromNotification(notification:)))
+        addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromDatabase(animated: true)
+        }
+        addCustomObserver(EpisodeDownloaded.self) { [weak self] _ in
+            self?.refreshEpisodesFromDatabase(animated: true)
+        }
+        addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromDatabase(animated: true)
+        }
+        addCustomObserver(EpisodeArchiveStatusChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromDatabase(animated: true)
+        }
         addCustomObserver(EpisodePlayStatusChanged.self) { [weak self] _ in
             self?.refreshEpisodesFromDatabase(animated: true)
         }
-        addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshEpisodesFromNotification(notification:)))
-    }
-
-    @objc private func refreshEpisodesFromNotification(notification: Notification) {
-        refreshEpisodesFromDatabase(animated: true)
+        addCustomObserver(ManyEpisodesChanged.self) { [weak self] _ in
+            self?.refreshEpisodesFromDatabase(animated: true)
+        }
     }
 
     func setupNavBar() {

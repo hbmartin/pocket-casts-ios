@@ -1,0 +1,21 @@
+# Files allowed to contain the legacy NotificationCenter API patterns
+# ('addObserver(self, selector:' / 'postOnMainThread(notification:') guarded by
+# scripts/ci/check-legacy-notification-api.sh (mise run check:legacy-notifications).
+#
+# Deletion-only: remove entries as files are converted to typed messages; never
+# add entries to admit new usage. Every entry below is either a system-notification
+# observer (keyboard, app lifecycle — no typed SDK message adopted yet) or an
+# observer-bag API definition kept for those sites.
+#
+# addObserver(self, selector:) — system-notification observers:
+podcasts/BackgroundShakeObserver.swift
+podcasts/ChangeEmailViewController.swift
+podcasts/ChangePasswordViewController.swift
+podcasts/MediaExporterResourceLoaderDelegate.swift
+podcasts/NewEmailViewController.swift
+podcasts/TranscriptViewController.swift
+# addObserver(self, selector:) — observer-bag API definitions
+# (selector-based addCustomObserver(_:selector:) kept for the system-name sites):
+podcasts/SimpleNotificationsViewController.swift
+podcasts/Utilities/CustomObserver.swift
+# postOnMainThread(notification:) — retired; no entries. Do not add any.

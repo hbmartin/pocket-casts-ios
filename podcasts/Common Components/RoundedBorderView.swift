@@ -32,8 +32,14 @@ class RoundedBorderView: UIView {
         setupBorder()
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setupBorder() {
@@ -43,11 +49,11 @@ class RoundedBorderView: UIView {
         layer.borderWidth = 1.0 / UIScreen.main.scale
         layer.cornerRadius = cornerRadius
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeChanged), name: Constants.Notifications.themeChanged, object: nil)
-    }
-
-    @objc private func themeChanged() {
-        updateColors()
+        if themeToken == nil {
+            themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.updateColors()
+            }
+        }
     }
 
     private func updateColors() {

@@ -323,9 +323,16 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                         hideSearchKeyboard()
                     }
 
-                    let episodeController = EpisodeDetailViewController(episode: episode, podcast: podcast, source: .podcastScreen, playlist: .podcast(uuid: podcast.uuid))
-                    episodeController.modalPresentationStyle = .formSheet
-                    present(episodeController, animated: true, completion: nil)
+                    let playOnTap = Settings.tapToPlay()
+                    Analytics.track(.episodeTapped, properties: ["source": AnalyticsSource.podcastScreen, "will_play": playOnTap])
+
+                    if playOnTap {
+                        AnalyticsPlaybackHelper.shared.currentSource = .podcastScreen
+                        PlaybackActionHelper.play(episode: episode, playlist: .podcast(uuid: podcast.uuid))
+                        return
+                    }
+
+                    presentEpisodeDetails(for: episode)
                 }
             }
 
@@ -368,6 +375,16 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                 navigationController?.pushViewController(podcastController, animated: true)
             }
         }
+    }
+
+    /// Presents the episode detail sheet. Single source of truth for this screen —
+    /// used by both row taps (when tap to play is off) and the Details swipe action.
+    func presentEpisodeDetails(for episode: Episode) {
+        guard let podcast else { return }
+
+        let episodeController = EpisodeDetailViewController(episode: episode, podcast: podcast, source: .podcastScreen, playlist: .podcast(uuid: podcast.uuid))
+        episodeController.modalPresentationStyle = .formSheet
+        present(episodeController, animated: true, completion: nil)
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {

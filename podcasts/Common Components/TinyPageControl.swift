@@ -37,16 +37,24 @@ class TinyPageControl: UIControl {
         MainActor.assumeIsolated {
             isAccessibilityElement = true
             accessibilityTraits = UIAccessibilityTraits.button
-            NotificationCenter.default.addObserver(self, selector: #selector(updateForTheme), name: Constants.Notifications.themeChanged, object: nil)
+            themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+                self?.updateForTheme()
+            }
             updateForTheme()
         }
     }
 
+    private var themeToken: NotificationCenter.ObservationToken?
+
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
-    @objc private func updateForTheme() {
+    private func updateForTheme() {
         onColor = ThemeColor.primaryUi05Selected()
         offColor = ThemeColor.primaryUi05()
         backgroundColor = UIColor.clear

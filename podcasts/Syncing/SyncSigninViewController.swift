@@ -118,12 +118,24 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         super.viewDidAppear(animated)
 
         emailField.becomeFirstResponder()
-        addCustomObserver(ServerNotifications.syncProgressPodcastCount, selector: #selector(syncProgressCountKnown(_:)))
-        addCustomObserver(ServerNotifications.syncProgressPodcastUpto, selector: #selector(syncUpToChanged(_:)))
-        addCustomObserver(ServerNotifications.syncProgressImportedPodcasts, selector: #selector(podcastsImported))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(syncCompleted))
-        addCustomObserver(ServerNotifications.syncFailed, selector: #selector(syncCompleted))
-        addCustomObserver(ServerNotifications.podcastRefreshFailed, selector: #selector(syncCompleted))
+        addCustomObserver(SyncProgressPodcastCountKnown.self) { [weak self] message in
+            self?.totalPodcastsToImport = message.count
+        }
+        addCustomObserver(SyncProgressPodcastUptoChanged.self) { [weak self] message in
+            self?.syncUpToChanged(message.upTo)
+        }
+        addCustomObserver(SyncProgressPodcastsImported.self) { [weak self] _ in
+            self?.podcastsImported()
+        }
+        addCustomObserver(SyncCompleted.self) { [weak self] _ in
+            self?.syncCompleted()
+        }
+        addCustomObserver(SyncFailed.self) { [weak self] _ in
+            self?.syncCompleted()
+        }
+        addCustomObserver(PodcastRefreshFailed.self) { [weak self] _ in
+            self?.syncCompleted()
+        }
 
         if loginAgain, let syncingEmail = ServerSettings.syncingEmail(), let password = ServerSettings.syncingPassword() {
             startSignIn(syncingEmail, password: password)
@@ -161,19 +173,12 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
 
     // MARK: - Syncing Progress
 
-    @objc private func syncProgressCountKnown(_ notification: Notification) {
-        if let number = notification.object as? NSNumber {
-            totalPodcastsToImport = number.intValue
-        }
-    }
-
-    @objc private func syncUpToChanged(_ notification: Notification) {
-        guard let progressAlert, let number = notification.object as? NSNumber else { return }
+    private func syncUpToChanged(_ upTo: Int) {
+        guard let progressAlert else { return }
 
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
-            let upTo = number.intValue
             if self.totalPodcastsToImport > 0 {
                 progressAlert.title = L10n.syncProgress(upTo.localized(), self.totalPodcastsToImport.localized())
                 progressAlert.progress = CGFloat(upTo / self.totalPodcastsToImport)
@@ -184,7 +189,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @objc private func podcastsImported() {
+    private func podcastsImported() {
         guard let progressAlert else { return }
 
         DispatchQueue.main.async {
@@ -192,7 +197,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @objc private func syncCompleted() {
+    private func syncCompleted() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
@@ -225,7 +230,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidStart)
+        NotificationCenter.postOnMainThread(TextEditingDidStart())
         if textField == emailField {
             emailBorderView.isSelected = true
             passwordBorderView.isSelected = false
@@ -236,7 +241,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.textEditingDidEnd)
+        NotificationCenter.postOnMainThread(TextEditingDidEnd())
     }
 
     @objc func emailFieldDidChange() {
@@ -295,7 +300,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
                     self.handleSuccessfulSignIn(username, password: password, userId: userId)
                     RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
 
-                    NotificationCenter.postOnMainThread(notification: .userSignedIn)
+                    NotificationCenter.postOnMainThread(UserSignedIn())
                 })
             }
         }
@@ -323,7 +328,13 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
 
     private func handleSuccessfulSignIn(_ username: String, password: String, userId: String?) {
         ServerSettings.userId = userId
-        ServerSettings.saveSyncingPassword(password)
+        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
+            ServerSettings.accountAuthMethod = .password
+        } else {
+            // Legacy credential persistence until refresh-token auth for password accounts
+            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
+            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
+        }
 
         // we've signed in, set all our existing podcasts to
         // be non synced if the user never logged in before
@@ -336,7 +347,7 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
         ServerSettings.clearLastSyncTime()
         ServerSettings.setSyncingEmail(email: username)
 
-        NotificationCenter.default.post(name: .userLoginDidChange, object: nil)
+        NotificationCenter.postOnMainThread(UserLoginDidChange())
 
         Analytics.track(.userSignedIn, properties: ["source": "password"])
     }

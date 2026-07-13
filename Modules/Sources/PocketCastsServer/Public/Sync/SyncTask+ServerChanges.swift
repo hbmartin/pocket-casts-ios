@@ -56,7 +56,7 @@ extension SyncTask {
             }
         }
         importQueue.waitUntilAllOperationsAreFinished()
-        NotificationCenter.postOnMainThread(notification: ServerNotifications.syncProgressImportedPodcasts, object: nil)
+        NotificationCenter.postOnMainThread(SyncProgressPodcastsImported())
 
         for episodeItem in episodesToImport {
             importQueue.addOperation { [weak self] in
@@ -272,6 +272,15 @@ extension SyncTask {
     private func importPlaylist(_ playlistItem: Api_SyncUserPlaylist) {
         let playlistUuid = playlistItem.originalUuid // it's important to use this field, not uuid because the server won't change the case on this one
         var existingPlaylist = DataManager.sharedManager.findPlaylist(uuid: playlistUuid)
+
+        // Custom playlists are device-local: a server record with a colliding uuid must
+        // never overwrite (or delete) the local query. Belt-and-braces — uploads are
+        // already filtered out in PlaylistDataManager.allUnsyncedPlaylists, so the
+        // server should never have seen this uuid.
+        if let existing = existingPlaylist, existing.isCustom {
+            FileLog.shared.addMessage("SyncTask: ignoring server playlist \(playlistUuid) because a local custom playlist owns that uuid")
+            return
+        }
 
         // if the filter exists, and another device has deleted it, then delete it
         if playlistItem.hasIsDeleted, playlistItem.isDeleted.value {

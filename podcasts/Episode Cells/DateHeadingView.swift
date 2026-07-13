@@ -33,16 +33,20 @@ class DateHeadingView: UIView {
             label.topAnchor.constraint(equalTo: topAnchor)
         ])
 
-        NotificationCenter.default.addObserver(self, selector: #selector(themeDidChange), name: Constants.Notifications.themeChanged, object: nil)
+        themeToken = NotificationCenter.default.addObserver(for: ThemeChanged.self) { [weak self] _ in
+            self?.setBgColorForTheme()
+        }
         setBgColorForTheme()
     }
+
+    private var themeToken: NotificationCenter.ObservationToken?
 
     deinit {
+        let token = themeToken
         NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc func themeDidChange() {
-        setBgColorForTheme()
+        if let token {
+            NotificationCenter.default.removeObserver(token)
+        }
     }
 
     private func setBgColorForTheme() {

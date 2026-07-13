@@ -173,8 +173,11 @@ public class ServerSettings {
         UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.syncingEmailLegacy)
     }
 
+    /// Legacy password persistence — the definition every allowlisted caller funnels
+    /// through. Goes away entirely once `FeatureFlag.refreshTokenForPasswordAuth`
+    /// migration completes fleet-wide (plan workstream A).
     public class func saveSyncingPassword(_ password: String) {
-        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock) // nosemgrep: pocketcasts.no-persisted-account-password
     }
 
     public class func syncingPassword() -> String? {
@@ -291,13 +294,19 @@ public extension ServerSettings {
         }
     }
 
+    // Credential Keychain items use AfterFirstUnlock (not WhenUnlocked) because background
+    // refresh/sync legitimately reads them while the device is locked, and ThisDeviceOnly so
+    // sessions don't restore onto another device from an encrypted backup. Existing items are
+    // upgraded in place because KeychainHelper.save includes kSecAttrAccessible in the
+    // attributes passed to SecItemUpdate. The email item intentionally stays AfterFirstUnlock
+    // without ThisDeviceOnly: it's needed for prefill/display (PII but not a credential).
     class var syncingV2Token: String? {
         get {
             try? KeychainHelper.string(for: ServerConstants.Values.syncingV2TokenKey)
         }
 
         set {
-            KeychainHelper.save(string: newValue, key: ServerConstants.Values.syncingV2TokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+            KeychainHelper.save(string: newValue, key: ServerConstants.Values.syncingV2TokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
         }
     }
 
@@ -306,6 +315,86 @@ public extension ServerSettings {
     }
 
     class func setRefreshToken(_ newValue: String?) {
-        KeychainHelper.save(string: newValue, key: ServerConstants.Values.refreshTokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        KeychainHelper.save(string: newValue, key: ServerConstants.Values.refreshTokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+    }
+}
+
+// MARK: - Access Token Expiry
+
+public extension ServerSettings {
+    /// How far ahead of the server-reported expiry the client treats a token as dead,
+    /// so a token isn't presented moments before it lapses (clock skew + in-flight time).
+    private static let tokenExpirySkew: TimeInterval = 5.minutes
+    private static let tokenExpiryDateKey = "SJTokenExpiryDate"
+
+    /// Persists the access-token expiry hint from an authentication response.
+    ///
+    /// The stored date is `now + expiresIn - 5 minutes` of skew. This is a *hint* only —
+    /// the 401 retry path remains the authority. Passing nil (server didn't send
+    /// `expires_in`) clears any previously stored hint so it can't apply to a newer token.
+    /// TTLs at or below the skew are treated as "no hint" rather than storing an
+    /// already-past date, which would put every request through a refresh first.
+    class func setTokenExpiry(expiresIn: Int?) {
+        guard let expiresIn, TimeInterval(expiresIn) > tokenExpirySkew else {
+            setTokenExpiryDate(nil)
+            return
+        }
+
+        setTokenExpiryDate(Date(timeIntervalSinceNow: TimeInterval(expiresIn) - tokenExpirySkew))
+    }
+
+    class func tokenExpiryDate() -> Date? {
+        UserDefaults.standard.object(forKey: tokenExpiryDateKey) as? Date
+    }
+
+    /// Internal seam (used by `setTokenExpiry(expiresIn:)` and tests).
+    internal class func setTokenExpiryDate(_ date: Date?) {
+        if let date {
+            UserDefaults.standard.set(date, forKey: tokenExpiryDateKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: tokenExpiryDateKey)
+        }
+    }
+
+    /// The stored sync token, treating a past-expiry token as absent so callers refresh
+    /// proactively instead of burning a request to collect the 401.
+    internal class func validSyncingV2Token() -> String? {
+        guard let token = try? KeychainHelper.string(for: ServerConstants.Values.syncingV2TokenKey) else {
+            return nil
+        }
+
+        if let expiryDate = tokenExpiryDate(), expiryDate.timeIntervalSinceNow <= 0 {
+            return nil
+        }
+
+        return token
+    }
+}
+
+// MARK: - Auth Method Marker
+
+/// How the account was signed in. A non-secret marker persisted in UserDefaults so UI can
+/// branch on auth method without inferring it from the presence of a stored password
+/// (which goes away under `FeatureFlag.refreshTokenForPasswordAuth`).
+public enum AccountAuthMethod: String, Sendable {
+    case password
+    case sso
+}
+
+public extension ServerSettings {
+    private static let accountAuthMethodKey = "SJAccountAuthMethod"
+
+    class var accountAuthMethod: AccountAuthMethod? {
+        get {
+            UserDefaults.standard.string(forKey: accountAuthMethodKey).flatMap(AccountAuthMethod.init(rawValue:))
+        }
+
+        set {
+            if let newValue {
+                UserDefaults.standard.set(newValue.rawValue, forKey: accountAuthMethodKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: accountAuthMethodKey)
+            }
+        }
     }
 }

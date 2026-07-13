@@ -59,6 +59,10 @@ nonisolated final class ImageManager: @unchecked Sendable {
     // Discover Cache
     private var discoverCache = ImageCache(name: "discoverCache")
 
+    /// Kingfisher cache for SwiftUI discovery surfaces (the Explore tab) whose
+    /// artwork isn't tied to a subscribed podcast. Shares the discover cache.
+    var exploreImageCache: ImageCache { discoverCache }
+
     // cache for discover video thumbnails cache
     private var discoverVideoThumbnailCache: ImageCache = {
         let cache = ImageCache(name: "discoverVideoThumbnailCache")
@@ -78,6 +82,8 @@ nonisolated final class ImageManager: @unchecked Sendable {
     // we store failed embed lookups in memory, just to stop us constantly parsing a file with no artwork for artwork
     private var failedEmbeddedLookups = [] as [String]
 
+    private let podcastAddedToken = Mutex<NotificationCenter.ObservationToken?>(nil)
+
     init() {
         networkImageCache.diskStorage.config.expiration = .days(56) // 8 weeks
 
@@ -89,11 +95,19 @@ nonisolated final class ImageManager: @unchecked Sendable {
         discoverCache.diskStorage.config.expiration = .days(10)
         discoverCache.diskStorage.config.sizeLimit = UInt(50.megabytes)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastAddedNotification(notification:)), name: Constants.Notifications.podcastAdded, object: nil)
+        let token = NotificationCenter.default.addObserver(for: PodcastAdded.self) { [weak self] message in
+            guard let self, let podcastUuid = message.uuid else { return }
+            self.cacheImages(podcastUuid: podcastUuid)
+        }
+        podcastAddedToken.withLock { $0 = token }
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        podcastAddedToken.withLock { token in
+            if let token {
+                NotificationCenter.default.removeObserver(token)
+            }
+        }
     }
 
     @MainActor
@@ -298,7 +312,7 @@ nonisolated final class ImageManager: @unchecked Sendable {
 
     func save(_ image: UIImage, for episodeUuid: String) {
         subscribedPodcastsCache.store(image, forKey: episodeUuid) { _ in
-            NotificationCenter.postOnMainThread(notification: .episodeEmbeddedArtworkLoaded)
+            NotificationCenter.postOnMainThread(EpisodeEmbeddedArtworkLoaded())
         }
     }
 
@@ -486,14 +500,14 @@ nonisolated final class ImageManager: @unchecked Sendable {
                 strongSelf.cacheAllPodcastImages()
             }
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastImageReCacheRequired)
+            NotificationCenter.postOnMainThread(PodcastImageReCacheRequired())
         }
     }
 
     func clearCache(podcastUuid: String, recacheWhenDone: Bool) {
         // reset the podcast color version, so it re-downloads that when re-caching the image if required
         DataManager.sharedManager.setPodcastImageVersion(podcastUuid: podcastUuid, version: 0)
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcastUuid)
+        NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcastUuid))
 
         // list and card are the same image, so card is not in the list below
         let listUrl = Self.podcastUrl(sizeRequired: Self.sizeFor(imageSize: .list), uuid: podcastUuid)
@@ -510,7 +524,7 @@ nonisolated final class ImageManager: @unchecked Sendable {
                 strongSelf.cacheImages(podcastUuid: podcastUuid)
             }
 
-            NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastImageReCacheRequired)
+            NotificationCenter.postOnMainThread(PodcastImageReCacheRequired())
         })
     }
 
@@ -550,14 +564,6 @@ nonisolated final class ImageManager: @unchecked Sendable {
             do {
                 try fileManager.removeItem(atPath: folderNS.appendingPathComponent(file as! String))
             } catch {}
-        }
-    }
-
-    // MARK: - Pre-cache newly added podcasts
-
-    @objc private func podcastAddedNotification(notification: Notification) {
-        if let podcastUuid = notification.object as? String {
-            cacheImages(podcastUuid: podcastUuid)
         }
     }
 
