@@ -4185,6 +4185,16 @@ nonisolated internal enum L10n {
   internal static var settingsVolumeBoost: String { return L10n.tr("Localizable", "settings_volume_boost", fallback: "Volume Boost") }
   /// Title for the options for the user to configure their account.
   internal static var setupAccount: String { return L10n.tr("Localizable", "setup_account", fallback: "Set Up Account") }
+  /// Note on the shake-to-report sheet describing the diagnostics attached to the report
+  internal static var shakeFeedbackDiagnosticsNote: String { return L10n.tr("Localizable", "shake_feedback_diagnostics_note", fallback: "Your report includes recent app logs, device and app version info, and the diagnostics session ID.") }
+  /// Error shown when a shake-to-report feedback submission failed
+  internal static var shakeFeedbackFailed: String { return L10n.tr("Localizable", "shake_feedback_failed", fallback: "The report couldn't be sent. Check your connection and try again.") }
+  /// Send button on the shake-to-report feedback sheet
+  internal static var shakeFeedbackSend: String { return L10n.tr("Localizable", "shake_feedback_send", fallback: "Send Report") }
+  /// Confirmation after a shake-to-report feedback submission succeeded
+  internal static var shakeFeedbackSent: String { return L10n.tr("Localizable", "shake_feedback_sent", fallback: "Thanks — your report was sent.") }
+  /// Title of the shake-to-report feedback sheet shown in beta builds
+  internal static var shakeFeedbackTitle: String { return L10n.tr("Localizable", "shake_feedback_title", fallback: "Report a Problem") }
   /// Name of the option to shake to restart sleep timer
   internal static var shakeToRestartSleepTimer: String { return L10n.tr("Localizable", "shake_to_restart_sleep_timer", fallback: "Shake to restart Sleep Timer") }
   /// Description of the option to shake to restart sleep timer

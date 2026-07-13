@@ -431,10 +431,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: Secrets
 
     private func configureBitdrift() {
-        // Dev-tooling only: never start instrumentation in release builds. The
-        // Capture.Logger.logX call sites are safe no-ops when start was skipped
-        // (the credential-less configuration already exercises that path).
-        #if DEBUG
+        // Dev tooling and TestFlight diagnostics: never start instrumentation in
+        // App Store builds. TestFlight sessions feed shake-to-report (the report
+        // attaches the session ID). The Capture.Logger.logX call sites are safe
+        // no-ops when start was skipped (the credential-less configuration
+        // already exercises that path).
+        guard BuildEnvironment.current != .appStore else { return }
         guard !ApiCredentials.bitdriftSDKKey.isMissingOrPlaceholderCredential else {
             FileLog.shared.addMessage("Bitdrift SDK key is not configured; skipping Bitdrift startup")
             return
@@ -444,7 +446,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             withAPIKey: ApiCredentials.bitdriftSDKKey,
             sessionStrategy: .fixed()
         )
-        #endif
     }
 
     private func configureMetricKit() {

@@ -6,10 +6,10 @@ import SwiftProtobuf
 class SupportFeedbackTask: ApiBaseTask, @unchecked Sendable {
     private let completion: (Bool) -> Void
 
-    private let message: String
+    private let report: FeedbackReport
 
-    init(message: String, completion: @escaping (Bool) -> Void) {
-        self.message = message
+    init(report: FeedbackReport, completion: @escaping (Bool) -> Void) {
+        self.report = report
         self.completion = completion
     }
 
@@ -28,9 +28,13 @@ class SupportFeedbackTask: ApiBaseTask, @unchecked Sendable {
             let urlString = "\(ServerConstants.Urls.api())\(feedbackType.endpoint)"
 
             var request = Api_SupportFeedbackRequest()
-            request.message = message
-            request.subject = "Pocket Casts - Kids Profile Ideas"
-            request.inbox = "research"
+            request.message = report.message
+            request.subject = report.subject
+            request.inbox = "feedback"
+            request.logs = report.logs
+            request.bitdriftSessionID = report.bitdriftSessionID
+            request.deviceInfo = report.deviceInfo
+            request.appVersion = report.appVersion
 
             let data = try request.serializedData()
 

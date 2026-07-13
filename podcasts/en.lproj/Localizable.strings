@@ -4877,6 +4877,21 @@
 /* Footer under the podcast settings on-device-only transcription switch, explaining that this show's automatic transcripts skip the remote provider */
 "podcast_settings_local_transcription_only_footer" = "Automatic transcripts for this podcast will be generated on-device instead of using your configured transcription provider.";
 
+/* Title of the shake-to-report feedback sheet shown in beta builds */
+"shake_feedback_title" = "Report a Problem";
+
+/* Send button on the shake-to-report feedback sheet */
+"shake_feedback_send" = "Send Report";
+
+/* Confirmation after a shake-to-report feedback submission succeeded */
+"shake_feedback_sent" = "Thanks — your report was sent.";
+
+/* Error shown when a shake-to-report feedback submission failed */
+"shake_feedback_failed" = "The report couldn't be sent. Check your connection and try again.";
+
+/* Note on the shake-to-report sheet describing the diagnostics attached to the report */
+"shake_feedback_diagnostics_note" = "Your report includes recent app logs, device and app version info, and the diagnostics session ID.";
+
 /* Section header in Advanced Audio settings for adaptive effects switching */
 "adaptive_effects_header" = "Adaptive Effects";
 

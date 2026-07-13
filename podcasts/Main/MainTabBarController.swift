@@ -754,9 +754,27 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
     override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
         super.motionEnded(motion, with: event)
-        if motion == .motionShake && Settings.shakeToRestartSleepTimer {
+        guard motion == .motionShake else { return }
+
+        // Sleep-timer restart keeps priority while a timer is running; otherwise
+        // debug/TestFlight builds get the feedback sheet (Deferred Item 67).
+        if Settings.shakeToRestartSleepTimer, PlaybackManager.shared.sleepTimerActive() {
             PlaybackManager.shared.restartSleepTimer()
+        } else if BuildEnvironment.current != .appStore {
+            presentShakeFeedback()
         }
+    }
+
+    private func presentShakeFeedback() {
+        // One sheet at a time; never shake-present over an existing modal.
+        guard presentedViewController == nil else { return }
+
+        let sheet = ThemedHostingController(rootView: ShakeFeedbackView(model: ShakeFeedbackViewModel()))
+        if let presentation = sheet.sheetPresentationController {
+            presentation.detents = [.medium()]
+            presentation.prefersGrabberVisible = true
+        }
+        present(sheet, animated: true)
     }
 }
 
