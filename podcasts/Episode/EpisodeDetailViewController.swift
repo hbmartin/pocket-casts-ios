@@ -56,6 +56,10 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     var showNotesWebViewTopConstraint: NSLayoutConstraint?
     @IBOutlet var transcriptExcerpt: UIView?
 
+    /// Container for the flag-gated AI summary card, inserted in code between
+    /// the transcript excerpt and the show notes (see +ShowNotes).
+    var episodeSummaryContainer: UIView?
+
     @IBOutlet var mainScrollView: UIScrollView! {
         didSet {
             mainScrollView.contentInset = UIEdgeInsets(top: EpisodeDetailConstants.topPadding, left: 0, bottom: Constants.effectiveMiniPlayerOffset, right: 0)

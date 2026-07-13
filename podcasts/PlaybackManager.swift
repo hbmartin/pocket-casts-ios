@@ -2608,10 +2608,8 @@ extension PlaybackManager {
     func playBookmark(_ bookmark: Bookmark, source: BookmarkAnalyticsSource, firstTry: Bool = true) {
         guard bookmarksEnabled else { return }
 
-        let dataManager = DataManager.sharedManager
-
-        // Get the bookmark's BaseEpisode so we can load it
-        guard let episode = bookmark.episode ?? dataManager.findBaseEpisode(uuid: bookmark.episodeUuid) else {
+        // Make sure the bookmark's episode exists before tracking/seeking; fetch it once if it doesn't
+        guard (bookmark.episode ?? DataManager.sharedManager.findBaseEpisode(uuid: bookmark.episodeUuid)) != nil else {
             if firstTry, let podcastUuid = bookmark.podcastUuid {
                 ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: bookmark.episodeUuid, podcastUuid: podcastUuid) { [weak self] episode in
                     if episode != nil {
@@ -2626,14 +2624,40 @@ extension PlaybackManager {
 
         analyticsPlaybackHelper.currentSource = .bookmark
 
-        // If we're already the now playing episode, then just seek to the bookmark time
-        if isNowPlayingEpisode(episodeUuid: bookmark.episodeUuid) {
-            seekTo(time: bookmark.time, startPlaybackAfterSeek: true)
+        play(episodeUuid: bookmark.episodeUuid, podcastUuid: bookmark.podcastUuid, at: bookmark.time)
+    }
+}
+
+// MARK: - Deep-link seek and play
+
+extension PlaybackManager {
+    /// Canonical seek-and-play for deep links into a moment of an episode
+    /// (bookmarks, summary takeaways, transcript search hits):
+    /// - the now-playing episode gets a direct seek
+    /// - any other local episode has its start position stamped before the
+    ///   standard play pipeline loads it (which resumes from there)
+    /// - a missing episode is fetched from the server once, then retried.
+    func play(episodeUuid: String, podcastUuid: String?, at time: TimeInterval, firstTry: Bool = true) {
+        // If we're already the now playing episode, then just seek
+        if isNowPlayingEpisode(episodeUuid: episodeUuid) {
+            seekTo(time: time, startPlaybackAfterSeek: true)
+            return
+        }
+
+        let dataManager = DataManager.sharedManager
+        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid) else {
+            if firstTry, let podcastUuid {
+                ServerPodcastManager.shared.addMissingPodcastAndEpisode(episodeUuid: episodeUuid, podcastUuid: podcastUuid) { [weak self] episode in
+                    if episode != nil {
+                        self?.play(episodeUuid: episodeUuid, podcastUuid: podcastUuid, at: time, firstTry: false)
+                    }
+                }
+            }
             return
         }
 
         // Save the playback time before we start playing so the player will jump to the correct starting time when it does load
-        dataManager.saveEpisode(playedUpTo: bookmark.time, episode: episode, updateSyncFlag: false)
+        dataManager.saveEpisode(playedUpTo: time, episode: episode, updateSyncFlag: false)
         dataManager.saveEpisode(playingStatus: .inProgress, episode: episode, updateSyncFlag: false)
         // Start the play process
         PlaybackActionHelper.play(episode: episode)

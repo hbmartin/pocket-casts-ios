@@ -4397,6 +4397,15 @@
 /* The default title to use for a bookmark */
 "bookmark_default_title" = "Bookmark";
 
+/* Name of the quote-card style offered when sharing a highlight (a bookmark enriched with a transcript excerpt) */
+"highlight_quote_share_style" = "Quote";
+
+/* Shown on the shareable quote card when a bookmark has no transcript excerpt */
+"highlight_excerpt_unavailable" = "No transcript excerpt available";
+
+/* Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card. */
+"highlight_quote_card_a11y" = "Quote card: %1$@";
+
 /* The title of a view where the user can edit their bookmark title */
 "change_bookmark_title" = "Change title";
 
@@ -4741,6 +4750,21 @@
 
 /* Title of the Transcript excerpt in Episode detail */
 "view_transcript" = "View Transcript";
+
+/* Title of the AI episode summary card on the episode detail screen */
+"episode_summary_card_title" = "Episode Summary";
+
+/* Caption on the episode summary card disclosing that the summary and takeaways are AI-generated and may not be perfectly accurate */
+"episode_summary_card_generated_disclaimer" = "AI-generated";
+
+/* Header for the list of chapter-based key moments on the episode summary card, shown when on-device takeaway generation is unavailable */
+"episode_summary_card_key_moments" = "Key moments";
+
+/* Button that expands the truncated episode summary text to show it in full */
+"episode_summary_card_show_more" = "Show more";
+
+/* Button that collapses the expanded episode summary text back to a preview */
+"episode_summary_card_show_less" = "Show less";
 
 /* Title of the button/action that starts generating an on-device transcript for a downloaded episode */
 "transcription_generate" = "Generate Transcript";

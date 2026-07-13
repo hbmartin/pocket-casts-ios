@@ -799,6 +799,12 @@ enum AnalyticsEvent: String {
     case bookmarkDeleteFormDismissed
     case bookmarkDeleteFormSubmitted
 
+    // MARK: - Smart Highlights
+
+    case highlightEnrichmentCompleted
+    case highlightEnrichmentFailed
+    case highlightQuoteShared
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged
@@ -825,6 +831,12 @@ enum AnalyticsEvent: String {
     case syncedTranscriptUnavailable
     case syncedTranscriptSeekFailed
     case syncedTranscriptAutoScrollResumed
+
+    // MARK: - Episode Summary (AI summary card on episode detail)
+
+    case episodeDetailSummaryCardShown
+    case episodeDetailSummaryTakeawayTapped
+    case episodeDetailSummaryGenerationFailed
 
     // MARK: - Diarized Transcription (locally generated transcripts)
 

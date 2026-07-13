@@ -1322,6 +1322,16 @@ nonisolated internal enum L10n {
   internal static func episodeShorthandFormatShort(_ p1: Any) -> String {
     return L10n.tr("Localizable", "episode_shorthand_format_short", String(describing: p1), fallback: "EP %1$@")
   }
+  /// Caption on the episode summary card disclosing that the summary and takeaways are AI-generated and may not be perfectly accurate
+  internal static var episodeSummaryCardGeneratedDisclaimer: String { return L10n.tr("Localizable", "episode_summary_card_generated_disclaimer", fallback: "AI-generated") }
+  /// Header for the list of chapter-based key moments on the episode summary card, shown when on-device takeaway generation is unavailable
+  internal static var episodeSummaryCardKeyMoments: String { return L10n.tr("Localizable", "episode_summary_card_key_moments", fallback: "Key moments") }
+  /// Button that collapses the expanded episode summary text back to a preview
+  internal static var episodeSummaryCardShowLess: String { return L10n.tr("Localizable", "episode_summary_card_show_less", fallback: "Show less") }
+  /// Button that expands the truncated episode summary text to show it in full
+  internal static var episodeSummaryCardShowMore: String { return L10n.tr("Localizable", "episode_summary_card_show_more", fallback: "Show more") }
+  /// Title of the AI episode summary card on the episode detail screen
+  internal static var episodeSummaryCardTitle: String { return L10n.tr("Localizable", "episode_summary_card_title", fallback: "Episode Summary") }
   /// Message indicating that the episode is unavailable server side but will remain in your manual playlist until removed.
   internal static var episodeUnavailableMessage: String { return L10n.tr("Localizable", "episode_unavailable_message", fallback: "The podcast creator deleted this episode. It will stay in your playlist until you remove it.") }
   /// Title indicating that the episode is unavailable server side
@@ -1739,6 +1749,14 @@ nonisolated internal enum L10n {
   internal static var groupEpisodes: String { return L10n.tr("Localizable", "group_episodes", fallback: "Group Episodes") }
   /// Displayed when doing a heavy task the user has to wait
   internal static var hangOn: String { return L10n.tr("Localizable", "hang_on", fallback: "Hang on!") }
+  /// Shown on the shareable quote card when a bookmark has no transcript excerpt
+  internal static var highlightExcerptUnavailable: String { return L10n.tr("Localizable", "highlight_excerpt_unavailable", fallback: "No transcript excerpt available") }
+  /// Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card.
+  internal static func highlightQuoteCardA11y(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "highlight_quote_card_a11y", String(describing: p1), fallback: "Quote card: %1$@")
+  }
+  /// Name of the quote-card style offered when sharing a highlight (a bookmark enriched with a transcript excerpt)
+  internal static var highlightQuoteShareStyle: String { return L10n.tr("Localizable", "highlight_quote_share_style", fallback: "Quote") }
   /// Prompt to clear the full listening history for the user.
   internal static var historyClearAll: String { return L10n.tr("Localizable", "history_clear_all", fallback: "Clear All") }
   /// Title for the details prompt to confirm the user wants to clear their listening history.

@@ -77,9 +77,63 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
                     hideExcerpt(self)
                 }
             }
+
             downloadingShowNotes = false
             showNotesDidLoad(showNotes: showNotes ?? CacheServerHandler.noShowNotesMessage)
+
+            // After the show notes render so the extra -meta.json request never
+            // delays them; the card slots in whenever the summary arrives.
+            if FeatureFlag.episodeSummaries.enabled,
+               let summary = try? await ShowInfoCoordinator.shared.loadEpisodeSummary(podcastUuid: parentIdentifier, episodeUuid: episodeUUID),
+               !summary.trim().isEmpty {
+                await MainActor.run { [weak self] in
+                    self?.attachSummaryCardIfNeeded(summary: summary)
+                }
+            }
         }
+    }
+
+    /// Hosts the AI summary card between the transcript excerpt and the show
+    /// notes: a code-created container joins the excerpt's vertical stack right
+    /// after the excerpt, and a `ThemedHostingController` child fills it
+    /// (plans/AI UX Improvements.md Phase 2). Idempotent — `loadShowNotes()`
+    /// can run again via the retry button.
+    private func attachSummaryCardIfNeeded(summary: String) {
+        guard episodeSummaryContainer == nil,
+              let excerptView = transcriptExcerpt,
+              let stack = excerptView.superview as? UIStackView else {
+            return
+        }
+
+        let viewModel = EpisodeSummaryViewModel(
+            summary: summary,
+            episodeUuid: episode.uuid,
+            podcastUuid: episode.parentIdentifier(),
+            duration: episode.duration
+        )
+
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let hostingController = ThemedHostingController(rootView: EpisodeSummaryCardView(viewModel: viewModel))
+        hostingController.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+        let hostedView = hostingController.view!
+        hostedView.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        container.addSubview(hostedView)
+
+        if let index = stack.arrangedSubviews.firstIndex(of: excerptView) {
+            stack.insertArrangedSubview(container, at: index + 1)
+        } else {
+            stack.addArrangedSubview(container)
+        }
+
+        hostingController.didMove(toParent: self)
+        hostedView.anchorToAllSidesOf(view: container)
+
+        episodeSummaryContainer = container
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

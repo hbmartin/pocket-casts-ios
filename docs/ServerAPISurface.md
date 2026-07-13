@@ -425,6 +425,7 @@ Source: `podcasts/ImageManager.swift`, `PodcastImage.swift`, `EpisodeArtwork.swi
 
 - **Transcripts:** `TranscriptsDataRetriever` fetches per‑episode transcript URLs (from episode metadata) over an **ephemeral** `URLSession`; `URLCache` 1 MB/100 MB in `transcripts/`, `reloadRevalidatingCacheData`, ETag/Last‑Modified conditional requests. **Generated transcripts** use `generatedTranscripts` host: `shownotes.pocketcasts.com/generated_transcripts/{podcastUuid}/{episodeUuid}.{ext}` (gated by `FeatureFlag.generatedTranscripts`), built in `ShowInfoCoordinator`.
 - **Chapters:** `PodcastIndexChapterDataRetriever` fetches Podcast Index chapter JSON from per‑episode URLs; `URLCache` 1 MB/10 MB in `podcast_index_chapters/`, snake‑case decoding.
+- **Generated episode metadata:** `GeneratedEpisodeMetadataRetriever` GETs `shownotes.pocketcasts.com/generated_transcripts/{podcastUuid}/{episodeUuid}-meta.json`; `URLCache` 1 MB/10 MB in `generated_episode_metadata/`, snake‑case decoding, in‑flight request coalescing. Envelope (`GeneratedMetadataEnvelope`): `summary: String?` (AI episode summary — rendered by the episode‑detail summary card behind `FeatureFlag.episodeSummaries`, `ShowInfoCoordinator.loadEpisodeSummary`) and `chapters: [{title, timestamp, start_time}]?` (AI chapters, lowest‑priority chapter source in `ShowInfoCoordinator.loadChapters`).
 
 ---
 

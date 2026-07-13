@@ -24,4 +24,11 @@ nonisolated protocol ShowInfoCoordinating {
         podcastUuid: String,
         episodeUuid: String
     ) async throws -> EpisodeTranscriptData
+
+    /// The AI-generated episode summary from the generated-metadata envelope,
+    /// or nil when the backend has none for this episode.
+    func loadEpisodeSummary(
+        podcastUuid: String,
+        episodeUuid: String
+    ) async throws -> String?
 }

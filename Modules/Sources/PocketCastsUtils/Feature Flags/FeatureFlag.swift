@@ -73,6 +73,16 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see plans/API Auth Hardening Plan.md.
     case sharingListBearerAuth
 
+    /// AI summary card on the episode detail screen with tap-to-seek key
+    /// takeaways (on-device FoundationModels with deterministic fallbacks);
+    /// see plans/AI UX Improvements.md Phase 2.
+    case episodeSummaries
+
+    /// Smart highlights: bookmarks enriched with transcript excerpts and
+    /// on-device auto-titles, shareable as quote cards;
+    /// see plans/AI UX Improvements.md Phase 3.
+    case smartHighlights
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -131,6 +141,10 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             false
         case .sharingListBearerAuth:
             false
+        case .episodeSummaries:
+            BuildEnvironment.current != .appStore
+        case .smartHighlights:
+            BuildEnvironment.current != .appStore
         }
     }
 
