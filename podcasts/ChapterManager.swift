@@ -66,6 +66,11 @@ class ChapterManager {
     /// Resolves the smart-skip title patterns for an episode's podcast. Injectable for tests.
     private let skipPatternsProvider: (BaseEpisode) -> [String]
 
+    /// Runs after a parse installs chapters and applies skip rules, so playback
+    /// can skip a rule-deselected chapter that is already playing. Injected so
+    /// tests can observe the call without a live `PlaybackManager`.
+    private let currentChapterRevalidator: (BaseEpisode) -> Void
+
     private var playableChapters: [ChapterInfo] {
         visibleChapters.filter { $0.isPlayable() }
     }
@@ -73,11 +78,20 @@ class ChapterManager {
     init(
         chapterParser: PodcastChapterParser = PodcastChapterParser(),
         showInfoCoordinator: ShowInfoCoordinating = ShowInfoCoordinator.shared,
-        skipPatternsProvider: ((BaseEpisode) -> [String])? = nil) {
+        skipPatternsProvider: ((BaseEpisode) -> [String])? = nil,
+        currentChapterRevalidator: ((BaseEpisode) -> Void)? = nil) {
         self.chapterParser = chapterParser
         self.showInfoCoordinator = showInfoCoordinator
         self.skipPatternsProvider = skipPatternsProvider ?? { episode in
             DataManager.sharedManager.findPodcast(uuid: episode.parentIdentifier())?.settings.skipChapterTitles ?? []
+        }
+        self.currentChapterRevalidator = currentChapterRevalidator ?? { episode in
+            // A rule-skipped chapter may already be playing when parsing
+            // finishes; without this the time observer only re-evaluates at the
+            // next chapter boundary, so the whole unwanted chapter plays through.
+            if PlaybackManager.shared.currentEpisode()?.uuid == episode.uuid {
+                PlaybackManager.shared.playableChaptersUpdated()
+            }
         }
     }
 
@@ -445,12 +459,7 @@ class ChapterManager {
         updateCurrentChapter(time: PlaybackManager.shared.currentTime())
         fetchRemoteArtworkIfNeeded()
 
-        // A rule-skipped chapter may already be playing when parsing finishes;
-        // without this the time observer only re-evaluates at the next chapter
-        // boundary, so the whole unwanted chapter plays through.
-        if PlaybackManager.shared.currentEpisode()?.uuid == episode.uuid {
-            PlaybackManager.shared.playableChaptersUpdated()
-        }
+        currentChapterRevalidator(episode)
 
         NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
     }

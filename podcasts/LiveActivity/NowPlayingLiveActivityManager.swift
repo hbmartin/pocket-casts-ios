@@ -22,7 +22,7 @@ final class NowPlayingLiveActivityManager {
     /// Playback seconds of divergence between actual and projected position
     /// before a progress tick counts as a seek. Generous enough that timer
     /// jitter and rate rounding never trip it.
-    private static let seekDriftThreshold: TimeInterval = 3
+    nonisolated private static let seekDriftThreshold: TimeInterval = 3
 
     private var messageTokens = [NotificationCenter.ObservationToken]()
 
@@ -109,16 +109,24 @@ final class NowPlayingLiveActivityManager {
     private func progressTicked() {
         guard activity != nil, let lastContentState else { return }
 
-        let projected: TimeInterval
-        if lastContentState.isPlaying {
-            let elapsed = Date().timeIntervalSince(lastContentState.capturedAt)
-            projected = lastContentState.position + elapsed * (lastContentState.playbackRate ?? 1)
-        } else {
-            projected = lastContentState.position
-        }
-        if abs(PlaybackManager.shared.currentTime() - projected) > Self.seekDriftThreshold {
+        if Self.isSeekDrift(state: lastContentState, currentTime: PlaybackManager.shared.currentTime(), now: Date()) {
             playbackChanged()
         }
+    }
+
+    /// The pure drift decision behind `progressTicked()`, split out for tests:
+    /// projects where playback should be if `state` still held (frozen while
+    /// paused; advancing at `playbackRate` playback-seconds per wall second
+    /// while playing) and reports whether the actual position has jumped away.
+    nonisolated static func isSeekDrift(state: NowPlayingActivityAttributes.ContentState, currentTime: TimeInterval, now: Date) -> Bool {
+        let projected: TimeInterval
+        if state.isPlaying {
+            let elapsed = now.timeIntervalSince(state.capturedAt)
+            projected = state.position + elapsed * (state.playbackRate ?? 1)
+        } else {
+            projected = state.position
+        }
+        return abs(currentTime - projected) > seekDriftThreshold
     }
 
     private func playbackEnded() {

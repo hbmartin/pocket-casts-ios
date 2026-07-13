@@ -74,6 +74,32 @@ final class ChapterManagerSkipRulesTests: XCTestCase {
         XCTAssertFalse(manager.isRuleSkipped(chapterIndex: 0))
     }
 
+    // MARK: - Current-chapter revalidation (review finding P2-6)
+
+    func testParseCompletionRevalidatesTheCurrentChapterAfterRulesApply() async {
+        // A rule-skipped chapter can already be playing when parsing finishes;
+        // the manager must hand playback a revalidation pass — and only after
+        // the skip rules have run, or the current chapter still looks playable.
+        let parser = PodcastChapterParserMock()
+        var revalidatedEpisodes = [String]()
+        var manager: ChapterManager!
+        manager = ChapterManager(
+            chapterParser: parser,
+            showInfoCoordinator: SkipRulesShowInfoCoordinatorMock(),
+            skipPatternsProvider: { _ in ["sponsor"] },
+            currentChapterRevalidator: { episode in
+                revalidatedEpisodes.append(episode.uuid)
+                XCTAssertEqual(manager.chapterAt(index: 0)?.isPlayable(), false,
+                               "revalidation must run after skip rules are applied, or the skip is missed")
+            })
+        parser.chapters = [chapter(index: 0, title: "Sponsor Break"), chapter(index: 1, title: "Main topic")]
+        let episode = makeEpisode()
+
+        await manager.parseChapters(episode: episode, duration: 200)
+
+        XCTAssertEqual(revalidatedEpisodes, [episode.uuid], "exactly one revalidation per parse, for the parsed episode")
+    }
+
     // MARK: - Helpers
 
     private func makeManager(patterns: [String]) -> (ChapterManager, PodcastChapterParserMock) {
