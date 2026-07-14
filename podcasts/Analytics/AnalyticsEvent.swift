@@ -822,6 +822,11 @@ enum AnalyticsEvent: String {
     case transcriptEmbeddingBackfillCompleted
     case librarySearchTranscriptPlayedFilterToggled
 
+    // MARK: - Entity Mentions
+
+    case episodeDetailMentionsShown
+    case episodeDetailMentionTapped
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged

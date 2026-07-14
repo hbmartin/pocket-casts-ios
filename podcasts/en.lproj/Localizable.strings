@@ -6897,6 +6897,12 @@
 /* Toggle above transcript search results restricting matches to episodes already played */
 "search_transcripts_played_only" = "Played only";
 
+/* Header of the episode-detail card listing entities extracted from the transcript */
+"episode_mentions_title" = "Mentioned in this episode";
+
+/* Tappable seek link under a mentioned entity; '%1$@' is a timestamp like 34:12 */
+"episode_mentions_at_time" = "Mentioned at %1$@";
+
 /* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
 "search_transcripts_empty_message" = "Episodes become searchable here when they download or when you view their transcript.";
 

@@ -114,6 +114,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// when keywords don't; see plans/transcript-based-ideas.md item 1.
     case semanticTranscriptSearch
 
+    /// "Mentioned in this episode": entities (people/books/products/websites/
+    /// places/organizations) extracted from the indexed transcript with
+    /// tap-to-seek anchors — auto-generated show notes;
+    /// see plans/transcript-based-ideas.md item 5.
+    case episodeMentions
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -187,6 +193,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .onDeviceChapters:
             BuildEnvironment.current != .appStore
         case .semanticTranscriptSearch:
+            BuildEnvironment.current != .appStore
+        case .episodeMentions:
             BuildEnvironment.current != .appStore
         }
     }
