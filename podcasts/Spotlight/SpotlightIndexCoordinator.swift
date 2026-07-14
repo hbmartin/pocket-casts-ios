@@ -1,3 +1,4 @@
+import Combine
 import CoreSpotlight
 import Foundation
 import PocketCastsDataModel
@@ -70,6 +71,7 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
 
     private struct PendingChanges {
         var uuids: Set<String> = []
+        var bookmarkUuids: Set<String> = []
         var needsFullRefresh = false
         var flushScheduled = false
     }
@@ -84,9 +86,18 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     /// should be deleted (episode gone, not downloaded, or a user file).
     private let resolveEpisode: @Sendable (String) -> SpotlightItemBuilder.EpisodeMetadata?
     private let downloadedEpisodes: @Sendable () -> [SpotlightItemBuilder.EpisodeMetadata]
+    /// Byte-capped transcript text for an indexed episode (nil = none indexed).
+    private let transcriptText: @Sendable (String) -> String?
+    /// Metadata for a Highlight that should be indexed; nil means delete
+    /// (bookmark gone, or not enriched with an excerpt).
+    private let resolveHighlight: @Sendable (String) -> SpotlightItemBuilder.HighlightMetadata?
+    private let allHighlights: @Sendable () -> [SpotlightItemBuilder.HighlightMetadata]
 
     /// Held for the coordinator's whole (process-long) lifetime; set once in start().
     private let observationTokens = Mutex<[NotificationCenter.ObservationToken]>([])
+    /// AnyCancellable isn't Sendable; main-actor isolation guards it instead
+    /// (subscriptions are only ever created there, once).
+    @MainActor private var bookmarkSubscriptions = Set<AnyCancellable>()
     private let pending = Mutex<PendingChanges>(PendingChanges())
     private let persistedIdentifiers = Mutex<Set<String>?>(nil)
 
@@ -96,7 +107,10 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
          debounceSeconds: TimeInterval = 2,
          isEnabled: @escaping @Sendable () -> Bool = { FeatureFlag.spotlightIndexing.enabled },
          resolveEpisode: @escaping @Sendable (String) -> SpotlightItemBuilder.EpisodeMetadata? = SpotlightIndexCoordinator.liveResolveEpisode,
-         downloadedEpisodes: @escaping @Sendable () -> [SpotlightItemBuilder.EpisodeMetadata] = SpotlightIndexCoordinator.liveDownloadedEpisodes) {
+         downloadedEpisodes: @escaping @Sendable () -> [SpotlightItemBuilder.EpisodeMetadata] = SpotlightIndexCoordinator.liveDownloadedEpisodes,
+         transcriptText: @escaping @Sendable (String) -> String? = SpotlightIndexCoordinator.liveTranscriptText,
+         resolveHighlight: @escaping @Sendable (String) -> SpotlightItemBuilder.HighlightMetadata? = SpotlightIndexCoordinator.liveResolveHighlight,
+         allHighlights: @escaping @Sendable () -> [SpotlightItemBuilder.HighlightMetadata] = SpotlightIndexCoordinator.liveAllHighlights) {
         self.index = index
         self.defaults = defaults
         self.stateFileURL = stateFileURL
@@ -104,9 +118,13 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
         self.isEnabled = isEnabled
         self.resolveEpisode = resolveEpisode
         self.downloadedEpisodes = downloadedEpisodes
+        self.transcriptText = transcriptText
+        self.resolveHighlight = resolveHighlight
+        self.allHighlights = allHighlights
     }
 
-    /// Begins observing episode lifecycle messages. Call once at launch.
+    /// Begins observing episode lifecycle and transcript-index messages. Call
+    /// once at launch.
     func start() {
         let downloadToken = NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
             self?.episodeChanged(uuid: message.uuid)
@@ -115,18 +133,53 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
             // A nil uuid is a bulk change (mark-all, cleanup): re-derive everything.
             self?.episodeChanged(uuid: message.uuid)
         }
-        observationTokens.withLock { $0 = [downloadToken, statusToken] }
+        let transcriptToken = NotificationCenter.default.addObserver(for: TranscriptIndexUpdated.self) { [weak self] message in
+            // Re-index so the episode item picks up the transcript textContent.
+            self?.episodeChanged(uuid: message.uuid)
+        }
+        observationTokens.withLock { $0 = [downloadToken, statusToken, transcriptToken] }
+    }
+
+    /// Mirrors Highlight lifecycle (bookmarks gaining excerpts, deletions) into
+    /// the index. Separate from `start()` because the bookmark manager lives on
+    /// the main actor.
+    @MainActor
+    func startBookmarkObservations(bookmarkManager: BookmarkManager) {
+        bookmarkManager.onBookmarkChanged
+            .sink { [weak self] event in
+                // Only enrichment makes a bookmark a Highlight; title edits on
+                // an already-indexed one also refresh via the same path.
+                self?.highlightChanged(bookmarkUuid: event.uuid)
+            }
+            .store(in: &bookmarkSubscriptions)
+        bookmarkManager.onBookmarksDeleted
+            .sink { [weak self] event in
+                event.items.forEach { self?.highlightChanged(bookmarkUuid: $0.uuid) }
+            }
+            .store(in: &bookmarkSubscriptions)
     }
 
     // MARK: - Event intake (debounced)
 
     func episodeChanged(uuid: String?) {
-        let shouldSchedule: Bool = pending.withLock { state in
+        enqueueChange { state in
             if let uuid {
                 state.uuids.insert(uuid)
             } else {
                 state.needsFullRefresh = true
             }
+        }
+    }
+
+    func highlightChanged(bookmarkUuid: String) {
+        enqueueChange { state in
+            state.bookmarkUuids.insert(bookmarkUuid)
+        }
+    }
+
+    private func enqueueChange(_ apply: (inout PendingChanges) -> Void) {
+        let shouldSchedule: Bool = pending.withLock { state in
+            apply(&state)
             guard !state.flushScheduled else { return false }
             state.flushScheduled = true
             return true
@@ -142,9 +195,9 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     /// Applies the coalesced changes. Exposed for tests (which call it directly
     /// after seeding events with a long debounce).
     func flushPending() async {
-        let (uuids, fullRefresh): (Set<String>, Bool) = pending.withLock { state in
+        let (uuids, bookmarkUuids, fullRefresh): (Set<String>, Set<String>, Bool) = pending.withLock { state in
             defer { state = PendingChanges() }
-            return (state.uuids, state.needsFullRefresh)
+            return (state.uuids, state.bookmarkUuids, state.needsFullRefresh)
         }
         guard isEnabled(), index.isAvailable() else { return }
 
@@ -152,15 +205,22 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
             await rebuildAll()
             return
         }
-        guard !uuids.isEmpty else { return }
+        guard !uuids.isEmpty || !bookmarkUuids.isEmpty else { return }
 
         var itemsToIndex: [CSSearchableItem] = []
         var identifiersToDelete: [String] = []
-        for uuid in uuids {
+        for uuid in uuids.sorted() {
             if let metadata = resolveEpisode(uuid) {
-                itemsToIndex.append(SpotlightItemBuilder.episodeItem(metadata))
+                itemsToIndex.append(SpotlightItemBuilder.episodeItem(metadata, transcriptText: transcriptText(uuid)))
             } else {
                 identifiersToDelete.append(SpotlightItemBuilder.identifier(for: .episode(uuid: uuid)))
+            }
+        }
+        for bookmarkUuid in bookmarkUuids.sorted() {
+            if let metadata = resolveHighlight(bookmarkUuid) {
+                itemsToIndex.append(SpotlightItemBuilder.highlightItem(metadata))
+            } else {
+                identifiersToDelete.append(SpotlightItemBuilder.identifier(for: .highlight(bookmarkUuid: bookmarkUuid)))
             }
         }
 
@@ -199,12 +259,14 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
         await rebuildAll()
     }
 
-    /// Recomputes the full expected set and rewrites Spotlight to match. Also the
-    /// "Rebuild Spotlight Index" settings action.
+    /// Recomputes the full expected set (episodes and Highlights) and rewrites
+    /// Spotlight to match. Also the "Rebuild Spotlight Index" settings action.
     func rebuildAll() async {
         guard isEnabled(), index.isAvailable() else { return }
 
-        let items = downloadedEpisodes().map { SpotlightItemBuilder.episodeItem($0) }
+        let episodeItems = downloadedEpisodes().map { SpotlightItemBuilder.episodeItem($0, transcriptText: transcriptText($0.uuid)) }
+        let highlightItems = allHighlights().map { SpotlightItemBuilder.highlightItem($0) }
+        let items = episodeItems + highlightItems
         let expected = Set(items.map(\.uniqueIdentifier))
         let plan = SpotlightReconciliationPlan.make(expected: expected, persisted: loadPersisted())
 
@@ -304,6 +366,50 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
             episodeDescription: episode.episodeDescription,
             publishedDate: episode.publishedDate,
             duration: episode.duration
+        )
+    }
+
+    /// Byte-capped transcript text for the episode, preferring the generated
+    /// corpus (native audio timeline, always kept) over the provided one.
+    private static let liveTranscriptText: @Sendable (String) -> String? = { uuid in
+        let search = DataManager.sharedManager.transcriptSearch
+        guard search.isAvailable else { return nil }
+        // Qualified: the app module has its own (unrelated) TranscriptSource enum.
+        for source in [PocketCastsDataModel.TranscriptSource.generated, .provided] {
+            let texts = search.segments(episodeUuid: uuid, source: source).map(\.text)
+            if !texts.isEmpty {
+                return SpotlightItemBuilder.trimmedTextContent(texts)
+            }
+        }
+        return nil
+    }
+
+    /// Only enriched bookmarks (Highlights) qualify; a plain bookmark's uuid
+    /// resolves to nil and deletes any stale item.
+    private static let liveResolveHighlight: @Sendable (String) -> SpotlightItemBuilder.HighlightMetadata? = { bookmarkUuid in
+        guard let bookmark = DataManager.sharedManager.bookmarks.bookmark(for: bookmarkUuid),
+              let excerpt = bookmark.excerpt else {
+            return nil
+        }
+        return highlightMetadata(for: bookmark, excerpt: excerpt)
+    }
+
+    private static let liveAllHighlights: @Sendable () -> [SpotlightItemBuilder.HighlightMetadata] = {
+        DataManager.sharedManager.bookmarks.allBookmarks()
+            .compactMap { bookmark in
+                bookmark.excerpt.map { highlightMetadata(for: bookmark, excerpt: $0) }
+            }
+    }
+
+    private static func highlightMetadata(for bookmark: Bookmark, excerpt: String) -> SpotlightItemBuilder.HighlightMetadata {
+        let episode = DataManager.sharedManager.findEpisode(uuid: bookmark.episodeUuid)
+        let podcastUuid = bookmark.podcastUuid ?? episode?.podcastUuid
+        return SpotlightItemBuilder.HighlightMetadata(
+            bookmarkUuid: bookmark.uuid,
+            title: bookmark.title,
+            excerpt: excerpt,
+            episodeTitle: episode?.title,
+            podcastTitle: podcastUuid.flatMap { DataManager.sharedManager.findPodcast(uuid: $0, includeUnsubscribed: true)?.title }
         )
     }
 }

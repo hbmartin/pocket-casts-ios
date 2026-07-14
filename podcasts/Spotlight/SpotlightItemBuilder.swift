@@ -91,6 +91,41 @@ nonisolated enum SpotlightItemBuilder {
         return item
     }
 
+    /// The highlight fields an item is built from (a Highlight is a bookmark
+    /// enriched with a transcript excerpt).
+    struct HighlightMetadata: Equatable, Sendable {
+        let bookmarkUuid: String
+        let title: String
+        let excerpt: String
+        let episodeTitle: String?
+        let podcastTitle: String?
+
+        init(bookmarkUuid: String, title: String, excerpt: String, episodeTitle: String? = nil, podcastTitle: String? = nil) {
+            self.bookmarkUuid = bookmarkUuid
+            self.title = title
+            self.excerpt = excerpt
+            self.episodeTitle = episodeTitle
+            self.podcastTitle = podcastTitle
+        }
+    }
+
+    static func highlightItem(_ metadata: HighlightMetadata) -> CSSearchableItem {
+        let attributes = CSSearchableItemAttributeSet(contentType: .audio)
+        attributes.title = metadata.title
+        attributes.containerTitle = [metadata.episodeTitle, metadata.podcastTitle].compactMap { $0 }.first
+        attributes.contentDescription = String(metadata.excerpt.prefix(300))
+        attributes.textContent = metadata.excerpt
+        attributes.keywords = [metadata.podcastTitle].compactMap { $0 }
+
+        let item = CSSearchableItem(
+            uniqueIdentifier: identifier(for: .highlight(bookmarkUuid: metadata.bookmarkUuid)),
+            domainIdentifier: highlightDomain,
+            attributeSet: attributes
+        )
+        item.expirationDate = Date(timeIntervalSinceNow: expirationInterval)
+        return item
+    }
+
     /// Joins segment texts until the UTF-8 budget is reached — never splitting a
     /// segment, so the indexed text always ends on a spoken-sentence boundary.
     static func trimmedTextContent(_ segments: [String], maxBytes: Int = maxTextContentBytes) -> String {

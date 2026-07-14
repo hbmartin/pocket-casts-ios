@@ -578,6 +578,7 @@ actor TranscriptionQueueManager {
 
         setState(episodeUuid: episodeUuid, state: .completed, forcePost: true)
         NotificationCenter.postOnMainThread(EpisodeTranscriptionCompleted(episodeUuid: episodeUuid, succeeded: true))
+        NotificationCenter.postOnMainThread(TranscriptIndexUpdated(uuid: episodeUuid))
         Analytics.track(.transcriptionCompleted, properties: [
             "episode_uuid": episodeUuid,
             "engine": transcript.engineDescription,

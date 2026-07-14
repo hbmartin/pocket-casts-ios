@@ -66,6 +66,27 @@ final class SpotlightItemBuilderTests: XCTestCase {
         XCTAssertEqual(item.attributeSet.contentDescription?.count, 300)
     }
 
+    // MARK: - Highlight items
+
+    func testHighlightItemCarriesExcerpt() {
+        let metadata = SpotlightItemBuilder.HighlightMetadata(
+            bookmarkUuid: "bm-1",
+            title: "That rates argument",
+            excerpt: "and that is why rates will stay high",
+            episodeTitle: "Episode Nine",
+            podcastTitle: "Economics Weekly"
+        )
+        let item = SpotlightItemBuilder.highlightItem(metadata)
+
+        XCTAssertEqual(item.uniqueIdentifier, "highlight:bm-1")
+        XCTAssertEqual(item.domainIdentifier, SpotlightItemBuilder.highlightDomain)
+        XCTAssertEqual(item.attributeSet.title, "That rates argument")
+        XCTAssertEqual(item.attributeSet.containerTitle, "Episode Nine")
+        XCTAssertEqual(item.attributeSet.contentDescription, "and that is why rates will stay high")
+        XCTAssertEqual(item.attributeSet.textContent, "and that is why rates will stay high")
+        XCTAssertNotNil(item.expirationDate)
+    }
+
     // MARK: - Text content trimming
 
     func testTrimmedTextContentRespectsByteBudgetAtSegmentBoundaries() {

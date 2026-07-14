@@ -6744,6 +6744,12 @@
 /* Schema reference type label for the podcast picker field */
 "playlist_custom_schema_type_podcast" = "Podcasts";
 
+/* Settings action that re-indexes every episode and highlight into iOS Spotlight search */
+"settings_rebuild_spotlight_index" = "Rebuild Spotlight Index";
+
+/* Toast confirming the Spotlight re-index kicked off in the background */
+"settings_rebuild_spotlight_index_started" = "Rebuilding Spotlight index…";
+
 /* One matching episode for the current query; '%1$@' is the number 1 formatted */
 "playlist_custom_match_count_singular" = "%1$@ matching episode";
 

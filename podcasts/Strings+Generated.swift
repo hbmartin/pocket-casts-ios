@@ -4051,6 +4051,10 @@ nonisolated internal enum L10n {
   internal static var settingsQueuePosition: String { return L10n.tr("Localizable", "settings_queue_position", fallback: "Position in Queue") }
   /// Label for an input that takes the user to the privacy policy
   internal static var settingsReadPrivacyPolicy: String { return L10n.tr("Localizable", "settings_read_privacy_policy", fallback: "Read privacy policy") }
+  /// Settings action that re-indexes every episode and highlight into iOS Spotlight search
+  internal static var settingsRebuildSpotlightIndex: String { return L10n.tr("Localizable", "settings_rebuild_spotlight_index", fallback: "Rebuild Spotlight Index") }
+  /// Toast confirming the Spotlight re-index kicked off in the background
+  internal static var settingsRebuildSpotlightIndexStarted: String { return L10n.tr("Localizable", "settings_rebuild_spotlight_index_started", fallback: "Rebuilding Spotlight index…") }
   /// Button that restores the library from a previously saved backup.
   internal static var settingsRestore: String { return L10n.tr("Localizable", "settings_restore", fallback: "Restore From Backup") }
   /// Message of the confirmation shown before restoring from a backup.

@@ -228,6 +228,69 @@ public struct TranscriptSearchDataManager: Sendable {
         return success
     }
 
+    // MARK: - Read-back
+
+    /// All indexed segments for the (episode, source) pair, in segment order —
+    /// the raw material for Spotlight text content and other consumers that
+    /// need the transcript without re-fetching or re-parsing it. Empty while
+    /// unavailable or when the pair isn't indexed.
+    public func segments(episodeUuid: String, source: TranscriptSource) -> [TranscriptSearchSegment] {
+        guard isAvailable else { return [] }
+
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
+        let sql = """
+        SELECT text, segmentIndex, startTime, endTime, speaker
+        FROM \(Self.ftsTableName)
+        WHERE episodeUuid = ? AND source = ?
+        ORDER BY segmentIndex
+        """
+        let rows = dbQueue.read { db in
+            try Row.fetchAll(db, sql: sql, arguments: [episodeUuid, source.rawValue])
+        } ?? []
+
+        return rows.map { row in
+            TranscriptSearchSegment(
+                index: row["segmentIndex"] ?? 0,
+                text: row["text"] ?? "",
+                startTime: row["startTime"] ?? 0,
+                endTime: row["endTime"],
+                speaker: row["speaker"]
+            )
+        }
+    }
+
+    /// One indexed segment by ordinal, as a hit whose snippet is the plain
+    /// segment text (no highlight markers). Prefers the generated corpus when
+    /// both sources carry the ordinal. Used to re-resolve persisted Siri
+    /// entities across process restarts.
+    public func segment(episodeUuid: String, segmentIndex: Int) -> TranscriptSearchHit? {
+        guard isAvailable else { return nil }
+
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
+        let sql = """
+        SELECT text, episodeUuid, podcastUuid, segmentIndex, startTime, endTime, speaker, source
+        FROM \(Self.ftsTableName)
+        WHERE episodeUuid = ? AND segmentIndex = ?
+        ORDER BY CASE source WHEN '\(TranscriptSource.generated.rawValue)' THEN 0 ELSE 1 END
+        LIMIT 1
+        """
+        let row = dbQueue.read { db in
+            try Row.fetchOne(db, sql: sql, arguments: [episodeUuid, segmentIndex])
+        } ?? nil
+        guard let row else { return nil }
+
+        return TranscriptSearchHit(
+            episodeUuid: row["episodeUuid"] ?? "",
+            podcastUuid: row["podcastUuid"],
+            segmentIndex: row["segmentIndex"] ?? 0,
+            startTime: row["startTime"] ?? 0,
+            endTime: row["endTime"],
+            speaker: row["speaker"],
+            source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided,
+            snippet: row["text"] ?? ""
+        )
+    }
+
     // MARK: - Search
 
     /// Full-text search across every indexed transcript, most relevant first

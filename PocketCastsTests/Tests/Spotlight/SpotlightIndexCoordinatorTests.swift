@@ -69,6 +69,8 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
     private var defaults: UserDefaults!
     private var stateURL: URL!
     private var episodesBox: SharedBox<[String: SpotlightItemBuilder.EpisodeMetadata]>!
+    private var highlightsBox: SharedBox<[String: SpotlightItemBuilder.HighlightMetadata]>!
+    private var transcriptsBox: SharedBox<[String: String]>!
     private var enabledBox: SharedBox<Bool>!
 
     override func setUpWithError() throws {
@@ -78,6 +80,8 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
         stateURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("spotlight-state-\(UUID().uuidString).json")
         episodesBox = SharedBox([:])
+        highlightsBox = SharedBox([:])
+        transcriptsBox = SharedBox([:])
         enabledBox = SharedBox(true)
     }
 
@@ -86,12 +90,16 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
         fakeIndex = nil
         defaults = nil
         episodesBox = nil
+        highlightsBox = nil
+        transcriptsBox = nil
         enabledBox = nil
         try super.tearDownWithError()
     }
 
     private func makeCoordinator() -> SpotlightIndexCoordinator {
         let episodes = episodesBox!
+        let highlights = highlightsBox!
+        let transcripts = transcriptsBox!
         let enabled = enabledBox!
         return SpotlightIndexCoordinator(
             index: fakeIndex,
@@ -100,7 +108,10 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
             debounceSeconds: 600, // tests call flushPending() directly
             isEnabled: { enabled.get() },
             resolveEpisode: { uuid in episodes.get()[uuid] },
-            downloadedEpisodes: { episodes.get().values.sorted { $0.uuid < $1.uuid } }
+            downloadedEpisodes: { episodes.get().values.sorted { $0.uuid < $1.uuid } },
+            transcriptText: { uuid in transcripts.get()[uuid] },
+            resolveHighlight: { uuid in highlights.get()[uuid] },
+            allHighlights: { highlights.get().values.sorted { $0.bookmarkUuid < $1.bookmarkUuid } }
         )
     }
 
@@ -110,6 +121,14 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
 
     private func removeEpisode(uuid: String) {
         episodesBox.update { $0[uuid] = nil }
+    }
+
+    private func setHighlight(_ metadata: SpotlightItemBuilder.HighlightMetadata) {
+        highlightsBox.update { $0[metadata.bookmarkUuid] = metadata }
+    }
+
+    private func setTranscript(_ text: String, episodeUuid: String) {
+        transcriptsBox.update { $0[episodeUuid] = text }
     }
 
     private func setEnabled(_ value: Bool) {
@@ -178,6 +197,56 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
         // The next full rebuild retries it.
         await c.rebuildAll()
         XCTAssertEqual(fakeIndex.calls.last, .index(["episode:ep-1"]))
+    }
+
+    // MARK: - Highlights and transcript text
+
+    func testHighlightChangesUpsertAndDelete() async {
+        let c = makeCoordinator()
+        setHighlight(.init(bookmarkUuid: "bm-1", title: "T", excerpt: "quote"))
+
+        c.highlightChanged(bookmarkUuid: "bm-1")
+        c.highlightChanged(bookmarkUuid: "bm-plain") // never enriched -> delete
+        await c.flushPending()
+
+        XCTAssertEqual(fakeIndex.calls, [
+            .delete(["highlight:bm-plain"]),
+            .index(["highlight:bm-1"])
+        ])
+    }
+
+    func testEpisodeAndHighlightChangesShareOneFlush() async {
+        let c = makeCoordinator()
+        setEpisode(.init(uuid: "ep-1", title: "One"))
+        setHighlight(.init(bookmarkUuid: "bm-1", title: "T", excerpt: "quote"))
+
+        c.episodeChanged(uuid: "ep-1")
+        c.highlightChanged(bookmarkUuid: "bm-1")
+        await c.flushPending()
+
+        XCTAssertEqual(fakeIndex.calls, [.index(["episode:ep-1", "highlight:bm-1"])])
+    }
+
+    func testRebuildIncludesHighlights() async {
+        let c = makeCoordinator()
+        setEpisode(.init(uuid: "ep-1", title: "One"))
+        setHighlight(.init(bookmarkUuid: "bm-1", title: "T", excerpt: "quote"))
+
+        await c.rebuildAll()
+
+        XCTAssertEqual(fakeIndex.calls, [.index(["episode:ep-1", "highlight:bm-1"])])
+    }
+
+    func testTranscriptUpdateReindexesEpisodeWithText() async {
+        let c = makeCoordinator()
+        setEpisode(.init(uuid: "ep-1", title: "One"))
+        setTranscript("spoken words", episodeUuid: "ep-1")
+
+        // The TranscriptIndexUpdated observer funnels into episodeChanged.
+        c.episodeChanged(uuid: "ep-1")
+        await c.flushPending()
+
+        XCTAssertEqual(fakeIndex.calls, [.index(["episode:ep-1"])])
     }
 
     // MARK: - Reconciliation
