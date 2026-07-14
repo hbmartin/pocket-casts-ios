@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -346,6 +346,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             cell.settingsImage.image = UIImage(named: "bookmarks-profile")
             cell.settingsLabel.text = L10n.bookmarks
+        case .peopleDirectory:
+            cell.settingsImage.image = UIImage(systemName: "person.2")
+            cell.settingsLabel.text = L10n.peopleDirectoryTitle
         }
 
         return cell
@@ -403,6 +406,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             let bookmarksController = BookmarksProfileListController()
             navigationController?.pushViewController(bookmarksController, animated: true)
+        case .peopleDirectory:
+            let directoryController = ThemedHostingController(rootView: PersonDirectoryView())
+            navigationController?.pushViewController(directoryController, animated: true)
         }
     }
 
@@ -423,6 +429,10 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     private func refreshTableData() {
         var data: [[ProfileViewController.TableRow]]
         data = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help, .uploadedFiles]]
+
+        if FeatureFlag.speakerDirectory.enabled, let bookmarksIndex = data[0].firstIndex(of: .bookmarks) {
+            data[0].insert(.peopleDirectory, at: bookmarksIndex + 1)
+        }
 
         if informationalBannerCoordinator.shouldShowBanner() {
             data[0].insert(.informationalBanner, at: 0)

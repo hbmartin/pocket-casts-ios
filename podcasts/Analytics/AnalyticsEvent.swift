@@ -816,6 +816,10 @@ enum AnalyticsEvent: String {
     case highlightEnrichmentFailed
     case highlightQuoteShared
 
+    // MARK: - People Directory
+
+    case peopleDirectoryShown
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged

@@ -108,6 +108,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Item 2's on-device path).
     case onDeviceChapters
 
+    /// The People directory: user-renamed transcript speakers aggregated by
+    /// display name into a Profile-tab screen;
+    /// see plans/transcript-based-ideas.md item 3.
+    case speakerDirectory
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -179,6 +184,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .catchMeUp:
             BuildEnvironment.current != .appStore
         case .onDeviceChapters:
+            BuildEnvironment.current != .appStore
+        case .speakerDirectory:
             BuildEnvironment.current != .appStore
         }
     }

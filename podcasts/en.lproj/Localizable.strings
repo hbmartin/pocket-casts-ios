@@ -6894,6 +6894,21 @@
 /* Title shown in search results when no transcript matches the search term */
 "search_transcripts_empty_title" = "No Transcript Matches";
 
+/* Title of the People directory screen listing renamed transcript speakers */
+"people_directory_title" = "People";
+
+/* Empty state title when no transcript speakers have been named yet */
+"people_directory_empty_title" = "No People Yet";
+
+/* Empty state message explaining how the People directory gets populated */
+"people_directory_empty_message" = "Name the speakers in an episode's transcript and they'll show up here, across every show.";
+
+/* Appearance count for a person featured in exactly one episode */
+"people_directory_episode_count_singular" = "1 episode";
+
+/* Appearance count for a person; '%1$@' is the number of episodes */
+"people_directory_episode_count_plural" = "%1$@ episodes";
+
 /* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
 "search_transcripts_empty_message" = "Episodes become searchable here when they download or when you view their transcript.";
 
