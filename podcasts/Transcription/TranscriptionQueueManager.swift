@@ -110,6 +110,10 @@ actor TranscriptionQueueManager {
     private var drainTask: Task<Void, Never>?
     private var currentJob: (episodeUuid: String, task: Task<Void, Never>)?
     private var cancelIntents: [String: CancelIntent] = [:]
+    /// True while the running job is on the local (on-device) pipeline — the
+    /// only kind the battery policy governs. Remote-provider jobs cost network,
+    /// not compute, and must never be paused by a power change.
+    private var currentJobIsLocalPipeline = false
     private var lastPostedStage: String?
     private var lastProgressPostDate = Date.distantPast
 
@@ -243,9 +247,13 @@ actor TranscriptionQueueManager {
             cancelIntents[episodeUuid] = .user
             currentJob.task.cancel()
         }
-        dataManager.transcriptions.delete(episodeUuid: episodeUuid)
+        // Ancillary data first, the record last: the record is what keeps the
+        // transcript discoverable (Clear All iterates records), so a crash
+        // between the steps must not strand FTS rows or an artifact behind an
+        // already-deleted record.
         dataManager.transcriptSearch.delete(episodeUuid: episodeUuid, source: .generated)
         artifactStore.delete(episodeUuid: episodeUuid)
+        dataManager.transcriptions.delete(episodeUuid: episodeUuid)
         states[episodeUuid] = nil
     }
 
@@ -255,6 +263,9 @@ actor TranscriptionQueueManager {
         for record in dataManager.transcriptions.allRecords() where !record.episodeUuid.isEmpty {
             deleteTranscription(episodeUuid: record.episodeUuid)
         }
+        // Sweep generated FTS rows an old crash may have orphaned (record gone,
+        // segments left behind) — the record iteration above can't find those.
+        dataManager.transcriptSearch.removeAll(source: .generated)
     }
 
     /// Suspends until the drain loop goes idle (queue empty, or deferred by
@@ -296,6 +307,7 @@ actor TranscriptionQueueManager {
             currentJob = (episodeUuid, job)
             await job.value
             currentJob = nil
+            currentJobIsLocalPipeline = false
             cancelIntents[episodeUuid] = nil
 
             if states[episodeUuid] == .queued {
@@ -353,7 +365,9 @@ actor TranscriptionQueueManager {
 
         let mode = globalMode == .remoteProvider ? .appleBuiltIn : globalMode
         // Local transcription is compute-heavy: the battery policy defers it
-        // (remote jobs cost network, not battery, and return above).
+        // (remote jobs cost network, not battery, and return above), and
+        // `powerConditionsChanged` may pause it mid-flight.
+        currentJobIsLocalPipeline = true
         try await checkPower()
 
         let engine = try engineFactory.makeEngine(for: mode)
@@ -390,6 +404,7 @@ actor TranscriptionQueueManager {
 
         setState(episodeUuid: episodeUuid, state: .diarizing(0), forcePost: true)
         let turns = try await diarize(episodeUuid: episodeUuid, audioURL: audioURL)
+        try Task.checkCancellation()
         let cues = SpeakerAligner.align(segments: segments, turns: turns)
         guard !cues.isEmpty else { throw TranscriptionError.engineFailure }
         setState(episodeUuid: episodeUuid, state: .diarizing(1))
@@ -485,6 +500,9 @@ actor TranscriptionQueueManager {
 
         setState(episodeUuid: episodeUuid, state: .transcribing(0), forcePost: true)
         let outcome = try await provider.submit(source: source, language: language, apiKey: apiKey)
+        // A non-cooperative provider can return after a cancel/delete raced the
+        // submit; never carry its result into the persistence path.
+        try Task.checkCancellation()
 
         switch outcome {
         case .completed(let transcript):
@@ -532,6 +550,8 @@ actor TranscriptionQueueManager {
 
             switch try await provider.poll(handle: handle, apiKey: apiKey) {
             case .completed(let transcript):
+                // The poll itself may have ignored a cancel/delete that raced it.
+                try Task.checkCancellation()
                 return transcript
             case .failed(let error):
                 throw error
@@ -552,6 +572,14 @@ actor TranscriptionQueueManager {
     /// Shared tail of both pipelines: write the VTT artifact, replace the FTS
     /// segments, finalize the record and announce completion.
     private func complete(episodeUuid: String, record: EpisodeTranscriptionRecord, transcript: DiarizedTranscript) throws {
+        // A delete raced the job: `deleteTranscription` cancels, but a
+        // non-cooperative engine/provider can still deliver a result. Persisting
+        // it would resurrect the record, artifact and FTS rows the user just
+        // removed — abort instead (the record row is the tombstone).
+        try Task.checkCancellation()
+        guard dataManager.transcriptions.find(episodeUuid: episodeUuid) != nil else {
+            throw TranscriptionError.cancelled
+        }
         guard !transcript.cues.isEmpty else { throw TranscriptionError.engineFailure }
 
         var record = record
@@ -646,9 +674,28 @@ actor TranscriptionQueueManager {
         }
     }
 
-    /// Battery level/charging state/Low Power Mode changed: a power-deferred
-    /// queue may be runnable again. Called from the app-level observers.
-    func powerConditionsChanged() {
+    /// Battery level/charging state/Low Power Mode changed. Two duties, called
+    /// from the app-level observers:
+    ///
+    /// - A power-deferred queue may be runnable again: kick the drain.
+    /// - An in-flight LOCAL job may now have to stop — the settings UI promises
+    ///   "Low Power Mode always pauses transcription", so a job that started
+    ///   under good conditions must not run through a deferral. Mirrors
+    ///   `deferForBackgroundExpiration`: the job goes back to `queued` (stage
+    ///   progress is lost, matching the requeue contract) and resumes when
+    ///   conditions clear. Remote-provider jobs are unaffected — they cost
+    ///   network, not battery.
+    func powerConditionsChanged() async {
+        if let job = currentJob, currentJobIsLocalPipeline, cancelIntents[job.episodeUuid] == nil {
+            let deferred = TranscriptionPowerState.isDeferred(policy: batteryPolicy(), state: await powerState())
+            // Re-check after the await: the job may have finished (or been
+            // cancelled by the user) while the power state was read.
+            if deferred, currentJob?.episodeUuid == job.episodeUuid, cancelIntents[job.episodeUuid] == nil {
+                FileLog.shared.addMessage("[Transcription] power conditions defer the in-flight job; requeueing \(job.episodeUuid)")
+                cancelIntents[job.episodeUuid] = .requeue
+                job.task.cancel()
+            }
+        }
         drainIfNeeded()
     }
 
@@ -695,7 +742,10 @@ actor TranscriptionQueueManager {
 
 extension TranscriptionQueueManager {
     /// Registers the charging-time queue drain. Must be called before the app
-    /// finishes launching (from `AppDelegate.setupBackgroundRefresh()`).
+    /// finishes launching (from `AppDelegate.setupBackgroundRefresh()`), and is
+    /// registered UNCONDITIONALLY — BGTaskScheduler only accepts registrations
+    /// at launch, so a Beta-menu flag toggle mid-session must not leave a
+    /// scheduled task without a handler. The handler checks the flag instead.
     @MainActor
     static func registerBackgroundTask() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: backgroundTaskId, using: nil) { task in
@@ -726,6 +776,12 @@ extension TranscriptionQueueManager {
     }
 
     nonisolated private static func handleBackgroundTask(_ task: BGProcessingTask) {
+        guard FeatureFlag.diarizedTranscription.enabled else {
+            // Registration is unconditional (see registerBackgroundTask); the
+            // feature flag gates the actual work here.
+            task.setTaskCompleted(success: true)
+            return
+        }
         FileLog.shared.addMessage("[Transcription] background processing task started")
         let boxedTask = PocketCastsUtils.UncheckedSendable(task)
         task.expirationHandler = {
@@ -738,6 +794,56 @@ extension TranscriptionQueueManager {
             // Work can remain (thermal/expiration deferral) — ask for another pass.
             scheduleProcessingTaskIfNeeded()
             boxedTask.value.setTaskCompleted(success: true)
+        }
+    }
+}
+
+// MARK: - Runtime infrastructure
+
+extension TranscriptionQueueManager {
+    @MainActor
+    private static var runtimeInfrastructureStarted = false
+
+    /// Idempotent setup of everything local transcription needs while the app
+    /// runs: battery monitoring (`UIDevice.batteryLevel` reads -1 until it is
+    /// enabled, which the default battery policy treats as "defer"), the power
+    /// observers that resume a deferred queue, restoring pending jobs, and a
+    /// charging-time BGProcessingTask pass.
+    ///
+    /// Called at launch when `FeatureFlag.diarizedTranscription` is on, and
+    /// lazily by `TranscriptAcquisitionCoordinator` on the first flag-on use
+    /// after a mid-session Beta toggle — without the lazy call, jobs enqueued
+    /// post-toggle would defer on the unreadable battery level with no observer
+    /// ever resuming them before the next cold launch. BG task REGISTRATION is
+    /// deliberately not here: BGTaskScheduler requires it before launch ends,
+    /// so `registerBackgroundTask()` always runs and its handler checks the flag.
+    @MainActor
+    static func ensureRuntimeInfrastructure() {
+        guard !runtimeInfrastructureStarted else { return }
+        runtimeInfrastructureStarted = true
+
+        // The battery policy reads UIDevice.batteryLevel, which returns -1
+        // until monitoring is enabled.
+        UIDevice.current.isBatteryMonitoringEnabled = true
+
+        // Kick the queue when charging state, battery level or Low Power Mode
+        // changes, so a battery-deferred queue (or in-flight local job) reacts
+        // without a relaunch. Observers live for the process lifetime (never
+        // removed). The kick is cheap: `powerConditionsChanged` no-ops when
+        // nothing is queued or running.
+        let kick: @Sendable (Notification) -> Void = { _ in
+            Task { await TranscriptionQueueManager.shared.powerConditionsChanged() }
+        }
+        let center = NotificationCenter.default
+        center.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main, using: kick)
+        center.addObserver(forName: UIDevice.batteryLevelDidChangeNotification, object: nil, queue: .main, using: kick)
+        center.addObserver(forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main, using: kick)
+
+        Task.detached(priority: .utility) {
+            // Resume queued transcription jobs (and reset any a crash left
+            // mid-flight), then ask for a charging-time pass if work remains.
+            await TranscriptionQueueManager.shared.restorePendingJobs()
+            TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
         }
     }
 }

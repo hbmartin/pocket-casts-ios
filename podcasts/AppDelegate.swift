@@ -130,33 +130,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupSignOutListener()
 
         if FeatureFlag.diarizedTranscription.enabled {
-            // The battery policy reads UIDevice.batteryLevel, which returns -1
-            // until monitoring is enabled.
-            UIDevice.current.isBatteryMonitoringEnabled = true
-            observePowerChangesForTranscription()
-            Task.detached(priority: .utility) {
-                // Resume queued transcription jobs (and reset any a crash left
-                // mid-flight), then ask for a charging-time pass if work remains.
-                await TranscriptionQueueManager.shared.restorePendingJobs()
-                TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
-            }
+            // Battery monitoring, power observers, pending-job restore and BG
+            // scheduling. Idempotent — TranscriptAcquisitionCoordinator also
+            // invokes it lazily on the feature's first use, so a Beta-menu
+            // toggle mid-session gets working infrastructure without a relaunch.
+            TranscriptionQueueManager.ensureRuntimeInfrastructure()
         }
 
         return true
-    }
-
-    /// Kicks the transcription queue when charging state, battery level or Low
-    /// Power Mode changes, so a battery-deferred queue resumes without a relaunch.
-    /// Observers live for the process lifetime (never removed). The kick is cheap:
-    /// `drainIfNeeded` no-ops when nothing is queued or a drain is already running.
-    private func observePowerChangesForTranscription() {
-        let kick: (Notification) -> Void = { _ in
-            Task { await TranscriptionQueueManager.shared.powerConditionsChanged() }
-        }
-        let center = NotificationCenter.default
-        center.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main, using: kick)
-        center.addObserver(forName: UIDevice.batteryLevelDidChangeNotification, object: nil, queue: .main, using: kick)
-        center.addObserver(forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main, using: kick)
     }
 
     // MARK: - TipKit
@@ -342,9 +323,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
 
-        if FeatureFlag.diarizedTranscription.enabled {
-            TranscriptionQueueManager.registerBackgroundTask()
-        }
+        // Registered unconditionally: BGTaskScheduler only accepts registrations
+        // before launch ends, so a Beta-menu flag toggle mid-session must not
+        // leave a scheduled transcription task without a handler until the next
+        // cold launch. The handler itself checks the feature flag.
+        TranscriptionQueueManager.registerBackgroundTask()
     }
 
     private func scheduleNextBackgroundRefresh() {
@@ -437,6 +420,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // no-ops when start was skipped (the credential-less configuration
         // already exercises that path).
         guard BuildEnvironment.current != .appStore else { return }
+        // Respect the analytics opt-out, mirroring configureTelemetryDeck. Capture
+        // exposes no API to stop an already-started logger, so a mid-session
+        // opt-out takes effect at the next launch; until then the direct
+        // Capture.Logger call sites (BitdriftErrorLogger, TranscriptManager)
+        // check the opt-out themselves.
+        guard !Settings.analyticsOptOut() else {
+            FileLog.shared.addMessage("Analytics opt-out enabled; skipping Bitdrift startup")
+            return
+        }
         guard !ApiCredentials.bitdriftSDKKey.isMissingOrPlaceholderCredential else {
             FileLog.shared.addMessage("Bitdrift SDK key is not configured; skipping Bitdrift startup")
             return
@@ -494,6 +486,11 @@ nonisolated struct BitdriftErrorLogger: ErrorLogger {
     let category: String
 
     func log(error: Error, context: [String: String]?) {
+        // Wired unconditionally as DataManager.logger / ServerConfig.errorLogger,
+        // so honor the analytics opt-out here — this also silences a mid-session
+        // opt-out, since the already-started Capture logger can't be stopped.
+        guard !Settings.analyticsOptOut() else { return }
+
         var fields = (context ?? [:]).reduce(into: Fields()) { result, entry in
             result[entry.key] = entry.value
         }

@@ -20,7 +20,10 @@ struct ShakeFeedbackReportBuilder {
         return FeedbackReport(
             message: message.trimmingCharacters(in: .whitespacesAndNewlines),
             subject: "Shake report",
-            logs: await logProvider(),
+            // Redact at export time: log lines can carry secret-bearing URLs
+            // (private-feed userinfo, signed enclosure tokens) and this payload
+            // is POSTed to the feedback API.
+            logs: LogRedaction.redactURLs(in: await logProvider()),
             bitdriftSessionID: sessionIDProvider() ?? "",
             deviceInfo: "\(device.model) \(device.systemName) \(device.systemVersion)",
             appVersion: "\(version) (\(build))"

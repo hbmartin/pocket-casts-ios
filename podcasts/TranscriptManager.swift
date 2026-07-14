@@ -91,15 +91,24 @@ nonisolated class TranscriptManager {
                 await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUUID)
                 hasLocalTranscription = false
             } else if sourcePreference != .podcastProvided,
-                      let record, record.transcriptionStatus == .completed,
-                      let localModel = loadLocalTranscript(record: record) {
-                // Best-effort probe so the source switcher knows whether a
-                // podcast-provided transcript also exists; failures just mean
-                // the switcher won't offer the podcast source this time.
-                let metadata = try? await showCoordinator.loadTranscriptsMetadata(podcastUuid: podcastUUID, episodeUuid: episodeUUID)
-                hasPodcastProvidedTranscripts = metadata.map { !$0.transcripts.isEmpty } ?? false
-                isDisplayingLocalTranscription = true
-                return localModel
+                      let record, record.transcriptionStatus == .completed {
+                if let localModel = loadLocalTranscript(record: record) {
+                    // Best-effort probe so the source switcher knows whether a
+                    // podcast-provided transcript also exists; failures just mean
+                    // the switcher won't offer the podcast source this time.
+                    let metadata = try? await showCoordinator.loadTranscriptsMetadata(podcastUuid: podcastUUID, episodeUuid: episodeUUID)
+                    hasPodcastProvidedTranscripts = metadata.map { !$0.transcripts.isEmpty } ?? false
+                    isDisplayingLocalTranscription = true
+                    return localModel
+                }
+                // The artifact exists but can't be parsed. Left alone, the
+                // corrupt file pins the dead record forever: `hasArtifact` is a
+                // fileExists check, so the Generate affordance stays hidden
+                // while every load falls through here. Same cleanup as the
+                // phantom-record path above, then fall through to the
+                // podcast-provided flow.
+                await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUUID)
+                hasLocalTranscription = false
             }
         }
 
@@ -160,6 +169,11 @@ nonisolated class TranscriptManager {
 
         #if !os(tvOS)
         await MainActor.run {
+            // Direct Bitdrift call site: honor the analytics opt-out (a
+            // mid-session opt-out can't stop the already-started logger, so
+            // every direct call site checks it — see configureBitdrift).
+            guard !Settings.analyticsOptOut() else { return }
+
             let fields: Fields = [
                 "category": "transcript",
                 "url": transcriptURL.absoluteString

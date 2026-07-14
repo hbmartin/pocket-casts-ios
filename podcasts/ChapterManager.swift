@@ -208,15 +208,27 @@ class ChapterManager {
             KingfisherManager.shared.retrieveImage(with: url) { [weak self] result in
                 guard let self, case .success(let value) = result else { return }
                 Task { @MainActor [weak self] in
-                    guard let self, chapter.image == nil else { return }
-                    chapter.image = value.image
-                    // Only announce when the artwork is on screen; prefetched
-                    // next-chapter art gets announced by its boundary crossing.
-                    if self.currentChapters.visibleChapter === chapter {
-                        NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
-                    }
+                    self?.applyFetchedArtwork(value.image, for: url)
                 }
             }
+        }
+    }
+
+    /// Lands a fetched artwork image in every chapter of the current list that
+    /// shares `url` and is still missing art. Attempts are deduped by URL
+    /// (`artworkFetchesAttempted`), so filling only the chapter that triggered
+    /// the fetch would leave later same-URL chapters imageless forever — their
+    /// boundary crossing would find the URL already attempted and never retry.
+    func applyFetchedArtwork(_ image: UIImage, for url: URL) {
+        var filled = [ChapterInfo]()
+        for chapter in chapters where chapter.imageURL == url && chapter.image == nil {
+            chapter.image = image
+            filled.append(chapter)
+        }
+        // Only announce when the artwork is on screen; prefetched
+        // next-chapter art gets announced by its boundary crossing.
+        if filled.contains(where: { currentChapters.visibleChapter === $0 }) {
+            NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
         }
     }
 
@@ -353,11 +365,18 @@ class ChapterManager {
         // Lowest precedence of all: when no source produced chapters, segment
         // the episode's own transcript on-device (Deferred Item 19; cached per
         // episode). Behaves as `.generated` downstream, like server-generated.
+        // Only locally generated transcripts qualify: they are cut from the
+        // exact audio being played, so their cue times align with playback.
+        // Podcast-provided/server transcripts live on the reference timeline —
+        // dynamic ads shift playback, so installing their cue times as chapter
+        // starts makes chapters, seek and smart-skip drift. The flag is only
+        // valid after `loadTranscript()` completes.
         if chapters.isEmpty, FeatureFlag.onDeviceChapters.enabled {
             let boxedManager = PocketCastsUtils.UncheckedSendable(
                 TranscriptManager(episodeUUID: episodeUuid, podcastUUID: podcastUuid)
             )
-            if let model = try? await Self.loadTranscript(boxedManager) {
+            if let model = try? await Self.loadTranscript(boxedManager),
+               boxedManager.value.isDisplayingLocalTranscription {
                 let cues = SummaryTakeawayGenerator.timedCues(from: model)
                 let generated = await TranscriptChapterGenerator().chapters(episodeUuid: episodeUuid, cues: cues, duration: duration)
                 if !generated.isEmpty, lastEpisodeUuid == episode.uuid {

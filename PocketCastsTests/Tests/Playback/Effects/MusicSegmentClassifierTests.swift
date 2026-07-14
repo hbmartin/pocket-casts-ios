@@ -104,6 +104,29 @@ final class MusicSegmentClassifierTests: XCTestCase {
         XCTAssertTrue(classifier.isMusicActive)
     }
 
+    func testLaggedClassificationsStillEnterMusicSegment() {
+        var classifier = makeClassifier()
+
+        // The read loop queries the analyzer at (read head - ~0.75s lag): the
+        // first buffers see no coverage (nil), then music arrives at the lagged
+        // position with a constant latency. The state must still flip once the
+        // lagged timeline sustains music past the enter window.
+        let bufferDuration = 1152.0 / 44100.0
+        let lag = 0.75
+        var changed = false
+        for buffer in 0 ..< 400 {
+            let laggedTime = Double(buffer) * bufferDuration - lag
+            if laggedTime < 0 {
+                changed = classifier.analyze(speechConfidence: nil, musicConfidence: nil, at: 0) || changed
+            } else {
+                changed = classifier.analyze(speechConfidence: 0.1, musicConfidence: 0.9, at: laggedTime) || changed
+            }
+        }
+
+        XCTAssertTrue(changed)
+        XCTAssertTrue(classifier.isMusicActive, "Sustained music seen through the lagged query must activate the segment")
+    }
+
     func testResetClearsEverything() {
         var classifier = makeClassifier()
         _ = feedMusic(&classifier, from: 0, to: 6)

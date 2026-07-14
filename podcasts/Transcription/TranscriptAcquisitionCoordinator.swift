@@ -10,9 +10,9 @@ import Synchronization
 /// Provided-first: a transcript the feed already offers is cheaper (no ASR
 /// compute) and usually better than a generated one, so it wins; on-device or
 /// remote generation is the fallback. Generation is always on — the only
-/// per-episode gates are "already done" checks (a record of ANY status blocks:
-/// auto-run never overwrites or retries; after a failure or cancel, another
-/// attempt is the user's call).
+/// per-episode gates are "already done" checks (a blocking record: auto-run
+/// never overwrites or retries; after a failure or cancel, another attempt is
+/// the user's call — see `recordBlocks` for the one exception).
 nonisolated enum TranscriptAcquisitionDecision {
     enum Action: Equatable, Sendable {
         case none
@@ -29,20 +29,33 @@ nonisolated enum TranscriptAcquisitionDecision {
     ///   - hasProvidedTranscript: the feed offers a transcript in a supported format.
     ///   - alreadyIndexedProvided: the unified index already has the episode's
     ///     provided segments.
-    ///   - hasExistingRecord: whether ANY transcription record exists for the episode.
+    ///   - hasBlockingRecord: an existing transcription record blocks another
+    ///     auto-run (see `recordBlocks`).
     static func action(searchIndexingEnabled: Bool,
                        transcriptionEnabled: Bool,
                        hasProvidedTranscript: Bool,
                        alreadyIndexedProvided: Bool,
-                       hasExistingRecord: Bool) -> Action {
+                       hasBlockingRecord: Bool) -> Action {
         if hasProvidedTranscript {
             // A provided transcript exists, so generating would be wasteful even
             // when indexing is off/unavailable — there is nothing else to do.
             guard searchIndexingEnabled, !alreadyIndexedProvided else { return .none }
             return .indexProvided
         }
-        guard transcriptionEnabled, !hasExistingRecord else { return .none }
+        guard transcriptionEnabled, !hasBlockingRecord else { return .none }
         return .enqueueTranscription
+    }
+
+    /// Whether an existing record blocks auto-acquisition. Any real attempt
+    /// blocks — auto-run never overwrites or retries; after a failure or cancel
+    /// another attempt is the user's call. The one exception: a `.failed`
+    /// record whose failure was `notDownloaded` never touched the audio (a
+    /// streaming buffer's premature `EpisodeDownloaded` raced the durable
+    /// download), so the durable download's own event may retry it.
+    static func recordBlocks(_ record: EpisodeTranscriptionRecord?) -> Bool {
+        guard let record else { return false }
+        return !(record.transcriptionStatus == .failed
+            && record.errorMessage == TranscriptionError.notDownloaded.sanitizedDescription)
     }
 }
 
@@ -69,6 +82,7 @@ nonisolated final class TranscriptAcquisitionCoordinator: Sendable {
     private let fetchTranscriptText: @Sendable (URL) async throws -> String?
     private let indexProvided: @Sendable (_ episodeUuid: String, _ podcastUuid: String, _ model: TranscriptModel) async -> Bool
     private let enqueueTranscription: @Sendable (_ episodeUuid: String, _ podcastUuid: String) async -> Void
+    private let ensureInfrastructure: @Sendable () async -> Void
 
     /// Shared with nobody else: provided-transcript fetches go through the same
     /// URL cache the viewer uses, so indexing a download makes later viewing free.
@@ -86,12 +100,16 @@ nonisolated final class TranscriptAcquisitionCoordinator: Sendable {
          },
          enqueueTranscription: @escaping @Sendable (_ episodeUuid: String, _ podcastUuid: String) async -> Void = { episodeUuid, podcastUuid in
              await TranscriptionQueueManager.shared.enqueue(episodeUuid: episodeUuid, podcastUuid: podcastUuid)
+         },
+         ensureInfrastructure: @escaping @Sendable () async -> Void = {
+             await TranscriptionQueueManager.ensureRuntimeInfrastructure()
          }) {
         self.dataManager = dataManager
         self.loadTranscriptsMetadata = loadTranscriptsMetadata
         self.fetchTranscriptText = fetchTranscriptText
         self.indexProvided = indexProvided
         self.enqueueTranscription = enqueueTranscription
+        self.ensureInfrastructure = ensureInfrastructure
 
         let token = NotificationCenter.default.addObserver(for: EpisodeDownloaded.self) { [weak self] message in
             guard let self, let episodeUuid = message.uuid else { return }
@@ -111,6 +129,23 @@ nonisolated final class TranscriptAcquisitionCoordinator: Sendable {
         let transcriptionEnabled = FeatureFlag.diarizedTranscription.enabled
         guard searchIndexingEnabled || transcriptionEnabled else { return }
 
+        if transcriptionEnabled {
+            // First flag-on hit after a mid-session Beta toggle: make sure the
+            // battery/power/BG-scheduling infrastructure exists (idempotent, a
+            // cheap no-op after the first call) so any job this evaluation
+            // enqueues can actually run instead of deferring forever on an
+            // unreadable battery level.
+            await ensureInfrastructure()
+        }
+
+        // DownloadManager posts EpisodeDownloaded for streaming buffers too
+        // (`.downloadedForStreaming`). Those are evictable and fail the queue's
+        // downloaded() check, and the resulting `.failed` record would block the
+        // real download's acquisition — only a durable download acquires (the
+        // durable download posts its own event later; provided transcripts are
+        // still indexed when viewed).
+        guard episode.episodeStatus == DownloadStatus.downloaded.rawValue else { return }
+
         var provided: [TranscriptMetadata] = []
         do {
             provided = try await loadTranscriptsMetadata(podcast.uuid, episodeUuid)
@@ -127,7 +162,7 @@ nonisolated final class TranscriptAcquisitionCoordinator: Sendable {
             transcriptionEnabled: transcriptionEnabled,
             hasProvidedTranscript: TranscriptFormat.bestTranscript(from: provided) != nil,
             alreadyIndexedProvided: dataManager.transcriptSearch.isIndexed(episodeUuid: episodeUuid, source: .provided),
-            hasExistingRecord: dataManager.transcriptions.find(episodeUuid: episodeUuid) != nil
+            hasBlockingRecord: TranscriptAcquisitionDecision.recordBlocks(dataManager.transcriptions.find(episodeUuid: episodeUuid))
         )
 
         switch action {
@@ -137,7 +172,8 @@ nonisolated final class TranscriptAcquisitionCoordinator: Sendable {
             let indexed = await acquireProvided(episodeUuid: episodeUuid, podcastUuid: podcast.uuid, from: provided)
             // An unfetchable or unparseable provided transcript is as good as
             // absent — fall through to generation under its own gates.
-            if !indexed, transcriptionEnabled, dataManager.transcriptions.find(episodeUuid: episodeUuid) == nil {
+            if !indexed, transcriptionEnabled,
+               !TranscriptAcquisitionDecision.recordBlocks(dataManager.transcriptions.find(episodeUuid: episodeUuid)) {
                 await enqueue(episodeUuid: episodeUuid, podcast: podcast)
             }
         case .enqueueTranscription:

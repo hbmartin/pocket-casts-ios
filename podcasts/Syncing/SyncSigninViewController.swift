@@ -159,7 +159,13 @@ class SyncSigninViewController: PCViewController, UITextFieldDelegate {
     @objc func closeTapped() {
         Analytics.track(.signInDismissed)
 
-        navigationController?.popViewController(animated: true)
+        // Popping is a no-op when we're the navigation root (presented modally
+        // inside our own nav controller) — dismiss the whole sheet instead.
+        if navigationController?.viewControllers.first === self {
+            dismiss(animated: true)
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
     }
 
     @IBAction func signInTapped(_ sender: Any) {

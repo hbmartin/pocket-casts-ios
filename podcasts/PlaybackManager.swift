@@ -89,6 +89,15 @@ final class PlaybackManager {
             set { _tuning.withLock { $0 = newValue } }
         }
 
+        /// Last-applied adaptive-effects toggle, tracked alongside the tuning snapshot
+        /// (it is not part of `AudioTuning`) so `handleAudioTuningChanged` can tell an
+        /// adaptive-only toggle apart from a no-op notification.
+        private let _adaptiveEffects = Mutex(Settings.adaptiveEffects())
+        var adaptiveEffects: Bool {
+            get { _adaptiveEffects.withLock { $0 } }
+            set { _adaptiveEffects.withLock { $0 = newValue } }
+        }
+
         /// One-shot starting position for EffectsPlayer, captured on the main actor at
         /// play-dispatch time because its locked setup flow can't call back to main
         /// (a main.sync there deadlocks against endPlayback holding playerLock).
@@ -689,7 +698,11 @@ final class PlaybackManager {
     /// Timed metadata pushed by the player mid-stream (see
     /// `StreamedChapterMetadataHandler`): fills artwork/title gaps in the chapter
     /// playing at `time`, or grows a synthetic chapter list for chapterless streams.
-    func ingestStreamedChapterMetadata(title: String?, artworkData: Data?, at time: TimeInterval) {
+    /// `episodeUuid` is the episode whose player item produced the group — a stale
+    /// group whose async value load outlived its episode is dropped here rather
+    /// than mutating the next episode's chapters.
+    func ingestStreamedChapterMetadata(title: String?, artworkData: Data?, at time: TimeInterval, episodeUuid: String) {
+        guard currentEpisode()?.uuid == episodeUuid else { return }
         chapterManager.ingestStreamedMetadata(title: title, artworkData: artworkData, at: time)
     }
 
@@ -1206,9 +1219,15 @@ final class PlaybackManager {
     private func handleAudioTuningChanged() {
         let oldTuning = Self.engineState.tuning
         let newTuning = Settings.audioTuning
-        guard oldTuning != newTuning else { return }
+        // The adaptive-effects toggle rides this notification too but is not part
+        // of the AudioTuning snapshot; compare it separately so toggling adaptive
+        // alone still reaches effectsDidChange() → setTuning() → reconfigureDetector().
+        let oldAdaptive = Self.engineState.adaptiveEffects
+        let newAdaptive = Settings.adaptiveEffects()
+        guard oldTuning != newTuning || oldAdaptive != newAdaptive else { return }
 
         Self.engineState.tuning = newTuning
+        Self.engineState.adaptiveEffects = newAdaptive
 
         if oldTuning.timeStretch.effectsPlayerAlgorithm != newTuning.timeStretch.effectsPlayerAlgorithm,
            player is EffectsPlayer, let episode = currentEpisode() {

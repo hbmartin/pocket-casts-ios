@@ -205,13 +205,17 @@ struct RemoteOpApplier {
             }
         }
 
-        // Highlight enrichment is write-once: adopt the remote excerpt only when
-        // this device hasn't produced one of its own.
-        if item.hasExcerpt, existing.excerpt == nil {
+        // Highlight enrichment merges by stamped LWW (MergeEngine fields
+        // 1000/1001), so the merged record is authoritative: adopt its excerpt
+        // and end time whenever either differs from the local row. Each field
+        // is honored independently — an absent field keeps the local value.
+        let mergedExcerpt = item.hasExcerpt ? item.excerpt.value : existing.excerpt
+        let mergedEndTime = item.hasEndTime ? item.endTime.value : existing.endTime
+        if mergedExcerpt != existing.excerpt || mergedEndTime != existing.endTime {
             _ = await dataManager.bookmarks.updateEnrichment(
                 uuid: uuid,
-                excerpt: item.excerpt.value,
-                endTime: item.hasEndTime ? item.endTime.value : nil,
+                excerpt: mergedExcerpt,
+                endTime: mergedEndTime,
                 syncStatus: .synced)
         }
     }

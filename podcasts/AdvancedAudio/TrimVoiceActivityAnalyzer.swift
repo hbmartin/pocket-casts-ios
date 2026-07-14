@@ -32,6 +32,20 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     private static let stalenessWindow: TimeInterval = 2
     private static let maxStoredResults = 64
 
+    /// SoundAnalysis window configuration (seconds). With `overlapFactor` 0.5 the
+    /// classifier hops half a window at a time, so the newest position a completed
+    /// window can END at trails the live read head by up to a full window plus one hop.
+    private static let windowDuration: TimeInterval = 0.5
+    private static let windowOverlapFactor = 0.5
+
+    /// How many frames behind the live read head callers should query
+    /// (`classification(atFramePosition:)` / `speechConfidence(atFramePosition:)`).
+    /// Results are stored as half-open ranges, so a completed window can never
+    /// *contain* the read head itself — every window's upperBound is at or behind
+    /// it. Lagging the query by one window plus one hop lands it inside the
+    /// newest window that has had time to complete.
+    let queryLagFrames: Int64
+
     private let sampleRate: Double
     private let monoFormat: AVAudioFormat
     private let analyzer: SNAudioStreamAnalyzer
@@ -82,9 +96,12 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
         analyzer = SNAudioStreamAnalyzer(format: format)
         observer = Observer()
 
+        let hopDuration = Self.windowDuration * (1 - Self.windowOverlapFactor)
+        queryLagFrames = Int64((Self.windowDuration + hopDuration) * sampleRate)
+
         let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
-        request.windowDuration = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(sampleRate))
-        request.overlapFactor = 0.5
+        request.windowDuration = CMTime(seconds: Self.windowDuration, preferredTimescale: CMTimeScale(sampleRate))
+        request.overlapFactor = Self.windowOverlapFactor
         try analyzer.add(request, withObserver: observer)
 
         observer.onResult = { [weak self] startSeconds, endSeconds, confidence, musicConfidence in
@@ -92,7 +109,8 @@ nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
         }
     }
 
-    private func record(startSeconds: Double, endSeconds: Double, confidence: Float, musicConfidence: Float) {
+    /// Internal (not private) so tests can seed synthetic classifier results.
+    func record(startSeconds: Double, endSeconds: Double, confidence: Float, musicConfidence: Float) {
         let frameRange = Int64(startSeconds * sampleRate) ..< Int64(endSeconds * sampleRate)
         store.withLock { store in
             store.results.append(SpeechResult(frameRange: frameRange, confidence: confidence, musicConfidence: musicConfidence))

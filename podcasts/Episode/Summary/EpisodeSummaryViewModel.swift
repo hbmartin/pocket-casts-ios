@@ -97,7 +97,10 @@ class EpisodeSummaryViewModel: ObservableObject {
 
     // MARK: - Lifecycle
 
-    func cardAppeared() {
+    /// Runs the takeaway load inside the view's `.task`, so tearing the card
+    /// down cancels the in-flight transcript load and model generation instead
+    /// of leaving them running detached.
+    func cardAppeared() async {
         if !hasTrackedShown {
             hasTrackedShown = true
             track(.episodeDetailSummaryCardShown)
@@ -105,9 +108,7 @@ class EpisodeSummaryViewModel: ObservableObject {
         refreshCatchMeUpAvailability()
         guard !hasStartedLoading else { return }
         hasStartedLoading = true
-        Task { [weak self] in
-            await self?.loadTakeaways()
-        }
+        await loadTakeaways()
     }
 
     private func refreshCatchMeUpAvailability() {
@@ -140,6 +141,13 @@ class EpisodeSummaryViewModel: ObservableObject {
         let keyMoments = generatedChapters.map { Takeaway(text: $0.title, startTime: $0.startTime) }
 
         let result = await generator.takeaways(cues: cues, keyMoments: keyMoments, duration: episodeDuration)
+
+        guard !Task.isCancelled else {
+            // Cancelled by the card disappearing: don't publish a result built
+            // from aborted loads; let the next appearance start over.
+            hasStartedLoading = false
+            return
+        }
 
         takeawayState = .loaded(result.takeaways, layer: result.layer)
 

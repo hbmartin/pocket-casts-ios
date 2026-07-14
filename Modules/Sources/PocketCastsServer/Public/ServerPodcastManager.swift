@@ -109,6 +109,13 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
     /// refresh regime) is subscribed in place instead of duplicated under a hash UUID.
     public func addLocalFeed(feedURL: String, subscribe: Bool, autoDownloads: Int = 0, completion: (@Sendable (Bool) -> Void)?) {
         if var existing = DataManager.sharedManager.findPodcast(feedURL: feedURL) {
+            // The dedup match ignores userinfo, so freshly re-entered credentials
+            // (e.g. an unsubscribe/resubscribe with `user:pass@`) would otherwise be
+            // dropped here — keep them for the existing row's refreshes.
+            if let credentials = LocalFeedURL.credentials(from: feedURL),
+               !LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: existing.uuid) {
+                FileLog.shared.addMessage("ServerPodcastManager: failed to store re-entered credentials for \(LocalFeedURL.redactedForLogging(feedURL))")
+            }
             if subscribe, !existing.isSubscribed() {
                 existing.subscribed = 1
                 // A signed-out resubscribe of a server-sourced row flips it to on-device

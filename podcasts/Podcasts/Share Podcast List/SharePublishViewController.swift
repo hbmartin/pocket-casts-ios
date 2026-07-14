@@ -257,8 +257,10 @@ class SharePublishViewController: PCViewController, UICollectionViewDelegate, UI
 
         let alert = UIAlertController(title: L10n.sharePodcastsSharingFailedTitle, message: L10n.sharePodcastsSigninRequiredMsg, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: L10n.signIn, style: .default) { [weak self] _ in
+            guard let self else { return }
             let signInController = SyncSigninViewController()
-            self?.present(SJUIUtils.navController(for: signInController), animated: true)
+            signInController.delegate = self
+            self.present(SJUIUtils.navController(for: signInController), animated: true)
         })
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         present(alert, animated: true)
@@ -357,5 +359,17 @@ class SharePublishViewController: PCViewController, UICollectionViewDelegate, UI
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         .portrait // since this controller is presented modally it needs to tell iOS it only goes portrait
+    }
+}
+
+// MARK: - SyncSigninDelegate
+
+extension SharePublishViewController: SyncSigninDelegate {
+    func signingProcessCompleted() {
+        // Dismiss the sign-in sheet we presented, then retry the publish now
+        // that the account exists.
+        dismiss(animated: true) { [weak self] in
+            self?.shareTapped()
+        }
     }
 }

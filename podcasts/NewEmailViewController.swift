@@ -249,6 +249,11 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         ServerSettings.userId = userId
         if FeatureFlag.refreshTokenForPasswordAuth.enabled {
             ServerSettings.accountAuthMethod = .password
+            // This path only runs when the post-registration sign-in failed, so
+            // no tokens were stored. Keep the password so a later re-auth has a
+            // credential — otherwise the account looks signed in (email-derived)
+            // with nothing to authenticate with.
+            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
         } else {
             // Legacy credential persistence until refresh-token auth for password accounts
             // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.

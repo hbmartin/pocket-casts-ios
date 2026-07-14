@@ -39,12 +39,12 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
                         transcriptionEnabled: Bool = true,
                         hasProvidedTranscript: Bool = false,
                         alreadyIndexedProvided: Bool = false,
-                        hasExistingRecord: Bool = false) -> TranscriptAcquisitionDecision.Action {
+                        hasBlockingRecord: Bool = false) -> TranscriptAcquisitionDecision.Action {
         TranscriptAcquisitionDecision.action(searchIndexingEnabled: searchIndexingEnabled,
                                              transcriptionEnabled: transcriptionEnabled,
                                              hasProvidedTranscript: hasProvidedTranscript,
                                              alreadyIndexedProvided: alreadyIndexedProvided,
-                                             hasExistingRecord: hasExistingRecord)
+                                             hasBlockingRecord: hasBlockingRecord)
     }
 
     func testProvidedTranscriptWinsOverGeneration() {
@@ -66,9 +66,9 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
     }
 
     func testExistingRecordBlocksGeneration() {
-        // Any record blocks — completed, failed or cancelled alike. Auto-run
+        // A blocking record — completed, failed or cancelled alike. Auto-run
         // never retries; another attempt is the user's call.
-        XCTAssertEqual(decide(hasExistingRecord: true), .none)
+        XCTAssertEqual(decide(hasBlockingRecord: true), .none)
     }
 
     func testDisabledTranscriptionFlagBlocksGeneration() {
@@ -77,6 +77,49 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
 
     func testGenerationDoesNotRequireSearchIndexing() {
         XCTAssertEqual(decide(searchIndexingEnabled: false), .enqueueTranscription)
+    }
+
+    // MARK: - recordBlocks (pure)
+
+    private func makeRecord(status: TranscriptionStatus, errorMessage: String? = nil) -> EpisodeTranscriptionRecord {
+        var record = EpisodeTranscriptionRecord()
+        record.episodeUuid = "ep-record"
+        record.transcriptionStatus = status
+        record.errorMessage = errorMessage
+        return record
+    }
+
+    func testNilRecordDoesNotBlock() {
+        XCTAssertFalse(TranscriptAcquisitionDecision.recordBlocks(nil))
+    }
+
+    func testFailedNotDownloadedRecordDoesNotBlock() {
+        // The job never touched the audio (a streaming buffer's premature
+        // EpisodeDownloaded raced the durable download) — the durable
+        // download's own event may retry it.
+        let record = makeRecord(status: .failed, errorMessage: TranscriptionError.notDownloaded.sanitizedDescription)
+        XCTAssertFalse(TranscriptAcquisitionDecision.recordBlocks(record))
+    }
+
+    func testFailedForOtherReasonsBlocks() {
+        let record = makeRecord(status: .failed, errorMessage: TranscriptionError.engineFailure.sanitizedDescription)
+        XCTAssertTrue(TranscriptAcquisitionDecision.recordBlocks(record))
+    }
+
+    func testFailedWithoutErrorMessageBlocks() {
+        XCTAssertTrue(TranscriptAcquisitionDecision.recordBlocks(makeRecord(status: .failed)))
+    }
+
+    func testCompletedRecordBlocks() {
+        XCTAssertTrue(TranscriptAcquisitionDecision.recordBlocks(makeRecord(status: .completed)))
+    }
+
+    func testCancelledRecordBlocks() {
+        XCTAssertTrue(TranscriptAcquisitionDecision.recordBlocks(makeRecord(status: .cancelled)))
+    }
+
+    func testQueuedRecordBlocks() {
+        XCTAssertTrue(TranscriptAcquisitionDecision.recordBlocks(makeRecord(status: .queued)))
     }
 
     // MARK: - Coordinator flow
@@ -97,7 +140,7 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
     """
 
     @discardableResult
-    private func insertFixture(_ fixture: Fixture) -> Fixture {
+    private func insertFixture(_ fixture: Fixture, status: DownloadStatus = .downloaded) -> Fixture {
         var podcast = Podcast()
         podcast.uuid = fixture.podcastUuid
         podcast.addedDate = Date()
@@ -106,6 +149,7 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
         episode.uuid = fixture.episodeUuid
         episode.podcastUuid = fixture.podcastUuid
         episode.addedDate = Date()
+        episode.episodeStatus = status.rawValue
         dataManager.save(episode: episode)
         return fixture
     }
@@ -114,7 +158,8 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
                                  metadataError: Error? = nil,
                                  transcriptText: String? = TranscriptAcquisitionCoordinatorTests.vttBody,
                                  fetchError: Error? = nil,
-                                 onEnqueue: @escaping @Sendable (String, String) -> Void = { _, _ in }) -> TranscriptAcquisitionCoordinator {
+                                 onEnqueue: @escaping @Sendable (String, String) -> Void = { _, _ in },
+                                 onEnsureInfrastructure: @escaping @Sendable () -> Void = {}) -> TranscriptAcquisitionCoordinator {
         let dataManager: DataManager = dataManager
         return TranscriptAcquisitionCoordinator(
             dataManager: dataManager,
@@ -133,6 +178,9 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
             },
             enqueueTranscription: { episodeUuid, podcastUuid in
                 onEnqueue(episodeUuid, podcastUuid)
+            },
+            ensureInfrastructure: {
+                onEnsureInfrastructure()
             }
         )
     }
@@ -197,6 +245,7 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
         var record = EpisodeTranscriptionRecord()
         record.episodeUuid = fixture.episodeUuid
         record.transcriptionStatus = .failed
+        record.errorMessage = TranscriptionError.engineFailure.sanitizedDescription
         dataManager.transcriptions.upsert(record)
 
         let enqueued = Mutex<[String]>([])
@@ -216,5 +265,53 @@ final class TranscriptAcquisitionCoordinatorTests: XCTestCase {
         await coordinator.evaluate(episodeUuid: "not-in-library")
 
         XCTAssertEqual(enqueued.withLock { $0 }, [])
+    }
+
+    func testStreamingBufferDownloadDoesNotAcquire() async {
+        // DownloadManager posts EpisodeDownloaded for evictable streaming
+        // buffers too; acquiring on those would enqueue a job that fails
+        // `.notDownloaded` and used to block the real download's pass forever.
+        let fixture = insertFixture(Fixture(), status: .downloadedForStreaming)
+        let enqueued = Mutex<[String]>([])
+        let coordinator = makeCoordinator(transcripts: [],
+                                          onEnqueue: { episodeUuid, _ in enqueued.withLock { $0.append(episodeUuid) } })
+
+        await coordinator.evaluate(episodeUuid: fixture.episodeUuid)
+
+        XCTAssertEqual(enqueued.withLock { $0 }, [], "A streaming buffer must not trigger acquisition")
+        XCTAssertFalse(dataManager.transcriptSearch.isIndexed(episodeUuid: fixture.episodeUuid, source: .provided))
+        XCTAssertNil(dataManager.transcriptions.find(episodeUuid: fixture.episodeUuid))
+    }
+
+    func testFailedNotDownloadedRecordRetriesOnDurableDownload() async {
+        let fixture = insertFixture(Fixture())
+        var record = EpisodeTranscriptionRecord()
+        record.episodeUuid = fixture.episodeUuid
+        record.transcriptionStatus = .failed
+        record.errorMessage = TranscriptionError.notDownloaded.sanitizedDescription
+        dataManager.transcriptions.upsert(record)
+
+        let enqueued = Mutex<[String]>([])
+        let coordinator = makeCoordinator(transcripts: [],
+                                          onEnqueue: { episodeUuid, _ in enqueued.withLock { $0.append(episodeUuid) } })
+
+        await coordinator.evaluate(episodeUuid: fixture.episodeUuid)
+
+        XCTAssertEqual(enqueued.withLock { $0 }, [fixture.episodeUuid],
+                       "A notDownloaded failure never touched the audio; the durable download must retry it")
+    }
+
+    func testEvaluateEnsuresTranscriptionInfrastructure() async {
+        // Enabling the Beta flag mid-session must lazily build the battery/
+        // power/BG infrastructure the queue needs — launch-time setup was
+        // skipped while the flag was off.
+        let fixture = insertFixture(Fixture())
+        let ensured = Mutex(0)
+        let coordinator = makeCoordinator(transcripts: [],
+                                          onEnsureInfrastructure: { ensured.withLock { $0 += 1 } })
+
+        await coordinator.evaluate(episodeUuid: fixture.episodeUuid)
+
+        XCTAssertEqual(ensured.withLock { $0 }, 1)
     }
 }

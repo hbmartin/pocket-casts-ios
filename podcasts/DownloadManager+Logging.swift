@@ -66,7 +66,9 @@ nonisolated extension DownloadManager {
             "in_background": inBackground
                     ])
 
-        let url = metrics.transactionMetrics.last?.request.url?.absoluteString ?? "unknown"
+        // Redacted: enclosure URLs can carry signed tokens or userinfo, and this
+        // log ships in shareable diagnostics (shake-to-report, support uploads).
+        let url = (metrics.transactionMetrics.last?.request.url?.absoluteString).map { LogRedaction.redactURLs(in: $0) } ?? "unknown"
         fileLog.addMessage("DownloadManager: Failed download \(episode.uuid) \(url) statusCode:\(String(describing: statusCode)) isCell:\(isCellular) isProxy: \(isProxy) errorCode:\(String(describing: errorCode)) errorDomain:\(String(describing: errorDomain))")
     }
 }

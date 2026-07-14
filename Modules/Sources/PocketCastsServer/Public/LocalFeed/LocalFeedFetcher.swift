@@ -33,6 +33,15 @@ public enum LocalFeedURL {
               let password = components.password else { return nil }
         return (user, password)
     }
+
+    /// Whether two URLs share an origin (scheme + host + port) — the boundary private-feed
+    /// Basic credentials must never cross. Explicit default ports (`:443`) intentionally
+    /// don't match implicit ones: erring tight only costs an auth header on a matching host.
+    public static func isSameOrigin(_ lhs: URL, _ rhs: URL) -> Bool {
+        guard let lhsScheme = lhs.scheme?.lowercased(), let rhsScheme = rhs.scheme?.lowercased(),
+              let lhsHost = lhs.host?.lowercased(), let rhsHost = rhs.host?.lowercased() else { return false }
+        return lhsScheme == rhsScheme && lhsHost == rhsHost && lhs.port == rhs.port
+    }
 }
 
 /// Fetches and parses a feed over the network — no Pocket Casts servers involved.
@@ -53,31 +62,54 @@ public struct LocalFeedFetcher: Sendable {
 
     /// Fetches and parses the feed at `urlString`. When `followingPages` is true (the
     /// back-fill/subscribe path), `rel="next"` pages are followed — up to `maxPages`,
-    /// stopping quietly on a page error so partial history still lands.
+    /// stopping (with a log entry) on a page error so partial history still lands.
     /// `credentials` supplies HTTP Basic auth when the URL itself carries no userinfo.
     public func fetchFeed(url urlString: String, followingPages: Bool = false, credentials: (user: String, password: String)? = nil) async throws -> ParsedFeed {
-        var merged = try await fetchPage(urlString, credentials: credentials)
+        guard let firstURL = URL(string: urlString.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            throw LocalFeedError.invalidURL(urlString)
+        }
+
+        var merged = try await fetchPage(firstURL, credentials: credentials)
         guard followingPages else { return merged }
 
-        var visited: Set<String> = [urlString]
-        var nextURL = merged.nextPageURL
-        while let pageURL = nextURL, visited.count < Self.maxPages, !visited.contains(pageURL) {
-            visited.insert(pageURL)
-            guard let page = try? await fetchPage(pageURL, credentials: credentials) else { break }
+        // Page one's effective auth (URL userinfo wins over passed-in credentials) must
+        // carry to the `rel="next"` pages too — but only same-origin ones, so a feed
+        // can't redirect the credential to a third-party host.
+        let effectiveCredentials = Self.userinfoCredentials(of: firstURL) ?? credentials
+
+        var currentURL = firstURL
+        var visited: Set<String> = [firstURL.absoluteString]
+        var nextHref = merged.nextPageURL
+        while let href = nextHref, visited.count < Self.maxPages {
+            // Resolve against the page that linked it — paged feeds commonly use relative hrefs.
+            guard let pageURL = URL(string: href, relativeTo: currentURL)?.absoluteURL else {
+                FileLog.shared.addMessage("LocalFeedFetcher: unresolvable rel=next href on \(LocalFeedURL.redactedForLogging(currentURL.absoluteString)); keeping pages fetched so far")
+                break
+            }
+            guard !visited.contains(pageURL.absoluteString) else { break }
+            visited.insert(pageURL.absoluteString)
+
+            let pageCredentials = LocalFeedURL.isSameOrigin(pageURL, firstURL) ? effectiveCredentials : nil
+            guard let page = try? await fetchPage(pageURL, credentials: pageCredentials) else {
+                FileLog.shared.addMessage("LocalFeedFetcher: failed to fetch page \(LocalFeedURL.redactedForLogging(pageURL.absoluteString)); keeping pages fetched so far")
+                break
+            }
             merged.items.append(contentsOf: page.items)
-            nextURL = page.nextPageURL
+            currentURL = pageURL
+            nextHref = page.nextPageURL
         }
         merged.nextPageURL = nil
         return merged
     }
 
-    private func fetchPage(_ urlString: String, credentials: (user: String, password: String)?) async throws -> ParsedFeed {
-        guard let url = URL(string: urlString.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            throw LocalFeedError.invalidURL(urlString)
-        }
+    /// The `user:password` userinfo of a URL, when present.
+    private static func userinfoCredentials(of url: URL) -> (user: String, password: String)? {
+        (url.user).flatMap { user in url.password.map { (user, $0) } }
+    }
 
+    private func fetchPage(_ url: URL, credentials: (user: String, password: String)?) async throws -> ParsedFeed {
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringCacheData, timeoutInterval: 60)
-        let basicAuth = (url.user).flatMap { user in url.password.map { (user, $0) } } ?? credentials
+        let basicAuth = Self.userinfoCredentials(of: url) ?? credentials
         if let (user, password) = basicAuth,
            let encoded = "\(user):\(password)".data(using: .utf8) {
             request.setValue("Basic \(encoded.base64EncodedString())", forHTTPHeaderField: "Authorization")
