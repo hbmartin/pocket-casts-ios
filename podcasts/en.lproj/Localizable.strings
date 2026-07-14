@@ -6915,6 +6915,9 @@
 /* Header above the list of episodes a person appears in */
 "people_detail_episodes_header" = "Episodes";
 
+/* Tappable AI suggestion under a speaker rename field; '%1$@' is the suggested name */
+"transcription_rename_suggestion" = "Suggested: %1$@";
+
 /* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
 "search_transcripts_empty_message" = "Episodes become searchable here when they download or when you view their transcript.";
 
