@@ -6894,6 +6894,9 @@
 /* Title shown in search results when no transcript matches the search term */
 "search_transcripts_empty_title" = "No Transcript Matches";
 
+/* Toggle above transcript search results restricting matches to episodes already played */
+"search_transcripts_played_only" = "Played only";
+
 /* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
 "search_transcripts_empty_message" = "Episodes become searchable here when they download or when you view their transcript.";
 

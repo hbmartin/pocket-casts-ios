@@ -820,6 +820,7 @@ enum AnalyticsEvent: String {
 
     case transcriptEmbeddingAssetsUnavailable
     case transcriptEmbeddingBackfillCompleted
+    case librarySearchTranscriptPlayedFilterToggled
 
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown

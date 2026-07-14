@@ -196,8 +196,16 @@ struct NewSearchResultsView: View {
     }
 
     /// Matches from the on-device transcript index, or its zero state when the
-    /// current term has no transcript hits.
+    /// current term has no transcript hits. The Played-only chip filters to
+    /// episodes already listened to ("I heard this somewhere...").
     @ViewBuilder var transcriptResults: some View {
+        if !searchResults.allTranscriptHits.isEmpty || searchResults.transcriptPlayedOnly {
+            Toggle(L10n.searchTranscriptsPlayedOnly, isOn: $searchResults.transcriptPlayedOnly)
+                .font(style: .subheadline, weight: .medium)
+                .tint(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                .listRowBackground(theme.primaryUi01)
+                .listRowSeparator(.hidden)
+        }
         if searchResults.transcriptHits.isEmpty {
             EmptyStateView(title: L10n.searchTranscriptsEmptyTitle,
                            message: L10n.searchTranscriptsEmptyMessage,

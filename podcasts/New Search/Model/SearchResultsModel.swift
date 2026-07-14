@@ -60,6 +60,7 @@ class SearchResultsModel: ObservableObject {
         episodes = []
         combinedResults = []
         transcriptHits = []
+        allTranscriptHits = []
         playedEpisodesUUIDs = []
         resultsContainLocalPodcasts = false
         currentSearchTerm = ""
@@ -182,27 +183,76 @@ class SearchResultsModel: ObservableObject {
         analyticsHelper.trackSearchPerformed()
     }
 
-    /// Queries the on-device transcript FTS index (flag-gated) and publishes the
-    /// resolved display rows. The database work runs off the main actor.
+    /// Queries the on-device transcript FTS index (flag-gated), fuses in vector
+    /// matches when semantic search is on, and publishes the resolved display
+    /// rows. The database and scoring work runs off the main actor.
     @MainActor
     private func searchTranscriptIndex(term: String) {
         guard FeatureFlag.transcriptSearch.enabled else { return }
 
         let transcriptSearch = dataMangager.transcriptSearch
         guard transcriptSearch.isAvailable, !isTermAnURL(term) else {
+            allTranscriptHits = []
             transcriptHits = []
             return
         }
 
+        let dataManager = dataMangager
+        let semanticEnabled = FeatureFlag.semanticTranscriptSearch.enabled && dataManager.transcriptEmbeddings.isAvailable
+
         Task {
             let hits = await Task.detached(priority: .userInitiated) {
-                TranscriptSearchHitDisplay.displays(for: transcriptSearch.search(term: term))
+                let ftsHits = transcriptSearch.search(term: term)
+                guard semanticEnabled else {
+                    return TranscriptSearchHitDisplay.displays(for: ftsHits)
+                }
+
+                let semanticHits = await SemanticTranscriptSearch().search(term: term)
+                var fused = TranscriptSearchFusion.fused(ftsHits: ftsHits, semanticHits: semanticHits)
+
+                // Mild recency boost: "I know I heard this somewhere last month".
+                var ageDaysByEpisode: [String: Double?] = [:]
+                let now = Date()
+                fused = TranscriptSearchFusion.recencyBoosted(fused) { episodeUuid in
+                    if let cached = ageDaysByEpisode[episodeUuid] { return cached }
+                    let episode = dataManager.findEpisode(uuid: episodeUuid)
+                    let newest = [episode?.lastPlaybackInteractionDate, episode?.publishedDate].compactMap { $0 }.max()
+                    let age = newest.map { max(0, now.timeIntervalSince($0) / 86_400) }
+                    ageDaysByEpisode[episodeUuid] = age
+                    return age
+                }
+
+                return TranscriptSearchHitDisplay.displays(forFused: fused)
             }.value
 
             // A newer search superseded this one while the query ran.
             guard term == currentSearchTerm else { return }
-            transcriptHits = hits
+            allTranscriptHits = hits
+            applyTranscriptPlayedFilter()
         }
+    }
+
+    /// The unfiltered fused hits backing the Transcripts section; `transcriptHits`
+    /// is this list after the Played-only filter.
+    @Published private(set) var allTranscriptHits: [TranscriptSearchHitDisplay] = []
+
+    /// The Transcripts section's "Played only" chip.
+    @Published var transcriptPlayedOnly = false {
+        didSet {
+            guard transcriptPlayedOnly != oldValue else { return }
+            Analytics.track(.librarySearchTranscriptPlayedFilterToggled, properties: ["on": transcriptPlayedOnly])
+            applyTranscriptPlayedFilter()
+        }
+    }
+
+    @MainActor
+    private func applyTranscriptPlayedFilter() {
+        guard transcriptPlayedOnly, !allTranscriptHits.isEmpty else {
+            transcriptHits = allTranscriptHits
+            return
+        }
+        let playedUuids = Set(dataMangager.findPlayedEpisodes(uuids: allTranscriptHits.map(\.episodeUuid)))
+        transcriptHits = allTranscriptHits.filter { playedUuids.contains($0.episodeUuid) }
     }
 
     @MainActor
