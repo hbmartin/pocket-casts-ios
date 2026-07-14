@@ -149,7 +149,6 @@ nonisolated enum ReferenceFingerprintEncoder {
 
             let interleaved = interleavedSamples(from: buffer)
             windows.append(contentsOf: streamer.pushSamplesF32(samples: interleaved, channels: channels))
-            await Task.yield()
         }
 
         try Task.checkCancellation()

@@ -47,8 +47,9 @@ struct AppAttestServiceTests {
         #expect(json["attestation"] as? String == Data("attestation-key-1".utf8).base64EncodedString())
         #expect(json["challenge"] as? String == backend.challenge.base64EncodedString())
 
-        // keyId persisted only after the 200 — presence means enrolled.
+        // The pending key moves to the enrolled slot only after the 200.
         #expect(try keychain.string(for: AppAttestService.keyIdKeychainKey) == "key-1")
+        #expect(try keychain.string(for: AppAttestService.pendingKeyIdKeychainKey) == nil)
     }
 
     @Test func unsupportedDeviceReturnsEmptyHeadersWithoutNetwork() async throws {
@@ -111,17 +112,60 @@ struct AppAttestServiceTests {
         #expect(backend.state.withLock { $0.challengeCount } == 2)
     }
 
-    @Test func transientEnrollmentFailureDoesNotBurnRetryBudget() async throws {
+    @Test func transientEnrollmentFailureReusesPendingKey() async throws {
         let backend = AppAttestBackendMock(enrollStatuses: [500, 503, 200])
+        let attester = AppAttestKeyServiceMock()
+        let keychain = InMemoryKeychainStore()
+        let service = makeService(backend: backend, attester: attester, keychain: keychain)
+
+        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
+        #expect(try keychain.string(for: AppAttestService.pendingKeyIdKeychainKey) == "key-1")
+        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
+
+        // 5xx is transient: every need re-attests the same key against a fresh
+        // challenge, then the third backend attempt succeeds.
+        let third = await service.assertionHeaders(forBody: Data("body".utf8))
+        #expect(third[AppAttestService.HeaderNames.keyId] == "key-1")
+        #expect(backend.state.withLock { $0.enrollBodies.count } == 3)
+        #expect(attester.state.withLock { $0.generateKeyCount } == 1)
+        #expect(attester.state.withLock { $0.attestCalls.map(\.keyId) } == ["key-1", "key-1", "key-1"])
+    }
+
+    @Test func pendingKeySurvivesServiceRecreation() async throws {
+        let backend = AppAttestBackendMock(enrollStatuses: [500, 200])
+        let keychain = InMemoryKeychainStore()
+        let firstAttester = AppAttestKeyServiceMock()
+        let firstService = makeService(backend: backend, attester: firstAttester, keychain: keychain)
+
+        #expect(await firstService.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
+        #expect(try keychain.string(for: AppAttestService.pendingKeyIdKeychainKey) == "key-1")
+
+        let relaunchedAttester = AppAttestKeyServiceMock()
+        let relaunchedService = makeService(backend: backend, attester: relaunchedAttester, keychain: keychain)
+        let headers = await relaunchedService.assertionHeaders(forBody: Data("body".utf8))
+
+        #expect(headers[AppAttestService.HeaderNames.keyId] == "key-1")
+        #expect(relaunchedAttester.state.withLock { $0.generateKeyCount } == 0)
+        #expect(relaunchedAttester.state.withLock { $0.attestCalls.first?.keyId } == "key-1")
+    }
+
+    @Test func transientReEnrollmentDoesNotConsumeReplacementBudget() async throws {
+        let backend = AppAttestBackendMock(enrollStatuses: [200, 500, 200])
         let attester = AppAttestKeyServiceMock()
         let service = makeService(backend: backend, attester: attester, keychain: InMemoryKeychainStore())
 
-        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
-        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
+        #expect(await service.assertionHeaders(forBody: Data("body".utf8))[AppAttestService.HeaderNames.keyId] == "key-1")
+        await service.handleAttestationRejection()
 
-        // 5xx is transient (docs/AppAttest.md §4.4): the next need retries and succeeds.
-        let third = await service.assertionHeaders(forBody: Data("body".utf8))
-        #expect(third[AppAttestService.HeaderNames.keyId] == "key-3")
+        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
+        let recovered = await service.assertionHeaders(forBody: Data("body".utf8))
+        #expect(recovered[AppAttestService.HeaderNames.keyId] == "key-2")
+        #expect(attester.state.withLock { $0.generateKeyCount } == 2)
+
+        // Successful replacement consumes the one-session budget; another real
+        // key rejection cannot start a third enrollment this session.
+        await service.handleAttestationRejection()
+        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
         #expect(backend.state.withLock { $0.enrollBodies.count } == 3)
     }
 

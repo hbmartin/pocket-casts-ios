@@ -47,8 +47,11 @@ the feed URL ever leaving the device.
   exponential backoff, and has **no terminal give-up** — a row persists until
   success or its transcription is deleted (tombstone check before every send;
   deleting locally cancels pending uploads but cannot retract delivered ones).
-- The whole pipeline obeys the transcription battery/Low Power policy: deferred
-  power state pauses fingerprinting and uploads exactly like transcription jobs.
+  Retry and server-pause deadlines arm an in-process wake task; relaunch also
+  kicks the durable queue.
+- Contribution fingerprinting obeys the transcription battery/Low Power policy.
+  Sightings are lightweight network-only reports and continue draining without
+  battery monitoring, including when an older contribution is power-deferred.
 - **No client feature flag and no user setting** (product decision, ADR-0002).
   Operator control is entirely server-side (§5).
 
@@ -57,7 +60,9 @@ the feed URL ever leaving the device.
 Both endpoints require App Attest assertion headers (`docs/AppAttest.md`);
 `Authorization: Bearer` is attached when the user is signed in. Bodies are
 protobuf (fork-owned messages; fields in the ≥1001 fork allocation range where
-they extend shared messages), gzip-encoded.
+they extend shared messages), gzip-encoded. A rejected Bearer is invalidated and
+retried once without account attribution; the anonymous retry mints a fresh App
+Attest assertion over the same body.
 
 ### `POST transcripts/contribute`
 

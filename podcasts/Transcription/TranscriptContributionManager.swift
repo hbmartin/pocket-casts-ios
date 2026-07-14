@@ -18,7 +18,8 @@ import PocketCastsUtils
 /// invalid, or its transcription is deleted locally (tombstone check before
 /// every send). Failed attempts back off exponentially (capped at 6 h) and a
 /// server `pauseQueue` parks the whole queue behind a persisted date. The
-/// drain obeys the same battery policy as transcription jobs.
+/// Contribution fingerprinting obeys the same battery policy as transcription
+/// jobs; lightweight sightings remain network-only and are not power-gated.
 actor TranscriptContributionManager {
     static let shared = TranscriptContributionManager()
 
@@ -65,8 +66,13 @@ actor TranscriptContributionManager {
     private let loadPausedUntil: @Sendable () -> Date?
     private let storePausedUntil: @Sendable (Date?) -> Void
     private let now: @Sendable () -> Date
+    private let sleep: @Sendable (TimeInterval) async throws -> Void
 
     private var drainTask: Task<Void, Never>?
+    private var wakeTask: Task<Void, Never>?
+    private var wakeDate: Date?
+    private var wakeID: UUID?
+    private var drainRequestedAfterCurrentRun = false
 
     init(dataManager: DataManager = .sharedManager,
          artifactStore: TranscriptionArtifactStore = TranscriptionArtifactStore(),
@@ -96,7 +102,10 @@ actor TranscriptContributionManager {
                  UserDefaults.standard.removeObject(forKey: TranscriptContributionManager.pausedUntilDefaultsKey)
              }
          },
-         now: @escaping @Sendable () -> Date = { Date() }) {
+         now: @escaping @Sendable () -> Date = { Date() },
+         sleep: @escaping @Sendable (TimeInterval) async throws -> Void = { interval in
+             try await Task.sleep(for: .seconds(interval))
+         }) {
         self.dataManager = dataManager
         self.artifactStore = artifactStore
         self.audioFileURL = audioFileURL
@@ -111,6 +120,7 @@ actor TranscriptContributionManager {
         self.loadPausedUntil = loadPausedUntil
         self.storePausedUntil = storePausedUntil
         self.now = now
+        self.sleep = sleep
     }
 
     // MARK: - Public API
@@ -214,23 +224,45 @@ actor TranscriptContributionManager {
     // MARK: - Drain
 
     private func drainLoop() async {
-        defer { drainTask = nil }
+        defer {
+            drainTask = nil
+            if drainRequestedAfterCurrentRun {
+                drainRequestedAfterCurrentRun = false
+                kick()
+            }
+        }
 
         var lastProcessed: (id: Int64, attempts: Int32)?
         while true {
-            if let pausedUntil = loadPausedUntil(), now() < pausedUntil {
+            let currentDate = now()
+            if let pausedUntil = loadPausedUntil(), currentDate < pausedUntil {
                 // Operator kill switch (docs/TranscriptContributions.md §5):
-                // the queue stays parked; every later kick re-checks the date.
+                // the queue stays parked until the persisted deadline.
+                scheduleWake(at: pausedUntil)
                 break
             }
-            if TranscriptionPowerState.isDeferred(policy: batteryPolicy(), state: await powerState()) {
-                // Same battery gate as transcription jobs: fingerprinting is
-                // compute-heavy, and none of this work is urgent.
-                FileLog.shared.addMessage("[TranscriptContribution] drain deferred by battery policy")
+
+            let contributionDeferred = TranscriptionPowerState.isDeferred(policy: batteryPolicy(), state: await powerState())
+            let row: PendingTranscriptUploadRecord?
+            if contributionDeferred {
+                // Sightings are tiny network-only reports. Keep draining them even
+                // when an older contribution is waiting for fingerprint-friendly
+                // power conditions (including App Store builds where battery
+                // monitoring is intentionally not initialized).
+                row = dataManager.pendingTranscriptUploads.nextDue(at: currentDate, kind: .sighting)
+                if row == nil, dataManager.pendingTranscriptUploads.nextDue(at: currentDate) != nil {
+                    FileLog.shared.addMessage("[TranscriptContribution] contribution drain deferred by battery policy")
+                }
+            } else {
+                row = dataManager.pendingTranscriptUploads.nextDue(at: currentDate)
+            }
+            guard let row, let rowId = row.id else {
+                let scheduledKind: PendingTranscriptUploadKind? = contributionDeferred ? .sighting : nil
+                if let retryDate = dataManager.pendingTranscriptUploads.nextScheduledAttempt(after: currentDate, kind: scheduledKind) {
+                    scheduleWake(at: retryDate)
+                }
                 break
             }
-            guard let row = dataManager.pendingTranscriptUploads.nextDue(at: now()),
-                  let rowId = row.id else { break }
             if let lastProcessed, rowId == lastProcessed.id, row.attempts == lastProcessed.attempts {
                 // The previous pass failed to advance this row (e.g. a retry-state
                 // write failed): stop rather than hammer the server in a tight loop.
@@ -268,7 +300,9 @@ actor TranscriptContributionManager {
             scheduleRetry(row: row, rowId: rowId, minimumDelay: interval)
         case .pauseQueue(let interval):
             // The operator parked the whole queue; the row itself is untouched.
-            storePausedUntil(now().addingTimeInterval(interval))
+            let pausedUntil = now().addingTimeInterval(interval)
+            storePausedUntil(pausedUntil)
+            scheduleWake(at: pausedUntil)
             FileLog.shared.addMessage("[TranscriptContribution] queue paused for \(Int(interval))s by server")
         case .attestationRejected:
             await handleAttestationRejection()
@@ -380,9 +414,48 @@ actor TranscriptContributionManager {
     private func scheduleRetry(row: PendingTranscriptUploadRecord, rowId: Int64, minimumDelay: TimeInterval) {
         let attempts = row.attempts + 1
         let delay = min(max(minimumDelay, Self.backoffInterval(attempts: attempts)), Self.maxRetryInterval)
-        dataManager.pendingTranscriptUploads.setRetryState(id: rowId,
-                                                           attempts: attempts,
-                                                           nextAttemptAt: now().addingTimeInterval(delay))
+        let retryDate = now().addingTimeInterval(delay)
+        if dataManager.pendingTranscriptUploads.setRetryState(id: rowId,
+                                                              attempts: attempts,
+                                                              nextAttemptAt: retryDate) {
+            scheduleWake(at: retryDate)
+        }
+    }
+
+    /// Arms one cancellable wake-up for the earliest known retry/pause deadline.
+    /// The wait runs outside actor isolation; only the deadline handoff returns to
+    /// this actor. New earlier deadlines replace the existing task.
+    private func scheduleWake(at date: Date) {
+        if let wakeDate, wakeDate <= date { return }
+
+        wakeTask?.cancel()
+        let id = UUID()
+        let delay = max(0, date.timeIntervalSince(now()))
+        wakeDate = date
+        wakeID = id
+        let sleep = self.sleep
+        wakeTask = Task { @concurrent in
+            do {
+                try await sleep(delay)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            await self.scheduledWakeFired(id: id)
+        }
+    }
+
+    private func scheduledWakeFired(id: UUID) {
+        guard wakeID == id else { return }
+        wakeTask = nil
+        wakeDate = nil
+        wakeID = nil
+
+        if drainTask == nil {
+            kick()
+        } else {
+            drainRequestedAfterCurrentRun = true
+        }
     }
 
     private func removeContributionRow(id: Int64, episodeUuid: String) {
