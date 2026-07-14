@@ -22,7 +22,7 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
 
     private var scrollView: UIScrollView!
     private var stackView: UIStackView!
-    private var stackBgView: UIView!
+    private var cardBackgroundView: UIView!
 
     private let buttonCornerRadius: CGFloat = 8
     private var actionHeight: CGFloat = 72
@@ -70,6 +70,17 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
         view.addSubview(scrollView)
         scrollView.backgroundColor = colors.background
 
+        cardBackgroundView = UIView()
+        cardBackgroundView.translatesAutoresizingMaskIntoConstraints = false
+        cardBackgroundView.backgroundColor = colors.background
+        cardBackgroundView.layer.cornerRadius = scrollView.layer.cornerRadius
+        cardBackgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        cardBackgroundView.clipsToBounds = true
+        cardBackgroundView.accessibilityIdentifier = "optionsPicker.cardBackground"
+        view.insertSubview(cardBackgroundView, belowSubview: scrollView)
+
+        scrollView.accessibilityIdentifier = "optionsPicker.scrollView"
+
         stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .fill
@@ -100,13 +111,17 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
         scrollViewHeightConstraint?.priority = .defaultHigh
 
         scrollViewTopAnchor = view.bottomAnchor.constraint(equalTo: scrollView.topAnchor)
-        scrollViewBottomAnchor = view.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
+        scrollViewBottomAnchor = view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         NSLayoutConstraint.activate([
             scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             maxHeightConstraint,
             scrollViewHeightConstraint!,
-            scrollViewTopAnchor!
+            scrollViewTopAnchor!,
+            cardBackgroundView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            cardBackgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            cardBackgroundView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            cardBackgroundView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor)
         ])
 
         let dismissView = UIView()
@@ -199,18 +214,6 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
         actionsAdded += 1
     }
 
-    func aboutToPresentOptions(bottomPadding: CGFloat) {
-        let bottomPaddingView = UIView()
-        bottomPaddingView.backgroundColor = .clear
-        NSLayoutConstraint.activate([
-            bottomPaddingView.heightAnchor.constraint(equalToConstant: bottomPadding),
-        ])
-        stackView.addArrangedSubview(bottomPaddingView)
-        NSLayoutConstraint.activate([
-            bottomPaddingView.widthAnchor.constraint(equalTo: stackView.widthAnchor),
-        ])
-    }
-
     // MARK: - Native Sheet Presentation
 
     /// Reconfigures the layout so the content fills a natively-presented sheet
@@ -220,6 +223,7 @@ class OptionsPickerRootController: UIViewController, UIGestureRecognizerDelegate
 
         view.backgroundColor = scrollView.backgroundColor?.withAlphaComponent(0.85)
         scrollView.backgroundColor = .clear
+        cardBackgroundView.isHidden = true
         view.layer.cornerRadius = 0
         dismissView?.isHidden = true
 
