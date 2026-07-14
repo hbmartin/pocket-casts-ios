@@ -48,7 +48,6 @@ class OptionsPicker {
 
     func show(statusBarStyle: UIStatusBarStyle? = nil) {
         guard let rootController = optionsController else { return }
-        // Root cause of the layout workaround below tracked in hbmartin/pocket-casts-ios#285
         #if !APPCLIP
         window = SceneHelper.newMainScreenWindow()
         #endif
@@ -56,11 +55,9 @@ class OptionsPicker {
         window?.windowLevel = UIWindow.Level.alert
         window?.makeKeyAndVisible()
 
-        let additionalPaddingRequired: CGFloat = window?.safeAreaInsets.bottom ?? 0
         if let statusBarStyle {
             rootController.overrideStatusBarStyle = statusBarStyle
         }
-        rootController.aboutToPresentOptions(bottomPadding: additionalPaddingRequired)
         rootController.animateIn()
     }
 
