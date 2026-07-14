@@ -130,6 +130,8 @@ extension NowPlayingPlayerItemViewController {
         timeSlider.rightColor = ThemeColor.playerContrast06()
         timeSlider.popupColor = ThemeColor.playerContrast06()
         timeSlider.popupTextColor = ThemeColor.playerContrast01()
+
+        updateShelfGlass()
     }
 
     func updatePlayPauseButton(isPlaying: Bool) {

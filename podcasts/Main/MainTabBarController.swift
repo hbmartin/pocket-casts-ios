@@ -377,6 +377,14 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
+    func navigateToExplore(_ animated: Bool) {
+        if !switchToTab(.explore) { return }
+
+        if let navController = selectedViewController as? UINavigationController {
+            navController.popToRootViewController(animated: true)
+        }
+    }
+
     func navigateToFolder(_ folder: Folder, popToRootViewController: Bool = true) {
         guard let navController = selectedViewController as? UINavigationController else { return }
 

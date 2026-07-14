@@ -103,6 +103,7 @@ actor TranscriptionQueueManager {
     private let remoteAPIKey: @Sendable (String) -> String?
     private let episodeDownloadURL: @Sendable (String) -> URL?
     private let transcodeForUpload: @Sendable (URL) async throws -> AudioTranscodeHelper.Output
+    private let contributionEnqueue: @Sendable (String, EpisodeTranscriptionRecord) -> Void
     private let pollSchedule: PollSchedule
 
     private var states: [String: JobState] = [:]
@@ -148,6 +149,14 @@ actor TranscriptionQueueManager {
          transcodeForUpload: @escaping @Sendable (URL) async throws -> AudioTranscodeHelper.Output = {
              try await AudioTranscodeHelper().transcodeForUpload(sourceURL: $0)
          },
+         contributionEnqueue: @escaping @Sendable (String, EpisodeTranscriptionRecord) -> Void = { episodeUuid, record in
+             // Crowdsourced transcript upload (docs/TranscriptContributions.md §2):
+             // a completed transcription of an Eligible episode becomes a
+             // Contribution row, drained by the contribution manager.
+             if TranscriptContributionManager.enqueueContribution(episodeUuid: episodeUuid, record: record, dataManager: .sharedManager) {
+                 TranscriptContributionManager.kickShared()
+             }
+         },
          pollSchedule: PollSchedule = .default) {
         self.dataManager = dataManager
         self.engineFactory = engineFactory
@@ -164,6 +173,7 @@ actor TranscriptionQueueManager {
         self.remoteAPIKey = remoteAPIKey
         self.episodeDownloadURL = episodeDownloadURL
         self.transcodeForUpload = transcodeForUpload
+        self.contributionEnqueue = contributionEnqueue
         self.pollSchedule = pollSchedule
     }
 
@@ -252,6 +262,10 @@ actor TranscriptionQueueManager {
         // between the steps must not strand FTS rows or an artifact behind an
         // already-deleted record.
         dataManager.transcriptSearch.delete(episodeUuid: episodeUuid, source: .generated)
+        // Local deletion cancels pending contribution uploads (it cannot retract
+        // delivered ones) — docs/TranscriptContributions.md §2. The artifact
+        // delete below also removes the cached upload fingerprint.
+        dataManager.pendingTranscriptUploads.deleteContributions(episodeUuid: episodeUuid)
         artifactStore.delete(episodeUuid: episodeUuid)
         dataManager.transcriptions.delete(episodeUuid: episodeUuid)
         states[episodeUuid] = nil
@@ -602,7 +616,14 @@ actor TranscriptionQueueManager {
         record.remoteJobId = nil
         record.filePath = artifactURL.path
         record.updatedAt = Date().timeIntervalSince1970
-        dataManager.transcriptions.upsert(record)
+        let persisted = dataManager.transcriptions.upsert(record)
+
+        if persisted {
+            // Contribution hook: only genuinely persisted completions become
+            // uploads (docs/TranscriptContributions.md §1); the closure applies
+            // the eligibility gate and kicks the contribution drain.
+            contributionEnqueue(episodeUuid, record)
+        }
 
         setState(episodeUuid: episodeUuid, state: .completed, forcePost: true)
         NotificationCenter.postOnMainThread(EpisodeTranscriptionCompleted(episodeUuid: episodeUuid, succeeded: true))
@@ -833,6 +854,9 @@ extension TranscriptionQueueManager {
         // nothing is queued or running.
         let kick: @Sendable (Notification) -> Void = { _ in
             Task { await TranscriptionQueueManager.shared.powerConditionsChanged() }
+            // The contribution upload queue obeys the same battery policy; a
+            // power change may make a deferred drain runnable again.
+            TranscriptContributionManager.kickShared()
         }
         let center = NotificationCenter.default
         center.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main, using: kick)
@@ -844,6 +868,8 @@ extension TranscriptionQueueManager {
             // mid-flight), then ask for a charging-time pass if work remains.
             await TranscriptionQueueManager.shared.restorePendingJobs()
             TranscriptionQueueManager.scheduleProcessingTaskIfNeeded()
+            // Resume pending contribution/sighting uploads from earlier runs.
+            await TranscriptContributionManager.shared.kick()
         }
     }
 }

@@ -22,6 +22,11 @@
 /// matches the upstream Pocket Casts wire format, including messages for
 /// endpoints this backend has not implemented yet.
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 import SwiftProtobuf
 
 // If the compiler emits an error on this type, it is because this file
@@ -5696,6 +5701,85 @@ nonisolated struct Api_SupportFeedbackRequest: Sendable {
   var deviceInfo: String = String()
 
   var appVersion: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// Body of POST transcripts/contribute. The request body is this message
+/// serialized and gzip-encoded (Content-Encoding: gzip); App Attest assertion
+/// headers sign the gzipped body bytes.
+nonisolated struct Api_TranscriptContributionRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Catalog UUIDs or deterministic local-feed identities — indistinguishable by design.
+  var episodeUuid: String = String()
+
+  var podcastUuid: String = String()
+
+  /// Gzipped VTT bytes, speaker labels included, exactly the on-device artifact.
+  var vtt: Data = Data()
+
+  /// Gzipped fingerprint-compact-v2 JSON of the contributor's audio stitch.
+  var fingerprint: Data = Data()
+
+  /// "whisperkit" | "applespeech" | remote provider identifier.
+  var engine: String = String()
+
+  /// The specific producer, e.g. "whisper-large-v3-turbo", "apple-speech-ios26".
+  var modelID: String = String()
+
+  /// BCP-47 as reported by the engine.
+  var language: String = String()
+
+  var diarized: Bool = false
+
+  /// Build marketing version.
+  var appVersion: String = String()
+
+  /// Sanity anchor for server-side validation (cue span ≈ duration, reject > ±20%).
+  var episodeDurationSeconds: Double = 0
+
+  /// Contribution creation time (no listening timestamps).
+  var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_createdAt = newValue}
+  }
+  /// Returns true if `createdAt` has been explicitly set.
+  var hasCreatedAt: Bool {self._createdAt != nil}
+  /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
+  mutating func clearCreatedAt() {self._createdAt = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+/// Body of POST transcripts/sighting. Same encoding rules as
+/// TranscriptContributionRequest. The server fetches the transcript content
+/// itself; the client never uploads publisher transcript bytes.
+nonisolated struct Api_TranscriptSightingRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var episodeUuid: String = String()
+
+  var podcastUuid: String = String()
+
+  /// Token-free publisher URL (enforced client-side, re-validated server-side).
+  var transcriptURL: String = String()
+
+  /// Mime type of the sighted transcript.
+  var format: String = String()
+
+  /// Optional BCP-47 tag; empty when the feed didn't declare one.
+  var language: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -15424,6 +15508,140 @@ nonisolated extension Api_SupportFeedbackRequest: SwiftProtobuf.Message, SwiftPr
     if lhs.bitdriftSessionID != rhs.bitdriftSessionID {return false}
     if lhs.deviceInfo != rhs.deviceInfo {return false}
     if lhs.appVersion != rhs.appVersion {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_TranscriptContributionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TranscriptContributionRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{1}vtt\0\u{1}fingerprint\0\u{1}engine\0\u{3}model_id\0\u{1}language\0\u{1}diarized\0\u{3}app_version\0\u{3}episode_duration_seconds\0\u{3}created_at\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.episodeUuid) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      case 3: try { try decoder.decodeSingularBytesField(value: &self.vtt) }()
+      case 4: try { try decoder.decodeSingularBytesField(value: &self.fingerprint) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.engine) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.modelID) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.language) }()
+      case 8: try { try decoder.decodeSingularBoolField(value: &self.diarized) }()
+      case 9: try { try decoder.decodeSingularStringField(value: &self.appVersion) }()
+      case 10: try { try decoder.decodeSingularDoubleField(value: &self.episodeDurationSeconds) }()
+      case 11: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.episodeUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.episodeUuid, fieldNumber: 1)
+    }
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 2)
+    }
+    if !self.vtt.isEmpty {
+      try visitor.visitSingularBytesField(value: self.vtt, fieldNumber: 3)
+    }
+    if !self.fingerprint.isEmpty {
+      try visitor.visitSingularBytesField(value: self.fingerprint, fieldNumber: 4)
+    }
+    if !self.engine.isEmpty {
+      try visitor.visitSingularStringField(value: self.engine, fieldNumber: 5)
+    }
+    if !self.modelID.isEmpty {
+      try visitor.visitSingularStringField(value: self.modelID, fieldNumber: 6)
+    }
+    if !self.language.isEmpty {
+      try visitor.visitSingularStringField(value: self.language, fieldNumber: 7)
+    }
+    if self.diarized != false {
+      try visitor.visitSingularBoolField(value: self.diarized, fieldNumber: 8)
+    }
+    if !self.appVersion.isEmpty {
+      try visitor.visitSingularStringField(value: self.appVersion, fieldNumber: 9)
+    }
+    if self.episodeDurationSeconds.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.episodeDurationSeconds, fieldNumber: 10)
+    }
+    try { if let v = self._createdAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_TranscriptContributionRequest, rhs: Api_TranscriptContributionRequest) -> Bool {
+    if lhs.episodeUuid != rhs.episodeUuid {return false}
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.vtt != rhs.vtt {return false}
+    if lhs.fingerprint != rhs.fingerprint {return false}
+    if lhs.engine != rhs.engine {return false}
+    if lhs.modelID != rhs.modelID {return false}
+    if lhs.language != rhs.language {return false}
+    if lhs.diarized != rhs.diarized {return false}
+    if lhs.appVersion != rhs.appVersion {return false}
+    if lhs.episodeDurationSeconds != rhs.episodeDurationSeconds {return false}
+    if lhs._createdAt != rhs._createdAt {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_TranscriptSightingRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TranscriptSightingRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{3}transcript_url\0\u{1}format\0\u{1}language\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.episodeUuid) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.transcriptURL) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.format) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.language) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.episodeUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.episodeUuid, fieldNumber: 1)
+    }
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 2)
+    }
+    if !self.transcriptURL.isEmpty {
+      try visitor.visitSingularStringField(value: self.transcriptURL, fieldNumber: 3)
+    }
+    if !self.format.isEmpty {
+      try visitor.visitSingularStringField(value: self.format, fieldNumber: 4)
+    }
+    if !self.language.isEmpty {
+      try visitor.visitSingularStringField(value: self.language, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_TranscriptSightingRequest, rhs: Api_TranscriptSightingRequest) -> Bool {
+    if lhs.episodeUuid != rhs.episodeUuid {return false}
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.transcriptURL != rhs.transcriptURL {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.language != rhs.language {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

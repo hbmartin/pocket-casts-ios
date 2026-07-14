@@ -103,6 +103,21 @@ class FeatureFlagTests: XCTestCase {
         XCTAssertNil(FeatureFlagRemoteConfigStore(store: defaults).overriddenValue(for: .autoDownloadOnSubscribe))
     }
 
+    func testEveryFlagHasANonEmptyBetaDescription() {
+        for flag in FeatureFlag.allCases {
+            let description = flag.betaDescription
+            XCTAssertFalse(description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, "\(flag) is missing a beta description")
+        }
+    }
+
+    func testEveryBetaDescriptionStatesARiskLevel() {
+        for flag in FeatureFlag.allCases {
+            let description = flag.betaDescription
+            let statesRisk = description.contains("Low risk") || description.contains("Medium risk") || description.contains("High risk")
+            XCTAssertTrue(statesRisk, "\(flag)'s beta description does not state a risk level: \(description)")
+        }
+    }
+
     func testEnabledUsesRemoteConfigValueAfterLocalOverride() throws {
         let flag = FeatureFlag.autoDownloadOnSubscribe
         let remoteKey = try XCTUnwrap(flag.remoteKey)

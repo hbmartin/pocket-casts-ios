@@ -252,6 +252,30 @@ class DatabaseHelper {
                 """, values: nil)
                 try db.executeUpdate("DROP TABLE TranscriptIndexMeta;", values: nil)
             }
+        },
+        // Transcript contributions (device-local, no sync): the durable queue of
+        // pending contribution/sighting uploads drained serially by the app-layer
+        // TranscriptContributionManager (docs/TranscriptContributions.md §2).
+        // `kind` is 0 = contribution, 1 = sighting (PendingTranscriptUploadKind);
+        // `payloadJson` carries the kind-specific fields captured at enqueue time;
+        // `nextAttemptAt` is NULL when the row is due immediately.
+        SchemaMigration(toVersion: 83) { db in
+            try db.executeUpdate("""
+            CREATE TABLE PendingTranscriptUpload (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                episodeUuid TEXT NOT NULL,
+                podcastUuid TEXT NOT NULL,
+                kind INTEGER NOT NULL DEFAULT 0,
+                payloadJson TEXT NOT NULL DEFAULT '',
+                attempts INTEGER NOT NULL DEFAULT 0,
+                nextAttemptAt REAL,
+                addedDate REAL NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX pending_transcript_upload_episode_kind ON PendingTranscriptUpload (episodeUuid, kind);", values: nil)
+            try db.executeUpdate(
+                "CREATE INDEX pending_transcript_upload_due ON PendingTranscriptUpload (nextAttemptAt, addedDate);", values: nil)
         }
     ]
 

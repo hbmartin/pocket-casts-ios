@@ -63,7 +63,8 @@ final class TranscriptionQueueManagerDiarizerTests: XCTestCase {
             thermalState: { .nominal },
             powerState: { TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false) },
             batteryPolicy: { .always },
-            maxSpeakers: { maxSpeakers }
+            maxSpeakers: { maxSpeakers },
+            contributionEnqueue: { _, _ in }
         )
     }
 

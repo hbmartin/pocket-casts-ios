@@ -29,6 +29,7 @@ public class DataManager {
     public let networkDataUsageManager: NetworkDataUsageManager
     public let transcriptions: TranscriptionDataManager
     public let transcriptSearch: TranscriptSearchDataManager
+    public let pendingTranscriptUploads: PendingTranscriptUploadDataManager
 
     let dbQueue: GRDBQueue
 
@@ -103,6 +104,7 @@ public class DataManager {
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
         transcriptions = TranscriptionDataManager(dbQueue: dbQueue)
         transcriptSearch = TranscriptSearchDataManager(dbQueue: dbQueue)
+        pendingTranscriptUploads = PendingTranscriptUploadDataManager(dbQueue: dbQueue)
     }
 
     private var databaseSize: String? {

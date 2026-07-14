@@ -46,6 +46,36 @@ nonisolated struct TranscriptionArtifactStore: Sendable {
 
     func delete(episodeUuid: String) {
         try? FileManager.default.removeItem(at: fileURL(forEpisodeUuid: episodeUuid))
+        deleteFingerprint(episodeUuid: episodeUuid)
+    }
+
+    // MARK: - Contribution fingerprint cache
+
+    /// Where the contribution pipeline caches the episode's gzipped
+    /// `fingerprint-compact-v2` JSON, next to the VTT artifact, so upload
+    /// retries never re-decode the audio (docs/TranscriptContributions.md §2).
+    func fingerprintFileURL(forEpisodeUuid episodeUuid: String) -> URL {
+        directoryURL.appendingPathComponent("\(episodeUuid)-fingerprint.json.gz", isDirectory: false)
+    }
+
+    /// The cached gzipped fingerprint, or nil when none has been computed yet.
+    func readFingerprint(episodeUuid: String) -> Data? {
+        try? Data(contentsOf: fingerprintFileURL(forEpisodeUuid: episodeUuid))
+    }
+
+    /// Caches the gzipped fingerprint bytes for the episode, replacing any
+    /// previous cache.
+    @discardableResult
+    func writeFingerprint(_ data: Data, episodeUuid: String) throws -> URL {
+        try ensureDirectoryExists()
+        let url = fingerprintFileURL(forEpisodeUuid: episodeUuid)
+        try data.write(to: url, options: .atomic)
+        return url
+    }
+
+    /// Removes the cached fingerprint (upload accepted, or transcription deleted).
+    func deleteFingerprint(episodeUuid: String) {
+        try? FileManager.default.removeItem(at: fingerprintFileURL(forEpisodeUuid: episodeUuid))
     }
 
     /// Total bytes of all generated transcript artifacts on disk. Backs the

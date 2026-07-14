@@ -150,8 +150,9 @@ class SkipButton: UIButton {
 
 /// Draws a circular "skip" arrow (a stroked arc with a chevron arrowhead) and
 /// spins once when tapped. Replaces the former Lottie `skip_button` animation.
-/// The owning `SkipButton` mirrors this view horizontally for skip-back, and the
-/// seconds value is rendered separately by `SkipButton`'s label in the centre.
+/// The base drawing points counter-clockwise (skip-back); the owning `SkipButton`
+/// mirrors this view horizontally for skip-forward, and the seconds value is
+/// rendered separately by `SkipButton`'s label in the centre.
 class SkipIconView: UIView {
     private static let spinKey = "skipSpin"
     private static let scaleKey = "skipScale"
@@ -237,28 +238,27 @@ class SkipIconView: UIView {
         let radius = min(bounds.width, bounds.height) * 0.34
         guard radius > 0 else { return CGMutablePath() }
 
-        // Near-complete circle with a small gap at the top.
+        // Near-complete circle with a small gap at the top, drawn counter-clockwise
+        // so the stroke ends at the right edge of the gap. This base orientation is
+        // the skip-back arrow; `SkipButton` mirrors the view for skip-forward.
         let gapHalf: CGFloat = 0.55
         let topAngle = -CGFloat.pi / 2
-        let start = topAngle + gapHalf
-        let end = start + (2 * .pi - 2 * gapHalf)
+        let start = topAngle - gapHalf
+        let end = topAngle + gapHalf
 
-        let path = UIBezierPath(arcCenter: center, radius: radius, startAngle: start, endAngle: end, clockwise: true)
+        let path = UIBezierPath(arcCenter: center, radius: radius, startAngle: start, endAngle: end, clockwise: false)
 
-        // Chevron arrowhead at the start of the arc, pointing clockwise.
-        let tip = CGPoint(x: center.x + radius * cos(start), y: center.y + radius * sin(start))
-        let tangent = CGVector(dx: -sin(start), dy: cos(start)) // clockwise direction
-        let arrowLen = radius * 0.55
-        func barb(_ angle: CGFloat) -> CGPoint {
-            // Rotate the reverse-tangent by `angle` to splay the barbs backwards.
-            let dx = -tangent.dx, dy = -tangent.dy
-            let rx = dx * cos(angle) - dy * sin(angle)
-            let ry = dx * sin(angle) + dy * cos(angle)
-            return CGPoint(x: tip.x + rx * arrowLen, y: tip.y + ry * arrowLen)
-        }
-        path.move(to: barb(0.6))
+        // Chevron arrowhead straddling the end of the stroke, with its tip ahead of
+        // the arc end so it points counter-clockwise across the gap.
+        let endPoint = CGPoint(x: center.x + radius * cos(end), y: center.y + radius * sin(end))
+        let direction = CGVector(dx: sin(end), dy: -cos(end)) // counter-clockwise tangent
+        let perpendicular = CGVector(dx: -direction.dy, dy: direction.dx)
+        let headLength = radius * 0.45
+        let headHalfWidth = radius * 0.38
+        let tip = CGPoint(x: endPoint.x + direction.dx * headLength, y: endPoint.y + direction.dy * headLength)
+        path.move(to: CGPoint(x: endPoint.x + perpendicular.dx * headHalfWidth, y: endPoint.y + perpendicular.dy * headHalfWidth))
         path.addLine(to: tip)
-        path.addLine(to: barb(-0.6))
+        path.addLine(to: CGPoint(x: endPoint.x - perpendicular.dx * headHalfWidth, y: endPoint.y - perpendicular.dy * headHalfWidth))
 
         return path.cgPath
     }

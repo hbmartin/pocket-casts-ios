@@ -129,6 +129,10 @@ nonisolated class TranscriptManager {
                 // transcripts return earlier above and are deliberately skipped —
                 // they are indexed by the transcription feature's own FTS table.
                 TranscriptSearchIndexer.shared.indexIfNeeded(episodeUuid: episodeUUID, podcastUuid: podcastUUID, model: model)
+                // Sighting hook (docs/TranscriptContributions.md §1): report that
+                // this episode has a Provided transcript. Deduplicated per
+                // episode, Eligible episodes with token-free URLs only.
+                TranscriptContributionManager.noteSighting(episodeUuid: episodeUUID, podcastUuid: podcastUUID, transcriptUrl: transcript.url, format: transcript.type, language: transcript.language)
                 return model
             } catch TranscriptError.empty, TranscriptError.failedToParse {
                 transcriptsAvailable.removeAll { other in

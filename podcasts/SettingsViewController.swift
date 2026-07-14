@@ -80,11 +80,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
 
     /// All the possible settings sections
     private let allSections: [[TableRow]] = {
-        #if DEBUG
-        let developerSection: [TableRow] = [.developer, .beta]
-        #else
-        let developerSection: [TableRow] = []
-        #endif
+        let developerSection: [TableRow] = BuildEnvironment.current != .appStore ? [.developer, .beta] : []
 
         return [
             developerSection,

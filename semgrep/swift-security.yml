@@ -5309,3 +5309,30 @@ rules:
         - "**/WidgetExtension/**/*.swift"
     patterns:
       - pattern-regex: '^[ \t]*LocalFeedCredentials\.save\('
+
+  - id: pocketcasts.app-attest-single-owner
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Do not use DCAppAttestService directly: route attestation through
+      AppAttestService (Modules/Sources/PocketCastsServer/Public/AppAttest) so
+      the per-install key, its keychain persistence, and the enrollment /
+      rejection lifecycle keep a single owner (docs/AppAttest.md section 1).
+      Only DeviceCheckAppAttestAdapter inside the AppAttest module may touch
+      the system service.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/Modules/Sources/PocketCastsServer/AppAttestSingleOwnerFixture.swift"
+      exclude:
+        - "**/Modules/Sources/PocketCastsServer/Private/AppAttest/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: DCAppAttestService.shared
+          - pattern: DCAppAttestService()

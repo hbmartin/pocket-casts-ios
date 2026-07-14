@@ -14,6 +14,7 @@ struct DeveloperMenu: View {
     @State var showIntroCarousel = false
     @State var showingNotificationsPermissions = false
     @State var enableDebugPlaylistLimit = false
+    @State var showingResetConfirmation = false
 
     @StateObject var recommendationsViewModel = RecommendationsViewModel(configuration: .all)
 
@@ -50,11 +51,19 @@ struct DeveloperMenu: View {
                         FileLog.shared.addMessage("DeveloperMenu: failed to export pcasts: \(error)")
                     }
                 }
-                Button(action: {
-                    PCBundleDoc.delete()
+                Button(role: .destructive, action: {
+                    showingResetConfirmation = true
                 }, label: {
                     Text("Reset Database + Settings")
                 })
+                .alert("Reset Database + Settings?", isPresented: $showingResetConfirmation) {
+                    Button("Reset and Quit", role: .destructive) {
+                        PCBundleDoc.delete()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This permanently deletes the local database and all settings, then quits the app. This cannot be undone.")
+                }
             }
             Section {
                 Button(action: {
