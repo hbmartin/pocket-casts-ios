@@ -610,6 +610,10 @@ actor TranscriptionQueueManager {
 
         record.transcriptionStatus = .completed
         record.errorMessage = nil
+        // Persist the exact producer for contribution provenance. Remote
+        // providers report their model/API identifier here; local pipelines use
+        // the same engine id already captured before transcription.
+        record.modelId = transcript.engineDescription
         record.durationSecs = transcript.cues.last?.end ?? 0
         record.speakerCount = Int32(transcript.speakerCount)
         record.language = transcript.language

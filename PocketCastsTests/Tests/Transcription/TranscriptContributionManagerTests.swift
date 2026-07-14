@@ -53,6 +53,7 @@ final class TranscriptContributionManagerTests: XCTestCase {
         let fingerprintCalls = Mutex(0)
         let attestationHandled = Mutex(false)
         let pausedUntil = Mutex<Date?>(nil)
+        let wakeDelays = Mutex<[TimeInterval]>([])
 
         var sendCount: Int {
             contributions.withLock { $0.count } + sightings.withLock { $0.count }
@@ -62,8 +63,20 @@ final class TranscriptContributionManagerTests: XCTestCase {
     private func makeManager(recorder: Recorder,
                              result: ContributionSendResult,
                              powerDeferred: Bool = false,
-                             fingerprintData: Data = Data("fingerprint-json".utf8)) -> TranscriptContributionManager {
+                             fingerprintData: Data = Data("fingerprint-json".utf8),
+                             resultScript: [ContributionSendResult]? = nil,
+                             now: @escaping @Sendable () -> Date = { Date() },
+                             scheduledSleep: @escaping @Sendable (TimeInterval) async throws -> Void = { _ in throw CancellationError() }) -> TranscriptContributionManager {
         let audioURL = audioURL
+        let scriptedResults = Mutex(resultScript ?? [result])
+        let nextResult: @Sendable () -> ContributionSendResult = {
+            scriptedResults.withLock { results in
+                if results.count > 1 {
+                    return results.removeFirst()
+                }
+                return results.first ?? result
+            }
+        }
         return TranscriptContributionManager(
             dataManager: dataManager,
             artifactStore: artifactStore,
@@ -75,11 +88,11 @@ final class TranscriptContributionManagerTests: XCTestCase {
             gzip: { $0 }, // Identity: payload bytes are asserted against the inputs.
             sendContribution: { payload in
                 recorder.contributions.withLock { $0.append(payload) }
-                return result
+                return nextResult()
             },
             sendSighting: { payload in
                 recorder.sightings.withLock { $0.append(payload) }
-                return result
+                return nextResult()
             },
             powerState: {
                 TranscriptionPowerState(batteryLevel: 1,
@@ -91,7 +104,11 @@ final class TranscriptContributionManagerTests: XCTestCase {
             appVersion: { "7.99-test" },
             loadPausedUntil: { recorder.pausedUntil.withLock { $0 } },
             storePausedUntil: { date in recorder.pausedUntil.withLock { $0 = date } },
-            now: { Date() }
+            now: now,
+            sleep: { delay in
+                recorder.wakeDelays.withLock { $0.append(delay) }
+                try await scheduledSleep(delay)
+            }
         )
     }
 
@@ -224,6 +241,47 @@ final class TranscriptContributionManagerTests: XCTestCase {
         XCTAssertEqual(nextAttemptAt, before.timeIntervalSince1970 + 600, accuracy: 10)
     }
 
+    func testRetryDeadlineAutomaticallyWakesAndDrainsQueue() async throws {
+        try seedContribution()
+        let recorder = Recorder()
+        let clock = Mutex(Date(timeIntervalSince1970: 1_700_000_000))
+        let manager = makeManager(
+            recorder: recorder,
+            result: .accepted,
+            resultScript: [.retryAfter(1), .accepted],
+            now: { clock.withLock { $0 } },
+            scheduledSleep: { delay in
+                clock.withLock { $0.addTimeInterval(delay) }
+            }
+        )
+
+        await drain(manager)
+        try await waitUntil("scheduled retry drains the row") {
+            recorder.sendCount == 2 && self.dataManager.pendingTranscriptUploads.count() == 0
+        }
+
+        XCTAssertEqual(recorder.wakeDelays.withLock { $0.first }, 60,
+                       "Attempt one uses the 60-second exponential-backoff floor")
+    }
+
+    func testKickRearmsPersistedRetryDeadline() async throws {
+        let rowId = try seedContribution()
+        let currentDate = Date(timeIntervalSince1970: 1_700_000_000)
+        XCTAssertTrue(dataManager.pendingTranscriptUploads.setRetryState(id: rowId,
+                                                                         attempts: 1,
+                                                                         nextAttemptAt: currentDate.addingTimeInterval(120)))
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder,
+                                  result: .accepted,
+                                  now: { currentDate })
+
+        await drain(manager)
+
+        let wakeDelay = try XCTUnwrap(recorder.wakeDelays.withLock { $0.first })
+        XCTAssertEqual(wakeDelay, 120, accuracy: 0.001)
+        XCTAssertEqual(recorder.sendCount, 0, "A persisted retry must remain unsent until its deadline")
+    }
+
     func testPauseQueuePersistsParkDateAndBlocksSubsequentDrains() async throws {
         try seedContribution()
         try seedSighting(episodeUuid: "ep-2", podcastUuid: "pod-2")
@@ -237,6 +295,9 @@ final class TranscriptContributionManagerTests: XCTestCase {
         XCTAssertEqual(recorder.sendCount, 1)
         let pausedUntil = try XCTUnwrap(recorder.pausedUntil.withLock { $0 })
         XCTAssertEqual(pausedUntil.timeIntervalSince(before), 3600, accuracy: 10)
+        let wakeDelay = try XCTUnwrap(recorder.wakeDelays.withLock { $0.first })
+        XCTAssertEqual(wakeDelay, 3600, accuracy: 0.1,
+                       "A server pause must arm an automatic queue wake-up")
 
         // Rows are untouched — they resume when the pause lapses.
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 2)
@@ -330,8 +391,23 @@ final class TranscriptContributionManagerTests: XCTestCase {
 
         await drain(manager)
 
-        XCTAssertEqual(recorder.sendCount, 0, "Uploads obey the transcription battery policy")
+        XCTAssertEqual(recorder.sendCount, 0, "Contribution fingerprinting obeys the transcription battery policy")
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 1)
+    }
+
+    func testPowerDeferredContributionDoesNotBlockSightings() async throws {
+        try seedContribution(episodeUuid: "ep-contribution")
+        try seedSighting(episodeUuid: "ep-sighting")
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder, result: .accepted, powerDeferred: true)
+
+        await drain(manager)
+
+        XCTAssertEqual(recorder.contributions.withLock { $0.count }, 0)
+        XCTAssertEqual(recorder.sightings.withLock { $0.count }, 1,
+                       "Network-only sightings must drain without battery monitoring")
+        let remaining = dataManager.pendingTranscriptUploads.allRecords()
+        XCTAssertEqual(remaining.map(\.uploadKind), [.contribution])
     }
 
     // MARK: - Backoff
@@ -344,6 +420,19 @@ final class TranscriptContributionManagerTests: XCTestCase {
                           TranscriptContributionManager.backoffInterval(attempts: 6))
         XCTAssertEqual(TranscriptContributionManager.backoffInterval(attempts: 30),
                        TranscriptContributionManager.maxRetryInterval)
+    }
+
+    private func waitUntil(_ description: String,
+                           timeout: TimeInterval = 2,
+                           condition: @escaping () -> Bool) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            guard Date() < deadline else {
+                XCTFail("Timed out waiting until \(description)")
+                return
+            }
+            try await Task.sleep(for: .milliseconds(10))
+        }
     }
 
     // MARK: - Sighting enqueue

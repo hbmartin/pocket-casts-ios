@@ -7,6 +7,7 @@ import PocketCastsUtils
 /// maps the response onto `ContributionSendResult` for the upload queue.
 final class TranscriptUploadSender: Sendable {
     typealias TokenProvider = @Sendable () async -> String?
+    typealias TokenInvalidator = @Sendable () -> Void
     typealias AssertionHeadersProvider = @Sendable (Data) async -> [String: String]
 
     /// Backoff for the single pending item when a 429 arrives without a parseable Retry-After.
@@ -23,13 +24,16 @@ final class TranscriptUploadSender: Sendable {
 
     private let urlConnection: URLConnection
     private let tokenProvider: TokenProvider
+    private let tokenInvalidator: TokenInvalidator
     private let assertionHeaders: AssertionHeadersProvider
 
     init(urlConnection: URLConnection,
          tokenProvider: @escaping TokenProvider = TranscriptUploadSender.defaultTokenProvider,
+         tokenInvalidator: @escaping TokenInvalidator = TranscriptUploadSender.defaultTokenInvalidator,
          assertionHeaders: @escaping AssertionHeadersProvider = TranscriptUploadSender.defaultAssertionHeadersProvider) {
         self.urlConnection = urlConnection
         self.tokenProvider = tokenProvider
+        self.tokenInvalidator = tokenInvalidator
         self.assertionHeaders = assertionHeaders
     }
 
@@ -47,6 +51,11 @@ final class TranscriptUploadSender: Sendable {
                 continuation.resume(returning: TokenHelper.shared.acquireToken())
             }
         }
+    }
+
+    static let defaultTokenInvalidator: TokenInvalidator = {
+        KeychainHelper.removeKey(ServerConstants.Values.syncingV2TokenKey)
+        ServerSettings.setTokenExpiryDate(nil)
     }
 
     /// Assertion headers sign the exact body bytes on the wire (docs/AppAttest.md §1.3),
@@ -70,6 +79,31 @@ final class TranscriptUploadSender: Sendable {
             return .permanentFailure("Invalid endpoint URL: \(urlString)")
         }
 
+        let token = await tokenProvider()
+        let firstAttempt = await performPost(body: body, to: url, token: token)
+        guard let firstResponse = firstAttempt.response else {
+            return .retryAfter(Self.defaultTransientRetryDelay)
+        }
+
+        // Account auth is attribution-only for these endpoints. If a locally
+        // valid token is rejected, invalidate it and retry once anonymously.
+        // performPost mints a fresh assertion for the second request, so strict
+        // App Attest counters never see a replayed assertion.
+        if token != nil,
+           firstResponse.statusCode == ServerConstants.HttpConstants.unauthorized,
+           !Self.isInvalidAttestation(firstAttempt.data) {
+            tokenInvalidator()
+            let anonymousAttempt = await performPost(body: body, to: url, token: nil)
+            guard let anonymousResponse = anonymousAttempt.response else {
+                return .retryAfter(Self.defaultTransientRetryDelay)
+            }
+            return Self.result(for: anonymousResponse, body: anonymousAttempt.data)
+        }
+
+        return Self.result(for: firstResponse, body: firstAttempt.data)
+    }
+
+    private func performPost(body: Data, to url: URL, token: String?) async -> (data: Data?, response: HTTPURLResponse?) {
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: ServerConstants.Timeouts.general)
         request.httpMethod = "POST"
         request.httpBody = body
@@ -79,7 +113,7 @@ final class TranscriptUploadSender: Sendable {
         request.addLocalizationHeaders()
         request.setValue(ServerConfig.shared.syncDelegate?.privateUserAgent() ?? "", forHTTPHeaderField: ServerConstants.HttpHeaders.userAgent)
 
-        if let token = await tokenProvider() {
+        if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
         }
         for (field, value) in await assertionHeaders(body) {
@@ -88,13 +122,10 @@ final class TranscriptUploadSender: Sendable {
 
         do {
             let (data, response) = try await urlConnection.send(request: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                return .retryAfter(Self.defaultTransientRetryDelay)
-            }
-            return Self.result(for: httpResponse, body: data)
+            return (data, response as? HTTPURLResponse)
         } catch {
-            FileLog.shared.addMessage("TranscriptUploadSender: POST to \(urlString) failed: \(error)")
-            return .retryAfter(Self.defaultTransientRetryDelay)
+            FileLog.shared.addMessage("TranscriptUploadSender: POST to \(url.absoluteString) failed: \(error)")
+            return (nil, nil)
         }
     }
 
@@ -110,8 +141,12 @@ final class TranscriptUploadSender: Sendable {
         case ServerConstants.HttpConstants.unauthorized where isInvalidAttestation(body):
             return .attestationRejected
         case ServerConstants.HttpConstants.unauthorized:
-            // A stale Bearer, not a rejected attestation: auth is optional here, and the
-            // next attempt re-acquires a token, so treat it as transient.
+            // No Bearer was available, or the one anonymous retry was still
+            // unauthorized. Keep the durable row for a later attempt.
+            return .retryAfter(defaultTransientRetryDelay)
+        case ServerConstants.HttpConstants.conflict where isStaleAttestation(body):
+            // A valid lower counter arrived after a newer assertion. Retry with
+            // a fresh assertion; the enrolled key itself remains healthy.
             return .retryAfter(defaultTransientRetryDelay)
         case ServerConstants.HttpConstants.badRequest, ServerConstants.HttpConstants.unprocessableEntity:
             return .permanentFailure("HTTP \(response.statusCode)\(serverMessageSuffix(from: body))")
@@ -122,13 +157,21 @@ final class TranscriptUploadSender: Sendable {
 
     /// Detects the `401 {"errorMessageId":"invalid_attestation"}` envelope (docs/AppAttest.md §1.5).
     private static func isInvalidAttestation(_ body: Data?) -> Bool {
+        errorMessageId(from: body) == AppAttestService.invalidAttestationErrorId
+    }
+
+    private static func isStaleAttestation(_ body: Data?) -> Bool {
+        errorMessageId(from: body) == AppAttestService.staleAttestationErrorId
+    }
+
+    private static func errorMessageId(from body: Data?) -> String? {
         guard let body,
               let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
               let errorMessageId = json["errorMessageId"] as? String
         else {
-            return false
+            return nil
         }
-        return errorMessageId == "invalid_attestation"
+        return errorMessageId
     }
 
     private static func serverMessageSuffix(from body: Data?) -> String {

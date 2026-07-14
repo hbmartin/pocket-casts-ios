@@ -30,14 +30,20 @@ public actor AppAttestService {
         public static let assertion = "X-Attest-Assertion"
     }
 
-    /// The `errorMessageId` of the 401 the backend returns when assertion
-    /// verification fails (docs/AppAttest.md §1.5).
+    /// The `errorMessageId` of the 401 the backend returns when the key or
+    /// signature is invalid (docs/AppAttest.md §1.5). Counter regressions use a
+    /// distinct 409 envelope so callers do not discard a healthy key.
     public static let invalidAttestationErrorId = "invalid_attestation"
+    public static let staleAttestationErrorId = "stale_attestation"
 
     /// Keychain account for the enrolled keyId. Written only after the backend
     /// confirms enrollment, so presence == enrolled. `ThisDeviceOnly` so the key
     /// never migrates via backup; a restored device simply re-enrolls (§1.1).
     static let keyIdKeychainKey = "PCAppAttestKeyId"
+    /// A generated key whose enrollment has not yet received a backend 200.
+    /// Persisting this separately lets transient Apple/backend failures retry the
+    /// same Secure Enclave key instead of generating dormant replacements.
+    static let pendingKeyIdKeychainKey = "PCAppAttestPendingKeyId"
 
     /// Bootstrap endpoints live on the api host family — the same base as the
     /// feedback endpoint this contract first protects (docs/AppAttest.md §1.2).
@@ -53,6 +59,7 @@ public actor AppAttestService {
 
     /// Set once enrollment is confirmed (or a persisted keyId is read back).
     private var cachedKeyId: String?
+    private var cachedPendingKeyId: String?
 
     /// Single-flight gate: concurrent callers needing enrollment await this
     /// task instead of racing their own.
@@ -115,19 +122,21 @@ public actor AppAttestService {
         if let cachedKeyId { return cachedKeyId }
         if let inFlightEnrollment { return await inFlightEnrollment.value }
 
-        // The keyId is persisted only after the backend confirms enrollment,
-        // so a stored value means this install is already enrolled.
-        if let stored = ((try? keychain.string(for: Self.keyIdKeychainKey)) ?? nil), !stored.isEmpty {
+        // The enrolled key and pending key use separate keychain entries, so a
+        // stored enrolled value is authoritative even if a crash left stale
+        // pending state behind.
+        if let stored = try? keychain.string(for: Self.keyIdKeychainKey), !stored.isEmpty {
             cachedKeyId = stored
+            discardPendingKey()
             return stored
         }
 
         guard !keyWasDiscarded || reEnrollmentsRemaining > 0 else { return nil }
-        if keyWasDiscarded { reEnrollmentsRemaining -= 1 }
+        let isReplacementEnrollment = keyWasDiscarded
 
         // No suspension between the in-flight check above and this assignment,
         // so concurrent callers cannot start a second enrollment.
-        let enrollment = Task { await self.performEnrollment() }
+        let enrollment = Task { await self.performEnrollment(isReplacement: isReplacementEnrollment) }
         inFlightEnrollment = enrollment
         let keyId = await enrollment.value
         inFlightEnrollment = nil
@@ -137,41 +146,86 @@ public actor AppAttestService {
     private func discardKey() {
         cachedKeyId = nil
         keychain.save(value: nil, key: Self.keyIdKeychainKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+        discardPendingKey()
         keyWasDiscarded = true
+    }
+
+    private func pendingKeyId() -> String? {
+        if let cachedPendingKeyId { return cachedPendingKeyId }
+        if let stored = try? keychain.string(for: Self.pendingKeyIdKeychainKey), !stored.isEmpty {
+            cachedPendingKeyId = stored
+            return stored
+        }
+        return nil
+    }
+
+    private func discardPendingKey() {
+        cachedPendingKeyId = nil
+        keychain.save(value: nil, key: Self.pendingKeyIdKeychainKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
     }
 
     // MARK: - Enrollment (docs/AppAttest.md §1.2)
 
-    private func performEnrollment() async -> String? {
+    private func performEnrollment(isReplacement: Bool) async -> String? {
         do {
             guard let challenge = try await fetchChallenge() else { return nil }
 
-            let keyId = try await attester.generateKey()
+            let keyId: String
+            if let pendingKeyId = pendingKeyId() {
+                keyId = pendingKeyId
+            } else {
+                keyId = try await attester.generateKey()
+                cachedPendingKeyId = keyId
+                if !keychain.save(value: keyId,
+                                  key: Self.pendingKeyIdKeychainKey,
+                                  accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly) {
+                    // Keep the in-memory value for this session. A later request
+                    // still reuses it; only a process death can lose it.
+                    FileLog.shared.addMessage("AppAttestService: failed to persist pending App Attest key")
+                }
+            }
             let clientDataHash = Data(SHA256.hash(data: challenge.bytes))
             let attestation = try await attester.attestKey(keyId, clientDataHash: clientDataHash)
             let statusCode = try await postEnrollment(keyId: keyId, attestation: attestation, challengeBase64: challenge.base64)
 
             switch statusCode {
             case ServerConstants.HttpConstants.ok:
-                keychain.save(value: keyId, key: Self.keyIdKeychainKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+                let persisted = keychain.save(value: keyId,
+                                              key: Self.keyIdKeychainKey,
+                                              accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
                 cachedKeyId = keyId
+                if persisted {
+                    discardPendingKey()
+                } else {
+                    // Preserve pending state so the next launch can repeat the
+                    // idempotent enrollment instead of generating a new key.
+                    FileLog.shared.addMessage("AppAttestService: failed to persist enrolled App Attest key")
+                }
+                if isReplacement {
+                    reEnrollmentsRemaining -= 1
+                }
                 FileLog.shared.addMessage("AppAttestService: enrolled App Attest key")
                 return keyId
             case 400 ..< 500:
                 // The server refused this key/attestation: discard it and allow one
                 // enrollment from scratch at the next need this session (§1.2).
+                if isReplacement {
+                    reEnrollmentsRemaining -= 1
+                }
                 FileLog.shared.addMessage("AppAttestService: enrollment rejected with status \(statusCode); discarding key")
                 discardKey()
                 return nil
             default:
-                // Transient (5xx or transport-shaped): keep the key budget intact and
-                // retry at the next need. The just-generated key goes dormant; a fresh
-                // one is generated next attempt.
-                FileLog.shared.addMessage("AppAttestService: enrollment failed with status \(statusCode); will retry at next need")
+                // Transient (5xx or transport-shaped): preserve both the pending
+                // key and the replacement budget, then attest the same key against
+                // a fresh challenge at the next need.
+                FileLog.shared.addMessage("AppAttestService: enrollment failed with status \(statusCode); will retry pending key at next need")
                 return nil
             }
         } catch {
-            FileLog.shared.addMessage("AppAttestService: enrollment error: \(error)")
+            // Apple's serverUnavailable guidance requires retrying the same key.
+            // Other transient transport failures follow the same safe path.
+            FileLog.shared.addMessage("AppAttestService: enrollment error; preserving pending key: \(error)")
             return nil
         }
     }

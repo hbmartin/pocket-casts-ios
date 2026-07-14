@@ -43,9 +43,14 @@ dual-accept rollout).
 4. **Authenticated requests**: `Authorization: Bearer <access token>` MAY
    accompany the assertion headers. Attestation and account auth are independent
    layers; both are verified when present.
-5. **Failure handling**: `401 {"errorMessageId":"invalid_attestation"}` → client
-   re-enrolls once (key may be unknown after a server data loss), then parks the
-   owning queue with exponential backoff. Never user-visible.
+5. **Failure handling**:
+   - `401 {"errorMessageId":"invalid_attestation"}` is reserved for an
+     unknown/revoked key or invalid signature/RP ID → client re-enrolls once (the
+     key may be unknown after server data loss), then parks the owning queue with
+     exponential backoff.
+   - `409 {"errorMessageId":"stale_attestation"}` means a valid assertion's
+     counter arrived after a newer one → client retries with a fresh assertion
+     and **does not discard the healthy key**. Neither path is user-visible.
 
 ### Simulator / dev builds
 
@@ -88,10 +93,18 @@ Apple's documented sequence (implement exactly; libraries exist for most stacks)
 2. Decode CBOR `{signature, authenticatorData}`. Verify
    `signature` over `authenticatorData ‖ SHA256(request body)` with the enrolled
    public key (ES256).
-3. RP ID hash matches; **counter strictly greater** than the stored counter →
-   store the new counter. Non-monotonic counter = cloned key or replay → reject
-   and increment an abuse metric (revoke the key after N violations).
-4. Update `last_used_at`.
+3. RP ID hash matches; then perform the counter check and update **atomically**.
+   One acceptable SQL shape is
+   `UPDATE attest_keys SET counter = :new, last_used_at = :now WHERE key_id = :id AND status = 'active' AND counter < :new`.
+   Accept only when exactly one row changed. This compare-and-update must not be
+   split into a read followed by a write: concurrent counters 1 and 2 arriving
+   in reverse order must leave 2 stored, never roll the record back to 1.
+4. When the conditional update changes no row, distinguish the cause: an
+   unknown/revoked key is `401 invalid_attestation`; an otherwise valid counter
+   at or below the stored value is `409 stale_attestation`. Increment the replay
+   metric for the latter, but do not tell the client to replace its key merely
+   because concurrent network requests arrived out of order. Revoke only under
+   a separately documented abuse threshold.
 
 Replay defense = body binding + counter monotonicity; no separate `jti` cache is
 needed at contribution volumes. If an endpoint later needs idempotent retries of
@@ -121,16 +134,39 @@ credential-grade access controls.
 
 ## 4. Backend task list
 
+### 4.1 Mandatory input limits
+
+Apply these limits to raw wire bytes **before** JSON/protobuf/gzip/base64/CBOR
+decoding or cryptographic verification. Return `413 Payload Too Large` for body
+violations and `431 Request Header Fields Too Large` for assertion-header
+violations; neither response is an attestation rejection.
+
+| Input | Maximum |
+|---|---:|
+| `GET /attest/challenge` response body | 4 KiB |
+| `POST /attest/enroll` JSON body | 64 KiB |
+| decoded enrollment attestation CBOR | 32 KiB |
+| `key_id` value, in JSON or `X-Attest-Key-Id` | 256 ASCII bytes |
+| `X-Attest-Assertion` base64 value | 16 KiB |
+| decoded per-request assertion CBOR | 12 KiB |
+| `POST transcripts/contribute` compressed body | 3 MiB |
+| `POST transcripts/sighting` compressed body | 64 KiB |
+| support-feedback protobuf body | 1 MiB |
+
+Reject invalid base64 without allocating from attacker-controlled decoded-length
+claims. Endpoint-specific decoded-content limits still apply after attestation
+(for example, the VTT/fingerprint caps in `docs/TranscriptContributions.md` §4).
+
 1. Challenge endpoint (`GET /attest/challenge`): CSPRNG 32-byte challenge,
    single-use store (TTL 5 min).
 2. Enrollment endpoint (`POST /attest/enroll`) implementing §2.1; key store
    schema above.
 3. Assertion-verification middleware implementing §2.2, mountable per endpoint
    with the §2.3 mode flag.
-4. Error envelope: `401 {"errorMessageId":"invalid_attestation"}` (flows through
-   the client's existing error mapping); `5xx` for verifier-internal faults
-   (client treats as transient — never `401` for a server-side fault, or the
-   client will discard a healthy key).
+4. Error envelopes: `401 {"errorMessageId":"invalid_attestation"}` only for
+   invalid/revoked key material; `409 {"errorMessageId":"stale_attestation"}`
+   for an otherwise valid non-increasing counter. Use `5xx` for verifier-internal
+   faults (never `401`, or the client will discard a healthy key).
 5. Metrics: enrollments/day, assertion verify failures by cause (unknown key,
    bad signature, counter regression), unattested-request rate per endpoint
    (drives the log-only→required flip), per-key submission rate (abuse).

@@ -1,6 +1,7 @@
 import Foundation
 import PocketCastsUtils
 import SwiftProtobuf
+import Synchronization
 import Testing
 
 @testable import PocketCastsServer
@@ -51,6 +52,7 @@ struct TranscriptUploadTaskTests {
     private static func makeSender(status: Int = 202,
                                    responseHeaders: [String: String]? = nil,
                                    token: String? = nil,
+                                   tokenInvalidator: @escaping TranscriptUploadSender.TokenInvalidator = {},
                                    assertionHeaders: [String: String] = [:],
                                    capturedRequest: UncheckedSendableBox<URLRequest?> = .init(nil),
                                    assertionBody: UncheckedSendableBox<Data?> = .init(nil)) -> TranscriptUploadSender {
@@ -60,6 +62,7 @@ struct TranscriptUploadTaskTests {
         })
         return TranscriptUploadSender(urlConnection: connection,
                                       tokenProvider: { token },
+                                      tokenInvalidator: tokenInvalidator,
                                       assertionHeaders: { body in
                                           assertionBody.value = body
                                           return assertionHeaders
@@ -146,6 +149,42 @@ struct TranscriptUploadTaskTests {
         #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
     }
 
+    @Test("a rejected bearer is invalidated and retried once anonymously with a fresh assertion")
+    func rejectedBearerRetriesAnonymously() async throws {
+        let requests = Mutex<[URLRequest]>([])
+        let statuses = Mutex([401, 202])
+        let invalidated = Mutex(false)
+        let assertionCalls = Mutex(0)
+        let connection = URLConnection(mockHandler: { request in
+            requests.withLock { $0.append(request) }
+            let status = statuses.withLock { values in values.removeFirst() }
+            return (Data(), Self.httpResponse(status: status))
+        })
+        let sender = TranscriptUploadSender(
+            urlConnection: connection,
+            tokenProvider: { "stale-token" },
+            tokenInvalidator: { invalidated.withLock { $0 = true } },
+            assertionHeaders: { _ in
+                let call = assertionCalls.withLock { value -> Int in
+                    value += 1
+                    return value
+                }
+                return [AppAttestService.HeaderNames.assertion: "assertion-\(call)"]
+            }
+        )
+
+        let result = await TranscriptSightingTask(sender: sender).send(Self.sighting())
+
+        #expect(result == .accepted)
+        #expect(invalidated.withLock { $0 })
+        let captured = requests.withLock { $0 }
+        #expect(captured.count == 2)
+        #expect(captured[0].value(forHTTPHeaderField: "Authorization") == "Bearer stale-token")
+        #expect(captured[1].value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(captured[0].value(forHTTPHeaderField: AppAttestService.HeaderNames.assertion) == "assertion-1")
+        #expect(captured[1].value(forHTTPHeaderField: AppAttestService.HeaderNames.assertion) == "assertion-2")
+    }
+
     @Test("assertion headers are merged and sign the exact gzipped body bytes")
     func assertionHeadersMerged() async throws {
         let captured = UncheckedSendableBox<URLRequest?>(nil)
@@ -219,6 +258,13 @@ struct TranscriptUploadTaskTests {
     func invalidAttestation() {
         let body = Data(#"{"errorMessageId":"invalid_attestation"}"#.utf8)
         #expect(TranscriptUploadSender.result(for: Self.httpResponse(status: 401), body: body) == .attestationRejected)
+    }
+
+    @Test("409 stale_attestation retries without rejecting the enrolled key")
+    func staleAttestation() {
+        let body = Data(#"{"errorMessageId":"stale_attestation"}"#.utf8)
+        let result = TranscriptUploadSender.result(for: Self.httpResponse(status: 409), body: body)
+        #expect(result == .retryAfter(TranscriptUploadSender.defaultTransientRetryDelay))
     }
 
     @Test("401 without the attestation envelope is transient (stale bearer)")

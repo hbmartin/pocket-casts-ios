@@ -103,14 +103,31 @@ public struct PendingTranscriptUploadDataManager: Sendable {
     // MARK: - Drain support
 
     /// The oldest row that is due at `now` (`nextAttemptAt` unset or in the
-    /// past), or nil when nothing is ready to send.
-    public func nextDue(at now: Date = Date()) -> PendingTranscriptUploadRecord? {
+    /// past), optionally restricted to one upload kind, or nil when nothing is
+    /// ready to send.
+    public func nextDue(at now: Date = Date(), kind: PendingTranscriptUploadKind? = nil) -> PendingTranscriptUploadRecord? {
         let dueFilter = PendingTranscriptUploadRecord.Columns.nextAttemptAt == nil
             || PendingTranscriptUploadRecord.Columns.nextAttemptAt <= now.timeIntervalSince1970
-        let request = PendingTranscriptUploadRecord
+        var request = PendingTranscriptUploadRecord
             .filter(dueFilter)
             .order(PendingTranscriptUploadRecord.Columns.addedDate.asc)
+        if let kind {
+            request = request.filter(PendingTranscriptUploadRecord.Columns.kind == kind.rawValue)
+        }
         return dbQueue.fetchOne(request)
+    }
+
+    /// The earliest retry deadline after `now`, optionally restricted to one
+    /// upload kind. Used to restore the queue's wake-up timer after relaunch.
+    public func nextScheduledAttempt(after now: Date = Date(), kind: PendingTranscriptUploadKind? = nil) -> Date? {
+        var request = PendingTranscriptUploadRecord
+            .filter(PendingTranscriptUploadRecord.Columns.nextAttemptAt > now.timeIntervalSince1970)
+            .order(PendingTranscriptUploadRecord.Columns.nextAttemptAt.asc)
+        if let kind {
+            request = request.filter(PendingTranscriptUploadRecord.Columns.kind == kind.rawValue)
+        }
+        guard let timestamp = dbQueue.fetchOne(request)?.nextAttemptAt else { return nil }
+        return Date(timeIntervalSince1970: timestamp)
     }
 
     /// Records a failed attempt: the new attempt count and when the row may

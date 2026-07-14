@@ -74,7 +74,7 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         DiarizedTranscript(cues: [
             DiarizedCue(speaker: "Speaker 1", text: "Hello from the mock provider.", start: 0, end: 3),
             DiarizedCue(speaker: "Speaker 2", text: "Glad to be transcribed.", start: 3.5, end: 6),
-        ], language: "en", speakerCount: 2, engineDescription: "mock")
+        ], language: "en", speakerCount: 2, engineDescription: "mock-model-v2")
     }
 
     // MARK: - Tests
@@ -89,6 +89,8 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-sync"))
         XCTAssertEqual(record.transcriptionStatus, .completed)
         XCTAssertEqual(record.provider, "mock")
+        XCTAssertEqual(record.modelId, "mock-model-v2",
+                       "Contribution provenance must retain the provider's exact model identifier")
         XCTAssertEqual(record.engineMode, TranscriptionEngineMode.remoteProvider.rawValue)
         XCTAssertEqual(record.speakerCount, 2)
         XCTAssertNil(record.remoteJobId)

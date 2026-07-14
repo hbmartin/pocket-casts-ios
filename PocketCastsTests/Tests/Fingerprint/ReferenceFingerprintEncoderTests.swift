@@ -175,13 +175,13 @@ final class ReferenceFingerprintEncoderTests: XCTestCase {
         let url = try Self.makeNoiseWAV(seconds: 1)
         defer { try? FileManager.default.removeItem(at: url) }
 
+        let gate = CancellationGate()
         let task = Task<Data, Error> {
-            // Deterministic: only enter the encoder once cancellation is observable,
-            // so its first Task.checkCancellation() must throw.
-            while !Task.isCancelled { await Task.yield() }
+            await gate.wait()
             return try await ReferenceFingerprintEncoder.fingerprint(audioFileURL: url)
         }
         task.cancel()
+        await gate.open()
 
         do {
             _ = try await task.value
@@ -238,5 +238,24 @@ final class ReferenceFingerprintEncoderTests: XCTestCase {
         try file.write(from: buffer)
         file.close()
         return url
+    }
+}
+
+private actor CancellationGate {
+    private var isOpen = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        guard !isOpen else { return }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+
+    func open() {
+        isOpen = true
+        let pending = waiters
+        waiters.removeAll()
+        pending.forEach { $0.resume() }
     }
 }

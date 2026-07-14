@@ -110,6 +110,38 @@ final class PendingTranscriptUploadDataManagerTests: XCTestCase {
         XCTAssertNil(dataManager.pendingTranscriptUploads.nextDue(at: now))
     }
 
+    func testNextDueCanSelectOnlySightings() {
+        let now = Date()
+        dataManager.pendingTranscriptUploads.insert(makeRecord(episodeUuid: "ep-contribution",
+                                                               kind: .contribution,
+                                                               addedDate: 50))
+        dataManager.pendingTranscriptUploads.insert(makeRecord(episodeUuid: "ep-sighting",
+                                                               kind: .sighting,
+                                                               addedDate: 100))
+
+        let due = dataManager.pendingTranscriptUploads.nextDue(at: now, kind: .sighting)
+
+        XCTAssertEqual(due?.episodeUuid, "ep-sighting")
+        XCTAssertEqual(due?.uploadKind, .sighting)
+    }
+
+    func testNextScheduledAttemptReturnsEarliestFutureDeadlineForKind() throws {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        dataManager.pendingTranscriptUploads.insert(makeRecord(episodeUuid: "ep-contribution",
+                                                               kind: .contribution,
+                                                               nextAttemptAt: now.timeIntervalSince1970 + 30))
+        dataManager.pendingTranscriptUploads.insert(makeRecord(episodeUuid: "ep-later-sighting",
+                                                               kind: .sighting,
+                                                               nextAttemptAt: now.timeIntervalSince1970 + 120))
+        dataManager.pendingTranscriptUploads.insert(makeRecord(episodeUuid: "ep-earlier-sighting",
+                                                               kind: .sighting,
+                                                               nextAttemptAt: now.timeIntervalSince1970 + 60))
+
+        let scheduled = try XCTUnwrap(dataManager.pendingTranscriptUploads.nextScheduledAttempt(after: now, kind: .sighting))
+
+        XCTAssertEqual(scheduled.timeIntervalSince(now), 60, accuracy: 0.001)
+    }
+
     // MARK: - Retry state
 
     func testSetRetryStateUpdatesAttemptsAndNextAttempt() throws {
