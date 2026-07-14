@@ -140,30 +140,15 @@ struct TranscriptSearchResultRow: View {
     }
 
     /// Seeks-and-plays via the canonical deep-link path (loads the episode first
-    /// when it isn't the one now playing).
+    /// when it isn't the one now playing). Seek-time mapping lives in
+    /// `TranscriptHitPlayback`, shared with the Siri intent.
     private func play() {
-        let seconds = seekTime
+        let seconds = TranscriptHitPlayback.seekTime(episodeUuid: display.episodeUuid, startTime: display.startTime, source: display.source)
         Analytics.track(.librarySearchTranscriptResultTapped, properties: [
             "position": position,
             "seconds": Int(seconds)
         ])
         PlaybackManager.shared.play(episodeUuid: display.episodeUuid, podcastUuid: display.podcastUuid, at: seconds)
-    }
-
-    /// Provided-corpus segments indexed from a server-generated transcript carry
-    /// reference-timeline times; when the hit's episode is the actively
-    /// fingerprinted now-playing episode the time is mapped onto the local
-    /// audio. For any other episode no mapping exists at seek time, so the
-    /// indexed time is the best available (an inherent limitation — dynamic-ad
-    /// offsets can shift the landing spot there).
-    private var seekTime: TimeInterval {
-        guard display.source == .provided,
-              PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: display.episodeUuid),
-              case .active = FingerprintTimingManager.shared.state,
-              let mapped = FingerprintTimingManager.shared.playbackTime(forReferenceTime: display.startTime) else {
-            return display.startTime
-        }
-        return mapped
     }
 
     private func openEpisodeDetail() {

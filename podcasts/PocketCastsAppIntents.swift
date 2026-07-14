@@ -198,11 +198,18 @@ struct PocketCastsAppShortcuts: AppShortcutsProvider {
             shortTitle: "Set Sleep Timer",
             systemImageName: "moon.zzz.fill"
         )
+        // Apple caps AppShortcutsProvider at 10 shortcuts. Search Transcripts
+        // took Extend Sleep Timer's slot (extending is a follow-on action almost
+        // always done right after setting the timer, whose shortcut stays); the
+        // ExtendSleepTimerIntent itself remains available in the Shortcuts app.
         AppShortcut(
-            intent: ExtendSleepTimerIntent(),
-            phrases: ["Extend the sleep timer in \(.applicationName)"],
-            shortTitle: "Extend Sleep Timer",
-            systemImageName: "moon.zzz"
+            intent: SearchTranscriptsIntent(),
+            phrases: [
+                "Search transcripts in \(.applicationName)",
+                "Find where they talked about something in \(.applicationName)"
+            ],
+            shortTitle: "Search Transcripts",
+            systemImageName: "text.magnifyingglass"
         )
     }
 }
