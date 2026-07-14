@@ -24,7 +24,8 @@ typealias SwiftProtobufTimestamp = SwiftProtobuf.Google_Protobuf_Timestamp
 ///   `modified_at`.
 /// - Bookmarks merge title/deleted per field on their embedded `*_modified`
 ///   values; the immutable creation fields ride along whole, and the
-///   write-once highlight enrichment (excerpt/end_time) fills in first-writer.
+///   highlight enrichment (excerpt/end_time) merges by stamped LWW on the
+///   op's envelope stamp, so concurrent enrichments converge to one winner.
 /// - Playlists and folders merge whole-record (the app always saves them
 ///   whole, so field-level merging would invent states no device ever had).
 /// - Deletion is not a separate lifecycle: it is just another LWW field

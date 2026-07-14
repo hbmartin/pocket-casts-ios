@@ -102,6 +102,57 @@ struct LocalFeedURLTests {
     }
 }
 
+extension GlobalSeamSerializedTests {
+@Suite("LocalPodcastSource credential persistence", .serialized)
+struct LocalPodcastSourceCredentialPersistenceTests {
+    private func makeSource() -> LocalPodcastSource {
+        LocalPodcastSource(fetcher: LocalFeedFetcher(session: StubFeedURLProtocol.session()))
+    }
+
+    @Test("a failed keychain save fails the subscribe instead of stranding a credential-less row")
+    func failedCredentialSaveFailsSubscribe() async {
+        let previous = KeychainHelper.store
+        defer { KeychainHelper.store = previous }
+        KeychainHelper.store = FailingKeychainStore()
+
+        StubFeedURLProtocol.reset(routes: [
+            "https://example.com/feed.xml": .init(body: feedPageXML(itemGuids: ["ep-1"]))
+        ])
+
+        let info = await makeSource().loadPodcastInfo(feedURL: "https://user:pass@example.com/feed.xml")
+        #expect(info == nil, "persisting the podcast without its credential would 401 on every refresh")
+    }
+
+    @Test("a successful subscribe persists the userinfo credential for later refreshes")
+    func successfulSubscribePersistsCredential() async throws {
+        let previous = KeychainHelper.store
+        defer { KeychainHelper.store = previous }
+        KeychainHelper.store = InMemoryKeychainStore()
+
+        StubFeedURLProtocol.reset(routes: [
+            "https://example.com/feed.xml": .init(body: feedPageXML(itemGuids: ["ep-1"]))
+        ])
+
+        let feedURL = "https://user:pass@example.com/feed.xml"
+        let info = await makeSource().loadPodcastInfo(feedURL: feedURL)
+        #expect(info != nil)
+
+        let podcastUuid = LocalFeedIdentity.uuid(seed: LocalFeedURL.removingCredentials(from: feedURL))
+        let stored = try #require(LocalFeedCredentials.credentials(podcastUuid: podcastUuid))
+        #expect(stored.user == "user")
+        #expect(stored.password == "pass")
+    }
+}
+}
+
+/// A `KeychainStoring` whose writes always fail, for exercising save-failure paths.
+private struct FailingKeychainStore: KeychainStoring {
+    @discardableResult
+    func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool { false }
+    func string(for key: String) throws -> String? { nil }
+}
+
+extension GlobalSeamSerializedTests {
 @Suite("LocalFeedCredentials", .serialized)
 struct LocalFeedCredentialsTests {
     @Test("round-trips through the keychain keyed by podcast uuid")
@@ -120,4 +171,5 @@ struct LocalFeedCredentialsTests {
         LocalFeedCredentials.delete(podcastUuid: "pod-1")
         #expect(LocalFeedCredentials.credentials(podcastUuid: "pod-1") == nil)
     }
+}
 }

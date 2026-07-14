@@ -963,3 +963,45 @@ enum SafePointerMove {
         memmove(data, data + offset, count * MemoryLayout<Float32>.stride)
     }
 }
+
+enum UnsafeDBQueueNilChecks {
+    static func parameterizedRead(dbQueue: GRDBQueue) -> Bool {
+        // ruleid: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        dbQueue.read { db in try TranscriptIndexRecord.fetchOne(db) } != nil
+    }
+
+    static func shorthandRead(dbQueue: GRDBQueue) -> Bool {
+        // ruleid: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        dbQueue.read { try TranscriptIndexRecord.fetchOne($0) } != nil
+    }
+
+    static func parameterizedWrite(dbQueue: GRDBQueue, record: TranscriptIndexRecord) -> Bool {
+        // ruleid: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        dbQueue.write { db in try record.insert(db) } == nil
+    }
+
+    static func multiStatementRead(sourceDbQueue: GRDBQueue) -> Bool {
+        // ruleid: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        sourceDbQueue.read { db in
+            let count = try TranscriptIndexRecord.fetchCount(db)
+            return count
+        } != nil
+    }
+}
+
+enum SafeDBQueueUsage {
+    static func nonDBReceiver(reader: TokenReader) -> Bool {
+        // ok: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        reader.read { $0.next() } != nil
+    }
+
+    static func rawGRDBPool(pool: DatabasePool) throws -> Bool {
+        // ok: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        try pool.read { db in try TranscriptIndexRecord.fetchOne(db) } != nil
+    }
+
+    static func flattenedResult(dbQueue: GRDBQueue) -> Bool {
+        // ok: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        dbQueue.read { db in try TranscriptIndexRecord.fetchCount(db) > 0 } ?? false
+    }
+}

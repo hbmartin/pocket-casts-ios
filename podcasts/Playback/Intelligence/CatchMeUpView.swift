@@ -39,13 +39,14 @@ class CatchMeUpViewModel: ObservableObject {
         )
     }
 
-    func sheetAppeared() {
+    /// Runs the sheet's whole load inside the view's `.task`, so dismissing the
+    /// sheet cancels transcript loading and model generation instead of leaving
+    /// them running detached.
+    func sheetAppeared() async {
         guard !hasStartedLoading else { return }
         hasStartedLoading = true
         Analytics.track(.catchMeUpShown, properties: ["episode_uuid": episodeUuid, "podcast_uuid": podcastUuid])
-        Task { [weak self] in
-            await self?.load()
-        }
+        await load()
     }
 
     private func load() async {
@@ -53,11 +54,38 @@ class CatchMeUpViewModel: ObservableObject {
         if let model = try? await Self.loadTranscript(transcriptManager) {
             cues = SummaryTakeawayGenerator.timedCues(from: model)
         }
+        guard !Task.isCancelled else {
+            hasStartedLoading = false
+            return
+        }
+
+        // `playedUpTo` is on the playback timeline; non-local transcript cues
+        // are on the reference timeline. Convert before the generator compares
+        // them (mirrors `EpisodeSummaryViewModel.seek(to:)`, which maps the
+        // other way). Valid to read `isDisplayingLocalTranscription` here —
+        // `loadTranscript()` has completed.
+        let timingManager = FingerprintTimingManager.shared
+        var isTimingActive = false
+        if case .active = timingManager.state { isTimingActive = true }
+        let effectivePlayedUpTo = Self.effectivePlayedUpTo(
+            playedUpTo,
+            isLocalTranscript: transcriptManager.value.isDisplayingLocalTranscription,
+            isTimingActive: isTimingActive,
+            referenceTime: { timingManager.referenceTime(forPlaybackTime: $0, episodeUuid: episodeUuid) }
+        )
 
         do {
-            let summary = try await generator.catchUp(cues: cues, playedUpTo: playedUpTo)
+            let summary = try await generator.catchUp(cues: cues, playedUpTo: effectivePlayedUpTo)
+            guard !Task.isCancelled else {
+                hasStartedLoading = false
+                return
+            }
             phase = .loaded(summary)
         } catch {
+            guard !Task.isCancelled else {
+                hasStartedLoading = false
+                return
+            }
             phase = .failed
             let reason: String = switch error as? CatchUpError {
             case .noTranscript: "no_transcript"
@@ -71,6 +99,23 @@ class CatchMeUpViewModel: ObservableObject {
                 "reason": reason
             ])
         }
+    }
+
+    /// Which played-up-to value the cue filter should use: the raw playback
+    /// time for locally generated transcripts (cut from the played audio, so
+    /// natively aligned), or the fingerprint-mapped reference time when the
+    /// transcript is podcast-provided/server and the alignment is active for
+    /// this episode. Falls back to the raw value when no mapping is available.
+    nonisolated static func effectivePlayedUpTo(
+        _ playedUpTo: TimeInterval,
+        isLocalTranscript: Bool,
+        isTimingActive: Bool,
+        referenceTime: (TimeInterval) -> TimeInterval?
+    ) -> TimeInterval {
+        guard !isLocalTranscript, isTimingActive, let mapped = referenceTime(playedUpTo) else {
+            return playedUpTo
+        }
+        return mapped
     }
 
     nonisolated private static func loadTranscript(
@@ -123,7 +168,9 @@ struct CatchMeUpView: View {
             .padding(20)
         }
         .background(AppTheme.color(for: .primaryUi01, theme: theme).ignoresSafeArea())
-        .onAppear { model.sheetAppeared() }
+        // `.task` (not `.onAppear` + unstored Task) so dismissing the sheet
+        // cancels the in-flight transcript load and recap generation.
+        .task { await model.sheetAppeared() }
     }
 
     private var header: some View {

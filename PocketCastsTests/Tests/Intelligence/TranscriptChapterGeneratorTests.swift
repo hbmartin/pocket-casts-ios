@@ -48,6 +48,55 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(chapters.map(\.startTime), [3600])
     }
 
+    // MARK: - Chapter digest (review finding P2-19)
+
+    func testChapterDigestSamplesTheWholeEpisodeWithinBudget() {
+        // ~2 hours of cues, far beyond the budget: a prefix digest would only
+        // ever describe the head of the episode.
+        let cues = (0 ..< 400).map { TimedCueText(startTime: TimeInterval($0 * 18), text: "cue \($0) words words words") }
+
+        let digest = TranscriptChapterGenerator.chapterDigest(from: cues, characterBudget: 1_200)
+
+        XCTAssertLessThanOrEqual(digest.count, 1_200)
+
+        let times = digest.split(separator: "\n").compactMap { line -> Int? in
+            guard let end = line.firstIndex(of: "]") else { return nil }
+            return Int(line[line.index(after: line.startIndex) ..< end])
+        }
+        XCTAssertFalse(times.isEmpty)
+        XCTAssertEqual(times, times.sorted(), "Sampled lines stay in listening order")
+        let lastCueTime = Int(cues.last!.startTime)
+        XCTAssertGreaterThanOrEqual(times.max() ?? 0, lastCueTime - lastCueTime / 12,
+                                    "The episode tail must be represented, not truncated away")
+        XCTAssertLessThanOrEqual(times.min() ?? .max, lastCueTime / 12,
+                                 "The episode head must still be represented")
+    }
+
+    func testChapterDigestKeepsEverythingWhenItFits() {
+        let cues = (0 ..< 5).map { TimedCueText(startTime: TimeInterval($0 * 60), text: "short cue \($0)") }
+
+        let digest = TranscriptChapterGenerator.chapterDigest(from: cues)
+
+        XCTAssertEqual(digest, SummaryTakeawayGenerator.digest(from: cues),
+                       "Short transcripts need no sampling and match the plain digest")
+        XCTAssertEqual(digest.split(separator: "\n").count, 5)
+    }
+
+    func testChapterDigestPreservesTimestampLineFormatAndCapsCues() {
+        let cues = [
+            TimedCueText(startTime: 5.4, text: String(repeating: "a", count: 5_000)),
+            TimedCueText(startTime: 600, text: "  tail cue  ")
+        ]
+
+        let digest = TranscriptChapterGenerator.chapterDigest(from: cues, cueCharacterCap: 100)
+
+        let lines = digest.split(separator: "\n")
+        XCTAssertEqual(lines.count, 2)
+        XCTAssertTrue(lines[0].hasPrefix("[5] "), "Lines keep the bracketed-seconds shape validated() snaps against")
+        XCTAssertLessThanOrEqual(lines[0].count, 104, "Runaway cues are individually capped")
+        XCTAssertEqual(lines[1], "[600] tail cue")
+    }
+
     func testTimestampStringFormats() {
         XCTAssertEqual(TranscriptChapterGenerator.timestampString(for: 65), "1:05")
         XCTAssertEqual(TranscriptChapterGenerator.timestampString(for: 3725), "1:02:05")
@@ -72,5 +121,25 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(loaded.map(\.startTime), [0, 900])
         XCTAssertEqual(loaded.map(\.timestamp), ["0:00", "15:00"], "Timestamps regenerate from start times")
         XCTAssertNil(store.load(episodeUuid: "ep-other"))
+    }
+
+    func testStoreIgnoresLegacySchemaEntries() throws {
+        // v1 entries can carry reference-timeline, head-only chapter lists
+        // (P2-18/P2-19); the schema bump must orphan them so they regenerate.
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chapter-store-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let legacyPayload = Data(#"[{"title":"Stale","startTime":5}]"#.utf8)
+        try legacyPayload.write(to: directory.appendingPathComponent("ep-1.json"))
+
+        let store = OnDeviceChapterStore(directoryURL: directory)
+        XCTAssertNil(store.load(episodeUuid: "ep-1"), "Unversioned v1 cache entries must not be served")
+
+        store.save([GeneratedChapter(title: "Fresh", timestamp: "0:05", startTime: 5)], episodeUuid: "ep-1")
+        let versionedFile = directory.appendingPathComponent("ep-1.v\(OnDeviceChapterStore.schemaVersion).json")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: versionedFile.path))
+        XCTAssertEqual(store.load(episodeUuid: "ep-1")?.map(\.title), ["Fresh"])
     }
 }

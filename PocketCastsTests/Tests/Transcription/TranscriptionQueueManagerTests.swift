@@ -225,6 +225,59 @@ final class TranscriptionQueueManagerTests: XCTestCase {
         XCTAssertEqual(record.transcriptionStatus, .completed)
     }
 
+    func testPowerChangeDefersInFlightLocalJob() async throws {
+        // The settings UI promises "Low Power Mode always pauses transcription":
+        // a local job that started under good conditions must stop (and requeue)
+        // when the power state degrades mid-flight.
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "never finishes", start: 0, end: 1)],
+                                      blockDuringTranscribe: true)
+        let power = Mutex(TranscriptionPowerState(batteryLevel: 1, isCharging: false, isLowPowerModeEnabled: false))
+        let manager = makeManager(engine: engine,
+                                  powerState: { power.withLock { $0 } },
+                                  batteryPolicy: .always)
+
+        await manager.enqueue(episodeUuid: "episode-lpm", podcastUuid: nil)
+        try await waitUntil("transcription reaches the transcribe stage") { engine.transcribeStarted }
+
+        power.withLock { $0 = TranscriptionPowerState(batteryLevel: 1, isCharging: false, isLowPowerModeEnabled: true) }
+        await manager.powerConditionsChanged()
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-lpm"))
+        XCTAssertEqual(record.transcriptionStatus, .queued,
+                       "A mid-job power deferral requeues the job — never cancels or fails it")
+        let state = await manager.state(for: "episode-lpm")
+        XCTAssertEqual(state, .queued)
+        let stillQueued = await manager.isEpisodeQueued("episode-lpm")
+        XCTAssertTrue(stillQueued)
+    }
+
+    // MARK: - Deletion durability
+
+    func testDeleteAllSweepsOrphanedGeneratedFTSRows() async throws {
+        // A crash between the old delete steps (record first, FTS second) could
+        // leave generated FTS rows with no record; Clear All iterates records,
+        // so it must sweep the index too.
+        let orphan = TranscriptSearchSegment(index: 0, text: "orphaned stranded segment", startTime: 0, endTime: 2, speaker: nil)
+        XCTAssertTrue(dataManager.transcriptSearch.replaceSegments(episodeUuid: "episode-orphan",
+                                                                   podcastUuid: nil,
+                                                                   source: .generated,
+                                                                   segments: [orphan]))
+        XCTAssertFalse(dataManager.transcriptSearch.search(term: "stranded", limit: 10, source: .generated).isEmpty)
+
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "a real recorded transcription", start: 0, end: 2)])
+        let manager = makeManager(engine: engine)
+        await manager.enqueue(episodeUuid: "episode-real", podcastUuid: nil)
+        await manager.drainUntilIdle()
+
+        await manager.deleteAllTranscriptions()
+
+        XCTAssertTrue(dataManager.transcriptions.allRecords().isEmpty)
+        XCTAssertTrue(dataManager.transcriptSearch.search(term: "recorded", limit: 10, source: .generated).isEmpty)
+        XCTAssertTrue(dataManager.transcriptSearch.search(term: "stranded", limit: 10, source: .generated).isEmpty,
+                      "Clear All must sweep FTS rows whose record is already gone")
+    }
+
     // MARK: - Engine fallback (always-on policy)
 
     func testRemoteModeWithPodcastOptOutFallsBackToLocalEngine() async throws {

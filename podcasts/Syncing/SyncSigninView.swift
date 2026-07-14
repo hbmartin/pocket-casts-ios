@@ -264,8 +264,18 @@ final class SyncSigninViewModel: ObservableObject {
         isSigningIn = true
         errorMessage = nil
 
-        // show "signing in..." spinner inline; progress HUD appears *after* success like the original
         Task { @MainActor [weak self] in
+            guard let self else { return }
+
+            // Show the progress HUD *before* validateLogin: the refresh it kicks
+            // off can post SyncCompleted/SyncFailed before the call returns, and
+            // syncCompleted() must find the alert to dismiss it (a late-created
+            // alert would never be torn down).
+            self.progressAlert = SyncLoadingAlert()
+            if let navigationController = self.coordinator.navigationController {
+                self.progressAlert?.showAlert(navigationController, hasProgress: false, completion: nil)
+            }
+
             do {
                 // AuthenticationHelper is the canonical sign-in path: it clears
                 // stale keychain tokens, persists the access/refresh tokens (or
@@ -274,19 +284,11 @@ final class SyncSigninViewModel: ObservableObject {
                 // refresh. The old callback API discarded the returned tokens.
                 _ = try await AuthenticationHelper.validateLogin(username: username, password: password, scope: .mobile)
 
-                guard let self else { return }
                 Analytics.track(.userSignedIn, properties: ["source": "password"])
-
-                // Show SyncLoadingAlert
-                self.progressAlert = SyncLoadingAlert()
-                if let navigationController = self.coordinator.navigationController {
-                    self.progressAlert?.showAlert(navigationController, hasProgress: false, completion: nil)
-                }
 
                 NotificationCenter.postOnMainThread(UserSignedIn())
                 self.isSigningIn = false
             } catch {
-                guard let self else { return }
                 let apiError = error as? APIError
                 Analytics.track(.userSignInFailed, properties: [
                     "source": "password",
@@ -307,7 +309,13 @@ final class SyncSigninViewModel: ObservableObject {
     }
 
     private func syncCompleted() {
-        progressAlert?.hideAlert(true) { [weak self] in
+        // Without an alert to dismiss, still complete — dropping onCompleted
+        // would strand the user on the sign-in screen after a successful sync.
+        guard let progressAlert else {
+            onCompleted?()
+            return
+        }
+        progressAlert.hideAlert(true) { [weak self] in
             self?.progressAlert = nil
             self?.onCompleted?()
         }

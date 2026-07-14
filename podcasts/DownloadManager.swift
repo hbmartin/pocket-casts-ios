@@ -536,6 +536,10 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         if !retryWithoutUserAgent {
             request.addValue(ServerConstants.Values.appUserAgent, forHTTPHeaderField: ServerConstants.HttpHeaders.userAgent)
         }
+        // private local feeds: reattach the stored Basic credential, but only to same-origin media URLs
+        if let authorization = LocalFeedCredentials.mediaAuthorizationHeader(for: episode, mediaURL: url) {
+            request.setValue(authorization, forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
+        }
         request.timeoutInterval = 30.seconds
 
         let tempFilePath = tempPathForEpisode(episode)

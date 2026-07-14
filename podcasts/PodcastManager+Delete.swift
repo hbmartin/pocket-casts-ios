@@ -29,12 +29,14 @@ extension PodcastManager {
             // if they aren't signed in, just blow it all away
             EpisodeManager.deleteAllEpisodesInPodcast(id: podcast.id)
             dataManager.delete(podcast: podcast)
+
+            // only drop private-feed credentials with the row itself; the signed-in branch
+            // keeps the row (subscribed = 0), so a resubscribe must still find them
+            if podcast.feedRefreshSource == .localFeed {
+                LocalFeedCredentials.delete(podcastUuid: podcast.uuid)
+            }
         }
         PodcastExistsHelper.shared.invalidate(uuid: podcast.uuid)
-
-        if podcast.feedRefreshSource == .localFeed {
-            LocalFeedCredentials.delete(podcastUuid: podcast.uuid)
-        }
 
         PlaylistManager.handlePodcastUnsubscribed(podcastUuid: podcast.uuid)
 

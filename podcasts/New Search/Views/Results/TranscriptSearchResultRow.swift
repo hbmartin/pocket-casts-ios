@@ -160,7 +160,10 @@ struct TranscriptSearchResultRow: View {
         guard display.source == .provided,
               PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: display.episodeUuid),
               case .active = FingerprintTimingManager.shared.state,
-              let mapped = FingerprintTimingManager.shared.playbackTime(forReferenceTime: display.startTime) else {
+              // Episode-bound overload: returns nil (falling back to the raw
+              // time) when a track change moved the alignment to another episode
+              // between the now-playing check and the lookup.
+              let mapped = FingerprintTimingManager.shared.playbackTime(forReferenceTime: display.startTime, episodeUuid: display.episodeUuid) else {
             return display.startTime
         }
         return mapped

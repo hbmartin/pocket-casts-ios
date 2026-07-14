@@ -29,6 +29,10 @@ nonisolated struct GeneratedChapterListItem {
 /// Results are cached per episode (JSON next to nothing else — Caches
 /// directory, regenerable) so a chapterless episode is segmented once, not on
 /// every player load. Prompt-injection posture matches the other generators.
+///
+/// Cue times become playback chapter starts verbatim, so callers must only
+/// feed locally generated transcripts (cut from the played audio) — see the
+/// restriction in `ChapterManager.parseLocalAndRemoteChapters`.
 nonisolated struct TranscriptChapterGenerator: Sendable {
     private let intelligence: any IntelligenceProviding
     private let store: OnDeviceChapterStore
@@ -52,7 +56,7 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
         guard cues.count >= 10, case .available = intelligence.availability() else { return [] }
 
         do {
-            let digest = SummaryTakeawayGenerator.digest(from: cues)
+            let digest = Self.chapterDigest(from: cues)
             let generated = try await intelligence.respond(
                 instructions: Self.instructions,
                 prompt: "<transcript>\n\(digest)\n</transcript>",
@@ -125,6 +129,64 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
         return result
     }
 
+    /// Chapter-specific digest: same "[seconds] text" line shape as
+    /// `SummaryTakeawayGenerator.digest`, but sampled evenly across the episode
+    /// instead of hard prefix truncation. Takeaways can live with a head-heavy
+    /// digest; chapters must span the whole episode, or long episodes get
+    /// chapters only in whatever fits the first `characterBudget` characters.
+    ///
+    /// Cues are bucketed into `windowCount` temporal windows across the cue
+    /// span and each window gets an equal share of the budget (unused share
+    /// rolls forward), so every region contributes timestamped lines for
+    /// `validated()` to snap against. Output stays in listening order.
+    static func chapterDigest(
+        from cues: [TimedCueText],
+        characterBudget: Int = 12_000,
+        cueCharacterCap: Int = 300,
+        windowCount: Int = 12
+    ) -> String {
+        var lines: [(time: TimeInterval, line: String)] = []
+        for cue in cues {
+            let text = cue.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { continue }
+            lines.append((cue.startTime, "[\(Int(cue.startTime.rounded()))] \(text.prefix(cueCharacterCap))"))
+        }
+        guard let first = lines.first, let last = lines.last else { return "" }
+
+        // Everything fits — no sampling needed.
+        let totalLength = lines.reduce(0) { $0 + $1.line.count + 1 }
+        if totalLength <= characterBudget {
+            return lines.map(\.line).joined(separator: "\n")
+        }
+
+        let span = last.time - first.time
+        let windows = max(1, windowCount)
+        guard span > 0 else {
+            // Degenerate transcript (all cues at one instant): temporal windows
+            // are meaningless, fall back to the prefix budget.
+            return SummaryTakeawayGenerator.digest(from: cues, characterBudget: characterBudget, cueCharacterCap: cueCharacterCap)
+        }
+
+        var buckets = [[String]](repeating: [], count: windows)
+        for (time, line) in lines {
+            let index = min(Int((time - first.time) / span * Double(windows)), windows - 1)
+            buckets[index].append(line)
+        }
+
+        var selected = [String]()
+        var remaining = 0
+        let share = characterBudget / windows
+        for bucket in buckets {
+            remaining += share
+            for line in bucket {
+                guard line.count <= remaining else { break }
+                remaining -= line.count + 1
+                selected.append(line)
+            }
+        }
+        return selected.joined(separator: "\n")
+    }
+
     /// "m:ss" / "h:mm:ss" display timestamp matching the server-generated
     /// chapter payloads.
     static func timestampString(for time: TimeInterval) -> String {
@@ -145,6 +207,13 @@ nonisolated struct OnDeviceChapterStore: Sendable {
         let title: String
         let startTime: TimeInterval
     }
+
+    /// Cache schema version, part of every entry's file name. v2: chapters may
+    /// only come from locally generated (playback-aligned) transcripts and the
+    /// digest samples the whole episode — v1 entries could carry
+    /// reference-timeline, head-only chapter lists, so bumping the version
+    /// orphans them (Caches is system-purgeable) and forces regeneration.
+    static let schemaVersion = 2
 
     private let directoryURL: URL
 
@@ -173,6 +242,6 @@ nonisolated struct OnDeviceChapterStore: Sendable {
     }
 
     private func fileURL(episodeUuid: String) -> URL {
-        directoryURL.appendingPathComponent("\(episodeUuid).json")
+        directoryURL.appendingPathComponent("\(episodeUuid).v\(Self.schemaVersion).json")
     }
 }

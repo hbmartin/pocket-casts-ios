@@ -31,8 +31,10 @@ struct EpisodeSummaryCardView: View {
         .padding(.horizontal, 16)
         .padding(.top, 2)
         .padding(.bottom, 14)
-        .onAppear {
-            viewModel.cardAppeared()
+        // `.task` (not `.onAppear` + unstored Task) so tearing the card down
+        // cancels the in-flight transcript load and takeaway generation.
+        .task {
+            await viewModel.cardAppeared()
         }
     }
 

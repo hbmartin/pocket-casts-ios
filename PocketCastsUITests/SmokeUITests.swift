@@ -791,8 +791,12 @@ final class PerformanceUITests: PocketCastsUITestCase {
         measure(metrics: [XCTClockMetric()], options: options) {
             episodeRow.tap()
             // The episode card is a sheet; its action strip is the readiness signal.
-            let card = app.buttons["Play"].firstMatch
-            _ = card.waitForExistence(timeout: 30)
+            // Exclude the mini-player's play/pause button (identifier "play pause
+            // button"), which also carries the "Play" label when paused.
+            let card = app.buttons.matching(
+                NSPredicate(format: "label == 'Play' AND identifier != 'play pause button'")
+            ).firstMatch
+            XCTAssertTrue(card.waitForExistence(timeout: 30), "Episode card did not show its action strip")
             app.swipeDown(velocity: .fast)
             XCTAssertTrue(episodeRow.waitForExistence(timeout: 30), "Episode card did not dismiss")
         }

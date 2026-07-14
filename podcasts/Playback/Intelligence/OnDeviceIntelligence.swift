@@ -122,7 +122,9 @@ actor OnDeviceIntelligence: IntelligenceProviding {
     /// still wedge the caller past the deadline. Here the loser is cancelled
     /// and abandoned — a truly non-cooperative generation keeps running in the
     /// background, but the caller gets its timeout on time.
-    nonisolated private static func raceAgainstTimeout<T: Sendable>(
+    /// Internal (not private) so the timeout/cancellation contract is unit-testable
+    /// with stubbed work in place of a real `LanguageModelSession`.
+    nonisolated static func raceAgainstTimeout<T: Sendable>(
         timeout: Duration,
         _ work: @escaping @Sendable () async throws -> T
     ) async throws -> T {

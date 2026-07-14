@@ -22,6 +22,19 @@ final class ShakeFeedbackTests: XCTestCase {
         XCTAssertTrue(report.appVersion.contains("("), "App version includes the build number: \(report.appVersion)")
     }
 
+    func testReportRedactsSecretBearingURLsInLogs() async {
+        let logs = """
+        LocalFeedFetcher: fetched https://user:secret@example.com/feed.xml
+        DownloadManager: Failed download uuid-1 https://cdn.example.com/ep.mp3?token=abc123 statusCode:Optional(403)
+        """
+        let report = await makeBuilder(logs: logs).report(message: "hi")
+
+        XCTAssertFalse(report.logs.contains("secret"), "Userinfo must not reach the feedback API")
+        XCTAssertFalse(report.logs.contains("abc123"), "Signed query values must not reach the feedback API")
+        XCTAssertTrue(report.logs.contains("https://example.com/feed.xml"), "Host and path stay diagnostic")
+        XCTAssertTrue(report.logs.contains("token=REDACTED"), "Query keys stay diagnostic")
+    }
+
     func testReportToleratesMissingSessionID() async {
         let report = await makeBuilder(sessionID: nil).report(message: "hi")
         XCTAssertEqual(report.bitdriftSessionID, "")

@@ -124,6 +124,9 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         dismissSearch()
         resetSearch()
         cancelAutoScrollBack()
+        // Reappearing re-creates this task (willBeAddedToPlayer/update call
+        // loadTranscript()); don't let a stale load outlive the view.
+        loadTask?.cancel()
     }
 
     // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
@@ -132,6 +135,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         // here mirrors what stopHighlightDisplayLink() does without touching isolated state
         autoScrollBackWorkItem?.cancel()
         highlightDisplayLink?.invalidate()
+        loadTask?.cancel()
     }
 
     private func startHighlightDisplayLink() {
@@ -998,7 +1002,11 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
 
         Task { [weak self] in
             let queueManager = TranscriptionQueueManager.shared
-            let isInFlight = await queueManager.isEpisodeQueued(episodeUuid) || queueManager.isEpisodeProcessing(episodeUuid)
+            // Two separate awaits: `||`'s rhs is a synchronous autoclosure, so a
+            // combined expression would call into the actor without awaiting.
+            let isQueued = await queueManager.isEpisodeQueued(episodeUuid)
+            let isProcessing = await queueManager.isEpisodeProcessing(episodeUuid)
+            let isInFlight = isQueued || isProcessing
             guard let self, self.playbackManager.episodeUUID == episodeUuid, self.transcriptView.isHidden else { return }
             if isInFlight {
                 self.showGenerationProgress(fraction: 0)

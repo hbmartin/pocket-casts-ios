@@ -5200,10 +5200,24 @@ rules:
         - "**/*.swift"
     patterns:
       - pattern-either:
+          # Shorthand-argument closures: dbQueue.read { fetchOne($0) } != nil
           - pattern: $Q.read { ... } != nil
           - pattern: $Q.read { ... } == nil
           - pattern: $Q.write { ... } != nil
           - pattern: $Q.write { ... } == nil
+          # Parameterized closures — the dominant GRDB style in this codebase:
+          # dbQueue.read { db in ... } != nil. `{ ... }` alone does NOT match
+          # these, which left the rule inert against the exact bug it targets.
+          - pattern: $Q.read { $DB in ... } != nil
+          - pattern: $Q.read { $DB in ... } == nil
+          - pattern: $Q.write { $DB in ... } != nil
+          - pattern: $Q.write { $DB in ... } == nil
+      # Only DB-ish receivers (dbQueue, sourceDbQueue, dbPool, database, ...).
+      # Raw GRDB pools/queues require `try`, which already keeps them out of the
+      # patterns above; this guards against unrelated read()/write() APIs.
+      - metavariable-regex:
+          metavariable: $Q
+          regex: (?i).*(queue|pool|database|db)$
 
   - id: pocketcasts.no-bare-print
     severity: ERROR
@@ -5250,3 +5264,48 @@ rules:
         - "**/Modules/Sources/PocketCastsServer/Public/LocalFeed/*.swift"
     patterns:
       - pattern-regex: 'FileLog\.shared\.addMessage\([^\n]*\\\((feedURL|urlString|podcastUrl)\)'
+
+  - id: pocketcasts.feedback-report-logs-must-be-redacted
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      FeedbackReport.logs is POSTed to the feedback API, and log lines record
+      full URLs that can carry secrets (private-feed userinfo, signed enclosure
+      query tokens). Wrap the logs value in LogRedaction.redactURLs(in:) at
+      export time so raw log text never leaves the device (review finding
+      P1-2).
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/**/*.swift"
+        - "**/Modules/Sources/**/*.swift"
+        - "**/WidgetExtension/**/*.swift"
+    patterns:
+      - pattern-regex: 'FeedbackReport\([\s\S]{0,600}?\blogs:(?!\s*LogRedaction\.redactURLs\()'
+
+  - id: pocketcasts.check-local-feed-credentials-save-result
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      LocalFeedCredentials.save returns whether the keychain write succeeded.
+      Discarding a failure strands a credential-less podcast row that 401s on
+      every refresh (review finding P2-10). Check the result and fail or log
+      the surrounding operation.
+    languages: [generic]
+    paths:
+      include:
+        - "**/Modules/Sources/**/*.swift"
+        - "**/podcasts/**/*.swift"
+        - "**/WidgetExtension/**/*.swift"
+    patterns:
+      - pattern-regex: '^[ \t]*LocalFeedCredentials\.save\('

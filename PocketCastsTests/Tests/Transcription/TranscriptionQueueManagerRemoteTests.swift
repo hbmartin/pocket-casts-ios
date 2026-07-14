@@ -224,6 +224,51 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         XCTAssertEqual(record.errorMessage, "quotaExceeded")
     }
 
+    func testDeleteDuringNonCooperativeSubmitDoesNotResurrectRecord() async throws {
+        let provider = MockRemoteProvider(submitResult: .success(.completed(Self.makeTranscript())),
+                                          blockSubmitUntilReleased: true)
+        let manager = makeManager(provider: provider)
+
+        await manager.enqueue(episodeUuid: "episode-deleted", podcastUuid: "podcast-1")
+        try await waitUntil("provider receives the submit") { provider.submitCount > 0 }
+
+        // The user deletes mid-submit; the provider ignores the cancellation
+        // and returns a finished transcript anyway.
+        await manager.deleteTranscription(episodeUuid: "episode-deleted")
+        provider.releaseSubmit()
+        await manager.drainUntilIdle()
+
+        XCTAssertNil(dataManager.transcriptions.find(episodeUuid: "episode-deleted"),
+                     "A provider returning after deletion must not resurrect the record")
+        XCTAssertTrue(dataManager.transcriptSearch.search(term: "transcribed", limit: 10, source: .generated).isEmpty,
+                      "No FTS rows may be written for a deleted transcription")
+        let artifactsDir = workDirectory.appendingPathComponent("artifacts", isDirectory: true)
+        let artifacts = (try? FileManager.default.contentsOfDirectory(atPath: artifactsDir.path)) ?? []
+        XCTAssertEqual(artifacts, [], "No artifact may be written for a deleted transcription")
+    }
+
+    func testPowerChangeDoesNotDeferInFlightRemoteJob() async throws {
+        // Only LOCAL jobs pause on power changes (they cost compute); a remote
+        // job in flight must run to completion even under the strictest policy
+        // with Low Power Mode on.
+        let provider = MockRemoteProvider(submitResult: .success(.completed(Self.makeTranscript())),
+                                          blockSubmitUntilReleased: true)
+        let manager = makeManager(provider: provider,
+                                  batteryPolicy: .onlyWhileCharging,
+                                  powerState: TranscriptionPowerState(batteryLevel: 0.1, isCharging: false, isLowPowerModeEnabled: true))
+
+        await manager.enqueue(episodeUuid: "episode-remote-power", podcastUuid: nil)
+        try await waitUntil("provider receives the submit") { provider.submitCount > 0 }
+
+        await manager.powerConditionsChanged()
+        provider.releaseSubmit()
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-remote-power"))
+        XCTAssertEqual(record.transcriptionStatus, .completed,
+                       "A power change must never cancel or requeue an in-flight remote job")
+    }
+
     func testProviderResponseBodyIsKeptOutOfThePersistedRecord() async throws {
         let provider = MockRemoteProvider(
             submitResult: .failure(.remoteResponseFailure(status: 500, providerMessage: "request id abc123, user@example.com"))
@@ -242,6 +287,21 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         // for the failure UI.
         let state = await manager.state(for: "episode-body")
         XCTAssertEqual(state, .failed(.remoteResponseFailure(status: 500, providerMessage: "request id abc123, user@example.com")))
+    }
+
+    // MARK: - Helpers
+
+    private func waitUntil(_ description: String,
+                           timeout: TimeInterval = 10,
+                           condition: @escaping () -> Bool) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            if Date() > deadline {
+                XCTFail("Timed out waiting until \(description)")
+                return
+            }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
     }
 }
 
@@ -274,14 +334,23 @@ nonisolated private final class MockRemoteProvider: RemoteTranscriptionProvider,
     }
 
     private let submitResult: Result<SubmitOutcome, TranscriptionError>
+    private let blockSubmitUntilReleased: Bool
+    private let submitReleased = Mutex(false)
     private let state: Mutex<State>
 
     init(submitResult: Result<SubmitOutcome, TranscriptionError>,
          pollResults: [Result<RemoteJobStatus, TranscriptionError>] = [],
-         supportsPublicURL: Bool = true) {
+         supportsPublicURL: Bool = true,
+         blockSubmitUntilReleased: Bool = false) {
         self.submitResult = submitResult
         self.supportsPublicURL = supportsPublicURL
+        self.blockSubmitUntilReleased = blockSubmitUntilReleased
         state = Mutex(State(pollResults: pollResults))
+    }
+
+    /// Lets a `blockSubmitUntilReleased` submit return its result.
+    func releaseSubmit() {
+        submitReleased.withLock { $0 = true }
     }
 
     /// Ran right after submit returns, before the first poll; its return value
@@ -306,6 +375,13 @@ nonisolated private final class MockRemoteProvider: RemoteTranscriptionProvider,
             description = "fileUpload(\(url.lastPathComponent), \(mimeType))"
         }
         state.withLock { $0.submittedSources.append(description) }
+        if blockSubmitUntilReleased {
+            // Deliberately IGNORES cancellation — models a non-cooperative
+            // provider that returns a finished result after a cancel/delete.
+            while !(submitReleased.withLock { $0 }) {
+                try? await Task.sleep(nanoseconds: 10_000_000)
+            }
+        }
         return try submitResult.get()
     }
 

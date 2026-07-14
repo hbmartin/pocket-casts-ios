@@ -168,18 +168,31 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
         }
     }
 
+    /// Whether the configuration needs the system sound-classifier analyzer running:
+    /// either trim silence is discriminating via VAD, or adaptive effects need
+    /// music-segment classification — the latter regardless of the trim setting
+    /// (Voice-Boost-only playback must still adapt). Pure so it is unit-testable.
+    static func wantsAnalyzer(trimSilence: TrimSilenceAmount, discriminator: TrimDiscriminator, adaptiveEnabled: Bool) -> Bool {
+        (trimSilence != .off && discriminator == .vad) || adaptiveEnabled
+    }
+
     /// Must be called with `lock` held (or from init).
     private func reconfigureDetector() {
         trimParameters = tuning.trimParameters(for: trimSilence)
         detector.configure(parameters: trimParameters, sampleRate: audioFile.fileFormat.sampleRate, framesPerBuffer: Int(bufferLength))
 
         adaptiveEffectsEnabled = Settings.adaptiveEffects()
-        let wantsVAD = trimSilence != .off && (trimParameters.discriminator == .vad || adaptiveEffectsEnabled)
+        let wantsVAD = Self.wantsAnalyzer(trimSilence: trimSilence, discriminator: trimParameters.discriminator, adaptiveEnabled: adaptiveEffectsEnabled)
         if wantsVAD {
             if vadAnalyzer == nil { startBuildingVADAnalyzer() }
         } else if let analyzer = vadAnalyzer {
             analyzer.finish()
             vadAnalyzer = nil
+        }
+        if !adaptiveEffectsEnabled {
+            // Turning the toggle off must not leave effects suspended by a stale flag.
+            musicClassifier.reset()
+            musicSegmentActive = false
         }
     }
 
@@ -224,7 +237,7 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             }
             self.lock.withLock {
                 self.vadAnalyzerBuilding = false
-                let stillWantsVAD = self.trimSilence != .off && (self.trimParameters.discriminator == .vad || self.adaptiveEffectsEnabled)
+                let stillWantsVAD = Self.wantsAnalyzer(trimSilence: self.trimSilence, discriminator: self.trimParameters.discriminator, adaptiveEnabled: self.adaptiveEffectsEnabled)
                 guard let built else { return }
                 if stillWantsVAD, self.vadAnalyzer == nil {
                     self.vadAnalyzer = built
@@ -309,6 +322,11 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
             if currentFramePosition >= cachedFrameCount {
                 return .reachedEndOfFile
             }
+
+            // First frame of the buffer we're about to read: the analyzer indexes
+            // audio by its START position, so stored classification windows line
+            // up with the audio they describe.
+            let bufferStartFramePosition = currentFramePosition
 
             guard let audioPCMBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: bufferLength) else {
                 FileLog.shared.addMessage("[AudioReadTask] failed to allocate read buffer")
@@ -411,6 +429,19 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
                 audioBuffer = BufferedAudio(audioBuffer: audioPCMBuffer, framePosition: currentFramePosition, shouldFadeOut: false, shouldFadeIn: fadeInNextFrame)
             }
 
+            // Feed the sound classifier whenever it exists — adaptive effects must
+            // track music segments even when trim silence is off (Voice-Boost-only
+            // playback). Queries lag the read head by a window + hop: results are
+            // half-open ranges, so no completed analysis window can ever contain
+            // the live head itself; the flag applies with a small constant latency
+            // that the classifier's hysteresis already smooths over.
+            if let analyzer = vadAnalyzer {
+                analyzer.append(audioPCMBuffer, atFramePosition: bufferStartFramePosition)
+                if adaptiveEffectsEnabled {
+                    updateMusicSegment(analyzer: analyzer, framePosition: max(0, currentFramePosition - analyzer.queryLagFrames))
+                }
+            }
+
             var buffers = [BufferedAudio]()
             if trimSilence != .off {
                 let bufferListPointer = UnsafeMutableAudioBufferListPointer(audioPCMBuffer.mutableAudioBufferList)
@@ -426,14 +457,10 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
                     features.zeroCrossingRate = AudioUtils.calculateZeroCrossingRate(bufferListPointer[0])
                     features.spectralFlatness = flatnessBox.spectralFlatness(of: bufferListPointer[0])
                 }
-                if let analyzer = vadAnalyzer, trimParameters.discriminator == .vad || adaptiveEffectsEnabled {
-                    analyzer.append(audioPCMBuffer, atFramePosition: currentFramePosition)
-                    if trimParameters.discriminator == .vad {
-                        features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: currentFramePosition)
-                    }
-                    if adaptiveEffectsEnabled {
-                        updateMusicSegment(analyzer: analyzer, framePosition: currentFramePosition)
-                    }
+                if let analyzer = vadAnalyzer, trimParameters.discriminator == .vad {
+                    // Same lag as the music query: the live head is never covered
+                    // by a completed window, so an un-lagged read is always nil.
+                    features.vadSpeechConfidence = analyzer.speechConfidence(atFramePosition: max(0, currentFramePosition - analyzer.queryLagFrames))
                 }
 
                 let stashedCount = buffersSavedDuringGap.count()

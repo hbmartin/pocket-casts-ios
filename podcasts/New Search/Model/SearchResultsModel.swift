@@ -39,6 +39,11 @@ class SearchResultsModel: ObservableObject {
     private(set) var currentSearchTerm: String = ""
     private(set) var currentPredictiveSearchTerm: String = ""
 
+    /// Invalidates in-flight transcript-index queries: bumped by every new query
+    /// and by `clearSearch()`. The publish guard compares against this rather than
+    /// `currentSearchTerm`, which `clearSearch()` resets to "" mid-search.
+    private var transcriptSearchGeneration = 0
+
     private(set) var playedEpisodesUUIDs = Set<String>()
     private let dataMangager: DataManager
 
@@ -56,6 +61,7 @@ class SearchResultsModel: ObservableObject {
     }
 
     func clearSearch() {
+        transcriptSearchGeneration += 1
         podcasts = []
         episodes = []
         combinedResults = []
@@ -107,12 +113,13 @@ class SearchResultsModel: ObservableObject {
             return
         }
 
-        currentSearchTerm = term
         clearErrors()
 
         if !isShowingLocalResultsOnly {
             clearSearch()
         }
+        // Assigned after clearSearch(), which resets it to "".
+        currentSearchTerm = term
 
         Task {
             isSearchingForPodcasts = true
@@ -153,12 +160,13 @@ class SearchResultsModel: ObservableObject {
 
     @MainActor
     func combinedSearch(term: String) {
-        currentSearchTerm = term
         clearErrors()
 
         if !isShowingLocalResultsOnly {
             clearSearch()
         }
+        // Assigned after clearSearch(), which resets it to "".
+        currentSearchTerm = term
 
         Task {
             isSearchingForPodcasts = true
@@ -194,13 +202,16 @@ class SearchResultsModel: ObservableObject {
             return
         }
 
+        transcriptSearchGeneration += 1
+        let generation = transcriptSearchGeneration
+
         Task {
             let hits = await Task.detached(priority: .userInitiated) {
                 TranscriptSearchHitDisplay.displays(for: transcriptSearch.search(term: term))
             }.value
 
-            // A newer search superseded this one while the query ran.
-            guard term == currentSearchTerm else { return }
+            // A newer search (or a clear) superseded this one while the query ran.
+            guard generation == transcriptSearchGeneration else { return }
             transcriptHits = hits
         }
     }
