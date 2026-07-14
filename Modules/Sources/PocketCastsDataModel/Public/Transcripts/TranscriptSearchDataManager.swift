@@ -269,6 +269,65 @@ public struct TranscriptSearchDataManager: Sendable {
         }
     }
 
+    /// One (episode, canonical speaker) pair a person-scoped search is allowed to
+    /// match. Renames never touch the FTS `speaker` column, so person→segments
+    /// resolution always goes display name → ("episode", "Speaker N") → here.
+    public struct SpeakerScope: Hashable, Sendable {
+        public let episodeUuid: String
+        public let speaker: String
+
+        public init(episodeUuid: String, speaker: String) {
+            self.episodeUuid = episodeUuid
+            self.speaker = speaker
+        }
+    }
+
+    /// Scopes beyond this cap are ignored — the OR-chain has to stay bounded.
+    public static let maxSpeakerScopes = 50
+
+    /// Full-text search restricted to segments spoken by a person, expressed as
+    /// (episode, canonical speaker) pairs. Only the generated corpus carries
+    /// speaker labels, so results are implicitly `.generated`.
+    public func search(term: String, limit: Int = 50, speakerScopes: [SpeakerScope]) -> [TranscriptSearchHit] {
+        guard isAvailable, let match = Self.sanitizeFTSQuery(term) else { return [] }
+        let scopes = Array(speakerScopes.prefix(Self.maxSpeakerScopes))
+        guard !scopes.isEmpty else { return [] }
+
+        let scopeClause = scopes.map { _ in "(episodeUuid = ? AND speaker = ?)" }.joined(separator: " OR ")
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 MATCH/snippet()/bm25() have no GRDB query-interface equivalent
+        let sql = """
+        SELECT episodeUuid, podcastUuid, segmentIndex, startTime, endTime, speaker, source,
+               snippet(\(Self.ftsTableName), 0, '\(TranscriptSearchHit.highlightStart)', '\(TranscriptSearchHit.highlightEnd)', '…', 12) AS snippet
+        FROM \(Self.ftsTableName)
+        WHERE \(Self.ftsTableName) MATCH ? AND source = ? AND (\(scopeClause))
+        ORDER BY bm25(\(Self.ftsTableName))
+        LIMIT ?
+        """
+        var arguments: [(any DatabaseValueConvertible)?] = [match, TranscriptSource.generated.rawValue]
+        for scope in scopes {
+            arguments.append(scope.episodeUuid)
+            arguments.append(scope.speaker)
+        }
+        arguments.append(limit)
+
+        let rows = dbQueue.read { db in
+            try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments))
+        } ?? []
+
+        return rows.map { row in
+            TranscriptSearchHit(
+                episodeUuid: row["episodeUuid"] ?? "",
+                podcastUuid: row["podcastUuid"],
+                segmentIndex: row["segmentIndex"] ?? 0,
+                startTime: row["startTime"] ?? 0,
+                endTime: row["endTime"],
+                speaker: row["speaker"],
+                source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided,
+                snippet: row["snippet"] ?? ""
+            )
+        }
+    }
+
     /// Turns arbitrary user input into a safe FTS5 MATCH expression: every
     /// whitespace-separated token is double-quoted (neutralizing operators like
     /// AND/OR/NEAR, parentheses and column filters), and the last token gets a `*`

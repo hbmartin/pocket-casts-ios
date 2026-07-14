@@ -6909,6 +6909,12 @@
 /* Appearance count for a person; '%1$@' is the number of episodes */
 "people_directory_episode_count_plural" = "%1$@ episodes";
 
+/* Placeholder for the search field scoped to one person's transcript segments */
+"people_detail_search_placeholder" = "Search what they said";
+
+/* Header above the list of episodes a person appears in */
+"people_detail_episodes_header" = "Episodes";
+
 /* Message shown in search results when no transcript matches the search term. Explains how transcripts become searchable. */
 "search_transcripts_empty_message" = "Episodes become searchable here when they download or when you view their transcript.";
 

@@ -819,6 +819,8 @@ enum AnalyticsEvent: String {
     // MARK: - People Directory
 
     case peopleDirectoryShown
+    case peopleDirectoryPersonEpisodeTapped
+    case peopleDirectorySegmentSearchPerformed
 
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown

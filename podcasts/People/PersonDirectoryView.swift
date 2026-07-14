@@ -23,8 +23,13 @@ struct PersonDirectoryView: View {
             } else {
                 List {
                     ForEach(model.entries) { entry in
-                        row(for: entry)
-                            .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
+                        NavigationLink {
+                            PersonDetailView(entry: entry)
+                                .environmentObject(theme)
+                        } label: {
+                            row(for: entry)
+                        }
+                        .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
                     }
                 }
                 .listStyle(.plain)
