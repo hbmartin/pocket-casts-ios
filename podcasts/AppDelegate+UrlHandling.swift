@@ -331,8 +331,15 @@ extension AppDelegate {
         JLRoutes.global().addRoute("social/share/:showOrPrivate/:sharingId") { [weak self] parameters -> Bool in
             guard let strongSelf = self, let folder = parameters["showOrPrivate"] as? String, let sharingId = parameters["sharingId"] as? String, let controller = SceneHelper.rootViewController() else { return false }
             var sharePath = "social/share/\(folder)/\(sharingId)"
+            var querySeparator = "/?"
             if let timestamp = parameters["t"] as? String {
-                sharePath = sharePath + "/?t=\(timestamp)"
+                sharePath = sharePath + "\(querySeparator)t=\(timestamp)"
+                querySeparator = "&"
+            }
+            // JLRoutes hands query values decoded; re-encode so the reconstructed
+            // path survives the URLComponents round-trip in openSharePath.
+            if let quote = parameters["q"] as? String {
+                sharePath = sharePath + "\(querySeparator)q=\(ShareQuoteBuilder.percentEncodedURLQuote(quote))"
             }
             FileLog.shared.addMessage("Opening share link, path: \(folder)/\(sharingId)")
             strongSelf.openSharePath(sharePath, controller: controller, onErrorOpen: nil)
@@ -441,15 +448,13 @@ extension AppDelegate {
         progressDialog = ShiftyLoadingAlert(title: L10n.sharedItemLoading)
         progressDialog?.showAlert(controller, hasProgress: false) {
             // Parse the URL into path and query components so that any query parameters
-            // (e.g. ?t=123) do not interfere with UUID extraction.
+            // (e.g. ?t=123&q=quote) do not interfere with UUID extraction.
             let urlComponents = URLComponents(string: path)
             let cleanPath = urlComponents?.path.isEmpty == false ? urlComponents!.path : path
-            let timestamp: Double? = {
-                guard let queryItems = urlComponents?.queryItems else { return nil }
-                guard let tItem = queryItems.first(where: { $0.name == "t" }) else { return nil }
-                guard let value = tItem.value, let doubleValue = Double(value) else { return nil }
-                return doubleValue
-            }()
+            let (timestamp, quote) = ShareLinkQueryParser.timestampAndQuote(from: path)
+            if quote != nil {
+                Analytics.track(.deepLinkQuoteOpened, properties: ["has_timestamp": timestamp != nil])
+            }
 
             // URLs that are already in the format https://pca.st/podcast/da3271a0-69e7-0132-d9fd-5f4c86fd3263 (or /private/) have the podcast UUID in them already so no need to ask the refresh server for it
             // Also handles new format: /podcast/{podcastSlug}/{podcastUuid}/{episodeSlug}/{episodeUuid}
@@ -463,7 +468,7 @@ extension AppDelegate {
                     if components.count == 4 {
                         let podcastUuid = components[1]
                         let episodeUuid = components[3]
-                        self.loadAndShowEpisode(episodeUuid: episodeUuid, podcastUuid: podcastUuid, timestamp: timestamp)
+                        self.loadAndShowEpisode(episodeUuid: episodeUuid, podcastUuid: podcastUuid, timestamp: timestamp, quote: quote)
                         return
                     }
                 }
@@ -506,21 +511,21 @@ extension AppDelegate {
                     }
                 } else if let episodeUuid = item.episodeHeader?.uuid, let podcastUuid = item.podcastHeader?.uuid {
                     let timestamp = item.fromTime?.toDouble()
-                    self.loadAndShowEpisode(episodeUuid: episodeUuid, podcastUuid: podcastUuid, timestamp: timestamp)
+                    self.loadAndShowEpisode(episodeUuid: episodeUuid, podcastUuid: podcastUuid, timestamp: timestamp, quote: quote)
                 }
             }
         }
     }
 
-    private func loadAndShowEpisode(episodeUuid: String, podcastUuid: String, timestamp: TimeInterval? = nil) {
+    private func loadAndShowEpisode(episodeUuid: String, podcastUuid: String, timestamp: TimeInterval? = nil, quote: String? = nil) {
         if let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
             // if we're subscribed to the podcast, we'll likely have this episode, just open it
             if podcast.isSubscribed() {
-                openEpisode(episodeUuid, from: podcast, timestamp: timestamp)
+                openEpisode(episodeUuid, from: podcast, timestamp: timestamp, quote: quote)
             } else { // if we're not subscribed, than it's possible our local copy is out of date, so we'll need to update it first
                 ServerPodcastManager.shared.updatePodcastIfRequired(podcast: podcast) { _ in
                     Task { @MainActor in
-                        self.openEpisode(episodeUuid, from: podcast, timestamp: timestamp)
+                        self.openEpisode(episodeUuid, from: podcast, timestamp: timestamp, quote: quote)
                     }
                 }
             }
@@ -530,7 +535,7 @@ extension AppDelegate {
 
         ServerPodcastManager.shared.addFromUuid(podcastUuid: podcastUuid, subscribe: false, completion: { success in
             if success, let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
-                self.openEpisode(episodeUuid, from: podcast, timestamp: timestamp)
+                self.openEpisode(episodeUuid, from: podcast, timestamp: timestamp, quote: quote)
             } else {
                 DispatchQueue.main.async {
                     self.hideProgressDialog()

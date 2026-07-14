@@ -289,7 +289,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NavigationManager.sharedManager.miniPlayer
     }
 
-    func openEpisode(_ episodeUuid: String, from podcast: Podcast, timestamp: TimeInterval? = nil) {
+    func openEpisode(_ episodeUuid: String, from podcast: Podcast, timestamp: TimeInterval? = nil, quote: String? = nil) {
         DispatchQueue.main.async {
             self.hideProgressDialog()
 
@@ -303,6 +303,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             var data: [String: Any] = [NavigationManager.episodeUuidKey: episode.uuid]
             if let timestamp {
                 data[NavigationManager.episodeTimestamp] = timestamp
+            }
+            if let quote {
+                data[NavigationManager.episodeQuote] = quote
             }
 
             NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey, data: data as NSDictionary)

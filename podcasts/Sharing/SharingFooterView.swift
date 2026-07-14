@@ -11,6 +11,7 @@ struct SharingFooterView: View {
     let style: ShareImageStyle
     let clipUUID: String
     let source: AnalyticsSource
+    var quote: String?
 
     @State var shareTask: Task<Void, Error>?
 
@@ -66,7 +67,7 @@ struct SharingFooterView: View {
     @ViewBuilder var buttons: some View {
         HStack(spacing: 24) {
             ForEach(destinations, id: \.self) { destination in
-                ShareButton(isExporting: $isExporting, shareTask: $shareTask, progress: $progress, option: option, destination: destination, style: style, clipTime: clipTime, clipUUID: clipUUID, source: source)
+                ShareButton(isExporting: $isExporting, shareTask: $shareTask, progress: $progress, option: option, destination: destination, style: style, clipTime: clipTime, clipUUID: clipUUID, source: source, quote: quote)
             }
         }
     }
