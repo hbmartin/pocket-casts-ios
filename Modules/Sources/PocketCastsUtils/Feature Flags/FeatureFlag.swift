@@ -108,6 +108,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Item 2's on-device path).
     case onDeviceChapters
 
+    /// Mirrors downloaded episodes (and, later, transcript text and highlights)
+    /// into iOS Spotlight as searchable items with deep links back into the app;
+    /// see plans/transcript-based-ideas.md item 2.
+    case spotlightIndexing
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -179,6 +184,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .catchMeUp:
             BuildEnvironment.current != .appStore
         case .onDeviceChapters:
+            BuildEnvironment.current != .appStore
+        case .spotlightIndexing:
             BuildEnvironment.current != .appStore
         }
     }

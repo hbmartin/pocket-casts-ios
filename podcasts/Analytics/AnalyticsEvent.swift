@@ -816,6 +816,11 @@ enum AnalyticsEvent: String {
     case highlightEnrichmentFailed
     case highlightQuoteShared
 
+    // MARK: - Spotlight
+
+    case spotlightItemOpened
+    case spotlightReconcileCompleted
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged
