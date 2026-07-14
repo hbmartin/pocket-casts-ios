@@ -50,6 +50,24 @@ public enum ServerConstants {
             production() ? "https://pocketcasts.com/create" : "https://pocketcasts.net/create"
         }
 
+        // Fork-owned transcript contribution endpoints (docs/TranscriptContributions.md §3).
+        public static var transcriptContributeUrl: String {
+            "\(api())transcripts/contribute"
+        }
+
+        public static var transcriptSightingUrl: String {
+            "\(api())transcripts/sighting"
+        }
+
+        // Fork-owned App Attest endpoints (docs/AppAttest.md §1).
+        public static var attestChallengeUrl: String {
+            "\(api())attest/challenge"
+        }
+
+        public static var attestEnrollUrl: String {
+            "\(api())attest/enroll"
+        }
+
         public static let support = "https://support.pocketcasts.com/ios/"
         public static let termsOfUse = "https://support.pocketcasts.com/article/terms-of-use/"
         public static let privacyPolicy = "https://support.pocketcasts.com/article/privacy-policy/"
@@ -73,6 +91,7 @@ public enum ServerConstants {
 
     public enum HttpConstants {
         public static let ok = 200
+        public static let accepted = 202
         public static let notModified = 304
         public static let unauthorized = 401
         public static let forbidden = 403
@@ -81,6 +100,8 @@ public enum ServerConstants {
         public static let serverError = 500
         public static let badRequest = 400
         public static let conflict = 409
+        public static let unprocessableEntity = 422
+        public static let serviceUnavailable = 503
     }
 
     public enum HttpHeaders {

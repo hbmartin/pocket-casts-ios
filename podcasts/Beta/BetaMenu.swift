@@ -2,6 +2,7 @@ import SwiftUI
 import PocketCastsUtils
 
 struct BetaMenu: View {
+    @EnvironmentObject private var theme: Theme
     @State private var searchText = ""
     @State private var resetTrigger = false
     @State private var showingMetricKitPayloads = false
@@ -16,7 +17,12 @@ struct BetaMenu: View {
             Section("Feature Flags") {
                 ForEach(filteredFeatures, id: \.self) { feature in
                     Toggle(isOn: feature.isOn) {
-                        Text(String(describing: feature))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(describing: feature))
+                            Text(feature.betaDescription)
+                                .font(.footnote)
+                                .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+                        }
                     }
                     .onTapGesture { }
                 }
@@ -72,5 +78,6 @@ private extension FeatureFlag {
 struct BetaMenu_Previews: PreviewProvider {
     static var previews: some View {
         BetaMenu()
+            .environmentObject(Theme.sharedTheme)
     }
 }

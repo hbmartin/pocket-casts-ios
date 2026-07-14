@@ -35,7 +35,7 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
             actions: [
                 .init(title: L10n.podcastGridDiscoverPodcasts, action: {
                     Analytics.track(.podcastsListDiscoverButtonTapped)
-                    NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
+                    NavigationManager.sharedManager.navigateTo(NavigationManager.explorePageKey)
                 })
             ],
             style: DefaultEmptyStateStyle.defaultStyle

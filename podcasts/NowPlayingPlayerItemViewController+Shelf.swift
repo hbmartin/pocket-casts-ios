@@ -595,6 +595,47 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     }
     #endif
 
+    // MARK: - Liquid Glass
+
+    /// Renders the shelf bar on a Liquid Glass capsule, following the same
+    /// `UIGlassEffect` idiom as the multi-select footer and the transcript
+    /// search accessory. Called from every `update()` color pass so the
+    /// transparent background is re-asserted after `ThemeableView` repaints
+    /// its legacy contrast wash on theme changes (the shelf's own repaint
+    /// observer registers first, so this runs later on the same notification
+    /// via the container's `themeDidChange()` -> `update()`).
+    func updateShelfGlass() {
+        installShelfGlassIfNeeded()
+
+        // Keep the ThemeableView transparent so the glass samples the
+        // podcast-tinted player background instead of a flat contrast wash.
+        shelfBg.backgroundColor = .clear
+    }
+
+    private func installShelfGlassIfNeeded() {
+        guard !shelfBg.subviews.contains(where: { $0 is UIVisualEffectView }) else { return }
+
+        let glass = UIGlassEffect()
+        glass.isInteractive = true
+        let glassView = UIVisualEffectView(effect: glass)
+        glassView.cornerConfiguration = .capsule()
+        glassView.translatesAutoresizingMaskIntoConstraints = false
+
+        // The glass draws its own capsule; the XIB's rounded-rect mask would
+        // clip the effect's edge highlight, so retire it.
+        shelfBg.layer.cornerRadius = 0
+        shelfBg.layer.masksToBounds = false
+
+        // Behind the controls stack so button hit targets are unchanged.
+        shelfBg.insertSubview(glassView, at: 0)
+        NSLayoutConstraint.activate([
+            glassView.leadingAnchor.constraint(equalTo: shelfBg.leadingAnchor),
+            glassView.trailingAnchor.constraint(equalTo: shelfBg.trailingAnchor),
+            glassView.topAnchor.constraint(equalTo: shelfBg.topAnchor),
+            glassView.bottomAnchor.constraint(equalTo: shelfBg.bottomAnchor)
+        ])
+    }
+
     // MARK: - Private Helpers
 
     private func addToShelf(on view: UIView) {

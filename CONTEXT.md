@@ -12,13 +12,30 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   evictable under the corpus byte cap.
 - **Generated transcript** — a transcript produced by this app's transcription
   pipeline (on-device engine or a user-configured remote provider). Backed by a VTT
-  artifact on disk that the user owns; its index rows are never evicted.
+  artifact on the device; its index rows are never evicted. Generated transcripts
+  of Eligible episodes are contributed to the backend.
 - **Segment** — the unit of the corpus: a sentence-ish run of transcript text with
   a start time (and, when known, end time and speaker), belonging to one episode
   and one source.
 - **Transcription record** — the per-episode pipeline-state row (status, engine,
   provider, artifact path). Pipeline state, not index data: it survives index
   rebuilds and lives in its own table.
+
+## Transcript crowdsourcing
+
+- **Contribution** — an upload of a Generated transcript's content, together with
+  a fingerprint of the exact audio it was cut from, so other listeners of the
+  same episode can use it with correct timing despite dynamic ad insertion.
+  Only Generated transcripts are contributed; the server already has everything
+  else.
+- **Sighting** — a report that an episode has a Provided transcript at a publisher
+  URL (with format and language). No content leaves the device; a Sighting asks
+  the server to fetch the transcript itself from the publisher.
+- **Eligible episode** — an episode whose transcripts may be contributed or
+  sighted: every episode except those of private local feeds. Episodes outside
+  the Pocket Casts catalog are eligible — their deterministic feed-derived
+  identity is shared by all subscribers of the same feed. A transcript URL
+  carrying credentials or access tokens is never sighted.
 
 ## Playback intelligence
 

@@ -137,6 +137,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             TranscriptionQueueManager.ensureRuntimeInfrastructure()
         }
 
+        // Resume pending transcript contribution/sighting uploads. Deliberately
+        // not behind the diarizedTranscription flag: sighting rows come from
+        // plain transcript viewing (docs/TranscriptContributions.md §2 — no
+        // client feature flag; operator control is server-side).
+        TranscriptContributionManager.kickShared()
+
         return true
     }
 

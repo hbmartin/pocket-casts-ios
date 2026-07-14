@@ -191,6 +191,67 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         true
     }
 
+    /// User-facing description shown below each toggle in the Beta Features menu.
+    /// Plain (non-localized) strings: this screen is only visible in non-App Store builds.
+    public var betaDescription: String {
+        switch self {
+        case .analyticsLogging:
+            "Logs analytics events to the console for debugging. No user-facing changes. Low risk."
+        case .appThemePropertiesLogging:
+            "Attaches the current theme's properties to analytics events. No user-facing changes. Low risk."
+        case .newSettingsStorage:
+            "Stores app settings as JSON in User Defaults and podcast settings in SQLite (the modern storage path). Turning this off reverts to legacy storage. High risk."
+        case .settingsSync:
+            "Syncs all app and podcast settings with your account across devices. Turning this off stops settings from syncing. High risk."
+        case .onlyMarkPodcastsUnsyncedForNewUsers:
+            "On sign-in, only marks podcasts as unsynced for accounts that never signed in before, avoiding syncing changes that shouldn't be synced. Low risk."
+        case .runVacuumOnVersionUpdate:
+            "Runs a database vacuum after an app update to optimize data fetches. May slow the first launch after updating. Low risk."
+        case .autoDownloadOnSubscribe:
+            "Automatically queues the two latest episodes for download when you subscribe to a podcast. Low risk."
+        case .useFollowNaming:
+            "Uses Follow/Unfollow wording instead of Subscribe/Unsubscribe throughout the app. Cosmetic only. Low risk."
+        case .podcastFeedUpdate:
+            "Enables refreshing a podcast's episode feed on demand from its page. Low risk."
+        case .generatedTranscripts:
+            "Shows server-generated transcripts for episodes that don't provide their own. Low risk."
+        case .syncedTranscripts:
+            "Enables transcripts synced to playback timing, so the text follows along with the audio. Medium risk (staged rollout)."
+        case .diarizedTranscription:
+            "On-device speech-to-text transcription with speaker labels, including background processing and transcript search. Uses significant CPU and battery while transcribing. Medium risk."
+        case .podcastsSortChanges:
+            "Enables the newer podcast sorting options in the library and folders. Low risk."
+        case .newOnboardingAccountCreation:
+            "Uses the redesigned upgrade and account-creation onboarding screens. Low risk."
+        case .searchImprovements:
+            "Uses the new search endpoint and redesigned search UI, including predictive results. Medium risk."
+        case .optimizeManualPlaylistQueries:
+            "Optimizes manual playlist database queries with improved deduplication. Low risk."
+        case .showExplicitBadges:
+            "Shows explicit-content badges on podcasts in lists and search results. Low risk."
+        case .customPlaylists:
+            "Custom smart playlists built with a visual condition builder or a raw SQL WHERE clause. Stored on this device only, excluded from sync. Experimental. Medium risk."
+        case .refreshTokenForPasswordAuth:
+            "Password accounts sign in via rotating refresh tokens and stop storing your password in the Keychain. Requires server support that may not be live yet; enabling early can break sign-in. High risk."
+        case .sharingListBearerAuth:
+            "Authenticates share-list creation with your account token instead of the legacy static signature. Requires server support that may not be live yet; enabling early can break list sharing. High risk."
+        case .episodeSummaries:
+            "AI summary card on the episode detail screen with tap-to-seek key takeaways, generated on device. Medium risk."
+        case .smartHighlights:
+            "Enriches bookmarks with transcript excerpts and on-device auto-titles, shareable as quote cards. Medium risk."
+        case .transcriptSearch:
+            "Indexes podcast-provided transcripts you've viewed and adds a Transcripts section to search. Medium risk."
+        case .promptedPlaylists:
+            "Creates a smart playlist draft from a natural-language description, interpreted on device with a rule-based fallback. Medium risk."
+        case .episodeCredits:
+            "Shows people credits (hosts and guests) on the episode detail screen, parsed from podcast feed data. Low risk."
+        case .catchMeUp:
+            "On-device recap of the already-played portion of an in-progress episode, available from the player shelf and the episode summary card. Medium risk."
+        case .onDeviceChapters:
+            "Generates chapters on device from the local transcript when an episode has no chapters from any other source. Medium risk."
+        }
+    }
+
     /// Remote feature flag key used by runtime configuration providers.
     public var remoteKey: String? {
         switch self {

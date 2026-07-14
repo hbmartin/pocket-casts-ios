@@ -68,6 +68,6 @@ extension PlaylistDetailViewController {
             return
         }
         track(.filterBrowseShowsCtaEmptyTapped)
-        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
+        NavigationManager.sharedManager.navigateTo(NavigationManager.explorePageKey)
     }
 }

@@ -32,7 +32,7 @@ class WelcomeViewModel: ObservableObject, OnboardingModel {
         case .discover:
             track(.welcomeDiscoverTapped)
             navigationController?.dismiss(animated: true)
-            NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey, data: nil)
+            NavigationManager.sharedManager.navigateTo(NavigationManager.explorePageKey, data: nil)
         }
     }
 

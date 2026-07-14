@@ -268,7 +268,7 @@ class ListeningHistoryViewController: PCViewController {
                     image: UIImage(named: "options-history"),
                     action: .init(title: L10n.goToDiscover) {
                         Analytics.track(.listeningHistoryDiscoverButtonTapped)
-                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastListPageKey)
+                        NavigationManager.sharedManager.navigateTo(NavigationManager.explorePageKey)
                     }
                 )
             }

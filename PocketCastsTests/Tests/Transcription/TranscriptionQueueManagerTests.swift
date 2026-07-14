@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import PocketCastsServer
 import PocketCastsTranscription
 import PocketCastsUtils
 import Synchronization
@@ -46,7 +47,8 @@ final class TranscriptionQueueManagerTests: XCTestCase {
                              powerState: @escaping @Sendable () -> TranscriptionPowerState = { TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false) },
                              batteryPolicy: TranscriptionBatteryPolicy = .always,
                              podcastDisablesRemote: Bool = false,
-                             remoteConsent: Bool = true) -> TranscriptionQueueManager {
+                             remoteConsent: Bool = true,
+                             contributionEnqueue: @escaping @Sendable (String, EpisodeTranscriptionRecord) -> Void = { _, _ in }) -> TranscriptionQueueManager {
         let audioURL = audioURL
         return TranscriptionQueueManager(
             dataManager: dataManager,
@@ -58,7 +60,8 @@ final class TranscriptionQueueManagerTests: XCTestCase {
             powerState: { powerState() },
             batteryPolicy: { batteryPolicy },
             podcastDisablesRemote: { _ in podcastDisablesRemote },
-            remoteConsent: { _ in remoteConsent }
+            remoteConsent: { _ in remoteConsent },
+            contributionEnqueue: contributionEnqueue
         )
     }
 
@@ -305,6 +308,104 @@ final class TranscriptionQueueManagerTests: XCTestCase {
         XCTAssertEqual(record.transcriptionStatus, .completed)
         XCTAssertEqual(record.engineMode, TranscriptionEngineMode.appleBuiltIn.rawValue,
                        "Auto-runs must never spend remote credits before the user consented to the provider")
+    }
+
+    // MARK: - Contribution hook
+
+    /// Podcast + episode rows so the contribution eligibility gate can resolve them.
+    private func insertEligibilityFixture(episodeUuid: String, podcastUuid: String, refreshSource: PodcastRefreshSource = .server) {
+        var podcast = Podcast()
+        podcast.uuid = podcastUuid
+        podcast.addedDate = Date()
+        podcast.feedRefreshSource = refreshSource
+        _ = dataManager.save(podcast: podcast)
+        var episode = Episode()
+        episode.uuid = episodeUuid
+        episode.podcastUuid = podcastUuid
+        episode.addedDate = Date()
+        dataManager.save(episode: episode)
+    }
+
+    /// A queue manager whose contribution hook runs the REAL enqueue path
+    /// against this suite's isolated database (the production default targets
+    /// DataManager.sharedManager).
+    private func makeManagerWithContributionHook(engine: MockSpeechEngine) -> TranscriptionQueueManager {
+        let dataManager: DataManager = dataManager
+        return makeManager(engine: engine, contributionEnqueue: { episodeUuid, record in
+            TranscriptContributionManager.enqueueContribution(episodeUuid: episodeUuid, record: record, dataManager: dataManager)
+        })
+    }
+
+    func testCompleteEnqueuesContributionForEligibleEpisode() async throws {
+        insertEligibilityFixture(episodeUuid: "episode-contrib", podcastUuid: "podcast-contrib")
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "worth contributing", start: 0, end: 9)])
+        let manager = makeManagerWithContributionHook(engine: engine)
+
+        await manager.enqueue(episodeUuid: "episode-contrib", podcastUuid: "podcast-contrib")
+        await manager.drainUntilIdle()
+
+        let rows = dataManager.pendingTranscriptUploads.allRecords()
+        XCTAssertEqual(rows.count, 1)
+        let row = try XCTUnwrap(rows.first)
+        XCTAssertEqual(row.uploadKind, .contribution)
+        XCTAssertEqual(row.episodeUuid, "episode-contrib")
+        XCTAssertEqual(row.podcastUuid, "podcast-contrib")
+        XCTAssertEqual(row.attempts, 0)
+        XCTAssertNil(row.nextAttemptAt, "A fresh contribution is due immediately")
+
+        let info = try JSONDecoder().decode(TranscriptContributionManager.ContributionInfo.self,
+                                            from: Data(row.payloadJson.utf8))
+        XCTAssertEqual(info.engine, "applespeech")
+        XCTAssertFalse(info.diarized)
+        XCTAssertEqual(info.durationSeconds, 9, accuracy: 0.001,
+                       "With no episode duration the transcript span is the sanity anchor")
+    }
+
+    func testCompleteDoesNotEnqueueContributionForPrivateLocalFeedPodcast() async throws {
+        let previousStore = KeychainHelper.store
+        defer { KeychainHelper.store = previousStore }
+        KeychainHelper.store = InMemoryKeychainStore()
+        LocalFeedCredentials.save(user: "user", password: "pass", podcastUuid: "podcast-private")
+        insertEligibilityFixture(episodeUuid: "episode-private", podcastUuid: "podcast-private", refreshSource: .localFeed)
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "private words", start: 0, end: 3)])
+        let manager = makeManagerWithContributionHook(engine: engine)
+
+        await manager.enqueue(episodeUuid: "episode-private", podcastUuid: "podcast-private")
+        await manager.drainUntilIdle()
+
+        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-private"))
+        XCTAssertEqual(record.transcriptionStatus, .completed, "The transcription itself must still complete")
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
+                       "Nothing from a private local feed is ever uploaded")
+    }
+
+    func testDeleteTranscriptionCancelsPendingContributionAndCachedFingerprint() async throws {
+        insertEligibilityFixture(episodeUuid: "episode-del", podcastUuid: "podcast-del")
+        let engine = MockSpeechEngine(segments: [ASRSegment(text: "soon deleted", start: 0, end: 2)])
+        let manager = makeManagerWithContributionHook(engine: engine)
+
+        await manager.enqueue(episodeUuid: "episode-del", podcastUuid: "podcast-del")
+        await manager.drainUntilIdle()
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 1)
+
+        // A cached upload fingerprint and an unrelated sighting row must behave
+        // differently on delete: the fingerprint goes, the sighting survives.
+        let artifactStore = TranscriptionArtifactStore(directoryURL: workDirectory.appendingPathComponent("artifacts", isDirectory: true))
+        try artifactStore.writeFingerprint(Data("gzipped fingerprint".utf8), episodeUuid: "episode-del")
+        var sighting = PendingTranscriptUploadRecord()
+        sighting.episodeUuid = "episode-del"
+        sighting.podcastUuid = "podcast-del"
+        sighting.uploadKind = .sighting
+        sighting.payloadJson = "{}"
+        dataManager.pendingTranscriptUploads.insert(sighting)
+
+        await manager.deleteTranscription(episodeUuid: "episode-del")
+
+        let remaining = dataManager.pendingTranscriptUploads.allRecords()
+        XCTAssertEqual(remaining.map(\.uploadKind), [.sighting],
+                       "Local deletion cancels pending contribution uploads only")
+        XCTAssertNil(artifactStore.readFingerprint(episodeUuid: "episode-del"),
+                     "The cached fingerprint must not outlive its transcription")
     }
 
     // MARK: - Helpers

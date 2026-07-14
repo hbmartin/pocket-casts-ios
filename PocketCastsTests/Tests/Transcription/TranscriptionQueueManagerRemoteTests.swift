@@ -62,6 +62,7 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
             remoteAPIKey: { _ in apiKey },
             episodeDownloadURL: { _ in downloadURL },
             transcodeForUpload: { url in AudioTranscodeHelper.Output(url: url, mimeType: "audio/mp4", isTemporary: false) },
+            contributionEnqueue: { _, _ in },
             pollSchedule: TranscriptionQueueManager.PollSchedule(initialInterval: 0.01,
                                                                  backoffFactor: 1,
                                                                  maxInterval: 0.01,
