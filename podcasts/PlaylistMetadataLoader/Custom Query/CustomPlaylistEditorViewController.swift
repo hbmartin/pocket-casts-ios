@@ -196,7 +196,8 @@ class CustomPlaylistEditorViewController: PCViewController {
             delegate?.filterCreated(newFilter: savedPlaylist)
             Analytics.track(.filterCreated, properties: [
                 "custom": true,
-                "custom_mode": viewModel.editorMode.rawValue
+                "custom_mode": viewModel.editorMode.rawValue,
+                "uses_transcript_field": viewModel.usesTranscriptField
             ])
             delegate?.presentingPlaylistDetail = true
             // Dismiss both the editor and the creation screen underneath it.
@@ -206,7 +207,8 @@ class CustomPlaylistEditorViewController: PCViewController {
                 "group": "custom_query",
                 "source": "filters",
                 "custom": true,
-                "custom_mode": viewModel.editorMode.rawValue
+                "custom_mode": viewModel.editorMode.rawValue,
+                "uses_transcript_field": viewModel.usesTranscriptField
             ])
             onEditPlaylist?()
             presentingViewController?.dismiss(animated: true, completion: nil)

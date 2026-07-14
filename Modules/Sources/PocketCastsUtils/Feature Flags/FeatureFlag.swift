@@ -108,6 +108,13 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Item 2's on-device path).
     case onDeviceChapters
 
+    /// Custom playlist "Transcript mentions" condition: an FTS MATCH predicate
+    /// over the on-device transcript corpus. Positive-only — the index covers
+    /// only episodes with fetched/generated transcripts, so unindexed episodes
+    /// never match (and negation is deliberately not offered);
+    /// see plans/transcript-based-ideas.md item 7.
+    case transcriptPlaylistPredicates
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -179,6 +186,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .catchMeUp:
             BuildEnvironment.current != .appStore
         case .onDeviceChapters:
+            BuildEnvironment.current != .appStore
+        case .transcriptPlaylistPredicates:
             BuildEnvironment.current != .appStore
         }
     }

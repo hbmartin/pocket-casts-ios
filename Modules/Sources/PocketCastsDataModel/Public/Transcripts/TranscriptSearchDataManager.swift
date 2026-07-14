@@ -269,6 +269,17 @@ public struct TranscriptSearchDataManager: Sendable {
         }
     }
 
+    /// The SQL for the custom-playlist "transcript mentions" condition: matches
+    /// episodes with any indexed segment (either source) matching an FTS query.
+    /// Owned here so all FTS SQL stays in this manager; `CustomQueryCompiler`
+    /// splices it into playlist queries. Identifiers only — the caller binds the
+    /// `sanitizeFTSQuery`-sanitized term as the single `?`. Non-correlated on
+    /// purpose: SQLite runs the FTS query once per statement, not per episode row
+    /// (playlist count queries run on every badge refresh).
+    public static func transcriptMentionsSubquery(episodeUuidExpression: String) -> String {
+        "\(episodeUuidExpression) IN (SELECT episodeUuid FROM \(ftsTableName) WHERE \(ftsTableName) MATCH ?)"
+    }
+
     /// Turns arbitrary user input into a safe FTS5 MATCH expression: every
     /// whitespace-separated token is double-quoted (neutralizing operators like
     /// AND/OR/NEAR, parentheses and column filters), and the last token gets a `*`

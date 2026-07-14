@@ -1,6 +1,22 @@
 import Foundation
 import GRDB
 
+/// Feature/device capabilities resolved at compile time. The compiler is pure —
+/// it can't probe the database or feature flags itself — so callers pass in what
+/// the device can actually execute (see `CustomQueryCapabilities.current`).
+public struct CustomQueryCapabilities: Sendable {
+    /// Whether the transcript FTS index exists and the predicate feature is on.
+    /// When false, `transcriptMentions` conditions compile to the always-false
+    /// `(0)` — the single condition goes dark instead of nulling the playlist.
+    public var transcriptIndexAvailable: Bool
+
+    public static let all = CustomQueryCapabilities(transcriptIndexAvailable: true)
+
+    public init(transcriptIndexAvailable: Bool) {
+        self.transcriptIndexAvailable = transcriptIndexAvailable
+    }
+}
+
 public enum CustomQueryCompileError: Error, Equatable {
     case depthLimitExceeded(limit: Int)
     case groupTooLarge(limit: Int)
@@ -25,10 +41,10 @@ public enum CustomQueryCompiler {
     public static let maxChildrenPerGroup = 20
     public static let maxConditions = 50
 
-    public static func compile(root: CustomQueryNode, now: Date = Date()) throws -> (sql: String, arguments: [DatabaseValue]) {
+    public static func compile(root: CustomQueryNode, now: Date = Date(), capabilities: CustomQueryCapabilities = .all) throws -> (sql: String, arguments: [DatabaseValue]) {
         var conditionCount = 0
         var arguments = [DatabaseValue]()
-        let sql = try compile(node: root, groupDepth: 0, conditionCount: &conditionCount, arguments: &arguments, now: now)
+        let sql = try compile(node: root, groupDepth: 0, conditionCount: &conditionCount, arguments: &arguments, now: now, capabilities: capabilities)
         return (sql, arguments)
     }
 
@@ -39,7 +55,8 @@ public enum CustomQueryCompiler {
         groupDepth: Int,
         conditionCount: inout Int,
         arguments: inout [DatabaseValue],
-        now: Date
+        now: Date,
+        capabilities: CustomQueryCapabilities
     ) throws -> String {
         switch node {
         case .group(let group):
@@ -57,7 +74,7 @@ public enum CustomQueryCompiler {
             }
             let joiner = group.op == .all ? " AND " : " OR "
             let children = try group.children.map {
-                try compile(node: $0, groupDepth: depth, conditionCount: &conditionCount, arguments: &arguments, now: now)
+                try compile(node: $0, groupDepth: depth, conditionCount: &conditionCount, arguments: &arguments, now: now, capabilities: capabilities)
             }
             return "(" + children.joined(separator: joiner) + ")"
 
@@ -66,7 +83,7 @@ public enum CustomQueryCompiler {
             guard conditionCount <= maxConditions else {
                 throw CustomQueryCompileError.tooManyConditions(limit: maxConditions)
             }
-            return try compile(condition: condition, arguments: &arguments, now: now)
+            return try compile(condition: condition, arguments: &arguments, now: now, capabilities: capabilities)
         }
     }
 
@@ -75,7 +92,8 @@ public enum CustomQueryCompiler {
     private static func compile(
         condition: CustomQueryCondition,
         arguments: inout [DatabaseValue],
-        now: Date
+        now: Date,
+        capabilities: CustomQueryCapabilities
     ) throws -> String {
         let field = condition.field
         let op = condition.op
@@ -96,6 +114,8 @@ public enum CustomQueryCompiler {
             return try podcastCondition(field: field, op: op, value: condition.value, arguments: &arguments)
         case .enumeration:
             return try enumerationCondition(field: field, op: op, value: condition.value, arguments: &arguments)
+        case .transcript:
+            return try transcriptCondition(field: field, op: op, value: condition.value, arguments: &arguments, capabilities: capabilities)
         }
     }
 
@@ -247,6 +267,30 @@ public enum CustomQueryCompiler {
         }
     }
 
+    private static func transcriptCondition(
+        field: CustomQueryField,
+        op: CustomQueryOperator,
+        value: CustomQueryValue?,
+        arguments: inout [DatabaseValue],
+        capabilities: CustomQueryCapabilities
+    ) throws -> String {
+        guard op == .mentions, case .string(let term)? = value else {
+            throw CustomQueryCompileError.invalidCondition(field: field, op: op)
+        }
+        // Nothing searchable in the operand (punctuation-only): same contract as a
+        // value-shape mismatch. The builder UI blocks saving such conditions.
+        guard let match = TranscriptSearchDataManager.sanitizeFTSQuery(term) else {
+            throw CustomQueryCompileError.invalidCondition(field: field, op: op)
+        }
+        // Compiled fresh on every query, so toggling the feature or an FTS5-less
+        // database darkens just this condition, not the whole playlist.
+        guard capabilities.transcriptIndexAvailable else {
+            return "(0)"
+        }
+        arguments.append(match.databaseValue)
+        return "(\(TranscriptSearchDataManager.transcriptMentionsSubquery(episodeUuidExpression: "episode.uuid")))"
+    }
+
     private static func podcastCondition(
         field: CustomQueryField,
         op: CustomQueryOperator,
@@ -345,6 +389,10 @@ public enum CustomQueryCompiler {
         case .publishedDate: return "episode.publishedDate"
         case .addedDate: return "episode.addedDate"
         case .lastPlayedDate: return "episode.lastPlaybackInteractionDate"
+        case .transcriptMentions:
+            // Unreachable: the .transcript kind compiles to an FTS subquery before
+            // any column lookup. The join key keeps this switch exhaustive.
+            return "episode.uuid"
         }
     }
 

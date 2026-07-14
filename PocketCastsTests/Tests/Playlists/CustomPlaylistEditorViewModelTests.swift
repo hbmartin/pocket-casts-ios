@@ -346,6 +346,51 @@ return }
         XCTAssertFalse(viewModel.hasChanges)
         XCTAssertTrue(viewModel.canSave, "a complete loaded document is savable once edited")
     }
+
+    // MARK: - Transcript predicate
+
+    func testTranscriptConditionCompletenessRequiresSearchableText() {
+        var condition = CustomQueryDraftCondition.makeDefault(for: .transcriptMentions)
+        XCTAssertEqual(condition.op, .mentions)
+        XCTAssertFalse(condition.isComplete, "empty term is incomplete")
+
+        condition.value.text = "!!! ???"
+        XCTAssertFalse(condition.isComplete, "punctuation-only sanitizes to nothing, so the compiler would reject it")
+
+        condition.value.text = "climate change"
+        XCTAssertTrue(condition.isComplete)
+    }
+
+    func testTranscriptFieldHasHonestFootnote() {
+        XCTAssertNotNil(CustomQueryField.transcriptMentions.footnote)
+        XCTAssertNil(CustomQueryField.duration.footnote)
+    }
+
+    func testUsesTranscriptFieldReflectsBuilderDocument() {
+        let viewModel = makeViewModel()
+        viewModel.addCondition(toGroupID: viewModel.document.id)
+        XCTAssertFalse(viewModel.usesTranscriptField)
+
+        guard var condition = firstCondition(of: viewModel) else {
+            XCTFail("Expected a condition")
+            return
+        }
+        condition = condition.changingField(to: .transcriptMentions)
+        condition.value.text = "wwdc"
+        viewModel.updateCondition(condition)
+
+        XCTAssertTrue(viewModel.usesTranscriptField)
+    }
+
+    func testUsesTranscriptFieldSpotsTableNameInSQLMode() {
+        let viewModel = makeViewModel()
+        viewModel.editorMode = .sql
+        viewModel.sqlText = "episode.duration > 1800"
+        XCTAssertFalse(viewModel.usesTranscriptField)
+
+        viewModel.sqlText = "episode.uuid IN (SELECT episodeUuid FROM transcriptsegmentindex WHERE transcriptsegmentindex MATCH '\"x\"')"
+        XCTAssertTrue(viewModel.usesTranscriptField, "SQL mode falls back to a case-insensitive table-name check")
+    }
 }
 
 /// Suspends a validator until the test releases it, so in-flight states can be asserted.
