@@ -96,6 +96,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // a transcription job is enqueued (flags re-checked per download)
         _ = TranscriptAcquisitionCoordinator.shared
 
+        // embed any indexed transcripts that don't have current-model vectors
+        // yet (also the lazy re-embed path after an OS model bump)
+        TranscriptEmbeddingBackfill.shared.kickAfterLaunch()
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in

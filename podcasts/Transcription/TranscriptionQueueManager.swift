@@ -565,6 +565,7 @@ actor TranscriptionQueueManager {
                                                      podcastUuid: record.podcastUuid,
                                                      source: .generated,
                                                      segments: searchSegments)
+        TranscriptEmbeddingPipeline.shared.embedIfNeeded(episodeUuid: episodeUuid, podcastUuid: record.podcastUuid, source: .generated)
 
         record.transcriptionStatus = .completed
         record.errorMessage = nil
