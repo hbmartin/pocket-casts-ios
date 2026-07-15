@@ -1,28 +1,32 @@
 import CoreSpotlight
 import Foundation
+import Synchronization
 import XCTest
 
 @testable import podcasts
 
 /// Recording fake for `SearchableIndexing`. File-scope and explicitly
 /// nonisolated: the coordinator calls it off the main actor.
-nonisolated private final class FakeIndex: SearchableIndexing, @unchecked Sendable {
+nonisolated private final class FakeIndex: SearchableIndexing, Sendable {
     enum Call: Equatable {
         case index([String])
         case delete([String])
         case deleteAll([String])
     }
 
-    private let lock = NSLock()
-    private var recordedCalls: [Call] = []
-    private var available = true
-    private var failNext = false
+    private struct State {
+        var recordedCalls: [Call] = []
+        var available = true
+        var failNext = false
+    }
 
-    var calls: [Call] { lock.withLock { recordedCalls } }
-    func setAvailable(_ value: Bool) { lock.withLock { available = value } }
-    func setFailNext() { lock.withLock { failNext = true } }
+    private let state = Mutex(State())
 
-    func isAvailable() -> Bool { lock.withLock { available } }
+    var calls: [Call] { state.withLock { $0.recordedCalls } }
+    func setAvailable(_ value: Bool) { state.withLock { $0.available = value } }
+    func setFailNext() { state.withLock { $0.failNext = true } }
+
+    func isAvailable() -> Bool { state.withLock { $0.available } }
 
     nonisolated(nonsending) func index(_ items: [CSSearchableItem]) async throws {
         try recordOrThrow(.index(items.map(\.uniqueIdentifier).sorted()))
@@ -37,12 +41,12 @@ nonisolated private final class FakeIndex: SearchableIndexing, @unchecked Sendab
     }
 
     private func recordOrThrow(_ call: Call) throws {
-        let shouldThrow: Bool = lock.withLock {
-            if failNext {
-                failNext = false
+        let shouldThrow: Bool = state.withLock { state in
+            if state.failNext {
+                state.failNext = false
                 return true
             }
-            recordedCalls.append(call)
+            state.recordedCalls.append(call)
             return false
         }
         if shouldThrow { throw NSError(domain: "fake", code: 1) }
@@ -50,13 +54,12 @@ nonisolated private final class FakeIndex: SearchableIndexing, @unchecked Sendab
 }
 
 /// Mutable state shared with the coordinator's @Sendable lookup closures.
-nonisolated private final class SharedBox<Value>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var value: Value
+nonisolated private final class SharedBox<Value: Sendable>: Sendable {
+    private let storage: Mutex<Value>
 
-    init(_ value: Value) { self.value = value }
-    func get() -> Value { lock.withLock { value } }
-    func update(_ transform: (inout Value) -> Void) { lock.withLock { transform(&value) } }
+    init(_ value: Value) { storage = Mutex(value) }
+    func get() -> Value { storage.withLock { $0 } }
+    func update(_ transform: (inout Value) -> Void) { storage.withLock { transform(&$0) } }
 }
 
 /// Coordinator behavior against a recording fake index: incremental

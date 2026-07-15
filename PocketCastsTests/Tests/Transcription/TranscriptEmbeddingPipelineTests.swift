@@ -1,31 +1,35 @@
 import Foundation
 import PocketCastsDataModel
+import Synchronization
 import XCTest
 
 @testable import podcasts
 
-nonisolated private final class FakeEmbeddingProvider: TextEmbeddingProviding, @unchecked Sendable {
-    private let lock = NSLock()
-    private var available = true
-    private var failNext = false
-    private var embedCallTexts: [[String]] = []
+nonisolated private final class FakeEmbeddingProvider: TextEmbeddingProviding, Sendable {
+    private struct State {
+        var available = true
+        var failNext = false
+        var embedCallTexts: [[String]] = []
+    }
 
-    var embedCalls: [[String]] { lock.withLock { embedCallTexts } }
-    func setAvailable(_ value: Bool) { lock.withLock { available = value } }
-    func setFailNext() { lock.withLock { failNext = true } }
+    private let state = Mutex(State())
+
+    var embedCalls: [[String]] { state.withLock { $0.embedCallTexts } }
+    func setAvailable(_ value: Bool) { state.withLock { $0.available = value } }
+    func setFailNext() { state.withLock { $0.failNext = true } }
 
     func modelInfo() async -> TranscriptEmbeddingModelInfo? {
-        guard lock.withLock({ available }) else { return nil }
+        guard state.withLock({ $0.available }) else { return nil }
         return TranscriptEmbeddingModelInfo(identifier: "fake.model", revision: 1, dimension: 2, quantization: EmbeddingVectorCodec.quantization)
     }
 
     func embed(texts: [String], languageHint: String?) async throws -> [[Float]] {
-        let shouldFail: Bool = lock.withLock {
-            if failNext {
-                failNext = false
+        let shouldFail: Bool = state.withLock { state in
+            if state.failNext {
+                state.failNext = false
                 return true
             }
-            embedCallTexts.append(texts)
+            state.embedCallTexts.append(texts)
             return false
         }
         if shouldFail { throw TextEmbeddingError.embeddingFailed }
@@ -34,20 +38,33 @@ nonisolated private final class FakeEmbeddingProvider: TextEmbeddingProviding, @
 }
 
 /// Shared mutable capture for the pipeline's injected sinks.
-nonisolated private final class PipelineCapture: @unchecked Sendable {
-    private let lock = NSLock()
-    private var storedWindows: [TranscriptEmbeddingWindow] = []
-    private var storedModel: TranscriptEmbeddingModelInfo?
-    var alreadyEmbedded = false
-    var segments: [TranscriptSearchSegment] = []
+nonisolated private final class PipelineCapture: Sendable {
+    private struct State {
+        var storedWindows: [TranscriptEmbeddingWindow] = []
+        var storedModel: TranscriptEmbeddingModelInfo?
+        var alreadyEmbedded = false
+        var segments: [TranscriptSearchSegment] = []
+    }
 
-    var windows: [TranscriptEmbeddingWindow] { lock.withLock { storedWindows } }
-    var model: TranscriptEmbeddingModelInfo? { lock.withLock { storedModel } }
+    private let state = Mutex(State())
+
+    var windows: [TranscriptEmbeddingWindow] { state.withLock { $0.storedWindows } }
+    var model: TranscriptEmbeddingModelInfo? { state.withLock { $0.storedModel } }
+
+    var alreadyEmbedded: Bool {
+        get { state.withLock { $0.alreadyEmbedded } }
+        set { state.withLock { $0.alreadyEmbedded = newValue } }
+    }
+
+    var segments: [TranscriptSearchSegment] {
+        get { state.withLock { $0.segments } }
+        set { state.withLock { $0.segments = newValue } }
+    }
 
     func store(model: TranscriptEmbeddingModelInfo, windows: [TranscriptEmbeddingWindow]) {
-        lock.withLock {
-            storedModel = model
-            storedWindows = windows
+        state.withLock {
+            $0.storedModel = model
+            $0.storedWindows = windows
         }
     }
 }
@@ -239,12 +256,11 @@ final class TranscriptEmbeddingBackfillTests: XCTestCase {
     }
 }
 
-nonisolated private final class SharedCounter: @unchecked Sendable {
-    private let lock = NSLock()
-    private var count: Int
+nonisolated private final class SharedCounter: Sendable {
+    private let count: Mutex<Int>
 
-    init(_ count: Int) { self.count = count }
-    var value: Int { lock.withLock { count } }
-    func increment() { lock.withLock { count += 1 } }
-    func decrement() { lock.withLock { count -= 1 } }
+    init(_ count: Int) { self.count = Mutex(count) }
+    var value: Int { count.withLock { $0 } }
+    func increment() { count.withLock { $0 += 1 } }
+    func decrement() { count.withLock { $0 -= 1 } }
 }

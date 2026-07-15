@@ -77,7 +77,7 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     }
 
     private let index: any SearchableIndexing
-    /// UserDefaults is documented thread-safe; it just predates Sendable.
+    // nonisolated(unsafe): UserDefaults is documented thread-safe; it just predates Sendable.
     nonisolated(unsafe) private let defaults: UserDefaults
     private let stateFileURL: URL
     private let debounceSeconds: TimeInterval
@@ -194,7 +194,9 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
 
     /// Applies the coalesced changes. Exposed for tests (which call it directly
     /// after seeding events with a long debounce).
-    func flushPending() async {
+    /// `@concurrent`: callers are usually main-actor Tasks, and the episode /
+    /// transcript fetch closures do synchronous database reads.
+    @concurrent func flushPending() async {
         let (uuids, bookmarkUuids, fullRefresh): (Set<String>, Set<String>, Bool) = pending.withLock { state in
             defer { state = PendingChanges() }
             return (state.uuids, state.bookmarkUuids, state.needsFullRefresh)
@@ -244,7 +246,9 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     /// Launch-time reconciliation, throttled to once per `reconcileInterval`.
     /// With the feature off (or indexing unavailable) it instead clears anything
     /// this app previously wrote — once — so a flag flip cleans up after itself.
-    func reconcileIfDue() async {
+    /// `@concurrent`: launched from a main-actor Task in `AppDelegate`; without
+    /// it the full-library fetch below would inherit the main actor.
+    @concurrent func reconcileIfDue() async {
         guard isEnabled(), index.isAvailable() else {
             await clearEverythingOnce()
             return
@@ -261,7 +265,9 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
 
     /// Recomputes the full expected set (episodes and Highlights) and rewrites
     /// Spotlight to match. Also the "Rebuild Spotlight Index" settings action.
-    func rebuildAll() async {
+    /// `@concurrent`: the settings action awaits this from the main actor, and
+    /// `downloadedEpisodes()`/`transcriptText()` read the database synchronously.
+    @concurrent func rebuildAll() async {
         guard isEnabled(), index.isAvailable() else { return }
 
         let episodeItems = downloadedEpisodes().map { SpotlightItemBuilder.episodeItem($0, transcriptText: transcriptText($0.uuid)) }
