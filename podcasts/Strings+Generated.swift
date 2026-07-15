@@ -2701,6 +2701,10 @@ nonisolated internal enum L10n {
   internal static var playlistCustomFieldPublishedDate: String { return L10n.tr("Localizable", "playlist_custom_field_published_date", fallback: "Published date") }
   /// Queryable field: the episode's season number
   internal static var playlistCustomFieldSeasonNumber: String { return L10n.tr("Localizable", "playlist_custom_field_season_number", fallback: "Season number") }
+  /// Queryable field: full-text search over the episode's transcript
+  internal static var playlistCustomFieldTranscriptMentions: String { return L10n.tr("Localizable", "playlist_custom_field_transcript_mentions", fallback: "Transcript mentions") }
+  /// Footnote under the transcript mentions condition explaining it only sees episodes whose transcripts are indexed on this device
+  internal static var playlistCustomFieldTranscriptMentionsFootnote: String { return L10n.tr("Localizable", "playlist_custom_field_transcript_mentions_footnote", fallback: "Only episodes with a searchable transcript can match.") }
   /// Segmented option for a rule group where every rule must match
   internal static var playlistCustomGroupAll: String { return L10n.tr("Localizable", "playlist_custom_group_all", fallback: "All") }
   /// Segmented option for a rule group where any rule may match
@@ -2751,6 +2755,8 @@ nonisolated internal enum L10n {
   internal static var playlistCustomOpIsSet: String { return L10n.tr("Localizable", "playlist_custom_op_is_set", fallback: "is set") }
   /// Condition operator: numeric field is less than the value
   internal static var playlistCustomOpLessThan: String { return L10n.tr("Localizable", "playlist_custom_op_less_than", fallback: "is less than") }
+  /// Condition operator: the episode's transcript contains the phrase
+  internal static var playlistCustomOpMentions: String { return L10n.tr("Localizable", "playlist_custom_op_mentions", fallback: "mentions") }
   /// Condition operator: text field does not contain the value
   internal static var playlistCustomOpNotContains: String { return L10n.tr("Localizable", "playlist_custom_op_not_contains", fallback: "doesn't contain") }
   /// Condition operator: field does not equal the value
@@ -2785,6 +2791,8 @@ nonisolated internal enum L10n {
   internal static var playlistCustomSchemaTypePodcast: String { return L10n.tr("Localizable", "playlist_custom_schema_type_podcast", fallback: "Podcasts") }
   /// Schema reference type label for text fields
   internal static var playlistCustomSchemaTypeText: String { return L10n.tr("Localizable", "playlist_custom_schema_type_text", fallback: "Text") }
+  /// Schema reference type label for the transcript full-text search field
+  internal static var playlistCustomSchemaTypeTranscript: String { return L10n.tr("Localizable", "playlist_custom_schema_type_transcript", fallback: "Transcript") }
   /// Hint explaining what to type in the SQL editor
   internal static var playlistCustomSqlHint: String { return L10n.tr("Localizable", "playlist_custom_sql_hint", fallback: "Write the conditions of a query over the episode and podcast tables. The playlist updates automatically as your library changes.") }
   /// Button that pre-fills the SQL editor from the playlist's current smart rules

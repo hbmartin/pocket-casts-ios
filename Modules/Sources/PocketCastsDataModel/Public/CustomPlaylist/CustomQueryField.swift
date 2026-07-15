@@ -37,6 +37,12 @@ public enum CustomQueryField: String, Codable, CaseIterable, Sendable {
     case addedDate
     case lastPlayedDate
 
+    // Transcript. Note on forward compatibility: builds that predate a field fail
+    // to decode envelopes containing it (unknown raw value), so
+    // `CustomPlaylistQuery(envelopeJSON:)` returns nil there and the playlist
+    // renders empty — adding a field needs no envelope version bump.
+    case transcriptMentions
+
     /// The value shape a field expects; drives both the UI's value editors and the
     /// compiler's operator validation.
     public enum Kind: Sendable, Equatable {
@@ -46,6 +52,7 @@ public enum CustomQueryField: String, Codable, CaseIterable, Sendable {
         case date
         case podcastList
         case enumeration
+        case transcript
     }
 
     public var kind: Kind {
@@ -62,6 +69,8 @@ public enum CustomQueryField: String, Codable, CaseIterable, Sendable {
             return .boolean
         case .publishedDate, .addedDate, .lastPlayedDate:
             return .date
+        case .transcriptMentions:
+            return .transcript
         }
     }
 
@@ -81,6 +90,11 @@ public enum CustomQueryField: String, Codable, CaseIterable, Sendable {
             return [.isIn, .notIn]
         case .enumeration:
             return [.isIn, .notIn]
+        case .transcript:
+            // Positive-only by design: the transcript index only covers episodes
+            // whose transcripts were fetched or generated, so "does not mention"
+            // would match every unindexed episode.
+            return [.mentions]
         }
     }
 
@@ -131,4 +145,7 @@ public enum CustomQueryOperator: String, Codable, CaseIterable, Sendable {
     case inLastDays
     case before
     case after
+
+    // Transcript
+    case mentions
 }

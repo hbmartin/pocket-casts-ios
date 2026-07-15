@@ -52,7 +52,10 @@ struct CustomQueryConditionRow: View {
 
     private var fieldMenu: some View {
         Menu {
-            ForEach(CustomQueryField.allCases, id: \.self) { catalogField in
+            // Unavailable fields (flag off, FTS5-less device) are hidden from the
+            // picker, but a row whose field is already unavailable keeps rendering:
+            // hiding it would silently drop the condition on the next save.
+            ForEach(CustomQueryField.allCases.filter { $0.isAvailableInBuilder || $0 == field }, id: \.self) { catalogField in
                 Button(catalogField.displayName) {
                     viewModel.updateCondition(condition.changingField(to: catalogField))
                 }
@@ -105,6 +108,16 @@ struct CustomQueryConditionRow: View {
             enumEditor(for: field)
         case .podcastList:
             podcastEditor
+        case .transcript:
+            VStack(alignment: .leading, spacing: 4) {
+                textField(L10n.playlistCustomValuePlaceholder, binding: textBinding)
+                if let footnote = field.footnote {
+                    Text(footnote)
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
     }
 

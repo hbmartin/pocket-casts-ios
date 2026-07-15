@@ -2,12 +2,6 @@
 
 ## Context
 
-`docs/DeferredWork.md` Item 57 describes a deferred concept: subscribe to Podping for
-followed feeds with `refreshSource == .localFeed`, and trigger a targeted refresh on ping,
-with WebSub as a fallback for feeds advertising hubs. It was deferred until Track A's
-on-device refresh work shipped and soaked (`docs/LocalFirstProgramSummary-2026-07.md`,
-`docs/LocalFirst.md`) — that has now happened, so this un-defers it.
-
 Research this session established a hard constraint the original one-line concept didn't
 account for: **neither protocol has a consumer-friendly client story**. Podping has no
 hosted subscriber relay — `podping.cloud` is a *publisher* write path only; consuming it
@@ -29,6 +23,8 @@ This also intersects with the fork's local-first philosophy directly:
 Pocket Casts server (`docs/LocalFirst.md`). Sending those feed URLs + a push token to a
 new relay is a real privacy trade-off, so this must be **opt-in, off by default**, not
 folded into the feature flag alone.
+
+**Important:** Whenever making changes with server implications, be sure to update the server doc and the proto.
 
 ## Architecture summary
 

@@ -6744,6 +6744,9 @@
 /* Schema reference type label for the podcast picker field */
 "playlist_custom_schema_type_podcast" = "Podcasts";
 
+/* Schema reference type label for the transcript full-text search field */
+"playlist_custom_schema_type_transcript" = "Transcript";
+
 /* One matching episode for the current query; '%1$@' is the number 1 formatted */
 "playlist_custom_match_count_singular" = "%1$@ matching episode";
 
@@ -6825,6 +6828,9 @@
 /* Condition operator: date field is after the value */
 "playlist_custom_op_after" = "is after";
 
+/* Condition operator: the episode's transcript contains the phrase */
+"playlist_custom_op_mentions" = "mentions";
+
 /* Queryable field: the episode's title */
 "playlist_custom_field_episode_title" = "Episode title";
 
@@ -6878,6 +6884,12 @@
 
 /* Queryable field: when the episode was last played */
 "playlist_custom_field_last_played_date" = "Last played date";
+
+/* Queryable field: full-text search over the episode's transcript */
+"playlist_custom_field_transcript_mentions" = "Transcript mentions";
+
+/* Footnote under the transcript mentions condition explaining it only sees episodes whose transcripts are indexed on this device */
+"playlist_custom_field_transcript_mentions_footnote" = "Only episodes with a searchable transcript can match.";
 
 /* Episode type choice: a regular full-length episode */
 "playlist_custom_episode_type_full" = "Full episode";
