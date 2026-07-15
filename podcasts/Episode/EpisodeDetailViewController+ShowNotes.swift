@@ -102,7 +102,88 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
                     self?.attachSummaryCardIfNeeded(summary: summary)
                 }
             }
+
+            // Entity mentions come from the on-device transcript index (no
+            // network); like the credits card, it self-hides when empty.
+            if FeatureFlag.episodeMentions.enabled {
+                await loadMentionsCard(episodeUuid: episodeUUID)
+            }
         }
+    }
+
+    /// Reads the episode's indexed transcript (generated corpus preferred — its
+    /// timeline is native to the local audio), extracts entity mentions, and
+    /// attaches the card. Best-effort: no indexed transcript or no validated
+    /// entities means no card.
+    private func loadMentionsCard(episodeUuid: String) async {
+        let search = DataManager.sharedManager.transcriptSearch
+        guard search.isAvailable else { return }
+
+        var segments = search.segments(episodeUuid: episodeUuid, source: .generated)
+        var source = PocketCastsDataModel.TranscriptSource.generated
+        if segments.isEmpty {
+            segments = search.segments(episodeUuid: episodeUuid, source: .provided)
+            source = .provided
+        }
+        guard !segments.isEmpty else { return }
+
+        // Ties the cache to the exact indexed transcript: a re-index changes the
+        // count or tail time and reads as a miss.
+        let fingerprint = "\(source.rawValue)-\(segments.count)-\(Int(segments.last?.startTime ?? 0))"
+
+        let intelligence = OnDeviceIntelligence.shared
+        let usedModel: Bool = {
+            if case .available = intelligence.availability() { return true }
+            return false
+        }()
+        let mentions = await EntityMentionGenerator().mentions(episodeUuid: episodeUuid, fingerprint: fingerprint, segments: segments)
+        guard !mentions.isEmpty else { return }
+
+        await MainActor.run { [weak self] in
+            self?.attachMentionsCardIfNeeded(mentions: mentions, usedModel: usedModel)
+        }
+    }
+
+    /// Hosts the mentions card after the credits card (or whatever card is last
+    /// in the excerpt stack); same idempotent container pattern as
+    /// `attachCreditsCardIfNeeded`.
+    private func attachMentionsCardIfNeeded(mentions: [EntityMention], usedModel: Bool) {
+        guard episodeMentionsContainer == nil,
+              let excerptView = transcriptExcerpt,
+              let stack = excerptView.superview as? UIStackView else {
+            return
+        }
+
+        let viewModel = EpisodeMentionsViewModel(
+            mentions: mentions,
+            episodeUuid: episode.uuid,
+            podcastUuid: episode.parentIdentifier(),
+            usedModel: usedModel
+        )
+
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let hostingController = ThemedHostingController(rootView: EpisodeMentionsCardView(viewModel: viewModel))
+        hostingController.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+        let hostedView = hostingController.view!
+        hostedView.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        container.addSubview(hostedView)
+
+        let anchorView = episodeCreditsContainer ?? episodeSummaryContainer ?? excerptView
+        if let index = stack.arrangedSubviews.firstIndex(of: anchorView) {
+            stack.insertArrangedSubview(container, at: index + 1)
+        } else {
+            stack.addArrangedSubview(container)
+        }
+
+        hostingController.didMove(toParent: self)
+        hostedView.anchorToAllSidesOf(view: container)
+
+        episodeMentionsContainer = container
     }
 
     /// Hosts the AI summary card between the transcript excerpt and the show

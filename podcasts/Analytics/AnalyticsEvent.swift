@@ -824,6 +824,28 @@ enum AnalyticsEvent: String {
     case speakerNameSuggestionsShown
     case speakerNameSuggestionApplied
 
+    // MARK: - Quote Share Links
+
+    case deepLinkQuoteOpened
+    case transcriptQuoteFlashed
+
+    // MARK: - Spotlight & Siri
+
+    case spotlightItemOpened
+    case spotlightReconcileCompleted
+    case searchTranscriptsIntentRan
+
+    // MARK: - Semantic Transcript Search
+
+    case transcriptEmbeddingAssetsUnavailable
+    case transcriptEmbeddingBackfillCompleted
+    case librarySearchTranscriptPlayedFilterToggled
+
+    // MARK: - Entity Mentions
+
+    case episodeDetailMentionsShown
+    case episodeDetailMentionTapped
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged

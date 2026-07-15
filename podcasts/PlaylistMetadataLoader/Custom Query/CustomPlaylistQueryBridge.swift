@@ -81,6 +81,8 @@ nonisolated extension CustomQueryDraftCondition {
             }
         case .enumeration, .podcastList:
             primary = .stringList(value.selectedValues)
+        case .transcript:
+            primary = .string(value.text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
 
         return .condition(CustomQueryCondition(field: field, op: op, value: primary, secondValue: secondary))
@@ -187,6 +189,31 @@ nonisolated extension CustomQueryField {
         case .publishedDate: L10n.playlistCustomFieldPublishedDate
         case .addedDate: L10n.playlistCustomFieldAddedDate
         case .lastPlayedDate: L10n.playlistCustomFieldLastPlayedDate
+        case .transcriptMentions: L10n.playlistCustomFieldTranscriptMentions
+        }
+    }
+
+    /// Honest-labeling footnote rendered under the condition row (nil for most
+    /// fields). The transcript predicate only sees indexed episodes, and users
+    /// must learn that from the builder, not from a mysteriously thin playlist.
+    var footnote: String? {
+        switch self {
+        case .transcriptMentions: L10n.playlistCustomFieldTranscriptMentionsFootnote
+        default: nil
+        }
+    }
+
+    /// Whether the field appears in the builder's add/change pickers. Existing
+    /// rows keep rendering regardless — hiding them would silently drop the
+    /// condition on the next save.
+    var isAvailableInBuilder: Bool {
+        switch self {
+        case .transcriptMentions:
+            FeatureFlag.transcriptPlaylistPredicates.enabled
+                && FeatureFlag.transcriptSearch.enabled
+                && DataManager.sharedManager.transcriptSearch.isAvailable
+        default:
+            true
         }
     }
 
@@ -233,6 +260,7 @@ nonisolated extension CustomQueryField {
         case .publishedDate: "episode.publishedDate"
         case .addedDate: "episode.addedDate"
         case .lastPlayedDate: "episode.lastPlaybackInteractionDate"
+        case .transcriptMentions: "TranscriptSegmentIndex (FTS)"
         }
     }
 
@@ -258,6 +286,7 @@ nonisolated extension CustomQueryField {
         case .publishedDate: "episode.publishedDate > strftime('%s', 'now', '-30 days')"
         case .addedDate: "episode.addedDate > strftime('%s', 'now', '-7 days')"
         case .lastPlayedDate: "episode.lastPlaybackInteractionDate IS NOT NULL"
+        case .transcriptMentions: "episode.uuid IN (SELECT episodeUuid FROM TranscriptSegmentIndex WHERE TranscriptSegmentIndex MATCH '\"climate\"')"
         }
     }
 
@@ -270,6 +299,7 @@ nonisolated extension CustomQueryField {
         case .date: L10n.playlistCustomSchemaTypeDate
         case .enumeration: L10n.playlistCustomSchemaTypeEnum
         case .podcastList: L10n.playlistCustomSchemaTypePodcast
+        case .transcript: L10n.playlistCustomSchemaTypeTranscript
         }
     }
 }
@@ -297,6 +327,7 @@ nonisolated extension CustomQueryOperator {
         case .inLastDays: L10n.playlistCustomOpInLastDays
         case .before: L10n.playlistCustomOpBefore
         case .after: L10n.playlistCustomOpAfter
+        case .mentions: L10n.playlistCustomOpMentions
         }
     }
 }

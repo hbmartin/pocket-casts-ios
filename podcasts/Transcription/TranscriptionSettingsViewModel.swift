@@ -235,7 +235,24 @@ final class TranscriptionSettingsViewModel: ObservableObject {
     func clearAllTranscriptions() {
         Task { [weak self] in
             await TranscriptionQueueManager.shared.deleteAllTranscriptions()
+            // Spotlight items still carry the deleted transcripts' text.
+            await SpotlightIndexCoordinator.shared.rebuildAll()
             self?.refreshStorage()
+        }
+    }
+
+    // MARK: - Spotlight
+
+    @Published private(set) var isRebuildingSpotlight = false
+
+    /// The "Rebuild Spotlight Index" settings action: recomputes every episode
+    /// and highlight item from scratch.
+    func rebuildSpotlightIndex() {
+        guard !isRebuildingSpotlight else { return }
+        isRebuildingSpotlight = true
+        Task { [weak self] in
+            await SpotlightIndexCoordinator.shared.rebuildAll()
+            self?.isRebuildingSpotlight = false
         }
     }
 

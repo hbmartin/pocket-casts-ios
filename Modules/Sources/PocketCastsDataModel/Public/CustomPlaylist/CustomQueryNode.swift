@@ -49,6 +49,19 @@ public indirect enum CustomQueryNode: Codable, Equatable, Sendable {
     }
 }
 
+public extension CustomQueryNode {
+    /// True when any condition in the tree reads `field` (used for analytics on
+    /// playlist save; not a compile-path concern).
+    func contains(field: CustomQueryField) -> Bool {
+        switch self {
+        case .condition(let condition):
+            condition.field == field
+        case .group(let group):
+            group.children.contains { $0.contains(field: field) }
+        }
+    }
+}
+
 /// A boolean combinator over child nodes: `all` = AND, `any` = OR.
 public struct CustomQueryGroup: Codable, Equatable, Sendable {
     public enum Operator: String, Codable, Sendable {

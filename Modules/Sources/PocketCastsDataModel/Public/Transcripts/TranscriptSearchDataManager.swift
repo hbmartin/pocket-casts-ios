@@ -139,6 +139,9 @@ public struct TranscriptSearchDataManager: Sendable {
 
         let textBytes = segments.reduce(into: Int64(0)) { $0 += Int64($1.text.utf8.count) }
         let success = dbQueue.write { db in
+            // Re-indexing shifts segment ordinals, so any stored embedding
+            // windows for the pair are stale; the backfill re-embeds.
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, episodeUuid: episodeUuid, source: source)
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
             try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ? AND source = ?", arguments: [episodeUuid, source.rawValue])
 
@@ -191,11 +194,13 @@ public struct TranscriptSearchDataManager: Sendable {
         return dbQueue.count(TranscriptSearchIndexMetaRecord.self)
     }
 
-    /// Drops the (episode, source) pair's segments and bookkeeping row.
+    /// Drops the (episode, source) pair's segments, bookkeeping row, and
+    /// embedding windows (the sidecar always mirrors the corpus).
     @discardableResult
     public func delete(episodeUuid: String, source: TranscriptSource) -> Bool {
         guard isAvailable else { return false }
         let success = dbQueue.write { db in
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, episodeUuid: episodeUuid, source: source)
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
             try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ? AND source = ?", arguments: [episodeUuid, source.rawValue])
             _ = try TranscriptSearchIndexMetaRecord
@@ -207,11 +212,13 @@ public struct TranscriptSearchDataManager: Sendable {
         return success
     }
 
-    /// Drops every indexed segment and bookkeeping row, optionally for one source only.
+    /// Drops every indexed segment, bookkeeping row, and embedding window,
+    /// optionally for one source only.
     @discardableResult
     public func removeAll(source: TranscriptSource? = nil) -> Bool {
         guard isAvailable else { return false }
         let success = dbQueue.write { db in
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, source: source)
             if let source {
                 // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
                 try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE source = ?", arguments: [source.rawValue])
@@ -226,6 +233,69 @@ public struct TranscriptSearchDataManager: Sendable {
         }
         if !success { FileLog.shared.addMessage("TranscriptSearchDataManager.removeAll failed") }
         return success
+    }
+
+    // MARK: - Read-back
+
+    /// All indexed segments for the (episode, source) pair, in segment order —
+    /// the raw material for Spotlight text content and other consumers that
+    /// need the transcript without re-fetching or re-parsing it. Empty while
+    /// unavailable or when the pair isn't indexed.
+    public func segments(episodeUuid: String, source: TranscriptSource) -> [TranscriptSearchSegment] {
+        guard isAvailable else { return [] }
+
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
+        let sql = """
+        SELECT text, segmentIndex, startTime, endTime, speaker
+        FROM \(Self.ftsTableName)
+        WHERE episodeUuid = ? AND source = ?
+        ORDER BY segmentIndex
+        """
+        let rows = dbQueue.read { db in
+            try Row.fetchAll(db, sql: sql, arguments: [episodeUuid, source.rawValue])
+        } ?? []
+
+        return rows.map { row in
+            TranscriptSearchSegment(
+                index: row["segmentIndex"] ?? 0,
+                text: row["text"] ?? "",
+                startTime: row["startTime"] ?? 0,
+                endTime: row["endTime"],
+                speaker: row["speaker"]
+            )
+        }
+    }
+
+    /// One indexed segment by ordinal, as a hit whose snippet is the plain
+    /// segment text (no highlight markers). Prefers the generated corpus when
+    /// both sources carry the ordinal. Used to re-resolve persisted Siri
+    /// entities across process restarts.
+    public func segment(episodeUuid: String, segmentIndex: Int) -> TranscriptSearchHit? {
+        guard isAvailable else { return nil }
+
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
+        let sql = """
+        SELECT text, episodeUuid, podcastUuid, segmentIndex, startTime, endTime, speaker, source
+        FROM \(Self.ftsTableName)
+        WHERE episodeUuid = ? AND segmentIndex = ?
+        ORDER BY CASE source WHEN '\(TranscriptSource.generated.rawValue)' THEN 0 ELSE 1 END
+        LIMIT 1
+        """
+        let row = dbQueue.read { db in
+            try Row.fetchOne(db, sql: sql, arguments: [episodeUuid, segmentIndex])
+        } ?? nil
+        guard let row else { return nil }
+
+        return TranscriptSearchHit(
+            episodeUuid: row["episodeUuid"] ?? "",
+            podcastUuid: row["podcastUuid"],
+            segmentIndex: row["segmentIndex"] ?? 0,
+            startTime: row["startTime"] ?? 0,
+            endTime: row["endTime"],
+            speaker: row["speaker"],
+            source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided,
+            snippet: row["text"] ?? ""
+        )
     }
 
     // MARK: - Search
@@ -328,6 +398,17 @@ public struct TranscriptSearchDataManager: Sendable {
         }
     }
 
+    /// The SQL for the custom-playlist "transcript mentions" condition: matches
+    /// episodes with any indexed segment (either source) matching an FTS query.
+    /// Owned here so all FTS SQL stays in this manager; `CustomQueryCompiler`
+    /// splices it into playlist queries. Identifiers only — the caller binds the
+    /// `sanitizeFTSQuery`-sanitized term as the single `?`. Non-correlated on
+    /// purpose: SQLite runs the FTS query once per statement, not per episode row
+    /// (playlist count queries run on every badge refresh).
+    public static func transcriptMentionsSubquery(episodeUuidExpression: String) -> String {
+        "\(episodeUuidExpression) IN (SELECT episodeUuid FROM \(ftsTableName) WHERE \(ftsTableName) MATCH ?)"
+    }
+
     /// Turns arbitrary user input into a safe FTS5 MATCH expression: every
     /// whitespace-separated token is double-quoted (neutralizing operators like
     /// AND/OR/NEAR, parentheses and column filters), and the last token gets a `*`
@@ -369,6 +450,7 @@ public struct TranscriptSearchDataManager: Sendable {
             """, arguments: [TranscriptSource.provided.rawValue, keptEpisodeUuid])
             guard let victimUuid else { return }
 
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, episodeUuid: victimUuid, source: .provided)
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
             try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ? AND source = ?", arguments: [victimUuid, TranscriptSource.provided.rawValue])
             _ = try TranscriptSearchIndexMetaRecord

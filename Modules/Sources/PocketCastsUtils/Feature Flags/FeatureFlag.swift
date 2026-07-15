@@ -113,6 +113,30 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see plans/transcript-based-ideas.md item 3.
     case speakerDirectory
 
+    /// Custom playlist "Transcript mentions" condition: an FTS MATCH predicate
+    /// over the on-device transcript corpus. Positive-only — the index covers
+    /// only episodes with fetched/generated transcripts, so unindexed episodes
+    /// never match (and negation is deliberately not offered);
+    /// see plans/transcript-based-ideas.md item 7.
+    case transcriptPlaylistPredicates
+
+    /// Mirrors downloaded episodes (and, later, transcript text and highlights)
+    /// into iOS Spotlight as searchable items with deep links back into the app;
+    /// see plans/transcript-based-ideas.md item 2.
+    case spotlightIndexing
+
+    /// Semantic transcript search: indexed transcripts are embedded on-device
+    /// (NLContextualEmbedding) into a windowed vector sidecar, and New Search
+    /// fuses vector matches into the Transcripts section so paraphrases match
+    /// when keywords don't; see plans/transcript-based-ideas.md item 1.
+    case semanticTranscriptSearch
+
+    /// "Mentioned in this episode": entities (people/books/products/websites/
+    /// places/organizations) extracted from the indexed transcript with
+    /// tap-to-seek anchors — auto-generated show notes;
+    /// see plans/transcript-based-ideas.md item 5.
+    case episodeMentions
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -187,6 +211,14 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .speakerDirectory:
             BuildEnvironment.current != .appStore
+        case .transcriptPlaylistPredicates:
+            BuildEnvironment.current != .appStore
+        case .spotlightIndexing:
+            BuildEnvironment.current != .appStore
+        case .semanticTranscriptSearch:
+            BuildEnvironment.current != .appStore
+        case .episodeMentions:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -256,6 +288,16 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "On-device recap of the already-played portion of an in-progress episode, available from the player shelf and the episode summary card. Medium risk."
         case .onDeviceChapters:
             "Generates chapters on device from the local transcript when an episode has no chapters from any other source. Medium risk."
+        case .speakerDirectory:
+            "People directory on the Profile tab aggregating speakers you've named in transcripts, with per-person episode lists, scoped search, and AI name suggestions in the rename sheet. Medium risk."
+        case .transcriptPlaylistPredicates:
+            "Adds a 'Transcript mentions' condition to custom playlists that matches episodes whose searchable transcript contains a phrase. Only sees episodes with an indexed transcript. Medium risk."
+        case .spotlightIndexing:
+            "Indexes downloaded episodes (including transcript text) and highlights into iOS Spotlight search, plus a 'Search Transcripts' Siri shortcut. Medium risk."
+        case .semanticTranscriptSearch:
+            "Embeds indexed transcripts on device so transcript search also matches paraphrases, with a Played-only filter and recency boost. Uses storage for vectors and CPU while embedding. Medium risk."
+        case .episodeMentions:
+            "'Mentioned in this episode' card extracting people, books, products, websites and places from the transcript with tap-to-seek links, generated on device. Medium risk."
         }
     }
 

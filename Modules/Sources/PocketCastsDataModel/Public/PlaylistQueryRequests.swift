@@ -700,7 +700,7 @@ extension PlaylistQueryBuilder {
     /// Builder mode recompiles on every call so relative dates track `now`; SQL mode
     /// splices the validator-approved fragment as raw SQL (it is zero-argument by
     /// validation, and executes on read-only connections).
-    static func customRuleFragment(for playlist: EpisodeFilter, now: Date = Date()) -> SQL {
+    static func customRuleFragment(for playlist: EpisodeFilter, now: Date = Date(), capabilities: CustomQueryCapabilities = .current) -> SQL {
         guard FeatureFlag.customPlaylists.enabled,
               let envelope = CustomPlaylistQuery(envelopeJSON: playlist.customQuery),
               envelope.isSupported else {
@@ -710,7 +710,7 @@ extension PlaylistQueryBuilder {
         switch envelope.mode {
         case .builder:
             guard let root = envelope.root,
-                  let compiled = try? CustomQueryCompiler.compile(root: root, now: now) else {
+                  let compiled = try? CustomQueryCompiler.compile(root: root, now: now, capabilities: capabilities) else {
                 return "(0)"
             }
             let arguments = StatementArguments(compiled.arguments.map { $0 as DatabaseValueConvertible? })
@@ -871,5 +871,19 @@ extension PlaylistQueryBuilder {
 
     private static func orderByClause(sortType: Int32, prefix: String) -> SQL? {
         orderingTerms(sortType: sortType, prefix: prefix).map { "ORDER BY \($0)" }
+    }
+}
+
+extension CustomQueryCapabilities {
+    /// The live capability set for playlist compilation, resolved fresh on every
+    /// compile (the pure compiler can't probe flags or the database): the
+    /// transcript-predicate feature flags plus the FTS index actually existing on
+    /// this device (migration 82 self-disables on FTS5-less SQLite builds).
+    static var current: CustomQueryCapabilities {
+        CustomQueryCapabilities(
+            transcriptIndexAvailable: FeatureFlag.transcriptPlaylistPredicates.enabled
+                && FeatureFlag.transcriptSearch.enabled
+                && DataManager.sharedManager.transcriptSearch.isAvailable
+        )
     }
 }

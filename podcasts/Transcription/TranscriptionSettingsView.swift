@@ -325,6 +325,17 @@ struct TranscriptionSettingsView: View {
             } message: {
                 Text(L10n.transcriptionStorageClearAllConfirmation("\(model.transcriptCount)"))
             }
+
+            if FeatureFlag.spotlightIndexing.enabled {
+                Button {
+                    model.rebuildSpotlightIndex()
+                    Toast.show(L10n.settingsRebuildSpotlightIndexStarted)
+                } label: {
+                    Text(L10n.settingsRebuildSpotlightIndex)
+                        .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                }
+                .disabled(model.isRebuildingSpotlight)
+            }
         }
     }
 

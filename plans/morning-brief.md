@@ -2,12 +2,6 @@
 
 ## Context
 
-`docs/DeferredFeatures.md` records "Daily briefing / highlights feed" as the top deliberately-deferred
-AI feature: a morning surface summarizing what's new across subscriptions — new-episode summaries,
-key takeaways, and recent highlights — assembled on-device. It was deferred because the product shape,
-refresh economics (FoundationModels runs × subscriptions), and notification fatigue needed design
-time. All primitives shipped in the July 2026 AI UX round; this plan turns them into the feature.
-
 **Product decisions (user, this session):**
 - **Shape:** "Morning Edition" editorial feed, **highly user-configurable**: greeting header,
   per-new-episode summary cards with tap-to-seek takeaway chips, recent-highlights strip,
@@ -17,7 +11,7 @@ time. All primitives shipped in the July 2026 AI UX round; this plan turns them 
   (Podcasts | Briefing) in the Podcasts tab that swaps the tab's content.
 - **Delivery layers (v1):** morning local notification (quiet-day rule: nothing new → no
   notification) + home/lock-screen widget. **No TTS narration in v1.**
-- **Constraints:** on-device only, free, behind new flag `.dailyBriefing`.
+- **Constraints:** on-device only, free
 
 **Verified facts that shaped the design:**
 - Takeaways are never cached today — `EpisodeSummaryViewModel.loadTakeaways()` regenerates on every
@@ -53,11 +47,8 @@ app-activation day-rollover check ───────────────�
 
 New directory: `podcasts/Daily Briefing/` (repo convention uses spaces, e.g. `Up Next History/`).
 
-## 1. Foundation: flag, settings, model, stores
+## 1. Foundation: settings, model, stores
 
-- **Flag**: `case dailyBriefing` in `Modules/Sources/PocketCastsUtils/Feature Flags/FeatureFlag.swift`,
-  `default:` → `BuildEnvironment.current != .appStore` (matches other AI flags); `remoteKey`
-  auto-derives `daily_briefing`.
 - **Settings** — single Codable blob following the `Settings.audioTuning` pattern
   (`podcasts/Settings.swift:1506`): `Settings.dailyBriefing: DailyBriefingSettings`
   (device-local, NOT synced):
@@ -113,6 +104,7 @@ re-snapshot wholesale (cheap).
   lazily when the surface opens (same path, written back to both stores).
 
 **`DailyBriefingCoordinator` (@MainActor singleton)** — conforms to the UI-facing protocol:
+
 ```swift
 @MainActor protocol DailyBriefingProviding {
     var state: DailyBriefingState { get }   // idle | generating | ready(DailyBriefing) | quietDay | unavailable(reason)
@@ -121,7 +113,7 @@ re-snapshot wholesale (cheap).
     func markBriefingSeen()
 }
 ```
-Triggers (all behind the flag, wired in `AppDelegate` setup):
+Triggers (`AppDelegate` setup):
 - Foreground: observe `ServerNotifications.podcastsRefreshed`
   (`Modules/Sources/PocketCastsServer/Public/ServerNotifications.swift:11`), debounce 5s, assemble
   with `allowsGeneration = thermalState <= .fair && !isLowPowerModeEnabled`.
@@ -137,7 +129,7 @@ Triggers (all behind the flag, wired in `AppDelegate` setup):
 - New `case dailyBriefing` in `NotificationType`: dynamic body computed at schedule time from the
   stored briefing ("5 new episodes — starting with '{top title}'"), precedent
   `.reengagementDownloads`. `link = "pktc://briefing"`, `isRepeatable = true`, `shouldSend` gated on
-  flag + `Settings.dailyBriefing.notificationsEnabled`.
+   `Settings.dailyBriefing.notificationsEnabled`.
 - **Do not add a `NotificationsGroup` case** (fixed hours, drives grouped settings UI); the
   coordinator schedules directly: `UNCalendarNotificationTrigger(dateMatching:
   DateComponents(hour: settings.scheduleHour), repeats: false)`.
@@ -174,7 +166,7 @@ invasive).
   `matchedGeometryEffect` thumb (gated on reduce-motion), 6pt unseen-dot on the Briefing segment,
   segments as Buttons with `.isSelected` traits.
 - `podcasts/Daily Briefing/PodcastListViewController+Briefing.swift` — all switcher logic:
-  - `installBriefingToggleIfNeeded()` from `viewDidLoad`: flag-gated; `title = nil`,
+  - `installBriefingToggleIfNeeded()` from `viewDidLoad`: ; `title = nil`,
     `navigationItem.titleView = UIHostingController(rootView: toggle).view` with
     `sizingOptions = [.intrinsicContentSize]` + `.environmentObject(Theme.sharedTheme)`.
     **Risk note:** `PCViewController.setupNavBar` is gated on non-empty title
@@ -234,7 +226,7 @@ invasive).
   `BriefingSettingsView` cloning the `AdvancedAudioSettingsView` chassis: Sections (toggles in
   `sectionOrder`, `.onMove` reordering), Content (episode-cap menu Picker 3/5/10/15), Schedule
   (notification toggle + hour picker; footer explains regeneration), Widget hint row.
-- Reachable from the gear on the briefing surface AND a new flag-gated `case dailyBriefing` row in
+- Reachable from the gear on the briefing surface  `case dailyBriefing` row in
   `podcasts/SettingsViewController.swift` (`TableRow` enum ~line 8, push pattern at lines 214-218).
 
 ## 8. Analytics + L10n
@@ -263,13 +255,12 @@ invasive).
 
 ## 10. PR sequence
 
-1. **Foundation** (no behavior change): flag; `DailyBriefingSettings` + `Settings.dailyBriefing`
+1. **Foundation** (no behavior change): `DailyBriefingSettings` + `Settings.dailyBriefing`
    blob; model types; `DailyBriefingStore` + `TakeawayStore` + tests; `TakeawayChipRow` +
    `SummarySeekAction` extractions (summary card parity); L10n keys.
 2. **Assembler**: seams + queries + summary/takeaway pipeline + analytics; unit tests. Not wired.
 3. **Coordinator + triggers**: refresh observer, activation rollover, BG hook in
-   `handleAppRefresh`, thermal/low-power gate, `DailyBriefingUpdated` message. Assembles end-to-end
-   behind the flag.
+   `handleAppRefresh`, thermal/low-power gate, `DailyBriefingUpdated` message. Assembles end-to-end.
 4. **Surface skeleton + toggle**: `DailyBriefingProviding` conformance; BriefingViewModel/View with
    greeting + empty/generating/unavailable states; toggle + child-swap +
    `Constants.UserDefaults.podcastsHomeSurface`; unseen dot.

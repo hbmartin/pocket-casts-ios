@@ -36,13 +36,15 @@ class EpisodeLoadingController: UIHostingController<AnyView> {
     private let episodeUuid: String
     private let podcastUuid: String
     private let timestamp: TimeInterval?
+    private let quote: String?
 
     private let episodeLoadingModel = EpisodeLoadingModel()
 
-    init(episodeUuid: String, podcastUuid: String, timestamp: TimeInterval? = nil) {
+    init(episodeUuid: String, podcastUuid: String, timestamp: TimeInterval? = nil, quote: String? = nil) {
         self.episodeUuid = episodeUuid
         self.podcastUuid = podcastUuid
         self.timestamp = timestamp
+        self.quote = quote
 
         super.init(rootView: AnyView(EpisodeLoadingView(episodeLoadingModel: episodeLoadingModel).setupDefaultEnvironment()))
     }
@@ -97,7 +99,7 @@ class EpisodeLoadingController: UIHostingController<AnyView> {
     }
 
     private func transitionToEpisodeControllerFadingIntoIt() {
-        let controller = EpisodeDetailViewController(episodeUuid: episodeUuid, source: .homeScreenWidget, timestamp: timestamp)
+        let controller = EpisodeDetailViewController(episodeUuid: episodeUuid, source: .homeScreenWidget, timestamp: timestamp, quote: quote)
 
         view.addSubview(controller.view)
         controller.view.alpha = 0

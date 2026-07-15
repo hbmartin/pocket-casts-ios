@@ -14,7 +14,7 @@ protocol NavigationProtocol: AnyObject {
     func navigateToFolder(_ folder: Folder, popToRootViewController: Bool)
     func navigateToSuggestedFolders()
 
-    func navigateToEpisode(_ episodeUuid: String, podcastUuid: String?, timestamp: TimeInterval?)
+    func navigateToEpisode(_ episodeUuid: String, podcastUuid: String?, timestamp: TimeInterval?, quote: String?)
 
     func navigateToProfile(row: ProfileViewController.TableRow?, animated: Bool)
 

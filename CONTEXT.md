@@ -21,6 +21,15 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   provider, artifact path). Pipeline state, not index data: it survives index
   rebuilds and lives in its own table.
 
+- **Highlight** — a Bookmark enriched with a transcript excerpt and end time;
+  the user-curated "hot segment" of an episode. Enrichment is write-once and
+  best-effort: no transcript means a plain bookmark.
+- **Quote Link** — a timestamped share link whose payload carries the transcript
+  sentence(s) at the timestamp: in the share text and in the URL's `q`
+  parameter. The quote is display/deep-link data only — the canonical
+  transcript is unchanged, and a link without a resolvable quote is exactly a
+  plain timestamped link.
+
 ## Transcript crowdsourcing
 
 - **Contribution** — an upload of a Generated transcript's content, together with

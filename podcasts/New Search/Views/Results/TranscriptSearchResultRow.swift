@@ -27,6 +27,9 @@ nonisolated struct TranscriptSearchHitDisplay: Hashable, Sendable, Identifiable 
     /// indexed transcript was server-generated. (The app module has its own
     /// `TranscriptSource` enum, hence the qualified name.)
     let source: PocketCastsDataModel.TranscriptSource
+    /// How the hit matched (exact keyword, vector similarity, or both).
+    /// Analytics only — the row renders every match identically.
+    var matchType: TranscriptSearchFusion.MatchType = .exact
 
     var id: String { "\(episodeUuid)-\(segmentIndex)" }
 
@@ -46,6 +49,26 @@ nonisolated struct TranscriptSearchHitDisplay: Hashable, Sendable, Identifiable 
                 startTime: hit.startTime,
                 speaker: hit.speaker,
                 source: hit.source
+            )
+        }
+    }
+
+    /// Resolves fused (exact + semantic) hits the same way. Semantic snippets
+    /// carry no highlight markers, so `runs(from:)` renders them plain.
+    static func displays(forFused hits: [TranscriptSearchFusion.FusedHit]) -> [TranscriptSearchHitDisplay] {
+        let dataManager = DataManager.sharedManager
+        return hits.compactMap { hit in
+            guard let episode = dataManager.findBaseEpisode(uuid: hit.episodeUuid) else { return nil }
+            return TranscriptSearchHitDisplay(
+                episodeUuid: hit.episodeUuid,
+                podcastUuid: hit.podcastUuid ?? (episode as? Episode)?.podcastUuid,
+                segmentIndex: hit.segmentIndex,
+                episodeTitle: episode.displayableTitle(),
+                runs: runs(from: hit.snippet),
+                startTime: hit.startTime,
+                speaker: hit.speaker,
+                source: hit.source,
+                matchType: hit.matchType
             )
         }
     }
@@ -140,33 +163,16 @@ struct TranscriptSearchResultRow: View {
     }
 
     /// Seeks-and-plays via the canonical deep-link path (loads the episode first
-    /// when it isn't the one now playing).
+    /// when it isn't the one now playing). Seek-time mapping lives in
+    /// `TranscriptHitPlayback`, shared with the Siri intent.
     private func play() {
-        let seconds = seekTime
+        let seconds = TranscriptHitPlayback.seekTime(episodeUuid: display.episodeUuid, startTime: display.startTime, source: display.source)
         Analytics.track(.librarySearchTranscriptResultTapped, properties: [
             "position": position,
-            "seconds": Int(seconds)
+            "seconds": Int(seconds),
+            "match_type": display.matchType.rawValue
         ])
         PlaybackManager.shared.play(episodeUuid: display.episodeUuid, podcastUuid: display.podcastUuid, at: seconds)
-    }
-
-    /// Provided-corpus segments indexed from a server-generated transcript carry
-    /// reference-timeline times; when the hit's episode is the actively
-    /// fingerprinted now-playing episode the time is mapped onto the local
-    /// audio. For any other episode no mapping exists at seek time, so the
-    /// indexed time is the best available (an inherent limitation — dynamic-ad
-    /// offsets can shift the landing spot there).
-    private var seekTime: TimeInterval {
-        guard display.source == .provided,
-              PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: display.episodeUuid),
-              case .active = FingerprintTimingManager.shared.state,
-              // Episode-bound overload: returns nil (falling back to the raw
-              // time) when a track change moved the alignment to another episode
-              // between the now-playing check and the lookup.
-              let mapped = FingerprintTimingManager.shared.playbackTime(forReferenceTime: display.startTime, episodeUuid: display.episodeUuid) else {
-            return display.startTime
-        }
-        return mapped
     }
 
     private func openEpisodeDetail() {

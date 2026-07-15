@@ -64,6 +64,7 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     /// the summary card (or the transcript excerpt) and before the show notes
     /// (see +ShowNotes).
     var episodeCreditsContainer: UIView?
+    var episodeMentionsContainer: UIView?
 
     @IBOutlet var mainScrollView: UIScrollView! {
         didSet {
@@ -174,6 +175,9 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     var episode: Episode
     var podcast: Podcast
     var timestamp: TimeInterval?
+    /// Transcript quote from an inbound quote share link; posted to the
+    /// transcript view for a scroll-and-flash after the seek.
+    var quote: String?
 
     let viewSource: EpisodeDetailViewSource
 
@@ -183,13 +187,14 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
 
     // MARK: - Init
 
-    init(episodeUuid: String, source: EpisodeDetailViewSource, playlist: AutoplayHelper.Playlist? = nil, timestamp: TimeInterval? = nil) {
+    init(episodeUuid: String, source: EpisodeDetailViewSource, playlist: AutoplayHelper.Playlist? = nil, timestamp: TimeInterval? = nil, quote: String? = nil) {
         // it's ok to crash here, an episode card with no episode or podcast is invalid
         episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid)!
         podcast = DataManager.sharedManager.findPodcast(uuid: episode.podcastUuid, includeUnsubscribed: true)!
         viewSource = source
         fromPlaylist = playlist
         self.timestamp = timestamp
+        self.quote = quote
         super.init(nibName: "EpisodeDetailViewController", bundle: nil)
     }
 

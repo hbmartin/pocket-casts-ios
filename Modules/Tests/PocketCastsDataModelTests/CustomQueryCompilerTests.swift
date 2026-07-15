@@ -11,8 +11,8 @@ final class CustomQueryCompilerTests: XCTestCase {
     /// 2026-01-01 00:00:00 UTC — fixed so relative dates are deterministic.
     private let now = Date(timeIntervalSince1970: 1_767_225_600)
 
-    private func compile(_ node: CustomQueryNode) throws -> (sql: String, arguments: [DatabaseValue]) {
-        try CustomQueryCompiler.compile(root: node, now: now)
+    private func compile(_ node: CustomQueryNode, capabilities: CustomQueryCapabilities = .all) throws -> (sql: String, arguments: [DatabaseValue]) {
+        try CustomQueryCompiler.compile(root: node, now: now, capabilities: capabilities)
     }
 
     private func condition(
@@ -207,6 +207,72 @@ final class CustomQueryCompilerTests: XCTestCase {
 
         let notVideo = try compile(condition(.mediaType, .notIn, .stringList(["video"])))
         XCTAssertEqual(notVideo.sql, "(NOT (episode.fileType LIKE 'video%'))")
+    }
+
+    // MARK: - Transcript predicate
+
+    func testTranscriptMentionsCompilesToNonCorrelatedInSubquery() throws {
+        let compiled = try compile(condition(.transcriptMentions, .mentions, .string("climate change")))
+        XCTAssertEqual(
+            compiled.sql,
+            "(episode.uuid IN (SELECT episodeUuid FROM TranscriptSegmentIndex WHERE TranscriptSegmentIndex MATCH ?))"
+        )
+        // The bound argument is the sanitized MATCH expression, never the raw term.
+        XCTAssertEqual(compiled.arguments, ["\"climate\" \"change\"*".databaseValue])
+    }
+
+    func testTranscriptMentionsSanitizesEmbeddedFTSOperators() throws {
+        let compiled = try compile(condition(.transcriptMentions, .mentions, .string(#"climate OR "evil()" NEAR"#)))
+        XCTAssertEqual(compiled.arguments, ["\"climate\" \"OR\" \"evil()\" \"NEAR\"*".databaseValue])
+    }
+
+    func testTranscriptMentionsRejectsOtherOperatorsAndFields() {
+        XCTAssertThrowsError(try compile(condition(.transcriptMentions, .contains, .string("x")))) { error in
+            XCTAssertEqual(error as? CustomQueryCompileError, .invalidCondition(field: .transcriptMentions, op: .contains))
+        }
+        XCTAssertThrowsError(try compile(condition(.episodeTitle, .mentions, .string("x")))) { error in
+            XCTAssertEqual(error as? CustomQueryCompileError, .invalidCondition(field: .episodeTitle, op: .mentions))
+        }
+    }
+
+    func testTranscriptMentionsValueShapeMismatchThrows() {
+        XCTAssertThrowsError(try compile(condition(.transcriptMentions, .mentions, .number(5)))) { error in
+            XCTAssertEqual(error as? CustomQueryCompileError, .invalidCondition(field: .transcriptMentions, op: .mentions))
+        }
+    }
+
+    func testTranscriptMentionsPunctuationOnlyTermThrows() {
+        // Nothing searchable survives sanitization; the builder UI blocks saving
+        // this, so an envelope that smuggles it in fails like any bad operand.
+        XCTAssertThrowsError(try compile(condition(.transcriptMentions, .mentions, .string("!!! ???")))) { error in
+            XCTAssertEqual(error as? CustomQueryCompileError, .invalidCondition(field: .transcriptMentions, op: .mentions))
+        }
+    }
+
+    func testTranscriptMentionsCompilesAlwaysFalseWhenIndexUnavailable() throws {
+        let unavailable = CustomQueryCapabilities(transcriptIndexAvailable: false)
+        let compiled = try compile(condition(.transcriptMentions, .mentions, .string("climate")), capabilities: unavailable)
+        XCTAssertEqual(compiled.sql, "(0)")
+        XCTAssertTrue(compiled.arguments.isEmpty, "no argument may bind for a condition that compiled away")
+    }
+
+    func testTranscriptMentionsUnavailableInsideAnyGroupLeavesOtherArmsAlive() throws {
+        let unavailable = CustomQueryCapabilities(transcriptIndexAvailable: false)
+        let node = CustomQueryNode.group(CustomQueryGroup(op: .any, children: [
+            condition(.transcriptMentions, .mentions, .string("climate")),
+            condition(.episodeTitle, .contains, .string("news"))
+        ]))
+        let compiled = try compile(node, capabilities: unavailable)
+        XCTAssertEqual(compiled.sql, "((0) OR (UPPER(episode.title) LIKE ? ESCAPE '\\'))")
+        XCTAssertEqual(compiled.arguments, ["%NEWS%".databaseValue])
+    }
+
+    func testEnvelopeJSONRoundTripsTranscriptMentions() throws {
+        let node = condition(.transcriptMentions, .mentions, .string("wwdc"))
+        let envelope = CustomPlaylistQuery(root: node)
+        let decoded = try XCTUnwrap(CustomPlaylistQuery(envelopeJSON: try envelope.envelopeJSON()))
+        XCTAssertEqual(decoded, envelope)
+        XCTAssertTrue(decoded.isSupported, "no version bump: unknown-field tolerance handles older builds")
     }
 
     // MARK: - Groups and nesting

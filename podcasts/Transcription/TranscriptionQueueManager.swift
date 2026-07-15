@@ -607,6 +607,7 @@ actor TranscriptionQueueManager {
                                                      podcastUuid: record.podcastUuid,
                                                      source: .generated,
                                                      segments: searchSegments)
+        TranscriptEmbeddingPipeline.shared.embedIfNeeded(episodeUuid: episodeUuid, podcastUuid: record.podcastUuid, source: .generated)
 
         record.transcriptionStatus = .completed
         record.errorMessage = nil
@@ -631,6 +632,7 @@ actor TranscriptionQueueManager {
 
         setState(episodeUuid: episodeUuid, state: .completed, forcePost: true)
         NotificationCenter.postOnMainThread(EpisodeTranscriptionCompleted(episodeUuid: episodeUuid, succeeded: true))
+        NotificationCenter.postOnMainThread(TranscriptIndexUpdated(uuid: episodeUuid))
         Analytics.track(.transcriptionCompleted, properties: [
             "episode_uuid": episodeUuid,
             "engine": transcript.engineDescription,

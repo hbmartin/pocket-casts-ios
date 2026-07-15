@@ -90,6 +90,10 @@ nonisolated struct CustomQueryDraftCondition: Identifiable, Equatable {
             }
         case .enumeration, .podcastList:
             return !value.selectedValues.isEmpty
+        case .transcript:
+            // The compiler rejects terms that sanitize to nothing (punctuation
+            // only), so the row is only complete once something searchable remains.
+            return TranscriptSearchDataManager.sanitizeFTSQuery(value.text) != nil
         }
     }
 }

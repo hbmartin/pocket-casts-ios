@@ -147,6 +147,18 @@ final class CustomPlaylistEditorViewModel: ObservableObject {
         document.totalConditionCount > 0 && !document.allConditionsComplete
     }
 
+    /// Whether the saved query reads the transcript predicate (analytics on
+    /// `filterCreated`/`filterUpdated`). SQL mode can't be parsed, so it falls
+    /// back to spotting the FTS table name in the fragment.
+    var usesTranscriptField: Bool {
+        switch editorMode {
+        case .builder:
+            document.queryNode()?.contains(field: .transcriptMentions) ?? false
+        case .sql:
+            sqlText.localizedCaseInsensitiveContains("TranscriptSegmentIndex")
+        }
+    }
+
     /// The versioned envelope to persist, or nil when the current state can't be saved.
     func envelopeForSaving() -> String? {
         switch editorMode {

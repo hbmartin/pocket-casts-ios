@@ -139,6 +139,35 @@ final class TranscriptSearchDataManagerTests: XCTestCase {
         XCTAssertEqual(dataManager.transcriptSearch.search(term: "climate", speakerScopes: []), [])
     }
 
+    // MARK: - Read-back
+
+    func testSegmentsReturnsIndexedSegmentsInOrder() {
+        let segments = [
+            TranscriptSearchSegment(index: 0, text: "first part", startTime: 0, endTime: 5, speaker: "Speaker 1"),
+            TranscriptSearchSegment(index: 1, text: "second part", startTime: 5, endTime: 10)
+        ]
+        dataManager.transcriptSearch.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", source: .generated, segments: segments)
+
+        let readBack = dataManager.transcriptSearch.segments(episodeUuid: "ep-1", source: .generated)
+        XCTAssertEqual(readBack, segments)
+        XCTAssertTrue(dataManager.transcriptSearch.segments(episodeUuid: "ep-1", source: .provided).isEmpty)
+        XCTAssertTrue(dataManager.transcriptSearch.segments(episodeUuid: "nope", source: .generated).isEmpty)
+    }
+
+    func testSegmentByOrdinalPrefersGeneratedCorpus() {
+        dataManager.transcriptSearch.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", source: .provided,
+                                                     segments: [TranscriptSearchSegment(index: 0, text: "provided text", startTime: 3)])
+        dataManager.transcriptSearch.replaceSegments(episodeUuid: "ep-1", podcastUuid: "pod-1", source: .generated,
+                                                     segments: [TranscriptSearchSegment(index: 0, text: "generated text", startTime: 7)])
+
+        let hit = dataManager.transcriptSearch.segment(episodeUuid: "ep-1", segmentIndex: 0)
+        XCTAssertEqual(hit?.source, .generated)
+        XCTAssertEqual(hit?.snippet, "generated text", "the plain segment text stands in for the FTS snippet")
+        XCTAssertEqual(hit?.startTime, 7)
+
+        XCTAssertNil(dataManager.transcriptSearch.segment(episodeUuid: "ep-1", segmentIndex: 9))
+    }
+
     // MARK: - Search
 
     func testSearchReturnsHighlightedSnippetAndFields() throws {
