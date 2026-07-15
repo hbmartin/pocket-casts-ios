@@ -1330,6 +1330,12 @@ nonisolated internal enum L10n {
   }
   /// Episode indicator that the current episode is a trailer.
   internal static var episodeIndicatorTrailer: String { return L10n.tr("Localizable", "episode_indicator_trailer", fallback: "Trailer") }
+  /// Tappable seek link under a mentioned entity; '%1$@' is a timestamp like 34:12
+  internal static func episodeMentionsAtTime(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "episode_mentions_at_time", String(describing: p1), fallback: "Mentioned at %1$@")
+  }
+  /// Header of the episode-detail card listing entities extracted from the transcript
+  internal static var episodeMentionsTitle: String { return L10n.tr("Localizable", "episode_mentions_title", fallback: "Mentioned in this episode") }
   /// Shorthand format used to show the Episode number of a podcast. '%1$@' is a placeholder for the episode number.
   internal static func episodeShorthandFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "episode_shorthand_format", String(describing: p1), fallback: "EPISODE %1$@")
@@ -2305,6 +2311,22 @@ nonisolated internal enum L10n {
   internal static var paywallDynamicHeadlineThemes: String { return L10n.tr("Localizable", "paywall_dynamic_headline_themes", fallback: "Get exclusive themes with Pocket Casts Plus, and more") }
   /// Paywall header for when the view is presented from the Up Next Shuffle source
   internal static var paywallDynamicHeadlineUpNextShuffle: String { return L10n.tr("Localizable", "paywall_dynamic_headline_up_next_shuffle", fallback: "Shuffle your episodes with Pocket Casts Plus, and more") }
+  /// Header above the list of episodes a person appears in
+  internal static var peopleDetailEpisodesHeader: String { return L10n.tr("Localizable", "people_detail_episodes_header", fallback: "Episodes") }
+  /// Placeholder for the search field scoped to one person's transcript segments
+  internal static var peopleDetailSearchPlaceholder: String { return L10n.tr("Localizable", "people_detail_search_placeholder", fallback: "Search what they said") }
+  /// Empty state message explaining how the People directory gets populated
+  internal static var peopleDirectoryEmptyMessage: String { return L10n.tr("Localizable", "people_directory_empty_message", fallback: "Name the speakers in an episode's transcript and they'll show up here, across every show.") }
+  /// Empty state title when no transcript speakers have been named yet
+  internal static var peopleDirectoryEmptyTitle: String { return L10n.tr("Localizable", "people_directory_empty_title", fallback: "No People Yet") }
+  /// Appearance count for a person; '%1$@' is the number of episodes
+  internal static func peopleDirectoryEpisodeCountPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "people_directory_episode_count_plural", String(describing: p1), fallback: "%1$@ episodes")
+  }
+  /// Appearance count for a person featured in exactly one episode
+  internal static var peopleDirectoryEpisodeCountSingular: String { return L10n.tr("Localizable", "people_directory_episode_count_singular", fallback: "1 episode") }
+  /// Title of the People directory screen listing renamed transcript speakers
+  internal static var peopleDirectoryTitle: String { return L10n.tr("Localizable", "people_directory_title", fallback: "People") }
   /// A common string used throughout the app. Used to reference a phone.
   internal static var phone: String { return L10n.tr("Localizable", "phone", fallback: "Phone") }
   /// A common string used throughout the app. Prompt to start playback.
@@ -3629,6 +3651,8 @@ nonisolated internal enum L10n {
   internal static var searchTranscriptsEmptyTitle: String { return L10n.tr("Localizable", "search_transcripts_empty_title", fallback: "No Transcript Matches") }
   /// Search results filter pill that shows matches found inside episode transcripts
   internal static var searchTranscriptsPill: String { return L10n.tr("Localizable", "search_transcripts_pill", fallback: "Transcripts") }
+  /// Toggle above transcript search results restricting matches to episodes already played
+  internal static var searchTranscriptsPlayedOnly: String { return L10n.tr("Localizable", "search_transcripts_played_only", fallback: "Played only") }
   /// Timestamp label on a transcript search result showing where in the episode the match occurs. '%1$@' is a placeholder for a time like 12:34.
   internal static func searchTranscriptsResultAtTime(_ p1: Any) -> String {
     return L10n.tr("Localizable", "search_transcripts_result_at_time", String(describing: p1), fallback: "At %1$@")
@@ -4787,6 +4811,10 @@ nonisolated internal enum L10n {
   internal static var transcriptionRenameSave: String { return L10n.tr("Localizable", "transcription_rename_save", fallback: "Save") }
   /// Title of the menu action and sheet for renaming the numbered speakers of a generated transcript
   internal static var transcriptionRenameSpeakers: String { return L10n.tr("Localizable", "transcription_rename_speakers", fallback: "Rename Speakers") }
+  /// Tappable AI suggestion under a speaker rename field; '%1$@' is the suggested name
+  internal static func transcriptionRenameSuggestion(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "transcription_rename_suggestion", String(describing: p1), fallback: "Suggested: %1$@")
+  }
   /// Title of the Transcription page in Settings and of its row in the settings list
   internal static var transcriptionSettingsTitle: String { return L10n.tr("Localizable", "transcription_settings_title", fallback: "Transcription") }
   /// Title of the transcript source menu option that shows the locally generated transcript

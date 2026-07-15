@@ -137,6 +137,7 @@ final class TranscriptSearchDataManagerTests: XCTestCase {
             episodeUuid: "ep-1", podcastUuid: "pod-1", source: .generated,
             segments: [TranscriptSearchSegment(index: 0, text: "climate talk", startTime: 0, speaker: "Speaker 1")])
         XCTAssertEqual(dataManager.transcriptSearch.search(term: "climate", speakerScopes: []), [])
+    }
 
     // MARK: - Read-back
 
