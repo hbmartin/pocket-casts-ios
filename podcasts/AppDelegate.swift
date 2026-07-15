@@ -96,6 +96,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // a transcription job is enqueued (flags re-checked per download)
         _ = TranscriptAcquisitionCoordinator.shared
 
+        // mirror downloaded episodes and highlights into iOS Spotlight (flag
+        // re-checked per event); the launch reconciliation is throttled to once a day
+        SpotlightIndexCoordinator.shared.start()
+        SpotlightIndexCoordinator.shared.startBookmarkObservations(bookmarkManager: PlaybackManager.shared.bookmarkManager)
+        Task(priority: .utility) {
+            await SpotlightIndexCoordinator.shared.reconcileIfDue()
+        }
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in

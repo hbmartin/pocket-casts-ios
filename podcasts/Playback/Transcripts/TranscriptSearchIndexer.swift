@@ -56,6 +56,7 @@ nonisolated final class TranscriptSearchIndexer: Sendable {
         let indexed = index.replaceSegments(episodeUuid: episodeUuid, podcastUuid: podcastUuid, source: .provided, segments: cues)
         if indexed {
             FileLog.shared.addMessage("TranscriptSearchIndexer: indexed \(cues.count) segments for episode \(episodeUuid)")
+            NotificationCenter.postOnMainThread(TranscriptIndexUpdated(uuid: episodeUuid))
         }
         return indexed
     }

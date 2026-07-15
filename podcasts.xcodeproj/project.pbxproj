@@ -1946,6 +1946,7 @@
 			sourceTree = "<group>";
 		};
 		BB66DEC0DE2F680002000B66 /* People */ = {
+		AA55C0DE2F6800010000A5A5 /* Spotlight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 			);
@@ -1954,6 +1955,7 @@
 			explicitFolders = (
 			);
 			path = People;
+			path = Spotlight;
 			sourceTree = "<group>";
 		};
 		3F26BB7B2F4FC23E0007119B /* PocketCastsTests */ = {
@@ -3857,6 +3859,7 @@
 			children = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
 				BB66DEC0DE2F680002000B66 /* People */,
+				AA55C0DE2F6800010000A5A5 /* Spotlight */,
 				3FADA0102F60ADA000000001 /* AdvancedAudio */,
 				3F584E492F568154005A3593 /* Theme */,
 				3F747A542F5598A2004C7FF6 /* Playback */,
@@ -4852,6 +4855,7 @@
 			fileSystemSynchronizedGroups = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
 				BB66DEC0DE2F680002000B66 /* People */,
+				AA55C0DE2F6800010000A5A5 /* Spotlight */,
 				3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */,
 				3F584D262F567EE1005A3593 /* Lists */,
 				3F584E492F568154005A3593 /* Theme */,

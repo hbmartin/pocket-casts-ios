@@ -120,6 +120,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see plans/transcript-based-ideas.md item 7.
     case transcriptPlaylistPredicates
 
+    /// Mirrors downloaded episodes (and, later, transcript text and highlights)
+    /// into iOS Spotlight as searchable items with deep links back into the app;
+    /// see plans/transcript-based-ideas.md item 2.
+    case spotlightIndexing
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -195,6 +200,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .speakerDirectory:
             BuildEnvironment.current != .appStore
         case .transcriptPlaylistPredicates:
+            BuildEnvironment.current != .appStore
+        case .spotlightIndexing:
             BuildEnvironment.current != .appStore
         }
     }

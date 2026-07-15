@@ -1,4 +1,5 @@
 import CoreServices
+import CoreSpotlight
 import Foundation
 import UniformTypeIdentifiers
 import JLRoutes
@@ -559,6 +560,8 @@ extension AppDelegate {
             if let urlString = info?["url"] as? String, let url = URL(string: urlString) {
                 JLRoutes.routeURL(url)
             }
+        } else if userActivity.activityType == CSSearchableItemActionType {
+            handleSpotlightItem(userActivity)
         } else if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             guard
                 let incomingURL = userActivity.webpageURL,
@@ -589,6 +592,33 @@ extension AppDelegate {
 
             FileLog.shared.addMessage("Opening universal link, path: \(sharePath)")
             openSharePath("social/share/show\(sharePath)", controller: controller, onErrorOpen: incomingURL)
+        }
+    }
+
+    /// A Spotlight result was tapped. Episodes open their card; highlight items
+    /// (added with the transcript/highlight indexing slice) seek-and-play.
+    private func handleSpotlightItem(_ userActivity: NSUserActivity) {
+        guard let identifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+              let target = SpotlightItemBuilder.parse(identifier: identifier) else {
+            return
+        }
+
+        switch target {
+        case .episode(let uuid):
+            Analytics.track(.spotlightItemOpened, properties: ["type": "episode"])
+            guard let episode = DataManager.sharedManager.findEpisode(uuid: uuid) else {
+                FileLog.shared.addMessage("[Spotlight] tapped episode \(uuid) no longer exists")
+                return
+            }
+            NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey, data: [NavigationManager.episodeUuidKey: episode.uuid])
+        case .highlight(let bookmarkUuid):
+            Analytics.track(.spotlightItemOpened, properties: ["type": "highlight"])
+            guard let bookmark = DataManager.sharedManager.bookmarks.bookmark(for: bookmarkUuid),
+                  let episode = DataManager.sharedManager.findEpisode(uuid: bookmark.episodeUuid) else {
+                FileLog.shared.addMessage("[Spotlight] tapped highlight \(bookmarkUuid) no longer resolves")
+                return
+            }
+            PlaybackManager.shared.play(episodeUuid: episode.uuid, podcastUuid: episode.podcastUuid, at: bookmark.time)
         }
     }
 }

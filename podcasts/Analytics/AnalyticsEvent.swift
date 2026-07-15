@@ -829,6 +829,12 @@ enum AnalyticsEvent: String {
     case deepLinkQuoteOpened
     case transcriptQuoteFlashed
 
+    // MARK: - Spotlight & Siri
+
+    case spotlightItemOpened
+    case spotlightReconcileCompleted
+    case searchTranscriptsIntentRan
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged
