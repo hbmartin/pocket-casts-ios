@@ -77,6 +77,17 @@ public struct TranscriptionDataManager: Sendable {
         return dbQueue.fetchAll(request)
     }
 
+    /// Completed transcriptions whose speakers the user has renamed
+    /// (`speakerNames` non-nil), newest first — the raw material for the
+    /// people directory's display-name aggregation.
+    public func recordsWithSpeakerNames() -> [EpisodeTranscriptionRecord] {
+        let request = EpisodeTranscriptionRecord
+            .filter(EpisodeTranscriptionRecord.Columns.status == TranscriptionStatus.completed.rawValue)
+            .filter(EpisodeTranscriptionRecord.Columns.speakerNames != nil)
+            .order(EpisodeTranscriptionRecord.Columns.updatedAt.desc)
+        return dbQueue.fetchAll(request)
+    }
+
     /// Number of episodes with a completed transcription.
     public func completedCount() -> Int {
         dbQueue.count(EpisodeTranscriptionRecord.self,

@@ -1,4 +1,5 @@
 import PocketCastsDataModel
+import PocketCastsUtils
 import SwiftUI
 
 /// Sheet for renaming the diarized speakers of a generated transcript
@@ -17,6 +18,7 @@ struct SpeakerRenameView: View {
     let onSaved: () -> Void
 
     @State private var names: [String]
+    @State private var suggestions: [Int: String] = [:]
 
     init(episodeUuid: String, speakerCount: Int, currentNames: [String: String], onSaved: @escaping () -> Void) {
         self.episodeUuid = episodeUuid
@@ -42,9 +44,26 @@ struct SpeakerRenameView: View {
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
                         }
+                        // A tappable suggestion fills the field; Save remains the
+                        // only commit path, so nothing is ever auto-applied.
+                        if let suggestion = suggestions[index + 1], names[index].isEmpty {
+                            Button {
+                                names[index] = suggestion
+                                Analytics.track(.speakerNameSuggestionApplied)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "sparkles")
+                                        .font(.caption)
+                                    Text(L10n.transcriptionRenameSuggestion(suggestion))
+                                        .font(.footnote)
+                                }
+                                .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                            }
+                        }
                     }
                 }
             }
+            .task { await loadSuggestions() }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(AppTheme.color(for: .primaryUi04, theme: theme).ignoresSafeArea())
@@ -59,6 +78,21 @@ struct SpeakerRenameView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Suggestions
+
+    /// Loads AI name suggestions from the transcript's opening (flag-gated,
+    /// best-effort, Apple Intelligence only). Fields the user already filled
+    /// never show a suggestion.
+    private func loadSuggestions() async {
+        guard FeatureFlag.speakerDirectory.enabled else { return }
+        guard let vtt = TranscriptionArtifactStore().read(episodeUuid: episodeUuid) else { return }
+
+        let found = await SpeakerNameSuggester().suggestions(fromVTT: vtt, speakerCount: speakerCount)
+        guard !found.isEmpty else { return }
+        suggestions = found
+        Analytics.track(.speakerNameSuggestionsShown, properties: ["count": found.count])
     }
 
     // MARK: - Names

@@ -101,6 +101,44 @@ final class TranscriptSearchDataManagerTests: XCTestCase {
         XCTAssertEqual(ftsRowCount(episodeUuid: "ep-1"), 2, "Replacing with fewer segments should shrink only that source's set")
     }
 
+    // MARK: - Speaker-scoped search
+
+    func testSpeakerScopedSearchMatchesOnlyTheScopedPairs() {
+        dataManager.transcriptSearch.replaceSegments(
+            episodeUuid: "ep-1", podcastUuid: "pod-1", source: .generated,
+            segments: [
+                TranscriptSearchSegment(index: 0, text: "climate talk by the host", startTime: 0, speaker: "Speaker 1"),
+                TranscriptSearchSegment(index: 1, text: "climate rebuttal by the guest", startTime: 10, speaker: "Speaker 2")
+            ])
+        dataManager.transcriptSearch.replaceSegments(
+            episodeUuid: "ep-2", podcastUuid: "pod-1", source: .generated,
+            segments: [TranscriptSearchSegment(index: 0, text: "climate finale", startTime: 0, speaker: "Speaker 1")])
+        // Provided-corpus text never matches a scoped search (no speaker labels).
+        dataManager.transcriptSearch.replaceSegments(
+            episodeUuid: "ep-1", podcastUuid: "pod-1", source: .provided,
+            segments: [TranscriptSearchSegment(index: 0, text: "climate provided text", startTime: 0)])
+
+        let scopes = [
+            TranscriptSearchDataManager.SpeakerScope(episodeUuid: "ep-1", speaker: "Speaker 2"),
+            TranscriptSearchDataManager.SpeakerScope(episodeUuid: "ep-2", speaker: "Speaker 1")
+        ]
+        let hits = dataManager.transcriptSearch.search(term: "climate", speakerScopes: scopes)
+
+        XCTAssertEqual(hits.count, 2)
+        XCTAssertTrue(hits.allSatisfy { $0.source == .generated })
+        XCTAssertTrue(hits.contains { $0.episodeUuid == "ep-1" && $0.speaker == "Speaker 2" })
+        XCTAssertTrue(hits.contains { $0.episodeUuid == "ep-2" && $0.speaker == "Speaker 1" })
+        XCTAssertFalse(hits.contains { $0.episodeUuid == "ep-1" && $0.speaker == "Speaker 1" },
+                       "the unscoped speaker in the same episode stays invisible")
+    }
+
+    func testSpeakerScopedSearchWithNoScopesReturnsNothing() {
+        dataManager.transcriptSearch.replaceSegments(
+            episodeUuid: "ep-1", podcastUuid: "pod-1", source: .generated,
+            segments: [TranscriptSearchSegment(index: 0, text: "climate talk", startTime: 0, speaker: "Speaker 1")])
+        XCTAssertEqual(dataManager.transcriptSearch.search(term: "climate", speakerScopes: []), [])
+    }
+
     // MARK: - Search
 
     func testSearchReturnsHighlightedSnippetAndFields() throws {
