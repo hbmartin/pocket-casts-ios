@@ -1946,7 +1946,6 @@
 			sourceTree = "<group>";
 		};
 		BB66DEC0DE2F680002000B66 /* People */ = {
-		AA55C0DE2F6800010000A5A5 /* Spotlight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 			);
@@ -1955,6 +1954,16 @@
 			explicitFolders = (
 			);
 			path = People;
+			sourceTree = "<group>";
+		};
+		AA55C0DE2F6800010000A5A5 /* Spotlight */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
 			path = Spotlight;
 			sourceTree = "<group>";
 		};
