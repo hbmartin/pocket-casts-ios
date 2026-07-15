@@ -824,6 +824,11 @@ enum AnalyticsEvent: String {
     case speakerNameSuggestionsShown
     case speakerNameSuggestionApplied
 
+    // MARK: - Quote Share Links
+
+    case deepLinkQuoteOpened
+    case transcriptQuoteFlashed
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged

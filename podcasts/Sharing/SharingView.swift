@@ -47,6 +47,7 @@ struct SharingView: View {
     @State private var shareable: Shareable
     @State private var isExporting: Bool = false
     @State private var episodeArtworkUrl: URL?
+    @State private var quote: String?
 
     @ObservedObject var clipTime: ClipTime
 
@@ -91,7 +92,7 @@ struct SharingView: View {
         VStack {
             title
             tabView
-            SharingFooterView(clipTime: clipTime, option: $shareable.option, isExporting: $isExporting, destinations: destinations, style: shareable.style, clipUUID: clipUUID, source: source)
+            SharingFooterView(clipTime: clipTime, option: $shareable.option, isExporting: $isExporting, destinations: destinations, style: shareable.style, clipUUID: clipUUID, source: source, quote: quote)
         }
         .onAppear {
             var properties: [String: Sendable] = [:]
@@ -126,6 +127,12 @@ struct SharingView: View {
         .foregroundStyle(Color.white)
         .task {
             episodeArtworkUrl = await shareable.option.loadEpisodeArtworkUrl()
+        }
+        // Resolved at presentation (and re-resolved when the option's identity
+        // changes, e.g. a clip trimmed via Edit → Next); the share tap uses the
+        // current value and never awaits — unresolved simply shares without a quote.
+        .task(id: shareable.option.quoteResolutionKey) {
+            quote = await ShareQuoteBuilder.quote(for: shareable.option)
         }
     }
 

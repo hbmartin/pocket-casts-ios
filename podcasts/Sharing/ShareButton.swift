@@ -12,6 +12,9 @@ struct ShareButton: View {
     let clipTime: ClipTime
     let clipUUID: String
     let source: AnalyticsSource
+    /// Transcript quote resolved at modal presentation; the tap uses whatever
+    /// has resolved by now and never awaits it.
+    var quote: String?
 
     var frame: CurrentValueSubject<CGRect, Never> = .init(.zero)
 
@@ -22,7 +25,7 @@ struct ShareButton: View {
             isExporting = true
             shareTask = Task { @MainActor in
                 do {
-                    try await destination.share(option, style: style, clipTime: clipTime, clipUUID: clipUUID, progress: $progress, presentFrom: frame, source: source)
+                    try await destination.share(option, style: style, clipTime: clipTime, clipUUID: clipUUID, progress: $progress, presentFrom: frame, source: source, quote: quote)
                 } catch {
                     if Task.isCancelled { return }
                     Toast.show(L10n.sharingClipExportFailedDescription(error.localizedDescription))

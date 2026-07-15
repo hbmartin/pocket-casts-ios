@@ -38,16 +38,17 @@ enum ShareDestination: Hashable {
                clipUUID: String,
                progress: Binding<Float?>,
                presentFrom rect: CurrentValueSubject<CGRect, Never>,
-               source: AnalyticsSource) async throws {
+               source: AnalyticsSource,
+               quote: String? = nil) async throws {
         switch self {
         case .copyLink:
-            UIPasteboard.general.string = option.shareURL
+            UIPasteboard.general.string = option.shareURL(quote: quote)
             Toast.show(L10n.shareCopiedToClipboard)
             ShareDestination.logClipShared(option: option, style: style, clipUUID: clipUUID, source: source)
             ShareDestination.logHighlightQuoteShared(option: option, style: style, source: source)
-            ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source)
+            ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source, hasQuote: quote != nil)
         case .systemSheet(let vc):
-            let data = try await option.shareData(style: style, destination: self, clipUUID: clipUUID, progress: progress)
+            let data = try await option.shareData(style: style, destination: self, clipUUID: clipUUID, progress: progress, quote: quote)
             let activityViewController = UIActivityViewController(activityItems: data, applicationActivities: nil)
             activityViewController.popoverPresentationController?.sourceView = vc.view
             activityViewController.popoverPresentationController?.sourceRect = rect.value
@@ -60,7 +61,7 @@ enum ShareDestination: Hashable {
             vc.presentedViewController?.present(activityViewController, animated: true, completion: {
                 ShareDestination.logClipShared(option: option, style: style, clipUUID: clipUUID, source: source)
                 ShareDestination.logHighlightQuoteShared(option: option, style: style, source: source)
-                ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source)
+                ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source, hasQuote: quote != nil)
             })
         }
     }
@@ -171,11 +172,12 @@ extension ShareDestination {
         }
     }
 
-    private static func logPodcastShared(style: ShareImageStyle, option: SharingModal.Option, destination: Self, source: AnalyticsSource) {
+    private static func logPodcastShared(style: ShareImageStyle, option: SharingModal.Option, destination: Self, source: AnalyticsSource, hasQuote: Bool = false) {
         let properties: [String: any Sendable] = [
             "type": type(style: style, option: option, destination: destination),
             "action": destination.analyticsDescription,
-            "card_type": cardType(style: style)
+            "card_type": cardType(style: style),
+            "has_quote": hasQuote
         ]
 
         Analytics.track(.podcastShared, source: source, properties: properties)

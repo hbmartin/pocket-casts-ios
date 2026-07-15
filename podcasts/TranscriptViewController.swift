@@ -51,6 +51,9 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     private var isSearching = false
     private var searchIndicesResult: [Int] = []
     private var currentSearchIndex = 0
+    /// Quote from an inbound quote share link that arrived before the transcript
+    /// finished loading; consumed one-shot by `show(transcript:resetPosition:)`.
+    private var pendingQuoteToFlash: String?
     private var searchTerm: String?
 
     private let debounce = Debounce(delay: Constants.defaultDebounceTime)
@@ -874,6 +877,10 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         if resetPosition {
             transcriptView.setContentOffset(.zero, animated: false)
         }
+        if let pendingQuote = pendingQuoteToFlash {
+            pendingQuoteToFlash = nil
+            flashQuote(pendingQuote)
+        }
     }
 
     private func makeStyle(alignment: NSTextAlignment = .natural) -> [NSAttributedString.Key: Any] {
@@ -1118,6 +1125,9 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         if FeatureFlag.diarizedTranscription.enabled {
             addTranscriptionObservers()
         }
+        addCustomObserver(TranscriptQuoteHighlightRequested.self) { [weak self] message in
+            self?.handleQuoteHighlightRequest(message)
+        }
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         if FeatureFlag.syncedTranscripts.enabled {
@@ -1338,6 +1348,37 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
             "from_position_seconds": Int(fromPosition),
             "to_position_seconds": Int(seekTime)
         ])
+    }
+
+    // MARK: - Quote flash (inbound quote share links)
+
+    private func handleQuoteHighlightRequest(_ message: TranscriptQuoteHighlightRequested) {
+        guard message.episodeUuid == playbackManager.episodeUUID else { return }
+        if transcript != nil {
+            flashQuote(message.quote)
+        } else {
+            // Transcript still loading; applied one-shot by show(transcript:).
+            pendingQuoteToFlash = message.quote
+        }
+    }
+
+    /// Scrolls to the quoted line and briefly paints it with the search
+    /// highlight style, fading back via a full re-style. Skipped entirely while
+    /// an in-transcript search session is active — never fight the user.
+    private func flashQuote(_ quote: String) {
+        guard !isSearching, let transcript else { return }
+
+        let range = TranscriptQuoteMatcher.range(ofQuote: quote, in: transcript.plainText)
+        track(.transcriptQuoteFlashed, properties: ["matched": range != nil])
+        guard let range, NSMaxRange(range) <= transcriptView.textStorage.length else { return }
+
+        transcriptView.scrollToRange(range)
+        let attributes = TranscriptSearchHighlightStyle.attributes(showFromEpisode: showFromEpisode, isCurrent: true)
+        transcriptView.textStorage.addAttributes(attributes, range: range)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.seconds) { [weak self] in
+            guard let self, !self.isSearching else { return }
+            self.refreshText()
+        }
     }
 
     // MARK: - Search

@@ -447,7 +447,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
-    func navigateToEpisode(_ episodeUuid: String, podcastUuid: String?, timestamp: TimeInterval?) {
+    func navigateToEpisode(_ episodeUuid: String, podcastUuid: String?, timestamp: TimeInterval?, quote: String?) {
         if let navController = selectedViewController as? UINavigationController {
             navController.dismiss(animated: false, completion: nil)
 
@@ -457,7 +457,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
                 if EpisodeLoadingController.needsLoading(uuid: episodeUuid), let podcastUuid {
                     let episodeController = EpisodeLoadingController(episodeUuid: episodeUuid,
                                                                      podcastUuid: podcastUuid,
-                                                                     timestamp: timestamp)
+                                                                     timestamp: timestamp,
+                                                                     quote: quote)
 
                     let nav = UINavigationController(rootViewController: episodeController)
                     nav.modalPresentationStyle = .formSheet
@@ -465,7 +466,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
                     navController.present(nav, animated: true)
                 } else {
-                    let episodeController = EpisodeDetailViewController(episodeUuid: episodeUuid, source: .homeScreenWidget, timestamp: timestamp)
+                    let episodeController = EpisodeDetailViewController(episodeUuid: episodeUuid, source: .homeScreenWidget, timestamp: timestamp, quote: quote)
                     episodeController.modalPresentationStyle = .formSheet
 
                     navController.present(episodeController, animated: true)

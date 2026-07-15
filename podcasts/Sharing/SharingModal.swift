@@ -233,8 +233,8 @@ extension SharingModal.Option {
     }
 
     @MainActor
-    func shareData(style: ShareImageStyle, destination: ShareDestination, clipUUID: String, progress: Binding<Float?>) async throws -> [ActivityItemSourceItem] {
-        let url = URL(string: shareURL) as NSURL?
+    func shareData(style: ShareImageStyle, destination: ShareDestination, clipUUID: String, progress: Binding<Float?>, quote: String? = nil) async throws -> [ActivityItemSourceItem] {
+        let url = URL(string: shareURL(quote: quote)) as NSURL?
         let episodeArtwork = await loadEpisodeArtworkUrl()
         let info = imageInfo(episodeArtworkUrl: episodeArtwork)
 
@@ -247,7 +247,8 @@ extension SharingModal.Option {
             media = ShareImageView(info: info, style: style, angle: .constant(0)).frame(width: size.width, height: size.height).snapshot(scale: Constants.exportedAssetScale)
         }
 
-        return [url.map { ActivityItemSourceItem(item: $0, disallowedActivityTypes: [.airDrop]) },
+        return [shareText(quote: quote).map { ActivityItemSourceItem(item: $0 as NSString) },
+                url.map { ActivityItemSourceItem(item: $0, disallowedActivityTypes: [.airDrop]) },
                 media.map { ActivityItemSourceItem(item: $0) }].compactMap({ $0 })
     }
 
@@ -319,6 +320,30 @@ extension SharingModal.Option {
         case .clipShare(let episode, let clipTime, _):
             return episode.shareURL + "?t=\(clipTime.start.formatted(formatter)),\(clipTime.end.formatted(formatter))"
         }
+    }
+
+    /// The share link with the transcript quote appended as `q`. Appended by
+    /// string concatenation — never `URLComponents` — so the existing `t`
+    /// formatting stays byte-identical; a nil/unresolved quote yields exactly
+    /// `shareURL`. pca.st ignores the parameter; this app reads it back on
+    /// inbound links to flash the quoted line after seeking.
+    func shareURL(quote: String?) -> String {
+        guard let quote else { return shareURL }
+        let truncated = ShareQuoteBuilder.urlQuote(quote)
+        guard !truncated.isEmpty else { return shareURL }
+        let separator = shareURL.contains("?") ? "&" : "?"
+        return shareURL + separator + "q=" + ShareQuoteBuilder.percentEncodedURLQuote(truncated)
+    }
+
+    /// The human-readable share message: “quote” — Episode, Podcast. Uses the
+    /// same truncated form as the URL so the two never disagree.
+    func shareText(quote: String?) -> String? {
+        guard let quote else { return nil }
+        let truncated = ShareQuoteBuilder.urlQuote(quote)
+        guard !truncated.isEmpty else { return nil }
+        let attribution = [title, description].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
+        guard !attribution.isEmpty else { return "\u{201C}\(truncated)\u{201D}" }
+        return "\u{201C}\(truncated)\u{201D} — \(attribution)"
     }
 }
 

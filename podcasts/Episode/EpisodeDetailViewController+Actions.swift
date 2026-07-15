@@ -111,6 +111,13 @@ extension EpisodeDetailViewController {
             }
             PlaybackActionHelper.play(episode: episode, playlist: fromPlaylist)
         }
+
+        // Inbound quote link: ask the transcript view (if open on this episode)
+        // to scroll to and flash the quoted line. Best-effort, one-shot.
+        if let quote {
+            NotificationCenter.postOnMainThread(TranscriptQuoteHighlightRequested(episodeUuid: episode.uuid, quote: quote))
+            self.quote = nil
+        }
     }
 
     @IBAction func downloadTapped(_ sender: UIButton) {
