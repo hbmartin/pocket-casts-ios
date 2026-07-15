@@ -835,6 +835,17 @@ enum AnalyticsEvent: String {
     case spotlightReconcileCompleted
     case searchTranscriptsIntentRan
 
+    // MARK: - Semantic Transcript Search
+
+    case transcriptEmbeddingAssetsUnavailable
+    case transcriptEmbeddingBackfillCompleted
+    case librarySearchTranscriptPlayedFilterToggled
+
+    // MARK: - Entity Mentions
+
+    case episodeDetailMentionsShown
+    case episodeDetailMentionTapped
+
     // MARK: - Headphone Controls
     case settingsHeadphoneControlsShown
     case settingsHeadphoneControlsNextChanged

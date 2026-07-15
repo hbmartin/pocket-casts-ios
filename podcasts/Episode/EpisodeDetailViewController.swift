@@ -64,6 +64,7 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     /// the summary card (or the transcript excerpt) and before the show notes
     /// (see +ShowNotes).
     var episodeCreditsContainer: UIView?
+    var episodeMentionsContainer: UIView?
 
     @IBOutlet var mainScrollView: UIScrollView! {
         didSet {

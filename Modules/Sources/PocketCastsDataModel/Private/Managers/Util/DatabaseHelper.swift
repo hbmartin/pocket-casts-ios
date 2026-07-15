@@ -276,6 +276,50 @@ class DatabaseHelper {
                 "CREATE INDEX pending_transcript_upload_episode_kind ON PendingTranscriptUpload (episodeUuid, kind);", values: nil)
             try db.executeUpdate(
                 "CREATE INDEX pending_transcript_upload_due ON PendingTranscriptUpload (nextAttemptAt, addedDate);", values: nil)
+        },
+
+        // The semantic-search sidecar: per-window embedding vectors keyed to the
+        // same (episodeUuid, source) identity as the FTS corpus, plus per-pair
+        // model bookkeeping. Plain tables (no FTS5 fragility); eviction cascades
+        // from TranscriptSearchDataManager inside its own write transactions.
+        // See docs/adr/0004-windowed-embedding-sidecar.md.
+        SchemaMigration(toVersion: 84) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS TranscriptEmbedding (
+                episodeUuid TEXT NOT NULL,
+                source TEXT NOT NULL,
+                windowIndex INTEGER NOT NULL,
+                podcastUuid TEXT,
+                startSegmentIndex INTEGER NOT NULL,
+                endSegmentIndex INTEGER NOT NULL,
+                startTime REAL NOT NULL,
+                endTime REAL,
+                textPreview TEXT NOT NULL DEFAULT '',
+                vector BLOB NOT NULL,
+                PRIMARY KEY (episodeUuid, source, windowIndex)
+            );
+            """, values: nil)
+            // Serves the same-podcast, earlier-episodes candidate filter
+            // (callback detection) without a full-table scan.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS transcript_embedding_podcast
+            ON TranscriptEmbedding (podcastUuid, episodeUuid);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS TranscriptEmbeddingMeta (
+                episodeUuid TEXT NOT NULL,
+                source TEXT NOT NULL,
+                podcastUuid TEXT,
+                modelIdentifier TEXT NOT NULL,
+                modelRevision INTEGER NOT NULL,
+                dimension INTEGER NOT NULL,
+                quantization TEXT NOT NULL,
+                windowCount INTEGER NOT NULL DEFAULT 0,
+                vectorBytes INTEGER NOT NULL DEFAULT 0,
+                embeddedDate REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY (episodeUuid, source)
+            );
+            """, values: nil)
         }
     ]
 

@@ -103,6 +103,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Task(priority: .utility) {
             await SpotlightIndexCoordinator.shared.reconcileIfDue()
         }
+        // embed any indexed transcripts that don't have current-model vectors
+        // yet (also the lazy re-embed path after an OS model bump)
+        TranscriptEmbeddingBackfill.shared.kickAfterLaunch()
 
         NotificationsHelper.shared.register(checkToken: false)
 

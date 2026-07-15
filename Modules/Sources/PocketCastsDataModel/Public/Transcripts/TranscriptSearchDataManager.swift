@@ -139,6 +139,9 @@ public struct TranscriptSearchDataManager: Sendable {
 
         let textBytes = segments.reduce(into: Int64(0)) { $0 += Int64($1.text.utf8.count) }
         let success = dbQueue.write { db in
+            // Re-indexing shifts segment ordinals, so any stored embedding
+            // windows for the pair are stale; the backfill re-embeds.
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, episodeUuid: episodeUuid, source: source)
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
             try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ? AND source = ?", arguments: [episodeUuid, source.rawValue])
 
@@ -191,11 +194,13 @@ public struct TranscriptSearchDataManager: Sendable {
         return dbQueue.count(TranscriptSearchIndexMetaRecord.self)
     }
 
-    /// Drops the (episode, source) pair's segments and bookkeeping row.
+    /// Drops the (episode, source) pair's segments, bookkeeping row, and
+    /// embedding windows (the sidecar always mirrors the corpus).
     @discardableResult
     public func delete(episodeUuid: String, source: TranscriptSource) -> Bool {
         guard isAvailable else { return false }
         let success = dbQueue.write { db in
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, episodeUuid: episodeUuid, source: source)
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
             try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ? AND source = ?", arguments: [episodeUuid, source.rawValue])
             _ = try TranscriptSearchIndexMetaRecord
@@ -207,11 +212,13 @@ public struct TranscriptSearchDataManager: Sendable {
         return success
     }
 
-    /// Drops every indexed segment and bookkeeping row, optionally for one source only.
+    /// Drops every indexed segment, bookkeeping row, and embedding window,
+    /// optionally for one source only.
     @discardableResult
     public func removeAll(source: TranscriptSource? = nil) -> Bool {
         guard isAvailable else { return false }
         let success = dbQueue.write { db in
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, source: source)
             if let source {
                 // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
                 try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE source = ?", arguments: [source.rawValue])
@@ -443,6 +450,7 @@ public struct TranscriptSearchDataManager: Sendable {
             """, arguments: [TranscriptSource.provided.rawValue, keptEpisodeUuid])
             guard let victimUuid else { return }
 
+            try TranscriptEmbeddingDataManager.deleteRows(db: db, episodeUuid: victimUuid, source: .provided)
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - FTS5 virtual table has no GRDB query-interface equivalent
             try db.execute(sql: "DELETE FROM \(Self.ftsTableName) WHERE episodeUuid = ? AND source = ?", arguments: [victimUuid, TranscriptSource.provided.rawValue])
             _ = try TranscriptSearchIndexMetaRecord

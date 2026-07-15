@@ -57,6 +57,7 @@ nonisolated final class TranscriptSearchIndexer: Sendable {
         if indexed {
             FileLog.shared.addMessage("TranscriptSearchIndexer: indexed \(cues.count) segments for episode \(episodeUuid)")
             NotificationCenter.postOnMainThread(TranscriptIndexUpdated(uuid: episodeUuid))
+            TranscriptEmbeddingPipeline.shared.embedIfNeeded(episodeUuid: episodeUuid, podcastUuid: podcastUuid, source: .provided)
         }
         return indexed
     }
