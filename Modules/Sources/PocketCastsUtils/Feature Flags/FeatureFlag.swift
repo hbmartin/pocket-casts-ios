@@ -137,6 +137,13 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see plans/transcript-based-ideas.md item 5.
     case episodeMentions
 
+    /// Social identity foundation: opt-in public profiles keyed to the account
+    /// uuid, immutable handles (pca.st/u/<handle>), per-field privacy, and
+    /// block/mute/report. Ships DARK — the backend must be live in production
+    /// before this is enabled (remote key `social_profiles` is the kill switch);
+    /// see docs/Social.md and ADR-0005/0006/0007.
+    case socialProfiles
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -219,6 +226,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .episodeMentions:
             BuildEnvironment.current != .appStore
+        case .socialProfiles:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -298,6 +307,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Embeds indexed transcripts on device so transcript search also matches paraphrases, with a Played-only filter and recency boost. Uses storage for vectors and CPU while embedding. Medium risk."
         case .episodeMentions:
             "'Mentioned in this episode' card extracting people, books, products, websites and places from the transcript with tap-to-seek links, generated on device. Medium risk."
+        case .socialProfiles:
+            "Social identity foundation: opt-in public profiles with an immutable @handle (pca.st/u/<handle>), per-field privacy, and block/mute/report. Ships dark — requires the social backend to be live in production; enabling early will fail. High risk."
         }
     }
 

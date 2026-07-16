@@ -320,6 +320,28 @@ class DatabaseHelper {
                 PRIMARY KEY (episodeUuid, source)
             );
             """, values: nil)
+        },
+
+        // Social graph: the local mirror of block/mute relationships so the UI
+        // can filter instantly (the server stays authoritative). One row per
+        // (targetUserId, type); type 0 = block, 1 = mute. targetHandle is a
+        // convenience for display and may be stale. Device-local only — nothing
+        // here syncs. See docs/SocialModeration.md and ADR-0007.
+        SchemaMigration(toVersion: 85) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS SocialRelationship (
+                targetUserId TEXT NOT NULL,
+                targetHandle TEXT NOT NULL DEFAULT '',
+                type INTEGER NOT NULL DEFAULT 0,
+                addedDate REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY (targetUserId, type)
+            );
+            """, values: nil)
+            // Lists all blocks or all mutes, newest first, without a full scan.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS social_relationship_type
+            ON SocialRelationship (type, addedDate);
+            """, values: nil)
         }
     ]
 
