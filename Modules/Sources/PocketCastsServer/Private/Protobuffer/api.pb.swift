@@ -39,6 +39,203 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
   typealias Version = _2
 }
 
+/// Per-field profile visibility. Stored three-tier from day one; the Phase-1 UI
+/// only writes PRIVATE/PUBLIC, and FOLLOWERS_ONLY unlocks with the Phase-2 graph.
+/// UNSPECIFIED (0, the proto3 default) is treated as PRIVATE by every reader.
+nonisolated enum Api_SocialVisibility: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case `private` // = 1
+  case `public` // = 2
+  case followersOnly // = 3
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .private
+    case 2: self = .public
+    case 3: self = .followersOnly
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .private: return 1
+    case .public: return 2
+    case .followersOnly: return 3
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_SocialVisibility] = [
+    .unspecified,
+    .private,
+    .public,
+    .followersOnly,
+  ]
+
+}
+
+/// Result of a handle availability check / claim attempt. TOMBSTONED and RESERVED
+/// are permanently unavailable (deleted accounts and the reserved-word blocklist).
+nonisolated enum Api_HandleStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case available // = 1
+  case taken // = 2
+  case reserved // = 3
+  case tombstoned // = 4
+  case invalid // = 5
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .available
+    case 2: self = .taken
+    case 3: self = .reserved
+    case 4: self = .tombstoned
+    case 5: self = .invalid
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .available: return 1
+    case .taken: return 2
+    case .reserved: return 3
+    case .tombstoned: return 4
+    case .invalid: return 5
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_HandleStatus] = [
+    .unspecified,
+    .available,
+    .taken,
+    .reserved,
+    .tombstoned,
+    .invalid,
+  ]
+
+}
+
+/// Why a user or content item is being reported into the triage queue.
+nonisolated enum Api_ReportReason: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case spam // = 1
+  case harassment // = 2
+  case hate // = 3
+  case sexual // = 4
+  case impersonation // = 5
+  case other // = 6
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .spam
+    case 2: self = .harassment
+    case 3: self = .hate
+    case 4: self = .sexual
+    case 5: self = .impersonation
+    case 6: self = .other
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .spam: return 1
+    case .harassment: return 2
+    case .hate: return 3
+    case .sexual: return 4
+    case .impersonation: return 5
+    case .other: return 6
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_ReportReason] = [
+    .unspecified,
+    .spam,
+    .harassment,
+    .hate,
+    .sexual,
+    .impersonation,
+    .other,
+  ]
+
+}
+
+/// Result of the mandatory CSAM/nudity scan on an uploaded avatar. This is the
+/// response only — the upload request body is raw image bytes (octet-stream),
+/// not a protobuf message.
+nonisolated enum Api_AvatarUploadStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case accepted // = 1
+  case rejectedScan // = 2
+  case rejectedFormat // = 3
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .accepted
+    case 2: self = .rejectedScan
+    case 3: self = .rejectedFormat
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .accepted: return 1
+    case .rejectedScan: return 2
+    case .rejectedFormat: return 3
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_AvatarUploadStatus] = [
+    .unspecified,
+    .accepted,
+    .rejectedScan,
+    .rejectedFormat,
+  ]
+
+}
+
 nonisolated struct Api_UserLoginRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -8988,9 +9185,345 @@ nonisolated struct Api_YearHistoryResponse: Sendable {
   init() {}
 }
 
+/// The full social profile of the calling account: every field plus every
+/// visibility tier. Keyed to the immutable account uuid; the handle is permanent
+/// (immutable in the user UI). display_name has no tier — it is always public
+/// once joined, as the addressable identity.
+nonisolated struct Api_SocialProfile: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// immutable account uuid (ServerSettings.userId)
+  var userID: String = String()
+
+  /// immutable, lowercase [a-z0-9_], 3-30
+  var handle: String = String()
+
+  /// always public once joined
+  var displayName: String = String()
+
+  var bio: String = String()
+
+  /// CDN URL of the scanned avatar; empty if none
+  var avatarURL: String = String()
+
+  var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_createdAt = newValue}
+  }
+  /// Returns true if `createdAt` has been explicitly set.
+  var hasCreatedAt: Bool {self._createdAt != nil}
+  /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
+  mutating func clearCreatedAt() {self._createdAt = nil}
+
+  /// public-identity terms accepted at join
+  var termsVersion: Int32 = 0
+
+  var avatarVisibility: Api_SocialVisibility = .unspecified
+
+  var bioVisibility: Api_SocialVisibility = .unspecified
+
+  var followedShowsVisibility: Api_SocialVisibility = .unspecified
+
+  var topPodcastsVisibility: Api_SocialVisibility = .unspecified
+
+  var statsVisibility: Api_SocialVisibility = .unspecified
+
+  var historyVisibility: Api_SocialVisibility = .unspecified
+
+  var presenceVisibility: Api_SocialVisibility = .unspecified
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+/// POST social/handle/availability — the rate-limited typeahead availability check.
+nonisolated struct Api_HandleAvailabilityRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var handle: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_HandleAvailabilityResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var status: Api_HandleStatus = .unspecified
+
+  /// server-normalized form the client should display
+  var normalizedHandle: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// POST social/join — claims the handle and creates the profile. Every visibility
+/// field defaults PRIVATE server-side; display_name is the only public field.
+nonisolated struct Api_JoinRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var handle: String = String()
+
+  var acceptedTermsVersion: Int32 = 0
+
+  /// candidate, seeded from the device-local Share Profile
+  var displayName: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_JoinResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var profile: Api_SocialProfile {
+    get {_profile ?? Api_SocialProfile()}
+    set {_profile = newValue}
+  }
+  /// Returns true if `profile` has been explicitly set.
+  var hasProfile: Bool {self._profile != nil}
+  /// Clears the value of `profile`. Subsequent reads from it will return its default value.
+  mutating func clearProfile() {self._profile = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _profile: Api_SocialProfile? = nil
+}
+
+/// POST social/profile/get (empty request) and social/profile/update. The handle
+/// is never accepted on update (immutable); display_name/bio re-run the text
+/// pre-filter server-side.
+nonisolated struct Api_ProfileGetRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_ProfileUpdateRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var displayName: String = String()
+
+  var bio: String = String()
+
+  var avatarVisibility: Api_SocialVisibility = .unspecified
+
+  var bioVisibility: Api_SocialVisibility = .unspecified
+
+  var followedShowsVisibility: Api_SocialVisibility = .unspecified
+
+  var topPodcastsVisibility: Api_SocialVisibility = .unspecified
+
+  var statsVisibility: Api_SocialVisibility = .unspecified
+
+  var historyVisibility: Api_SocialVisibility = .unspecified
+
+  var presenceVisibility: Api_SocialVisibility = .unspecified
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_ProfileResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var profile: Api_SocialProfile {
+    get {_profile ?? Api_SocialProfile()}
+    set {_profile = newValue}
+  }
+  /// Returns true if `profile` has been explicitly set.
+  var hasProfile: Bool {self._profile != nil}
+  /// Clears the value of `profile`. Subsequent reads from it will return its default value.
+  mutating func clearProfile() {self._profile = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _profile: Api_SocialProfile? = nil
+}
+
+/// GET social/u/{handle} — optionally authenticated. The server applies per-field
+/// visibility AND the viewer's block relationship (a blocked viewer reads as
+/// not-found); only fields the viewer may see are populated. Powers pca.st/u/<handle>.
+nonisolated struct Api_PublicProfileRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var handle: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_PublicProfileResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var userID: String = String()
+
+  var handle: String = String()
+
+  var displayName: String = String()
+
+  /// empty if bio_visibility hides it from this viewer
+  var bio: String = String()
+
+  /// empty if avatar_visibility hides it
+  var avatarURL: String = String()
+
+  var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_createdAt = newValue}
+  }
+  /// Returns true if `createdAt` has been explicitly set.
+  var hasCreatedAt: Bool {self._createdAt != nil}
+  /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
+  mutating func clearCreatedAt() {self._createdAt = nil}
+
+  /// section presence implies the viewer may see it
+  var hasStats_p: Bool = false
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+/// POST social/avatar response (request body is raw image bytes; see enum above).
+nonisolated struct Api_AvatarUploadResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var status: Api_AvatarUploadStatus = .unspecified
+
+  /// populated only on ACCEPTED
+  var avatarURL: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// Moderation + safety. block = mutual invisibility; mute = one-way hide;
+/// report = a flag into the triage queue. target_user_id is the immutable uuid.
+nonisolated struct Api_BlockRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var targetUserID: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_MuteRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var targetUserID: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_ReportRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var targetUserID: String = String()
+
+  var reason: Api_ReportReason = .unspecified
+
+  /// pointer/description of the offending content
+  var context: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// POST social/erase — GDPR erasure: clears PII, tombstones the handle.
+nonisolated struct Api_EraseRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// Simple ack shared by block/unblock/mute/unmute/report/erase.
+nonisolated struct Api_SocialAck: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var success: Bool = false
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "api"
+
+nonisolated extension Api_SocialVisibility: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SOCIAL_VISIBILITY_UNSPECIFIED\0\u{1}SOCIAL_VISIBILITY_PRIVATE\0\u{1}SOCIAL_VISIBILITY_PUBLIC\0\u{1}SOCIAL_VISIBILITY_FOLLOWERS_ONLY\0")
+}
+
+nonisolated extension Api_HandleStatus: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0HANDLE_STATUS_UNSPECIFIED\0\u{1}HANDLE_STATUS_AVAILABLE\0\u{1}HANDLE_STATUS_TAKEN\0\u{1}HANDLE_STATUS_RESERVED\0\u{1}HANDLE_STATUS_TOMBSTONED\0\u{1}HANDLE_STATUS_INVALID\0")
+}
+
+nonisolated extension Api_ReportReason: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0REPORT_REASON_UNSPECIFIED\0\u{1}REPORT_REASON_SPAM\0\u{1}REPORT_REASON_HARASSMENT\0\u{1}REPORT_REASON_HATE\0\u{1}REPORT_REASON_SEXUAL\0\u{1}REPORT_REASON_IMPERSONATION\0\u{1}REPORT_REASON_OTHER\0")
+}
+
+nonisolated extension Api_AvatarUploadStatus: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0AVATAR_UPLOAD_STATUS_UNSPECIFIED\0\u{1}AVATAR_UPLOAD_STATUS_ACCEPTED\0\u{1}AVATAR_UPLOAD_STATUS_REJECTED_SCAN\0\u{1}AVATAR_UPLOAD_STATUS_REJECTED_FORMAT\0")
+}
 
 nonisolated extension Api_UserLoginRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserLoginRequest"
@@ -20845,6 +21378,645 @@ nonisolated extension Api_YearHistoryResponse: SwiftProtobuf.Message, SwiftProto
   }
 
   static func ==(lhs: Api_YearHistoryResponse, rhs: Api_YearHistoryResponse) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialProfile: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialProfile"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}terms_version\0\u{3}avatar_visibility\0\u{3}bio_visibility\0\u{3}followed_shows_visibility\0\u{3}top_podcasts_visibility\0\u{3}stats_visibility\0\u{3}history_visibility\0\u{3}presence_visibility\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.userID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.bio) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.avatarURL) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.termsVersion) }()
+      case 8: try { try decoder.decodeSingularEnumField(value: &self.avatarVisibility) }()
+      case 9: try { try decoder.decodeSingularEnumField(value: &self.bioVisibility) }()
+      case 10: try { try decoder.decodeSingularEnumField(value: &self.followedShowsVisibility) }()
+      case 11: try { try decoder.decodeSingularEnumField(value: &self.topPodcastsVisibility) }()
+      case 12: try { try decoder.decodeSingularEnumField(value: &self.statsVisibility) }()
+      case 13: try { try decoder.decodeSingularEnumField(value: &self.historyVisibility) }()
+      case 14: try { try decoder.decodeSingularEnumField(value: &self.presenceVisibility) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.userID.isEmpty {
+      try visitor.visitSingularStringField(value: self.userID, fieldNumber: 1)
+    }
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 2)
+    }
+    if !self.displayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 3)
+    }
+    if !self.bio.isEmpty {
+      try visitor.visitSingularStringField(value: self.bio, fieldNumber: 4)
+    }
+    if !self.avatarURL.isEmpty {
+      try visitor.visitSingularStringField(value: self.avatarURL, fieldNumber: 5)
+    }
+    try { if let v = self._createdAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+    } }()
+    if self.termsVersion != 0 {
+      try visitor.visitSingularInt32Field(value: self.termsVersion, fieldNumber: 7)
+    }
+    if self.avatarVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.avatarVisibility, fieldNumber: 8)
+    }
+    if self.bioVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.bioVisibility, fieldNumber: 9)
+    }
+    if self.followedShowsVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.followedShowsVisibility, fieldNumber: 10)
+    }
+    if self.topPodcastsVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.topPodcastsVisibility, fieldNumber: 11)
+    }
+    if self.statsVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.statsVisibility, fieldNumber: 12)
+    }
+    if self.historyVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.historyVisibility, fieldNumber: 13)
+    }
+    if self.presenceVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.presenceVisibility, fieldNumber: 14)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialProfile, rhs: Api_SocialProfile) -> Bool {
+    if lhs.userID != rhs.userID {return false}
+    if lhs.handle != rhs.handle {return false}
+    if lhs.displayName != rhs.displayName {return false}
+    if lhs.bio != rhs.bio {return false}
+    if lhs.avatarURL != rhs.avatarURL {return false}
+    if lhs._createdAt != rhs._createdAt {return false}
+    if lhs.termsVersion != rhs.termsVersion {return false}
+    if lhs.avatarVisibility != rhs.avatarVisibility {return false}
+    if lhs.bioVisibility != rhs.bioVisibility {return false}
+    if lhs.followedShowsVisibility != rhs.followedShowsVisibility {return false}
+    if lhs.topPodcastsVisibility != rhs.topPodcastsVisibility {return false}
+    if lhs.statsVisibility != rhs.statsVisibility {return false}
+    if lhs.historyVisibility != rhs.historyVisibility {return false}
+    if lhs.presenceVisibility != rhs.presenceVisibility {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_HandleAvailabilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".HandleAvailabilityRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}handle\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_HandleAvailabilityRequest, rhs: Api_HandleAvailabilityRequest) -> Bool {
+    if lhs.handle != rhs.handle {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_HandleAvailabilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".HandleAvailabilityResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}status\0\u{3}normalized_handle\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.status) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.normalizedHandle) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.status != .unspecified {
+      try visitor.visitSingularEnumField(value: self.status, fieldNumber: 1)
+    }
+    if !self.normalizedHandle.isEmpty {
+      try visitor.visitSingularStringField(value: self.normalizedHandle, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_HandleAvailabilityResponse, rhs: Api_HandleAvailabilityResponse) -> Bool {
+    if lhs.status != rhs.status {return false}
+    if lhs.normalizedHandle != rhs.normalizedHandle {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_JoinRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".JoinRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}handle\0\u{3}accepted_terms_version\0\u{3}display_name\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.acceptedTermsVersion) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 1)
+    }
+    if self.acceptedTermsVersion != 0 {
+      try visitor.visitSingularInt32Field(value: self.acceptedTermsVersion, fieldNumber: 2)
+    }
+    if !self.displayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_JoinRequest, rhs: Api_JoinRequest) -> Bool {
+    if lhs.handle != rhs.handle {return false}
+    if lhs.acceptedTermsVersion != rhs.acceptedTermsVersion {return false}
+    if lhs.displayName != rhs.displayName {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_JoinResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".JoinResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}profile\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._profile) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._profile {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_JoinResponse, rhs: Api_JoinResponse) -> Bool {
+    if lhs._profile != rhs._profile {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_ProfileGetRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".ProfileGetRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_ProfileGetRequest, rhs: Api_ProfileGetRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_ProfileUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".ProfileUpdateRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_visibility\0\u{3}bio_visibility\0\u{3}followed_shows_visibility\0\u{3}top_podcasts_visibility\0\u{3}stats_visibility\0\u{3}history_visibility\0\u{3}presence_visibility\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.bio) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.avatarVisibility) }()
+      case 4: try { try decoder.decodeSingularEnumField(value: &self.bioVisibility) }()
+      case 5: try { try decoder.decodeSingularEnumField(value: &self.followedShowsVisibility) }()
+      case 6: try { try decoder.decodeSingularEnumField(value: &self.topPodcastsVisibility) }()
+      case 7: try { try decoder.decodeSingularEnumField(value: &self.statsVisibility) }()
+      case 8: try { try decoder.decodeSingularEnumField(value: &self.historyVisibility) }()
+      case 9: try { try decoder.decodeSingularEnumField(value: &self.presenceVisibility) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.displayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 1)
+    }
+    if !self.bio.isEmpty {
+      try visitor.visitSingularStringField(value: self.bio, fieldNumber: 2)
+    }
+    if self.avatarVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.avatarVisibility, fieldNumber: 3)
+    }
+    if self.bioVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.bioVisibility, fieldNumber: 4)
+    }
+    if self.followedShowsVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.followedShowsVisibility, fieldNumber: 5)
+    }
+    if self.topPodcastsVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.topPodcastsVisibility, fieldNumber: 6)
+    }
+    if self.statsVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.statsVisibility, fieldNumber: 7)
+    }
+    if self.historyVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.historyVisibility, fieldNumber: 8)
+    }
+    if self.presenceVisibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.presenceVisibility, fieldNumber: 9)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_ProfileUpdateRequest, rhs: Api_ProfileUpdateRequest) -> Bool {
+    if lhs.displayName != rhs.displayName {return false}
+    if lhs.bio != rhs.bio {return false}
+    if lhs.avatarVisibility != rhs.avatarVisibility {return false}
+    if lhs.bioVisibility != rhs.bioVisibility {return false}
+    if lhs.followedShowsVisibility != rhs.followedShowsVisibility {return false}
+    if lhs.topPodcastsVisibility != rhs.topPodcastsVisibility {return false}
+    if lhs.statsVisibility != rhs.statsVisibility {return false}
+    if lhs.historyVisibility != rhs.historyVisibility {return false}
+    if lhs.presenceVisibility != rhs.presenceVisibility {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_ProfileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".ProfileResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}profile\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._profile) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._profile {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_ProfileResponse, rhs: Api_ProfileResponse) -> Bool {
+    if lhs._profile != rhs._profile {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_PublicProfileRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PublicProfileRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}handle\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_PublicProfileRequest, rhs: Api_PublicProfileRequest) -> Bool {
+    if lhs.handle != rhs.handle {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PublicProfileResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.userID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.bio) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.avatarURL) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
+      case 7: try { try decoder.decodeSingularBoolField(value: &self.hasStats_p) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.userID.isEmpty {
+      try visitor.visitSingularStringField(value: self.userID, fieldNumber: 1)
+    }
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 2)
+    }
+    if !self.displayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 3)
+    }
+    if !self.bio.isEmpty {
+      try visitor.visitSingularStringField(value: self.bio, fieldNumber: 4)
+    }
+    if !self.avatarURL.isEmpty {
+      try visitor.visitSingularStringField(value: self.avatarURL, fieldNumber: 5)
+    }
+    try { if let v = self._createdAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+    } }()
+    if self.hasStats_p != false {
+      try visitor.visitSingularBoolField(value: self.hasStats_p, fieldNumber: 7)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_PublicProfileResponse, rhs: Api_PublicProfileResponse) -> Bool {
+    if lhs.userID != rhs.userID {return false}
+    if lhs.handle != rhs.handle {return false}
+    if lhs.displayName != rhs.displayName {return false}
+    if lhs.bio != rhs.bio {return false}
+    if lhs.avatarURL != rhs.avatarURL {return false}
+    if lhs._createdAt != rhs._createdAt {return false}
+    if lhs.hasStats_p != rhs.hasStats_p {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_AvatarUploadResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".AvatarUploadResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}status\0\u{3}avatar_url\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.status) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.avatarURL) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.status != .unspecified {
+      try visitor.visitSingularEnumField(value: self.status, fieldNumber: 1)
+    }
+    if !self.avatarURL.isEmpty {
+      try visitor.visitSingularStringField(value: self.avatarURL, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_AvatarUploadResponse, rhs: Api_AvatarUploadResponse) -> Bool {
+    if lhs.status != rhs.status {return false}
+    if lhs.avatarURL != rhs.avatarURL {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_BlockRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".BlockRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}target_user_id\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.targetUserID) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.targetUserID.isEmpty {
+      try visitor.visitSingularStringField(value: self.targetUserID, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_BlockRequest, rhs: Api_BlockRequest) -> Bool {
+    if lhs.targetUserID != rhs.targetUserID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_MuteRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".MuteRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}target_user_id\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.targetUserID) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.targetUserID.isEmpty {
+      try visitor.visitSingularStringField(value: self.targetUserID, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_MuteRequest, rhs: Api_MuteRequest) -> Bool {
+    if lhs.targetUserID != rhs.targetUserID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_ReportRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".ReportRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}target_user_id\0\u{1}reason\0\u{1}context\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.targetUserID) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.reason) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.context) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.targetUserID.isEmpty {
+      try visitor.visitSingularStringField(value: self.targetUserID, fieldNumber: 1)
+    }
+    if self.reason != .unspecified {
+      try visitor.visitSingularEnumField(value: self.reason, fieldNumber: 2)
+    }
+    if !self.context.isEmpty {
+      try visitor.visitSingularStringField(value: self.context, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_ReportRequest, rhs: Api_ReportRequest) -> Bool {
+    if lhs.targetUserID != rhs.targetUserID {return false}
+    if lhs.reason != rhs.reason {return false}
+    if lhs.context != rhs.context {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_EraseRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".EraseRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_EraseRequest, rhs: Api_EraseRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialAck: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialAck"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialAck, rhs: Api_SocialAck) -> Bool {
+    if lhs.success != rhs.success {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

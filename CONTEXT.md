@@ -61,3 +61,32 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Feedback Report** — a user-initiated report from a TestFlight/debug build
   (shake gesture): message plus attached diagnostics (device/app info, log tail,
   bitdrift session ID), sent to this fork's own feedback endpoint.
+
+## Social
+
+- **Join** — the one-time opt-in that turns a private account into a public social
+  identity: claim a handle and accept the public-identity terms. Before Join an account
+  has no handle, no public footprint and no ability to act socially; everything behaves
+  exactly as it does today. Join requires a logged-in synced account.
+- **Handle** — the immutable, permanent `@name` that addresses a joined account
+  (`pca.st/u/<handle>`). Unique, lowercase alphanumeric + `_`, 3–30 chars. Users can
+  never rename it; the canonical stored identity is still the server `uuid`, so follows,
+  mentions and attribution reference the `uuid` and render the handle at read time.
+- **Tombstone** — the permanent retirement of a handle after account deletion: the
+  profile PII is erased but the handle string is kept as a non-PII reservation, so the
+  handle is never reissued and old mentions/links can't be hijacked.
+- **Social Profile** — the server-hosted public identity keyed to the account `uuid`:
+  handle, display name, avatar, bio, and the per-field visibility settings. Distinct from
+  the deprecated device-local *Share Profile*, which only seeds it on Join.
+- **Visibility** — the per-field privacy tier of a profile element (avatar, bio, followed
+  shows, top podcasts, stats/heatmap, history, presence): `public`, `followers-only` or
+  `private`. Stored three-tier from day one; only public/private are selectable until the
+  follow graph unlocks `followers-only`. Every field defaults to private.
+- **Block / Mute / Report** — the day-one safety primitives. *Block* is mutual
+  invisibility (no view, follow, mention or interaction either way). *Mute* is a one-way
+  hide; the muted party is not notified. *Report* files a flag into the triage queue.
+- **Triage Queue** — the single `moderation_reports` queue that receives both community
+  flags and automated pre-filter hits (text classifier, image scan), distinguished by
+  `source`. Worked manually at launch. See `docs/SocialModeration.md`.
+- **Listen-gate** — the pre-existing anti-spam rule (you may only rate a podcast after
+  listening to ≥1–2 episodes) reused to gate reviews, comments and reactions.

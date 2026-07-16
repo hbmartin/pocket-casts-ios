@@ -31,6 +31,7 @@ public class DataManager {
     public let transcriptSearch: TranscriptSearchDataManager
     public let pendingTranscriptUploads: PendingTranscriptUploadDataManager
     public let transcriptEmbeddings: TranscriptEmbeddingDataManager
+    public let socialGraph: SocialGraphStore
 
     let dbQueue: GRDBQueue
 
@@ -107,6 +108,7 @@ public class DataManager {
         transcriptSearch = TranscriptSearchDataManager(dbQueue: dbQueue)
         pendingTranscriptUploads = PendingTranscriptUploadDataManager(dbQueue: dbQueue)
         transcriptEmbeddings = TranscriptEmbeddingDataManager(dbQueue: dbQueue, isAvailable: transcriptSearch.isAvailable)
+        socialGraph = SocialGraphStore(dbQueue: dbQueue)
     }
 
     private var databaseSize: String? {
