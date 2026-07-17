@@ -35,6 +35,9 @@
       }
     },
     {
+      "skippedTests" : [
+        "SocialLocalBackendE2ETests"
+      ],
       "target" : {
         "containerPath" : "container:Modules",
         "identifier" : "PocketCastsServerTests",

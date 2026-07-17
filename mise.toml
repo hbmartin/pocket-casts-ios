@@ -127,6 +127,37 @@ xcodebuild test -project podcasts.xcodeproj \
 exit $TEST_STATUS
 '''
 
+[tasks."test:e2e-social"]
+description = "Run SocialLocalBackendE2ETests against the live local Docker backend (fails fast if it's down; SIMULATOR_OS / BACKEND_URL overridable)"
+run = '''
+set -o pipefail
+BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:8000/}"
+if ! curl -sf --max-time 5 "${BACKEND_URL%/}/health" > /dev/null; then
+    echo "error: no healthy backend at ${BACKEND_URL} — start it with 'make local-up' in podcast-backend" >&2
+    exit 1
+fi
+DESTINATION="$(SIMULATOR_OS="${SIMULATOR_OS:-26.5}" ruby scripts/ci/select-ios-simulator.rb)"
+LOG="$(mktemp)"
+TEST_STATUS=0
+# TEST_RUNNER_ must be exported as an ENVIRONMENT variable: as an xcodebuild
+# command-line argument it becomes a build setting and never reaches the tests.
+TEST_RUNNER_POCKET_CASTS_SERVER_BASE_URL="$BACKEND_URL" \
+xcodebuild test -project podcasts.xcodeproj \
+    -scheme "Pocket Casts Staging" \
+    -testPlan SocialE2E \
+    -destination "$DESTINATION" 2>&1 | tee "$LOG" || TEST_STATUS=$?
+# A skipped or empty E2E run must never read as green.
+if grep -qE "Test Case .* skipped" "$LOG"; then
+    echo "error: E2E test cases were skipped — the env var did not reach the test process" >&2
+    exit 1
+fi
+if ! grep -qE "Test Case .* passed" "$LOG"; then
+    echo "error: no E2E test case ran" >&2
+    exit 1
+fi
+exit $TEST_STATUS
+'''
+
 [tasks."test:tsan"]
 description = "Run the UnitTests plan under Thread Sanitizer (Pocket Casts Staging scheme; ONLY_TESTING/SIMULATOR_OS overridable)"
 run = '''

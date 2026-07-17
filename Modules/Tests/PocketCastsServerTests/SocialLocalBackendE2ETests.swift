@@ -3,22 +3,36 @@ import SwiftProtobuf
 @testable import PocketCastsServer
 
 /// End-to-end proof of the Swift↔Go social wire contract against the REAL
-/// local backend (docs/Social.md "backend live before ship"). Runs only when
-/// `POCKET_CASTS_SERVER_BASE_URL` is set (the "Pocket Casts Local" scheme
-/// points it at the Docker backend on 127.0.0.1:8000) — skipped everywhere
-/// else. When the env var IS set, an unreachable backend is a failure: this
-/// suite exists to catch contract drift, not to be skipped past.
+/// local backend (docs/Social.md "backend live before ship"). Run it with
+/// `mise run test:e2e-social`, which checks the Docker backend is up and
+/// exports `POCKET_CASTS_SERVER_BASE_URL` the correct way (a true environment
+/// variable — passed as an xcodebuild *argument* it becomes a build setting
+/// and never reaches the process).
+///
+/// A missing env var is a hard FAILURE, not a skip: a skipped E2E suite reads
+/// as green while proving nothing, which already bit one session. The class is
+/// excluded from the UnitTests plan (`skippedTests`) so plan sweeps and CI —
+/// which have no backend — never touch it; every explicit run must have the
+/// var or it errors.
 ///
 /// Uses URLSession + the generated `Api_*` messages directly (no app global
 /// state), registering throwaway accounts per run. Mirrors the backend's
 /// `TestSocialIdentityLoop` e2e test.
 final class SocialLocalBackendE2ETests: XCTestCase {
+    private struct MissingBackendConfiguration: Error {}
+
     private var baseURL: URL!
 
     override func setUpWithError() throws {
         guard let raw = ProcessInfo.processInfo.environment["POCKET_CASTS_SERVER_BASE_URL"],
               let url = URL(string: raw) else {
-            throw XCTSkip("POCKET_CASTS_SERVER_BASE_URL not set — run under the 'Pocket Casts Local' scheme with the Docker backend up")
+            XCTFail("""
+            POCKET_CASTS_SERVER_BASE_URL is not set — this E2E suite must run against the live \
+            local backend and refuses to silently skip. Use `mise run test:e2e-social` (or export \
+            TEST_RUNNER_POCKET_CASTS_SERVER_BASE_URL as an ENVIRONMENT VARIABLE to xcodebuild — \
+            as a command-line argument it becomes a build setting and never reaches the tests).
+            """)
+            throw MissingBackendConfiguration()
         }
         baseURL = url
     }
