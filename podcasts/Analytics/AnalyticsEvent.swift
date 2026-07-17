@@ -93,6 +93,13 @@ enum AnalyticsEvent: String {
     case profileRefreshButtonTapped
     case profileBookmarksShow
 
+    // MARK: - Social
+
+    case socialProfileJoined
+    case socialProfileLinkShared
+    case socialProfileBlocked
+    case socialProfileReported
+
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy
     case accountDetailsChangeAvatar

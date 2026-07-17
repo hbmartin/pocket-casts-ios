@@ -86,7 +86,8 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(updated.profile.statsVisibility, .private, "unspecified folds to private")
         XCTAssertEqual(updated.profile.handle, handle, "handle is immutable")
 
-        // Public read as B: public bio visible, private stats absent.
+        // Public read as B: public bio visible, private stats absent, and all
+        // sections empty while their visibility fields are private.
         var publicRequest = Api_PublicProfileRequest()
         publicRequest.handle = handle
         (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
@@ -94,6 +95,34 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         let publicProfile = try Api_PublicProfileResponse(serializedBytes: body)
         XCTAssertEqual(publicProfile.bio, "hello from the iOS e2e suite")
         XCTAssertFalse(publicProfile.hasStats_p)
+        XCTAssertTrue(publicProfile.followedShows.isEmpty)
+        XCTAssertTrue(publicProfile.topPodcasts.isEmpty)
+        XCTAssertTrue(publicProfile.recentlyPlayed.isEmpty)
+        XCTAssertFalse(publicProfile.hasStats)
+
+        // Making stats public exposes the totals section to other viewers.
+        var statsUpdate = Api_ProfileUpdateRequest()
+        statsUpdate.displayName = "iOS E2E Person"
+        statsUpdate.bio = "hello from the iOS e2e suite"
+        statsUpdate.bioVisibility = .public
+        statsUpdate.statsVisibility = .public
+        (status, _) = try await post("social/profile/update", token: tokenA, message: statsUpdate)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
+        XCTAssertEqual(status, 200)
+        let withStats = try Api_PublicProfileResponse(serializedBytes: body)
+        XCTAssertTrue(withStats.hasStats_p)
+        XCTAssertTrue(withStats.hasStats, "stats message present when visible")
+
+        // The web Profile Link page renders for anonymous viewers (ADR-0008).
+        var pageRequest = URLRequest(url: baseURL.appendingPathComponent("u/\(handle)"))
+        pageRequest.httpMethod = "GET"
+        let (pageData, pageResponse) = try await URLSession.shared.data(for: pageRequest)
+        XCTAssertEqual((pageResponse as? HTTPURLResponse)?.statusCode, 200)
+        let html = String(data: pageData, encoding: .utf8) ?? ""
+        XCTAssertTrue(html.contains("@" + handle))
+        XCTAssertTrue(html.contains("thcast://profile/" + handle))
 
         // A blocks B: mutual invisibility — B's read of A becomes not-found.
         var block = Api_BlockRequest()

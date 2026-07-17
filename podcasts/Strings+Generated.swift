@@ -4473,6 +4473,146 @@ nonisolated internal enum L10n {
   internal static var smartPlaylistsTipViewDescription: String { return L10n.tr("Localizable", "smart_playlists_tip_view_description", fallback: "We made these to help you get started. They auto-update based on your listening.") }
   /// The title shown in a Tip View when the user hasn't yet added a smart playlist
   internal static var smartPlaylistsTipViewTitle: String { return L10n.tr("Localizable", "smart_playlists_tip_view_title", fallback: "Smart playlists, ready to go") }
+  /// Body of the one-time social announcement sheet
+  internal static var socialAnnouncementBody: String { return L10n.tr("Localizable", "social_announcement_body", fallback: "Claim your @handle and share what you're listening to — private by default, opt-in only.") }
+  /// Button on the announcement sheet that opens the Join flow
+  internal static var socialAnnouncementCta: String { return L10n.tr("Localizable", "social_announcement_cta", fallback: "Claim your @handle") }
+  /// Title of the one-time social announcement sheet
+  internal static var socialAnnouncementTitle: String { return L10n.tr("Localizable", "social_announcement_title", fallback: "Say hello to profiles") }
+  /// Block action label
+  internal static var socialBlock: String { return L10n.tr("Localizable", "social_block", fallback: "Block") }
+  /// Message of the block confirmation alert
+  internal static var socialBlockConfirmMessage: String { return L10n.tr("Localizable", "social_block_confirm_message", fallback: "You won't see each other's profiles, and they won't be able to interact with you. They aren't notified.") }
+  /// Title of the block confirmation alert
+  internal static var socialBlockConfirmTitle: String { return L10n.tr("Localizable", "social_block_confirm_title", fallback: "Block this person?") }
+  /// Label on a profile the viewer has blocked
+  internal static var socialBlockedLabel: String { return L10n.tr("Localizable", "social_blocked_label", fallback: "Blocked") }
+  /// Profile tab row CTA before the account has joined social
+  internal static var socialClaimHandle: String { return L10n.tr("Localizable", "social_claim_handle", fallback: "Claim your @handle") }
+  /// Note on the confirmation step that all fields start private
+  internal static var socialConfirmPrivateNote: String { return L10n.tr("Localizable", "social_confirm_private_note", fallback: "Only your display name and handle will be public. Everything else stays private until you change it.") }
+  /// Confirmation step prompt. %1$@ is the claimed @handle
+  internal static func socialConfirmPrompt(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_confirm_prompt", String(describing: p1), fallback: "Claiming %1$@ — what name should people see?")
+  }
+  /// Placeholder for the public display name field
+  internal static var socialDisplayNamePlaceholder: String { return L10n.tr("Localizable", "social_display_name_placeholder", fallback: "Display name") }
+  /// Error shown when a profile edit is rejected by the server
+  internal static var socialEditRejected: String { return L10n.tr("Localizable", "social_edit_rejected", fallback: "Couldn't save. Your name or bio may have been rejected.") }
+  /// Shown when a handle is available. %1$@ is the normalized @handle
+  internal static func socialHandleAvailable(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_handle_available", String(describing: p1), fallback: "%1$@ is available")
+  }
+  /// Shown when the availability check could not reach the server
+  internal static var socialHandleCheckFailed: String { return L10n.tr("Localizable", "social_handle_check_failed", fallback: "Couldn't check availability") }
+  /// Shown while the handle availability check is running
+  internal static var socialHandleChecking: String { return L10n.tr("Localizable", "social_handle_checking", fallback: "Checking availability…") }
+  /// Shown when the requested handle has invalid characters or length
+  internal static var socialHandleInvalid: String { return L10n.tr("Localizable", "social_handle_invalid", fallback: "3–30 lowercase letters, numbers or underscores") }
+  /// Note under the handle field about immutability
+  internal static var socialHandlePermanent: String { return L10n.tr("Localizable", "social_handle_permanent", fallback: "3–30 characters: lowercase letters, numbers, underscores. Handles are permanent.") }
+  /// Placeholder for the handle entry field
+  internal static var socialHandlePlaceholder: String { return L10n.tr("Localizable", "social_handle_placeholder", fallback: "yourname") }
+  /// Prompt above the handle entry field
+  internal static var socialHandlePrompt: String { return L10n.tr("Localizable", "social_handle_prompt", fallback: "Choose your handle") }
+  /// Shown when the requested handle is reserved or retired
+  internal static var socialHandleReserved: String { return L10n.tr("Localizable", "social_handle_reserved", fallback: "Not available") }
+  /// Shown when the requested handle is already taken
+  internal static var socialHandleTaken: String { return L10n.tr("Localizable", "social_handle_taken", fallback: "Already taken") }
+  /// Navigation title of the handle selection step
+  internal static var socialHandleTitle: String { return L10n.tr("Localizable", "social_handle_title", fallback: "Your @handle") }
+  /// Footer explaining the heatmap is device-local
+  internal static var socialHeatmapLocalNote: String { return L10n.tr("Localizable", "social_heatmap_local_note", fallback: "Your activity grid is computed on this device and isn't shown on your public page.") }
+  /// Button accepting the social terms and continuing to handle selection
+  internal static var socialJoinAgree: String { return L10n.tr("Localizable", "social_join_agree", fallback: "Agree & Continue") }
+  /// Button that performs the join/claim
+  internal static var socialJoinCta: String { return L10n.tr("Localizable", "social_join_cta", fallback: "Claim Handle") }
+  /// Error shown when the join request fails
+  internal static var socialJoinFailed: String { return L10n.tr("Localizable", "social_join_failed", fallback: "Couldn't create your profile. The handle may have just been taken, or your name was rejected.") }
+  /// Intro paragraph of the Join flow explaining the opt-in public identity
+  internal static var socialJoinIntro: String { return L10n.tr("Localizable", "social_join_intro", fallback: "Create a public profile so friends can find you. Nothing is shared until you join, and everything starts private.") }
+  /// Join flow bullet: erasure right
+  internal static var socialJoinPointErase: String { return L10n.tr("Localizable", "social_join_point_erase", fallback: "Delete your profile any time; your handle is retired, never reused") }
+  /// Join flow bullet: the permanent handle
+  internal static var socialJoinPointHandle: String { return L10n.tr("Localizable", "social_join_point_handle", fallback: "Pick a permanent @handle — it can never be changed") }
+  /// Join flow bullet: privacy default
+  internal static var socialJoinPointPrivate: String { return L10n.tr("Localizable", "social_join_point_private", fallback: "Every field starts private — you choose what to show") }
+  /// Join flow terms acceptance note shown above the agree button
+  internal static var socialJoinTerms: String { return L10n.tr("Localizable", "social_join_terms", fallback: "By joining you agree that your display name and anything you set to public are visible to everyone.") }
+  /// Title of the opt-in social Join flow and its navigation bar
+  internal static var socialJoinTitle: String { return L10n.tr("Localizable", "social_join_title", fallback: "Join Social") }
+  /// Trailing note on the display name row: it cannot be made private
+  internal static var socialPrivacyAlwaysPublic: String { return L10n.tr("Localizable", "social_privacy_always_public", fallback: "Always public") }
+  /// Privacy screen row label for the bio
+  internal static var socialPrivacyBio: String { return L10n.tr("Localizable", "social_privacy_bio", fallback: "Bio") }
+  /// Privacy screen row label for the display name
+  internal static var socialPrivacyDisplayName: String { return L10n.tr("Localizable", "social_privacy_display_name", fallback: "Display name") }
+  /// Privacy screen row label for followed shows
+  internal static var socialPrivacyFollowedShows: String { return L10n.tr("Localizable", "social_privacy_followed_shows", fallback: "Followed shows") }
+  /// Privacy screen footer explaining the toggles
+  internal static var socialPrivacyFooter: String { return L10n.tr("Localizable", "social_privacy_footer", fallback: "Public fields appear on your profile page. Followers-only visibility arrives with following.") }
+  /// Privacy screen row label for listening history
+  internal static var socialPrivacyHistory: String { return L10n.tr("Localizable", "social_privacy_history", fallback: "Recently played") }
+  /// Privacy screen section header for identity fields
+  internal static var socialPrivacyIdentityHeader: String { return L10n.tr("Localizable", "social_privacy_identity_header", fallback: "Identity") }
+  /// Privacy screen section header for listening data fields
+  internal static var socialPrivacyListeningHeader: String { return L10n.tr("Localizable", "social_privacy_listening_header", fallback: "Listening") }
+  /// Header shown when the privacy screen appears right after joining
+  internal static var socialPrivacyNudgeHeader: String { return L10n.tr("Localizable", "social_privacy_nudge_header", fallback: "Your profile is private right now. Choose what to show on your public page — you can change this any time.") }
+  /// Toggle subtitle when a field is private
+  internal static var socialPrivacyPrivate: String { return L10n.tr("Localizable", "social_privacy_private", fallback: "Private") }
+  /// Toggle subtitle when a field is public
+  internal static var socialPrivacyPublic: String { return L10n.tr("Localizable", "social_privacy_public", fallback: "Public") }
+  /// Error shown when saving privacy settings fails
+  internal static var socialPrivacySaveFailed: String { return L10n.tr("Localizable", "social_privacy_save_failed", fallback: "Couldn't save your privacy settings. Try again.") }
+  /// Privacy screen row label for listening stats
+  internal static var socialPrivacyStats: String { return L10n.tr("Localizable", "social_privacy_stats", fallback: "Listening stats") }
+  /// Navigation title of the social privacy screen
+  internal static var socialPrivacyTitle: String { return L10n.tr("Localizable", "social_privacy_title", fallback: "Profile Privacy") }
+  /// Privacy screen row label for top podcasts
+  internal static var socialPrivacyTopPodcasts: String { return L10n.tr("Localizable", "social_privacy_top_podcasts", fallback: "Top podcasts") }
+  /// Button opening the profile edit sheet
+  internal static var socialProfileEdit: String { return L10n.tr("Localizable", "social_profile_edit", fallback: "Edit Profile") }
+  /// Shown when a profile does not exist or is unavailable to the viewer
+  internal static var socialProfileNotFound: String { return L10n.tr("Localizable", "social_profile_not_found", fallback: "This profile isn't available") }
+  /// Row that shares the public profile link
+  internal static var socialProfileShareLink: String { return L10n.tr("Localizable", "social_profile_share_link", fallback: "Share Profile Link") }
+  /// Navigation title of the own social profile screen
+  internal static var socialProfileTitle: String { return L10n.tr("Localizable", "social_profile_title", fallback: "My Profile") }
+  /// Report action label
+  internal static var socialReport: String { return L10n.tr("Localizable", "social_report", fallback: "Report") }
+  /// Report reason: harassment
+  internal static var socialReportHarassment: String { return L10n.tr("Localizable", "social_report_harassment", fallback: "Harassment") }
+  /// Report reason: hate
+  internal static var socialReportHate: String { return L10n.tr("Localizable", "social_report_hate", fallback: "Hate") }
+  /// Report reason: impersonation
+  internal static var socialReportImpersonation: String { return L10n.tr("Localizable", "social_report_impersonation", fallback: "Impersonation") }
+  /// Report reason: other
+  internal static var socialReportOther: String { return L10n.tr("Localizable", "social_report_other", fallback: "Other") }
+  /// Report reason: sexual content
+  internal static var socialReportSexual: String { return L10n.tr("Localizable", "social_report_sexual", fallback: "Sexual content") }
+  /// Report reason: spam
+  internal static var socialReportSpam: String { return L10n.tr("Localizable", "social_report_spam", fallback: "Spam") }
+  /// Title of the report reason picker
+  internal static var socialReportTitle: String { return L10n.tr("Localizable", "social_report_title", fallback: "Report this profile") }
+  /// Save button used in social edit screens
+  internal static var socialSave: String { return L10n.tr("Localizable", "social_save", fallback: "Save") }
+  /// Section header for the followed shows list
+  internal static var socialSectionFollowedShows: String { return L10n.tr("Localizable", "social_section_followed_shows", fallback: "Followed shows") }
+  /// Section header for the listening heatmap on the own profile
+  internal static var socialSectionHeatmap: String { return L10n.tr("Localizable", "social_section_heatmap", fallback: "Listening activity") }
+  /// Section header for the recently played list
+  internal static var socialSectionRecentlyPlayed: String { return L10n.tr("Localizable", "social_section_recently_played", fallback: "Recently played") }
+  /// Section header for listening stats on a public profile
+  internal static var socialSectionStats: String { return L10n.tr("Localizable", "social_section_stats", fallback: "Listening") }
+  /// Section header for the top podcasts list
+  internal static var socialSectionTopPodcasts: String { return L10n.tr("Localizable", "social_section_top_podcasts", fallback: "Top podcasts") }
+  /// Stats row label: total hours listened
+  internal static var socialStatsHoursListened: String { return L10n.tr("Localizable", "social_stats_hours_listened", fallback: "Hours listened") }
+  /// Stats row label: date listening started
+  internal static var socialStatsListeningSince: String { return L10n.tr("Localizable", "social_stats_listening_since", fallback: "Listening since") }
+  /// Unblock action label
+  internal static var socialUnblock: String { return L10n.tr("Localizable", "social_unblock", fallback: "Unblock") }
   /// Prompt to confirm when presented with a connection prompt. Used when connecting to a Sonos speaker.
   internal static var sonosConnectAction: String { return L10n.tr("Localizable", "sonos_connect_action", fallback: "CONNECT") }
   /// Prompt to connect to a Sonos speaker. 'Sonos' refers the the speaker manufacturer.

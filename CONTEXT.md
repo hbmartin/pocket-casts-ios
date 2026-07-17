@@ -82,6 +82,10 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   shows, top podcasts, stats/heatmap, history, presence): `public`, `followers-only` or
   `private`. Stored three-tier from day one; only public/private are selectable until the
   follow graph unlocks `followers-only`. Every field defaults to private.
+- **Profile Link** — the shareable address of a Social Profile: the fork backend's
+  public base URL + `/u/<handle>` on the web, and `thcast://profile/<handle>` for
+  app-to-app opening. The `pca.st/u/<handle>` form in early documents is upstream's
+  domain and is aspirational only — this fork cannot serve or deep-link it.
 - **Block / Mute / Report** — the day-one safety primitives. *Block* is mutual
   invisibility (no view, follow, mention or interaction either way). *Mute* is a one-way
   hide; the muted party is not notified. *Report* files a flag into the triage queue.

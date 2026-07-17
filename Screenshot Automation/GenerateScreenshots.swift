@@ -2,7 +2,7 @@ import XCTest
 
 enum Config {
     static let promoListUUID = "297172b7-948b-4da2-9b0d-7ae9b9068125"
-    static let promoList = "pktc://sharelist/lists.pocketcasts.com/\(promoListUUID)"
+    static let promoList = "thcast://sharelist/lists.pocketcasts.com/\(promoListUUID)"
 }
 
 class GenerateScreenshots: XCTestCase {

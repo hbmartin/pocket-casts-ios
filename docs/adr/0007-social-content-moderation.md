@@ -28,6 +28,11 @@ resistance.
 - **block / mute / report ship with the first UGC surface.** `block` = mutual
   invisibility (cannot follow, mention-resolve or interact); `mute` = one-way hide, the
   muted party is not notified; `report` = a flag into the triage queue.
+  - *Amended 2026-07-16:* mute's effect is on **content streams**, which don't exist
+    until Phase 2 — so the mute *affordance* ships with the first feed surface, while
+    block/report ship with the first identity surface (public profiles). The backend
+    endpoints and the local relationship store support mute from day one regardless;
+    only the UI waits. A do-nothing control is worse than a deferred one.
 - **GDPR erasure** clears profile PII and the CDN avatar but tombstones the handle
   (ADR-0005), so erasure and impersonation-resistance coexist.
 - Write endpoints (join, avatar, report) carry an **App Attest assertion** over the

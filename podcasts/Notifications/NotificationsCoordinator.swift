@@ -82,27 +82,27 @@ nonisolated enum NotificationType: String {
     var link: String {
         switch self {
         case .onboardingSignUp:
-            return "pktc://signup"
+            return "thcast://signup"
         case .onboardingImport:
-            return "pktc://settings/import"
+            return "thcast://settings/import"
         case .onboardingThemes:
-            return "pktc://settings/themes"
+            return "thcast://settings/themes"
         case .onboardingUpNext:
-            return "pktc://upnext/?location=tab"
+            return "thcast://upnext/?location=tab"
         case .onboardingFilters:
-            return "pktc://filters"
+            return "thcast://filters"
         case .onboardingStaffPicks:
-            return "pktc://discover/staff-picks"
+            return "thcast://discover/staff-picks"
         case .reengagementWeekly:
-            return "pktc://discover"
+            return "thcast://discover"
         case .reengagementDownloads:
-            return "pktc://profile/downloads"
+            return "thcast://profile/downloads"
         case .recommendationsTrending:
-            return "pktc://discover/trending"
+            return "thcast://discover/trending"
         case .recommendationsYouMightLike:
-            return "pktc://discover/recommendations_user"
+            return "thcast://discover/recommendations_user"
         case .newFeatureSuggestedFolders:
-            return "pktc://features/suggestedFolders"
+            return "thcast://features/suggestedFolders"
         }
     }
 

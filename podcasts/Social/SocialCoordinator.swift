@@ -1,0 +1,81 @@
+import SwiftUI
+import PocketCastsServer
+import PocketCastsUtils
+import UIKit
+
+/// Presentation glue for the social surfaces: the Join flow, the owner's
+/// profile, and public profiles opened from Profile Links
+/// (thcast://profile/<handle> or <backend>/u/<handle>, ADR-0008).
+/// All entry points are gated by FeatureFlag.socialProfiles.
+@MainActor
+enum SocialCoordinator {
+    /// Presents the one-time Join flow. On success, pushes the new profile.
+    static func presentJoinFlow(from presenter: UIViewController, navigationController: UINavigationController?) {
+        guard SyncManager.isUserLoggedIn() else {
+            NavigationManager.sharedManager.navigateTo(NavigationManager.onboardingFlow,
+                                                       data: ["flow": OnboardingFlow.Flow.loggedOut])
+            return
+        }
+
+        let viewModel = SocialJoinViewModel { [weak presenter, weak navigationController] profile in
+            presenter?.dismiss(animated: true) {
+                if profile != nil, let navigationController {
+                    pushOwnProfile(on: navigationController)
+                }
+            }
+        }
+        let hosting = ThemedHostingController(rootView: SocialJoinView(viewModel: viewModel))
+        hosting.modalPresentationStyle = .formSheet
+        presenter.present(hosting, animated: true)
+    }
+
+    /// Pushes the owner's profile (requires a joined account).
+    static func pushOwnProfile(on navigationController: UINavigationController) {
+        guard let profile = SocialIdentityStore.cachedProfile else { return }
+        let viewModel = OwnSocialProfileViewModel(profile: profile)
+        viewModel.onShare = { [weak navigationController] url in
+            guard let presenter = navigationController?.topViewController else { return }
+            let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+            activity.popoverPresentationController?.sourceView = presenter.view
+            presenter.present(activity, animated: true)
+        }
+        let hosting = ThemedHostingController(rootView: OwnSocialProfileView(viewModel: viewModel))
+        navigationController.pushViewController(hosting, animated: true)
+    }
+
+    /// Opens another user's profile from a Profile Link.
+    static func openPublicProfile(handle: String) {
+        guard FeatureFlag.socialProfiles.enabled, !handle.isEmpty else { return }
+        let hosting = ThemedHostingController(rootView: PublicProfileView(viewModel: PublicProfileViewModel(handle: handle)))
+        if let navigationController = SceneHelper.rootViewController()?.presentedNavigationController
+            ?? (SceneHelper.rootViewController() as? UINavigationController) {
+            navigationController.pushViewController(hosting, animated: true)
+        } else {
+            SceneHelper.rootViewController()?.present(UINavigationController(rootViewController: hosting), animated: true)
+        }
+    }
+
+    /// Recognizes a Profile Link path (`/u/<handle>`) or a thcast profile host
+    /// (`thcast://profile/<handle>`) and returns the handle, else nil.
+    static func profileHandle(from url: URL) -> String? {
+        if url.scheme?.lowercased() == "thcast", url.host?.lowercased() == "profile" {
+            let handle = url.pathComponents.dropFirst().first ?? ""
+            return handle.isEmpty ? nil : handle.lowercased()
+        }
+        let components = url.pathComponents
+        if components.count >= 3, components[1] == "u" {
+            return components[2].lowercased()
+        }
+        return nil
+    }
+}
+
+private extension UIViewController {
+    var presentedNavigationController: UINavigationController? {
+        var top: UIViewController = self
+        while let presented = top.presentedViewController { top = presented }
+        return (top as? UINavigationController)
+            ?? (top as? UITabBarController)?.selectedViewController as? UINavigationController
+            ?? top.navigationController
+    }
+}

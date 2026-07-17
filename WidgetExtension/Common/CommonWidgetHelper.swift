@@ -102,7 +102,7 @@ class CommonWidgetHelper {
     }
 
     class func urlForEpisodeUuid(uuid: String) -> URL? {
-        guard let url = URL(string: "pktc://widget-episode/\(uuid)") else {
+        guard let url = URL(string: "thcast://widget-episode/\(uuid)") else {
             return nil
         }
 

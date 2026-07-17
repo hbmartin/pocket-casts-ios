@@ -7,5 +7,5 @@
     },
     "category": "DEEP_LINK"
   },
-  "destination_url": "pktc://settings/themes"
+  "destination_url": "thcast://settings/themes"
 }

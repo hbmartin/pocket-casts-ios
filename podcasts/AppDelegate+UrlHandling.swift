@@ -21,7 +21,7 @@ nonisolated enum InboundAction: Equatable, Sendable {
 nonisolated enum InboundActionRouter {
     static func action(for url: URL) -> InboundAction {
         guard url.isFileURL else {
-            return url.scheme?.lowercased() == "pktc" ? .route(url) : .unsupported
+            return url.scheme?.lowercased() == "thcast" ? .route(url) : .unsupported
         }
 
         guard let type = UTType(filenameExtension: url.pathExtension) else {
@@ -132,6 +132,14 @@ extension AppDelegate {
             return true
         }
 
+        // open a public social profile from a Profile Link
+        // (thcast://profile/<handle>, ADR-0008)
+        JLRoutes.global().addRoute("/profile/:handle") { parameters -> Bool in
+            guard FeatureFlag.socialProfiles.enabled, let handle = parameters["handle"] as? String, !handle.isEmpty else { return false }
+            SocialCoordinator.openPublicProfile(handle: handle)
+            return true
+        }
+
         // open a playlist from a shortcut
         JLRoutes.global().addRoute("/shortcuts/filter/:filterId") { parameters -> Bool in
             guard let playlistId = parameters["filterId"] as? String, let playlist = DataManager.sharedManager.findPlaylist(uuid: playlistId) else { return false }
@@ -202,7 +210,7 @@ extension AppDelegate {
                 return false
             }
 
-            let prefix = "pktc://subscribe/"
+            let prefix = "thcast://subscribe/"
             if prefix.count >= subscribeUrl.count { return true } // this request is missing a URL
 
             let feedUrl = subscribeUrl.replacingOccurrences(of: prefix, with: "")
@@ -372,7 +380,7 @@ extension AppDelegate {
                   let rootViewController = SceneHelper.rootViewController(),
                   let originalUrl = parameters[JLRouteURLKey] as? URL else { return false }
 
-            let fileURLString = originalUrl.absoluteString.replacingOccurrences(of: "pktc://import-file/", with: "")
+            let fileURLString = originalUrl.absoluteString.replacingOccurrences(of: "thcast://import-file/", with: "")
 
             guard let fileURL = URL(string: fileURLString) else {
                 return true
@@ -578,7 +586,7 @@ extension AppDelegate {
             }
 
             if path == "/discover" || path.startsWith(string: "/discover/") {
-                if let url = URL(string: "pktc:/\(path)") {
+                if let url = URL(string: "thcast:/\(path)") {
                     NavigationManager.sharedManager.dismissPresentedViewController()
                     JLRoutes.routeURL(url)
                 }

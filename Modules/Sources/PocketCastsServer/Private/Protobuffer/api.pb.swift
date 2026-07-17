@@ -9415,11 +9415,106 @@ nonisolated struct Api_PublicProfileResponse: Sendable {
   /// section presence implies the viewer may see it
   var hasStats_p: Bool = false
 
+  /// Visibility-gated sections: populated only when the matching field is
+  /// visible to this viewer (or the viewer is the owner). Server-capped sizes.
+  /// The heatmap grid is deliberately absent: no per-day series exists
+  /// server-side; it renders from local data on the owner's own profile only.
+  var followedShows: [Api_SocialProfilePodcast] = []
+
+  var topPodcasts: [Api_SocialProfilePodcast] = []
+
+  /// set only when has_stats
+  var stats: Api_SocialProfileStats {
+    get {_stats ?? Api_SocialProfileStats()}
+    set {_stats = newValue}
+  }
+  /// Returns true if `stats` has been explicitly set.
+  var hasStats: Bool {self._stats != nil}
+  /// Clears the value of `stats`. Subsequent reads from it will return its default value.
+  mutating func clearStats() {self._stats = nil}
+
+  var recentlyPlayed: [Api_SocialProfileEpisode] = []
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 
   fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _stats: Api_SocialProfileStats? = nil
+}
+
+/// A podcast entry in a public-profile section (followed shows / top podcasts).
+nonisolated struct Api_SocialProfilePodcast: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var uuid: String = String()
+
+  /// catalog-resolved; may be empty if uncataloged
+  var title: String = String()
+
+  var author: String = String()
+
+  /// top-podcasts ranking signal; 0 elsewhere
+  var playedSeconds: Int64 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// A recently-played entry in a public-profile section (from listening history).
+nonisolated struct Api_SocialProfileEpisode: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var uuid: String = String()
+
+  var podcastUuid: String = String()
+
+  var title: String = String()
+
+  var playedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_playedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_playedAt = newValue}
+  }
+  /// Returns true if `playedAt` has been explicitly set.
+  var hasPlayedAt: Bool {self._playedAt != nil}
+  /// Clears the value of `playedAt`. Subsequent reads from it will return its default value.
+  mutating func clearPlayedAt() {self._playedAt = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _playedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+/// Aggregate listening totals for a public profile. Totals only — the per-day
+/// heatmap series never leaves the device.
+nonisolated struct Api_SocialProfileStats: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var timeListenedSeconds: Int64 = 0
+
+  var listeningSince: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_listeningSince ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_listeningSince = newValue}
+  }
+  /// Returns true if `listeningSince` has been explicitly set.
+  var hasListeningSince: Bool {self._listeningSince != nil}
+  /// Clears the value of `listeningSince`. Subsequent reads from it will return its default value.
+  mutating func clearListeningSince() {self._listeningSince = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _listeningSince: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
 /// POST social/avatar response (request body is raw image bytes; see enum above).
@@ -21776,7 +21871,7 @@ nonisolated extension Api_PublicProfileRequest: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".PublicProfileResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0\u{3}followed_shows\0\u{3}top_podcasts\0\u{1}stats\0\u{3}recently_played\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -21791,6 +21886,10 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
       case 5: try { try decoder.decodeSingularStringField(value: &self.avatarURL) }()
       case 6: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
       case 7: try { try decoder.decodeSingularBoolField(value: &self.hasStats_p) }()
+      case 8: try { try decoder.decodeRepeatedMessageField(value: &self.followedShows) }()
+      case 9: try { try decoder.decodeRepeatedMessageField(value: &self.topPodcasts) }()
+      case 10: try { try decoder.decodeSingularMessageField(value: &self._stats) }()
+      case 11: try { try decoder.decodeRepeatedMessageField(value: &self.recentlyPlayed) }()
       default: break
       }
     }
@@ -21822,6 +21921,18 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
     if self.hasStats_p != false {
       try visitor.visitSingularBoolField(value: self.hasStats_p, fieldNumber: 7)
     }
+    if !self.followedShows.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.followedShows, fieldNumber: 8)
+    }
+    if !self.topPodcasts.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.topPodcasts, fieldNumber: 9)
+    }
+    try { if let v = self._stats {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
+    } }()
+    if !self.recentlyPlayed.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.recentlyPlayed, fieldNumber: 11)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -21833,6 +21944,143 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
     if lhs.avatarURL != rhs.avatarURL {return false}
     if lhs._createdAt != rhs._createdAt {return false}
     if lhs.hasStats_p != rhs.hasStats_p {return false}
+    if lhs.followedShows != rhs.followedShows {return false}
+    if lhs.topPodcasts != rhs.topPodcasts {return false}
+    if lhs._stats != rhs._stats {return false}
+    if lhs.recentlyPlayed != rhs.recentlyPlayed {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialProfilePodcast: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialProfilePodcast"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{1}title\0\u{1}author\0\u{3}played_seconds\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.uuid) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.author) }()
+      case 4: try { try decoder.decodeSingularInt64Field(value: &self.playedSeconds) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.uuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.uuid, fieldNumber: 1)
+    }
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 2)
+    }
+    if !self.author.isEmpty {
+      try visitor.visitSingularStringField(value: self.author, fieldNumber: 3)
+    }
+    if self.playedSeconds != 0 {
+      try visitor.visitSingularInt64Field(value: self.playedSeconds, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialProfilePodcast, rhs: Api_SocialProfilePodcast) -> Bool {
+    if lhs.uuid != rhs.uuid {return false}
+    if lhs.title != rhs.title {return false}
+    if lhs.author != rhs.author {return false}
+    if lhs.playedSeconds != rhs.playedSeconds {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialProfileEpisode: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialProfileEpisode"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}podcast_uuid\0\u{1}title\0\u{3}played_at\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.uuid) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._playedAt) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.uuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.uuid, fieldNumber: 1)
+    }
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 2)
+    }
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 3)
+    }
+    try { if let v = self._playedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialProfileEpisode, rhs: Api_SocialProfileEpisode) -> Bool {
+    if lhs.uuid != rhs.uuid {return false}
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.title != rhs.title {return false}
+    if lhs._playedAt != rhs._playedAt {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialProfileStats: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialProfileStats"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_listened_seconds\0\u{3}listening_since\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.timeListenedSeconds) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._listeningSince) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.timeListenedSeconds != 0 {
+      try visitor.visitSingularInt64Field(value: self.timeListenedSeconds, fieldNumber: 1)
+    }
+    try { if let v = self._listeningSince {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialProfileStats, rhs: Api_SocialProfileStats) -> Bool {
+    if lhs.timeListenedSeconds != rhs.timeListenedSeconds {return false}
+    if lhs._listeningSince != rhs._listeningSince {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
