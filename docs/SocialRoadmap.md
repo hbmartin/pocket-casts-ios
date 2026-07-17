@@ -9,7 +9,9 @@ Phased plan for the social program. Update the **Status** column as work lands. 
 
 | Slice | Item | Status | Notes |
 |---|---|---|---|
-| 1 | Identity + moderation **foundation** (handles, profile store, avatar scan, privacy schema, block/mute/report, GDPR erasure, triage queue, public read `pca.st/u/<handle>`) | planned | The backend-live gate. ADR-0005/0006/0007. |
+| 1 | Identity + moderation foundation — **iOS dark scaffolding** (proto, `FeatureFlag.socialProfiles`, migration 85, models, API tasks) | shipped | PR #313. |
+| 1 | Identity + moderation foundation — **backend endpoints** (`social/*`: handles + tombstone, profiles, per-field visibility, block/mute/report, triage queue, GDPR erase incl. account deletion) | in-progress | `podcast-backend` branch `social/foundation-endpoints`: migration 012, handlers, routes; Go handler + e2e suites green; iOS `SocialLocalBackendE2ETests` proves the Swift↔Go wire contract against the local Docker backend. |
+| 1 | **Avatar upload + CSAM/nudity scan pipeline** | deferred | Deliberately cut from the first backend slice (2026-07-16): profiles are handle+name+bio only; `SocialAvatarUploadSender` sits unused; the scan-pipeline decision returns when avatars do. HARD gate: real scan vendor integration before avatars go live publicly. |
 | 2 | Public profiles (followed shows, top podcasts, stats/heatmap, history, public lists — privacy-gated) | planned | Reuses `ListeningHeatmapView`. |
 | 3 | Stat/heatmap share cards + **Year-in-Review** stories | planned | Client-only; rides `VideoExporter`/`ShareImageView`. YIR is net-new. |
 | 3 | Written **reviews** (extend synced ratings + listen-gate) | planned | Needs new local rating DB storage (ratings are in-memory today). |

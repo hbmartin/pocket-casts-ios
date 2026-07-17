@@ -2,52 +2,161 @@ import Foundation
 
 public enum ServerConstants {
     public enum Urls {
+        static let localBaseURLEnvironmentKey = "POCKET_CASTS_SERVER_BASE_URL"
+
+        struct Endpoints: Equatable {
+            let main: String
+            let api: String
+            let cache: String
+            let sharing: String
+            let discover: String
+            let image: String
+            let share: String
+            let lists: String
+            let search: String
+            let generatedTranscripts: String
+            let tvPair: String
+            let tvCreate: String
+        }
+
+        private static var currentEndpoints: Endpoints {
+            resolvedEndpoints(
+                production: production(),
+                localBaseURL: simulatorLocalBaseURL
+            )
+        }
+
+        private static var simulatorLocalBaseURL: String? {
+            #if DEBUG && targetEnvironment(simulator)
+                ProcessInfo.processInfo.environment[localBaseURLEnvironmentKey]
+            #else
+                nil
+            #endif
+        }
+
+        static func resolvedEndpoints(production: Bool, localBaseURL: String?) -> Endpoints {
+            let hosted = if production {
+                Endpoints(
+                    main: "https://refresh.pocketcasts.com/",
+                    api: "https://api.pocketcasts.com/",
+                    cache: "https://cache.pocketcasts.com/",
+                    sharing: "https://sharing.pocketcasts.com/",
+                    discover: "https://static.pocketcasts.com/discover/",
+                    image: "https://static.pocketcasts.com/",
+                    share: "https://pca.st/",
+                    lists: "https://lists.pocketcasts.com/",
+                    search: "https://search.pocketcasts.com/",
+                    generatedTranscripts: "https://shownotes.pocketcasts.com/generated_transcripts/",
+                    tvPair: "https://pocketcasts.com/pair",
+                    tvCreate: "https://pocketcasts.com/create"
+                )
+            } else {
+                Endpoints(
+                    main: "https://refresh.pocketcasts.net/",
+                    api: "https://api.pocketcasts.net/",
+                    cache: "https://podcast-api.pocketcasts.net/",
+                    sharing: "https://sharing.pocketcasts.net/",
+                    discover: "https://static.pocketcasts.net/discover/",
+                    image: "https://static.pocketcasts.net/",
+                    share: "https://pcast.pocketcasts.net/",
+                    lists: "https://lists.pocketcasts.net/",
+                    search: "https://search.pocketcasts.net/",
+                    generatedTranscripts: "https://shownotes.pocketcasts.net/generated_transcripts/",
+                    tvPair: "https://pocketcasts.net/pair",
+                    tvCreate: "https://pocketcasts.net/create"
+                )
+            }
+
+            guard let baseURL = normalizedLocalBaseURL(localBaseURL) else {
+                return hosted
+            }
+
+            return Endpoints(
+                main: baseURL,
+                api: baseURL,
+                cache: baseURL,
+                sharing: baseURL,
+                discover: baseURL + "discover/",
+                image: baseURL,
+                share: hosted.share,
+                lists: hosted.lists,
+                search: baseURL,
+                generatedTranscripts: hosted.generatedTranscripts,
+                tvPair: hosted.tvPair,
+                tvCreate: hosted.tvCreate
+            )
+        }
+
+        static func normalizedLocalBaseURL(_ value: String?) -> String? {
+            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !value.isEmpty,
+                  var components = URLComponents(string: value),
+                  let scheme = components.scheme?.lowercased(),
+                  scheme == "http" || scheme == "https",
+                  let host = components.host,
+                  !host.isEmpty,
+                  components.user == nil,
+                  components.password == nil,
+                  components.query == nil,
+                  components.fragment == nil
+            else {
+                return nil
+            }
+
+            components.scheme = scheme
+            if !components.path.hasSuffix("/") {
+                components.path += "/"
+            }
+
+            return components.url?.absoluteString
+        }
+
         public static func main() -> String {
-            production() ? "https://refresh.pocketcasts.com/" : "https://refresh.pocketcasts.net/"
+            currentEndpoints.main
         }
 
         public static func api() -> String {
-            production() ? "https://api.pocketcasts.com/" : "https://api.pocketcasts.net/"
+            currentEndpoints.api
         }
 
         public static func cache() -> String {
-            production() ? "https://cache.pocketcasts.com/" : "https://podcast-api.pocketcasts.net/"
+            currentEndpoints.cache
         }
 
         public static func sharing() -> String {
-            production() ? "https://sharing.pocketcasts.com/" : "https://sharing.pocketcasts.net/"
+            currentEndpoints.sharing
         }
 
         public static func discover() -> String {
-            production() ? "https://static.pocketcasts.com/discover/" : "https://static.pocketcasts.net/discover/"
+            currentEndpoints.discover
         }
 
         public static func image() -> String {
-            production() ? "https://static.pocketcasts.com/" : "https://static.pocketcasts.net/"
+            currentEndpoints.image
         }
 
         public static func share() -> String {
-            production() ? "https://pca.st/" : "https://pcast.pocketcasts.net/"
+            currentEndpoints.share
         }
 
         public static func lists() -> String {
-            production() ? "https://lists.pocketcasts.com/" : "https://lists.pocketcasts.net/"
+            currentEndpoints.lists
         }
 
         public static var search: String {
-            production() ? "https://search.pocketcasts.com/" : "https://search.pocketcasts.net/"
+            currentEndpoints.search
         }
 
         public static var generatedTranscripts: String {
-            production() ? "https://shownotes.pocketcasts.com/generated_transcripts/" : "https://shownotes.pocketcasts.net/generated_transcripts/"
+            currentEndpoints.generatedTranscripts
         }
 
         public static var tvPair: String {
-            production() ? "https://pocketcasts.com/pair" : "https://pocketcasts.net/pair"
+            currentEndpoints.tvPair
         }
 
         public static var tvCreate: String {
-            production() ? "https://pocketcasts.com/create" : "https://pocketcasts.net/create"
+            currentEndpoints.tvCreate
         }
 
         // Fork-owned transcript contribution endpoints (docs/TranscriptContributions.md §3).
