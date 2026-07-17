@@ -108,7 +108,53 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             if FeatureFlag.episodeMentions.enabled {
                 await loadMentionsCard(episodeUuid: episodeUUID)
             }
+
+            // Episode reactions (Slice 3, docs/Social.md): account-level,
+            // counts-only, listen-gated to >=25% of the episode played.
+            if FeatureFlag.socialProfiles.enabled, SyncManager.isUserLoggedIn() {
+                await MainActor.run { [weak self] in
+                    self?.attachReactionsRowIfNeeded()
+                }
+            }
         }
+    }
+
+    /// Hosts the reactions row after the other social/AI cards, using the same
+    /// stack-insertion pattern. Idempotent.
+    private func attachReactionsRowIfNeeded() {
+        guard episodeReactionsContainer == nil,
+              let excerptView = transcriptExcerpt,
+              let stack = excerptView.superview as? UIStackView else {
+            return
+        }
+
+        let duration = episode.duration
+        let canReact = duration > 0 && episode.playedUpTo >= duration * 0.25
+        let viewModel = EpisodeReactionsViewModel(episodeUuid: episode.uuid, canReact: canReact)
+
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let hostingController = ThemedHostingController(rootView: EpisodeReactionsRowView(viewModel: viewModel))
+        hostingController.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+        let hostedView = hostingController.view!
+        hostedView.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        container.addSubview(hostedView)
+
+        let anchorView = episodeMentionsContainer ?? episodeCreditsContainer ?? episodeSummaryContainer ?? excerptView
+        if let index = stack.arrangedSubviews.firstIndex(of: anchorView) {
+            stack.insertArrangedSubview(container, at: index + 1)
+        } else {
+            stack.addArrangedSubview(container)
+        }
+
+        hostingController.didMove(toParent: self)
+        hostedView.anchorToAllSidesOf(view: container)
+
+        episodeReactionsContainer = container
     }
 
     /// Reads the episode's indexed transcript (generated corpus preferred — its

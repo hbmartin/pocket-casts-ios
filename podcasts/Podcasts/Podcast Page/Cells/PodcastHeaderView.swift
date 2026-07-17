@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
 import SwiftUI
 
 struct PodcastBlurHeaderView: View {
@@ -30,6 +31,17 @@ struct PodcastHeaderView: View {
     @ObservedObject var viewModel: PodcastHeaderViewModel
 
     @State private var contentHeight: CGFloat = RichExpandableLabel.estimateHeightFor(maxLines: 3, lineHeightMultiple: 1.4, font: UIFont.preferredFont(forTextStyle: .body))
+    @State private var showingReviews = false
+
+    /// Builds the reviews VM, routing not-joined writers into the Join flow.
+    private func reviewsViewModel() -> PodcastReviewsViewModel {
+        let reviewsModel = PodcastReviewsViewModel(podcastUuid: viewModel.podcast.uuid)
+        reviewsModel.onJoinRequired = {
+            guard let presenter = SceneHelper.rootViewController() else { return }
+            SocialCoordinator.presentJoinFlow(from: presenter, navigationController: nil)
+        }
+        return reviewsModel
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,6 +75,25 @@ struct PodcastHeaderView: View {
                            onRate: {
                 viewModel.podcastRatingViewModel.update(podcast: viewModel.podcast, ignoringCache: true)
             })
+            // Written reviews (Slice 3, docs/Social.md), behind the social flag.
+            if FeatureFlag.socialProfiles.enabled {
+                Button {
+                    showingReviews = true
+                } label: {
+                    Text(L10n.socialReviewsSee)
+                        .font(.footnote.bold())
+                        .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+                .sheet(isPresented: $showingReviews) {
+                    NavigationView {
+                        PodcastReviewsView(viewModel: reviewsViewModel())
+                    }
+                    .navigationViewStyle(.stack)
+                    .environmentObject(theme)
+                }
+            }
             Spacer().frame(height: titleBottomMargin)
             podcastActions
             Spacer().frame(height: itemMargin)

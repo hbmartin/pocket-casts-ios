@@ -168,6 +168,95 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(status, 409, "tombstoned handles are never reissued")
     }
 
+    /// Slice-3 wire contract: attributed review text (join + listen-gated) and
+    /// account-level reactions with counts-only reads.
+    func testReviewsAndReactionsLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (token, _) = try await register(email: "ios-review-\(suffix)@e2e.test")
+        let podcastUuid = "dddddddd-0000-0000-0000-00000000\(String(suffix.prefix(4)))"
+        let episodeUuid = "eeeeeeee-0000-0000-0000-00000000\(String(suffix.prefix(4)))"
+
+        // Review submit before joining: forbidden.
+        var submit = Api_PodcastReviewSubmitRequest()
+        submit.podcastUuid = podcastUuid
+        submit.text = "not yet"
+        var (status, body) = try await post("social/review/submit", token: token, message: submit)
+        XCTAssertEqual(status, 403)
+
+        // Join, sync two played episodes of the podcast, then submit.
+        var join = Api_JoinRequest()
+        join.handle = "ios_rev_\(suffix)"
+        join.acceptedTermsVersion = 1
+        join.displayName = "iOS Reviewer"
+        (status, _) = try await post("social/join", token: token, message: join)
+        XCTAssertEqual(status, 200)
+
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        for index in 0..<2 {
+            var episode = Api_SyncUserEpisode()
+            episode.uuid = "eeeeeeee-0000-0000-000\(index)-00000000\(String(suffix.prefix(4)))"
+            episode.podcastUuid = podcastUuid
+            episode.duration = Google_Protobuf_Int64Value(600)
+            episode.durationModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            episode.playedUpTo = Google_Protobuf_Int64Value(500)
+            episode.playedUpToModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            var record = Api_Record()
+            record.episode = episode
+            sync.records.append(record)
+        }
+        (status, _) = try await post("user/sync/update", token: token, message: sync)
+        XCTAssertEqual(status, 200)
+
+        submit.text = "an attributed opinion from iOS"
+        (status, body) = try await post("social/review/submit", token: token, message: submit)
+        XCTAssertEqual(status, 200)
+        let review = try Api_PodcastReview(serializedBytes: body)
+        XCTAssertEqual(review.handle, "ios_rev_\(suffix)")
+
+        // Public list carries it + your_review for the author.
+        var listRequest = Api_PodcastReviewsRequest()
+        listRequest.podcastUuid = podcastUuid
+        (status, body) = try await post("podcast/reviews", token: token, message: listRequest)
+        XCTAssertEqual(status, 200)
+        let page = try Api_PodcastReviewsResponse(serializedBytes: body)
+        XCTAssertEqual(page.reviews.count, 1)
+        XCTAssertTrue(page.hasYourReview)
+
+        // Reactions: set -> counts + own; clear -> empty.
+        var setReaction = Api_EpisodeReactionSetRequest()
+        setReaction.episodeUuid = episodeUuid
+        setReaction.kind = .fire
+        (status, body) = try await post("social/reaction/set", token: token, message: setReaction)
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
+
+        var reactionsRequest = Api_EpisodeReactionsRequest()
+        reactionsRequest.episodeUuid = episodeUuid
+        (status, body) = try await post("episode/reactions", token: token, message: reactionsRequest)
+        XCTAssertEqual(status, 200)
+        var reactions = try Api_EpisodeReactionsResponse(serializedBytes: body)
+        XCTAssertEqual(reactions.counts.count, 1)
+        XCTAssertEqual(reactions.counts.first?.kind, .fire)
+        XCTAssertEqual(reactions.yourReaction, .fire)
+
+        setReaction.kind = .unspecified
+        (status, _) = try await post("social/reaction/set", token: token, message: setReaction)
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("episode/reactions", token: token, message: reactionsRequest)
+        XCTAssertEqual(status, 200)
+        reactions = try Api_EpisodeReactionsResponse(serializedBytes: body)
+        XCTAssertTrue(reactions.counts.isEmpty)
+
+        // Erase: the attributed review vanishes from the public list.
+        (status, _) = try await post("social/erase", token: token, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("podcast/reviews", token: token, message: listRequest)
+        XCTAssertEqual(status, 200)
+        let afterErase = try Api_PodcastReviewsResponse(serializedBytes: body)
+        XCTAssertTrue(afterErase.reviews.isEmpty, "attributed review text dies with the profile")
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {

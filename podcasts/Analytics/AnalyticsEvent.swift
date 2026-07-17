@@ -99,6 +99,10 @@ enum AnalyticsEvent: String {
     case socialProfileLinkShared
     case socialProfileBlocked
     case socialProfileReported
+    case socialReviewSubmitted
+    case socialReactionSet
+    case socialStatsCardShared
+    case socialHeatmapCardShared
 
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy

@@ -33,6 +33,7 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveStarredTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveStatsTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialIdentityTask.swift: 10
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialModerationTask.swift: 8
+Modules/Sources/PocketCastsServer/Private/API Tasks/SocialReviewTask.swift: 10
 Modules/Sources/PocketCastsServer/Private/API Tasks/StarredSyncTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SuggestedFolderTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SupportFeedbackTask.swift: 2
