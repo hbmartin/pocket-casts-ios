@@ -105,8 +105,10 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Shared Item** — an episode sent person-to-person, with an optional note and a
   listen-from timestamp. Sender and recipient must both be joined; a blocked or unknown
   recipient is indistinguishable at send time. Sent items die with the sender's profile.
-- **Inbox** — the recipient-side list of Shared Items: unread count, marked read on open,
-  deletable. Reacting to a received item waits until senders can see reactions.
+- **Inbox** — the screen for things addressed to *you*: Shared Items (unread count, marked
+  read on open, deletable), pending Follow Requests (accept/decline), and Replies to your
+  Comments (watermark-based unread). Reacting to a received item waits until senders can
+  see reactions.
 - **Follow** — the one-way graph edge between joined accounts. Open by default: following
   someone succeeds instantly and may reveal their `followers-only` fields. If the followee
   has enabled follower approval, a new follow becomes a Follow Request instead. Blocking
@@ -115,7 +117,19 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   Followers" setting is on). Pending requesters see nothing extra — no followers-only
   fields, no feed items — until accepted. Surfaces in the Inbox for accept/decline.
 - **Activity Feed / Feed Item** — the reverse-chronological list of followees' activity:
-  joined, followed a person, followed a show, finished an episode, reviewed, reacted.
-  Items are derived at read time from existing records (nothing is stored per-item); the
-  listening-derived kinds obey the actor's per-field Visibility for each viewer, and
-  muted or blocked actors are filtered out.
+  joined, followed a person, followed a show, finished an episode, reviewed, reacted,
+  commented. Items are derived at read time from existing records (nothing is stored
+  per-item); the listening-derived kinds obey the actor's per-field Visibility for each
+  viewer, and muted or blocked actors are filtered out.
+- **Comment** — attributed text by a joined account on an episode, forming the episode's
+  discussion tree. A *top-level* comment (posting requires having played ≥25% of the
+  episode) optionally anchors to a playback timestamp; a *Reply* attaches to any comment
+  (full nesting, no listen-gate). Editable only within a short grace window and only
+  until replied to; text is pre-filtered and reportable. Top-level comments emit Feed
+  Items; replies are conversation, not broadcast.
+- **Moment** — the player-surface rendering of a timestamp-anchored top-level Comment: a
+  pin on the scrubber that seeks and opens the comment's subtree. Not a separate entity —
+  the episode page and the player are two lenses over one comment tree.
+- **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
+  its text and author are wiped but its position in the tree is kept, so other people's
+  replies survive. The comment-tree analogue of a tombstoned Handle.
