@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile, socialInbox }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -355,6 +355,10 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             } else {
                 cell.settingsLabel.text = L10n.socialClaimHandle
             }
+        case .socialInbox:
+            cell.settingsImage.image = UIImage(systemName: "tray")
+            let unread = SocialInboxBadge.unreadCount
+            cell.settingsLabel.text = unread > 0 ? L10n.socialInboxRowUnread(unread) : L10n.socialInboxTitle
         case .peopleDirectory:
             cell.settingsImage.image = UIImage(systemName: "person.2")
             cell.settingsLabel.text = L10n.peopleDirectoryTitle
@@ -424,6 +428,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             } else {
                 SocialCoordinator.presentJoinFlow(from: self, navigationController: navigationController)
             }
+        case .socialInbox:
+            let inboxController = ThemedHostingController(rootView: SocialInboxView(viewModel: SocialInboxViewModel()))
+            navigationController?.pushViewController(inboxController, animated: true)
         }
     }
 
@@ -478,6 +485,10 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         // owner's profile afterward (docs/Social.md; requires a synced account).
         if FeatureFlag.socialProfiles.enabled, SyncManager.isUserLoggedIn() {
             data[0].insert(.socialProfile, at: 0)
+            if SocialIdentityStore.isJoined {
+                data[0].insert(.socialInbox, at: 1)
+                SocialInboxBadge.refresh()
+            }
         }
 
         if informationalBannerCoordinator.shouldShowBanner() {

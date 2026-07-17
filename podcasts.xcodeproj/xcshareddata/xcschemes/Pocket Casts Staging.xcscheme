@@ -48,6 +48,9 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
+            reference = "container:PocketCastsTests/SocialE2E.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
             reference = "container:PocketCastsUITests/SmokeUITests.xctestplan">
          </TestPlanReference>
          <TestPlanReference

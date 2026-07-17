@@ -6,9 +6,10 @@ import PocketCastsUtils
 /// Another user's Social Profile, fetched by handle. The server has already
 /// applied per-field visibility and the viewer's block relationship — a
 /// blocked, missing or tombstoned handle all render the same not-found state
-/// (docs/SocialModeration.md). Block + report live in the overflow menu; the
-/// mute affordance deliberately waits for the first feed surface (ADR-0007,
-/// 2026-07-16 amendment).
+/// (docs/SocialModeration.md). Block + report + mute live in the overflow menu
+/// (mute shipped with the feed it filters — ADR-0007 amendment fulfilled,
+/// Slice 5). Joined viewers get the Follow button; followers may see
+/// followers-only fields (server-applied).
 struct PublicProfileView: View {
     @EnvironmentObject var theme: Theme
     @StateObject var viewModel: PublicProfileViewModel
@@ -72,10 +73,22 @@ struct PublicProfileView: View {
                         Text(profile.bio)
                             .font(.subheadline)
                     }
+                    HStack(spacing: 4) {
+                        Text("\(profile.followerCount)").bold()
+                        Text(L10n.socialFollowersTitle)
+                        Text("·")
+                        Text("\(profile.followingCount)").bold()
+                        Text(L10n.socialFollowingTitle)
+                    }
+                    .font(.footnote)
+                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
                     if viewModel.isBlocked {
                         Label(L10n.socialBlockedLabel, systemImage: "hand.raised.fill")
                             .font(.footnote)
                             .foregroundColor(AppTheme.color(for: .support05, theme: theme))
+                    }
+                    if viewModel.showsFollowButton {
+                        followButton
                     }
                 }
                 .padding(.vertical, 4)
@@ -121,6 +134,49 @@ struct PublicProfileView: View {
         }
     }
 
+    /// Follow / Requested / Following. Follow acts immediately; the other two
+    /// states confirm before severing (a declined request can't be re-secretly
+    /// re-requested without the owner noticing, and unfollow loses feed items).
+    private var followButton: some View {
+        Button {
+            if viewModel.followState == .none {
+                Task { await viewModel.follow() }
+            } else {
+                viewModel.showingUnfollowConfirm = true
+            }
+        } label: {
+            HStack {
+                if viewModel.isUpdatingFollow {
+                    ProgressView()
+                } else {
+                    Text(followButtonTitle)
+                        .font(.subheadline.weight(.semibold))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(AppTheme.color(for: viewModel.followState == .none ? .primaryInteractive01 : .primaryUi05, theme: theme))
+            )
+            .foregroundColor(AppTheme.color(for: viewModel.followState == .none ? .primaryInteractive02 : .primaryText01, theme: theme))
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 4)
+        .confirmationDialog(L10n.socialUnfollow, isPresented: $viewModel.showingUnfollowConfirm, titleVisibility: .hidden) {
+            Button(L10n.socialUnfollow, role: .destructive) { Task { await viewModel.unfollow() } }
+            Button(L10n.cancel, role: .cancel) {}
+        }
+    }
+
+    private var followButtonTitle: String {
+        switch viewModel.followState {
+        case .none: return L10n.socialFollow
+        case .pending: return L10n.socialFollowRequested
+        case .active: return L10n.socialFollowing
+        }
+    }
+
     @ViewBuilder
     private func podcastSection(_ header: String, podcasts: [SocialProfilePodcast]) -> some View {
         if !podcasts.isEmpty {
@@ -147,6 +203,19 @@ struct PublicProfileView: View {
 
     private func overflowMenu(_ profile: SocialPublicProfile) -> some View {
         Menu {
+            if viewModel.isMuted {
+                Button {
+                    Task { await viewModel.setMuted(false) }
+                } label: {
+                    Label(L10n.socialUnmute, systemImage: "speaker.wave.2")
+                }
+            } else {
+                Button {
+                    Task { await viewModel.setMuted(true) }
+                } label: {
+                    Label(L10n.socialMute, systemImage: "speaker.slash")
+                }
+            }
             if viewModel.isBlocked {
                 Button {
                     Task { await viewModel.setBlocked(false) }
@@ -187,15 +256,30 @@ final class PublicProfileViewModel: ObservableObject {
     let handle: String
     @Published private(set) var state: State = .loading
     @Published private(set) var isBlocked = false
+    @Published private(set) var isMuted = false
+    @Published private(set) var followState: FollowState = .none
+    @Published private(set) var isUpdatingFollow = false
     @Published var showingReportPicker = false
     @Published var showingBlockConfirm = false
+    @Published var showingUnfollowConfirm = false
 
     /// `fixture` preloads a state (snapshot tests/previews); `load()` then no-ops.
     init(handle: String, fixture: State? = nil) {
         self.handle = handle.lowercased()
         if let fixture {
             state = fixture
+            if case .loaded(let profile) = fixture {
+                followState = profile.yourFollowState
+            }
         }
+    }
+
+    /// Follow button shows for joined viewers on profiles other than their own
+    /// (the server rejects self-follow anyway; don't render a dead control).
+    var showsFollowButton: Bool {
+        guard SocialIdentityStore.isJoined, !isBlocked else { return false }
+        guard case .loaded(let profile) = state else { return false }
+        return profile.userId != SocialIdentityStore.cachedProfile?.userId
     }
 
     func load() async {
@@ -205,7 +289,42 @@ final class PublicProfileViewModel: ObservableObject {
             return
         }
         isBlocked = DataManager.sharedManager.socialGraph.isBlocked(profile.userId)
+        isMuted = DataManager.sharedManager.socialGraph.isMuted(profile.userId)
+        followState = profile.yourFollowState
         state = .loaded(profile)
+    }
+
+    /// Open accounts return .active immediately; approval-gated ones .pending.
+    func follow() async {
+        isUpdatingFollow = true
+        if let newState = await ApiServerHandler.shared.follow(handle: handle) {
+            followState = newState
+            Analytics.track(.socialFollowed)
+        }
+        isUpdatingFollow = false
+    }
+
+    /// Also cancels a pending request (same endpoint server-side).
+    func unfollow() async {
+        isUpdatingFollow = true
+        if await ApiServerHandler.shared.unfollow(handle: handle) != nil {
+            followState = .none
+        }
+        isUpdatingFollow = false
+    }
+
+    /// Mute = one-way hide from the feed; the muted person is never notified
+    /// (docs/SocialModeration.md). Mirrored locally, server authoritative.
+    func setMuted(_ muted: Bool) async {
+        guard case .loaded(let profile) = state else { return }
+        if muted {
+            DataManager.sharedManager.socialGraph.add(targetUserId: profile.userId, handle: profile.handle, type: .mute)
+            Analytics.track(.socialProfileMuted)
+        } else {
+            DataManager.sharedManager.socialGraph.remove(targetUserId: profile.userId, type: .mute)
+        }
+        isMuted = muted
+        _ = await ApiServerHandler.shared.setMuted(muted, targetUserId: profile.userId)
     }
 
     /// Block = mutual invisibility: mirror locally for instant filtering, tell

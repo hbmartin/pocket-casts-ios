@@ -1,0 +1,27 @@
+{
+  "configurations" : [
+    {
+      "id" : "8F3A1C2E-5B6D-4E7F-9A0B-1C2D3E4F5A6B",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "selectedTests" : [
+        "SocialLocalBackendE2ETests"
+      ],
+      "target" : {
+        "containerPath" : "container:Modules",
+        "identifier" : "PocketCastsServerTests",
+        "name" : "PocketCastsServerTests"
+      }
+    }
+  ],
+  "version" : 1
+}

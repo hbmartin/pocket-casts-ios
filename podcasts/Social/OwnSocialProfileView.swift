@@ -30,6 +30,19 @@ struct OwnSocialProfileView: View {
                 Button(L10n.socialProfileEdit) { showingEdit = true }
             }
 
+            // Own follower/following lists (the backend only serves the
+            // caller's lists; other profiles show counts only — Slice 5).
+            Section {
+                NavigationLink(destination: FollowListView(viewModel: FollowListViewModel(kind: .followers))
+                    .environmentObject(theme)) {
+                    Label(L10n.socialFollowersTitle, systemImage: "person.2")
+                }
+                NavigationLink(destination: FollowListView(viewModel: FollowListViewModel(kind: .following))
+                    .environmentObject(theme)) {
+                    Label(L10n.socialFollowingTitle, systemImage: "person.2.wave.2")
+                }
+            }
+
             Section {
                 Button {
                     viewModel.shareLink()

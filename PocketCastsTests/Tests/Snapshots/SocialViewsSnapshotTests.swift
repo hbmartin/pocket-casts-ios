@@ -103,6 +103,13 @@ final class SocialViewsSnapshotTests: XCTestCase {
     }
 
     func testPublicProfileLoaded() {
+        // Pin the joined state: the follow button renders only for joined
+        // viewers, and the simulator's UserDefaults may carry a profile from
+        // manual QA. Deterministically render as a joined non-owner viewer.
+        let previousProfile = SocialIdentityStore.cachedProfile
+        SocialIdentityStore.cachedProfile = Self.fixtureProfile()
+        defer { SocialIdentityStore.cachedProfile = previousProfile }
+
         let profile = SocialPublicProfile(
             userId: "00000000-0000-0000-0000-000000000002",
             handle: "snapshot_person",

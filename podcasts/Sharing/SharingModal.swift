@@ -2,6 +2,7 @@ import CoreMedia
 import Dependencies
 import PocketCastsDataModel
 import SwiftUI
+import PocketCastsServer
 import PocketCastsUtils
 
 enum SharingModal {
@@ -135,7 +136,11 @@ enum SharingModal {
             return
         }
 
-        let sharingDestinations: [ShareDestination] = [.copyLink, .systemSheet(vc: viewController)]
+        var sharingDestinations: [ShareDestination] = [.copyLink, .systemSheet(vc: viewController)]
+        // Send-to-friend (Slice 4, docs/Social.md): joined accounts only.
+        if FeatureFlag.socialProfiles.enabled, SocialIdentityStore.isJoined {
+            sharingDestinations.insert(.sendToFriend(vc: viewController), at: 1)
+        }
         let sharingView = SharingView(destinations: sharingDestinations, selectedOption: option, source: source)
         let modalView = ModalView {
             sharingView
