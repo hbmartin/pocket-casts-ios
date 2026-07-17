@@ -50,6 +50,21 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
         title = L10n.settingsStats
         Analytics.track(.statsShown)
+
+        // Shareable stat cards (Slice 3, docs/Social.md).
+        if FeatureFlag.socialProfiles.enabled {
+            let menu = UIMenu(children: [
+                UIAction(title: L10n.socialCardShareStats, image: UIImage(systemName: "chart.bar")) { [weak self] _ in
+                    guard let self else { return }
+                    SocialShareCards.shareStatsCard(from: self)
+                },
+                UIAction(title: L10n.socialCardShareHeatmap, image: UIImage(systemName: "square.grid.3x3")) { [weak self] _ in
+                    guard let self else { return }
+                    SocialShareCards.shareHeatmapCard(from: self, heatmapModel: self.heatmapViewModel)
+                },
+            ])
+            navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), menu: menu)
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {

@@ -7187,3 +7187,57 @@
 
 /* Report reason: other */
 "social_report_other" = "Other";
+
+/* Button opening the review editor when the user has no review yet */
+"social_review_write" = "Write a review";
+
+/* Button opening the review editor to edit an existing review */
+"social_review_edit" = "Edit your review";
+
+/* Shown when a podcast has no written reviews yet */
+"social_reviews_empty" = "No written reviews yet. Be the first!";
+
+/* Section header for the review list. %1$d is the number of reviews */
+"social_reviews_count" = "Reviews (%1$d)";
+
+/* Button loading the next page of reviews */
+"social_reviews_load_more" = "Load more";
+
+/* Navigation title of the reviews screen */
+"social_reviews_title" = "Ratings & Reviews";
+
+/* Footer of the review editor explaining attribution */
+"social_review_editor_note" = "Your review is public and shown with your @handle. Star ratings stay separate and anonymous.";
+
+/* Destructive button deleting the user's review */
+"social_review_delete" = "Delete review";
+
+/* Error when a review submission is rejected */
+"social_review_rejected" = "Couldn't post your review. Listen to a couple of episodes first, or check your wording.";
+
+/* Link on the podcast page opening the reviews screen */
+"social_reviews_see" = "See ratings & reviews";
+
+/* Title of the episode reactions row */
+"social_reactions_title" = "Reactions";
+
+/* Hint shown when the user hasn't listened enough to react */
+"social_reactions_gate_hint" = "Listen to a bit more of this episode to react.";
+
+/* Stats share card label: total hours listened */
+"social_card_hours_listened" = "listened";
+
+/* Stats share card label: time saved by effects */
+"social_card_time_saved" = "saved by trim & speed";
+
+/* Stats share card label: date listening started */
+"social_card_listening_since" = "listening since";
+
+/* Stats share card hours value. %1$d is a number of hours */
+"social_card_hours_value" = "%1$d hours";
+
+/* Share menu action for the stats card */
+"social_card_share_stats" = "Share stats card";
+
+/* Share menu action for the heatmap card */
+"social_card_share_heatmap" = "Share activity card";

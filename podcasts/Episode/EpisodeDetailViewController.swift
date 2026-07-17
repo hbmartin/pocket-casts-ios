@@ -65,6 +65,7 @@ class EpisodeDetailViewController: FakeNavViewController, @preconcurrency UIDocu
     /// (see +ShowNotes).
     var episodeCreditsContainer: UIView?
     var episodeMentionsContainer: UIView?
+    var episodeReactionsContainer: UIView?
 
     @IBOutlet var mainScrollView: UIScrollView! {
         didSet {

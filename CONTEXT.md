@@ -94,3 +94,10 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   `source`. Worked manually at launch. See `docs/SocialModeration.md`.
 - **Listen-gate** — the pre-existing anti-spam rule (you may only rate a podcast after
   listening to ≥1–2 episodes) reused to gate reviews, comments and reactions.
+- **Review** — a podcast's star rating plus optional written text. The stars remain the
+  anonymous account-level primitive; the *text* requires a joined account and is publicly
+  attributed (@handle, display name, date). One per person per podcast; editable,
+  deletable, pre-filtered, reportable, and erased with the profile.
+- **Reaction** — an account-recorded emoji (❤️ 😂 🤯 👏 🔥) on an episode, one per person,
+  listen-gated. Publicly displayed as aggregate counts only; attribution surfaces only for
+  joined accounts once feeds exist.

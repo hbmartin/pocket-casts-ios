@@ -4487,6 +4487,20 @@ nonisolated internal enum L10n {
   internal static var socialBlockConfirmTitle: String { return L10n.tr("Localizable", "social_block_confirm_title", fallback: "Block this person?") }
   /// Label on a profile the viewer has blocked
   internal static var socialBlockedLabel: String { return L10n.tr("Localizable", "social_blocked_label", fallback: "Blocked") }
+  /// Stats share card label: total hours listened
+  internal static var socialCardHoursListened: String { return L10n.tr("Localizable", "social_card_hours_listened", fallback: "listened") }
+  /// Stats share card hours value. %1$d is a number of hours
+  internal static func socialCardHoursValue(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_card_hours_value", p1, fallback: "%1$d hours")
+  }
+  /// Stats share card label: date listening started
+  internal static var socialCardListeningSince: String { return L10n.tr("Localizable", "social_card_listening_since", fallback: "listening since") }
+  /// Share menu action for the heatmap card
+  internal static var socialCardShareHeatmap: String { return L10n.tr("Localizable", "social_card_share_heatmap", fallback: "Share activity card") }
+  /// Share menu action for the stats card
+  internal static var socialCardShareStats: String { return L10n.tr("Localizable", "social_card_share_stats", fallback: "Share stats card") }
+  /// Stats share card label: time saved by effects
+  internal static var socialCardTimeSaved: String { return L10n.tr("Localizable", "social_card_time_saved", fallback: "saved by trim & speed") }
   /// Profile tab row CTA before the account has joined social
   internal static var socialClaimHandle: String { return L10n.tr("Localizable", "social_claim_handle", fallback: "Claim your @handle") }
   /// Note on the confirmation step that all fields start private
@@ -4579,6 +4593,10 @@ nonisolated internal enum L10n {
   internal static var socialProfileShareLink: String { return L10n.tr("Localizable", "social_profile_share_link", fallback: "Share Profile Link") }
   /// Navigation title of the own social profile screen
   internal static var socialProfileTitle: String { return L10n.tr("Localizable", "social_profile_title", fallback: "My Profile") }
+  /// Hint shown when the user hasn't listened enough to react
+  internal static var socialReactionsGateHint: String { return L10n.tr("Localizable", "social_reactions_gate_hint", fallback: "Listen to a bit more of this episode to react.") }
+  /// Title of the episode reactions row
+  internal static var socialReactionsTitle: String { return L10n.tr("Localizable", "social_reactions_title", fallback: "Reactions") }
   /// Report action label
   internal static var socialReport: String { return L10n.tr("Localizable", "social_report", fallback: "Report") }
   /// Report reason: harassment
@@ -4595,6 +4613,28 @@ nonisolated internal enum L10n {
   internal static var socialReportSpam: String { return L10n.tr("Localizable", "social_report_spam", fallback: "Spam") }
   /// Title of the report reason picker
   internal static var socialReportTitle: String { return L10n.tr("Localizable", "social_report_title", fallback: "Report this profile") }
+  /// Destructive button deleting the user's review
+  internal static var socialReviewDelete: String { return L10n.tr("Localizable", "social_review_delete", fallback: "Delete review") }
+  /// Button opening the review editor to edit an existing review
+  internal static var socialReviewEdit: String { return L10n.tr("Localizable", "social_review_edit", fallback: "Edit your review") }
+  /// Footer of the review editor explaining attribution
+  internal static var socialReviewEditorNote: String { return L10n.tr("Localizable", "social_review_editor_note", fallback: "Your review is public and shown with your @handle. Star ratings stay separate and anonymous.") }
+  /// Error when a review submission is rejected
+  internal static var socialReviewRejected: String { return L10n.tr("Localizable", "social_review_rejected", fallback: "Couldn't post your review. Listen to a couple of episodes first, or check your wording.") }
+  /// Button opening the review editor when the user has no review yet
+  internal static var socialReviewWrite: String { return L10n.tr("Localizable", "social_review_write", fallback: "Write a review") }
+  /// Section header for the review list. %1$d is the number of reviews
+  internal static func socialReviewsCount(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_reviews_count", p1, fallback: "Reviews (%1$d)")
+  }
+  /// Shown when a podcast has no written reviews yet
+  internal static var socialReviewsEmpty: String { return L10n.tr("Localizable", "social_reviews_empty", fallback: "No written reviews yet. Be the first!") }
+  /// Button loading the next page of reviews
+  internal static var socialReviewsLoadMore: String { return L10n.tr("Localizable", "social_reviews_load_more", fallback: "Load more") }
+  /// Link on the podcast page opening the reviews screen
+  internal static var socialReviewsSee: String { return L10n.tr("Localizable", "social_reviews_see", fallback: "See ratings & reviews") }
+  /// Navigation title of the reviews screen
+  internal static var socialReviewsTitle: String { return L10n.tr("Localizable", "social_reviews_title", fallback: "Ratings & Reviews") }
   /// Save button used in social edit screens
   internal static var socialSave: String { return L10n.tr("Localizable", "social_save", fallback: "Save") }
   /// Section header for the followed shows list
