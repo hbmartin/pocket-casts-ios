@@ -4513,6 +4513,62 @@ nonisolated internal enum L10n {
   internal static var socialDisplayNamePlaceholder: String { return L10n.tr("Localizable", "social_display_name_placeholder", fallback: "Display name") }
   /// Error shown when a profile edit is rejected by the server
   internal static var socialEditRejected: String { return L10n.tr("Localizable", "social_edit_rejected", fallback: "Couldn't save. Your name or bio may have been rejected.") }
+  /// Body of the Explore-tab card explaining what joining unlocks
+  internal static var socialExploreJoinMessage: String { return L10n.tr("Localizable", "social_explore_join_message", fallback: "Claim a handle to follow friends and see what they're listening to — right here.") }
+  /// Title of the Explore-tab card inviting the user to join the social features
+  internal static var socialExploreJoinTitle: String { return L10n.tr("Localizable", "social_explore_join_title", fallback: "Find your friends") }
+  /// Empty state for the Explore activity feed when there is no recent activity from followed people
+  internal static var socialFeedEmpty: String { return L10n.tr("Localizable", "social_feed_empty", fallback: "Follow friends to see what they're listening to.") }
+  /// Section header for the friends activity feed on the Explore tab
+  internal static var socialFeedHeader: String { return L10n.tr("Localizable", "social_feed_header", fallback: "Friends") }
+  /// Feed line: person finished an episode. %1$@ = display name, %2$@ = episode title
+  internal static func socialFeedItemFinished(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_finished", String(describing: p1), String(describing: p2), fallback: "%1$@ finished %2$@")
+  }
+  /// Feed line: person followed another person. %1$@ = display name, %2$@ = the @handle they followed
+  internal static func socialFeedItemFollowedPerson(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_followed_person", String(describing: p1), String(describing: p2), fallback: "%1$@ followed %2$@")
+  }
+  /// Feed line: person followed a podcast. %1$@ = display name, %2$@ = podcast title
+  internal static func socialFeedItemFollowedShow(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_followed_show", String(describing: p1), String(describing: p2), fallback: "%1$@ followed %2$@")
+  }
+  /// Feed line: person joined the social features. %1$@ = their display name
+  internal static func socialFeedItemJoined(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_joined", String(describing: p1), fallback: "%1$@ joined")
+  }
+  /// Feed line: person reacted to an episode. %1$@ = display name, %2$@ = episode title
+  internal static func socialFeedItemReacted(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_reacted", String(describing: p1), String(describing: p2), fallback: "%1$@ reacted to %2$@")
+  }
+  /// Feed line: person reviewed a podcast. %1$@ = display name, %2$@ = podcast title
+  internal static func socialFeedItemReviewed(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_reviewed", String(describing: p1), String(describing: p2), fallback: "%1$@ reviewed %2$@")
+  }
+  /// Button that asks for a friend's @handle to open their profile
+  internal static var socialFindPeople: String { return L10n.tr("Localizable", "social_find_people", fallback: "Find People") }
+  /// Confirmation button that opens the profile for the typed handle
+  internal static var socialFindPeopleCta: String { return L10n.tr("Localizable", "social_find_people_cta", fallback: "View Profile") }
+  /// Prompt shown with a text field asking for a friend's @handle
+  internal static var socialFindPeoplePrompt: String { return L10n.tr("Localizable", "social_find_people_prompt", fallback: "Enter a friend's handle to view their profile.") }
+  /// Button to follow this profile's owner
+  internal static var socialFollow: String { return L10n.tr("Localizable", "social_follow", fallback: "Follow") }
+  /// Button to accept a pending follow request
+  internal static var socialFollowAccept: String { return L10n.tr("Localizable", "social_follow_accept", fallback: "Accept") }
+  /// Button to decline a pending follow request
+  internal static var socialFollowDecline: String { return L10n.tr("Localizable", "social_follow_decline", fallback: "Decline") }
+  /// Empty state for a followers/following list
+  internal static var socialFollowListEmpty: String { return L10n.tr("Localizable", "social_follow_list_empty", fallback: "No one here yet.") }
+  /// Follow-button state while a follow request awaits the owner's approval
+  internal static var socialFollowRequested: String { return L10n.tr("Localizable", "social_follow_requested", fallback: "Requested") }
+  /// Section header in the Inbox listing pending follow requests
+  internal static var socialFollowRequestsTitle: String { return L10n.tr("Localizable", "social_follow_requests_title", fallback: "Follow Requests") }
+  /// Header/label for the list of accounts that follow a profile
+  internal static var socialFollowersTitle: String { return L10n.tr("Localizable", "social_followers_title", fallback: "Followers") }
+  /// Follow-button state when the signed-in user already follows this profile
+  internal static var socialFollowing: String { return L10n.tr("Localizable", "social_following", fallback: "Following") }
+  /// Header/label for the list of accounts a profile follows
+  internal static var socialFollowingTitle: String { return L10n.tr("Localizable", "social_following_title", fallback: "Following") }
   /// Shown when a handle is available. %1$@ is the normalized @handle
   internal static func socialHandleAvailable(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_handle_available", String(describing: p1), fallback: "%1$@ is available")
@@ -4567,16 +4623,24 @@ nonisolated internal enum L10n {
   internal static var socialJoinTerms: String { return L10n.tr("Localizable", "social_join_terms", fallback: "By joining you agree that your display name and anything you set to public are visible to everyone.") }
   /// Title of the opt-in social Join flow and its navigation bar
   internal static var socialJoinTitle: String { return L10n.tr("Localizable", "social_join_title", fallback: "Join Social") }
+  /// Overflow action that hides a person's items from the activity feed without blocking them
+  internal static var socialMute: String { return L10n.tr("Localizable", "social_mute", fallback: "Mute") }
   /// Trailing note on the display name row: it cannot be made private
   internal static var socialPrivacyAlwaysPublic: String { return L10n.tr("Localizable", "social_privacy_always_public", fallback: "Always public") }
+  /// Toggle: new follows become requests that need the user's approval
+  internal static var socialPrivacyApproveFollowers: String { return L10n.tr("Localizable", "social_privacy_approve_followers", fallback: "Approve My Followers") }
+  /// Footer explaining the follow-approval toggle, including what open following means for Followers-visibility fields
+  internal static var socialPrivacyApproveFollowersFooter: String { return L10n.tr("Localizable", "social_privacy_approve_followers_footer", fallback: "When on, people must ask before they can follow you. When off, anyone can follow you instantly — and every follower can see anything set to Followers.") }
   /// Privacy screen row label for the bio
   internal static var socialPrivacyBio: String { return L10n.tr("Localizable", "social_privacy_bio", fallback: "Bio") }
   /// Privacy screen row label for the display name
   internal static var socialPrivacyDisplayName: String { return L10n.tr("Localizable", "social_privacy_display_name", fallback: "Display name") }
   /// Privacy screen row label for followed shows
   internal static var socialPrivacyFollowedShows: String { return L10n.tr("Localizable", "social_privacy_followed_shows", fallback: "Followed shows") }
+  /// Visibility option: only approved followers can see this field
+  internal static var socialPrivacyFollowers: String { return L10n.tr("Localizable", "social_privacy_followers", fallback: "Followers") }
   /// Privacy screen footer explaining the toggles
-  internal static var socialPrivacyFooter: String { return L10n.tr("Localizable", "social_privacy_footer", fallback: "Public fields appear on your profile page. Followers-only visibility arrives with following.") }
+  internal static var socialPrivacyFooter: String { return L10n.tr("Localizable", "social_privacy_footer", fallback: "Public fields appear on your profile page. Fields set to Followers are visible to everyone you've let follow you.") }
   /// Privacy screen row label for listening history
   internal static var socialPrivacyHistory: String { return L10n.tr("Localizable", "social_privacy_history", fallback: "Recently played") }
   /// Privacy screen section header for identity fields
@@ -4687,6 +4751,10 @@ nonisolated internal enum L10n {
   internal static var socialStatsListeningSince: String { return L10n.tr("Localizable", "social_stats_listening_since", fallback: "Listening since") }
   /// Unblock action label
   internal static var socialUnblock: String { return L10n.tr("Localizable", "social_unblock", fallback: "Unblock") }
+  /// Menu action to stop following this profile (also cancels a pending request)
+  internal static var socialUnfollow: String { return L10n.tr("Localizable", "social_unfollow", fallback: "Unfollow") }
+  /// Overflow action that undoes muting a person
+  internal static var socialUnmute: String { return L10n.tr("Localizable", "social_unmute", fallback: "Unmute") }
   /// Prompt to confirm when presented with a connection prompt. Used when connecting to a Sonos speaker.
   internal static var sonosConnectAction: String { return L10n.tr("Localizable", "sonos_connect_action", fallback: "CONNECT") }
   /// Prompt to connect to a Sonos speaker. 'Sonos' refers the the speaker manufacturer.

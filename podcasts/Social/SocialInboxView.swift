@@ -3,15 +3,24 @@ import PocketCastsServer
 import PocketCastsUtils
 
 /// The shared-item inbox (Slice 4, docs/Social.md): items friends sent you,
-/// newest first. Marked read on appear; swipe to delete; tapping opens the
-/// episode at the carried timestamp. React is deferred until senders can see
-/// reactions (roadmap amendment).
+/// newest first, with pending follow requests on top when the "Approve My
+/// Followers" toggle is on (Slice 5). Items are marked read on appear; swipe
+/// to delete; tapping opens the episode at the carried timestamp. React is
+/// deferred until senders can see reactions (roadmap amendment).
 struct SocialInboxView: View {
     @EnvironmentObject var theme: Theme
     @StateObject var viewModel: SocialInboxViewModel
 
     var body: some View {
         List {
+            if !viewModel.requests.isEmpty {
+                Section(header: Text(L10n.socialFollowRequestsTitle)) {
+                    ForEach(viewModel.requests) { entry in
+                        requestRow(entry)
+                    }
+                }
+            }
+
             if viewModel.items.isEmpty, !viewModel.isLoading {
                 Section {
                     Text(L10n.socialInboxEmpty)
@@ -39,6 +48,35 @@ struct SocialInboxView: View {
         .navigationTitle(L10n.socialInboxTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.load() }
+    }
+
+    private func requestRow(_ entry: FollowEntry) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                SocialCoordinator.openPublicProfile(handle: entry.handle)
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.displayName.isEmpty ? "@" + entry.handle : entry.displayName)
+                        .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                    Text("@" + entry.handle)
+                        .font(.footnote)
+                        .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                }
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            Button(L10n.socialFollowAccept) {
+                Task { await viewModel.respond(to: entry, accept: true) }
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.borderedProminent)
+            Button(L10n.socialFollowDecline) {
+                Task { await viewModel.respond(to: entry, accept: false) }
+            }
+            .font(.subheadline)
+            .buttonStyle(.bordered)
+        }
+        .padding(.vertical, 2)
     }
 
     private func itemRow(_ item: SharedItem) -> some View {
@@ -79,6 +117,7 @@ struct SocialInboxView: View {
 @MainActor
 final class SocialInboxViewModel: ObservableObject {
     @Published private(set) var items: [SharedItem] = []
+    @Published private(set) var requests: [FollowEntry] = []
     @Published private(set) var total = 0
     @Published private(set) var isLoading = true
 
@@ -88,8 +127,9 @@ final class SocialInboxViewModel: ObservableObject {
     init() {}
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: SocialInboxPage) {
+    init(fixture: SocialInboxPage, requests: [FollowEntry] = []) {
         items = fixture.items
+        self.requests = requests
         total = fixture.total
         isLoading = false
         fixtureLoaded = true
@@ -100,6 +140,7 @@ final class SocialInboxViewModel: ObservableObject {
     func load() async {
         guard !fixtureLoaded else { return }
         Analytics.track(.socialInboxOpened)
+        requests = await ApiServerHandler.shared.fetchFollowRequests()?.entries ?? []
         guard let page = await ApiServerHandler.shared.fetchInbox() else {
             isLoading = false
             return
@@ -114,6 +155,16 @@ final class SocialInboxViewModel: ObservableObject {
         if !unreadIds.isEmpty {
             _ = await ApiServerHandler.shared.markInboxRead(ids: unreadIds)
         }
+    }
+
+    /// Accept makes the requester an active follower (they may now see
+    /// Followers-tier fields); decline removes the pending row server-side.
+    func respond(to entry: FollowEntry, accept: Bool) async {
+        guard await ApiServerHandler.shared.respondToFollowRequest(requesterHandle: entry.handle, accept: accept) else { return }
+        if accept {
+            Analytics.track(.socialFollowApproved)
+        }
+        requests.removeAll { $0.handle == entry.handle }
     }
 
     func loadMore() async {

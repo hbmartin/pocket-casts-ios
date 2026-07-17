@@ -321,6 +321,163 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertTrue(inbox.items.isEmpty, "sent items die with the sender's profile")
     }
 
+    /// Slice-5 wire contract: the follow graph (open + approval-gated) and the
+    /// derived activity feed with per-field visibility gating and mute.
+    func testFollowGraphAndFeedLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-graph-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-graph-b-\(suffix)@e2e.test")
+        let (tokenC, _) = try await register(email: "ios-graph-c-\(suffix)@e2e.test")
+
+        let handleA = "ios_gra_a_\(suffix)"
+        for (token, handle, name) in [(tokenA, handleA, "Feed Actor A"),
+                                      (tokenB, "ios_gra_b_\(suffix)", "Follower B"),
+                                      (tokenC, "ios_gra_c_\(suffix)", "Requester C")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // B follows A: open by default → immediately active.
+        var follow = Api_FollowRequest()
+        follow.handle = handleA
+        var (status, body) = try await post("social/follow", token: tokenB, message: follow)
+        XCTAssertEqual(status, 200)
+        XCTAssertEqual(try Api_FollowResponse(serializedBytes: body).state, .active)
+
+        // A's public profile as B: counts + your_follow_state reflect it.
+        var publicRequest = Api_PublicProfileRequest()
+        publicRequest.handle = handleA
+        (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
+        XCTAssertEqual(status, 200)
+        var profileAsB = try Api_PublicProfileResponse(serializedBytes: body)
+        XCTAssertEqual(profileAsB.followerCount, 1)
+        XCTAssertEqual(profileAsB.yourFollowState, .active)
+
+        // A syncs a finished episode; history stays private → B's feed shows
+        // only the joined event, no listening-derived items (decision 3).
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        var episode = Api_SyncUserEpisode()
+        episode.uuid = "ffffffff-0000-0000-0000-00000000\(String(suffix.prefix(4)))"
+        episode.podcastUuid = "cccccccc-0000-0000-0000-00000000\(String(suffix.prefix(4)))"
+        episode.duration = Google_Protobuf_Int64Value(600)
+        episode.durationModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        episode.playedUpTo = Google_Protobuf_Int64Value(600)
+        episode.playedUpToModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        episode.playingStatus = Google_Protobuf_Int32Value(3) // completed
+        episode.playingStatusModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        var record = Api_Record()
+        record.episode = episode
+        sync.records.append(record)
+        (status, _) = try await post("user/sync/update", token: tokenA, message: sync)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/feed", token: tokenB, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        var feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertTrue(feed.items.contains { $0.kind == .joined && $0.actorHandle == handleA })
+        XCTAssertFalse(feed.items.contains { $0.kind == .finishedEpisode },
+                       "private history must not leak into follower feeds")
+
+        // A flips history to followers-only → the finished episode appears.
+        var update = Api_ProfileUpdateRequest()
+        update.displayName = "Feed Actor A"
+        update.historyVisibility = .followersOnly
+        (status, _) = try await post("social/profile/update", token: tokenA, message: update)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/feed", token: tokenB, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertTrue(feed.items.contains { $0.kind == .finishedEpisode && $0.actorHandle == handleA },
+                      "followers-only history is visible to an active follower")
+
+        // B's own lists: following contains A; A's followers contain B.
+        var listRequest = Api_FollowListRequest()
+        listRequest.followers = false
+        (status, body) = try await post("social/follows", token: tokenB, message: listRequest)
+        XCTAssertEqual(status, 200)
+        let following = try Api_FollowListResponse(serializedBytes: body)
+        XCTAssertTrue(following.entries.contains { $0.handle == handleA })
+
+        // A enables the approval toggle; C's follow becomes a pending request.
+        update.requireFollowApproval = true
+        update.historyVisibility = .followersOnly
+        (status, _) = try await post("social/profile/update", token: tokenA, message: update)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/follow", token: tokenC, message: follow)
+        XCTAssertEqual(status, 200)
+        XCTAssertEqual(try Api_FollowResponse(serializedBytes: body).state, .pending)
+
+        // Pending ≠ follower: C cannot see the followers-only feed items yet.
+        (status, body) = try await post("social/feed", token: tokenC, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertFalse(feed.items.contains { $0.actorHandle == handleA },
+                       "a pending follow contributes nothing to the feed")
+
+        // A sees the request and accepts it; C is now active.
+        (status, body) = try await post("social/follow/requests", token: tokenA, message: Api_FollowRequestsRequest())
+        XCTAssertEqual(status, 200)
+        let requests = try Api_FollowListResponse(serializedBytes: body)
+        XCTAssertTrue(requests.entries.contains { $0.handle == "ios_gra_c_\(suffix)" })
+
+        var approval = Api_FollowApprovalRequest()
+        approval.requesterHandle = "ios_gra_c_\(suffix)"
+        approval.accept = true
+        (status, body) = try await post("social/follow/approve", token: tokenA, message: approval)
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
+
+        (status, body) = try await post("social/feed", token: tokenC, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertTrue(feed.items.contains { $0.kind == .finishedEpisode && $0.actorHandle == handleA },
+                      "an approved follower unlocks followers-only items")
+
+        // B mutes A: A's items vanish from B's feed (one-way, unannounced).
+        (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
+        XCTAssertEqual(status, 200)
+        profileAsB = try Api_PublicProfileResponse(serializedBytes: body)
+        var mute = Api_MuteRequest()
+        mute.targetUserID = profileAsB.userID
+        (status, body) = try await post("social/mute", token: tokenB, message: mute)
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
+
+        (status, body) = try await post("social/feed", token: tokenB, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertFalse(feed.items.contains { $0.actorHandle == handleA },
+                       "muted actors are filtered from the feed")
+
+        // B unfollows: A's follower count drops and B's state resets.
+        var unfollow = Api_UnfollowRequest()
+        unfollow.handle = handleA
+        (status, body) = try await post("social/unfollow", token: tokenB, message: unfollow)
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
+
+        (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
+        XCTAssertEqual(status, 200)
+        profileAsB = try Api_PublicProfileResponse(serializedBytes: body)
+        XCTAssertEqual(profileAsB.followerCount, 1, "only C remains")
+        XCTAssertEqual(profileAsB.yourFollowState, .none)
+
+        // Erase A: C's following list empties (follows die with the profile).
+        (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/follows", token: tokenC, message: listRequest)
+        XCTAssertEqual(status, 200)
+        let cFollowing = try Api_FollowListResponse(serializedBytes: body)
+        XCTAssertFalse(cFollowing.entries.contains { $0.handle == handleA })
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {

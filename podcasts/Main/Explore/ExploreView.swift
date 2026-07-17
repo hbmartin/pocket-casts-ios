@@ -1,11 +1,14 @@
 import SwiftUI
+import PocketCastsUtils
 
-/// The Explore tab: Apple top charts with a genre picker, plus directory
-/// search. Everything on this screen works signed out and with zero
-/// Pocket Casts servers.
+/// The Explore tab: the friends activity feed for joined users (Slice 5 —
+/// feed-first restructure; the tab keeps the name "Explore"), then Apple top
+/// charts with a genre picker, plus directory search. The directory portion
+/// works signed out and with zero Pocket Casts servers.
 struct ExploreView: View {
     @EnvironmentObject private var theme: Theme
     @StateObject private var model = ExploreViewModel()
+    @StateObject private var feedModel = SocialFeedViewModel()
 
     private enum Layout {
         static let horizontalPadding: CGFloat = 16
@@ -49,6 +52,10 @@ struct ExploreView: View {
 
     private var chartContent: some View {
         LazyVStack(alignment: .leading, spacing: Layout.gridSpacing) {
+            if FeatureFlag.socialProfiles.enabled {
+                SocialFeedSection(viewModel: feedModel)
+            }
+
             genrePicker
 
             switch model.chartState {

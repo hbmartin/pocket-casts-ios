@@ -34,6 +34,35 @@ public struct SocialProfile: Equatable, Sendable, Codable {
     public var statsVisibility: SocialVisibility
     public var historyVisibility: SocialVisibility
     public var presenceVisibility: SocialVisibility
+    /// Hybrid follow consent (Slice 5): when true, new follows become requests.
+    /// Decoded leniently so pre-Slice-5 cached profiles stay readable.
+    public var requireFollowApproval: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case userId, handle, displayName, bio, avatarURL, createdAt, termsVersion
+        case avatarVisibility, bioVisibility, followedShowsVisibility, topPodcastsVisibility
+        case statsVisibility, historyVisibility, presenceVisibility, requireFollowApproval
+    }
+
+    // Swift-qualified: the SwiftProtobuf import has its own Decoder protocol.
+    public init(from decoder: Swift.Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        userId = try container.decode(String.self, forKey: .userId)
+        handle = try container.decode(String.self, forKey: .handle)
+        displayName = try container.decode(String.self, forKey: .displayName)
+        bio = try container.decode(String.self, forKey: .bio)
+        avatarURL = try container.decode(String.self, forKey: .avatarURL)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt)
+        termsVersion = try container.decode(Int.self, forKey: .termsVersion)
+        avatarVisibility = try container.decode(SocialVisibility.self, forKey: .avatarVisibility)
+        bioVisibility = try container.decode(SocialVisibility.self, forKey: .bioVisibility)
+        followedShowsVisibility = try container.decode(SocialVisibility.self, forKey: .followedShowsVisibility)
+        topPodcastsVisibility = try container.decode(SocialVisibility.self, forKey: .topPodcastsVisibility)
+        statsVisibility = try container.decode(SocialVisibility.self, forKey: .statsVisibility)
+        historyVisibility = try container.decode(SocialVisibility.self, forKey: .historyVisibility)
+        presenceVisibility = try container.decode(SocialVisibility.self, forKey: .presenceVisibility)
+        requireFollowApproval = try container.decodeIfPresent(Bool.self, forKey: .requireFollowApproval) ?? false
+    }
 
     public init(userId: String,
                 handle: String,
@@ -48,7 +77,8 @@ public struct SocialProfile: Equatable, Sendable, Codable {
                 topPodcastsVisibility: SocialVisibility = .private,
                 statsVisibility: SocialVisibility = .private,
                 historyVisibility: SocialVisibility = .private,
-                presenceVisibility: SocialVisibility = .private) {
+                presenceVisibility: SocialVisibility = .private,
+                requireFollowApproval: Bool = false) {
         self.userId = userId
         self.handle = handle
         self.displayName = displayName
@@ -63,6 +93,7 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         self.statsVisibility = statsVisibility
         self.historyVisibility = historyVisibility
         self.presenceVisibility = presenceVisibility
+        self.requireFollowApproval = requireFollowApproval
     }
 }
 
@@ -79,6 +110,10 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let createdAt: Date?
     public let hasStats: Bool
 
+    public let followerCount: Int
+    public let followingCount: Int
+    public let yourFollowState: FollowState
+
     // Visibility-gated sections; empty/nil when hidden from this viewer.
     public let followedShows: [SocialProfilePodcast]
     public let topPodcasts: [SocialProfilePodcast]
@@ -86,6 +121,7 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let recentlyPlayed: [SocialProfileEpisode]
 
     public init(userId: String, handle: String, displayName: String, bio: String, avatarURL: String, createdAt: Date?, hasStats: Bool,
+                followerCount: Int = 0, followingCount: Int = 0, yourFollowState: FollowState = .none,
                 followedShows: [SocialProfilePodcast] = [], topPodcasts: [SocialProfilePodcast] = [],
                 stats: SocialProfileStats? = nil, recentlyPlayed: [SocialProfileEpisode] = []) {
         self.userId = userId
@@ -95,6 +131,9 @@ public struct SocialPublicProfile: Equatable, Sendable {
         self.avatarURL = avatarURL
         self.createdAt = createdAt
         self.hasStats = hasStats
+        self.followerCount = followerCount
+        self.followingCount = followingCount
+        self.yourFollowState = yourFollowState
         self.followedShows = followedShows
         self.topPodcasts = topPodcasts
         self.stats = stats
@@ -183,7 +222,8 @@ extension SocialProfile {
                   topPodcastsVisibility: SocialVisibility(api.topPodcastsVisibility),
                   statsVisibility: SocialVisibility(api.statsVisibility),
                   historyVisibility: SocialVisibility(api.historyVisibility),
-                  presenceVisibility: SocialVisibility(api.presenceVisibility))
+                  presenceVisibility: SocialVisibility(api.presenceVisibility),
+                  requireFollowApproval: api.requireFollowApproval)
     }
 }
 
@@ -196,6 +236,9 @@ extension SocialPublicProfile {
                   avatarURL: api.avatarURL,
                   createdAt: api.hasCreatedAt ? api.createdAt.date : nil,
                   hasStats: api.hasStats_p,
+                  followerCount: Int(api.followerCount),
+                  followingCount: Int(api.followingCount),
+                  yourFollowState: FollowState(api.yourFollowState),
                   followedShows: api.followedShows.map(SocialProfilePodcast.init),
                   topPodcasts: api.topPodcasts.map(SocialProfilePodcast.init),
                   stats: api.hasStats ? SocialProfileStats(api.stats) : nil,

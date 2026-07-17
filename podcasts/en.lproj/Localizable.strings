@@ -7081,7 +7081,7 @@
 "social_privacy_listening_header" = "Listening";
 
 /* Privacy screen footer explaining the toggles */
-"social_privacy_footer" = "Public fields appear on your profile page. Followers-only visibility arrives with following.";
+"social_privacy_footer" = "Public fields appear on your profile page. Fields set to Followers are visible to everyone you've let follow you.";
 
 /* Privacy screen row label for followed shows */
 "social_privacy_followed_shows" = "Followed shows";
@@ -7280,3 +7280,87 @@
 
 /* Profile tab row label for the inbox with an unread count. %1$d is the count */
 "social_inbox_row_unread" = "Inbox (%1$d)";
+
+/* Button to follow this profile's owner */
+"social_follow" = "Follow";
+
+/* Follow-button state when the signed-in user already follows this profile */
+"social_following" = "Following";
+
+/* Follow-button state while a follow request awaits the owner's approval */
+"social_follow_requested" = "Requested";
+
+/* Menu action to stop following this profile (also cancels a pending request) */
+"social_unfollow" = "Unfollow";
+
+/* Header/label for the list of accounts that follow a profile */
+"social_followers_title" = "Followers";
+
+/* Header/label for the list of accounts a profile follows */
+"social_following_title" = "Following";
+
+/* Empty state for a followers/following list */
+"social_follow_list_empty" = "No one here yet.";
+
+/* Overflow action that hides a person's items from the activity feed without blocking them */
+"social_mute" = "Mute";
+
+/* Overflow action that undoes muting a person */
+"social_unmute" = "Unmute";
+
+/* Section header in the Inbox listing pending follow requests */
+"social_follow_requests_title" = "Follow Requests";
+
+/* Button to accept a pending follow request */
+"social_follow_accept" = "Accept";
+
+/* Button to decline a pending follow request */
+"social_follow_decline" = "Decline";
+
+/* Visibility option: only approved followers can see this field */
+"social_privacy_followers" = "Followers";
+
+/* Toggle: new follows become requests that need the user's approval */
+"social_privacy_approve_followers" = "Approve My Followers";
+
+/* Footer explaining the follow-approval toggle, including what open following means for Followers-visibility fields */
+"social_privacy_approve_followers_footer" = "When on, people must ask before they can follow you. When off, anyone can follow you instantly — and every follower can see anything set to Followers.";
+
+/* Section header for the friends activity feed on the Explore tab */
+"social_feed_header" = "Friends";
+
+/* Empty state for the Explore activity feed when there is no recent activity from followed people */
+"social_feed_empty" = "Follow friends to see what they're listening to.";
+
+/* Button that asks for a friend's @handle to open their profile */
+"social_find_people" = "Find People";
+
+/* Prompt shown with a text field asking for a friend's @handle */
+"social_find_people_prompt" = "Enter a friend's handle to view their profile.";
+
+/* Confirmation button that opens the profile for the typed handle */
+"social_find_people_cta" = "View Profile";
+
+/* Feed line: person joined the social features. %1$@ = their display name */
+"social_feed_item_joined" = "%1$@ joined";
+
+/* Feed line: person followed another person. %1$@ = display name, %2$@ = the @handle they followed */
+"social_feed_item_followed_person" = "%1$@ followed %2$@";
+
+/* Feed line: person followed a podcast. %1$@ = display name, %2$@ = podcast title */
+"social_feed_item_followed_show" = "%1$@ followed %2$@";
+
+/* Feed line: person finished an episode. %1$@ = display name, %2$@ = episode title */
+"social_feed_item_finished" = "%1$@ finished %2$@";
+
+/* Feed line: person reviewed a podcast. %1$@ = display name, %2$@ = podcast title */
+"social_feed_item_reviewed" = "%1$@ reviewed %2$@";
+
+/* Feed line: person reacted to an episode. %1$@ = display name, %2$@ = episode title */
+"social_feed_item_reacted" = "%1$@ reacted to %2$@";
+
+/* Title of the Explore-tab card inviting the user to join the social features */
+"social_explore_join_title" = "Find your friends";
+
+/* Body of the Explore-tab card explaining what joining unlocks */
+"social_explore_join_message" = "Claim a handle to follow friends and see what they're listening to — right here.";

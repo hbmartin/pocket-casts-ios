@@ -80,15 +80,16 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   the deprecated device-local *Share Profile*, which only seeds it on Join.
 - **Visibility** — the per-field privacy tier of a profile element (avatar, bio, followed
   shows, top podcasts, stats/heatmap, history, presence): `public`, `followers-only` or
-  `private`. Stored three-tier from day one; only public/private are selectable until the
-  follow graph unlocks `followers-only`. Every field defaults to private.
+  `private`. Stored three-tier from day one; all three tiers became selectable when the
+  follow graph shipped. Every field defaults to private.
 - **Profile Link** — the shareable address of a Social Profile: the fork backend's
   public base URL + `/u/<handle>` on the web, and `thcast://profile/<handle>` for
   app-to-app opening. The `pca.st/u/<handle>` form in early documents is upstream's
   domain and is aspirational only — this fork cannot serve or deep-link it.
 - **Block / Mute / Report** — the day-one safety primitives. *Block* is mutual
   invisibility (no view, follow, mention or interaction either way). *Mute* is a one-way
-  hide; the muted party is not notified. *Report* files a flag into the triage queue.
+  hide — the muted person's items are filtered from the muter's Activity Feed; the muted
+  party is not notified. *Report* files a flag into the triage queue.
 - **Triage Queue** — the single `moderation_reports` queue that receives both community
   flags and automated pre-filter hits (text classifier, image scan), distinguished by
   `source`. Worked manually at launch. See `docs/SocialModeration.md`.
@@ -99,10 +100,22 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   attributed (@handle, display name, date). One per person per podcast; editable,
   deletable, pre-filtered, reportable, and erased with the profile.
 - **Reaction** — an account-recorded emoji (❤️ 😂 🤯 👏 🔥) on an episode, one per person,
-  listen-gated. Publicly displayed as aggregate counts only; attribution surfaces only for
-  joined accounts once feeds exist.
+  listen-gated. Publicly displayed as aggregate counts only; for joined accounts the
+  reaction also appears attributed as a Feed Item to their followers.
 - **Shared Item** — an episode sent person-to-person, with an optional note and a
   listen-from timestamp. Sender and recipient must both be joined; a blocked or unknown
   recipient is indistinguishable at send time. Sent items die with the sender's profile.
 - **Inbox** — the recipient-side list of Shared Items: unread count, marked read on open,
   deletable. Reacting to a received item waits until senders can see reactions.
+- **Follow** — the one-way graph edge between joined accounts. Open by default: following
+  someone succeeds instantly and may reveal their `followers-only` fields. If the followee
+  has enabled follower approval, a new follow becomes a Follow Request instead. Blocking
+  severs follows in both directions; erasure deletes them.
+- **Follow Request** — a follow awaiting the followee's approval (their "Approve My
+  Followers" setting is on). Pending requesters see nothing extra — no followers-only
+  fields, no feed items — until accepted. Surfaces in the Inbox for accept/decline.
+- **Activity Feed / Feed Item** — the reverse-chronological list of followees' activity:
+  joined, followed a person, followed a show, finished an episode, reviewed, reacted.
+  Items are derived at read time from existing records (nothing is stored per-item); the
+  listening-derived kinds obey the actor's per-field Visibility for each viewer, and
+  muted or blocked actors are filtered out.

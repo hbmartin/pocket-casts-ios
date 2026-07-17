@@ -33,16 +33,19 @@ program's decision record and entry point. Companion docs:
 4. **Tombstone + operator reclaim.** Deleted handles are tombstoned forever (PII erased,
    handle string reserved). Operators can reclaim/reassign for impersonation, trademark,
    slur or legal order, and grant a one-off safety rename via support. (ADR-0005)
-5. **Per-field 3-tier privacy schema, 2-tier UI now, default private.** Store
-   `{public | followers-only | private}` per field from day one; expose only
-   public/private until the Phase-2 graph unlocks `followers-only`. (ADR-0006)
+5. **Per-field 3-tier privacy schema, default private.** Store
+   `{public | followers-only | private}` per field from day one; the Phase-1 UI exposed
+   only public/private, and Slice 5 (2026-07-17) unlocked the full three tiers with the
+   follow graph. (ADR-0006)
 6. **Post-moderation** + automated pre-filters (text classifier; mandatory CSAM/nudity
    image scan on every avatar/thumbnail) + community flags into one async triage queue;
    block/mute/report ship with the first UGC surface; anti-spam reuses the listen-gate.
    (ADR-0007)
-7. **Explore → Social (end-state).** The Explore tab becomes a unified Social tab merging
-   people-driven and directory discovery. Phase-1 interim: social attaches to existing
-   profile/podcast/episode screens; the tab flips when the Phase-2 feed exists.
+7. **Explore → Social (end-state), keeping the name "Explore".** The Explore tab becomes a
+   unified social+directory surface. Phase-1 interim: social attached to existing
+   profile/podcast/episode screens. Slice 5 (2026-07-17) restructured the tab feed-first
+   (activity feed → find people → charts + search) — but *amended*: all user-facing copy
+   keeps calling the tab "Explore".
 8. **Seed from local, server wins.** Join seeds display name + avatar from the device-local
    Share Profile as candidate content only (not its share-on toggles); then the server is
    source of truth and the local card retargets to `pca.st/u/<handle>`.
@@ -71,6 +74,17 @@ program's decision record and entry point. Companion docs:
    reactions (❤️😂🤯), listen-gated.
 4. **Send-to-friend + shared-item inbox** — `ShareDestination.sendToUser(handle)` plus a
    minimal inbox (read/unread, react).
+
+## Phase 2 slices
+
+5. **Follow graph + activity feed (Slice 5, shipped 2026-07-17).** Hybrid follow consent:
+   open/instant by default, per-account "Approve My Followers" toggle turns new follows
+   into requests (accept/decline in the Inbox). Followers may see `followers-only` fields
+   — the privacy screen states this honestly. Feed = fan-out-on-read derivation over
+   existing tables (ADR-0009): joined / followed-person / followed-show / finished-episode
+   / reviewed / reacted, gated per-viewer by the actor's per-field visibility, filtered by
+   mute + block. Mute UI shipped here (fulfilling the ADR-0007 amendment). Follower /
+   following lists are caller-own only; other profiles show counts + your-follow-state.
 
 ## Where things live (code anchors)
 
