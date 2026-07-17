@@ -4537,6 +4537,18 @@ nonisolated internal enum L10n {
   internal static var socialHandleTitle: String { return L10n.tr("Localizable", "social_handle_title", fallback: "Your @handle") }
   /// Footer explaining the heatmap is device-local
   internal static var socialHeatmapLocalNote: String { return L10n.tr("Localizable", "social_heatmap_local_note", fallback: "Your activity grid is computed on this device and isn't shown on your public page.") }
+  /// Shown when the inbox has no items
+  internal static var socialInboxEmpty: String { return L10n.tr("Localizable", "social_inbox_empty", fallback: "Nothing here yet. Episodes friends send you will show up here.") }
+  /// Profile tab row label for the inbox with an unread count. %1$d is the count
+  internal static func socialInboxRowUnread(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_inbox_row_unread", p1, fallback: "Inbox (%1$d)")
+  }
+  /// Inbox row attribution line. %1$@ is a display name, %2$@ is an @handle
+  internal static func socialInboxSentBy(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_inbox_sent_by", String(describing: p1), String(describing: p2), fallback: "%1$@ (%2$@) sent you")
+  }
+  /// Navigation title of the shared-item inbox
+  internal static var socialInboxTitle: String { return L10n.tr("Localizable", "social_inbox_title", fallback: "Inbox") }
   /// Button accepting the social terms and continuing to handle selection
   internal static var socialJoinAgree: String { return L10n.tr("Localizable", "social_join_agree", fallback: "Agree & Continue") }
   /// Button that performs the join/claim
@@ -4647,6 +4659,28 @@ nonisolated internal enum L10n {
   internal static var socialSectionStats: String { return L10n.tr("Localizable", "social_section_stats", fallback: "Listening") }
   /// Section header for the top podcasts list
   internal static var socialSectionTopPodcasts: String { return L10n.tr("Localizable", "social_section_top_podcasts", fallback: "Top podcasts") }
+  /// Button performing the send
+  internal static var socialSendCta: String { return L10n.tr("Localizable", "social_send_cta", fallback: "Send") }
+  /// Error when a send fails (unknown recipient, rejected note, or offline)
+  internal static var socialSendFailed: String { return L10n.tr("Localizable", "social_send_failed", fallback: "Couldn't send. Check the handle and your note.") }
+  /// Shows the listen-from position carried with the send. %1$@ is a play time like 14:30
+  internal static func socialSendFromTimestamp(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_send_from_timestamp", String(describing: p1), fallback: "Starts at %1$@")
+  }
+  /// Section header for the optional note field
+  internal static var socialSendNoteHeader: String { return L10n.tr("Localizable", "social_send_note_header", fallback: "Note") }
+  /// Placeholder for the optional note field
+  internal static var socialSendNotePlaceholder: String { return L10n.tr("Localizable", "social_send_note_placeholder", fallback: "Add a note (optional)") }
+  /// Section header for the recipient handle field
+  internal static var socialSendRecipientHeader: String { return L10n.tr("Localizable", "social_send_recipient_header", fallback: "To") }
+  /// Shown when the recipient handle doesn't match a joined profile
+  internal static var socialSendRecipientNotFound: String { return L10n.tr("Localizable", "social_send_recipient_not_found", fallback: "No one with that handle") }
+  /// Toast after a successful send. %1$@ is the recipient @handle
+  internal static func socialSendSuccess(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_send_success", String(describing: p1), fallback: "Sent to %1$@")
+  }
+  /// Title of the send-to-friend sheet and its share-destination button
+  internal static var socialSendTitle: String { return L10n.tr("Localizable", "social_send_title", fallback: "Send to Friend") }
   /// Stats row label: total hours listened
   internal static var socialStatsHoursListened: String { return L10n.tr("Localizable", "social_stats_hours_listened", fallback: "Hours listened") }
   /// Stats row label: date listening started

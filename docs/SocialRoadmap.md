@@ -17,7 +17,7 @@ Phased plan for the social program. Update the **Status** column as work lands. 
 | 3 | Written **reviews** — stars stay anonymous; TEXT requires Join, attributed; 1/user/podcast; edit/delete; pre-filtered; reportable (content-level reports); erased with profile | in-progress | Server-only storage v1 (own review rides the fetch); server-side listen-gate from synced `user_episodes`. |
 | 3 | Episode **reactions** (❤️😂🤯👏🔥) — account-recorded, counts-only display; one per episode (switch/clear); ≥25%-played gate | in-progress | Per-account rows make Phase-2 attributed feeds migration-free. |
 | — | **Year-in-Review stories** | deferred | Cut 2026-07-17: all aggregates net-new and local data approximate (cumulative time attributed to last-interaction day; this-device only). Revisit with per-day listening tracking and/or the §11 vertical story export. |
-| 4 | **Send-to-friend** + shared-item inbox | planned | Adds `ShareDestination.sendToUser`; minimal inbox. |
+| 4 | **Send-to-friend** + shared-item inbox — both ends joined; item = episode + note (≤500, filtered) + timestamp; inbox = read/unread + delete + open-at-timestamp with a Profile-tab unread badge | in-progress | *Amended 2026-07-17:* the roadmap's inbox **react** is deferred until senders can see reactions (sent-view or notifications) — same do-nothing-control reasoning as the mute deferral. Erase deletes sent items. |
 
 ## Phase 2 — Graph & discovery
 

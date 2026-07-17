@@ -101,3 +101,8 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Reaction** — an account-recorded emoji (❤️ 😂 🤯 👏 🔥) on an episode, one per person,
   listen-gated. Publicly displayed as aggregate counts only; attribution surfaces only for
   joined accounts once feeds exist.
+- **Shared Item** — an episode sent person-to-person, with an optional note and a
+  listen-from timestamp. Sender and recipient must both be joined; a blocked or unknown
+  recipient is indistinguishable at send time. Sent items die with the sender's profile.
+- **Inbox** — the recipient-side list of Shared Items: unread count, marked read on open,
+  deletable. Reacting to a received item waits until senders can see reactions.

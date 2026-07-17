@@ -6,12 +6,15 @@ import PocketCastsUtils
 
 enum ShareDestination: Hashable {
     case copyLink
+    case sendToFriend(vc: UIViewController)
     case systemSheet(vc: UIViewController)
 
     var name: String {
         switch self {
         case .copyLink:
             L10n.shareCopyLink
+        case .sendToFriend:
+            L10n.socialSendTitle
         case .systemSheet:
             L10n.shareMoreActions
         }
@@ -21,6 +24,8 @@ enum ShareDestination: Hashable {
         switch self {
         case .copyLink:
             Image("pocketcasts")
+        case .sendToFriend:
+            Image(systemName: "paperplane")
         case .systemSheet:
             Image(systemName: "ellipsis")
         }
@@ -47,6 +52,24 @@ enum ShareDestination: Hashable {
             ShareDestination.logClipShared(option: option, style: style, clipUUID: clipUUID, source: source)
             ShareDestination.logHighlightQuoteShared(option: option, style: style, source: source)
             ShareDestination.logPodcastShared(style: style, option: option, destination: self, source: source, hasQuote: quote != nil)
+        case .sendToFriend(let vc):
+            // Send-to-friend (Slice 4, docs/Social.md): episode reference +
+            // optional note; current-position shares carry the timestamp.
+            let (episode, timestamp): (Episode?, TimeInterval) = switch option {
+            case .episode(let episode): (episode, 0)
+            case .currentPosition(let episode, let time), .bookmark(let episode, let time), .clip(let episode, let time): (episode, time)
+            case .highlight(let episode, let bookmark): (episode, bookmark.time)
+            case .clipShare(let episode, let clipTime, _): (episode, TimeInterval(clipTime.start))
+            case .podcast: (nil, 0)
+            }
+            guard let episode else { return }
+            let viewModel = SendToFriendViewModel(episodeUuid: episode.uuid,
+                                                  podcastUuid: episode.parentIdentifier(),
+                                                  episodeTitle: episode.title ?? "",
+                                                  podcastTitle: episode.parentPodcast()?.title ?? "",
+                                                  timestampSeconds: Int(timestamp))
+            let hosting = ThemedHostingController(rootView: SendToFriendView(viewModel: viewModel))
+            (vc.presentedViewController ?? vc).present(hosting, animated: true)
         case .systemSheet(let vc):
             let data = try await option.shareData(style: style, destination: self, clipUUID: clipUUID, progress: progress, quote: quote)
             let activityViewController = UIActivityViewController(activityItems: data, applicationActivities: nil)
@@ -70,6 +93,8 @@ enum ShareDestination: Hashable {
         switch self {
         case .copyLink:
             "url"
+        case .sendToFriend:
+            "send_to_friend"
         case .systemSheet:
             "system_sheet"
         }

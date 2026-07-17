@@ -7241,3 +7241,42 @@
 
 /* Share menu action for the heatmap card */
 "social_card_share_heatmap" = "Share activity card";
+
+/* Title of the send-to-friend sheet and its share-destination button */
+"social_send_title" = "Send to Friend";
+
+/* Section header for the recipient handle field */
+"social_send_recipient_header" = "To";
+
+/* Shown when the recipient handle doesn't match a joined profile */
+"social_send_recipient_not_found" = "No one with that handle";
+
+/* Section header for the optional note field */
+"social_send_note_header" = "Note";
+
+/* Placeholder for the optional note field */
+"social_send_note_placeholder" = "Add a note (optional)";
+
+/* Shows the listen-from position carried with the send. %1$@ is a play time like 14:30 */
+"social_send_from_timestamp" = "Starts at %1$@";
+
+/* Button performing the send */
+"social_send_cta" = "Send";
+
+/* Error when a send fails (unknown recipient, rejected note, or offline) */
+"social_send_failed" = "Couldn't send. Check the handle and your note.";
+
+/* Toast after a successful send. %1$@ is the recipient @handle */
+"social_send_success" = "Sent to %1$@";
+
+/* Navigation title of the shared-item inbox */
+"social_inbox_title" = "Inbox";
+
+/* Shown when the inbox has no items */
+"social_inbox_empty" = "Nothing here yet. Episodes friends send you will show up here.";
+
+/* Inbox row attribution line. %1$@ is a display name, %2$@ is an @handle */
+"social_inbox_sent_by" = "%1$@ (%2$@) sent you";
+
+/* Profile tab row label for the inbox with an unread count. %1$d is the count */
+"social_inbox_row_unread" = "Inbox (%1$d)";

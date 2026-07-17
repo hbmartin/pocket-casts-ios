@@ -103,6 +103,9 @@ enum AnalyticsEvent: String {
     case socialReactionSet
     case socialStatsCardShared
     case socialHeatmapCardShared
+    case socialItemSent
+    case socialInboxOpened
+    case socialInboxItemOpened
 
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy

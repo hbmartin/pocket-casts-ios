@@ -257,6 +257,70 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertTrue(afterErase.reviews.isEmpty, "attributed review text dies with the profile")
     }
 
+    /// Slice-4 wire contract: send-to-friend + the shared-item inbox.
+    func testSendToFriendAndInboxLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-send-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-send-b-\(suffix)@e2e.test")
+
+        for (token, handle, name) in [(tokenA, "ios_snd_a_\(suffix)", "Sender A"),
+                                      (tokenB, "ios_snd_b_\(suffix)", "Recipient B")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        var send = Api_SharedItemSendRequest()
+        send.recipientHandle = "ios_snd_b_\(suffix)"
+        send.episodeUuid = "ios-episode-\(suffix)"
+        send.podcastUuid = "ios-podcast-\(suffix)"
+        send.episodeTitle = "A Sent Episode"
+        send.podcastTitle = "A Sent Podcast"
+        send.note = "you'll love this bit"
+        send.timestampSeconds = 615
+        var (status, body) = try await post("social/share/send", token: tokenA, message: send)
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
+
+        // B's inbox: one unread item, fully attributed.
+        (status, body) = try await post("social/inbox", token: tokenB, message: Api_InboxRequest())
+        XCTAssertEqual(status, 200)
+        var inbox = try Api_InboxResponse(serializedBytes: body)
+        XCTAssertEqual(inbox.items.count, 1)
+        XCTAssertEqual(inbox.unread, 1)
+        let item = inbox.items[0]
+        XCTAssertEqual(item.senderHandle, "ios_snd_a_\(suffix)")
+        XCTAssertEqual(item.note, "you'll love this bit")
+        XCTAssertEqual(item.timestampSeconds, 615)
+        XCTAssertFalse(item.read)
+
+        // Mark read → unread drops.
+        var markRead = Api_InboxMarkReadRequest()
+        markRead.ids = [item.id]
+        (status, _) = try await post("social/inbox/read", token: tokenB, message: markRead)
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/inbox", token: tokenB, message: Api_InboxRequest())
+        inbox = try Api_InboxResponse(serializedBytes: body)
+        XCTAssertEqual(inbox.unread, 0)
+        XCTAssertTrue(inbox.items[0].read)
+
+        // Unknown recipient: 404 (no leak).
+        send.recipientHandle = "nobody_here_\(suffix)"
+        (status, _) = try await post("social/share/send", token: tokenA, message: send)
+        XCTAssertEqual(status, 404)
+
+        // Sender erases: the delivered item vanishes from B's inbox.
+        (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/inbox", token: tokenB, message: Api_InboxRequest())
+        XCTAssertEqual(status, 200)
+        inbox = try Api_InboxResponse(serializedBytes: body)
+        XCTAssertTrue(inbox.items.isEmpty, "sent items die with the sender's profile")
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {
