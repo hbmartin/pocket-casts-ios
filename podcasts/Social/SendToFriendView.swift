@@ -117,7 +117,8 @@ final class SendToFriendViewModel: ObservableObject {
 
     @Published var handleInput = "" { didSet { scheduleLookup() } }
     @Published var note = ""
-    @Published private(set) var recipientStatus: RecipientStatus = .idle
+    // Internal setter: snapshot tests stage specific states.
+    @Published var recipientStatus: RecipientStatus = .idle
     @Published private(set) var isSending = false
     @Published private(set) var sendError: String?
 
