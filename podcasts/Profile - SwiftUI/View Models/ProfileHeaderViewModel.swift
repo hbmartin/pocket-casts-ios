@@ -1,4 +1,6 @@
 import Foundation
+import PocketCastsServer
+import PocketCastsUtils
 import SwiftUI
 
 /// View model for the header view that appears on the Profile tab view
@@ -27,6 +29,18 @@ class ProfileHeaderViewModel: ProfileDataViewModel {
 
     func shareTapped() {
         guard let presenter = navigationController?.topViewController else { return }
+
+        // Social retarget (docs/Social.md decision 9): joined accounts share
+        // their Profile Link; not-yet-joined accounts get the Join flow. The
+        // legacy device-local Share Profile card remains the flag-off path.
+        if FeatureFlag.socialProfiles.enabled, SyncManager.isUserLoggedIn() {
+            if SocialIdentityStore.isJoined, let navigationController {
+                SocialCoordinator.pushOwnProfile(on: navigationController)
+            } else {
+                SocialCoordinator.presentJoinFlow(from: presenter, navigationController: navigationController)
+            }
+            return
+        }
 
         let shareView = ShareProfileView(
             onOpenPrivacySettings: { [weak self] in

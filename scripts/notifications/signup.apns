@@ -7,5 +7,5 @@
     },
     "category": "DEEP_LINK"
   },
-  "destination_url": "pktc://signup"
+  "destination_url": "thcast://signup"
 }

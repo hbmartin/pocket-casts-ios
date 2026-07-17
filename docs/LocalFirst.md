@@ -58,7 +58,7 @@ Every subscribe route works with no account:
 - **Search/Discover/Explore** → `subscribe(to:)` → `addFromJson` → the policy above.
 - **OPML import** → server resolution first; feeds the catalog cannot resolve fall back to
   on-device ingest (regardless of the local-ingest toggle, which keeps its signed-in semantics).
-- **`pktc://subscribe/<url>`** → catalog resolution first; on failure while signed out, the feed
+- **`thcast://subscribe/<url>`** → catalog resolution first; on failure while signed out, the feed
   is ingested on device.
 - **Local-ingest toggle on** (`Settings.localFeedIngestEnabled`): add-by-URL and OPML skip the
   server entirely.

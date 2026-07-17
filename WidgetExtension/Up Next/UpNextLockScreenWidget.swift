@@ -40,7 +40,7 @@ struct UpNextCircularWidgetView: View {
     }
 
     var widgetURL: String {
-        return numberOfEpisodeInUpNext != 0 ? "pktc://upnext?source=lock_screen_widget" : "pktc://discover?source=widget"
+        return numberOfEpisodeInUpNext != 0 ? "thcast://upnext?source=lock_screen_widget" : "thcast://discover?source=widget"
     }
 
     var font: Font {
@@ -93,7 +93,7 @@ struct UpNextRectangularWidgetView: View {
     }
 
     var widgetURL: String {
-        return nextEpisode != nil ? "pktc://upnext?source=lock_screen_widget" : "pktc://discover?source=widget"
+        return nextEpisode != nil ? "thcast://upnext?source=lock_screen_widget" : "thcast://discover?source=widget"
     }
 
     var body: some View {

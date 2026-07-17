@@ -1956,6 +1956,17 @@
 			path = People;
 			sourceTree = "<group>";
 		};
+		50C1A15EC0DE2F68000000CA /* Social */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Social;
+			sourceTree = "<group>";
+		};
 		AA55C0DE2F6800010000A5A5 /* Spotlight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -3868,6 +3879,7 @@
 			children = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
 				BB66DEC0DE2F680002000B66 /* People */,
+				50C1A15EC0DE2F68000000CA /* Social */,
 				AA55C0DE2F6800010000A5A5 /* Spotlight */,
 				3FADA0102F60ADA000000001 /* AdvancedAudio */,
 				3F584E492F568154005A3593 /* Theme */,
@@ -4864,6 +4876,7 @@
 			fileSystemSynchronizedGroups = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
 				BB66DEC0DE2F680002000B66 /* People */,
+				50C1A15EC0DE2F68000000CA /* Social */,
 				AA55C0DE2F6800010000A5A5 /* Spotlight */,
 				3F584D1D2F567E4A005A3593 /* Episode Info Coordinator */,
 				3F584D262F567EE1005A3593 /* Lists */,

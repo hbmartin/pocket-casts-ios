@@ -79,7 +79,15 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let createdAt: Date?
     public let hasStats: Bool
 
-    public init(userId: String, handle: String, displayName: String, bio: String, avatarURL: String, createdAt: Date?, hasStats: Bool) {
+    // Visibility-gated sections; empty/nil when hidden from this viewer.
+    public let followedShows: [SocialProfilePodcast]
+    public let topPodcasts: [SocialProfilePodcast]
+    public let stats: SocialProfileStats?
+    public let recentlyPlayed: [SocialProfileEpisode]
+
+    public init(userId: String, handle: String, displayName: String, bio: String, avatarURL: String, createdAt: Date?, hasStats: Bool,
+                followedShows: [SocialProfilePodcast] = [], topPodcasts: [SocialProfilePodcast] = [],
+                stats: SocialProfileStats? = nil, recentlyPlayed: [SocialProfileEpisode] = []) {
         self.userId = userId
         self.handle = handle
         self.displayName = displayName
@@ -87,6 +95,56 @@ public struct SocialPublicProfile: Equatable, Sendable {
         self.avatarURL = avatarURL
         self.createdAt = createdAt
         self.hasStats = hasStats
+        self.followedShows = followedShows
+        self.topPodcasts = topPodcasts
+        self.stats = stats
+        self.recentlyPlayed = recentlyPlayed
+    }
+}
+
+/// A podcast entry in a public-profile section (followed shows / top podcasts).
+public struct SocialProfilePodcast: Equatable, Sendable, Identifiable {
+    public let uuid: String
+    public let title: String
+    public let author: String
+    public let playedSeconds: Int64
+
+    public var id: String { uuid }
+
+    public init(uuid: String, title: String, author: String, playedSeconds: Int64 = 0) {
+        self.uuid = uuid
+        self.title = title
+        self.author = author
+        self.playedSeconds = playedSeconds
+    }
+}
+
+/// A recently-played entry in a public-profile section.
+public struct SocialProfileEpisode: Equatable, Sendable, Identifiable {
+    public let uuid: String
+    public let podcastUuid: String
+    public let title: String
+    public let playedAt: Date?
+
+    public var id: String { uuid }
+
+    public init(uuid: String, podcastUuid: String, title: String, playedAt: Date?) {
+        self.uuid = uuid
+        self.podcastUuid = podcastUuid
+        self.title = title
+        self.playedAt = playedAt
+    }
+}
+
+/// Aggregate listening totals on a public profile (totals only — the per-day
+/// heatmap series never leaves the device).
+public struct SocialProfileStats: Equatable, Sendable {
+    public let timeListenedSeconds: Int64
+    public let listeningSince: Date?
+
+    public init(timeListenedSeconds: Int64, listeningSince: Date?) {
+        self.timeListenedSeconds = timeListenedSeconds
+        self.listeningSince = listeningSince
     }
 }
 
@@ -137,6 +195,30 @@ extension SocialPublicProfile {
                   bio: api.bio,
                   avatarURL: api.avatarURL,
                   createdAt: api.hasCreatedAt ? api.createdAt.date : nil,
-                  hasStats: api.hasStats_p)
+                  hasStats: api.hasStats_p,
+                  followedShows: api.followedShows.map(SocialProfilePodcast.init),
+                  topPodcasts: api.topPodcasts.map(SocialProfilePodcast.init),
+                  stats: api.hasStats ? SocialProfileStats(api.stats) : nil,
+                  recentlyPlayed: api.recentlyPlayed.map(SocialProfileEpisode.init))
+    }
+}
+
+extension SocialProfilePodcast {
+    init(_ api: Api_SocialProfilePodcast) {
+        self.init(uuid: api.uuid, title: api.title, author: api.author, playedSeconds: api.playedSeconds)
+    }
+}
+
+extension SocialProfileEpisode {
+    init(_ api: Api_SocialProfileEpisode) {
+        self.init(uuid: api.uuid, podcastUuid: api.podcastUuid, title: api.title,
+                  playedAt: api.hasPlayedAt ? api.playedAt.date : nil)
+    }
+}
+
+extension SocialProfileStats {
+    init(_ api: Api_SocialProfileStats) {
+        self.init(timeListenedSeconds: api.timeListenedSeconds,
+                  listeningSince: api.hasListeningSince ? api.listeningSince.date : nil)
     }
 }

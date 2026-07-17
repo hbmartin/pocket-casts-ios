@@ -950,7 +950,7 @@
 			<string>au.com.shiftyjelly.podcasts</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>pktc</string>
+				<string>thcast</string>
 			</array>
 		</dict>
 	</array>

@@ -7,5 +7,5 @@
     },
     "category": "DEEP_LINK"
   },
-  "destination_url": "pktc://upnext"
+  "destination_url": "thcast://upnext"
 }

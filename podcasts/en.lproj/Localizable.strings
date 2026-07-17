@@ -6983,3 +6983,207 @@
 
 /* Example playlist description chip: starred and duration rules */
 "prompted_playlist_example_3" = "Starred episodes longer than an hour";
+
+/* Title of the opt-in social Join flow and its navigation bar */
+"social_join_title" = "Join Social";
+
+/* Intro paragraph of the Join flow explaining the opt-in public identity */
+"social_join_intro" = "Create a public profile so friends can find you. Nothing is shared until you join, and everything starts private.";
+
+/* Join flow bullet: privacy default */
+"social_join_point_private" = "Every field starts private — you choose what to show";
+
+/* Join flow bullet: the permanent handle */
+"social_join_point_handle" = "Pick a permanent @handle — it can never be changed";
+
+/* Join flow bullet: erasure right */
+"social_join_point_erase" = "Delete your profile any time; your handle is retired, never reused";
+
+/* Join flow terms acceptance note shown above the agree button */
+"social_join_terms" = "By joining you agree that your display name and anything you set to public are visible to everyone.";
+
+/* Button accepting the social terms and continuing to handle selection */
+"social_join_agree" = "Agree & Continue";
+
+/* Prompt above the handle entry field */
+"social_handle_prompt" = "Choose your handle";
+
+/* Placeholder for the handle entry field */
+"social_handle_placeholder" = "yourname";
+
+/* Note under the handle field about immutability */
+"social_handle_permanent" = "3–30 characters: lowercase letters, numbers, underscores. Handles are permanent.";
+
+/* Navigation title of the handle selection step */
+"social_handle_title" = "Your @handle";
+
+/* Shown while the handle availability check is running */
+"social_handle_checking" = "Checking availability…";
+
+/* Shown when a handle is available. %1$@ is the normalized @handle */
+"social_handle_available" = "%1$@ is available";
+
+/* Shown when the requested handle is already taken */
+"social_handle_taken" = "Already taken";
+
+/* Shown when the requested handle is reserved or retired */
+"social_handle_reserved" = "Not available";
+
+/* Shown when the requested handle has invalid characters or length */
+"social_handle_invalid" = "3–30 lowercase letters, numbers or underscores";
+
+/* Shown when the availability check could not reach the server */
+"social_handle_check_failed" = "Couldn't check availability";
+
+/* Confirmation step prompt. %1$@ is the claimed @handle */
+"social_confirm_prompt" = "Claiming %1$@ — what name should people see?";
+
+/* Placeholder for the public display name field */
+"social_display_name_placeholder" = "Display name";
+
+/* Note on the confirmation step that all fields start private */
+"social_confirm_private_note" = "Only your display name and handle will be public. Everything else stays private until you change it.";
+
+/* Error shown when the join request fails */
+"social_join_failed" = "Couldn't create your profile. The handle may have just been taken, or your name was rejected.";
+
+/* Button that performs the join/claim */
+"social_join_cta" = "Claim Handle";
+
+/* Title of the one-time social announcement sheet */
+"social_announcement_title" = "Say hello to profiles";
+
+/* Body of the one-time social announcement sheet */
+"social_announcement_body" = "Claim your @handle and share what you're listening to — private by default, opt-in only.";
+
+/* Button on the announcement sheet that opens the Join flow */
+"social_announcement_cta" = "Claim your @handle";
+
+/* Profile tab row CTA before the account has joined social */
+"social_claim_handle" = "Claim your @handle";
+
+/* Header shown when the privacy screen appears right after joining */
+"social_privacy_nudge_header" = "Your profile is private right now. Choose what to show on your public page — you can change this any time.";
+
+/* Privacy screen section header for identity fields */
+"social_privacy_identity_header" = "Identity";
+
+/* Privacy screen row label for the display name */
+"social_privacy_display_name" = "Display name";
+
+/* Trailing note on the display name row: it cannot be made private */
+"social_privacy_always_public" = "Always public";
+
+/* Privacy screen row label for the bio */
+"social_privacy_bio" = "Bio";
+
+/* Privacy screen section header for listening data fields */
+"social_privacy_listening_header" = "Listening";
+
+/* Privacy screen footer explaining the toggles */
+"social_privacy_footer" = "Public fields appear on your profile page. Followers-only visibility arrives with following.";
+
+/* Privacy screen row label for followed shows */
+"social_privacy_followed_shows" = "Followed shows";
+
+/* Privacy screen row label for top podcasts */
+"social_privacy_top_podcasts" = "Top podcasts";
+
+/* Privacy screen row label for listening stats */
+"social_privacy_stats" = "Listening stats";
+
+/* Privacy screen row label for listening history */
+"social_privacy_history" = "Recently played";
+
+/* Navigation title of the social privacy screen */
+"social_privacy_title" = "Profile Privacy";
+
+/* Toggle subtitle when a field is public */
+"social_privacy_public" = "Public";
+
+/* Toggle subtitle when a field is private */
+"social_privacy_private" = "Private";
+
+/* Error shown when saving privacy settings fails */
+"social_privacy_save_failed" = "Couldn't save your privacy settings. Try again.";
+
+/* Save button used in social edit screens */
+"social_save" = "Save";
+
+/* Button opening the profile edit sheet */
+"social_profile_edit" = "Edit Profile";
+
+/* Row that shares the public profile link */
+"social_profile_share_link" = "Share Profile Link";
+
+/* Section header for the listening heatmap on the own profile */
+"social_section_heatmap" = "Listening activity";
+
+/* Footer explaining the heatmap is device-local */
+"social_heatmap_local_note" = "Your activity grid is computed on this device and isn't shown on your public page.";
+
+/* Navigation title of the own social profile screen */
+"social_profile_title" = "My Profile";
+
+/* Error shown when a profile edit is rejected by the server */
+"social_edit_rejected" = "Couldn't save. Your name or bio may have been rejected.";
+
+/* Title of the report reason picker */
+"social_report_title" = "Report this profile";
+
+/* Title of the block confirmation alert */
+"social_block_confirm_title" = "Block this person?";
+
+/* Message of the block confirmation alert */
+"social_block_confirm_message" = "You won't see each other's profiles, and they won't be able to interact with you. They aren't notified.";
+
+/* Block action label */
+"social_block" = "Block";
+
+/* Unblock action label */
+"social_unblock" = "Unblock";
+
+/* Report action label */
+"social_report" = "Report";
+
+/* Shown when a profile does not exist or is unavailable to the viewer */
+"social_profile_not_found" = "This profile isn't available";
+
+/* Label on a profile the viewer has blocked */
+"social_blocked_label" = "Blocked";
+
+/* Section header for listening stats on a public profile */
+"social_section_stats" = "Listening";
+
+/* Stats row label: total hours listened */
+"social_stats_hours_listened" = "Hours listened";
+
+/* Stats row label: date listening started */
+"social_stats_listening_since" = "Listening since";
+
+/* Section header for the top podcasts list */
+"social_section_top_podcasts" = "Top podcasts";
+
+/* Section header for the followed shows list */
+"social_section_followed_shows" = "Followed shows";
+
+/* Section header for the recently played list */
+"social_section_recently_played" = "Recently played";
+
+/* Report reason: spam */
+"social_report_spam" = "Spam";
+
+/* Report reason: harassment */
+"social_report_harassment" = "Harassment";
+
+/* Report reason: hate */
+"social_report_hate" = "Hate";
+
+/* Report reason: sexual content */
+"social_report_sexual" = "Sexual content";
+
+/* Report reason: impersonation */
+"social_report_impersonation" = "Impersonation";
+
+/* Report reason: other */
+"social_report_other" = "Other";

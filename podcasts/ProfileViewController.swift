@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -138,6 +138,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+
+        presentSocialAnnouncementIfNeeded()
 
         addCustomObserver(PodcastsRefreshed.self) { [weak self] _ in
             self?.refreshComplete()
@@ -346,6 +348,13 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             cell.settingsImage.image = UIImage(named: "bookmarks-profile")
             cell.settingsLabel.text = L10n.bookmarks
+        case .socialProfile:
+            cell.settingsImage.image = UIImage(systemName: "at")
+            if let handle = SocialIdentityStore.handle {
+                cell.settingsLabel.text = "@" + handle
+            } else {
+                cell.settingsLabel.text = L10n.socialClaimHandle
+            }
         case .peopleDirectory:
             cell.settingsImage.image = UIImage(systemName: "person.2")
             cell.settingsLabel.text = L10n.peopleDirectoryTitle
@@ -409,6 +418,12 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .peopleDirectory:
             let directoryController = ThemedHostingController(rootView: PersonDirectoryView())
             navigationController?.pushViewController(directoryController, animated: true)
+        case .socialProfile:
+            if SocialIdentityStore.isJoined, let navigationController {
+                SocialCoordinator.pushOwnProfile(on: navigationController)
+            } else {
+                SocialCoordinator.presentJoinFlow(from: self, navigationController: navigationController)
+            }
         }
     }
 
@@ -426,12 +441,43 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private var tableData: [[ProfileViewController.TableRow]] = []
 
+    /// One-time social announcement (grill decision: CTA row + one-time
+    /// prompt). Never re-shown after any dismissal.
+    private func presentSocialAnnouncementIfNeeded() {
+        guard SocialAnnouncement.shouldShow, presentedViewController == nil else { return }
+        SocialAnnouncement.markShown()
+
+        let announcement = SocialAnnouncementView(
+            onJoin: { [weak self] in
+                guard let self else { return }
+                dismiss(animated: true) {
+                    SocialCoordinator.presentJoinFlow(from: self, navigationController: self.navigationController)
+                }
+            },
+            onDismiss: { [weak self] in
+                self?.dismiss(animated: true)
+            }
+        )
+        let hosting = ThemedHostingController(rootView: announcement)
+        hosting.modalPresentationStyle = .formSheet
+        if let sheet = hosting.sheetPresentationController {
+            sheet.detents = [.medium()]
+        }
+        present(hosting, animated: true)
+    }
+
     private func refreshTableData() {
         var data: [[ProfileViewController.TableRow]]
         data = [[.allStats, .downloaded, .starred, .bookmarks, .listeningHistory, .help, .uploadedFiles]]
 
         if FeatureFlag.speakerDirectory.enabled, let bookmarksIndex = data[0].firstIndex(of: .bookmarks) {
             data[0].insert(.peopleDirectory, at: bookmarksIndex + 1)
+        }
+
+        // The social CTA/entry row: "Claim your @handle" before joining, the
+        // owner's profile afterward (docs/Social.md; requires a synced account).
+        if FeatureFlag.socialProfiles.enabled, SyncManager.isUserLoggedIn() {
+            data[0].insert(.socialProfile, at: 0)
         }
 
         if informationalBannerCoordinator.shouldShowBanner() {

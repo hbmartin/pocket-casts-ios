@@ -13,8 +13,8 @@ struct InboundActionRoutingTests {
 
     static let routeCases: [RouteCase] = [
         RouteCase(
-            url: URL(string: "pktc://discover/?source=widget")!,
-            expectedAction: .route(URL(string: "pktc://discover/?source=widget")!)
+            url: URL(string: "thcast://discover/?source=widget")!,
+            expectedAction: .route(URL(string: "thcast://discover/?source=widget")!)
         ),
         RouteCase(
             url: URL(fileURLWithPath: "/tmp/subscriptions.opml"),
@@ -57,8 +57,8 @@ struct InboundActionRoutingTests {
         defer { try? sandbox.cleanUp() }
 
         #expect(
-            InboundActionRouter.shortcutURL(from: "pktc://shortcuts/discover")
-                == URL(string: "pktc://shortcuts/discover")
+            InboundActionRouter.shortcutURL(from: "thcast://shortcuts/discover")
+                == URL(string: "thcast://shortcuts/discover")
         )
         #expect(InboundActionRouter.shortcutURL(from: nil) == nil)
         #expect(sandbox.directoryURL.deletingLastPathComponent().lastPathComponent == "PocketCastsIntegrationTests")
