@@ -190,11 +190,16 @@ final class PublicProfileViewModel: ObservableObject {
     @Published var showingReportPicker = false
     @Published var showingBlockConfirm = false
 
-    init(handle: String) {
+    /// `fixture` preloads a state (snapshot tests/previews); `load()` then no-ops.
+    init(handle: String, fixture: State? = nil) {
         self.handle = handle.lowercased()
+        if let fixture {
+            state = fixture
+        }
     }
 
     func load() async {
+        guard case .loading = state else { return }
         guard let profile = await ApiServerHandler.shared.fetchPublicProfile(handle: handle) else {
             state = .notFound
             return

@@ -172,11 +172,12 @@ final class SocialJoinViewModel: ObservableObject {
     @Published var handleInput: String = "" { didSet { scheduleAvailabilityCheck() } }
     @Published var displayNameInput: String = ""
     @Published private(set) var availability: SocialHandleAvailability = .unknown
-    @Published private(set) var availabilityDisplay: AvailabilityDisplay = .idle
+    // Internal setters: snapshot tests stage specific states.
+    @Published var availabilityDisplay: AvailabilityDisplay = .idle
     @Published private(set) var isJoining = false
     @Published private(set) var joinError: String?
 
-    private(set) var claimedHandle: String = ""
+    var claimedHandle: String = ""
     private(set) var joinedProfile: SocialProfile?
     private var checkTask: Task<Void, Never>?
     private let onFinished: (SocialProfile?) -> Void
