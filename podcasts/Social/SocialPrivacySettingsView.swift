@@ -48,6 +48,7 @@ struct SocialPrivacySettingsView: View {
             Section(footer: Text(L10n.socialPrivacyApproveFollowersFooter)
                 .font(.footnote)) {
                 Toggle(L10n.socialPrivacyApproveFollowers, isOn: $viewModel.requireFollowApproval)
+                Toggle(L10n.socialPrivacyDiscoverable, isOn: $viewModel.discoverable)
             }
 
             Section {
@@ -119,6 +120,7 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
     @Published var statsVisibility: SocialVisibility
     @Published var historyVisibility: SocialVisibility
     @Published var requireFollowApproval: Bool
+    @Published var discoverable: Bool
     @Published private(set) var isSaving = false
     @Published private(set) var saveError: String?
 
@@ -132,6 +134,7 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
         statsVisibility = profile?.statsVisibility ?? .private
         historyVisibility = profile?.historyVisibility ?? .private
         requireFollowApproval = profile?.requireFollowApproval ?? false
+        discoverable = !(profile?.hideFromDiscovery ?? false)
     }
 
     var hasChanges: Bool {
@@ -142,6 +145,7 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
             || statsVisibility != profile.statsVisibility
             || historyVisibility != profile.historyVisibility
             || requireFollowApproval != profile.requireFollowApproval
+            || discoverable != !profile.hideFromDiscovery
     }
 
     @discardableResult
@@ -158,6 +162,7 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
         updated.statsVisibility = statsVisibility
         updated.historyVisibility = historyVisibility
         updated.requireFollowApproval = requireFollowApproval
+        updated.hideFromDiscovery = !discoverable
 
         isSaving = true
         saveError = nil

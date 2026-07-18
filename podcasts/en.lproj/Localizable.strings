@@ -7520,3 +7520,36 @@
 
 /* Toggle: push when someone invites you to a shared list */
 "social_notifications_list_invites" = "List invites";
+
+/* Placeholder for the find-people search field */
+"social_find_people_placeholder" = "Search by @handle or name";
+
+/* Header over search results on the find-people screen */
+"social_find_results_header" = "Results";
+
+/* Header over contact-match results */
+"social_find_contacts_header" = "From your contacts";
+
+/* Header over friends-of-followed suggestions */
+"social_find_suggested_header" = "Suggested";
+
+/* Button starting the contacts-matching flow */
+"social_find_from_contacts" = "Find from contacts";
+
+/* Button state while contact matching runs */
+"social_find_contacts_matching" = "Matching…";
+
+/* Confirm button of the contacts consent alert */
+"social_find_contacts_consent_cta" = "Match my contacts";
+
+/* Body of the contacts consent alert — honest about the mechanics */
+"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once — nothing is stored, and no one is notified. Only members who allow discovery can match.";
+
+/* Row sharing the owner's Profile Link to invite a friend */
+"social_find_invite" = "Invite a friend";
+
+/* Mutual-connections count on a suggestion row. %1$d = count */
+"social_find_mutual_count" = "%1$d mutual connections";
+
+/* Privacy toggle: appear in people search and suggestions */
+"social_privacy_discoverable" = "Include me in search & suggestions";

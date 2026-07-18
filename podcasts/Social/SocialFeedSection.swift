@@ -10,8 +10,6 @@ import PocketCastsUtils
 struct SocialFeedSection: View {
     @EnvironmentObject var theme: Theme
     @StateObject var viewModel: SocialFeedViewModel
-    @State private var showingFindPeople = false
-    @State private var findPeopleHandle = ""
 
     var body: some View {
         Group {
@@ -23,21 +21,6 @@ struct SocialFeedSection: View {
         }
         .task { await viewModel.load() }
         .onAppear { Task { await viewModel.refreshIfStale() } }
-        .alert(L10n.socialFindPeople, isPresented: $showingFindPeople) {
-            TextField(L10n.socialHandlePlaceholder, text: $findPeopleHandle)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            Button(L10n.socialFindPeopleCta) {
-                let handle = findPeopleHandle.trimmingCharacters(in: .whitespaces)
-                    .trimmingCharacters(in: CharacterSet(charactersIn: "@"))
-                findPeopleHandle = ""
-                guard !handle.isEmpty else { return }
-                SocialCoordinator.openPublicProfile(handle: handle)
-            }
-            Button(L10n.cancel, role: .cancel) { findPeopleHandle = "" }
-        } message: {
-            Text(L10n.socialFindPeoplePrompt)
-        }
     }
 
     // MARK: - Feed (joined)
@@ -50,7 +33,7 @@ struct SocialFeedSection: View {
                     .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
                 Spacer()
                 Button {
-                    showingFindPeople = true
+                    SocialCoordinator.openFindPeople()
                 } label: {
                     Label(L10n.socialFindPeople, systemImage: "person.badge.plus")
                         .font(.subheadline)

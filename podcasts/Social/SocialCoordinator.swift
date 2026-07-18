@@ -62,6 +62,12 @@ enum SocialCoordinator {
         push(ThemedHostingController(rootView: SocialInboxView(viewModel: SocialInboxViewModel())))
     }
 
+    /// Pushes the find-people screen (Slice 9).
+    static func openFindPeople() {
+        guard FeatureFlag.socialProfiles.enabled else { return }
+        push(ThemedHostingController(rootView: FindPeopleView(viewModel: FindPeopleViewModel())))
+    }
+
     /// Pushes the Shared Lists hub (social push landing for list invites).
     static func openSharedLists() {
         guard FeatureFlag.socialProfiles.enabled else { return }
