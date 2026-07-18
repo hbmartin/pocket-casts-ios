@@ -926,8 +926,10 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         (status, body) = try await post("social/podcast/proof", token: tokenA, message: proofRequest)
         XCTAssertEqual(status, 200)
         var proof = try Api_PodcastProofResponse(serializedBytes: body)
-        XCTAssertEqual(proof.totalCount, 1)
-        XCTAssertTrue(proof.visibleHandles.isEmpty, "private followed-shows fold into the count")
+        // QA-corrected contract: a private followed-shows list contributes
+        // NOTHING to proof — not even the count.
+        XCTAssertEqual(proof.totalCount, 0)
+        XCTAssertTrue(proof.visibleHandles.isEmpty)
 
         update.historyVisibility = .followersOnly
         update.followedShowsVisibility = .public
@@ -937,6 +939,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(status, 200)
         proof = try Api_PodcastProofResponse(serializedBytes: body)
         XCTAssertEqual(proof.visibleHandles, [handleB])
+        XCTAssertEqual(proof.totalCount, 1)
     }
 
     // MARK: - Wire helpers (no app global state)
