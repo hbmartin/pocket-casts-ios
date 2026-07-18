@@ -7553,3 +7553,18 @@
 
 /* Privacy toggle: appear in people search and suggestions */
 "social_privacy_discoverable" = "Include me in search & suggestions";
+
+/* Header for the Explore trending-with-friends row */
+"social_trending_header" = "Trending with friends";
+
+/* Listener count under a trending podcast. %1$d = distinct friends */
+"social_trending_listeners" = "%1$d friends listened recently";
+
+/* Podcast social proof, counts only. %1$d = count of followees */
+"social_proof_count_only" = "Followed by %1$d people you follow";
+
+/* Podcast social proof with names. %1$@ = comma-joined @handles */
+"social_proof_named" = "Followed by %1$@";
+
+/* Podcast social proof, names + remainder. %1$@ = @handles, %2$d = more count */
+"social_proof_named_and_more" = "Followed by %1$@ and %2$d more you follow";

@@ -153,6 +153,12 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   On by default (existence is already public: any profile is reachable by exact handle);
   the privacy screen's "Include me in search & suggestions" toggle turns it off. Stored
   inverted (hide flag) so an absent value means discoverable.
+- **Social Proof** — the podcast-page line naming which of your followees follow this
+  show. Names appear only when that person's followed-shows visibility already grants you
+  their list; everyone else folds into the count. The Explore "Trending with friends" row
+  is the listening-side sibling: ranked by followees' recently finished episodes under
+  each actor's history visibility. Each surface reveals only what its source field
+  already permits.
 - **Contact Match** — finding accounts from the user's address book: an explicit action
   that salted-hashes every email and phone number per contact on device and uploads only
   the hashes. The server matches emails (accounts have no phone numbers yet; phone hashes

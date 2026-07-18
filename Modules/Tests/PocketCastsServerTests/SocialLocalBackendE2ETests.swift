@@ -854,6 +854,91 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(matched.profiles.first?.handle, handleB)
     }
 
+    /// Slice-10 wire contract: trending under history visibility and podcast
+    /// proof under followed-shows visibility (named only when visible).
+    func testDiscoveryLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-disc-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-disc-b-\(suffix)@e2e.test")
+
+        let handleB = "ios_dsc_b_\(suffix)"
+        for (token, handle, name) in [(tokenA, "ios_dsc_a_\(suffix)", "Discoverer"), (tokenB, handleB, "Listener")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+        var follow = Api_FollowRequest()
+        follow.handle = handleB
+        var (status, body) = try await post("social/follow", token: tokenA, message: follow)
+        XCTAssertEqual(status, 200)
+
+        // B finishes an episode with followers-only history; the show trends
+        // for A (an active follower) and counts one listener.
+        let podcastUuid = "abcd\(String(suffix.prefix(4)))-9999-8888-7777-666655554444"
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        var episode = Api_SyncUserEpisode()
+        episode.uuid = "dcba\(String(suffix.prefix(4)))-9999-8888-7777-666655554444"
+        episode.podcastUuid = podcastUuid
+        episode.duration = Google_Protobuf_Int64Value(600)
+        episode.durationModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        episode.playedUpTo = Google_Protobuf_Int64Value(600)
+        episode.playedUpToModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        episode.playingStatus = Google_Protobuf_Int32Value(3)
+        episode.playingStatusModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        var record = Api_Record()
+        record.episode = episode
+        sync.records.append(record)
+        (status, _) = try await post("user/sync/update", token: tokenB, message: sync)
+        XCTAssertEqual(status, 200)
+
+        var update = Api_ProfileUpdateRequest()
+        update.displayName = "Listener"
+        update.historyVisibility = .followersOnly
+        (status, _) = try await post("social/profile/update", token: tokenB, message: update)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/trending", token: tokenA, message: Api_SocialTrendingRequest())
+        XCTAssertEqual(status, 200)
+        let trending = try Api_SocialTrendingResponse(serializedBytes: body)
+        XCTAssertEqual(trending.podcasts.count, 1)
+        XCTAssertEqual(trending.podcasts.first?.podcastUuid, podcastUuid)
+        XCTAssertEqual(trending.podcasts.first?.listenerCount, 1)
+
+        // Proof: B subscribes with followed-shows private → count only; the
+        // public flip names them.
+        var podcastSync = Api_SyncUpdateRequest()
+        podcastSync.deviceUtcTimeMs = sync.deviceUtcTimeMs + 1
+        var podcast = Api_SyncUserPodcast()
+        podcast.uuid = podcastUuid
+        podcast.subscribed = Google_Protobuf_BoolValue(true)
+        var podcastRecord = Api_Record()
+        podcastRecord.podcast = podcast
+        podcastSync.records.append(podcastRecord)
+        (status, _) = try await post("user/sync/update", token: tokenB, message: podcastSync)
+        XCTAssertEqual(status, 200)
+
+        var proofRequest = Api_PodcastProofRequest()
+        proofRequest.podcastUuid = podcastUuid
+        (status, body) = try await post("social/podcast/proof", token: tokenA, message: proofRequest)
+        XCTAssertEqual(status, 200)
+        var proof = try Api_PodcastProofResponse(serializedBytes: body)
+        XCTAssertEqual(proof.totalCount, 1)
+        XCTAssertTrue(proof.visibleHandles.isEmpty, "private followed-shows fold into the count")
+
+        update.historyVisibility = .followersOnly
+        update.followedShowsVisibility = .public
+        (status, _) = try await post("social/profile/update", token: tokenB, message: update)
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/podcast/proof", token: tokenA, message: proofRequest)
+        XCTAssertEqual(status, 200)
+        proof = try Api_PodcastProofResponse(serializedBytes: body)
+        XCTAssertEqual(proof.visibleHandles, [handleB])
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {

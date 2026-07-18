@@ -123,6 +123,7 @@ enum AnalyticsEvent: String {
     case socialPeopleShown
     case socialPeopleSearched
     case socialContactsMatched
+    case socialTrendingTapped
 
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy
