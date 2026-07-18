@@ -36,7 +36,27 @@ extension PlaylistDetailViewController {
         let editAction = editAction()
         optionsPicker.addAction(action: editAction)
 
+        // Shared lists (Slice 7, ADR-0011): publish this playlist, or manage
+        // the server list it's already linked to.
+        if FeatureFlag.socialProfiles.enabled, SocialIdentityStore.isJoined {
+            optionsPicker.addAction(action: shareAsListAction())
+        }
+
         optionsPicker.present(from: self)
+    }
+
+    private func shareAsListAction() -> OptionAction {
+        let alreadyLinked = viewModel.playlist.sharedListId != nil
+        return OptionAction(label: alreadyLinked ? L10n.socialListsTitle : L10n.socialListPublishTitle,
+                            icon: "option-multiselect") { [weak self] in
+            guard let self else { return }
+            if let listId = self.viewModel.playlist.sharedListId {
+                SocialCoordinator.openSharedList(id: listId)
+            } else {
+                let hosting = ThemedHostingController(rootView: PublishListView(viewModel: PublishListViewModel(playlist: self.viewModel.playlist)))
+                self.present(hosting, animated: true)
+            }
+        }
     }
 
     // MARK: - Multiselect

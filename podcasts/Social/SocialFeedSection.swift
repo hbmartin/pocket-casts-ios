@@ -173,6 +173,8 @@ struct FeedItemRow: View {
             return emoji + L10n.socialFeedItemReacted(actor, item.episodeTitle)
         case .commented:
             return L10n.socialFeedItemCommented(actor, item.episodeTitle)
+        case .publishedList:
+            return L10n.socialFeedItemPublishedList(actor, item.listTitle)
         }
     }
 
@@ -185,6 +187,7 @@ struct FeedItemRow: View {
         case .reviewed: return "star.bubble"
         case .reacted: return "heart"
         case .commented: return "bubble.left.and.bubble.right"
+        case .publishedList: return "list.star"
         }
     }
 }
@@ -262,6 +265,9 @@ final class SocialFeedViewModel: ObservableObject {
             NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
                                                        data: [NavigationManager.episodeUuidKey: item.episodeUuid,
                                                               NavigationManager.podcastKey: item.podcastUuid])
+        case .publishedList:
+            guard item.listId > 0 else { return }
+            SocialCoordinator.openSharedList(id: item.listId)
         }
     }
 }

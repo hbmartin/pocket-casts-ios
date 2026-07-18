@@ -150,6 +150,10 @@ extension SyncTask {
         playlistRecord.shorterThan.value = filter.shorterThan
         playlistRecord.longerThan.value = filter.longerThan
         playlistRecord.manual.value = filter.manual
+        if let customQuery = filter.customQuery {
+            // Fork-owned field (Slice 7, ADR-0011): custom playlists sync too.
+            playlistRecord.customQuery.value = customQuery
+        }
 
         if filter.manual {
             let episodes = DataManager.sharedManager.playlistEpisodes(for: filter, sortType: .dragAndDrop)

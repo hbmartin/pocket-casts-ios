@@ -7418,3 +7418,81 @@
 
 /* Feed line: person commented on an episode. %1$@ = display name, %2$@ = episode title */
 "social_feed_item_commented" = "%1$@ commented on %2$@";
+
+/* Title of the shared-lists hub screen */
+"social_lists_title" = "Shared Lists";
+
+/* Empty state for the shared-lists hub */
+"social_lists_empty" = "Lists you publish, co-edit or subscribe to will show up here.";
+
+/* Section header for pending list-collaboration invites */
+"social_list_invites_title" = "List Invites";
+
+/* Who invited the user to a list. %1$@ = owner @handle */
+"social_list_invite_from" = "%1$@ invited you to collaborate";
+
+/* Episode count on a shared-list row. %1$d = count */
+"social_list_episode_count" = "%1$d episodes";
+
+/* Role label: the account owns this list */
+"social_list_role_owner" = "Owner";
+
+/* Role label: the account co-edits this list */
+"social_list_role_collaborator" = "Collaborator";
+
+/* Role label: the account follows this list read-only */
+"social_list_role_subscriber" = "Subscribed";
+
+/* Role label: invitation not yet answered */
+"social_list_role_invited" = "Invited";
+
+/* Byline under a shared list's title. %1$@ = owner @handle */
+"social_list_byline" = "A list by %1$@";
+
+/* Button to follow a shared list read-only */
+"social_list_subscribe" = "Subscribe";
+
+/* Button to stop following a shared list */
+"social_list_unsubscribe" = "Unsubscribe";
+
+/* Attribution chip on a shared-list entry. %1$@ = adder @handle */
+"social_list_added_by" = "added by %1$@";
+
+/* Title of the shared-list members sheet and its toolbar button */
+"social_list_members" = "Members";
+
+/* Button sending a collaboration invite */
+"social_list_invite" = "Invite";
+
+/* Footer of the invite field explaining consent */
+"social_list_invite_footer" = "They'll get an invite to accept before they can edit. Up to 20 collaborators.";
+
+/* Button removing a member from a shared list (owner only) */
+"social_list_remove_member" = "Remove";
+
+/* Title of the publish-list sheet */
+"social_list_publish_title" = "Share as List";
+
+/* Confirm button of the publish-list sheet */
+"social_list_publish_cta" = "Publish";
+
+/* Footer for publishing a manual playlist in place */
+"social_list_publish_note" = "Publishes this list to your profile at the visibility you choose. You can invite collaborators afterwards from Members.";
+
+/* Footer when publishing snapshots a smart/custom playlist's current results */
+"social_list_publish_materialize_note" = "Publishes a snapshot of this playlist's current episodes as a new shared list. The playlist itself stays personal.";
+
+/* Error when publishing a list fails */
+"social_list_publish_failed" = "Couldn't publish the list.";
+
+/* Placeholder for the shared list's title field */
+"social_list_title_placeholder" = "List name";
+
+/* Placeholder for the shared list's description field */
+"social_list_description_placeholder" = "Description (optional)";
+
+/* Profile section header for a person's shared lists */
+"social_section_lists" = "Lists";
+
+/* Feed line: person published a list. %1$@ = display name, %2$@ = list title */
+"social_feed_item_published_list" = "%1$@ published %2$@";

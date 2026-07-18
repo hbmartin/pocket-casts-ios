@@ -107,8 +107,8 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   recipient is indistinguishable at send time. Sent items die with the sender's profile.
 - **Inbox** — the screen for things addressed to *you*: Shared Items (unread count, marked
   read on open, deletable), pending Follow Requests (accept/decline), and Replies to your
-  Comments (watermark-based unread). Reacting to a received item waits until senders can
-  see reactions.
+  Comments (watermark-based unread). List-collaboration invites live in the Shared Lists
+  hub. Reacting to a received item waits until senders can see reactions.
 - **Follow** — the one-way graph edge between joined accounts. Open by default: following
   someone succeeds instantly and may reveal their `followers-only` fields. If the followee
   has enabled follower approval, a new follow becomes a Follow Request instead. Blocking
@@ -133,3 +133,14 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
   its text and author are wiped but its position in the tree is kept, so other people's
   replies survive. The comment-tree analogue of a tombstoned Handle.
+- **Shared List** — an episode list published as a first-class server object: an owner,
+  invited Collaborators who co-edit (add/remove/reorder, attributed per entry), and
+  Subscribers who follow it read-only. Carries the standard three-tier Visibility;
+  followers/public lists appear on the owner's profile. Dies with its owner; an erased
+  collaborator's entries survive with their attribution wiped.
+- **List Mirror** — the local playlist that renders a Shared List in the Playlists tab.
+  Mirrors are server-derived caches, rebuilt on refresh; the owner's original playlist is
+  never rebuilt — it keeps syncing as an ordinary manual playlist.
+- **Materialize** — publishing a smart or custom playlist snapshots its *current results*
+  into a new Shared List; the playlist itself stays personal. Live queries never share
+  (a rule evaluates differently in every account).

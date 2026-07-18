@@ -35,6 +35,7 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/SocialCommentTask.swift: 8
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialGraphTask.swift: 8
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialIdentityTask.swift: 10
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialInboxTask.swift: 8
+Modules/Sources/PocketCastsServer/Private/API Tasks/SocialListTask.swift: 8
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialModerationTask.swift: 8
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialReviewTask.swift: 10
 Modules/Sources/PocketCastsServer/Private/API Tasks/StarredSyncTask.swift: 2

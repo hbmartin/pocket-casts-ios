@@ -116,6 +116,25 @@ struct PublicProfileView: View {
             podcastSection(L10n.socialSectionTopPodcasts, podcasts: profile.topPodcasts)
             podcastSection(L10n.socialSectionFollowedShows, podcasts: profile.followedShows)
 
+            if !profile.lists.isEmpty {
+                Section(header: Text(L10n.socialSectionLists)) {
+                    ForEach(profile.lists) { list in
+                        Button {
+                            SocialCoordinator.openSharedList(id: list.id)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(list.title)
+                                    .lineLimit(1)
+                                    .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                                Text(L10n.socialListEpisodeCount(list.entryCount))
+                                    .font(.footnote)
+                                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                            }
+                        }
+                    }
+                }
+            }
+
             if !profile.recentlyPlayed.isEmpty {
                 Section(header: Text(L10n.socialSectionRecentlyPlayed)) {
                     ForEach(profile.recentlyPlayed) { episode in
