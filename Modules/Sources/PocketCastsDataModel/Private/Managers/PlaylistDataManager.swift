@@ -77,13 +77,11 @@ class PlaylistDataManager {
     }
 
     func allUnsyncedPlaylists(dbQueue: GRDBQueue) -> [EpisodeFilter] {
+        // Custom playlists sync too since the fork-owned custom_query wire
+        // field landed (Slice 7, ADR-0011).
         return dbQueue.fetchAll(
             EpisodeFilter
                 .filter(EpisodeFilter.Columns.syncStatus == SyncStatus.notSynced.rawValue)
-                // Custom playlists are device-local: the sync protocol cannot
-                // represent customQuery, so they are never offered for upload
-                // (SyncTask.changedPlaylists is the sole consumer).
-                .filter(EpisodeFilter.Columns.customQuery == nil)
                 .order(EpisodeFilter.Columns.sortPosition.asc)
         )
     }
@@ -325,8 +323,7 @@ class PlaylistDataManager {
     func markAllUnsynced(dbQueue: GRDBQueue) {
         dbQueue.updateAll(
             EpisodeFilter.self,
-            // Custom playlists stay out of the upload queue (see allUnsyncedPlaylists).
-            filter: EpisodeFilter.Columns.syncStatus == SyncStatus.synced.rawValue && EpisodeFilter.Columns.customQuery == nil,
+            filter: EpisodeFilter.Columns.syncStatus == SyncStatus.synced.rawValue,
             EpisodeFilter.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
         )
     }

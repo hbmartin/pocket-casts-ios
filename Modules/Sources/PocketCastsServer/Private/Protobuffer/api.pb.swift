@@ -337,6 +337,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
   case reviewed // = 5
   case reacted // = 6
   case commented // = 7
+  case publishedList // = 8
   case UNRECOGNIZED(Int)
 
   init() {
@@ -353,6 +354,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
     case 5: self = .reviewed
     case 6: self = .reacted
     case 7: self = .commented
+    case 8: self = .publishedList
     default: self = .UNRECOGNIZED(rawValue)
     }
   }
@@ -367,6 +369,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
     case .reviewed: return 5
     case .reacted: return 6
     case .commented: return 7
+    case .publishedList: return 8
     case .UNRECOGNIZED(let i): return i
     }
   }
@@ -381,6 +384,95 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
     .reviewed,
     .reacted,
     .commented,
+    .publishedList,
+  ]
+
+}
+
+nonisolated enum Api_SharedListRole: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case none // = 0
+  case owner // = 1
+  case collaborator // = 2
+  case subscriber // = 3
+  case invited // = 4
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .none
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .none
+    case 1: self = .owner
+    case 2: self = .collaborator
+    case 3: self = .subscriber
+    case 4: self = .invited
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .none: return 0
+    case .owner: return 1
+    case .collaborator: return 2
+    case .subscriber: return 3
+    case .invited: return 4
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_SharedListRole] = [
+    .none,
+    .owner,
+    .collaborator,
+    .subscriber,
+    .invited,
+  ]
+
+}
+
+nonisolated enum Api_SharedListOp: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case add // = 1
+  case remove // = 2
+  case move // = 3
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .add
+    case 2: self = .remove
+    case 3: self = .move
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .add: return 1
+    case .remove: return 2
+    case .move: return 3
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_SharedListOp] = [
+    .unspecified,
+    .add,
+    .remove,
+    .move,
   ]
 
 }
@@ -1225,6 +1317,18 @@ nonisolated struct Api_SyncUserPlaylist: @unchecked Sendable {
   var hasShowArchived: Bool {_storage._showArchived != nil}
   /// Clears the value of `showArchived`. Subsequent reads from it will return its default value.
   mutating func clearShowArchived() {_uniqueStorage()._showArchived = nil}
+
+  /// Fork-owned (>=1001): the custom-playlist query envelope (JSON
+  /// CustomPlaylistQuery). Empty for smart/manual playlists. Slice 7 overturns
+  /// the device-local exclusion — see iOS ADR-0011.
+  var customQuery: SwiftProtobuf.Google_Protobuf_StringValue {
+    get {_storage._customQuery ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_uniqueStorage()._customQuery = newValue}
+  }
+  /// Returns true if `customQuery` has been explicitly set.
+  var hasCustomQuery: Bool {_storage._customQuery != nil}
+  /// Clears the value of `customQuery`. Subsequent reads from it will return its default value.
+  mutating func clearCustomQuery() {_uniqueStorage()._customQuery = nil}
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2552,6 +2656,16 @@ nonisolated struct Api_PlaylistSyncResponse: @unchecked Sendable {
   var hasShowArchived: Bool {_storage._showArchived != nil}
   /// Clears the value of `showArchived`. Subsequent reads from it will return its default value.
   mutating func clearShowArchived() {_uniqueStorage()._showArchived = nil}
+
+  /// Fork-owned (>=1001): mirrors SyncUserPlaylist.custom_query.
+  var customQuery: SwiftProtobuf.Google_Protobuf_StringValue {
+    get {_storage._customQuery ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_uniqueStorage()._customQuery = newValue}
+  }
+  /// Returns true if `customQuery` has been explicitly set.
+  var hasCustomQuery: Bool {_storage._customQuery != nil}
+  /// Clears the value of `customQuery`. Subsequent reads from it will return its default value.
+  mutating func clearCustomQuery() {_uniqueStorage()._customQuery = nil}
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -9626,10 +9740,15 @@ nonisolated struct Api_PublicProfileResponse: @unchecked Sendable {
     set {_uniqueStorage()._followingCount = newValue}
   }
 
-  /// authenticated viewers only
   var yourFollowState: Api_FollowState {
     get {_storage._yourFollowState}
     set {_uniqueStorage()._yourFollowState = newValue}
+  }
+
+  /// visibility-filtered for this viewer // authenticated viewers only
+  var lists: [Api_SharedList] {
+    get {_storage._lists}
+    set {_uniqueStorage()._lists = newValue}
   }
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -10279,6 +10398,12 @@ nonisolated struct Api_FeedItem: Sendable {
   /// Clears the value of `eventAt`. Subsequent reads from it will return its default value.
   mutating func clearEventAt() {self._eventAt = nil}
 
+  /// PUBLISHED_LIST
+  var listTitle: String = String()
+
+  /// PUBLISHED_LIST
+  var listID: Int64 = 0
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -10500,6 +10625,289 @@ nonisolated struct Api_InboxRepliesResponse: Sendable {
   init() {}
 }
 
+nonisolated struct Api_SharedListMember: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var handle: String = String()
+
+  var displayName: String = String()
+
+  var role: Api_SharedListRole = .none
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedList: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var id: Int64 = 0
+
+  var ownerHandle: String = String()
+
+  var ownerDisplayName: String = String()
+
+  var title: String = String()
+
+  var description_p: String = String()
+
+  var visibility: Api_SocialVisibility = .unspecified
+
+  var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_createdAt = newValue}
+  }
+  /// Returns true if `createdAt` has been explicitly set.
+  var hasCreatedAt: Bool {self._createdAt != nil}
+  /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
+  mutating func clearCreatedAt() {self._createdAt = nil}
+
+  var updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_updatedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_updatedAt = newValue}
+  }
+  /// Returns true if `updatedAt` has been explicitly set.
+  var hasUpdatedAt: Bool {self._updatedAt != nil}
+  /// Clears the value of `updatedAt`. Subsequent reads from it will return its default value.
+  mutating func clearUpdatedAt() {self._updatedAt = nil}
+
+  var entryCount: Int32 = 0
+
+  var yourRole: Api_SharedListRole = .none
+
+  /// collaborators + pending invites (owner view)
+  var members: [Api_SharedListMember] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+nonisolated struct Api_SharedListEntry: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var episodeUuid: String = String()
+
+  var podcastUuid: String = String()
+
+  var episodeTitle: String = String()
+
+  var podcastTitle: String = String()
+
+  var position: Int32 = 0
+
+  /// empty when the adder was erased
+  var addedByHandle: String = String()
+
+  var addedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_addedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_addedAt = newValue}
+  }
+  /// Returns true if `addedAt` has been explicitly set.
+  var hasAddedAt: Bool {self._addedAt != nil}
+  /// Clears the value of `addedAt`. Subsequent reads from it will return its default value.
+  mutating func clearAddedAt() {self._addedAt = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _addedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+nonisolated struct Api_SharedListCreateRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var title: String = String()
+
+  var description_p: String = String()
+
+  var visibility: Api_SocialVisibility = .unspecified
+
+  /// initial snapshot (materialize-to-share)
+  var entries: [Api_SharedListEntry] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListUpdateRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var title: String = String()
+
+  var description_p: String = String()
+
+  var visibility: Api_SocialVisibility = .unspecified
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListDeleteRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListEntriesRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var limit: Int32 = 0
+
+  var offset: Int32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListEntriesResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var list: Api_SharedList {
+    get {_list ?? Api_SharedList()}
+    set {_list = newValue}
+  }
+  /// Returns true if `list` has been explicitly set.
+  var hasList: Bool {self._list != nil}
+  /// Clears the value of `list`. Subsequent reads from it will return its default value.
+  mutating func clearList() {self._list = nil}
+
+  var entries: [Api_SharedListEntry] = []
+
+  var total: Int32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _list: Api_SharedList? = nil
+}
+
+nonisolated struct Api_SharedListEntryOpRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var op: Api_SharedListOp = .unspecified
+
+  var episodeUuid: String = String()
+
+  var podcastUuid: String = String()
+
+  var episodeTitle: String = String()
+
+  var podcastTitle: String = String()
+
+  /// ADD append when < 0; MOVE target
+  var position: Int32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListInviteRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var handle: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListInviteRespondRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var accept: Bool = false
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListSubscribeRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var listID: Int64 = 0
+
+  var subscribe: Bool = false
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SharedListsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// owned + collaborating + subscribed
+  var lists: [Api_SharedList] = []
+
+  /// pending invitations to the caller
+  var invites: [Api_SharedList] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "api"
@@ -10529,7 +10937,15 @@ nonisolated extension Api_FollowState: SwiftProtobuf._ProtoNameProviding {
 }
 
 nonisolated extension Api_FeedItemKind: SwiftProtobuf._ProtoNameProviding {
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FEED_ITEM_KIND_UNSPECIFIED\0\u{1}FEED_ITEM_KIND_JOINED\0\u{1}FEED_ITEM_KIND_FOLLOWED_PERSON\0\u{1}FEED_ITEM_KIND_FOLLOWED_SHOW\0\u{1}FEED_ITEM_KIND_FINISHED_EPISODE\0\u{1}FEED_ITEM_KIND_REVIEWED\0\u{1}FEED_ITEM_KIND_REACTED\0\u{1}FEED_ITEM_KIND_COMMENTED\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FEED_ITEM_KIND_UNSPECIFIED\0\u{1}FEED_ITEM_KIND_JOINED\0\u{1}FEED_ITEM_KIND_FOLLOWED_PERSON\0\u{1}FEED_ITEM_KIND_FOLLOWED_SHOW\0\u{1}FEED_ITEM_KIND_FINISHED_EPISODE\0\u{1}FEED_ITEM_KIND_REVIEWED\0\u{1}FEED_ITEM_KIND_REACTED\0\u{1}FEED_ITEM_KIND_COMMENTED\0\u{1}FEED_ITEM_KIND_PUBLISHED_LIST\0")
+}
+
+nonisolated extension Api_SharedListRole: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SHARED_LIST_ROLE_NONE\0\u{1}SHARED_LIST_ROLE_OWNER\0\u{1}SHARED_LIST_ROLE_COLLABORATOR\0\u{1}SHARED_LIST_ROLE_SUBSCRIBER\0\u{1}SHARED_LIST_ROLE_INVITED\0")
+}
+
+nonisolated extension Api_SharedListOp: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SHARED_LIST_OP_UNSPECIFIED\0\u{1}SHARED_LIST_OP_ADD\0\u{1}SHARED_LIST_OP_REMOVE\0\u{1}SHARED_LIST_OP_MOVE\0")
 }
 
 nonisolated extension Api_UserLoginRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
@@ -11572,7 +11988,7 @@ nonisolated extension Api_SyncUserEpisode: SwiftProtobuf.Message, SwiftProtobuf.
 
 nonisolated extension Api_SyncUserPlaylist: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SyncUserPlaylist"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}is_deleted\0\u{1}title\0\u{3}all_podcasts\0\u{3}podcast_uuids\0\u{3}episode_uuids\0\u{3}audio_video\0\u{3}not_downloaded\0\u{1}downloaded\0\u{1}downloading\0\u{1}finished\0\u{3}partially_played\0\u{1}unplayed\0\u{1}starred\0\u{1}manual\0\u{3}sort_position\0\u{3}sort_type\0\u{3}icon_id\0\u{3}filter_hours\0\u{3}original_uuid\0\u{3}filter_duration\0\u{3}longer_than\0\u{3}shorter_than\0\u{3}episode_order\0\u{1}episodes\0\u{3}show_archived\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}is_deleted\0\u{1}title\0\u{3}all_podcasts\0\u{3}podcast_uuids\0\u{3}episode_uuids\0\u{3}audio_video\0\u{3}not_downloaded\0\u{1}downloaded\0\u{1}downloading\0\u{1}finished\0\u{3}partially_played\0\u{1}unplayed\0\u{1}starred\0\u{1}manual\0\u{3}sort_position\0\u{3}sort_type\0\u{3}icon_id\0\u{3}filter_hours\0\u{3}original_uuid\0\u{3}filter_duration\0\u{3}longer_than\0\u{3}shorter_than\0\u{3}episode_order\0\u{1}episodes\0\u{3}show_archived\0\u{4}O\u{f}custom_query\0")
 
   fileprivate class _StorageClass {
     var _uuid: String = String()
@@ -11601,6 +12017,7 @@ nonisolated extension Api_SyncUserPlaylist: SwiftProtobuf.Message, SwiftProtobuf
     var _episodeOrder: [String] = []
     var _episodes: [Api_SyncPlaylistEpisode] = []
     var _showArchived: SwiftProtobuf.Google_Protobuf_BoolValue? = nil
+    var _customQuery: SwiftProtobuf.Google_Protobuf_StringValue? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -11637,6 +12054,7 @@ nonisolated extension Api_SyncUserPlaylist: SwiftProtobuf.Message, SwiftProtobuf
       _episodeOrder = source._episodeOrder
       _episodes = source._episodes
       _showArchived = source._showArchived
+      _customQuery = source._customQuery
     }
   }
 
@@ -11681,6 +12099,7 @@ nonisolated extension Api_SyncUserPlaylist: SwiftProtobuf.Message, SwiftProtobuf
         case 24: try { try decoder.decodeRepeatedStringField(value: &_storage._episodeOrder) }()
         case 25: try { try decoder.decodeRepeatedMessageField(value: &_storage._episodes) }()
         case 26: try { try decoder.decodeSingularMessageField(value: &_storage._showArchived) }()
+        case 1001: try { try decoder.decodeSingularMessageField(value: &_storage._customQuery) }()
         default: break
         }
       }
@@ -11771,6 +12190,9 @@ nonisolated extension Api_SyncUserPlaylist: SwiftProtobuf.Message, SwiftProtobuf
       try { if let v = _storage._showArchived {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 26)
       } }()
+      try { if let v = _storage._customQuery {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -11806,6 +12228,7 @@ nonisolated extension Api_SyncUserPlaylist: SwiftProtobuf.Message, SwiftProtobuf
         if _storage._episodeOrder != rhs_storage._episodeOrder {return false}
         if _storage._episodes != rhs_storage._episodes {return false}
         if _storage._showArchived != rhs_storage._showArchived {return false}
+        if _storage._customQuery != rhs_storage._customQuery {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -13269,7 +13692,7 @@ nonisolated extension Api_UserPlaylistListResponse: SwiftProtobuf.Message, Swift
 
 nonisolated extension Api_PlaylistSyncResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".PlaylistSyncResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}is_deleted\0\u{1}title\0\u{3}audio_video\0\u{3}not_downloaded\0\u{1}downloaded\0\u{1}downloading\0\u{1}finished\0\u{3}partially_played\0\u{1}unplayed\0\u{1}starred\0\u{1}manual\0\u{3}sort_position\0\u{3}sort_type\0\u{3}icon_id\0\u{3}all_podcasts\0\u{3}filter_hours\0\u{3}podcast_uuids\0\u{3}episode_uuids\0\u{3}original_uuid\0\u{3}filter_duration\0\u{3}longer_than\0\u{3}shorter_than\0\u{3}episode_order\0\u{1}episodes\0\u{3}show_archived\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}is_deleted\0\u{1}title\0\u{3}audio_video\0\u{3}not_downloaded\0\u{1}downloaded\0\u{1}downloading\0\u{1}finished\0\u{3}partially_played\0\u{1}unplayed\0\u{1}starred\0\u{1}manual\0\u{3}sort_position\0\u{3}sort_type\0\u{3}icon_id\0\u{3}all_podcasts\0\u{3}filter_hours\0\u{3}podcast_uuids\0\u{3}episode_uuids\0\u{3}original_uuid\0\u{3}filter_duration\0\u{3}longer_than\0\u{3}shorter_than\0\u{3}episode_order\0\u{1}episodes\0\u{3}show_archived\0\u{4}O\u{f}custom_query\0")
 
   fileprivate class _StorageClass {
     var _uuid: String = String()
@@ -13298,6 +13721,7 @@ nonisolated extension Api_PlaylistSyncResponse: SwiftProtobuf.Message, SwiftProt
     var _episodeOrder: [String] = []
     var _episodes: [Api_SyncPlaylistEpisode] = []
     var _showArchived: SwiftProtobuf.Google_Protobuf_BoolValue? = nil
+    var _customQuery: SwiftProtobuf.Google_Protobuf_StringValue? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -13334,6 +13758,7 @@ nonisolated extension Api_PlaylistSyncResponse: SwiftProtobuf.Message, SwiftProt
       _episodeOrder = source._episodeOrder
       _episodes = source._episodes
       _showArchived = source._showArchived
+      _customQuery = source._customQuery
     }
   }
 
@@ -13378,6 +13803,7 @@ nonisolated extension Api_PlaylistSyncResponse: SwiftProtobuf.Message, SwiftProt
         case 24: try { try decoder.decodeRepeatedStringField(value: &_storage._episodeOrder) }()
         case 25: try { try decoder.decodeRepeatedMessageField(value: &_storage._episodes) }()
         case 26: try { try decoder.decodeSingularMessageField(value: &_storage._showArchived) }()
+        case 1001: try { try decoder.decodeSingularMessageField(value: &_storage._customQuery) }()
         default: break
         }
       }
@@ -13468,6 +13894,9 @@ nonisolated extension Api_PlaylistSyncResponse: SwiftProtobuf.Message, SwiftProt
       try { if let v = _storage._showArchived {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 26)
       } }()
+      try { if let v = _storage._customQuery {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -13503,6 +13932,7 @@ nonisolated extension Api_PlaylistSyncResponse: SwiftProtobuf.Message, SwiftProt
         if _storage._episodeOrder != rhs_storage._episodeOrder {return false}
         if _storage._episodes != rhs_storage._episodes {return false}
         if _storage._showArchived != rhs_storage._showArchived {return false}
+        if _storage._customQuery != rhs_storage._customQuery {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -22793,7 +23223,7 @@ nonisolated extension Api_PublicProfileRequest: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".PublicProfileResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0\u{3}followed_shows\0\u{3}top_podcasts\0\u{1}stats\0\u{3}recently_played\0\u{3}follower_count\0\u{3}following_count\0\u{3}your_follow_state\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0\u{3}followed_shows\0\u{3}top_podcasts\0\u{1}stats\0\u{3}recently_played\0\u{3}follower_count\0\u{3}following_count\0\u{3}your_follow_state\0\u{1}lists\0")
 
   fileprivate class _StorageClass {
     var _userID: String = String()
@@ -22810,6 +23240,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
     var _followerCount: Int64 = 0
     var _followingCount: Int64 = 0
     var _yourFollowState: Api_FollowState = .none
+    var _lists: [Api_SharedList] = []
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -22834,6 +23265,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
       _followerCount = source._followerCount
       _followingCount = source._followingCount
       _yourFollowState = source._yourFollowState
+      _lists = source._lists
     }
   }
 
@@ -22866,6 +23298,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
         case 12: try { try decoder.decodeSingularInt64Field(value: &_storage._followerCount) }()
         case 13: try { try decoder.decodeSingularInt64Field(value: &_storage._followingCount) }()
         case 14: try { try decoder.decodeSingularEnumField(value: &_storage._yourFollowState) }()
+        case 15: try { try decoder.decodeRepeatedMessageField(value: &_storage._lists) }()
         default: break
         }
       }
@@ -22920,6 +23353,9 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
       if _storage._yourFollowState != .none {
         try visitor.visitSingularEnumField(value: _storage._yourFollowState, fieldNumber: 14)
       }
+      if !_storage._lists.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._lists, fieldNumber: 15)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -22943,6 +23379,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
         if _storage._followerCount != rhs_storage._followerCount {return false}
         if _storage._followingCount != rhs_storage._followingCount {return false}
         if _storage._yourFollowState != rhs_storage._yourFollowState {return false}
+        if _storage._lists != rhs_storage._lists {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -24228,7 +24665,7 @@ nonisolated extension Api_FeedRequest: SwiftProtobuf.Message, SwiftProtobuf._Mes
 
 nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".FeedItem"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{3}actor_handle\0\u{3}actor_display_name\0\u{3}actor_user_id\0\u{3}podcast_uuid\0\u{3}podcast_title\0\u{3}episode_uuid\0\u{3}episode_title\0\u{3}target_handle\0\u{3}reaction_kind\0\u{3}review_excerpt\0\u{3}event_at\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{3}actor_handle\0\u{3}actor_display_name\0\u{3}actor_user_id\0\u{3}podcast_uuid\0\u{3}podcast_title\0\u{3}episode_uuid\0\u{3}episode_title\0\u{3}target_handle\0\u{3}reaction_kind\0\u{3}review_excerpt\0\u{3}event_at\0\u{3}list_title\0\u{3}list_id\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -24248,6 +24685,8 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
       case 10: try { try decoder.decodeSingularEnumField(value: &self.reactionKind) }()
       case 11: try { try decoder.decodeSingularStringField(value: &self.reviewExcerpt) }()
       case 12: try { try decoder.decodeSingularMessageField(value: &self._eventAt) }()
+      case 13: try { try decoder.decodeSingularStringField(value: &self.listTitle) }()
+      case 14: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
       default: break
       }
     }
@@ -24294,6 +24733,12 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
     try { if let v = self._eventAt {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
     } }()
+    if !self.listTitle.isEmpty {
+      try visitor.visitSingularStringField(value: self.listTitle, fieldNumber: 13)
+    }
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 14)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -24310,6 +24755,8 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
     if lhs.reactionKind != rhs.reactionKind {return false}
     if lhs.reviewExcerpt != rhs.reviewExcerpt {return false}
     if lhs._eventAt != rhs._eventAt {return false}
+    if lhs.listTitle != rhs.listTitle {return false}
+    if lhs.listID != rhs.listID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -24763,6 +25210,617 @@ nonisolated extension Api_InboxRepliesResponse: SwiftProtobuf.Message, SwiftProt
     if lhs.replies != rhs.replies {return false}
     if lhs.total != rhs.total {return false}
     if lhs.unread != rhs.unread {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListMember: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListMember"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}handle\0\u{3}display_name\0\u{1}role\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.role) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 1)
+    }
+    if !self.displayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 2)
+    }
+    if self.role != .none {
+      try visitor.visitSingularEnumField(value: self.role, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListMember, rhs: Api_SharedListMember) -> Bool {
+    if lhs.handle != rhs.handle {return false}
+    if lhs.displayName != rhs.displayName {return false}
+    if lhs.role != rhs.role {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedList: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedList"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}owner_handle\0\u{3}owner_display_name\0\u{1}title\0\u{1}description\0\u{1}visibility\0\u{3}created_at\0\u{3}updated_at\0\u{3}entry_count\0\u{3}your_role\0\u{1}members\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.ownerHandle) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.ownerDisplayName) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 6: try { try decoder.decodeSingularEnumField(value: &self.visibility) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
+      case 8: try { try decoder.decodeSingularMessageField(value: &self._updatedAt) }()
+      case 9: try { try decoder.decodeSingularInt32Field(value: &self.entryCount) }()
+      case 10: try { try decoder.decodeSingularEnumField(value: &self.yourRole) }()
+      case 11: try { try decoder.decodeRepeatedMessageField(value: &self.members) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.id != 0 {
+      try visitor.visitSingularInt64Field(value: self.id, fieldNumber: 1)
+    }
+    if !self.ownerHandle.isEmpty {
+      try visitor.visitSingularStringField(value: self.ownerHandle, fieldNumber: 2)
+    }
+    if !self.ownerDisplayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.ownerDisplayName, fieldNumber: 3)
+    }
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 4)
+    }
+    if !self.description_p.isEmpty {
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 5)
+    }
+    if self.visibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.visibility, fieldNumber: 6)
+    }
+    try { if let v = self._createdAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
+    try { if let v = self._updatedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+    } }()
+    if self.entryCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.entryCount, fieldNumber: 9)
+    }
+    if self.yourRole != .none {
+      try visitor.visitSingularEnumField(value: self.yourRole, fieldNumber: 10)
+    }
+    if !self.members.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.members, fieldNumber: 11)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedList, rhs: Api_SharedList) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.ownerHandle != rhs.ownerHandle {return false}
+    if lhs.ownerDisplayName != rhs.ownerDisplayName {return false}
+    if lhs.title != rhs.title {return false}
+    if lhs.description_p != rhs.description_p {return false}
+    if lhs.visibility != rhs.visibility {return false}
+    if lhs._createdAt != rhs._createdAt {return false}
+    if lhs._updatedAt != rhs._updatedAt {return false}
+    if lhs.entryCount != rhs.entryCount {return false}
+    if lhs.yourRole != rhs.yourRole {return false}
+    if lhs.members != rhs.members {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListEntry"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{3}episode_title\0\u{3}podcast_title\0\u{1}position\0\u{3}added_by_handle\0\u{3}added_at\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.episodeUuid) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.episodeTitle) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.podcastTitle) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.position) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.addedByHandle) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._addedAt) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.episodeUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.episodeUuid, fieldNumber: 1)
+    }
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 2)
+    }
+    if !self.episodeTitle.isEmpty {
+      try visitor.visitSingularStringField(value: self.episodeTitle, fieldNumber: 3)
+    }
+    if !self.podcastTitle.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastTitle, fieldNumber: 4)
+    }
+    if self.position != 0 {
+      try visitor.visitSingularInt32Field(value: self.position, fieldNumber: 5)
+    }
+    if !self.addedByHandle.isEmpty {
+      try visitor.visitSingularStringField(value: self.addedByHandle, fieldNumber: 6)
+    }
+    try { if let v = self._addedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListEntry, rhs: Api_SharedListEntry) -> Bool {
+    if lhs.episodeUuid != rhs.episodeUuid {return false}
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.episodeTitle != rhs.episodeTitle {return false}
+    if lhs.podcastTitle != rhs.podcastTitle {return false}
+    if lhs.position != rhs.position {return false}
+    if lhs.addedByHandle != rhs.addedByHandle {return false}
+    if lhs._addedAt != rhs._addedAt {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListCreateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListCreateRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}title\0\u{1}description\0\u{1}visibility\0\u{1}entries\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.visibility) }()
+      case 4: try { try decoder.decodeRepeatedMessageField(value: &self.entries) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 1)
+    }
+    if !self.description_p.isEmpty {
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 2)
+    }
+    if self.visibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.visibility, fieldNumber: 3)
+    }
+    if !self.entries.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.entries, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListCreateRequest, rhs: Api_SharedListCreateRequest) -> Bool {
+    if lhs.title != rhs.title {return false}
+    if lhs.description_p != rhs.description_p {return false}
+    if lhs.visibility != rhs.visibility {return false}
+    if lhs.entries != rhs.entries {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListUpdateRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0\u{1}title\0\u{1}description\0\u{1}visibility\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 4: try { try decoder.decodeSingularEnumField(value: &self.visibility) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 2)
+    }
+    if !self.description_p.isEmpty {
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 3)
+    }
+    if self.visibility != .unspecified {
+      try visitor.visitSingularEnumField(value: self.visibility, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListUpdateRequest, rhs: Api_SharedListUpdateRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.title != rhs.title {return false}
+    if lhs.description_p != rhs.description_p {return false}
+    if lhs.visibility != rhs.visibility {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListDeleteRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListDeleteRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListDeleteRequest, rhs: Api_SharedListDeleteRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListEntriesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListEntriesRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0\u{1}limit\0\u{1}offset\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.limit) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.offset) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    if self.limit != 0 {
+      try visitor.visitSingularInt32Field(value: self.limit, fieldNumber: 2)
+    }
+    if self.offset != 0 {
+      try visitor.visitSingularInt32Field(value: self.offset, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListEntriesRequest, rhs: Api_SharedListEntriesRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.limit != rhs.limit {return false}
+    if lhs.offset != rhs.offset {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListEntriesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListEntriesResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}list\0\u{1}entries\0\u{1}total\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._list) }()
+      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.entries) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.total) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._list {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if !self.entries.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.entries, fieldNumber: 2)
+    }
+    if self.total != 0 {
+      try visitor.visitSingularInt32Field(value: self.total, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListEntriesResponse, rhs: Api_SharedListEntriesResponse) -> Bool {
+    if lhs._list != rhs._list {return false}
+    if lhs.entries != rhs.entries {return false}
+    if lhs.total != rhs.total {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListEntryOpRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListEntryOpRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0\u{1}op\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{3}episode_title\0\u{3}podcast_title\0\u{1}position\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.op) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.episodeUuid) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.episodeTitle) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.podcastTitle) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.position) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    if self.op != .unspecified {
+      try visitor.visitSingularEnumField(value: self.op, fieldNumber: 2)
+    }
+    if !self.episodeUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.episodeUuid, fieldNumber: 3)
+    }
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 4)
+    }
+    if !self.episodeTitle.isEmpty {
+      try visitor.visitSingularStringField(value: self.episodeTitle, fieldNumber: 5)
+    }
+    if !self.podcastTitle.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastTitle, fieldNumber: 6)
+    }
+    if self.position != 0 {
+      try visitor.visitSingularInt32Field(value: self.position, fieldNumber: 7)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListEntryOpRequest, rhs: Api_SharedListEntryOpRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.op != rhs.op {return false}
+    if lhs.episodeUuid != rhs.episodeUuid {return false}
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.episodeTitle != rhs.episodeTitle {return false}
+    if lhs.podcastTitle != rhs.podcastTitle {return false}
+    if lhs.position != rhs.position {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListInviteRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListInviteRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0\u{1}handle\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.handle) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    if !self.handle.isEmpty {
+      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListInviteRequest, rhs: Api_SharedListInviteRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.handle != rhs.handle {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListInviteRespondRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListInviteRespondRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0\u{1}accept\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.accept) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    if self.accept != false {
+      try visitor.visitSingularBoolField(value: self.accept, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListInviteRespondRequest, rhs: Api_SharedListInviteRespondRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.accept != rhs.accept {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListSubscribeRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListSubscribeRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}list_id\0\u{1}subscribe\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt64Field(value: &self.listID) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.subscribe) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.listID != 0 {
+      try visitor.visitSingularInt64Field(value: self.listID, fieldNumber: 1)
+    }
+    if self.subscribe != false {
+      try visitor.visitSingularBoolField(value: self.subscribe, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListSubscribeRequest, rhs: Api_SharedListSubscribeRequest) -> Bool {
+    if lhs.listID != rhs.listID {return false}
+    if lhs.subscribe != rhs.subscribe {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListsRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListsRequest, rhs: Api_SharedListsRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SharedListsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SharedListsResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}lists\0\u{1}invites\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.lists) }()
+      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.invites) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.lists.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.lists, fieldNumber: 1)
+    }
+    if !self.invites.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.invites, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SharedListsResponse, rhs: Api_SharedListsResponse) -> Bool {
+    if lhs.lists != rhs.lists {return false}
+    if lhs.invites != rhs.invites {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

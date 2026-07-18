@@ -4577,6 +4577,10 @@ nonisolated internal enum L10n {
   internal static func socialFeedItemJoined(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_joined", String(describing: p1), fallback: "%1$@ joined")
   }
+  /// Feed line: person published a list. %1$@ = display name, %2$@ = list title
+  internal static func socialFeedItemPublishedList(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_published_list", String(describing: p1), String(describing: p2), fallback: "%1$@ published %2$@")
+  }
   /// Feed line: person reacted to an episode. %1$@ = display name, %2$@ = episode title
   internal static func socialFeedItemReacted(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_reacted", String(describing: p1), String(describing: p2), fallback: "%1$@ reacted to %2$@")
@@ -4669,6 +4673,62 @@ nonisolated internal enum L10n {
   internal static var socialJoinTerms: String { return L10n.tr("Localizable", "social_join_terms", fallback: "By joining you agree that your display name and anything you set to public are visible to everyone.") }
   /// Title of the opt-in social Join flow and its navigation bar
   internal static var socialJoinTitle: String { return L10n.tr("Localizable", "social_join_title", fallback: "Join Social") }
+  /// Attribution chip on a shared-list entry. %1$@ = adder @handle
+  internal static func socialListAddedBy(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_list_added_by", String(describing: p1), fallback: "added by %1$@")
+  }
+  /// Byline under a shared list's title. %1$@ = owner @handle
+  internal static func socialListByline(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_list_byline", String(describing: p1), fallback: "A list by %1$@")
+  }
+  /// Placeholder for the shared list's description field
+  internal static var socialListDescriptionPlaceholder: String { return L10n.tr("Localizable", "social_list_description_placeholder", fallback: "Description (optional)") }
+  /// Episode count on a shared-list row. %1$d = count
+  internal static func socialListEpisodeCount(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_list_episode_count", p1, fallback: "%1$d episodes")
+  }
+  /// Button sending a collaboration invite
+  internal static var socialListInvite: String { return L10n.tr("Localizable", "social_list_invite", fallback: "Invite") }
+  /// Footer of the invite field explaining consent
+  internal static var socialListInviteFooter: String { return L10n.tr("Localizable", "social_list_invite_footer", fallback: "They'll get an invite to accept before they can edit. Up to 20 collaborators.") }
+  /// Who invited the user to a list. %1$@ = owner @handle
+  internal static func socialListInviteFrom(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_list_invite_from", String(describing: p1), fallback: "%1$@ invited you to collaborate")
+  }
+  /// Section header for pending list-collaboration invites
+  internal static var socialListInvitesTitle: String { return L10n.tr("Localizable", "social_list_invites_title", fallback: "List Invites") }
+  /// Title of the shared-list members sheet and its toolbar button
+  internal static var socialListMembers: String { return L10n.tr("Localizable", "social_list_members", fallback: "Members") }
+  /// Confirm button of the publish-list sheet
+  internal static var socialListPublishCta: String { return L10n.tr("Localizable", "social_list_publish_cta", fallback: "Publish") }
+  /// Error when publishing a list fails
+  internal static var socialListPublishFailed: String { return L10n.tr("Localizable", "social_list_publish_failed", fallback: "Couldn't publish the list.") }
+  /// Footer when publishing snapshots a smart/custom playlist's current results
+  internal static var socialListPublishMaterializeNote: String { return L10n.tr("Localizable", "social_list_publish_materialize_note", fallback: "Publishes a snapshot of this playlist's current episodes as a new shared list. The playlist itself stays personal.") }
+  /// Footer for publishing a manual playlist in place
+  internal static var socialListPublishNote: String { return L10n.tr("Localizable", "social_list_publish_note", fallback: "Publishes this list to your profile at the visibility you choose. You can invite collaborators afterwards from Members.") }
+  /// Title of the publish-list sheet
+  internal static var socialListPublishTitle: String { return L10n.tr("Localizable", "social_list_publish_title", fallback: "Share as List") }
+  /// Button removing a member from a shared list (owner only)
+  internal static var socialListRemoveMember: String { return L10n.tr("Localizable", "social_list_remove_member", fallback: "Remove") }
+  /// Role label: the account co-edits this list
+  internal static var socialListRoleCollaborator: String { return L10n.tr("Localizable", "social_list_role_collaborator", fallback: "Collaborator") }
+  /// Role label: invitation not yet answered
+  internal static var socialListRoleInvited: String { return L10n.tr("Localizable", "social_list_role_invited", fallback: "Invited") }
+  /// Role label: the account owns this list
+  internal static var socialListRoleOwner: String { return L10n.tr("Localizable", "social_list_role_owner", fallback: "Owner") }
+  /// Role label: the account follows this list read-only
+  internal static var socialListRoleSubscriber: String { return L10n.tr("Localizable", "social_list_role_subscriber", fallback: "Subscribed") }
+  /// Button to follow a shared list read-only
+  internal static var socialListSubscribe: String { return L10n.tr("Localizable", "social_list_subscribe", fallback: "Subscribe") }
+  /// Placeholder for the shared list's title field
+  internal static var socialListTitlePlaceholder: String { return L10n.tr("Localizable", "social_list_title_placeholder", fallback: "List name") }
+  /// Button to stop following a shared list
+  internal static var socialListUnsubscribe: String { return L10n.tr("Localizable", "social_list_unsubscribe", fallback: "Unsubscribe") }
+  /// Empty state for the shared-lists hub
+  internal static var socialListsEmpty: String { return L10n.tr("Localizable", "social_lists_empty", fallback: "Lists you publish, co-edit or subscribe to will show up here.") }
+  /// Title of the shared-lists hub screen
+  internal static var socialListsTitle: String { return L10n.tr("Localizable", "social_lists_title", fallback: "Shared Lists") }
   /// Overflow action that hides a person's items from the activity feed without blocking them
   internal static var socialMute: String { return L10n.tr("Localizable", "social_mute", fallback: "Mute") }
   /// Trailing note on the display name row: it cannot be made private
@@ -4763,6 +4823,8 @@ nonisolated internal enum L10n {
   internal static var socialSectionFollowedShows: String { return L10n.tr("Localizable", "social_section_followed_shows", fallback: "Followed shows") }
   /// Section header for the listening heatmap on the own profile
   internal static var socialSectionHeatmap: String { return L10n.tr("Localizable", "social_section_heatmap", fallback: "Listening activity") }
+  /// Profile section header for a person's shared lists
+  internal static var socialSectionLists: String { return L10n.tr("Localizable", "social_section_lists", fallback: "Lists") }
   /// Section header for the recently played list
   internal static var socialSectionRecentlyPlayed: String { return L10n.tr("Localizable", "social_section_recently_played", fallback: "Recently played") }
   /// Section header for listening stats on a public profile

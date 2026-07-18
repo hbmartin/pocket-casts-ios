@@ -44,6 +44,7 @@ public enum FeedItemKind: Int, Sendable {
     case reviewed = 5
     case reacted = 6
     case commented = 7
+    case publishedList = 8
 }
 
 /// One derived activity-feed item (read-time derivation; ADR-0009).
@@ -60,12 +61,15 @@ public struct FeedItem: Equatable, Sendable, Identifiable {
     public let reactionKind: ReactionKind?
     public let reviewExcerpt: String
     public let eventAt: Date?
+    public let listTitle: String
+    public let listId: Int64
 
     public var id: String { "\(kind.rawValue)-\(actorHandle)-\(episodeUuid)-\(podcastUuid)-\(targetHandle)-\(eventAt?.timeIntervalSince1970 ?? 0)" }
 
     public init(kind: FeedItemKind, actorHandle: String, actorDisplayName: String, actorUserId: String,
                 podcastUuid: String, podcastTitle: String, episodeUuid: String, episodeTitle: String,
-                targetHandle: String, reactionKind: ReactionKind?, reviewExcerpt: String, eventAt: Date?) {
+                targetHandle: String, reactionKind: ReactionKind?, reviewExcerpt: String, eventAt: Date?,
+                listTitle: String = "", listId: Int64 = 0) {
         self.kind = kind
         self.actorHandle = actorHandle
         self.actorDisplayName = actorDisplayName
@@ -78,6 +82,8 @@ public struct FeedItem: Equatable, Sendable, Identifiable {
         self.reactionKind = reactionKind
         self.reviewExcerpt = reviewExcerpt
         self.eventAt = eventAt
+        self.listTitle = listTitle
+        self.listId = listId
     }
 }
 
@@ -109,6 +115,8 @@ extension FeedItem {
                   targetHandle: api.targetHandle,
                   reactionKind: ReactionKind(rawValue: api.reactionKind.rawValue),
                   reviewExcerpt: api.reviewExcerpt,
-                  eventAt: api.hasEventAt ? api.eventAt.date : nil)
+                  eventAt: api.hasEventAt ? api.eventAt.date : nil,
+                  listTitle: api.listTitle,
+                  listId: api.listID)
     }
 }

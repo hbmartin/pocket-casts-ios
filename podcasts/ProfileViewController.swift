@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile, socialInbox }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile, socialInbox, socialLists }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -359,6 +359,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             cell.settingsImage.image = UIImage(systemName: "tray")
             let unread = SocialInboxBadge.unreadCount
             cell.settingsLabel.text = unread > 0 ? L10n.socialInboxRowUnread(unread) : L10n.socialInboxTitle
+        case .socialLists:
+            cell.settingsImage.image = UIImage(systemName: "list.star")
+            cell.settingsLabel.text = L10n.socialListsTitle
         case .peopleDirectory:
             cell.settingsImage.image = UIImage(systemName: "person.2")
             cell.settingsLabel.text = L10n.peopleDirectoryTitle
@@ -431,6 +434,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .socialInbox:
             let inboxController = ThemedHostingController(rootView: SocialInboxView(viewModel: SocialInboxViewModel()))
             navigationController?.pushViewController(inboxController, animated: true)
+        case .socialLists:
+            let listsController = ThemedHostingController(rootView: SharedListsView(viewModel: SharedListsViewModel()))
+            navigationController?.pushViewController(listsController, animated: true)
         }
     }
 
@@ -487,6 +493,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             data[0].insert(.socialProfile, at: 0)
             if SocialIdentityStore.isJoined {
                 data[0].insert(.socialInbox, at: 1)
+                data[0].insert(.socialLists, at: 2)
                 SocialInboxBadge.refresh()
             }
         }

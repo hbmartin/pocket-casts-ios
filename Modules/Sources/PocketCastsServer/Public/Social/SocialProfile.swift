@@ -119,11 +119,13 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let topPodcasts: [SocialProfilePodcast]
     public let stats: SocialProfileStats?
     public let recentlyPlayed: [SocialProfileEpisode]
+    public let lists: [SharedList]
 
     public init(userId: String, handle: String, displayName: String, bio: String, avatarURL: String, createdAt: Date?, hasStats: Bool,
                 followerCount: Int = 0, followingCount: Int = 0, yourFollowState: FollowState = .none,
                 followedShows: [SocialProfilePodcast] = [], topPodcasts: [SocialProfilePodcast] = [],
-                stats: SocialProfileStats? = nil, recentlyPlayed: [SocialProfileEpisode] = []) {
+                stats: SocialProfileStats? = nil, recentlyPlayed: [SocialProfileEpisode] = [],
+                lists: [SharedList] = []) {
         self.userId = userId
         self.handle = handle
         self.displayName = displayName
@@ -138,6 +140,7 @@ public struct SocialPublicProfile: Equatable, Sendable {
         self.topPodcasts = topPodcasts
         self.stats = stats
         self.recentlyPlayed = recentlyPlayed
+        self.lists = lists
     }
 }
 
@@ -242,7 +245,8 @@ extension SocialPublicProfile {
                   followedShows: api.followedShows.map(SocialProfilePodcast.init),
                   topPodcasts: api.topPodcasts.map(SocialProfilePodcast.init),
                   stats: api.hasStats ? SocialProfileStats(api.stats) : nil,
-                  recentlyPlayed: api.recentlyPlayed.map(SocialProfileEpisode.init))
+                  recentlyPlayed: api.recentlyPlayed.map(SocialProfileEpisode.init),
+                  lists: api.lists.map(SharedList.init))
     }
 }
 

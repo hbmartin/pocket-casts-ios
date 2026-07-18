@@ -55,6 +55,18 @@ enum SocialCoordinator {
         }
     }
 
+    /// Pushes a shared list (Slice 7) from feed rows and profile sections.
+    static func openSharedList(id: Int64) {
+        guard FeatureFlag.socialProfiles.enabled else { return }
+        let hosting = ThemedHostingController(rootView: SharedListDetailView(viewModel: SharedListDetailViewModel(listId: id)))
+        if let navigationController = SceneHelper.rootViewController()?.presentedNavigationController
+            ?? (SceneHelper.rootViewController() as? UINavigationController) {
+            navigationController.pushViewController(hosting, animated: true)
+        } else {
+            SceneHelper.rootViewController()?.present(UINavigationController(rootViewController: hosting), animated: true)
+        }
+    }
+
     /// Recognizes a Profile Link path (`/u/<handle>`) or a thcast profile host
     /// (`thcast://profile/<handle>`) and returns the handle, else nil.
     static func profileHandle(from url: URL) -> String? {

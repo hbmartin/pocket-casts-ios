@@ -273,12 +273,11 @@ extension SyncTask {
         let playlistUuid = playlistItem.originalUuid // it's important to use this field, not uuid because the server won't change the case on this one
         var existingPlaylist = DataManager.sharedManager.findPlaylist(uuid: playlistUuid)
 
-        // Custom playlists are device-local: a server record with a colliding uuid must
-        // never overwrite (or delete) the local query. Belt-and-braces — uploads are
-        // already filtered out in PlaylistDataManager.allUnsyncedPlaylists, so the
-        // server should never have seen this uuid.
-        if let existing = existingPlaylist, existing.isCustom {
-            FileLog.shared.addMessage("SyncTask: ignoring server playlist \(playlistUuid) because a local custom playlist owns that uuid")
+        // Custom playlists sync since Slice 7 (ADR-0011); a server record
+        // without the fork field must still never blank a local query — that
+        // is an old-format record, not an intentional clear.
+        if let existing = existingPlaylist, existing.isCustom, !playlistItem.hasCustomQuery {
+            FileLog.shared.addMessage("SyncTask: ignoring server playlist \(playlistUuid) — record carries no custom_query but the local playlist is custom")
             return
         }
 
@@ -349,6 +348,10 @@ extension SyncTask {
         }
         if playlistItem.hasManual {
             playlist.manual = playlistItem.manual.value
+        }
+        if playlistItem.hasCustomQuery {
+            // Fork-owned field (Slice 7, ADR-0011): the query envelope syncs.
+            playlist.customQuery = playlistItem.customQuery.value.isEmpty ? nil : playlistItem.customQuery.value
         }
         if playlistItem.hasPodcastUuids {
             playlist.podcastUuids = playlistItem.podcastUuids.value

@@ -608,6 +608,138 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(page.comments.first?.replyCount, 1)
     }
 
+    /// Slice-7 wire contract: shared lists (ADR-0011) — visibility gating,
+    /// subscribe, the collaborator invite loop with attributed entries, kick,
+    /// the profile Lists section, owner-death — plus the custom-playlist sync
+    /// overturn round-trip.
+    func testSharedListsLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-lst-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-lst-b-\(suffix)@e2e.test")
+
+        let handleA = "ios_lst_a_\(suffix)"
+        let handleB = "ios_lst_b_\(suffix)"
+        for (token, handle, name) in [(tokenA, handleA, "List Owner"), (tokenB, handleB, "List Friend")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // Create private with an initial snapshot; B cannot see it.
+        var create = Api_SharedListCreateRequest()
+        create.title = "iOS Road Trip"
+        create.visibility = .private
+        var seedEntry = Api_SharedListEntry()
+        seedEntry.episodeUuid = "ep-ios-1"
+        seedEntry.episodeTitle = "First"
+        create.entries = [seedEntry]
+        var (status, body) = try await post("social/list/create", token: tokenA, message: create)
+        XCTAssertEqual(status, 200)
+        let list = try Api_SharedList(serializedBytes: body)
+        XCTAssertEqual(list.yourRole, .owner)
+
+        var entriesRequest = Api_SharedListEntriesRequest()
+        entriesRequest.listID = list.id
+        (status, _) = try await post("social/list/entries", token: tokenB, message: entriesRequest)
+        XCTAssertEqual(status, 404, "private lists must not leak")
+
+        // Publish public: B sees it, subscribes, and it rides A's profile.
+        var update = Api_SharedListUpdateRequest()
+        update.listID = list.id
+        update.title = "iOS Road Trip"
+        update.visibility = .public
+        (status, _) = try await post("social/list/update", token: tokenA, message: update)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/list/entries", token: tokenB, message: entriesRequest)
+        XCTAssertEqual(status, 200)
+        var page = try Api_SharedListEntriesResponse(serializedBytes: body)
+        XCTAssertEqual(page.entries.count, 1)
+        XCTAssertEqual(page.entries.first?.addedByHandle, handleA)
+
+        var subscribe = Api_SharedListSubscribeRequest()
+        subscribe.listID = list.id
+        subscribe.subscribe = true
+        (status, _) = try await post("social/list/subscribe", token: tokenB, message: subscribe)
+        XCTAssertEqual(status, 200)
+
+        var profileRequest = Api_PublicProfileRequest()
+        profileRequest.handle = handleA
+        (status, body) = try await post("social/profile/public", token: tokenB, message: profileRequest)
+        XCTAssertEqual(status, 200)
+        let profile = try Api_PublicProfileResponse(serializedBytes: body)
+        XCTAssertTrue(profile.lists.contains { $0.id == list.id }, "public lists ride the profile")
+
+        // Invite → accept → collaborator adds an attributed entry.
+        var invite = Api_SharedListInviteRequest()
+        invite.listID = list.id
+        invite.handle = handleB
+        (status, _) = try await post("social/list/invite", token: tokenA, message: invite)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/lists", token: tokenB, message: Api_SharedListsRequest())
+        XCTAssertEqual(status, 200)
+        let overview = try Api_SharedListsResponse(serializedBytes: body)
+        XCTAssertTrue(overview.invites.contains { $0.id == list.id })
+
+        var respond = Api_SharedListInviteRespondRequest()
+        respond.listID = list.id
+        respond.accept = true
+        (status, _) = try await post("social/list/invite/respond", token: tokenB, message: respond)
+        XCTAssertEqual(status, 200)
+
+        var entryOp = Api_SharedListEntryOpRequest()
+        entryOp.listID = list.id
+        entryOp.op = .add
+        entryOp.episodeUuid = "ep-ios-2"
+        entryOp.episodeTitle = "Second"
+        entryOp.position = -1
+        (status, _) = try await post("social/list/entry", token: tokenB, message: entryOp)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/list/entries", token: tokenA, message: entriesRequest)
+        page = try Api_SharedListEntriesResponse(serializedBytes: body)
+        XCTAssertEqual(page.entries.count, 2)
+        XCTAssertEqual(page.entries.last?.addedByHandle, handleB)
+
+        // Kick: B's edits stop with a 403.
+        (status, _) = try await post("social/list/member/remove", token: tokenA, message: invite)
+        XCTAssertEqual(status, 200)
+        entryOp.episodeUuid = "ep-ios-3"
+        (status, _) = try await post("social/list/entry", token: tokenB, message: entryOp)
+        XCTAssertEqual(status, 403)
+
+        // The custom-playlist overturn: the query envelope round-trips.
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        var playlist = Api_SyncUserPlaylist()
+        playlist.uuid = "cc00cc00-1111-2222-3333-00000000\(String(suffix.prefix(4)))"
+        playlist.title = Google_Protobuf_StringValue("iOS Custom")
+        playlist.customQuery = Google_Protobuf_StringValue(#"{"version":1,"mode":"sql"}"#)
+        var record = Api_Record()
+        record.playlist = playlist
+        sync.records.append(record)
+        (status, _) = try await post("user/sync/update", token: tokenA, message: sync)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("user/playlist/list", token: tokenA, message: Api_UserPlaylistListRequest())
+        XCTAssertEqual(status, 200)
+        let playlists = try Api_UserPlaylistListResponse(serializedBytes: body)
+        let custom = playlists.playlists.first { $0.uuid.lowercased().hasPrefix("cc00cc00") }
+        XCTAssertNotNil(custom)
+        XCTAssertEqual(custom?.customQuery.value, #"{"version":1,"mode":"sql"}"#,
+                       "custom_query must round-trip through sync")
+
+        // Owner erase: the list dies for everyone.
+        (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        (status, _) = try await post("social/list/entries", token: tokenB, message: entriesRequest)
+        XCTAssertEqual(status, 404)
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {

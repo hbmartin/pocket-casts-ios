@@ -342,6 +342,16 @@ class DatabaseHelper {
             CREATE INDEX IF NOT EXISTS social_relationship_type
             ON SocialRelationship (type, addedDate);
             """, values: nil)
+        },
+
+        // Shared lists (Slice 7, ADR-0011): a local playlist can mirror a
+        // server-side shared list. sharedListId links the mirror; sharedRole
+        // (0 = none, 1 = owner, 2 = collaborator, 3 = subscriber) drives
+        // read-only vs editable UI. Server-authoritative — nothing here syncs
+        // through the playlist records.
+        SchemaMigration(toVersion: 86) { db in
+            try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN sharedListId INTEGER", values: nil)
+            try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN sharedRole INTEGER NOT NULL DEFAULT 0", values: nil)
         }
     ]
 

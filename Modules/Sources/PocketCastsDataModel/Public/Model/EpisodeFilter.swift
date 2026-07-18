@@ -37,6 +37,12 @@ public struct EpisodeFilter: Equatable, Hashable, Sendable {
     /// Device-local: rows with a non-nil value are excluded from account sync and file sync.
     public var customQuery: String?
 
+    /// Shared-list mirror link (Slice 7, ADR-0011): the server list this
+    /// playlist mirrors, if any, and the account's role on it
+    /// (0 = none, 1 = owner, 2 = collaborator, 3 = subscriber).
+    public var sharedListId: Int64?
+    public var sharedRole: Int32 = 0
+
     /// Whether this playlist is a custom (query-envelope) playlist. Computed, not persisted.
     /// `manual` wins over a stray envelope so manual playlists can never lose their
     /// episode-membership semantics.

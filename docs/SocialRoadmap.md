@@ -27,7 +27,7 @@ Phased plan for the social program. Update the **Status** column as work lands. 
 | 3 | Activity feed, now-playing presence, milestones, "recently played by" shelf, weekly digest | in-progress | **Slice 5 shipped the feed (2026-07-17):** fan-out-on-read derivation over existing tables (ADR-0009), six event kinds, per-field-visibility gated, mute/block filtered, on the Explore tab. Still open: presence TTL + ops cost; milestones; shelf; digest. | sync events; push token infra; `NotificationsCoordinator` |
 | 6 | Recommend-to, trending-in-network, follow curators, "because friends listen", guest/host graph, social proof | planned | revive dormant `DiscoverServerHandler`; People-directory scope | `DiscoverServerHandler` (dormant) |
 | 7 | Episode discussion threads, timestamped comments, reactions | in-progress | **Slice 6 decisions locked (2026-07-17, ADR-0010):** one comment entity, two lenses (episode thread + Moment scrubber pins for timestamped seeds); full nesting; tombstoned deletion; Join + ≥25%-played gate on top-level only; grace-window edit; `commented` feed kind (top-level only); Inbox "Replies" section w/ seen-watermark. Transcript-line pinning stays open (timestamp-only anchors v1). | `?t=`/`?q=` model, `ShareQuoteBuilder` |
-| 8 | Collaborative + subscribable lists, reactions/forks, auto-lists | planned | **overturn custom-playlist device-local exclusion** (sync custom/AI playlists) — reverses a deliberate choice in `PlaylistDataManager`/`SyncTask` | `sharePodcastList` |
+| 8 | Collaborative + subscribable lists, reactions/forks, auto-lists | in-progress | **Slice 7 shipped the core (2026-07-18, ADR-0011):** shared lists as social objects + mirrors (Inbox-style invites, attributed entries, 3-tier visibility, profile Lists section, published-list feed kind) AND the custom-playlist sync overturn (`custom_query = 1001` fork field; the exclusion in `PlaylistDataManager`/`SyncTask` is gone). Still open: list reactions/forks, auto-lists; note — the invite surface landed in the Shared Lists hub rather than the Inbox (dated amendment). | `sharePodcastList` |
 | 8 | Explore tab → **Social** tab | in-progress | **Amended + started in Slice 5 (2026-07-17):** the tab restructured feed-first (feed → find-people → charts + search; join card for non-joined) but **keeps the name "Explore"** in all user strings/copy — amends decision 8's naming. | `ExploreViewModel`, `MainTabBarController` |
 
 ## Phase 3 — Community
@@ -45,10 +45,9 @@ Phased plan for the social program. Update the **Status** column as work lands. 
 
 - **Monetization (§11–12):** no premium gate; use **Supporter Podcasts** where a paid
   concept is needed. Never trip `no-legacy-plus-payment-entry-points`.
-- **Custom/AI playlist sync:** collaborative lists (§8) require overturning the current
-  device-local-only exclusion of `customQuery` playlists — a deliberate choice enforced in
-  `PlaylistDataManager.allUnsyncedPlaylists` and the `SyncTask` import guard. Carries
-  migration + sync-protocol risk; grill before committing.
+- **Custom/AI playlist sync:** RESOLVED 2026-07-18 (Slice 7): the exclusion is overturned —
+  `custom_query = 1001` on the shared playlist messages (guarded by
+  `ApiForkPlaylistFieldsTests`), backend column + passthrough, both client guards removed.
 - **Deferred foundation decisions:** wiring SSO/QR into Join; verified/reserved handles for
   creators & brands; presence TTL. (Feed fan-out settled 2026-07-17: fan-out-on-read,
   ADR-0009.)
