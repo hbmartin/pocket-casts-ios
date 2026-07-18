@@ -79,6 +79,8 @@ extension NowPlayingPlayerItemViewController {
     func update(animatingArtwork: Bool = false, errorRelevant: Bool = false) {
         guard let playingEpisode = PlaybackManager.shared.currentEpisode() else { return }
 
+        refreshMomentPins(for: playingEpisode)
+
         if playingEpisode.videoPodcast() {
             if floatingVideoView.isHidden {
                 floatingVideoView.isHidden = false

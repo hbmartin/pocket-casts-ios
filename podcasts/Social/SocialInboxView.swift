@@ -2,10 +2,10 @@ import SwiftUI
 import PocketCastsServer
 import PocketCastsUtils
 
-/// The shared-item inbox (Slice 4, docs/Social.md): items friends sent you,
-/// newest first, with pending follow requests on top when the "Approve My
-/// Followers" toggle is on (Slice 5). Items are marked read on appear; swipe
-/// to delete; tapping opens the episode at the carried timestamp. React is
+/// The Inbox (docs/Social.md): everything addressed to you — pending follow
+/// requests (Slice 5), replies to your comments (Slice 6, watermark-based
+/// unread), and Shared Items friends sent (Slice 4, marked read on appear,
+/// swipe to delete, opens at the carried timestamp). React on shared items is
 /// deferred until senders can see reactions (roadmap amendment).
 struct SocialInboxView: View {
     @EnvironmentObject var theme: Theme
@@ -17,6 +17,19 @@ struct SocialInboxView: View {
                 Section(header: Text(L10n.socialFollowRequestsTitle)) {
                     ForEach(viewModel.requests) { entry in
                         requestRow(entry)
+                    }
+                }
+            }
+
+            if !viewModel.replies.isEmpty {
+                Section(header: Text(L10n.socialInboxRepliesTitle)) {
+                    ForEach(viewModel.replies) { reply in
+                        Button {
+                            viewModel.open(reply)
+                        } label: {
+                            replyRow(reply)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -79,6 +92,24 @@ struct SocialInboxView: View {
         .padding(.vertical, 2)
     }
 
+    private func replyRow(_ reply: SocialComment) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(L10n.socialInboxReplyFrom(reply.displayName, "@" + reply.handle))
+                .font(.footnote)
+                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            Text("\u{201C}" + reply.text + "\u{201D}")
+                .font(.subheadline)
+                .lineLimit(2)
+            if !reply.episodeTitle.isEmpty {
+                Text(reply.episodeTitle)
+                    .font(.footnote)
+                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
     private func itemRow(_ item: SharedItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Circle()
@@ -118,6 +149,7 @@ struct SocialInboxView: View {
 final class SocialInboxViewModel: ObservableObject {
     @Published private(set) var items: [SharedItem] = []
     @Published private(set) var requests: [FollowEntry] = []
+    @Published private(set) var replies: [SocialComment] = []
     @Published private(set) var total = 0
     @Published private(set) var isLoading = true
 
@@ -127,9 +159,10 @@ final class SocialInboxViewModel: ObservableObject {
     init() {}
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: SocialInboxPage, requests: [FollowEntry] = []) {
+    init(fixture: SocialInboxPage, requests: [FollowEntry] = [], replies: [SocialComment] = []) {
         items = fixture.items
         self.requests = requests
+        self.replies = replies
         total = fixture.total
         isLoading = false
         fixtureLoaded = true
@@ -141,6 +174,13 @@ final class SocialInboxViewModel: ObservableObject {
         guard !fixtureLoaded else { return }
         Analytics.track(.socialInboxOpened)
         requests = await ApiServerHandler.shared.fetchFollowRequests()?.entries ?? []
+        if let repliesPage = await ApiServerHandler.shared.fetchInboxReplies() {
+            replies = repliesPage.replies
+            if repliesPage.unread > 0 {
+                Analytics.track(.socialInboxRepliesOpened)
+                await ApiServerHandler.shared.markInboxRepliesSeen()
+            }
+        }
         guard let page = await ApiServerHandler.shared.fetchInbox() else {
             isLoading = false
             return
@@ -155,6 +195,13 @@ final class SocialInboxViewModel: ObservableObject {
         if !unreadIds.isEmpty {
             _ = await ApiServerHandler.shared.markInboxRead(ids: unreadIds)
         }
+    }
+
+    /// Opens the replied-to conversation at the episode.
+    func open(_ reply: SocialComment) {
+        NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
+                                                   data: [NavigationManager.episodeUuidKey: reply.episodeUuid,
+                                                          NavigationManager.podcastKey: reply.podcastUuid])
     }
 
     /// Accept makes the requester an active follower (they may now see

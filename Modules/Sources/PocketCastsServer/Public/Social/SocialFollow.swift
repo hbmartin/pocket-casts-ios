@@ -43,6 +43,7 @@ public enum FeedItemKind: Int, Sendable {
     case finishedEpisode = 4
     case reviewed = 5
     case reacted = 6
+    case commented = 7
 }
 
 /// One derived activity-feed item (read-time derivation; ADR-0009).

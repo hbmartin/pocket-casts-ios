@@ -7364,3 +7364,57 @@
 
 /* Body of the Explore-tab card explaining what joining unlocks */
 "social_explore_join_message" = "Claim a handle to follow friends and see what they're listening to — right here.";
+
+/* Title of the episode comments screen */
+"social_comments_title" = "Comments";
+
+/* Empty state for an episode with no comments yet */
+"social_comments_empty" = "No comments yet. Be the first!";
+
+/* Row on the episode card opening the comments screen. %1$d = comment count */
+"social_comments_row" = "Comments (%1$d)";
+
+/* Row on the episode card opening the comments screen when the count is unknown */
+"social_comments_row_untallied" = "Comments";
+
+/* Hint shown when the user hasn't listened enough to post a top-level comment */
+"social_comments_gate_hint" = "Listen to a bit more of this episode to join the discussion. You can still reply to others.";
+
+/* Placeholder for the comment compose field */
+"social_comment_placeholder" = "Add a comment";
+
+/* Button starting a reply to a comment */
+"social_comment_reply" = "Reply";
+
+/* Button revealing a comment's replies. %1$d = reply count */
+"social_comment_view_replies" = "View %1$d replies";
+
+/* Composer banner while replying. %1$@ = the @handle being replied to */
+"social_comment_replying_to" = "Replying to %1$@";
+
+/* Composer banner while editing an existing comment */
+"social_comment_editing_banner" = "Editing your comment";
+
+/* Marker on a comment edited during the grace window */
+"social_comment_edited" = "(edited)";
+
+/* Placeholder body for a deleted/removed comment whose replies survive */
+"social_comment_removed" = "[removed]";
+
+/* Accessibility label for the attach-playback-timestamp toggle in the composer */
+"social_comment_attach_timestamp" = "Attach current playback time";
+
+/* Error when a comment fails to post */
+"social_comment_submit_failed" = "Couldn't post that comment.";
+
+/* Error when a comment edit is rejected (window closed or filter) */
+"social_comment_edit_failed" = "Couldn't save the edit. The edit window may have closed.";
+
+/* Inbox section header for replies to the user's comments */
+"social_inbox_replies_title" = "Replies";
+
+/* Inbox reply row: who replied. %1$@ = display name, %2$@ = @handle */
+"social_inbox_reply_from" = "%1$@ (%2$@) replied to your comment";
+
+/* Feed line: person commented on an episode. %1$@ = display name, %2$@ = episode title */
+"social_feed_item_commented" = "%1$@ commented on %2$@";

@@ -111,6 +111,9 @@ enum AnalyticsEvent: String {
     case socialFeedShown
     case socialFeedItemTapped
     case socialProfileMuted
+    case socialCommentsOpened
+    case socialCommentSubmitted
+    case socialInboxRepliesOpened
 
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy
