@@ -7496,3 +7496,27 @@
 
 /* Feed line: person published a list. %1$@ = display name, %2$@ = list title */
 "social_feed_item_published_list" = "%1$@ published %2$@";
+
+/* Section header for social push toggles in Settings -> Notifications */
+"social_notifications_header" = "Social";
+
+/* Footer under the social push toggles */
+"social_notifications_footer" = "Notifications about things addressed to you. Applies on all your devices.";
+
+/* Toggle: push when someone asks to follow you */
+"social_notifications_follow_requests" = "Follow requests";
+
+/* Toggle: push when your follow request is approved */
+"social_notifications_follow_approved" = "Request approvals";
+
+/* Toggle: push when someone starts following you */
+"social_notifications_new_followers" = "New followers";
+
+/* Toggle: push when a friend sends you an episode */
+"social_notifications_shared_items" = "Sent episodes";
+
+/* Toggle: push when someone replies to your comment */
+"social_notifications_replies" = "Comment replies";
+
+/* Toggle: push when someone invites you to a shared list */
+"social_notifications_list_invites" = "List invites";

@@ -118,6 +118,8 @@ enum AnalyticsEvent: String {
     case socialListSubscribed
     case socialListInviteAccepted
     case socialListsShown
+    case socialPushTapped
+    case socialPushPrefChanged
 
     case accountDetailsShowTOS
     case accountDetailsShowPrivacyPolicy

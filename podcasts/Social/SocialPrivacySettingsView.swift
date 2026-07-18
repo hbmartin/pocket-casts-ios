@@ -50,6 +50,13 @@ struct SocialPrivacySettingsView: View {
                 Toggle(L10n.socialPrivacyApproveFollowers, isOn: $viewModel.requireFollowApproval)
             }
 
+            Section {
+                NavigationLink(destination: SocialNotificationSettingsView(viewModel: SocialNotificationSettingsViewModel())
+                    .environmentObject(theme)) {
+                    Label(L10n.socialNotificationsHeader, systemImage: "bell")
+                }
+            }
+
             if let error = viewModel.saveError {
                 Section {
                     Text(error)
@@ -140,6 +147,11 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
     @discardableResult
     func save() async -> Bool {
         guard var updated = profile else { return true }
+        // Prefs edited on the notifications screen may be fresher than this
+        // screen's snapshot — never clobber them with a stale copy.
+        if let fresh = SocialIdentityStore.cachedProfile {
+            updated.socialPushDisabled = fresh.socialPushDisabled
+        }
         updated.bioVisibility = bioVisibility
         updated.followedShowsVisibility = followedShowsVisibility
         updated.topPodcastsVisibility = topPodcastsVisibility

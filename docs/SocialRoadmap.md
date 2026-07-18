@@ -37,7 +37,7 @@ Phased plan for the social program. Update the **Status** column as work lands. 
 | 9 | Private group feeds, fandom hubs, shared-item inbox | planned | group moderation scaling; presence in groups | Slice-4 inbox |
 | 3 | Listening parties / live chat | planned | real-time infra + moderation | presence infra |
 | 10 | Streaks, badges, achievements, friend leaderboards | planned | achievement definitions; leaderboard privacy gating | `ListeningHeatmapViewModel` |
-| 11 | Social push notifications (recommend, live, presence, reactions) + configurable defaults | planned | per-type opt-in matrix; non-intrusive defaults | remote push token infra |
+| 11 | Social push notifications (recommend, live, presence, reactions) + configurable defaults | in-progress | **Slice 8 shipped the core (2026-07-18):** six directed-at-you types (follow request/approved, new follower, shared item, comment reply, list invite), ALL ON by default (settled: personally-addressed events are the non-intrusive case), per-type toggles in Settings → Notifications backed by a server-side disabled-bitmask that gates sends at the source; category "so" + typed payload deep links; per-(type, actor) collapse ids. Still open: recommendation/presence/reaction pushes as those features land. Human prerequisite: APNs .p8 in backend config for real devices. | remote push token infra |
 | 11 | Native social-story vertical export | planned | net-new Stories format | `VideoExporter` |
 | 12 | AI: shareable summaries, taste-embedding friend-match, "why you'd like it", NL→shared playlist | planned | on-device vs server embeddings; taste-embedding privacy | `podcasts/Playback/Intelligence/`, bookmark `ai_*` fields |
 

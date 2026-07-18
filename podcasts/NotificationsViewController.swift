@@ -10,7 +10,12 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     private let soundOff = 0
 
     private var sections: [Section] = [.episodes]
-    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.trendingRecommendations, .dailyReminders], [.newFeaturesAndTips, .pocketCastsOffers]]
+    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.trendingRecommendations, .dailyReminders], [.newFeaturesAndTips, .pocketCastsOffers], [.socialNotifications]]
+
+    /// The Social section shows only for joined accounts (Slice 8).
+    private var showsSocialSection: Bool {
+        FeatureFlag.socialProfiles.enabled && SocialIdentityStore.isJoined
+    }
 
     private var notificationsDenied = false
 
@@ -22,6 +27,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         case episodes = 0
         case recommendationsAndReminders
         case featuresAndOffers
+        case social
     }
 
     enum Row: Int {
@@ -34,6 +40,8 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
 
         case newFeaturesAndTips
         case pocketCastsOffers
+
+        case socialNotifications
 
         var description: String {
             switch self {
@@ -51,6 +59,8 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                 return L10n.notificationsNewFeaturesTips
             case .pocketCastsOffers:
                 return L10n.notificationsPocketCastOffers
+            case .socialNotifications:
+                return L10n.socialNotificationsHeader
             }
         }
 
@@ -66,7 +76,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                 return Settings.notificationsRecommendations
             case .pocketCastsOffers:
                 return Settings.notificationsOffers
-            case .podcastsChosen, .appBadges:
+            case .podcastsChosen, .appBadges, .socialNotifications:
                 return false
             }
         }
@@ -87,6 +97,8 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                     return .settingsNotificationsAppBadgeChanged
                 case .pocketCastsOffers:
                     return .settingsNotificationsOffersToggle
+                case .socialNotifications:
+                    return .socialPushPrefChanged
             }
         }
 
@@ -106,6 +118,8 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                     return nil
                 case .pocketCastsOffers:
                     return .offers
+                case .socialNotifications:
+                    return nil
             }
         }
     }
@@ -145,7 +159,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        return Section.allCases.count
+        return showsSocialSection ? Section.allCases.count : Section.allCases.count - 1
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -155,7 +169,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         switch sectionType {
         case .episodes:
             return NotificationsGroup.newEpisodes.isEnabled ? 3 : 1
-        case .featuresAndOffers, .recommendationsAndReminders:
+        case .featuresAndOffers, .recommendationsAndReminders, .social:
             return rows[section].count
         }
     }
@@ -181,6 +195,12 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
             cell.cellSecondaryLabel.text =  badgeChoice?.description
             cell.isLocked = !notificationsDenied
             return cell
+        case .socialNotifications:
+            let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as! DisclosureCell
+            cell.cellLabel.text = row.description
+            cell.cellSecondaryLabel.text = nil
+            cell.isLocked = !notificationsDenied
+            return cell
         default:
             let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
             cell.cellLabel.text = row.description
@@ -203,6 +223,10 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         let rowType = rows[indexPath.section][indexPath.row]
 
         switch sectionType {
+        case .social:
+            let hosting = ThemedHostingController(rootView: SocialNotificationSettingsView(viewModel: SocialNotificationSettingsViewModel()))
+            navigationController?.pushViewController(hosting, animated: true)
+            return
         case .episodes:
             switch rowType {
             case .podcastsChosen: // choose podcasts for push

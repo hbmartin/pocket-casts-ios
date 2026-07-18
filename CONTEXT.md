@@ -144,3 +144,8 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Materialize** — publishing a smart or custom playlist snapshots its *current results*
   into a new Shared List; the playlist itself stays personal. Live queries never share
   (a rule evaluates differently in every account).
+- **Social Push** — an APNs notification for one of six directed-at-you events: follow
+  request, follow approved, new follower, shared item, comment reply, list invite. All
+  on by default (they are personally addressed, never broadcast); each individually
+  toggleable, with the preference stored on the profile so it gates sending at the
+  server across every device. Taps deep-link to the event's home surface.

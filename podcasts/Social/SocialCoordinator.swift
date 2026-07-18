@@ -1,4 +1,5 @@
 import SwiftUI
+import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import UIKit
@@ -47,6 +48,41 @@ enum SocialCoordinator {
     static func openPublicProfile(handle: String) {
         guard FeatureFlag.socialProfiles.enabled, !handle.isEmpty else { return }
         let hosting = ThemedHostingController(rootView: PublicProfileView(viewModel: PublicProfileViewModel(handle: handle)))
+        if let navigationController = SceneHelper.rootViewController()?.presentedNavigationController
+            ?? (SceneHelper.rootViewController() as? UINavigationController) {
+            navigationController.pushViewController(hosting, animated: true)
+        } else {
+            SceneHelper.rootViewController()?.present(UINavigationController(rootViewController: hosting), animated: true)
+        }
+    }
+
+    /// Pushes the Inbox (social push landing for requests + shared items).
+    static func openInbox() {
+        guard FeatureFlag.socialProfiles.enabled else { return }
+        push(ThemedHostingController(rootView: SocialInboxView(viewModel: SocialInboxViewModel())))
+    }
+
+    /// Pushes the Shared Lists hub (social push landing for list invites).
+    static func openSharedLists() {
+        guard FeatureFlag.socialProfiles.enabled else { return }
+        push(ThemedHostingController(rootView: SharedListsView(viewModel: SharedListsViewModel())))
+    }
+
+    /// Presents an episode's comment tree, optionally focused on one subtree
+    /// (social push landing for replies — same surface as a Moment pin tap).
+    static func openComments(episodeUuid: String, podcastUuid: String, focusCommentId: Int64?) {
+        guard FeatureFlag.socialProfiles.enabled, !episodeUuid.isEmpty else { return }
+        let episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid)
+        let duration = episode?.duration ?? 0
+        let canSeed = duration > 0 && (episode?.playedUpTo ?? 0) >= duration * 0.25
+        let viewModel = EpisodeCommentsViewModel(episodeUuid: episodeUuid, podcastUuid: podcastUuid,
+                                                 episodeTitle: episode?.displayableTitle() ?? "",
+                                                 podcastTitle: "", canSeed: canSeed,
+                                                 focusCommentId: focusCommentId)
+        push(ThemedHostingController(rootView: EpisodeCommentsView(viewModel: viewModel)))
+    }
+
+    private static func push(_ hosting: UIViewController) {
         if let navigationController = SceneHelper.rootViewController()?.presentedNavigationController
             ?? (SceneHelper.rootViewController() as? UINavigationController) {
             navigationController.pushViewController(hosting, animated: true)

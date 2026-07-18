@@ -477,6 +477,60 @@ nonisolated enum Api_SharedListOp: SwiftProtobuf.Enum, Swift.CaseIterable {
 
 }
 
+nonisolated enum Api_SocialPushType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case followRequest // = 1
+  case followApproved // = 2
+  case newFollower // = 3
+  case sharedItem // = 4
+  case commentReply // = 5
+  case listInvite // = 6
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .followRequest
+    case 2: self = .followApproved
+    case 3: self = .newFollower
+    case 4: self = .sharedItem
+    case 5: self = .commentReply
+    case 6: self = .listInvite
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .followRequest: return 1
+    case .followApproved: return 2
+    case .newFollower: return 3
+    case .sharedItem: return 4
+    case .commentReply: return 5
+    case .listInvite: return 6
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Api_SocialPushType] = [
+    .unspecified,
+    .followRequest,
+    .followApproved,
+    .newFollower,
+    .sharedItem,
+    .commentReply,
+    .listInvite,
+  ]
+
+}
+
 nonisolated struct Api_UserLoginRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -9452,59 +9506,108 @@ nonisolated struct Api_YearHistoryResponse: Sendable {
 /// visibility tier. Keyed to the immutable account uuid; the handle is permanent
 /// (immutable in the user UI). display_name has no tier — it is always public
 /// once joined, as the addressable identity.
-nonisolated struct Api_SocialProfile: Sendable {
+nonisolated struct Api_SocialProfile: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// immutable account uuid (ServerSettings.userId)
-  var userID: String = String()
+  var userID: String {
+    get {_storage._userID}
+    set {_uniqueStorage()._userID = newValue}
+  }
 
   /// immutable, lowercase [a-z0-9_], 3-30
-  var handle: String = String()
+  var handle: String {
+    get {_storage._handle}
+    set {_uniqueStorage()._handle = newValue}
+  }
 
   /// always public once joined
-  var displayName: String = String()
+  var displayName: String {
+    get {_storage._displayName}
+    set {_uniqueStorage()._displayName = newValue}
+  }
 
-  var bio: String = String()
+  var bio: String {
+    get {_storage._bio}
+    set {_uniqueStorage()._bio = newValue}
+  }
 
   /// CDN URL of the scanned avatar; empty if none
-  var avatarURL: String = String()
+  var avatarURL: String {
+    get {_storage._avatarURL}
+    set {_uniqueStorage()._avatarURL = newValue}
+  }
 
   var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_createdAt = newValue}
+    get {_storage._createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._createdAt = newValue}
   }
   /// Returns true if `createdAt` has been explicitly set.
-  var hasCreatedAt: Bool {self._createdAt != nil}
+  var hasCreatedAt: Bool {_storage._createdAt != nil}
   /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
-  mutating func clearCreatedAt() {self._createdAt = nil}
+  mutating func clearCreatedAt() {_uniqueStorage()._createdAt = nil}
 
   /// public-identity terms accepted at join
-  var termsVersion: Int32 = 0
+  var termsVersion: Int32 {
+    get {_storage._termsVersion}
+    set {_uniqueStorage()._termsVersion = newValue}
+  }
 
-  var avatarVisibility: Api_SocialVisibility = .unspecified
+  var avatarVisibility: Api_SocialVisibility {
+    get {_storage._avatarVisibility}
+    set {_uniqueStorage()._avatarVisibility = newValue}
+  }
 
-  var bioVisibility: Api_SocialVisibility = .unspecified
+  var bioVisibility: Api_SocialVisibility {
+    get {_storage._bioVisibility}
+    set {_uniqueStorage()._bioVisibility = newValue}
+  }
 
-  var followedShowsVisibility: Api_SocialVisibility = .unspecified
+  var followedShowsVisibility: Api_SocialVisibility {
+    get {_storage._followedShowsVisibility}
+    set {_uniqueStorage()._followedShowsVisibility = newValue}
+  }
 
-  var topPodcastsVisibility: Api_SocialVisibility = .unspecified
+  var topPodcastsVisibility: Api_SocialVisibility {
+    get {_storage._topPodcastsVisibility}
+    set {_uniqueStorage()._topPodcastsVisibility = newValue}
+  }
 
-  var statsVisibility: Api_SocialVisibility = .unspecified
+  var statsVisibility: Api_SocialVisibility {
+    get {_storage._statsVisibility}
+    set {_uniqueStorage()._statsVisibility = newValue}
+  }
 
-  var historyVisibility: Api_SocialVisibility = .unspecified
+  var historyVisibility: Api_SocialVisibility {
+    get {_storage._historyVisibility}
+    set {_uniqueStorage()._historyVisibility = newValue}
+  }
 
-  var presenceVisibility: Api_SocialVisibility = .unspecified
+  var presenceVisibility: Api_SocialVisibility {
+    get {_storage._presenceVisibility}
+    set {_uniqueStorage()._presenceVisibility = newValue}
+  }
 
   /// Hybrid follow consent (Slice 5): when true, new follows become requests.
-  var requireFollowApproval: Bool = false
+  var requireFollowApproval: Bool {
+    get {_storage._requireFollowApproval}
+    set {_uniqueStorage()._requireFollowApproval = newValue}
+  }
+
+  /// Bitmask of DISABLED SocialPushType values (bit n = type n+1 off).
+  /// Default 0 = every social push enabled.
+  var socialPushDisabled: Int64 {
+    get {_storage._socialPushDisabled}
+    set {_uniqueStorage()._socialPushDisabled = newValue}
+  }
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 
-  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// POST social/handle/availability — the rate-limited typeahead availability check.
@@ -9612,6 +9715,8 @@ nonisolated struct Api_ProfileUpdateRequest: Sendable {
   var presenceVisibility: Api_SocialVisibility = .unspecified
 
   var requireFollowApproval: Bool = false
+
+  var socialPushDisabled: Int64 = 0
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -10946,6 +11051,10 @@ nonisolated extension Api_SharedListRole: SwiftProtobuf._ProtoNameProviding {
 
 nonisolated extension Api_SharedListOp: SwiftProtobuf._ProtoNameProviding {
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SHARED_LIST_OP_UNSPECIFIED\0\u{1}SHARED_LIST_OP_ADD\0\u{1}SHARED_LIST_OP_REMOVE\0\u{1}SHARED_LIST_OP_MOVE\0")
+}
+
+nonisolated extension Api_SocialPushType: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SOCIAL_PUSH_TYPE_UNSPECIFIED\0\u{1}SOCIAL_PUSH_TYPE_FOLLOW_REQUEST\0\u{1}SOCIAL_PUSH_TYPE_FOLLOW_APPROVED\0\u{1}SOCIAL_PUSH_TYPE_NEW_FOLLOWER\0\u{1}SOCIAL_PUSH_TYPE_SHARED_ITEM\0\u{1}SOCIAL_PUSH_TYPE_COMMENT_REPLY\0\u{1}SOCIAL_PUSH_TYPE_LIST_INVITE\0")
 }
 
 nonisolated extension Api_UserLoginRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
@@ -22822,103 +22931,174 @@ nonisolated extension Api_YearHistoryResponse: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Api_SocialProfile: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SocialProfile"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}terms_version\0\u{3}avatar_visibility\0\u{3}bio_visibility\0\u{3}followed_shows_visibility\0\u{3}top_podcasts_visibility\0\u{3}stats_visibility\0\u{3}history_visibility\0\u{3}presence_visibility\0\u{3}require_follow_approval\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}terms_version\0\u{3}avatar_visibility\0\u{3}bio_visibility\0\u{3}followed_shows_visibility\0\u{3}top_podcasts_visibility\0\u{3}stats_visibility\0\u{3}history_visibility\0\u{3}presence_visibility\0\u{3}require_follow_approval\0\u{3}social_push_disabled\0")
+
+  fileprivate class _StorageClass {
+    var _userID: String = String()
+    var _handle: String = String()
+    var _displayName: String = String()
+    var _bio: String = String()
+    var _avatarURL: String = String()
+    var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _termsVersion: Int32 = 0
+    var _avatarVisibility: Api_SocialVisibility = .unspecified
+    var _bioVisibility: Api_SocialVisibility = .unspecified
+    var _followedShowsVisibility: Api_SocialVisibility = .unspecified
+    var _topPodcastsVisibility: Api_SocialVisibility = .unspecified
+    var _statsVisibility: Api_SocialVisibility = .unspecified
+    var _historyVisibility: Api_SocialVisibility = .unspecified
+    var _presenceVisibility: Api_SocialVisibility = .unspecified
+    var _requireFollowApproval: Bool = false
+    var _socialPushDisabled: Int64 = 0
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _userID = source._userID
+      _handle = source._handle
+      _displayName = source._displayName
+      _bio = source._bio
+      _avatarURL = source._avatarURL
+      _createdAt = source._createdAt
+      _termsVersion = source._termsVersion
+      _avatarVisibility = source._avatarVisibility
+      _bioVisibility = source._bioVisibility
+      _followedShowsVisibility = source._followedShowsVisibility
+      _topPodcastsVisibility = source._topPodcastsVisibility
+      _statsVisibility = source._statsVisibility
+      _historyVisibility = source._historyVisibility
+      _presenceVisibility = source._presenceVisibility
+      _requireFollowApproval = source._requireFollowApproval
+      _socialPushDisabled = source._socialPushDisabled
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.userID) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.handle) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.bio) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.avatarURL) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
-      case 7: try { try decoder.decodeSingularInt32Field(value: &self.termsVersion) }()
-      case 8: try { try decoder.decodeSingularEnumField(value: &self.avatarVisibility) }()
-      case 9: try { try decoder.decodeSingularEnumField(value: &self.bioVisibility) }()
-      case 10: try { try decoder.decodeSingularEnumField(value: &self.followedShowsVisibility) }()
-      case 11: try { try decoder.decodeSingularEnumField(value: &self.topPodcastsVisibility) }()
-      case 12: try { try decoder.decodeSingularEnumField(value: &self.statsVisibility) }()
-      case 13: try { try decoder.decodeSingularEnumField(value: &self.historyVisibility) }()
-      case 14: try { try decoder.decodeSingularEnumField(value: &self.presenceVisibility) }()
-      case 15: try { try decoder.decodeSingularBoolField(value: &self.requireFollowApproval) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._userID) }()
+        case 2: try { try decoder.decodeSingularStringField(value: &_storage._handle) }()
+        case 3: try { try decoder.decodeSingularStringField(value: &_storage._displayName) }()
+        case 4: try { try decoder.decodeSingularStringField(value: &_storage._bio) }()
+        case 5: try { try decoder.decodeSingularStringField(value: &_storage._avatarURL) }()
+        case 6: try { try decoder.decodeSingularMessageField(value: &_storage._createdAt) }()
+        case 7: try { try decoder.decodeSingularInt32Field(value: &_storage._termsVersion) }()
+        case 8: try { try decoder.decodeSingularEnumField(value: &_storage._avatarVisibility) }()
+        case 9: try { try decoder.decodeSingularEnumField(value: &_storage._bioVisibility) }()
+        case 10: try { try decoder.decodeSingularEnumField(value: &_storage._followedShowsVisibility) }()
+        case 11: try { try decoder.decodeSingularEnumField(value: &_storage._topPodcastsVisibility) }()
+        case 12: try { try decoder.decodeSingularEnumField(value: &_storage._statsVisibility) }()
+        case 13: try { try decoder.decodeSingularEnumField(value: &_storage._historyVisibility) }()
+        case 14: try { try decoder.decodeSingularEnumField(value: &_storage._presenceVisibility) }()
+        case 15: try { try decoder.decodeSingularBoolField(value: &_storage._requireFollowApproval) }()
+        case 16: try { try decoder.decodeSingularInt64Field(value: &_storage._socialPushDisabled) }()
+        default: break
+        }
       }
     }
   }
 
   func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.userID.isEmpty {
-      try visitor.visitSingularStringField(value: self.userID, fieldNumber: 1)
-    }
-    if !self.handle.isEmpty {
-      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 2)
-    }
-    if !self.displayName.isEmpty {
-      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 3)
-    }
-    if !self.bio.isEmpty {
-      try visitor.visitSingularStringField(value: self.bio, fieldNumber: 4)
-    }
-    if !self.avatarURL.isEmpty {
-      try visitor.visitSingularStringField(value: self.avatarURL, fieldNumber: 5)
-    }
-    try { if let v = self._createdAt {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    if self.termsVersion != 0 {
-      try visitor.visitSingularInt32Field(value: self.termsVersion, fieldNumber: 7)
-    }
-    if self.avatarVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.avatarVisibility, fieldNumber: 8)
-    }
-    if self.bioVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.bioVisibility, fieldNumber: 9)
-    }
-    if self.followedShowsVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.followedShowsVisibility, fieldNumber: 10)
-    }
-    if self.topPodcastsVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.topPodcastsVisibility, fieldNumber: 11)
-    }
-    if self.statsVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.statsVisibility, fieldNumber: 12)
-    }
-    if self.historyVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.historyVisibility, fieldNumber: 13)
-    }
-    if self.presenceVisibility != .unspecified {
-      try visitor.visitSingularEnumField(value: self.presenceVisibility, fieldNumber: 14)
-    }
-    if self.requireFollowApproval != false {
-      try visitor.visitSingularBoolField(value: self.requireFollowApproval, fieldNumber: 15)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._userID.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._userID, fieldNumber: 1)
+      }
+      if !_storage._handle.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._handle, fieldNumber: 2)
+      }
+      if !_storage._displayName.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._displayName, fieldNumber: 3)
+      }
+      if !_storage._bio.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._bio, fieldNumber: 4)
+      }
+      if !_storage._avatarURL.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._avatarURL, fieldNumber: 5)
+      }
+      try { if let v = _storage._createdAt {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+      } }()
+      if _storage._termsVersion != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._termsVersion, fieldNumber: 7)
+      }
+      if _storage._avatarVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._avatarVisibility, fieldNumber: 8)
+      }
+      if _storage._bioVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._bioVisibility, fieldNumber: 9)
+      }
+      if _storage._followedShowsVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._followedShowsVisibility, fieldNumber: 10)
+      }
+      if _storage._topPodcastsVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._topPodcastsVisibility, fieldNumber: 11)
+      }
+      if _storage._statsVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._statsVisibility, fieldNumber: 12)
+      }
+      if _storage._historyVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._historyVisibility, fieldNumber: 13)
+      }
+      if _storage._presenceVisibility != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._presenceVisibility, fieldNumber: 14)
+      }
+      if _storage._requireFollowApproval != false {
+        try visitor.visitSingularBoolField(value: _storage._requireFollowApproval, fieldNumber: 15)
+      }
+      if _storage._socialPushDisabled != 0 {
+        try visitor.visitSingularInt64Field(value: _storage._socialPushDisabled, fieldNumber: 16)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   static func ==(lhs: Api_SocialProfile, rhs: Api_SocialProfile) -> Bool {
-    if lhs.userID != rhs.userID {return false}
-    if lhs.handle != rhs.handle {return false}
-    if lhs.displayName != rhs.displayName {return false}
-    if lhs.bio != rhs.bio {return false}
-    if lhs.avatarURL != rhs.avatarURL {return false}
-    if lhs._createdAt != rhs._createdAt {return false}
-    if lhs.termsVersion != rhs.termsVersion {return false}
-    if lhs.avatarVisibility != rhs.avatarVisibility {return false}
-    if lhs.bioVisibility != rhs.bioVisibility {return false}
-    if lhs.followedShowsVisibility != rhs.followedShowsVisibility {return false}
-    if lhs.topPodcastsVisibility != rhs.topPodcastsVisibility {return false}
-    if lhs.statsVisibility != rhs.statsVisibility {return false}
-    if lhs.historyVisibility != rhs.historyVisibility {return false}
-    if lhs.presenceVisibility != rhs.presenceVisibility {return false}
-    if lhs.requireFollowApproval != rhs.requireFollowApproval {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._userID != rhs_storage._userID {return false}
+        if _storage._handle != rhs_storage._handle {return false}
+        if _storage._displayName != rhs_storage._displayName {return false}
+        if _storage._bio != rhs_storage._bio {return false}
+        if _storage._avatarURL != rhs_storage._avatarURL {return false}
+        if _storage._createdAt != rhs_storage._createdAt {return false}
+        if _storage._termsVersion != rhs_storage._termsVersion {return false}
+        if _storage._avatarVisibility != rhs_storage._avatarVisibility {return false}
+        if _storage._bioVisibility != rhs_storage._bioVisibility {return false}
+        if _storage._followedShowsVisibility != rhs_storage._followedShowsVisibility {return false}
+        if _storage._topPodcastsVisibility != rhs_storage._topPodcastsVisibility {return false}
+        if _storage._statsVisibility != rhs_storage._statsVisibility {return false}
+        if _storage._historyVisibility != rhs_storage._historyVisibility {return false}
+        if _storage._presenceVisibility != rhs_storage._presenceVisibility {return false}
+        if _storage._requireFollowApproval != rhs_storage._requireFollowApproval {return false}
+        if _storage._socialPushDisabled != rhs_storage._socialPushDisabled {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -23084,7 +23264,7 @@ nonisolated extension Api_ProfileGetRequest: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Api_ProfileUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".ProfileUpdateRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_visibility\0\u{3}bio_visibility\0\u{3}followed_shows_visibility\0\u{3}top_podcasts_visibility\0\u{3}stats_visibility\0\u{3}history_visibility\0\u{3}presence_visibility\0\u{3}require_follow_approval\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_visibility\0\u{3}bio_visibility\0\u{3}followed_shows_visibility\0\u{3}top_podcasts_visibility\0\u{3}stats_visibility\0\u{3}history_visibility\0\u{3}presence_visibility\0\u{3}require_follow_approval\0\u{3}social_push_disabled\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -23102,6 +23282,7 @@ nonisolated extension Api_ProfileUpdateRequest: SwiftProtobuf.Message, SwiftProt
       case 8: try { try decoder.decodeSingularEnumField(value: &self.historyVisibility) }()
       case 9: try { try decoder.decodeSingularEnumField(value: &self.presenceVisibility) }()
       case 10: try { try decoder.decodeSingularBoolField(value: &self.requireFollowApproval) }()
+      case 11: try { try decoder.decodeSingularInt64Field(value: &self.socialPushDisabled) }()
       default: break
       }
     }
@@ -23138,6 +23319,9 @@ nonisolated extension Api_ProfileUpdateRequest: SwiftProtobuf.Message, SwiftProt
     if self.requireFollowApproval != false {
       try visitor.visitSingularBoolField(value: self.requireFollowApproval, fieldNumber: 10)
     }
+    if self.socialPushDisabled != 0 {
+      try visitor.visitSingularInt64Field(value: self.socialPushDisabled, fieldNumber: 11)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -23152,6 +23336,7 @@ nonisolated extension Api_ProfileUpdateRequest: SwiftProtobuf.Message, SwiftProt
     if lhs.historyVisibility != rhs.historyVisibility {return false}
     if lhs.presenceVisibility != rhs.presenceVisibility {return false}
     if lhs.requireFollowApproval != rhs.requireFollowApproval {return false}
+    if lhs.socialPushDisabled != rhs.socialPushDisabled {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -740,6 +740,38 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(status, 404)
     }
 
+    /// Slice-8 wire contract: the per-type push-disabled bitmask round-trips
+    /// through profile update and decodes leniently. Actual APNs delivery is
+    /// asserted by the backend's mock-APNs e2e (this suite can't receive
+    /// pushes).
+    func testSocialPushPrefsLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (token, _) = try await register(email: "ios-push-\(suffix)@e2e.test")
+
+        var join = Api_JoinRequest()
+        join.handle = "ios_psh_\(suffix)"
+        join.acceptedTermsVersion = 1
+        join.displayName = "Push Prefs"
+        var (status, body) = try await post("social/join", token: token, message: join)
+        XCTAssertEqual(status, 200)
+        let joined = try Api_JoinResponse(serializedBytes: body)
+        XCTAssertEqual(joined.profile.socialPushDisabled, 0, "all types default on")
+
+        // Disable new-follower (bit 2) + comment-reply (bit 4).
+        var update = Api_ProfileUpdateRequest()
+        update.displayName = "Push Prefs"
+        update.socialPushDisabled = (1 << 2) | (1 << 4)
+        (status, body) = try await post("social/profile/update", token: token, message: update)
+        XCTAssertEqual(status, 200)
+        let updated = try Api_ProfileResponse(serializedBytes: body)
+        XCTAssertEqual(updated.profile.socialPushDisabled, (1 << 2) | (1 << 4))
+
+        (status, body) = try await post("social/profile/get", token: token, message: Api_ProfileGetRequest())
+        XCTAssertEqual(status, 200)
+        let fetched = try Api_ProfileResponse(serializedBytes: body)
+        XCTAssertEqual(fetched.profile.socialPushDisabled, (1 << 2) | (1 << 4), "the mask persists")
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {

@@ -126,6 +126,7 @@ class SocialProfileUpdateTask: ApiBaseTask, @unchecked Sendable {
             request.historyVisibility = profile.historyVisibility.apiValue
             request.presenceVisibility = profile.presenceVisibility.apiValue
             request.requireFollowApproval = profile.requireFollowApproval
+            request.socialPushDisabled = profile.socialPushDisabled
             let data = try request.serializedData()
 
             let (response, httpStatus) = postToServer(url: urlString, token: token, data: data)

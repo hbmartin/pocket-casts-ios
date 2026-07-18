@@ -4731,6 +4731,22 @@ nonisolated internal enum L10n {
   internal static var socialListsTitle: String { return L10n.tr("Localizable", "social_lists_title", fallback: "Shared Lists") }
   /// Overflow action that hides a person's items from the activity feed without blocking them
   internal static var socialMute: String { return L10n.tr("Localizable", "social_mute", fallback: "Mute") }
+  /// Toggle: push when your follow request is approved
+  internal static var socialNotificationsFollowApproved: String { return L10n.tr("Localizable", "social_notifications_follow_approved", fallback: "Request approvals") }
+  /// Toggle: push when someone asks to follow you
+  internal static var socialNotificationsFollowRequests: String { return L10n.tr("Localizable", "social_notifications_follow_requests", fallback: "Follow requests") }
+  /// Footer under the social push toggles
+  internal static var socialNotificationsFooter: String { return L10n.tr("Localizable", "social_notifications_footer", fallback: "Notifications about things addressed to you. Applies on all your devices.") }
+  /// Section header for social push toggles in Settings -> Notifications
+  internal static var socialNotificationsHeader: String { return L10n.tr("Localizable", "social_notifications_header", fallback: "Social") }
+  /// Toggle: push when someone invites you to a shared list
+  internal static var socialNotificationsListInvites: String { return L10n.tr("Localizable", "social_notifications_list_invites", fallback: "List invites") }
+  /// Toggle: push when someone starts following you
+  internal static var socialNotificationsNewFollowers: String { return L10n.tr("Localizable", "social_notifications_new_followers", fallback: "New followers") }
+  /// Toggle: push when someone replies to your comment
+  internal static var socialNotificationsReplies: String { return L10n.tr("Localizable", "social_notifications_replies", fallback: "Comment replies") }
+  /// Toggle: push when a friend sends you an episode
+  internal static var socialNotificationsSharedItems: String { return L10n.tr("Localizable", "social_notifications_shared_items", fallback: "Sent episodes") }
   /// Trailing note on the display name row: it cannot be made private
   internal static var socialPrivacyAlwaysPublic: String { return L10n.tr("Localizable", "social_privacy_always_public", fallback: "Always public") }
   /// Toggle: new follows become requests that need the user's approval

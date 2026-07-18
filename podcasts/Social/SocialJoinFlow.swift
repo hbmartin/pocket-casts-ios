@@ -215,6 +215,9 @@ final class SocialJoinViewModel: ObservableObject {
         SocialIdentityStore.cachedProfile = profile
         joinedProfile = profile
         Analytics.track(.socialProfileJoined)
+        // Social pushes (Slice 8) ride APNs: ask contextually now that the
+        // account can be addressed. No-op when permission is already settled.
+        NotificationsHelper.shared.registerForPushNotifications()
         step = .privacyNudge
     }
 
