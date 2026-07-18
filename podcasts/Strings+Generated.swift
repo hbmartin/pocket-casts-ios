@@ -4503,6 +4503,42 @@ nonisolated internal enum L10n {
   internal static var socialCardTimeSaved: String { return L10n.tr("Localizable", "social_card_time_saved", fallback: "saved by trim & speed") }
   /// Profile tab row CTA before the account has joined social
   internal static var socialClaimHandle: String { return L10n.tr("Localizable", "social_claim_handle", fallback: "Claim your @handle") }
+  /// Accessibility label for the attach-playback-timestamp toggle in the composer
+  internal static var socialCommentAttachTimestamp: String { return L10n.tr("Localizable", "social_comment_attach_timestamp", fallback: "Attach current playback time") }
+  /// Error when a comment edit is rejected (window closed or filter)
+  internal static var socialCommentEditFailed: String { return L10n.tr("Localizable", "social_comment_edit_failed", fallback: "Couldn't save the edit. The edit window may have closed.") }
+  /// Marker on a comment edited during the grace window
+  internal static var socialCommentEdited: String { return L10n.tr("Localizable", "social_comment_edited", fallback: "(edited)") }
+  /// Composer banner while editing an existing comment
+  internal static var socialCommentEditingBanner: String { return L10n.tr("Localizable", "social_comment_editing_banner", fallback: "Editing your comment") }
+  /// Placeholder for the comment compose field
+  internal static var socialCommentPlaceholder: String { return L10n.tr("Localizable", "social_comment_placeholder", fallback: "Add a comment") }
+  /// Placeholder body for a deleted/removed comment whose replies survive
+  internal static var socialCommentRemoved: String { return L10n.tr("Localizable", "social_comment_removed", fallback: "[removed]") }
+  /// Button starting a reply to a comment
+  internal static var socialCommentReply: String { return L10n.tr("Localizable", "social_comment_reply", fallback: "Reply") }
+  /// Composer banner while replying. %1$@ = the @handle being replied to
+  internal static func socialCommentReplyingTo(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_comment_replying_to", String(describing: p1), fallback: "Replying to %1$@")
+  }
+  /// Error when a comment fails to post
+  internal static var socialCommentSubmitFailed: String { return L10n.tr("Localizable", "social_comment_submit_failed", fallback: "Couldn't post that comment.") }
+  /// Button revealing a comment's replies. %1$d = reply count
+  internal static func socialCommentViewReplies(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_comment_view_replies", p1, fallback: "View %1$d replies")
+  }
+  /// Empty state for an episode with no comments yet
+  internal static var socialCommentsEmpty: String { return L10n.tr("Localizable", "social_comments_empty", fallback: "No comments yet. Be the first!") }
+  /// Hint shown when the user hasn't listened enough to post a top-level comment
+  internal static var socialCommentsGateHint: String { return L10n.tr("Localizable", "social_comments_gate_hint", fallback: "Listen to a bit more of this episode to join the discussion. You can still reply to others.") }
+  /// Row on the episode card opening the comments screen. %1$d = comment count
+  internal static func socialCommentsRow(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_comments_row", p1, fallback: "Comments (%1$d)")
+  }
+  /// Row on the episode card opening the comments screen when the count is unknown
+  internal static var socialCommentsRowUntallied: String { return L10n.tr("Localizable", "social_comments_row_untallied", fallback: "Comments") }
+  /// Title of the episode comments screen
+  internal static var socialCommentsTitle: String { return L10n.tr("Localizable", "social_comments_title", fallback: "Comments") }
   /// Note on the confirmation step that all fields start private
   internal static var socialConfirmPrivateNote: String { return L10n.tr("Localizable", "social_confirm_private_note", fallback: "Only your display name and handle will be public. Everything else stays private until you change it.") }
   /// Confirmation step prompt. %1$@ is the claimed @handle
@@ -4521,6 +4557,10 @@ nonisolated internal enum L10n {
   internal static var socialFeedEmpty: String { return L10n.tr("Localizable", "social_feed_empty", fallback: "Follow friends to see what they're listening to.") }
   /// Section header for the friends activity feed on the Explore tab
   internal static var socialFeedHeader: String { return L10n.tr("Localizable", "social_feed_header", fallback: "Friends") }
+  /// Feed line: person commented on an episode. %1$@ = display name, %2$@ = episode title
+  internal static func socialFeedItemCommented(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_commented", String(describing: p1), String(describing: p2), fallback: "%1$@ commented on %2$@")
+  }
   /// Feed line: person finished an episode. %1$@ = display name, %2$@ = episode title
   internal static func socialFeedItemFinished(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_finished", String(describing: p1), String(describing: p2), fallback: "%1$@ finished %2$@")
@@ -4595,6 +4635,12 @@ nonisolated internal enum L10n {
   internal static var socialHeatmapLocalNote: String { return L10n.tr("Localizable", "social_heatmap_local_note", fallback: "Your activity grid is computed on this device and isn't shown on your public page.") }
   /// Shown when the inbox has no items
   internal static var socialInboxEmpty: String { return L10n.tr("Localizable", "social_inbox_empty", fallback: "Nothing here yet. Episodes friends send you will show up here.") }
+  /// Inbox section header for replies to the user's comments
+  internal static var socialInboxRepliesTitle: String { return L10n.tr("Localizable", "social_inbox_replies_title", fallback: "Replies") }
+  /// Inbox reply row: who replied. %1$@ = display name, %2$@ = @handle
+  internal static func socialInboxReplyFrom(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_inbox_reply_from", String(describing: p1), String(describing: p2), fallback: "%1$@ (%2$@) replied to your comment")
+  }
   /// Profile tab row label for the inbox with an unread count. %1$d is the count
   internal static func socialInboxRowUnread(_ p1: Int) -> String {
     return L10n.tr("Localizable", "social_inbox_row_unread", p1, fallback: "Inbox (%1$d)")

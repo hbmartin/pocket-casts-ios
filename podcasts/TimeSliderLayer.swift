@@ -18,6 +18,9 @@ nonisolated class TimeSliderLayer: CALayer {
     @NSManaged var popupValue: NSString
     @NSManaged var textStyle: NSParagraphStyle
 
+    /// Fractions (0...1) of timestamped comments — Moment pins (Slice 6).
+    var momentFractions: [CGFloat] = []
+
     override init() {
         super.init()
     }
@@ -47,6 +50,7 @@ nonisolated class TimeSliderLayer: CALayer {
         textStyle = otherLayer.textStyle
 
         shouldAnimate = otherLayer.shouldAnimate
+        momentFractions = otherLayer.momentFractions
     }
 
     override class func needsDisplay(forKey key: String) -> Bool {
@@ -101,6 +105,18 @@ nonisolated class TimeSliderLayer: CALayer {
         ctx.setStrokeColor(rightColor)
         let rightPath = UIBezierPath(roundedRect: rightHalfRect, cornerRadius: 2)
         rightPath.fill()
+
+        // draw the Moment pins: small dots floating above the track
+        if !momentFractions.isEmpty {
+            let trackStart = leftHalfRect.origin.x
+            let trackWidth = leftHalfRect.width + rightHalfRect.width
+            let pinY = leftHalfRect.midY - 9
+            ctx.setFillColor(circleColor)
+            for fraction in momentFractions {
+                let x = trackStart + fraction * trackWidth
+                ctx.fillEllipse(in: CGRect(x: x - 2.5, y: pinY - 2.5, width: 5, height: 5))
+            }
+        }
 
         // draw the knob
         ctx.addEllipse(in: knobRect)

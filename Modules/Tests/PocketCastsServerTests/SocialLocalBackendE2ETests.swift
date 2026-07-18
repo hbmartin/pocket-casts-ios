@@ -492,12 +492,128 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertFalse(cFollowing.entries.contains { $0.handle == handleA })
     }
 
+    /// Slice-6 wire contract: the episode comment tree (ADR-0010) — seed gate,
+    /// ungated replies, grace-window edit, tombstoned delete, inbox replies
+    /// watermark, and the commented feed item.
+    func testCommentTreeLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-cmt-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-cmt-b-\(suffix)@e2e.test")
+
+        let handleA = "ios_cmt_a_\(suffix)"
+        for (token, handle, name) in [(tokenA, handleA, "Commenter A"), (tokenB, "ios_cmt_b_\(suffix)", "Replier B")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        let episodeUuid = "abcdabcd-0000-0000-0000-00000000\(String(suffix.prefix(4)))"
+        let podcastUuid = "dcbadcba-0000-0000-0000-00000000\(String(suffix.prefix(4)))"
+
+        // Seed before playing: the listen-gate refuses.
+        var submit = Api_CommentSubmitRequest()
+        submit.episodeUuid = episodeUuid
+        submit.podcastUuid = podcastUuid
+        submit.episodeTitle = "A Discussed Episode"
+        submit.text = "too soon"
+        var (status, body) = try await post("social/comment/submit", token: tokenA, message: submit)
+        XCTAssertEqual(status, 403)
+
+        // A syncs ≥25% played, then a timestamped seed (a Moment) lands.
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        var episode = Api_SyncUserEpisode()
+        episode.uuid = episodeUuid
+        episode.podcastUuid = podcastUuid
+        episode.duration = Google_Protobuf_Int64Value(600)
+        episode.durationModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        episode.playedUpTo = Google_Protobuf_Int64Value(200)
+        episode.playedUpToModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+        var record = Api_Record()
+        record.episode = episode
+        sync.records.append(record)
+        (status, _) = try await post("user/sync/update", token: tokenA, message: sync)
+        XCTAssertEqual(status, 200)
+
+        submit.text = "this bit at two minutes"
+        submit.timestampSeconds = 125
+        (status, body) = try await post("social/comment/submit", token: tokenA, message: submit)
+        XCTAssertEqual(status, 200)
+        let seed = try Api_SocialComment(serializedBytes: body)
+        XCTAssertEqual(seed.handle, handleA)
+        XCTAssertEqual(seed.timestampSeconds, 125)
+
+        // B replies without playing anything: replies are ungated.
+        var reply = Api_CommentSubmitRequest()
+        reply.episodeUuid = episodeUuid
+        reply.text = "agreed!"
+        reply.parentID = seed.id
+        (status, body) = try await post("social/comment/submit", token: tokenB, message: reply)
+        XCTAssertEqual(status, 200)
+
+        // The public top-level list: one seed carrying one reply.
+        var listRequest = Api_EpisodeCommentsRequest()
+        listRequest.episodeUuid = episodeUuid
+        (status, body) = try await post("episode/comments", token: tokenB, message: listRequest)
+        XCTAssertEqual(status, 200)
+        var page = try Api_CommentsResponse(serializedBytes: body)
+        XCTAssertEqual(page.comments.count, 1)
+        XCTAssertEqual(page.comments.first?.replyCount, 1)
+
+        // Edit after reply: grace window shut.
+        var edit = Api_CommentEditRequest()
+        edit.id = seed.id
+        edit.text = "revised"
+        (status, _) = try await post("social/comment/edit", token: tokenA, message: edit)
+        XCTAssertEqual(status, 409)
+
+        // A's inbox replies: one unread from B; seen resets the watermark.
+        (status, body) = try await post("social/inbox/replies", token: tokenA, message: Api_InboxRepliesRequest())
+        XCTAssertEqual(status, 200)
+        var inbox = try Api_InboxRepliesResponse(serializedBytes: body)
+        XCTAssertEqual(inbox.replies.count, 1)
+        XCTAssertEqual(inbox.unread, 1)
+        XCTAssertEqual(inbox.replies.first?.episodeTitle, "A Discussed Episode")
+
+        (status, _) = try await post("social/inbox/replies/seen", token: tokenA, message: Api_InboxRepliesRequest())
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/inbox/replies", token: tokenA, message: Api_InboxRepliesRequest())
+        inbox = try Api_InboxRepliesResponse(serializedBytes: body)
+        XCTAssertEqual(inbox.unread, 0)
+
+        // B follows A: the seed appears as a commented feed item.
+        var follow = Api_FollowRequest()
+        follow.handle = handleA
+        (status, _) = try await post("social/follow", token: tokenB, message: follow)
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/feed", token: tokenB, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        let feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertTrue(feed.items.contains { $0.kind == .commented && $0.actorHandle == handleA },
+                      "the seed must surface as a commented feed item")
+
+        // A deletes the seed: tombstone keeps the reply anchored.
+        var deleteRequest = Api_CommentDeleteRequest()
+        deleteRequest.id = seed.id
+        (status, _) = try await post("social/comment/delete", token: tokenA, message: deleteRequest)
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("episode/comments", token: tokenB, message: listRequest)
+        page = try Api_CommentsResponse(serializedBytes: body)
+        XCTAssertEqual(page.comments.count, 1)
+        XCTAssertTrue(page.comments.first?.removed ?? false)
+        XCTAssertTrue(page.comments.first?.text.isEmpty ?? false)
+        XCTAssertEqual(page.comments.first?.replyCount, 1)
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {
         var request = Api_RegisterRequest()
         request.email = email
-        request.password = "ios-e2e-password"
+        request.password = "ios-e2e-password" // nosemgrep: hardcoded_secret - throwaway fixture credential for disposable accounts on the local Docker backend
         request.scope = "mobile"
         let (status, body) = try await post("user/register", token: nil, message: request)
         XCTAssertEqual(status, 200, "register must succeed against the local backend")

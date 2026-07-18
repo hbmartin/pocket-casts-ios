@@ -41,9 +41,19 @@ class TimeSlider: UIView {
     var topOffset = 20 as CGFloat
     var shouldPopupOnDrag = true
 
+    /// Timestamped comments rendered as pins above the track (Slice 6). A tap
+    /// near a pin (that isn't a knob drag) reports sliderDidTapMoment.
+    var momentPins: [(id: Int64, fraction: Double)] = [] {
+        didSet {
+            timeLayer().momentFractions = momentPins.map { CGFloat($0.fraction) }
+            timeLayer().setNeedsDisplay()
+        }
+    }
+
     // MARK: - private properties
 
     private var draggingKnob = false
+    private var pinTouchCandidate: Int64?
     private let textStyle = NSMutableParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
 
     // MARK: - public methods
@@ -116,8 +126,10 @@ class TimeSlider: UIView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let firstTouch = touches.first {
             let touchPoint = firstTouch.location(in: self)
+            pinTouchCandidate = momentPin(near: touchPoint)
             let slightlyBiggerKnobRect = timeLayer().knobRect.insetBy(dx: -20, dy: -20)
             if slightlyBiggerKnobRect.contains(touchPoint) {
+                pinTouchCandidate = nil
                 draggingKnob = true
                 if shouldPopupOnDrag {
                     timeLayer().popupScale = 1.0
@@ -145,6 +157,12 @@ class TimeSlider: UIView {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if !draggingKnob, let pin = pinTouchCandidate {
+            pinTouchCandidate = nil
+            delegate?.sliderDidTapMoment(id: pin)
+            return
+        }
+        pinTouchCandidate = nil
         if draggingKnob {
             draggingKnob = false
             if shouldPopupOnDrag { timeLayer().popupScale = 0 }
@@ -178,6 +196,23 @@ class TimeSlider: UIView {
                 delegate.sliderDidProvisionallySlide(to: currentTime)
             }
         }
+    }
+
+    /// The pin whose track position lies within 16pt of the touch, if any.
+    private func momentPin(near point: CGPoint) -> Int64? {
+        guard !momentPins.isEmpty else { return nil }
+        let availableWidth = bounds.width - (sidePadding * 2)
+        let trackY = (bounds.height / 2) + topOffset
+        guard abs(point.y - trackY) < 30 else { return nil }
+        var best: (id: Int64, distance: CGFloat)?
+        for pin in momentPins {
+            let x = sidePadding + CGFloat(pin.fraction) * availableWidth
+            let distance = abs(point.x - x)
+            if distance < 16, distance < (best?.distance ?? .greatestFiniteMagnitude) {
+                best = (pin.id, distance)
+            }
+        }
+        return best?.id
     }
 
     // MARK: - Position calculations

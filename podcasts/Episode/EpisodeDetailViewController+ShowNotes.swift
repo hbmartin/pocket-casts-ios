@@ -114,6 +114,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             if FeatureFlag.socialProfiles.enabled, SyncManager.isUserLoggedIn() {
                 await MainActor.run { [weak self] in
                     self?.attachReactionsRowIfNeeded()
+                    self?.attachCommentsRowIfNeeded()
                 }
             }
         }
@@ -155,6 +156,54 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
         hostedView.anchorToAllSidesOf(view: container)
 
         episodeReactionsContainer = container
+    }
+
+    /// Hosts the comments entry row under the reactions row (Slice 6,
+    /// ADR-0010): a count row that opens the episode's comment tree.
+    private func attachCommentsRowIfNeeded() {
+        guard episodeCommentsContainer == nil,
+              let excerptView = transcriptExcerpt,
+              let stack = excerptView.superview as? UIStackView else {
+            return
+        }
+
+        let duration = episode.duration
+        let canSeed = duration > 0 && episode.playedUpTo >= duration * 0.25
+        let viewModel = EpisodeCommentsRowViewModel(episodeUuid: episode.uuid,
+                                                    podcastUuid: episode.parentIdentifier(),
+                                                    episodeTitle: episode.displayableTitle(),
+                                                    podcastTitle: podcast.title ?? "",
+                                                    canSeed: canSeed)
+        viewModel.onOpen = { [weak self] commentsViewModel in
+            guard let self else { return }
+            let hosting = ThemedHostingController(rootView: EpisodeCommentsView(viewModel: commentsViewModel))
+            let navigation = UINavigationController(rootViewController: hosting)
+            self.present(navigation, animated: true)
+        }
+
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let hostingController = ThemedHostingController(rootView: EpisodeCommentsRowView(viewModel: viewModel))
+        hostingController.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
+        let hostedView = hostingController.view!
+        hostedView.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        container.addSubview(hostedView)
+
+        let anchorView = episodeReactionsContainer ?? episodeMentionsContainer ?? episodeCreditsContainer ?? episodeSummaryContainer ?? excerptView
+        if let index = stack.arrangedSubviews.firstIndex(of: anchorView) {
+            stack.insertArrangedSubview(container, at: index + 1)
+        } else {
+            stack.addArrangedSubview(container)
+        }
+
+        hostingController.didMove(toParent: self)
+        hostedView.anchorToAllSidesOf(view: container)
+
+        episodeCommentsContainer = container
     }
 
     /// Reads the episode's indexed transcript (generated corpus preferred — its

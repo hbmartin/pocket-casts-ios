@@ -171,6 +171,8 @@ struct FeedItemRow: View {
         case .reacted:
             let emoji = item.reactionKind.map { "\($0.emoji) " } ?? ""
             return emoji + L10n.socialFeedItemReacted(actor, item.episodeTitle)
+        case .commented:
+            return L10n.socialFeedItemCommented(actor, item.episodeTitle)
         }
     }
 
@@ -182,6 +184,7 @@ struct FeedItemRow: View {
         case .finishedEpisode: return "checkmark.circle"
         case .reviewed: return "star.bubble"
         case .reacted: return "heart"
+        case .commented: return "bubble.left.and.bubble.right"
         }
     }
 }
@@ -254,7 +257,7 @@ final class SocialFeedViewModel: ObservableObject {
             guard !item.podcastUuid.isEmpty else { return }
             NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
                                                        data: [NavigationManager.podcastKey: item.podcastUuid])
-        case .finishedEpisode, .reacted:
+        case .finishedEpisode, .reacted, .commented:
             guard !item.episodeUuid.isEmpty else { return }
             NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
                                                        data: [NavigationManager.episodeUuidKey: item.episodeUuid,
