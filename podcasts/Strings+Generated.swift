@@ -4589,12 +4589,34 @@ nonisolated internal enum L10n {
   internal static func socialFeedItemReviewed(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_reviewed", String(describing: p1), String(describing: p2), fallback: "%1$@ reviewed %2$@")
   }
+  /// Body of the contacts consent alert — honest about the mechanics
+  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once — nothing is stored, and no one is notified. Only members who allow discovery can match.") }
+  /// Confirm button of the contacts consent alert
+  internal static var socialFindContactsConsentCta: String { return L10n.tr("Localizable", "social_find_contacts_consent_cta", fallback: "Match my contacts") }
+  /// Header over contact-match results
+  internal static var socialFindContactsHeader: String { return L10n.tr("Localizable", "social_find_contacts_header", fallback: "From your contacts") }
+  /// Button state while contact matching runs
+  internal static var socialFindContactsMatching: String { return L10n.tr("Localizable", "social_find_contacts_matching", fallback: "Matching…") }
+  /// Button starting the contacts-matching flow
+  internal static var socialFindFromContacts: String { return L10n.tr("Localizable", "social_find_from_contacts", fallback: "Find from contacts") }
+  /// Row sharing the owner's Profile Link to invite a friend
+  internal static var socialFindInvite: String { return L10n.tr("Localizable", "social_find_invite", fallback: "Invite a friend") }
+  /// Mutual-connections count on a suggestion row. %1$d = count
+  internal static func socialFindMutualCount(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_find_mutual_count", p1, fallback: "%1$d mutual connections")
+  }
   /// Button that asks for a friend's @handle to open their profile
   internal static var socialFindPeople: String { return L10n.tr("Localizable", "social_find_people", fallback: "Find People") }
   /// Confirmation button that opens the profile for the typed handle
   internal static var socialFindPeopleCta: String { return L10n.tr("Localizable", "social_find_people_cta", fallback: "View Profile") }
+  /// Placeholder for the find-people search field
+  internal static var socialFindPeoplePlaceholder: String { return L10n.tr("Localizable", "social_find_people_placeholder", fallback: "Search by @handle or name") }
   /// Prompt shown with a text field asking for a friend's @handle
   internal static var socialFindPeoplePrompt: String { return L10n.tr("Localizable", "social_find_people_prompt", fallback: "Enter a friend's handle to view their profile.") }
+  /// Header over search results on the find-people screen
+  internal static var socialFindResultsHeader: String { return L10n.tr("Localizable", "social_find_results_header", fallback: "Results") }
+  /// Header over friends-of-followed suggestions
+  internal static var socialFindSuggestedHeader: String { return L10n.tr("Localizable", "social_find_suggested_header", fallback: "Suggested") }
   /// Button to follow this profile's owner
   internal static var socialFollow: String { return L10n.tr("Localizable", "social_follow", fallback: "Follow") }
   /// Button to accept a pending follow request
@@ -4731,6 +4753,22 @@ nonisolated internal enum L10n {
   internal static var socialListsTitle: String { return L10n.tr("Localizable", "social_lists_title", fallback: "Shared Lists") }
   /// Overflow action that hides a person's items from the activity feed without blocking them
   internal static var socialMute: String { return L10n.tr("Localizable", "social_mute", fallback: "Mute") }
+  /// Toggle: push when your follow request is approved
+  internal static var socialNotificationsFollowApproved: String { return L10n.tr("Localizable", "social_notifications_follow_approved", fallback: "Request approvals") }
+  /// Toggle: push when someone asks to follow you
+  internal static var socialNotificationsFollowRequests: String { return L10n.tr("Localizable", "social_notifications_follow_requests", fallback: "Follow requests") }
+  /// Footer under the social push toggles
+  internal static var socialNotificationsFooter: String { return L10n.tr("Localizable", "social_notifications_footer", fallback: "Notifications about things addressed to you. Applies on all your devices.") }
+  /// Section header for social push toggles in Settings -> Notifications
+  internal static var socialNotificationsHeader: String { return L10n.tr("Localizable", "social_notifications_header", fallback: "Social") }
+  /// Toggle: push when someone invites you to a shared list
+  internal static var socialNotificationsListInvites: String { return L10n.tr("Localizable", "social_notifications_list_invites", fallback: "List invites") }
+  /// Toggle: push when someone starts following you
+  internal static var socialNotificationsNewFollowers: String { return L10n.tr("Localizable", "social_notifications_new_followers", fallback: "New followers") }
+  /// Toggle: push when someone replies to your comment
+  internal static var socialNotificationsReplies: String { return L10n.tr("Localizable", "social_notifications_replies", fallback: "Comment replies") }
+  /// Toggle: push when a friend sends you an episode
+  internal static var socialNotificationsSharedItems: String { return L10n.tr("Localizable", "social_notifications_shared_items", fallback: "Sent episodes") }
   /// Trailing note on the display name row: it cannot be made private
   internal static var socialPrivacyAlwaysPublic: String { return L10n.tr("Localizable", "social_privacy_always_public", fallback: "Always public") }
   /// Toggle: new follows become requests that need the user's approval
@@ -4739,6 +4777,8 @@ nonisolated internal enum L10n {
   internal static var socialPrivacyApproveFollowersFooter: String { return L10n.tr("Localizable", "social_privacy_approve_followers_footer", fallback: "When on, people must ask before they can follow you. When off, anyone can follow you instantly — and every follower can see anything set to Followers.") }
   /// Privacy screen row label for the bio
   internal static var socialPrivacyBio: String { return L10n.tr("Localizable", "social_privacy_bio", fallback: "Bio") }
+  /// Privacy toggle: appear in people search and suggestions
+  internal static var socialPrivacyDiscoverable: String { return L10n.tr("Localizable", "social_privacy_discoverable", fallback: "Include me in search & suggestions") }
   /// Privacy screen row label for the display name
   internal static var socialPrivacyDisplayName: String { return L10n.tr("Localizable", "social_privacy_display_name", fallback: "Display name") }
   /// Privacy screen row label for followed shows

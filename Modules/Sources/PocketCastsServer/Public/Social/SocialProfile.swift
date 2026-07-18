@@ -37,11 +37,19 @@ public struct SocialProfile: Equatable, Sendable, Codable {
     /// Hybrid follow consent (Slice 5): when true, new follows become requests.
     /// Decoded leniently so pre-Slice-5 cached profiles stay readable.
     public var requireFollowApproval: Bool
+    /// Bitmask of DISABLED SocialPushType raw values (bit n = type n+1 off);
+    /// 0 = every social push enabled (Slice 8). Lenient decode for old caches.
+    public var socialPushDisabled: Int64
+    /// Inverted discoverability (Slice 9): true removes this profile from
+    /// people search and suggestions. Zero-value = discoverable.
+    public var hideFromDiscovery: Bool
 
     private enum CodingKeys: String, CodingKey {
         case userId, handle, displayName, bio, avatarURL, createdAt, termsVersion
         case avatarVisibility, bioVisibility, followedShowsVisibility, topPodcastsVisibility
         case statsVisibility, historyVisibility, presenceVisibility, requireFollowApproval
+        case socialPushDisabled
+        case hideFromDiscovery
     }
 
     // Swift-qualified: the SwiftProtobuf import has its own Decoder protocol.
@@ -62,6 +70,8 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         historyVisibility = try container.decode(SocialVisibility.self, forKey: .historyVisibility)
         presenceVisibility = try container.decode(SocialVisibility.self, forKey: .presenceVisibility)
         requireFollowApproval = try container.decodeIfPresent(Bool.self, forKey: .requireFollowApproval) ?? false
+        socialPushDisabled = try container.decodeIfPresent(Int64.self, forKey: .socialPushDisabled) ?? 0
+        hideFromDiscovery = try container.decodeIfPresent(Bool.self, forKey: .hideFromDiscovery) ?? false
     }
 
     public init(userId: String,
@@ -78,7 +88,9 @@ public struct SocialProfile: Equatable, Sendable, Codable {
                 statsVisibility: SocialVisibility = .private,
                 historyVisibility: SocialVisibility = .private,
                 presenceVisibility: SocialVisibility = .private,
-                requireFollowApproval: Bool = false) {
+                requireFollowApproval: Bool = false,
+                socialPushDisabled: Int64 = 0,
+                hideFromDiscovery: Bool = false) {
         self.userId = userId
         self.handle = handle
         self.displayName = displayName
@@ -94,6 +106,8 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         self.historyVisibility = historyVisibility
         self.presenceVisibility = presenceVisibility
         self.requireFollowApproval = requireFollowApproval
+        self.socialPushDisabled = socialPushDisabled
+        self.hideFromDiscovery = hideFromDiscovery
     }
 }
 
@@ -226,7 +240,9 @@ extension SocialProfile {
                   statsVisibility: SocialVisibility(api.statsVisibility),
                   historyVisibility: SocialVisibility(api.historyVisibility),
                   presenceVisibility: SocialVisibility(api.presenceVisibility),
-                  requireFollowApproval: api.requireFollowApproval)
+                  requireFollowApproval: api.requireFollowApproval,
+                  socialPushDisabled: api.socialPushDisabled,
+                  hideFromDiscovery: api.hideFromDiscovery)
     }
 }
 

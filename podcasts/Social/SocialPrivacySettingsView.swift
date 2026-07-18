@@ -48,6 +48,14 @@ struct SocialPrivacySettingsView: View {
             Section(footer: Text(L10n.socialPrivacyApproveFollowersFooter)
                 .font(.footnote)) {
                 Toggle(L10n.socialPrivacyApproveFollowers, isOn: $viewModel.requireFollowApproval)
+                Toggle(L10n.socialPrivacyDiscoverable, isOn: $viewModel.discoverable)
+            }
+
+            Section {
+                NavigationLink(destination: SocialNotificationSettingsView(viewModel: SocialNotificationSettingsViewModel())
+                    .environmentObject(theme)) {
+                    Label(L10n.socialNotificationsHeader, systemImage: "bell")
+                }
             }
 
             if let error = viewModel.saveError {
@@ -112,6 +120,7 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
     @Published var statsVisibility: SocialVisibility
     @Published var historyVisibility: SocialVisibility
     @Published var requireFollowApproval: Bool
+    @Published var discoverable: Bool
     @Published private(set) var isSaving = false
     @Published private(set) var saveError: String?
 
@@ -125,6 +134,7 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
         statsVisibility = profile?.statsVisibility ?? .private
         historyVisibility = profile?.historyVisibility ?? .private
         requireFollowApproval = profile?.requireFollowApproval ?? false
+        discoverable = !(profile?.hideFromDiscovery ?? false)
     }
 
     var hasChanges: Bool {
@@ -135,17 +145,24 @@ final class SocialPrivacySettingsViewModel: ObservableObject {
             || statsVisibility != profile.statsVisibility
             || historyVisibility != profile.historyVisibility
             || requireFollowApproval != profile.requireFollowApproval
+            || discoverable != !profile.hideFromDiscovery
     }
 
     @discardableResult
     func save() async -> Bool {
         guard var updated = profile else { return true }
+        // Prefs edited on the notifications screen may be fresher than this
+        // screen's snapshot — never clobber them with a stale copy.
+        if let fresh = SocialIdentityStore.cachedProfile {
+            updated.socialPushDisabled = fresh.socialPushDisabled
+        }
         updated.bioVisibility = bioVisibility
         updated.followedShowsVisibility = followedShowsVisibility
         updated.topPodcastsVisibility = topPodcastsVisibility
         updated.statsVisibility = statsVisibility
         updated.historyVisibility = historyVisibility
         updated.requireFollowApproval = requireFollowApproval
+        updated.hideFromDiscovery = !discoverable
 
         isSaving = true
         saveError = nil

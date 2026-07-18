@@ -1,3 +1,4 @@
+import CryptoKit
 import XCTest
 import SwiftProtobuf
 @testable import PocketCastsServer
@@ -740,6 +741,119 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(status, 404)
     }
 
+    /// Slice-8 wire contract: the per-type push-disabled bitmask round-trips
+    /// through profile update and decodes leniently. Actual APNs delivery is
+    /// asserted by the backend's mock-APNs e2e (this suite can't receive
+    /// pushes).
+    func testSocialPushPrefsLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (token, _) = try await register(email: "ios-push-\(suffix)@e2e.test")
+
+        var join = Api_JoinRequest()
+        join.handle = "ios_psh_\(suffix)"
+        join.acceptedTermsVersion = 1
+        join.displayName = "Push Prefs"
+        var (status, body) = try await post("social/join", token: token, message: join)
+        XCTAssertEqual(status, 200)
+        let joined = try Api_JoinResponse(serializedBytes: body)
+        XCTAssertEqual(joined.profile.socialPushDisabled, 0, "all types default on")
+
+        // Disable new-follower (bit 2) + comment-reply (bit 4).
+        var update = Api_ProfileUpdateRequest()
+        update.displayName = "Push Prefs"
+        update.socialPushDisabled = (1 << 2) | (1 << 4)
+        (status, body) = try await post("social/profile/update", token: token, message: update)
+        XCTAssertEqual(status, 200)
+        let updated = try Api_ProfileResponse(serializedBytes: body)
+        XCTAssertEqual(updated.profile.socialPushDisabled, (1 << 2) | (1 << 4))
+
+        (status, body) = try await post("social/profile/get", token: token, message: Api_ProfileGetRequest())
+        XCTAssertEqual(status, 200)
+        let fetched = try Api_ProfileResponse(serializedBytes: body)
+        XCTAssertEqual(fetched.profile.socialPushDisabled, (1 << 2) | (1 << 4), "the mask persists")
+    }
+
+    /// Slice-9 wire contract: search + discoverability opt-out, suggestions
+    /// with count-only copy, and the salted contacts match (email matched,
+    /// phone hash wire-ready).
+    func testFindPeopleLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let emailB = "ios-find-b-\(suffix)@e2e.test"
+        let (tokenA, _) = try await register(email: "ios-find-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: emailB)
+        let (tokenC, _) = try await register(email: "ios-find-c-\(suffix)@e2e.test")
+
+        let handleB = "ios_fnd_b_\(suffix)"
+        let handleC = "ios_fnd_c_\(suffix)"
+        for (token, handle, name) in [(tokenA, "ios_fnd_a_\(suffix)", "Finder A"),
+                                      (tokenB, handleB, "Findable B"), (tokenC, handleC, "Suggested C")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // Prefix search finds B; the opt-out removes them.
+        var search = Api_SocialSearchRequest()
+        search.query = String(handleB.prefix(12))
+        var (status, body) = try await post("social/search", token: tokenA, message: search)
+        XCTAssertEqual(status, 200)
+        var found = try Api_SocialSearchResponse(serializedBytes: body)
+        XCTAssertEqual(found.profiles.count, 1)
+        XCTAssertEqual(found.profiles.first?.handle, handleB)
+
+        var hide = Api_ProfileUpdateRequest()
+        hide.displayName = "Findable B"
+        hide.hideFromDiscovery = true
+        (status, _) = try await post("social/profile/update", token: tokenB, message: hide)
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/search", token: tokenA, message: search)
+        found = try Api_SocialSearchResponse(serializedBytes: body)
+        XCTAssertTrue(found.profiles.isEmpty, "hidden profiles leave search")
+
+        hide.hideFromDiscovery = false
+        (status, _) = try await post("social/profile/update", token: tokenB, message: hide)
+        XCTAssertEqual(status, 200)
+
+        // A→B→C: C is suggested to A with one mutual connection, count only.
+        var follow = Api_FollowRequest()
+        follow.handle = handleB
+        (status, _) = try await post("social/follow", token: tokenA, message: follow)
+        XCTAssertEqual(status, 200)
+        follow.handle = handleC
+        (status, _) = try await post("social/follow", token: tokenB, message: follow)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/suggestions", token: tokenA, message: Api_SocialSuggestionsRequest())
+        XCTAssertEqual(status, 200)
+        let suggestions = try Api_SocialSuggestionsResponse(serializedBytes: body)
+        XCTAssertEqual(suggestions.profiles.count, 1)
+        XCTAssertEqual(suggestions.profiles.first?.handle, handleC)
+        XCTAssertEqual(suggestions.profiles.first?.mutualCount, 1)
+
+        // Contacts match with the same client-side hashing the app performs.
+        (status, body) = try await post("social/contacts/salt", token: tokenA, message: Api_SocialSuggestionsRequest())
+        XCTAssertEqual(status, 200)
+        let salt = try Api_ContactsSaltResponse(serializedBytes: body).salt
+        XCTAssertFalse(salt.isEmpty)
+
+        var emailHash = Api_ContactHash()
+        emailHash.kind = .email
+        emailHash.hash = FindPeopleHashHelper.saltedHash(salt: salt, value: emailB.lowercased())
+        var phoneHash = Api_ContactHash()
+        phoneHash.kind = .phone
+        phoneHash.hash = FindPeopleHashHelper.saltedHash(salt: salt, value: "+15550001111")
+        var match = Api_ContactsMatchRequest()
+        match.hashes = [emailHash, phoneHash]
+        (status, body) = try await post("social/contacts/match", token: tokenA, message: match)
+        XCTAssertEqual(status, 200)
+        let matched = try Api_ContactsMatchResponse(serializedBytes: body)
+        XCTAssertEqual(matched.profiles.count, 1, "email matches; the phone hash is wire-ready but unmatched")
+        XCTAssertEqual(matched.profiles.first?.handle, handleB)
+    }
+
     // MARK: - Wire helpers (no app global state)
 
     private func register(email: String) async throws -> (token: String, uuid: String) {
@@ -766,5 +880,13 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? -1
         return (status, data)
+    }
+}
+
+
+/// Mirrors the app's contact-identifier hashing (FindPeopleViewModel).
+enum FindPeopleHashHelper {
+    static func saltedHash(salt: String, value: String) -> String {
+        SHA256.hash(data: Data((salt + value).utf8)).map { String(format: "%02x", $0) }.joined()
     }
 }

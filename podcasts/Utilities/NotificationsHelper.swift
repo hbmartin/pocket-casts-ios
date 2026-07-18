@@ -20,6 +20,7 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
         case deepLink = "DEEP_LINK"
         case episodes = "ep"
         case podcasts = "po"
+        case social = "so"
     }
 
     func checkNotificationsDenied(completion: @escaping @Sendable (Bool) -> ()) {
@@ -104,10 +105,12 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
 
         let deepLinkCategory = UNNotificationCategory(identifier: NotificationsCategory.deepLink.rawValue, actions: [], intentIdentifiers: [], options: [])
 
+        let socialCategory = UNNotificationCategory(identifier: NotificationsCategory.social.rawValue, actions: [], intentIdentifiers: [], options: [])
+
         // register actions
         let notificationCenter = UNUserNotificationCenter.current()
         notificationCenter.delegate = self
-        notificationCenter.setNotificationCategories([episodeCategory, podcastCategory, deepLinkCategory])
+        notificationCenter.setNotificationCategories([episodeCategory, podcastCategory, deepLinkCategory, socialCategory])
 
         notificationCenter.getNotificationSettings { settings in
             guard settings.authorizationStatus == .notDetermined else {
@@ -156,6 +159,39 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
             handleEpisodeNotification(response: response, completionHandler: completionHandler)
         case .deepLink:
             handleDeepLinkNotification(response: response, completionHandler: completionHandler)
+        case .social:
+            handleSocialNotification(response: response, completionHandler: completionHandler)
+        }
+    }
+
+    /// Social pushes (Slice 8, docs/Social.md): the server sends category "so"
+    /// with a typed payload; each type deep-links to its home surface.
+    private func handleSocialNotification(response: UNNotificationResponse, completionHandler: @escaping () -> Void) {
+        let userInfo = response.notification.request.content.userInfo
+        let rawType = Int(userInfo["social_type"] as? String ?? "") ?? 0
+        let actorHandle = userInfo["actor_handle"] as? String ?? ""
+        Analytics.track(.socialPushTapped, properties: ["social_type": "\(rawType)"])
+
+        let episodeUuid = userInfo["episode_uuid"] as? String ?? ""
+        let podcastUuid = userInfo["podcast_uuid"] as? String ?? ""
+        let commentId = Int64(userInfo["comment_id"] as? String ?? "") ?? 0
+        // The system only needs to know handling finished; routing continues
+        // on the main actor with Sendable captures.
+        completionHandler()
+        Task { @MainActor in
+            switch SocialPushType(rawValue: rawType) {
+            case .followRequest, .sharedItem:
+                SocialCoordinator.openInbox()
+            case .followApproved, .newFollower:
+                SocialCoordinator.openPublicProfile(handle: actorHandle)
+            case .commentReply:
+                SocialCoordinator.openComments(episodeUuid: episodeUuid, podcastUuid: podcastUuid,
+                                               focusCommentId: commentId > 0 ? commentId : nil)
+            case .listInvite:
+                SocialCoordinator.openSharedLists()
+            case .none:
+                break
+            }
         }
     }
 
