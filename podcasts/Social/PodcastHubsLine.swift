@@ -14,6 +14,17 @@ struct PodcastHubsLine: View {
     @State private var showingHubs = false
 
     var body: some View {
+        // A zero-size placeholder keeps the view in the hierarchy pre-load —
+        // an empty Group never appears, so its .task would never fire.
+        content
+            .task {
+                guard !loaded, SocialIdentityStore.isJoined else { return }
+                hubs = await ApiServerHandler.shared.groupsForPodcast(uuid: podcastUuid)
+                loaded = true
+            }
+    }
+
+    @ViewBuilder private var content: some View {
         Group {
             if loaded {
                 Button {
@@ -34,12 +45,9 @@ struct PodcastHubsLine: View {
                     .navigationViewStyle(.stack)
                     .environmentObject(theme)
                 }
+            } else {
+                Color.clear.frame(width: 1, height: 1)
             }
-        }
-        .task {
-            guard !loaded, SocialIdentityStore.isJoined else { return }
-            hubs = await ApiServerHandler.shared.groupsForPodcast(uuid: podcastUuid)
-            loaded = true
         }
     }
 }
