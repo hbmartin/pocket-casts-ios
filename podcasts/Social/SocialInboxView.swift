@@ -231,8 +231,14 @@ final class SocialInboxViewModel: ObservableObject {
     func open(_ item: SharedItem) {
         Analytics.track(.socialInboxItemOpened)
         if item.episodeUuid.isEmpty {
+            // PodcastInfo, not a bare uuid: the String branch of the podcast
+            // navigation silently no-ops when the show isn't in the local
+            // database, and a recommended show usually isn't.
+            var info = PodcastInfo()
+            info.uuid = item.podcastUuid
+            info.title = item.podcastTitle
             NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
-                                                       data: [NavigationManager.podcastKey: item.podcastUuid])
+                                                       data: [NavigationManager.podcastKey: info])
             return
         }
         let timestamp: TimeInterval? = item.timestampSeconds > 0 ? TimeInterval(item.timestampSeconds) : nil
