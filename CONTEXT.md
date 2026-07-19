@@ -130,6 +130,11 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Moment** — the player-surface rendering of a timestamp-anchored top-level Comment: a
   pin on the scrubber that seeks and opens the comment's subtree. Not a separate entity —
   the episode page and the player are two lenses over one comment tree.
+- **Transcript Quote** — a short excerpt of the episode's transcript attached to a
+  Moment: the quote text is self-contained rendering truth (it can never break), while an
+  accompanying advisory reference to the generating transcript segment enables future
+  deep-linking and is allowed to rot when transcripts regenerate. Wiped with the text on
+  tombstoning.
 - **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
   its text and author are wiped but its position in the tree is kept, so other people's
   replies survive. The comment-tree analogue of a tombstoned Handle.

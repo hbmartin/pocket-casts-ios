@@ -7404,6 +7404,12 @@
 /* Accessibility label for the attach-playback-timestamp toggle in the composer */
 "social_comment_attach_timestamp" = "Attach current playback time";
 
+/* Transcript-reader context-menu action that quotes the tapped line into a new comment */
+"social_comment_quote_action" = "Comment on This";
+
+/* Accessibility label for the button removing a staged transcript quote from the comment composer */
+"social_comment_quote_remove" = "Remove quote";
+
 /* Error when a comment fails to post */
 "social_comment_submit_failed" = "Couldn't post that comment.";
 

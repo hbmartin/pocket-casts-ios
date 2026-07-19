@@ -54,3 +54,15 @@ rows.
   comments are excluded outright from lists (mutual invisibility), which hides
   their entire subtree from that viewer — accepted as the block contract rather
   than leaking a placeholder.
+
+## Amendment (2026-07-19, Slice 12)
+
+The deferred transcript-line anchor question is resolved: a Moment may carry a
+**Transcript Quote** — the quoted line text stored verbatim on the comment
+(self-contained rendering truth), plus an advisory `(quote_source,
+quote_segment)` reference into the transcript that produced it. The quote can
+never break; the reference is best-effort and expected to rot when transcripts
+regenerate, so nothing may ever *depend* on it resolving. Quotes require a
+timestamp (a quoted comment is a Moment by construction), pass the same UGC
+text filter as comment bodies, cap at 300 runes, and are wiped alongside the
+text on tombstoning/erasure.

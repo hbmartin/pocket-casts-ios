@@ -4513,6 +4513,10 @@ nonisolated internal enum L10n {
   internal static var socialCommentEditingBanner: String { return L10n.tr("Localizable", "social_comment_editing_banner", fallback: "Editing your comment") }
   /// Placeholder for the comment compose field
   internal static var socialCommentPlaceholder: String { return L10n.tr("Localizable", "social_comment_placeholder", fallback: "Add a comment") }
+  /// Transcript-reader context-menu action that quotes the tapped line into a new comment
+  internal static var socialCommentQuoteAction: String { return L10n.tr("Localizable", "social_comment_quote_action", fallback: "Comment on This") }
+  /// Accessibility label for the button removing a staged transcript quote from the comment composer
+  internal static var socialCommentQuoteRemove: String { return L10n.tr("Localizable", "social_comment_quote_remove", fallback: "Remove quote") }
   /// Placeholder body for a deleted/removed comment whose replies survive
   internal static var socialCommentRemoved: String { return L10n.tr("Localizable", "social_comment_removed", fallback: "[removed]") }
   /// Button starting a reply to a comment

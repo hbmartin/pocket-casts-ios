@@ -10628,6 +10628,14 @@ nonisolated struct Api_CommentSubmitRequest: Sendable {
 
   var podcastTitle: String = String()
 
+  /// Slice 12: transcript pinning. The quote is self-contained rendering
+  /// truth; source/segment are an advisory ref that may rot on regeneration.
+  var quote: String = String()
+
+  var quoteSource: Int32 = 0
+
+  var quoteSegment: Int32 = 0
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -10635,67 +10643,121 @@ nonisolated struct Api_CommentSubmitRequest: Sendable {
   fileprivate var _timestampSeconds: Int32? = nil
 }
 
-nonisolated struct Api_SocialComment: Sendable {
+nonisolated struct Api_SocialComment: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var id: Int64 = 0
+  var id: Int64 {
+    get {_storage._id}
+    set {_uniqueStorage()._id = newValue}
+  }
 
   /// 0 = top-level
-  var parentID: Int64 = 0
+  var parentID: Int64 {
+    get {_storage._parentID}
+    set {_uniqueStorage()._parentID = newValue}
+  }
 
   /// empty when removed (tombstone)
-  var userID: String = String()
+  var userID: String {
+    get {_storage._userID}
+    set {_uniqueStorage()._userID = newValue}
+  }
 
-  var handle: String = String()
+  var handle: String {
+    get {_storage._handle}
+    set {_uniqueStorage()._handle = newValue}
+  }
 
-  var displayName: String = String()
+  var displayName: String {
+    get {_storage._displayName}
+    set {_uniqueStorage()._displayName = newValue}
+  }
 
   /// empty when removed
-  var text: String = String()
+  var text: String {
+    get {_storage._text}
+    set {_uniqueStorage()._text = newValue}
+  }
 
   var timestampSeconds: Int32 {
-    get {_timestampSeconds ?? 0}
-    set {_timestampSeconds = newValue}
+    get {_storage._timestampSeconds ?? 0}
+    set {_uniqueStorage()._timestampSeconds = newValue}
   }
   /// Returns true if `timestampSeconds` has been explicitly set.
-  var hasTimestampSeconds: Bool {self._timestampSeconds != nil}
+  var hasTimestampSeconds: Bool {_storage._timestampSeconds != nil}
   /// Clears the value of `timestampSeconds`. Subsequent reads from it will return its default value.
-  mutating func clearTimestampSeconds() {self._timestampSeconds = nil}
+  mutating func clearTimestampSeconds() {_uniqueStorage()._timestampSeconds = nil}
 
   var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_createdAt = newValue}
+    get {_storage._createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._createdAt = newValue}
   }
   /// Returns true if `createdAt` has been explicitly set.
-  var hasCreatedAt: Bool {self._createdAt != nil}
+  var hasCreatedAt: Bool {_storage._createdAt != nil}
   /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
-  mutating func clearCreatedAt() {self._createdAt = nil}
+  mutating func clearCreatedAt() {_uniqueStorage()._createdAt = nil}
 
-  var edited: Bool = false
+  var edited: Bool {
+    get {_storage._edited}
+    set {_uniqueStorage()._edited = newValue}
+  }
 
   /// tombstone placeholder
-  var removed: Bool = false
+  var removed: Bool {
+    get {_storage._removed}
+    set {_uniqueStorage()._removed = newValue}
+  }
 
   /// direct children
-  var replyCount: Int32 = 0
+  var replyCount: Int32 {
+    get {_storage._replyCount}
+    set {_uniqueStorage()._replyCount = newValue}
+  }
 
   /// set on inbox-reply rows
-  var episodeUuid: String = String()
+  var episodeUuid: String {
+    get {_storage._episodeUuid}
+    set {_uniqueStorage()._episodeUuid = newValue}
+  }
 
-  var podcastUuid: String = String()
+  var podcastUuid: String {
+    get {_storage._podcastUuid}
+    set {_uniqueStorage()._podcastUuid = newValue}
+  }
 
-  var episodeTitle: String = String()
+  var episodeTitle: String {
+    get {_storage._episodeTitle}
+    set {_uniqueStorage()._episodeTitle = newValue}
+  }
 
-  var podcastTitle: String = String()
+  var podcastTitle: String {
+    get {_storage._podcastTitle}
+    set {_uniqueStorage()._podcastTitle = newValue}
+  }
+
+  /// empty when none or tombstoned
+  var quote: String {
+    get {_storage._quote}
+    set {_uniqueStorage()._quote = newValue}
+  }
+
+  var quoteSource: Int32 {
+    get {_storage._quoteSource}
+    set {_uniqueStorage()._quoteSource = newValue}
+  }
+
+  var quoteSegment: Int32 {
+    get {_storage._quoteSegment}
+    set {_uniqueStorage()._quoteSegment = newValue}
+  }
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 
-  fileprivate var _timestampSeconds: Int32? = nil
-  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 nonisolated struct Api_CommentEditRequest: Sendable {
@@ -25267,7 +25329,7 @@ nonisolated extension Api_FeedResponse: SwiftProtobuf.Message, SwiftProtobuf._Me
 
 nonisolated extension Api_CommentSubmitRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".CommentSubmitRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{1}text\0\u{3}parent_id\0\u{3}timestamp_seconds\0\u{3}episode_title\0\u{3}podcast_title\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{1}text\0\u{3}parent_id\0\u{3}timestamp_seconds\0\u{3}episode_title\0\u{3}podcast_title\0\u{1}quote\0\u{3}quote_source\0\u{3}quote_segment\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -25282,6 +25344,9 @@ nonisolated extension Api_CommentSubmitRequest: SwiftProtobuf.Message, SwiftProt
       case 5: try { try decoder.decodeSingularInt32Field(value: &self._timestampSeconds) }()
       case 6: try { try decoder.decodeSingularStringField(value: &self.episodeTitle) }()
       case 7: try { try decoder.decodeSingularStringField(value: &self.podcastTitle) }()
+      case 8: try { try decoder.decodeSingularStringField(value: &self.quote) }()
+      case 9: try { try decoder.decodeSingularInt32Field(value: &self.quoteSource) }()
+      case 10: try { try decoder.decodeSingularInt32Field(value: &self.quoteSegment) }()
       default: break
       }
     }
@@ -25313,6 +25378,15 @@ nonisolated extension Api_CommentSubmitRequest: SwiftProtobuf.Message, SwiftProt
     if !self.podcastTitle.isEmpty {
       try visitor.visitSingularStringField(value: self.podcastTitle, fieldNumber: 7)
     }
+    if !self.quote.isEmpty {
+      try visitor.visitSingularStringField(value: self.quote, fieldNumber: 8)
+    }
+    if self.quoteSource != 0 {
+      try visitor.visitSingularInt32Field(value: self.quoteSource, fieldNumber: 9)
+    }
+    if self.quoteSegment != 0 {
+      try visitor.visitSingularInt32Field(value: self.quoteSegment, fieldNumber: 10)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -25324,6 +25398,9 @@ nonisolated extension Api_CommentSubmitRequest: SwiftProtobuf.Message, SwiftProt
     if lhs._timestampSeconds != rhs._timestampSeconds {return false}
     if lhs.episodeTitle != rhs.episodeTitle {return false}
     if lhs.podcastTitle != rhs.podcastTitle {return false}
+    if lhs.quote != rhs.quote {return false}
+    if lhs.quoteSource != rhs.quoteSource {return false}
+    if lhs.quoteSegment != rhs.quoteSegment {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -25331,103 +25408,188 @@ nonisolated extension Api_CommentSubmitRequest: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Api_SocialComment: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SocialComment"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}parent_id\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}text\0\u{3}timestamp_seconds\0\u{3}created_at\0\u{1}edited\0\u{1}removed\0\u{3}reply_count\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{3}episode_title\0\u{3}podcast_title\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}parent_id\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}text\0\u{3}timestamp_seconds\0\u{3}created_at\0\u{1}edited\0\u{1}removed\0\u{3}reply_count\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{3}episode_title\0\u{3}podcast_title\0\u{1}quote\0\u{3}quote_source\0\u{3}quote_segment\0")
+
+  fileprivate class _StorageClass {
+    var _id: Int64 = 0
+    var _parentID: Int64 = 0
+    var _userID: String = String()
+    var _handle: String = String()
+    var _displayName: String = String()
+    var _text: String = String()
+    var _timestampSeconds: Int32? = nil
+    var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _edited: Bool = false
+    var _removed: Bool = false
+    var _replyCount: Int32 = 0
+    var _episodeUuid: String = String()
+    var _podcastUuid: String = String()
+    var _episodeTitle: String = String()
+    var _podcastTitle: String = String()
+    var _quote: String = String()
+    var _quoteSource: Int32 = 0
+    var _quoteSegment: Int32 = 0
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _id = source._id
+      _parentID = source._parentID
+      _userID = source._userID
+      _handle = source._handle
+      _displayName = source._displayName
+      _text = source._text
+      _timestampSeconds = source._timestampSeconds
+      _createdAt = source._createdAt
+      _edited = source._edited
+      _removed = source._removed
+      _replyCount = source._replyCount
+      _episodeUuid = source._episodeUuid
+      _podcastUuid = source._podcastUuid
+      _episodeTitle = source._episodeTitle
+      _podcastTitle = source._podcastTitle
+      _quote = source._quote
+      _quoteSource = source._quoteSource
+      _quoteSegment = source._quoteSegment
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.id) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.parentID) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.userID) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.handle) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.text) }()
-      case 7: try { try decoder.decodeSingularInt32Field(value: &self._timestampSeconds) }()
-      case 8: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
-      case 9: try { try decoder.decodeSingularBoolField(value: &self.edited) }()
-      case 10: try { try decoder.decodeSingularBoolField(value: &self.removed) }()
-      case 11: try { try decoder.decodeSingularInt32Field(value: &self.replyCount) }()
-      case 12: try { try decoder.decodeSingularStringField(value: &self.episodeUuid) }()
-      case 13: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
-      case 14: try { try decoder.decodeSingularStringField(value: &self.episodeTitle) }()
-      case 15: try { try decoder.decodeSingularStringField(value: &self.podcastTitle) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularInt64Field(value: &_storage._id) }()
+        case 2: try { try decoder.decodeSingularInt64Field(value: &_storage._parentID) }()
+        case 3: try { try decoder.decodeSingularStringField(value: &_storage._userID) }()
+        case 4: try { try decoder.decodeSingularStringField(value: &_storage._handle) }()
+        case 5: try { try decoder.decodeSingularStringField(value: &_storage._displayName) }()
+        case 6: try { try decoder.decodeSingularStringField(value: &_storage._text) }()
+        case 7: try { try decoder.decodeSingularInt32Field(value: &_storage._timestampSeconds) }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._createdAt) }()
+        case 9: try { try decoder.decodeSingularBoolField(value: &_storage._edited) }()
+        case 10: try { try decoder.decodeSingularBoolField(value: &_storage._removed) }()
+        case 11: try { try decoder.decodeSingularInt32Field(value: &_storage._replyCount) }()
+        case 12: try { try decoder.decodeSingularStringField(value: &_storage._episodeUuid) }()
+        case 13: try { try decoder.decodeSingularStringField(value: &_storage._podcastUuid) }()
+        case 14: try { try decoder.decodeSingularStringField(value: &_storage._episodeTitle) }()
+        case 15: try { try decoder.decodeSingularStringField(value: &_storage._podcastTitle) }()
+        case 16: try { try decoder.decodeSingularStringField(value: &_storage._quote) }()
+        case 17: try { try decoder.decodeSingularInt32Field(value: &_storage._quoteSource) }()
+        case 18: try { try decoder.decodeSingularInt32Field(value: &_storage._quoteSegment) }()
+        default: break
+        }
       }
     }
   }
 
   func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if self.id != 0 {
-      try visitor.visitSingularInt64Field(value: self.id, fieldNumber: 1)
-    }
-    if self.parentID != 0 {
-      try visitor.visitSingularInt64Field(value: self.parentID, fieldNumber: 2)
-    }
-    if !self.userID.isEmpty {
-      try visitor.visitSingularStringField(value: self.userID, fieldNumber: 3)
-    }
-    if !self.handle.isEmpty {
-      try visitor.visitSingularStringField(value: self.handle, fieldNumber: 4)
-    }
-    if !self.displayName.isEmpty {
-      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 5)
-    }
-    if !self.text.isEmpty {
-      try visitor.visitSingularStringField(value: self.text, fieldNumber: 6)
-    }
-    try { if let v = self._timestampSeconds {
-      try visitor.visitSingularInt32Field(value: v, fieldNumber: 7)
-    } }()
-    try { if let v = self._createdAt {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
-    } }()
-    if self.edited != false {
-      try visitor.visitSingularBoolField(value: self.edited, fieldNumber: 9)
-    }
-    if self.removed != false {
-      try visitor.visitSingularBoolField(value: self.removed, fieldNumber: 10)
-    }
-    if self.replyCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.replyCount, fieldNumber: 11)
-    }
-    if !self.episodeUuid.isEmpty {
-      try visitor.visitSingularStringField(value: self.episodeUuid, fieldNumber: 12)
-    }
-    if !self.podcastUuid.isEmpty {
-      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 13)
-    }
-    if !self.episodeTitle.isEmpty {
-      try visitor.visitSingularStringField(value: self.episodeTitle, fieldNumber: 14)
-    }
-    if !self.podcastTitle.isEmpty {
-      try visitor.visitSingularStringField(value: self.podcastTitle, fieldNumber: 15)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if _storage._id != 0 {
+        try visitor.visitSingularInt64Field(value: _storage._id, fieldNumber: 1)
+      }
+      if _storage._parentID != 0 {
+        try visitor.visitSingularInt64Field(value: _storage._parentID, fieldNumber: 2)
+      }
+      if !_storage._userID.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._userID, fieldNumber: 3)
+      }
+      if !_storage._handle.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._handle, fieldNumber: 4)
+      }
+      if !_storage._displayName.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._displayName, fieldNumber: 5)
+      }
+      if !_storage._text.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._text, fieldNumber: 6)
+      }
+      try { if let v = _storage._timestampSeconds {
+        try visitor.visitSingularInt32Field(value: v, fieldNumber: 7)
+      } }()
+      try { if let v = _storage._createdAt {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+      if _storage._edited != false {
+        try visitor.visitSingularBoolField(value: _storage._edited, fieldNumber: 9)
+      }
+      if _storage._removed != false {
+        try visitor.visitSingularBoolField(value: _storage._removed, fieldNumber: 10)
+      }
+      if _storage._replyCount != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._replyCount, fieldNumber: 11)
+      }
+      if !_storage._episodeUuid.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._episodeUuid, fieldNumber: 12)
+      }
+      if !_storage._podcastUuid.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._podcastUuid, fieldNumber: 13)
+      }
+      if !_storage._episodeTitle.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._episodeTitle, fieldNumber: 14)
+      }
+      if !_storage._podcastTitle.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._podcastTitle, fieldNumber: 15)
+      }
+      if !_storage._quote.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._quote, fieldNumber: 16)
+      }
+      if _storage._quoteSource != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._quoteSource, fieldNumber: 17)
+      }
+      if _storage._quoteSegment != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._quoteSegment, fieldNumber: 18)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   static func ==(lhs: Api_SocialComment, rhs: Api_SocialComment) -> Bool {
-    if lhs.id != rhs.id {return false}
-    if lhs.parentID != rhs.parentID {return false}
-    if lhs.userID != rhs.userID {return false}
-    if lhs.handle != rhs.handle {return false}
-    if lhs.displayName != rhs.displayName {return false}
-    if lhs.text != rhs.text {return false}
-    if lhs._timestampSeconds != rhs._timestampSeconds {return false}
-    if lhs._createdAt != rhs._createdAt {return false}
-    if lhs.edited != rhs.edited {return false}
-    if lhs.removed != rhs.removed {return false}
-    if lhs.replyCount != rhs.replyCount {return false}
-    if lhs.episodeUuid != rhs.episodeUuid {return false}
-    if lhs.podcastUuid != rhs.podcastUuid {return false}
-    if lhs.episodeTitle != rhs.episodeTitle {return false}
-    if lhs.podcastTitle != rhs.podcastTitle {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._id != rhs_storage._id {return false}
+        if _storage._parentID != rhs_storage._parentID {return false}
+        if _storage._userID != rhs_storage._userID {return false}
+        if _storage._handle != rhs_storage._handle {return false}
+        if _storage._displayName != rhs_storage._displayName {return false}
+        if _storage._text != rhs_storage._text {return false}
+        if _storage._timestampSeconds != rhs_storage._timestampSeconds {return false}
+        if _storage._createdAt != rhs_storage._createdAt {return false}
+        if _storage._edited != rhs_storage._edited {return false}
+        if _storage._removed != rhs_storage._removed {return false}
+        if _storage._replyCount != rhs_storage._replyCount {return false}
+        if _storage._episodeUuid != rhs_storage._episodeUuid {return false}
+        if _storage._podcastUuid != rhs_storage._podcastUuid {return false}
+        if _storage._episodeTitle != rhs_storage._episodeTitle {return false}
+        if _storage._podcastTitle != rhs_storage._podcastTitle {return false}
+        if _storage._quote != rhs_storage._quote {return false}
+        if _storage._quoteSource != rhs_storage._quoteSource {return false}
+        if _storage._quoteSegment != rhs_storage._quoteSegment {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -539,13 +539,24 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         (status, _) = try await post("user/sync/update", token: tokenA, message: sync)
         XCTAssertEqual(status, 200)
 
+        // Slice 12: a quote without a timestamp is rejected — quotes are
+        // Moments by construction.
+        submit.text = "orphan"
+        submit.quote = "we shipped it on a friday"
+        (status, _) = try await post("social/comment/submit", token: tokenA, message: submit)
+        XCTAssertEqual(status, 400)
+
         submit.text = "this bit at two minutes"
         submit.timestampSeconds = 125
+        submit.quoteSource = 1
+        submit.quoteSegment = 7
         (status, body) = try await post("social/comment/submit", token: tokenA, message: submit)
         XCTAssertEqual(status, 200)
         let seed = try Api_SocialComment(serializedBytes: body)
         XCTAssertEqual(seed.handle, handleA)
         XCTAssertEqual(seed.timestampSeconds, 125)
+        XCTAssertEqual(seed.quote, "we shipped it on a friday")
+        XCTAssertEqual(seed.quoteSegment, 7)
 
         // B replies without playing anything: replies are ungated.
         var reply = Api_CommentSubmitRequest()
@@ -563,6 +574,8 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         var page = try Api_CommentsResponse(serializedBytes: body)
         XCTAssertEqual(page.comments.count, 1)
         XCTAssertEqual(page.comments.first?.replyCount, 1)
+        XCTAssertEqual(page.comments.first?.quote, "we shipped it on a friday")
+        XCTAssertEqual(page.comments.first?.quoteSource, 1)
 
         // Edit after reply: grace window shut.
         var edit = Api_CommentEditRequest()
@@ -606,6 +619,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(page.comments.count, 1)
         XCTAssertTrue(page.comments.first?.removed ?? false)
         XCTAssertTrue(page.comments.first?.text.isEmpty ?? false)
+        XCTAssertTrue(page.comments.first?.quote.isEmpty ?? false, "tombstones wipe the quote with the text")
         XCTAssertEqual(page.comments.first?.replyCount, 1)
     }
 

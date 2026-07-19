@@ -113,6 +113,7 @@ enum AnalyticsEvent: String {
     case socialProfileMuted
     case socialCommentsOpened
     case socialCommentSubmitted
+    case socialCommentQuoteStarted
     case socialInboxRepliesOpened
     case socialListPublished
     case socialListSubscribed

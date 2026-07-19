@@ -44,7 +44,7 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/StarredSyncTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SuggestedFolderTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SupportFeedbackTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/UserPodcastRatingTask.swift: 4
-Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 16
+Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 17
 Modules/Sources/PocketCastsServer/Public/Refresh/PodcastSearchOperation.swift: 2
 Modules/Sources/PocketCastsServer/Public/Refresh/RefreshOperation.swift: 2
 Modules/Sources/PocketCastsServer/Public/ServerConfig.swift: 2

@@ -16,15 +16,19 @@ final class SocialSlice6SnapshotTests: XCTestCase {
 
     private static func comment(id: Int64, parentId: Int64 = 0, handle: String = "snapshot_friend",
                                 name: String = "Snapshot Friend", text: String, ts: Int? = nil,
-                                edited: Bool = false, removed: Bool = false, replyCount: Int = 0) -> SocialComment {
+                                quote: String = "", edited: Bool = false, removed: Bool = false,
+                                replyCount: Int = 0) -> SocialComment {
         SocialComment(id: id, parentId: parentId, userId: "00000000-0000-0000-0000-000000000003",
                       handle: handle, displayName: name, text: text, timestampSeconds: ts,
-                      createdAt: nil, edited: edited, removed: removed, replyCount: replyCount)
+                      quote: quote, createdAt: nil, edited: edited, removed: removed, replyCount: replyCount)
     }
 
     func testCommentsThread() {
         let fixture = [
             Self.comment(id: 1, text: "A Moment at two minutes — this bit is great.", ts: 125, replyCount: 2),
+            Self.comment(id: 7, handle: "quoting_friend", name: "Quoting Friend",
+                         text: "Exactly the moment I meant.", ts: 210,
+                         quote: "so we shipped it on a friday and nothing broke"),
             Self.comment(id: 4, text: "", removed: true, replyCount: 1),
             Self.comment(id: 6, handle: "another_friend", name: "Another Friend",
                          text: "Plain thread comment, no timestamp.", edited: true),

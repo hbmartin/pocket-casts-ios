@@ -301,6 +301,21 @@ final class TranscriptReaderViewModel: ObservableObject {
         )
     }
 
+    /// The raw line + anchor data for quoting into a comment (Slice 12).
+    /// Unlike `quoteText` this is the unformatted line: the quote text is
+    /// stored verbatim on the comment. A generated transcript without an
+    /// active mapping yields a nil timestamp — the composer then stamps the
+    /// current playback position at send.
+    func commentQuote(forBlock blockID: Int) -> (text: String, timestampSeconds: Int?, segment: Int)? {
+        guard blocks.indices.contains(blockID),
+              let cueIndex = blocks[blockID].cueIndex else { return nil }
+        let time = transcript.cues.indices.contains(cueIndex)
+            ? playbackTimelineTime(forCueTime: transcript.cues[cueIndex].startTime) : nil
+        let text = blocks[blockID].text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        return (text, time.map { Int($0) }, cueIndex)
+    }
+
     /// The cue's time window on the playback timeline, for pre-seeding the
     /// clip-share flow. Returns nil for a generated transcript without an
     /// active mapping — a clip trimmed against unmapped reference times would
