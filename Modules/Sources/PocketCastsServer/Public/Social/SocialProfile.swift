@@ -134,12 +134,13 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let stats: SocialProfileStats?
     public let recentlyPlayed: [SocialProfileEpisode]
     public let lists: [SharedList]
+    public let milestones: [SocialMilestone]
 
     public init(userId: String, handle: String, displayName: String, bio: String, avatarURL: String, createdAt: Date?, hasStats: Bool,
                 followerCount: Int = 0, followingCount: Int = 0, yourFollowState: FollowState = .none,
                 followedShows: [SocialProfilePodcast] = [], topPodcasts: [SocialProfilePodcast] = [],
                 stats: SocialProfileStats? = nil, recentlyPlayed: [SocialProfileEpisode] = [],
-                lists: [SharedList] = []) {
+                lists: [SharedList] = [], milestones: [SocialMilestone] = []) {
         self.userId = userId
         self.handle = handle
         self.displayName = displayName
@@ -155,6 +156,7 @@ public struct SocialPublicProfile: Equatable, Sendable {
         self.stats = stats
         self.recentlyPlayed = recentlyPlayed
         self.lists = lists
+        self.milestones = milestones
     }
 }
 
@@ -262,7 +264,8 @@ extension SocialPublicProfile {
                   topPodcasts: api.topPodcasts.map(SocialProfilePodcast.init),
                   stats: api.hasStats ? SocialProfileStats(api.stats) : nil,
                   recentlyPlayed: api.recentlyPlayed.map(SocialProfileEpisode.init),
-                  lists: api.lists.map(SharedList.init))
+                  lists: api.lists.map(SharedList.init),
+                  milestones: api.milestones.compactMap(SocialMilestone.init))
     }
 }
 
@@ -283,5 +286,32 @@ extension SocialProfileStats {
     init(_ api: Api_SocialProfileStats) {
         self.init(timeListenedSeconds: api.timeListenedSeconds,
                   listeningSince: api.hasListeningSince ? api.listeningSince.date : nil)
+    }
+}
+
+/// A materialized listening-ladder crossing (Slice 14, ADR-0013). Shared
+/// surfaces obey the owner's stats visibility; kind 1 = hours listened,
+/// 2 = episodes finished.
+public struct SocialMilestone: Equatable, Sendable, Identifiable {
+    public enum Kind: Int, Sendable {
+        case hours = 1
+        case episodes = 2
+    }
+
+    public let kind: Kind
+    public let tier: Int
+    public let crossedAt: Date?
+
+    public var id: String { "\(kind.rawValue)-\(tier)" }
+
+    public init(kind: Kind, tier: Int, crossedAt: Date? = nil) {
+        self.kind = kind
+        self.tier = tier
+        self.crossedAt = crossedAt
+    }
+
+    init?(_ api: Api_Milestone) {
+        guard let kind = Kind(rawValue: Int(api.kind)) else { return nil }
+        self.init(kind: kind, tier: Int(api.tier), crossedAt: api.hasCrossedAt ? api.crossedAt.date : nil)
     }
 }

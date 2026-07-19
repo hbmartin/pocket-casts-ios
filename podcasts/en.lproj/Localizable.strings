@@ -7488,6 +7488,36 @@
 /* Notification-settings toggle for new-post pushes from groups you enabled alerts for */
 "social_notifications_group_posts" = "Group posts (only groups you enable)";
 
+/* Notification-settings toggle for the weekly digest push */
+"social_notifications_digest" = "Weekly digest";
+
+/* Feed line for an hours-listened milestone. %1$@ actor, %2$d tier */
+"social_feed_item_milestone_hours" = "%1$@ crossed %2$d hours listened";
+
+/* Feed line for an episodes-finished milestone. %1$@ actor, %2$d tier */
+"social_feed_item_milestone_episodes" = "%1$@ finished %2$d episodes";
+
+/* Celebration card for your own hours milestone. %1$d is the tier */
+"social_milestone_celebration_hours" = "You crossed %1$d hours listened!";
+
+/* Celebration card for your own episodes milestone. %1$d is the tier */
+"social_milestone_celebration_episodes" = "You finished %1$d episodes!";
+
+/* Share button on the milestone celebration card */
+"social_milestone_share" = "Share your stats";
+
+/* Podcast-page line when the show has fandom hubs (plural). %1$d is the count */
+"social_hubs_count" = "%1$d groups about this show";
+
+/* Podcast-page line when the show has exactly one fandom hub */
+"social_hubs_count_singular" = "1 group about this show";
+
+/* Podcast-page entry to create the show's first group */
+"social_hubs_start" = "Start a group";
+
+/* Empty state of the podcast hubs sheet */
+"social_hubs_empty" = "No groups about this show yet.";
+
 /* Error when a comment fails to post */
 "social_comment_submit_failed" = "Couldn't post that comment.";
 

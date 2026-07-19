@@ -339,6 +339,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
   case commented // = 7
   case publishedList // = 8
   case joinedGroup // = 9
+  case milestone // = 10
   case UNRECOGNIZED(Int)
 
   init() {
@@ -357,6 +358,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
     case 7: self = .commented
     case 8: self = .publishedList
     case 9: self = .joinedGroup
+    case 10: self = .milestone
     default: self = .UNRECOGNIZED(rawValue)
     }
   }
@@ -373,6 +375,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
     case .commented: return 7
     case .publishedList: return 8
     case .joinedGroup: return 9
+    case .milestone: return 10
     case .UNRECOGNIZED(let i): return i
     }
   }
@@ -389,6 +392,7 @@ nonisolated enum Api_FeedItemKind: SwiftProtobuf.Enum, Swift.CaseIterable {
     .commented,
     .publishedList,
     .joinedGroup,
+    .milestone,
   ]
 
 }
@@ -492,6 +496,7 @@ nonisolated enum Api_SocialPushType: SwiftProtobuf.Enum, Swift.CaseIterable {
   case listInvite // = 6
   case groupInvite // = 7
   case groupPost // = 8
+  case digest // = 9
   case UNRECOGNIZED(Int)
 
   init() {
@@ -509,6 +514,7 @@ nonisolated enum Api_SocialPushType: SwiftProtobuf.Enum, Swift.CaseIterable {
     case 6: self = .listInvite
     case 7: self = .groupInvite
     case 8: self = .groupPost
+    case 9: self = .digest
     default: self = .UNRECOGNIZED(rawValue)
     }
   }
@@ -524,6 +530,7 @@ nonisolated enum Api_SocialPushType: SwiftProtobuf.Enum, Swift.CaseIterable {
     case .listInvite: return 6
     case .groupInvite: return 7
     case .groupPost: return 8
+    case .digest: return 9
     case .UNRECOGNIZED(let i): return i
     }
   }
@@ -539,6 +546,7 @@ nonisolated enum Api_SocialPushType: SwiftProtobuf.Enum, Swift.CaseIterable {
     .listInvite,
     .groupInvite,
     .groupPost,
+    .digest,
   ]
 
 }
@@ -9985,6 +9993,12 @@ nonisolated struct Api_PublicProfileResponse: @unchecked Sendable {
     set {_uniqueStorage()._lists = newValue}
   }
 
+  /// present only when stats are visible (Slice 14)
+  var milestones: [Api_Milestone] {
+    get {_storage._milestones}
+    set {_uniqueStorage()._milestones = newValue}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -10687,6 +10701,18 @@ nonisolated struct Api_FeedItem: @unchecked Sendable {
   var groupTitle: String {
     get {_storage._groupTitle}
     set {_uniqueStorage()._groupTitle = newValue}
+  }
+
+  /// MILESTONE (1=hours, 2=episodes)
+  var milestoneKind: Int32 {
+    get {_storage._milestoneKind}
+    set {_uniqueStorage()._milestoneKind = newValue}
+  }
+
+  /// MILESTONE
+  var milestoneTier: Int32 {
+    get {_storage._milestoneTier}
+    set {_uniqueStorage()._milestoneTier = newValue}
   }
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -11756,6 +11782,33 @@ nonisolated struct Api_GroupPostDeleteRequest: Sendable {
   init() {}
 }
 
+/// ---- Milestones (Slice 14, ADR-0013): materialized ladder crossings. ----
+nonisolated struct Api_Milestone: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// 1 = hours listened, 2 = episodes finished
+  var kind: Int32 = 0
+
+  var tier: Int32 = 0
+
+  var crossedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_crossedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_crossedAt = newValue}
+  }
+  /// Returns true if `crossedAt` has been explicitly set.
+  var hasCrossedAt: Bool {self._crossedAt != nil}
+  /// Clears the value of `crossedAt`. Subsequent reads from it will return its default value.
+  mutating func clearCrossedAt() {self._crossedAt = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _crossedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
 nonisolated struct Api_ProfileSummary: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -11976,7 +12029,7 @@ nonisolated extension Api_FollowState: SwiftProtobuf._ProtoNameProviding {
 }
 
 nonisolated extension Api_FeedItemKind: SwiftProtobuf._ProtoNameProviding {
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FEED_ITEM_KIND_UNSPECIFIED\0\u{1}FEED_ITEM_KIND_JOINED\0\u{1}FEED_ITEM_KIND_FOLLOWED_PERSON\0\u{1}FEED_ITEM_KIND_FOLLOWED_SHOW\0\u{1}FEED_ITEM_KIND_FINISHED_EPISODE\0\u{1}FEED_ITEM_KIND_REVIEWED\0\u{1}FEED_ITEM_KIND_REACTED\0\u{1}FEED_ITEM_KIND_COMMENTED\0\u{1}FEED_ITEM_KIND_PUBLISHED_LIST\0\u{1}FEED_ITEM_KIND_JOINED_GROUP\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FEED_ITEM_KIND_UNSPECIFIED\0\u{1}FEED_ITEM_KIND_JOINED\0\u{1}FEED_ITEM_KIND_FOLLOWED_PERSON\0\u{1}FEED_ITEM_KIND_FOLLOWED_SHOW\0\u{1}FEED_ITEM_KIND_FINISHED_EPISODE\0\u{1}FEED_ITEM_KIND_REVIEWED\0\u{1}FEED_ITEM_KIND_REACTED\0\u{1}FEED_ITEM_KIND_COMMENTED\0\u{1}FEED_ITEM_KIND_PUBLISHED_LIST\0\u{1}FEED_ITEM_KIND_JOINED_GROUP\0\u{1}FEED_ITEM_KIND_MILESTONE\0")
 }
 
 nonisolated extension Api_SharedListRole: SwiftProtobuf._ProtoNameProviding {
@@ -11988,7 +12041,7 @@ nonisolated extension Api_SharedListOp: SwiftProtobuf._ProtoNameProviding {
 }
 
 nonisolated extension Api_SocialPushType: SwiftProtobuf._ProtoNameProviding {
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SOCIAL_PUSH_TYPE_UNSPECIFIED\0\u{1}SOCIAL_PUSH_TYPE_FOLLOW_REQUEST\0\u{1}SOCIAL_PUSH_TYPE_FOLLOW_APPROVED\0\u{1}SOCIAL_PUSH_TYPE_NEW_FOLLOWER\0\u{1}SOCIAL_PUSH_TYPE_SHARED_ITEM\0\u{1}SOCIAL_PUSH_TYPE_COMMENT_REPLY\0\u{1}SOCIAL_PUSH_TYPE_LIST_INVITE\0\u{1}SOCIAL_PUSH_TYPE_GROUP_INVITE\0\u{1}SOCIAL_PUSH_TYPE_GROUP_POST\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SOCIAL_PUSH_TYPE_UNSPECIFIED\0\u{1}SOCIAL_PUSH_TYPE_FOLLOW_REQUEST\0\u{1}SOCIAL_PUSH_TYPE_FOLLOW_APPROVED\0\u{1}SOCIAL_PUSH_TYPE_NEW_FOLLOWER\0\u{1}SOCIAL_PUSH_TYPE_SHARED_ITEM\0\u{1}SOCIAL_PUSH_TYPE_COMMENT_REPLY\0\u{1}SOCIAL_PUSH_TYPE_LIST_INVITE\0\u{1}SOCIAL_PUSH_TYPE_GROUP_INVITE\0\u{1}SOCIAL_PUSH_TYPE_GROUP_POST\0\u{1}SOCIAL_PUSH_TYPE_DIGEST\0")
 }
 
 nonisolated extension Api_GroupRole: SwiftProtobuf._ProtoNameProviding {
@@ -24372,7 +24425,7 @@ nonisolated extension Api_PublicProfileRequest: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".PublicProfileResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0\u{3}followed_shows\0\u{3}top_podcasts\0\u{1}stats\0\u{3}recently_played\0\u{3}follower_count\0\u{3}following_count\0\u{3}your_follow_state\0\u{1}lists\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}user_id\0\u{1}handle\0\u{3}display_name\0\u{1}bio\0\u{3}avatar_url\0\u{3}created_at\0\u{3}has_stats\0\u{3}followed_shows\0\u{3}top_podcasts\0\u{1}stats\0\u{3}recently_played\0\u{3}follower_count\0\u{3}following_count\0\u{3}your_follow_state\0\u{1}lists\0\u{1}milestones\0")
 
   fileprivate class _StorageClass {
     var _userID: String = String()
@@ -24390,6 +24443,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
     var _followingCount: Int64 = 0
     var _yourFollowState: Api_FollowState = .none
     var _lists: [Api_SharedList] = []
+    var _milestones: [Api_Milestone] = []
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -24415,6 +24469,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
       _followingCount = source._followingCount
       _yourFollowState = source._yourFollowState
       _lists = source._lists
+      _milestones = source._milestones
     }
   }
 
@@ -24448,6 +24503,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
         case 13: try { try decoder.decodeSingularInt64Field(value: &_storage._followingCount) }()
         case 14: try { try decoder.decodeSingularEnumField(value: &_storage._yourFollowState) }()
         case 15: try { try decoder.decodeRepeatedMessageField(value: &_storage._lists) }()
+        case 16: try { try decoder.decodeRepeatedMessageField(value: &_storage._milestones) }()
         default: break
         }
       }
@@ -24505,6 +24561,9 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
       if !_storage._lists.isEmpty {
         try visitor.visitRepeatedMessageField(value: _storage._lists, fieldNumber: 15)
       }
+      if !_storage._milestones.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._milestones, fieldNumber: 16)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -24529,6 +24588,7 @@ nonisolated extension Api_PublicProfileResponse: SwiftProtobuf.Message, SwiftPro
         if _storage._followingCount != rhs_storage._followingCount {return false}
         if _storage._yourFollowState != rhs_storage._yourFollowState {return false}
         if _storage._lists != rhs_storage._lists {return false}
+        if _storage._milestones != rhs_storage._milestones {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -25814,7 +25874,7 @@ nonisolated extension Api_FeedRequest: SwiftProtobuf.Message, SwiftProtobuf._Mes
 
 nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".FeedItem"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{3}actor_handle\0\u{3}actor_display_name\0\u{3}actor_user_id\0\u{3}podcast_uuid\0\u{3}podcast_title\0\u{3}episode_uuid\0\u{3}episode_title\0\u{3}target_handle\0\u{3}reaction_kind\0\u{3}review_excerpt\0\u{3}event_at\0\u{3}list_title\0\u{3}list_id\0\u{3}group_id\0\u{3}group_title\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{3}actor_handle\0\u{3}actor_display_name\0\u{3}actor_user_id\0\u{3}podcast_uuid\0\u{3}podcast_title\0\u{3}episode_uuid\0\u{3}episode_title\0\u{3}target_handle\0\u{3}reaction_kind\0\u{3}review_excerpt\0\u{3}event_at\0\u{3}list_title\0\u{3}list_id\0\u{3}group_id\0\u{3}group_title\0\u{3}milestone_kind\0\u{3}milestone_tier\0")
 
   fileprivate class _StorageClass {
     var _kind: Api_FeedItemKind = .unspecified
@@ -25833,6 +25893,8 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
     var _listID: Int64 = 0
     var _groupID: Int64 = 0
     var _groupTitle: String = String()
+    var _milestoneKind: Int32 = 0
+    var _milestoneTier: Int32 = 0
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -25859,6 +25921,8 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
       _listID = source._listID
       _groupID = source._groupID
       _groupTitle = source._groupTitle
+      _milestoneKind = source._milestoneKind
+      _milestoneTier = source._milestoneTier
     }
   }
 
@@ -25893,6 +25957,8 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
         case 14: try { try decoder.decodeSingularInt64Field(value: &_storage._listID) }()
         case 15: try { try decoder.decodeSingularInt64Field(value: &_storage._groupID) }()
         case 16: try { try decoder.decodeSingularStringField(value: &_storage._groupTitle) }()
+        case 17: try { try decoder.decodeSingularInt32Field(value: &_storage._milestoneKind) }()
+        case 18: try { try decoder.decodeSingularInt32Field(value: &_storage._milestoneTier) }()
         default: break
         }
       }
@@ -25953,6 +26019,12 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
       if !_storage._groupTitle.isEmpty {
         try visitor.visitSingularStringField(value: _storage._groupTitle, fieldNumber: 16)
       }
+      if _storage._milestoneKind != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._milestoneKind, fieldNumber: 17)
+      }
+      if _storage._milestoneTier != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._milestoneTier, fieldNumber: 18)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -25978,6 +26050,8 @@ nonisolated extension Api_FeedItem: SwiftProtobuf.Message, SwiftProtobuf._Messag
         if _storage._listID != rhs_storage._listID {return false}
         if _storage._groupID != rhs_storage._groupID {return false}
         if _storage._groupTitle != rhs_storage._groupTitle {return false}
+        if _storage._milestoneKind != rhs_storage._milestoneKind {return false}
+        if _storage._milestoneTier != rhs_storage._milestoneTier {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -28239,6 +28313,50 @@ nonisolated extension Api_GroupPostDeleteRequest: SwiftProtobuf.Message, SwiftPr
 
   static func ==(lhs: Api_GroupPostDeleteRequest, rhs: Api_GroupPostDeleteRequest) -> Bool {
     if lhs.id != rhs.id {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_Milestone: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".Milestone"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{1}tier\0\u{3}crossed_at\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.kind) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.tier) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._crossedAt) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.kind != 0 {
+      try visitor.visitSingularInt32Field(value: self.kind, fieldNumber: 1)
+    }
+    if self.tier != 0 {
+      try visitor.visitSingularInt32Field(value: self.tier, fieldNumber: 2)
+    }
+    try { if let v = self._crossedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_Milestone, rhs: Api_Milestone) -> Bool {
+    if lhs.kind != rhs.kind {return false}
+    if lhs.tier != rhs.tier {return false}
+    if lhs._crossedAt != rhs._crossedAt {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

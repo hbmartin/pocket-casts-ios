@@ -147,6 +147,14 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Succession** — the public-hub lifecycle rule: when a hub owner's profile is erased,
   ownership passes to the longest-tenured remaining member (a memberless hub dies). A
   private Group instead dies with its owner, like a Shared List.
+- **Milestone** — a materialized threshold-crossing on one of two global listening
+  ladders (total hours; episodes finished). The crossing *moment* is stored state — it
+  cannot be re-derived from aggregates. Shared surfaces obey the owner's stats
+  Visibility; the owner's own crossing is always celebrated locally.
+- **Weekly Digest** — the once-weekly push summarizing the account's own week (hours,
+  episodes, Milestones) and its graph's highlights. Personally addressed and on by
+  default, but sent only to joined accounts with a graph or a fresh Milestone — never
+  filler.
 - **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
   its text and author are wiped but its position in the tree is kept, so other people's
   replies survive. The comment-tree analogue of a tombstoned Handle.

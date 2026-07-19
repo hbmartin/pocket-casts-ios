@@ -46,6 +46,7 @@ public enum FeedItemKind: Int, Sendable {
     case commented = 7
     case publishedList = 8
     case joinedGroup = 9
+    case milestone = 10
 }
 
 /// One derived activity-feed item (read-time derivation; ADR-0009).
@@ -66,6 +67,8 @@ public struct FeedItem: Equatable, Sendable, Identifiable {
     public let listId: Int64
     public let groupTitle: String
     public let groupId: Int64
+    public let milestoneKind: Int
+    public let milestoneTier: Int
 
     public var id: String { "\(kind.rawValue)-\(actorHandle)-\(episodeUuid)-\(podcastUuid)-\(targetHandle)-\(eventAt?.timeIntervalSince1970 ?? 0)" }
 
@@ -73,7 +76,8 @@ public struct FeedItem: Equatable, Sendable, Identifiable {
                 podcastUuid: String, podcastTitle: String, episodeUuid: String, episodeTitle: String,
                 targetHandle: String, reactionKind: ReactionKind?, reviewExcerpt: String, eventAt: Date?,
                 listTitle: String = "", listId: Int64 = 0,
-                groupTitle: String = "", groupId: Int64 = 0) {
+                groupTitle: String = "", groupId: Int64 = 0,
+                milestoneKind: Int = 0, milestoneTier: Int = 0) {
         self.kind = kind
         self.actorHandle = actorHandle
         self.actorDisplayName = actorDisplayName
@@ -90,6 +94,8 @@ public struct FeedItem: Equatable, Sendable, Identifiable {
         self.listId = listId
         self.groupTitle = groupTitle
         self.groupId = groupId
+        self.milestoneKind = milestoneKind
+        self.milestoneTier = milestoneTier
     }
 }
 
@@ -125,6 +131,8 @@ extension FeedItem {
                   listTitle: api.listTitle,
                   listId: api.listID,
                   groupTitle: api.groupTitle,
-                  groupId: api.groupID)
+                  groupId: api.groupID,
+                  milestoneKind: Int(api.milestoneKind),
+                  milestoneTier: Int(api.milestoneTier))
     }
 }

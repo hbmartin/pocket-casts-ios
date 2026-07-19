@@ -12,6 +12,7 @@ public enum SocialPushType: Int, Sendable, CaseIterable {
     case listInvite = 6
     case groupInvite = 7
     case groupPost = 8
+    case digest = 9
 
     public var bit: Int64 { 1 << Int64(rawValue - 1) }
 

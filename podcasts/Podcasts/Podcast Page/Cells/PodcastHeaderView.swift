@@ -99,6 +99,12 @@ struct PodcastHeaderView: View {
                 // visible to this account (docs/Social.md).
                 PodcastProofLine(podcastUuid: viewModel.podcast.uuid)
                     .padding(.top, 2)
+
+                // Fandom hubs (Slice 14 debt from ADR-0012): the show's
+                // public groups, non-exclusive anchors.
+                PodcastHubsLine(podcastUuid: viewModel.podcast.uuid,
+                                podcastTitle: viewModel.podcast.title ?? "")
+                    .padding(.top, 2)
             }
             Spacer().frame(height: titleBottomMargin)
             podcastActions

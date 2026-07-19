@@ -4587,6 +4587,14 @@ nonisolated internal enum L10n {
   internal static func socialFeedItemJoinedGroup(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_joined_group", String(describing: p1), String(describing: p2), fallback: "%1$@ joined %2$@")
   }
+  /// Feed line for an episodes-finished milestone. %1$@ actor, %2$d tier
+  internal static func socialFeedItemMilestoneEpisodes(_ p1: Any, _ p2: Int) -> String {
+    return L10n.tr("Localizable", "social_feed_item_milestone_episodes", String(describing: p1), p2, fallback: "%1$@ finished %2$d episodes")
+  }
+  /// Feed line for an hours-listened milestone. %1$@ actor, %2$d tier
+  internal static func socialFeedItemMilestoneHours(_ p1: Any, _ p2: Int) -> String {
+    return L10n.tr("Localizable", "social_feed_item_milestone_hours", String(describing: p1), p2, fallback: "%1$@ crossed %2$d hours listened")
+  }
   /// Feed line: person published a list. %1$@ = display name, %2$@ = list title
   internal static func socialFeedItemPublishedList(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_published_list", String(describing: p1), String(describing: p2), fallback: "%1$@ published %2$@")
@@ -4721,6 +4729,16 @@ nonisolated internal enum L10n {
   internal static var socialHandleTitle: String { return L10n.tr("Localizable", "social_handle_title", fallback: "Your @handle") }
   /// Footer explaining the heatmap is device-local
   internal static var socialHeatmapLocalNote: String { return L10n.tr("Localizable", "social_heatmap_local_note", fallback: "Your activity grid is computed on this device and isn't shown on your public page.") }
+  /// Podcast-page line when the show has fandom hubs (plural). %1$d is the count
+  internal static func socialHubsCount(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_hubs_count", p1, fallback: "%1$d groups about this show")
+  }
+  /// Podcast-page line when the show has exactly one fandom hub
+  internal static var socialHubsCountSingular: String { return L10n.tr("Localizable", "social_hubs_count_singular", fallback: "1 group about this show") }
+  /// Empty state of the podcast hubs sheet
+  internal static var socialHubsEmpty: String { return L10n.tr("Localizable", "social_hubs_empty", fallback: "No groups about this show yet.") }
+  /// Podcast-page entry to create the show's first group
+  internal static var socialHubsStart: String { return L10n.tr("Localizable", "social_hubs_start", fallback: "Start a group") }
   /// Shown when the inbox has no items
   internal static var socialInboxEmpty: String { return L10n.tr("Localizable", "social_inbox_empty", fallback: "Nothing here yet. Episodes friends send you will show up here.") }
   /// Inbox section header for replies to the user's comments
@@ -4815,8 +4833,20 @@ nonisolated internal enum L10n {
   internal static var socialListsEmpty: String { return L10n.tr("Localizable", "social_lists_empty", fallback: "Lists you publish, co-edit or subscribe to will show up here.") }
   /// Title of the shared-lists hub screen
   internal static var socialListsTitle: String { return L10n.tr("Localizable", "social_lists_title", fallback: "Shared Lists") }
+  /// Celebration card for your own episodes milestone. %1$d is the tier
+  internal static func socialMilestoneCelebrationEpisodes(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_milestone_celebration_episodes", p1, fallback: "You finished %1$d episodes!")
+  }
+  /// Celebration card for your own hours milestone. %1$d is the tier
+  internal static func socialMilestoneCelebrationHours(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_milestone_celebration_hours", p1, fallback: "You crossed %1$d hours listened!")
+  }
+  /// Share button on the milestone celebration card
+  internal static var socialMilestoneShare: String { return L10n.tr("Localizable", "social_milestone_share", fallback: "Share your stats") }
   /// Overflow action that hides a person's items from the activity feed without blocking them
   internal static var socialMute: String { return L10n.tr("Localizable", "social_mute", fallback: "Mute") }
+  /// Notification-settings toggle for the weekly digest push
+  internal static var socialNotificationsDigest: String { return L10n.tr("Localizable", "social_notifications_digest", fallback: "Weekly digest") }
   /// Toggle: push when your follow request is approved
   internal static var socialNotificationsFollowApproved: String { return L10n.tr("Localizable", "social_notifications_follow_approved", fallback: "Request approvals") }
   /// Toggle: push when someone asks to follow you

@@ -182,6 +182,8 @@ struct CreateGroupView: View {
     /// Podcast anchor: set when creating from a podcast page.
     var anchorUuid = ""
     var anchorTitle = ""
+    /// Hub creation entries (podcast page) start on the public setting.
+    var startPublic = false
 
     var body: some View {
         Form {
@@ -204,6 +206,9 @@ struct CreateGroupView: View {
                     .font(.caption)
                     .foregroundColor(AppTheme.color(for: .support05, theme: theme))
             }
+        }
+        .onAppear {
+            if startPublic { isPublic = true }
         }
         .navigationTitle(L10n.socialGroupCreateTitle)
         .navigationBarTitleDisplayMode(.inline)

@@ -834,6 +834,80 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertFalse(groups.groups.contains { $0.id == circle.id }, "private circle dies with its owner")
     }
 
+    /// Slice-14 wire contract: milestones (ADR-0013) — sync-detected
+    /// crossings, stats-visibility gating, profile line, digest pref bit.
+    func testMilestonesLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-mile-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-mile-b-\(suffix)@e2e.test")
+
+        let handleA = "ios_mile_a_\(suffix)"
+        for (token, handle, name) in [(tokenA, handleA, "Milestone A"), (tokenB, "ios_mile_b_\(suffix)", "Watcher B")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // A syncs 12 finished hour-long episodes: tier-10 crossings on both
+        // ladders materialize server-side.
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        for index in 0 ..< 12 {
+            var episode = Api_SyncUserEpisode()
+            episode.uuid = String(format: "abcd%04d-00bb-4000-8000-%@", index, String(suffix.prefix(4)) + "00000000")
+            episode.podcastUuid = "dcba0000-00bb-4000-8000-000000000001"
+            episode.duration = Google_Protobuf_Int64Value(3600)
+            episode.durationModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            episode.playedUpTo = Google_Protobuf_Int64Value(3600)
+            episode.playedUpToModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            episode.playingStatus = Google_Protobuf_Int32Value(3)
+            episode.playingStatusModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            var record = Api_Record()
+            record.episode = episode
+            sync.records.append(record)
+        }
+        var (status, body) = try await post("user/sync/update", token: tokenA, message: sync)
+        XCTAssertEqual(status, 200)
+
+        // Stats public, B follows: kind-10 items surface with the tier.
+        var update = Api_ProfileUpdateRequest()
+        update.displayName = "Milestone A"
+        update.statsVisibility = .public
+        (status, _) = try await post("social/profile/update", token: tokenA, message: update)
+        XCTAssertEqual(status, 200)
+        var follow = Api_FollowRequest()
+        follow.handle = handleA
+        (status, _) = try await post("social/follow", token: tokenB, message: follow)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/feed", token: tokenB, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        let feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertTrue(feed.items.contains { $0.kind == .milestone && $0.milestoneTier == 10 },
+                      "tier-10 crossing must surface as a milestone feed item")
+
+        // The public profile carries the milestones line under the stats gate.
+        var publicRequest = Api_PublicProfileRequest()
+        publicRequest.handle = handleA
+        (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
+        XCTAssertEqual(status, 200)
+        let profile = try Api_PublicProfileResponse(serializedBytes: body)
+        XCTAssertFalse(profile.milestones.isEmpty)
+
+        // Digest pref: disabling bit 9 round-trips through the profile.
+        var prefs = Api_ProfileUpdateRequest()
+        prefs.displayName = "Milestone A"
+        prefs.statsVisibility = .public
+        prefs.socialPushDisabled = 1 << 8
+        (status, body) = try await post("social/profile/update", token: tokenA, message: prefs)
+        XCTAssertEqual(status, 200)
+        let updated = try Api_ProfileResponse(serializedBytes: body)
+        XCTAssertEqual(updated.profile.socialPushDisabled, 1 << 8)
+    }
+
     func testSocialPushPrefsLoop() async throws {
         let suffix = UUID().uuidString.prefix(8).lowercased()
         let (token, _) = try await register(email: "ios-push-\(suffix)@e2e.test")

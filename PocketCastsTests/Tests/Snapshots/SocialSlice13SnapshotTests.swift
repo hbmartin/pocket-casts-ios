@@ -58,6 +58,38 @@ final class SocialSlice13SnapshotTests: XCTestCase {
         )
     }
 
+    func testMilestoneFeedAndCelebration() {
+        let items = [
+            FeedItem(kind: .milestone, actorHandle: "snapshot_friend", actorDisplayName: "Snapshot Friend",
+                     actorUserId: "u1", podcastUuid: "", podcastTitle: "", episodeUuid: "", episodeTitle: "",
+                     targetHandle: "", reactionKind: nil, reviewExcerpt: "", eventAt: nil,
+                     milestoneKind: 1, milestoneTier: 100),
+            FeedItem(kind: .milestone, actorHandle: "another_friend", actorDisplayName: "Another Friend",
+                     actorUserId: "u2", podcastUuid: "", podcastTitle: "", episodeUuid: "", episodeTitle: "",
+                     targetHandle: "", reactionKind: nil, reviewExcerpt: "", eventAt: nil,
+                     milestoneKind: 2, milestoneTier: 250),
+        ]
+        let viewModel = SocialFeedViewModel(fixture: items)
+        viewModel.celebration = SocialMilestone(kind: .hours, tier: 100)
+        assertAppThemedSnapshots(
+            of: ScrollView { SocialFeedSection(viewModel: viewModel) },
+            layout: .fixed(width: 390, height: 540)
+        )
+    }
+
+    func testPodcastHubsSheet() {
+        let hubs = [
+            Self.group(id: 4, title: "Swift Talk Listeners", isPublic: true, members: 87, role: .none),
+            Self.group(id: 5, title: "Weekly Watchers", isPublic: true, members: 12, role: .none),
+        ]
+        assertAppThemedSnapshots(
+            of: NavigationView {
+                PodcastHubsListView(podcastUuid: "fixture", podcastTitle: "Fixture Podcast", hubs: hubs)
+            }.navigationViewStyle(.stack),
+            layout: .fixed(width: 390, height: 480)
+        )
+    }
+
     func testCreateGroupSheet() {
         assertAppThemedSnapshots(
             of: NavigationView {

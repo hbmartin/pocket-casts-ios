@@ -27,6 +27,9 @@ struct SocialFeedSection: View {
 
     private var feedContent: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if let milestone = viewModel.celebration {
+                celebrationCard(milestone)
+            }
             HStack {
                 Text(L10n.socialFeedHeader)
                     .font(.title3.bold())
@@ -122,6 +125,40 @@ struct SocialFeedSection: View {
 
     // MARK: - Join card (not joined)
 
+    private func celebrationCard(_ milestone: SocialMilestone) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "trophy.fill")
+                .font(.title3)
+                .foregroundColor(AppTheme.color(for: .support10, theme: theme))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(milestone.kind == .hours
+                    ? L10n.socialMilestoneCelebrationHours(milestone.tier)
+                    : L10n.socialMilestoneCelebrationEpisodes(milestone.tier))
+                    .font(.subheadline.weight(.semibold))
+                Button(L10n.socialMilestoneShare) {
+                    if let presenter = SceneHelper.rootViewController() {
+                        SocialShareCards.shareStatsCard(from: presenter)
+                    }
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.plain)
+                .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+            }
+            Spacer(minLength: 0)
+            Button {
+                viewModel.dismissCelebration()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(L10n.cancel)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(AppTheme.color(for: .primaryUi02, theme: theme)))
+        .padding(.horizontal, 16)
+    }
+
     private var joinCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(L10n.socialExploreJoinTitle)
@@ -214,6 +251,11 @@ struct FeedItemRow: View {
             return L10n.socialFeedItemPublishedList(actor, item.listTitle)
         case .joinedGroup:
             return L10n.socialFeedItemJoinedGroup(actor, item.groupTitle)
+        case .milestone:
+            if item.milestoneKind == SocialMilestone.Kind.hours.rawValue {
+                return L10n.socialFeedItemMilestoneHours(actor, item.milestoneTier)
+            }
+            return L10n.socialFeedItemMilestoneEpisodes(actor, item.milestoneTier)
         }
     }
 
@@ -228,6 +270,7 @@ struct FeedItemRow: View {
         case .commented: return "bubble.left.and.bubble.right"
         case .publishedList: return "list.star"
         case .joinedGroup: return "person.3"
+        case .milestone: return "trophy"
         }
     }
 }
@@ -236,6 +279,7 @@ struct FeedItemRow: View {
 final class SocialFeedViewModel: ObservableObject {
     @Published private(set) var items: [FeedItem] = []
     @Published private(set) var trending: [TrendingPodcast] = []
+    @Published var celebration: SocialMilestone?
     @Published private(set) var isLoading = true
     @Published private(set) var isJoined: Bool
 
@@ -269,6 +313,30 @@ final class SocialFeedViewModel: ObservableObject {
         items = await ApiServerHandler.shared.fetchFeed(limit: Self.pageSize) ?? []
         trending = await ApiServerHandler.shared.fetchTrendingWithFriends() ?? []
         isLoading = false
+        await detectFreshMilestone()
+    }
+
+    /// The local celebration (Slice 14, ADR-0013): your own crossing always
+    /// celebrates regardless of stats visibility. Seen-tracking is local.
+    private func detectFreshMilestone() async {
+        guard celebration == nil, let handle = SocialIdentityStore.cachedProfile?.handle,
+              let profile = await ApiServerHandler.shared.fetchPublicProfile(handle: handle) else { return }
+        var seen = Set(UserDefaults.standard.stringArray(forKey: Self.seenMilestonesKey) ?? [])
+        let fresh = profile.milestones.filter { !seen.contains($0.id) }
+        guard !fresh.isEmpty else { return }
+        seen.formUnion(fresh.map(\.id))
+        UserDefaults.standard.set(Array(seen), forKey: Self.seenMilestonesKey)
+        // First launch just baselines: celebrate only when SOME were seen
+        // before (otherwise long-time listeners get a wall of stale confetti).
+        if seen.count != fresh.count {
+            celebration = fresh.first
+        }
+    }
+
+    private static let seenMilestonesKey = "SocialSeenMilestones"
+
+    func dismissCelebration() {
+        celebration = nil
     }
 
     /// Re-loads when the joined state changed since the last load (e.g. the
@@ -320,6 +388,8 @@ final class SocialFeedViewModel: ObservableObject {
         case .joinedGroup:
             guard item.groupId > 0 else { return }
             SocialCoordinator.openGroup(id: item.groupId)
+        case .milestone:
+            SocialCoordinator.openPublicProfile(handle: item.actorHandle)
         }
     }
 }

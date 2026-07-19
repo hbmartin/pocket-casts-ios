@@ -198,6 +198,8 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
                 } else {
                     SocialCoordinator.openGroups()
                 }
+            case .digest:
+                NavigationManager.sharedManager.navigateTo(NavigationManager.explorePageKey, data: nil)
             case .none:
                 break
             }
