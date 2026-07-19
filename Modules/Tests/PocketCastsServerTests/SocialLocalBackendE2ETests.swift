@@ -759,6 +759,81 @@ final class SocialLocalBackendE2ETests: XCTestCase {
     /// through profile update and decodes leniently. Actual APNs delivery is
     /// asserted by the backend's mock-APNs e2e (this suite can't receive
     /// pushes).
+    /// Slice-13 wire contract: groups (ADR-0012) — private no-leak, invites,
+    /// posts + replies, public join, succession on owner erasure.
+    func testGroupsLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-grp-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-grp-b-\(suffix)@e2e.test")
+
+        let handleB = "ios_grp_b_\(suffix)"
+        for (token, handle, name) in [(tokenA, "ios_grp_a_\(suffix)", "Group Owner"), (tokenB, handleB, "Group Member")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // A creates a public hub; B cannot yet be a member.
+        var create = Api_GroupCreateRequest()
+        create.title = "iOS Wire Hub"
+        create.visibility = .public
+        var (status, body) = try await post("social/group/create", token: tokenA, message: create)
+        XCTAssertEqual(status, 200)
+        let hub = try Api_SocialGroup(serializedBytes: body)
+        XCTAssertEqual(hub.yourRole, .owner)
+
+        // A posts; anonymous read of the public hub works and carries the group detail.
+        var post_ = Api_GroupPostRequest()
+        post_.groupID = hub.id
+        post_.text = "welcome to the hub"
+        (status, body) = try await post("social/group/post/submit", token: tokenA, message: post_)
+        XCTAssertEqual(status, 200)
+        let seed = try Api_GroupPost(serializedBytes: body)
+
+        var postsReq = Api_GroupPostsRequest()
+        postsReq.groupID = hub.id
+        (status, body) = try await post("social/group/posts", token: "", message: postsReq)
+        XCTAssertEqual(status, 200)
+        var page = try Api_GroupPostsResponse(serializedBytes: body)
+        XCTAssertEqual(page.posts.count, 1)
+        XCTAssertEqual(page.group.title, "iOS Wire Hub")
+
+        // B joins one-tap, replies to the seed.
+        var joinReq = Api_GroupJoinRequest()
+        joinReq.id = hub.id
+        (status, _) = try await post("social/group/join", token: tokenB, message: joinReq)
+        XCTAssertEqual(status, 200)
+        var reply = Api_GroupPostRequest()
+        reply.groupID = hub.id
+        reply.parentID = seed.id
+        reply.text = "glad to be here"
+        (status, _) = try await post("social/group/post/submit", token: tokenB, message: reply)
+        XCTAssertEqual(status, 200)
+
+        // A creates a private circle; B gets a no-leak 404 on its posts.
+        create.title = "iOS Wire Circle"
+        create.visibility = .private
+        (status, body) = try await post("social/group/create", token: tokenA, message: create)
+        XCTAssertEqual(status, 200)
+        let circle = try Api_SocialGroup(serializedBytes: body)
+        postsReq.groupID = circle.id
+        (status, _) = try await post("social/group/posts", token: tokenB, message: postsReq)
+        XCTAssertEqual(status, 404)
+
+        // A erases: hub passes to B (succession), circle dies.
+        (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/groups", token: tokenB, message: Api_GroupsRequest())
+        XCTAssertEqual(status, 200)
+        let groups = try Api_GroupsResponse(serializedBytes: body)
+        let hubAfter = groups.groups.first { $0.id == hub.id }
+        XCTAssertEqual(hubAfter?.yourRole, .owner, "hub passes to the longest-tenured member")
+        XCTAssertFalse(groups.groups.contains { $0.id == circle.id }, "private circle dies with its owner")
+    }
+
     func testSocialPushPrefsLoop() async throws {
         let suffix = UUID().uuidString.prefix(8).lowercased()
         let (token, _) = try await register(email: "ios-push-\(suffix)@e2e.test")

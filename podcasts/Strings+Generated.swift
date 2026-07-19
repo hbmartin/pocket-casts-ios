@@ -4583,6 +4583,10 @@ nonisolated internal enum L10n {
   internal static func socialFeedItemJoined(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_joined", String(describing: p1), fallback: "%1$@ joined")
   }
+  /// Feed line for joining a public group. %1$@ actor name, %2$@ group title
+  internal static func socialFeedItemJoinedGroup(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_feed_item_joined_group", String(describing: p1), String(describing: p2), fallback: "%1$@ joined %2$@")
+  }
   /// Feed line: person published a list. %1$@ = display name, %2$@ = list title
   internal static func socialFeedItemPublishedList(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "social_feed_item_published_list", String(describing: p1), String(describing: p2), fallback: "%1$@ published %2$@")
@@ -4643,6 +4647,56 @@ nonisolated internal enum L10n {
   internal static var socialFollowing: String { return L10n.tr("Localizable", "social_following", fallback: "Following") }
   /// Header/label for the list of accounts a profile follows
   internal static var socialFollowingTitle: String { return L10n.tr("Localizable", "social_following_title", fallback: "Following") }
+  /// Accessibility label for the per-group new-post notification toggle
+  internal static var socialGroupAlertToggle: String { return L10n.tr("Localizable", "social_group_alert_toggle", fallback: "New post alerts") }
+  /// Accessibility label for attaching the currently playing episode to a group post
+  internal static var socialGroupAttachEpisode: String { return L10n.tr("Localizable", "social_group_attach_episode", fallback: "Attach current episode") }
+  /// Owner action banning a member from a group (cannot rejoin)
+  internal static var socialGroupBan: String { return L10n.tr("Localizable", "social_group_ban", fallback: "Ban from group") }
+  /// Title of the group creation sheet
+  internal static var socialGroupCreateTitle: String { return L10n.tr("Localizable", "social_group_create_title", fallback: "New Group") }
+  /// Placeholder for the optional group description field
+  internal static var socialGroupDescriptionPlaceholder: String { return L10n.tr("Localizable", "social_group_description_placeholder", fallback: "Description (optional)") }
+  /// Attribution line on a group invite. %1$@ is the inviter's @handle
+  internal static func socialGroupInviteFrom(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_group_invite_from", String(describing: p1), fallback: "Invited by %1$@")
+  }
+  /// Section header for pending group invites
+  internal static var socialGroupInvitesTitle: String { return L10n.tr("Localizable", "social_group_invites_title", fallback: "Group Invites") }
+  /// Button joining a public group
+  internal static var socialGroupJoin: String { return L10n.tr("Localizable", "social_group_join", fallback: "Join Group") }
+  /// Owner action removing a member from a group
+  internal static var socialGroupKick: String { return L10n.tr("Localizable", "social_group_kick", fallback: "Remove from group") }
+  /// Menu action to leave a group
+  internal static var socialGroupLeave: String { return L10n.tr("Localizable", "social_group_leave", fallback: "Leave Group") }
+  /// Member count on a group row (plural). %1$d is the count
+  internal static func socialGroupMemberCount(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_group_member_count", p1, fallback: "%1$d members")
+  }
+  /// Member count on a group row when there is exactly one member
+  internal static var socialGroupMemberCountSingular: String { return L10n.tr("Localizable", "social_group_member_count_singular", fallback: "1 member") }
+  /// Title of the group members sheet
+  internal static var socialGroupMembersTitle: String { return L10n.tr("Localizable", "social_group_members_title", fallback: "Members") }
+  /// Placeholder for the group post composer
+  internal static var socialGroupPostPlaceholder: String { return L10n.tr("Localizable", "social_group_post_placeholder", fallback: "Post to the group") }
+  /// Empty state of a group's post feed
+  internal static var socialGroupPostsEmpty: String { return L10n.tr("Localizable", "social_group_posts_empty", fallback: "No posts yet. Share an episode or start a conversation.") }
+  /// Footer explaining a private group's lifecycle. Shown in the create sheet
+  internal static var socialGroupPrivateFooter: String { return L10n.tr("Localizable", "social_group_private_footer", fallback: "Only people you invite can see a private group. It is deleted with your profile.") }
+  /// Footer explaining a public group's lifecycle. Shown in the create sheet
+  internal static var socialGroupPublicFooter: String { return L10n.tr("Localizable", "social_group_public_footer", fallback: "Anyone can find and join a public group. If you delete your profile, the group passes to its longest-standing member.") }
+  /// Toggle making a group public (joinable and discoverable)
+  internal static var socialGroupPublicToggle: String { return L10n.tr("Localizable", "social_group_public_toggle", fallback: "Public group") }
+  /// Placeholder for the group name field
+  internal static var socialGroupTitlePlaceholder: String { return L10n.tr("Localizable", "social_group_title_placeholder", fallback: "Group name") }
+  /// Section header for discoverable public groups
+  internal static var socialGroupsDiscoverTitle: String { return L10n.tr("Localizable", "social_groups_discover_title", fallback: "Discover") }
+  /// Empty state when the account belongs to no groups
+  internal static var socialGroupsEmpty: String { return L10n.tr("Localizable", "social_groups_empty", fallback: "Create a group or join a public one to share episodes with people.") }
+  /// Section header for the account's own groups
+  internal static var socialGroupsMineTitle: String { return L10n.tr("Localizable", "social_groups_mine_title", fallback: "My Groups") }
+  /// Title of the Groups hub screen
+  internal static var socialGroupsTitle: String { return L10n.tr("Localizable", "social_groups_title", fallback: "Groups") }
   /// Shown when a handle is available. %1$@ is the normalized @handle
   internal static func socialHandleAvailable(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_handle_available", String(describing: p1), fallback: "%1$@ is available")
@@ -4769,6 +4823,10 @@ nonisolated internal enum L10n {
   internal static var socialNotificationsFollowRequests: String { return L10n.tr("Localizable", "social_notifications_follow_requests", fallback: "Follow requests") }
   /// Footer under the social push toggles
   internal static var socialNotificationsFooter: String { return L10n.tr("Localizable", "social_notifications_footer", fallback: "Notifications about things addressed to you. Applies on all your devices.") }
+  /// Notification-settings toggle for group invite pushes
+  internal static var socialNotificationsGroupInvites: String { return L10n.tr("Localizable", "social_notifications_group_invites", fallback: "Group invites") }
+  /// Notification-settings toggle for new-post pushes from groups you enabled alerts for
+  internal static var socialNotificationsGroupPosts: String { return L10n.tr("Localizable", "social_notifications_group_posts", fallback: "Group posts (only groups you enable)") }
   /// Section header for social push toggles in Settings -> Notifications
   internal static var socialNotificationsHeader: String { return L10n.tr("Localizable", "social_notifications_header", fallback: "Social") }
   /// Toggle: push when someone invites you to a shared list

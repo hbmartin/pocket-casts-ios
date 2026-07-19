@@ -69,6 +69,14 @@ enum SocialCoordinator {
     }
 
     /// Pushes the Shared Lists hub (social push landing for list invites).
+    static func openGroups() {
+        push(ThemedHostingController(rootView: SocialGroupsView(viewModel: SocialGroupsViewModel())))
+    }
+
+    static func openGroup(id: Int64) {
+        push(ThemedHostingController(rootView: GroupDetailView(viewModel: GroupDetailViewModel(groupId: id))))
+    }
+
     static func openSharedLists() {
         guard FeatureFlag.socialProfiles.enabled else { return }
         push(ThemedHostingController(rootView: SharedListsView(viewModel: SharedListsViewModel())))

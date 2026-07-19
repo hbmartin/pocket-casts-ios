@@ -39,6 +39,13 @@ struct SocialFeedSection: View {
                         .font(.subheadline)
                         .labelStyle(.titleAndIcon)
                 }
+                Button {
+                    SocialCoordinator.openGroups()
+                } label: {
+                    Label(L10n.socialGroupsTitle, systemImage: "person.3")
+                        .font(.subheadline)
+                        .labelStyle(.titleAndIcon)
+                }
             }
             .padding(.horizontal, 16)
 
@@ -205,6 +212,8 @@ struct FeedItemRow: View {
             return L10n.socialFeedItemCommented(actor, item.episodeTitle)
         case .publishedList:
             return L10n.socialFeedItemPublishedList(actor, item.listTitle)
+        case .joinedGroup:
+            return L10n.socialFeedItemJoinedGroup(actor, item.groupTitle)
         }
     }
 
@@ -218,6 +227,7 @@ struct FeedItemRow: View {
         case .reacted: return "heart"
         case .commented: return "bubble.left.and.bubble.right"
         case .publishedList: return "list.star"
+        case .joinedGroup: return "person.3"
         }
     }
 }
@@ -307,6 +317,9 @@ final class SocialFeedViewModel: ObservableObject {
         case .publishedList:
             guard item.listId > 0 else { return }
             SocialCoordinator.openSharedList(id: item.listId)
+        case .joinedGroup:
+            guard item.groupId > 0 else { return }
+            SocialCoordinator.openGroup(id: item.groupId)
         }
     }
 }

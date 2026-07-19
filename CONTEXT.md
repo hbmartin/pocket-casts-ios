@@ -135,6 +135,18 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   accompanying advisory reference to the generating transcript segment enables future
   deep-linking and is allowed to rot when transcripts regenerate. Wiped with the text on
   tombstoning.
+- **Group** — a member-owned room with a feed of deliberate Group Posts. One entity, two
+  configurations: a *private* Group (invite-only, invisible to non-members) or a *public*
+  Group (one-tap joinable, discoverable). Membership never grants follower-level
+  visibility into members' listening.
+- **Fandom Hub** — a public Group anchored to a podcast. Anchors are non-exclusive: any
+  number of Groups may anchor to the same show, listed on its page by size.
+- **Group Post** — a deliberate act of sharing into a Group: an episode, a Shared List, or
+  plain text, with a note; carries threaded replies with the same semantics as Comments
+  (tombstones, grace-window edit, pre-filtering, reportable, block invisibility).
+- **Succession** — the public-hub lifecycle rule: when a hub owner's profile is erased,
+  ownership passes to the longest-tenured remaining member (a memberless hub dies). A
+  private Group instead dies with its owner, like a Shared List.
 - **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
   its text and author are wiped but its position in the tree is kept, so other people's
   replies survive. The comment-tree analogue of a tombstoned Handle.
