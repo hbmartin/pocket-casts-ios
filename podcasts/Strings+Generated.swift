@@ -4527,6 +4527,8 @@ nonisolated internal enum L10n {
   internal static func socialCommentViewReplies(_ p1: Int) -> String {
     return L10n.tr("Localizable", "social_comment_view_replies", p1, fallback: "View %1$d replies")
   }
+  /// Singular of social_comment_view_replies
+  internal static var socialCommentViewRepliesSingular: String { return L10n.tr("Localizable", "social_comment_view_replies_singular", fallback: "View 1 reply") }
   /// Empty state for an episode with no comments yet
   internal static var socialCommentsEmpty: String { return L10n.tr("Localizable", "social_comments_empty", fallback: "No comments yet. Be the first!") }
   /// Hint shown when the user hasn't listened enough to post a top-level comment
@@ -4605,6 +4607,8 @@ nonisolated internal enum L10n {
   internal static func socialFindMutualCount(_ p1: Int) -> String {
     return L10n.tr("Localizable", "social_find_mutual_count", p1, fallback: "%1$d mutual connections")
   }
+  /// Singular of social_find_mutual_count
+  internal static var socialFindMutualCountSingular: String { return L10n.tr("Localizable", "social_find_mutual_count_singular", fallback: "1 mutual connection") }
   /// Button that asks for a friend's @handle to open their profile
   internal static var socialFindPeople: String { return L10n.tr("Localizable", "social_find_people", fallback: "Find People") }
   /// Confirmation button that opens the profile for the typed handle
@@ -4709,6 +4713,8 @@ nonisolated internal enum L10n {
   internal static func socialListEpisodeCount(_ p1: Int) -> String {
     return L10n.tr("Localizable", "social_list_episode_count", p1, fallback: "%1$d episodes")
   }
+  /// Singular of social_list_episode_count
+  internal static var socialListEpisodeCountSingular: String { return L10n.tr("Localizable", "social_list_episode_count_singular", fallback: "1 episode") }
   /// Button sending a collaboration invite
   internal static var socialListInvite: String { return L10n.tr("Localizable", "social_list_invite", fallback: "Invite") }
   /// Footer of the invite field explaining consent
@@ -4819,6 +4825,8 @@ nonisolated internal enum L10n {
   internal static func socialProofCountOnly(_ p1: Int) -> String {
     return L10n.tr("Localizable", "social_proof_count_only", p1, fallback: "Followed by %1$d people you follow")
   }
+  /// Singular of social_proof_count_only
+  internal static var socialProofCountOnlySingular: String { return L10n.tr("Localizable", "social_proof_count_only_singular", fallback: "Followed by 1 person you follow") }
   /// Podcast social proof with names. %1$@ = comma-joined @handles
   internal static func socialProofNamed(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_proof_named", String(describing: p1), fallback: "Followed by %1$@")
@@ -4915,6 +4923,8 @@ nonisolated internal enum L10n {
   internal static func socialTrendingListeners(_ p1: Int) -> String {
     return L10n.tr("Localizable", "social_trending_listeners", p1, fallback: "%1$d friends listened recently")
   }
+  /// Singular of social_trending_listeners
+  internal static var socialTrendingListenersSingular: String { return L10n.tr("Localizable", "social_trending_listeners_singular", fallback: "1 friend listened recently") }
   /// Unblock action label
   internal static var socialUnblock: String { return L10n.tr("Localizable", "social_unblock", fallback: "Unblock") }
   /// Menu action to stop following this profile (also cancels a pending request)

@@ -7568,3 +7568,18 @@
 
 /* Podcast social proof, names + remainder. %1$@ = @handles, %2$d = more count */
 "social_proof_named_and_more" = "Followed by %1$@ and %2$d more you follow";
+
+/* Singular of social_trending_listeners */
+"social_trending_listeners_singular" = "1 friend listened recently";
+
+/* Singular of social_find_mutual_count */
+"social_find_mutual_count_singular" = "1 mutual connection";
+
+/* Singular of social_proof_count_only */
+"social_proof_count_only_singular" = "Followed by 1 person you follow";
+
+/* Singular of social_list_episode_count */
+"social_list_episode_count_singular" = "1 episode";
+
+/* Singular of social_comment_view_replies */
+"social_comment_view_replies_singular" = "View 1 reply";

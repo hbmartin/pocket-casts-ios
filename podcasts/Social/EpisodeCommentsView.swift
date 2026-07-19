@@ -115,7 +115,7 @@ struct EpisodeCommentsView: View {
                 .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
 
                 if node.comment.replyCount > 0, !viewModel.isExpanded(node.comment.id) {
-                    Button(L10n.socialCommentViewReplies(node.comment.replyCount)) {
+                    Button(node.comment.replyCount == 1 ? L10n.socialCommentViewRepliesSingular : L10n.socialCommentViewReplies(node.comment.replyCount)) {
                         Task { await viewModel.expand(node.comment.id) }
                     }
                     .font(.caption)

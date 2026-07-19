@@ -37,7 +37,7 @@ struct PodcastProofLine: View {
         let names = proof.visibleHandles.map { "@" + $0 }.joined(separator: ", ")
         let remainder = proof.totalCount - proof.visibleHandles.count
         if names.isEmpty {
-            return L10n.socialProofCountOnly(proof.totalCount)
+            return proof.totalCount == 1 ? L10n.socialProofCountOnlySingular : L10n.socialProofCountOnly(proof.totalCount)
         }
         if remainder > 0 {
             return L10n.socialProofNamedAndMore(names, remainder)

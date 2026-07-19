@@ -87,7 +87,7 @@ struct SocialFeedSection: View {
                                             Text(podcast.author)
                                             Text("·")
                                         }
-                                        Text(L10n.socialTrendingListeners(podcast.listenerCount))
+                                        Text(podcast.listenerCount == 1 ? L10n.socialTrendingListenersSingular : L10n.socialTrendingListeners(podcast.listenerCount))
                                     }
                                     .font(.footnote)
                                     .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))

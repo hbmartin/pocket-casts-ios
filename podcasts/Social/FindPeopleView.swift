@@ -92,7 +92,7 @@ struct FindPeopleView: View {
                         Text("@" + person.handle)
                         if person.mutualCount > 0 {
                             Text("·")
-                            Text(L10n.socialFindMutualCount(person.mutualCount))
+                            Text(person.mutualCount == 1 ? L10n.socialFindMutualCountSingular : L10n.socialFindMutualCount(person.mutualCount))
                         }
                     }
                     .font(.footnote)

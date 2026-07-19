@@ -1047,6 +1047,26 @@ nonisolated struct Api_SyncUserPodcast: Sendable {
   /// Clears the value of `settings`. Subsequent reads from it will return its default value.
   mutating func clearSettings() {self._settings = nil}
 
+  /// Fork-owned (>=1001, Slice 11): lets the server ingest feeds it has never
+  /// seen (catalog/episodes/artwork) and render titles before the crawl lands.
+  var feedURL: SwiftProtobuf.Google_Protobuf_StringValue {
+    get {_feedURL ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_feedURL = newValue}
+  }
+  /// Returns true if `feedURL` has been explicitly set.
+  var hasFeedURL: Bool {self._feedURL != nil}
+  /// Clears the value of `feedURL`. Subsequent reads from it will return its default value.
+  mutating func clearFeedURL() {self._feedURL = nil}
+
+  var title: SwiftProtobuf.Google_Protobuf_StringValue {
+    get {_title ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_title = newValue}
+  }
+  /// Returns true if `title` has been explicitly set.
+  var hasTitle: Bool {self._title != nil}
+  /// Clears the value of `title`. Subsequent reads from it will return its default value.
+  mutating func clearTitle() {self._title = nil}
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -1060,6 +1080,8 @@ nonisolated struct Api_SyncUserPodcast: Sendable {
   fileprivate var _sortPosition: SwiftProtobuf.Google_Protobuf_Int32Value? = nil
   fileprivate var _dateAdded: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
   fileprivate var _settings: Api_PodcastSettings? = nil
+  fileprivate var _feedURL: SwiftProtobuf.Google_Protobuf_StringValue? = nil
+  fileprivate var _title: SwiftProtobuf.Google_Protobuf_StringValue? = nil
 }
 
 nonisolated struct Api_SyncUserEpisode: Sendable {
@@ -12163,7 +12185,7 @@ nonisolated extension Api_Record: SwiftProtobuf.Message, SwiftProtobuf._MessageI
 
 nonisolated extension Api_SyncUserPodcast: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SyncUserPodcast"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}is_deleted\0\u{1}subscribed\0\u{3}auto_start_from\0\u{3}episodes_sort_order\0\u{3}auto_skip_last\0\u{3}folder_uuid\0\u{3}sort_position\0\u{3}date_added\0\u{1}settings\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}uuid\0\u{3}is_deleted\0\u{1}subscribed\0\u{3}auto_start_from\0\u{3}episodes_sort_order\0\u{3}auto_skip_last\0\u{3}folder_uuid\0\u{3}sort_position\0\u{3}date_added\0\u{1}settings\0\u{4}_\u{f}feed_url\0\u{1}title\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -12181,6 +12203,8 @@ nonisolated extension Api_SyncUserPodcast: SwiftProtobuf.Message, SwiftProtobuf.
       case 8: try { try decoder.decodeSingularMessageField(value: &self._sortPosition) }()
       case 9: try { try decoder.decodeSingularMessageField(value: &self._dateAdded) }()
       case 10: try { try decoder.decodeSingularMessageField(value: &self._settings) }()
+      case 1001: try { try decoder.decodeSingularMessageField(value: &self._feedURL) }()
+      case 1002: try { try decoder.decodeSingularMessageField(value: &self._title) }()
       default: break
       }
     }
@@ -12221,6 +12245,12 @@ nonisolated extension Api_SyncUserPodcast: SwiftProtobuf.Message, SwiftProtobuf.
     try { if let v = self._settings {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
     } }()
+    try { if let v = self._feedURL {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+    } }()
+    try { if let v = self._title {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1002)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -12235,6 +12265,8 @@ nonisolated extension Api_SyncUserPodcast: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs._sortPosition != rhs._sortPosition {return false}
     if lhs._dateAdded != rhs._dateAdded {return false}
     if lhs._settings != rhs._settings {return false}
+    if lhs._feedURL != rhs._feedURL {return false}
+    if lhs._title != rhs._title {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
