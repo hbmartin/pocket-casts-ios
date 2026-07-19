@@ -43,6 +43,7 @@ public struct SocialProfile: Equatable, Sendable, Codable {
     /// Inverted discoverability (Slice 9): true removes this profile from
     /// people search and suggestions. Zero-value = discoverable.
     public var hideFromDiscovery: Bool
+    public var curator: Bool
 
     private enum CodingKeys: String, CodingKey {
         case userId, handle, displayName, bio, avatarURL, createdAt, termsVersion
@@ -50,6 +51,7 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         case statsVisibility, historyVisibility, presenceVisibility, requireFollowApproval
         case socialPushDisabled
         case hideFromDiscovery
+        case curator
     }
 
     // Swift-qualified: the SwiftProtobuf import has its own Decoder protocol.
@@ -72,6 +74,7 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         requireFollowApproval = try container.decodeIfPresent(Bool.self, forKey: .requireFollowApproval) ?? false
         socialPushDisabled = try container.decodeIfPresent(Int64.self, forKey: .socialPushDisabled) ?? 0
         hideFromDiscovery = try container.decodeIfPresent(Bool.self, forKey: .hideFromDiscovery) ?? false
+        curator = try container.decodeIfPresent(Bool.self, forKey: .curator) ?? false
     }
 
     public init(userId: String,
@@ -90,7 +93,7 @@ public struct SocialProfile: Equatable, Sendable, Codable {
                 presenceVisibility: SocialVisibility = .private,
                 requireFollowApproval: Bool = false,
                 socialPushDisabled: Int64 = 0,
-                hideFromDiscovery: Bool = false) {
+                hideFromDiscovery: Bool = false, curator: Bool = false) {
         self.userId = userId
         self.handle = handle
         self.displayName = displayName
@@ -108,6 +111,7 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         self.requireFollowApproval = requireFollowApproval
         self.socialPushDisabled = socialPushDisabled
         self.hideFromDiscovery = hideFromDiscovery
+        self.curator = curator
     }
 }
 
@@ -123,6 +127,7 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let avatarURL: String // empty when hidden from this viewer
     public let createdAt: Date?
     public let hasStats: Bool
+    public let curator: Bool
 
     public let followerCount: Int
     public let followingCount: Int
@@ -137,6 +142,7 @@ public struct SocialPublicProfile: Equatable, Sendable {
     public let milestones: [SocialMilestone]
 
     public init(userId: String, handle: String, displayName: String, bio: String, avatarURL: String, createdAt: Date?, hasStats: Bool,
+                curator: Bool = false,
                 followerCount: Int = 0, followingCount: Int = 0, yourFollowState: FollowState = .none,
                 followedShows: [SocialProfilePodcast] = [], topPodcasts: [SocialProfilePodcast] = [],
                 stats: SocialProfileStats? = nil, recentlyPlayed: [SocialProfileEpisode] = [],
@@ -148,6 +154,7 @@ public struct SocialPublicProfile: Equatable, Sendable {
         self.avatarURL = avatarURL
         self.createdAt = createdAt
         self.hasStats = hasStats
+        self.curator = curator
         self.followerCount = followerCount
         self.followingCount = followingCount
         self.yourFollowState = yourFollowState
@@ -244,7 +251,7 @@ extension SocialProfile {
                   presenceVisibility: SocialVisibility(api.presenceVisibility),
                   requireFollowApproval: api.requireFollowApproval,
                   socialPushDisabled: api.socialPushDisabled,
-                  hideFromDiscovery: api.hideFromDiscovery)
+                  hideFromDiscovery: api.hideFromDiscovery, curator: api.curator)
     }
 }
 
@@ -257,6 +264,7 @@ extension SocialPublicProfile {
                   avatarURL: api.avatarURL,
                   createdAt: api.hasCreatedAt ? api.createdAt.date : nil,
                   hasStats: api.hasStats_p,
+                  curator: api.curator,
                   followerCount: Int(api.followerCount),
                   followingCount: Int(api.followingCount),
                   yourFollowState: FollowState(api.yourFollowState),

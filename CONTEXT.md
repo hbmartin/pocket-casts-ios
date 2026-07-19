@@ -155,6 +155,13 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   episodes, Milestones) and its graph's highlights. Personally addressed and on by
   default, but sent only to joined accounts with a graph or a fresh Milestone — never
   filler.
+- **Curator** — a profile the operator has designated as worth following for its taste:
+  a badge and a place in the Curators directory, nothing more. Designation is an
+  operator act (like Handle reclaim); the curation itself is the account's existing
+  public Shared Lists and Reviews. Never self-serve, never called "verified".
+- **Recommendation** — a Shared Item carrying a show instead of an episode: a directed
+  "you should listen to this" with a note, riding the Inbox end to end (unread, no-leak,
+  dies with its sender).
 - **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
   its text and author are wiped but its position in the tree is kept, so other people's
   replies survive. The comment-tree analogue of a tombstoned Handle.

@@ -43,6 +43,14 @@ struct FindPeopleView: View {
                 }
             }
 
+            if !viewModel.curators.isEmpty {
+                Section(header: Text(L10n.socialCuratorsHeader)) {
+                    ForEach(viewModel.curators) { person in
+                        personRow(person)
+                    }
+                }
+            }
+
             if !viewModel.suggestions.isEmpty {
                 Section(header: Text(L10n.socialFindSuggestedHeader)) {
                     ForEach(viewModel.suggestions) { person in
@@ -86,10 +94,22 @@ struct FindPeopleView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(person.displayName.isEmpty ? "@" + person.handle : person.displayName)
-                        .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                    HStack(spacing: 4) {
+                        Text(person.displayName.isEmpty ? "@" + person.handle : person.displayName)
+                            .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                        if person.curator {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.caption)
+                                .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                                .accessibilityLabel(L10n.socialCuratorBadge)
+                        }
+                    }
                     HStack(spacing: 4) {
                         Text("@" + person.handle)
+                        if person.curator, person.followerCount > 0 {
+                            Text("·")
+                            Text(person.followerCount == 1 ? L10n.socialCuratorFollowersSingular : L10n.socialCuratorFollowers(person.followerCount))
+                        }
                         if person.mutualCount > 0 {
                             Text("·")
                             Text(person.mutualCount == 1 ? L10n.socialFindMutualCountSingular : L10n.socialFindMutualCount(person.mutualCount))
@@ -119,6 +139,7 @@ final class FindPeopleViewModel: ObservableObject {
     @Published var query = ""
     @Published private(set) var results: [SocialProfileSummary] = []
     @Published private(set) var suggestions: [SocialProfileSummary] = []
+    @Published private(set) var curators: [SocialProfileSummary] = []
     @Published private(set) var contactMatches: [SocialProfileSummary] = []
     @Published private(set) var searchedWithNoResults = false
     @Published private(set) var isMatchingContacts = false
@@ -130,10 +151,11 @@ final class FindPeopleViewModel: ObservableObject {
 
     /// Fixture initializer for snapshots/previews; loads then no-op.
     init(fixtureResults: [SocialProfileSummary] = [], suggestions: [SocialProfileSummary] = [],
-         contactMatches: [SocialProfileSummary] = []) {
+         contactMatches: [SocialProfileSummary] = [], curators: [SocialProfileSummary] = []) {
         results = fixtureResults
         self.suggestions = suggestions
         self.contactMatches = contactMatches
+        self.curators = curators
         fixtureLoaded = true
     }
 
@@ -141,6 +163,7 @@ final class FindPeopleViewModel: ObservableObject {
         guard !fixtureLoaded, SocialIdentityStore.isJoined else { return }
         Analytics.track(.socialPeopleShown)
         suggestions = await ApiServerHandler.shared.fetchPeopleSuggestions() ?? []
+        curators = await ApiServerHandler.shared.fetchCurators() ?? []
     }
 
     /// Debounce: a new keystroke supersedes the in-flight search.

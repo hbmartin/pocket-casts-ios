@@ -49,6 +49,13 @@ struct SocialFeedSection: View {
                         .font(.subheadline)
                         .labelStyle(.titleAndIcon)
                 }
+                Button {
+                    SocialCoordinator.openCurators()
+                } label: {
+                    Label(L10n.socialCuratorsHeader, systemImage: "checkmark.seal")
+                        .font(.subheadline)
+                        .labelStyle(.titleAndIcon)
+                }
             }
             .padding(.horizontal, 16)
 

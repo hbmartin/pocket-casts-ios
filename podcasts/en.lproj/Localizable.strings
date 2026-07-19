@@ -7518,6 +7518,18 @@
 /* Empty state of the podcast hubs sheet */
 "social_hubs_empty" = "No groups about this show yet.";
 
+/* Section header for the operator-designated curators directory */
+"social_curators_header" = "Curators";
+
+/* Accessibility label for the curator badge (a seal icon; never says verified) */
+"social_curator_badge" = "Curator";
+
+/* Follower count on a curator row (plural). %1$d is the count */
+"social_curator_followers" = "%1$d followers";
+
+/* Follower count on a curator row when there is exactly one */
+"social_curator_followers_singular" = "1 follower";
+
 /* Error when a comment fails to post */
 "social_comment_submit_failed" = "Couldn't post that comment.";
 

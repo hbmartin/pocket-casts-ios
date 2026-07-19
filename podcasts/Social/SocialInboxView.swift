@@ -120,10 +120,18 @@ struct SocialInboxView: View {
                 Text(L10n.socialInboxSentBy(item.senderDisplayName, "@" + item.senderHandle))
                     .font(.footnote)
                     .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
-                Text(item.episodeTitle.isEmpty ? item.episodeUuid : item.episodeTitle)
-                    .font(.subheadline.bold())
-                    .lineLimit(2)
-                if !item.podcastTitle.isEmpty {
+                // A show recommendation (Slice 15) carries no episode: the
+                // podcast title leads and the row opens the podcast page.
+                if item.episodeUuid.isEmpty {
+                    Label(item.podcastTitle.isEmpty ? item.podcastUuid : item.podcastTitle, systemImage: "mic")
+                        .font(.subheadline.bold())
+                        .lineLimit(2)
+                } else {
+                    Text(item.episodeTitle.isEmpty ? item.episodeUuid : item.episodeTitle)
+                        .font(.subheadline.bold())
+                        .lineLimit(2)
+                }
+                if !item.podcastTitle.isEmpty, !item.episodeUuid.isEmpty {
                     Text(item.podcastTitle)
                         .font(.footnote)
                         .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
@@ -222,6 +230,11 @@ final class SocialInboxViewModel: ObservableObject {
 
     func open(_ item: SharedItem) {
         Analytics.track(.socialInboxItemOpened)
+        if item.episodeUuid.isEmpty {
+            NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
+                                                       data: [NavigationManager.podcastKey: item.podcastUuid])
+            return
+        }
         let timestamp: TimeInterval? = item.timestampSeconds > 0 ? TimeInterval(item.timestampSeconds) : nil
         NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
                                                    data: [NavigationManager.episodeUuidKey: item.episodeUuid,

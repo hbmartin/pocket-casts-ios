@@ -39,7 +39,7 @@ struct SendToFriendView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(viewModel.episodeTitle)
+                        Text(viewModel.episodeTitle.isEmpty ? viewModel.podcastTitle : viewModel.episodeTitle)
                             .font(.subheadline.bold())
                             .lineLimit(1)
                         if viewModel.timestampSeconds > 0 {

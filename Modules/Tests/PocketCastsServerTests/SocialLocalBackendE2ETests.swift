@@ -327,6 +327,29 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         (status, _) = try await post("social/share/send", token: tokenA, message: send)
         XCTAssertEqual(status, 404)
 
+        // Slice 15: a show recommendation — podcast, no episode — rides the
+        // same pipeline; a send with neither is rejected.
+        var recommend = Api_SharedItemSendRequest()
+        recommend.recipientHandle = "ios_snd_b_\(suffix)"
+        recommend.podcastUuid = "ios-recshow-\(suffix)"
+        recommend.podcastTitle = "A Recommended Show"
+        recommend.note = "start with the pilot"
+        let (recStatus, _) = try await post("social/share/send", token: tokenA, message: recommend)
+        XCTAssertEqual(recStatus, 200)
+        var invalid = Api_SharedItemSendRequest()
+        invalid.recipientHandle = "ios_snd_b_\(suffix)"
+        invalid.note = "nothing attached"
+        let (invStatus, _) = try await post("social/share/send", token: tokenA, message: invalid)
+        XCTAssertEqual(invStatus, 400)
+
+        var inboxCheck = Api_InboxRequest()
+        let (recInboxStatus, recBody) = try await post("social/inbox", token: tokenB, message: inboxCheck)
+        XCTAssertEqual(recInboxStatus, 200)
+        let recInbox = try Api_InboxResponse(serializedBytes: recBody)
+        let showItem = recInbox.items.first { $0.episodeUuid.isEmpty }
+        XCTAssertNotNil(showItem, "show recommendation must land in the inbox")
+        XCTAssertEqual(showItem?.podcastTitle, "A Recommended Show")
+
         // Sender erases: the delivered item vanishes from B's inbox.
         (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
         XCTAssertEqual(status, 200)
@@ -956,6 +979,16 @@ final class SocialLocalBackendE2ETests: XCTestCase {
             join.displayName = name
             let (status, _) = try await post("social/join", token: token, message: join)
             XCTAssertEqual(status, 200)
+        }
+
+        // Slice 15: the curators directory answers with the wire contract
+        // (entries need handles; the list may be empty on a fresh backend —
+        // designation is an operator act, not seedable from here).
+        let (curatorsStatus, curatorsBody) = try await post("social/curators", token: tokenA, message: Api_CuratorsRequest())
+        XCTAssertEqual(curatorsStatus, 200)
+        let curators = try Api_CuratorsResponse(serializedBytes: curatorsBody)
+        for entry in curators.curators {
+            XCTAssertFalse(entry.handle.isEmpty)
         }
 
         // Prefix search finds B; the opt-out removes them.

@@ -19,7 +19,11 @@ final class SocialSlice9SnapshotTests: XCTestCase {
             fixtureResults: [Self.person("snapshot_person", name: "Snapshot Person", state: .active)],
             suggestions: [Self.person("suggested_friend", name: "Suggested Friend", mutual: 3),
                           Self.person("another_suggestion", name: "Another Suggestion", mutual: 1)],
-            contactMatches: [Self.person("from_contacts", name: "From Contacts")]
+            contactMatches: [Self.person("from_contacts", name: "From Contacts")],
+            curators: [SocialProfileSummary(handle: "taste_maker", displayName: "Taste Maker",
+                                            curator: true, followerCount: 128),
+                       SocialProfileSummary(handle: "deep_cuts", displayName: "Deep Cuts",
+                                            yourFollowState: .active, curator: true, followerCount: 41)]
         )
         assertAppThemedSnapshots(
             of: NavigationView {

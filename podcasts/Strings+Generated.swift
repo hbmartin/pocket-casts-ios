@@ -4551,6 +4551,16 @@ nonisolated internal enum L10n {
   internal static func socialConfirmPrompt(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_confirm_prompt", String(describing: p1), fallback: "Claiming %1$@ — what name should people see?")
   }
+  /// Accessibility label for the curator badge (a seal icon; never says verified)
+  internal static var socialCuratorBadge: String { return L10n.tr("Localizable", "social_curator_badge", fallback: "Curator") }
+  /// Follower count on a curator row (plural). %1$d is the count
+  internal static func socialCuratorFollowers(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_curator_followers", p1, fallback: "%1$d followers")
+  }
+  /// Follower count on a curator row when there is exactly one
+  internal static var socialCuratorFollowersSingular: String { return L10n.tr("Localizable", "social_curator_followers_singular", fallback: "1 follower") }
+  /// Section header for the operator-designated curators directory
+  internal static var socialCuratorsHeader: String { return L10n.tr("Localizable", "social_curators_header", fallback: "Curators") }
   /// Placeholder for the public display name field
   internal static var socialDisplayNamePlaceholder: String { return L10n.tr("Localizable", "social_display_name_placeholder", fallback: "Display name") }
   /// Error shown when a profile edit is rejected by the server
