@@ -62,6 +62,53 @@ struct SocialFeedSection: View {
                     }
                 }
             }
+
+            // Trending with friends (Slice 10): followees' recent listening,
+            // history-visibility gated server-side. Hidden when empty.
+            if !viewModel.trending.isEmpty {
+                Text(L10n.socialTrendingHeader)
+                    .font(.title3.bold())
+                    .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                VStack(spacing: 0) {
+                    ForEach(viewModel.trending) { podcast in
+                        Button {
+                            viewModel.openTrending(podcast)
+                        } label: {
+                            HStack(spacing: 10) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(podcast.title.isEmpty ? podcast.podcastUuid : podcast.title)
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
+                                        .lineLimit(1)
+                                    HStack(spacing: 4) {
+                                        if !podcast.author.isEmpty {
+                                            Text(podcast.author)
+                                            Text("·")
+                                        }
+                                        Text(L10n.socialTrendingListeners(podcast.listenerCount))
+                                    }
+                                    .font(.footnote)
+                                    .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+                                    .lineLimit(1)
+                                }
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right")
+                                    .font(.footnote)
+                                    .foregroundStyle(AppTheme.color(for: .primaryIcon02, theme: theme))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if podcast.id != viewModel.trending.last?.id {
+                            Divider().padding(.leading, 16)
+                        }
+                    }
+                }
+            }
         }
         .padding(.bottom, 8)
     }
@@ -178,6 +225,7 @@ struct FeedItemRow: View {
 @MainActor
 final class SocialFeedViewModel: ObservableObject {
     @Published private(set) var items: [FeedItem] = []
+    @Published private(set) var trending: [TrendingPodcast] = []
     @Published private(set) var isLoading = true
     @Published private(set) var isJoined: Bool
 
@@ -190,8 +238,9 @@ final class SocialFeedViewModel: ObservableObject {
     }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: [FeedItem], isJoined: Bool = true) {
+    init(fixture: [FeedItem], isJoined: Bool = true, trending: [TrendingPodcast] = []) {
         items = fixture
+        self.trending = trending
         self.isJoined = isJoined
         isLoading = false
         fixtureLoaded = true
@@ -208,6 +257,7 @@ final class SocialFeedViewModel: ObservableObject {
         }
         Analytics.track(.socialFeedShown)
         items = await ApiServerHandler.shared.fetchFeed(limit: Self.pageSize) ?? []
+        trending = await ApiServerHandler.shared.fetchTrendingWithFriends() ?? []
         isLoading = false
     }
 
@@ -228,6 +278,12 @@ final class SocialFeedViewModel: ObservableObject {
         var top: UIViewController = root
         while let presented = top.presentedViewController { top = presented }
         SocialCoordinator.presentJoinFlow(from: top, navigationController: nil)
+    }
+
+    func openTrending(_ podcast: TrendingPodcast) {
+        Analytics.track(.socialTrendingTapped)
+        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
+                                                   data: [NavigationManager.podcastKey: podcast.podcastUuid])
     }
 
     /// Per-kind navigation: people items open profiles, show items open the

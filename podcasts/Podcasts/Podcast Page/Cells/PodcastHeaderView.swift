@@ -93,6 +93,12 @@ struct PodcastHeaderView: View {
                     .navigationViewStyle(.stack)
                     .environmentObject(theme)
                 }
+
+                // Social proof (Slice 10): which followees follow this show —
+                // named only when their followed-shows list is already
+                // visible to this account (docs/Social.md).
+                PodcastProofLine(podcastUuid: viewModel.podcast.uuid)
+                    .padding(.top, 2)
             }
             Spacer().frame(height: titleBottomMargin)
             podcastActions

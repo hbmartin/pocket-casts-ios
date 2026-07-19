@@ -11182,6 +11182,77 @@ nonisolated struct Api_ContactsMatchResponse: Sendable {
   init() {}
 }
 
+nonisolated struct Api_SocialTrendingRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var limit: Int32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_TrendingPodcast: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var podcastUuid: String = String()
+
+  var title: String = String()
+
+  var author: String = String()
+
+  /// distinct followees, last 30 days
+  var listenerCount: Int32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_SocialTrendingResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var podcasts: [Api_TrendingPodcast] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_PodcastProofRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var podcastUuid: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Api_PodcastProofResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// named-when-visible, capped
+  var visibleHandles: [String] = []
+
+  /// all followees following the show
+  var totalCount: Int32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "api"
@@ -26486,6 +26557,176 @@ nonisolated extension Api_ContactsMatchResponse: SwiftProtobuf.Message, SwiftPro
 
   static func ==(lhs: Api_ContactsMatchResponse, rhs: Api_ContactsMatchResponse) -> Bool {
     if lhs.profiles != rhs.profiles {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialTrendingRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialTrendingRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}limit\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.limit) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.limit != 0 {
+      try visitor.visitSingularInt32Field(value: self.limit, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialTrendingRequest, rhs: Api_SocialTrendingRequest) -> Bool {
+    if lhs.limit != rhs.limit {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_TrendingPodcast: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TrendingPodcast"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}podcast_uuid\0\u{1}title\0\u{1}author\0\u{3}listener_count\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.author) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.listenerCount) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 1)
+    }
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 2)
+    }
+    if !self.author.isEmpty {
+      try visitor.visitSingularStringField(value: self.author, fieldNumber: 3)
+    }
+    if self.listenerCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.listenerCount, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_TrendingPodcast, rhs: Api_TrendingPodcast) -> Bool {
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.title != rhs.title {return false}
+    if lhs.author != rhs.author {return false}
+    if lhs.listenerCount != rhs.listenerCount {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_SocialTrendingResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SocialTrendingResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}podcasts\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.podcasts) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.podcasts.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.podcasts, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_SocialTrendingResponse, rhs: Api_SocialTrendingResponse) -> Bool {
+    if lhs.podcasts != rhs.podcasts {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_PodcastProofRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PodcastProofRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}podcast_uuid\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.podcastUuid.isEmpty {
+      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_PodcastProofRequest, rhs: Api_PodcastProofRequest) -> Bool {
+    if lhs.podcastUuid != rhs.podcastUuid {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Api_PodcastProofResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PodcastProofResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}visible_handles\0\u{3}total_count\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedStringField(value: &self.visibleHandles) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.totalCount) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.visibleHandles.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.visibleHandles, fieldNumber: 1)
+    }
+    if self.totalCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.totalCount, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_PodcastProofResponse, rhs: Api_PodcastProofResponse) -> Bool {
+    if lhs.visibleHandles != rhs.visibleHandles {return false}
+    if lhs.totalCount != rhs.totalCount {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -4815,6 +4815,18 @@ nonisolated internal enum L10n {
   internal static var socialProfileShareLink: String { return L10n.tr("Localizable", "social_profile_share_link", fallback: "Share Profile Link") }
   /// Navigation title of the own social profile screen
   internal static var socialProfileTitle: String { return L10n.tr("Localizable", "social_profile_title", fallback: "My Profile") }
+  /// Podcast social proof, counts only. %1$d = count of followees
+  internal static func socialProofCountOnly(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_proof_count_only", p1, fallback: "Followed by %1$d people you follow")
+  }
+  /// Podcast social proof with names. %1$@ = comma-joined @handles
+  internal static func socialProofNamed(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "social_proof_named", String(describing: p1), fallback: "Followed by %1$@")
+  }
+  /// Podcast social proof, names + remainder. %1$@ = @handles, %2$d = more count
+  internal static func socialProofNamedAndMore(_ p1: Any, _ p2: Int) -> String {
+    return L10n.tr("Localizable", "social_proof_named_and_more", String(describing: p1), p2, fallback: "Followed by %1$@ and %2$d more you follow")
+  }
   /// Hint shown when the user hasn't listened enough to react
   internal static var socialReactionsGateHint: String { return L10n.tr("Localizable", "social_reactions_gate_hint", fallback: "Listen to a bit more of this episode to react.") }
   /// Title of the episode reactions row
@@ -4897,6 +4909,12 @@ nonisolated internal enum L10n {
   internal static var socialStatsHoursListened: String { return L10n.tr("Localizable", "social_stats_hours_listened", fallback: "Hours listened") }
   /// Stats row label: date listening started
   internal static var socialStatsListeningSince: String { return L10n.tr("Localizable", "social_stats_listening_since", fallback: "Listening since") }
+  /// Header for the Explore trending-with-friends row
+  internal static var socialTrendingHeader: String { return L10n.tr("Localizable", "social_trending_header", fallback: "Trending with friends") }
+  /// Listener count under a trending podcast. %1$d = distinct friends
+  internal static func socialTrendingListeners(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_trending_listeners", p1, fallback: "%1$d friends listened recently")
+  }
   /// Unblock action label
   internal static var socialUnblock: String { return L10n.tr("Localizable", "social_unblock", fallback: "Unblock") }
   /// Menu action to stop following this profile (also cancels a pending request)
