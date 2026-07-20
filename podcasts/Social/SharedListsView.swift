@@ -47,7 +47,7 @@ struct SharedListsView: View {
                 Text("·")
                 Text("@" + list.ownerHandle)
                 Text("·")
-                Text(L10n.socialListEpisodeCount(list.entryCount))
+                Text(list.entryCount == 1 ? L10n.socialListEpisodeCountSingular : L10n.socialListEpisodeCount(list.entryCount))
             }
             .font(.footnote)
             .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))

@@ -27,6 +27,9 @@ struct SocialFeedSection: View {
 
     private var feedContent: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if let milestone = viewModel.celebration {
+                celebrationCard(milestone)
+            }
             HStack {
                 Text(L10n.socialFeedHeader)
                     .font(.title3.bold())
@@ -36,6 +39,20 @@ struct SocialFeedSection: View {
                     SocialCoordinator.openFindPeople()
                 } label: {
                     Label(L10n.socialFindPeople, systemImage: "person.badge.plus")
+                        .font(.subheadline)
+                        .labelStyle(.titleAndIcon)
+                }
+                Button {
+                    SocialCoordinator.openGroups()
+                } label: {
+                    Label(L10n.socialGroupsTitle, systemImage: "person.3")
+                        .font(.subheadline)
+                        .labelStyle(.titleAndIcon)
+                }
+                Button {
+                    SocialCoordinator.openCurators()
+                } label: {
+                    Label(L10n.socialCuratorsHeader, systemImage: "checkmark.seal")
                         .font(.subheadline)
                         .labelStyle(.titleAndIcon)
                 }
@@ -87,7 +104,7 @@ struct SocialFeedSection: View {
                                             Text(podcast.author)
                                             Text("·")
                                         }
-                                        Text(L10n.socialTrendingListeners(podcast.listenerCount))
+                                        Text(podcast.listenerCount == 1 ? L10n.socialTrendingListenersSingular : L10n.socialTrendingListeners(podcast.listenerCount))
                                     }
                                     .font(.footnote)
                                     .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
@@ -114,6 +131,40 @@ struct SocialFeedSection: View {
     }
 
     // MARK: - Join card (not joined)
+
+    private func celebrationCard(_ milestone: SocialMilestone) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "trophy.fill")
+                .font(.title3)
+                .foregroundColor(AppTheme.color(for: .support10, theme: theme))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(milestone.kind == .hours
+                    ? L10n.socialMilestoneCelebrationHours(milestone.tier)
+                    : L10n.socialMilestoneCelebrationEpisodes(milestone.tier))
+                    .font(.subheadline.weight(.semibold))
+                Button(L10n.socialMilestoneShare) {
+                    if let presenter = SceneHelper.rootViewController() {
+                        SocialShareCards.shareStatsCard(from: presenter)
+                    }
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.plain)
+                .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+            }
+            Spacer(minLength: 0)
+            Button {
+                viewModel.dismissCelebration()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(L10n.cancel)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(AppTheme.color(for: .primaryUi02, theme: theme)))
+        .padding(.horizontal, 16)
+    }
 
     private var joinCard: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -205,6 +256,13 @@ struct FeedItemRow: View {
             return L10n.socialFeedItemCommented(actor, item.episodeTitle)
         case .publishedList:
             return L10n.socialFeedItemPublishedList(actor, item.listTitle)
+        case .joinedGroup:
+            return L10n.socialFeedItemJoinedGroup(actor, item.groupTitle)
+        case .milestone:
+            if item.milestoneKind == SocialMilestone.Kind.hours.rawValue {
+                return L10n.socialFeedItemMilestoneHours(actor, item.milestoneTier)
+            }
+            return L10n.socialFeedItemMilestoneEpisodes(actor, item.milestoneTier)
         }
     }
 
@@ -218,6 +276,8 @@ struct FeedItemRow: View {
         case .reacted: return "heart"
         case .commented: return "bubble.left.and.bubble.right"
         case .publishedList: return "list.star"
+        case .joinedGroup: return "person.3"
+        case .milestone: return "trophy"
         }
     }
 }
@@ -226,10 +286,12 @@ struct FeedItemRow: View {
 final class SocialFeedViewModel: ObservableObject {
     @Published private(set) var items: [FeedItem] = []
     @Published private(set) var trending: [TrendingPodcast] = []
+    @Published var celebration: SocialMilestone?
     @Published private(set) var isLoading = true
     @Published private(set) var isJoined: Bool
 
     private var fixtureLoaded = false
+    private var isLoadInFlight = false
     private var lastLoadedJoined: Bool?
     private static let pageSize = 30
 
@@ -248,7 +310,9 @@ final class SocialFeedViewModel: ObservableObject {
     }
 
     func load() async {
-        guard !fixtureLoaded else { return }
+        guard !fixtureLoaded, !isLoadInFlight else { return }
+        isLoadInFlight = true
+        defer { isLoadInFlight = false }
         isJoined = FeatureFlag.socialProfiles.enabled && SocialIdentityStore.isJoined
         lastLoadedJoined = isJoined
         guard isJoined else {
@@ -259,6 +323,38 @@ final class SocialFeedViewModel: ObservableObject {
         items = await ApiServerHandler.shared.fetchFeed(limit: Self.pageSize) ?? []
         trending = await ApiServerHandler.shared.fetchTrendingWithFriends() ?? []
         isLoading = false
+        await detectFreshMilestone()
+    }
+
+    /// The local celebration (Slice 14, ADR-0013): your own crossing always
+    /// celebrates regardless of stats visibility. Seen-tracking is local.
+    private func detectFreshMilestone() async {
+        // Once per session: milestones move slowly and the profile fetch is
+        // not free (QA review finding).
+        guard celebration == nil, !Self.checkedThisSession,
+              let handle = SocialIdentityStore.cachedProfile?.handle,
+              let profile = await ApiServerHandler.shared.fetchPublicProfile(handle: handle) else { return }
+        Self.checkedThisSession = true
+        // Baseline = the key has never been written (key ABSENCE, not count
+        // math: count equality misfired on a user whose first-ever milestone
+        // arrived after joining — QA review finding). Write the baseline even
+        // when empty so the first real crossing celebrates.
+        let stored = UserDefaults.standard.stringArray(forKey: Self.seenMilestonesKey)
+        var seen = Set(stored ?? [])
+        let fresh = profile.milestones.filter { !seen.contains($0.id) }
+        seen.formUnion(fresh.map(\.id))
+        UserDefaults.standard.set(Array(seen), forKey: Self.seenMilestonesKey)
+        if stored != nil, !fresh.isEmpty {
+            celebration = fresh.first
+        }
+    }
+
+    private static var checkedThisSession = false
+
+    private static let seenMilestonesKey = "SocialSeenMilestones"
+
+    func dismissCelebration() {
+        celebration = nil
     }
 
     /// Re-loads when the joined state changed since the last load (e.g. the
@@ -282,8 +378,15 @@ final class SocialFeedViewModel: ObservableObject {
 
     func openTrending(_ podcast: TrendingPodcast) {
         Analytics.track(.socialTrendingTapped)
+        // PodcastInfo, not a bare uuid: the String branch silently no-ops
+        // when the show isn't in the local database — and a trending show
+        // usually isn't (QA review finding, same class as the inbox fix).
+        var info = PodcastInfo()
+        info.uuid = podcast.podcastUuid
+        info.title = podcast.title
+        info.author = podcast.author
         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
-                                                   data: [NavigationManager.podcastKey: podcast.podcastUuid])
+                                                   data: [NavigationManager.podcastKey: info])
     }
 
     /// Per-kind navigation: people items open profiles, show items open the
@@ -297,8 +400,11 @@ final class SocialFeedViewModel: ObservableObject {
             SocialCoordinator.openPublicProfile(handle: item.targetHandle.isEmpty ? item.actorHandle : item.targetHandle)
         case .followedShow, .reviewed:
             guard !item.podcastUuid.isEmpty else { return }
+            var info = PodcastInfo()
+            info.uuid = item.podcastUuid
+            info.title = item.podcastTitle
             NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
-                                                       data: [NavigationManager.podcastKey: item.podcastUuid])
+                                                       data: [NavigationManager.podcastKey: info])
         case .finishedEpisode, .reacted, .commented:
             guard !item.episodeUuid.isEmpty else { return }
             NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
@@ -307,6 +413,11 @@ final class SocialFeedViewModel: ObservableObject {
         case .publishedList:
             guard item.listId > 0 else { return }
             SocialCoordinator.openSharedList(id: item.listId)
+        case .joinedGroup:
+            guard item.groupId > 0 else { return }
+            SocialCoordinator.openGroup(id: item.groupId)
+        case .milestone:
+            SocialCoordinator.openPublicProfile(handle: item.actorHandle)
         }
     }
 }

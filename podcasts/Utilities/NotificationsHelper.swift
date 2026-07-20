@@ -175,6 +175,7 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
         let episodeUuid = userInfo["episode_uuid"] as? String ?? ""
         let podcastUuid = userInfo["podcast_uuid"] as? String ?? ""
         let commentId = Int64(userInfo["comment_id"] as? String ?? "") ?? 0
+        let groupId = Int64(userInfo["group_id"] as? String ?? "") ?? 0
         // The system only needs to know handling finished; routing continues
         // on the main actor with Sendable captures.
         completionHandler()
@@ -189,6 +190,16 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
                                                focusCommentId: commentId > 0 ? commentId : nil)
             case .listInvite:
                 SocialCoordinator.openSharedLists()
+            case .groupInvite:
+                SocialCoordinator.openGroups()
+            case .groupPost:
+                if groupId > 0 {
+                    SocialCoordinator.openGroup(id: groupId)
+                } else {
+                    SocialCoordinator.openGroups()
+                }
+            case .digest:
+                NavigationManager.sharedManager.navigateTo(NavigationManager.explorePageKey, data: nil)
             case .none:
                 break
             }

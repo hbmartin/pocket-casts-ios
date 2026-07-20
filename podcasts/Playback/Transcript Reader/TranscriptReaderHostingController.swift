@@ -1,4 +1,5 @@
 import PocketCastsDataModel
+import PocketCastsUtils
 import SwiftUI
 import UIKit
 
@@ -32,6 +33,13 @@ final class TranscriptReaderHostingController: ThemedHostingController<Transcrip
             // (SharingModal force-unwraps it), so gate the action on it.
             canShareClip: episode?.parentPodcast() != nil,
             onShareQuote: { router.shareQuote($0) },
+            onQuoteToComment: FeatureFlag.socialProfiles.enabled ? { blockID in
+                guard let quote = viewModel.commentQuote(forBlock: blockID) else { return }
+                router.quoteToComment(text: quote.text,
+                                      timestampSeconds: quote.timestampSeconds,
+                                      segment: quote.segment,
+                                      isGenerated: isGeneratedTranscript)
+            } : nil,
             onShareClip: { router.shareClip(start: $0, end: $1) },
             onClose: { router.close() }
         )
@@ -69,6 +77,28 @@ final class TranscriptReaderActionRouter {
             popover.permittedArrowDirections = []
         }
         host.present(activityViewController, animated: true)
+    }
+
+    /// Slice 12: open the episode's comment tree with the tapped line staged
+    /// as a transcript quote. The seed gate mirrors the Moments entry point.
+    func quoteToComment(text: String, timestampSeconds: Int?, segment: Int, isGenerated: Bool) {
+        guard let host, let episode else { return }
+        let duration = episode.duration
+        let canSeed = duration > 0 && episode.playedUpTo >= duration * 0.25
+        let preset = PendingTranscriptQuote(
+            text: text,
+            source: PendingTranscriptQuote.wireSource(isGenerated ? PocketCastsDataModel.TranscriptSource.generated : .provided),
+            segment: segment,
+            timestampSeconds: timestampSeconds)
+        let viewModel = EpisodeCommentsViewModel(episodeUuid: episode.uuid,
+                                                 podcastUuid: episode.parentIdentifier(),
+                                                 episodeTitle: episode.displayableTitle(),
+                                                 podcastTitle: episode.parentPodcast()?.title ?? "",
+                                                 canSeed: canSeed,
+                                                 presetQuote: preset)
+        let hosting = ThemedHostingController(rootView: EpisodeCommentsView(viewModel: viewModel))
+        host.present(UINavigationController(rootViewController: hosting), animated: true)
+        Analytics.track(.socialCommentQuoteStarted)
     }
 
     /// Reuses the existing clip-share flow, pre-seeded with the cue's window.

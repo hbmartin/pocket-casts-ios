@@ -69,6 +69,21 @@ enum SocialCoordinator {
     }
 
     /// Pushes the Shared Lists hub (social push landing for list invites).
+    static func openCurators() {
+        // The directory lives atop Find People; one surface, two doors.
+        openFindPeople()
+    }
+
+    static func openGroups() {
+        guard FeatureFlag.socialProfiles.enabled else { return }
+        push(ThemedHostingController(rootView: SocialGroupsView(viewModel: SocialGroupsViewModel())))
+    }
+
+    static func openGroup(id: Int64) {
+        guard FeatureFlag.socialProfiles.enabled else { return }
+        push(ThemedHostingController(rootView: GroupDetailView(viewModel: GroupDetailViewModel(groupId: id))))
+    }
+
     static func openSharedLists() {
         guard FeatureFlag.socialProfiles.enabled else { return }
         push(ThemedHostingController(rootView: SharedListsView(viewModel: SharedListsViewModel())))

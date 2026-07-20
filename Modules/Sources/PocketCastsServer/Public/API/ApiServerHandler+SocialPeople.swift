@@ -8,6 +8,15 @@ public extension ApiServerHandler {
     }
 
     /// Friends-of-followed suggestions with mutual counts (count only).
+    /// The operator-designated curators directory (Slice 15, ADR-0014).
+    func fetchCurators() async -> [SocialProfileSummary]? {
+        await withCheckedContinuation { continuation in
+            let operation = SocialPeopleTask(kind: .curators)
+            operation.profilesCompletion = { continuation.resume(returning: $0) }
+            apiQueue.addOperation(operation)
+        }
+    }
+
     func fetchPeopleSuggestions() async -> [SocialProfileSummary]? {
         await profiles(.suggestions)
     }

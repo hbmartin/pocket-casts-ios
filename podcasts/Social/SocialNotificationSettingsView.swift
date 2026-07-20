@@ -19,6 +19,9 @@ struct SocialNotificationSettingsView: View {
                 toggleRow(L10n.socialNotificationsSharedItems, type: .sharedItem)
                 toggleRow(L10n.socialNotificationsReplies, type: .commentReply)
                 toggleRow(L10n.socialNotificationsListInvites, type: .listInvite)
+                toggleRow(L10n.socialNotificationsGroupInvites, type: .groupInvite)
+                toggleRow(L10n.socialNotificationsGroupPosts, type: .groupPost)
+                toggleRow(L10n.socialNotificationsDigest, type: .digest)
             }
             if let error = viewModel.saveError {
                 Section {

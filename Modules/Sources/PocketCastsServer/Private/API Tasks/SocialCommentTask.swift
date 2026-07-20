@@ -15,9 +15,13 @@ class CommentSubmitTask: ApiBaseTask, @unchecked Sendable {
     private let text: String
     private let parentId: Int64
     private let timestampSeconds: Int?
+    private let quote: String
+    private let quoteSource: Int
+    private let quoteSegment: Int
 
     init(episodeUuid: String, podcastUuid: String, episodeTitle: String, podcastTitle: String,
-         text: String, parentId: Int64, timestampSeconds: Int?) {
+         text: String, parentId: Int64, timestampSeconds: Int?,
+         quote: String, quoteSource: Int, quoteSegment: Int) {
         self.episodeUuid = episodeUuid
         self.podcastUuid = podcastUuid
         self.episodeTitle = episodeTitle
@@ -25,6 +29,9 @@ class CommentSubmitTask: ApiBaseTask, @unchecked Sendable {
         self.text = text
         self.parentId = parentId
         self.timestampSeconds = timestampSeconds
+        self.quote = quote
+        self.quoteSource = quoteSource
+        self.quoteSegment = quoteSegment
     }
 
     override func apiTokenAcquired(token: String) {
@@ -39,6 +46,9 @@ class CommentSubmitTask: ApiBaseTask, @unchecked Sendable {
             if let timestampSeconds {
                 request.timestampSeconds = Int32(timestampSeconds)
             }
+            request.quote = quote
+            request.quoteSource = Int32(quoteSource)
+            request.quoteSegment = Int32(quoteSegment)
             let data = try request.serializedData()
 
             let (response, httpStatus) = postToServer(url: "\(ServerConstants.Urls.api())social/comment/submit", token: token, data: data)

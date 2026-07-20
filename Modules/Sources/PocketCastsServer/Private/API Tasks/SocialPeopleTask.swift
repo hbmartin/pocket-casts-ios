@@ -10,14 +10,19 @@ public struct SocialProfileSummary: Equatable, Sendable, Identifiable {
     public let displayName: String
     public let yourFollowState: FollowState
     public let mutualCount: Int
+    public let curator: Bool
+    public let followerCount: Int
 
     public var id: String { handle }
 
-    public init(handle: String, displayName: String, yourFollowState: FollowState = .none, mutualCount: Int = 0) {
+    public init(handle: String, displayName: String, yourFollowState: FollowState = .none, mutualCount: Int = 0,
+                curator: Bool = false, followerCount: Int = 0) {
         self.handle = handle
         self.displayName = displayName
         self.yourFollowState = yourFollowState
         self.mutualCount = mutualCount
+        self.curator = curator
+        self.followerCount = followerCount
     }
 
     init(_ api: Api_ProfileSummary) {
@@ -44,10 +49,16 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
         case suggestions
         case salt
         case match(hashes: [SocialContactHash])
+        case curators
     }
 
     var profilesCompletion: (([SocialProfileSummary]?) -> Void)?
     var saltCompletion: ((String?) -> Void)?
+
+    override func apiTokenAcquisitionFailed() {
+        profilesCompletion?(nil)
+        saltCompletion?(nil)
+    }
 
     private let kind: Kind
 
@@ -71,6 +82,9 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
             case .salt:
                 data = try Api_SocialSuggestionsRequest().serializedData()
                 path = "social/contacts/salt"
+            case .curators:
+                data = try Api_CuratorsRequest().serializedData()
+                path = "social/curators"
             case .match(let hashes):
                 var request = Api_ContactsMatchRequest()
                 request.hashes = hashes.map { contactHash in
@@ -103,6 +117,12 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
             case .match:
                 let result = try Api_ContactsMatchResponse(serializedBytes: responseData)
                 profilesCompletion?(result.profiles.map(SocialProfileSummary.init))
+            case .curators:
+                let result = try Api_CuratorsResponse(serializedBytes: responseData)
+                profilesCompletion?(result.curators.map { entry in
+                    SocialProfileSummary(handle: entry.handle, displayName: entry.displayName,
+                                         curator: true, followerCount: Int(entry.followerCount))
+                })
             }
         } catch {
             FileLog.shared.addMessage("SocialPeopleTask serialize error \(error.localizedDescription)")

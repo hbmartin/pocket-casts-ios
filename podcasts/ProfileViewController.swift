@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile, socialInbox, socialLists }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile, socialInbox, socialLists, socialGroups }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -362,6 +362,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .socialLists:
             cell.settingsImage.image = UIImage(systemName: "list.star")
             cell.settingsLabel.text = L10n.socialListsTitle
+        case .socialGroups:
+            cell.settingsImage.image = UIImage(systemName: "person.3")
+            cell.settingsLabel.text = L10n.socialGroupsTitle
         case .peopleDirectory:
             cell.settingsImage.image = UIImage(systemName: "person.2")
             cell.settingsLabel.text = L10n.peopleDirectoryTitle
@@ -437,6 +440,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .socialLists:
             let listsController = ThemedHostingController(rootView: SharedListsView(viewModel: SharedListsViewModel()))
             navigationController?.pushViewController(listsController, animated: true)
+        case .socialGroups:
+            let groupsController = ThemedHostingController(rootView: SocialGroupsView(viewModel: SocialGroupsViewModel()))
+            navigationController?.pushViewController(groupsController, animated: true)
         }
     }
 
@@ -494,6 +500,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             if SocialIdentityStore.isJoined {
                 data[0].insert(.socialInbox, at: 1)
                 data[0].insert(.socialLists, at: 2)
+                data[0].insert(.socialGroups, at: 3)
                 SocialInboxBadge.refresh()
             }
         }

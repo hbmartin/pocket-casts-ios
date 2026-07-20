@@ -8,11 +8,13 @@ public extension ApiServerHandler {
     /// listen-gate; nil covers rejection and failure alike.
     func submitComment(episodeUuid: String, podcastUuid: String, episodeTitle: String = "",
                        podcastTitle: String = "", text: String, parentId: Int64 = 0,
-                       timestampSeconds: Int? = nil) async -> SocialComment? {
+                       timestampSeconds: Int? = nil, quote: String = "",
+                       quoteSource: Int = 0, quoteSegment: Int = 0) async -> SocialComment? {
         await withCheckedContinuation { continuation in
             let operation = CommentSubmitTask(episodeUuid: episodeUuid, podcastUuid: podcastUuid,
                                               episodeTitle: episodeTitle, podcastTitle: podcastTitle,
-                                              text: text, parentId: parentId, timestampSeconds: timestampSeconds)
+                                              text: text, parentId: parentId, timestampSeconds: timestampSeconds,
+                                              quote: quote, quoteSource: quoteSource, quoteSegment: quoteSegment)
             operation.completion = { continuation.resume(returning: $0) }
             apiQueue.addOperation(operation)
         }

@@ -130,6 +130,38 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
 - **Moment** — the player-surface rendering of a timestamp-anchored top-level Comment: a
   pin on the scrubber that seeks and opens the comment's subtree. Not a separate entity —
   the episode page and the player are two lenses over one comment tree.
+- **Transcript Quote** — a short excerpt of the episode's transcript attached to a
+  Moment: the quote text is self-contained rendering truth (it can never break), while an
+  accompanying advisory reference to the generating transcript segment enables future
+  deep-linking and is allowed to rot when transcripts regenerate. Wiped with the text on
+  tombstoning.
+- **Group** — a member-owned room with a feed of deliberate Group Posts. One entity, two
+  configurations: a *private* Group (invite-only, invisible to non-members) or a *public*
+  Group (one-tap joinable, discoverable). Membership never grants follower-level
+  visibility into members' listening.
+- **Fandom Hub** — a public Group anchored to a podcast. Anchors are non-exclusive: any
+  number of Groups may anchor to the same show, listed on its page by size.
+- **Group Post** — a deliberate act of sharing into a Group: an episode, a Shared List, or
+  plain text, with a note; carries threaded replies with the same semantics as Comments
+  (tombstones, grace-window edit, pre-filtering, reportable, block invisibility).
+- **Succession** — the public-hub lifecycle rule: when a hub owner's profile is erased,
+  ownership passes to the longest-tenured remaining member (a memberless hub dies). A
+  private Group instead dies with its owner, like a Shared List.
+- **Milestone** — a materialized threshold-crossing on one of two global listening
+  ladders (total hours; episodes finished). The crossing *moment* is stored state — it
+  cannot be re-derived from aggregates. Shared surfaces obey the owner's stats
+  Visibility; the owner's own crossing is always celebrated locally.
+- **Weekly Digest** — the once-weekly push summarizing the account's own week (hours,
+  episodes, Milestones) and its graph's highlights. Personally addressed and on by
+  default, but sent only to joined accounts with a graph or a fresh Milestone — never
+  filler.
+- **Curator** — a profile the operator has designated as worth following for its taste:
+  a badge and a place in the Curators directory, nothing more. Designation is an
+  operator act (like Handle reclaim); the curation itself is the account's existing
+  public Shared Lists and Reviews. Never self-serve, never called "verified".
+- **Recommendation** — a Shared Item carrying a show instead of an episode: a directed
+  "you should listen to this" with a note, riding the Inbox end to end (unread, no-leak,
+  dies with its sender).
 - **Tombstoned Comment** — a deleted, moderation-removed, or erasure-affected Comment:
   its text and author are wiped but its position in the tree is kept, so other people's
   replies survive. The comment-tree analogue of a tombstoned Handle.

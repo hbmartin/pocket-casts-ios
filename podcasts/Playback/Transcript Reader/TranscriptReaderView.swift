@@ -10,6 +10,8 @@ struct TranscriptReaderView: View {
     @ObservedObject var viewModel: TranscriptReaderViewModel
     let canShareClip: Bool
     let onShareQuote: (String) -> Void
+    /// Slice 12: quote this line into a new episode comment (nil = hidden).
+    let onQuoteToComment: ((Int) -> Void)?
     let onShareClip: (_ start: TimeInterval, _ end: TimeInterval) -> Void
     let onClose: () -> Void
 
@@ -255,6 +257,14 @@ struct TranscriptReaderView: View {
                             }
                         } label: {
                             Label(L10n.transcriptReaderShareQuote, systemImage: "quote.opening")
+                        }
+
+                        if let onQuoteToComment {
+                            Button {
+                                onQuoteToComment(block.id)
+                            } label: {
+                                Label(L10n.socialCommentQuoteAction, systemImage: "text.bubble")
+                            }
                         }
 
                         if canShareClip, let range = viewModel.clipRange(forBlock: block.id) {

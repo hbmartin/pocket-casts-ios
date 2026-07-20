@@ -327,6 +327,29 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         (status, _) = try await post("social/share/send", token: tokenA, message: send)
         XCTAssertEqual(status, 404)
 
+        // Slice 15: a show recommendation — podcast, no episode — rides the
+        // same pipeline; a send with neither is rejected.
+        var recommend = Api_SharedItemSendRequest()
+        recommend.recipientHandle = "ios_snd_b_\(suffix)"
+        recommend.podcastUuid = "ios-recshow-\(suffix)"
+        recommend.podcastTitle = "A Recommended Show"
+        recommend.note = "start with the pilot"
+        let (recStatus, _) = try await post("social/share/send", token: tokenA, message: recommend)
+        XCTAssertEqual(recStatus, 200)
+        var invalid = Api_SharedItemSendRequest()
+        invalid.recipientHandle = "ios_snd_b_\(suffix)"
+        invalid.note = "nothing attached"
+        let (invStatus, _) = try await post("social/share/send", token: tokenA, message: invalid)
+        XCTAssertEqual(invStatus, 400)
+
+        var inboxCheck = Api_InboxRequest()
+        let (recInboxStatus, recBody) = try await post("social/inbox", token: tokenB, message: inboxCheck)
+        XCTAssertEqual(recInboxStatus, 200)
+        let recInbox = try Api_InboxResponse(serializedBytes: recBody)
+        let showItem = recInbox.items.first { $0.episodeUuid.isEmpty }
+        XCTAssertNotNil(showItem, "show recommendation must land in the inbox")
+        XCTAssertEqual(showItem?.podcastTitle, "A Recommended Show")
+
         // Sender erases: the delivered item vanishes from B's inbox.
         (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
         XCTAssertEqual(status, 200)
@@ -539,13 +562,24 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         (status, _) = try await post("user/sync/update", token: tokenA, message: sync)
         XCTAssertEqual(status, 200)
 
+        // Slice 12: a quote without a timestamp is rejected — quotes are
+        // Moments by construction.
+        submit.text = "orphan"
+        submit.quote = "we shipped it on a friday"
+        (status, _) = try await post("social/comment/submit", token: tokenA, message: submit)
+        XCTAssertEqual(status, 400)
+
         submit.text = "this bit at two minutes"
         submit.timestampSeconds = 125
+        submit.quoteSource = 1
+        submit.quoteSegment = 7
         (status, body) = try await post("social/comment/submit", token: tokenA, message: submit)
         XCTAssertEqual(status, 200)
         let seed = try Api_SocialComment(serializedBytes: body)
         XCTAssertEqual(seed.handle, handleA)
         XCTAssertEqual(seed.timestampSeconds, 125)
+        XCTAssertEqual(seed.quote, "we shipped it on a friday")
+        XCTAssertEqual(seed.quoteSegment, 7)
 
         // B replies without playing anything: replies are ungated.
         var reply = Api_CommentSubmitRequest()
@@ -563,6 +597,8 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         var page = try Api_CommentsResponse(serializedBytes: body)
         XCTAssertEqual(page.comments.count, 1)
         XCTAssertEqual(page.comments.first?.replyCount, 1)
+        XCTAssertEqual(page.comments.first?.quote, "we shipped it on a friday")
+        XCTAssertEqual(page.comments.first?.quoteSource, 1)
 
         // Edit after reply: grace window shut.
         var edit = Api_CommentEditRequest()
@@ -606,6 +642,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(page.comments.count, 1)
         XCTAssertTrue(page.comments.first?.removed ?? false)
         XCTAssertTrue(page.comments.first?.text.isEmpty ?? false)
+        XCTAssertTrue(page.comments.first?.quote.isEmpty ?? false, "tombstones wipe the quote with the text")
         XCTAssertEqual(page.comments.first?.replyCount, 1)
     }
 
@@ -745,6 +782,155 @@ final class SocialLocalBackendE2ETests: XCTestCase {
     /// through profile update and decodes leniently. Actual APNs delivery is
     /// asserted by the backend's mock-APNs e2e (this suite can't receive
     /// pushes).
+    /// Slice-13 wire contract: groups (ADR-0012) — private no-leak, invites,
+    /// posts + replies, public join, succession on owner erasure.
+    func testGroupsLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-grp-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-grp-b-\(suffix)@e2e.test")
+
+        let handleB = "ios_grp_b_\(suffix)"
+        for (token, handle, name) in [(tokenA, "ios_grp_a_\(suffix)", "Group Owner"), (tokenB, handleB, "Group Member")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // A creates a public hub; B cannot yet be a member.
+        var create = Api_GroupCreateRequest()
+        create.title = "iOS Wire Hub"
+        create.visibility = .public
+        var (status, body) = try await post("social/group/create", token: tokenA, message: create)
+        XCTAssertEqual(status, 200)
+        let hub = try Api_SocialGroup(serializedBytes: body)
+        XCTAssertEqual(hub.yourRole, .owner)
+
+        // A posts; anonymous read of the public hub works and carries the group detail.
+        var post_ = Api_GroupPostRequest()
+        post_.groupID = hub.id
+        post_.text = "welcome to the hub"
+        (status, body) = try await post("social/group/post/submit", token: tokenA, message: post_)
+        XCTAssertEqual(status, 200)
+        let seed = try Api_GroupPost(serializedBytes: body)
+
+        var postsReq = Api_GroupPostsRequest()
+        postsReq.groupID = hub.id
+        (status, body) = try await post("social/group/posts", token: "", message: postsReq)
+        XCTAssertEqual(status, 200)
+        var page = try Api_GroupPostsResponse(serializedBytes: body)
+        XCTAssertEqual(page.posts.count, 1)
+        XCTAssertEqual(page.group.title, "iOS Wire Hub")
+
+        // B joins one-tap, replies to the seed.
+        var joinReq = Api_GroupJoinRequest()
+        joinReq.id = hub.id
+        (status, _) = try await post("social/group/join", token: tokenB, message: joinReq)
+        XCTAssertEqual(status, 200)
+        var reply = Api_GroupPostRequest()
+        reply.groupID = hub.id
+        reply.parentID = seed.id
+        reply.text = "glad to be here"
+        (status, _) = try await post("social/group/post/submit", token: tokenB, message: reply)
+        XCTAssertEqual(status, 200)
+
+        // A creates a private circle; B gets a no-leak 404 on its posts.
+        create.title = "iOS Wire Circle"
+        create.visibility = .private
+        (status, body) = try await post("social/group/create", token: tokenA, message: create)
+        XCTAssertEqual(status, 200)
+        let circle = try Api_SocialGroup(serializedBytes: body)
+        postsReq.groupID = circle.id
+        (status, _) = try await post("social/group/posts", token: tokenB, message: postsReq)
+        XCTAssertEqual(status, 404)
+
+        // A erases: hub passes to B (succession), circle dies.
+        (status, _) = try await post("social/erase", token: tokenA, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        (status, body) = try await post("social/groups", token: tokenB, message: Api_GroupsRequest())
+        XCTAssertEqual(status, 200)
+        let groups = try Api_GroupsResponse(serializedBytes: body)
+        let hubAfter = groups.groups.first { $0.id == hub.id }
+        XCTAssertEqual(hubAfter?.yourRole, .owner, "hub passes to the longest-tenured member")
+        XCTAssertFalse(groups.groups.contains { $0.id == circle.id }, "private circle dies with its owner")
+    }
+
+    /// Slice-14 wire contract: milestones (ADR-0013) — sync-detected
+    /// crossings, stats-visibility gating, profile line, digest pref bit.
+    func testMilestonesLoop() async throws {
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        let (tokenA, _) = try await register(email: "ios-mile-a-\(suffix)@e2e.test")
+        let (tokenB, _) = try await register(email: "ios-mile-b-\(suffix)@e2e.test")
+
+        let handleA = "ios_mile_a_\(suffix)"
+        for (token, handle, name) in [(tokenA, handleA, "Milestone A"), (tokenB, "ios_mile_b_\(suffix)", "Watcher B")] {
+            var join = Api_JoinRequest()
+            join.handle = handle
+            join.acceptedTermsVersion = 1
+            join.displayName = name
+            let (status, _) = try await post("social/join", token: token, message: join)
+            XCTAssertEqual(status, 200)
+        }
+
+        // A syncs 12 finished hour-long episodes: tier-10 crossings on both
+        // ladders materialize server-side.
+        var sync = Api_SyncUpdateRequest()
+        sync.deviceUtcTimeMs = Int64(Date().timeIntervalSince1970 * 1000)
+        for index in 0 ..< 12 {
+            var episode = Api_SyncUserEpisode()
+            episode.uuid = String(format: "abcd%04d-00bb-4000-8000-%@", index, String(suffix.prefix(4)) + "00000000")
+            episode.podcastUuid = "dcba0000-00bb-4000-8000-000000000001"
+            episode.duration = Google_Protobuf_Int64Value(3600)
+            episode.durationModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            episode.playedUpTo = Google_Protobuf_Int64Value(3600)
+            episode.playedUpToModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            episode.playingStatus = Google_Protobuf_Int32Value(3)
+            episode.playingStatusModified = Google_Protobuf_Int64Value(sync.deviceUtcTimeMs)
+            var record = Api_Record()
+            record.episode = episode
+            sync.records.append(record)
+        }
+        var (status, body) = try await post("user/sync/update", token: tokenA, message: sync)
+        XCTAssertEqual(status, 200)
+
+        // Stats public, B follows: kind-10 items surface with the tier.
+        var update = Api_ProfileUpdateRequest()
+        update.displayName = "Milestone A"
+        update.statsVisibility = .public
+        (status, _) = try await post("social/profile/update", token: tokenA, message: update)
+        XCTAssertEqual(status, 200)
+        var follow = Api_FollowRequest()
+        follow.handle = handleA
+        (status, _) = try await post("social/follow", token: tokenB, message: follow)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/feed", token: tokenB, message: Api_FeedRequest())
+        XCTAssertEqual(status, 200)
+        let feed = try Api_FeedResponse(serializedBytes: body)
+        XCTAssertTrue(feed.items.contains { $0.kind == .milestone && $0.milestoneTier == 10 },
+                      "tier-10 crossing must surface as a milestone feed item")
+
+        // The public profile carries the milestones line under the stats gate.
+        var publicRequest = Api_PublicProfileRequest()
+        publicRequest.handle = handleA
+        (status, body) = try await post("social/profile/public", token: tokenB, message: publicRequest)
+        XCTAssertEqual(status, 200)
+        let profile = try Api_PublicProfileResponse(serializedBytes: body)
+        XCTAssertFalse(profile.milestones.isEmpty)
+
+        // Digest pref: disabling bit 9 round-trips through the profile.
+        var prefs = Api_ProfileUpdateRequest()
+        prefs.displayName = "Milestone A"
+        prefs.statsVisibility = .public
+        prefs.socialPushDisabled = 1 << 8
+        (status, body) = try await post("social/profile/update", token: tokenA, message: prefs)
+        XCTAssertEqual(status, 200)
+        let updated = try Api_ProfileResponse(serializedBytes: body)
+        XCTAssertEqual(updated.profile.socialPushDisabled, 1 << 8)
+    }
+
     func testSocialPushPrefsLoop() async throws {
         let suffix = UUID().uuidString.prefix(8).lowercased()
         let (token, _) = try await register(email: "ios-push-\(suffix)@e2e.test")
@@ -793,6 +979,16 @@ final class SocialLocalBackendE2ETests: XCTestCase {
             join.displayName = name
             let (status, _) = try await post("social/join", token: token, message: join)
             XCTAssertEqual(status, 200)
+        }
+
+        // Slice 15: the curators directory answers with the wire contract
+        // (entries need handles; the list may be empty on a fresh backend —
+        // designation is an operator act, not seedable from here).
+        let (curatorsStatus, curatorsBody) = try await post("social/curators", token: tokenA, message: Api_CuratorsRequest())
+        XCTAssertEqual(curatorsStatus, 200)
+        let curators = try Api_CuratorsResponse(serializedBytes: curatorsBody)
+        for entry in curators.curators {
+            XCTAssertFalse(entry.handle.isEmpty)
         }
 
         // Prefix search finds B; the opt-out removes them.

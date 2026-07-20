@@ -62,12 +62,23 @@ enum ShareDestination: Hashable {
             case .clipShare(let episode, let clipTime, _): (episode, TimeInterval(clipTime.start))
             case .podcast: (nil, 0)
             }
-            guard let episode else { return }
-            let viewModel = SendToFriendViewModel(episodeUuid: episode.uuid,
+            let viewModel: SendToFriendViewModel
+            if let episode {
+                viewModel = SendToFriendViewModel(episodeUuid: episode.uuid,
                                                   podcastUuid: episode.parentIdentifier(),
                                                   episodeTitle: episode.title ?? "",
                                                   podcastTitle: episode.parentPodcast()?.title ?? "",
                                                   timestampSeconds: Int(timestamp))
+            } else if case .podcast(let podcast) = option {
+                // A show recommendation (Slice 15): podcast, no episode.
+                viewModel = SendToFriendViewModel(episodeUuid: "",
+                                                  podcastUuid: podcast.uuid,
+                                                  episodeTitle: "",
+                                                  podcastTitle: podcast.title ?? "",
+                                                  timestampSeconds: 0)
+            } else {
+                return
+            }
             let hosting = ThemedHostingController(rootView: SendToFriendView(viewModel: viewModel))
             (vc.presentedViewController ?? vc).present(hosting, animated: true)
         case .systemSheet(let vc):

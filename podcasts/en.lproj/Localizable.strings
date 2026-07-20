@@ -7404,6 +7404,132 @@
 /* Accessibility label for the attach-playback-timestamp toggle in the composer */
 "social_comment_attach_timestamp" = "Attach current playback time";
 
+/* Transcript-reader context-menu action that quotes the tapped line into a new comment */
+"social_comment_quote_action" = "Comment on This";
+
+/* Accessibility label for the button removing a staged transcript quote from the comment composer */
+"social_comment_quote_remove" = "Remove quote";
+
+/* Title of the Groups hub screen */
+"social_groups_title" = "Groups";
+
+/* Section header for the account's own groups */
+"social_groups_mine_title" = "My Groups";
+
+/* Section header for discoverable public groups */
+"social_groups_discover_title" = "Discover";
+
+/* Empty state when the account belongs to no groups */
+"social_groups_empty" = "Create a group or join a public one to share episodes with people.";
+
+/* Section header for pending group invites */
+"social_group_invites_title" = "Group Invites";
+
+/* Attribution line on a group invite. %1$@ is the inviter's @handle */
+"social_group_invite_from" = "Invited by %1$@";
+
+/* Title of the group creation sheet */
+"social_group_create_title" = "New Group";
+
+/* Placeholder for the group name field */
+"social_group_title_placeholder" = "Group name";
+
+/* Placeholder for the optional group description field */
+"social_group_description_placeholder" = "Description (optional)";
+
+/* Toggle making a group public (joinable and discoverable) */
+"social_group_public_toggle" = "Public group";
+
+/* Footer explaining a public group's lifecycle. Shown in the create sheet */
+"social_group_public_footer" = "Anyone can find and join a public group. If you delete your profile, the group passes to its longest-standing member.";
+
+/* Footer explaining a private group's lifecycle. Shown in the create sheet */
+"social_group_private_footer" = "Only people you invite can see a private group. It is deleted with your profile.";
+
+/* Member count on a group row (plural). %1$d is the count */
+"social_group_member_count" = "%1$d members";
+
+/* Member count on a group row when there is exactly one member */
+"social_group_member_count_singular" = "1 member";
+
+/* Empty state of a group's post feed */
+"social_group_posts_empty" = "No posts yet. Share an episode or start a conversation.";
+
+/* Placeholder for the group post composer */
+"social_group_post_placeholder" = "Post to the group";
+
+/* Accessibility label for attaching the currently playing episode to a group post */
+"social_group_attach_episode" = "Attach current episode";
+
+/* Accessibility label for the per-group new-post notification toggle */
+"social_group_alert_toggle" = "New post alerts";
+
+/* Title of the group members sheet */
+"social_group_members_title" = "Members";
+
+/* Menu action to leave a group */
+"social_group_leave" = "Leave Group";
+
+/* Button joining a public group */
+"social_group_join" = "Join Group";
+
+/* Owner action removing a member from a group */
+"social_group_kick" = "Remove from group";
+
+/* Owner action banning a member from a group (cannot rejoin) */
+"social_group_ban" = "Ban from group";
+
+/* Feed line for joining a public group. %1$@ actor name, %2$@ group title */
+"social_feed_item_joined_group" = "%1$@ joined %2$@";
+
+/* Notification-settings toggle for group invite pushes */
+"social_notifications_group_invites" = "Group invites";
+
+/* Notification-settings toggle for new-post pushes from groups you enabled alerts for */
+"social_notifications_group_posts" = "Group posts (only groups you enable)";
+
+/* Notification-settings toggle for the weekly digest push */
+"social_notifications_digest" = "Weekly digest";
+
+/* Feed line for an hours-listened milestone. %1$@ actor, %2$d tier */
+"social_feed_item_milestone_hours" = "%1$@ crossed %2$d hours listened";
+
+/* Feed line for an episodes-finished milestone. %1$@ actor, %2$d tier */
+"social_feed_item_milestone_episodes" = "%1$@ finished %2$d episodes";
+
+/* Celebration card for your own hours milestone. %1$d is the tier */
+"social_milestone_celebration_hours" = "You crossed %1$d hours listened!";
+
+/* Celebration card for your own episodes milestone. %1$d is the tier */
+"social_milestone_celebration_episodes" = "You finished %1$d episodes!";
+
+/* Share button on the milestone celebration card */
+"social_milestone_share" = "Share your stats";
+
+/* Podcast-page line when the show has fandom hubs (plural). %1$d is the count */
+"social_hubs_count" = "%1$d groups about this show";
+
+/* Podcast-page line when the show has exactly one fandom hub */
+"social_hubs_count_singular" = "1 group about this show";
+
+/* Podcast-page entry to create the show's first group */
+"social_hubs_start" = "Start a group";
+
+/* Empty state of the podcast hubs sheet */
+"social_hubs_empty" = "No groups about this show yet.";
+
+/* Section header for the operator-designated curators directory */
+"social_curators_header" = "Curators";
+
+/* Accessibility label for the curator badge (a seal icon; never says verified) */
+"social_curator_badge" = "Curator";
+
+/* Follower count on a curator row (plural). %1$d is the count */
+"social_curator_followers" = "%1$d followers";
+
+/* Follower count on a curator row when there is exactly one */
+"social_curator_followers_singular" = "1 follower";
+
 /* Error when a comment fails to post */
 "social_comment_submit_failed" = "Couldn't post that comment.";
 
@@ -7568,3 +7694,18 @@
 
 /* Podcast social proof, names + remainder. %1$@ = @handles, %2$d = more count */
 "social_proof_named_and_more" = "Followed by %1$@ and %2$d more you follow";
+
+/* Singular of social_trending_listeners */
+"social_trending_listeners_singular" = "1 friend listened recently";
+
+/* Singular of social_find_mutual_count */
+"social_find_mutual_count_singular" = "1 mutual connection";
+
+/* Singular of social_proof_count_only */
+"social_proof_count_only_singular" = "Followed by 1 person you follow";
+
+/* Singular of social_list_episode_count */
+"social_list_episode_count_singular" = "1 episode";
+
+/* Singular of social_comment_view_replies */
+"social_comment_view_replies_singular" = "View 1 reply";

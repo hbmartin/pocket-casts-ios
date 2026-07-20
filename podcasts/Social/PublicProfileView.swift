@@ -65,8 +65,15 @@ struct PublicProfileView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(profile.displayName)
-                        .font(.title2.bold())
+                    HStack(spacing: 6) {
+                        Text(profile.displayName)
+                            .font(.title2.bold())
+                        if profile.curator {
+                            Image(systemName: "checkmark.seal.fill")
+                                .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                                .accessibilityLabel(L10n.socialCuratorBadge)
+                        }
+                    }
                     Text("@" + profile.handle)
                         .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
                     if !profile.bio.isEmpty {
@@ -126,7 +133,7 @@ struct PublicProfileView: View {
                                 Text(list.title)
                                     .lineLimit(1)
                                     .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
-                                Text(L10n.socialListEpisodeCount(list.entryCount))
+                                Text(list.entryCount == 1 ? L10n.socialListEpisodeCountSingular : L10n.socialListEpisodeCount(list.entryCount))
                                     .font(.footnote)
                                     .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
                             }

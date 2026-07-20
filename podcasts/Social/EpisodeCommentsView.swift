@@ -100,6 +100,26 @@ struct EpisodeCommentsView: View {
                             .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
                     }
                 }
+                if !node.comment.quote.isEmpty {
+                    // The transcript quote renders from stored text alone —
+                    // never resolved through the (advisory) segment ref.
+                    HStack(alignment: .top, spacing: 8) {
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                            .frame(width: 3)
+                        Text(node.comment.quote)
+                            .font(.footnote)
+                            .italic()
+                            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if let seconds = node.comment.timestampSeconds {
+                            viewModel.seek(to: seconds)
+                        }
+                    }
+                }
                 Text(node.comment.text)
                     .font(.subheadline)
                     .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
@@ -115,7 +135,7 @@ struct EpisodeCommentsView: View {
                 .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
 
                 if node.comment.replyCount > 0, !viewModel.isExpanded(node.comment.id) {
-                    Button(L10n.socialCommentViewReplies(node.comment.replyCount)) {
+                    Button(node.comment.replyCount == 1 ? L10n.socialCommentViewRepliesSingular : L10n.socialCommentViewReplies(node.comment.replyCount)) {
                         Task { await viewModel.expand(node.comment.id) }
                     }
                     .font(.caption)
@@ -172,6 +192,29 @@ struct EpisodeCommentsView: View {
                     .font(.caption)
                     .foregroundColor(AppTheme.color(for: .support05, theme: theme))
             }
+            if let quote = viewModel.pendingQuote, viewModel.composerBanner == nil {
+                HStack(alignment: .top, spacing: 8) {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                        .frame(width: 3)
+                    Text(quote.text)
+                        .font(.caption)
+                        .italic()
+                        .lineLimit(2)
+                        .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    Spacer(minLength: 0)
+                    Button {
+                        viewModel.removeQuote()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.caption)
+                            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.socialCommentQuoteRemove)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
             HStack(spacing: 8) {
                 TextField(viewModel.composerPlaceholder, text: $viewModel.composeText, axis: .vertical)
                     .lineLimit(1 ... 4)
@@ -180,7 +223,7 @@ struct EpisodeCommentsView: View {
                     .disabled(!viewModel.canCompose)
                 if viewModel.canAttachTimestamp {
                     Button {
-                        viewModel.attachTimestamp.toggle()
+                        viewModel.toggleTimestamp()
                     } label: {
                         Image(systemName: viewModel.attachTimestamp ? "clock.fill" : "clock")
                     }
@@ -220,6 +263,26 @@ struct CommentNode: Identifiable {
     var id: Int64 { comment.id }
 }
 
+/// A transcript quote staged in the composer (Slice 12). The quote text is
+/// self-contained rendering truth; source/segment are the advisory ref. A nil
+/// timestamp means "stamp the current playback position at send" (the
+/// auto-quote path); the transcript reader presets the line's own time.
+struct PendingTranscriptQuote: Equatable {
+    let text: String
+    let source: Int
+    let segment: Int
+    let timestampSeconds: Int?
+
+    /// Wire values for `quote_source` (0 = unspecified). Qualified: the app
+    /// target has an unrelated player-side `TranscriptSource` enum.
+    static func wireSource(_ source: PocketCastsDataModel.TranscriptSource) -> Int {
+        switch source {
+        case .provided: 1
+        case .generated: 2
+        }
+    }
+}
+
 @MainActor
 final class EpisodeCommentsViewModel: ObservableObject {
     let episodeUuid: String
@@ -239,6 +302,7 @@ final class EpisodeCommentsViewModel: ObservableObject {
     @Published private(set) var isLoading = true
     @Published var composeText = ""
     @Published var attachTimestamp = false
+    @Published private(set) var pendingQuote: PendingTranscriptQuote?
     @Published private(set) var isSending = false
     @Published private(set) var composeError: String?
     @Published var showingReportPicker = false
@@ -251,13 +315,17 @@ final class EpisodeCommentsViewModel: ObservableObject {
     private static let pageSize = 50
 
     init(episodeUuid: String, podcastUuid: String, episodeTitle: String = "", podcastTitle: String = "",
-         canSeed: Bool, focusCommentId: Int64? = nil) {
+         canSeed: Bool, focusCommentId: Int64? = nil, presetQuote: PendingTranscriptQuote? = nil) {
         self.episodeUuid = episodeUuid
         self.podcastUuid = podcastUuid
         self.episodeTitle = episodeTitle
         self.podcastTitle = podcastTitle
         self.canSeed = canSeed
         self.focusCommentId = focusCommentId
+        if let presetQuote {
+            pendingQuote = presetQuote
+            attachTimestamp = true
+        }
     }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
@@ -352,6 +420,47 @@ final class EpisodeCommentsViewModel: ObservableObject {
             && PlaybackManager.shared.currentEpisode()?.uuid == episodeUuid
     }
 
+    /// The clock toggle. Turning the timestamp on also auto-grabs the current
+    /// transcript line as a quote when the local index has one (Slice 12);
+    /// turning it off drops both.
+    func toggleTimestamp() {
+        attachTimestamp.toggle()
+        if attachTimestamp {
+            Task { await autoQuoteCurrentLine() }
+        } else {
+            pendingQuote = nil
+        }
+    }
+
+    func removeQuote() {
+        pendingQuote = nil
+    }
+
+    private func autoQuoteCurrentLine() async {
+        guard pendingQuote == nil else { return }
+        let uuid = episodeUuid
+        let time = PlaybackManager.shared.currentTime()
+        let found: (TranscriptSearchSegment, PocketCastsDataModel.TranscriptSource)? = await Task.detached(priority: .userInitiated) {
+            let search = DataManager.sharedManager.transcriptSearch
+            for source in [PocketCastsDataModel.TranscriptSource.generated, .provided] {
+                let segments = search.segments(episodeUuid: uuid, source: source)
+                if let line = segments.last(where: { $0.startTime <= time && time < ($0.endTime ?? .greatestFiniteMagnitude) })
+                    ?? segments.last(where: { $0.startTime <= time }) {
+                    return (line, source)
+                }
+            }
+            return nil
+        }.value
+        // The toggle may have flipped off (or a quote landed) while we read.
+        guard attachTimestamp, pendingQuote == nil, let (line, source) = found else { return }
+        let text = line.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        pendingQuote = PendingTranscriptQuote(text: text,
+                                              source: PendingTranscriptQuote.wireSource(source),
+                                              segment: line.index,
+                                              timestampSeconds: nil)
+    }
+
     func beginReply(to comment: SocialComment) {
         editTarget = nil
         replyTarget = comment
@@ -370,6 +479,7 @@ final class EpisodeCommentsViewModel: ObservableObject {
         editTarget = nil
         composeText = ""
         composeError = nil
+        pendingQuote = nil
     }
 
     func send() async {
@@ -390,12 +500,22 @@ final class EpisodeCommentsViewModel: ObservableObject {
         }
 
         let parentId = replyTarget?.id ?? 0
-        let timestamp: Int? = (parentId == 0 && attachTimestamp)
+        // Guard the live stamp against playback moving on to another episode
+        // while the composer was open (QA review finding).
+        let isThisEpisodePlaying = PlaybackManager.shared.currentEpisode()?.uuid == episodeUuid
+        var timestamp: Int? = (parentId == 0 && attachTimestamp && isThisEpisodePlaying)
             ? Int(PlaybackManager.shared.currentTime()) : nil
+        // A preset quote (transcript reader) anchors to its own line's time.
+        let quote = parentId == 0 ? pendingQuote : nil
+        if let presetTime = quote?.timestampSeconds {
+            timestamp = presetTime
+        }
         let submitted = await ApiServerHandler.shared.submitComment(
             episodeUuid: episodeUuid, podcastUuid: podcastUuid,
             episodeTitle: episodeTitle, podcastTitle: podcastTitle,
-            text: text, parentId: parentId, timestampSeconds: timestamp)
+            text: text, parentId: parentId, timestampSeconds: timestamp,
+            quote: timestamp != nil ? (quote?.text ?? "") : "",
+            quoteSource: quote?.source ?? 0, quoteSegment: quote?.segment ?? 0)
         if submitted != nil {
             Analytics.track(.socialCommentSubmitted)
             if let replyTarget {
@@ -462,7 +582,9 @@ final class EpisodeCommentsViewModel: ObservableObject {
     private func adjusted(_ comment: SocialComment) -> SocialComment {
         SocialComment(id: comment.id, parentId: comment.parentId, userId: comment.userId,
                       handle: comment.handle, displayName: comment.displayName, text: comment.text,
-                      timestampSeconds: comment.timestampSeconds, createdAt: comment.createdAt,
+                      timestampSeconds: comment.timestampSeconds,
+                      quote: comment.quote, quoteSource: comment.quoteSource, quoteSegment: comment.quoteSegment,
+                      createdAt: comment.createdAt,
                       edited: comment.edited, removed: comment.removed, replyCount: comment.replyCount + 1,
                       episodeUuid: comment.episodeUuid, podcastUuid: comment.podcastUuid,
                       episodeTitle: comment.episodeTitle, podcastTitle: comment.podcastTitle)

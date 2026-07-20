@@ -34,6 +34,7 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveStatsTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialCommentTask.swift: 8
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialDiscoveryTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialGraphTask.swift: 8
+Modules/Sources/PocketCastsServer/Private/API Tasks/SocialGroupTask.swift: 12
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialIdentityTask.swift: 10
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialInboxTask.swift: 8
 Modules/Sources/PocketCastsServer/Private/API Tasks/SocialListTask.swift: 8
@@ -44,7 +45,7 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/StarredSyncTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SuggestedFolderTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/SupportFeedbackTask.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/UserPodcastRatingTask.swift: 4
-Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 16
+Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 19
 Modules/Sources/PocketCastsServer/Public/Refresh/PodcastSearchOperation.swift: 2
 Modules/Sources/PocketCastsServer/Public/Refresh/RefreshOperation.swift: 2
 Modules/Sources/PocketCastsServer/Public/ServerConfig.swift: 2

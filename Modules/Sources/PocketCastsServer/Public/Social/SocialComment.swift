@@ -14,6 +14,14 @@ public struct SocialComment: Equatable, Sendable, Identifiable {
     public let displayName: String
     public let text: String
     public let timestampSeconds: Int? // nil = plain thread comment
+
+    // Slice 12: transcript anchor. The quote is self-contained rendering
+    // truth; source/segment are an advisory ref into the transcript that
+    // generated it (transcripts regenerate, so never a hard dependency).
+    public let quote: String
+    public let quoteSource: Int
+    public let quoteSegment: Int
+
     public let createdAt: Date?
     public let edited: Bool
     public let removed: Bool
@@ -27,6 +35,7 @@ public struct SocialComment: Equatable, Sendable, Identifiable {
 
     public init(id: Int64, parentId: Int64 = 0, userId: String = "", handle: String = "",
                 displayName: String = "", text: String = "", timestampSeconds: Int? = nil,
+                quote: String = "", quoteSource: Int = 0, quoteSegment: Int = 0,
                 createdAt: Date? = nil, edited: Bool = false, removed: Bool = false,
                 replyCount: Int = 0, episodeUuid: String = "", podcastUuid: String = "",
                 episodeTitle: String = "", podcastTitle: String = "") {
@@ -37,6 +46,9 @@ public struct SocialComment: Equatable, Sendable, Identifiable {
         self.displayName = displayName
         self.text = text
         self.timestampSeconds = timestampSeconds
+        self.quote = quote
+        self.quoteSource = quoteSource
+        self.quoteSegment = quoteSegment
         self.createdAt = createdAt
         self.edited = edited
         self.removed = removed
@@ -84,6 +96,9 @@ extension SocialComment {
                   displayName: api.displayName,
                   text: api.text,
                   timestampSeconds: api.hasTimestampSeconds ? Int(api.timestampSeconds) : nil,
+                  quote: api.quote,
+                  quoteSource: Int(api.quoteSource),
+                  quoteSegment: Int(api.quoteSegment),
                   createdAt: api.hasCreatedAt ? api.createdAt.date : nil,
                   edited: api.edited,
                   removed: api.removed,

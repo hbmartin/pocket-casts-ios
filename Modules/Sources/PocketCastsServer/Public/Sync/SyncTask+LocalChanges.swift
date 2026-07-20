@@ -29,6 +29,15 @@ extension SyncTask {
                 podcastRecord.dateAdded = Google_Protobuf_Timestamp(date: addedDate)
             }
 
+            // Fork-owned fields (Slice 11): the server ingests feeds it has
+            // never seen and renders titles before the crawl lands.
+            if let feedUrl = podcast.podcastUrl, !feedUrl.isEmpty {
+                podcastRecord.feedURL.value = feedUrl
+            }
+            if let title = podcast.title, !title.isEmpty {
+                podcastRecord.title.value = title
+            }
+
             FileLog.shared.addMessage("Syncing new settings for \(podcastRecord.uuid): \(try! podcastRecord.settings.jsonString())")
 
             var apiRecord = Api_Record()
