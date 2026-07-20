@@ -192,7 +192,7 @@ struct EpisodeCommentsView: View {
                     .font(.caption)
                     .foregroundColor(AppTheme.color(for: .support05, theme: theme))
             }
-            if let quote = viewModel.pendingQuote {
+            if let quote = viewModel.pendingQuote, viewModel.composerBanner == nil {
                 HStack(alignment: .top, spacing: 8) {
                     RoundedRectangle(cornerRadius: 1.5)
                         .fill(AppTheme.color(for: .primaryInteractive01, theme: theme))
@@ -500,7 +500,10 @@ final class EpisodeCommentsViewModel: ObservableObject {
         }
 
         let parentId = replyTarget?.id ?? 0
-        var timestamp: Int? = (parentId == 0 && attachTimestamp)
+        // Guard the live stamp against playback moving on to another episode
+        // while the composer was open (QA review finding).
+        let isThisEpisodePlaying = PlaybackManager.shared.currentEpisode()?.uuid == episodeUuid
+        var timestamp: Int? = (parentId == 0 && attachTimestamp && isThisEpisodePlaying)
             ? Int(PlaybackManager.shared.currentTime()) : nil
         // A preset quote (transcript reader) anchors to its own line's time.
         let quote = parentId == 0 ? pendingQuote : nil
@@ -579,7 +582,9 @@ final class EpisodeCommentsViewModel: ObservableObject {
     private func adjusted(_ comment: SocialComment) -> SocialComment {
         SocialComment(id: comment.id, parentId: comment.parentId, userId: comment.userId,
                       handle: comment.handle, displayName: comment.displayName, text: comment.text,
-                      timestampSeconds: comment.timestampSeconds, createdAt: comment.createdAt,
+                      timestampSeconds: comment.timestampSeconds,
+                      quote: comment.quote, quoteSource: comment.quoteSource, quoteSegment: comment.quoteSegment,
+                      createdAt: comment.createdAt,
                       edited: comment.edited, removed: comment.removed, replyCount: comment.replyCount + 1,
                       episodeUuid: comment.episodeUuid, podcastUuid: comment.podcastUuid,
                       episodeTitle: comment.episodeTitle, podcastTitle: comment.podcastTitle)

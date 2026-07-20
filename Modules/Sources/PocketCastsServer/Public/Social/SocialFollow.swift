@@ -70,7 +70,7 @@ public struct FeedItem: Equatable, Sendable, Identifiable {
     public let milestoneKind: Int
     public let milestoneTier: Int
 
-    public var id: String { "\(kind.rawValue)-\(actorHandle)-\(episodeUuid)-\(podcastUuid)-\(targetHandle)-\(eventAt?.timeIntervalSince1970 ?? 0)" }
+    public var id: String { "\(kind.rawValue)-\(actorHandle)-\(episodeUuid)-\(podcastUuid)-\(targetHandle)-\(listId)-\(groupId)-\(milestoneKind)-\(milestoneTier)-\(eventAt?.timeIntervalSince1970 ?? 0)" }
 
     public init(kind: FeedItemKind, actorHandle: String, actorDisplayName: String, actorUserId: String,
                 podcastUuid: String, podcastTitle: String, episodeUuid: String, episodeTitle: String,

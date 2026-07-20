@@ -291,6 +291,7 @@ final class SocialFeedViewModel: ObservableObject {
     @Published private(set) var isJoined: Bool
 
     private var fixtureLoaded = false
+    private var isLoadInFlight = false
     private var lastLoadedJoined: Bool?
     private static let pageSize = 30
 
@@ -309,7 +310,9 @@ final class SocialFeedViewModel: ObservableObject {
     }
 
     func load() async {
-        guard !fixtureLoaded else { return }
+        guard !fixtureLoaded, !isLoadInFlight else { return }
+        isLoadInFlight = true
+        defer { isLoadInFlight = false }
         isJoined = FeatureFlag.socialProfiles.enabled && SocialIdentityStore.isJoined
         lastLoadedJoined = isJoined
         guard isJoined else {
@@ -326,19 +329,27 @@ final class SocialFeedViewModel: ObservableObject {
     /// The local celebration (Slice 14, ADR-0013): your own crossing always
     /// celebrates regardless of stats visibility. Seen-tracking is local.
     private func detectFreshMilestone() async {
-        guard celebration == nil, let handle = SocialIdentityStore.cachedProfile?.handle,
+        // Once per session: milestones move slowly and the profile fetch is
+        // not free (QA review finding).
+        guard celebration == nil, !Self.checkedThisSession,
+              let handle = SocialIdentityStore.cachedProfile?.handle,
               let profile = await ApiServerHandler.shared.fetchPublicProfile(handle: handle) else { return }
-        var seen = Set(UserDefaults.standard.stringArray(forKey: Self.seenMilestonesKey) ?? [])
+        Self.checkedThisSession = true
+        // Baseline = the key has never been written (key ABSENCE, not count
+        // math: count equality misfired on a user whose first-ever milestone
+        // arrived after joining — QA review finding). Write the baseline even
+        // when empty so the first real crossing celebrates.
+        let stored = UserDefaults.standard.stringArray(forKey: Self.seenMilestonesKey)
+        var seen = Set(stored ?? [])
         let fresh = profile.milestones.filter { !seen.contains($0.id) }
-        guard !fresh.isEmpty else { return }
         seen.formUnion(fresh.map(\.id))
         UserDefaults.standard.set(Array(seen), forKey: Self.seenMilestonesKey)
-        // First launch just baselines: celebrate only when SOME were seen
-        // before (otherwise long-time listeners get a wall of stale confetti).
-        if seen.count != fresh.count {
+        if stored != nil, !fresh.isEmpty {
             celebration = fresh.first
         }
     }
+
+    private static var checkedThisSession = false
 
     private static let seenMilestonesKey = "SocialSeenMilestones"
 
@@ -367,8 +378,15 @@ final class SocialFeedViewModel: ObservableObject {
 
     func openTrending(_ podcast: TrendingPodcast) {
         Analytics.track(.socialTrendingTapped)
+        // PodcastInfo, not a bare uuid: the String branch silently no-ops
+        // when the show isn't in the local database — and a trending show
+        // usually isn't (QA review finding, same class as the inbox fix).
+        var info = PodcastInfo()
+        info.uuid = podcast.podcastUuid
+        info.title = podcast.title
+        info.author = podcast.author
         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
-                                                   data: [NavigationManager.podcastKey: podcast.podcastUuid])
+                                                   data: [NavigationManager.podcastKey: info])
     }
 
     /// Per-kind navigation: people items open profiles, show items open the
@@ -382,8 +400,11 @@ final class SocialFeedViewModel: ObservableObject {
             SocialCoordinator.openPublicProfile(handle: item.targetHandle.isEmpty ? item.actorHandle : item.targetHandle)
         case .followedShow, .reviewed:
             guard !item.podcastUuid.isEmpty else { return }
+            var info = PodcastInfo()
+            info.uuid = item.podcastUuid
+            info.title = item.podcastTitle
             NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey,
-                                                       data: [NavigationManager.podcastKey: item.podcastUuid])
+                                                       data: [NavigationManager.podcastKey: info])
         case .finishedEpisode, .reacted, .commented:
             guard !item.episodeUuid.isEmpty else { return }
             NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,

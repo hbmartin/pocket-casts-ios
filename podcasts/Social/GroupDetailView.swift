@@ -10,6 +10,7 @@ struct GroupDetailView: View {
     @StateObject var viewModel: GroupDetailViewModel
     @FocusState private var composerFocused: Bool
     @State private var showingMembers = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
@@ -75,6 +76,12 @@ struct GroupDetailView: View {
                 }
             }
         }
+        .confirmationDialog(L10n.socialReportTitle, isPresented: $viewModel.showingReportPicker, titleVisibility: .visible) {
+            ForEach(PublicProfileViewModel.reportReasons, id: \.1) { label, reason in
+                Button(label) { Task { await viewModel.reportSelected(reason: reason) } }
+            }
+            Button(L10n.cancel, role: .cancel) {}
+        }
         .sheet(isPresented: $showingMembers) {
             NavigationView {
                 GroupMembersView(viewModel: viewModel)
@@ -82,6 +89,9 @@ struct GroupDetailView: View {
             }
         }
         .task { await viewModel.load() }
+        .onChange(of: viewModel.departed) { _, departed in
+            if departed { dismiss() }
+        }
     }
 
     private func postRow(_ node: GroupPostNode) -> some View {
@@ -117,7 +127,8 @@ struct GroupDetailView: View {
                         .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
                         .onTapGesture {
                             NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
-                                                                       data: [NavigationManager.episodeUuidKey: node.post.episodeUuid])
+                                                                       data: [NavigationManager.episodeUuidKey: node.post.episodeUuid,
+                                                                              NavigationManager.podcastKey: node.post.podcastUuid])
                         }
                 }
                 if node.post.listId > 0, !node.post.listTitle.isEmpty {
@@ -166,12 +177,6 @@ struct GroupDetailView: View {
                     Label(L10n.socialReport, systemImage: "flag")
                 }
             }
-        }
-        .confirmationDialog(L10n.socialReportTitle, isPresented: $viewModel.showingReportPicker, titleVisibility: .visible) {
-            ForEach(PublicProfileViewModel.reportReasons, id: \.1) { label, reason in
-                Button(label) { Task { await viewModel.reportSelected(reason: reason) } }
-            }
-            Button(L10n.cancel, role: .cancel) {}
         }
     }
 
@@ -314,6 +319,7 @@ final class GroupDetailViewModel: ObservableObject {
     @Published private(set) var isSending = false
     @Published private(set) var attachedEpisodeTitle: String?
     @Published var showingReportPicker = false
+    @Published private(set) var departed = false
     @Published var reportTarget: GroupPost?
 
     private var replyTarget: GroupPost?
@@ -458,7 +464,15 @@ final class GroupDetailViewModel: ObservableObject {
         if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
             topLevel = page.posts
         }
-        childrenByParent[post.parentId] = nil
+        // Re-fetch the sibling page so an expanded branch stays expanded
+        // (nil-ing the cache while the parent stays in `expanded` hid the
+        // surviving replies with no way back — QA review finding).
+        if post.parentId > 0 {
+            childrenByParent[post.parentId] = nil
+            if expanded.contains(post.parentId) {
+                await expand(post.parentId)
+            }
+        }
     }
 
     func reportSelected(reason: SocialReportReason) async {
@@ -481,16 +495,12 @@ final class GroupDetailViewModel: ObservableObject {
 
     func leave() async {
         guard await ApiServerHandler.shared.leaveGroup(id: groupId) else { return }
-        if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
-            topLevel = page.posts
-            group = page.group
-        }
+        departed = true
     }
 
     func deleteGroup() async {
         guard await ApiServerHandler.shared.deleteGroup(id: groupId) else { return }
-        group = nil
-        topLevel = []
+        departed = true
     }
 
     func toggleAlerts() async {

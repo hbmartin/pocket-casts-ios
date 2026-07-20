@@ -8,6 +8,10 @@ import SwiftProtobuf
 class GroupCreateTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((SocialGroup?) -> Void)?
 
+    override func apiTokenAcquisitionFailed() {
+        completion?(nil)
+    }
+
     private let title: String
     private let groupDescription: String
     private let visibility: SocialVisibility
@@ -61,6 +65,10 @@ class GroupAckTask: ApiBaseTask, @unchecked Sendable {
     }
 
     var completion: ((Bool) -> Void)?
+
+    override func apiTokenAcquisitionFailed() {
+        completion?(false)
+    }
 
     private let kind: Kind
 
@@ -157,6 +165,10 @@ class GroupsFetchTask: ApiBaseTask, @unchecked Sendable {
 
     var completion: ((SocialGroupsOverview?) -> Void)?
 
+    override func apiTokenAcquisitionFailed() {
+        completion?(nil)
+    }
+
     private let kind: Kind
 
     init(kind: Kind) {
@@ -206,6 +218,10 @@ class GroupsFetchTask: ApiBaseTask, @unchecked Sendable {
 // @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class GroupPostSubmitTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((GroupPost?) -> Void)?
+
+    override func apiTokenAcquisitionFailed() {
+        completion?(nil)
+    }
 
     private let groupId: Int64
     private let parentId: Int64
@@ -261,6 +277,10 @@ class GroupPostSubmitTask: ApiBaseTask, @unchecked Sendable {
 class GroupPostsTask: ApiBaseTask, @unchecked Sendable {
     var completion: ((GroupPostsPage?) -> Void)?
 
+    override func apiTokenAcquisitionFailed() {
+        completion?(nil)
+    }
+
     private let groupId: Int64
     private let parentId: Int64
     private let limit: Int32
@@ -301,6 +321,10 @@ class GroupPostsTask: ApiBaseTask, @unchecked Sendable {
 // @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
 class GroupMembersTask: ApiBaseTask, @unchecked Sendable {
     var completion: (([GroupMemberInfo]?) -> Void)?
+
+    override func apiTokenAcquisitionFailed() {
+        completion?(nil)
+    }
 
     private let groupId: Int64
 

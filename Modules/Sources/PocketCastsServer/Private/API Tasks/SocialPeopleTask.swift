@@ -55,6 +55,11 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
     var profilesCompletion: (([SocialProfileSummary]?) -> Void)?
     var saltCompletion: ((String?) -> Void)?
 
+    override func apiTokenAcquisitionFailed() {
+        profilesCompletion?(nil)
+        saltCompletion?(nil)
+    }
+
     private let kind: Kind
 
     init(kind: Kind) {

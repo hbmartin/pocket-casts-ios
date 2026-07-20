@@ -75,10 +75,12 @@ enum SocialCoordinator {
     }
 
     static func openGroups() {
+        guard FeatureFlag.socialProfiles.enabled else { return }
         push(ThemedHostingController(rootView: SocialGroupsView(viewModel: SocialGroupsViewModel())))
     }
 
     static func openGroup(id: Int64) {
+        guard FeatureFlag.socialProfiles.enabled else { return }
         push(ThemedHostingController(rootView: GroupDetailView(viewModel: GroupDetailViewModel(groupId: id))))
     }
 

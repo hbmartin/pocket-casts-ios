@@ -91,7 +91,8 @@ struct PodcastHubsListView: View {
             NavigationView {
                 CreateGroupView(onDone: { group in
                     showingCreate = false
-                    if let group {
+                    // A private circle isn't a hub even when created here.
+                    if let group, group.visibility == .public {
                         hubs.insert(group, at: 0)
                     }
                 }, anchorUuid: podcastUuid, anchorTitle: podcastTitle, startPublic: true)
