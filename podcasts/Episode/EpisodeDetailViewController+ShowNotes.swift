@@ -5,6 +5,45 @@ import PocketCastsUtils
 import SafariServices
 import WebKit
 
+nonisolated private struct EpisodeMentionsCardPayload: Sendable {
+    let mentions: [EntityMention]
+    let usedModel: Bool
+}
+
+/// The transcript index and entity cache are synchronous database/disk APIs.
+/// `@concurrent` ensures those reads do not inherit the caller's MainActor.
+@concurrent
+private func episodeMentionsCardPayload(episodeUuid: String) async -> EpisodeMentionsCardPayload? {
+    let search = DataManager.sharedManager.transcriptSearch
+    guard search.isAvailable else { return nil }
+
+    var segments = search.segments(episodeUuid: episodeUuid, source: .generated)
+    var source = PocketCastsDataModel.TranscriptSource.generated
+    if segments.isEmpty {
+        segments = search.segments(episodeUuid: episodeUuid, source: .provided)
+        source = .provided
+    }
+    guard !segments.isEmpty, !Task.isCancelled else { return nil }
+
+    // Ties the cache to the exact indexed transcript: a re-index changes the
+    // count or tail time and reads as a miss.
+    let tailStartBitPattern = (segments.last?.startTime ?? 0).bitPattern
+    let fingerprint = "\(source.rawValue)-\(segments.count)-\(tailStartBitPattern)"
+
+    let intelligence = OnDeviceIntelligence.shared
+    let usedModel: Bool = {
+        if case .available = intelligence.availability() { return true }
+        return false
+    }()
+    let mentions = await EntityMentionGenerator().mentions(
+        episodeUuid: episodeUuid,
+        fingerprint: fingerprint,
+        segments: segments
+    )
+    guard !mentions.isEmpty, !Task.isCancelled else { return nil }
+    return EpisodeMentionsCardPayload(mentions: mentions, usedModel: usedModel)
+}
+
 extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFSafariViewControllerDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
     func setupWebView() {
         showNotesWebView = WKWebView()
@@ -32,6 +71,16 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
         showNotesWebView.scrollView.showsVerticalScrollIndicator = false
     }
 
+    private func removeTranscriptExcerptController() {
+        guard let transcriptExcerpt else { return }
+
+        for child in children where child.viewIfLoaded?.isDescendant(of: transcriptExcerpt) == true {
+            child.willMove(toParent: nil)
+            child.view.removeFromSuperview()
+            child.removeFromParent()
+        }
+    }
+
     func loadShowNotes() {
         if downloadingShowNotes { return }
 
@@ -46,6 +95,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             let showNotes = try? await ShowInfoCoordinator.shared.loadShowNotes(podcastUuid: parentIdentifier, episodeUuid: episodeUUID)
 
             let hideExcerpt: (EpisodeDetailViewController?) -> Void = { vc in
+                vc?.removeTranscriptExcerptController()
                 vc?.transcriptExcerpt?.isHidden = true
                 vc?.showNotesHolderTopAnchor?.constant = 0.0
                 vc?.showNotesWebViewTopConstraint?.constant = 20.0
@@ -62,6 +112,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
                     }
                 }
                 await MainActor.run { [weak self] in
+                    self?.removeTranscriptExcerptController()
                     let vc = ThemedHostingController(rootView: TranscriptExcerptView(viewModel: viewModel))
                     vc.sizingOptions = [.intrinsicContentSize, .preferredContentSize]
                     let view = vc.view!
@@ -173,7 +224,11 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
                                                     podcastUuid: episode.parentIdentifier(),
                                                     episodeTitle: episode.displayableTitle(),
                                                     podcastTitle: podcast.title ?? "",
-                                                    canSeed: canSeed)
+                                                    canSeed: canSeed,
+                                                    canSeedProvider: { [weak self] in
+                                                        guard let episode = self?.episode else { return false }
+                                                        return episode.duration > 0 && episode.playedUpTo >= episode.duration * 0.25
+                                                    })
         viewModel.onOpen = { [weak self] commentsViewModel in
             guard let self else { return }
             let hosting = ThemedHostingController(rootView: EpisodeCommentsView(viewModel: commentsViewModel))
@@ -211,32 +266,8 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
     /// attaches the card. Best-effort: no indexed transcript or no validated
     /// entities means no card.
     private func loadMentionsCard(episodeUuid: String) async {
-        let search = DataManager.sharedManager.transcriptSearch
-        guard search.isAvailable else { return }
-
-        var segments = search.segments(episodeUuid: episodeUuid, source: .generated)
-        var source = PocketCastsDataModel.TranscriptSource.generated
-        if segments.isEmpty {
-            segments = search.segments(episodeUuid: episodeUuid, source: .provided)
-            source = .provided
-        }
-        guard !segments.isEmpty else { return }
-
-        // Ties the cache to the exact indexed transcript: a re-index changes the
-        // count or tail time and reads as a miss.
-        let fingerprint = "\(source.rawValue)-\(segments.count)-\(Int(segments.last?.startTime ?? 0))"
-
-        let intelligence = OnDeviceIntelligence.shared
-        let usedModel: Bool = {
-            if case .available = intelligence.availability() { return true }
-            return false
-        }()
-        let mentions = await EntityMentionGenerator().mentions(episodeUuid: episodeUuid, fingerprint: fingerprint, segments: segments)
-        guard !mentions.isEmpty else { return }
-
-        await MainActor.run { [weak self] in
-            self?.attachMentionsCardIfNeeded(mentions: mentions, usedModel: usedModel)
-        }
+        guard let payload = await episodeMentionsCardPayload(episodeUuid: episodeUuid) else { return }
+        attachMentionsCardIfNeeded(mentions: payload.mentions, usedModel: payload.usedModel)
     }
 
     /// Hosts the mentions card after the credits card (or whatever card is last

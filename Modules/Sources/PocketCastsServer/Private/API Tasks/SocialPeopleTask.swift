@@ -33,13 +33,31 @@ public struct SocialProfileSummary: Equatable, Sendable, Identifiable {
 
 /// One salted contact-identifier hash (kind 1 = email, 2 = phone).
 public struct SocialContactHash: Sendable {
-    public let kind: Int
+    public enum Kind: Equatable, Sendable {
+        case email
+        case phone
+
+        var apiValue: Api_ContactHashKind {
+            switch self {
+            case .email: .email
+            case .phone: .phone
+            }
+        }
+    }
+
+    public let kind: Kind
     public let hash: String
 
-    public init(kind: Int, hash: String) {
+    public init(kind: Kind, hash: String) {
         self.kind = kind
         self.hash = hash
     }
+}
+
+public enum SocialPeopleRequestError: Error, Equatable, Sendable {
+    case authenticationFailed
+    case requestFailed(statusCode: Int)
+    case invalidResponse
 }
 
 // @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
@@ -52,12 +70,12 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
         case curators
     }
 
-    var profilesCompletion: (([SocialProfileSummary]?) -> Void)?
-    var saltCompletion: ((String?) -> Void)?
+    var profilesCompletion: (@Sendable (Result<[SocialProfileSummary], SocialPeopleRequestError>) -> Void)?
+    var saltCompletion: (@Sendable (Result<String, SocialPeopleRequestError>) -> Void)?
 
     override func apiTokenAcquisitionFailed() {
-        profilesCompletion?(nil)
-        saltCompletion?(nil)
+        profilesCompletion?(.failure(.authenticationFailed))
+        saltCompletion?(.failure(.authenticationFailed))
     }
 
     private let kind: Kind
@@ -89,7 +107,7 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
                 var request = Api_ContactsMatchRequest()
                 request.hashes = hashes.map { contactHash in
                     var wire = Api_ContactHash()
-                    wire.kind = Api_ContactHashKind(rawValue: contactHash.kind) ?? .unspecified
+                    wire.kind = contactHash.kind.apiValue
                     wire.hash = contactHash.hash
                     return wire
                 }
@@ -100,34 +118,34 @@ class SocialPeopleTask: ApiBaseTask, @unchecked Sendable {
             let (response, httpStatus) = postToServer(url: "\(ServerConstants.Urls.api())\(path)", token: token, data: data)
             guard let responseData = response, httpStatus == ServerConstants.HttpConstants.ok else {
                 FileLog.shared.addMessage("SocialPeopleTask \(path) failed, http status \(httpStatus)")
-                profilesCompletion?(nil)
-                saltCompletion?(nil)
+                profilesCompletion?(.failure(.requestFailed(statusCode: httpStatus)))
+                saltCompletion?(.failure(.requestFailed(statusCode: httpStatus)))
                 return
             }
             switch kind {
             case .search:
                 let result = try Api_SocialSearchResponse(serializedBytes: responseData)
-                profilesCompletion?(result.profiles.map(SocialProfileSummary.init))
+                profilesCompletion?(.success(result.profiles.map(SocialProfileSummary.init)))
             case .suggestions:
                 let result = try Api_SocialSuggestionsResponse(serializedBytes: responseData)
-                profilesCompletion?(result.profiles.map(SocialProfileSummary.init))
+                profilesCompletion?(.success(result.profiles.map(SocialProfileSummary.init)))
             case .salt:
                 let result = try Api_ContactsSaltResponse(serializedBytes: responseData)
-                saltCompletion?(result.salt)
+                saltCompletion?(.success(result.salt))
             case .match:
                 let result = try Api_ContactsMatchResponse(serializedBytes: responseData)
-                profilesCompletion?(result.profiles.map(SocialProfileSummary.init))
+                profilesCompletion?(.success(result.profiles.map(SocialProfileSummary.init)))
             case .curators:
                 let result = try Api_CuratorsResponse(serializedBytes: responseData)
-                profilesCompletion?(result.curators.map { entry in
+                profilesCompletion?(.success(result.curators.map { entry in
                     SocialProfileSummary(handle: entry.handle, displayName: entry.displayName,
                                          curator: true, followerCount: Int(entry.followerCount))
-                })
+                }))
             }
         } catch {
             FileLog.shared.addMessage("SocialPeopleTask serialize error \(error.localizedDescription)")
-            profilesCompletion?(nil)
-            saltCompletion?(nil)
+            profilesCompletion?(.failure(.invalidResponse))
+            saltCompletion?(.failure(.invalidResponse))
         }
     }
 }

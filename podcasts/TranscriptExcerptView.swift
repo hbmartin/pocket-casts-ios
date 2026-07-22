@@ -27,9 +27,6 @@ class TranscriptExcerptViewModel: ObservableObject, TranscriptExcerptViewModelin
     // Boxed: loadTranscript() runs off the main actor by design
     private let manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
 
-    nonisolated private static func load(_ manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>) async throws -> TranscriptModel {
-        try await manager.value.loadTranscript()
-    }
     private let tapAction: () -> Void
     private let episodeUUID: String
     private let podcastUUID: String
@@ -49,7 +46,7 @@ class TranscriptExcerptViewModel: ObservableObject, TranscriptExcerptViewModelin
 
     @discardableResult
     func loadTranscript() async throws -> TranscriptModel {
-        try await Self.load(manager)
+        try await TranscriptManager.loadTranscript(from: manager)
     }
 
     func loadExcerptTranscript() async {

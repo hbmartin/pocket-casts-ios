@@ -17,27 +17,28 @@ extension AppDelegate {
         } else {
             DispatchQueue.main.sync { MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable } }
         }
-        guard protectedDataAvailable else {
-            FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
-            return
-        }
+        if protectedDataAvailable {
+            performUpdateIfRequired(updateKey: "v5Run") {
+                // these are considered defaults for a new app install
+                SyncManager.clearTokensFromKeyChain()
+                FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run clearTokensFromKeyChain")
+                ServerSettings.setSkipBackTime(10, syncChange: false)
+                ServerSettings.setSkipForwardTime(45, syncChange: false)
 
-        performUpdateIfRequired(updateKey: "v5Run") {
-            // these are considered defaults for a new app install
-            SyncManager.clearTokensFromKeyChain()
-            FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run clearTokensFromKeyChain")
-            ServerSettings.setSkipBackTime(10, syncChange: false)
-            ServerSettings.setSkipForwardTime(45, syncChange: false)
+                Settings.setShouldDeleteWhenPlayed(true)
+                Settings.setHomeFolderSortOrder(order: .dateAddedNewestToOldest)
+                Settings.setMobileDataAllowed(true)
+                Settings.shouldShowInitialOnboardingFlow = true
+                Settings.autoplay = true
 
-            Settings.setShouldDeleteWhenPlayed(true)
-            Settings.setHomeFolderSortOrder(order: .dateAddedNewestToOldest)
-            Settings.setMobileDataAllowed(true)
-            Settings.shouldShowInitialOnboardingFlow = true
-            Settings.autoplay = true
-
-            // Disable dark up next theme for new users
-            Settings.darkUpNextTheme = false
-            Settings.setAutoDownloadOnFollow(true)
+                // Disable dark up next theme for new users
+                Settings.darkUpNextTheme = false
+                Settings.setAutoDownloadOnFollow(true)
+            }
+        } else {
+            // Do not call performUpdateIfRequired: v5Run must remain pending so it
+            // retries after first unlock. Unrelated defaults migrations still run.
+            FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run deferred - protected data not available")
         }
 
         performUpdateIfRequired(updateKey: "v6Run") {

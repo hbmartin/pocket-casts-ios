@@ -6,7 +6,7 @@ import PocketCastsServer
 /// replies (comment-tree semantics). Members compose; a public hub is
 /// readable by anyone. The bell is the per-group opt-in new-post alert.
 struct GroupDetailView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     @StateObject var viewModel: GroupDetailViewModel
     @FocusState private var composerFocused: Bool
     @State private var showingMembers = false
@@ -135,6 +135,9 @@ struct GroupDetailView: View {
                     Label(node.post.listTitle, systemImage: "list.bullet")
                         .font(.footnote)
                         .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                        .onTapGesture {
+                            SocialCoordinator.openSharedList(id: node.post.listId)
+                        }
                 }
             }
 
@@ -149,7 +152,7 @@ struct GroupDetailView: View {
                     .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
                 }
                 if node.post.replyCount > 0, !viewModel.isExpanded(node.post.id) {
-                    Button(node.post.replyCount == 1 ? L10n.socialCommentViewRepliesSingular : L10n.socialCommentViewReplies(node.post.replyCount)) {
+                    Button(node.post.replyCount == 1 ? L10n.socialCommentViewRepliesSingular : L10n.socialCommentViewRepliesPlural(node.post.replyCount)) {
                         Task { await viewModel.expand(node.post.id) }
                     }
                     .font(.caption)
@@ -255,7 +258,7 @@ struct GroupDetailView: View {
 
 /// The members sheet: rows link nowhere for now; the owner kicks/bans.
 struct GroupMembersView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     @ObservedObject var viewModel: GroupDetailViewModel
 
     var body: some View {

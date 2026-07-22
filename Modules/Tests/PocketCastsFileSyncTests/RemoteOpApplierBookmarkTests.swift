@@ -12,13 +12,13 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
     private var deviceB: DataManager!
     private var testDirectory: URL!
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
         testDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("filesync-tests")
             .appendingPathComponent(UUID().uuidString)
-        deviceA = makeDataManager(name: "applier_bookmarks_deviceA.sqlite3")
-        deviceB = makeDataManager(name: "applier_bookmarks_deviceB.sqlite3")
+        deviceA = try makeDataManager(name: "applier_bookmarks_deviceA.sqlite3")
+        deviceB = try makeDataManager(name: "applier_bookmarks_deviceB.sqlite3")
     }
 
     override func tearDown() {
@@ -28,12 +28,12 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeDataManager(name: String) -> DataManager {
-        try? FileManager.default.createDirectory(at: testDirectory, withIntermediateDirectories: true)
+    private func makeDataManager(name: String) throws -> DataManager {
+        try FileManager.default.createDirectory(at: testDirectory, withIntermediateDirectories: true)
         let path = testDirectory.appendingPathComponent(name).path
         var config = Configuration()
         config.busyMode = .timeout(10)
-        let pool = try! DatabasePool(path: path, configuration: config)
+        let pool = try DatabasePool(path: path, configuration: config)
         return DataManager(dbQueue: GRDBQueue(dbPool: pool))
     }
 

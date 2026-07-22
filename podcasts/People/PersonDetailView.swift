@@ -77,7 +77,7 @@ struct PersonDetailView: View {
 /// speaker-scoped transcript search.
 @MainActor
 final class PersonDetailModel: ObservableObject {
-    struct EpisodeRow: Hashable, Sendable {
+    nonisolated struct EpisodeRow: Hashable, Sendable {
         let uuid: String
         let podcastUuid: String?
         let title: String
@@ -94,34 +94,70 @@ final class PersonDetailModel: ObservableObject {
         }
     }
 
-    init(entry: PersonDirectoryEntry) {
+    private let episodesProvider: @Sendable ([PersonAppearance]) async -> [EpisodeRow]
+    private let searchProvider: @Sendable (String, [TranscriptSearchDataManager.SpeakerScope]) async -> [TranscriptSearchHitDisplay]
+    private let searchTracker: @MainActor @Sendable (Int) -> Void
+    private var loadTask: Task<Void, Never>?
+    private var searchTask: Task<Void, Never>?
+    private var hasStartedLoading = false
+    private var searchGeneration = 0
+
+    init(entry: PersonDirectoryEntry,
+         episodesProvider: @escaping @Sendable ([PersonAppearance]) async -> [EpisodeRow] = { appearances in
+             let dataManager = DataManager.sharedManager
+             var seen = Set<String>()
+             var rows: [EpisodeRow] = []
+             for appearance in appearances where !seen.contains(appearance.episodeUuid) {
+                 guard !Task.isCancelled else { return [] }
+                 seen.insert(appearance.episodeUuid)
+                 guard let episode = dataManager.findBaseEpisode(uuid: appearance.episodeUuid) else { continue }
+                 let podcastUuid = appearance.podcastUuid ?? (episode as? Episode)?.podcastUuid
+                 rows.append(EpisodeRow(
+                     uuid: appearance.episodeUuid,
+                     podcastUuid: podcastUuid,
+                     title: episode.displayableTitle(),
+                     podcastTitle: podcastUuid.flatMap { dataManager.findPodcast(uuid: $0, includeUnsubscribed: true)?.title }
+                 ))
+             }
+             return rows
+         },
+         searchProvider: @escaping @Sendable (String, [TranscriptSearchDataManager.SpeakerScope]) async -> [TranscriptSearchHitDisplay] = { term, scopes in
+             guard !Task.isCancelled else { return [] }
+             return TranscriptSearchHitDisplay.displays(
+                 for: DataManager.sharedManager.transcriptSearch.search(term: term, speakerScopes: scopes)
+             )
+         },
+         searchTracker: @escaping @MainActor @Sendable (Int) -> Void = {
+             Analytics.track(.peopleDirectorySegmentSearchPerformed, properties: ["hit_count": $0])
+         }) {
         self.entry = entry
+        self.episodesProvider = episodesProvider
+        self.searchProvider = searchProvider
+        self.searchTracker = searchTracker
     }
 
     func load() {
+        guard !hasStartedLoading else { return }
+        hasStartedLoading = true
+
         let appearances = entry.appearances
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let dataManager = DataManager.sharedManager
-            var seen = Set<String>()
-            var rows: [EpisodeRow] = []
-            for appearance in appearances where !seen.contains(appearance.episodeUuid) {
-                seen.insert(appearance.episodeUuid)
-                guard let episode = dataManager.findBaseEpisode(uuid: appearance.episodeUuid) else { continue }
-                let podcastUuid = appearance.podcastUuid ?? (episode as? Episode)?.podcastUuid
-                rows.append(EpisodeRow(
-                    uuid: appearance.episodeUuid,
-                    podcastUuid: podcastUuid,
-                    title: episode.displayableTitle(),
-                    podcastTitle: podcastUuid.flatMap { dataManager.findPodcast(uuid: $0, includeUnsubscribed: true)?.title }
-                ))
-            }
+        let episodesProvider = episodesProvider
+        loadTask = Task { @concurrent [weak self] in
+            let rows = await episodesProvider(appearances)
+            guard !Task.isCancelled else { return }
             await MainActor.run { [weak self] in
-                self?.episodes = rows
+                guard !Task.isCancelled, let self else { return }
+                self.episodes = rows
+                self.loadTask = nil
             }
         }
     }
 
     private func search() {
+        searchTask?.cancel()
+        searchTask = nil
+        searchGeneration &+= 1
+        let generation = searchGeneration
         let term = searchTerm.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !term.isEmpty else {
             searchHits = []
@@ -130,13 +166,19 @@ final class PersonDetailModel: ObservableObject {
         let scopes = entry.appearances.map {
             TranscriptSearchDataManager.SpeakerScope(episodeUuid: $0.episodeUuid, speaker: $0.canonicalSpeaker)
         }
-        Task { [weak self] in
-            let hits = await Task.detached(priority: .userInitiated) {
-                TranscriptSearchHitDisplay.displays(for: DataManager.sharedManager.transcriptSearch.search(term: term, speakerScopes: scopes))
-            }.value
-            guard let self, term == self.searchTerm.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
-            self.searchHits = hits
-            Analytics.track(.peopleDirectorySegmentSearchPerformed, properties: ["hit_count": hits.count])
+        let searchProvider = searchProvider
+        let searchTracker = searchTracker
+        searchTask = Task { @concurrent [weak self] in
+            let hits = await searchProvider(term, scopes)
+            guard !Task.isCancelled else { return }
+            await MainActor.run { [weak self] in
+                guard !Task.isCancelled,
+                      let self,
+                      generation == self.searchGeneration else { return }
+                self.searchHits = hits
+                self.searchTask = nil
+                searchTracker(hits.count)
+            }
         }
     }
 
@@ -147,5 +189,11 @@ final class PersonDetailModel: ObservableObject {
             data[NavigationManager.podcastKey] = podcastUuid
         }
         NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey, data: data as NSDictionary)
+    }
+
+    // isolated deinit: the SwiftUI-owned model and its task state live on MainActor.
+    isolated deinit {
+        loadTask?.cancel()
+        searchTask?.cancel()
     }
 }

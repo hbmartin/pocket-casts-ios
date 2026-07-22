@@ -56,25 +56,24 @@ nonisolated final class TranscriptEmbeddingBackfill: Sendable {
     }
 
     /// Embeds up to `maxPairs` pending pairs, stopping early on cancellation or
-    /// when power/thermal conditions defer background work.
+    /// when power/thermal conditions defer background work. Each pending pair is
+    /// attempted at most once per drain so one persistently failing episode
+    /// cannot starve the rest of the batch.
     func drain(maxPairs: Int = TranscriptEmbeddingBackfill.maxPairsPerDrain) async {
-        guard isEnabled() else { return }
+        guard isEnabled(), maxPairs > 0 else { return }
         guard let model = await provider.modelInfo() else { return }
+        let pairs = pendingPairs(model, maxPairs)
+        guard !pairs.isEmpty else { return }
 
         var embedded = 0
-        while embedded < maxPairs {
+        for pair in pairs.prefix(maxPairs) {
             if Task.isCancelled { break }
             if await isDeferred() { break }
-            // Re-query each iteration: embedding a pair removes it from the list.
-            guard let pair = pendingPairs(model, 1).first else { break }
 
             let stored = await pipeline.embed(episodeUuid: pair.episodeUuid, podcastUuid: pair.podcastUuid, source: pair.source)
-            guard stored else {
-                // A pair that can't embed (corpus row raced away, provider error)
-                // would loop forever at the head of the list — stop this drain.
-                break
+            if stored {
+                embedded += 1
             }
-            embedded += 1
         }
 
         if embedded > 0 {

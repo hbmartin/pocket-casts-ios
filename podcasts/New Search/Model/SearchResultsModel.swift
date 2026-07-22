@@ -46,14 +46,20 @@ class SearchResultsModel: ObservableObject {
 
     private(set) var playedEpisodesUUIDs = Set<String>()
     private let dataMangager: DataManager
+    private let beforeTranscriptSearch: @Sendable () async -> Void
 
     let showLocalResults: Bool
 
-    init(analyticsHelper: SearchAnalyticsHelper = SearchAnalyticsHelper(source: .unknown), showLocalResults: Bool = false,
-         dataManager: DataManager = DataManager.sharedManager) {
+    init(
+        analyticsHelper: SearchAnalyticsHelper = SearchAnalyticsHelper(source: .unknown),
+        showLocalResults: Bool = false,
+        dataManager: DataManager = DataManager.sharedManager,
+        beforeTranscriptSearch: @escaping @Sendable () async -> Void = {}
+    ) {
         self.analyticsHelper = analyticsHelper
         self.dataMangager = dataManager
         self.showLocalResults = showLocalResults
+        self.beforeTranscriptSearch = beforeTranscriptSearch
     }
 
     var noResults: Bool {
@@ -196,6 +202,10 @@ class SearchResultsModel: ObservableObject {
     /// rows. The database and scoring work runs off the main actor.
     @MainActor
     private func searchTranscriptIndex(term: String) {
+        // Every invocation supersedes the previous query, including calls that
+        // cannot start a replacement because the feature is off or the term is
+        // not searchable.
+        transcriptSearchGeneration += 1
         guard FeatureFlag.transcriptSearch.enabled else { return }
 
         let transcriptSearch = dataMangager.transcriptSearch
@@ -205,13 +215,14 @@ class SearchResultsModel: ObservableObject {
             return
         }
 
-        transcriptSearchGeneration += 1
         let generation = transcriptSearchGeneration
         let dataManager = dataMangager
+        let beforeTranscriptSearch = beforeTranscriptSearch
         let semanticEnabled = FeatureFlag.semanticTranscriptSearch.enabled && dataManager.transcriptEmbeddings.isAvailable
 
         Task {
             let hits = await Task.detached(priority: .userInitiated) {
+                await beforeTranscriptSearch()
                 let ftsHits = transcriptSearch.search(term: term)
                 guard semanticEnabled else {
                     return TranscriptSearchHitDisplay.displays(for: ftsHits)
@@ -221,15 +232,13 @@ class SearchResultsModel: ObservableObject {
                 var fused = TranscriptSearchFusion.fused(ftsHits: ftsHits, semanticHits: semanticHits)
 
                 // Mild recency boost: "I know I heard this somewhere last month".
-                var ageDaysByEpisode: [String: Double?] = [:]
+                var recencyAgeCache = TranscriptSearchRecencyAgeCache()
                 let now = Date()
                 fused = TranscriptSearchFusion.recencyBoosted(fused) { episodeUuid in
-                    if let cached = ageDaysByEpisode[episodeUuid] { return cached }
-                    let episode = dataManager.findEpisode(uuid: episodeUuid)
-                    let newest = [episode?.lastPlaybackInteractionDate, episode?.publishedDate].compactMap { $0 }.max()
-                    let age = newest.map { max(0, now.timeIntervalSince($0) / 86_400) }
-                    ageDaysByEpisode[episodeUuid] = age
-                    return age
+                    recencyAgeCache.ageDays(for: episodeUuid, now: now) {
+                        let episode = dataManager.findEpisode(uuid: episodeUuid)
+                        return [episode?.lastPlaybackInteractionDate, episode?.publishedDate].compactMap { $0 }.max()
+                    }
                 }
 
                 return TranscriptSearchHitDisplay.displays(forFused: fused)
@@ -324,5 +333,23 @@ class SearchResultsModel: ObservableObject {
     private func showCombinedResults(_ results: [CombinedSearchResultType]) {
         isShowingPredictiveSearch = false
         combinedResults = results
+    }
+}
+
+/// Per-search cache for the episode lookup used by transcript recency scoring.
+/// A negative sentinel distinguishes a cached missing date from an uncached
+/// episode because assigning nil to a Dictionary subscript removes the entry.
+nonisolated struct TranscriptSearchRecencyAgeCache {
+    private static let missingAge = -1.0
+    private var ageDaysByEpisode: [String: Double] = [:]
+
+    mutating func ageDays(for episodeUuid: String, now: Date, newestDate: () -> Date?) -> Double? {
+        if let cached = ageDaysByEpisode[episodeUuid] {
+            return cached >= 0 ? cached : nil
+        }
+
+        let age = newestDate().map { max(0, now.timeIntervalSince($0) / 86_400) }
+        ageDaysByEpisode[episodeUuid] = age ?? Self.missingAge
+        return age
     }
 }

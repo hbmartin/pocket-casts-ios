@@ -156,6 +156,22 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
         return segment.content.text
     }
 
+    /// Returns whether an expression is an integer literal, including a literal
+    /// with a leading sign. Swift infers these expressions as `Int` when there is
+    /// no explicit type context.
+    private static func isIntegerLiteral(_ expression: ExprSyntax) -> Bool {
+        if expression.as(IntegerLiteralExprSyntax.self) != nil {
+            return true
+        }
+
+        guard let prefixExpression = expression.as(PrefixOperatorExprSyntax.self),
+              prefixExpression.operator.text == "+" || prefixExpression.operator.text == "-" else {
+            return false
+        }
+
+        return prefixExpression.expression.as(IntegerLiteralExprSyntax.self) != nil
+    }
+
     /// Check if a property has @GRDBIgnore attribute
     private static func hasGRDBIgnore(_ varDecl: VariableDeclSyntax) -> Bool {
         varDecl.attributes.contains { attr in
@@ -280,6 +296,8 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
                 } else if initExpr.contains(".") && !initExpr.contains("\"") {
                     // Numeric literal with decimal point like 1.0
                     typeString = "Double"
+                } else if isIntegerLiteral(initializer.value) {
+                    typeString = "Int"
                 }
             }
 
@@ -523,6 +541,8 @@ public struct GRDBRecordMacro: MemberMacro, ExtensionMacro {
                         isDate = true
                     } else if initExpr.contains(".") && !initExpr.contains("\"") {
                         typeString = "Double"
+                    } else if isIntegerLiteral(initializer.value) {
+                        typeString = "Int"
                     } else {
                         typeString = "Int64"
                     }

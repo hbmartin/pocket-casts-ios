@@ -208,23 +208,10 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
         ApiServerHandler.shared.changePasswordRequest(currentPassword: currentPassword, newPassword: newPassword, completion: { success in
             DispatchQueue.main.async {
                 self.activityIndicatorView.stopAnimating()
-            }
-            if success {
-                Analytics.track(.userPasswordUpdated)
-
-                // Legacy site kept in sync deliberately (even during the refresh-token
-                // migration window a stale stored password would break the one-shot
-                // migration login); removed at plan M2 with the in-memory re-auth flow.
-                ServerSettings.saveSyncingPassword(newPassword) // nosemgrep: pocketcasts.no-persisted-account-password
-                DispatchQueue.main.async {
-                    let updatedVC = AccountUpdatedViewController()
-                    updatedVC.titleText = L10n.changePasswordConf
-                    updatedVC.detailText = L10n.funnyConfMsg
-                    updatedVC.imageName = AppTheme.passwordChangedImageName
-                    self.navigationController?.pushViewController(updatedVC, animated: true)
-                }
-            } else {
-                DispatchQueue.main.async {
+                if success {
+                    Analytics.track(.userPasswordUpdated)
+                    self.completeSuccessfulPasswordChange(newPassword: newPassword)
+                } else {
                     self.mainButton.setTitle(L10n.confirm, for: .normal)
                     self.errorView.isHidden = false
                     self.errorLabel.text = L10n.changePasswordError
@@ -232,6 +219,47 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
                 }
             }
         })
+    }
+
+    private func completeSuccessfulPasswordChange(newPassword: String) {
+        guard FeatureFlag.refreshTokenForPasswordAuth.enabled else {
+            AuthenticationHelper.persistPasswordForLegacyAuthenticationIfNeeded(newPassword)
+            showPasswordUpdatedConfirmation()
+            return
+        }
+
+        // user/change_password revokes the current refresh-token family. Reauthenticate
+        // immediately with the new password held only by this task; AuthenticationHelper
+        // rejects the response unless it carries a non-empty replacement refresh token.
+        guard let username = ServerSettings.syncingEmail(), !username.isEmpty else {
+            showReauthenticationFailure()
+            return
+        }
+
+        Task { @MainActor in
+            do {
+                _ = try await AuthenticationHelper.validateLogin(username: username, password: newPassword, scope: .mobile)
+                showPasswordUpdatedConfirmation()
+            } catch {
+                FileLog.shared.addMessage("Password changed but in-memory reauthentication failed: \(error)")
+                showReauthenticationFailure()
+            }
+        }
+    }
+
+    private func showPasswordUpdatedConfirmation() {
+        let updatedVC = AccountUpdatedViewController()
+        updatedVC.titleText = L10n.changePasswordConf
+        updatedVC.detailText = L10n.funnyConfMsg
+        updatedVC.imageName = AppTheme.passwordChangedImageName
+        navigationController?.pushViewController(updatedVC, animated: true)
+    }
+
+    private func showReauthenticationFailure() {
+        mainButton.setTitle(L10n.confirm, for: .normal)
+        errorView.isHidden = false
+        errorLabel.text = L10n.clientErrorTokenDeauth
+        contentView.alpha = 1
     }
 
     // MARK: - UITextField Methods

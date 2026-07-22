@@ -9,8 +9,8 @@ struct BetaMenu: View {
 
     var body: some View {
         List {
-            Section("Diagnostics") {
-                Button("MetricKit Payloads") {
+            Section(L10n.betaMenuDiagnosticsTitle) {
+                Button(L10n.betaMenuMetricKitPayloadsTitle) {
                     showingMetricKitPayloads = true
                 }
             }

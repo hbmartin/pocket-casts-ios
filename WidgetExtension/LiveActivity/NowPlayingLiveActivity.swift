@@ -57,10 +57,10 @@ struct NowPlayingLiveActivity: Widget {
                     .frame(width: 22, height: 22)
                     .clipShape(RoundedRectangle(cornerRadius: 5))
             } compactTrailing: {
-                Image(systemName: context.state.isPlaying ? "play.fill" : "pause.fill")
+                Image(systemName: context.state.isPlaying ? "pause.fill" : "play.fill")
                     .foregroundStyle(.tint)
             } minimal: {
-                Image(systemName: context.state.isPlaying ? "play.fill" : "pause.fill")
+                Image(systemName: context.state.isPlaying ? "pause.fill" : "play.fill")
                     .foregroundStyle(.tint)
             }
         }

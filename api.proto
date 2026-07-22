@@ -91,8 +91,7 @@ message UserChangePasswordRequest {
 message UserChangeResponse {
   google.protobuf.BoolValue success = 1;
   string message = 2;
-  // JSON name is camelCase in the client's nameMap (upstream quirk).
-  string messageId = 3;
+  string message_id = 3;
 }
 
 message BasicRequest {

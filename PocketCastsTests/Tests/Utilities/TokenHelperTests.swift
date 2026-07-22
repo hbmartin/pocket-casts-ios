@@ -440,10 +440,16 @@ class TokenHelperTests: XCTestCase {
         })
     }
 
+    /// Models a password written by a pre-migration build. The production writer now
+    /// refuses new password writes while the refresh-token flag is enabled.
+    private func seedLegacyPassword(_ password: String) {
+        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+    }
+
     func testMigrationPersistsPairDeletesPasswordAndSetsMarker() throws {
         flagMock.set(.refreshTokenForPasswordAuth, value: true)
         ServerSettings.setSyncingEmail(email: "test@test.com")
-        ServerSettings.saveSyncingPassword("1234")
+        seedLegacyPassword("1234")
 
         let response = AuthenticationResponse(token: "access", uuid: "uuid", email: "test@test.com", refreshToken: "new-refresh", isNewAccount: false, expiresIn: 3600, tokenType: "Bearer")
         makeTokenHelper().migratePasswordAccountIfPossible(response: response)
@@ -458,7 +464,7 @@ class TokenHelperTests: XCTestCase {
     func testMigrationKeepsPasswordWhenResponseLacksRefreshToken() throws {
         flagMock.set(.refreshTokenForPasswordAuth, value: true)
         ServerSettings.setSyncingEmail(email: "test@test.com")
-        ServerSettings.saveSyncingPassword("1234")
+        seedLegacyPassword("1234")
 
         let response = AuthenticationResponse(token: "access", uuid: "uuid", email: "test@test.com", refreshToken: nil, isNewAccount: false, expiresIn: nil, tokenType: nil)
         makeTokenHelper().migratePasswordAccountIfPossible(response: response)
@@ -484,7 +490,7 @@ class TokenHelperTests: XCTestCase {
     func testFlagOnPrefersRefreshGrantOverStoredPassword() throws {
         flagMock.set(.refreshTokenForPasswordAuth, value: true)
         ServerSettings.setSyncingEmail(email: "test@test.com")
-        ServerSettings.saveSyncingPassword("1234")
+        seedLegacyPassword("1234")
         ServerSettings.setRefreshToken("existing-refresh")
 
         let grantBody = try tokenLoginResponseData(accessToken: "grant-token", refreshToken: "rotated-refresh")

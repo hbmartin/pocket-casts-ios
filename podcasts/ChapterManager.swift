@@ -71,6 +71,11 @@ class ChapterManager {
     /// tests can observe the call without a live `PlaybackManager`.
     private let currentChapterRevalidator: (BaseEpisode) -> Void
 
+    /// The on-device result cache is checked before transcript acquisition so
+    /// both successful and no-chapter outcomes suppress repeated I/O/model work.
+    private let onDeviceChapterStore: OnDeviceChapterStore
+    private let localTranscriptCuesLoader: @Sendable (String, String) async -> [TimedCueText]?
+
     private var playableChapters: [ChapterInfo] {
         visibleChapters.filter { $0.isPlayable() }
     }
@@ -79,9 +84,14 @@ class ChapterManager {
         chapterParser: PodcastChapterParser = PodcastChapterParser(),
         showInfoCoordinator: ShowInfoCoordinating = ShowInfoCoordinator.shared,
         skipPatternsProvider: ((BaseEpisode) -> [String])? = nil,
-        currentChapterRevalidator: ((BaseEpisode) -> Void)? = nil) {
+        currentChapterRevalidator: ((BaseEpisode) -> Void)? = nil,
+        onDeviceChapterStore: OnDeviceChapterStore = OnDeviceChapterStore(),
+        localTranscriptCuesLoader: (@Sendable (String, String) async -> [TimedCueText]?)? = nil
+    ) {
         self.chapterParser = chapterParser
         self.showInfoCoordinator = showInfoCoordinator
+        self.onDeviceChapterStore = onDeviceChapterStore
+        self.localTranscriptCuesLoader = localTranscriptCuesLoader ?? Self.loadLocalTranscriptCues
         self.skipPatternsProvider = skipPatternsProvider ?? { episode in
             DataManager.sharedManager.findPodcast(uuid: episode.parentIdentifier())?.settings.skipChapterTitles ?? []
         }
@@ -282,9 +292,18 @@ class ChapterManager {
             // Metadata can re-announce the current group (seeks, output resets):
             // same boundary means update, not append.
             if abs(last.startTime.seconds - time) < 1 {
-                if let artwork, last.image == nil { last.image = artwork }
-                if let title, !title.isEmpty, last.title.isEmpty { last.title = title }
-                NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
+                var changed = false
+                if let artwork, last.image == nil {
+                    last.image = artwork
+                    changed = true
+                }
+                if let title, !title.isEmpty, last.title.isEmpty {
+                    last.title = title
+                    changed = true
+                }
+                if changed {
+                    NotificationCenter.postOnMainThread(PodcastChaptersDidUpdate())
+                }
                 return
             }
             guard time > last.startTime.seconds else { return }
@@ -372,17 +391,24 @@ class ChapterManager {
         // starts makes chapters, seek and smart-skip drift. The flag is only
         // valid after `loadTranscript()` completes.
         if chapters.isEmpty, FeatureFlag.onDeviceChapters.enabled {
-            let boxedManager = PocketCastsUtils.UncheckedSendable(
-                TranscriptManager(episodeUUID: episodeUuid, podcastUUID: podcastUuid)
-            )
-            if let model = try? await Self.loadTranscript(boxedManager),
-               boxedManager.value.isDisplayingLocalTranscription {
-                let cues = SummaryTakeawayGenerator.timedCues(from: model)
-                let generated = await TranscriptChapterGenerator().chapters(episodeUuid: episodeUuid, cues: cues, duration: duration)
-                if !generated.isEmpty, lastEpisodeUuid == episode.uuid {
-                    chapters = chapterParser.parseGeneratedChapters(generated, episodeDuration: duration)
+            switch onDeviceChapterStore.load(episodeUuid: episodeUuid) {
+            case .chapters(let cached):
+                if lastEpisodeUuid == episode.uuid {
+                    chapters = chapterParser.parseGeneratedChapters(cached, episodeDuration: duration)
                     chaptersOrigin = .generated
-                    FileLog.shared.addMessage("ChapterManager: using on-device generated chapters")
+                    FileLog.shared.addMessage("ChapterManager: using cached on-device generated chapters")
+                }
+            case .noChapters:
+                break
+            case nil:
+                if let cues = await localTranscriptCuesLoader(episodeUuid, podcastUuid) {
+                    let generated = await TranscriptChapterGenerator(store: onDeviceChapterStore)
+                        .chapters(episodeUuid: episodeUuid, cues: cues, duration: duration)
+                    if !generated.isEmpty, lastEpisodeUuid == episode.uuid {
+                        chapters = chapterParser.parseGeneratedChapters(generated, episodeDuration: duration)
+                        chaptersOrigin = .generated
+                        FileLog.shared.addMessage("ChapterManager: using on-device generated chapters")
+                    }
                 }
             }
         }
@@ -392,10 +418,18 @@ class ChapterManager {
         }
     }
 
-    nonisolated private static func loadTranscript(
-        _ manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
-    ) async throws -> TranscriptModel {
-        try await manager.value.loadTranscript()
+    nonisolated private static func loadLocalTranscriptCues(
+        episodeUuid: String,
+        podcastUuid: String
+    ) async -> [TimedCueText]? {
+        let boxedManager = PocketCastsUtils.UncheckedSendable(
+            TranscriptManager(episodeUUID: episodeUuid, podcastUUID: podcastUuid)
+        )
+        guard let model = try? await TranscriptManager.loadTranscript(from: boxedManager),
+              boxedManager.value.isDisplayingLocalTranscription else {
+            return nil
+        }
+        return SummaryTakeawayGenerator.timedCues(from: model)
     }
 
     nonisolated private static func loadFileChapters(_ boxed: PocketCastsUtils.UncheckedSendable<(ChapterManager, BaseEpisode)>, duration: TimeInterval) async -> [ChapterInfo] {

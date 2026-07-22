@@ -12,19 +12,24 @@ nonisolated enum EmbeddingVectorCodec {
         let normalized = l2Normalized(vector)
         var data = Data(capacity: normalized.count * MemoryLayout<Float16>.size)
         for value in normalized {
-            var half = Float16(value)
-            withUnsafeBytes(of: &half) { data.append(contentsOf: $0) }
+            var bits = Float16(value).bitPattern.littleEndian
+            withUnsafeBytes(of: &bits) { data.append(contentsOf: $0) }
         }
         return data
     }
 
-    static func decode(_ data: Data) -> [Float] {
+    /// Returns nil when the blob ends in an incomplete Float16 word.
+    static func decode(_ data: Data) -> [Float]? {
+        guard data.count.isMultiple(of: MemoryLayout<UInt16>.size) else { return nil }
         let count = data.count / MemoryLayout<Float16>.size
         var result = [Float](repeating: 0, count: count)
         data.withUnsafeBytes { raw in
-            let halves = raw.bindMemory(to: Float16.self)
             for index in 0 ..< count {
-                result[index] = Float(halves[index])
+                let bits = raw.loadUnaligned(
+                    fromByteOffset: index * MemoryLayout<UInt16>.size,
+                    as: UInt16.self
+                )
+                result[index] = Float(Float16(bitPattern: UInt16(littleEndian: bits)))
             }
         }
         return result
@@ -40,13 +45,17 @@ nonisolated enum EmbeddingVectorCodec {
     /// cosine similarity, given both sides are normalized. Returns nil on
     /// dimension mismatch (a corrupt or foreign-model row must never score).
     static func dotProduct(_ data: Data, query: [Float]) -> Float? {
+        guard data.count.isMultiple(of: MemoryLayout<UInt16>.size) else { return nil }
         let count = data.count / MemoryLayout<Float16>.size
         guard count == query.count, count > 0 else { return nil }
         return data.withUnsafeBytes { raw in
-            let halves = raw.bindMemory(to: Float16.self)
             var total: Float = 0
             for index in 0 ..< count {
-                total += Float(halves[index]) * query[index]
+                let bits = raw.loadUnaligned(
+                    fromByteOffset: index * MemoryLayout<UInt16>.size,
+                    as: UInt16.self
+                )
+                total += Float(Float16(bitPattern: UInt16(littleEndian: bits))) * query[index]
             }
             return total
         }

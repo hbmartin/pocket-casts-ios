@@ -30,6 +30,20 @@ class PerfReportTest < Minitest::Test
     end
   end
 
+  def test_replaces_malformed_utf8_without_losing_measurements
+    malformed_log = (
+      "compiler output: \xFF\n".b +
+      MEASURED_LOG.b +
+      "undefined bytes: \xC3\x28\n".b
+    )
+
+    with_log(malformed_log) do |path|
+      entries = PerfReport.parse(path)
+      assert_equal 2, entries.length
+      assert_equal "testColdLaunchPerformance", entries[0].test
+    end
+  end
+
   def test_markdown_reports_delta_against_baseline
     with_log(MEASURED_LOG) do |path|
       entries = PerfReport.parse(path)

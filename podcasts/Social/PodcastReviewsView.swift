@@ -164,6 +164,11 @@ struct ReviewEditorView: View {
 
 @MainActor
 final class PodcastReviewsViewModel: ObservableObject {
+    typealias FetchReviews = @MainActor (String, Int, Int) async -> PodcastReviewPage?
+    typealias SubmitReview = @MainActor (String, String) async -> PodcastReview?
+    typealias DeleteReview = @MainActor (String) async -> Bool
+    typealias ReportUser = @MainActor (String, SocialReportReason, String, String, String) async -> Bool
+
     let podcastUuid: String
     let ownUserId: String?
 
@@ -182,10 +187,35 @@ final class PodcastReviewsViewModel: ObservableObject {
     var onJoinRequired: (() -> Void)?
 
     private static let pageSize = 50
+    private let fetchReviews: FetchReviews
+    private let submitReview: SubmitReview
+    private let deleteReviewRequest: DeleteReview
+    private let reportUser: ReportUser
 
-    init(podcastUuid: String, ownUserId: String? = ServerSettings.userId) {
+    init(podcastUuid: String,
+         ownUserId: String? = ServerSettings.userId,
+         fetchReviews: @escaping FetchReviews = {
+             await ApiServerHandler.shared.fetchReviews(podcastUuid: $0, limit: $1, offset: $2)
+         },
+         submitReview: @escaping SubmitReview = {
+             await ApiServerHandler.shared.submitReview(podcastUuid: $0, text: $1)
+         },
+         deleteReview: @escaping DeleteReview = {
+             await ApiServerHandler.shared.deleteReview(podcastUuid: $0)
+         },
+         reportUser: @escaping ReportUser = {
+             await ApiServerHandler.shared.reportUser(targetUserId: $0,
+                                                      reason: $1,
+                                                      context: $2,
+                                                      targetType: $3,
+                                                      contentRef: $4)
+         }) {
         self.podcastUuid = podcastUuid
         self.ownUserId = ownUserId?.lowercased()
+        self.fetchReviews = fetchReviews
+        self.submitReview = submitReview
+        self.deleteReviewRequest = deleteReview
+        self.reportUser = reportUser
     }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
@@ -204,7 +234,7 @@ final class PodcastReviewsViewModel: ObservableObject {
 
     func load() async {
         guard !fixtureLoaded else { return }
-        guard let page = await ApiServerHandler.shared.fetchReviews(podcastUuid: podcastUuid) else {
+        guard let page = await fetchReviews(podcastUuid, Self.pageSize, 0) else {
             isLoading = false
             return
         }
@@ -215,9 +245,7 @@ final class PodcastReviewsViewModel: ObservableObject {
     }
 
     func loadMore() async {
-        guard let page = await ApiServerHandler.shared.fetchReviews(podcastUuid: podcastUuid,
-                                                                    limit: Self.pageSize,
-                                                                    offset: reviews.count) else { return }
+        guard let page = await fetchReviews(podcastUuid, Self.pageSize, reviews.count) else { return }
         reviews.append(contentsOf: page.reviews)
         total = page.total
     }
@@ -235,21 +263,27 @@ final class PodcastReviewsViewModel: ObservableObject {
     func submitDraft() async -> Bool {
         isSubmitting = true
         editorError = nil
-        let review = await ApiServerHandler.shared.submitReview(podcastUuid: podcastUuid,
-                                                                text: draftText.trimmingCharacters(in: .whitespacesAndNewlines))
+        let review = await submitReview(podcastUuid,
+                                        draftText.trimmingCharacters(in: .whitespacesAndNewlines))
         isSubmitting = false
-        guard review != nil else {
+        guard let review else {
             // Rejection reasons: text filter, or the listen-gate.
             editorError = L10n.socialReviewRejected
             return false
         }
         Analytics.track(.socialReviewSubmitted)
+        commitSubmittedReview(review)
         await load()
         return true
     }
 
     func deleteReview() async -> Bool {
-        guard await ApiServerHandler.shared.deleteReview(podcastUuid: podcastUuid) else { return false }
+        guard await deleteReviewRequest(podcastUuid) else { return false }
+        if let ownReview = yourReview {
+            reviews.removeAll { $0.userId == ownReview.userId }
+            total = max(0, total - 1)
+            yourReview = nil
+        }
         await load()
         return true
     }
@@ -257,9 +291,11 @@ final class PodcastReviewsViewModel: ObservableObject {
     func reportSelected(reason: SocialReportReason) async {
         guard let target = reportTarget else { return }
         Analytics.track(.socialProfileReported)
-        _ = await ApiServerHandler.shared.reportUser(targetUserId: target.userId,
-                                                     reason: reason,
-                                                     context: "review:\(podcastUuid)")
+        _ = await reportUser(target.userId,
+                             reason,
+                             "review:\(podcastUuid)",
+                             "review",
+                             podcastUuid)
     }
 
     func blockAuthor(_ review: PodcastReview) async {
@@ -267,5 +303,18 @@ final class PodcastReviewsViewModel: ObservableObject {
         Analytics.track(.socialProfileBlocked)
         _ = await ApiServerHandler.shared.setBlocked(true, targetUserId: review.userId)
         await load()
+    }
+
+    private func commitSubmittedReview(_ review: PodcastReview) {
+        let hadReview = yourReview != nil || reviews.contains { $0.userId == review.userId }
+        yourReview = review
+        if let index = reviews.firstIndex(where: { $0.userId == review.userId }) {
+            reviews[index] = review
+        } else {
+            reviews.insert(review, at: 0)
+            if !hadReview {
+                total += 1
+            }
+        }
     }
 }

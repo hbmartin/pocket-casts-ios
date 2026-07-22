@@ -26,13 +26,16 @@ class SharedListCreateTask: ApiBaseTask, @unchecked Sendable {
             request.title = title
             request.description_p = descriptionText
             request.visibility = visibility.apiValue
-            request.entries = entries.map { entry in
+            request.entries = try entries.map { entry in
+                guard let position = Int32(exactly: entry.position) else {
+                    throw SharedListTaskError.invalidPosition
+                }
                 var wire = Api_SharedListEntry()
                 wire.episodeUuid = entry.episodeUuid
                 wire.podcastUuid = entry.podcastUuid
                 wire.episodeTitle = entry.episodeTitle
                 wire.podcastTitle = entry.podcastTitle
-                wire.position = Int32(entry.position)
+                wire.position = position
                 return wire
             }
             let data = try request.serializedData()
@@ -56,7 +59,7 @@ class SharedListAckTask: ApiBaseTask, @unchecked Sendable {
     enum Kind {
         case update(listId: Int64, title: String, description: String, visibility: SocialVisibility)
         case delete(listId: Int64)
-        case entryOp(listId: Int64, op: SharedListOp, entry: SharedListEntry, position: Int)
+        case entryOp(listId: Int64, op: SharedListOp, entry: SharedListEntry, position: Int32)
         case invite(listId: Int64, handle: String)
         case inviteRespond(listId: Int64, accept: Bool)
         case memberRemove(listId: Int64, handle: String)
@@ -97,7 +100,7 @@ class SharedListAckTask: ApiBaseTask, @unchecked Sendable {
                 request.podcastUuid = entry.podcastUuid
                 request.episodeTitle = entry.episodeTitle
                 request.podcastTitle = entry.podcastTitle
-                request.position = Int32(position)
+                request.position = position
                 data = try request.serializedData()
                 path = "social/list/entry"
             case .invite(let listId, let handle):
@@ -137,6 +140,10 @@ class SharedListAckTask: ApiBaseTask, @unchecked Sendable {
             completion?(false)
         }
     }
+}
+
+private enum SharedListTaskError: Error {
+    case invalidPosition
 }
 
 // @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.

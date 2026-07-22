@@ -9,7 +9,7 @@ struct PodcastDetailsTabView: View {
 
     weak var delegate: PodcastActionsDelegate?
 
-    enum Tab {
+    enum Tab: Hashable {
         case episodes
         case bookmarks
         case youMightLike
@@ -27,10 +27,13 @@ struct PodcastDetailsTabView: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) { tabs }
-            .onReceive(delegate?.currentViewModePublisher ?? Just(.episodes).eraseToAnyPublisher()) { viewMode in
-                selectedTab = Tab(from: viewMode)
-            }
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) { tabs }
+                .onReceive(delegate?.currentViewModePublisher ?? Just(.episodes).eraseToAnyPublisher()) { viewMode in
+                    selectedTab = Tab(from: viewMode)
+                    proxy.scrollTo(selectedTab, anchor: .center)
+                }
+        }
     }
 
     @ViewBuilder var tabs: some View {
@@ -44,6 +47,7 @@ struct PodcastDetailsTabView: View {
                         .applyStyle(theme: theme, highlighted: selectedTab == .episodes)
                         .applyButtonEffect(isPressed: config.isPressed)
                 }
+                .id(Tab.episodes)
 
             Text(L10n.bookmarks)
                 .buttonize {
@@ -54,6 +58,7 @@ struct PodcastDetailsTabView: View {
                         .applyStyle(theme: theme, highlighted: selectedTab == .bookmarks)
                         .applyButtonEffect(isPressed: config.isPressed)
                 }
+                .id(Tab.bookmarks)
 
             Text(L10n.youMightLike)
                 .buttonize {
@@ -64,6 +69,7 @@ struct PodcastDetailsTabView: View {
                         .applyStyle(theme: theme, highlighted: selectedTab == .youMightLike)
                         .applyButtonEffect(isPressed: config.isPressed)
                 }
+                .id(Tab.youMightLike)
 
             Spacer()
         }

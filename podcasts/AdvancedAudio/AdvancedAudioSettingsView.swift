@@ -88,7 +88,7 @@ private struct NormalizeSection: View {
                 .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
         ) {
             Toggle(L10n.settingsGeneralNormalizeVolume, isOn: $model.tuning.normalize.enabled)
-            TuningSliderRow(title: L10n.advancedAudioBoostTargetLufs, range: NormalizeTuning.targetLUFSRange, step: 0.5, unit: "LUFS", value: $model.tuning.normalize.targetLUFS)
+            TuningSliderRow(title: L10n.advancedAudioBoostTargetLufs, range: NormalizeTuning.targetLUFSRange, step: 0.5, unit: L10n.advancedAudioLoudnessUnitLufs, value: $model.tuning.normalize.targetLUFS)
                 .disabled(!model.tuning.normalize.enabled)
                 .opacity(model.tuning.normalize.enabled ? 1 : 0.5)
         }

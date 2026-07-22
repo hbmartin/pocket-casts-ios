@@ -797,7 +797,10 @@ final class PerformanceUITests: PocketCastsUITestCase {
                 NSPredicate(format: "label == 'Play' AND identifier != 'play pause button'")
             ).firstMatch
             XCTAssertTrue(card.waitForExistence(timeout: 30), "Episode card did not show its action strip")
-            app.swipeDown(velocity: .fast)
+            let closeButton = app.buttons["Close"]
+            XCTAssertTrue(closeButton.waitForExistence(timeout: 30), "Episode card did not show its Close control")
+            closeButton.tap()
+            XCTAssertTrue(card.waitForNonExistence(timeout: 30), "Episode card did not dismiss")
             XCTAssertTrue(episodeRow.waitForExistence(timeout: 30), "Episode card did not dismiss")
         }
     }

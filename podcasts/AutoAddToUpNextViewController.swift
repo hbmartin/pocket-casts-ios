@@ -140,19 +140,18 @@ class AutoAddToUpNextViewController: PCViewController, UITableViewDelegate, UITa
     }
 
     private func addActionForPodcast(podcast: Podcast, setting: AutoAddToUpNextSetting, label: String, to: OptionsPicker) {
-        var podcast = podcast
-        let action = OptionAction(label: label, selected: podcast.autoAddToUpNextSetting() == setting) { [weak self] in
-            podcast.setAutoAddToUpNext(setting: setting)
-            // addToUpNext is a synced setting; without the dirty mark the change
-            // never uploads (SyncTask only sends unsynced podcasts).
-            podcast.syncStatus = SyncStatus.notSynced.rawValue
-            DataManager.sharedManager.save(podcast: podcast)
-            NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcast.uuid))
+        to.addAction(action: actionForPodcast(podcast: podcast, setting: setting, label: label))
+    }
+
+    func actionForPodcast(podcast: Podcast, setting: AutoAddToUpNextSetting, label: String) -> OptionAction {
+        let podcastUuid = podcast.uuid
+        return OptionAction(label: label, selected: podcast.autoAddToUpNextSetting() == setting) { [weak self, podcastUuid] in
+            DataManager.sharedManager.saveAutoAddToUpNext(podcastUuid: podcastUuid, autoAddToUpNext: setting.rawValue)
+            NotificationCenter.postOnMainThread(PodcastUpdated(uuid: podcastUuid))
             self?.reloadDownloadedPodcasts()
             self?.mainTable.reloadData()
             Settings.trackValueChanged(.settingsAutoAddUpNextPodcastPositionOptionChanged, value: setting)
         }
-        to.addAction(action: action)
     }
 
     private func addOnLimitReached(action: AutoAddLimitReachedAction, to: OptionsPicker) {

@@ -3,6 +3,7 @@ import Foundation
 import PocketCastsUtils
 import PocketCastsServer
 import PocketCastsDataModel
+import Synchronization
 
 nonisolated enum NotificationType: String {
 
@@ -302,14 +303,17 @@ nonisolated enum NotificationsGroup: CaseIterable {
     }
 }
 
-/// State is an immutable (thread-safe) UNUserNotificationCenter plus a debug toggle
-/// only flipped from the developer menu.
-/// @unchecked Sendable: notificationCenter is immutable and thread-safe; debugMode is an unsynchronized developer-menu-only toggle.
+/// State is an immutable (thread-safe) UNUserNotificationCenter plus a lock-backed debug toggle.
+/// @unchecked Sendable: notificationCenter is immutable and thread-safe; debugMode is protected by Mutex.
 nonisolated final class NotificationsCoordinator: @unchecked Sendable {
 
     static let shared = NotificationsCoordinator()
 
-    var debugMode: Bool = false
+    private let debugModeState = Mutex(false)
+    var debugMode: Bool {
+        get { debugModeState.withLock { $0 } }
+        set { debugModeState.withLock { $0 = newValue } }
+    }
 
     private let notificationCenter: UNUserNotificationCenter
 

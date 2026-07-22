@@ -1,7 +1,7 @@
 import Foundation
 
-// @unchecked Sendable: `timer` and `action` are only accessed on the main thread, while
-// `timerValid` is guarded by `lock`.
+// `timer` and `action` are only accessed on the main thread, while
+// @unchecked Sendable: timer/action stay main-thread-confined and lock guards timerValid.
 public final class TimedActionHelper: @unchecked Sendable {
     private let lock = NSLock()
     private var timer: Timer?

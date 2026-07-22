@@ -120,21 +120,69 @@ enum PlaylistQueryValidator {
     }
 
     /// True when the fragment contains a statement separator outside of a
-    /// single-quoted SQL string literal: `episode.title = 'Science; Vs'` is a
-    /// valid expression, `1); DELETE ...` is not. SQL escapes a quote inside a
-    /// literal by doubling it (`''`), which the scanner handles by toggling on
-    /// every quote. A `;` after an unterminated quote counts as literal text —
-    /// such fragments already fail statement preparation at save time.
+    /// single-quoted SQL string literal or SQL comment. Malformed quoted strings
+    /// and block comments also return true so the runtime re-check fails closed
+    /// when a stored fragment bypassed save-time statement preparation.
     static func containsStatementSeparator(_ fragment: String) -> Bool {
-        var insideLiteral = false
-        for character in fragment {
-            if character == "'" {
-                insideLiteral.toggle()
-            } else if character == ";", !insideLiteral {
-                return true
-            }
+        enum State {
+            case sql
+            case singleQuotedString
+            case lineComment
+            case blockComment
         }
-        return false
+
+        let characters = Array(fragment)
+        var state = State.sql
+        var index = 0
+
+        while index < characters.count {
+            let character = characters[index]
+            let nextCharacter = index + 1 < characters.count ? characters[index + 1] : nil
+
+            switch state {
+            case .sql:
+                switch (character, nextCharacter) {
+                case ("'", _):
+                    state = .singleQuotedString
+                case ("-", "-"):
+                    state = .lineComment
+                    index += 1
+                case ("/", "*"):
+                    state = .blockComment
+                    index += 1
+                case (";", _):
+                    return true
+                default:
+                    break
+                }
+            case .singleQuotedString:
+                if character == "'" {
+                    if nextCharacter == "'" {
+                        index += 1
+                    } else {
+                        state = .sql
+                    }
+                }
+            case .lineComment:
+                if character == "\n" || character == "\r" {
+                    state = .sql
+                }
+            case .blockComment:
+                if character == "*", nextCharacter == "/" {
+                    state = .sql
+                    index += 1
+                }
+            }
+
+            index += 1
+        }
+
+        switch state {
+        case .singleQuotedString, .blockComment:
+            return true
+        case .sql, .lineComment:
+            return false
+        }
     }
 
     private static func databaseErrorMessage(_ error: Error) -> String {

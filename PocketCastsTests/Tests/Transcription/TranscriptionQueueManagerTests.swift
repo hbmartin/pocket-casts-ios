@@ -408,6 +408,56 @@ final class TranscriptionQueueManagerTests: XCTestCase {
                      "The cached fingerprint must not outlive its transcription")
     }
 
+    func testCleanupUnusableCompletedRecordDoesNotDeleteNewerRetry() async throws {
+        let manager = makeManager(engine: MockSpeechEngine())
+        var inspected = EpisodeTranscriptionRecord()
+        inspected.episodeUuid = "episode-retried"
+        inspected.transcriptionStatus = .completed
+        inspected.createdAt = 100
+        inspected.updatedAt = 200
+        XCTAssertTrue(dataManager.transcriptions.upsert(inspected))
+
+        var retried = inspected
+        retried.transcriptionStatus = .queued
+        retried.updatedAt = 300
+        XCTAssertTrue(dataManager.transcriptions.upsert(retried))
+
+        let deleted = await manager.cleanupUnusableCompletedTranscription(expected: inspected)
+
+        XCTAssertFalse(deleted)
+        XCTAssertEqual(dataManager.transcriptions.find(episodeUuid: inspected.episodeUuid), retried,
+                       "Cleanup based on an old load must preserve a newer retry")
+    }
+
+    func testCleanupRevalidatesArtifactBeforeDeletingCompletedRecord() async throws {
+        let manager = makeManager(engine: MockSpeechEngine())
+        var inspected = EpisodeTranscriptionRecord()
+        inspected.episodeUuid = "episode-restored"
+        inspected.transcriptionStatus = .completed
+        inspected.createdAt = 100
+        inspected.updatedAt = 200
+        XCTAssertTrue(dataManager.transcriptions.upsert(inspected))
+
+        let artifactStore = TranscriptionArtifactStore(
+            directoryURL: workDirectory.appendingPathComponent("artifacts", isDirectory: true)
+        )
+        try artifactStore.write(
+            transcript: DiarizedTranscript(
+                cues: [DiarizedCue(speaker: nil, text: "Restored", start: 0, end: 1)],
+                language: "en",
+                speakerCount: 1,
+                engineDescription: "test"
+            ),
+            episodeUuid: inspected.episodeUuid
+        )
+
+        let deleted = await manager.cleanupUnusableCompletedTranscription(expected: inspected)
+
+        XCTAssertFalse(deleted)
+        XCTAssertEqual(dataManager.transcriptions.find(episodeUuid: inspected.episodeUuid), inspected,
+                       "An artifact restored during the load must prevent cleanup")
+    }
+
     // MARK: - Helpers
 
     private func waitUntil(_ description: String,

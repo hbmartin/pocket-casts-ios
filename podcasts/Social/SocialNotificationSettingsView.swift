@@ -38,27 +38,36 @@ struct SocialNotificationSettingsView: View {
     private func toggleRow(_ title: String, type: SocialPushType) -> some View {
         Toggle(title, isOn: Binding(
             get: { viewModel.isEnabled(type) },
-            set: { enabled in Task { await viewModel.set(type, enabled: enabled) } }
+            set: { enabled in viewModel.set(type, enabled: enabled) }
         ))
     }
 }
 
 @MainActor
 final class SocialNotificationSettingsViewModel: ObservableObject {
+    typealias UpdateProfile = (SocialProfile) async -> SocialProfile?
+
     @Published private(set) var disabledMask: Int64
     @Published private(set) var saveError: String?
 
     private var profile: SocialProfile?
     private var fixtureLoaded = false
+    private var saveTask: Task<Void, Never>?
+    private let updateProfile: UpdateProfile
 
-    init(profile: SocialProfile? = SocialIdentityStore.cachedProfile) {
+    init(
+        profile: SocialProfile? = SocialIdentityStore.cachedProfile,
+        updateProfile: @escaping UpdateProfile = { await ApiServerHandler.shared.updateSocialProfile($0) }
+    ) {
         self.profile = profile
+        self.updateProfile = updateProfile
         disabledMask = profile?.socialPushDisabled ?? 0
     }
 
     /// Fixture initializer for snapshots/previews; saves then no-op.
     init(fixtureMask: Int64) {
         disabledMask = fixtureMask
+        updateProfile = { _ in nil }
         fixtureLoaded = true
     }
 
@@ -68,20 +77,49 @@ final class SocialNotificationSettingsViewModel: ObservableObject {
 
     /// Optimistic flip; the profile update persists it server-side (where
     /// sends are gated). Reverts on failure.
-    func set(_ type: SocialPushType, enabled: Bool) async {
-        let previous = disabledMask
+    func set(_ type: SocialPushType, enabled: Bool) {
         disabledMask = SocialPushType.setEnabled(type, enabled: enabled, in: disabledMask)
         saveError = nil
-        guard !fixtureLoaded, var updated = profile else { return }
+        guard !fixtureLoaded, profile != nil else { return }
 
         Analytics.track(.socialPushPrefChanged)
-        updated.socialPushDisabled = disabledMask
-        guard let saved = await ApiServerHandler.shared.updateSocialProfile(updated) else {
-            disabledMask = previous
-            saveError = L10n.socialPrivacySaveFailed
+        guard saveTask == nil else { return }
+        saveTask = Task { [weak self] in
+            await self?.persistPendingMask()
+        }
+    }
+
+    func waitForPendingSave() async {
+        await saveTask?.value
+    }
+
+    /// Serializes full-profile writes and coalesces rapid toggles. Cancelling an
+    /// Operation-backed request cannot stop its HTTP write, so one writer is
+    /// kept in flight and any newer desired mask is sent immediately after it.
+    private func persistPendingMask() async {
+        defer { saveTask = nil }
+        guard var confirmedProfile = profile else { return }
+
+        while !Task.isCancelled {
+            let requestedMask = disabledMask
+            var updated = confirmedProfile
+            updated.socialPushDisabled = requestedMask
+
+            guard let saved = await updateProfile(updated) else {
+                if disabledMask == requestedMask {
+                    disabledMask = confirmedProfile.socialPushDisabled
+                    saveError = L10n.socialPrivacySaveFailed
+                    return
+                }
+                continue
+            }
+
+            confirmedProfile = saved
+            profile = saved
+            guard disabledMask == requestedMask else { continue }
+            disabledMask = saved.socialPushDisabled
+            SocialIdentityStore.cachedProfile = saved
             return
         }
-        SocialIdentityStore.cachedProfile = saved
-        profile = saved
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import PocketCastsServer
 
@@ -22,6 +23,10 @@ private final class ParseResultBox: @unchecked Sendable {
     var outcome: TimeBoxedParseOutcome = .timedOut
 }
 
+/// XMLParser cannot be cancelled. Once one hostile input strands a worker,
+/// prevent the rest of the corpus from creating another unbounded thread.
+private let parserTimeoutOccurred = Mutex(false)
+
 /// Runs `FeedParser.parse` on a dedicated thread and gives up after `limit`, recording
 /// a test failure, so a pathological input fails the test rather than hanging CI.
 /// `XMLParser.parse()` cannot be cancelled, so on timeout the worker thread is
@@ -30,6 +35,12 @@ func parseTimeBoxed(_ data: Data,
                     limit: Duration = .seconds(5),
                     label: String = "input",
                     sourceLocation: SourceLocation = #_sourceLocation) -> TimeBoxedParseOutcome {
+    let canStartWorker = parserTimeoutOccurred.withLock { !$0 }
+    guard canStartWorker else {
+        Issue.record("FeedParser.parse(\(label)) skipped because an earlier parser worker timed out", sourceLocation: sourceLocation)
+        return .timedOut
+    }
+
     let box = ParseResultBox()
     let semaphore = DispatchSemaphore(value: 0)
     let clock = ContinuousClock()
@@ -46,6 +57,7 @@ func parseTimeBoxed(_ data: Data,
 
     let limitSeconds = Double(limit.components.seconds) + Double(limit.components.attoseconds) / 1e18
     guard semaphore.wait(timeout: .now() + limitSeconds) == .success else {
+        parserTimeoutOccurred.withLock { $0 = true }
         Issue.record("FeedParser.parse(\(label)) exceeded the \(limit) time box (elapsed \(clock.now - start))", sourceLocation: sourceLocation)
         return .timedOut
     }

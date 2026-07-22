@@ -1,11 +1,58 @@
+import FoundationModels
+import Synchronization
 import XCTest
 
 @testable import podcasts
 
+nonisolated private final class CountingChapterIntelligence: IntelligenceProviding {
+    private struct Counts: Sendable {
+        var availability = 0
+        var responses = 0
+    }
+
+    private let counts = Mutex(Counts())
+    private let availabilityResult: IntelligenceAvailability
+    private let response: @Sendable () throws -> GeneratedChapterList
+
+    init(
+        availability: IntelligenceAvailability = .available,
+        response: @escaping @Sendable () throws -> GeneratedChapterList = {
+            GeneratedChapterList(chapters: [])
+        }
+    ) {
+        self.availabilityResult = availability
+        self.response = response
+    }
+
+    func availability() -> IntelligenceAvailability {
+        counts.withLock { $0.availability += 1 }
+        return availabilityResult
+    }
+
+    func respond<T: Generable & Sendable>(
+        instructions: String,
+        prompt: String,
+        generating type: T.Type
+    ) async throws -> T {
+        counts.withLock { $0.responses += 1 }
+        guard let value = try response() as? T else {
+            throw IntelligenceError.decodingFailed
+        }
+        return value
+    }
+
+    var callCounts: (availability: Int, responses: Int) {
+        counts.withLock { ($0.availability, $0.responses) }
+    }
+}
+
 /// Pure validation of on-device chapter generation and the per-episode cache.
 @MainActor
 final class TranscriptChapterGeneratorTests: XCTestCase {
-    private let cueStarts: [TimeInterval] = stride(from: 0.0, through: 3600, by: 30).map { $0 }
+    private let cueStarts: [TimeInterval] = Array(stride(from: 0.0, through: 3600, by: 30))
+    private let productionCues = (0 ..< 12).map {
+        TimedCueText(startTime: TimeInterval($0 * 60), text: "Transcript cue \($0)")
+    }
 
     private func item(_ title: String, _ seconds: Int) -> GeneratedChapterListItem {
         GeneratedChapterListItem(title: title, startSeconds: seconds)
@@ -32,7 +79,7 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
     func testValidationDropsUnsnappableTimestamps() {
         // Cues only cover the first 10 minutes; a chapter at 50 minutes has no
         // nearby cue and must be dropped rather than invented.
-        let shortCues: [TimeInterval] = stride(from: 0.0, through: 600, by: 30).map { $0 }
+        let shortCues: [TimeInterval] = Array(stride(from: 0.0, through: 600, by: 30))
         let chapters = TranscriptChapterGenerator.validated([item("Ghost", 3000), item("Real", 300)],
                                                             cueStartTimes: shortCues,
                                                             duration: 3600)
@@ -102,6 +149,139 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(TranscriptChapterGenerator.timestampString(for: 3725), "1:02:05")
     }
 
+    // MARK: - Production entry point
+
+    func testChaptersReturnsCachedSuccessWithoutConsultingModel() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        store.save(.chapters([
+            GeneratedChapter(title: "Cached", timestamp: "0:00", startTime: 0)
+        ]), episodeUuid: "cached")
+        let intelligence = CountingChapterIntelligence()
+
+        let chapters = await TranscriptChapterGenerator(intelligence: intelligence, store: store)
+            .chapters(episodeUuid: "cached", cues: productionCues, duration: 700)
+
+        XCTAssertEqual(chapters.map(\.title), ["Cached"])
+        XCTAssertEqual(intelligence.callCounts.availability, 0)
+        XCTAssertEqual(intelligence.callCounts.responses, 0)
+    }
+
+    func testInsufficientCuesCachesNoChaptersAndSuppressesEligibleRetry() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let intelligence = CountingChapterIntelligence()
+        let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
+
+        let first = await generator.chapters(
+            episodeUuid: "thin",
+            cues: Array(productionCues.prefix(9)),
+            duration: 700
+        )
+        let second = await generator.chapters(
+            episodeUuid: "thin",
+            cues: productionCues,
+            duration: 700
+        )
+
+        XCTAssertTrue(first.isEmpty)
+        XCTAssertTrue(second.isEmpty)
+        XCTAssertEqual(intelligence.callCounts.availability, 0)
+        XCTAssertEqual(intelligence.callCounts.responses, 0)
+        guard case .noChapters? = store.load(episodeUuid: "thin") else {
+            XCTFail("The completed no-chapters outcome should be distinct from a cache miss")
+            return
+        }
+    }
+
+    func testUnavailableModelOutcomeIsCached() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let intelligence = CountingChapterIntelligence(
+            availability: .unavailable(reason: "model_not_ready")
+        )
+        let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
+
+        let first = await generator.chapters(episodeUuid: "unavailable", cues: productionCues, duration: 700)
+        let second = await generator.chapters(episodeUuid: "unavailable", cues: productionCues, duration: 700)
+
+        XCTAssertTrue(first.isEmpty)
+        XCTAssertTrue(second.isEmpty)
+        XCTAssertEqual(intelligence.callCounts.availability, 1)
+        XCTAssertEqual(intelligence.callCounts.responses, 0)
+        guard case .noChapters? = store.load(episodeUuid: "unavailable") else {
+            XCTFail("Model unavailability should persist the no-chapters outcome")
+            return
+        }
+    }
+
+    func testGenerationErrorOutcomeIsCached() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let intelligence = CountingChapterIntelligence(response: {
+            throw IntelligenceError.timedOut
+        })
+        let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
+
+        let first = await generator.chapters(episodeUuid: "error", cues: productionCues, duration: 700)
+        let second = await generator.chapters(episodeUuid: "error", cues: productionCues, duration: 700)
+
+        XCTAssertTrue(first.isEmpty)
+        XCTAssertTrue(second.isEmpty)
+        XCTAssertEqual(intelligence.callCounts.availability, 1)
+        XCTAssertEqual(intelligence.callCounts.responses, 1)
+        guard case .noChapters? = store.load(episodeUuid: "error") else {
+            XCTFail("A completed generation failure should suppress repeated model work")
+            return
+        }
+    }
+
+    func testEmptyValidatedOutcomeIsCached() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let intelligence = CountingChapterIntelligence(response: {
+            GeneratedChapterList(chapters: [])
+        })
+        let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
+
+        let first = await generator.chapters(episodeUuid: "empty", cues: productionCues, duration: 700)
+        let second = await generator.chapters(episodeUuid: "empty", cues: productionCues, duration: 700)
+
+        XCTAssertTrue(first.isEmpty)
+        XCTAssertTrue(second.isEmpty)
+        XCTAssertEqual(intelligence.callCounts.responses, 1)
+        guard case .noChapters? = store.load(episodeUuid: "empty") else {
+            XCTFail("Empty validated output should suppress repeated model work")
+            return
+        }
+    }
+
+    func testCancellationDoesNotPoisonCache() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let cancelled = CountingChapterIntelligence(response: {
+            throw CancellationError()
+        })
+
+        let cancelledResult = await TranscriptChapterGenerator(intelligence: cancelled, store: store)
+            .chapters(episodeUuid: "cancelled", cues: productionCues, duration: 700)
+        XCTAssertTrue(cancelledResult.isEmpty)
+        XCTAssertNil(store.load(episodeUuid: "cancelled"))
+
+        let succeeding = CountingChapterIntelligence(response: {
+            GeneratedChapterList(chapters: [
+                GeneratedChapterListItem(title: "Intro", startSeconds: 0),
+                GeneratedChapterListItem(title: "Middle", startSeconds: 180),
+                GeneratedChapterListItem(title: "End", startSeconds: 420)
+            ])
+        })
+        let chapters = await TranscriptChapterGenerator(intelligence: succeeding, store: store)
+            .chapters(episodeUuid: "cancelled", cues: productionCues, duration: 700)
+
+        XCTAssertEqual(chapters.map(\.title), ["Intro", "Middle", "End"])
+        XCTAssertEqual(succeeding.callCounts.responses, 1)
+    }
+
     func testStoreRoundTripsChapters() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("chapter-store-\(UUID().uuidString)", isDirectory: true)
@@ -114,9 +294,12 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
             GeneratedChapter(title: "Intro", timestamp: "0:00", startTime: 0),
             GeneratedChapter(title: "Topic", timestamp: "15:00", startTime: 900)
         ]
-        store.save(chapters, episodeUuid: "ep-1")
+        store.save(.chapters(chapters), episodeUuid: "ep-1")
 
-        let loaded = try XCTUnwrap(store.load(episodeUuid: "ep-1"))
+        guard case .chapters(let loaded)? = store.load(episodeUuid: "ep-1") else {
+            XCTFail("Expected a cached chapter list")
+            return
+        }
         XCTAssertEqual(loaded.map(\.title), ["Intro", "Topic"])
         XCTAssertEqual(loaded.map(\.startTime), [0, 900])
         XCTAssertEqual(loaded.map(\.timestamp), ["0:00", "15:00"], "Timestamps regenerate from start times")
@@ -133,13 +316,40 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
 
         let legacyPayload = Data(#"[{"title":"Stale","startTime":5}]"#.utf8)
         try legacyPayload.write(to: directory.appendingPathComponent("ep-1.json"))
+        try legacyPayload.write(to: directory.appendingPathComponent("ep-1.v2.json"))
 
         let store = OnDeviceChapterStore(directoryURL: directory)
-        XCTAssertNil(store.load(episodeUuid: "ep-1"), "Unversioned v1 cache entries must not be served")
+        XCTAssertNil(store.load(episodeUuid: "ep-1"), "Legacy v1/v2 cache entries must not be served")
 
-        store.save([GeneratedChapter(title: "Fresh", timestamp: "0:05", startTime: 5)], episodeUuid: "ep-1")
+        store.save(.chapters([
+            GeneratedChapter(title: "Fresh", timestamp: "0:05", startTime: 5)
+        ]), episodeUuid: "ep-1")
         let versionedFile = directory.appendingPathComponent("ep-1.v\(OnDeviceChapterStore.schemaVersion).json")
         XCTAssertTrue(FileManager.default.fileExists(atPath: versionedFile.path))
-        XCTAssertEqual(store.load(episodeUuid: "ep-1")?.map(\.title), ["Fresh"])
+        guard case .chapters(let loaded)? = store.load(episodeUuid: "ep-1") else {
+            XCTFail("Expected the versioned chapter list")
+            return
+        }
+        XCTAssertEqual(loaded.map(\.title), ["Fresh"])
+    }
+
+    func testStoreRoundTripsNoChaptersDistinctFromMiss() {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        XCTAssertNil(store.load(episodeUuid: "ep-none"))
+        store.save(.noChapters, episodeUuid: "ep-none")
+
+        guard case .noChapters? = store.load(episodeUuid: "ep-none") else {
+            XCTFail("Expected a persisted no-chapters sentinel")
+            return
+        }
+        XCTAssertNil(store.load(episodeUuid: "ep-unattempted"))
+    }
+
+    private func temporaryStore() -> (OnDeviceChapterStore, URL) {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chapter-store-\(UUID().uuidString)", isDirectory: true)
+        return (OnDeviceChapterStore(directoryURL: directory), directory)
     }
 }

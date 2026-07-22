@@ -190,6 +190,39 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-b1"])
     }
 
+    func testSQLModeSemicolonsAndApostrophesInsideCommentsExecute() throws {
+        let fragments = [
+            "episode.duration > 1800 -- don't reject this semicolon;\n",
+            "episode.duration > 1800 /* don't reject this semicolon; */",
+        ]
+
+        for fragment in fragments {
+            let envelope = try CustomPlaylistQuery(sql: fragment).envelopeJSON()
+            let playlist = makeCustomPlaylist(envelopeJSON: envelope)
+
+            let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+            XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-b1"])
+        }
+    }
+
+    func testSQLModeSeparatorAfterCommentApostropheRendersEmpty() throws {
+        let fragments = [
+            "1 = 1 -- don't hide the separator\n; SELECT 2",
+            "1 = 1 /* don't hide the separator */ ; SELECT 2",
+        ]
+
+        for fragment in fragments {
+            let envelope = try CustomPlaylistQuery(sql: fragment).envelopeJSON()
+            let playlist = makeCustomPlaylist(envelopeJSON: envelope)
+
+            XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+            XCTAssertEqual(
+                dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)),
+                0
+            )
+        }
+    }
+
     func testBuilderInLastDaysAcceptsTheBridgeDateShape() throws {
         // The builder UI's bridge emits .date(.relativeDays(n)); one such rule
         // used to make compilation throw, nulling the entire playlist to "(0)".

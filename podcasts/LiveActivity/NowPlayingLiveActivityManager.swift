@@ -144,8 +144,9 @@ final class NowPlayingLiveActivityManager {
     /// Ends every activity of our type — used at launch to clean up leftovers
     /// from a previous process (the `activity` reference does not survive relaunch).
     private func endAllActivities() {
+        let staleActivities = Activity<NowPlayingActivityAttributes>.activities
         Task {
-            for activity in Activity<NowPlayingActivityAttributes>.activities {
+            for activity in staleActivities {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
@@ -165,6 +166,7 @@ final class NowPlayingLiveActivityManager {
             nil
         }
         guard let image else { return nil }
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return nil }
 
         let fileName = "artwork-\(episode.uuid).jpg"
         let fileURL = directory.appendingPathComponent(fileName)
@@ -180,7 +182,7 @@ final class NowPlayingLiveActivityManager {
                     try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
                 }
             }
-            try image.jpegData(compressionQuality: 0.8)?.write(to: fileURL, options: .atomic)
+            try imageData.write(to: fileURL, options: .atomic)
             return fileName
         } catch {
             FileLog.shared.addMessage("NowPlayingLiveActivity: failed to publish artwork: \(error)")

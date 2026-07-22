@@ -2,8 +2,8 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-// @unchecked Sendable: stored properties are formatters and OperationQueues,
-// configured at init and read-only afterwards.
+// Stored properties are formatters and OperationQueues,
+// @unchecked Sendable: queues and formatters are configured at init and read-only afterwards.
 public final class ServerPodcastManager: NSObject, @unchecked Sendable {
     private static let maxAutoDownloadSeperationTime = 12.hours
 
@@ -112,9 +112,12 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
             // The dedup match ignores userinfo, so freshly re-entered credentials
             // (e.g. an unsubscribe/resubscribe with `user:pass@`) would otherwise be
             // dropped here — keep them for the existing row's refreshes.
-            if let credentials = LocalFeedURL.credentials(from: feedURL),
-               !LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: existing.uuid) {
-                FileLog.shared.addMessage("ServerPodcastManager: failed to store re-entered credentials for \(LocalFeedURL.redactedForLogging(feedURL))")
+            if let credentials = LocalFeedURL.credentials(from: feedURL) {
+                guard LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: existing.uuid) else {
+                    FileLog.shared.addMessage("ServerPodcastManager: failed to store re-entered credentials for \(LocalFeedURL.redactedForLogging(feedURL))")
+                    completion?(false)
+                    return
+                }
             }
             if subscribe, !existing.isSubscribed() {
                 existing.subscribed = 1
@@ -279,8 +282,10 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
                    existingPodcast.feedRefreshSource == .server,
                    !(existingPodcast.podcastUrl ?? "").isEmpty {
                     existingPodcast.feedRefreshSource = .localFeed
-                    existingPodcast.syncStatus = SyncStatus.synced.rawValue
                 }
+                // Derive sync state from the final source, not only from whether this
+                // invocation performed the source flip. Existing local-feed rows never sync.
+                existingPodcast.syncStatus = (existingPodcast.isLocalFeedSourced ? SyncStatus.synced : SyncStatus.notSynced).rawValue
             }
             DataManager.sharedManager.save(podcast: existingPodcast)
             updateLatestEpisodeInfo(podcast: existingPodcast, setDefaults: true, autoDownloadLimit: autoDownloads)

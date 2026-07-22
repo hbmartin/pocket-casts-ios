@@ -1,7 +1,7 @@
 import Foundation
 
-// @unchecked Sendable: formatters are configured in their property initializers and never
-// mutated afterwards; Foundation formatters are safe for concurrent reads.
+// Formatters are configured in their property initializers and never
+// @unchecked Sendable: configured Foundation formatters are immutable and only read concurrently.
 public final class SizeFormatter: @unchecked Sendable {
     public static let shared = SizeFormatter()
     public var placeholder: String {

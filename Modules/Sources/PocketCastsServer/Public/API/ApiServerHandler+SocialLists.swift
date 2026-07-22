@@ -8,6 +8,10 @@ public extension ApiServerHandler {
     func createSharedList(title: String, description: String = "",
                           visibility: SocialVisibility = .private,
                           entries: [SharedListEntry] = []) async -> SharedList? {
+        guard entries.allSatisfy({ $0.position >= 0 && Int32(exactly: $0.position) != nil }) else {
+            return nil
+        }
+
         await withCheckedContinuation { continuation in
             let operation = SharedListCreateTask(title: title, descriptionText: description,
                                                  visibility: visibility, entries: entries)
@@ -27,8 +31,14 @@ public extension ApiServerHandler {
     /// The list header + an entries page. Non-200 (hidden, blocked, missing)
     /// reads as nil — the no-leak contract.
     func fetchSharedList(id: Int64, limit: Int = 100, offset: Int = 0) async -> SharedListPage? {
+        guard limit >= 0, offset >= 0,
+              let validatedLimit = Int32(exactly: limit),
+              let validatedOffset = Int32(exactly: offset) else {
+            return nil
+        }
+
         await withCheckedContinuation { continuation in
-            let operation = SharedListEntriesTask(listId: id, limit: Int32(limit), offset: Int32(offset))
+            let operation = SharedListEntriesTask(listId: id, limit: validatedLimit, offset: validatedOffset)
             operation.completion = { continuation.resume(returning: $0) }
             apiQueue.addOperation(operation)
         }
@@ -36,7 +46,10 @@ public extension ApiServerHandler {
 
     /// Add/remove/move an entry (owner or collaborator; server LWW).
     func sharedListEntryOp(listId: Int64, op: SharedListOp, entry: SharedListEntry, position: Int = -1) async -> Bool {
-        await ack(.entryOp(listId: listId, op: op, entry: entry, position: position))
+        guard let validatedPosition = Int32(exactly: position), op != .move || position >= 0 else {
+            return false
+        }
+        return await ack(.entryOp(listId: listId, op: op, entry: entry, position: validatedPosition))
     }
 
     func inviteToSharedList(id: Int64, handle: String) async -> Bool {

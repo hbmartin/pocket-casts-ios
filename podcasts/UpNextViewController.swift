@@ -75,7 +75,6 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
     // Use HitTargetButton so these small header controls meet Apple's recommended 44x44pt minimum tap target without changing their visible size.
     let shuffleButton = HitTargetButton(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
     let sortButton = HitTargetButton(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
-    let clearQueueButton = HitTargetButton(frame: CGRect(x: 0, y: 0, width: 93, height: 16))
     var selectedPlayListEpisodes = [PlaylistEpisode]() {
         didSet {
             multiSelectActionBar.setSelectedCount(count: selectedPlayListEpisodes.count)
@@ -115,7 +114,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             sortButton.heightAnchor.constraint(equalToConstant: 24)
         ])
 
-        // The shuffle/clear buttons sit to the sort button's left.
+        // The shuffle button sits to the sort button's left.
         let trailingButtonAnchor = sortButton.leadingAnchor
         let trailingButtonConstant: CGFloat = -16
 
@@ -130,16 +129,6 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
             shuffleButton.heightAnchor.constraint(equalToConstant: 24)
         ])
 
-        headerView.addSubview(clearQueueButton)
-        clearQueueButton.translatesAutoresizingMaskIntoConstraints = false
-        clearQueueButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        NSLayoutConstraint.activate([
-            clearQueueButton.trailingAnchor.constraint(equalTo: trailingButtonAnchor, constant: trailingButtonConstant),
-            clearQueueButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            clearQueueButton.leadingAnchor.constraint(greaterThanOrEqualTo: remainingLabel.trailingAnchor, constant: 10)
-        ])
-
-        clearQueueButton.isHidden = true
         shuffleButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         sortButton.isHidden = PlaybackManager.shared.upNextCount() < 2
         updateSize()
@@ -426,6 +415,7 @@ class UpNextViewController: UIViewController, UIGestureRecognizerDelegate {
         guard tip.shouldDisplay else { return }
 
         let tipVC = TipUIPopoverViewController(tip, sourceItem: sortButton)
+        tipVC.presentationDelegate = self
         sortTipVC = tipVC
         present(tipVC, animated: true)
 
@@ -730,6 +720,18 @@ nonisolated enum UpNextSortOption: CaseIterable, AnalyticsDescribable {
 extension UpNextViewController: AnalyticsSourceProvider {
     var analyticsSource: AnalyticsSource {
         .upNext
+    }
+}
+
+extension UpNextViewController: UIPopoverPresentationControllerDelegate {
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        .none
+    }
+
+    func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
+        guard sortTipVC != nil else { return }
+        sortTipVC = nil
+        UpNextSortTip().invalidate(reason: .tipClosed)
     }
 }
 

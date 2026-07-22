@@ -31,6 +31,9 @@
 /* Accessibility text listing the current value for the playback speed. '%1$@' is a placeholder for the playback speed. */
 "accessibility_player_effects_playback_speed" = "Playback speed %1$@ times";
 
+/* VoiceOver action for opening a timestamped comment from the player scrubber. %1$d = Moment position in the action list; %2$@ = episode timestamp. */
+"accessibility_player_open_moment" = "Open Moment %1$d at %2$@";
+
 /* Accessibility hint to inform the user which filter color flag is being used. '%1$@' is a placeholder for the filter color number. */
 "accessibility_playlist_color" = "Playlist color %1$@";
 
@@ -3592,6 +3595,24 @@
 /* Description for the WidgetKit Control Center play/pause control. */
 "widget_playback_control_play_pause_description" = "Play or pause the current episode.";
 
+/* Display name for the WidgetKit Control Center next chapter control. */
+"widget_playback_control_next_chapter_display_name" = "Next Chapter";
+
+/* Description for the WidgetKit Control Center next chapter control. */
+"widget_playback_control_next_chapter_description" = "Skip to the next chapter of the current episode.";
+
+/* Display name for the WidgetKit Control Center play Up Next control. */
+"widget_playback_control_play_up_next_display_name" = "Play Next Episode";
+
+/* Description for the WidgetKit Control Center play Up Next control. */
+"widget_playback_control_play_up_next_description" = "Skip to the next episode in Up Next.";
+
+/* Display name for the WidgetKit Control Center sleep timer control. */
+"widget_playback_control_sleep_timer_display_name" = "Sleep Timer";
+
+/* Description for the WidgetKit Control Center sleep timer control. */
+"widget_playback_control_sleep_timer_description" = "Start a 15 minute sleep timer, or extend the running one.";
+
 /* Display name for the WidgetKit Control Center skip back control. */
 "widget_playback_control_skip_back_display_name" = "Skip Back";
 
@@ -4510,6 +4531,12 @@
 
 /* Title of a message thanking the user for being a beta tester */
 "beta_thank_you" = "Thank you for beta testing!";
+
+/* Section title for diagnostic tools in the beta menu. */
+"beta_menu_diagnostics_title" = "Diagnostics";
+
+/* Button and screen title for viewing collected MetricKit payload files. */
+"beta_menu_metric_kit_payloads_title" = "MetricKit Payloads";
 
 /* Message of an alert that informs the user purchasing is disabled in the beta. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app. %1$@ is the name of the tier (Plus or Patron)*/
 "beta_purchase_disabled" = "Please download Pocket Casts from the App Store to purchase %1$@.";
@@ -6393,6 +6420,9 @@
 /* Advanced Audio - warning footer explaining these are expert DSP settings */
 "advanced_audio_footer_warning" = "These settings tune the audio engine directly. Defaults match standard playback; reset if something sounds wrong.";
 
+/* Unit shown beside advanced-audio loudness targets; LUFS means Loudness Units relative to Full Scale. */
+"advanced_audio_loudness_unit_lufs" = "LUFS";
+
 /* Advanced Audio - button resetting every tuning parameter */
 "advanced_audio_reset_all" = "Reset All Tuning";
 
@@ -6939,6 +6969,9 @@
 /* Toggle above transcript search results restricting matches to episodes already played */
 "search_transcripts_played_only" = "Played only";
 
+/* Speaker suffix on a transcript search result. '%1$@' is the speaker name; translators may change punctuation and spacing for their locale. */
+"search_transcripts_speaker_format" = "· %1$@";
+
 /* Header of the episode-detail card listing entities extracted from the transcript */
 "episode_mentions_title" = "Mentioned in this episode";
 
@@ -7335,6 +7368,9 @@
 /* Button that asks for a friend's @handle to open their profile */
 "social_find_people" = "Find People";
 
+/* Error shown when a Find People search, suggestion, or contact match request fails. */
+"social_find_load_failed" = "Couldn't load people. Try again.";
+
 /* Prompt shown with a text field asking for a friend's @handle */
 "social_find_people_prompt" = "Enter a friend's handle to view their profile.";
 
@@ -7386,8 +7422,8 @@
 /* Button starting a reply to a comment */
 "social_comment_reply" = "Reply";
 
-/* Button revealing a comment's replies. %1$d = reply count */
-"social_comment_view_replies" = "View %1$d replies";
+/* Button revealing multiple replies to a comment. %1$d = reply count. */
+"social_comment_view_replies_plural" = "View %1$d replies";
 
 /* Composer banner while replying. %1$@ = the @handle being replied to */
 "social_comment_replying_to" = "Replying to %1$@";
@@ -7587,6 +7623,9 @@
 /* Title of the shared-list members sheet and its toolbar button */
 "social_list_members" = "Members";
 
+/* Local mirror playlist name for a shared list. %1$@ = list title, %2$@ = owner handle without the @ prefix */
+"social_list_mirror_name" = "%1$@ · @%2$@";
+
 /* Button sending a collaboration invite */
 "social_list_invite" = "Invite";
 
@@ -7674,8 +7713,8 @@
 /* Row sharing the owner's Profile Link to invite a friend */
 "social_find_invite" = "Invite a friend";
 
-/* Mutual-connections count on a suggestion row. %1$d = count */
-"social_find_mutual_count" = "%1$d mutual connections";
+/* Multiple mutual-connections count on a suggestion row. %1$d = count. */
+"social_find_mutual_count_plural" = "%1$d mutual connections";
 
 /* Privacy toggle: appear in people search and suggestions */
 "social_privacy_discoverable" = "Include me in search & suggestions";
@@ -7698,7 +7737,7 @@
 /* Singular of social_trending_listeners */
 "social_trending_listeners_singular" = "1 friend listened recently";
 
-/* Singular of social_find_mutual_count */
+/* Exactly one mutual connection on a suggestion row. */
 "social_find_mutual_count_singular" = "1 mutual connection";
 
 /* Singular of social_proof_count_only */
@@ -7707,5 +7746,5 @@
 /* Singular of social_list_episode_count */
 "social_list_episode_count_singular" = "1 episode";
 
-/* Singular of social_comment_view_replies */
+/* Button revealing exactly one reply to a comment. */
 "social_comment_view_replies_singular" = "View 1 reply";

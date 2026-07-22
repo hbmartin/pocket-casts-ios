@@ -3,6 +3,89 @@ import XCTest
 
 @testable import podcasts
 
+private actor EntityChunkResponseProbe {
+    nonisolated enum Mode: Sendable {
+        case manuallyReleased
+        case suspendUntilCancelled
+    }
+
+    struct Snapshot: Sendable {
+        let startedChunks: [String]
+        let activeCount: Int
+        let maximumActiveCount: Int
+    }
+
+    private let mode: Mode
+    private var startedChunks: [String] = []
+    private var activeCount = 0
+    private var maximumActiveCount = 0
+    private var releases: [Int: CheckedContinuation<Void, Never>] = [:]
+    private var cancellationWaiters: [Int: CheckedContinuation<Void, Error>] = [:]
+    private var startWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
+
+    init(mode: Mode) {
+        self.mode = mode
+    }
+
+    func respond(to chunk: String) async throws -> [GeneratedEntityItem] {
+        startedChunks.append(chunk)
+        let invocation = startedChunks.count
+        activeCount += 1
+        maximumActiveCount = max(maximumActiveCount, activeCount)
+        resumeSatisfiedStartWaiters()
+        defer { activeCount -= 1 }
+
+        switch mode {
+        case .manuallyReleased:
+            await withCheckedContinuation { continuation in
+                releases[invocation] = continuation
+            }
+        case .suspendUntilCancelled:
+            try await withTaskCancellationHandler {
+                try Task.checkCancellation()
+                try await withCheckedThrowingContinuation { continuation in
+                    cancellationWaiters[invocation] = continuation
+                }
+            } onCancel: {
+                Task { await self.cancel(invocation) }
+            }
+        }
+
+        return [GeneratedEntityItem(name: "Entity \(invocation)", kind: "person", startSeconds: invocation)]
+    }
+
+    func waitUntilStarted(_ expectedCount: Int) async {
+        guard startedChunks.count < expectedCount else { return }
+        await withCheckedContinuation { continuation in
+            startWaiters.append((expectedCount, continuation))
+        }
+    }
+
+    func release(_ invocation: Int) {
+        releases.removeValue(forKey: invocation)?.resume()
+    }
+
+    func snapshot() -> Snapshot {
+        Snapshot(
+            startedChunks: startedChunks,
+            activeCount: activeCount,
+            maximumActiveCount: maximumActiveCount
+        )
+    }
+
+    private func resumeSatisfiedStartWaiters() {
+        let satisfied = startWaiters.filter { $0.count <= startedChunks.count }
+        startWaiters.removeAll { $0.count <= startedChunks.count }
+        for waiter in satisfied {
+            waiter.continuation.resume()
+        }
+    }
+
+    private func cancel(_ invocation: Int) {
+        cancellationWaiters.removeValue(forKey: invocation)?.resume(throwing: CancellationError())
+    }
+}
+
 final class EntityMentionGeneratorTests: XCTestCase {
 
     private func segment(_ index: Int, _ text: String, start: TimeInterval? = nil) -> TranscriptSearchSegment {
@@ -11,6 +94,17 @@ final class EntityMentionGeneratorTests: XCTestCase {
 
     private func item(_ name: String, kind: String = "person", seconds: Int = 0) -> GeneratedEntityItem {
         GeneratedEntityItem(name: name, kind: kind, startSeconds: seconds)
+    }
+
+    nonisolated private static func startGeneratedItems(
+        chunks: [String],
+        probe: EntityChunkResponseProbe
+    ) -> Task<[GeneratedEntityItem], Error> {
+        Task.detached {
+            try await EntityMentionGenerator.generatedItems(chunks: chunks) { chunk in
+                try await probe.respond(to: chunk)
+            }
+        }
     }
 
     // MARK: - Chunking
@@ -32,6 +126,48 @@ final class EntityMentionGeneratorTests: XCTestCase {
         let segments = (0 ..< 30).map { segment($0, String(repeating: "w", count: 500)) }
         let chunks = EntityMentionGenerator.chunks(from: segments, characterBudget: 2000, maxChunks: 2)
         XCTAssertEqual(chunks.count, 2)
+    }
+
+    // MARK: - Model chunk admission / cancellation
+
+    func testGeneratedItemsRunsChunksSeriallyInTranscriptOrder() async throws {
+        let probe = EntityChunkResponseProbe(mode: .manuallyReleased)
+        let task = Self.startGeneratedItems(chunks: ["first", "second"], probe: probe)
+
+        await probe.waitUntilStarted(1)
+        var snapshot = await probe.snapshot()
+        XCTAssertEqual(snapshot.startedChunks, ["first"])
+        XCTAssertEqual(snapshot.activeCount, 1)
+
+        await probe.release(1)
+        await probe.waitUntilStarted(2)
+        snapshot = await probe.snapshot()
+        XCTAssertEqual(snapshot.startedChunks, ["first", "second"])
+        XCTAssertEqual(snapshot.activeCount, 1)
+        XCTAssertEqual(snapshot.maximumActiveCount, 1)
+
+        await probe.release(2)
+        let items = try await task.value
+        XCTAssertEqual(items.map(\.name), ["Entity 1", "Entity 2"])
+    }
+
+    func testGeneratedItemsCancellationStopsBeforeTheNextChunk() async {
+        let probe = EntityChunkResponseProbe(mode: .suspendUntilCancelled)
+        let task = Self.startGeneratedItems(chunks: ["first", "must-not-start"], probe: probe)
+        await probe.waitUntilStarted(1)
+
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("Cancellation must terminate chunk generation")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "expected CancellationError, got \(error)")
+        }
+        let snapshot = await probe.snapshot()
+
+        XCTAssertEqual(snapshot.startedChunks, ["first"])
+        XCTAssertEqual(snapshot.activeCount, 0)
+        XCTAssertEqual(snapshot.maximumActiveCount, 1)
     }
 
     // MARK: - Merging / validation
@@ -62,6 +198,25 @@ final class EntityMentionGeneratorTests: XCTestCase {
         ], segmentStartTimes: [0, 30, 60, 90])
         XCTAssertEqual(merged.count, 1)
         XCTAssertEqual(merged[0].startTime, 0)
+    }
+
+    func testMergedSortsSegmentTimesAndIgnoresCorruptAnchors() {
+        let merged = EntityMentionGenerator.merged(
+            [item("Midpoint", seconds: 45)],
+            segmentStartTimes: [.nan, 60, .infinity, 0, -30, 30]
+        )
+
+        XCTAssertEqual(merged.count, 1)
+        XCTAssertEqual(merged[0].startTime, 30, "an exact tie deterministically chooses the earlier seek point")
+    }
+
+    func testMergedRejectsAnIndexWithNoValidSeekAnchors() {
+        let merged = EntityMentionGenerator.merged(
+            [item("Alice", seconds: 0)],
+            segmentStartTimes: [.nan, -.infinity, .infinity, -1]
+        )
+
+        XCTAssertTrue(merged.isEmpty)
     }
 
     func testMergedCapsAtMaxEntities() {

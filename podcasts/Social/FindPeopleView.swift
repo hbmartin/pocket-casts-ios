@@ -10,7 +10,7 @@ import PocketCastsUtils
 /// every email and phone number per contact; emails match today, phone hashes
 /// are wire-ready), and an invite row sharing the owner's Profile Link.
 struct FindPeopleView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     @StateObject var viewModel: FindPeopleViewModel
     @State private var showingContactsConsent = false
 
@@ -56,6 +56,14 @@ struct FindPeopleView: View {
                     ForEach(viewModel.suggestions) { person in
                         personRow(person)
                     }
+                }
+            }
+
+            if let error = viewModel.loadError {
+                Section {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundColor(AppTheme.color(for: .support05, theme: theme))
                 }
             }
 
@@ -112,7 +120,7 @@ struct FindPeopleView: View {
                         }
                         if person.mutualCount > 0 {
                             Text("·")
-                            Text(person.mutualCount == 1 ? L10n.socialFindMutualCountSingular : L10n.socialFindMutualCount(person.mutualCount))
+                            Text(person.mutualCount == 1 ? L10n.socialFindMutualCountSingular : L10n.socialFindMutualCountPlural(person.mutualCount))
                         }
                     }
                     .font(.footnote)
@@ -136,6 +144,11 @@ struct FindPeopleView: View {
 
 @MainActor
 final class FindPeopleViewModel: ObservableObject {
+    typealias SearchPeople = (String) async -> Result<[SocialProfileSummary], SocialPeopleRequestError>
+    typealias LoadPeople = () async -> Result<[SocialProfileSummary], SocialPeopleRequestError>
+    typealias LoadContactsSalt = () async -> Result<String, SocialPeopleRequestError>
+    typealias MatchContacts = ([SocialContactHash]) async -> Result<[SocialProfileSummary], SocialPeopleRequestError>
+
     @Published var query = ""
     @Published private(set) var results: [SocialProfileSummary] = []
     @Published private(set) var suggestions: [SocialProfileSummary] = []
@@ -143,11 +156,32 @@ final class FindPeopleViewModel: ObservableObject {
     @Published private(set) var contactMatches: [SocialProfileSummary] = []
     @Published private(set) var searchedWithNoResults = false
     @Published private(set) var isMatchingContacts = false
+    @Published private(set) var loadError: String?
 
     private var searchTask: Task<Void, Never>?
     private var fixtureLoaded = false
+    private let isJoined: () -> Bool
+    private let searchPeople: SearchPeople
+    private let loadPeopleSuggestions: LoadPeople
+    private let loadCurators: LoadPeople
+    private let loadContactsSalt: LoadContactsSalt
+    private let matchContactHashes: MatchContacts
 
-    init() {}
+    init(
+        isJoined: @escaping () -> Bool = { SocialIdentityStore.isJoined },
+        searchPeople: @escaping SearchPeople = { await ApiServerHandler.shared.searchPeople(query: $0) },
+        loadPeopleSuggestions: @escaping LoadPeople = { await ApiServerHandler.shared.fetchPeopleSuggestions() },
+        loadCurators: @escaping LoadPeople = { await ApiServerHandler.shared.fetchCurators() },
+        loadContactsSalt: @escaping LoadContactsSalt = { await ApiServerHandler.shared.fetchContactsSalt() },
+        matchContactHashes: @escaping MatchContacts = { await ApiServerHandler.shared.matchContacts(hashes: $0) }
+    ) {
+        self.isJoined = isJoined
+        self.searchPeople = searchPeople
+        self.loadPeopleSuggestions = loadPeopleSuggestions
+        self.loadCurators = loadCurators
+        self.loadContactsSalt = loadContactsSalt
+        self.matchContactHashes = matchContactHashes
+    }
 
     /// Fixture initializer for snapshots/previews; loads then no-op.
     init(fixtureResults: [SocialProfileSummary] = [], suggestions: [SocialProfileSummary] = [],
@@ -156,14 +190,31 @@ final class FindPeopleViewModel: ObservableObject {
         self.suggestions = suggestions
         self.contactMatches = contactMatches
         self.curators = curators
+        isJoined = { false }
+        searchPeople = { _ in .success([]) }
+        loadPeopleSuggestions = { .success([]) }
+        loadCurators = { .success([]) }
+        loadContactsSalt = { .success("") }
+        matchContactHashes = { _ in .success([]) }
         fixtureLoaded = true
     }
 
     func loadSuggestions() async {
-        guard !fixtureLoaded, SocialIdentityStore.isJoined else { return }
+        guard !fixtureLoaded, isJoined() else { return }
         Analytics.track(.socialPeopleShown)
-        suggestions = await ApiServerHandler.shared.fetchPeopleSuggestions() ?? []
-        curators = await ApiServerHandler.shared.fetchCurators() ?? []
+        loadError = nil
+        switch await loadPeopleSuggestions() {
+        case .success(let loaded):
+            suggestions = loaded
+        case .failure:
+            loadError = L10n.socialFindLoadFailed
+        }
+        switch await loadCurators() {
+        case .success(let loaded):
+            curators = loaded
+        case .failure:
+            loadError = L10n.socialFindLoadFailed
+        }
     }
 
     /// Debounce: a new keystroke supersedes the in-flight search.
@@ -180,10 +231,22 @@ final class FindPeopleViewModel: ObservableObject {
             try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled, let self else { return }
             Analytics.track(.socialPeopleSearched)
-            let found = await ApiServerHandler.shared.searchPeople(query: trimmed) ?? []
-            guard !Task.isCancelled else { return }
-            self.results = found
-            self.searchedWithNoResults = found.isEmpty
+            await self.performSearch(query: trimmed)
+        }
+    }
+
+    func performSearch(query: String) async {
+        let result = await searchPeople(query)
+        guard !Task.isCancelled else { return }
+        switch result {
+        case .success(let found):
+            loadError = nil
+            results = found
+            searchedWithNoResults = found.isEmpty
+        case .failure:
+            results = []
+            searchedWithNoResults = false
+            loadError = L10n.socialFindLoadFailed
         }
     }
 
@@ -197,7 +260,15 @@ final class FindPeopleViewModel: ObservableObject {
 
         let store = CNContactStore()
         let granted = (try? await store.requestAccess(for: .contacts)) ?? false
-        guard granted, let salt = await ApiServerHandler.shared.fetchContactsSalt() else { return }
+        guard granted else { return }
+        let salt: String
+        switch await loadContactsSalt() {
+        case .success(let loaded):
+            salt = loaded
+        case .failure:
+            loadError = L10n.socialFindLoadFailed
+            return
+        }
 
         let hashes = await Task.detached(priority: .userInitiated) { () -> [SocialContactHash] in
             var collected: [SocialContactHash] = []
@@ -207,21 +278,31 @@ final class FindPeopleViewModel: ObservableObject {
                 for email in contact.emailAddresses {
                     let normalized = (email.value as String).lowercased().trimmingCharacters(in: .whitespaces)
                     guard !normalized.isEmpty else { continue }
-                    collected.append(SocialContactHash(kind: 1, hash: Self.saltedHash(salt: salt, value: normalized)))
+                    collected.append(SocialContactHash(kind: .email, hash: Self.saltedHash(salt: salt, value: normalized)))
                 }
                 for phone in contact.phoneNumbers {
                     let digits = phone.value.stringValue.filter { $0.isNumber || $0 == "+" }
                     guard digits.count >= 7 else { continue }
-                    collected.append(SocialContactHash(kind: 2, hash: Self.saltedHash(salt: salt, value: digits)))
+                    collected.append(SocialContactHash(kind: .phone, hash: Self.saltedHash(salt: salt, value: digits)))
                 }
             }
             return Array(collected.prefix(2000))
         }.value
 
         guard !hashes.isEmpty else { return }
-        let matches = await ApiServerHandler.shared.matchContacts(hashes: hashes) ?? []
-        Analytics.track(.socialContactsMatched)
-        contactMatches = matches
+        await loadContactMatches(hashes)
+    }
+
+    func loadContactMatches(_ hashes: [SocialContactHash]) async {
+        switch await matchContactHashes(hashes) {
+        case .success(let matches):
+            loadError = nil
+            Analytics.track(.socialContactsMatched)
+            contactMatches = matches
+        case .failure:
+            contactMatches = []
+            loadError = L10n.socialFindLoadFailed
+        }
     }
 
     func inviteFriend() {

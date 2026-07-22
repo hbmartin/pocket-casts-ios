@@ -223,20 +223,7 @@ extension AppDelegate {
                 // On-device ingest: parse the feed locally instead of resolving it
                 // through the Pocket Casts search/cache servers.
                 if Settings.localFeedIngestEnabled() {
-                    let localUuid = LocalFeedIdentity.uuid(seed: searchTerm)
-                    ServerPodcastManager.shared.addLocalFeed(feedURL: searchTerm, subscribe: false) { success in
-                        DispatchQueue.main.async {
-                            self?.hideProgressDialog()
-
-                            // dedup can attach to an existing row, so resolve the real uuid
-                            let uuid = DataManager.sharedManager.findPodcast(feedURL: searchTerm)?.uuid ?? localUuid
-                            if success {
-                                NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: uuid])
-                            } else {
-                                SJUIUtils.showAlert(title: L10n.error, message: L10n.errorGeneralPodcastNotFound, from: SceneHelper.rootViewController())
-                            }
-                        }
-                    }
+                    self?.ingestFeedLocally(searchTerm: searchTerm)
                     return
                 }
 
@@ -245,20 +232,7 @@ extension AppDelegate {
                         // Signed out and the catalog can't resolve it: ingest the feed on
                         // device so any valid feed URL still opens.
                         if !SyncManager.isUserLoggedIn() {
-                            let localUuid = LocalFeedIdentity.uuid(seed: searchTerm)
-                            ServerPodcastManager.shared.addLocalFeed(feedURL: searchTerm, subscribe: false) { success in
-                                DispatchQueue.main.async {
-                                    self?.hideProgressDialog()
-
-                                    // dedup can attach to an existing row, so resolve the real uuid
-                                    let resolvedUuid = DataManager.sharedManager.findPodcast(feedURL: searchTerm)?.uuid ?? localUuid
-                                    if success {
-                                        NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: resolvedUuid])
-                                    } else {
-                                        SJUIUtils.showAlert(title: L10n.error, message: L10n.errorGeneralPodcastNotFound, from: SceneHelper.rootViewController())
-                                    }
-                                }
-                            }
+                            self?.ingestFeedLocally(searchTerm: searchTerm)
                             return
                         }
 
@@ -552,6 +526,30 @@ extension AppDelegate {
                 }
             }
         })
+    }
+
+    private func ingestFeedLocally(searchTerm: String) {
+        let localUuid = LocalFeedIdentity.uuid(seed: searchTerm)
+        ServerPodcastManager.shared.addLocalFeed(feedURL: searchTerm, subscribe: false) { [weak self] success in
+            DispatchQueue.main.async {
+                self?.hideProgressDialog()
+
+                // Dedup can attach to an existing row, so resolve the real UUID.
+                let resolvedUuid = DataManager.sharedManager.findPodcast(feedURL: searchTerm)?.uuid ?? localUuid
+                if success {
+                    NavigationManager.sharedManager.navigateTo(
+                        NavigationManager.podcastPageKey,
+                        data: [NavigationManager.podcastKey: resolvedUuid]
+                    )
+                } else {
+                    SJUIUtils.showAlert(
+                        title: L10n.error,
+                        message: L10n.errorGeneralPodcastNotFound,
+                        from: SceneHelper.rootViewController()
+                    )
+                }
+            }
+        }
     }
 
     // MARK: - NSUserActivity (universal links / Handoff)

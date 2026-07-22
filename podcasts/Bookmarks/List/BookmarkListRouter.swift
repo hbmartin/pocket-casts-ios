@@ -22,6 +22,11 @@ extension BookmarkListRouter {
 
 extension BookmarkListRouter where Self: UIViewController {
     func presentBookmarkController(_ controller: UIViewController) {
+        if let popover = controller.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
         present(controller, animated: true)
     }
 }

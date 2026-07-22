@@ -2,11 +2,95 @@ import XCTest
 
 @testable import podcasts
 
-/// Contract tests for `OnDeviceIntelligence.raceAgainstTimeout`, the primitive
-/// that bounds Foundation Models generation (review finding P2-14). The critical
-/// property: the caller is resumed at the deadline even when the work **ignores
-/// cancellation** — the old task-group race awaited its cancelled children, so a
-/// hung generation wedged callers indefinitely.
+/// A deterministic stand-in for the Foundation Models generation call. Selected
+/// invocations suspend on continuations that intentionally ignore cancellation,
+/// matching the provider behavior that motivated the admission-control fix.
+private actor ControlledGenerationProvider {
+    struct Snapshot: Sendable {
+        let startCount: Int
+        let activeCount: Int
+        let maximumActiveCount: Int
+    }
+
+    private let blockedInvocations: Set<Int>
+    private var startCount = 0
+    private var activeCount = 0
+    private var maximumActiveCount = 0
+    private var finishCount = 0
+    private var releaseContinuations: [Int: CheckedContinuation<Void, Never>] = [:]
+    private var startWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
+    private var finishWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
+
+    init(blockedInvocations: Set<Int> = [1]) {
+        self.blockedInvocations = blockedInvocations
+    }
+
+    func generate() async -> Int {
+        startCount += 1
+        let invocation = startCount
+        activeCount += 1
+        maximumActiveCount = max(maximumActiveCount, activeCount)
+        resumeSatisfiedStartWaiters()
+
+        if blockedInvocations.contains(invocation) {
+            await withCheckedContinuation { continuation in
+                releaseContinuations[invocation] = continuation
+            }
+        }
+
+        activeCount -= 1
+        finishCount += 1
+        resumeSatisfiedFinishWaiters()
+        return invocation
+    }
+
+    func waitUntilStarted(_ expectedCount: Int) async {
+        guard startCount < expectedCount else { return }
+        await withCheckedContinuation { continuation in
+            startWaiters.append((expectedCount, continuation))
+        }
+    }
+
+    func waitUntilFinished(_ expectedCount: Int) async {
+        guard finishCount < expectedCount else { return }
+        await withCheckedContinuation { continuation in
+            finishWaiters.append((expectedCount, continuation))
+        }
+    }
+
+    func release(_ invocation: Int) {
+        releaseContinuations.removeValue(forKey: invocation)?.resume()
+    }
+
+    func snapshot() -> Snapshot {
+        Snapshot(
+            startCount: startCount,
+            activeCount: activeCount,
+            maximumActiveCount: maximumActiveCount
+        )
+    }
+
+    private func resumeSatisfiedStartWaiters() {
+        let satisfied = startWaiters.filter { $0.count <= startCount }
+        startWaiters.removeAll { $0.count <= startCount }
+        for waiter in satisfied {
+            waiter.continuation.resume()
+        }
+    }
+
+    private func resumeSatisfiedFinishWaiters() {
+        let satisfied = finishWaiters.filter { $0.count <= finishCount }
+        finishWaiters.removeAll { $0.count <= finishCount }
+        for waiter in satisfied {
+            waiter.continuation.resume()
+        }
+    }
+}
+
+/// Contract tests for the timeout primitive and actor-owned admission gate that
+/// bound Foundation Models generation (review finding P2-14). Callers resume at
+/// the deadline even when work ignores cancellation, while retries stay blocked
+/// until that abandoned work actually exits.
 final class OnDeviceIntelligenceRaceTests: XCTestCase {
 
     /// Suspends forever and never observes cancellation — the worst-case
@@ -30,6 +114,69 @@ final class OnDeviceIntelligenceRaceTests: XCTestCase {
         Task.detached {
             try await raceAgainstHungWork(timeout: timeout)
         }
+    }
+
+    private static func startGeneration(
+        intelligence: OnDeviceIntelligence,
+        provider: ControlledGenerationProvider
+    ) -> Task<Int, Error> {
+        Task.detached {
+            try await intelligence.performGeneration {
+                await provider.generate()
+            }
+        }
+    }
+
+    private func assertTimedOut(
+        _ task: Task<Int, Error>,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        do {
+            _ = try await task.value
+            XCTFail("Expected .timedOut", file: file, line: line)
+        } catch {
+            guard case IntelligenceError.timedOut = error else {
+                XCTFail("Expected .timedOut, got \(error)", file: file, line: line)
+                return
+            }
+        }
+    }
+
+    private func assertConcurrentRequest(
+        _ error: any Error,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        guard Self.isConcurrentRequest(error) else {
+            XCTFail("Expected concurrent_requests, got \(error)", file: file, line: line)
+            return
+        }
+    }
+
+    private static func isConcurrentRequest(_ error: any Error) -> Bool {
+        guard case IntelligenceError.generationFailed(let description) = error else { return false }
+        return description == "concurrent_requests"
+    }
+
+    private func performAfterAdmissionReopens(
+        intelligence: OnDeviceIntelligence,
+        provider: ControlledGenerationProvider
+    ) async throws -> Int {
+        for _ in 0 ..< 100 {
+            do {
+                return try await intelligence.performGeneration {
+                    await provider.generate()
+                }
+            } catch where Self.isConcurrentRequest(error) {
+                // The provider has returned; allow the completion task's actor
+                // hop to clear admission without introducing a wall-clock delay.
+                await Task.yield()
+            }
+        }
+
+        XCTFail("Admission did not reopen after the underlying provider returned")
+        return -1
     }
 
     func testWorkValueWinsBeforeTimeout() async throws {
@@ -100,5 +247,103 @@ final class OnDeviceIntelligenceRaceTests: XCTestCase {
         } catch {
             XCTAssertTrue(error is CancellationError, "expected CancellationError, got \(error)")
         }
+    }
+
+    func testTimedOutGenerationRejectsRetryUntilUnderlyingWorkExits() async {
+        let intelligence = OnDeviceIntelligence(timeout: .milliseconds(100))
+        let provider = ControlledGenerationProvider()
+        let first = Self.startGeneration(intelligence: intelligence, provider: provider)
+        await provider.waitUntilStarted(1)
+
+        await assertTimedOut(first)
+
+        do {
+            _ = try await intelligence.performGeneration {
+                await provider.generate()
+            }
+            XCTFail("Retry must be rejected while timed-out provider work remains active")
+        } catch {
+            assertConcurrentRequest(error)
+        }
+
+        let snapshot = await provider.snapshot()
+        XCTAssertEqual(snapshot.startCount, 1, "a rejected retry must not invoke the provider")
+        XCTAssertEqual(snapshot.activeCount, 1)
+
+        await provider.release(1)
+        await provider.waitUntilFinished(1)
+    }
+
+    func testAdmissionBoundsConcurrentCallsToOneProviderGeneration() async throws {
+        let intelligence = OnDeviceIntelligence(timeout: .seconds(30))
+        let provider = ControlledGenerationProvider()
+        let first = Self.startGeneration(intelligence: intelligence, provider: provider)
+        await provider.waitUntilStarted(1)
+
+        do {
+            _ = try await intelligence.performGeneration {
+                await provider.generate()
+            }
+            XCTFail("A concurrent call must be rejected")
+        } catch {
+            assertConcurrentRequest(error)
+        }
+
+        let snapshot = await provider.snapshot()
+        XCTAssertEqual(snapshot.startCount, 1)
+        XCTAssertEqual(snapshot.activeCount, 1)
+        XCTAssertEqual(snapshot.maximumActiveCount, 1)
+
+        await provider.release(1)
+        let firstValue = try await first.value
+        XCTAssertEqual(firstValue, 1)
+    }
+
+    func testAdmissionRecoversAfterTimedOutUnderlyingWorkCompletes() async throws {
+        let intelligence = OnDeviceIntelligence(timeout: .milliseconds(100))
+        let provider = ControlledGenerationProvider()
+        let first = Self.startGeneration(intelligence: intelligence, provider: provider)
+        await provider.waitUntilStarted(1)
+        await assertTimedOut(first)
+
+        await provider.release(1)
+        await provider.waitUntilFinished(1)
+
+        let recovered = try await performAfterAdmissionReopens(
+            intelligence: intelligence,
+            provider: provider
+        )
+
+        XCTAssertEqual(recovered, 2)
+        let snapshot = await provider.snapshot()
+        XCTAssertEqual(snapshot.startCount, 2)
+        XCTAssertEqual(snapshot.maximumActiveCount, 1)
+    }
+
+    func testCallerCancellationReturnsWithoutAdmittingAReplacement() async {
+        let intelligence = OnDeviceIntelligence(timeout: .seconds(30))
+        let provider = ControlledGenerationProvider()
+        let first = Self.startGeneration(intelligence: intelligence, provider: provider)
+        await provider.waitUntilStarted(1)
+
+        first.cancel()
+        do {
+            _ = try await first.value
+            XCTFail("A cancelled caller must not produce a value")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "expected CancellationError, got \(error)")
+        }
+
+        do {
+            _ = try await intelligence.performGeneration {
+                await provider.generate()
+            }
+            XCTFail("Cancellation-ignoring provider work must retain admission")
+        } catch {
+            assertConcurrentRequest(error)
+        }
+
+        await provider.release(1)
+        await provider.waitUntilFinished(1)
     }
 }

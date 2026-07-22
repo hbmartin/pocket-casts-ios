@@ -25,11 +25,11 @@ nonisolated struct PersonDirectoryEntry: Identifiable, Hashable, Sendable {
 /// record can outlive the episode row).
 nonisolated enum PersonDirectoryBuilder {
     static func entries(from records: [EpisodeTranscriptionRecord],
-                        episodeExists: (String) -> Bool) -> [PersonDirectoryEntry] {
+                        existingEpisodeUuids: Set<String>) -> [PersonDirectoryEntry] {
         var appearancesByName: [String: [PersonAppearance]] = [:]
 
         for record in records {
-            guard episodeExists(record.episodeUuid) else { continue }
+            guard existingEpisodeUuids.contains(record.episodeUuid) else { continue }
             for (canonicalSpeaker, rawName) in SpeakerRenameView.decodeNames(record.speakerNames) {
                 let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !name.isEmpty else { continue }
@@ -59,29 +59,54 @@ final class PersonDirectoryModel: ObservableObject {
     @Published private(set) var entries: [PersonDirectoryEntry] = []
     @Published private(set) var hasLoaded = false
 
-    private let recordsProvider: @Sendable () -> [EpisodeTranscriptionRecord]
-    private let episodeExists: @Sendable (String) -> Bool
+    private let recordsProvider: @Sendable () async -> [EpisodeTranscriptionRecord]
+    private let existingEpisodeUuidsProvider: @Sendable ([String]) async -> Set<String>
+    private let directoryShownTracker: @MainActor @Sendable (Int) -> Void
+    private var loadTask: Task<Void, Never>?
+    private var hasStartedLoading = false
 
-    init(recordsProvider: @escaping @Sendable () -> [EpisodeTranscriptionRecord] = {
+    init(recordsProvider: @escaping @Sendable () async -> [EpisodeTranscriptionRecord] = {
              DataManager.sharedManager.transcriptions.recordsWithSpeakerNames()
          },
-         episodeExists: @escaping @Sendable (String) -> Bool = {
-             DataManager.sharedManager.findBaseEpisode(uuid: $0) != nil
+         existingEpisodeUuidsProvider: @escaping @Sendable ([String]) async -> Set<String> = {
+             DataManager.sharedManager.transcriptions.existingEpisodeUuids($0)
+         },
+         directoryShownTracker: @escaping @MainActor @Sendable (Int) -> Void = {
+             Analytics.track(.peopleDirectoryShown, properties: ["person_count": $0])
          }) {
         self.recordsProvider = recordsProvider
-        self.episodeExists = episodeExists
+        self.existingEpisodeUuidsProvider = existingEpisodeUuidsProvider
+        self.directoryShownTracker = directoryShownTracker
     }
 
     func load() {
+        guard !hasStartedLoading else { return }
+        hasStartedLoading = true
+
         let recordsProvider = recordsProvider
-        let episodeExists = episodeExists
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let entries = PersonDirectoryBuilder.entries(from: recordsProvider(), episodeExists: episodeExists)
+        let existingEpisodeUuidsProvider = existingEpisodeUuidsProvider
+        let directoryShownTracker = directoryShownTracker
+        loadTask = Task { @concurrent [weak self] in
+            let records = await recordsProvider()
+            guard !Task.isCancelled else { return }
+            let existingEpisodeUuids = await existingEpisodeUuidsProvider(records.map(\.episodeUuid))
+            guard !Task.isCancelled else { return }
+            let entries = PersonDirectoryBuilder.entries(
+                from: records,
+                existingEpisodeUuids: existingEpisodeUuids
+            )
             await MainActor.run { [weak self] in
-                guard let self else { return }
+                guard !Task.isCancelled, let self else { return }
                 self.entries = entries
                 self.hasLoaded = true
+                self.loadTask = nil
+                directoryShownTracker(entries.count)
             }
         }
+    }
+
+    // isolated deinit: the SwiftUI-owned model and its task state live on MainActor.
+    isolated deinit {
+        loadTask?.cancel()
     }
 }

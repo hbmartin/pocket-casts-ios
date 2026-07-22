@@ -56,11 +56,14 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
             let menu = UIMenu(children: [
                 UIAction(title: L10n.socialCardShareStats, image: UIImage(systemName: "chart.bar")) { [weak self] _ in
                     guard let self else { return }
-                    SocialShareCards.shareStatsCard(from: self)
+                    SocialShareCards.shareStatsCard(from: self,
+                                                    barButtonItem: self.navigationItem.rightBarButtonItem)
                 },
                 UIAction(title: L10n.socialCardShareHeatmap, image: UIImage(systemName: "square.grid.3x3")) { [weak self] _ in
                     guard let self else { return }
-                    SocialShareCards.shareHeatmapCard(from: self, heatmapModel: self.heatmapViewModel)
+                    SocialShareCards.shareHeatmapCard(from: self,
+                                                      heatmapModel: self.heatmapViewModel,
+                                                      barButtonItem: self.navigationItem.rightBarButtonItem)
                 },
             ])
             navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), menu: menu)

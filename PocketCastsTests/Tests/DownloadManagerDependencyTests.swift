@@ -29,9 +29,9 @@ final class DownloadManagerDependencyTests: XCTestCase {
     }
 }
 
-// @unchecked Sendable: `queued` is guarded by `lock`. `tempDownloadFolder` is an immutable value and
+// `queued` is guarded by `lock`. `tempDownloadFolder` is an immutable value and
 // `progressManager` is an immutable `let` binding — its `DownloadProgressManager` has internal mutable
-// state that isn't further synchronized here, which is acceptable for this single-threaded test double.
+// @unchecked Sendable: remaining mutable state belongs to this single-threaded test double.
 private final class DownloadManagingMock: DownloadManaging, @unchecked Sendable {
     private let lock = NSLock()
     private var queued: [String] = []

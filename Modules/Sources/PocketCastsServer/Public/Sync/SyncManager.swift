@@ -76,21 +76,25 @@ public class SyncManager {
             return
         }
 
-        let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/token/revoke")
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15.seconds)
-        request.httpMethod = "POST"
-        request.addValue("application/octet-stream", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-        request.setValue("application/octet-stream", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-        if let accessToken = try? KeychainHelper.string(for: ServerConstants.Values.syncingV2TokenKey), !accessToken.isEmpty {
-            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
-        }
-        request.httpBody = tokenRevokeRequestBody(refreshToken: refreshToken)
+        let request = tokenRevokeRequest(refreshToken: refreshToken)
 
         URLSession.shared.dataTask(with: request) { _, response, _ in
             // Status marker only — never log token material.
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
             FileLog.shared.addMessage("SyncManager.signout token revoke request finished, status: \(statusCode)")
         }.resume()
+    }
+
+    /// Builds an RFC 7009-shaped public-client request. Possession of the refresh token
+    /// authenticates revocation; deliberately do not make this depend on a live access token.
+    static func tokenRevokeRequest(refreshToken: String) -> URLRequest {
+        let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/token/revoke")
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15.seconds)
+        request.httpMethod = "POST"
+        request.addValue("application/octet-stream", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
+        request.setValue("application/octet-stream", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
+        request.httpBody = tokenRevokeRequestBody(refreshToken: refreshToken)
+        return request
     }
 
     /// Protobuf wire encoding of `TokenRevokeRequest { string refresh_token = 1; }`

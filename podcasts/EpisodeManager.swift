@@ -380,6 +380,8 @@ nonisolated class EpisodeManager: NSObject {
         }
     }
 
+    private static let temporaryOrphanAge = 1.week
+
     private class func enumerateTmpFolder(folderPath: String, _ body: (String, [FileAttributeKey: Any]) -> Void) {
         let fileManager = FileManager.default
         guard let folderEnum = fileManager.enumerator(atPath: folderPath) else { return }
@@ -394,15 +396,10 @@ nonisolated class EpisodeManager: NSObject {
         FileLog.shared.addMessage("Episode Manager: Starting removing the temporary orphan files")
         var totalFilesSize: UInt64 = 0
         enumerateTmpFolder(folderPath: folderPath) { tmpFile, attributes in
-            guard let date = attributes[.modificationDate] as? Date,
-                  Date.now.timeIntervalSince(date) > 1.week //A file that has been in the tmp folder for more than a week should no longer be actively used
-            else {
-                return
-            }
+            guard isOrphanedTmpFile(attributes: attributes) else { return }
             let fileSize = attributes[.size] as? UInt64 ?? 0
             let fullFilePath = (folderPath as NSString).appendingPathComponent(tmpFile)
             FileLog.shared.addMessage("Episode Manager: Removing the following orphan file \(tmpFile)")
-            StorageManager.removeItem(at: URL(fileURLWithPath: fullFilePath))
             if StorageManager.removeItem(at: URL(fileURLWithPath: fullFilePath)) {
                 totalFilesSize += fileSize
             } else {
@@ -419,6 +416,20 @@ nonisolated class EpisodeManager: NSObject {
             totalFilesSize += attributes[.size] as? UInt64 ?? 0
         }
         return totalFilesSize
+    }
+
+    class func orphanedTmpFolderSize(folderPath: String = DownloadManager.shared.tempDownloadFolder) -> UInt64 {
+        var totalFilesSize: UInt64 = 0
+        enumerateTmpFolder(folderPath: folderPath) { _, attributes in
+            guard isOrphanedTmpFile(attributes: attributes) else { return }
+            totalFilesSize += attributes[.size] as? UInt64 ?? 0
+        }
+        return totalFilesSize
+    }
+
+    private class func isOrphanedTmpFile(attributes: [FileAttributeKey: Any]) -> Bool {
+        guard let date = attributes[.modificationDate] as? Date else { return false }
+        return Date.now.timeIntervalSince(date) > temporaryOrphanAge
     }
 
     class func urlForEpisode(_ episode: BaseEpisode, streamingOnly: Bool = false) -> URL? {

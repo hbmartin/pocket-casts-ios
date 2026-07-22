@@ -2,6 +2,14 @@ import XCTest
 @testable import podcasts
 
 final class OpmlImportStateTests: XCTestCase {
+    func testWholeChunkFailureIsCounted() {
+        let state = OpmlImportState()
+
+        state.recordChunkFailure()
+
+        XCTAssertEqual(state.failureCount, 1)
+    }
+
     func testConcurrentResponseAndProgressUpdatesAreAtomic() async {
         let state = OpmlImportState()
         let updateCount = 100

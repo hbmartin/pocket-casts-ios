@@ -5,7 +5,7 @@ import PocketCastsServer
 /// circles and hubs, and discoverable public groups. Reached from the
 /// Profile tab and the Explore Groups row.
 struct SocialGroupsView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     @StateObject var viewModel: SocialGroupsViewModel
     @State private var showingCreate = false
 
@@ -170,7 +170,7 @@ final class SocialGroupsViewModel: ObservableObject {
 /// anchor (a fandom hub). The honest lifecycle consequence is stated in the
 /// footer copy per ADR-0012.
 struct CreateGroupView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     let onDone: (SocialGroup?) -> Void
 
     @State private var title = ""

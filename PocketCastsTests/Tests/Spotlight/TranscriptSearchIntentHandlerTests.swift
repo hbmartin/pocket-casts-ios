@@ -25,13 +25,15 @@ final class TranscriptSearchIntentHandlerTests: XCTestCase {
 
     private func makeHit(episode: String, segment: Int, snippet: String, startTime: TimeInterval = 30) -> TranscriptSearchHit {
         TranscriptSearchHit(
-            episodeUuid: episode,
-            podcastUuid: "pod-1",
-            segmentIndex: segment,
-            startTime: startTime,
-            endTime: nil,
-            speaker: nil,
-            source: .generated,
+            location: .init(
+                episodeUuid: episode,
+                podcastUuid: "pod-1",
+                segmentIndex: segment,
+                startTime: startTime,
+                endTime: nil,
+                speaker: nil,
+                source: .generated
+            ),
             snippet: snippet
         )
     }
@@ -74,6 +76,9 @@ final class TranscriptSearchIntentHandlerTests: XCTestCase {
         XCTAssertEqual(TranscriptSearchIntentHandler.timeString(754), "12:34")
         XCTAssertEqual(TranscriptSearchIntentHandler.timeString(3725), "1:02:05")
         XCTAssertEqual(TranscriptSearchIntentHandler.timeString(-5), "0:00")
+        XCTAssertEqual(TranscriptSearchIntentHandler.timeString(.nan), "0:00")
+        XCTAssertEqual(TranscriptSearchIntentHandler.timeString(.infinity), "0:00")
+        XCTAssertEqual(TranscriptSearchIntentHandler.timeString(-.infinity), "0:00")
     }
 
     func testPlainSnippetStripsAllMarkers() {

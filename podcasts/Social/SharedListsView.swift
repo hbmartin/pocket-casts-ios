@@ -90,16 +90,44 @@ struct SharedListsView: View {
 
 @MainActor
 final class SharedListsViewModel: ObservableObject {
+    typealias FetchLists = @MainActor () async -> SharedListsOverview?
+    typealias RespondToInvite = @MainActor (_ id: Int64, _ accept: Bool) async -> Bool
+    typealias RefreshMirrors = @MainActor () async -> SharedListsOverview?
+
     @Published private(set) var lists: [SharedList] = []
     @Published private(set) var invites: [SharedList] = []
     @Published private(set) var isLoading = true
 
     private var fixtureLoaded = false
+    private let fetchLists: FetchLists
+    private let respondToInvite: RespondToInvite
+    private let refreshMirrors: RefreshMirrors
 
-    init() {}
+    init(
+        fetchLists: @escaping FetchLists = { await ApiServerHandler.shared.fetchSharedLists() },
+        respondToInvite: @escaping RespondToInvite = { id, accept in
+            await ApiServerHandler.shared.respondToSharedListInvite(id: id, accept: accept)
+        },
+        refreshMirrors: @escaping RefreshMirrors = { await SocialListMirror.refreshAll() }
+    ) {
+        self.fetchLists = fetchLists
+        self.respondToInvite = respondToInvite
+        self.refreshMirrors = refreshMirrors
+    }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: [SharedList], invites: [SharedList] = []) {
+    init(
+        fixture: [SharedList],
+        invites: [SharedList] = [],
+        fetchLists: @escaping FetchLists = { await ApiServerHandler.shared.fetchSharedLists() },
+        respondToInvite: @escaping RespondToInvite = { id, accept in
+            await ApiServerHandler.shared.respondToSharedListInvite(id: id, accept: accept)
+        },
+        refreshMirrors: @escaping RefreshMirrors = { await SocialListMirror.refreshAll() }
+    ) {
+        self.fetchLists = fetchLists
+        self.respondToInvite = respondToInvite
+        self.refreshMirrors = refreshMirrors
         lists = fixture
         self.invites = invites
         isLoading = false
@@ -109,7 +137,7 @@ final class SharedListsViewModel: ObservableObject {
     func load() async {
         guard !fixtureLoaded else { return }
         Analytics.track(.socialListsShown)
-        if let overview = await ApiServerHandler.shared.fetchSharedLists() {
+        if let overview = await fetchLists() {
             lists = overview.lists
             invites = overview.invites
         }
@@ -117,14 +145,21 @@ final class SharedListsViewModel: ObservableObject {
     }
 
     func respond(to invite: SharedList, accept: Bool) async {
-        guard await ApiServerHandler.shared.respondToSharedListInvite(id: invite.id, accept: accept) else { return }
+        guard await respondToInvite(invite.id, accept) else { return }
+
+        let overview: SharedListsOverview?
         if accept {
             Analytics.track(.socialListInviteAccepted)
-            await SocialListMirror.refreshAll()
+            overview = await refreshMirrors()
+        } else {
+            overview = await fetchLists()
         }
-        invites.removeAll { $0.id == invite.id }
-        if let overview = await ApiServerHandler.shared.fetchSharedLists() {
+
+        if let overview {
             lists = overview.lists
+            invites = overview.invites
+        } else {
+            invites.removeAll { $0.id == invite.id }
         }
     }
 }

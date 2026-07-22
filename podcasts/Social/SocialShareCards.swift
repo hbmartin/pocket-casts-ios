@@ -12,26 +12,30 @@ enum SocialShareCards {
 
     /// Renders the stats card and presents the system share sheet.
     @MainActor
-    static func shareStatsCard(from presenter: UIViewController) {
+    static func shareStatsCard(from presenter: UIViewController, barButtonItem: UIBarButtonItem? = nil) {
         let card = StatsShareCardView(stats: .current(), footer: footer())
             .environmentObject(Theme.sharedTheme)
             .frame(width: cardSize.width, height: cardSize.height)
         Analytics.track(.socialStatsCardShared)
-        present(card.snapshot(), from: presenter)
+        present(card.snapshot(), from: presenter, barButtonItem: barButtonItem)
     }
 
     /// Renders the heatmap card and presents the system share sheet.
     @MainActor
-    static func shareHeatmapCard(from presenter: UIViewController, heatmapModel: ListeningHeatmapViewModel) {
+    static func shareHeatmapCard(from presenter: UIViewController,
+                                 heatmapModel: ListeningHeatmapViewModel,
+                                 barButtonItem: UIBarButtonItem? = nil) {
         let card = HeatmapShareCardView(viewModel: heatmapModel, footer: footer())
             .environmentObject(Theme.sharedTheme)
             .frame(width: cardSize.width, height: cardSize.height)
         Analytics.track(.socialHeatmapCardShared)
-        present(card.snapshot(), from: presenter)
+        present(card.snapshot(), from: presenter, barButtonItem: barButtonItem)
     }
 
     @MainActor
-    private static func present(_ image: UIImage?, from presenter: UIViewController) {
+    private static func present(_ image: UIImage?,
+                                from presenter: UIViewController,
+                                barButtonItem: UIBarButtonItem?) {
         guard let image else { return }
         var items: [Any] = [image]
         if let handle = SocialIdentityStore.handle,
@@ -39,8 +43,27 @@ enum SocialShareCards {
             items.append(link)
         }
         let activity = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        activity.popoverPresentationController?.sourceView = presenter.view
+        configurePopover(activity.popoverPresentationController,
+                         presenter: presenter,
+                         barButtonItem: barButtonItem)
         presenter.present(activity, animated: true)
+    }
+
+    @MainActor
+    static func configurePopover(_ popover: UIPopoverPresentationController?,
+                                 presenter: UIViewController,
+                                 barButtonItem: UIBarButtonItem?) {
+        guard let popover else { return }
+        if let barButtonItem {
+            popover.barButtonItem = barButtonItem
+        } else {
+            popover.sourceView = presenter.view
+            popover.sourceRect = CGRect(x: presenter.view.bounds.midX,
+                                        y: presenter.view.bounds.midY,
+                                        width: 0,
+                                        height: 0)
+            popover.permittedArrowDirections = []
+        }
     }
 
     static func footer() -> String {

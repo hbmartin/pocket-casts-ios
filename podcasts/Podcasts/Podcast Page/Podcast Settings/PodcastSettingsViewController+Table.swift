@@ -371,7 +371,7 @@ extension PodcastSettingsViewController: UITableViewDataSource, UITableViewDeleg
         // table reloads.
         podcast.settings.disableRemoteTranscription = sender.isOn
         DataManager.sharedManager.saveDisableRemoteTranscription(sender.isOn, podcastUuid: podcast.uuid)
-        Analytics.track(.podcastSettingsAutoTranscribeToggled, properties: ["enabled": sender.isOn])
+        Analytics.track(.podcastSettingsLocalTranscriptionOnlyToggled, properties: ["localOnly": sender.isOn])
     }
 
     @objc private func addToUpNextChanged(_ sender: UISwitch) {

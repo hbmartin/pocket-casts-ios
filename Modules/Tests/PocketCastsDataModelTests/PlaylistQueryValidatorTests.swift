@@ -93,13 +93,80 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
         }
     }
 
-    func testStatementSeparatorScannerIsLiteralAware() {
-        // Runtime re-check used by customRuleFragment: a ';' inside a string
-        // literal is data, one outside is a statement separator.
-        XCTAssertFalse(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'Science; Vs'"))
-        XCTAssertFalse(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'It''s; complicated'"))
-        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("1=1; DROP TABLE SJEpisode"))
-        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'x'; DELETE FROM SJEpisode"))
+    func testStatementSeparatorScannerAcceptsSemicolonsInLiteralsAndComments() {
+        let fragments = [
+            "episode.title = 'Science; Vs'",
+            "episode.title = 'It''s; complicated'",
+            "episode.duration > 0 -- semicolon; and apostrophe don't alter state",
+            "episode.duration > 0 /* semicolon; and apostrophe don't alter state */",
+            "episode.duration > 0 -- comment;\nAND episode.title = 'It''s valid'",
+        ]
+
+        for fragment in fragments {
+            XCTAssertFalse(
+                PlaylistQueryValidator.containsStatementSeparator(fragment),
+                "Expected a single SQL statement: \(fragment)"
+            )
+        }
+    }
+
+    func testStatementSeparatorScannerFindsSeparatorsAfterLiteralsAndComments() {
+        let fragments = [
+            "1=1; DROP TABLE SJEpisode",
+            "episode.title = 'x'; DELETE FROM SJEpisode",
+            "episode.title = 'It''s valid'; SELECT 2",
+            "1 = 1 -- don't let this apostrophe hide the separator\n; SELECT 2",
+            "1 = 1 /* don't let this apostrophe hide the separator */ ; SELECT 2",
+        ]
+
+        for fragment in fragments {
+            XCTAssertTrue(
+                PlaylistQueryValidator.containsStatementSeparator(fragment),
+                "Expected a SQL statement separator: \(fragment)"
+            )
+        }
+    }
+
+    func testStatementSeparatorScannerFailsClosedForMalformedLexicalStates() {
+        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("episode.title = 'unterminated; literal"))
+        XCTAssertTrue(
+            PlaylistQueryValidator.containsStatementSeparator("episode.duration > 0 /* unterminated; comment")
+        )
+    }
+
+    func testLegitimateCommentsAndEscapedQuotesPassValidation() throws {
+        let lineComment = "episode.duration > 0 -- semicolon; and apostrophe don't alter state\n"
+        let blockComment = "episode.duration > 0 /* semicolon; and apostrophe don't alter state */"
+        let escapedQuote = "episode.title = 'Long History Special' AND 'It''s; valid' != ''"
+
+        XCTAssertEqual(
+            try dataManager.validateCustomQueryFragment(lineComment).get(),
+            2
+        )
+        XCTAssertEqual(
+            try dataManager.validateCustomQueryFragment(blockComment).get(),
+            2
+        )
+        XCTAssertEqual(
+            try dataManager.validateCustomQueryFragment(escapedQuote).get(),
+            1
+        )
+    }
+
+    func testSeparatorAfterCommentApostropheIsRejectedByValidation() {
+        let fragments = [
+            "1 = 1 -- don't let this apostrophe hide the separator\n; SELECT 2",
+            "1 = 1 /* don't let this apostrophe hide the separator */ ; SELECT 2",
+        ]
+
+        for fragment in fragments {
+            switch dataManager.validateCustomQueryFragment(fragment) {
+            case .failure(.syntax), .failure(.multipleStatements):
+                break
+            default:
+                XCTFail("Expected statement separation to be rejected: \(fragment)")
+            }
+        }
     }
 
     func testStatementSmugglingIsRejectedAndTableSurvives() throws {

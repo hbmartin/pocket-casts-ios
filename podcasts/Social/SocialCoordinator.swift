@@ -48,12 +48,7 @@ enum SocialCoordinator {
     static func openPublicProfile(handle: String) {
         guard FeatureFlag.socialProfiles.enabled, !handle.isEmpty else { return }
         let hosting = ThemedHostingController(rootView: PublicProfileView(viewModel: PublicProfileViewModel(handle: handle)))
-        if let navigationController = SceneHelper.rootViewController()?.presentedNavigationController
-            ?? (SceneHelper.rootViewController() as? UINavigationController) {
-            navigationController.pushViewController(hosting, animated: true)
-        } else {
-            SceneHelper.rootViewController()?.present(UINavigationController(rootViewController: hosting), animated: true)
-        }
+        push(hosting)
     }
 
     /// Pushes the Inbox (social push landing for requests + shared items).
@@ -91,16 +86,51 @@ enum SocialCoordinator {
 
     /// Presents an episode's comment tree, optionally focused on one subtree
     /// (social push landing for replies — same surface as a Moment pin tap).
-    static func openComments(episodeUuid: String, podcastUuid: String, focusCommentId: Int64?) {
+    static func openComments(episodeUuid: String, podcastUuid: String, focusCommentId: Int64?) async {
         guard FeatureFlag.socialProfiles.enabled, !episodeUuid.isEmpty else { return }
-        let episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid)
+        let viewModel = await commentsViewModel(
+            episodeUuid: episodeUuid,
+            podcastUuid: podcastUuid,
+            focusCommentId: focusCommentId,
+            refreshIfNeeded: refreshPodcasts
+        )
+        push(ThemedHostingController(rootView: EpisodeCommentsView(viewModel: viewModel)))
+    }
+
+    static func commentsViewModel(
+        episodeUuid: String,
+        podcastUuid: String,
+        focusCommentId: Int64?,
+        refreshIfNeeded: () async -> Void
+    ) async -> EpisodeCommentsViewModel {
+        var episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid)
+        var resolvedPodcastUuid = episode?.parentIdentifier() ?? podcastUuid
+        var podcast = resolvedPodcastUuid.isEmpty ? nil : DataManager.sharedManager.findPodcast(uuid: resolvedPodcastUuid)
+        if episode == nil || (!resolvedPodcastUuid.isEmpty && podcast == nil) {
+            await refreshIfNeeded()
+            episode = DataManager.sharedManager.findEpisode(uuid: episodeUuid)
+            resolvedPodcastUuid = episode?.parentIdentifier() ?? podcastUuid
+            podcast = resolvedPodcastUuid.isEmpty ? nil : DataManager.sharedManager.findPodcast(uuid: resolvedPodcastUuid)
+        }
+
         let duration = episode?.duration ?? 0
         let canSeed = duration > 0 && (episode?.playedUpTo ?? 0) >= duration * 0.25
-        let viewModel = EpisodeCommentsViewModel(episodeUuid: episodeUuid, podcastUuid: podcastUuid,
-                                                 episodeTitle: episode?.displayableTitle() ?? "",
-                                                 podcastTitle: "", canSeed: canSeed,
-                                                 focusCommentId: focusCommentId)
-        push(ThemedHostingController(rootView: EpisodeCommentsView(viewModel: viewModel)))
+        return EpisodeCommentsViewModel(
+            episodeUuid: episodeUuid,
+            podcastUuid: resolvedPodcastUuid,
+            episodeTitle: episode?.displayableTitle() ?? "",
+            podcastTitle: podcast?.title ?? "",
+            canSeed: canSeed,
+            focusCommentId: focusCommentId
+        )
+    }
+
+    private static func refreshPodcasts() async {
+        await withCheckedContinuation { continuation in
+            RefreshManager.shared.refreshPodcasts { _ in
+                continuation.resume()
+            }
+        }
     }
 
     private static func push(_ hosting: UIViewController) {
@@ -116,12 +146,7 @@ enum SocialCoordinator {
     static func openSharedList(id: Int64) {
         guard FeatureFlag.socialProfiles.enabled else { return }
         let hosting = ThemedHostingController(rootView: SharedListDetailView(viewModel: SharedListDetailViewModel(listId: id)))
-        if let navigationController = SceneHelper.rootViewController()?.presentedNavigationController
-            ?? (SceneHelper.rootViewController() as? UINavigationController) {
-            navigationController.pushViewController(hosting, animated: true)
-        } else {
-            SceneHelper.rootViewController()?.present(UINavigationController(rootViewController: hosting), animated: true)
-        }
+        push(hosting)
     }
 
     /// Recognizes a Profile Link path (`/u/<handle>`) or a thcast profile host

@@ -9,6 +9,11 @@ public extension ApiServerHandler {
     func sendSharedItem(recipientHandle: String, episodeUuid: String, podcastUuid: String,
                         episodeTitle: String, podcastTitle: String,
                         note: String, timestampSeconds: Int) async -> Bool {
+        guard timestampSeconds >= 0,
+              let validatedTimestampSeconds = Int32(exactly: timestampSeconds) else {
+            return false
+        }
+
         var request = Api_SharedItemSendRequest()
         request.recipientHandle = recipientHandle
         request.episodeUuid = episodeUuid
@@ -16,7 +21,7 @@ public extension ApiServerHandler {
         request.episodeTitle = episodeTitle
         request.podcastTitle = podcastTitle
         request.note = note
-        request.timestampSeconds = Int32(timestampSeconds)
+        request.timestampSeconds = validatedTimestampSeconds
         return await withCheckedContinuation { continuation in
             let operation = SharedItemSendTask(request: request)
             operation.completion = { continuation.resume(returning: $0) }
@@ -26,8 +31,14 @@ public extension ApiServerHandler {
 
     /// The caller's inbox page (requires a joined account server-side).
     func fetchInbox(limit: Int = 50, offset: Int = 0) async -> SocialInboxPage? {
+        guard limit >= 0, offset >= 0,
+              let validatedLimit = Int32(exactly: limit),
+              let validatedOffset = Int32(exactly: offset) else {
+            return nil
+        }
+
         await withCheckedContinuation { continuation in
-            let operation = SocialInboxListTask(limit: Int32(limit), offset: Int32(offset))
+            let operation = SocialInboxListTask(limit: validatedLimit, offset: validatedOffset)
             operation.completion = { continuation.resume(returning: $0) }
             apiQueue.addOperation(operation)
         }

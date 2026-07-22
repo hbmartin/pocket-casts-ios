@@ -13,12 +13,12 @@ import PocketCastsUtils
 ///
 /// DB writes happen only on connection type changes and when tracking stops (not during streaming).
 /// An access log observer keeps an in-memory byte count up to date so that flushes are accurate.
-/// Byte counters and connection state are confined to `monitorQueue`
-/// (the path handler runs there and the access-log observer hops to it).
-/// @unchecked Sendable: byte counters and connection state are confined to monitorQueue (see above).
+/// The entire start/stop lifecycle, byte counters, and connection state are confined to `monitorQueue`.
+/// @unchecked Sendable: all mutable state is accessed only through monitorQueue.
 nonisolated final class StreamingCellularTracker: @unchecked Sendable {
     private var monitor: NWPathMonitor?
     private let monitorQueue = DispatchQueue(label: "com.pocketcasts.StreamingCellularTracker")
+    private let monitorQueueKey = DispatchSpecificKey<Void>()
 
     private weak var playerItem: AVPlayerItem?
     private var episodeUuid: String?
@@ -31,7 +31,9 @@ nonisolated final class StreamingCellularTracker: @unchecked Sendable {
 
     private var accessLogObserver: NSObjectProtocol?
 
-    init() {}
+    init() {
+        monitorQueue.setSpecific(key: monitorQueueKey, value: ())
+    }
 
     deinit {
         stopTracking()
@@ -39,43 +41,51 @@ nonisolated final class StreamingCellularTracker: @unchecked Sendable {
 
     /// Start tracking network usage for a player item
     func startTracking(playerItem: AVPlayerItem, episodeUuid: String?, podcastUuid: String?) {
-        stopTracking()
+        let input = PocketCastsUtils.UncheckedSendable((playerItem, episodeUuid, podcastUuid))
+        onMonitorQueue {
+            stopTrackingOnMonitorQueue()
+            let (playerItem, episodeUuid, podcastUuid) = input.value
 
-        self.playerItem = playerItem
-        self.episodeUuid = episodeUuid
-        self.podcastUuid = podcastUuid
-        self.lastReportedBytes = 0
-        self.bytesWhenConnectionStarted = 0
-        self.currentConnectionType = .unknown
-        self.latestBytesTransferred = 0
+            self.playerItem = playerItem
+            self.episodeUuid = episodeUuid
+            self.podcastUuid = podcastUuid
+            self.lastReportedBytes = 0
+            self.bytesWhenConnectionStarted = 0
+            self.currentConnectionType = .unknown
+            self.latestBytesTransferred = 0
 
-        let newMonitor = NWPathMonitor()
-        newMonitor.pathUpdateHandler = { [weak self] path in
-            self?.handlePathUpdate(path)
-        }
-        newMonitor.start(queue: monitorQueue)
-        monitor = newMonitor
+            let newMonitor = NWPathMonitor()
+            newMonitor.pathUpdateHandler = { [weak self] path in
+                self?.handlePathUpdate(path)
+            }
+            newMonitor.start(queue: monitorQueue)
+            monitor = newMonitor
 
-        // Observe access log changes to keep our in-memory byte count current.
-        // No DB writes happen here — we only flush on connection change or stop.
-        accessLogObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemNewAccessLogEntry,
-            object: playerItem,
-            queue: nil
-        ) { [weak self] _ in
-            guard let self else { return }
-            self.monitorQueue.async {
-                self.updateBytesTransferred()
+            // Observe access log changes to keep our in-memory byte count current.
+            // No DB writes happen here — we only flush on connection change or stop.
+            accessLogObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemNewAccessLogEntry,
+                object: playerItem,
+                queue: nil
+            ) { [weak self] _ in
+                guard let self else { return }
+                self.monitorQueue.async {
+                    self.updateBytesTransferred()
+                }
             }
         }
     }
 
     /// Stop tracking and report final network usage
     func stopTracking() {
-        monitorQueue.sync {
-            updateBytesTransferred()
-            reportCurrentConnectionUsageIfNeeded()
+        onMonitorQueue {
+            stopTrackingOnMonitorQueue()
         }
+    }
+
+    private func stopTrackingOnMonitorQueue() {
+        updateBytesTransferred()
+        reportCurrentConnectionUsageIfNeeded()
 
         monitor?.cancel()
         monitor = nil
@@ -92,6 +102,14 @@ nonisolated final class StreamingCellularTracker: @unchecked Sendable {
         bytesWhenConnectionStarted = 0
         lastReportedBytes = 0
         latestBytesTransferred = 0
+    }
+
+    private func onMonitorQueue(_ operation: () -> Void) {
+        if DispatchQueue.getSpecific(key: monitorQueueKey) != nil {
+            operation()
+        } else {
+            monitorQueue.sync(execute: operation)
+        }
     }
 
     // MARK: - Private

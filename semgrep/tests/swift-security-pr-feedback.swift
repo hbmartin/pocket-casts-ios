@@ -1004,4 +1004,115 @@ enum SafeDBQueueUsage {
         // ok: pocketcasts.swift-no-nil-check-on-dbqueue-result
         dbQueue.read { db in try TranscriptIndexRecord.fetchCount(db) > 0 } ?? false
     }
+
+    static func asyncRead(dbQueue: GRDBQueue) async throws -> Bool {
+        // ok: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        try await dbQueue.read { db in try TranscriptIndexRecord.fetchOne(db) } != nil
+    }
+
+    static func asyncWrite(dbQueue: GRDBQueue, record: TranscriptIndexRecord) async throws -> Bool {
+        // ok: pocketcasts.swift-no-nil-check-on-dbqueue-result
+        try await dbQueue.write { db in try record.insert(db) } == nil
+    }
+}
+
+enum UnsafeURLLogRedaction {
+    // ruleid: pocketcasts.url-log-redaction-must-fail-closed
+    static func redact(_ candidate: String) -> String {
+        guard var components = URLComponents(string: candidate) else {
+            return candidate
+        }
+        components.user = nil
+        guard let redacted = components.string else {
+            return candidate
+        }
+        return redacted
+    }
+}
+
+enum SafeURLLogRedaction {
+    // ok: pocketcasts.url-log-redaction-must-fail-closed
+    static func redact(_ candidate: String) -> String {
+        guard var components = URLComponents(string: candidate) else {
+            return "<unparseable-url>"
+        }
+        components.user = nil
+        guard let redacted = components.string else {
+            return "<unparseable-url>"
+        }
+        return redacted
+    }
+}
+
+enum RawDataBinding {
+    static func unsafeTypedBinding(_ data: Data) -> [UInt16] {
+        data.withUnsafeBytes { raw in
+            // ruleid: pocketcasts.no-typed-bindmemory-on-raw-data
+            Array(raw.bindMemory(to: UInt16.self))
+        }
+    }
+
+    static func unsafeTypedMutableBinding(_ data: inout Data) -> [Float16] {
+        data.withUnsafeMutableBytes { (raw: UnsafeMutableRawBufferPointer) -> [Float16] in
+            // ruleid: pocketcasts.no-typed-bindmemory-on-raw-data
+            Array(raw.bindMemory(to: Float16.self))
+        }
+    }
+
+    static func safeByteBinding(_ data: Data) -> [UInt8] {
+        data.withUnsafeBytes { raw in
+            // ok: pocketcasts.no-typed-bindmemory-on-raw-data
+            Array(raw.bindMemory(to: UInt8.self))
+        }
+    }
+
+    static func safeUnalignedLoad(_ data: Data) -> UInt16 {
+        data.withUnsafeBytes { raw in
+            // ok: pocketcasts.no-typed-bindmemory-on-raw-data
+            raw.loadUnaligned(as: UInt16.self)
+        }
+    }
+}
+
+struct UnsafeSecurityScopedDeveloperImport: View {
+    @State private var showingImporter = false
+
+    var body: some View {
+        Text("Unsafe import")
+            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.data]) { result in
+                if case .success(let url) = result {
+                    Task {
+                        // ruleid: pocketcasts.file-importer-wrapper-read-requires-scoped-access
+                        _ = try FileWrapper(url: url)
+                    }
+                }
+            }
+    }
+}
+
+struct SafeSecurityScopedDeveloperImport: View {
+    @State private var showingImporter = false
+
+    var body: some View {
+        Text("Safe import")
+            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.data]) { result in
+                if case .success(let url) = result {
+                    Task {
+                        guard url.startAccessingSecurityScopedResource() else {
+                            return
+                        }
+                        defer {
+                            url.stopAccessingSecurityScopedResource()
+                        }
+                        // ok: pocketcasts.file-importer-wrapper-read-requires-scoped-access
+                        _ = try FileWrapper(url: url)
+                    }
+                }
+            }
+    }
+}
+
+enum UnsafeDeveloperSettingsVisibility {
+    // ruleid: pocketcasts.developer-settings-must-be-debug-only
+    static let isVisible = BuildEnvironment.current != .appStore
 }

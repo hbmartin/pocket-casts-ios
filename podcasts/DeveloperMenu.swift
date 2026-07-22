@@ -29,13 +29,17 @@ struct DeveloperMenu: View {
                 .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.pcasts]) { result in
                     switch result {
                     case .success(let url):
-                        FileLog.shared.addMessage("DeveloperMenu: selected \(url)")
                         Task {
-                            let fileWrapper = try FileWrapper(url: url)
-                            try PCBundleDoc.performImport(from: fileWrapper)
+                            do {
+                                try DeveloperBundleImporter.importBundle(from: url)
+                            } catch let error as DeveloperBundleImportError {
+                                FileLog.shared.addMessage(error.logMessage)
+                            } catch {
+                                FileLog.shared.addMessage("DeveloperMenu: failed to import selected bundle")
+                            }
                         }
-                    case .failure(let error):
-                        FileLog.shared.addMessage("DeveloperMenu: failed to import pcasts: \(error)")
+                    case .failure:
+                        FileLog.shared.addMessage("DeveloperMenu: file picker failed")
                     }
                 }
                 Button(action: {
@@ -207,6 +211,53 @@ struct DeveloperMenu: View {
         showingInterestsOnboarding = false
         recommendationsViewModel.configuration = .preselected(categories)
         showingRecommendationsOnboardingSelected = true
+    }
+}
+
+enum DeveloperBundleImportError: Error, Equatable {
+    case accessDenied
+    case fileReadFailed
+    case importFailed
+
+    var logMessage: String {
+        switch self {
+        case .accessDenied:
+            "DeveloperMenu: failed to access selected bundle"
+        case .fileReadFailed:
+            "DeveloperMenu: failed to read selected bundle"
+        case .importFailed:
+            "DeveloperMenu: failed to apply selected bundle"
+        }
+    }
+}
+
+enum DeveloperBundleImporter {
+    static func importBundle(
+        from url: URL,
+        startAccessing: (URL) -> Bool = { $0.startAccessingSecurityScopedResource() },
+        stopAccessing: (URL) -> Void = { $0.stopAccessingSecurityScopedResource() },
+        readFileWrapper: (URL) throws -> FileWrapper = { try FileWrapper(url: $0, options: .immediate) },
+        performImport: (FileWrapper) throws -> Void = { try PCBundleDoc.performImport(from: $0) }
+    ) throws {
+        guard startAccessing(url) else {
+            throw DeveloperBundleImportError.accessDenied
+        }
+
+        // A successful PCBundleDoc import terminates the app. Eagerly load the
+        // wrapper and release scoped access before applying it so stop always runs.
+        let fileWrapper: FileWrapper
+        do {
+            defer { stopAccessing(url) }
+            fileWrapper = try readFileWrapper(url)
+        } catch {
+            throw DeveloperBundleImportError.fileReadFailed
+        }
+
+        do {
+            try performImport(fileWrapper)
+        } catch {
+            throw DeveloperBundleImportError.importFailed
+        }
     }
 }
 

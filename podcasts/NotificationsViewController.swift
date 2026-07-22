@@ -9,12 +9,28 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
 
     private let soundOff = 0
 
-    private var sections: [Section] = [.episodes]
-    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.trendingRecommendations, .dailyReminders], [.newFeaturesAndTips, .pocketCastsOffers], [.socialNotifications]]
+    private let rows: [Section: [Row]] = [
+        .episodes: [.newEpisodes, .podcastsChosen, .appBadges],
+        .recommendationsAndReminders: [.trendingRecommendations, .dailyReminders],
+        .featuresAndOffers: [.newFeaturesAndTips, .pocketCastsOffers],
+        .social: [.socialNotifications]
+    ]
 
     /// The Social section shows only for joined accounts (Slice 8).
     private var showsSocialSection: Bool {
         FeatureFlag.socialProfiles.enabled && SocialIdentityStore.isJoined
+    }
+
+    private var visibleSections: [Section] {
+        Self.visibleSections(showSocialSection: showsSocialSection)
+    }
+
+    static func visibleSections(showSocialSection: Bool) -> [Section] {
+        Section.allCases.filter { showSocialSection || $0 != .social }
+    }
+
+    private func section(at tableIndex: Int) -> Section? {
+        visibleSections.indices.contains(tableIndex) ? visibleSections[tableIndex] : nil
     }
 
     private var notificationsDenied = false
@@ -159,29 +175,31 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        return showsSocialSection ? Section.allCases.count : Section.allCases.count - 1
+        visibleSections.count
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let sectionType = Section(rawValue: section) else {
+        guard let sectionType = self.section(at: section) else {
             return 0
         }
         switch sectionType {
         case .episodes:
             return NotificationsGroup.newEpisodes.isEnabled ? 3 : 1
         case .featuresAndOffers, .recommendationsAndReminders, .social:
-            return rows[section].count
+            return rows[sectionType]?.count ?? 0
         }
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let sectionType = Section(rawValue: indexPath.section) else {
+        guard let sectionType = section(at: indexPath.section),
+              let row = rows[sectionType]?[indexPath.row] else {
             return UITableViewCell()
         }
-        let row = rows[sectionType.rawValue][indexPath.row]
         switch row {
         case .podcastsChosen:
-            let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as! DisclosureCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as? DisclosureCell else {
+                return UITableViewCell()
+            }
             let podcastsSelected = DataManager.sharedManager.pushEnabledPodcastsCount()
             let chosenPodcasts = podcastsSelected == 1 ? L10n.chosenPodcastsSingular : L10n.chosenPodcastsPluralFormat(podcastsSelected.localized())
             cell.cellLabel.text = (podcastsSelected == 0) ? L10n.filterChoosePodcasts : chosenPodcasts
@@ -189,20 +207,26 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
             cell.isLocked = !notificationsDenied
             return cell
         case .appBadges:
-            let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as! DisclosureCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as? DisclosureCell else {
+                return UITableViewCell()
+            }
             cell.cellLabel.text = row.description
             let badgeChoice = Settings.appBadge
             cell.cellSecondaryLabel.text =  badgeChoice?.description
             cell.isLocked = !notificationsDenied
             return cell
         case .socialNotifications:
-            let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as! DisclosureCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as? DisclosureCell else {
+                return UITableViewCell()
+            }
             cell.cellLabel.text = row.description
             cell.cellSecondaryLabel.text = nil
             cell.isLocked = !notificationsDenied
             return cell
         default:
-            let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as? SwitchCell else {
+                return UITableViewCell()
+            }
             cell.cellLabel.text = row.description
             cell.cellSwitch.isOn = row.value
             cell.cellSwitch.tag = row.rawValue
@@ -216,11 +240,12 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     private var podcastChooserController: PodcastChooserViewController?
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        guard let sectionType = Section(rawValue: indexPath.section), !notificationsDenied
+        guard let sectionType = section(at: indexPath.section),
+              let rowType = rows[sectionType]?[indexPath.row],
+              !notificationsDenied
         else {
             return
         }
-        let rowType = rows[indexPath.section][indexPath.row]
 
         switch sectionType {
         case .social:
@@ -257,7 +282,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     }
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        guard let sectionType = Section(rawValue: section) else {
+        guard let sectionType = self.section(at: section) else {
             return nil
         }
         switch sectionType {

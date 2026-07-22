@@ -18,9 +18,10 @@ enum SocialListMirror {
 
     /// Refreshes all mirrors from the server. Fire on app refresh and after
     /// membership changes.
-    static func refreshAll() async {
+    @discardableResult
+    static func refreshAll() async -> SharedListsOverview? {
         guard FeatureFlag.socialProfiles.enabled, SocialIdentityStore.isJoined,
-              let overview = await ApiServerHandler.shared.fetchSharedLists() else { return }
+              let overview = await ApiServerHandler.shared.fetchSharedLists() else { return nil }
 
         let mirrorable = overview.lists.filter { $0.yourRole == .collaborator || $0.yourRole == .subscriber }
         let wantedUuids = Set(mirrorable.map { mirrorUuid(for: $0.id) })
@@ -34,11 +35,19 @@ enum SocialListMirror {
         for list in mirrorable {
             await rebuildMirror(for: list)
         }
+
+        return overview
     }
 
     /// Rebuilds one mirror playlist from the server's entry order.
-    static func rebuildMirror(for list: SharedList) async {
-        guard let page = await ApiServerHandler.shared.fetchSharedList(id: list.id, limit: 500) else { return }
+    static func rebuildMirror(for list: SharedList, entries suppliedEntries: [SharedListEntry]? = nil) async {
+        let entries: [SharedListEntry]
+        if let suppliedEntries {
+            entries = suppliedEntries
+        } else {
+            guard let page = await ApiServerHandler.shared.fetchSharedList(id: list.id, limit: 1000) else { return }
+            entries = page.entries
+        }
 
         if let existing = DataManager.sharedManager.findPlaylist(uuid: mirrorUuid(for: list.id)) {
             DataManager.sharedManager.delete(playlist: existing)
@@ -46,7 +55,7 @@ enum SocialListMirror {
 
         var playlist = EpisodeFilter()
         playlist.uuid = mirrorUuid(for: list.id)
-        playlist.playlistName = "\(list.title) · @\(list.ownerHandle)"
+        playlist.playlistName = L10n.socialListMirrorName(list.title, list.ownerHandle)
         playlist.manual = true
         playlist.sharedListId = list.id
         playlist.sharedRole = Int32(list.yourRole.rawValue)
@@ -56,7 +65,7 @@ enum SocialListMirror {
 
         // Only locally-known episodes materialize; the shared-list screen
         // always shows the full server list regardless.
-        let episodes = page.entries.compactMap { DataManager.sharedManager.findEpisode(uuid: $0.episodeUuid) }
+        let episodes = entries.compactMap { DataManager.sharedManager.findEpisode(uuid: $0.episodeUuid) }
         if !episodes.isEmpty {
             _ = DataManager.sharedManager.add(episodes: episodes, to: playlist)
         }

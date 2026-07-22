@@ -52,6 +52,29 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     /// Which configuration the live VBN state was created with, so a
     /// boost ↔ normalize switch recreates it instead of reusing the wrong chain.
     private enum VBNMode { case boost, normalize }
+
+    struct EffectsConfiguration {
+        var useVoiceBoostN: AtomicBool?
+        var useNormalize: AtomicBool?
+        var sampleRate: Double
+        var tuning: AudioTuning
+        var knownLUFS: Double
+
+        init(
+            useVoiceBoostN: AtomicBool? = nil,
+            useNormalize: AtomicBool? = nil,
+            sampleRate: Double = 0,
+            tuning: AudioTuning = PlaybackManager.engineState.tuning,
+            knownLUFS: Double = 0
+        ) {
+            self.useVoiceBoostN = useVoiceBoostN
+            self.useNormalize = useNormalize
+            self.sampleRate = sampleRate
+            self.tuning = tuning
+            self.knownLUFS = knownLUFS
+        }
+    }
+
     private var activeVBNMode: VBNMode?
     private var voiceBoostNSampleRate: Double = 0
     private var hasProcessedFirstBuffer = false
@@ -63,17 +86,17 @@ nonisolated final class AudioReadTask: @unchecked Sendable {
     /// Integrated LUFS precomputed for this episode; 0 = unknown (adapt live).
     private let knownLUFS: Double
 
-    init(trimSilence: TrimSilenceAmount, audioFile: AVAudioFile, outputFormat: AVAudioFormat, bufferManager: PlayBufferManager, playPositionHint: TimeInterval, frameCount: Int64, useVoiceBoostN: AtomicBool? = nil, useNormalize: AtomicBool? = nil, sampleRate: Double = 0, tuning: AudioTuning = PlaybackManager.engineState.tuning, knownLUFS: Double = 0) {
+    init(trimSilence: TrimSilenceAmount, audioFile: AVAudioFile, outputFormat: AVAudioFormat, bufferManager: PlayBufferManager, playPositionHint: TimeInterval, frameCount: Int64, effects: EffectsConfiguration = EffectsConfiguration()) {
         self.trimSilence = trimSilence
         self.audioFile = audioFile
         self.outputFormat = outputFormat
         self.bufferManager = bufferManager
         cachedFrameCount = frameCount
-        self.useVoiceBoostN = useVoiceBoostN
-        self.useNormalize = useNormalize
-        voiceBoostNSampleRate = sampleRate
-        self.tuning = tuning
-        self.knownLUFS = knownLUFS
+        useVoiceBoostN = effects.useVoiceBoostN
+        useNormalize = effects.useNormalize
+        voiceBoostNSampleRate = effects.sampleRate
+        tuning = effects.tuning
+        knownLUFS = effects.knownLUFS
 
         readQueue = DispatchQueue(label: "au.com.pocketcasts.ReadQueue", qos: .userInitiated, attributes: [], autoreleaseFrequency: .never, target: nil)
 

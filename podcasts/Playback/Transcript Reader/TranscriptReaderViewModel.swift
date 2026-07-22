@@ -201,16 +201,17 @@ final class TranscriptReaderViewModel: ObservableObject {
     // MARK: - Seeking
 
     /// Mirrors `TranscriptViewController.transcriptTapped(_:)`. For generated
-    /// transcripts the cue time is on the fingerprint reference timeline and
-    /// must be mapped; for external transcripts (authored against the episode
-    /// audio itself) the plain cue time already is the playback time.
+    /// non-local transcripts the cue time is on the fingerprint reference
+    /// timeline and must be mapped; local and external transcripts are authored
+    /// against the episode audio itself, so their cue time is already playback
+    /// time.
     func seek(toCueIndex cueIndex: Int) -> SeekOutcome {
         guard playback.canSeek, transcript.cues.indices.contains(cueIndex) else {
             return .notAllowed
         }
         let cue = transcript.cues[cueIndex]
 
-        guard isGeneratedTranscript else {
+        guard isGeneratedTranscript, !isLocalTranscript else {
             playback.seekTo(time: cue.startTime)
             return .seeked(to: cue.startTime)
         }
@@ -335,10 +336,10 @@ final class TranscriptReaderViewModel: ObservableObject {
     }
 
     /// Converts a cue-timeline time to the playback timeline: identity for
-    /// external and local transcripts, fingerprint-mapped for generated ones
-    /// (the same conversion `seek` applies).
+    /// external and locally generated transcripts, fingerprint-mapped for
+    /// remote generated ones (the same conversion `seek` applies).
     private func playbackTimelineTime(forCueTime time: TimeInterval) -> TimeInterval? {
-        guard isGeneratedTranscript else { return time }
+        guard isGeneratedTranscript, !isLocalTranscript else { return time }
         return timing.playbackTime(time)
     }
 }

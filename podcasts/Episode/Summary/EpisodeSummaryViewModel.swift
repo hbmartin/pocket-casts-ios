@@ -130,7 +130,7 @@ class EpisodeSummaryViewModel: ObservableObject {
 
     private func loadTakeaways() async {
         var cues: [TimedCueText] = []
-        if let model = try? await Self.loadTranscript(transcriptManager) {
+        if let model = try? await TranscriptManager.loadTranscript(from: transcriptManager) {
             cues = SummaryTakeawayGenerator.timedCues(from: model)
         }
 
@@ -157,12 +157,6 @@ class EpisodeSummaryViewModel: ObservableObject {
                 "reason": reason
             ])
         }
-    }
-
-    nonisolated private static func loadTranscript(
-        _ manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
-    ) async throws -> TranscriptModel {
-        try await manager.value.loadTranscript()
     }
 
     // MARK: - Seek

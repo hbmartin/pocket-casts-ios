@@ -3,9 +3,9 @@ import Foundation
 import PocketCastsUtils
 import UIKit
 
-// @unchecked Sendable: instances are built single-threaded by the chapter parser and
+// Instances are built single-threaded by the chapter parser and
 // then handed over wholesale to the main-actor ChapterManager; all post-hand-off
-// reads/writes (shouldPlay toggling) happen on the main actor.
+// @unchecked Sendable: post-hand-off reads and shouldPlay writes stay on the main actor.
 nonisolated class ChapterInfo: Equatable, @unchecked Sendable {
     var title = ""
     var url: String?

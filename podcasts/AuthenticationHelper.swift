@@ -21,7 +21,8 @@ class AuthenticationHelper {
 
     static func validateLogin(username: String, password: String, scope: AuthenticationScope) async throws -> AuthenticationResponse {
         let response = try await ApiServerHandler.shared.validateLogin(username: username, password: password, scope: scope.rawValue)
-        handleSuccessfulSignIn(response)
+        try validatePasswordSignInResponse(response)
+        try handleSuccessfulSignIn(response, requireRefreshTokenPersistence: FeatureFlag.refreshTokenForPasswordAuth.enabled)
 
         // If the server didn't return a new email, and the call was successful, then reset the email to the one used to
         // validate the login
@@ -29,15 +30,31 @@ class AuthenticationHelper {
             ServerSettings.setSyncingEmail(email: username)
         }
 
-        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
-            ServerSettings.accountAuthMethod = .password
-        } else {
-            // Legacy credential persistence until refresh-token auth for password accounts
-            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
-            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
-        }
+        persistPasswordForLegacyAuthenticationIfNeeded(password)
 
         return response
+    }
+
+    /// Password-auth sessions must be renewable before they replace the current session.
+    /// The flag remains off until user/login can return this field; rejecting an omitted or
+    /// empty value keeps early flag enablement and server rollback fail-closed.
+    static func validatePasswordSignInResponse(_ response: AuthenticationResponse) throws {
+        let requiresRefreshToken = FeatureFlag.refreshTokenForPasswordAuth.enabled
+        guard !requiresRefreshToken || response.refreshToken?.isEmpty == false else {
+            throw APIError.TOKEN_DEAUTH
+        }
+    }
+
+    /// The plaintext password remains a rollback credential only while the legacy path is
+    /// explicitly selected. ServerSettings repeats this guard at the Keychain sink so a new
+    /// call site cannot bypass the feature policy.
+    static func persistPasswordForLegacyAuthenticationIfNeeded(_ password: String) {
+        guard !FeatureFlag.refreshTokenForPasswordAuth.enabled else {
+            ServerSettings.accountAuthMethod = .password
+            return
+        }
+
+        ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
     }
 
     // MARK: Apple SSO
@@ -46,7 +63,7 @@ class AuthenticationHelper {
         let response = try await ApiServerHandler.shared.validateLogin(identityToken: identityToken, scope: scope)
         // handleSuccessfulSignIn persists the refresh token (guarded against empty values) —
         // the duplicate unguarded write that used to live here is gone.
-        handleSuccessfulSignIn(response)
+        try handleSuccessfulSignIn(response)
 
         if FeatureFlag.refreshTokenForPasswordAuth.enabled {
             ServerSettings.accountAuthMethod = .sso
@@ -59,23 +76,35 @@ class AuthenticationHelper {
 
     /// Persists the credential material from an authentication response.
     /// Internal (not private) so the empty-refresh-token guard is unit-testable.
-    static func persistSignInCredentials(from response: AuthenticationResponse) {
+    @discardableResult
+    static func persistSignInCredentials(from response: AuthenticationResponse) -> Bool {
         ServerSettings.userId = response.uuid
         ServerSettings.syncingV2Token = response.token
         // Proto strings default to "" when omitted — never clobber a stored refresh token
         // with an empty value (it would silently brick future refreshes).
+        var refreshTokenPersisted = true
         if let refreshToken = response.refreshToken, !refreshToken.isEmpty {
-            ServerSettings.setRefreshToken(refreshToken)
+            refreshTokenPersisted = ServerSettings.setRefreshToken(refreshToken)
         }
         // Expiry is a hint; nil clears any stale hint from a previous token.
         ServerSettings.setTokenExpiry(expiresIn: response.expiresIn)
+        return refreshTokenPersisted
     }
 
-    private static func handleSuccessfulSignIn(_ response: AuthenticationResponse) {
+    private static func handleSuccessfulSignIn(
+        _ response: AuthenticationResponse,
+        requireRefreshTokenPersistence: Bool = false
+    ) throws {
         SyncManager.clearTokensFromKeyChain()
         FileLog.shared.addMessage("AuthenticationHelper.handleSuccessfulSignIn clearTokensFromKeyChain")
 
-        persistSignInCredentials(from: response)
+        let refreshTokenPersisted = persistSignInCredentials(from: response)
+        guard !requireRefreshTokenPersistence || refreshTokenPersisted else {
+            // Never report a renewable password-auth session when the replacement
+            // refresh token could not be committed to the Keychain.
+            SyncManager.clearTokensFromKeyChain()
+            throw APIError.TOKEN_DEAUTH
+        }
 
         // we've signed in, set all our existing podcasts to
         // be non synced if the user never logged in before
@@ -108,7 +137,7 @@ class AuthenticationHelper {
     @discardableResult
     static func deviceGetToken(deviceCode: String, scope: AuthenticationScope = .tv) async throws -> AuthenticationResponse {
         let response = try await ApiServerHandler.shared.deviceGetToken(deviceCode: deviceCode)
-        handleSuccessfulSignIn(response)
+        try handleSuccessfulSignIn(response)
 
         return response
     }

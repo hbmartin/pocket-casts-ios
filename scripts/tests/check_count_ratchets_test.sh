@@ -48,6 +48,7 @@ final class PlayerBox: @unchecked Sendable {
     let has = "has!"
     let plain = 0 as Int
 }
+// A documentation mention of @unchecked Sendable must not count.
 EOF
 cat > "$fake_repo/podcasts/Feed.swift" <<'EOF'
 struct Feed: @unchecked Sendable {}

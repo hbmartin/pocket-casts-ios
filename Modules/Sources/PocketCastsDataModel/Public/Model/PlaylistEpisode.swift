@@ -1,8 +1,8 @@
 import Foundation
 
-// @unchecked Sendable: mutable model object passed across threads by long-standing
+// Mutable model object passed across threads by long-standing
 // convention in this codebase; consistency is maintained by database-write discipline
-// rather than by the type itself.
+// @unchecked Sendable: database-write discipline, rather than the type itself, maintains consistency.
 public final class PlaylistEpisode: Equatable, Hashable, @unchecked Sendable {
     public var id = 0 as Int64
     public var episodePosition = 0 as Int32

@@ -37,8 +37,9 @@ public actor PodcastMirrorMaterializer {
             podcastUuid: episode.podcastUuid,
             episodeUuid: episode.uuid,
             fileExtension: fileExtension)
+        let podcastDirectory = PodcastMirrorFormat.podcastDirectory(podcastUuid: episode.podcastUuid)
 
-        try await folder.createDirectory("\(FileSyncFormat.podcastMirrorsDirectory)/\(episode.podcastUuid)")
+        try await folder.createDirectory(podcastDirectory)
         try await folder.coordinatedCopy(from: URL(fileURLWithPath: localPath), to: relativePath)
         return true
     }

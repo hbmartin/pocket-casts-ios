@@ -67,7 +67,50 @@ current_counts() {
   local grep_flags=(-o -H -F)
   local pattern
   case "$name" in
-    unchecked-sendable) pattern='@unchecked Sendable' ;;
+    unchecked-sendable)
+      # Count Swift tokens outside comments and string literals. A raw grep also
+      # counted the required justification comment beside every conformance,
+      # allowing comment edits to mask a newly added declaration.
+      while IFS= read -r -d '' f; do
+        count="$({
+          awk '
+            BEGIN { in_block = 0; in_string = 0 }
+            {
+              code = ""
+              escaped = 0
+              for (i = 1; i <= length($0); i++) {
+                c = substr($0, i, 1)
+                n = substr($0, i + 1, 1)
+                if (in_block) {
+                  if (c == "*" && n == "/") { in_block = 0; i++ }
+                  continue
+                }
+                if (in_string) {
+                  if (escaped) { escaped = 0; continue }
+                  if (c == "\\") { escaped = 1; continue }
+                  if (c == "\"") { in_string = 0 }
+                  continue
+                }
+                if (c == "/" && n == "/") { break }
+                if (c == "/" && n == "*") { in_block = 1; i++; continue }
+                if (c == "\"") { in_string = 1; continue }
+                code = code c
+              }
+              rest = code
+              while (match(rest, /@unchecked[ \t]+Sendable/)) {
+                count++
+                rest = substr(rest, RSTART + RLENGTH)
+              }
+            }
+            END { print count + 0 }
+          ' "$repo_root/$f"
+        } 2>/dev/null)"
+        if (( count > 0 )); then
+          printf '%s: %d\n' "$f" "$count"
+        fi
+      done < <(list_files "$name") | sort
+      return
+      ;;
     force-cast) pattern='as!'; grep_flags+=(-w) ;;
     *) echo "unknown ratchet: $name" >&2; return 2 ;;
   esac

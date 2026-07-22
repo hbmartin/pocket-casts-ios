@@ -80,7 +80,7 @@ jobs:
       # Snapshot-coverage gate consumes the xcresult's xccov data, so it must run
       # in this job (not check:static, which has no test results).
       - name: Check snapshot coverage
-        if: ${{ !cancelled() }}
+        if: ${{ success() }}
         run: ruby scripts/ci/check-snapshot-coverage.rb build/github/results/PocketCastsTests.xcresult
 
       - name: Upload build logs and results

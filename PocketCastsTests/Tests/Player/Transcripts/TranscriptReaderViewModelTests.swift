@@ -160,6 +160,19 @@ final class TranscriptReaderViewModelTests: XCTestCase {
         XCTAssertEqual(playback.seeks, [21])
     }
 
+    func testSeekUsesPlainCueTimeForLocallyGeneratedTranscript() {
+        let playback = MockTranscriptPlayback()
+        let viewModel = makeViewModel(playback: playback,
+                                      isGenerated: true,
+                                      isLocal: true,
+                                      timing: timing(offset: nil))
+
+        let outcome = viewModel.seek(toCueIndex: 0)
+
+        XCTAssertEqual(outcome, .seeked(to: 10))
+        XCTAssertEqual(playback.seeks, [10])
+    }
+
     func testSeekWithoutMappingWhenUnavailableStaysSilent() {
         let playback = MockTranscriptPlayback()
         let viewModel = makeViewModel(playback: playback, timing: timing(unavailable: true, offset: nil))
@@ -326,6 +339,18 @@ final class TranscriptReaderViewModelTests: XCTestCase {
         let quote = viewModel.quoteText(forBlock: 1)
 
         XCTAssertEqual(quote, "\u{201C}Hello and welcome to the show.\u{201D} — Episode One\nhttps://pca.st/episode/abc")
+    }
+
+    func testCommentQuoteUsesCueTimeForLocallyGeneratedTranscript() {
+        let viewModel = makeViewModel(isGenerated: true,
+                                      isLocal: true,
+                                      timing: timing(offset: nil))
+
+        let quote = viewModel.commentQuote(forBlock: 1)
+
+        XCTAssertEqual(quote?.text, "Hello and welcome to the show.")
+        XCTAssertEqual(quote?.timestampSeconds, 10)
+        XCTAssertEqual(quote?.segment, 0)
     }
 
     func testClipRangeMapsGeneratedCueTimesToPlaybackTimeline() {

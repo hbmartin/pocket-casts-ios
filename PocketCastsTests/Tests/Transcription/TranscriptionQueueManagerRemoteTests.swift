@@ -45,7 +45,9 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
                              apiKey: String? = "unit-test-key",
                              downloadURL: URL? = URL(string: "https://example.com/episode.mp3"),
                              batteryPolicy: TranscriptionBatteryPolicy = .always,
-                             powerState: TranscriptionPowerState = TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false)) -> TranscriptionQueueManager {
+                             powerState: TranscriptionPowerState = TranscriptionPowerState(batteryLevel: 1, isCharging: true, isLowPowerModeEnabled: false),
+                             reportFailureAnalytics: @escaping @Sendable (String, String) -> Void = { _, _ in },
+                             reportFailureLog: @escaping @Sendable (String, String) -> Void = { _, _ in }) -> TranscriptionQueueManager {
         let audioURL = audioURL
         return TranscriptionQueueManager(
             dataManager: dataManager,
@@ -63,6 +65,8 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
             episodeDownloadURL: { _ in downloadURL },
             transcodeForUpload: { url in AudioTranscodeHelper.Output(url: url, mimeType: "audio/mp4", isTemporary: false) },
             contributionEnqueue: { _, _ in },
+            reportFailureAnalytics: reportFailureAnalytics,
+            reportFailureLog: reportFailureLog,
             pollSchedule: TranscriptionQueueManager.PollSchedule(initialInterval: 0.01,
                                                                  backoffFactor: 1,
                                                                  maxInterval: 0.01,
@@ -273,10 +277,16 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
     }
 
     func testProviderResponseBodyIsKeptOutOfThePersistedRecord() async throws {
+        let analytics = FailureSinkRecorder()
+        let fileLog = FailureSinkRecorder()
         let provider = MockRemoteProvider(
             submitResult: .failure(.remoteResponseFailure(status: 500, providerMessage: "request id abc123, user@example.com"))
         )
-        let manager = makeManager(provider: provider)
+        let manager = makeManager(
+            provider: provider,
+            reportFailureAnalytics: { analytics.record(episodeUuid: $0, message: $1) },
+            reportFailureLog: { fileLog.record(episodeUuid: $0, message: $1) }
+        )
 
         await manager.enqueue(episodeUuid: "episode-body", podcastUuid: nil)
         await manager.drainUntilIdle()
@@ -290,6 +300,12 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
         // for the failure UI.
         let state = await manager.state(for: "episode-body")
         XCTAssertEqual(state, .failed(.remoteResponseFailure(status: 500, providerMessage: "request id abc123, user@example.com")))
+
+        let expected = [FailureSinkRecorder.Entry(episodeUuid: "episode-body", message: "remoteResponseFailure(HTTP 500)")]
+        XCTAssertEqual(analytics.entries, expected)
+        XCTAssertEqual(fileLog.entries, expected)
+        XCTAssertFalse(analytics.entries.description.contains("user@example.com"))
+        XCTAssertFalse(fileLog.entries.description.contains("abc123"))
     }
 
     // MARK: - Helpers
@@ -305,6 +321,21 @@ final class TranscriptionQueueManagerRemoteTests: XCTestCase {
             }
             try await Task.sleep(nanoseconds: 20_000_000)
         }
+    }
+}
+
+private final class FailureSinkRecorder: Sendable {
+    struct Entry: Equatable, Sendable {
+        let episodeUuid: String
+        let message: String
+    }
+
+    private let storage = Mutex<[Entry]>([])
+
+    var entries: [Entry] { storage.withLock { $0 } }
+
+    func record(episodeUuid: String, message: String) {
+        storage.withLock { $0.append(Entry(episodeUuid: episodeUuid, message: message)) }
     }
 }
 

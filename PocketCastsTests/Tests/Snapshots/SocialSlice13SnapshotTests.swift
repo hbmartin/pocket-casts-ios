@@ -93,7 +93,9 @@ final class SocialSlice13SnapshotTests: XCTestCase {
     func testCreateGroupSheet() {
         assertAppThemedSnapshots(
             of: NavigationView {
-                CreateGroupView(onDone: { _ in })
+                CreateGroupView(onDone: { _ in
+                    // Submission and dismissal are outside this static view snapshot.
+                })
             }.navigationViewStyle(.stack),
             layout: .fixed(width: 390, height: 480)
         )

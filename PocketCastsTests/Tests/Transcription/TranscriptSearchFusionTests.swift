@@ -6,14 +6,28 @@ import XCTest
 final class TranscriptSearchFusionTests: XCTestCase {
 
     private func ftsHit(_ episode: String, segment: Int, source: PocketCastsDataModel.TranscriptSource = .generated, snippet: String = "<b>match</b> text") -> TranscriptSearchHit {
-        TranscriptSearchHit(episodeUuid: episode, podcastUuid: "pod-1", segmentIndex: segment,
-                            startTime: Double(segment) * 10, endTime: nil, speaker: nil, source: source, snippet: snippet)
+        TranscriptSearchHit(
+            location: .init(
+                episodeUuid: episode,
+                podcastUuid: "pod-1",
+                segmentIndex: segment,
+                startTime: Double(segment) * 10,
+                endTime: nil,
+                speaker: nil,
+                source: source
+            ),
+            snippet: snippet
+        )
     }
 
     private func semanticHit(_ episode: String, range: ClosedRange<Int>, source: PocketCastsDataModel.TranscriptSource = .generated, score: Float = 0.8) -> SemanticTranscriptHit {
+        semanticHit(episode, start: range.lowerBound, end: range.upperBound, source: source, score: score)
+    }
+
+    private func semanticHit(_ episode: String, start: Int, end: Int, source: PocketCastsDataModel.TranscriptSource = .generated, score: Float = 0.8) -> SemanticTranscriptHit {
         SemanticTranscriptHit(episodeUuid: episode, podcastUuid: "pod-1", source: source,
-                              startSegmentIndex: range.lowerBound, endSegmentIndex: range.upperBound,
-                              startTime: Double(range.lowerBound) * 10, endTime: nil,
+                              startSegmentIndex: start, endSegmentIndex: end,
+                              startTime: Double(start) * 10, endTime: nil,
                               textPreview: "window preview", score: score)
     }
 
@@ -61,6 +75,16 @@ final class TranscriptSearchFusionTests: XCTestCase {
         XCTAssertEqual(fused[0].matchType, .semantic)
         XCTAssertEqual(fused[0].snippet, "window preview")
         XCTAssertEqual(fused[0].segmentIndex, 4, "seek lands on the window's first segment")
+    }
+
+    func testInvertedSemanticBoundsDoNotTrapOrOverlapExactHit() {
+        let fused = TranscriptSearchFusion.fused(
+            ftsHits: [ftsHit("ep-a", segment: 4)],
+            semanticHits: [semanticHit("ep-a", start: 6, end: 2)]
+        )
+
+        XCTAssertEqual(fused.count, 2, "corrupt inverted bounds must not collapse into an exact hit")
+        XCTAssertEqual(Set(fused.map(\.matchType)), [.exact, .semantic])
     }
 
     // MARK: - Recency boost

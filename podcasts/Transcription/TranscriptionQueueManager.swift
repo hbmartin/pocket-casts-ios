@@ -104,6 +104,8 @@ actor TranscriptionQueueManager {
     private let episodeDownloadURL: @Sendable (String) -> URL?
     private let transcodeForUpload: @Sendable (URL) async throws -> AudioTranscodeHelper.Output
     private let contributionEnqueue: @Sendable (String, EpisodeTranscriptionRecord) -> Void
+    private let reportFailureAnalytics: @Sendable (String, String) -> Void
+    private let reportFailureLog: @Sendable (String, String) -> Void
     private let pollSchedule: PollSchedule
 
     private var states: [String: JobState] = [:]
@@ -157,6 +159,12 @@ actor TranscriptionQueueManager {
                  TranscriptContributionManager.kickShared()
              }
          },
+         reportFailureAnalytics: @escaping @Sendable (String, String) -> Void = { episodeUuid, sanitizedError in
+             Analytics.track(.transcriptionFailed, properties: ["episode_uuid": episodeUuid, "error": sanitizedError])
+         },
+         reportFailureLog: @escaping @Sendable (String, String) -> Void = { episodeUuid, sanitizedError in
+             FileLog.shared.addMessage("[Transcription] failed \(episodeUuid): \(sanitizedError)")
+         },
          pollSchedule: PollSchedule = .default) {
         self.dataManager = dataManager
         self.engineFactory = engineFactory
@@ -174,6 +182,8 @@ actor TranscriptionQueueManager {
         self.episodeDownloadURL = episodeDownloadURL
         self.transcodeForUpload = transcodeForUpload
         self.contributionEnqueue = contributionEnqueue
+        self.reportFailureAnalytics = reportFailureAnalytics
+        self.reportFailureLog = reportFailureLog
         self.pollSchedule = pollSchedule
     }
 
@@ -269,6 +279,21 @@ actor TranscriptionQueueManager {
         artifactStore.delete(episodeUuid: episodeUuid)
         dataManager.transcriptions.delete(episodeUuid: episodeUuid)
         states[episodeUuid] = nil
+    }
+
+    /// Deletes a restored/corrupt completed record only if it is still exactly
+    /// the record the caller inspected and its artifact is still unusable. The
+    /// actor boundary makes the revalidation and deletion indivisible from
+    /// enqueue/retry operations, so an older load cannot remove a newer job.
+    @discardableResult
+    func cleanupUnusableCompletedTranscription(expected: EpisodeTranscriptionRecord) -> Bool {
+        guard expected.transcriptionStatus == .completed,
+              dataManager.transcriptions.find(episodeUuid: expected.episodeUuid) == expected,
+              !artifactStore.hasUsableArtifact(episodeUuid: expected.episodeUuid) else {
+            return false
+        }
+        deleteTranscription(episodeUuid: expected.episodeUuid)
+        return true
     }
 
     /// Settings "Clear All": removes every generated transcription — records,
@@ -652,8 +677,8 @@ actor TranscriptionQueueManager {
         dataManager.transcriptions.setStatus(episodeUuid: episodeUuid, status: .failed, errorMessage: sanitized)
         setState(episodeUuid: episodeUuid, state: .failed(error), forcePost: true)
         NotificationCenter.postOnMainThread(EpisodeTranscriptionCompleted(episodeUuid: episodeUuid, succeeded: false))
-        Analytics.track(.transcriptionFailed, properties: ["episode_uuid": episodeUuid, "error": sanitized])
-        FileLog.shared.addMessage("[Transcription] failed \(episodeUuid): \(sanitized)")
+        reportFailureAnalytics(episodeUuid, sanitized)
+        reportFailureLog(episodeUuid, sanitized)
     }
 
     private func finishCancelledOrRequeued(episodeUuid: String) {

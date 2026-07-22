@@ -17,7 +17,7 @@ import Synchronization
 ///
 /// Frame positions must increase monotonically; recreate the analyzer after a
 /// seek. All public methods are safe to call from the read thread.
-/// @unchecked Sendable: results are Mutex-guarded; all other stored state is immutable after init.
+/// @unchecked Sendable: analyzer mutations are confined to analysisQueue; cross-queue results are protected by Mutex.
 nonisolated final class TrimVoiceActivityAnalyzer: @unchecked Sendable {
     private struct SpeechResult {
         let frameRange: Range<Int64>

@@ -7,11 +7,16 @@ actor InMemorySyncFolder: SyncFolder {
     nonisolated let kind: SyncFolderKind = .securityScopedBookmark
 
     private var files: [String: Data] = [:]
+    private var directories = Set<String>()
     private let root = URL(fileURLWithPath: "/in-memory-sync-folder")
 
     func rootURL() throws -> URL { root }
 
     func contents(of path: String) -> Data? { files[path] }
+
+    func storedFilePaths() -> [String] { files.keys.sorted() }
+
+    func createdDirectoryPaths() -> [String] { directories.sorted() }
 
     func list(_ relativeDir: String) async throws -> [FolderEntry] {
         let prefix = relativeDir.isEmpty ? "" : relativeDir + "/"
@@ -57,7 +62,7 @@ actor InMemorySyncFolder: SyncFolder {
     }
 
     func createDirectory(_ relativePath: String) async throws {
-        // Directories are implicit in the dictionary-backed fake.
+        directories.insert(relativePath)
     }
 
     func coordinatedCopy(from localURL: URL, to relativePath: String) async throws {

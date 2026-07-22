@@ -10,13 +10,18 @@ Remediation plan for the three highest-ranked findings from the API-security bes
 3. **Bearer tokens with no lifetime handling and no sender constraint**, including the
    empty-refresh-token clobber bug (`TokenHelper.swift:106`).
 
-This is a *plan*, not an implementation. Client changes land in this repo; server changes land in
-`pocketcasts-api` (the protobuf source of truth — regenerate the client stubs afterwards with
-`mise run generate:proto`). Each workstream states its server contract precisely so the API team
+This is a *plan*, not an implementation. Client changes land in this repo. Official-service server
+changes land in Automattic's private `pocketcasts-api` repository (the upstream protobuf source of
+truth, which is not part of this checkout); equivalent self-hosted-fork changes land in
+[`hbmartin/podcast-backend`](https://github.com/hbmartin/podcast-backend), whose canonical schema
+is mirrored by this repository's root `api.proto`. Regenerate the client stubs afterwards with
+`mise run generate:proto`. Each workstream states its server contract precisely so the API team
 can build against it, and lists every client touch point by file/line as of this writing.
+Server-side completion also requires deployment evidence from the API gateway/load-balancer
+configuration and the shared replay-cache infrastructure; this iOS repository cannot prove those
+controls.
 
-> Companion references: `docs/ServerAPISurface.md` (surface map), `docs/ServerBackendSpec.md`
-> (wire contract). Field numbers below were verified against
+> Companion reference: `docs/ServerAPISurface.md` (surface map). Field numbers below were verified against
 > `Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift`.
 
 ---
@@ -172,8 +177,11 @@ is reused. Required properties (per RFC 9700 §§2.2, 4.14 for public clients):
 
 #### 2.3.3 New endpoint: `POST user/token/revoke`
 
-RFC 7009-shaped, protobuf body, Bearer-authenticated (the access token authenticates the call; the
-body names the refresh token to kill):
+RFC 7009-shaped, protobuf body, authenticated by possession of the refresh token being revoked.
+The endpoint must not require an active Bearer access token: an expired or already-invalid access
+token must not prevent sign-out from revoking the longer-lived credential. This native app is a
+public client, so there is no additional client secret at the transport layer. If the refresh
+family is DPoP-bound, require a proof from that bound key in addition to the token itself.
 
 ```proto
 message TokenRevokeRequest {
@@ -184,7 +192,9 @@ message TokenRevokeRequest {
 
 Client calls this from `SyncManager.signout()` best-effort (fire-and-forget with short timeout —
 sign-out must not block on network). Without this, a backup-restored or exfiltrated refresh token
-outlives the user's sign-out forever.
+outlives the user's sign-out forever. The iOS request must carry no `Authorization: Bearer` header;
+the protobuf body is the revocation credential. The server must rate-limit the endpoint without
+returning token-existence oracles and must revoke the family atomically before returning success.
 
 #### 2.3.4 Credential-endpoint abuse controls
 
@@ -438,11 +448,19 @@ on: `user/change_email`, `user/change_password`, `user/delete_account`, `user/to
 `user/exchange_sonos`, and file-upload presign. Server middleware validation order:
 
 1. Parse proof JWT; verify ES256 signature with the **embedded** JWK.
-2. `typ == "dpop+jwt"`; `htm` matches the HTTP method; `htu` matches the canonical request URI
-   (scheme+host+path, no query/fragment).
+2. `typ == "dpop+jwt"`; `htm` matches the HTTP method; `htu` matches the canonical *external*
+   request URI (scheme+host+path, no query/fragment). Behind TLS termination, reconstruct that URI
+   from forwarding metadata only when the immediate peer is a configured trusted proxy. Prefer a
+   gateway-supplied canonical-origin value or the standardized `Forwarded` header; accept
+   `X-Forwarded-Proto`/`X-Forwarded-Host` only from those trusted hops, reject conflicting or
+   ambiguous values, normalize the port, and require the resulting origin to be in the deployment's
+   allowlist. Never trust client-supplied forwarding headers directly.
 3. `iat` within ±300 s (start permissive; tighten with telemetry).
-4. `jti` unseen — replay cache (Redis `SETNX` with TTL = 2× skew window). Key by `jti` alone;
-   memory is bounded by TTL.
+4. `jti` unseen for this proof key — after signature verification and RFC 7638 thumbprint
+   calculation, atomically reserve `dpop:replay:<jkt>:<jti>` in Redis/equivalent with `SET NX EX`
+   and TTL = 2× skew window. Validate or hash attacker-controlled key components before composing
+   the bounded key. The namespace prevents collisions with other cache users; `jkt` prevents one
+   proof key from interfering with another key that happens to use the same `jti`.
 5. `ath` matches the presented access token.
 6. Proof key thumbprint == the token's bound `jkt`.
 7. On failure: `401` + JSON envelope `{"errorMessageId": "invalid_dpop_proof"}` (flows through the
@@ -464,10 +482,29 @@ registration (would attest the Phase-1 key), DeviceCheck abuse bits, anonymous-e
 |---|---|
 | Token store | `jkt` column on access-token + refresh-family records (§2.3.2 schema) |
 | Proof validator | Shared middleware (api service + any service that later requires proofs); ES256, RFC 7638 thumbprints |
-| Replay cache | Redis/equivalent, `jti` TTL ~10 min, sized for proof-carrying request volume on Phase-3 endpoints only |
+| Proxy canonicalization | API gateway/load-balancer must overwrite forwarding metadata; API trusts only configured proxy hops and allowlisted external origins |
+| Replay cache | Redis/equivalent, atomic `dpop:replay:<jkt>:<jti>` reservation, TTL ~10 min, sized for proof-carrying request volume on Phase-3 endpoints only |
 | Clock skew | ±300 s initial; export skew-failure metrics before tightening |
 | Error surface | `invalid_dpop_proof` / (later) `use_dpop_nonce` via the JSON error envelope |
 | Metrics | % tokens issued bound; proof failure rate by cause; refresh-with-wrong-key events (theft signal); rotation-reuse events |
+
+### 4.5 External implementation blockers (verified 2026-07-22)
+
+These controls cannot be completed or verified in the iOS repository:
+
+- **Refresh-token revocation:** the client request is specified here, but the official
+  `pocketcasts-api` implementation is private and absent from this checkout. The self-hosted
+  [`hbmartin/podcast-backend`](https://github.com/hbmartin/podcast-backend) router at commit
+  `4219683` registers `POST /user/token` but no `POST /user/token/revoke`. Completion requires the
+  public-client route, atomic family revocation, abuse controls, and staging proof that no active
+  Bearer token is required.
+- **Canonical DPoP URI:** neither server implementation nor its gateway trust policy is present
+  here; the self-hosted backend at the commit above has no DPoP validator. Completion requires a
+  server change plus deployment-owned trusted-hop and external-origin configuration, verified
+  through the real proxy rather than handler-only tests.
+- **Replay isolation:** this checkout has no server replay cache, and the self-hosted backend has
+  no DPoP replay implementation. Completion requires the server validator and shared-cache
+  deployment to atomically reserve the scoped key, followed by multi-instance integration tests.
 
 ---
 
@@ -482,7 +519,11 @@ registration (would attest the Phase-1 key), DeviceCheck abuse bits, anonymous-e
 - **Integration (staging, `api.pocketcasts.net` / `sharing.pocketcasts.net`).** Full password
   login → refresh → rotation → reuse-detection → family revocation; password change revokes other
   device's session; sign-out revoke; share-list create via Bearer on dual-accept, then with legacy
-  disabled.
+  disabled. Revoke with an expired/invalid access token (and with no Bearer header) must still
+  revoke the presented refresh family. Exercise DPoP through the real staging proxy: direct
+  spoofed forwarding headers fail, the gateway's external HTTPS origin succeeds despite an
+  internal HTTP hop, conflicting forwarded hosts fail, and the same `jti` is rejected for one
+  `jkt` while remaining independent for a different `jkt`.
 - **Migration drill.** Install current release → sign in (password persisted) → upgrade to A build
   → background refresh occurs → assert `SJSyncingPwd` absent from Keychain, refresh token present,
   sync still green. Repeat with server flag off (password must survive untouched).
@@ -502,7 +543,8 @@ Acceptance criteria per workstream:
   old secret rotated dead.
 - **C**: no stored-token overwrite with `""` possible; proactive refresh observable (401 rate on
   api host drops); Phase 2+: stolen-refresh-token replay from a different key fails in staging
-  test.
+  test. The deployment artifact records trusted proxy hops/external origins and demonstrates
+  atomic, key-scoped replay rejection against the shared cache.
 
 ---
 
@@ -549,6 +591,10 @@ its last suppression when B deletes the SHA-1 call.
    the client derive it from the login/refresh response alone?
 4. Android/web timelines for adopting the same additive fields (no coupling required, but the
    audit-log noise from password-replay logins won't fully quiet until all platforms migrate).
+5. Which gateway/load-balancer is authoritative for the externally visible DPoP URI, which source
+   ranges or identities define trusted proxy hops, and which external origins are allowlisted?
+6. Which shared replay-cache cluster and key-namespace owner will back
+   `dpop:replay:<jkt>:<jti>`, and what atomic-write/eviction monitoring is available there?
 
 **Non-goals of this plan** (tracked in the parent review): ATS tightening and the cleartext
 share-list fetch (transport workstream), App Attest / DeviceCheck adoption, anonymous-endpoint

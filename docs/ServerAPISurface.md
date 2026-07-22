@@ -82,7 +82,7 @@ All base URLs are defined in **`ServerConstants.Urls`** (`Public/Sharing/Structs
 | `Urls` accessor | Production | Staging | Used for |
 |---|---|---|---|
 | `main()` | `https://refresh.pocketcasts.com/` | `https://refresh.pocketcasts.net/` | Podcast refresh, podcast search/show, OPML import |
-| `api()` | `https://api.pocketcasts.com/` | `https://api.pocketcasts.net/` | Account, auth, sync, files, ratings, stats |
+| `api()` | `https://api.pocketcasts.com/` | `https://api.pocketcasts.net/` | Account, auth, sync, ratings, stats |
 | `cache()` | `https://cache.pocketcasts.com/` | `https://podcast-api.pocketcasts.net/` | Full podcast/show‑notes JSON, episode URLs, suggest folders, aggregate ratings |
 | `sharing()` | `https://sharing.pocketcasts.com/` | `https://sharing.pocketcasts.net/` | Create shareable podcast lists |
 | `discover()` | `https://static.pocketcasts.com/discover/` | `https://static.pocketcasts.net/discover/` | Discover layout JSON + thumbnails |
@@ -170,7 +170,7 @@ Standard timeouts (`ServerConstants.Timeouts`): `sync` = 60 s, `general` = 60 s,
 
 - `User-Agent` → `ServerConfig.shared.syncDelegate?.privateUserAgent()` (falls back to `"Pocket Casts"`).
 - `Authorization: Bearer <token>` on authenticated calls.
-- **Localization headers** via `URLRequest.addLocalizationHeaders()` — adds `X-User-Region` and `X-App-Language` **only** when the request host is in `InternationalizationProvider.allowedHosts` (all first‑party hosts: `main`, `api`, `cache`, `sharing`, `discover`, `image`, `files`, `share`, `lists`, `search`).
+- **Localization headers** via `URLRequest.addLocalizationHeaders()` — adds `X-User-Region` and `X-App-Language` **only** when the request host is in `InternationalizationProvider.allowedHosts` (all first‑party hosts: `main`, `api`, `cache`, `sharing`, `discover`, `image`, `share`, `lists`, `search`).
 
 ### 4.3 Conditional caching
 
@@ -514,7 +514,7 @@ Posted by `ServerNotifications` / `ServerNotificationsHelper` so the UI can reac
 | Host | Role |
 |---|---|
 | `refresh.pocketcasts.com` | Refresh, podcast search/show, OPML import |
-| `api.pocketcasts.com` | Account, auth, sync, files, ratings, stats |
+| `api.pocketcasts.com` | Account, auth, sync, ratings, stats |
 | `cache.pocketcasts.com` (staging `podcast-api.pocketcasts.net`) | Podcast/show‑notes JSON, episode URLs, suggest folders, aggregate ratings |
 | `static.pocketcasts.com` (+`/discover/`) | Artwork, color metadata, discover layout |
 | `sharing.pocketcasts.com` | Create shareable lists |

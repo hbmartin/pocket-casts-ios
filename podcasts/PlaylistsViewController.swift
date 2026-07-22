@@ -61,8 +61,8 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         }
     }
 
-    var newFilterTip: UIViewController? = nil
-    /// The TipKit tip currently shown in `newFilterTip`, so outside-tap dismissal can invalidate the right one.
+    var playlistsTipViewController: UIViewController? = nil
+    /// The TipKit tip currently shown in `playlistsTipViewController`, so outside-tap dismissal can invalidate the right one.
     var presentedPlaylistsTip: (any Tip)? = nil
 
     private var firstTimeLoading = true

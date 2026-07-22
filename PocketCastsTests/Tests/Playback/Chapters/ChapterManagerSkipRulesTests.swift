@@ -129,23 +129,23 @@ final class ChapterManagerSkipRulesTests: XCTestCase {
 }
 
 private class SkipRulesShowInfoCoordinatorMock: ShowInfoCoordinating {
-    func loadShowNotes(podcastUuid: String, episodeUuid: String) async throws -> String {
+    func loadShowNotes(podcastUuid _: String, episodeUuid _: String) async throws -> String {
         ""
     }
 
-    func loadEpisodeArtworkUrl(podcastUuid: String, episodeUuid: String) async throws -> URL? {
+    func loadEpisodeArtworkUrl(podcastUuid _: String, episodeUuid _: String) async throws -> URL? {
         nil
     }
 
-    func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> (metadata: [PocketCastsDataModel.Episode.Metadata.EpisodeChapter]?, podcastIndex: [podcasts.PodcastIndexChapter]?, generated: [GeneratedChapter]?) {
+    func loadChapters(podcastUuid _: String, episodeUuid _: String) async throws -> (metadata: [PocketCastsDataModel.Episode.Metadata.EpisodeChapter]?, podcastIndex: [podcasts.PodcastIndexChapter]?, generated: [GeneratedChapter]?) {
         (metadata: nil, podcastIndex: nil, generated: nil)
     }
 
-    func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
+    func loadTranscriptsMetadata(podcastUuid _: String, episodeUuid _: String) async throws -> EpisodeTranscriptData {
         (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
     }
 
-    func loadEpisodeSummary(podcastUuid: String, episodeUuid: String) async throws -> String? {
+    func loadEpisodeSummary(podcastUuid _: String, episodeUuid _: String) async throws -> String? {
         nil
     }
 }

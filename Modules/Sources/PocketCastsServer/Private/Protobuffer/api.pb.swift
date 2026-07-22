@@ -834,7 +834,6 @@ nonisolated struct Api_UserChangeResponse: Sendable {
 
   var message: String = String()
 
-  /// JSON name is camelCase in the client's nameMap (upstream quirk).
   var messageID: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -12544,7 +12543,7 @@ nonisolated extension Api_UserChangePasswordRequest: SwiftProtobuf.Message, Swif
 
 nonisolated extension Api_UserChangeResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserChangeResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{1}messageId\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}message_id\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {

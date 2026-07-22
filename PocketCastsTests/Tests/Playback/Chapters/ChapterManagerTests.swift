@@ -1,3 +1,4 @@
+import Synchronization
 import XCTest
 
 @testable import podcasts
@@ -16,6 +17,63 @@ class ChapterManagerTests: XCTestCase {
 
     override func tearDown() async throws {
         featureFlagMock.reset()
+    }
+
+    func testCachedOnDeviceChaptersSkipTranscriptAndCueLoading() async {
+        featureFlagMock.set(.onDeviceChapters, value: true)
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chapter-manager-cache-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = OnDeviceChapterStore(directoryURL: directory)
+        let episode = makeEpisodeMock()
+        episode.uuid = "cached-episode"
+        store.save(.chapters([
+            GeneratedChapter(title: "Intro", timestamp: "0:00", startTime: 0),
+            GeneratedChapter(title: "Topic", timestamp: "2:00", startTime: 120)
+        ]), episodeUuid: episode.uuid)
+        let transcriptLoads = Mutex(0)
+        let manager = ChapterManager(
+            chapterParser: PodcastChapterParserMock(),
+            showInfoCoordinator: ShowInfoCoordinatorMock(),
+            onDeviceChapterStore: store,
+            localTranscriptCuesLoader: { _, _ in
+                transcriptLoads.withLock { $0 += 1 }
+                return []
+            }
+        )
+
+        await manager.parseChapters(episode: episode, duration: 300)
+
+        XCTAssertEqual(transcriptLoads.withLock { $0 }, 0)
+        XCTAssertEqual(manager.visibleChapterCount(), 2)
+        XCTAssertEqual(manager.chaptersOrigin.analyticsDescription, "generated")
+    }
+
+    func testCachedNoChaptersSkipsTranscriptAndCueLoading() async {
+        featureFlagMock.set(.onDeviceChapters, value: true)
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chapter-manager-cache-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = OnDeviceChapterStore(directoryURL: directory)
+        let episode = makeEpisodeMock()
+        episode.uuid = "no-chapters-episode"
+        store.save(.noChapters, episodeUuid: episode.uuid)
+        let transcriptLoads = Mutex(0)
+        let manager = ChapterManager(
+            chapterParser: PodcastChapterParserMock(),
+            showInfoCoordinator: ShowInfoCoordinatorMock(),
+            onDeviceChapterStore: store,
+            localTranscriptCuesLoader: { _, _ in
+                transcriptLoads.withLock { $0 += 1 }
+                return []
+            }
+        )
+
+        await manager.parseChapters(episode: episode, duration: 300)
+
+        XCTAssertEqual(transcriptLoads.withLock { $0 }, 0)
+        XCTAssertEqual(manager.visibleChapterCount(), 0)
+        XCTAssertEqual(manager.chaptersOrigin.analyticsDescription, "unknown")
     }
 
     /// Update the current chapter given a TimeInterval

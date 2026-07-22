@@ -213,6 +213,20 @@ struct LocalFeedRefreshProviderResolveTests {
         #expect(resolution.newEpisodes.isEmpty)
         #expect(resolution.uuidOverrides.isEmpty)
     }
+
+    @Test("same-batch identity collisions keep only the first parsed item")
+    func duplicateResolvedUuidsAreDeduplicated() {
+        let items = [
+            item(guid: "duplicate-guid", enclosure: "https://example.com/first.mp3", title: "First"),
+            item(guid: "duplicate-guid", enclosure: "https://example.com/second.mp3", title: "Second")
+        ]
+
+        let resolution = LocalFeedRefreshProvider.resolve(feed: feed(items: items), existing: [])
+
+        #expect(resolution.newEpisodes.count == 1)
+        #expect(resolution.newEpisodes.first?.uuid == LocalFeedIdentity.uuid(seed: "duplicate-guid"))
+        #expect(resolution.newEpisodes.first?.title == "First")
+    }
 }
 
 @Suite("LocalFeedShowInfo uuid overrides")

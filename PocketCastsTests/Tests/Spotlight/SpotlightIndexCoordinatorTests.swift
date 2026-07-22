@@ -18,38 +18,53 @@ nonisolated private final class FakeIndex: SearchableIndexing, Sendable {
         var recordedCalls: [Call] = []
         var available = true
         var failNext = false
+        var delay: Duration?
+        var activeCalls = 0
+        var maximumActiveCalls = 0
     }
 
     private let state = Mutex(State())
 
     var calls: [Call] { state.withLock { $0.recordedCalls } }
+    var maximumActiveCalls: Int { state.withLock { $0.maximumActiveCalls } }
     func setAvailable(_ value: Bool) { state.withLock { $0.available = value } }
     func setFailNext() { state.withLock { $0.failNext = true } }
+    func setDelay(_ delay: Duration?) { state.withLock { $0.delay = delay } }
 
     func isAvailable() -> Bool { state.withLock { $0.available } }
 
     nonisolated(nonsending) func index(_ items: [CSSearchableItem]) async throws {
-        try recordOrThrow(.index(items.map(\.uniqueIdentifier).sorted()))
+        try await perform(.index(items.map(\.uniqueIdentifier).sorted()))
     }
 
     nonisolated(nonsending) func deleteItems(identifiers: [String]) async throws {
-        try recordOrThrow(.delete(identifiers.sorted()))
+        try await perform(.delete(identifiers.sorted()))
     }
 
     nonisolated(nonsending) func deleteAll(domainIdentifiers: [String]) async throws {
-        try recordOrThrow(.deleteAll(domainIdentifiers.sorted()))
+        try await perform(.deleteAll(domainIdentifiers.sorted()))
     }
 
-    private func recordOrThrow(_ call: Call) throws {
-        let shouldThrow: Bool = state.withLock { state in
+    private func perform(_ call: Call) async throws {
+        let (shouldThrow, delay): (Bool, Duration?) = state.withLock { state in
+            state.activeCalls += 1
+            state.maximumActiveCalls = max(state.maximumActiveCalls, state.activeCalls)
             if state.failNext {
                 state.failNext = false
-                return true
+                return (true, state.delay)
             }
-            state.recordedCalls.append(call)
-            return false
+            return (false, state.delay)
         }
-        if shouldThrow { throw NSError(domain: "fake", code: 1) }
+        defer {
+            state.withLock { $0.activeCalls -= 1 }
+        }
+        if let delay {
+            try? await Task.sleep(for: delay)
+        }
+        if shouldThrow {
+            throw NSError(domain: "fake", code: 1)
+        }
+        state.withLock { $0.recordedCalls.append(call) }
     }
 }
 
@@ -99,7 +114,7 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
         try super.tearDownWithError()
     }
 
-    private func makeCoordinator() -> SpotlightIndexCoordinator {
+    private func makeCoordinator(stateFileURL: URL? = nil) -> SpotlightIndexCoordinator {
         let episodes = episodesBox!
         let highlights = highlightsBox!
         let transcripts = transcriptsBox!
@@ -107,7 +122,7 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
         return SpotlightIndexCoordinator(
             index: fakeIndex,
             defaults: defaults,
-            stateFileURL: stateURL,
+            stateFileURL: stateFileURL ?? stateURL,
             debounceSeconds: 600, // tests call flushPending() directly
             isEnabled: { enabled.get() },
             resolveEpisode: { uuid in episodes.get()[uuid] },
@@ -282,6 +297,52 @@ final class SpotlightIndexCoordinatorTests: XCTestCase {
 
         await c.reconcileIfDue()
         XCTAssertEqual(fakeIndex.calls.count, first, "second reconcile within the interval is skipped")
+    }
+
+    func testConcurrentOperationsAreSerializedAcrossIndexSuspensions() async {
+        let c = makeCoordinator()
+        setEpisode(.init(uuid: "ep-1", title: "One"))
+        fakeIndex.setDelay(.milliseconds(50))
+
+        async let first: Void = c.rebuildAll()
+        async let second: Void = c.rebuildAll()
+        _ = await (first, second)
+
+        XCTAssertEqual(fakeIndex.maximumActiveCalls, 1)
+        XCTAssertEqual(fakeIndex.calls.count, 2)
+    }
+
+    func testRebuildCreatesMissingStateDirectoryBeforeRecordingSuccess() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("spotlight-state-directory-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let nestedStateURL = directory
+            .appendingPathComponent("nested", isDirectory: true)
+            .appendingPathComponent("spotlight.json")
+        let c = makeCoordinator(stateFileURL: nestedStateURL)
+        setEpisode(.init(uuid: "ep-1", title: "One"))
+
+        await c.reconcileIfDue()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: nestedStateURL.path))
+        XCTAssertGreaterThan(defaults.double(forKey: SpotlightIndexCoordinator.DefaultsKey.lastReconcile), 0)
+        XCTAssertEqual(defaults.integer(forKey: SpotlightIndexCoordinator.DefaultsKey.schemaVersion), SpotlightIndexCoordinator.schemaVersion)
+    }
+
+    func testReconcileTimestampIsNotUpdatedWhenPersistingStateFails() async throws {
+        let blockingFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("spotlight-state-blocker-\(UUID().uuidString)")
+        try Data("not a directory".utf8).write(to: blockingFile)
+        defer { try? FileManager.default.removeItem(at: blockingFile) }
+        let impossibleStateURL = blockingFile.appendingPathComponent("spotlight.json")
+        let c = makeCoordinator(stateFileURL: impossibleStateURL)
+        setEpisode(.init(uuid: "ep-1", title: "One"))
+
+        await c.reconcileIfDue()
+
+        XCTAssertEqual(fakeIndex.calls, [.index(["episode:ep-1"])], "Spotlight completed before state persistence failed")
+        XCTAssertEqual(defaults.double(forKey: SpotlightIndexCoordinator.DefaultsKey.lastReconcile), 0)
+        XCTAssertEqual(defaults.integer(forKey: SpotlightIndexCoordinator.DefaultsKey.schemaVersion), 0)
     }
 
     func testDisabledReconcileClearsPreviouslyWrittenItemsOnce() async {

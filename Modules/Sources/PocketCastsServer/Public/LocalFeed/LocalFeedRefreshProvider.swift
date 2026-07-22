@@ -93,12 +93,15 @@ public struct LocalFeedRefreshProvider: FeedRefreshProviding {
     static func resolve(feed: ParsedFeed, existing: [Episode]) -> (newEpisodes: [RefreshEpisode], uuidOverrides: [String: String]) {
         let matches = LocalFeedEpisodeMatcher.match(items: feed.items, existing: existing)
         var newEpisodes = [RefreshEpisode]()
+        var newEpisodeUuids = Set<String>()
         var uuidOverrides = [String: String]()
 
         for (item, match) in zip(feed.items, matches) {
             switch match {
             case .new(let hashUuid):
-                newEpisodes.append(RefreshEpisode(item: item, uuid: hashUuid))
+                if newEpisodeUuids.insert(hashUuid).inserted {
+                    newEpisodes.append(RefreshEpisode(item: item, uuid: hashUuid))
+                }
             case .existing(let uuid):
                 if let hashUuid = LocalFeedIdentity.episodeUuid(guid: item.guid, enclosureURL: item.enclosureURL), hashUuid != uuid {
                     uuidOverrides[hashUuid] = uuid

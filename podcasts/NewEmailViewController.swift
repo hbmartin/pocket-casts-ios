@@ -10,6 +10,7 @@ protocol CreateAccountDelegate: AnyObject {
 
 class NewEmailViewController: PCViewController, UITextFieldDelegate {
     weak var delegate: CreateAccountDelegate?
+    private var shouldRetryPostRegistrationSignIn = false
 
     @IBOutlet var scrollView: UIScrollView!
 
@@ -158,7 +159,11 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
 
     @IBAction func nextTapped(_ sender: Any) {
         guard let email = emailField.text, let password = passwordField.text else { return }
-        startRegister(email, password: password)
+        if shouldRetryPostRegistrationSignIn {
+            retryPostRegistrationSignIn(email, password: password)
+        } else {
+            startRegister(email, password: password)
+        }
     }
 
     @IBAction func toggleHidePassword(_ sender: Any) {
@@ -209,21 +214,58 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
                         _ = try await AuthenticationHelper.validateLogin(username: username, password: password, scope: .mobile)
                         NotificationCenter.postOnMainThread(UserSignedIn())
                     } catch {
-                        // The account exists but the follow-up sign-in failed
-                        // (e.g. network blip): fall back to the legacy
-                        // persistence so the user isn't left half signed in.
+                        guard !FeatureFlag.refreshTokenForPasswordAuth.enabled else {
+                            // The account exists, but without a renewable session it must not
+                            // be presented as signed in. Keep the entered password in memory so
+                            // the button can retry user/login without repeating registration.
+                            FileLog.shared.addMessage("Post-registration sign-in did not produce refresh credentials: \(error)")
+                            self.showPostRegistrationSignInFailure()
+                            return
+                        }
+
+                        // Flag off preserves the existing rollback behavior byte-for-byte.
                         FileLog.shared.addMessage("Post-registration sign-in failed, falling back to legacy persistence: \(error)")
                         self.saveUsernameAndPassword(username, password: password, userId: userId)
                         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
                     }
 
-                    SyncManager.syncReason = .accountCreated
-
-                    // Let a delegate decide what to do next
-                    self.delegate?.handleAccountCreated()
+                    self.finishAccountCreation()
                 }
             }
         }
+    }
+
+    private func retryPostRegistrationSignIn(_ username: String, password: String) {
+        contentView.alpha = 0.3
+        activityIndicator.startAnimating()
+        nextButton.setTitle("", for: .normal)
+
+        Task { @MainActor in
+            do {
+                _ = try await AuthenticationHelper.validateLogin(username: username, password: password, scope: .mobile)
+                NotificationCenter.postOnMainThread(UserSignedIn())
+                finishAccountCreation()
+            } catch {
+                FileLog.shared.addMessage("Post-registration sign-in retry failed: \(error)")
+                showPostRegistrationSignInFailure()
+            }
+        }
+    }
+
+    private func showPostRegistrationSignInFailure() {
+        shouldRetryPostRegistrationSignIn = true
+        contentView.alpha = 1
+        activityIndicator.stopAnimating()
+        showErrorMessage(L10n.serverErrorUnknown)
+        nextButton.setTitle(L10n.signIn, for: .normal)
+    }
+
+    private func finishAccountCreation() {
+        shouldRetryPostRegistrationSignIn = false
+        SyncManager.syncReason = .accountCreated
+
+        // Let a delegate decide what to do next
+        delegate?.handleAccountCreated()
     }
 
     // MARK: - Private helpers
@@ -247,18 +289,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
 
     private func saveUsernameAndPassword(_ username: String, password: String, userId: String?) {
         ServerSettings.userId = userId
-        if FeatureFlag.refreshTokenForPasswordAuth.enabled {
-            ServerSettings.accountAuthMethod = .password
-            // This path only runs when the post-registration sign-in failed, so
-            // no tokens were stored. Keep the password so a later re-auth has a
-            // credential — otherwise the account looks signed in (email-derived)
-            // with nothing to authenticate with.
-            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
-        } else {
-            // Legacy credential persistence until refresh-token auth for password accounts
-            // ships (plan workstream A / M1); with the flag on, re-auth uses the refresh grant.
-            ServerSettings.saveSyncingPassword(password) // nosemgrep: pocketcasts.no-persisted-account-password
-        }
+        AuthenticationHelper.persistPasswordForLegacyAuthenticationIfNeeded(password)
 
         // we've signed in, set all our existing podcasts to be non synced
         DataManager.sharedManager.markAllPodcastsUnsynced()
@@ -277,7 +308,13 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
             passwordField.becomeFirstResponder()
         } else {
             textField.resignFirstResponder()
-            startRegister(emailField.text ?? "", password: passwordField.text ?? "")
+            let email = emailField.text ?? ""
+            let password = passwordField.text ?? ""
+            if shouldRetryPostRegistrationSignIn {
+                retryPostRegistrationSignIn(email, password: password)
+            } else {
+                startRegister(email, password: password)
+            }
         }
         return true
     }

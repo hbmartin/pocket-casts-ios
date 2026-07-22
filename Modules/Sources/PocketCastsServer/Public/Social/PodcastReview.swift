@@ -16,7 +16,7 @@ public struct PodcastReview: Equatable, Sendable, Identifiable {
     public var id: String { userId }
 
     public init(userId: String, handle: String, displayName: String, rating: Int, text: String, createdAt: Date?, updatedAt: Date?) {
-        self.userId = userId
+        self.userId = userId.lowercased()
         self.handle = handle
         self.displayName = displayName
         self.rating = rating

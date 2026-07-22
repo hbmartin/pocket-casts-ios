@@ -37,11 +37,20 @@ nonisolated struct TranscriptionArtifactStore: Sendable {
         try? String(contentsOf: fileURL(forEpisodeUuid: episodeUuid), encoding: .utf8)
     }
 
-    /// Whether the episode's VTT artifact exists on disk. A completed record
-    /// without its artifact (the directory is excluded from device backups, the
-    /// database is not) must not be treated as a usable transcript.
-    func hasArtifact(episodeUuid: String) -> Bool {
-        FileManager.default.fileExists(atPath: fileURL(forEpisodeUuid: episodeUuid).path)
+    /// Loads the episode artifact through the same read, rename, parse, and
+    /// non-empty checks used by transcript presentation. A directory, empty or
+    /// corrupt file, or unreadable artifact is deliberately unusable.
+    func loadUsableTranscript(episodeUuid: String, speakerNames: String? = nil) -> TranscriptModel? {
+        guard let rawVTT = read(episodeUuid: episodeUuid) else { return nil }
+        let vtt = Self.applyingSpeakerNames(vtt: rawVTT, namesJSON: speakerNames)
+        guard let model = TranscriptModel.makeModel(from: vtt, format: .vtt), !model.isEmtpy else {
+            return nil
+        }
+        return model
+    }
+
+    func hasUsableArtifact(episodeUuid: String) -> Bool {
+        loadUsableTranscript(episodeUuid: episodeUuid) != nil
     }
 
     func delete(episodeUuid: String) {

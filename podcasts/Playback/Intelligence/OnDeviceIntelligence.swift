@@ -59,7 +59,9 @@ nonisolated protocol IntelligenceProviding: Sendable {
 ///   conversation state, no cross-feature context bleed.
 /// - Every call races a timeout that resumes the caller even when the
 ///   generation ignores cancellation (the hung call is abandoned, not
-///   awaited), so a wedged model can't hold a feature's loading state.
+///   awaited), so a wedged model can't hold a feature's loading state. While
+///   abandoned work is still running, admission stays closed so retries can't
+///   accumulate more generations behind it.
 /// - FoundationModels errors are mapped onto the stable `IntelligenceError`
 ///   surface at the boundary.
 actor OnDeviceIntelligence: IntelligenceProviding {
@@ -69,6 +71,11 @@ actor OnDeviceIntelligence: IntelligenceProviding {
     /// request that runs this long has effectively hung and the feature's
     /// fallback is a better experience than a spinner.
     private let timeout: Duration
+
+    /// Set before generation suspends and cleared only by that generation's
+    /// work task after the underlying provider actually exits. The identifier
+    /// prevents a stale completion from ever clearing newer admitted work.
+    private var inFlightGenerationID: UUID?
 
     init(timeout: Duration = .seconds(30)) {
         self.timeout = timeout
@@ -103,17 +110,53 @@ actor OnDeviceIntelligence: IntelligenceProviding {
             throw IntelligenceError.modelUnavailable(reason: reason)
         }
 
-        let session = LanguageModelSession(model: .default, instructions: instructions)
-        let timeout = timeout
         do {
-            return try await Self.raceAgainstTimeout(timeout: timeout) {
-                try await session.respond(to: prompt, generating: T.self).content
+            return try await performGeneration {
+                let session = LanguageModelSession(model: .default, instructions: instructions)
+                return try await session.respond(to: prompt, generating: T.self).content
             }
         } catch let error as IntelligenceError {
             throw error
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw Self.mapped(error)
         }
+    }
+
+    /// Admits at most one underlying generation at a time.
+    ///
+    /// Internal so tests can exercise timeout and cancellation behavior with a
+    /// deterministic provider in place of `LanguageModelSession`.
+    func performGeneration<T: Sendable>(
+        _ work: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        guard inFlightGenerationID == nil else {
+            throw IntelligenceError.generationFailed(description: "concurrent_requests")
+        }
+
+        let generationID = UUID()
+        inFlightGenerationID = generationID
+        let timeout = timeout
+
+        return try await Self.raceAgainstTimeout(timeout: timeout) { [weak self] in
+            do {
+                // Avoid starting provider work if cancellation wins before this
+                // unstructured task gets its first turn.
+                try Task.checkCancellation()
+                let result = try await work()
+                await self?.generationDidFinish(id: generationID)
+                return result
+            } catch {
+                await self?.generationDidFinish(id: generationID)
+                throw error
+            }
+        }
+    }
+
+    private func generationDidFinish(id: UUID) {
+        guard inFlightGenerationID == id else { return }
+        inFlightGenerationID = nil
     }
 
     /// Races `work` against the timeout without awaiting a hung child on the
@@ -141,8 +184,15 @@ actor OnDeviceIntelligence: IntelligenceProviding {
             }
         }
         let timerTask = Task {
-            try? await Task.sleep(for: timeout)
-            continuation.finish(throwing: IntelligenceError.timedOut)
+            do {
+                try await Task.sleep(for: timeout)
+                continuation.finish(throwing: IntelligenceError.timedOut)
+            } catch is CancellationError {
+                // The work completed or the caller was cancelled. Do not let a
+                // cancelled timer overwrite that outcome with a timeout.
+            } catch {
+                continuation.finish(throwing: error)
+            }
         }
         defer {
             // No-ops for the finished winner; the timed-out (or abandoned)

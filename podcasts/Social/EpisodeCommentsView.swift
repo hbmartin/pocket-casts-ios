@@ -10,7 +10,7 @@ import PocketCastsUtils
 /// top-level comment needs ≥25% of the episode played (server-enforced too);
 /// replies are ungated. Edits are offered only inside the grace window.
 struct EpisodeCommentsView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     @StateObject var viewModel: EpisodeCommentsViewModel
     @FocusState private var composerFocused: Bool
 
@@ -52,7 +52,9 @@ struct EpisodeCommentsView: View {
             ForEach(PublicProfileViewModel.reportReasons, id: \.1) { label, reason in
                 Button(label) { Task { await viewModel.reportSelected(reason: reason) } }
             }
-            Button(L10n.cancel, role: .cancel) {}
+            Button(L10n.cancel, role: .cancel) {
+                // The cancel role dismisses the confirmation dialog automatically.
+            }
         }
         .task { await viewModel.load() }
     }
@@ -135,7 +137,7 @@ struct EpisodeCommentsView: View {
                 .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
 
                 if node.comment.replyCount > 0, !viewModel.isExpanded(node.comment.id) {
-                    Button(node.comment.replyCount == 1 ? L10n.socialCommentViewRepliesSingular : L10n.socialCommentViewReplies(node.comment.replyCount)) {
+                    Button(node.comment.replyCount == 1 ? L10n.socialCommentViewRepliesSingular : L10n.socialCommentViewRepliesPlural(node.comment.replyCount)) {
                         Task { await viewModel.expand(node.comment.id) }
                     }
                     .font(.caption)
@@ -281,6 +283,16 @@ struct PendingTranscriptQuote: Equatable {
         case .generated: 2
         }
     }
+}
+
+@MainActor
+func invalidateMomentPinsIfNeeded(
+    afterMutating comment: SocialComment,
+    episodeUuid: String,
+    invalidator: (String) -> Void
+) {
+    guard comment.parentId == 0, comment.timestampSeconds != nil else { return }
+    invalidator(episodeUuid)
 }
 
 @MainActor
@@ -516,8 +528,13 @@ final class EpisodeCommentsViewModel: ObservableObject {
             text: text, parentId: parentId, timestampSeconds: timestamp,
             quote: timestamp != nil ? (quote?.text ?? "") : "",
             quoteSource: quote?.source ?? 0, quoteSegment: quote?.segment ?? 0)
-        if submitted != nil {
+        if let submitted {
             Analytics.track(.socialCommentSubmitted)
+            invalidateMomentPinsIfNeeded(
+                afterMutating: submitted,
+                episodeUuid: episodeUuid,
+                invalidator: NowPlayingPlayerItemViewController.invalidateMomentPins
+            )
             if let replyTarget {
                 childrenByParent[replyTarget.id] = nil
                 await expand(replyTarget.id)
@@ -546,6 +563,11 @@ final class EpisodeCommentsViewModel: ObservableObject {
 
     func delete(_ comment: SocialComment) async {
         guard await ApiServerHandler.shared.deleteComment(id: comment.id) else { return }
+        invalidateMomentPinsIfNeeded(
+            afterMutating: comment,
+            episodeUuid: episodeUuid,
+            invalidator: NowPlayingPlayerItemViewController.invalidateMomentPins
+        )
         await reloadPreservingExpansion()
     }
 
@@ -569,12 +591,14 @@ final class EpisodeCommentsViewModel: ObservableObject {
     private func bumpReplyCount(of id: Int64) {
         if let index = topLevel.firstIndex(where: { $0.id == id }) {
             topLevel[index] = adjusted(topLevel[index])
+            return
         }
         for (parent, children) in childrenByParent {
             if let index = children.firstIndex(where: { $0.id == id }) {
                 var updated = children
                 updated[index] = adjusted(children[index])
                 childrenByParent[parent] = updated
+                return
             }
         }
     }

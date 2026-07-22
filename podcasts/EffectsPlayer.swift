@@ -2,6 +2,7 @@ import AudioUnit
 import AVFoundation
 import PocketCastsDataModel
 import PocketCastsUtils
+import Synchronization
 import UIKit
 
 /// AVAudioEngine effects pipeline driven by PlaybackManager; state is guarded
@@ -12,7 +13,8 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var player: AVAudioPlayerNode?
 
     private var timePitch: AVAudioUnitTimePitch?
-    private var playbackSpeed = 0 as Double // AVAudioUnitTimePitch seems to not like us querying the rate sometimes, so store that as a separate variable
+    // AVAudioUnitTimePitch can be unsafe to query directly; keep a synchronized mirror.
+    private let playbackSpeed = Mutex<Double>(0)
 
     private var audioMixerNode: AVAudioMixerNode?
 
@@ -43,8 +45,12 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var episode: BaseEpisode?
     private var cachedFrameCount = 0 as Int64
 
-    private var seeking = false
-    private var lastSeekTime = 0 as TimeInterval
+    private struct SeekState: Sendable {
+        var isSeeking = false
+        var lastSeekTime: TimeInterval = 0
+    }
+
+    private let seekState = Mutex(SeekState())
 
     // this lock is to avoid race conditions where you're destroying the player while in the middle of setting it up (since the play method does its work asynchronously)
     private let playerLock = NSLock()
@@ -117,7 +123,7 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
             strongSelf.setVolumeBoostSettings()
 
             strongSelf.timePitch = strongSelf.createTimePitchUnit()
-            strongSelf.playbackSpeed = 1.0
+            strongSelf.playbackSpeed.withLock { $0 = 1.0 }
             strongSelf.timePitch?.rate = 1.0
             strongSelf.engine?.attach(strongSelf.timePitch!)
 
@@ -225,12 +231,14 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     func playbackRate() -> Double {
-        playbackSpeed
+        playbackSpeed.withLock { $0 }
     }
 
     func setPlaybackRate(_ rate: Double) {
+        playerLock.lock()
+        defer { playerLock.unlock() }
         if let timePitch {
-            playbackSpeed = rate
+            playbackSpeed.withLock { $0 = rate }
             timePitch.rate = Float(rate)
         }
     }
@@ -243,8 +251,10 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
             guard let self else { return }
 
             let (readOperation, completion) = boxed.value
-            lastSeekTime = max(0.1, time)
-            seeking = true
+            seekState.withLock {
+                $0.lastSeekTime = max(0.1, time)
+                $0.isSeeking = true
+            }
             readOperation.seekTo(time, completion: { [weak self] seekedToEnd in
                 if !seekedToEnd {
                     completion?()
@@ -254,14 +264,15 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
                     Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
                 }
 
-                self?.seeking = false
+                self?.seekState.withLock { $0.isSeeking = false }
             })
         }
     }
 
     func currentTime() -> TimeInterval {
-        if seeking {
-            return lastSeekTime
+        let seekSnapshot = seekState.withLock { $0 }
+        if seekSnapshot.isSeeking {
+            return seekSnapshot.lastSeekTime
         }
 
         if let audioFile, let curFrame = currentFrame() {
@@ -290,8 +301,11 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     func effectsDidChange() {
         audioReadTask?.setTrimSilence(effects.trimSilence)
         audioReadTask?.setTuning(tuning)
-        playbackSpeed = effects.playbackSpeed
-        timePitch?.rate = Float(playbackSpeed)
+        let updatedPlaybackSpeed = effects.playbackSpeed
+        playerLock.lock()
+        playbackSpeed.withLock { $0 = updatedPlaybackSpeed }
+        timePitch?.rate = Float(updatedPlaybackSpeed)
+        playerLock.unlock()
 
         // Update VoiceBoostN flag for dynamic switching
         let shouldUseVoiceBoostN = Settings.isVoiceBoostNEnabled && tuning.voiceBoost.useVoiceBoostN && effects.volumeBoost
@@ -405,7 +419,21 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
         }
 
         let requiredStartTime = PlaybackManager.engineState.consumePendingStartingPosition() ?? 0
-        audioReadTask = AudioReadTask(trimSilence: effects.trimSilence, audioFile: audioFile, outputFormat: audioFile.processingFormat, bufferManager: playBufferManager, playPositionHint: requiredStartTime, frameCount: cachedFrameCount, useVoiceBoostN: useVoiceBoostN, useNormalize: useNormalize, sampleRate: audioFileSampleRate, tuning: PlaybackManager.engineState.tuning, knownLUFS: knownLUFS)
+        audioReadTask = AudioReadTask(
+            trimSilence: effects.trimSilence,
+            audioFile: audioFile,
+            outputFormat: audioFile.processingFormat,
+            bufferManager: playBufferManager,
+            playPositionHint: requiredStartTime,
+            frameCount: cachedFrameCount,
+            effects: AudioReadTask.EffectsConfiguration(
+                useVoiceBoostN: useVoiceBoostN,
+                useNormalize: useNormalize,
+                sampleRate: audioFileSampleRate,
+                tuning: PlaybackManager.engineState.tuning,
+                knownLUFS: knownLUFS
+            )
+        )
         audioPlayTask = AudioPlayTask(player: player, bufferManager: playBufferManager)
 
         audioReadTask?.startup()

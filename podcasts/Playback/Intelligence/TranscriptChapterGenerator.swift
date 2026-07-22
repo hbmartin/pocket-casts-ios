@@ -49,29 +49,54 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
     /// fall back to "no chapters" exactly as before.
     func chapters(episodeUuid: String, cues: [TimedCueText], duration: TimeInterval) async -> [GeneratedChapter] {
         if let cached = store.load(episodeUuid: episodeUuid) {
-            return cached
+            switch cached {
+            case .chapters(let chapters):
+                return chapters
+            case .noChapters:
+                return []
+            }
         }
 
         // A handful of cues can't support meaningful segmentation.
-        guard cues.count >= 10, case .available = intelligence.availability() else { return [] }
+        guard cues.count >= 10 else {
+            return cacheNoChapters(episodeUuid: episodeUuid)
+        }
+        guard case .available = intelligence.availability() else {
+            return cacheNoChapters(episodeUuid: episodeUuid)
+        }
 
         do {
+            try Task.checkCancellation()
             let digest = Self.chapterDigest(from: cues)
             let generated = try await intelligence.respond(
                 instructions: Self.instructions,
                 prompt: "<transcript>\n\(digest)\n</transcript>",
                 generating: GeneratedChapterList.self
             )
+            try Task.checkCancellation()
             let validated = Self.validated(generated.chapters, cueStartTimes: cues.map(\.startTime), duration: duration)
-            guard !validated.isEmpty else { return [] }
+            guard !validated.isEmpty else {
+                return cacheNoChapters(episodeUuid: episodeUuid)
+            }
 
-            store.save(validated, episodeUuid: episodeUuid)
+            store.save(.chapters(validated), episodeUuid: episodeUuid)
             FileLog.shared.addMessage("TranscriptChapterGenerator: generated \(validated.count) chapters for \(episodeUuid)")
             return validated
+        } catch is CancellationError {
+            // Cancellation is a lifecycle outcome, not evidence that this
+            // episode can never produce chapters. Leave it unattempted so a
+            // later player presentation can try again.
+            return []
         } catch {
             FileLog.shared.addMessage("TranscriptChapterGenerator: generation failed for \(episodeUuid): \(error)")
-            return []
+            return cacheNoChapters(episodeUuid: episodeUuid)
         }
+    }
+
+    private func cacheNoChapters(episodeUuid: String) -> [GeneratedChapter] {
+        guard !Task.isCancelled else { return [] }
+        store.save(.noChapters, episodeUuid: episodeUuid)
+        return []
     }
 
     static let instructions = """
@@ -202,10 +227,25 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
 
 /// Device-local cache of generated chapter lists, one JSON file per episode in
 /// Caches (regenerable — safe for the system to purge).
+nonisolated enum OnDeviceChapterCacheEntry: Sendable {
+    case chapters([GeneratedChapter])
+    case noChapters
+}
+
 nonisolated struct OnDeviceChapterStore: Sendable {
     private struct StoredChapter: Codable {
         let title: String
         let startTime: TimeInterval
+    }
+
+    private struct StoredEntry: Codable {
+        enum Outcome: String, Codable {
+            case chapters
+            case noChapters
+        }
+
+        let outcome: Outcome
+        let chapters: [StoredChapter]
     }
 
     /// Cache schema version, part of every entry's file name. v2: chapters may
@@ -213,7 +253,9 @@ nonisolated struct OnDeviceChapterStore: Sendable {
     /// digest samples the whole episode — v1 entries could carry
     /// reference-timeline, head-only chapter lists, so bumping the version
     /// orphans them (Caches is system-purgeable) and forces regeneration.
-    static let schemaVersion = 2
+    /// v3 stores a distinct no-chapters sentinel; v2 encoded only a raw array,
+    /// so it cannot distinguish a cache miss from a completed empty outcome.
+    static let schemaVersion = 3
 
     private let directoryURL: URL
 
@@ -223,19 +265,33 @@ nonisolated struct OnDeviceChapterStore: Sendable {
         self.directoryURL = directoryURL ?? cachesDirectory.appendingPathComponent("generated_chapters", isDirectory: true)
     }
 
-    func load(episodeUuid: String) -> [GeneratedChapter]? {
+    func load(episodeUuid: String) -> OnDeviceChapterCacheEntry? {
         guard let data = try? Data(contentsOf: fileURL(episodeUuid: episodeUuid)),
-              let stored = try? JSONDecoder().decode([StoredChapter].self, from: data),
-              !stored.isEmpty else { return nil }
-        return stored.map {
-            GeneratedChapter(title: $0.title,
-                             timestamp: TranscriptChapterGenerator.timestampString(for: $0.startTime),
-                             startTime: $0.startTime)
+              let stored = try? JSONDecoder().decode(StoredEntry.self, from: data) else { return nil }
+
+        switch stored.outcome {
+        case .chapters:
+            guard !stored.chapters.isEmpty else { return nil }
+            return .chapters(stored.chapters.map {
+                GeneratedChapter(title: $0.title,
+                                 timestamp: TranscriptChapterGenerator.timestampString(for: $0.startTime),
+                                 startTime: $0.startTime)
+            })
+        case .noChapters:
+            return .noChapters
         }
     }
 
-    func save(_ chapters: [GeneratedChapter], episodeUuid: String) {
-        let stored = chapters.map { StoredChapter(title: $0.title, startTime: $0.startTime) }
+    func save(_ entry: OnDeviceChapterCacheEntry, episodeUuid: String) {
+        let stored: StoredEntry = switch entry {
+        case .chapters(let chapters):
+            StoredEntry(
+                outcome: .chapters,
+                chapters: chapters.map { StoredChapter(title: $0.title, startTime: $0.startTime) }
+            )
+        case .noChapters:
+            StoredEntry(outcome: .noChapters, chapters: [])
+        }
         guard let data = try? JSONEncoder().encode(stored) else { return }
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         try? data.write(to: fileURL(episodeUuid: episodeUuid), options: .atomic)

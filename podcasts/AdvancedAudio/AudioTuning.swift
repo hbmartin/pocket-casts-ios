@@ -300,7 +300,7 @@ nonisolated struct NormalizeTuning: Codable, Equatable, Sendable {
 
     func clamped() -> NormalizeTuning {
         var clamped = self
-        clamped.targetLUFS = min(max(targetLUFS, Self.targetLUFSRange.lowerBound), Self.targetLUFSRange.upperBound)
+        clamped.targetLUFS = targetLUFS.clamped(to: Self.targetLUFSRange)
         return clamped
     }
 }

@@ -178,6 +178,7 @@ final class SyncSigninViewModel: ObservableObject {
     @Published var isSigningIn = false
 
     private var progressAlert: SyncLoadingAlert?
+    private var hasCompletedSync = false
 
     var onCompleted: (() -> Void)?
 
@@ -261,6 +262,7 @@ final class SyncSigninViewModel: ObservableObject {
     }
 
     private func startSignIn(username: String, password: String) {
+        hasCompletedSync = false
         isSigningIn = true
         errorMessage = nil
 
@@ -309,6 +311,9 @@ final class SyncSigninViewModel: ObservableObject {
     }
 
     private func syncCompleted() {
+        guard !hasCompletedSync else { return }
+        hasCompletedSync = true
+
         // Without an alert to dismiss, still complete — dropping onCompleted
         // would strand the user on the sign-in screen after a successful sync.
         guard let progressAlert else {

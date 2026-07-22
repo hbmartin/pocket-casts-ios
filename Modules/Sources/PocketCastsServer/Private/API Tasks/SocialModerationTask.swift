@@ -73,20 +73,29 @@ class SocialReportTask: ApiBaseTask, @unchecked Sendable {
     private let targetUserId: String
     private let reason: SocialReportReason
     private let context: String
+    private let targetType: String
+    private let contentRef: String
 
-    init(targetUserId: String, reason: SocialReportReason, context: String) {
+    init(targetUserId: String,
+         reason: SocialReportReason,
+         context: String,
+         targetType: String,
+         contentRef: String) {
         self.targetUserId = targetUserId
         self.reason = reason
         self.context = context
+        self.targetType = targetType
+        self.contentRef = contentRef
     }
 
     override func apiTokenAcquired(token: String) {
         let urlString = "\(ServerConstants.Urls.api())social/report"
         do {
-            var request = Api_ReportRequest()
-            request.targetUserID = targetUserId
-            request.reason = reason.apiValue
-            request.context = context
+            let request = Self.makeRequest(targetUserId: targetUserId,
+                                           reason: reason,
+                                           context: context,
+                                           targetType: targetType,
+                                           contentRef: contentRef)
             let data = try request.serializedData()
 
             let (response, httpStatus) = postToServer(url: urlString, token: token, data: data)
@@ -95,6 +104,20 @@ class SocialReportTask: ApiBaseTask, @unchecked Sendable {
             FileLog.shared.addMessage("SocialReportTask serialize error \(error.localizedDescription)")
             completion?(false)
         }
+    }
+
+    static func makeRequest(targetUserId: String,
+                            reason: SocialReportReason,
+                            context: String,
+                            targetType: String,
+                            contentRef: String) -> Api_ReportRequest {
+        var request = Api_ReportRequest()
+        request.targetUserID = targetUserId
+        request.reason = reason.apiValue
+        request.context = context
+        request.targetType = targetType
+        request.contentRef = contentRef
+        return request
     }
 }
 

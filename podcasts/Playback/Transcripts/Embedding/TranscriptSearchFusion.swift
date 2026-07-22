@@ -56,7 +56,8 @@ nonisolated enum TranscriptSearchFusion {
             if let overlapping = hits.firstIndex(where: { hit in
                 hit.episodeUuid == semantic.episodeUuid
                     && hit.source == semantic.source
-                    && (semantic.startSegmentIndex ... semantic.endSegmentIndex).contains(hit.segmentIndex)
+                    && hit.segmentIndex >= semantic.startSegmentIndex
+                    && hit.segmentIndex <= semantic.endSegmentIndex
             }) {
                 hits[overlapping].score += contribution
                 hits[overlapping].matchType = .both
