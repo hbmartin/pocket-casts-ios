@@ -46,7 +46,10 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
     /// Returns generated chapters for the episode: cached when present,
     /// otherwise generated from `cues` and cached. Returns [] when the model is
     /// unavailable, the transcript is too thin, or generation fails — callers
-    /// fall back to "no chapters" exactly as before.
+    /// fall back to "no chapters" exactly as before. Only definitive outcomes
+    /// are cached; transient failures (timeout, admission-gate rejection, model
+    /// assets still downloading, cancellation) leave the episode unattempted so
+    /// a later presentation retries.
     func chapters(episodeUuid: String, cues: [TimedCueText], duration: TimeInterval) async -> [GeneratedChapter] {
         if let cached = store.load(episodeUuid: episodeUuid) {
             switch cached {
@@ -61,8 +64,12 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
         guard cues.count >= 10 else {
             return cacheNoChapters(episodeUuid: episodeUuid)
         }
-        guard case .available = intelligence.availability() else {
-            return cacheNoChapters(episodeUuid: episodeUuid)
+        let availability = intelligence.availability()
+        guard case .available = availability else {
+            // Assets still downloading is a moment-in-time condition, not a
+            // verdict on this episode — leave it unattempted so a later
+            // presentation retries once the model is ready.
+            return availability.isTransientlyUnavailable ? [] : cacheNoChapters(episodeUuid: episodeUuid)
         }
 
         do {
@@ -86,6 +93,12 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
             // Cancellation is a lifecycle outcome, not evidence that this
             // episode can never produce chapters. Leave it unattempted so a
             // later player presentation can try again.
+            return []
+        } catch let error as IntelligenceError where error.isTransient {
+            // Same for timeouts, admission-gate rejections, and a model still
+            // downloading its assets: retry on a later presentation instead of
+            // burning the per-episode sentinel on a moment-in-time failure.
+            FileLog.shared.addMessage("TranscriptChapterGenerator: transient failure for \(episodeUuid), will retry: \(error)")
             return []
         } catch {
             FileLog.shared.addMessage("TranscriptChapterGenerator: generation failed for \(episodeUuid): \(error)")

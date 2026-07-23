@@ -756,14 +756,20 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
             // A source choice only makes sense for the episode it was made on.
             transcriptSourcePreference = .automatic
             isGeneratingTranscript = false
+            // The published manager describes another episode's completed load;
+            // its state must not leak into this episode's UI.
+            self.transcriptManager = nil
         }
         currentEpisodeUUID = episodeUUID
 
+        // The new mutable manager stays private to the worker until its load
+        // finishes. The published manager keeps describing this episode's last
+        // completed load, so a failed fetch still offers that transcript's
+        // sources in `show(error:)` → `updateSourceMenu()` (e.g. the completed
+        // local transcript after a failed podcast-provided load) instead of
+        // hiding the source menu.
         let transcriptManager = TranscriptManager(episodeUUID: episodeUUID, podcastUUID: podcastUUID)
         transcriptManager.sourcePreference = transcriptSourcePreference
-        // The previously published manager describes a different completed load.
-        // Keep the new mutable manager private to the worker until it is finished.
-        self.transcriptManager = nil
 
         setupLoadingState()
 
@@ -1150,6 +1156,9 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         transcriptSourcePreference = .automatic
         Task { [weak self] in
             await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUuid)
+            // The published manager still claims a local transcript exists; drop
+            // it so a failed reload can't offer the just-deleted transcript.
+            self?.transcriptManager = nil
             self?.update()
         }
     }

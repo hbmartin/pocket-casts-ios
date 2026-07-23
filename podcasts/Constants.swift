@@ -277,8 +277,7 @@ nonisolated struct Constants {
     }
 }
 
-// All stored properties are immutable, and `defaults` (UserDefaults) is
-// @unchecked Sendable: immutable properties wrap documented-thread-safe UserDefaults.
+// @unchecked Sendable: all stored properties are immutable, and `defaults` (UserDefaults) is documented thread-safe.
 extension Constants.SettingValue: @unchecked Sendable where Value: Sendable {}
 
 enum OnboardingFlowSource: String {

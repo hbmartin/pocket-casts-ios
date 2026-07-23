@@ -34,6 +34,12 @@ final class EpisodeMomentPinsCache {
         return token
     }
 
+    /// True while a load for this episode is outstanding (between
+    /// beginLoading and its commit/discard/invalidate).
+    func isLoading(episodeUuid: String) -> Bool {
+        loadTokens[episodeUuid] != nil
+    }
+
     @discardableResult
     func commit(_ pins: [EpisodeMomentPin], for token: LoadToken) -> Bool {
         guard loadTokens[token.episodeUuid] == token else { return false }
@@ -77,6 +83,42 @@ func fetchAllEpisodeComments(
     return comments
 }
 
+/// Starts one load chain for an episode's Moment pins unless one is already
+/// in flight — update() fires in bursts, and every spare chain would re-fetch
+/// each comment page before losing the commit race. Returns whether a load
+/// was started.
+@MainActor
+@discardableResult
+func loadMomentPinsIfIdle(
+    cache: EpisodeMomentPinsCache,
+    episodeUuid: String,
+    duration: TimeInterval,
+    fetchPage: @escaping @MainActor (_ limit: Int, _ offset: Int) async -> SocialCommentPage?,
+    assign: @escaping @MainActor ([EpisodeMomentPin]) -> Void
+) -> Bool {
+    guard !cache.isLoading(episodeUuid: episodeUuid) else { return false }
+    let loadToken = cache.beginLoading(episodeUuid: episodeUuid)
+    Task { @MainActor in
+        let comments = await fetchAllEpisodeComments(fetchPage: fetchPage)
+        guard let comments else {
+            cache.discard(loadToken)
+            return
+        }
+        let pins = comments.compactMap { comment -> EpisodeMomentPin? in
+            guard !comment.removed, let seconds = comment.timestampSeconds, seconds >= 0,
+                  TimeInterval(seconds) <= duration else { return nil }
+            return EpisodeMomentPin(
+                id: comment.id,
+                fraction: TimeInterval(seconds) / duration,
+                seconds: seconds
+            )
+        }
+        guard cache.commit(pins, for: loadToken) else { return }
+        assign(pins)
+    }
+    return true
+}
+
 /// Moment pins on the player scrubber (Slice 6, ADR-0010): timestamped
 /// top-level comments render as dots on the TimeSlider; tapping one opens the
 /// episode's comment tree focused on that comment's subtree. The player is the
@@ -84,12 +126,22 @@ func fetchAllEpisodeComments(
 extension NowPlayingPlayerItemViewController {
     private static let momentPinsCache = EpisodeMomentPinsCache()
 
+    /// The live player item, so a Moments mutation in the comments sheet can
+    /// refresh the scrubber immediately instead of leaving a stale pin until
+    /// the next unrelated update() event.
+    private static weak var momentPinsController: NowPlayingPlayerItemViewController?
+
     static func invalidateMomentPins(for episodeUuid: String) {
+        // invalidate() also clears the in-flight marker, so this refresh is
+        // never suppressed by the load it just made stale.
         momentPinsCache.invalidate(episodeUuid: episodeUuid)
+        guard let episode = PlaybackManager.shared.currentEpisode(), episode.uuid == episodeUuid else { return }
+        momentPinsController?.refreshMomentPins(for: episode)
     }
 
     /// Loads (once per episode) the timestamped seeds and pins them.
     func refreshMomentPins(for episode: BaseEpisode) {
+        Self.momentPinsController = self
         guard FeatureFlag.socialProfiles.enabled, episode.duration > 0 else {
             Self.momentPinsCache.deactivate()
             timeSlider.momentPins = []
@@ -102,32 +154,21 @@ extension NowPlayingPlayerItemViewController {
         timeSlider.momentPins = []
 
         let uuid = episode.uuid
-        let duration = episode.duration
-        let loadToken = Self.momentPinsCache.beginLoading(episodeUuid: uuid)
-        Task { @MainActor [weak self] in
-            let comments = await fetchAllEpisodeComments(fetchPage: { limit, offset in
+        loadMomentPinsIfIdle(
+            cache: Self.momentPinsCache,
+            episodeUuid: uuid,
+            duration: episode.duration,
+            fetchPage: { limit, offset in
                 await ApiServerHandler.shared.fetchEpisodeComments(
                     episodeUuid: uuid,
                     limit: limit,
                     offset: offset
                 )
-            })
-            guard let comments else {
-                Self.momentPinsCache.discard(loadToken)
-                return
+            },
+            assign: { [weak self] pins in
+                self?.timeSlider.momentPins = pins.map { ($0.id, $0.fraction) }
             }
-            let pins = comments.compactMap { comment -> EpisodeMomentPin? in
-                guard !comment.removed, let seconds = comment.timestampSeconds, seconds >= 0,
-                      TimeInterval(seconds) <= duration else { return nil }
-                return EpisodeMomentPin(
-                    id: comment.id,
-                    fraction: TimeInterval(seconds) / duration,
-                    seconds: seconds
-                )
-            }
-            guard Self.momentPinsCache.commit(pins, for: loadToken), let self else { return }
-            self.timeSlider.momentPins = pins.map { ($0.id, $0.fraction) }
-        }
+        )
     }
 
     /// TimeSliderDelegate (optional member): open the tree at this Moment.

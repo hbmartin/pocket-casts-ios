@@ -53,9 +53,18 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private let seekState = Mutex(SeekState())
 
     // this lock is to avoid race conditions where you're destroying the player while in the middle of setting it up (since the play method does its work asynchronously)
+    // Locking contract: play() holds this across AVAudioFile(forReading:) and engine
+    // startup, which can take seconds, so it must never be acquired synchronously from
+    // the main actor. Main-actor entry points (setPlaybackRate, effectsDidChange) stage
+    // the desired rate in `playbackSpeed` and take the lock on `serialGraphApplyQueue`
+    // instead (see applyPlaybackSpeedToGraph).
     private let playerLock = NSLock()
 
     private let serialSeekQueue = DispatchQueue(label: "effectsplayer.serial.queue")
+
+    /// Serializes deferred applications of staged state (currently the playback rate)
+    /// onto the live audio graph; see `applyPlaybackSpeedToGraph`.
+    private let serialGraphApplyQueue = DispatchQueue(label: "effectsplayer.graphapply.queue")
 
     @MainActor
     private lazy var episodeArtwork = EpisodeArtwork()
@@ -235,11 +244,28 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     }
 
     func setPlaybackRate(_ rate: Double) {
-        playerLock.lock()
-        defer { playerLock.unlock() }
-        if let timePitch {
-            playbackSpeed.withLock { $0 = rate }
-            timePitch.rate = Float(rate)
+        playbackSpeed.withLock { $0 = rate }
+        applyPlaybackSpeedToGraph()
+    }
+
+    /// Applies the staged `playbackSpeed` to the live `timePitch` node.
+    ///
+    /// `playerLock` serializes graph access against `play()`'s background setup and
+    /// `endPlayback()`'s teardown, but `play()` holds it across `AVAudioFile(forReading:)`
+    /// and engine startup (often seconds). The rate setters run on the main actor —
+    /// `PlaybackManager.playerDidFinishPreparing` calls `setPlaybackRate` right after the
+    /// read/play threads start — so they must never block on that lock. They stage the
+    /// desired rate in the `playbackSpeed` mutex and this method takes the lock on a
+    /// serial background queue. Every application re-reads the latest staged value under
+    /// the lock, so a queued-up older application is harmless: the graph always converges
+    /// on the most recently requested rate, applied once the engine is set up.
+    private func applyPlaybackSpeedToGraph() {
+        serialGraphApplyQueue.async { [weak self] in
+            guard let self else { return }
+
+            playerLock.lock()
+            defer { playerLock.unlock() }
+            timePitch?.rate = Float(playbackRate())
         }
     }
 
@@ -301,11 +327,8 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     func effectsDidChange() {
         audioReadTask?.setTrimSilence(effects.trimSilence)
         audioReadTask?.setTuning(tuning)
-        let updatedPlaybackSpeed = effects.playbackSpeed
-        playerLock.lock()
-        playbackSpeed.withLock { $0 = updatedPlaybackSpeed }
-        timePitch?.rate = Float(updatedPlaybackSpeed)
-        playerLock.unlock()
+        playbackSpeed.withLock { $0 = effects.playbackSpeed }
+        applyPlaybackSpeedToGraph()
 
         // Update VoiceBoostN flag for dynamic switching
         let shouldUseVoiceBoostN = Settings.isVoiceBoostNEnabled && tuning.voiceBoost.useVoiceBoostN && effects.volumeBoost

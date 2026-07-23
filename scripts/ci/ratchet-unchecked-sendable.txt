@@ -71,6 +71,7 @@ PocketCastsTests/PlaybackQueueTests.swift: 1
 PocketCastsTests/Tests/Analytics/AnalyticsPlaybackHelperTests.swift: 1
 PocketCastsTests/Tests/AppIntents/PlaybackIntentActionHandlerTests.swift: 1
 PocketCastsTests/Tests/DownloadManagerDependencyTests.swift: 1
+PocketCastsTests/Tests/Explore/ITunesDirectoryTests.swift: 1
 PocketCastsTests/Tests/Playback/Chapters/ChapterManagerTests.swift: 1
 PocketCastsTests/Tests/Utilities/ApiBaseTaskRetryTests.swift: 1
 PocketCastsTests/Tests/Utilities/TokenHelperTests.swift: 1

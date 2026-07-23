@@ -727,7 +727,9 @@ extension PlaylistQueryBuilder {
                   !PlaylistQueryValidator.containsPlaceholders(fragment) else {
                 return "(0)"
             }
-            return "(\(sql: fragment))"
+            // The newline terminates a trailing `--` comment so it cannot swallow
+            // the closing paren (mirrors the validator's save-time wrap).
+            return "(\(sql: fragment)\n)"
         }
     }
 

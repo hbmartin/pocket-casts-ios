@@ -284,7 +284,10 @@ final class SocialInboxViewModel: ObservableObject {
     func delete(at offsets: IndexSet) async {
         let doomed = offsets.sorted().map { (index: $0, item: items[$0]) }
         items.remove(atOffsets: offsets)
-        total = max(0, total - doomed.count)
+        // The server-reported total can lag behind the visible rows, so track
+        // what was actually subtracted and never restore more than that.
+        let subtracted = min(total, doomed.count)
+        total -= subtracted
 
         var failedDeletions: [(index: Int, item: SharedItem)] = []
         for deletion in doomed {
@@ -296,7 +299,7 @@ final class SocialInboxViewModel: ObservableObject {
         for deletion in failedDeletions {
             items.insert(deletion.item, at: min(deletion.index, items.count))
         }
-        total += failedDeletions.count
+        total += min(failedDeletions.count, subtracted)
     }
 }
 

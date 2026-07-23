@@ -60,6 +60,24 @@ jobs:
         run: |
           semgrep scan --config semgrep/swift-security.yml --config semgrep/pocket-casts.yml --include "*.swift" --include "**/.github/workflows/*.yml" --include "**/scripts/ci/*.sh" --include "**/scripts/build-phases/*.sh" --include "**/semgrep/*.yml" --include "**/semgrep/*.yaml" --include "mise.toml" --include "**/mise.toml" --exclude "semgrep/tests/**" --metrics off --timeout 0 --disable-version-check --error --sarif-output semgrep-swift.sarif
 
+      - name: Drop source-suppressed findings from SARIF
+        # semgrep exits clean on nosemgrep'd findings but still emits them into the
+        # SARIF with a suppression record; code scanning ignores that record and
+        # raises them as open alerts, leaving the check permanently red. Strip them
+        # before upload so code scanning sees only unsuppressed findings.
+        if: always() && hashFiles('semgrep-swift.sarif') != ''
+        run: |
+          python3 - <<'EOF'
+          import json
+
+          with open("semgrep-swift.sarif") as f:
+              sarif = json.load(f)
+          for run in sarif.get("runs", []):
+              run["results"] = [r for r in run.get("results", []) if not r.get("suppressions")]
+          with open("semgrep-swift.sarif", "w") as f:
+              json.dump(sarif, f)
+          EOF
+
       - name: Upload SARIF to code scanning
         if: always() && hashFiles('semgrep-swift.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e

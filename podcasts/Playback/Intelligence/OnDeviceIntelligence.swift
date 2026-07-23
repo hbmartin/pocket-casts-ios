@@ -9,6 +9,14 @@ import FoundationModels
 nonisolated enum IntelligenceAvailability: Equatable, Sendable {
     case available
     case unavailable(reason: String)
+
+    /// True when the model is unavailable only because Apple Intelligence
+    /// assets are still downloading (`model_not_ready`): availability can flip
+    /// to `.available` without any user action, so callers that persist
+    /// definitive outcomes must not treat this state as permanent.
+    var isTransientlyUnavailable: Bool {
+        self == .unavailable(reason: "model_not_ready")
+    }
 }
 
 /// Stable error surface for on-device generation. Feature services own their
@@ -28,6 +36,24 @@ nonisolated enum IntelligenceError: Error {
     case decodingFailed
     /// Any other generation failure; `description` is safe to log.
     case generationFailed(description: String)
+
+    /// True for failures that describe this moment rather than this request:
+    /// the per-call timeout, the single-generation admission gate rejecting a
+    /// concurrent call, or model assets that are still downloading. Callers
+    /// that persist definitive "never retry" outcomes must not cache these —
+    /// an identical later attempt can succeed.
+    var isTransient: Bool {
+        switch self {
+        case .timedOut:
+            return true
+        case .modelUnavailable(let reason):
+            return reason == "model_not_ready"
+        case .generationFailed(let description):
+            return description == "concurrent_requests" || description == "rate_limited"
+        case .contextWindowExceeded, .guardrailViolation, .decodingFailed:
+            return false
+        }
+    }
 }
 
 /// Abstraction over on-device language-model generation so feature services

@@ -112,9 +112,14 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
             // The dedup match ignores userinfo, so freshly re-entered credentials
             // (e.g. an unsubscribe/resubscribe with `user:pass@`) would otherwise be
             // dropped here — keep them for the existing row's refreshes.
-            if let credentials = LocalFeedURL.credentials(from: feedURL) {
-                guard LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: existing.uuid) else {
-                    FileLog.shared.addMessage("ServerPodcastManager: failed to store re-entered credentials for \(LocalFeedURL.redactedForLogging(feedURL))")
+            if let credentials = LocalFeedURL.credentials(from: feedURL),
+               !LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: existing.uuid) {
+                FileLog.shared.addMessage("ServerPodcastManager: failed to store re-entered credentials for \(LocalFeedURL.redactedForLogging(feedURL))")
+                // Only the unsubscribed→subscribed transition depends on the fresh
+                // credential to produce working refreshes; abort just that case. An
+                // already-subscribed row (or a plain non-subscribing add) keeps whatever
+                // credential state it had, so log-and-succeed as before.
+                if subscribe, !existing.isSubscribed() {
                     completion?(false)
                     return
                 }
@@ -270,7 +275,6 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
             if !existingPodcast.isSubscribed(), subscribe {
                 // we have this podcast, just in a non-subscribed state, so subscribe to it
                 existingPodcast.subscribed = 1
-                existingPodcast.syncStatus = SyncStatus.notSynced.rawValue
                 existingPodcast.autoDownloadSetting = (autoDownloads > 0 ? AutoDownloadSetting.latest : AutoDownloadSetting.off).rawValue
 
                 // Signed-out subscribes must be self-sufficient: hand the row to the

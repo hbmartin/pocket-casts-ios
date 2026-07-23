@@ -67,9 +67,8 @@ nonisolated final class MetricKitCollector: NSObject, MXMetricManagerSubscriber,
         return "\(prefix)-\(formatter.string(from: date))-\(identifier.uuidString).json"
     }
 
-    /// Prunes per prefix: within one prefix the timestamped names sort lexically
-    /// oldest-first. One global sort would order "diagnostics-*" before every
-    /// "metrics-*" and sacrifice fresh crash diagnostics to keep old metrics.
+    /// Prunes per prefix: one global sort would order "diagnostics-*" before
+    /// every "metrics-*" and sacrifice fresh crash diagnostics to keep old metrics.
     private func pruneOldPayloads(in directory: URL) {
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return }
         for prefix in ["diagnostics-", "metrics-"] {
@@ -83,14 +82,44 @@ nonisolated final class MetricKitCollector: NSObject, MXMetricManagerSubscriber,
         }
     }
 
+    /// Ordered oldest-first by the timestamp embedded in each name, not lexically:
+    /// names written before the UTC change carry device-local stamps, which in
+    /// UTC-ahead timezones sort lexically after newer UTC-stamped names for up to
+    /// the offset — a lexical prune would evict the fresh payloads first.
     static func payloadNamesToPrune(
         _ names: [String],
         prefix: String,
-        keepingNewest limit: Int
+        keepingNewest limit: Int,
+        legacyTimeZone: TimeZone = .current
     ) -> [String] {
-        let sorted = names.filter { $0.hasPrefix(prefix) && $0.hasSuffix(".json") }.sorted()
-        guard sorted.count > limit else { return [] }
-        return Array(sorted.prefix(sorted.count - limit))
+        let matching = names.filter { $0.hasPrefix(prefix) && $0.hasSuffix(".json") }
+        guard matching.count > limit else { return [] }
+        let oldestFirst = matching
+            .map { (name: $0, stamp: Self.stampedDate(in: $0, prefix: prefix, legacyTimeZone: legacyTimeZone)) }
+            .sorted { lhs, rhs in
+                if let lhsStamp = lhs.stamp, let rhsStamp = rhs.stamp, lhsStamp != rhsStamp {
+                    return lhsStamp < rhsStamp
+                }
+                return lhs.name < rhs.name
+            }
+        return oldestFirst.prefix(matching.count - limit).map { $0.name }
+    }
+
+    /// Recovers the absolute time a payload name was stamped with. Current names
+    /// (full-UUID identifier) are UTC; legacy names (4-character identifier) were
+    /// stamped in device-local time, so they are read in `legacyTimeZone`. Returns
+    /// nil for unrecognized names, which then order lexically.
+    private static func stampedDate(in name: String, prefix: String, legacyTimeZone: TimeZone) -> Date? {
+        let format = "yyyyMMdd-HHmmss-SSS"
+        let stem = name.dropFirst(prefix.count).dropLast(".json".count)
+        guard stem.dropFirst(format.count).first == "-" else { return nil }
+        let identifier = stem.dropFirst(format.count + 1)
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = identifier.count == 4 ? legacyTimeZone : TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = format
+        return formatter.date(from: String(stem.prefix(format.count)))
     }
 
     // MARK: - Summaries

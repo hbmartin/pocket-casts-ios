@@ -53,6 +53,15 @@ EOF
 cat > "$fake_repo/podcasts/Feed.swift" <<'EOF'
 struct Feed: @unchecked Sendable {}
 EOF
+# A multiline string literal with an odd number of interior quotes must not desync
+# the parser: the declaration after it still counts, the quoted mention does not.
+cat > "$fake_repo/podcasts/Multiline.swift" <<'EOF'
+let banner = """
+a quoted mention of @unchecked Sendable must not count
+say "hi
+"""
+final class Boxed: @unchecked Sendable {}
+EOF
 # Test code and semgrep fixtures are out of scope for force-cast.
 cat > "$fake_repo/PocketCastsTests/PlayerTest.swift" <<'EOF'
 let sut = thing as! PlayerBox
@@ -73,9 +82,11 @@ assert "force-cast counts (tests and fixtures excluded, word-anchored)" \
   [ "$actual_force_cast" = "$expected_force_cast" ]
 
 expected_sendable="podcasts/Feed.swift: 1
+podcasts/Multiline.swift: 1
 podcasts/Player.swift: 1"
 actual_sendable="$("$checker" --print-counts unchecked-sendable)"
-assert "unchecked-sendable counts" [ "$actual_sendable" = "$expected_sendable" ]
+assert "unchecked-sendable counts (multiline strings do not desync the parser)" \
+  [ "$actual_sendable" = "$expected_sendable" ]
 
 # Missing baselines fail the check.
 assert_fails "missing baselines fail" "$checker" 2>/dev/null
@@ -116,6 +127,14 @@ git -C "$fake_repo" add -A
 out="$("$checker")"
 assert "improvement passes" "$checker" > /dev/null
 assert "improvement suggests locking in the baseline" grep -q "ratchets:baseline" <<< "$out"
+
+# A tracked file awk cannot read must fail the check loudly — previously the I/O
+# error was swallowed and the count 0 reported as an "improvement".
+rm "$fake_repo/podcasts/Feed.swift"
+assert_fails "unreadable tracked file fails the check" "$checker" 2>/dev/null
+err="$("$checker" 2>&1 >/dev/null || true)"
+assert "awk failure names the file" grep -q "podcasts/Feed.swift" <<< "$err"
+git -C "$fake_repo" checkout -q -- podcasts/Feed.swift
 
 if (( failures > 0 )); then
   echo "$failures test(s) failed" >&2

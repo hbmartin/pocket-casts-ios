@@ -56,6 +56,38 @@ final class MetricKitCollectorTests: XCTestCase {
         )
     }
 
+    func testPruningKeepsNewerUTCPayloadsOverOlderLegacyLocalStampedPayloads() throws {
+        // Legacy filenames were stamped in device-local time with 4-character
+        // identifiers. In Tokyo (UTC+9) a payload written at 2026-01-01 00:00 UTC
+        // was named 09:00, which sorts lexically after the UTC-stamped payload
+        // written an hour later — pruning must still evict the legacy file first.
+        let legacy = "metrics-20260101-090000-000-ABCD.json"
+        let newer = "metrics-20260101-010000-000-00000000-0000-0000-0000-000000000001.json"
+        let tokyo = try XCTUnwrap(TimeZone(identifier: "Asia/Tokyo"))
+
+        XCTAssertLessThan(newer, legacy)
+        XCTAssertEqual(
+            MetricKitCollector.payloadNamesToPrune(
+                [newer, legacy],
+                prefix: "metrics-",
+                keepingNewest: 1,
+                legacyTimeZone: tokyo
+            ),
+            [legacy]
+        )
+    }
+
+    func testPruningFallsBackToLexicalOrderForUnparseableNames() {
+        XCTAssertEqual(
+            MetricKitCollector.payloadNamesToPrune(
+                ["metrics-b-unparseable.json", "metrics-a-unparseable.json"],
+                prefix: "metrics-",
+                keepingNewest: 1
+            ),
+            ["metrics-a-unparseable.json"]
+        )
+    }
+
     private func date(_ value: String) throws -> Date {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]

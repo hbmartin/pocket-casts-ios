@@ -112,14 +112,7 @@ public struct TranscriptSearchIndexMetaRecord: Equatable, Sendable {
     /// UTF-8 byte size of all indexed segment text, feeding the total-size cap.
     public var textBytes: Int64 = 0
 
-    public init() {
-        episodeUuid = ""
-        source = ""
-        podcastUuid = nil
-        indexedDate = 0
-        segmentCount = 0
-        textBytes = 0
-    }
+    public init() {}
 }
 
 /// Data access for the unified library-wide transcript search index: one FTS5 table

@@ -89,6 +89,35 @@ struct LocalFeedCredentialsUsageTests {
         #expect(LocalFeedCredentials.credentials(podcastUuid: "local-pod") == nil)
     }
 
+    @Test("addLocalFeed dedup keeps an already-subscribed row successful when the credential save fails")
+    func dedupCredentialSaveFailureOnSubscribedRowLogsAndSucceeds() throws {
+        let previousStore = KeychainHelper.store
+        defer { KeychainHelper.store = previousStore }
+        KeychainHelper.store = RejectingLocalFeedKeychainStore()
+
+        let previousShared = DataManager.sharedManager
+        defer { DataManager.sharedManager = previousShared }
+        let dataManager = makeDataManager()
+        DataManager.sharedManager = dataManager
+
+        seedLocalFeedPodcast(
+            uuid: "local-pod",
+            feedURL: "https://example.com/feed.xml",
+            subscribed: true,
+            dataManager: dataManager
+        )
+
+        let succeeded = Mutex<Bool?>(nil)
+        ServerPodcastManager.shared.addLocalFeed(feedURL: "https://user:newpass@example.com/feed.xml", subscribe: true) { success in
+            succeeded.withLock { $0 = success }
+        }
+
+        #expect(succeeded.withLock { $0 } == true,
+                "an already-subscribed row does not depend on the fresh credential — log and succeed")
+        let podcast = try #require(dataManager.findPodcast(uuid: "local-pod", includeUnsubscribed: true))
+        #expect(podcast.isSubscribed())
+    }
+
     @Test("resubscribing an existing local-feed row keeps it out of server sync")
     func localFeedResubscribeDerivesSyncStatusFromFinalSource() throws {
         let previousShared = DataManager.sharedManager
@@ -112,6 +141,34 @@ struct LocalFeedCredentialsUsageTests {
         let podcast = try #require(dataManager.findPodcast(uuid: "local-pod", includeUnsubscribed: true))
         #expect(podcast.isSubscribed())
         #expect(podcast.syncStatus == SyncStatus.synced.rawValue)
+    }
+
+    @Test("addFromJson resubscribe of an existing unsubscribed local-feed row derives synced from the final source")
+    func addFromJsonResubscribeDerivesSyncStatusFromFinalSource() async throws {
+        let previousShared = DataManager.sharedManager
+        defer { DataManager.sharedManager = previousShared }
+        let dataManager = makeDataManager()
+        DataManager.sharedManager = dataManager
+
+        seedLocalFeedPodcast(
+            uuid: "local-pod",
+            feedURL: "https://example.com/feed.xml",
+            subscribed: false,
+            dataManager: dataManager
+        )
+
+        let podcastInfo: [String: Any] = ["podcast": ["uuid": "local-pod"]]
+        let added = await withCheckedContinuation { continuation in
+            ServerPodcastManager.shared.addFromJson(lastModified: nil, podcastInfo: podcastInfo, subscribe: true, autoDownloads: 0, refreshSource: .localFeed) { success in
+                continuation.resume(returning: success)
+            }
+        }
+
+        #expect(added == true)
+        let podcast = try #require(dataManager.findPodcast(uuid: "local-pod", includeUnsubscribed: true))
+        #expect(podcast.isSubscribed())
+        #expect(podcast.syncStatus == SyncStatus.synced.rawValue,
+                "existing local-feed rows must never queue for account sync, even via the addPodcast path")
     }
 
     // FIX for: stored credentials never reaching media downloads/playback.

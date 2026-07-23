@@ -122,22 +122,26 @@ struct GroupDetailView: View {
                     .font(.subheadline)
                     .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
                 if !node.post.episodeTitle.isEmpty {
-                    Label(node.post.episodeTitle, systemImage: "play.circle")
-                        .font(.footnote)
-                        .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
-                        .onTapGesture {
-                            NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
-                                                                       data: [NavigationManager.episodeUuidKey: node.post.episodeUuid,
-                                                                              NavigationManager.podcastKey: node.post.podcastUuid])
-                        }
+                    Button {
+                        NavigationManager.sharedManager.navigateTo(NavigationManager.episodePageKey,
+                                                                   data: [NavigationManager.episodeUuidKey: node.post.episodeUuid,
+                                                                          NavigationManager.podcastKey: node.post.podcastUuid])
+                    } label: {
+                        Label(node.post.episodeTitle, systemImage: "play.circle")
+                            .font(.footnote)
+                            .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                    }
+                    .buttonStyle(.plain)
                 }
                 if node.post.listId > 0, !node.post.listTitle.isEmpty {
-                    Label(node.post.listTitle, systemImage: "list.bullet")
-                        .font(.footnote)
-                        .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
-                        .onTapGesture {
-                            SocialCoordinator.openSharedList(id: node.post.listId)
-                        }
+                    Button {
+                        SocialCoordinator.openSharedList(id: node.post.listId)
+                    } label: {
+                        Label(node.post.listTitle, systemImage: "list.bullet")
+                            .font(.footnote)
+                            .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 

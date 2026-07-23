@@ -47,10 +47,12 @@ enum PlaylistQueryValidator {
 
         // The exact `.episodeCount` shape custom playlists execute at runtime
         // (smart count fragment with the rule group swapped for the user fragment).
+        // The newline before the closing paren terminates a trailing `--` comment
+        // so it cannot swallow the paren; the runtime wrap does the same.
         let countLiteral = PlaylistQueryBuilder.smartCountFragment(
             shouldShowArchived: false,
             allEpisodesCount: false,
-            whereFragment: " AND (\(sql: trimmed))"
+            whereFragment: " AND (\(sql: trimmed)\n)"
         )
 
         do {
@@ -120,13 +122,17 @@ enum PlaylistQueryValidator {
     }
 
     /// True when the fragment contains a statement separator outside of a
-    /// single-quoted SQL string literal or SQL comment. Malformed quoted strings
+    /// single-quoted SQL string literal, a quoted identifier (`"…"`, `` `…` ``,
+    /// `[…]`), or a SQL comment. Malformed quoted strings, quoted identifiers,
     /// and block comments also return true so the runtime re-check fails closed
     /// when a stored fragment bypassed save-time statement preparation.
     static func containsStatementSeparator(_ fragment: String) -> Bool {
         enum State {
             case sql
             case singleQuotedString
+            case doubleQuotedIdentifier
+            case backtickIdentifier
+            case bracketIdentifier
             case lineComment
             case blockComment
         }
@@ -144,6 +150,12 @@ enum PlaylistQueryValidator {
                 switch (character, nextCharacter) {
                 case ("'", _):
                     state = .singleQuotedString
+                case ("\"", _):
+                    state = .doubleQuotedIdentifier
+                case ("`", _):
+                    state = .backtickIdentifier
+                case ("[", _):
+                    state = .bracketIdentifier
                 case ("-", "-"):
                     state = .lineComment
                     index += 1
@@ -163,8 +175,31 @@ enum PlaylistQueryValidator {
                         state = .sql
                     }
                 }
+            case .doubleQuotedIdentifier:
+                if character == "\"" {
+                    if nextCharacter == "\"" {
+                        index += 1
+                    } else {
+                        state = .sql
+                    }
+                }
+            case .backtickIdentifier:
+                if character == "`" {
+                    if nextCharacter == "`" {
+                        index += 1
+                    } else {
+                        state = .sql
+                    }
+                }
+            case .bracketIdentifier:
+                if character == "]" {
+                    state = .sql
+                }
             case .lineComment:
-                if character == "\n" || character == "\r" {
+                // SQLite ends `--` comments only at '\n' (or end of input); a lone
+                // '\r' is comment text, so treating it as a terminator would desync
+                // the scanner from what SQLite actually parses.
+                if character == "\n" {
                     state = .sql
                 }
             case .blockComment:
@@ -178,7 +213,7 @@ enum PlaylistQueryValidator {
         }
 
         switch state {
-        case .singleQuotedString, .blockComment:
+        case .singleQuotedString, .doubleQuotedIdentifier, .backtickIdentifier, .bracketIdentifier, .blockComment:
             return true
         case .sql, .lineComment:
             return false

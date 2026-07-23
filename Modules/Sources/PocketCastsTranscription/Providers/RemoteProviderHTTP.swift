@@ -88,7 +88,7 @@ enum RemoteProviderHTTP {
 
     static func bodyExcerpt(_ body: Data?) -> String {
         guard let body, !body.isEmpty, let text = String(data: body, encoding: .utf8) else { return "no response body" }
-        bodyExcerpt(text)
+        return bodyExcerpt(text)
     }
 
     /// Applies the same bounded excerpt policy to provider errors decoded from

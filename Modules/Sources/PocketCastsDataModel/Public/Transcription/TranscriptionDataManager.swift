@@ -88,23 +88,35 @@ public struct TranscriptionDataManager: Sendable {
         return dbQueue.fetchAll(request)
     }
 
+    /// UUID batch size for `existingEpisodeUuids`: each UUID binds one SQL
+    /// variable and SQLite caps variables per statement (999 on older builds),
+    /// so the `IN (...)` lookups run in batches that stay well under the limit.
+    static let episodeUuidLookupChunkSize = 500
+
     /// Resolves a batch of transcription episode identifiers against both episode
-    /// tables. Keeping the two typed selects inside one database read bounds the
-    /// work to the two episode corpora instead of issuing one read per record.
+    /// tables. Keeping the typed selects inside one database read bounds the
+    /// work to the two episode corpora instead of issuing one read per record;
+    /// the lookups are chunked so no statement exceeds SQLite's variable limit.
     public func existingEpisodeUuids(_ uuids: [String]) -> Set<String> {
         let uuids = Array(Set(uuids))
         guard !uuids.isEmpty else { return [] }
 
         return dbQueue.read { db in
-            let podcastEpisodeUuids = try Episode
-                .filter(uuids.contains(Episode.Columns.uuid))
-                .select(Episode.Columns.uuid, as: String.self)
-                .fetchAll(db)
-            let userEpisodeUuids = try UserEpisode
-                .filter(uuids.contains(UserEpisode.Columns.uuid))
-                .select(UserEpisode.Columns.uuid, as: String.self)
-                .fetchAll(db)
-            return Set(podcastEpisodeUuids).union(userEpisodeUuids)
+            var existing = Set<String>()
+            for chunkStart in stride(from: 0, to: uuids.count, by: Self.episodeUuidLookupChunkSize) {
+                let chunk = Array(uuids[chunkStart ..< min(chunkStart + Self.episodeUuidLookupChunkSize, uuids.count)])
+                let podcastEpisodeUuids = try Episode
+                    .filter(chunk.contains(Episode.Columns.uuid))
+                    .select(Episode.Columns.uuid, as: String.self)
+                    .fetchAll(db)
+                let userEpisodeUuids = try UserEpisode
+                    .filter(chunk.contains(UserEpisode.Columns.uuid))
+                    .select(UserEpisode.Columns.uuid, as: String.self)
+                    .fetchAll(db)
+                existing.formUnion(podcastEpisodeUuids)
+                existing.formUnion(userEpisodeUuids)
+            }
+            return existing
         } ?? []
     }
 

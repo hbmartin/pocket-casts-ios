@@ -74,6 +74,11 @@ final class EpisodeReactionsViewModel: ObservableObject {
     @Published private(set) var reactions = EpisodeReactions(counts: [:], yourReaction: nil)
     private var loaded = false
     private var isUpdating = false
+    /// The last server-confirmed state — the revert target when a write and
+    /// its recovery fetch both fail.
+    private var confirmedReactions = EpisodeReactions(counts: [:], yourReaction: nil)
+    private var pendingKind: ReactionKind?
+    private var hasPendingWrite = false
     private let fetchReactions: FetchReactions
     private let setReaction: SetReaction
 
@@ -89,6 +94,7 @@ final class EpisodeReactionsViewModel: ObservableObject {
         self.setReaction = setReaction
         if let fixture {
             reactions = fixture
+            confirmedReactions = fixture
             loaded = true
         }
     }
@@ -97,17 +103,18 @@ final class EpisodeReactionsViewModel: ObservableObject {
         guard !loaded else { return }
         if let fetched = await fetchReactions(episodeUuid) {
             reactions = fetched
+            confirmedReactions = fetched
         }
         loaded = true
     }
 
     /// Tap semantics: same emoji again clears; a different one switches.
+    /// A tap while a mutation is in flight isn't dropped: the latest intent is
+    /// remembered and written once the in-flight mutation completes (the
+    /// single-writer pattern of SocialNotificationSettingsViewModel).
     func tap(_ kind: ReactionKind) async {
-        guard canReact, !isUpdating else { return }
-        isUpdating = true
-        defer { isUpdating = false }
+        guard canReact else { return }
 
-        let previousReactions = reactions
         let newKind: ReactionKind? = reactions.yourReaction == kind ? nil : kind
 
         // Optimistic local update; the server row is the source of truth.
@@ -122,9 +129,34 @@ final class EpisodeReactionsViewModel: ObservableObject {
         reactions = EpisodeReactions(counts: counts, yourReaction: newKind)
 
         Analytics.track(.socialReactionSet)
-        let ok = await setReaction(episodeUuid, newKind)
-        if !ok {
-            reactions = await fetchReactions(episodeUuid) ?? previousReactions
+        pendingKind = newKind
+        hasPendingWrite = true
+        guard !isUpdating else { return }
+        await persistPendingReaction()
+    }
+
+    /// Serializes reaction writes: one writer in flight, and any newer desired
+    /// kind queued mid-write is sent immediately after it.
+    private func persistPendingReaction() async {
+        isUpdating = true
+        defer { isUpdating = false }
+
+        while hasPendingWrite {
+            let requestedKind = pendingKind
+            hasPendingWrite = false
+
+            if await setReaction(episodeUuid, requestedKind) {
+                if !hasPendingWrite {
+                    confirmedReactions = reactions
+                }
+                continue
+            }
+            // A newer intent supersedes the failed write; otherwise resync.
+            guard !hasPendingWrite else { continue }
+            let refreshed = await fetchReactions(episodeUuid)
+            guard !hasPendingWrite else { continue }
+            reactions = refreshed ?? confirmedReactions
+            confirmedReactions = reactions
         }
     }
 }

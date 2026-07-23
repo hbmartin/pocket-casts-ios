@@ -25,6 +25,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
         autoreleasepool {
             if isCancelled {
                 cleanupAfterCancel()
+                finish(.failed)
 
                 return
             }
@@ -39,7 +40,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
             if refreshResult == .failed || refreshResult == .cancelled {
                 FileLog.shared.addMessage("Refresh \(refreshResult == .failed ? "failed" : "was cancelled")")
                 ServerNotificationsHelper.shared.firePodcastRefreshFailed()
-                completionHandler?(.failed)
+                finish(.failed)
                 return
             }
 
@@ -48,6 +49,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
             if isCancelled {
                 cleanupAfterCancel()
+                finish(.failed)
 
                 return
             }
@@ -72,10 +74,10 @@ class RefreshOperation: Operation, @unchecked Sendable {
                 // we use the sync task as the main indication of whether the sync has failed
                 let syncResult = syncTask.status
                 if syncResult == .failed || syncResult == .cancelled {
-                    completionHandler?(.failed)
+                    finish(.failed)
                 } else {
                     // however we use the refresh to indicate to iOS whether we found new stuff or not
-                    completionHandler?(refreshResult == .successNewData ? .newData : .noData)
+                    finish(refreshResult == .successNewData ? .newData : .noData)
 
                     FileLog.shared.addMessage("Sync succeeded")
 
@@ -83,7 +85,7 @@ class RefreshOperation: Operation, @unchecked Sendable {
                     ServerConfig.shared.syncDelegate?.playlistChanged()
                 }
             } else { // no sync required, we're done
-                completionHandler?(refreshResult == .successNewData ? .newData : .noData)
+                finish(refreshResult == .successNewData ? .newData : .noData)
             }
 
             ServerConfig.shared.syncDelegate?.applyAutoArchivingToAllPodcasts()
@@ -164,6 +166,14 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
     private func cleanupAfterCancel() {
         apiQueue.cancelAllOperations()
+    }
+
+    /// Reports the result and drops the handler so every exit path — including
+    /// cancellation — resolves the caller's completion exactly once (callers
+    /// wrap it in continuations that must never leak).
+    private func finish(_ result: RefreshFetchResult) {
+        completionHandler?(result)
+        completionHandler = nil
     }
 
     private func processAutoAddUpNextCandidates() {

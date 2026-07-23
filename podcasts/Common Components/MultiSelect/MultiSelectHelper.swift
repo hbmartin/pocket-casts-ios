@@ -77,8 +77,14 @@ class MultiSelectHelper {
         )
         alert.addAction(UIAlertAction(title: L10n.delete, style: .destructive) { _ in
             Task.detached {
+                var failedDeletes = 0
                 for episode in selectedEpisodes {
-                    UserEpisodeManager.deleteFromEverywhere(userEpisode: episode)
+                    if await !UserEpisodeManager.deleteFromEverywhere(userEpisode: episode) {
+                        failedDeletes += 1
+                    }
+                }
+                if failedDeletes > 0 {
+                    FileLog.shared.addMessage("MultiSelect delete: \(failedDeletes) of \(selectedEpisodes.count) upload deletes failed; files remain remotely and will retry on next sync")
                 }
                 await actionDelegate.multiSelectActionCompleted()
             }

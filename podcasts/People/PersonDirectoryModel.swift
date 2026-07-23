@@ -63,6 +63,10 @@ final class PersonDirectoryModel: ObservableObject {
     private let existingEpisodeUuidsProvider: @Sendable ([String]) async -> Set<String>
     private let directoryShownTracker: @MainActor @Sendable (Int) -> Void
     private var loadTask: Task<Void, Never>?
+    /// Gates load() to once per model lifetime. Trade-off: a speaker rename
+    /// elsewhere leaves this screen stale until it's re-pushed — no rename
+    /// notification exists to observe (SpeakerRenameView signals only its
+    /// presenter via onSaved).
     private var hasStartedLoading = false
 
     init(recordsProvider: @escaping @Sendable () async -> [EpisodeTranscriptionRecord] = {

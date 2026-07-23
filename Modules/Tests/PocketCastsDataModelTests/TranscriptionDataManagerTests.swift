@@ -154,6 +154,28 @@ final class TranscriptionDataManagerTests: XCTestCase {
         XCTAssertTrue(dataManager.transcriptions.existingEpisodeUuids([]).isEmpty)
     }
 
+    func testExistingEpisodeUuidsSpansMultipleLookupChunks() {
+        // More matching episodes than one lookup chunk holds, so matches are
+        // guaranteed to land in more than one IN(...) batch and the chunked
+        // results must be unioned rather than any single batch returned.
+        let episodeCount = TranscriptionDataManager.episodeUuidLookupChunkSize + 100
+        let episodes = (0 ..< episodeCount).map { index -> Episode in
+            var episode = Episode()
+            episode.uuid = "episode-\(index)"
+            return episode
+        }
+        dataManager.bulkSave(episodes: episodes)
+        var userEpisode = UserEpisode()
+        userEpisode.uuid = "user-episode"
+        dataManager.save(episode: userEpisode)
+
+        let queried = episodes.map(\.uuid) + ["user-episode"] + (0 ..< 100).map { "missing-\($0)" }
+
+        let existing = dataManager.transcriptions.existingEpisodeUuids(queried)
+
+        XCTAssertEqual(existing, Set(episodes.map(\.uuid) + ["user-episode"]))
+    }
+
     // MARK: - Delete
 
     func testDeleteRemovesOnlyTheGivenRecord() {

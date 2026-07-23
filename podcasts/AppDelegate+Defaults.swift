@@ -8,37 +8,39 @@ extension AppDelegate {
         let defaults = UserDefaults.standard
         let dataManager = DataManager.sharedManager
 
-        // Check if protected data is available before running migrations that touch keychain
-        // This prevents the v5Run migration from incorrectly clearing tokens when the app
-        // launches in the background before the device has been unlocked after a reboot.
+        // Check if protected data is available before running any migrations. Before the
+        // device is first unlocked after a reboot the keychain is unreadable and the
+        // UserDefaults completion markers can read false, so a background launch could
+        // clear tokens (v5Run) or re-run completed migrations and reset user settings.
         // This runs off-main during launch; bridge the UIKit read
         let protectedDataAvailable = if Thread.isMainThread {
             MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable }
         } else {
             DispatchQueue.main.sync { MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable } }
         }
-        if protectedDataAvailable {
-            performUpdateIfRequired(updateKey: "v5Run") {
-                // these are considered defaults for a new app install
-                SyncManager.clearTokensFromKeyChain()
-                FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run clearTokensFromKeyChain")
-                ServerSettings.setSkipBackTime(10, syncChange: false)
-                ServerSettings.setSkipForwardTime(45, syncChange: false)
+        guard protectedDataAvailable else {
+            // No markers are set here, so every deferred migration (v5Run included)
+            // remains pending and retries on the next launch after first unlock.
+            FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
+            return
+        }
 
-                Settings.setShouldDeleteWhenPlayed(true)
-                Settings.setHomeFolderSortOrder(order: .dateAddedNewestToOldest)
-                Settings.setMobileDataAllowed(true)
-                Settings.shouldShowInitialOnboardingFlow = true
-                Settings.autoplay = true
+        performUpdateIfRequired(updateKey: "v5Run") {
+            // these are considered defaults for a new app install
+            SyncManager.clearTokensFromKeyChain()
+            FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run clearTokensFromKeyChain")
+            ServerSettings.setSkipBackTime(10, syncChange: false)
+            ServerSettings.setSkipForwardTime(45, syncChange: false)
 
-                // Disable dark up next theme for new users
-                Settings.darkUpNextTheme = false
-                Settings.setAutoDownloadOnFollow(true)
-            }
-        } else {
-            // Do not call performUpdateIfRequired: v5Run must remain pending so it
-            // retries after first unlock. Unrelated defaults migrations still run.
-            FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run deferred - protected data not available")
+            Settings.setShouldDeleteWhenPlayed(true)
+            Settings.setHomeFolderSortOrder(order: .dateAddedNewestToOldest)
+            Settings.setMobileDataAllowed(true)
+            Settings.shouldShowInitialOnboardingFlow = true
+            Settings.autoplay = true
+
+            // Disable dark up next theme for new users
+            Settings.darkUpNextTheme = false
+            Settings.setAutoDownloadOnFollow(true)
         }
 
         performUpdateIfRequired(updateKey: "v6Run") {

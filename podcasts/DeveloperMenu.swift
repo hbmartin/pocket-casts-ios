@@ -48,11 +48,12 @@ struct DeveloperMenu: View {
                     Text("Export Bundle")
                 })
                 .fileExporter(isPresented: $showingExporter, document: PCBundleDoc()) { result in
+                    // Match the import-side sanitization: never log the selected destination
                     switch result {
-                    case .success(let url):
-                        FileLog.shared.addMessage("DeveloperMenu: saved to \(url)")
-                    case .failure(let error):
-                        FileLog.shared.addMessage("DeveloperMenu: failed to export pcasts: \(error)")
+                    case .success:
+                        FileLog.shared.addMessage("DeveloperMenu: exported bundle")
+                    case .failure:
+                        FileLog.shared.addMessage("DeveloperMenu: failed to export bundle")
                     }
                 }
                 Button(role: .destructive, action: {

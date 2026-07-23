@@ -63,4 +63,22 @@ final class EpisodeDurationCorrectorTests: XCTestCase {
         XCTAssertFalse(cooldownAdmission)
         XCTAssertTrue(afterCooldownAdmission)
     }
+
+    func testProbeCoordinatorBoundsFinishedEntryTracking() async {
+        let coordinator = EpisodeDurationProbeCoordinator(cooldown: 60, maxTrackedEpisodes: 2)
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        for (offset, uuid) in ["oldest", "middle", "newest"].enumerated() {
+            let now = start.addingTimeInterval(TimeInterval(offset))
+            let admitted = await coordinator.begin(episodeUuid: uuid, now: now)
+            XCTAssertTrue(admitted)
+            await coordinator.finish(episodeUuid: uuid, now: now)
+        }
+
+        let evictedAdmission = await coordinator.begin(episodeUuid: "oldest", now: start.addingTimeInterval(3))
+        XCTAssertTrue(evictedAdmission, "the evicted oldest entry loses its cooldown, keeping tracking bounded")
+
+        let retainedAdmission = await coordinator.begin(episodeUuid: "newest", now: start.addingTimeInterval(3))
+        XCTAssertFalse(retainedAdmission, "entries within the cap keep enforcing their cooldown")
+    }
 }

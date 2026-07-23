@@ -72,17 +72,27 @@ current_counts() {
       # counted the required justification comment beside every conformance,
       # allowing comment edits to mask a newly added declaration.
       while IFS= read -r -d '' f; do
-        count="$({
-          awk '
-            BEGIN { in_block = 0; in_string = 0 }
+        # An awk failure (unreadable file, I/O error) must fail the check loudly;
+        # swallowing it would report the file's count as 0 — an "improvement".
+        if ! count="$(awk '
+            BEGIN { in_block = 0; in_multiline = 0 }
             {
               code = ""
               escaped = 0
+              # Single-line strings cannot span lines; only block comments and
+              # multiline (""") string literals carry state across lines.
+              in_string = 0
               for (i = 1; i <= length($0); i++) {
                 c = substr($0, i, 1)
                 n = substr($0, i + 1, 1)
                 if (in_block) {
                   if (c == "*" && n == "/") { in_block = 0; i++ }
+                  continue
+                }
+                if (in_multiline) {
+                  if (escaped) { escaped = 0; continue }
+                  if (c == "\\") { escaped = 1; continue }
+                  if (c == "\"" && n == "\"" && substr($0, i + 2, 1) == "\"") { in_multiline = 0; i += 2 }
                   continue
                 }
                 if (in_string) {
@@ -93,6 +103,7 @@ current_counts() {
                 }
                 if (c == "/" && n == "/") { break }
                 if (c == "/" && n == "*") { in_block = 1; i++; continue }
+                if (c == "\"" && n == "\"" && substr($0, i + 2, 1) == "\"") { in_multiline = 1; i += 2; continue }
                 if (c == "\"") { in_string = 1; continue }
                 code = code c
               }
@@ -103,8 +114,10 @@ current_counts() {
               }
             }
             END { print count + 0 }
-          ' "$repo_root/$f"
-        } 2>/dev/null)"
+          ' "$repo_root/$f")"; then
+          echo "error: counting $name in $f failed (awk exited nonzero)" >&2
+          exit 1
+        fi
         if (( count > 0 )); then
           printf '%s: %d\n' "$f" "$count"
         fi

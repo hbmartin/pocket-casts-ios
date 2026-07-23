@@ -18,6 +18,7 @@ extension NetworkUtils {
         // picker's main-actor actions.
         let allowed = UncheckedSendable(allowed)
         let disallowed = UncheckedSendable(disallowed)
+        let isOffline = !isConnected()
         Task { @MainActor in
             let optionsPicker = OptionsPicker()
             let downloadAction = OptionAction(label: L10n.podcastDownloadNow, icon: nil) {
@@ -28,7 +29,12 @@ extension NetworkUtils {
             }
             laterAction.outline = true
 
-            optionsPicker.addAttributedDescriptiveActions(title: L10n.notOnWifi, message: L10n.downloadDataWarningWithSettingsLink("thcast://settings/storage-and-data"), icon: "option-alert", actions: [downloadAction, laterAction])
+            if isOffline {
+                // No connection at all: the "Not on Wi-Fi" cellular-data warning would be misleading
+                optionsPicker.addDescriptiveActions(title: L10n.playerErrorShortNoConnection, message: L10n.downloadErrorNoInternet, icon: "option-alert", actions: [downloadAction, laterAction])
+            } else {
+                optionsPicker.addAttributedDescriptiveActions(title: L10n.notOnWifi, message: L10n.downloadDataWarningWithSettingsLink("thcast://settings/storage-and-data"), icon: "option-alert", actions: [downloadAction, laterAction])
+            }
 
             optionsPicker.setNoActionCallback {
                 disallowed.value?()
@@ -48,12 +54,18 @@ extension NetworkUtils {
         // See downloadEpisodeRequested: main-actor prompt, callbacks handed over wholesale
         let allowed = UncheckedSendable(allowed)
         let disallowed = UncheckedSendable(disallowed)
+        let isOffline = !isConnected()
         Task { @MainActor in
             let optionsPicker = OptionsPicker()
             let streamAction = OptionAction(label: L10n.podcastStreamConfirmation, icon: nil) {
                 allowed.value?()
             }
-            optionsPicker.addAttributedDescriptiveActions(title: L10n.notOnWifi, message: L10n.podcastStreamDataWarningWithSettings("thcast://settings/storage-and-data"), icon: "option-alert", actions: [streamAction])
+            if isOffline {
+                // No connection at all: the "Not on Wi-Fi" cellular-data warning would be misleading
+                optionsPicker.addDescriptiveActions(title: L10n.playerErrorShortNoConnection, message: L10n.playerErrorInternetConnection, icon: "option-alert", actions: [streamAction])
+            } else {
+                optionsPicker.addAttributedDescriptiveActions(title: L10n.notOnWifi, message: L10n.podcastStreamDataWarningWithSettings("thcast://settings/storage-and-data"), icon: "option-alert", actions: [streamAction])
+            }
 
             optionsPicker.setNoActionCallback {
                 disallowed.value?()

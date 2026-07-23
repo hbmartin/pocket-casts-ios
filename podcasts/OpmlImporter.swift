@@ -113,8 +113,8 @@ nonisolated final class OpmlImportState: Sendable {
         }
     }
 
-    func recordChunkFailure() {
-        state.withLock { $0.failedCount += 1 }
+    func recordChunkFailure(feedCount: Int = 1) {
+        state.withLock { $0.failedCount += feedCount }
     }
 
     var failureCount: Int {
@@ -244,7 +244,7 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
             serverCallDispatchGroup.enter()
 
             MainServerHandler.shared.sendOpmlChunk(feedUrls: chunk) { response in
-                self.processImportPodcastsResponse(response: response, dispatchGroup: serverCallDispatchGroup)
+                self.processImportPodcastsResponse(response: response, feedCount: chunk.count, dispatchGroup: serverCallDispatchGroup)
             }
 
             _ = serverCallDispatchGroup.wait(timeout: .now() + 2.minutes)
@@ -255,15 +255,17 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
         let serverCallDispatchGroup = DispatchGroup()
         serverCallDispatchGroup.enter()
         MainServerHandler.shared.sendOpmlChunk(pollUuids: pollUuids) { response in
-            self.processImportPodcastsResponse(response: response, dispatchGroup: serverCallDispatchGroup)
+            self.processImportPodcastsResponse(response: response, feedCount: pollUuids.count, dispatchGroup: serverCallDispatchGroup)
         }
         _ = serverCallDispatchGroup.wait(timeout: .now() + 2.minutes)
     }
 
-    private func processImportPodcastsResponse(response: ImportOpmlResponse?, dispatchGroup: DispatchGroup) {
+    private func processImportPodcastsResponse(response: ImportOpmlResponse?, feedCount: Int, dispatchGroup: DispatchGroup) {
         guard let uploadResponse = response, uploadResponse.success() else {
-            // since there might be multiple chunks, if this one fails, just go to the next one
-            importState.recordChunkFailure()
+            // since there might be multiple chunks, if this one fails, just go to the next one.
+            // A chunk carries many feeds, so count each of them as failed to keep the failure
+            // total consistent with the per-podcast counting in updateProgress(failed:).
+            importState.recordChunkFailure(feedCount: feedCount)
             dispatchGroup.leave()
             return
         }

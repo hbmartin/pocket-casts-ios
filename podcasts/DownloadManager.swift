@@ -27,8 +27,8 @@ nonisolated extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCach
 
 // `DownloadManager.shared` is a process-wide singleton already shared across
 // threads by design — its `URLSessionDelegate`/`URLSessionDownloadDelegate` callbacks run on the
-// session's background delegate queue. `@unchecked` because the compiler can't verify the ad-hoc
-// synchronization of its mutable caches (which use `ThreadSafeDictionary`). Revisit when isolation
+// session's background delegate queue, and the compiler can't verify the ad-hoc
+// synchronization of its mutable caches (which use `ThreadSafeDictionary`).
 // @unchecked Sendable: delegate state uses locks/thread-safe caches pending formal isolation.
 nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
@@ -341,7 +341,10 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
 
         func complete(error: (any Error)? = nil) {
             state.withLock {
-                $0.error = error
+                // a nil error marks success only; it must not clear a previously recorded failure
+                if let error {
+                    $0.error = error
+                }
                 $0.completed = true
             }
         }
