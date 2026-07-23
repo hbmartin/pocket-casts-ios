@@ -23,7 +23,10 @@ on:
         type: string
 
 concurrency:
-  group: ios-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Keep same-repository pull_request runs separate from pull_request_target
+  # label events. Otherwise an automated label can cancel the trusted PR build,
+  # then replace it with a target run whose same-repository jobs are all skipped.
+  group: ios-ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
 
 permissions:

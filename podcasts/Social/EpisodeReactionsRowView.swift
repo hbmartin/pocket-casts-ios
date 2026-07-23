@@ -143,12 +143,16 @@ final class EpisodeReactionsViewModel: ObservableObject {
 
         while hasPendingWrite {
             let requestedKind = pendingKind
+            // Snapshot the optimistic state represented by this request before
+            // a newer tap can mutate `reactions` while the network call suspends.
+            let requestedReactions = reactions
             hasPendingWrite = false
 
             if await setReaction(episodeUuid, requestedKind) {
-                if !hasPendingWrite {
-                    confirmedReactions = reactions
-                }
+                // Every successful write advances the recovery point, even when a
+                // newer intent is already queued. A later write + refresh failure
+                // must fall back to what the server most recently confirmed.
+                confirmedReactions = requestedReactions
                 continue
             }
             // A newer intent supersedes the failed write; otherwise resync.

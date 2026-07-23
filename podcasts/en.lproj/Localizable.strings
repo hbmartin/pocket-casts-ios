@@ -79,6 +79,9 @@
 /* Title informing the user that their account has been successfully created */
 "account_created" = "Account Created";
 
+/* Error shown after account registration succeeds but the required sign-in request fails. */
+"account_created_sign_in_failed" = "Account created, but sign-in couldn't be completed. Try again.";
+
 /* Title for the final screen in the account creation flow. */
 "account_creation_complete" = "Complete Account";
 

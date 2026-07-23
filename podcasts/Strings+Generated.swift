@@ -102,6 +102,8 @@ nonisolated internal enum L10n {
   internal static var accountCompletionNudgeMsg: String { return L10n.tr("Localizable", "account_completion_nudge_msg", fallback: "Finalize your payment to finish upgrading your account.") }
   /// Title informing the user that their account has been successfully created
   internal static var accountCreated: String { return L10n.tr("Localizable", "account_created", fallback: "Account Created") }
+  /// Error shown after account registration succeeds but the required sign-in request fails.
+  internal static var accountCreatedSignInFailed: String { return L10n.tr("Localizable", "account_created_sign_in_failed", fallback: "Account created, but sign-in couldn't be completed. Try again.") }
   /// Title for the final screen in the account creation flow.
   internal static var accountCreationComplete: String { return L10n.tr("Localizable", "account_creation_complete", fallback: "Complete Account") }
   /// Prompt to allow the user to delete their account.

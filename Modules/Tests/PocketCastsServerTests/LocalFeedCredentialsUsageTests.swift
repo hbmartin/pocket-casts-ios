@@ -12,6 +12,8 @@ import Testing
 extension GlobalSeamSerializedTests {
 @Suite("LocalFeedCredentials usage", .serialized)
 struct LocalFeedCredentialsUsageTests {
+    private let credentialedFeedURL = "https://user:newpass@example.com/feed.xml" // NOSONAR - fake test credential
+
     private func makeDataManager() -> DataManager {
         DataManager(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite"))))
     }
@@ -50,7 +52,7 @@ struct LocalFeedCredentialsUsageTests {
 
         // The dedup match strips userinfo, so this hits the existing row.
         let succeeded = Mutex<Bool?>(nil)
-        ServerPodcastManager.shared.addLocalFeed(feedURL: "https://user:newpass@example.com/feed.xml", subscribe: true) { success in
+        ServerPodcastManager.shared.addLocalFeed(feedURL: credentialedFeedURL, subscribe: true) { success in
             succeeded.withLock { $0 = success }
         }
 
@@ -79,7 +81,7 @@ struct LocalFeedCredentialsUsageTests {
         )
 
         let succeeded = Mutex<Bool?>(nil)
-        ServerPodcastManager.shared.addLocalFeed(feedURL: "https://user:newpass@example.com/feed.xml", subscribe: true) { success in
+        ServerPodcastManager.shared.addLocalFeed(feedURL: credentialedFeedURL, subscribe: true) { success in
             succeeded.withLock { $0 = success }
         }
 
@@ -108,7 +110,7 @@ struct LocalFeedCredentialsUsageTests {
         )
 
         let succeeded = Mutex<Bool?>(nil)
-        ServerPodcastManager.shared.addLocalFeed(feedURL: "https://user:newpass@example.com/feed.xml", subscribe: true) { success in
+        ServerPodcastManager.shared.addLocalFeed(feedURL: credentialedFeedURL, subscribe: true) { success in
             succeeded.withLock { $0 = success }
         }
 

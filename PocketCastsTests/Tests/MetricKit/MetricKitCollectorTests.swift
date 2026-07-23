@@ -63,7 +63,7 @@ final class MetricKitCollectorTests: XCTestCase {
         // written an hour later — pruning must still evict the legacy file first.
         let legacy = "metrics-20260101-090000-000-ABCD.json"
         let newer = "metrics-20260101-010000-000-00000000-0000-0000-0000-000000000001.json"
-        let tokyo = try XCTUnwrap(TimeZone(identifier: "Asia/Tokyo"))
+        let legacyWriteDate = try date("2026-01-01T00:00:00Z")
 
         XCTAssertLessThan(newer, legacy)
         XCTAssertEqual(
@@ -71,7 +71,7 @@ final class MetricKitCollectorTests: XCTestCase {
                 [newer, legacy],
                 prefix: "metrics-",
                 keepingNewest: 1,
-                legacyTimeZone: tokyo
+                legacyModificationDates: [legacy: legacyWriteDate]
             ),
             [legacy]
         )
@@ -85,6 +85,19 @@ final class MetricKitCollectorTests: XCTestCase {
                 keepingNewest: 1
             ),
             ["metrics-a-unparseable.json"]
+        )
+    }
+
+    func testPruningTreatsUnparseablePayloadsAsOlderThanTimestampedPayloads() {
+        let current = "metrics-20260101-010000-000-00000000-0000-0000-0000-000000000001.json"
+
+        XCTAssertEqual(
+            MetricKitCollector.payloadNamesToPrune(
+                [current, "metrics-unparseable.json"],
+                prefix: "metrics-",
+                keepingNewest: 1
+            ),
+            ["metrics-unparseable.json"]
         )
     }
 

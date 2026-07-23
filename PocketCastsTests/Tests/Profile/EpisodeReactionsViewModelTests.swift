@@ -48,6 +48,34 @@ final class EpisodeReactionsViewModelTests: XCTestCase {
 
         XCTAssertEqual(model.reactions, previous)
     }
+
+    func testLaterFailureFallsBackToSuccessfulIntermediateWriteWhenRefreshFails() async {
+        let gate = ReactionRequestGate()
+        let model = EpisodeReactionsViewModel(
+            episodeUuid: "episode",
+            canReact: true,
+            fixture: EpisodeReactions(counts: [:], yourReaction: nil),
+            fetchReactions: { _ in nil },
+            setReaction: { _, kind in await gate.waitForRelease(recording: kind) }
+        )
+
+        let firstTap = Task { await model.tap(.heart) }
+        await gate.waitUntilEntered(count: 1)
+        await model.tap(.laugh)
+
+        await gate.release(returning: true)
+        await gate.waitUntilEntered(count: 2)
+        await gate.release(returning: false)
+        await firstTap.value
+
+        let requestedKinds = await gate.requestedKinds
+        XCTAssertEqual(requestedKinds, [.heart, .laugh])
+        XCTAssertEqual(
+            model.reactions,
+            EpisodeReactions(counts: [.heart: 1], yourReaction: .heart),
+            "A failed latest write and refresh must fall back to the last server-confirmed write"
+        )
+    }
 }
 
 private actor ReactionRequestGate {

@@ -27,6 +27,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private var backgroundSignOutListener: BackgroundSignOutListener?
     private(set) var appInstallState: AppLifecycleAnalytics.AppInstallState?
+    var defaultsMigrationRetryObserver: ProtectedDataMigrationRetryObserver?
+    nonisolated let defaultsMigrationQueue = DispatchQueue(label: "au.com.shiftyjelly.podcasts.defaults-migration")
 
     // MARK: - App Lifecycle
 

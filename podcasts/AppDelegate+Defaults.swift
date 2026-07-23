@@ -3,16 +3,43 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
+/// Retains the app-lifetime protected-data observation that retries migrations
+/// when a pre-unlock background launch remains alive through first unlock.
+@MainActor
+final class ProtectedDataMigrationRetryObserver {
+    private let notificationCenter: NotificationCenter
+    private let notificationName: Notification.Name
+    private let handler: @MainActor @Sendable () -> Void
+    private var token: NSObjectProtocol?
+
+    init(
+        notificationCenter: NotificationCenter = .default,
+        notificationName: Notification.Name = UIApplication.protectedDataDidBecomeAvailableNotification,
+        handler: @escaping @MainActor @Sendable () -> Void
+    ) {
+        self.notificationCenter = notificationCenter
+        self.notificationName = notificationName
+        self.handler = handler
+    }
+
+    func start() {
+        guard token == nil else { return }
+        token = notificationCenter.addObserver(forName: notificationName, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.handler()
+            }
+        }
+    }
+}
+
 extension AppDelegate {
     nonisolated func checkDefaults() {
-        let defaults = UserDefaults.standard
-        let dataManager = DataManager.sharedManager
-
         // Check if protected data is available before running any migrations. Before the
         // device is first unlocked after a reboot the keychain is unreadable and the
         // UserDefaults completion markers can read false, so a background launch could
         // clear tokens (v5Run) or re-run completed migrations and reset user settings.
-        // This runs off-main during launch; bridge the UIKit read
+        // This runs off-main during launch; bridge the UIKit read before entering the
+        // serial queue so a future main-thread caller cannot deadlock on main.sync.
         let protectedDataAvailable = if Thread.isMainThread {
             MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable }
         } else {
@@ -20,10 +47,23 @@ extension AppDelegate {
         }
         guard protectedDataAvailable else {
             // No markers are set here, so every deferred migration (v5Run included)
-            // remains pending and retries on the next launch after first unlock.
+            // remains pending. The protected-data observer retries during this process;
+            // a terminated process retries on its next launch after first unlock.
             FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
             return
         }
+
+        // The launch pass and protected-data retry can meet at the unlock boundary.
+        // A dedicated queue serializes marker reads/writes without holding an app lock
+        // across DataManager queries.
+        defaultsMigrationQueue.sync {
+            checkDefaultsSerially()
+        }
+    }
+
+    nonisolated private func checkDefaultsSerially() {
+        let defaults = UserDefaults.standard
+        let dataManager = DataManager.sharedManager
 
         performUpdateIfRequired(updateKey: "v5Run") {
             // these are considered defaults for a new app install
