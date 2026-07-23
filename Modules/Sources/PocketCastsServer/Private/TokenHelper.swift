@@ -164,7 +164,12 @@ final class TokenHelper: Sendable {
         // refresh token with an empty value (it would silently brick future refreshes).
         // Keep the previous token when the response didn't carry one.
         if let refreshedRefreshToken = response?.refreshToken, !refreshedRefreshToken.isEmpty {
-            ServerSettings.setRefreshToken(refreshedRefreshToken)
+            if !ServerSettings.setRefreshToken(refreshedRefreshToken) {
+                // The server rotated the presented token away, so a failed persist leaves a
+                // dead refresh token stored. Nothing can restore it client-side; log loudly
+                // so the eventual forced reauthentication is diagnosable.
+                FileLog.shared.addMessage("TokenHelper: CRITICAL keychain write of rotated refresh token failed; the stored refresh token is now stale and the next refresh will force reauthentication")
+            }
         }
         // C.0-2: persist the expiry hint for the new token; when the server didn't send
         // expires_in this clears any stale hint (the 401 path remains the authority).
@@ -239,10 +244,10 @@ final class TokenHelper: Sendable {
 
     /// §2.4.3 step 2: one-shot upgrade of a password account to refresh-token auth.
     /// Persists the token pair and deletes the stored password ONLY when the server
-    /// returned a non-empty refresh token (server ≥ M1). Otherwise today's behavior is
-    /// kept — the password stays put and migration retries on a later acquire, which
-    /// makes this client release safe to ship before the server flips and tolerant of
-    /// a server rollback.
+    /// returned a non-empty refresh token (server ≥ M1) AND the keychain write of that
+    /// token succeeded. Otherwise today's behavior is kept — the password stays put and
+    /// migration retries on a later acquire, which makes this client release safe to
+    /// ship before the server flips and tolerant of a server rollback.
     func migratePasswordAccountIfPossible(response: AuthenticationResponse) {
         guard FeatureFlag.refreshTokenForPasswordAuth.enabled,
               let refreshToken = response.refreshToken, !refreshToken.isEmpty
@@ -253,7 +258,12 @@ final class TokenHelper: Sendable {
         if let token = response.token, !token.isEmpty {
             ServerSettings.syncingV2Token = token
         }
-        ServerSettings.setRefreshToken(refreshToken)
+        guard ServerSettings.setRefreshToken(refreshToken) else {
+            // A failed keychain write must not delete the password below: it's the only
+            // remaining recoverable credential, so keep it and retry on a later acquire.
+            FileLog.shared.addMessage("TokenHelper: keychain write of refresh token failed during password-account migration; keeping stored password so migration can retry")
+            return
+        }
         ServerSettings.setTokenExpiry(expiresIn: response.expiresIn)
         KeychainHelper.removeKey(ServerConstants.Values.syncingLoginItemName)
         ServerSettings.accountAuthMethod = .password

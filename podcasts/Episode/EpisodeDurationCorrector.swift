@@ -63,11 +63,13 @@ nonisolated enum EpisodeDurationCorrector {
 
 actor EpisodeDurationProbeCoordinator {
     private let cooldown: TimeInterval
+    private let maxTrackedEpisodes: Int
     private var inFlight = Set<String>()
     private var lastFinishedAt = [String: Date]()
 
-    init(cooldown: TimeInterval) {
+    init(cooldown: TimeInterval, maxTrackedEpisodes: Int = 200) {
         self.cooldown = cooldown
+        self.maxTrackedEpisodes = maxTrackedEpisodes
     }
 
     func begin(episodeUuid: String, now: Date = Date()) -> Bool {
@@ -82,5 +84,11 @@ actor EpisodeDurationProbeCoordinator {
     func finish(episodeUuid: String, now: Date = Date()) {
         inFlight.remove(episodeUuid)
         lastFinishedAt[episodeUuid] = now
+        // `lastFinishedAt` otherwise grows by one entry per probed episode per session;
+        // evict the oldest entry once past the cap (it only loses its cooldown early).
+        if lastFinishedAt.count > maxTrackedEpisodes,
+           let oldest = lastFinishedAt.min(by: { $0.value < $1.value }) {
+            lastFinishedAt.removeValue(forKey: oldest.key)
+        }
     }
 }

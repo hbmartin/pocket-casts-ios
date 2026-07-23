@@ -4,6 +4,12 @@ import UIKit
 
 class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
 
+    /// Set when the password change succeeded server-side but the follow-up
+    /// re-authentication (which persists the replacement refresh-token pair) failed.
+    /// While set, the main button retries the re-authentication with this new password —
+    /// re-running the change with the stale current-password field would always fail.
+    private var pendingReauthenticationPassword: String?
+
     @IBOutlet var scrollView: UIScrollView!
 
     @IBOutlet var contentView: ThemeableView! {
@@ -192,7 +198,11 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
         currentField.resignFirstResponder()
         newField.resignFirstResponder()
         confirmField.resignFirstResponder()
-        changePassword()
+        if let newPassword = pendingReauthenticationPassword {
+            retryReauthentication(newPassword: newPassword)
+        } else {
+            changePassword()
+        }
     }
 
     @objc func changePassword() {
@@ -201,21 +211,18 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
             return
         }
 
-        activityIndicatorView.isHidden = false
-        activityIndicatorView.startAnimating()
-        mainButton.setTitle("", for: .normal)
-        contentView.alpha = 0.3
+        setBusy(true)
         ApiServerHandler.shared.changePasswordRequest(currentPassword: currentPassword, newPassword: newPassword, completion: { success in
             DispatchQueue.main.async {
-                self.activityIndicatorView.stopAnimating()
                 if success {
                     Analytics.track(.userPasswordUpdated)
+                    // Busy state stays up: the follow-up re-authentication is part of
+                    // the same operation from the user's point of view.
                     self.completeSuccessfulPasswordChange(newPassword: newPassword)
                 } else {
-                    self.mainButton.setTitle(L10n.confirm, for: .normal)
+                    self.setBusy(false)
                     self.errorView.isHidden = false
                     self.errorLabel.text = L10n.changePasswordError
-                    self.contentView.alpha = 1
                 }
             }
         })
@@ -224,25 +231,37 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     private func completeSuccessfulPasswordChange(newPassword: String) {
         guard FeatureFlag.refreshTokenForPasswordAuth.enabled else {
             AuthenticationHelper.persistPasswordForLegacyAuthenticationIfNeeded(newPassword)
+            setBusy(false)
             showPasswordUpdatedConfirmation()
             return
         }
 
         // user/change_password revokes the current refresh-token family. Reauthenticate
-        // immediately with the new password held only by this task; AuthenticationHelper
-        // rejects the response unless it carries a non-empty replacement refresh token.
+        // immediately with the new password; AuthenticationHelper rejects the response
+        // unless it carries a non-empty replacement refresh token.
+        reauthenticate(newPassword: newPassword)
+    }
+
+    private func retryReauthentication(newPassword: String) {
+        setBusy(true)
+        reauthenticate(newPassword: newPassword)
+    }
+
+    private func reauthenticate(newPassword: String) {
         guard let username = ServerSettings.syncingEmail(), !username.isEmpty else {
-            showReauthenticationFailure()
+            showReauthenticationFailure(newPassword: newPassword)
             return
         }
 
         Task { @MainActor in
             do {
                 _ = try await AuthenticationHelper.validateLogin(username: username, password: newPassword, scope: .mobile)
+                pendingReauthenticationPassword = nil
+                setBusy(false)
                 showPasswordUpdatedConfirmation()
             } catch {
                 FileLog.shared.addMessage("Password changed but in-memory reauthentication failed: \(error)")
-                showReauthenticationFailure()
+                showReauthenticationFailure(newPassword: newPassword)
             }
         }
     }
@@ -255,11 +274,30 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
         navigationController?.pushViewController(updatedVC, animated: true)
     }
 
-    private func showReauthenticationFailure() {
-        mainButton.setTitle(L10n.confirm, for: .normal)
+    private func showReauthenticationFailure(newPassword: String) {
+        pendingReauthenticationPassword = newPassword
+        setBusy(false)
+        mainButton.setTitle(L10n.tryAgain, for: .normal)
         errorView.isHidden = false
         errorLabel.text = L10n.clientErrorTokenDeauth
-        contentView.alpha = 1
+    }
+
+    /// Busy = spinner up, content dimmed, main button blank and untappable — held for
+    /// the whole change+re-auth sequence so a second submit can't be triggered.
+    private func setBusy(_ busy: Bool) {
+        if busy {
+            activityIndicatorView.isHidden = false
+            activityIndicatorView.startAnimating()
+            mainButton.setTitle("", for: .normal)
+            mainButton.isEnabled = false
+            contentView.alpha = 0.3
+        } else {
+            activityIndicatorView.stopAnimating()
+            activityIndicatorView.isHidden = true
+            mainButton.setTitle(L10n.confirm, for: .normal)
+            contentView.alpha = 1
+            updateButtonState()
+        }
     }
 
     // MARK: - UITextField Methods
@@ -317,6 +355,14 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func updateButtonState() {
+        if pendingReauthenticationPassword != nil {
+            // Retry mode: the action re-runs the re-authentication with the captured
+            // new password, so it no longer depends on the fields' contents.
+            mainButton.isEnabled = true
+            mainButton.buttonStyle = .primaryInteractive01
+            return
+        }
+
         mainButton.isEnabled = validFields()
         mainButton.buttonStyle = mainButton.isEnabled ? .primaryInteractive01 : .primaryInteractive01Disabled
     }

@@ -10,7 +10,12 @@ protocol CreateAccountDelegate: AnyObject {
 
 class NewEmailViewController: PCViewController, UITextFieldDelegate {
     weak var delegate: CreateAccountDelegate?
-    private var shouldRetryPostRegistrationSignIn = false
+
+    /// The credentials of the account registration created but sign-in couldn't complete
+    /// for. While set, the main button retries that sign-in with these captured values:
+    /// the text fields may have been edited since and would no longer identify the
+    /// already-created account.
+    private var registeredCredentialsAwaitingSignIn: (username: String, password: String)?
 
     @IBOutlet var scrollView: UIScrollView!
 
@@ -158,12 +163,13 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     @IBAction func nextTapped(_ sender: Any) {
-        guard let email = emailField.text, let password = passwordField.text else { return }
-        if shouldRetryPostRegistrationSignIn {
-            retryPostRegistrationSignIn(email, password: password)
-        } else {
-            startRegister(email, password: password)
+        if let credentials = registeredCredentialsAwaitingSignIn {
+            retryPostRegistrationSignIn(credentials.username, password: credentials.password)
+            return
         }
+
+        guard let email = emailField.text, let password = passwordField.text else { return }
+        startRegister(email, password: password)
     }
 
     @IBAction func toggleHidePassword(_ sender: Any) {
@@ -216,10 +222,10 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
                     } catch {
                         guard !FeatureFlag.refreshTokenForPasswordAuth.enabled else {
                             // The account exists, but without a renewable session it must not
-                            // be presented as signed in. Keep the entered password in memory so
+                            // be presented as signed in. Capture the registered credentials so
                             // the button can retry user/login without repeating registration.
                             FileLog.shared.addMessage("Post-registration sign-in did not produce refresh credentials: \(error)")
-                            self.showPostRegistrationSignInFailure()
+                            self.showPostRegistrationSignInFailure(username: username, password: password)
                             return
                         }
 
@@ -247,21 +253,22 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
                 finishAccountCreation()
             } catch {
                 FileLog.shared.addMessage("Post-registration sign-in retry failed: \(error)")
-                showPostRegistrationSignInFailure()
+                showPostRegistrationSignInFailure(username: username, password: password)
             }
         }
     }
 
-    private func showPostRegistrationSignInFailure() {
-        shouldRetryPostRegistrationSignIn = true
+    private func showPostRegistrationSignInFailure(username: String, password: String) {
+        registeredCredentialsAwaitingSignIn = (username, password)
         contentView.alpha = 1
         activityIndicator.stopAnimating()
-        showErrorMessage(L10n.serverErrorUnknown)
+        // The account exists — say so — but the sign-in it needs did not complete.
+        showErrorMessage("\(L10n.accountCreated). \(L10n.serverErrorUnknown)")
         nextButton.setTitle(L10n.signIn, for: .normal)
     }
 
     private func finishAccountCreation() {
-        shouldRetryPostRegistrationSignIn = false
+        registeredCredentialsAwaitingSignIn = nil
         SyncManager.syncReason = .accountCreated
 
         // Let a delegate decide what to do next
@@ -308,12 +315,10 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
             passwordField.becomeFirstResponder()
         } else {
             textField.resignFirstResponder()
-            let email = emailField.text ?? ""
-            let password = passwordField.text ?? ""
-            if shouldRetryPostRegistrationSignIn {
-                retryPostRegistrationSignIn(email, password: password)
+            if let credentials = registeredCredentialsAwaitingSignIn {
+                retryPostRegistrationSignIn(credentials.username, password: credentials.password)
             } else {
-                startRegister(email, password: password)
+                startRegister(emailField.text ?? "", password: passwordField.text ?? "")
             }
         }
         return true
@@ -347,6 +352,15 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func updateButtonState() {
+        if registeredCredentialsAwaitingSignIn != nil {
+            // Sign-in retry mode uses the captured credentials, so the button stays
+            // enabled no matter what the fields now contain.
+            nextButton.isEnabled = true
+            nextButton.buttonStyle = .primaryInteractive01
+            statusImage.isHidden = !validEmail()
+            return
+        }
+
         nextButton.isEnabled = validEmail() && validPassword()
 
         nextButton.buttonStyle = nextButton.isEnabled ? .primaryInteractive01 : .primaryInteractive01Disabled

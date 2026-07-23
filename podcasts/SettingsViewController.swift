@@ -80,11 +80,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
 
     /// All the possible settings sections
     private let allSections: [[TableRow]] = {
-        #if DEBUG
-            let developerSection: [TableRow] = [.developer, .beta]
-        #else
-            let developerSection: [TableRow] = []
-        #endif
+        // nosemgrep: pocketcasts.developer-settings-must-be-debug-only - TestFlight builds intentionally keep the Developer and Beta Features menus (BetaMenu ships localized strings for beta testers; MainTabBarController grants shake-to-feedback to all non-App-Store builds)
+        let developerSection: [TableRow] = BuildEnvironment.current != .appStore ? [.developer, .beta] : []
 
         return [
             developerSection,

@@ -4,7 +4,7 @@ import PocketCastsUtils
 import UIKit
 
 // Instances are built single-threaded by the chapter parser and
-// then handed over wholesale to the main-actor ChapterManager; all post-hand-off
+// then handed over wholesale to the main-actor ChapterManager.
 // @unchecked Sendable: post-hand-off reads and shouldPlay writes stay on the main actor.
 nonisolated class ChapterInfo: Equatable, @unchecked Sendable {
     var title = ""

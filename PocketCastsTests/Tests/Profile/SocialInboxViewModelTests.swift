@@ -46,6 +46,20 @@ final class SocialInboxViewModelTests: XCTestCase {
         XCTAssertEqual(model.total, 1)
     }
 
+    func testDeleteRestoreNeverInflatesAnUndercountedServerTotal() async {
+        let firstItem = makeItem(id: 1)
+        let secondItem = makeItem(id: 2)
+        let model = SocialInboxViewModel(
+            fixture: SocialInboxPage(items: [firstItem, secondItem], total: 1, unread: 0),
+            deleteInboxItem: { _ in false }
+        )
+
+        await model.delete(at: IndexSet([0, 1]))
+
+        XCTAssertEqual(model.items, [firstItem, secondItem])
+        XCTAssertEqual(model.total, 1)
+    }
+
     func testBadgeChangePostsUpdateMessage() async {
         let previousValue = SocialInboxBadge.unreadCount
         let newValue = previousValue == Int.max ? previousValue - 1 : previousValue + 1

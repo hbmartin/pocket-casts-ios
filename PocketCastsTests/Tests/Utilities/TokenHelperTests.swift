@@ -33,6 +33,24 @@ private final class LockedBox<Value: Sendable>: @unchecked Sendable {
     }
 }
 
+/// An in-memory keychain that rejects writes of the refresh-token key only, modelling a
+/// keychain failure at the exact moment migration tries to persist the new credential.
+private final class RefreshTokenRejectingKeychainStore: KeychainStoring {
+    private let backing = InMemoryKeychainStore()
+
+    @discardableResult
+    func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool {
+        if key == ServerConstants.Values.refreshTokenKey, value != nil {
+            return false
+        }
+        return backing.save(value: value, key: key, accessibility: accessibility)
+    }
+
+    func string(for key: String) throws -> String? {
+        try backing.string(for: key)
+    }
+}
+
 class TokenHelperTests: XCTestCase {
     private var previousKeychainStore: KeychainStoring!
     private let flagMock = FeatureFlagMock()
@@ -459,6 +477,21 @@ class TokenHelperTests: XCTestCase {
         XCTAssertEqual(ServerSettings.syncingV2Token, "access")
         XCTAssertEqual(ServerSettings.accountAuthMethod, .password)
         XCTAssertNotNil(ServerSettings.tokenExpiryDate())
+    }
+
+    func testMigrationKeepsPasswordWhenRefreshTokenPersistFails() throws {
+        flagMock.set(.refreshTokenForPasswordAuth, value: true)
+        KeychainHelper.store = RefreshTokenRejectingKeychainStore()
+        ServerSettings.setSyncingEmail(email: "test@test.com")
+        seedLegacyPassword("1234")
+
+        let response = AuthenticationResponse(token: "access", uuid: "uuid", email: "test@test.com", refreshToken: "new-refresh", isNewAccount: false, expiresIn: 3600, tokenType: "Bearer")
+        makeTokenHelper().migratePasswordAccountIfPossible(response: response)
+
+        XCTAssertEqual(ServerSettings.syncingPassword(), "1234", "A failed refresh-token keychain write must keep the password so migration can retry — deleting it would leave no recoverable credential")
+        XCTAssertNil(try ServerSettings.refreshToken())
+        XCTAssertNil(ServerSettings.accountAuthMethod, "The migration marker must only be set after a successful persist")
+        XCTAssertNil(ServerSettings.tokenExpiryDate(), "The expiry hint belongs to a persisted token pair only")
     }
 
     func testMigrationKeepsPasswordWhenResponseLacksRefreshToken() throws {

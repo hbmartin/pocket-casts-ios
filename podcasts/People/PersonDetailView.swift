@@ -99,6 +99,10 @@ final class PersonDetailModel: ObservableObject {
     private let searchTracker: @MainActor @Sendable (Int) -> Void
     private var loadTask: Task<Void, Never>?
     private var searchTask: Task<Void, Never>?
+    /// Gates load() to once per model lifetime. Trade-off: a speaker rename
+    /// elsewhere leaves this screen stale until it's re-pushed — no rename
+    /// notification exists to observe (SpeakerRenameView signals only its
+    /// presenter via onSaved).
     private var hasStartedLoading = false
     private var searchGeneration = 0
 

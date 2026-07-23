@@ -117,6 +117,9 @@ class PlayerChapterCell: UITableViewCell {
         chapterName.text = chapter.title
         chapterLength.text = TimeFormatter.shared.singleUnitFormattedShortestTime(time: chapter.duration)
         chapterNumber.text = "\(chapter.index + 1)"
+        // Assign before updateArtwork: a synchronously delivered artwork failure checks
+        // `self.chapter === chapter` before applying the fallback UI.
+        self.chapter = chapter
         updateArtwork(for: chapter)
         linkView.isHidden = (chapter.url == nil || isChapterToggleEnabled)
 
@@ -130,7 +133,6 @@ class PlayerChapterCell: UITableViewCell {
         }
 
         onLinkTapped = linkTapped
-        self.chapter = chapter
         isPlayingView.backgroundColor = ThemeColor.playerContrast06()
         progressUpdated(animated: false)
 

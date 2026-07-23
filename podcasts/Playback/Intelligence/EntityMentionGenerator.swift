@@ -242,7 +242,7 @@ nonisolated struct EntityMentionGenerator: Sendable {
             }
         }
 
-        Array(
+        return Array(
             earliestByName.values
                 .sorted { $0.startTime < $1.startTime }
                 .prefix(maxEntities)

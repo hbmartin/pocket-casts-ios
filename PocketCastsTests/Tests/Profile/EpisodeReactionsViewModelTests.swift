@@ -4,26 +4,34 @@ import PocketCastsServer
 
 @MainActor
 final class EpisodeReactionsViewModelTests: XCTestCase {
-    func testTapIgnoresConcurrentReactionMutation() async {
+    func testTapWhileMutationInFlightQueuesTheLatestIntent() async {
         let gate = ReactionRequestGate()
         let model = EpisodeReactionsViewModel(
             episodeUuid: "episode",
             canReact: true,
             fixture: EpisodeReactions(counts: [:], yourReaction: nil),
             fetchReactions: { _ in nil },
-            setReaction: { _, _ in await gate.waitForRelease() }
+            setReaction: { _, kind in await gate.waitForRelease(recording: kind) }
         )
 
         let firstTap = Task { await model.tap(.heart) }
-        await gate.waitUntilEntered()
+        await gate.waitUntilEntered(count: 1)
         await model.tap(.laugh)
+
+        // The mid-flight tap applies optimistically right away…
+        XCTAssertEqual(model.reactions,
+                       EpisodeReactions(counts: [.laugh: 1], yourReaction: .laugh))
+
+        // …and is written once the in-flight mutation completes.
+        await gate.release(returning: true)
+        await gate.waitUntilEntered(count: 2)
         await gate.release(returning: true)
         await firstTap.value
 
-        let callCount = await gate.callCount
-        XCTAssertEqual(callCount, 1)
+        let requestedKinds = await gate.requestedKinds
+        XCTAssertEqual(requestedKinds, [.heart, .laugh])
         XCTAssertEqual(model.reactions,
-                       EpisodeReactions(counts: [.heart: 1], yourReaction: .heart))
+                       EpisodeReactions(counts: [.laugh: 1], yourReaction: .laugh))
     }
 
     func testTapRestoresPreviousStateWhenMutationAndRefreshFail() async {
@@ -43,26 +51,27 @@ final class EpisodeReactionsViewModelTests: XCTestCase {
 }
 
 private actor ReactionRequestGate {
-    private(set) var callCount = 0
-    private var isEntered = false
-    private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
-    private var releaseContinuation: CheckedContinuation<Bool, Never>?
+    private(set) var requestedKinds: [ReactionKind?] = []
+    private var enteredWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
+    private var releaseContinuations: [CheckedContinuation<Bool, Never>] = []
 
-    func waitForRelease() async -> Bool {
-        callCount += 1
-        isEntered = true
-        enteredWaiters.forEach { $0.resume() }
-        enteredWaiters.removeAll()
-        return await withCheckedContinuation { releaseContinuation = $0 }
+    func waitForRelease(recording kind: ReactionKind?) async -> Bool {
+        requestedKinds.append(kind)
+        let entered = requestedKinds.count
+        for waiter in enteredWaiters where waiter.count <= entered {
+            waiter.continuation.resume()
+        }
+        enteredWaiters.removeAll { $0.count <= entered }
+        return await withCheckedContinuation { releaseContinuations.append($0) }
     }
 
-    func waitUntilEntered() async {
-        guard !isEntered else { return }
-        await withCheckedContinuation { enteredWaiters.append($0) }
+    func waitUntilEntered(count: Int) async {
+        guard requestedKinds.count < count else { return }
+        await withCheckedContinuation { enteredWaiters.append((count: count, continuation: $0)) }
     }
 
     func release(returning result: Bool) {
-        releaseContinuation?.resume(returning: result)
-        releaseContinuation = nil
+        guard !releaseContinuations.isEmpty else { return }
+        releaseContinuations.removeFirst().resume(returning: result)
     }
 }

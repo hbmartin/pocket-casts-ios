@@ -597,9 +597,9 @@ class PodcastDataManager {
                     WHERE uuid = ?
                     """
                     // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer; Swift re-encode would drop unmodeled payload fields
-                    try db.executeUpdate(
-                        query,
-                        values: [autoAddToUpNext, Self.defaultSettingsJsonString, enabledJsonString, positionJsonString, podcastUuid]
+                    try db.execute(
+                        sql: query,
+                        arguments: [autoAddToUpNext, Self.defaultSettingsJsonString, enabledJsonString, positionJsonString, podcastUuid]
                     )
                 } else {
                     try Podcast
@@ -863,9 +863,10 @@ class PodcastDataManager {
         // Deliberately leaves syncStatus untouched: save(podcast:) must persist the object
         // as the caller built it (the sync import path saves server state and must stay
         // synced). Setting-specific writers mark notSynced themselves.
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - settings JSON writer; Swift re-encode would drop unmodeled payload fields
         try db.execute(
             sql: "UPDATE \(DataManager.podcastTableName) SET settings = ? WHERE uuid = ?",
-            arguments: StatementArguments([jsonString, podcast.uuid])!) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - settings JSON writer; Swift re-encode would drop unmodeled payload fields
+            arguments: StatementArguments([jsonString, podcast.uuid])!)
     }
 
     private func savePushSettingWithNewSettingsStorage(podcastUuid: String, pushEnabled: Bool, dbQueue: GRDBQueue) {

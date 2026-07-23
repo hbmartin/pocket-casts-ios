@@ -100,6 +100,12 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
             "episode.duration > 0 -- semicolon; and apostrophe don't alter state",
             "episode.duration > 0 /* semicolon; and apostrophe don't alter state */",
             "episode.duration > 0 -- comment;\nAND episode.title = 'It''s valid'",
+            "\"a;b\" = episode.title",
+            "`a;b` = episode.title",
+            "[a;b] = episode.title",
+            // SQLite ends a `--` comment only at '\n'; the '\r' and the ';' after it
+            // are comment text.
+            "episode.duration > 0 -- comment\rstill the same comment; not a separator",
         ]
 
         for fragment in fragments {
@@ -117,6 +123,12 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
             "episode.title = 'It''s valid'; SELECT 2",
             "1 = 1 -- don't let this apostrophe hide the separator\n; SELECT 2",
             "1 = 1 /* don't let this apostrophe hide the separator */ ; SELECT 2",
+            // The apostrophe inside the quoted identifier must not desync the
+            // scanner into treating the real separator as string content.
+            "\"a'b\" = 'x' ; DROP TABLE SJEpisode --'",
+            // A lone '\r' does not end the comment; the '\n' does, so the ';' after
+            // it is a real separator (matching SQLite's lexer).
+            "1 = 1 -- comment\r 'a\n; DROP TABLE SJEpisode --'",
         ]
 
         for fragment in fragments {
@@ -132,6 +144,9 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
         XCTAssertTrue(
             PlaylistQueryValidator.containsStatementSeparator("episode.duration > 0 /* unterminated; comment")
         )
+        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("episode.title = \"unterminated; identifier"))
+        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("episode.title = `unterminated; identifier"))
+        XCTAssertTrue(PlaylistQueryValidator.containsStatementSeparator("episode.title = [unterminated; identifier"))
     }
 
     func testLegitimateCommentsAndEscapedQuotesPassValidation() throws {

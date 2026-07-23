@@ -166,13 +166,15 @@ final class NowPlayingLiveActivityManager {
             nil
         }
         guard let image else { return nil }
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return nil }
 
         let fileName = "artwork-\(episode.uuid).jpg"
         let fileURL = directory.appendingPathComponent(fileName)
         if FileManager.default.fileExists(atPath: fileURL.path) {
             return fileName
         }
+
+        // Encode only on the write path; a failed encode must not report a file that was never written.
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return nil }
 
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

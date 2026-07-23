@@ -194,11 +194,11 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         }
     }
 
-    func testUnavailableModelOutcomeIsCached() async {
+    func testPermanentUnavailabilityOutcomeIsCached() async {
         let (store, directory) = temporaryStore()
         defer { try? FileManager.default.removeItem(at: directory) }
         let intelligence = CountingChapterIntelligence(
-            availability: .unavailable(reason: "model_not_ready")
+            availability: .unavailable(reason: "device_not_eligible")
         )
         let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
 
@@ -210,16 +210,36 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(intelligence.callCounts.availability, 1)
         XCTAssertEqual(intelligence.callCounts.responses, 0)
         guard case .noChapters? = store.load(episodeUuid: "unavailable") else {
-            XCTFail("Model unavailability should persist the no-chapters outcome")
+            XCTFail("Permanent model unavailability should persist the no-chapters outcome")
             return
         }
     }
 
-    func testGenerationErrorOutcomeIsCached() async {
+    func testModelNotReadyUnavailabilityIsNotCached() async {
+        let (store, directory) = temporaryStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let intelligence = CountingChapterIntelligence(
+            availability: .unavailable(reason: "model_not_ready")
+        )
+        let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
+
+        let first = await generator.chapters(episodeUuid: "not-ready", cues: productionCues, duration: 700)
+        let second = await generator.chapters(episodeUuid: "not-ready", cues: productionCues, duration: 700)
+
+        XCTAssertTrue(first.isEmpty)
+        XCTAssertTrue(second.isEmpty)
+        XCTAssertEqual(intelligence.callCounts.availability, 2,
+                       "Still-downloading assets must be re-checked on the next presentation")
+        XCTAssertEqual(intelligence.callCounts.responses, 0)
+        XCTAssertNil(store.load(episodeUuid: "not-ready"),
+                     "Assets still downloading must not burn the per-episode no-chapters sentinel")
+    }
+
+    func testDefinitiveGenerationErrorOutcomeIsCached() async {
         let (store, directory) = temporaryStore()
         defer { try? FileManager.default.removeItem(at: directory) }
         let intelligence = CountingChapterIntelligence(response: {
-            throw IntelligenceError.timedOut
+            throw IntelligenceError.guardrailViolation
         })
         let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
 
@@ -231,8 +251,35 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(intelligence.callCounts.availability, 1)
         XCTAssertEqual(intelligence.callCounts.responses, 1)
         guard case .noChapters? = store.load(episodeUuid: "error") else {
-            XCTFail("A completed generation failure should suppress repeated model work")
+            XCTFail("A definitive generation failure should suppress repeated model work")
             return
+        }
+    }
+
+    func testTransientGenerationFailuresAreNotCached() async {
+        let transientErrors: [IntelligenceError] = [
+            .timedOut,
+            .generationFailed(description: "concurrent_requests"),
+            .generationFailed(description: "rate_limited"),
+            .modelUnavailable(reason: "model_not_ready")
+        ]
+        for transientError in transientErrors {
+            let (store, directory) = temporaryStore()
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let intelligence = CountingChapterIntelligence(response: {
+                throw transientError
+            })
+            let generator = TranscriptChapterGenerator(intelligence: intelligence, store: store)
+
+            let first = await generator.chapters(episodeUuid: "transient", cues: productionCues, duration: 700)
+            let second = await generator.chapters(episodeUuid: "transient", cues: productionCues, duration: 700)
+
+            XCTAssertTrue(first.isEmpty)
+            XCTAssertTrue(second.isEmpty)
+            XCTAssertNil(store.load(episodeUuid: "transient"),
+                         "\(transientError) must stay unattempted, not cached as a permanent no-chapters outcome")
+            XCTAssertEqual(intelligence.callCounts.responses, 2,
+                           "\(transientError) must not suppress a retry on the next presentation")
         }
     }
 

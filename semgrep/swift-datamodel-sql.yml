@@ -30,3 +30,89 @@ rules:
           - pattern: 'DataHelper.run(query: $Q, ...)'
           - pattern: '$DB.executeUpdate(...)'
           - pattern: '$DB.executeQuery(...)'
+          # The GRDB spelling of raw SQL — db.execute(sql:arguments:) — is still raw SQL.
+          - pattern: '$DB.execute(...)'
+
+  # The two db-closure API families cannot be mixed inside one dbQueue.write/read
+  # closure: the closure parameter is either the legacy `any PCDatabase`
+  # (executeUpdate/executeQuery) or GRDB's `Database` (query interface, execute(sql:)),
+  # picked by overload resolution — a closure using both type-checks against neither
+  # GRDBQueue overload and fails to compile. Semgrep can't run overload resolution, so
+  # this is the closest reliable approximation: flag a legacy call anchored inside a
+  # closure that also contains a GRDB-family call ($DB passed as an argument to a
+  # record/request method, or $DB.execute). Both try and non-try statement shapes are
+  # spelled out because statement patterns don't match `try` implicitly.
+  - id: pocketcasts.no-mixed-db-api-families-in-db-closure
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: HIGH
+      impact: MEDIUM
+      technology: [ios]
+    message: >
+      This dbQueue closure mixes the two DB API families: legacy PCDatabase calls
+      (executeUpdate/executeQuery) together with GRDB Database calls (query
+      interface or execute(sql:arguments:)). The closure parameter's type is picked
+      by overload resolution, so a body using both families cannot type-check
+      against any GRDBQueue.write/read overload and will not compile. Convert the
+      legacy calls to the GRDB query interface (preferred) or split the work into
+      separate closures.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsDataModel/Private/Managers/*.swift"
+        - "**/Modules/Sources/PocketCastsDataModel/Public/Bookmarks/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: '$DB.executeUpdate(...)'
+          - pattern: '$DB.executeQuery(...)'
+      - pattern-either:
+          - pattern-inside: |
+              $Q.write { $DB in
+                  ...
+                  $T.$M($DB, ...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.write { $DB in
+                  ...
+                  try $T.$M($DB, ...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.write { $DB in
+                  ...
+                  $DB.execute(...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.write { $DB in
+                  ...
+                  try $DB.execute(...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.read { $DB in
+                  ...
+                  $T.$M($DB, ...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.read { $DB in
+                  ...
+                  try $T.$M($DB, ...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.read { $DB in
+                  ...
+                  $DB.execute(...)
+                  ...
+              }
+          - pattern-inside: |
+              $Q.read { $DB in
+                  ...
+                  try $DB.execute(...)
+                  ...
+              }

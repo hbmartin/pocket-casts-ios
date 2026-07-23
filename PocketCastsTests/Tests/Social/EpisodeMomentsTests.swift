@@ -27,10 +27,44 @@ final class EpisodeMomentsTests: XCTestCase {
         XCTAssertEqual(cache.cachedPins(activating: "episode"), [pin])
 
         let inFlightLoad = cache.beginLoading(episodeUuid: "episode")
+        XCTAssertTrue(cache.isLoading(episodeUuid: "episode"))
         cache.invalidate(episodeUuid: "episode")
 
+        XCTAssertFalse(cache.isLoading(episodeUuid: "episode"))
         XCTAssertFalse(cache.commit([pin], for: inFlightLoad))
         XCTAssertNil(cache.cachedPins(activating: "episode"))
+    }
+
+    func testSecondRefreshWhileLoadIsInFlightStartsNoNewFetchChain() async {
+        let cache = EpisodeMomentPinsCache()
+        _ = cache.cachedPins(activating: "episode")
+        var fetchCount = 0
+        var assignedPins: [EpisodeMomentPin]?
+        let pinsAssigned = expectation(description: "pins assigned")
+        let startLoad = {
+            loadMomentPinsIfIdle(
+                cache: cache,
+                episodeUuid: "episode",
+                duration: 60,
+                fetchPage: { _, _ in
+                    fetchCount += 1
+                    return SocialCommentPage(comments: [SocialComment(id: 1, timestampSeconds: 30)], total: 1)
+                },
+                assign: {
+                    assignedPins = $0
+                    pinsAssigned.fulfill()
+                }
+            )
+        }
+
+        XCTAssertTrue(startLoad())
+        XCTAssertTrue(cache.isLoading(episodeUuid: "episode"))
+        XCTAssertFalse(startLoad())
+
+        await fulfillment(of: [pinsAssigned], timeout: 1)
+        XCTAssertEqual(fetchCount, 1)
+        XCTAssertFalse(cache.isLoading(episodeUuid: "episode"))
+        XCTAssertEqual(assignedPins, [EpisodeMomentPin(id: 1, fraction: 0.5, seconds: 30)])
     }
 
     func testCacheKeepsPinsScopedToEachEpisode() {
