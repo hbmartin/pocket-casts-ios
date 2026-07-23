@@ -139,7 +139,7 @@ struct TranscriptSearchResultRow: View {
                         Text(L10n.searchTranscriptsResultAtTime(TimeFormatter.shared.playTimeFormat(time: display.startTime)))
                             .font(style: .caption, weight: .semibold)
                         if let speaker = display.speaker, !speaker.isEmpty {
-                            Text(verbatim: "· \(speaker)")
+                            Text(L10n.searchTranscriptsSpeakerFormat(speaker))
                                 .font(style: .caption, weight: .regular)
                                 .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
                                 .lineLimit(1)

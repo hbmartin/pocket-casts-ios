@@ -17,8 +17,8 @@ final class MockURLProtocol: URLProtocol {
 
     typealias Handler = @Sendable (URLRequest) -> Outcome
 
-    /// NSLock-guarded handler table. @unchecked Sendable justification: `handlers`
-    /// is only ever read or written while `lock` is held.
+    /// NSLock-guarded handler table; `handlers`
+    /// @unchecked Sendable: handlers are only ever read or written while lock is held.
     private final class Registry: @unchecked Sendable {
         private let lock = NSLock()
         private var handlers: [String: Handler] = [:]

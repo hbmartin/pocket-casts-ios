@@ -65,6 +65,7 @@ nonisolated struct EntityMentionGenerator: Sendable {
     /// otherwise. Empty when the transcript is too thin or everything failed —
     /// the card simply doesn't appear.
     func mentions(episodeUuid: String, fingerprint: String, segments: [TranscriptSearchSegment]) async -> [EntityMention] {
+        guard !Task.isCancelled else { return [] }
         if let cached = store.load(episodeUuid: episodeUuid, fingerprint: fingerprint) {
             return cached
         }
@@ -72,33 +73,35 @@ nonisolated struct EntityMentionGenerator: Sendable {
 
         let mentions: [EntityMention]
         if case .available = intelligence.availability() {
-            mentions = await modelMentions(segments: segments)
+            do {
+                mentions = try await modelMentions(segments: segments)
+            } catch is CancellationError {
+                return []
+            } catch {
+                return []
+            }
         } else {
             mentions = Self.taggerMentions(from: segments)
         }
-        guard !mentions.isEmpty else { return [] }
+        guard !mentions.isEmpty, !Task.isCancelled else { return [] }
 
         store.save(mentions, episodeUuid: episodeUuid, fingerprint: fingerprint)
         return mentions
     }
 
-    private func modelMentions(segments: [TranscriptSearchSegment]) async -> [EntityMention] {
+    private func modelMentions(segments: [TranscriptSearchSegment]) async throws -> [EntityMention] {
         let chunks = Self.chunks(from: segments)
-        var raw: [GeneratedEntityItem] = []
-
-        for chunk in chunks {
-            do {
-                let generated = try await intelligence.respond(
-                    instructions: Self.instructions,
-                    prompt: "<transcript>\n\(chunk)\n</transcript>",
-                    generating: GeneratedEntityList.self
-                )
-                raw.append(contentsOf: generated.entities)
-            } catch {
-                FileLog.shared.addMessage("EntityMentionGenerator: chunk failed: \(error)")
-                // One failed chunk doesn't void the others; NLTagger rescues a
-                // total model failure below.
-            }
+        // OnDeviceIntelligence admits one underlying Foundation Models request
+        // at a time, including while timed-out work is still exiting. Keep the
+        // chunks serialized rather than turning expected admission rejections
+        // into missing transcript coverage.
+        let raw = try await Self.generatedItems(chunks: chunks) { chunk in
+            let generated = try await intelligence.respond(
+                instructions: Self.instructions,
+                prompt: "<transcript>\n\(chunk)\n</transcript>",
+                generating: GeneratedEntityList.self
+            )
+            return generated.entities
         }
 
         let validated = Self.merged(raw, segmentStartTimes: segments.map(\.startTime))
@@ -106,6 +109,29 @@ nonisolated struct EntityMentionGenerator: Sendable {
             return Self.taggerMentions(from: segments)
         }
         return validated
+    }
+
+    /// Runs model chunks in transcript order. The shared Foundation Models
+    /// provider has single-request admission, so bounded concurrency here is
+    /// one; this helper makes ordering and cancellation deterministic in tests.
+    static func generatedItems(
+        chunks: [String],
+        respond: @escaping @Sendable (String) async throws -> [GeneratedEntityItem]
+    ) async throws -> [GeneratedEntityItem] {
+        var raw: [GeneratedEntityItem] = []
+
+        for chunk in chunks {
+            try Task.checkCancellation()
+            do {
+                raw.append(contentsOf: try await respond(chunk))
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                FileLog.shared.addMessage("EntityMentionGenerator: chunk failed: \(error)")
+                // One failed chunk doesn't void the others.
+            }
+        }
+        return raw
     }
 
     // MARK: - Prompt
@@ -163,7 +189,35 @@ nonisolated struct EntityMentionGenerator: Sendable {
     /// names fold-deduplicated keeping the earliest mention, capped at
     /// ``maxEntities`` in first-mention order.
     static func merged(_ raw: [GeneratedEntityItem], segmentStartTimes: [TimeInterval]) -> [EntityMention] {
-        guard !segmentStartTimes.isEmpty else { return [] }
+        // Index rows normally arrive in segment order, but treating that as a
+        // precondition would make the binary search silently wrong for a
+        // partially rebuilt/corrupt index. Invalid timestamps cannot be valid
+        // seek anchors and are discarded before sorting.
+        let sortedStartTimes = segmentStartTimes
+            .filter { $0.isFinite && $0 >= 0 }
+            .sorted()
+        guard !sortedStartTimes.isEmpty else { return [] }
+
+        func nearestTime(to target: TimeInterval) -> TimeInterval {
+            var low = 0
+            var high = sortedStartTimes.count
+            while low < high {
+                let middle = low + (high - low) / 2
+                if sortedStartTimes[middle] < target {
+                    low = middle + 1
+                } else {
+                    high = middle
+                }
+            }
+
+            guard low > 0 else { return sortedStartTimes[0] }
+            guard low < sortedStartTimes.count else { return sortedStartTimes[sortedStartTimes.count - 1] }
+
+            let before = sortedStartTimes[low - 1]
+            let after = sortedStartTimes[low]
+            // Prefer the earlier seek point when the target is exactly midway.
+            return target - before <= after - target ? before : after
+        }
 
         var earliestByName: [String: EntityMention] = [:]
         for item in raw {
@@ -174,8 +228,8 @@ nonisolated struct EntityMentionGenerator: Sendable {
                   let kind = EntityMention.Kind(rawValue: item.kind.lowercased()) else { continue }
 
             let time = max(0, TimeInterval(item.startSeconds))
-            guard let nearest = segmentStartTimes.min(by: { abs($0 - time) < abs($1 - time) }),
-                  abs(nearest - time) <= snapTolerance else { continue }
+            let nearest = nearestTime(to: time)
+            guard abs(nearest - time) <= snapTolerance else { continue }
 
             let mention = EntityMention(name: name, kind: kind, startTime: nearest)
             let key = name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
@@ -188,10 +242,11 @@ nonisolated struct EntityMentionGenerator: Sendable {
             }
         }
 
-        return earliestByName.values
-            .sorted { $0.startTime < $1.startTime }
-            .prefix(maxEntities)
-            .map { $0 }
+        Array(
+            earliestByName.values
+                .sorted { $0.startTime < $1.startTime }
+                .prefix(maxEntities)
+        )
     }
 
     // MARK: - NLTagger fallback (pure-ish, deterministic)
@@ -204,6 +259,7 @@ nonisolated struct EntityMentionGenerator: Sendable {
         var raw: [GeneratedEntityItem] = []
 
         for segment in segments {
+            guard !Task.isCancelled else { return [] }
             tagger.string = segment.text
             tagger.enumerateTags(in: segment.text.startIndex ..< segment.text.endIndex,
                                  unit: .word,

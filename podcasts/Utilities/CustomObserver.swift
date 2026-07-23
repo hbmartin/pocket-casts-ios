@@ -23,7 +23,7 @@ class CustomObserver: NSObject {
     /// Typed-message registration; same dedupe-by-name behavior as the
     /// selector-based variant above, removed in `removeAllCustomObservers` or deinit.
     final func addCustomObserver<M: NotificationCenter.MainActorMessage>(_ type: M.Type, handler: @escaping @MainActor @Sendable (M) -> Void) where M.Subject: AnyObject {
-        guard messageTokens[M.name] == nil else { return } // we already have this one
+        guard !containsObserver(M.name) else { return } // we already have this one
 
         messageTokens[M.name] = NotificationCenter.default.addObserver(for: type, using: handler)
     }
@@ -42,8 +42,6 @@ class CustomObserver: NSObject {
     }
 
     private func containsObserver(_ name: Notification.Name) -> Bool {
-        if customObservers.isEmpty { return false }
-
-        return customObservers.contains(name)
+        customObservers.contains(name) || messageTokens[name] != nil
     }
 }

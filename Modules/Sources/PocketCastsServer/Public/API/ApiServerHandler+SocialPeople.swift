@@ -3,13 +3,13 @@ import Foundation
 /// Async entry points for find-people (Slice 9; docs/Social.md).
 public extension ApiServerHandler {
     /// Prefix search over discoverable joined profiles.
-    func searchPeople(query: String) async -> [SocialProfileSummary]? {
+    func searchPeople(query: String) async -> Result<[SocialProfileSummary], SocialPeopleRequestError> {
         await profiles(.search(query: query))
     }
 
     /// Friends-of-followed suggestions with mutual counts (count only).
     /// The operator-designated curators directory (Slice 15, ADR-0014).
-    func fetchCurators() async -> [SocialProfileSummary]? {
+    func fetchCurators() async -> Result<[SocialProfileSummary], SocialPeopleRequestError> {
         await withCheckedContinuation { continuation in
             let operation = SocialPeopleTask(kind: .curators)
             operation.profilesCompletion = { continuation.resume(returning: $0) }
@@ -17,12 +17,12 @@ public extension ApiServerHandler {
         }
     }
 
-    func fetchPeopleSuggestions() async -> [SocialProfileSummary]? {
+    func fetchPeopleSuggestions() async -> Result<[SocialProfileSummary], SocialPeopleRequestError> {
         await profiles(.suggestions)
     }
 
     /// The server salt for contact-identifier hashing.
-    func fetchContactsSalt() async -> String? {
+    func fetchContactsSalt() async -> Result<String, SocialPeopleRequestError> {
         await withCheckedContinuation { continuation in
             let operation = SocialPeopleTask(kind: .salt)
             operation.saltCompletion = { continuation.resume(returning: $0) }
@@ -32,11 +32,11 @@ public extension ApiServerHandler {
 
     /// Transient contact matching: typed salted hashes in, matched
     /// discoverable profiles out; nothing stored server-side.
-    func matchContacts(hashes: [SocialContactHash]) async -> [SocialProfileSummary]? {
+    func matchContacts(hashes: [SocialContactHash]) async -> Result<[SocialProfileSummary], SocialPeopleRequestError> {
         await profiles(.match(hashes: hashes))
     }
 
-    private func profiles(_ kind: SocialPeopleTask.Kind) async -> [SocialProfileSummary]? {
+    private func profiles(_ kind: SocialPeopleTask.Kind) async -> Result<[SocialProfileSummary], SocialPeopleRequestError> {
         await withCheckedContinuation { continuation in
             let operation = SocialPeopleTask(kind: kind)
             operation.profilesCompletion = { continuation.resume(returning: $0) }

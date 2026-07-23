@@ -202,6 +202,23 @@ struct AssemblyAIProviderTests {
         #expect(error == .remoteResponseFailure(status: nil, providerMessage: "Audio file could not be downloaded"))
     }
 
+    @Test func pollErrorStatusBoundsProviderMessage() async throws {
+        let (provider, apiKey) = makeProvider()
+        defer { MockURLProtocol.unregister(apiKey: apiKey) }
+        let providerMessage = String(repeating: "x", count: 350)
+        MockURLProtocol.register(apiKey: apiKey) { _ in
+            .json("{\"id\":\"job-123\",\"status\":\"error\",\"error\":\"\(providerMessage)\"}")
+        }
+
+        let status = try await provider.poll(handle: handle, apiKey: apiKey)
+        guard case .failed(let error) = status else {
+            Issue.record("Expected .failed, got \(status)")
+            return
+        }
+        #expect(error == .remoteResponseFailure(status: nil,
+                                                providerMessage: String(repeating: "x", count: 300) + "…"))
+    }
+
     @Test func pollWith401ThrowsInvalidAPIKey() async throws {
         let (provider, apiKey) = makeProvider()
         defer { MockURLProtocol.unregister(apiKey: apiKey) }

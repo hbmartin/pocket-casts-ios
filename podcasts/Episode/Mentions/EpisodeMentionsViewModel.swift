@@ -6,6 +6,7 @@ import SwiftUI
 /// Drives the "Mentioned in this episode" card: validated entity mentions with
 /// tap-to-seek anchors. The detail screen only attaches the card when the list
 /// is non-empty, so this model just renders and reports taps.
+@MainActor
 class EpisodeMentionsViewModel: ObservableObject {
     let mentions: [EntityMention]
     let episodeUuid: String

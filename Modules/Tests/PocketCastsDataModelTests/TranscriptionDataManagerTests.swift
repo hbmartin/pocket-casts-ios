@@ -135,6 +135,25 @@ final class TranscriptionDataManagerTests: XCTestCase {
         XCTAssertEqual(dataManager.transcriptions.completedCount(), 2)
     }
 
+    func testExistingEpisodeUuidsResolvesPodcastAndUserEpisodesAsOneBatch() {
+        var podcastEpisode = Episode()
+        podcastEpisode.uuid = "podcast-episode"
+        dataManager.save(episode: podcastEpisode)
+        var userEpisode = UserEpisode()
+        userEpisode.uuid = "user-episode"
+        dataManager.save(episode: userEpisode)
+
+        let existing = dataManager.transcriptions.existingEpisodeUuids([
+            "podcast-episode",
+            "user-episode",
+            "missing",
+            "podcast-episode"
+        ])
+
+        XCTAssertEqual(existing, ["podcast-episode", "user-episode"])
+        XCTAssertTrue(dataManager.transcriptions.existingEpisodeUuids([]).isEmpty)
+    }
+
     // MARK: - Delete
 
     func testDeleteRemovesOnlyTheGivenRecord() {

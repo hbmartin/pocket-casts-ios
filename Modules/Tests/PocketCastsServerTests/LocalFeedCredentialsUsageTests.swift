@@ -17,10 +17,16 @@ struct LocalFeedCredentialsUsageTests {
     }
 
     @discardableResult
-    private func seedLocalFeedPodcast(uuid: String, feedURL: String?, refreshSource: PodcastRefreshSource = .localFeed, dataManager: DataManager) -> Podcast {
+    private func seedLocalFeedPodcast(
+        uuid: String,
+        feedURL: String?,
+        refreshSource: PodcastRefreshSource = .localFeed,
+        subscribed: Bool = true,
+        dataManager: DataManager
+    ) -> Podcast {
         var podcast = Podcast()
         podcast.uuid = uuid
-        podcast.subscribed = 1
+        podcast.subscribed = subscribed ? 1 : 0
         podcast.addedDate = Date()
         podcast.syncStatus = SyncStatus.synced.rawValue
         podcast.podcastUrl = feedURL
@@ -52,6 +58,60 @@ struct LocalFeedCredentialsUsageTests {
         let stored = try #require(LocalFeedCredentials.credentials(podcastUuid: "local-pod"))
         #expect(stored.user == "user")
         #expect(stored.password == "newpass")
+    }
+
+    @Test("addLocalFeed dedup aborts resubscribe when re-entered credentials cannot be stored")
+    func dedupCredentialSaveFailureAbortsResubscribe() throws {
+        let previousStore = KeychainHelper.store
+        defer { KeychainHelper.store = previousStore }
+        KeychainHelper.store = RejectingLocalFeedKeychainStore()
+
+        let previousShared = DataManager.sharedManager
+        defer { DataManager.sharedManager = previousShared }
+        let dataManager = makeDataManager()
+        DataManager.sharedManager = dataManager
+
+        seedLocalFeedPodcast(
+            uuid: "local-pod",
+            feedURL: "https://example.com/feed.xml",
+            subscribed: false,
+            dataManager: dataManager
+        )
+
+        let succeeded = Mutex<Bool?>(nil)
+        ServerPodcastManager.shared.addLocalFeed(feedURL: "https://user:newpass@example.com/feed.xml", subscribe: true) { success in
+            succeeded.withLock { $0 = success }
+        }
+
+        #expect(succeeded.withLock { $0 } == false)
+        let podcast = try #require(dataManager.findPodcast(uuid: "local-pod", includeUnsubscribed: true))
+        #expect(!podcast.isSubscribed(), "a row without its required credential must not be resubscribed")
+        #expect(LocalFeedCredentials.credentials(podcastUuid: "local-pod") == nil)
+    }
+
+    @Test("resubscribing an existing local-feed row keeps it out of server sync")
+    func localFeedResubscribeDerivesSyncStatusFromFinalSource() throws {
+        let previousShared = DataManager.sharedManager
+        defer { DataManager.sharedManager = previousShared }
+        let dataManager = makeDataManager()
+        DataManager.sharedManager = dataManager
+
+        seedLocalFeedPodcast(
+            uuid: "local-pod",
+            feedURL: "https://example.com/feed.xml",
+            subscribed: false,
+            dataManager: dataManager
+        )
+
+        let succeeded = Mutex<Bool?>(nil)
+        ServerPodcastManager.shared.addLocalFeed(feedURL: "https://example.com/feed.xml", subscribe: true) { success in
+            succeeded.withLock { $0 = success }
+        }
+
+        #expect(succeeded.withLock { $0 } == true)
+        let podcast = try #require(dataManager.findPodcast(uuid: "local-pod", includeUnsubscribed: true))
+        #expect(podcast.isSubscribed())
+        #expect(podcast.syncStatus == SyncStatus.synced.rawValue)
     }
 
     // FIX for: stored credentials never reaching media downloads/playback.
@@ -119,4 +179,9 @@ struct LocalFeedCredentialsUsageTests {
         #expect(LocalFeedCredentials.mediaAuthorizationHeader(for: orphanEpisode, mediaURL: mediaURL) == nil)
     }
 }
+}
+
+private struct RejectingLocalFeedKeychainStore: KeychainStoring {
+    func save(value: String?, key: String, accessibility: CFTypeRef) -> Bool { false }
+    func string(for key: String) throws -> String? { nil }
 }

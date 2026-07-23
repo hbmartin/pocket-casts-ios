@@ -34,7 +34,8 @@ public struct EpisodeFilter: Equatable, Hashable, Sendable {
     public var playlistUpdateDate: Date?
     /// Custom playlists: the versioned JSON envelope (`CustomPlaylistQuery`) describing a
     /// builder AST or validated SQL WHERE fragment. `nil` = regular smart/manual playlist.
-    /// Device-local: rows with a non-nil value are excluded from account sync and file sync.
+    /// Account sync uploads and restores this field. Local file sync deliberately excludes
+    /// custom playlists until its record format can preserve the query envelope.
     public var customQuery: String?
 
     /// Shared-list mirror link (Slice 7, ADR-0011): the server list this

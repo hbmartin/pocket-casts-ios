@@ -40,7 +40,6 @@ struct PersonDirectoryView: View {
         .navigationTitle(L10n.peopleDirectoryTitle)
         .onAppear {
             model.load()
-            Analytics.track(.peopleDirectoryShown, properties: ["person_count": model.entries.count])
         }
     }
 

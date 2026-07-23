@@ -136,8 +136,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.shadowImage = nil
 
-        reloadAllFiles()
         addUIObservers()
+        reloadAllFiles()
 
         if let fileURL {
             let addCustomVC = AddCustomViewController(fileUrl: fileURL)
@@ -155,8 +155,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     // MARK: - App Backgrounding
 
     override func handleAppWillBecomeActive() {
-        reloadAllFiles()
         addUIObservers()
+        reloadAllFiles()
     }
 
     override func handleAppDidEnterBackground() {
@@ -247,7 +247,10 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     private func reloadAllFiles() {
-        Task { await FileSyncManager.shared.syncNow() }
+        Task { [weak self] in
+            await FileSyncManager.shared.syncNow()
+            self?.reloadLocalFiles()
+        }
         updateHeaderView()
     }
 
@@ -329,7 +332,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         }
     }
 
-    private func removeFromUploadTable(userEpisode: UserEpisode) {
+    private func removeFromUploadTable(userEpisode _: UserEpisode) {
         reloadLocalFiles()
     }
 

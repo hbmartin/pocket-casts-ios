@@ -20,11 +20,14 @@ public enum PodcastMirrorFormat {
         public let isPlaceholder: Bool
     }
 
+    static func podcastDirectory(podcastUuid: String) -> String {
+        "\(FileSyncFormat.podcastMirrorsDirectory)/\(safePathComponent(podcastUuid))"
+    }
+
     public static func relativePath(podcastUuid: String, episodeUuid: String, fileExtension: String) -> String {
-        let podcast = safePathComponent(podcastUuid)
         let episode = safePathComponent(episodeUuid)
         let ext = safePathComponent(fileExtension.isEmpty ? "mp3" : fileExtension)
-        return "\(FileSyncFormat.podcastMirrorsDirectory)/\(podcast)/\(episode).\(ext)"
+        return "\(podcastDirectory(podcastUuid: podcastUuid))/\(episode).\(ext)"
     }
 
     /// Parses a folder listing entry back into mirror identity; nil for anything that

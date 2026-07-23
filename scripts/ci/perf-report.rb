@@ -17,7 +17,8 @@ module PerfReport
 
   def self.parse(log_path)
     entries = []
-    File.foreach(log_path) do |line|
+    File.foreach(log_path, mode: "rb") do |raw_line|
+      line = raw_line.encode("utf-8", "utf-8", invalid: :replace, undef: :replace)
       match = LINE.match(line)
       next unless match
 

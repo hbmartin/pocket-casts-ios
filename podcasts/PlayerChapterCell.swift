@@ -154,7 +154,11 @@ class PlayerChapterCell: UITableViewCell {
             artworkView.isHidden = false
             chapterNumber.alpha = 0
             artworkView.kf.setImage(with: imageURL, options: [.transition(.fade(Constants.Animation.defaultAnimationTime))]) { [weak self] result in
-                if case .failure = result {
+                switch result {
+                case .success(let value):
+                    chapter.image = value.image
+                case .failure:
+                    guard self?.chapter === chapter else { return }
                     self?.artworkView.isHidden = true
                     self?.chapterNumber.alpha = 1
                 }

@@ -23,6 +23,18 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
         case social = "so"
     }
 
+    /// APNs custom values can bridge from JSON as either NSNumber or String.
+    /// Parse both forms without truncating fractions or overflowing the target.
+    static func socialPayloadInteger<Value: FixedWidthInteger>(_ value: Any?) -> Value? {
+        if let string = value as? String {
+            return Value(string)
+        }
+        if let number = value as? NSNumber {
+            return Value(number.stringValue)
+        }
+        return nil
+    }
+
     func checkNotificationsDenied(completion: @escaping @Sendable (Bool) -> ()) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             completion(settings.authorizationStatus == .denied)
@@ -168,14 +180,14 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
     /// with a typed payload; each type deep-links to its home surface.
     private func handleSocialNotification(response: UNNotificationResponse, completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
-        let rawType = Int(userInfo["social_type"] as? String ?? "") ?? 0
+        let rawType: Int = Self.socialPayloadInteger(userInfo["social_type"]) ?? 0
         let actorHandle = userInfo["actor_handle"] as? String ?? ""
         Analytics.track(.socialPushTapped, properties: ["social_type": "\(rawType)"])
 
         let episodeUuid = userInfo["episode_uuid"] as? String ?? ""
         let podcastUuid = userInfo["podcast_uuid"] as? String ?? ""
-        let commentId = Int64(userInfo["comment_id"] as? String ?? "") ?? 0
-        let groupId = Int64(userInfo["group_id"] as? String ?? "") ?? 0
+        let commentId: Int64 = Self.socialPayloadInteger(userInfo["comment_id"]) ?? 0
+        let groupId: Int64 = Self.socialPayloadInteger(userInfo["group_id"]) ?? 0
         // The system only needs to know handling finished; routing continues
         // on the main actor with Sendable captures.
         completionHandler()
@@ -186,8 +198,11 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
             case .followApproved, .newFollower:
                 SocialCoordinator.openPublicProfile(handle: actorHandle)
             case .commentReply:
-                SocialCoordinator.openComments(episodeUuid: episodeUuid, podcastUuid: podcastUuid,
-                                               focusCommentId: commentId > 0 ? commentId : nil)
+                await SocialCoordinator.openComments(
+                    episodeUuid: episodeUuid,
+                    podcastUuid: podcastUuid,
+                    focusCommentId: commentId > 0 ? commentId : nil
+                )
             case .listInvite:
                 SocialCoordinator.openSharedLists()
             case .groupInvite:

@@ -76,6 +76,18 @@ nonisolated class TranscriptManager {
         self.showCoordinator = showCoordinator
     }
 
+    /// Shared isolation bridge for UI consumers that own a boxed manager.
+    /// Cancellation checks prevent a cancelled presentation from starting a
+    /// new load or publishing a model returned by a non-cooperative dependency.
+    nonisolated static func loadTranscript(
+        from manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
+    ) async throws -> TranscriptModel {
+        try Task.checkCancellation()
+        let model = try await manager.value.loadTranscript()
+        try Task.checkCancellation()
+        return model
+    }
+
     public func loadTranscript() async throws -> TranscriptModel {
         isDisplayingLocalTranscription = false
 
@@ -83,13 +95,14 @@ nonisolated class TranscriptManager {
             let record = DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUUID)
             hasLocalTranscription = record?.transcriptionStatus == .completed
             if let record, record.transcriptionStatus == .completed,
-               !artifactStore.hasArtifact(episodeUuid: episodeUUID) {
+               !artifactStore.hasUsableArtifact(episodeUuid: episodeUUID) {
                 // A completed record whose VTT artifact is gone — the artifact
                 // directory is excluded from device backups while the record is
                 // restored with the database. Drop the phantom record so the
                 // Generate affordance comes back.
-                await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUUID)
-                hasLocalTranscription = false
+                await TranscriptionQueueManager.shared.cleanupUnusableCompletedTranscription(expected: record)
+                hasLocalTranscription = DataManager.sharedManager.transcriptions
+                    .find(episodeUuid: episodeUUID)?.transcriptionStatus == .completed
             } else if sourcePreference != .podcastProvided,
                       let record, record.transcriptionStatus == .completed {
                 if let localModel = loadLocalTranscript(record: record) {
@@ -101,14 +114,13 @@ nonisolated class TranscriptManager {
                     isDisplayingLocalTranscription = true
                     return localModel
                 }
-                // The artifact exists but can't be parsed. Left alone, the
-                // corrupt file pins the dead record forever: `hasArtifact` is a
-                // fileExists check, so the Generate affordance stays hidden
-                // while every load falls through here. Same cleanup as the
-                // phantom-record path above, then fall through to the
-                // podcast-provided flow.
-                await TranscriptionQueueManager.shared.deleteTranscription(episodeUuid: episodeUUID)
-                hasLocalTranscription = false
+                // The shared usability check normally routes corrupt artifacts
+                // through the branch above. Keep this defensive cleanup in case
+                // the file changes between validation and loading, then fall
+                // through to the podcast-provided flow.
+                await TranscriptionQueueManager.shared.cleanupUnusableCompletedTranscription(expected: record)
+                hasLocalTranscription = DataManager.sharedManager.transcriptions
+                    .find(episodeUuid: episodeUUID)?.transcriptionStatus == .completed
             }
         }
 
@@ -149,14 +161,7 @@ nonisolated class TranscriptManager {
     /// speaker renames on the raw VTT before parsing. Returns nil (falling back
     /// to the podcast-provided flow) when the artifact is missing or unparseable.
     private func loadLocalTranscript(record: EpisodeTranscriptionRecord) -> TranscriptModel? {
-        guard let rawVTT = artifactStore.read(episodeUuid: episodeUUID) else {
-            return nil
-        }
-        let vtt = TranscriptionArtifactStore.applyingSpeakerNames(vtt: rawVTT, namesJSON: record.speakerNames)
-        guard let model = TranscriptModel.makeModel(from: vtt, format: .vtt), !model.isEmtpy else {
-            return nil
-        }
-        return model
+        artifactStore.loadUsableTranscript(episodeUuid: episodeUUID, speakerNames: record.speakerNames)
     }
 
     private func loadTranscript(_ transcript: Transcript) async throws -> TranscriptModel {

@@ -128,7 +128,7 @@ class TestAsset {
 // (FileLog's shape): the class opts out of isolation checking and the Task inherits no isolation, so
 // publishing races with other Tasks and delivers on an arbitrary executor. The send belongs on an
 // actor instead.
-final class LogPublisher: @unchecked Sendable {
+final class LogPublisher: @unchecked Sendable { // @unchecked Sendable: intentionally unsafe fixture for subject-send detection.
     private let messageSubject = PassthroughSubject<String, Never>()
     private let valueSubject = CurrentValueSubject<Int, Never>(0)
 

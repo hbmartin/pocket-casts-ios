@@ -61,10 +61,14 @@ nonisolated struct SpeakerNameSuggester: Sendable {
     /// voice-tag shape is stable; cues without a voice tag pass through as
     /// bare text.
     static func openingDigest(fromVTT vtt: String, characterBudget: Int = digestCharacterBudget) -> String {
+        guard characterBudget > 0 else { return "" }
         var lines: [String] = []
         var total = 0
 
-        for rawLine in vtt.split(separator: "\n", omittingEmptySubsequences: true) {
+        let (multipliedScanLimit, overflow) = characterBudget.multipliedReportingOverflow(by: 4)
+        let scanLimit = overflow ? Int.max : multipliedScanLimit
+        let scanArea = vtt.prefix(scanLimit)
+        for rawLine in scanArea.split(separator: "\n", omittingEmptySubsequences: true) {
             let line = String(rawLine)
             if line == "WEBVTT" || line.contains(" --> ") { continue }
 
@@ -118,11 +122,13 @@ nonisolated struct SpeakerNameSuggester: Sendable {
                 .replacingOccurrences(of: "\n", with: " ")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .trimmingCharacters(in: CharacterSet(charactersIn: "\"'“”‘’«»"))
+            let lowercasedName = name.lowercased()
             guard !name.isEmpty,
                   name.count <= maxNameLength,
                   name.contains(where: \.isLetter),
-                  !name.lowercased().hasPrefix("speaker ") else { continue }
-            let dedupeKey = name.lowercased()
+                  lowercasedName != "speaker",
+                  !lowercasedName.hasPrefix("speaker ") else { continue }
+            let dedupeKey = lowercasedName
             guard !seenNames.contains(dedupeKey) else { continue }
             guard result[item.speakerNumber] == nil else { continue }
 

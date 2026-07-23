@@ -63,6 +63,11 @@ struct PublishListView: View {
 
 @MainActor
 final class PublishListViewModel: ObservableObject {
+    typealias LoadEpisodes = @MainActor (_ playlist: EpisodeFilter, _ limit: Int) -> [Episode]
+    typealias CreateList = @MainActor (_ title: String, _ description: String, _ visibility: SocialVisibility, _ entries: [SharedListEntry]) async -> SharedList?
+
+    static let maximumPublishedEpisodes = 1000
+
     @Published var title: String
     @Published var descriptionText = ""
     @Published var visibility: SocialVisibility = .private
@@ -70,10 +75,25 @@ final class PublishListViewModel: ObservableObject {
     @Published private(set) var publishError: String?
 
     private let playlist: EpisodeFilter
+    private let loadEpisodes: LoadEpisodes
+    private let createList: CreateList
     let isMaterializing: Bool
 
-    init(playlist: EpisodeFilter) {
+    init(
+        playlist: EpisodeFilter,
+        loadEpisodes: @escaping LoadEpisodes = { playlist, limit in
+            DataManager.sharedManager.playlistEpisodes(for: playlist, limit: limit)
+        },
+        createList: @escaping CreateList = { title, description, visibility, entries in
+            await ApiServerHandler.shared.createSharedList(title: title,
+                                                           description: description,
+                                                           visibility: visibility,
+                                                           entries: entries)
+        }
+    ) {
         self.playlist = playlist
+        self.loadEpisodes = loadEpisodes
+        self.createList = createList
         title = playlist.playlistName
         // Manual playlists publish in place; query playlists snapshot.
         isMaterializing = !playlist.manual
@@ -83,7 +103,7 @@ final class PublishListViewModel: ObservableObject {
         isPublishing = true
         publishError = nil
 
-        let episodes = DataManager.sharedManager.playlistEpisodes(for: playlist, limit: 500)
+        let episodes = loadEpisodes(playlist, Self.maximumPublishedEpisodes)
         let entries = episodes.enumerated().map { index, episode in
             SharedListEntry(episodeUuid: episode.uuid,
                             podcastUuid: episode.parentIdentifier(),
@@ -92,11 +112,10 @@ final class PublishListViewModel: ObservableObject {
                             position: index)
         }
 
-        guard let created = await ApiServerHandler.shared.createSharedList(
-            title: title.trimmingCharacters(in: .whitespaces),
-            description: descriptionText.trimmingCharacters(in: .whitespaces),
-            visibility: visibility,
-            entries: entries) else {
+        guard let created = await createList(title.trimmingCharacters(in: .whitespaces),
+                                             descriptionText.trimmingCharacters(in: .whitespaces),
+                                             visibility,
+                                             entries) else {
             publishError = L10n.socialListPublishFailed
             isPublishing = false
             return false

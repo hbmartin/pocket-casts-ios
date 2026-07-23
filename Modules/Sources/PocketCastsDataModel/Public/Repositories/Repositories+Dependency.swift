@@ -12,12 +12,12 @@ import Dependencies
 // unimplemented-dependency failure here would be a behavior change, not a
 // safety win.
 
-// @unchecked Sendable: repository dependency values must be Sendable. The
+// Repository dependency values must be Sendable. The
 // production `DataManager` facade delegates storage to GRDB's thread-safe queue
 // and sub-managers that serialize their mutable caches. Keep the unchecked
 // promise here at the repository boundary instead of on the class declaration;
 // subclasses that add mutable state must still avoid crossing concurrency
-// domains unless they provide their own synchronization.
+// @unchecked Sendable: subclasses must synchronize added state before crossing concurrency domains.
 extension DataManager: @unchecked Sendable {}
 
 protocol MirroredTestDependencyKey: DependencyKey {}

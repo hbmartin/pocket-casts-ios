@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSContactsUsageDescription</key>
-	<string>Find friends who already use the app: contact emails and phone numbers are hashed on this device and compared once — nothing is uploaded in readable form or stored.</string>
+	<string>Each time you run Find People, contact emails and phone numbers are hashed on this device and compared transiently — nothing is uploaded in readable form or stored.</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>au.com.shiftyjelly.podcasts.Refresh</string>

@@ -14,6 +14,8 @@ import PocketCastsUtils
 /// still be wrong. Rows refresh for free via the `episodeDurationChanged`
 /// notification they already observe.
 nonisolated enum EpisodeDurationCorrector {
+    static let probeCoordinator = EpisodeDurationProbeCoordinator(cooldown: 10.minutes)
+
     static func correctDurationIfNeeded(for episode: BaseEpisode) {
         if episode.downloaded(pathFinder: DownloadManager.shared) {
             EpisodeFileSizeUpdater.updateEpisodeDuration(episode: episode)
@@ -22,15 +24,17 @@ nonisolated enum EpisodeDurationCorrector {
 
         guard let url = remoteProbeURL(for: episode) else { return }
 
+        let episodeUuid = episode.uuid
         let boxed = PocketCastsUtils.UncheckedSendable((episode, AVURLAsset(url: url)))
         Task {
+            guard await probeCoordinator.begin(episodeUuid: episodeUuid) else { return }
             let (episode, asset) = boxed.value
-            guard let loaded = try? await asset.load(.duration) else { return }
-
-            guard let corrected = correction(current: episode.duration, calculated: CMTimeGetSeconds(loaded)) else { return }
-
-            DataManager.sharedManager.saveEpisode(duration: corrected.duration, episode: episode, updateSyncFlag: corrected.syncFlag)
-            NotificationCenter.postOnMainThread(EpisodeDurationChanged(uuid: episode.uuid))
+            if let loaded = try? await asset.load(.duration),
+               let corrected = correction(current: episode.duration, calculated: CMTimeGetSeconds(loaded)) {
+                DataManager.sharedManager.saveEpisode(duration: corrected.duration, episode: episode, updateSyncFlag: corrected.syncFlag)
+                NotificationCenter.postOnMainThread(EpisodeDurationChanged(uuid: episode.uuid))
+            }
+            await probeCoordinator.finish(episodeUuid: episodeUuid)
         }
     }
 
@@ -54,5 +58,29 @@ nonisolated enum EpisodeDurationCorrector {
         guard Int(current) != Int(calculated) else { return nil }
 
         return (duration: calculated, syncFlag: abs(current - calculated) >= 30)
+    }
+}
+
+actor EpisodeDurationProbeCoordinator {
+    private let cooldown: TimeInterval
+    private var inFlight = Set<String>()
+    private var lastFinishedAt = [String: Date]()
+
+    init(cooldown: TimeInterval) {
+        self.cooldown = cooldown
+    }
+
+    func begin(episodeUuid: String, now: Date = Date()) -> Bool {
+        guard !inFlight.contains(episodeUuid) else { return false }
+        if let lastFinishedAt = lastFinishedAt[episodeUuid], now.timeIntervalSince(lastFinishedAt) < cooldown {
+            return false
+        }
+        inFlight.insert(episodeUuid)
+        return true
+    }
+
+    func finish(episodeUuid: String, now: Date = Date()) {
+        inFlight.remove(episodeUuid)
+        lastFinishedAt[episodeUuid] = now
     }
 }

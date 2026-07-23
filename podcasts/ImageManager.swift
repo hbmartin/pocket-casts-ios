@@ -8,7 +8,7 @@ import Synchronization
 
 /// State is Kingfisher caches (thread-safe) and a lock-guarded metrics cache,
 /// so the shared instance is safe to hand across isolation domains.
-/// @unchecked Sendable: Kingfisher caches are thread-safe and screen metrics are Mutex-guarded; the placeholder/embedded-lookup caches rely on main-thread callers.
+/// @unchecked Sendable: Kingfisher caches are thread-safe and local mutable caches are Mutex-guarded.
 nonisolated final class ImageManager: @unchecked Sendable {
     static let sharedManager = ImageManager()
 
@@ -80,7 +80,7 @@ nonisolated final class ImageManager: @unchecked Sendable {
     private static let availablePodcastImageSizes = [130, 210, 280, 340, 400, 420, 680, 960]
 
     // we store failed embed lookups in memory, just to stop us constantly parsing a file with no artwork for artwork
-    private var failedEmbeddedLookups = [] as [String]
+    private let failedEmbeddedLookups = Mutex<Set<String>>([])
 
     private let podcastAddedToken = Mutex<NotificationCenter.ObservationToken?>(nil)
 
@@ -328,13 +328,14 @@ nonisolated final class ImageManager: @unchecked Sendable {
         }
 
         // loading episode artwork from downloaded files can be an expensive operation, so check to see if it's previously failed for this episode
-        if episode.downloaded(pathFinder: DownloadManager.shared), !failedEmbeddedLookups.contains(episode.uuid) {
+        let embeddedLookupPreviouslyFailed = failedEmbeddedLookups.withLock { $0.contains(episode.uuid) }
+        if episode.downloaded(pathFinder: DownloadManager.shared), !embeddedLookupPreviouslyFailed {
             if let embeddedImage = SJMediaMetadataHelper.embeddedImageForFile(atPath: episode.pathToDownloadedFile(pathFinder: DownloadManager.shared)) {
                 setImageOnMain(embeddedImage, on: imageView)
                 completion?(embeddedImage)
                 return true
             } else {
-                failedEmbeddedLookups.append(episode.uuid)
+                failedEmbeddedLookups.withLock { $0.insert(episode.uuid) }
                 return false
             }
         }
@@ -574,11 +575,11 @@ nonisolated final class ImageManager: @unchecked Sendable {
         let isDark: Bool
     }
 
-    private var placeholderImageCache: [PlaceholderKey: UIImage] = [:]
+    private let placeholderImageCache = Mutex<[PlaceholderKey: UIImage]>([:])
 
     func placeHolderImage(_ size: PodcastThumbnailSize) -> UIImage? {
         let key = PlaceholderKey(size: size, isDark: Theme.isDarkTheme())
-        if let cached = placeholderImageCache[key] {
+        if let cached = placeholderImageCache.withLock({ $0[key] }) {
             return cached
         }
         let name: String
@@ -591,7 +592,7 @@ nonisolated final class ImageManager: @unchecked Sendable {
             name = key.isDark ? "noartwork-page-dark" : "noartwork-page"
         }
         guard let image = UIImage(named: name) else { return nil }
-        placeholderImageCache[key] = image
+        placeholderImageCache.withLock { $0[key] = image }
         return image
     }
 

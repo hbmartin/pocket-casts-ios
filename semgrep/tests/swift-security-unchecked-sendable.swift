@@ -7,14 +7,14 @@ final class UnjustifiedBox: @unchecked Sendable {
 
 private let boxLock = NSLock()
 
-// @unchecked Sendable: all mutable state is guarded by boxLock.
 // ok: pocketcasts.unchecked-sendable-requires-justification
+// @unchecked Sendable: all mutable state is guarded by boxLock.
 final class JustifiedByPrecedingComment: @unchecked Sendable {
     var value: Int = 0
 }
 
-/// Conforms via @unchecked Sendable because the wrapped formatter is never mutated after init.
 // ok: pocketcasts.unchecked-sendable-requires-justification
+/// @unchecked Sendable because the wrapped formatter is never mutated after init.
 final class JustifiedByDocComment: @unchecked Sendable {
     let formatter = DateFormatter()
 }
@@ -33,6 +33,13 @@ final class BareKeywordNoReason: @unchecked Sendable {
 // All access guarded by boxLock.
 // ruleid: pocketcasts.unchecked-sendable-requires-justification
 final class CommentWithoutKeyword: @unchecked Sendable {
+    var value: Int = 0
+}
+
+// @unchecked Sendable: this explanation belongs to the next declaration only.
+// An unrelated comment breaks adjacency.
+// ruleid: pocketcasts.unchecked-sendable-requires-justification
+final class StaleInterveningJustification: @unchecked Sendable {
     var value: Int = 0
 }
 

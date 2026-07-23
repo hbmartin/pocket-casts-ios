@@ -23,7 +23,13 @@ Assessment meanings:
 - **defer-playback**: any call site is in the playback engine (PlaybackManager, DefaultPlayer,
   EffectsPlayer, AudioReadTask, PlaybackQueue, …). Deferred to Phase 5 regardless of other signals.
 
-| Flag | Default | Usages | Used in | Assessment | Sign-off |
+Remote-key retirement is tracked separately from code removal. For every row below that says
+`retire remote … key server-side`, the per-key remote-config fields currently remain:
+**targeting verification: unverified; responsible owner/approver: unassigned; retirement
+completion: pending (no completion date)**. A row may replace those defaults only after the
+remote targeting is checked and the named owner records completion.
+
+| Flag | Default | Usages | Used in | Assessment | Code sign-off / remote-retirement request |
 |---|---|---|---|---|---|
 | ~~`guestListsNetworkHighlightsRedesign`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |
 | ~~`refreshPlaylistOnSubscriptions`~~ | true | 0 | — | dead — removed | ✅ removed 2026-06-27 |

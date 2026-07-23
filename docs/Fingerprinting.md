@@ -75,7 +75,7 @@ Each checkpoint is a `[delta, data]` pair: `delta` advances a running quantized 
 
 State machine (`FingerprintTimingManager.State`):
 
-```
+```text
 idle → preparing → active(coverage: Int) → (idle on stop)
               ↘ failed(Error) / unavailable
 ```

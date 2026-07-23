@@ -558,20 +558,64 @@ class PodcastDataManager {
     }
 
     func saveAutoAddToUpNext(podcastUuid: String, autoAddToUpNext: Int32, dbQueue: GRDBQueue) {
-        if FeatureFlag.newSettingsStorage.enabled {
-            if var podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid) {
-                if let setting = AutoAddToUpNextSetting(rawValue: autoAddToUpNext) {
-                    podcast.setAutoAddToUpNext(setting: setting)
-                    podcast.syncStatus = SyncStatus.notSynced.rawValue
-                    save(podcast: podcast, dbQueue: dbQueue)
+        guard let setting = AutoAddToUpNextSetting(rawValue: autoAddToUpNext) else {
+            FileLog.shared.addMessage("Podcast Data: Failed to create AutoAddToUpNextSetting type for saving")
+            return
+        }
+
+        dbQueue.write { db in
+            do {
+                if FeatureFlag.newSettingsStorage.enabled {
+                    let modifiedAt = Date()
+                    let enabledJson = try JSONEncoder().encode(
+                        ModifiedDate(wrappedValue: setting != .off, modifiedAt: modifiedAt)
+                    )
+                    let positionJson = try JSONEncoder().encode(
+                        ModifiedDate(
+                            wrappedValue: setting == .addFirst ? UpNextPosition.top : UpNextPosition.bottom,
+                            modifiedAt: modifiedAt
+                        )
+                    )
+                    guard let enabledJsonString = String(data: enabledJson, encoding: .utf8) else {
+                        throw JSONError.failedStringConvert("addToUpNext", enabledJson)
+                    }
+                    guard let positionJsonString = String(data: positionJson, encoding: .utf8) else {
+                        throw JSONError.failedStringConvert("addToUpNextPosition", positionJson)
+                    }
+
+                    let query = """
+                    UPDATE \(DataManager.podcastTableName)
+                    SET autoAddToUpNext = ?,
+                        settings = json_set(
+                            coalesce(nullif(settings, ''), json(?)),
+                            '$.addToUpNext',
+                            json(?),
+                            '$.addToUpNextPosition',
+                            json(?)
+                        ),
+                        syncStatus = \(SyncStatus.notSynced.rawValue)
+                    WHERE uuid = ?
+                    """
+                    // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer; Swift re-encode would drop unmodeled payload fields
+                    try db.executeUpdate(
+                        query,
+                        values: [autoAddToUpNext, Self.defaultSettingsJsonString, enabledJsonString, positionJsonString, podcastUuid]
+                    )
                 } else {
-                    FileLog.shared.addMessage("Podcast Data: Failed to create AutoAddToUpNextSetting type for saving")
+                    try Podcast
+                        .filter(Podcast.Columns.uuid == podcastUuid)
+                        .updateAll(
+                            db,
+                            Podcast.Columns.autoAddToUpNext.set(to: autoAddToUpNext),
+                            Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+                        )
                 }
-            } else {
-                FileLog.shared.addMessage("Podcast Data: Couldn't find podcast for saving AutoAddToUpNext with UUID: \(podcastUuid)")
+            } catch {
+                FileLog.shared.addMessage("PodcastDataManager.saveAutoAddToUpNext error: \(error)")
             }
         }
-        saveSingleValue(name: "autoAddToUpNext", value: autoAddToUpNext, podcastUuid: podcastUuid, dbQueue: dbQueue)
+
+        cachePodcasts(dbQueue: dbQueue)
     }
 
     func setPodcastImageVersion(podcastUuid: String, version: Int, dbQueue: GRDBQueue) {

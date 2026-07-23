@@ -16,14 +16,17 @@ final class SocialViewsSnapshotTests: XCTestCase {
     private static let phone = SwiftUISnapshotLayout.fixed(width: 390, height: 700)
 
     private static func fixtureProfile() -> SocialProfile {
-        SocialProfile(userId: "00000000-0000-0000-0000-000000000001",
-                      handle: "snapshot_person",
-                      displayName: "Snapshot Person",
-                      bio: "A deterministic bio for image tests.",
-                      createdAt: Date(timeIntervalSince1970: 1_750_000_000),
-                      termsVersion: 1,
-                      bioVisibility: .public,
-                      statsVisibility: .public)
+        var configuration = SocialProfile.Configuration(
+            userId: "00000000-0000-0000-0000-000000000001",
+            handle: "snapshot_person",
+            displayName: "Snapshot Person"
+        )
+        configuration.bio = "A deterministic bio for image tests."
+        configuration.createdAt = Date(timeIntervalSince1970: 1_750_000_000)
+        configuration.termsVersion = 1
+        configuration.bioVisibility = .public
+        configuration.statsVisibility = .public
+        return SocialProfile(configuration: configuration)
     }
 
     func testAnnouncement() {

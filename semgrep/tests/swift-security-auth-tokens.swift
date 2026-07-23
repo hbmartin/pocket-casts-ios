@@ -26,6 +26,26 @@ func removePasswordIsFine() {
     KeychainHelper.removeKey(ServerConstants.Values.syncingLoginItemName)
 }
 
+public class UnsafePasswordSettings {
+    // ruleid: pocketcasts.password-writer-must-reject-refresh-auth
+    public class func saveSyncingPassword(_ password: String) {
+        // ruleid: pocketcasts.no-persisted-account-password
+        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+    }
+}
+
+public class SafePasswordSettings {
+    // ok: pocketcasts.password-writer-must-reject-refresh-auth
+    public class func saveSyncingPassword(_ password: String) {
+        guard !FeatureFlag.refreshTokenForPasswordAuth.enabled else {
+            return
+        }
+
+        // ruleid: pocketcasts.no-persisted-account-password
+        KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+    }
+}
+
 // MARK: - pocketcasts.auth-keychain-items-device-only
 
 func saveRefreshTokenBackupRestorable(token: String) {

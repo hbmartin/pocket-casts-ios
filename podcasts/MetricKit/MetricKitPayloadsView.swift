@@ -11,7 +11,7 @@ struct MetricKitPayloadsView: View {
         let sizeBytes: Int64
 
         var id: String { url.lastPathComponent }
-        var name: String { url.lastPathComponent }
+        var name: String { id }
     }
 
     var body: some View {
@@ -46,7 +46,7 @@ struct MetricKitPayloadsView: View {
                 }
             }
         }
-        .navigationTitle("MetricKit Payloads")
+        .navigationTitle(L10n.betaMenuMetricKitPayloadsTitle)
         .onAppear(perform: reload)
         .sheet(item: $selectedFile) { file in
             NavigationStack {

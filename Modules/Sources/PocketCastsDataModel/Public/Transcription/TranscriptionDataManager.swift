@@ -88,6 +88,26 @@ public struct TranscriptionDataManager: Sendable {
         return dbQueue.fetchAll(request)
     }
 
+    /// Resolves a batch of transcription episode identifiers against both episode
+    /// tables. Keeping the two typed selects inside one database read bounds the
+    /// work to the two episode corpora instead of issuing one read per record.
+    public func existingEpisodeUuids(_ uuids: [String]) -> Set<String> {
+        let uuids = Array(Set(uuids))
+        guard !uuids.isEmpty else { return [] }
+
+        return dbQueue.read { db in
+            let podcastEpisodeUuids = try Episode
+                .filter(uuids.contains(Episode.Columns.uuid))
+                .select(Episode.Columns.uuid, as: String.self)
+                .fetchAll(db)
+            let userEpisodeUuids = try UserEpisode
+                .filter(uuids.contains(UserEpisode.Columns.uuid))
+                .select(UserEpisode.Columns.uuid, as: String.self)
+                .fetchAll(db)
+            return Set(podcastEpisodeUuids).union(userEpisodeUuids)
+        } ?? []
+    }
+
     /// Number of episodes with a completed transcription.
     public func completedCount() -> Int {
         dbQueue.count(EpisodeTranscriptionRecord.self,

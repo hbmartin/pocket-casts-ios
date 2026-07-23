@@ -151,7 +151,7 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
     // MARK: - Private Helpers
 
     private func canDeleteAnything() -> Bool {
-        totalDeleteSize() > 0 && (deleteUnplayed || deletePlayed || deleteInProgress)
+        totalDeleteSize() > 0 && (deleteUnplayed || deletePlayed || deleteInProgress || tmpFilesSize > 0)
     }
 
     private func confirmCleanup() {
@@ -215,7 +215,7 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
         (EpisodeManager.downloadSizeOfUnplayedEpisodes(includeStarred: includeStarred),
          EpisodeManager.downloadSizeOfInProgressEpisodes(includeStarred: includeStarred),
          EpisodeManager.downloadSizeOfPlayedEpisodes(includeStarred: includeStarred),
-         EpisodeManager.tmpFolderSize())
+         EpisodeManager.orphanedTmpFolderSize())
     }
 
     private func totalDeleteSize() -> UInt64 {
@@ -223,6 +223,7 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
         if deleteUnplayed { total += unplayedSize }
         if deleteInProgress { total += inProgressSize }
         if deletePlayed { total += playedSize }
+        total += tmpFilesSize
 
         return total
     }

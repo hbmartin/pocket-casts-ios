@@ -37,6 +37,35 @@ public struct TranscriptSearchSegment: Equatable, Sendable {
 /// A library-wide transcript search hit. `snippet` is the matched excerpt with the
 /// matched terms wrapped in ``highlightStart``/``highlightEnd`` markers.
 public struct TranscriptSearchHit: Hashable, Sendable {
+    /// Stable source location for a matched segment. Grouping these related
+    /// fields keeps construction readable while `snippet` remains the distinct
+    /// query-dependent payload.
+    public struct Location: Hashable, Sendable {
+        public let episodeUuid: String
+        public let podcastUuid: String?
+        public let segmentIndex: Int
+        public let startTime: Double
+        public let endTime: Double?
+        public let speaker: String?
+        public let source: TranscriptSource
+
+        public init(episodeUuid: String,
+                    podcastUuid: String?,
+                    segmentIndex: Int,
+                    startTime: Double,
+                    endTime: Double?,
+                    speaker: String?,
+                    source: TranscriptSource) {
+            self.episodeUuid = episodeUuid
+            self.podcastUuid = podcastUuid
+            self.segmentIndex = segmentIndex
+            self.startTime = startTime
+            self.endTime = endTime
+            self.speaker = speaker
+            self.source = source
+        }
+    }
+
     public static let highlightStart = "<b>"
     public static let highlightEnd = "</b>"
 
@@ -49,14 +78,14 @@ public struct TranscriptSearchHit: Hashable, Sendable {
     public let source: TranscriptSource
     public let snippet: String
 
-    public init(episodeUuid: String, podcastUuid: String?, segmentIndex: Int, startTime: Double, endTime: Double?, speaker: String?, source: TranscriptSource, snippet: String) {
-        self.episodeUuid = episodeUuid
-        self.podcastUuid = podcastUuid
-        self.segmentIndex = segmentIndex
-        self.startTime = startTime
-        self.endTime = endTime
-        self.speaker = speaker
-        self.source = source
+    public init(location: Location, snippet: String) {
+        self.episodeUuid = location.episodeUuid
+        self.podcastUuid = location.podcastUuid
+        self.segmentIndex = location.segmentIndex
+        self.startTime = location.startTime
+        self.endTime = location.endTime
+        self.speaker = location.speaker
+        self.source = location.source
         self.snippet = snippet
     }
 }
@@ -83,7 +112,14 @@ public struct TranscriptSearchIndexMetaRecord: Equatable, Sendable {
     /// UTF-8 byte size of all indexed segment text, feeding the total-size cap.
     public var textBytes: Int64 = 0
 
-    public init() {}
+    public init() {
+        episodeUuid = ""
+        source = ""
+        podcastUuid = nil
+        indexedDate = 0
+        segmentCount = 0
+        textBytes = 0
+    }
 }
 
 /// Data access for the unified library-wide transcript search index: one FTS5 table
@@ -287,13 +323,15 @@ public struct TranscriptSearchDataManager: Sendable {
         guard let row else { return nil }
 
         return TranscriptSearchHit(
-            episodeUuid: row["episodeUuid"] ?? "",
-            podcastUuid: row["podcastUuid"],
-            segmentIndex: row["segmentIndex"] ?? 0,
-            startTime: row["startTime"] ?? 0,
-            endTime: row["endTime"],
-            speaker: row["speaker"],
-            source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided,
+            location: .init(
+                episodeUuid: row["episodeUuid"] ?? "",
+                podcastUuid: row["podcastUuid"],
+                segmentIndex: row["segmentIndex"] ?? 0,
+                startTime: row["startTime"] ?? 0,
+                endTime: row["endTime"],
+                speaker: row["speaker"],
+                source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided
+            ),
             snippet: row["text"] ?? ""
         )
     }
@@ -327,13 +365,15 @@ public struct TranscriptSearchDataManager: Sendable {
 
         return rows.map { row in
             TranscriptSearchHit(
-                episodeUuid: row["episodeUuid"] ?? "",
-                podcastUuid: row["podcastUuid"],
-                segmentIndex: row["segmentIndex"] ?? 0,
-                startTime: row["startTime"] ?? 0,
-                endTime: row["endTime"],
-                speaker: row["speaker"],
-                source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided,
+                location: .init(
+                    episodeUuid: row["episodeUuid"] ?? "",
+                    podcastUuid: row["podcastUuid"],
+                    segmentIndex: row["segmentIndex"] ?? 0,
+                    startTime: row["startTime"] ?? 0,
+                    endTime: row["endTime"],
+                    speaker: row["speaker"],
+                    source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided
+                ),
                 snippet: row["snippet"] ?? ""
             )
         }
@@ -386,13 +426,15 @@ public struct TranscriptSearchDataManager: Sendable {
 
         return rows.map { row in
             TranscriptSearchHit(
-                episodeUuid: row["episodeUuid"] ?? "",
-                podcastUuid: row["podcastUuid"],
-                segmentIndex: row["segmentIndex"] ?? 0,
-                startTime: row["startTime"] ?? 0,
-                endTime: row["endTime"],
-                speaker: row["speaker"],
-                source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided,
+                location: .init(
+                    episodeUuid: row["episodeUuid"] ?? "",
+                    podcastUuid: row["podcastUuid"],
+                    segmentIndex: row["segmentIndex"] ?? 0,
+                    startTime: row["startTime"] ?? 0,
+                    endTime: row["endTime"],
+                    speaker: row["speaker"],
+                    source: TranscriptSource(rawValue: row["source"] ?? "") ?? .provided
+                ),
                 snippet: row["snippet"] ?? ""
             )
         }

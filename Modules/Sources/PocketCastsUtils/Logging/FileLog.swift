@@ -101,9 +101,9 @@ actor LogBuffer {
     }
 }
 
-// @unchecked Sendable: `logBuffer` is an actor and `messageSubject` is only sent to from inside
+// `logBuffer` is an actor and `messageSubject` is only sent to from inside
 // that actor (see `LogBuffer.append`), so publishes are serialized on a single executor; there is
-// no other mutable state.
+// @unchecked Sendable: the LogBuffer actor serializes all mutable state and subject sends.
 public final class FileLog: @unchecked Sendable {
     public enum LogError: Error {
         case logCanceled

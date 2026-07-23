@@ -5,10 +5,10 @@ import XCTest
 import GRDB
 import SwiftProtobuf
 
-/// Custom playlists are device-local: these tests pin every sync guard — they are
-/// never offered for upload (`allUnsyncedPlaylists` / `markAllPlaylistsUnsynced`),
-/// an incremental server record with a colliding uuid is ignored (`importPlaylist`),
-/// and a full sync preserves them instead of delete-rewriting (`processServerPlaylists`).
+/// Custom playlists participate in account sync through the fork-owned custom_query
+/// field. Old-format live records still cannot erase a local query, while deletion
+/// tombstones remain authoritative and the compatibility full-sync path preserves a
+/// local query when the server response cannot represent one.
 final class SyncTaskCustomPlaylistTests: XCTestCase {
     private var dataManager: DataManager!
     private var syncTask: SyncTask!
@@ -48,44 +48,46 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         return dataManager.save(playlist: playlist)
     }
 
-    // MARK: - Upload exclusion
+    // MARK: - Account-sync upload
 
-    func testAllUnsyncedPlaylistsExcludesCustomPlaylists() {
+    func testAllUnsyncedPlaylistsIncludesCustomPlaylists() {
         saveCustomPlaylist(uuid: "custom-1")
         saveSmartPlaylist(uuid: "smart-1")
 
         let unsynced = dataManager.allUnsyncedPlaylists()
 
-        XCTAssertEqual(unsynced.map(\.uuid), ["smart-1"], "custom playlists must never be offered for upload")
+        XCTAssertEqual(Set(unsynced.map(\.uuid)), ["custom-1", "smart-1"])
     }
 
-    func testChangedPlaylistsNeverPushesCustomPlaylists() {
+    func testChangedPlaylistsPushesCustomQueryEnvelope() {
         saveCustomPlaylist(uuid: "custom-1")
         saveSmartPlaylist(uuid: "smart-1")
 
         let records = syncTask.changedPlaylists()
 
-        let pushedUuids = records?.compactMap { record -> String? in
-            if case let .playlist(playlist) = record.record { return playlist.uuid }
+        let pushedPlaylists = records?.compactMap { record -> Api_SyncUserPlaylist? in
+            if case let .playlist(playlist) = record.record { return playlist }
             return nil
         } ?? []
-        XCTAssertEqual(pushedUuids, ["smart-1"])
+        XCTAssertEqual(Set(pushedPlaylists.map(\.uuid)), ["custom-1", "smart-1"])
+        let customRecord = pushedPlaylists.first { $0.uuid == "custom-1" }
+        XCTAssertEqual(customRecord?.customQuery.value, customEnvelope)
     }
 
-    func testMarkAllPlaylistsUnsyncedLeavesCustomPlaylistsSynced() {
+    func testMarkAllPlaylistsUnsyncedIncludesCustomPlaylists() {
         saveCustomPlaylist(uuid: "custom-1", syncStatus: SyncStatus.synced.rawValue)
         saveSmartPlaylist(uuid: "smart-1", syncStatus: SyncStatus.synced.rawValue)
 
         dataManager.markAllPlaylistsUnsynced()
 
-        XCTAssertEqual(dataManager.findPlaylist(uuid: "custom-1")?.syncStatus, SyncStatus.synced.rawValue)
+        XCTAssertEqual(dataManager.findPlaylist(uuid: "custom-1")?.syncStatus, SyncStatus.notSynced.rawValue)
         XCTAssertEqual(dataManager.findPlaylist(uuid: "smart-1")?.syncStatus, SyncStatus.notSynced.rawValue)
-        XCTAssertTrue(dataManager.allUnsyncedPlaylists().allSatisfy { !$0.isCustom })
+        XCTAssertEqual(Set(dataManager.allUnsyncedPlaylists().map(\.uuid)), ["custom-1", "smart-1"])
     }
 
     // MARK: - Incremental import skip
 
-    func testImportPlaylistSkipsWhenLocalPlaylistIsCustom() {
+    func testImportPlaylistSkipsOldFormatLiveRecordWhenLocalPlaylistIsCustom() {
         saveCustomPlaylist(uuid: "custom-1", name: "Custom Local")
 
         var proto = Api_SyncUserPlaylist()
@@ -107,7 +109,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         XCTAssertEqual(local?.filterStarred, false)
     }
 
-    func testImportPlaylistIgnoresServerDeleteForCustomPlaylist() {
+    func testImportPlaylistAppliesServerDeleteForCustomPlaylist() {
         saveCustomPlaylist(uuid: "custom-1")
 
         var proto = Api_SyncUserPlaylist()
@@ -122,7 +124,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
 
         syncTask.processServerData(response: response)
 
-        XCTAssertNotNil(dataManager.findPlaylist(uuid: "custom-1"), "a server tombstone must not delete a local custom playlist")
+        XCTAssertNil(dataManager.findPlaylist(uuid: "custom-1"), "a server tombstone must delete the matching local custom playlist")
     }
 
     func testImportPlaylistStillAppliesToNonCustomPlaylists() {

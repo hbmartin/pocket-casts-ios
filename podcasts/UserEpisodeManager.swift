@@ -96,10 +96,11 @@ nonisolated struct UserEpisodeManager {
         NotificationCenter.postOnMainThread(UserEpisodeDeleted(uuid: userEpisode.uuid))
     }
 
-    static func deleteFromEverywhere(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) {
+    @discardableResult
+    static func deleteFromEverywhere(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) async -> Bool {
         guard userEpisode.folderRelativePath != nil else {
             deleteFromDevice(userEpisode: userEpisode, removeFromPlaybackQueue: removeFromPlaybackQueue)
-            return
+            return true
         }
 
         if removeFromPlaybackQueue {
@@ -108,12 +109,12 @@ nonisolated struct UserEpisodeManager {
             }
         }
 
-        Task {
-            do {
-                try await FileSyncManager.shared.deleteUpload(episodeUuid: userEpisode.uuid)
-            } catch {
-                FileLog.shared.addMessage("FileSync: delete upload failed: \(error)")
-            }
+        do {
+            try await FileSyncManager.shared.deleteUpload(episodeUuid: userEpisode.uuid)
+            return true
+        } catch {
+            FileLog.shared.addMessage("FileSync: delete upload failed: \(error)")
+            return false
         }
     }
 
@@ -218,8 +219,12 @@ nonisolated struct UserEpisodeManager {
                     })
                 }
                 alert.addAction(UIAlertAction(title: L10n.fileSyncDeleteEverywhere, style: .destructive) { _ in
-                    deleteFromEverywhere(userEpisode: episode)
-                    actionCallback?(true, true)
+                    Task {
+                        let deleted = await deleteFromEverywhere(userEpisode: episode)
+                        await MainActor.run {
+                            actionCallback?(deleted, deleted)
+                        }
+                    }
                 })
             } else {
                 alert.addAction(UIAlertAction(title: L10n.deleteFromDevice, style: .destructive) { _ in

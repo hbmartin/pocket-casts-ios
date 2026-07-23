@@ -5,6 +5,7 @@ import Foundation
 import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
+import Synchronization
 
 nonisolated protocol DownloadManagerEpisodesCache {
     subscript(index: String) -> BaseEpisode? { get set }
@@ -24,11 +25,11 @@ nonisolated protocol DownloadManagerStreamAndDownloadCache {
 nonisolated extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where ThreadSafeDictionary == ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate> {
 }
 
-// @unchecked Sendable: `DownloadManager.shared` is a process-wide singleton already shared across
+// `DownloadManager.shared` is a process-wide singleton already shared across
 // threads by design — its `URLSessionDelegate`/`URLSessionDownloadDelegate` callbacks run on the
 // session's background delegate queue. `@unchecked` because the compiler can't verify the ad-hoc
 // synchronization of its mutable caches (which use `ThreadSafeDictionary`). Revisit when isolation
-// is formalized in modernization Phase 2.
+// @unchecked Sendable: delegate state uses locks/thread-safe caches pending formal isolation.
 nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked Sendable {
 
     static let shared: DownloadManager = {
@@ -330,10 +331,24 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         return
     }
 
-    private class ExportStatus {
-        var completed: Bool = false
-        var reportedType: String?
-        var error: Error?
+    private final class ExportStatus: Sendable {
+        struct Snapshot: Sendable {
+            var completed = false
+            var error: (any Error)?
+        }
+
+        private let state = Mutex(Snapshot())
+
+        func complete(error: (any Error)? = nil) {
+            state.withLock {
+                $0.error = error
+                $0.completed = true
+            }
+        }
+
+        func snapshot() -> Snapshot {
+            state.withLock { $0 }
+        }
     }
 
     private let activeLoaderLock = NSLock()
@@ -415,20 +430,18 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         let exportPath = outputURL.pathComponents.joined(separator: "/")
         let exportStatus =  ExportStatus()
         let originalSizeInBytes = episode.sizeInBytes
-        let customLoaderDelegate = MediaExporterResourceLoaderDelegate(saveFilePath: exportPath, episodeUuid: episode.uuid, podcastUuid: episode.parentIdentifier()) { [weak self, exportStatus] status, contentType, bytesDownloaded, bytesExpected in
+        let customLoaderDelegate = MediaExporterResourceLoaderDelegate(saveFilePath: exportPath, episodeUuid: episode.uuid, podcastUuid: episode.parentIdentifier()) { [weak self, exportStatus] status, _, bytesDownloaded, bytesExpected in
             guard let self else {
                 return
             }
-            exportStatus.reportedType = contentType
             let size = max(100, max(bytesExpected, originalSizeInBytes))
             switch status {
             case .downloading:
                 self.reportProgress(episodeUUID: downloadTaskUUID, totalBytesWritten: bytesDownloaded, totalBytesExpectedToWrite: size)
             case .failed(let error):
-                exportStatus.error = error
-                exportStatus.completed = true
+                exportStatus.complete(error: error)
             case .completed:
-                exportStatus.completed = true
+                exportStatus.complete()
             }
         }
         guard let customURL = MediaExporterResourceLoaderDelegate.makeCustomURL(urlAsset.url) else {
@@ -444,9 +457,10 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         activeLoaderDelegate = customLoaderDelegate
         let boxedEpisode = PocketCastsUtils.UncheckedSendable(episode)
         Task {
-            while !exportStatus.completed {
+            while !exportStatus.snapshot().completed {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
+            let exportResult = exportStatus.snapshot()
             downloadingEpisodesCache[downloadTaskUUID] = nil
             removeEpisodeFromCache(boxedEpisode.value)
             if let mediaExporterDelegate = downloadAndStreamEpisodes[downloadTaskUUID] as? MediaExporterResourceLoaderDelegate,
@@ -457,13 +471,13 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             guard let episode = dataManager.findBaseEpisode(uuid: downloadTaskUUID) else {
                 return
             }
-            if exportStatus.error == nil {
+            if exportResult.error == nil {
                 fileLog.addMessage("DownloadManager stream and download: end downloading \(episode.uuid) successfully")
                 processEpisode(episode, downloadedFile: outputURL, copyFile: true)
             } else {
-                fileLog.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(exportStatus.error?.localizedDescription ?? "")")
+                fileLog.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(exportResult.error?.localizedDescription ?? "")")
                 wasDownloadingBefore = episode.downloading()
-                DataManager.sharedManager.saveEpisode(downloadStatus: .notDownloaded, downloadError: exportStatus.error?.localizedDescription, downloadTaskId: nil, episode: episode)
+                DataManager.sharedManager.saveEpisode(downloadStatus: .notDownloaded, downloadError: exportResult.error?.localizedDescription, downloadTaskId: nil, episode: episode)
                 DataManager.sharedManager.saveEpisode(autoDownloadStatus: .notSpecified, episode: episode)
                 if wasDownloadingBefore {
                     DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, autoDownloadStatus: .autoDownloaded)

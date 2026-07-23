@@ -51,7 +51,7 @@ class CatchMeUpViewModel: ObservableObject {
 
     private func load() async {
         var cues: [TimedCueText] = []
-        if let model = try? await Self.loadTranscript(transcriptManager) {
+        if let model = try? await TranscriptManager.loadTranscript(from: transcriptManager) {
             cues = SummaryTakeawayGenerator.timedCues(from: model)
         }
         guard !Task.isCancelled else {
@@ -116,12 +116,6 @@ class CatchMeUpViewModel: ObservableObject {
             return playedUpTo
         }
         return mapped
-    }
-
-    nonisolated private static func loadTranscript(
-        _ manager: PocketCastsUtils.UncheckedSendable<TranscriptManager>
-    ) async throws -> TranscriptModel {
-        try await manager.value.loadTranscript()
     }
 }
 

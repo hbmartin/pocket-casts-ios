@@ -36,6 +36,22 @@ final class SpeakerNameSuggesterTests: XCTestCase {
         XCTAssertTrue(digest.hasPrefix("Speaker 1: "))
     }
 
+    func testOpeningDigestDoesNotScanPastBoundedPrefixOfSkippedChrome() {
+        let skippedChrome = Array(
+            repeating: "00:00:00.000 --> 00:00:01.000",
+            count: 20
+        ).joined(separator: "\n")
+        let vtt = "WEBVTT\n\(skippedChrome)\n<v Speaker 1>This sentinel is beyond the scan window."
+
+        let digest = SpeakerNameSuggester.openingDigest(fromVTT: vtt, characterBudget: 40)
+
+        XCTAssertFalse(digest.contains("sentinel"))
+    }
+
+    func testOpeningDigestRejectsNonPositiveBudget() {
+        XCTAssertEqual(SpeakerNameSuggester.openingDigest(fromVTT: "<v Speaker 1>Hello", characterBudget: 0), "")
+    }
+
     func testEmptyVTTProducesEmptyDigest() {
         XCTAssertTrue(SpeakerNameSuggester.openingDigest(fromVTT: "WEBVTT\n").isEmpty)
     }
@@ -69,5 +85,15 @@ final class SpeakerNameSuggesterTests: XCTestCase {
         ], speakerCount: 3)
 
         XCTAssertEqual(validated, [1: "Alice"], "one suggestion per name and per speaker")
+    }
+
+    func testValidationRejectsExactGenericSpeakerButAllowsNamesStartingWithSpeaker() {
+        let validated = SpeakerNameSuggester.validated([
+            item(1, "Speaker"),
+            item(2, "speaker"),
+            item(3, "Speakersmith")
+        ], speakerCount: 3)
+
+        XCTAssertEqual(validated, [3: "Speakersmith"])
     }
 }

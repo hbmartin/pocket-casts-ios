@@ -184,19 +184,19 @@ final class TranscriptEmbeddingPipelineTests: XCTestCase {
 /// Backfill drain behavior against the same fakes.
 final class TranscriptEmbeddingBackfillTests: XCTestCase {
 
-    func testDrainEmbedsPendingPairsAndStopsWhenListEmpties() async {
+    func testDrainEmbedsPendingBatch() async {
         let provider = FakeEmbeddingProvider()
         let capture = PipelineCapture()
         capture.segments = [TranscriptSearchSegment(index: 0, text: String(repeating: "w", count: 400), startTime: 0)]
 
-        let remaining = SharedCounter(2)
+        let embedded = SharedStrings()
         let pipeline = TranscriptEmbeddingPipeline(
             provider: provider,
             isEnabled: { true },
             segments: { _, _ in capture.segments },
             isEmbedded: { _, _, _ in false },
-            replaceWindows: { _, _, _, _, _ in
-                remaining.decrement()
+            replaceWindows: { episodeUuid, _, _, _, _ in
+                embedded.append(episodeUuid)
                 return true
             },
             languageHint: { _ in nil }
@@ -206,14 +206,89 @@ final class TranscriptEmbeddingBackfillTests: XCTestCase {
             provider: provider,
             isEnabled: { true },
             pendingPairs: { _, _ in
-                remaining.value > 0 ? [(episodeUuid: "ep-\(remaining.value)", podcastUuid: nil, source: .generated)] : []
+                [
+                    (episodeUuid: "ep-1", podcastUuid: nil, source: .generated),
+                    (episodeUuid: "ep-2", podcastUuid: nil, source: .generated)
+                ]
             },
             isDeferred: { false }
         )
 
         await backfill.drain(maxPairs: 10)
 
-        XCTAssertEqual(remaining.value, 0, "drains until the pending list is empty")
+        XCTAssertEqual(embedded.values, ["ep-1", "ep-2"])
+    }
+
+    func testDrainContinuesPastProviderFailureAtHeadOfBatch() async {
+        let provider = FakeEmbeddingProvider()
+        provider.setFailNext()
+        let capture = PipelineCapture()
+        capture.segments = [TranscriptSearchSegment(index: 0, text: String(repeating: "w", count: 400), startTime: 0)]
+        let embedded = SharedStrings()
+        let pendingQueries = SharedCounter(0)
+        let pipeline = TranscriptEmbeddingPipeline(
+            provider: provider,
+            isEnabled: { true },
+            segments: { _, _ in capture.segments },
+            isEmbedded: { _, _, _ in false },
+            replaceWindows: { episodeUuid, _, _, _, _ in
+                embedded.append(episodeUuid)
+                return true
+            },
+            languageHint: { _ in nil }
+        )
+        let backfill = TranscriptEmbeddingBackfill(
+            pipeline: pipeline,
+            provider: provider,
+            isEnabled: { true },
+            pendingPairs: { _, _ in
+                pendingQueries.increment()
+                return [
+                    (episodeUuid: "ep-fails", podcastUuid: nil, source: .generated),
+                    (episodeUuid: "ep-next", podcastUuid: nil, source: .generated)
+                ]
+            },
+            isDeferred: { false }
+        )
+
+        await backfill.drain(maxPairs: 2)
+
+        XCTAssertEqual(embedded.values, ["ep-next"], "a persistent head failure must not starve later episodes")
+        XCTAssertEqual(pendingQueries.value, 1, "each drain should work from one bounded snapshot")
+    }
+
+    func testDrainContinuesWhenPairWasAlreadyEmbeddedConcurrently() async {
+        let provider = FakeEmbeddingProvider()
+        let capture = PipelineCapture()
+        capture.segments = [TranscriptSearchSegment(index: 0, text: String(repeating: "w", count: 400), startTime: 0)]
+        let embedded = SharedStrings()
+        let pipeline = TranscriptEmbeddingPipeline(
+            provider: provider,
+            isEnabled: { true },
+            segments: { _, _ in capture.segments },
+            isEmbedded: { episodeUuid, _, _ in episodeUuid == "ep-raced" },
+            replaceWindows: { episodeUuid, _, _, _, _ in
+                embedded.append(episodeUuid)
+                return true
+            },
+            languageHint: { _ in nil }
+        )
+        let backfill = TranscriptEmbeddingBackfill(
+            pipeline: pipeline,
+            provider: provider,
+            isEnabled: { true },
+            pendingPairs: { _, _ in
+                [
+                    (episodeUuid: "ep-raced", podcastUuid: nil, source: .generated),
+                    (episodeUuid: "ep-next", podcastUuid: nil, source: .generated)
+                ]
+            },
+            isDeferred: { false }
+        )
+
+        await backfill.drain(maxPairs: 2)
+
+        XCTAssertEqual(embedded.values, ["ep-next"], "a raced pair must not terminate the batch")
     }
 
     func testDrainRespectsDeferralAndPairCap() async {
@@ -248,7 +323,9 @@ final class TranscriptEmbeddingBackfillTests: XCTestCase {
             pipeline: pipeline,
             provider: provider,
             isEnabled: { true },
-            pendingPairs: { _, _ in [(episodeUuid: "ep-\(embedded.value)", podcastUuid: nil, source: .generated)] },
+            pendingPairs: { _, limit in
+                (0 ..< limit).map { (episodeUuid: "ep-\($0)", podcastUuid: nil, source: .generated) }
+            },
             isDeferred: { false }
         )
         await capped.drain(maxPairs: 3)
@@ -262,5 +339,11 @@ nonisolated private final class SharedCounter: Sendable {
     init(_ count: Int) { self.count = Mutex(count) }
     var value: Int { count.withLock { $0 } }
     func increment() { count.withLock { $0 += 1 } }
-    func decrement() { count.withLock { $0 -= 1 } }
+}
+
+nonisolated private final class SharedStrings: Sendable {
+    private let storage = Mutex<[String]>([])
+
+    var values: [String] { storage.withLock { $0 } }
+    func append(_ value: String) { storage.withLock { $0.append(value) } }
 }

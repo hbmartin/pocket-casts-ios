@@ -34,7 +34,6 @@ podcasts/MediaFilterOverlayController.swift: 1
 podcasts/New Detail/Custom Order/PlaylistDetailCustomOrderViewController.swift: 1
 podcasts/New Detail/Episode Add/ManualPlaylistsChooserViewController.swift: 1
 podcasts/New Detail/PlaylistDetailViewController+TableView.swift: 5
-podcasts/NotificationsViewController.swift: 4
 podcasts/PlaybackManager.swift: 2
 podcasts/PlaylistSelectionViewController.swift: 1
 podcasts/PlaylistsViewController+Table.swift: 1

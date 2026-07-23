@@ -141,11 +141,11 @@ precedent at `ServerSettings.swift:204-233`) — a restored backup on a new devi
 not silently inherit consent.
 
 **DB field**: add `SJPodcast.podpingRegistered` (`Bool`, default `false`) via
-`SchemaMigration(toVersion: 82)` in
+`SchemaMigration(toVersion: 87)` in
 `Modules/Sources/PocketCastsDataModel/Private/Managers/Util/DatabaseHelper.swift`
 (current latest is `toVersion: 81`, line 138), mirroring migration 76's style:
 ```swift
-SchemaMigration(toVersion: 82) { db in
+SchemaMigration(toVersion: 87) { db in
     try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN podpingRegistered INTEGER DEFAULT 0;", values: nil)
 }
 ```
@@ -374,7 +374,7 @@ deliberate check.
 
 - Unit tests: `ONLY_TESTING=PocketCastsServerTests mise run test:staging` (new
   `RefreshManager`/`PodpingRelayClient`/`FeedParser` cases) and
-  `ONLY_TESTING=PocketCastsDataModelTests mise run test:staging` (migration 82).
+  `ONLY_TESTING=PocketCastsDataModelTests mise run test:staging` (migration 87).
 - Manual: enable the feature flag + toggle on a simulator build, use the debug-menu
   "Simulate Podping Push" action (or `xcrun simctl push` with a fabricated payload)
   against a subscribed `.localFeed` podcast, and confirm via `FileLog`/breakpoints that

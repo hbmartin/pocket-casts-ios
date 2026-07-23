@@ -275,11 +275,18 @@ final class SocialLocalBackendE2ETests: XCTestCase {
     /// Slice-4 wire contract: send-to-friend + the shared-item inbox.
     func testSendToFriendAndInboxLoop() async throws {
         let suffix = UUID().uuidString.prefix(8).lowercased()
-        let (tokenA, _) = try await register(email: "ios-send-a-\(suffix)@e2e.test")
+        let (tokenA, senderUserId) = try await register(email: "ios-send-a-\(suffix)@e2e.test")
         let (tokenB, _) = try await register(email: "ios-send-b-\(suffix)@e2e.test")
+        let (blockedToken, _) = try await register(email: "ios-send-blocked-\(suffix)@e2e.test")
+        let (tombstonedToken, _) = try await register(email: "ios-send-tombstoned-\(suffix)@e2e.test")
+
+        let blockedHandle = "ios_snd_blk_\(suffix)"
+        let tombstonedHandle = "ios_snd_del_\(suffix)"
 
         for (token, handle, name) in [(tokenA, "ios_snd_a_\(suffix)", "Sender A"),
-                                      (tokenB, "ios_snd_b_\(suffix)", "Recipient B")] {
+                                      (tokenB, "ios_snd_b_\(suffix)", "Recipient B"),
+                                      (blockedToken, blockedHandle, "Blocked Recipient"),
+                                      (tombstonedToken, tombstonedHandle, "Deleted Recipient")] {
             var join = Api_JoinRequest()
             join.handle = handle
             join.acceptedTermsVersion = 1
@@ -287,6 +294,19 @@ final class SocialLocalBackendE2ETests: XCTestCase {
             let (status, _) = try await post("social/join", token: token, message: join)
             XCTAssertEqual(status, 200)
         }
+
+        // Prepare two privacy-sensitive recipients: one who blocked the
+        // sender, and one whose profile/PII was erased but whose handle remains
+        // tombstoned.
+        var blockSender = Api_BlockRequest()
+        blockSender.targetUserID = senderUserId
+        var (status, body) = try await post("social/block", token: blockedToken, message: blockSender)
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
+
+        (status, body) = try await post("social/erase", token: tombstonedToken, message: Api_EraseRequest())
+        XCTAssertEqual(status, 200)
+        XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
 
         var send = Api_SharedItemSendRequest()
         send.recipientHandle = "ios_snd_b_\(suffix)"
@@ -296,7 +316,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         send.podcastTitle = "A Sent Podcast"
         send.note = "you'll love this bit"
         send.timestampSeconds = 615
-        var (status, body) = try await post("social/share/send", token: tokenA, message: send)
+        (status, body) = try await post("social/share/send", token: tokenA, message: send)
         XCTAssertEqual(status, 200)
         XCTAssertTrue(try Api_SocialAck(serializedBytes: body).success)
 
@@ -306,8 +326,12 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         var inbox = try Api_InboxResponse(serializedBytes: body)
         XCTAssertEqual(inbox.items.count, 1)
         XCTAssertEqual(inbox.unread, 1)
-        let item = inbox.items[0]
+        let item = try XCTUnwrap(inbox.items.first)
         XCTAssertEqual(item.senderHandle, "ios_snd_a_\(suffix)")
+        XCTAssertEqual(item.episodeUuid, send.episodeUuid)
+        XCTAssertEqual(item.podcastUuid, send.podcastUuid)
+        XCTAssertEqual(item.episodeTitle, send.episodeTitle)
+        XCTAssertEqual(item.podcastTitle, send.podcastTitle)
         XCTAssertEqual(item.note, "you'll love this bit")
         XCTAssertEqual(item.timestampSeconds, 615)
         XCTAssertFalse(item.read)
@@ -318,14 +342,26 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         (status, _) = try await post("social/inbox/read", token: tokenB, message: markRead)
         XCTAssertEqual(status, 200)
         (status, body) = try await post("social/inbox", token: tokenB, message: Api_InboxRequest())
+        XCTAssertEqual(status, 200)
         inbox = try Api_InboxResponse(serializedBytes: body)
         XCTAssertEqual(inbox.unread, 0)
-        XCTAssertTrue(inbox.items[0].read)
+        XCTAssertTrue(try XCTUnwrap(inbox.items.first).read)
 
-        // Unknown recipient: 404 (no leak).
+        // Unknown, blocked, and tombstoned recipients are deliberately
+        // indistinguishable: status and serialized error body must match.
         send.recipientHandle = "nobody_here_\(suffix)"
-        (status, _) = try await post("social/share/send", token: tokenA, message: send)
-        XCTAssertEqual(status, 404)
+        let (unknownStatus, unknownBody) = try await post("social/share/send", token: tokenA, message: send)
+        XCTAssertEqual(unknownStatus, 404)
+
+        send.recipientHandle = blockedHandle
+        let (blockedStatus, blockedBody) = try await post("social/share/send", token: tokenA, message: send)
+        XCTAssertEqual(blockedStatus, unknownStatus)
+        XCTAssertEqual(blockedBody, unknownBody)
+
+        send.recipientHandle = tombstonedHandle
+        let (tombstonedStatus, tombstonedBody) = try await post("social/share/send", token: tokenA, message: send)
+        XCTAssertEqual(tombstonedStatus, unknownStatus)
+        XCTAssertEqual(tombstonedBody, unknownBody)
 
         // Slice 15: a show recommendation — podcast, no episode — rides the
         // same pipeline; a send with neither is rejected.
@@ -1009,27 +1045,21 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         found = try Api_SocialSearchResponse(serializedBytes: body)
         XCTAssertTrue(found.profiles.isEmpty, "hidden profiles leave search")
 
-        hide.hideFromDiscovery = false
-        (status, _) = try await post("social/profile/update", token: tokenB, message: hide)
-        XCTAssertEqual(status, 200)
-
-        // A→B→C: C is suggested to A with one mutual connection, count only.
+        // A→C→B would normally suggest B to A. Keep B hidden while
+        // proving both suggestions and contact matching honor the same opt-out.
         var follow = Api_FollowRequest()
-        follow.handle = handleB
+        follow.handle = handleC
         (status, _) = try await post("social/follow", token: tokenA, message: follow)
         XCTAssertEqual(status, 200)
-        follow.handle = handleC
-        (status, _) = try await post("social/follow", token: tokenB, message: follow)
+        follow.handle = handleB
+        (status, _) = try await post("social/follow", token: tokenC, message: follow)
         XCTAssertEqual(status, 200)
 
         (status, body) = try await post("social/suggestions", token: tokenA, message: Api_SocialSuggestionsRequest())
         XCTAssertEqual(status, 200)
-        let suggestions = try Api_SocialSuggestionsResponse(serializedBytes: body)
-        XCTAssertEqual(suggestions.profiles.count, 1)
-        XCTAssertEqual(suggestions.profiles.first?.handle, handleC)
-        XCTAssertEqual(suggestions.profiles.first?.mutualCount, 1)
+        var suggestions = try Api_SocialSuggestionsResponse(serializedBytes: body)
+        XCTAssertFalse(suggestions.profiles.contains { $0.handle == handleB }, "hidden profiles leave suggestions")
 
-        // Contacts match with the same client-side hashing the app performs.
         (status, body) = try await post("social/contacts/salt", token: tokenA, message: Api_SocialSuggestionsRequest())
         XCTAssertEqual(status, 200)
         let salt = try Api_ContactsSaltResponse(serializedBytes: body).salt
@@ -1045,8 +1075,28 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         match.hashes = [emailHash, phoneHash]
         (status, body) = try await post("social/contacts/match", token: tokenA, message: match)
         XCTAssertEqual(status, 200)
-        let matched = try Api_ContactsMatchResponse(serializedBytes: body)
+        var matched = try Api_ContactsMatchResponse(serializedBytes: body)
+        XCTAssertFalse(matched.profiles.contains { $0.handle == handleB }, "hidden profiles leave contact matches")
+
+        hide.hideFromDiscovery = false
+        (status, _) = try await post("social/profile/update", token: tokenB, message: hide)
+        XCTAssertEqual(status, 200)
+
+        (status, body) = try await post("social/search", token: tokenA, message: search)
+        found = try Api_SocialSearchResponse(serializedBytes: body)
+        XCTAssertEqual(found.profiles.first?.handle, handleB, "unhidden profile returns to search")
+
+        (status, body) = try await post("social/suggestions", token: tokenA, message: Api_SocialSuggestionsRequest())
+        XCTAssertEqual(status, 200)
+        suggestions = try Api_SocialSuggestionsResponse(serializedBytes: body)
+        XCTAssertEqual(suggestions.profiles.first?.handle, handleB)
+        XCTAssertEqual(suggestions.profiles.first?.mutualCount, 1)
+
+        (status, body) = try await post("social/contacts/match", token: tokenA, message: match)
+        XCTAssertEqual(status, 200)
+        matched = try Api_ContactsMatchResponse(serializedBytes: body)
         XCTAssertEqual(matched.profiles.count, 1, "email matches; the phone hash is wire-ready but unmatched")
+        XCTAssertEqual(matched.profiles.first?.handle, handleB)
         XCTAssertEqual(matched.profiles.first?.handle, handleB)
     }
 

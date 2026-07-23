@@ -1,12 +1,46 @@
 import PocketCastsUtils
 import UIKit
 
+struct MomentPinTouchTracker {
+    static let tapTolerance: CGFloat = 16
+
+    private(set) var candidate: Int64?
+    private var startPoint: CGPoint?
+
+    mutating func begin(candidate: Int64?, at point: CGPoint) {
+        self.candidate = candidate
+        startPoint = candidate == nil ? nil : point
+    }
+
+    mutating func move(to point: CGPoint) {
+        guard let startPoint,
+              hypot(point.x - startPoint.x, point.y - startPoint.y) > Self.tapTolerance else {
+            return
+        }
+        cancel()
+    }
+
+    mutating func end() -> Int64? {
+        defer { cancel() }
+        return candidate
+    }
+
+    mutating func cancel() {
+        candidate = nil
+        startPoint = nil
+    }
+}
+
 class TimeSlider: UIView {
     var sidePadding = 20 as CGFloat
 
     // MARK: - Public properties
 
-    var totalDuration: TimeInterval = 1800
+    var totalDuration: TimeInterval = 1800 {
+        didSet {
+            updateMomentAccessibilityActions()
+        }
+    }
     var currentTime: TimeInterval = 900 {
         didSet {
             let animated = !draggingKnob && (abs(oldValue - currentTime) > 8)
@@ -47,13 +81,14 @@ class TimeSlider: UIView {
         didSet {
             timeLayer().momentFractions = momentPins.map { CGFloat($0.fraction) }
             timeLayer().setNeedsDisplay()
+            updateMomentAccessibilityActions()
         }
     }
 
     // MARK: - private properties
 
     private var draggingKnob = false
-    private var pinTouchCandidate: Int64?
+    private var momentPinTouchTracker = MomentPinTouchTracker()
     private let textStyle = NSMutableParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
 
     // MARK: - public methods
@@ -126,10 +161,10 @@ class TimeSlider: UIView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let firstTouch = touches.first {
             let touchPoint = firstTouch.location(in: self)
-            pinTouchCandidate = momentPin(near: touchPoint)
+            momentPinTouchTracker.begin(candidate: momentPin(near: touchPoint), at: touchPoint)
             let slightlyBiggerKnobRect = timeLayer().knobRect.insetBy(dx: -20, dy: -20)
             if slightlyBiggerKnobRect.contains(touchPoint) {
-                pinTouchCandidate = nil
+                momentPinTouchTracker.cancel()
                 draggingKnob = true
                 if shouldPopupOnDrag {
                     timeLayer().popupScale = 1.0
@@ -145,6 +180,7 @@ class TimeSlider: UIView {
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        momentPinTouchTracker.cancel()
         if draggingKnob {
             draggingKnob = false
             if shouldPopupOnDrag { timeLayer().popupScale = 0 }
@@ -157,12 +193,11 @@ class TimeSlider: UIView {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if !draggingKnob, let pin = pinTouchCandidate {
-            pinTouchCandidate = nil
+        if !draggingKnob, let pin = momentPinTouchTracker.end() {
             delegate?.sliderDidTapMoment(id: pin)
             return
         }
-        pinTouchCandidate = nil
+        momentPinTouchTracker.cancel()
         if draggingKnob {
             draggingKnob = false
             if shouldPopupOnDrag { timeLayer().popupScale = 0 }
@@ -176,26 +211,44 @@ class TimeSlider: UIView {
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let firstTouch = touches.first else { return }
+        let touchPoint = firstTouch.location(in: self)
+        momentPinTouchTracker.move(to: touchPoint)
         if !draggingKnob { return }
 
-        if let firstTouch = touches.first {
-            let touchPoint = firstTouch.location(in: self)
+        if touchPoint.x < sidePadding + (timeLayer().knobRect.width / 2) {
+            currentTime = 0
+        } else if touchPoint.x > (bounds.width - (timeLayer().knobRect.width / 2) - sidePadding) {
+            currentTime = totalDuration
+        } else {
+            let percentage = TimeInterval((touchPoint.x - sidePadding) / (bounds.width - (sidePadding * 2)))
+            currentTime = totalDuration * percentage
+        }
 
-            if touchPoint.x < sidePadding + (timeLayer().knobRect.width / 2) {
-                currentTime = 0
-            } else if touchPoint.x > (bounds.width - (timeLayer().knobRect.width / 2) - sidePadding) {
-                currentTime = totalDuration
-            } else {
-                let percentage = TimeInterval((touchPoint.x - sidePadding) / (bounds.width - (sidePadding * 2)))
-                currentTime = totalDuration * percentage
-            }
+        timeLayer().popupValue = TimeFormatter.shared.playTimeFormat(time: currentTime) as NSString
+        recalculatePositionRects(false)
+        if let delegate {
+            delegate.sliderDidProvisionallySlide(to: currentTime)
+        }
+    }
 
-            timeLayer().popupValue = TimeFormatter.shared.playTimeFormat(time: currentTime) as NSString
-            recalculatePositionRects(false)
-            if let delegate {
-                delegate.sliderDidProvisionallySlide(to: currentTime)
+    private func updateMomentAccessibilityActions() {
+        accessibilityCustomActions = momentPins.enumerated().map { index, pin in
+            let fraction = min(max(pin.fraction, 0), 1)
+            let timestamp = TimeFormatter.shared.playTimeFormat(time: totalDuration * fraction)
+            return UIAccessibilityCustomAction(
+                name: L10n.accessibilityPlayerOpenMoment(index + 1, timestamp)
+            ) { [weak self] _ in
+                self?.activateMomentPin(id: pin.id) ?? false
             }
         }
+    }
+
+    @discardableResult
+    func activateMomentPin(id: Int64) -> Bool {
+        guard let delegate else { return false }
+        delegate.sliderDidTapMoment(id: id)
+        return true
     }
 
     /// The pin whose track position lies within 16pt of the touch, if any.

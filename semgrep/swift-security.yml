@@ -358,7 +358,6 @@ rules:
     paths:
       include:
         - "**/*.swift"
-        - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
       - pattern-either:
           - pattern: |
@@ -4823,11 +4822,11 @@ rules:
         - "**/Modules/Sources/PocketCastsDataModelTesting/**"
     patterns:
       - pattern-regex: '@unchecked[ \t]+Sendable'
-      # Mirrors pocketcasts.nonisolated-unsafe-requires-justification: longest alternative first.
-      # A justifying comment must carry an actual reason after the keyword (optionally after ':');
-      # a bare `// @unchecked Sendable` repeats the keyword without justifying anything. The final
-      # loose alternative keeps the token inside ordinary comments from being flagged itself.
-      - pattern-not-regex: '(?://[^\n]*@unchecked[ \t]+Sendable[ \t]*:?[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*@unchecked[ \t]+Sendable)|(?:@unchecked[ \t]+Sendable[^\n]*//[^\n]*@unchecked[ \t]+Sendable[ \t]*:?[ \t]*\S)|(?://[^\n]*@unchecked[ \t]+Sendable)'
+      # A preceding justification applies only to the declaration on the very next line. Allowing
+      # arbitrary intervening comments lets a stale explanation accidentally ratify a later type.
+      # Inline reasons remain valid, and the final alternative keeps comment tokens themselves from
+      # being reported as declarations.
+      - pattern-not-regex: '(?://[^\n]*@unchecked[ \t]+Sendable[ \t]*:?[ \t]*\S[^\n]*\n[^\n]*@unchecked[ \t]+Sendable)|(?:@unchecked[ \t]+Sendable[^\n]*//[^\n]*@unchecked[ \t]+Sendable[ \t]*:?[ \t]*\S)|(?://[^\n]*@unchecked[ \t]+Sendable)'
 
   - id: pocketcasts.grdb-record-no-unchecked-sendable-class
     severity: ERROR
@@ -5109,9 +5108,10 @@ rules:
       Do not add new writes of the stored account password (SJSyncingPwd). The
       password is a permanent replayable credential; re-auth is moving to rotating
       refresh tokens (plans/API Auth Hardening Plan.md, workstream A). The only
-      allowed writers are the flag-gated legacy sign-in sites and the
+      allowed writer is the flag-gated legacy helper and the
       ServerSettings.saveSyncingPassword definition, each carrying a justified
-      nosemgrep allowlist comment.
+      nosemgrep allowlist comment. The storage-boundary guard is enforced separately
+      by pocketcasts.password-writer-must-reject-refresh-auth.
     languages: [swift]
     paths:
       include:
@@ -5124,6 +5124,38 @@ rules:
           - pattern: ServerSettings.saveSyncingPassword($P)
           - pattern: 'KeychainHelper.save(string: $V, key: ServerConstants.Values.syncingLoginItemName, accessibility: $A)'
           - pattern: 'KeychainHelper.save(string: $V, key: "SJSyncingPwd", accessibility: $A)'
+
+  - id: pocketcasts.password-writer-must-reject-refresh-auth
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      The legacy password storage boundary must reject writes whenever
+      refreshTokenForPasswordAuth is enabled. Call-site checks are not sufficient:
+      a registration/error fallback could otherwise reintroduce plaintext password
+      persistence on the refresh-token path.
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/Public/ServerSettings.swift"
+        - "**/semgrep/tests/swift-security-auth-tokens.swift"
+    patterns:
+      - pattern: |
+          public class func saveSyncingPassword(_ $PASSWORD: String) {
+            ...
+          }
+      - pattern-not: |
+          public class func saveSyncingPassword(_ $PASSWORD: String) {
+            guard !FeatureFlag.refreshTokenForPasswordAuth.enabled else {
+              ...
+              return
+            }
+            ...
+          }
 
   - id: pocketcasts.auth-keychain-items-device-only
     severity: ERROR
@@ -5218,6 +5250,58 @@ rules:
       - metavariable-regex:
           metavariable: $Q
           regex: (?i).*(queue|pool|database|db)$
+      # Raw GRDB queues/pools expose async overloads whose result is the closure
+      # result directly and whose failure is thrown. Their awaited optional
+      # comparisons therefore do not have GRDBQueue's synchronous double-optional
+      # ambiguity.
+      - pattern-not: await $Q.read { ... } != nil
+      - pattern-not: await $Q.read { ... } == nil
+      - pattern-not: await $Q.write { ... } != nil
+      - pattern-not: await $Q.write { ... } == nil
+      - pattern-not: try await $Q.read { ... } != nil
+      - pattern-not: try await $Q.read { ... } == nil
+      - pattern-not: try await $Q.write { ... } != nil
+      - pattern-not: try await $Q.write { ... } == nil
+      - pattern-not: await $Q.read { $DB in ... } != nil
+      - pattern-not: await $Q.read { $DB in ... } == nil
+      - pattern-not: await $Q.write { $DB in ... } != nil
+      - pattern-not: await $Q.write { $DB in ... } == nil
+      - pattern-not: try await $Q.read { $DB in ... } != nil
+      - pattern-not: try await $Q.read { $DB in ... } == nil
+      - pattern-not: try await $Q.write { $DB in ... } != nil
+      - pattern-not: try await $Q.write { $DB in ... } == nil
+      - pattern-not-inside: |
+          await $Q.read { ... } != nil
+      - pattern-not-inside: |
+          await $Q.read { ... } == nil
+      - pattern-not-inside: |
+          await $Q.write { ... } != nil
+      - pattern-not-inside: |
+          await $Q.write { ... } == nil
+      - pattern-not-inside: |
+          await $Q.read { $DB in ... } != nil
+      - pattern-not-inside: |
+          await $Q.read { $DB in ... } == nil
+      - pattern-not-inside: |
+          await $Q.write { $DB in ... } != nil
+      - pattern-not-inside: |
+          await $Q.write { $DB in ... } == nil
+      - pattern-not-inside: |
+          try await $Q.read { ... } != nil
+      - pattern-not-inside: |
+          try await $Q.read { ... } == nil
+      - pattern-not-inside: |
+          try await $Q.write { ... } != nil
+      - pattern-not-inside: |
+          try await $Q.write { ... } == nil
+      - pattern-not-inside: |
+          try await $Q.read { $DB in ... } != nil
+      - pattern-not-inside: |
+          try await $Q.read { $DB in ... } == nil
+      - pattern-not-inside: |
+          try await $Q.write { $DB in ... } != nil
+      - pattern-not-inside: |
+          try await $Q.write { $DB in ... } == nil
 
   - id: pocketcasts.no-bare-print
     severity: ERROR
@@ -5288,6 +5372,43 @@ rules:
     patterns:
       - pattern-regex: 'FeedbackReport\([\s\S]{0,600}?\blogs:(?!\s*LogRedaction\.redactURLs\()'
 
+  - id: pocketcasts.url-log-redaction-must-fail-closed
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      A URL redaction helper must not return its raw candidate when parsing or
+      serialization fails. Logs are exported in support reports, so malformed
+      URLs can otherwise retain userinfo or signed query tokens. Return a stable
+      safe placeholder instead (PR #302 review finding).
+    languages: [swift]
+    paths:
+      include:
+        - "**/Logging/*Redaction*.swift"
+        - "**/Logging/*Redactor*.swift"
+    patterns:
+      - pattern-either:
+          - pattern: |
+              func $REDACT($CANDIDATE: String) -> String {
+                ...
+                guard var $COMPONENTS = URLComponents(string: ...) else {
+                  return $CANDIDATE
+                }
+                ...
+              }
+          - pattern: |
+              func $REDACT($CANDIDATE: String) -> String {
+                ...
+                guard let $REDACTED = $COMPONENTS.string else {
+                  return $CANDIDATE
+                }
+                ...
+              }
+
   - id: pocketcasts.check-local-feed-credentials-save-result
     severity: ERROR
     metadata:
@@ -5336,3 +5457,101 @@ rules:
       - pattern-either:
           - pattern: DCAppAttestService.shared
           - pattern: DCAppAttestService()
+
+  - id: pocketcasts.no-typed-bindmemory-on-raw-data
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Data.withUnsafeBytes/withUnsafeMutableBytes does not guarantee alignment
+      for the bound type. Do not bind its raw storage to multi-byte values;
+      decode fields with loadUnaligned(as:) or copy into explicitly aligned
+      storage. Binding to UInt8 is safe because its alignment is one.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              $DATA.withUnsafeBytes { $RAW in
+                ...
+              }
+          - pattern-inside: |
+              $DATA.withUnsafeBytes { ($RAW: $RAWTYPE) -> $RET in
+                ...
+              }
+          - pattern-inside: |
+              $DATA.withUnsafeMutableBytes { $RAW in
+                ...
+              }
+          - pattern-inside: |
+              $DATA.withUnsafeMutableBytes { ($RAW: $RAWTYPE) -> $RET in
+                ...
+              }
+      - pattern: '$RAW.bindMemory(to: $TYPE.self)'
+      - metavariable-regex:
+          metavariable: $TYPE
+          regex: '^(?!(?:Swift\.)?UInt8$).+'
+
+  - id: pocketcasts.file-importer-wrapper-read-requires-scoped-access
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: HIGH
+      impact: MEDIUM
+      technology: [ios]
+    message: >-
+      URLs returned by SwiftUI fileImporter are security-scoped. Acquire access
+      and pair it with a deferred stop in the same task before constructing a
+      FileWrapper. Reading without scoped access fails in the iOS sandbox and
+      starting access outside asynchronous work can end the scope too early.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern-inside: |
+          $VIEW.fileImporter(...) { $RESULT in
+            ...
+          }
+      - pattern: 'FileWrapper(url: $URL)'
+      - pattern-not-inside: |
+          $VIEW.fileImporter(...) { $RESULT in
+            ...
+            guard $URL.startAccessingSecurityScopedResource() else {
+              ...
+            }
+            ...
+            defer {
+              $URL.stopAccessingSecurityScopedResource()
+            }
+            ...
+          }
+
+  - id: pocketcasts.developer-settings-must-be-debug-only
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      Developer and feature-override settings can change authentication and
+      rollout boundaries. Do not expose them to every non-App-Store build with
+      a runtime BuildEnvironment check; compile their settings rows under
+      #if DEBUG so TestFlight, enterprise, and ad-hoc users cannot reach them.
+    languages: [generic]
+    paths:
+      include:
+        - "**/podcasts/SettingsViewController.swift"
+        - "**/semgrep/tests/swift-security-pr-feedback.swift"
+    patterns:
+      - pattern: BuildEnvironment.current != .appStore

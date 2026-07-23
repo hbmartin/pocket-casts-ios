@@ -4,8 +4,8 @@ import Foundation
 import Synchronization
 
 /// Helper used to track playback
-// @unchecked Sendable: restates AnalyticsCoordinator's conformance, as Swift requires
-// of subclasses; own state is guarded by a Mutex.
+// This restates AnalyticsCoordinator's conformance, as Swift requires
+// @unchecked Sendable: subclass state is guarded by Mutex.
 nonisolated class AnalyticsPlaybackHelper: AnalyticsCoordinator, @unchecked Sendable {
     static let shared = AnalyticsPlaybackHelper()
 

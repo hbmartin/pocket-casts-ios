@@ -17,6 +17,37 @@ public enum SocialVisibility: Int, Sendable, CaseIterable, Codable {
 /// type mapped from the wire `Api_SocialProfile`. See docs/Social.md and
 /// ADR-0005/0006.
 public struct SocialProfile: Equatable, Sendable, Codable {
+    /// Construction payload with three required identity fields and explicit
+    /// defaults for every optional profile setting. Callers with many custom
+    /// values build this incrementally, avoiding a fragile positional wall of
+    /// similarly typed initializer arguments.
+    public struct Configuration: Sendable {
+        public var userId: String
+        public var handle: String
+        public var displayName: String
+        public var bio = ""
+        public var avatarURL = ""
+        public var createdAt: Date?
+        public var termsVersion = 0
+        public var avatarVisibility: SocialVisibility = .private
+        public var bioVisibility: SocialVisibility = .private
+        public var followedShowsVisibility: SocialVisibility = .private
+        public var topPodcastsVisibility: SocialVisibility = .private
+        public var statsVisibility: SocialVisibility = .private
+        public var historyVisibility: SocialVisibility = .private
+        public var presenceVisibility: SocialVisibility = .private
+        public var requireFollowApproval = false
+        public var socialPushDisabled: Int64 = 0
+        public var hideFromDiscovery = false
+        public var curator = false
+
+        public init(userId: String, handle: String, displayName: String) {
+            self.userId = userId
+            self.handle = handle
+            self.displayName = displayName
+        }
+    }
+
     public let userId: String
     public let handle: String
     public var displayName: String
@@ -77,41 +108,29 @@ public struct SocialProfile: Equatable, Sendable, Codable {
         curator = try container.decodeIfPresent(Bool.self, forKey: .curator) ?? false
     }
 
-    public init(userId: String,
-                handle: String,
-                displayName: String,
-                bio: String = "",
-                avatarURL: String = "",
-                createdAt: Date? = nil,
-                termsVersion: Int = 0,
-                avatarVisibility: SocialVisibility = .private,
-                bioVisibility: SocialVisibility = .private,
-                followedShowsVisibility: SocialVisibility = .private,
-                topPodcastsVisibility: SocialVisibility = .private,
-                statsVisibility: SocialVisibility = .private,
-                historyVisibility: SocialVisibility = .private,
-                presenceVisibility: SocialVisibility = .private,
-                requireFollowApproval: Bool = false,
-                socialPushDisabled: Int64 = 0,
-                hideFromDiscovery: Bool = false, curator: Bool = false) {
-        self.userId = userId
-        self.handle = handle
-        self.displayName = displayName
-        self.bio = bio
-        self.avatarURL = avatarURL
-        self.createdAt = createdAt
-        self.termsVersion = termsVersion
-        self.avatarVisibility = avatarVisibility
-        self.bioVisibility = bioVisibility
-        self.followedShowsVisibility = followedShowsVisibility
-        self.topPodcastsVisibility = topPodcastsVisibility
-        self.statsVisibility = statsVisibility
-        self.historyVisibility = historyVisibility
-        self.presenceVisibility = presenceVisibility
-        self.requireFollowApproval = requireFollowApproval
-        self.socialPushDisabled = socialPushDisabled
-        self.hideFromDiscovery = hideFromDiscovery
-        self.curator = curator
+    public init(userId: String, handle: String, displayName: String) {
+        self.init(configuration: Configuration(userId: userId, handle: handle, displayName: displayName))
+    }
+
+    public init(configuration: Configuration) {
+        self.userId = configuration.userId
+        self.handle = configuration.handle
+        self.displayName = configuration.displayName
+        self.bio = configuration.bio
+        self.avatarURL = configuration.avatarURL
+        self.createdAt = configuration.createdAt
+        self.termsVersion = configuration.termsVersion
+        self.avatarVisibility = configuration.avatarVisibility
+        self.bioVisibility = configuration.bioVisibility
+        self.followedShowsVisibility = configuration.followedShowsVisibility
+        self.topPodcastsVisibility = configuration.topPodcastsVisibility
+        self.statsVisibility = configuration.statsVisibility
+        self.historyVisibility = configuration.historyVisibility
+        self.presenceVisibility = configuration.presenceVisibility
+        self.requireFollowApproval = configuration.requireFollowApproval
+        self.socialPushDisabled = configuration.socialPushDisabled
+        self.hideFromDiscovery = configuration.hideFromDiscovery
+        self.curator = configuration.curator
     }
 }
 
@@ -235,23 +254,27 @@ extension SocialVisibility {
 
 extension SocialProfile {
     init(_ api: Api_SocialProfile) {
-        self.init(userId: api.userID,
-                  handle: api.handle,
-                  displayName: api.displayName,
-                  bio: api.bio,
-                  avatarURL: api.avatarURL,
-                  createdAt: api.hasCreatedAt ? api.createdAt.date : nil,
-                  termsVersion: Int(api.termsVersion),
-                  avatarVisibility: SocialVisibility(api.avatarVisibility),
-                  bioVisibility: SocialVisibility(api.bioVisibility),
-                  followedShowsVisibility: SocialVisibility(api.followedShowsVisibility),
-                  topPodcastsVisibility: SocialVisibility(api.topPodcastsVisibility),
-                  statsVisibility: SocialVisibility(api.statsVisibility),
-                  historyVisibility: SocialVisibility(api.historyVisibility),
-                  presenceVisibility: SocialVisibility(api.presenceVisibility),
-                  requireFollowApproval: api.requireFollowApproval,
-                  socialPushDisabled: api.socialPushDisabled,
-                  hideFromDiscovery: api.hideFromDiscovery, curator: api.curator)
+        var configuration = Configuration(
+            userId: api.userID,
+            handle: api.handle,
+            displayName: api.displayName
+        )
+        configuration.bio = api.bio
+        configuration.avatarURL = api.avatarURL
+        configuration.createdAt = api.hasCreatedAt ? api.createdAt.date : nil
+        configuration.termsVersion = Int(api.termsVersion)
+        configuration.avatarVisibility = SocialVisibility(api.avatarVisibility)
+        configuration.bioVisibility = SocialVisibility(api.bioVisibility)
+        configuration.followedShowsVisibility = SocialVisibility(api.followedShowsVisibility)
+        configuration.topPodcastsVisibility = SocialVisibility(api.topPodcastsVisibility)
+        configuration.statsVisibility = SocialVisibility(api.statsVisibility)
+        configuration.historyVisibility = SocialVisibility(api.historyVisibility)
+        configuration.presenceVisibility = SocialVisibility(api.presenceVisibility)
+        configuration.requireFollowApproval = api.requireFollowApproval
+        configuration.socialPushDisabled = api.socialPushDisabled
+        configuration.hideFromDiscovery = api.hideFromDiscovery
+        configuration.curator = api.curator
+        self.init(configuration: configuration)
     }
 }
 

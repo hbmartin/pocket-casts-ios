@@ -62,7 +62,9 @@ public struct AssemblyAIProvider: RemoteTranscriptionProvider {
         case "completed":
             return .completed(makeTranscript(from: response))
         case "error":
-            return .failed(.remoteResponseFailure(status: nil, providerMessage: response.error ?? "AssemblyAI reported an unknown error"))
+            let message = response.error.map(RemoteProviderHTTP.bodyExcerpt)
+                ?? "AssemblyAI reported an unknown error"
+            return .failed(.remoteResponseFailure(status: nil, providerMessage: message))
         default:
             // Unknown states are treated as still-working; the queue's overall
             // deadline bounds how long that optimism can last.

@@ -151,20 +151,68 @@ struct SharedListDetailView: View {
 
 @MainActor
 final class SharedListDetailViewModel: ObservableObject {
+    typealias FetchList = @MainActor (_ id: Int64, _ limit: Int, _ offset: Int) async -> SharedListPage?
+    typealias Subscribe = @MainActor (_ id: Int64, _ subscribe: Bool) async -> Bool
+    typealias EntryOperation = @MainActor (_ listId: Int64, _ op: SharedListOp, _ entry: SharedListEntry, _ position: Int) async -> Bool
+    typealias RebuildMirror = @MainActor (_ list: SharedList, _ entries: [SharedListEntry]?) async -> Void
+    typealias RemoveMirror = @MainActor (_ listId: Int64) -> Void
+
     let listId: Int64
     @Published private(set) var page: SharedListPage?
     @Published private(set) var entries: [SharedListEntry] = []
     @Published private(set) var notFound = false
 
     private var fixtureLoaded = false
+    private let fetchList: FetchList
+    private let subscribe: Subscribe
+    private let entryOperation: EntryOperation
+    private let rebuildMirror: RebuildMirror
+    private let removeMirror: RemoveMirror
 
-    init(listId: Int64) {
+    init(
+        listId: Int64,
+        fetchList: @escaping FetchList = { id, limit, offset in
+            await ApiServerHandler.shared.fetchSharedList(id: id, limit: limit, offset: offset)
+        },
+        subscribe: @escaping Subscribe = { id, subscribe in
+            await ApiServerHandler.shared.subscribeToSharedList(id: id, subscribe: subscribe)
+        },
+        entryOperation: @escaping EntryOperation = { listId, op, entry, position in
+            await ApiServerHandler.shared.sharedListEntryOp(listId: listId, op: op, entry: entry, position: position)
+        },
+        rebuildMirror: @escaping RebuildMirror = { list, entries in
+            await SocialListMirror.rebuildMirror(for: list, entries: entries)
+        },
+        removeMirror: @escaping RemoveMirror = { SocialListMirror.removeMirror(for: $0) }
+    ) {
         self.listId = listId
+        self.fetchList = fetchList
+        self.subscribe = subscribe
+        self.entryOperation = entryOperation
+        self.rebuildMirror = rebuildMirror
+        self.removeMirror = removeMirror
     }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: SharedListPage) {
+    init(
+        fixture: SharedListPage,
+        subscribe: @escaping Subscribe = { id, subscribe in
+            await ApiServerHandler.shared.subscribeToSharedList(id: id, subscribe: subscribe)
+        },
+        entryOperation: @escaping EntryOperation = { listId, op, entry, position in
+            await ApiServerHandler.shared.sharedListEntryOp(listId: listId, op: op, entry: entry, position: position)
+        },
+        rebuildMirror: @escaping RebuildMirror = { list, entries in
+            await SocialListMirror.rebuildMirror(for: list, entries: entries)
+        },
+        removeMirror: @escaping RemoveMirror = { SocialListMirror.removeMirror(for: $0) }
+    ) {
         listId = fixture.list.id
+        fetchList = { _, _, _ in nil }
+        self.subscribe = subscribe
+        self.entryOperation = entryOperation
+        self.rebuildMirror = rebuildMirror
+        self.removeMirror = removeMirror
         page = fixture
         entries = fixture.entries
         fixtureLoaded = true
@@ -172,7 +220,7 @@ final class SharedListDetailViewModel: ObservableObject {
 
     func load() async {
         guard !fixtureLoaded else { return }
-        guard let fetched = await ApiServerHandler.shared.fetchSharedList(id: listId) else {
+        guard let fetched = await fetchList(listId, 100, 0) else {
             notFound = true
             return
         }
@@ -183,16 +231,31 @@ final class SharedListDetailViewModel: ObservableObject {
     func toggleSubscribe() async {
         guard let page else { return }
         let subscribing = page.list.yourRole != .subscriber
-        guard await ApiServerHandler.shared.subscribeToSharedList(id: listId, subscribe: subscribing) else { return }
+        guard await subscribe(listId, subscribing) else { return }
+
+        let updatedRole: SharedListRole = subscribing ? .subscriber : .none
+        let updatedList = SharedList(
+            id: page.list.id,
+            ownerHandle: page.list.ownerHandle,
+            ownerDisplayName: page.list.ownerDisplayName,
+            title: page.list.title,
+            description: page.list.description,
+            visibility: page.list.visibility,
+            createdAt: page.list.createdAt,
+            updatedAt: page.list.updatedAt,
+            entryCount: page.list.entryCount,
+            yourRole: updatedRole,
+            members: page.list.members
+        )
+        self.page = SharedListPage(list: updatedList, entries: entries, total: page.total)
+
         if subscribing {
             Analytics.track(.socialListSubscribed)
-            await SocialListMirror.rebuildMirror(for: SharedList(id: listId, ownerHandle: page.list.ownerHandle,
-                                                                title: page.list.title, yourRole: .subscriber))
+            let completeEntries = entries.count == page.total ? entries : nil
+            await rebuildMirror(updatedList, completeEntries)
         } else {
-            SocialListMirror.removeMirror(for: listId)
+            removeMirror(listId)
         }
-        fixtureLoaded = false
-        await load()
     }
 
     /// Edits post ops directly (server LWW), then re-fetch settles the truth.
@@ -200,16 +263,18 @@ final class SharedListDetailViewModel: ObservableObject {
         let doomed = offsets.map { entries[$0] }
         entries.remove(atOffsets: offsets)
         for entry in doomed {
-            _ = await ApiServerHandler.shared.sharedListEntryOp(listId: listId, op: .remove, entry: entry)
+            _ = await entryOperation(listId, .remove, entry, -1)
         }
         await refetch()
     }
 
     func move(from source: IndexSet, to destination: Int) async {
+        guard source.count == 1, let sourceIndex = source.first,
+              entries.indices.contains(sourceIndex) else { return }
+        let movedEntry = entries[sourceIndex]
         entries.move(fromOffsets: source, toOffset: destination)
-        for (index, entry) in entries.enumerated() where entry.position != index {
-            _ = await ApiServerHandler.shared.sharedListEntryOp(listId: listId, op: .move, entry: entry, position: index)
-        }
+        guard let newIndex = entries.firstIndex(where: { $0.id == movedEntry.id }) else { return }
+        _ = await entryOperation(listId, .move, movedEntry, newIndex)
         await refetch()
     }
 
@@ -232,7 +297,7 @@ final class SharedListDetailViewModel: ObservableObject {
 
     private func refetch() async {
         guard !fixtureLoaded else { return }
-        if let fetched = await ApiServerHandler.shared.fetchSharedList(id: listId) {
+        if let fetched = await fetchList(listId, 100, 0) {
             page = fetched
             entries = fetched.entries
         }

@@ -78,6 +78,52 @@ final class PodcastMirrorTests: XCTestCase {
             relativePath: "Podcast Mirrors/pod-1/nested/ep.mp3", sizeBytes: 1, mtimeMs: 0, isDirectory: false, isPlaceholder: false)))
     }
 
+    func testMirrorKeepsSanitizedDestinationsInsideMirrorDirectory() async throws {
+        let cases = [
+            (podcastUuid: "pod-1", episodeUuid: "ep-1", expectedPath: "Podcast Mirrors/pod-1/ep-1.mp3"),
+            (podcastUuid: "../outside", episodeUuid: "../episode", expectedPath: "Podcast Mirrors/___outside/___episode.mp3"),
+            (podcastUuid: "pod/cast", episodeUuid: "episode/name", expectedPath: "Podcast Mirrors/pod_cast/episode_name.mp3"),
+            (podcastUuid: "pod.cast:?", episodeUuid: "episode?#", expectedPath: "Podcast Mirrors/pod_cast__/episode__.mp3"),
+            (podcastUuid: "播客-ü", episodeUuid: "章節-é", expectedPath: "Podcast Mirrors/播客-ü/章節-é.mp3")
+        ]
+        let dataManager = try makeDataManager(name: "sanitized-paths.sqlite3")
+
+        for (index, testCase) in cases.enumerated() {
+            let episode = seedEpisode(
+                on: dataManager,
+                uuid: testCase.episodeUuid,
+                podcastUuid: testCase.podcastUuid,
+                downloaded: true
+            )
+            let localURL = testDirectory.appendingPathComponent("audio-\(index).mp3")
+            try Data("audio-\(index)".utf8).write(to: localURL)
+            let materializer = PodcastMirrorMaterializer(
+                folder: folder,
+                dataManager: dataManager,
+                localPathResolver: { _ in localURL.path }
+            )
+
+            XCTAssertTrue(try await materializer.mirror(episodeUuid: episode.uuid))
+        }
+
+        let createdPaths = await folder.createdDirectoryPaths()
+        let copiedPaths = await folder.storedFilePaths()
+        XCTAssertEqual(Set(copiedPaths), Set(cases.map(\.expectedPath)))
+        XCTAssertEqual(createdPaths.count, cases.count)
+
+        let syncRoot = URL(fileURLWithPath: "/sync-root", isDirectory: true)
+        let mirrorRoot = syncRoot
+            .appendingPathComponent(FileSyncFormat.podcastMirrorsDirectory, isDirectory: true)
+            .standardizedFileURL
+        for path in createdPaths + copiedPaths {
+            let resolved = syncRoot.appendingPathComponent(path).standardizedFileURL
+            XCTAssertTrue(
+                resolved.path.hasPrefix(mirrorRoot.path + "/"),
+                "Destination escaped Podcast Mirrors: \(path) resolves to \(resolved.path)"
+            )
+        }
+    }
+
     func testDownloadOnDeviceAMaterializesOnDeviceB() async throws {
         let audio = Data("mirrored audio bytes".utf8)
 

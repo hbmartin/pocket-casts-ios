@@ -6,7 +6,7 @@ import PocketCastsUtils
 /// opens EpisodeCommentsView. Self-tallies lazily; renders even at zero so
 /// discussion is discoverable.
 struct EpisodeCommentsRowView: View {
-    @EnvironmentObject var theme: Theme
+    @EnvironmentObject private var theme: Theme
     @StateObject var viewModel: EpisodeCommentsRowViewModel
 
     var body: some View {
@@ -45,13 +45,16 @@ final class EpisodeCommentsRowViewModel: ObservableObject {
     var onOpen: ((EpisodeCommentsViewModel) -> Void)?
 
     private var fixtureLoaded = false
+    private let canSeedProvider: (() -> Bool)?
 
-    init(episodeUuid: String, podcastUuid: String, episodeTitle: String, podcastTitle: String, canSeed: Bool) {
+    init(episodeUuid: String, podcastUuid: String, episodeTitle: String, podcastTitle: String,
+         canSeed: Bool, canSeedProvider: (() -> Bool)? = nil) {
         self.episodeUuid = episodeUuid
         self.podcastUuid = podcastUuid
         self.episodeTitle = episodeTitle
         self.podcastTitle = podcastTitle
         self.canSeed = canSeed
+        self.canSeedProvider = canSeedProvider
     }
 
     /// Fixture initializer for snapshots/previews; tally() then no-ops.
@@ -61,6 +64,7 @@ final class EpisodeCommentsRowViewModel: ObservableObject {
         episodeTitle = ""
         podcastTitle = ""
         canSeed = true
+        canSeedProvider = nil
         count = fixtureCount
         fixtureLoaded = true
     }
@@ -75,6 +79,6 @@ final class EpisodeCommentsRowViewModel: ObservableObject {
     func open() {
         onOpen?(EpisodeCommentsViewModel(episodeUuid: episodeUuid, podcastUuid: podcastUuid,
                                          episodeTitle: episodeTitle, podcastTitle: podcastTitle,
-                                         canSeed: canSeed))
+                                         canSeed: canSeedProvider?() ?? canSeed))
     }
 }

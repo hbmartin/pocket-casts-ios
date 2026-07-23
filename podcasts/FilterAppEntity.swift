@@ -31,7 +31,8 @@ struct FilterEntityQuery: EntityQuery {
     @MainActor
     func entities(for identifiers: [String]) async throws -> [FilterAppEntity] {
         identifiers.compactMap { uuid in
-            DataManager.sharedManager.findPlaylist(uuid: uuid).map(FilterAppEntity.init(filter:))
+            guard let filter = DataManager.sharedManager.findPlaylist(uuid: uuid), !filter.wasDeleted else { return nil }
+            return FilterAppEntity(filter: filter)
         }
     }
 

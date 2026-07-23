@@ -100,6 +100,16 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     @MainActor private var bookmarkSubscriptions = Set<AnyCancellable>()
     private let pending = Mutex<PendingChanges>(PendingChanges())
     private let persistedIdentifiers = Mutex<Set<String>?>(nil)
+    /// Serializes complete Spotlight transactions, including suspension while
+    /// Core Spotlight finishes a request. The other mutexes protect individual
+    /// values, but cannot keep a reconcile and an incremental flush from
+    /// interleaving their index and persisted-state mutations across `await`s.
+    private struct OperationTail: Sendable {
+        var id: UUID?
+        var task: Task<Void, Never>?
+    }
+
+    private let operationTail = Mutex(OperationTail())
 
     init(index: any SearchableIndexing = LiveSearchableIndex(),
          defaults: UserDefaults = .standard,
@@ -197,6 +207,12 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     /// `@concurrent`: callers are usually main-actor Tasks, and the episode /
     /// transcript fetch closures do synchronous database reads.
     @concurrent func flushPending() async {
+        await runSerialized { [self] in
+            await flushPendingSerially()
+        }
+    }
+
+    private func flushPendingSerially() async {
         let (uuids, bookmarkUuids, fullRefresh): (Set<String>, Set<String>, Bool) = pending.withLock { state in
             defer { state = PendingChanges() }
             return (state.uuids, state.bookmarkUuids, state.needsFullRefresh)
@@ -204,7 +220,7 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
         guard isEnabled(), index.isAvailable() else { return }
 
         if fullRefresh {
-            await rebuildAll()
+            await rebuildAllSerially()
             return
         }
         guard !uuids.isEmpty || !bookmarkUuids.isEmpty else { return }
@@ -229,11 +245,11 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
         do {
             if !identifiersToDelete.isEmpty {
                 try await index.deleteItems(identifiers: identifiersToDelete)
-                mutatePersisted { $0.subtract(identifiersToDelete) }
+                try mutatePersisted { $0.subtract(identifiersToDelete) }
             }
             if !itemsToIndex.isEmpty {
                 try await index.index(itemsToIndex)
-                mutatePersisted { $0.formUnion(itemsToIndex.map(\.uniqueIdentifier)) }
+                try mutatePersisted { $0.formUnion(itemsToIndex.map(\.uniqueIdentifier)) }
             }
         } catch {
             // State only records confirmed writes; the next reconciliation retries.
@@ -249,6 +265,12 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     /// `@concurrent`: launched from a main-actor Task in `AppDelegate`; without
     /// it the full-library fetch below would inherit the main actor.
     @concurrent func reconcileIfDue() async {
+        await runSerialized { [self] in
+            await reconcileIfDueSerially()
+        }
+    }
+
+    private func reconcileIfDueSerially() async {
         guard isEnabled(), index.isAvailable() else {
             await clearEverythingOnce()
             return
@@ -260,7 +282,7 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
             || Date().timeIntervalSince1970 - last >= Self.reconcileInterval
         guard due else { return }
 
-        await rebuildAll()
+        await rebuildAllSerially()
     }
 
     /// Recomputes the full expected set (episodes and Highlights) and rewrites
@@ -268,6 +290,12 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
     /// `@concurrent`: the settings action awaits this from the main actor, and
     /// `downloadedEpisodes()`/`transcriptText()` read the database synchronously.
     @concurrent func rebuildAll() async {
+        await runSerialized { [self] in
+            await rebuildAllSerially()
+        }
+    }
+
+    private func rebuildAllSerially() async {
         guard isEnabled(), index.isAvailable() else { return }
 
         let episodeItems = downloadedEpisodes().map { SpotlightItemBuilder.episodeItem($0, transcriptText: transcriptText($0.uuid)) }
@@ -283,7 +311,7 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
             for chunk in items.chunked(size: Self.indexBatchSize) {
                 try await index.index(chunk)
             }
-            savePersisted(expected)
+            try savePersisted(expected)
             defaults.set(Date().timeIntervalSince1970, forKey: DefaultsKey.lastReconcile)
             defaults.set(Self.schemaVersion, forKey: DefaultsKey.schemaVersion)
             FileLog.shared.addMessage("[Spotlight] reconciled: \(items.count) indexed, \(plan.toDelete.count) deleted")
@@ -300,7 +328,7 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
         guard !loadPersisted().isEmpty else { return }
         do {
             try await index.deleteAll(domainIdentifiers: [SpotlightItemBuilder.episodeDomain, SpotlightItemBuilder.highlightDomain])
-            savePersisted([])
+            try savePersisted([])
             FileLog.shared.addMessage("[Spotlight] cleared index (feature disabled)")
         } catch {
             FileLog.shared.addMessage("[Spotlight] clear failed: \(error)")
@@ -330,19 +358,42 @@ nonisolated final class SpotlightIndexCoordinator: Sendable {
         }
     }
 
-    private func mutatePersisted(_ mutate: (inout Set<String>) -> Void) {
+    private func mutatePersisted(_ mutate: (inout Set<String>) -> Void) throws {
         var current = loadPersisted()
         mutate(&current)
-        savePersisted(current)
+        try savePersisted(current)
     }
 
-    private func savePersisted(_ identifiers: Set<String>) {
+    private func savePersisted(_ identifiers: Set<String>) throws {
+        let directory = stateFileURL.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let data = try JSONEncoder().encode(identifiers)
+        try data.write(to: stateFileURL, options: .atomic)
         persistedIdentifiers.withLock { $0 = identifiers }
-        do {
-            let data = try JSONEncoder().encode(identifiers)
-            try data.write(to: stateFileURL, options: .atomic)
-        } catch {
-            FileLog.shared.addMessage("[Spotlight] failed to persist index state: \(error)")
+    }
+
+    // MARK: - Operation serialization
+
+    private func runSerialized(_ operation: @escaping @Sendable () async -> Void) async {
+        let operationID = UUID()
+        let task = operationTail.withLock { tail in
+            let previous = tail.task
+            let next = Task(priority: .utility) {
+                if let previous {
+                    await previous.value
+                }
+                await operation()
+            }
+            tail.id = operationID
+            tail.task = next
+            return next
+        }
+        await task.value
+        operationTail.withLock { tail in
+            guard tail.id == operationID else { return }
+            // Break the completed task chain once the queue becomes idle.
+            tail.id = nil
+            tail.task = nil
         }
     }
 

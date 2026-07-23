@@ -29,7 +29,6 @@ extension UpNextViewController: UITableViewDelegate, UITableViewDataSource {
 
         updateTimeRemainingLabel()
 
-        clearQueueButton.isHidden = true
         shuffleButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         sortButton.isHidden = PlaybackManager.shared.upNextCount() == 0
         return headerView

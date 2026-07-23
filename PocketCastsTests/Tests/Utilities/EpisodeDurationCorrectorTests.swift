@@ -47,4 +47,20 @@ final class EpisodeDurationCorrectorTests: XCTestCase {
 
         XCTAssertNil(EpisodeDurationCorrector.remoteProbeURL(for: episode))
     }
+
+    func testProbeCoordinatorCoalescesAndAppliesCooldown() async {
+        let coordinator = EpisodeDurationProbeCoordinator(cooldown: 60)
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        let firstAdmission = await coordinator.begin(episodeUuid: "episode", now: start)
+        let overlappingAdmission = await coordinator.begin(episodeUuid: "episode", now: start)
+        XCTAssertTrue(firstAdmission)
+        XCTAssertFalse(overlappingAdmission, "an in-flight probe must be coalesced")
+
+        await coordinator.finish(episodeUuid: "episode", now: start)
+        let cooldownAdmission = await coordinator.begin(episodeUuid: "episode", now: start.addingTimeInterval(59))
+        let afterCooldownAdmission = await coordinator.begin(episodeUuid: "episode", now: start.addingTimeInterval(60))
+        XCTAssertFalse(cooldownAdmission)
+        XCTAssertTrue(afterCooldownAdmission)
+    }
 }

@@ -166,4 +166,19 @@ final class EpisodeManagerTests: DBTestCase {
       XCTAssertFalse(FileManager.default.fileExists(atPath: oldFilePath), "Old file should be removed")
       XCTAssertTrue(FileManager.default.fileExists(atPath: recentFilePath), "Recent file should be kept")
     }
+
+    func testOrphanedTmpFolderSizeExcludesActiveFiles() throws {
+        let tmpDir = NSTemporaryDirectory() + UUID().uuidString
+        try FileManager.default.createDirectory(atPath: tmpDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: tmpDir) }
+
+        let oldFilePath = (tmpDir as NSString).appendingPathComponent("old.mp3")
+        let recentFilePath = (tmpDir as NSString).appendingPathComponent("recent.mp3")
+        FileManager.default.createFile(atPath: oldFilePath, contents: Data("old".utf8))
+        FileManager.default.createFile(atPath: recentFilePath, contents: Data("recent".utf8))
+        try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-8.days)], ofItemAtPath: oldFilePath)
+        try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-1.days)], ofItemAtPath: recentFilePath)
+
+        XCTAssertEqual(EpisodeManager.orphanedTmpFolderSize(folderPath: tmpDir), 3)
+    }
 }

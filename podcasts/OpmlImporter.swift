@@ -113,6 +113,10 @@ nonisolated final class OpmlImportState: Sendable {
         }
     }
 
+    func recordChunkFailure() {
+        state.withLock { $0.failedCount += 1 }
+    }
+
     var failureCount: Int {
         state.withLock { $0.failedCount }
     }
@@ -259,6 +263,7 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
     private func processImportPodcastsResponse(response: ImportOpmlResponse?, dispatchGroup: DispatchGroup) {
         guard let uploadResponse = response, uploadResponse.success() else {
             // since there might be multiple chunks, if this one fails, just go to the next one
+            importState.recordChunkFailure()
             dispatchGroup.leave()
             return
         }

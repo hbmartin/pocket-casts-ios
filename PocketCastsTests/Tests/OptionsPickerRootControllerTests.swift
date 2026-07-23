@@ -25,7 +25,7 @@ final class OptionsPickerRootControllerTests: XCTestCase {
         let actionFrame = actionView.convert(actionView.bounds, to: attachment.controller.view)
         let safeAreaBottom = attachment.controller.view.safeAreaLayoutGuide.layoutFrame.maxY
 
-        XCTAssertGreaterThan(attachment.window.safeAreaInsets.bottom, 0)
+        XCTAssertGreaterThan(attachment.controller.view.safeAreaInsets.bottom, 0)
         XCTAssertEqual(scrollView.frame.maxY, safeAreaBottom, accuracy: 0.5)
         XCTAssertLessThanOrEqual(actionFrame.maxY, safeAreaBottom)
         XCTAssertEqual(cardBackgroundView.frame.minY, scrollView.frame.minY, accuracy: 0.5)
@@ -52,6 +52,7 @@ final class OptionsPickerRootControllerTests: XCTestCase {
         let previousKeyWindow = windowScene.keyWindow
         let window = UIWindow(windowScene: windowScene)
         let controller = makeController()
+        controller.additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
         window.rootViewController = controller
         window.makeKeyAndVisible()
         window.layoutIfNeeded()

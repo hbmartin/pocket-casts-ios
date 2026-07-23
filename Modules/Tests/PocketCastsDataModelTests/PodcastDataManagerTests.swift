@@ -753,6 +753,50 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testSaveAutoAddToUpNextPreservesConcurrentFieldUpdateWithLegacyStorage() throws {
+        try assertSaveAutoAddToUpNextPreservesConcurrentFieldUpdate(newSettingsStorage: false)
+    }
+
+    func testSaveAutoAddToUpNextPreservesConcurrentFieldUpdateWithNewSettingsStorage() throws {
+        try assertSaveAutoAddToUpNextPreservesConcurrentFieldUpdate(newSettingsStorage: true)
+    }
+
+    private func assertSaveAutoAddToUpNextPreservesConcurrentFieldUpdate(newSettingsStorage: Bool) throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: newSettingsStorage)
+
+        try runWithBothImplementations { dataManager, impl in
+            let podcast = self.createTestPodcast(
+                uuid: "podcast-concurrent-auto-add-update",
+                title: "Title when the option opened",
+                syncStatus: SyncStatus.synced.rawValue,
+                autoAddToUpNext: AutoAddToUpNextSetting.off.rawValue,
+                dataManager: dataManager
+            )
+            var concurrentlyUpdatedPodcast = podcast
+            concurrentlyUpdatedPodcast.title = "Title from background refresh"
+            concurrentlyUpdatedPodcast.author = "Updated author"
+            concurrentlyUpdatedPodcast.syncStatus = SyncStatus.synced.rawValue
+            dataManager.save(podcast: concurrentlyUpdatedPodcast)
+
+            dataManager.saveAutoAddToUpNext(
+                podcastUuid: podcast.uuid,
+                autoAddToUpNext: AutoAddToUpNextSetting.addFirst.rawValue
+            )
+
+            let found = try XCTUnwrap(dataManager.findPodcast(uuid: podcast.uuid))
+            XCTAssertEqual(found.title, concurrentlyUpdatedPodcast.title, "\(impl): Auto add must not overwrite a concurrently updated title")
+            XCTAssertEqual(found.author, concurrentlyUpdatedPodcast.author, "\(impl): Auto add must not overwrite a concurrently updated author")
+            XCTAssertEqual(found.autoAddToUpNext, AutoAddToUpNextSetting.addFirst.rawValue, "\(impl): Legacy auto add should be updated")
+            XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): Podcast should be marked unsynced")
+            if newSettingsStorage {
+                XCTAssertTrue(found.settings.addToUpNext, "\(impl): Settings auto add should be enabled")
+                XCTAssertEqual(found.settings.addToUpNextPosition, .top, "\(impl): Settings position should be updated")
+            }
+        }
+    }
+
     func testUpdateAutoAddToUpNextUpdatesNewSettingsStoragePayloadFromEmptySettings() throws {
         let store = FeatureFlagOverrideStore()
         defer { store.resetOverrides() }

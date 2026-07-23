@@ -201,7 +201,7 @@ nonisolated struct PlaylistDragAndDropTip: Tip {
 
 extension PlaylistsViewController {
     func showPlaylistsTipIfNeeded() {
-        guard newFilterTip == nil else { return }
+        guard playlistsTipViewController == nil else { return }
 
         if SyncManager.isUserLoggedIn(), !hasPremadePlaylists() {
             let tip = NewFilterTip()
@@ -257,7 +257,7 @@ extension PlaylistsViewController {
     private func presentPlaylistsTip(_ tip: some Tip, sourceItem: any UIPopoverPresentationControllerSourceItem) {
         let tipVC = TipUIPopoverViewController(tip, sourceItem: sourceItem)
         tipVC.presentationDelegate = self
-        newFilterTip = tipVC
+        playlistsTipViewController = tipVC
         presentedPlaylistsTip = tip
         present(tipVC, animated: true)
 
@@ -273,8 +273,8 @@ extension PlaylistsViewController {
     }
 
     private func playlistsTipInvalidated(_ tip: some Tip, reason: Tips.InvalidationReason) {
-        guard let tipVC = newFilterTip else { return }
-        newFilterTip = nil
+        guard let tipVC = playlistsTipViewController else { return }
+        playlistsTipViewController = nil
         presentedPlaylistsTip = nil
         if tip is NewFilterTip, reason == .tipClosed {
             Analytics.track(.filterTooltipClosed)
@@ -292,7 +292,7 @@ extension PlaylistsViewController: UIPopoverPresentationControllerDelegate {
     func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
         // The user dismissed a tip popover by tapping outside of it: treat that as closing the tip.
         guard let tip = presentedPlaylistsTip else { return }
-        newFilterTip = nil
+        playlistsTipViewController = nil
         presentedPlaylistsTip = nil
         if tip is NewFilterTip {
             Analytics.track(.filterTooltipClosed)

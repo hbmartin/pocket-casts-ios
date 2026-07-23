@@ -15,8 +15,7 @@ This is a *plan*, not an implementation. Client changes land in this repo; serve
 `mise run generate:proto`). Each workstream states its server contract precisely so the API team
 can build against it, and lists every client touch point by file/line as of this writing.
 
-> Companion references: `docs/ServerAPISurface.md` (surface map), `docs/ServerBackendSpec.md`
-> (wire contract). Field numbers below were verified against
+> Companion reference: `docs/ServerAPISurface.md` (surface map). Field numbers below were verified against
 > `Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift`.
 
 ---

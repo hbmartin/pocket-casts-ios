@@ -1,8 +1,8 @@
 import Foundation
 import PocketCastsDataModel
 
-// @unchecked Sendable: delegates are assigned once during app startup, before
-// any server communication happens.
+// Delegates are assigned once during app startup, before
+// @unchecked Sendable: delegate assignment finishes before concurrent server communication starts.
 public final class ServerConfig: @unchecked Sendable {
     public static let shared = ServerConfig()
 

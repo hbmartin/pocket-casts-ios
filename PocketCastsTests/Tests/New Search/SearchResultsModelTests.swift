@@ -72,8 +72,8 @@ final class SearchResultsModelTests: XCTestCase {
         try await super.tearDown()
     }
 
-    private func makeModel() -> SearchResultsModel {
-        SearchResultsModel(dataManager: dataManager)
+    private func makeModel(beforeTranscriptSearch: @escaping @Sendable () async -> Void = {}) -> SearchResultsModel {
+        SearchResultsModel(dataManager: dataManager, beforeTranscriptSearch: beforeTranscriptSearch)
     }
 
     func testTranscriptHitsPublishAfterSearch() async {
@@ -82,8 +82,7 @@ final class SearchResultsModelTests: XCTestCase {
 
         let published = expectation(description: "transcriptHits published a hit")
         model.$transcriptHits
-            .filter { !$0.isEmpty }
-            .first()
+            .first { !$0.isEmpty }
             .sink { _ in published.fulfill() }
             .store(in: &cancellables)
 
@@ -108,8 +107,7 @@ final class SearchResultsModelTests: XCTestCase {
         let published = expectation(description: "transcriptHits published after clear")
         published.isInverted = true
         model.$transcriptHits
-            .filter { !$0.isEmpty }
-            .first()
+            .first { !$0.isEmpty }
             .sink { _ in published.fulfill() }
             .store(in: &cancellables)
 
@@ -118,5 +116,93 @@ final class SearchResultsModelTests: XCTestCase {
 
         await fulfillment(of: [published], timeout: 2)
         XCTAssertTrue(model.transcriptHits.isEmpty, "A cleared search must not publish stale transcript hits")
+    }
+
+    func testDisabledTranscriptSearchInvalidatesInFlightQueryWhenLocalResultsAreShowing() async throws {
+        let gate = TranscriptSearchGate()
+        let model = makeModel { await gate.suspend() }
+        model.isShowingLocalResultsOnly = true
+
+        let published = expectation(description: "stale transcript hits published after disabling transcript search")
+        published.isInverted = true
+        model.$transcriptHits
+            .first { !$0.isEmpty }
+            .sink { _ in published.fulfill() }
+            .store(in: &cancellables)
+
+        model.search(term: "galaxies")
+        await gate.waitUntilSuspended()
+        flagMock.set(.transcriptSearch, value: false)
+        model.search(term: "replacement")
+        await gate.release()
+
+        await fulfillment(of: [published], timeout: 2)
+        XCTAssertTrue(model.transcriptHits.isEmpty)
+    }
+
+    func testUnsearchableTranscriptTermInvalidatesInFlightQueryWhenLocalResultsAreShowing() async throws {
+        let gate = TranscriptSearchGate()
+        let model = makeModel { await gate.suspend() }
+        model.isShowingLocalResultsOnly = true
+
+        let published = expectation(description: "stale transcript hits published after an unsearchable term")
+        published.isInverted = true
+        model.$transcriptHits
+            .first { !$0.isEmpty }
+            .sink { _ in published.fulfill() }
+            .store(in: &cancellables)
+
+        model.search(term: "galaxies")
+        await gate.waitUntilSuspended()
+        model.search(term: "https://example.com/feed")
+        await gate.release()
+
+        await fulfillment(of: [published], timeout: 2)
+        XCTAssertTrue(model.transcriptHits.isEmpty)
+    }
+
+    func testTranscriptRecencyCacheRetainsMissingAge() {
+        var cache = TranscriptSearchRecencyAgeCache()
+        var lookupCount = 0
+        let now = Date()
+
+        let first = cache.ageDays(for: episodeUuid, now: now) {
+            lookupCount += 1
+            return nil
+        }
+        let second = cache.ageDays(for: episodeUuid, now: now) {
+            lookupCount += 1
+            return nil
+        }
+
+        XCTAssertNil(first)
+        XCTAssertNil(second)
+        XCTAssertEqual(lookupCount, 1, "a missing date should be cached instead of repeating the database lookup")
+    }
+}
+
+private actor TranscriptSearchGate {
+    private var isSuspended = false
+    private var isReleased = false
+    private var releaseContinuation: CheckedContinuation<Void, Never>?
+    private var suspendedContinuation: CheckedContinuation<Void, Never>?
+
+    func suspend() async {
+        isSuspended = true
+        suspendedContinuation?.resume()
+        suspendedContinuation = nil
+        guard !isReleased else { return }
+        await withCheckedContinuation { releaseContinuation = $0 }
+    }
+
+    func waitUntilSuspended() async {
+        guard !isSuspended else { return }
+        await withCheckedContinuation { suspendedContinuation = $0 }
+    }
+
+    func release() {
+        isReleased = true
+        releaseContinuation?.resume()
+        releaseContinuation = nil
     }
 }

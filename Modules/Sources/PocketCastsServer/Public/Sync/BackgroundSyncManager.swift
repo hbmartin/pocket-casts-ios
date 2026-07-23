@@ -3,9 +3,9 @@ import PocketCastsDataModel
 import PocketCastsUtils
 
 
-// @unchecked Sendable (required by its URLSession delegate conformance): background
+// Sendable is required by the URLSession delegate conformance; background
 // sync state is only touched from the serial syncProcessQueue and session delegate
-// callbacks, preserved pre-concurrency behavior.
+// @unchecked Sendable: URLSession delegate state stays on the serial syncProcessQueue/delegate callbacks.
 public final class BackgroundSyncManager: NSObject, @unchecked Sendable {
     public static let sessionIdPrefix = "SyncBgSession"
 

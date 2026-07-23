@@ -24,9 +24,17 @@ public extension ApiServerHandler {
     }
 
     /// Reports a user into the moderation triage queue.
-    func reportUser(targetUserId: String, reason: SocialReportReason, context: String = "") async -> Bool {
+    func reportUser(targetUserId: String,
+                    reason: SocialReportReason,
+                    context: String = "",
+                    targetType: String = "",
+                    contentRef: String = "") async -> Bool {
         await withCheckedContinuation { continuation in
-            let operation = SocialReportTask(targetUserId: targetUserId, reason: reason, context: context)
+            let operation = SocialReportTask(targetUserId: targetUserId,
+                                             reason: reason,
+                                             context: context,
+                                             targetType: targetType,
+                                             contentRef: contentRef)
             operation.completion = { continuation.resume(returning: $0) }
             apiQueue.addOperation(operation)
         }

@@ -108,6 +108,9 @@ final class SendToFriendViewModel: ObservableObject {
     enum RecipientStatus: Equatable { case idle, checking, found(name: String), notFound }
 
     static let recentRecipientsKey = "SocialRecentRecipients"
+    static let maximumNoteLength = 500
+
+    typealias FetchPublicProfile = @MainActor (String) async -> SocialPublicProfile?
 
     let episodeUuid: String
     let podcastUuid: String
@@ -116,13 +119,21 @@ final class SendToFriendViewModel: ObservableObject {
     let timestampSeconds: Int
 
     @Published var handleInput = "" { didSet { scheduleLookup() } }
-    @Published var note = ""
+    @Published var note = "" {
+        didSet {
+            if note.count > Self.maximumNoteLength {
+                note = String(note.prefix(Self.maximumNoteLength))
+            }
+        }
+    }
     // Internal setter: snapshot tests stage specific states.
     @Published var recipientStatus: RecipientStatus = .idle
     @Published private(set) var isSending = false
     @Published private(set) var sendError: String?
 
     private var lookupTask: Task<Void, Never>?
+    private let fetchPublicProfile: FetchPublicProfile
+    private let lookupDelayNanoseconds: UInt64
 
     var recentRecipients: [String] {
         UserDefaults.standard.stringArray(forKey: Self.recentRecipientsKey) ?? []
@@ -133,12 +144,18 @@ final class SendToFriendViewModel: ObservableObject {
         return false
     }
 
-    init(episodeUuid: String, podcastUuid: String, episodeTitle: String, podcastTitle: String, timestampSeconds: Int) {
+    init(episodeUuid: String, podcastUuid: String, episodeTitle: String, podcastTitle: String, timestampSeconds: Int,
+         fetchPublicProfile: @escaping FetchPublicProfile = { handle in
+             await ApiServerHandler.shared.fetchPublicProfile(handle: handle)
+         },
+         lookupDelayNanoseconds: UInt64 = 350_000_000) {
         self.episodeUuid = episodeUuid
         self.podcastUuid = podcastUuid
         self.episodeTitle = episodeTitle
         self.podcastTitle = podcastTitle
         self.timestampSeconds = timestampSeconds
+        self.fetchPublicProfile = fetchPublicProfile
+        self.lookupDelayNanoseconds = lookupDelayNanoseconds
     }
 
     func send() async -> Bool {
@@ -175,11 +192,14 @@ final class SendToFriendViewModel: ObservableObject {
             return
         }
         recipientStatus = .checking
+        let fetchPublicProfile = fetchPublicProfile
+        let lookupDelayNanoseconds = lookupDelayNanoseconds
         lookupTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 350_000_000)
-            guard !Task.isCancelled, let self else { return }
-            let profile = await ApiServerHandler.shared.fetchPublicProfile(handle: candidate)
-            guard !Task.isCancelled, self.normalized(self.handleInput) == candidate else { return }
+            try? await Task.sleep(nanoseconds: lookupDelayNanoseconds)
+            guard !Task.isCancelled else { return }
+            let profile = await fetchPublicProfile(candidate)
+            guard !Task.isCancelled, let self,
+                  self.normalized(self.handleInput) == candidate else { return }
             if let profile {
                 self.recipientStatus = .found(name: profile.displayName)
             } else {

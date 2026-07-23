@@ -72,6 +72,7 @@ nonisolated struct TranscriptSearchIntentHandler: Sendable {
 
     /// mm:ss (or h:mm:ss) without going through the MainActor TimeFormatter.
     static func timeString(_ time: TimeInterval) -> String {
+        guard time.isFinite else { return "0:00" }
         let total = max(0, Int(time.rounded()))
         let hours = total / 3600
         let minutes = (total % 3600) / 60

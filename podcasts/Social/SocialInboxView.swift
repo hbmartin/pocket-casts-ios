@@ -55,6 +55,7 @@ struct SocialInboxView: View {
                     Button(L10n.socialReviewsLoadMore) {
                         Task { await viewModel.loadMore() }
                     }
+                    .disabled(viewModel.isLoadingMore)
                 }
             }
         }
@@ -155,19 +156,47 @@ struct SocialInboxView: View {
 
 @MainActor
 final class SocialInboxViewModel: ObservableObject {
+    typealias FetchInbox = @MainActor (_ limit: Int, _ offset: Int) async -> SocialInboxPage?
+    typealias DeleteInboxItem = @MainActor (_ id: Int64) async -> Bool
+
     @Published private(set) var items: [SharedItem] = []
     @Published private(set) var requests: [FollowEntry] = []
     @Published private(set) var replies: [SocialComment] = []
     @Published private(set) var total = 0
     @Published private(set) var isLoading = true
+    @Published private(set) var isLoadingMore = false
 
     private var fixtureLoaded = false
     private static let pageSize = 50
+    private let fetchInbox: FetchInbox
+    private let deleteInboxItem: DeleteInboxItem
 
-    init() {}
+    init(
+        fetchInbox: @escaping FetchInbox = { limit, offset in
+            await ApiServerHandler.shared.fetchInbox(limit: limit, offset: offset)
+        },
+        deleteInboxItem: @escaping DeleteInboxItem = { id in
+            await ApiServerHandler.shared.deleteInboxItem(id: id)
+        }
+    ) {
+        self.fetchInbox = fetchInbox
+        self.deleteInboxItem = deleteInboxItem
+    }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: SocialInboxPage, requests: [FollowEntry] = [], replies: [SocialComment] = []) {
+    init(
+        fixture: SocialInboxPage,
+        requests: [FollowEntry] = [],
+        replies: [SocialComment] = [],
+        fetchInbox: @escaping FetchInbox = { limit, offset in
+            await ApiServerHandler.shared.fetchInbox(limit: limit, offset: offset)
+        },
+        deleteInboxItem: @escaping DeleteInboxItem = { id in
+            await ApiServerHandler.shared.deleteInboxItem(id: id)
+        }
+    ) {
+        self.fetchInbox = fetchInbox
+        self.deleteInboxItem = deleteInboxItem
         items = fixture.items
         self.requests = requests
         self.replies = replies
@@ -189,7 +218,7 @@ final class SocialInboxViewModel: ObservableObject {
                 await ApiServerHandler.shared.markInboxRepliesSeen()
             }
         }
-        guard let page = await ApiServerHandler.shared.fetchInbox() else {
+        guard let page = await fetchInbox(Self.pageSize, 0) else {
             isLoading = false
             return
         }
@@ -223,7 +252,11 @@ final class SocialInboxViewModel: ObservableObject {
     }
 
     func loadMore() async {
-        guard let page = await ApiServerHandler.shared.fetchInbox(limit: Self.pageSize, offset: items.count) else { return }
+        guard canLoadMore, !isLoadingMore else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+
+        guard let page = await fetchInbox(Self.pageSize, items.count) else { return }
         items.append(contentsOf: page.items)
         total = page.total
     }
@@ -249,23 +282,50 @@ final class SocialInboxViewModel: ObservableObject {
     }
 
     func delete(at offsets: IndexSet) async {
-        let doomed = offsets.map { items[$0] }
+        let doomed = offsets.sorted().map { (index: $0, item: items[$0]) }
         items.remove(atOffsets: offsets)
         total = max(0, total - doomed.count)
-        for item in doomed {
-            _ = await ApiServerHandler.shared.deleteInboxItem(id: item.id)
+
+        var failedDeletions: [(index: Int, item: SharedItem)] = []
+        for deletion in doomed {
+            if !(await deleteInboxItem(deletion.item.id)) {
+                failedDeletions.append(deletion)
+            }
         }
+
+        for deletion in failedDeletions {
+            items.insert(deletion.item, at: min(deletion.index, items.count))
+        }
+        total += failedDeletions.count
+    }
+}
+
+nonisolated struct SocialInboxBadgeUpdated: NotificationCenter.MainActorMessage, Sendable {
+    typealias Subject = AnyObject
+    static var name: Notification.Name { Notification.Name("SocialInboxBadgeUpdated") }
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        Self()
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name)
     }
 }
 
 /// Lightweight cache of the unread count so the Profile-tab row can badge
 /// without a fetch; refreshed whenever the inbox loads.
+@MainActor
 enum SocialInboxBadge {
     private static let key = "SocialInboxUnreadCount"
 
     static var unreadCount: Int {
         get { UserDefaults.standard.integer(forKey: key) }
-        set { UserDefaults.standard.set(newValue, forKey: key) }
+        set {
+            guard newValue != unreadCount else { return }
+            UserDefaults.standard.set(newValue, forKey: key)
+            NotificationCenter.postOnMainThread(SocialInboxBadgeUpdated())
+        }
     }
 
     /// Refreshes the cached count from the server (fire-and-forget).

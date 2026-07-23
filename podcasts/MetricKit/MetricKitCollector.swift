@@ -41,12 +41,7 @@ nonisolated final class MetricKitCollector: NSObject, MXMetricManagerSubscriber,
 
     private func persist(_ data: Data, prefix: String) {
         let directory = Self.payloadDirectory
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd-HHmmss-SSS"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        // A short random suffix on top of millisecond precision: payloads arrive
-        // in batches, and a same-instant collision would silently overwrite one.
-        let name = "\(prefix)-\(formatter.string(from: Date()))-\(UUID().uuidString.prefix(4)).json"
+        let name = Self.payloadFilename(prefix: prefix)
 
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -57,18 +52,45 @@ nonisolated final class MetricKitCollector: NSObject, MXMetricManagerSubscriber,
         }
     }
 
+    /// Millisecond timestamps preserve lexical age ordering; UTC prevents
+    /// timezone changes and DST fallbacks from reversing that order. The full
+    /// UUID prevents same-millisecond batches from overwriting one another.
+    static func payloadFilename(
+        prefix: String,
+        date: Date = Date(),
+        identifier: UUID = UUID()
+    ) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyyMMdd-HHmmss-SSS"
+        return "\(prefix)-\(formatter.string(from: date))-\(identifier.uuidString).json"
+    }
+
     /// Prunes per prefix: within one prefix the timestamped names sort lexically
     /// oldest-first. One global sort would order "diagnostics-*" before every
     /// "metrics-*" and sacrifice fresh crash diagnostics to keep old metrics.
     private func pruneOldPayloads(in directory: URL) {
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return }
         for prefix in ["diagnostics-", "metrics-"] {
-            let sorted = names.filter { $0.hasPrefix(prefix) && $0.hasSuffix(".json") }.sorted()
-            guard sorted.count > Self.maxStoredPayloads else { continue }
-            for name in sorted.prefix(sorted.count - Self.maxStoredPayloads) {
+            for name in Self.payloadNamesToPrune(
+                names,
+                prefix: prefix,
+                keepingNewest: Self.maxStoredPayloads
+            ) {
                 try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
             }
         }
+    }
+
+    static func payloadNamesToPrune(
+        _ names: [String],
+        prefix: String,
+        keepingNewest limit: Int
+    ) -> [String] {
+        let sorted = names.filter { $0.hasPrefix(prefix) && $0.hasSuffix(".json") }.sorted()
+        guard sorted.count > limit else { return [] }
+        return Array(sorted.prefix(sorted.count - limit))
     }
 
     // MARK: - Summaries

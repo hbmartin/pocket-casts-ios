@@ -121,7 +121,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         profileTable.tableFooterView = footerView
 
         setupRefreshButton()
-        updateDisplayedData()
         updateRefreshFooterColors()
         updateFooterFrame()
         setupRefreshControl()
@@ -131,6 +130,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
+        // Register before updateDisplayedData() starts the asynchronous badge
+        // refresh so even an immediately completed request updates this table.
+        addCustomObserver(SocialInboxBadgeUpdated.self) { [weak self] _ in
+            self?.profileTable.reloadData()
+        }
         updateDisplayedData()
 
         Analytics.track(.profileShown)
@@ -171,7 +175,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(UserWillBeSignedOut.self) { [weak self] _ in
             self?.handleDataChangedNotification()
         }
-
         addCustomObserver(TappedOnSelectedTab.self) { [weak self] message in
             self?.checkForScrollTap(message)
         }

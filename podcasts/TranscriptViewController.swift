@@ -5,6 +5,40 @@ import PocketCastsServer
 import PocketCastsUtils
 import SwiftUI
 
+/// Owns one off-main transcript load and gates its eventual main-actor publication.
+/// Cancellation also advances the generation so work that ignores cooperative
+/// cancellation can never publish after it has been superseded or abandoned.
+@MainActor
+final class TranscriptLoadTask {
+    private var task: Task<Void, Never>?
+    private var generation = 0
+
+    func start(_ operation: @escaping @Sendable (_ generation: Int) async -> Void) {
+        cancel()
+        let generation = generation
+        task = Task { @concurrent in
+            await operation(generation)
+        }
+    }
+
+    func finishIfCurrent(_ generation: Int, _ publish: () -> Void) {
+        guard generation == self.generation, task?.isCancelled == false else { return }
+        task = nil
+        publish()
+    }
+
+    func cancel() {
+        generation &+= 1
+        task?.cancel()
+        task = nil
+    }
+
+    // isolated deinit: this main-actor task owner is created and released by its main-actor view controller
+    isolated deinit {
+        task?.cancel()
+    }
+}
+
 class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvider {
     let analyticsSource: AnalyticsSource
 
@@ -129,7 +163,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         cancelAutoScrollBack()
         // Reappearing re-creates this task (willBeAddedToPlayer/update call
         // loadTranscript()); don't let a stale load outlive the view.
-        loadTask?.cancel()
+        transcriptLoadTask.cancel()
     }
 
     // isolated deinit: view controllers deallocate on the main actor; deinit tears down isolated observers
@@ -138,7 +172,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         // here mirrors what stopHighlightDisplayLink() does without touching isolated state
         autoScrollBackWorkItem?.cancel()
         highlightDisplayLink?.invalidate()
-        loadTask?.cancel()
+        transcriptLoadTask.cancel()
     }
 
     private func startHighlightDisplayLink() {
@@ -638,6 +672,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     override func willBeRemovedFromPlayer() {
+        transcriptLoadTask.cancel()
         removeAllCustomObservers()
         stopHighlightDisplayLink()
         if FeatureFlag.syncedTranscripts.enabled {
@@ -709,12 +744,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
     }
 
     private var currentEpisodeUUID: String?
-    private var loadTask: Task<Void, Never>?
-    /// Monotonic id for transcript loads. Each load captures its generation and
-    /// applies its result only while still current, so a slow superseded load
-    /// (e.g. a network fetch racing a local source switch) can't overwrite a
-    /// newer choice.
-    private var loadGeneration = 0
+    private let transcriptLoadTask = TranscriptLoadTask()
 
     private func loadTranscript() {
         guard let episodeUUID = playbackManager.episodeUUID, let podcastUUID = playbackManager.podcastUUID else {
@@ -729,65 +759,73 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         }
         currentEpisodeUUID = episodeUUID
 
-        transcriptManager = TranscriptManager(episodeUUID: episodeUUID, podcastUUID: podcastUUID)
-        transcriptManager?.sourcePreference = transcriptSourcePreference
+        let transcriptManager = TranscriptManager(episodeUUID: episodeUUID, podcastUUID: podcastUUID)
+        transcriptManager.sourcePreference = transcriptSourcePreference
+        // The previously published manager describes a different completed load.
+        // Keep the new mutable manager private to the worker until it is finished.
+        self.transcriptManager = nil
 
         setupLoadingState()
 
-        loadGeneration += 1
-        let generation = loadGeneration
-        loadTask?.cancel()
-        loadTask = Task.detached { [weak self, boxedManager = PocketCastsUtils.UncheckedSendable(transcriptManager)] in
-            guard let self, let transcriptManager = boxedManager.value else {
-                return
-            }
+        transcriptLoadTask.start { [weak self, boxedManager = PocketCastsUtils.UncheckedSendable(transcriptManager)] generation in
+            let transcriptManager = boxedManager.value
 
             do {
                 let transcript = try await transcriptManager.loadTranscript()
                 let hasGeneratedTranscripts = FeatureFlag.generatedTranscripts.enabled && transcriptManager.hasGeneratedTranscripts
                 let isDisplayingGenerated = transcriptManager.isDisplayingGeneratedTranscript
                 let isDisplayingLocal = transcriptManager.isDisplayingLocalTranscription
-                await MainActor.run {
-                    guard generation == self.loadGeneration else { return }
-                    self.setHasGeneratedTranscripts(hasGeneratedTranscripts)
-                    self.updateSourceMenu()
-                    if isDisplayingLocal {
-                        // Locally generated transcripts are cut from the exact
-                        // audio file being played, so timestamps align natively —
-                        // no fingerprint preparation needed.
-                        self.startHighlightDisplayLink()
-                    } else if isDisplayingGenerated {
-                        if FeatureFlag.syncedTranscripts.enabled, !self.showFromEpisode || PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: self.playbackManager.episodeUUID) {
-                            FingerprintTimingManager.shared.prepareForCurrentEpisode()
-                        }
-                        self.startHighlightDisplayLink()
-                    } else {
-                        self.stopSyncedTranscripts()
-                    }
-                    UIView.animate(withDuration: 0.25) {
-                        if hasGeneratedTranscripts, self.shouldShowPremiumView {
-                            self.stackView.alpha = 0
-                            self.showGeneratedTranscriptsPremiumOverlay?()
+                try Task.checkCancellation()
+                let loaded = PocketCastsUtils.UncheckedSendable((manager: transcriptManager, transcript: transcript))
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    self.transcriptLoadTask.finishIfCurrent(generation) {
+                        self.transcriptManager = loaded.value.manager
+                        self.setHasGeneratedTranscripts(hasGeneratedTranscripts)
+                        self.updateSourceMenu()
+                        if isDisplayingLocal {
+                            // Locally generated transcripts are cut from the exact
+                            // audio file being played, so timestamps align natively —
+                            // no fingerprint preparation needed.
+                            self.startHighlightDisplayLink()
+                        } else if isDisplayingGenerated {
+                            if FeatureFlag.syncedTranscripts.enabled, !self.showFromEpisode || PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: self.playbackManager.episodeUUID) {
+                                FingerprintTimingManager.shared.prepareForCurrentEpisode()
+                            }
+                            self.startHighlightDisplayLink()
                         } else {
-                            self.appearDate = Date()
-                            let syncedState = FingerprintTimingManager.shared.state
-                            self.track(.transcriptShown, properties: [
-                                "type": transcript.type,
-                                "show_as_webpage": transcript.hasJavascript,
-                                "synced_flag_enabled": FeatureFlag.syncedTranscripts.enabled,
-                                "synced_state": syncedState.analyticsName
-                            ])
+                            self.stopSyncedTranscripts()
                         }
-                        self.bannerView.isHidden = !hasGeneratedTranscripts
+                        UIView.animate(withDuration: 0.25) {
+                            if hasGeneratedTranscripts, self.shouldShowPremiumView {
+                                self.stackView.alpha = 0
+                                self.showGeneratedTranscriptsPremiumOverlay?()
+                            } else {
+                                self.appearDate = Date()
+                                let syncedState = FingerprintTimingManager.shared.state
+                                self.track(.transcriptShown, properties: [
+                                    "type": loaded.value.transcript.type,
+                                    "show_as_webpage": loaded.value.transcript.hasJavascript,
+                                    "synced_flag_enabled": FeatureFlag.syncedTranscripts.enabled,
+                                    "synced_state": syncedState.analyticsName
+                                ])
+                            }
+                            self.bannerView.isHidden = !hasGeneratedTranscripts
+                        }
+                        self.show(transcript: loaded.value.transcript, resetPosition: shouldResetPosition)
                     }
-                    self.show(transcript: transcript, resetPosition: shouldResetPosition)
                 }
+            } catch is CancellationError {
+                return
             } catch {
-                await MainActor.run {
-                    guard generation == self.loadGeneration else { return }
-                    self.stopSyncedTranscripts()
-                    self.track(.transcriptError, properties: ["error_code": (error as NSError).code])
-                    self.show(error: error)
+                let boxedError = PocketCastsUtils.UncheckedSendable(error)
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    self.transcriptLoadTask.finishIfCurrent(generation) {
+                        self.stopSyncedTranscripts()
+                        self.track(.transcriptError, properties: ["error_code": (boxedError.value as NSError).code])
+                        self.show(error: boxedError.value)
+                    }
                 }
             }
         }
@@ -997,7 +1035,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         guard DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid)?.transcriptionStatus == .completed else {
             return true
         }
-        return !TranscriptionArtifactStore().hasArtifact(episodeUuid: episodeUuid)
+        return !TranscriptionArtifactStore().hasUsableArtifact(episodeUuid: episodeUuid)
     }
 
     /// Offers the Generate button in the error/empty state — or, when a job for
@@ -1177,7 +1215,7 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
             let range = cue.characterRange
             previousRange = range
             hasRenderedHighlight = true
-            transcriptView.attributedText = styleText(transcript: transcript, position: position)
+            transcriptView.textStorage.setAttributedString(styleText(transcript: transcript, position: position))
             if !isUserScrolling, !isSearching, !isAutoScrollSuppressed {
                 transcriptView.scrollToRange(range, verticalAnchor: Self.highlightVerticalAnchor)
             }
@@ -1376,8 +1414,13 @@ class TranscriptViewController: PlayerItemViewController, AnalyticsSourceProvide
         let attributes = TranscriptSearchHighlightStyle.attributes(showFromEpisode: showFromEpisode, isCurrent: true)
         transcriptView.textStorage.addAttributes(attributes, range: range)
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.seconds) { [weak self] in
-            guard let self, !self.isSearching else { return }
-            self.refreshText()
+            guard let self, !self.isSearching, let transcript = self.transcript else { return }
+            let contentOffset = self.transcriptView.contentOffset
+            self.previousRange = nil
+            self.hasRenderedHighlight = false
+            self.transcriptView.textStorage.setAttributedString(self.styleText(transcript: transcript))
+            self.updateTranscriptPosition()
+            self.transcriptView.setContentOffset(contentOffset, animated: false)
         }
     }
 

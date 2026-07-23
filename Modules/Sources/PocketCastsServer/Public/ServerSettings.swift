@@ -177,6 +177,15 @@ public class ServerSettings {
     /// through. Goes away entirely once `FeatureFlag.refreshTokenForPasswordAuth`
     /// migration completes fleet-wide (plan workstream A).
     public class func saveSyncingPassword(_ password: String) {
+        guard !FeatureFlag.refreshTokenForPasswordAuth.enabled else {
+            // Never log password material. This marker only records that a stale/new caller
+            // attempted to cross the refresh-token feature boundary.
+            FileLog.shared.addMessage(
+                "ServerSettings: refused legacy password persistence while refresh-token password auth is enabled"
+            )
+            return
+        }
+
         KeychainHelper.save(string: password, key: ServerConstants.Values.syncingLoginItemName, accessibility: kSecAttrAccessibleAfterFirstUnlock) // nosemgrep: pocketcasts.no-persisted-account-password
     }
 
@@ -314,7 +323,8 @@ public extension ServerSettings {
         try KeychainHelper.string(for: ServerConstants.Values.refreshTokenKey)
     }
 
-    class func setRefreshToken(_ newValue: String?) {
+    @discardableResult
+    class func setRefreshToken(_ newValue: String?) -> Bool {
         KeychainHelper.save(string: newValue, key: ServerConstants.Values.refreshTokenKey, accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
     }
 }

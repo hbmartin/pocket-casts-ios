@@ -13,10 +13,35 @@ import PocketCastsDataModel
 @MainActor
 enum TranscriptHitPlayback {
     static func seekTime(episodeUuid: String, startTime: TimeInterval, source: PocketCastsDataModel.TranscriptSource) -> TimeInterval {
+        resolvedSeekTime(
+            episodeUuid: episodeUuid,
+            startTime: startTime,
+            source: source,
+            isNowPlaying: { PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: $0) },
+            isFingerprintActive: {
+                if case .active = FingerprintTimingManager.shared.state {
+                    return true
+                }
+                return false
+            },
+            playbackTime: {
+                FingerprintTimingManager.shared.playbackTime(forReferenceTime: $0, episodeUuid: $1)
+            }
+        )
+    }
+
+    static func resolvedSeekTime(
+        episodeUuid: String,
+        startTime: TimeInterval,
+        source: PocketCastsDataModel.TranscriptSource,
+        isNowPlaying: (String) -> Bool,
+        isFingerprintActive: () -> Bool,
+        playbackTime: (TimeInterval, String) -> TimeInterval?
+    ) -> TimeInterval {
         guard source == .provided,
-              PlaybackManager.shared.isNowPlayingEpisode(episodeUuid: episodeUuid),
-              case .active = FingerprintTimingManager.shared.state,
-              let mapped = FingerprintTimingManager.shared.playbackTime(forReferenceTime: startTime) else {
+              isNowPlaying(episodeUuid),
+              isFingerprintActive(),
+              let mapped = playbackTime(startTime, episodeUuid) else {
             return startTime
         }
         return mapped

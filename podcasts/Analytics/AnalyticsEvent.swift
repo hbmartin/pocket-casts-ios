@@ -599,6 +599,7 @@ enum AnalyticsEvent: String {
     case podcastSettingsAutoDownloadToggled
     case podcastSettingsNotificationsToggled
     case podcastSettingsAutoTranscribeToggled
+    case podcastSettingsLocalTranscriptionOnlyToggled
     case podcastSettingsAutoAddUpNextToggled
     case podcastSettingsAutoAddUpNextPositionOptionChanged
 

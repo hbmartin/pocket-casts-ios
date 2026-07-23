@@ -400,7 +400,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         stopAfterEpisodeTapped()
     }
 
-    @objc private func catchMeUpTapped(_ sender: UIButton) {
+    @objc private func catchMeUpTapped(_ _: UIButton) {
         shelfButtonTapped(.catchMeUp)
         catchMeUpTapped()
     }

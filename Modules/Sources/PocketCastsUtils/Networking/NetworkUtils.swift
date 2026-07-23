@@ -30,7 +30,13 @@ public final class NetworkUtils: Sendable {
     // MARK: - Connectivity
 
     public func isConnectedToUnexpensiveConnection() -> Bool {
-        !monitor.currentPath.usesInterfaceType(.cellular)
+        let path = monitor.currentPath
+        return Self.isUnexpensive(status: path.status, isExpensive: path.isExpensive)
+    }
+
+    static func isUnexpensive(status: NWPath.Status, isExpensive: Bool) -> Bool {
+        guard case .satisfied = status else { return false }
+        return !isExpensive
     }
 
     public func isConnected() -> Bool {

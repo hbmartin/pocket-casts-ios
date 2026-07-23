@@ -118,24 +118,25 @@ class NewPlaylistCell: ThemeableCell {
     }
 
     func loadMetadata(for playlist: EpisodeFilter) {
-        playlistID = playlist.uuid
+        let requestedPlaylistID = playlist.uuid
+        playlistID = requestedPlaylistID
 
         // Cancel previous subscriptions and set up new ones for this playlist
         cancellables.removeAll()
-        subscribeToUpdates(for: playlist.uuid)
+        subscribeToUpdates(for: requestedPlaylistID)
 
         playlistCountLoadTask = Task { [weak self] in
             guard let self else { return }
-            let loadingPlaylist = playlistID
 
-            if let cachedCount = await self.playlistMetadataLoader.cachedCount(for: playlist.uuid) {
+            if let cachedCount = await self.playlistMetadataLoader.cachedCount(for: requestedPlaylistID) {
                 await MainActor.run {
+                    guard self.playlistID == requestedPlaylistID else { return }
                     self.viewModel.episodesCount = cachedCount
                 }
             }
 
             let count = await self.playlistMetadataLoader.loadCount(for: playlist)
-            if self.playlistID != loadingPlaylist {
+            if self.playlistID != requestedPlaylistID {
                 return
             }
             await MainActor.run {
@@ -146,14 +147,14 @@ class NewPlaylistCell: ThemeableCell {
         }
         playlistImageLoadTask = Task { [weak self] in
             guard let self else { return }
-            let loadingPlaylist = playlistID
 
-            if let cachedImages = await self.playlistMetadataLoader.cachedImages(for: playlist.uuid) {
+            if let cachedImages = await self.playlistMetadataLoader.cachedImages(for: requestedPlaylistID),
+               self.playlistID == requestedPlaylistID {
                 self.viewModel.images = cachedImages
             }
 
             let images = await self.playlistMetadataLoader.loadImages(for: playlist)
-            if self.playlistID != loadingPlaylist {
+            if self.playlistID != requestedPlaylistID {
                 return
             }
             await MainActor.run {

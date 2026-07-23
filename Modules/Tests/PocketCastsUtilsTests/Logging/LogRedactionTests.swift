@@ -88,11 +88,14 @@ final class LogRedactionTests: XCTestCase {
 
     // MARK: - Malformed URLs
 
-    func testMalformedURLIsLeftAlone() {
-        // Invalid percent-encoding makes URLComponents parsing fail; the
-        // candidate must be left as-is rather than mangled.
-        let input = "weird https://exa%ZZmple.com/path?token=abc happened"
-        XCTAssertEqual(LogRedaction.redactURLs(in: input), input)
+    func testMalformedURLFailsClosed() {
+        // Invalid percent-encoding makes URLComponents parsing fail. The raw
+        // candidate can contain credentials, so it must never survive export.
+        let input = "weird https://exa%ZZmple.com/path?token=abc. happened"
+        let output = LogRedaction.redactURLs(in: input)
+
+        XCTAssertEqual(output, "weird <unparseable-url>. happened")
+        XCTAssertFalse(output.contains("token=abc"))
     }
 
     // MARK: - Surrounding punctuation

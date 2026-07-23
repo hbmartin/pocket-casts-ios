@@ -43,6 +43,18 @@ final class ChapterManagerStreamedMetadataTests: XCTestCase {
         XCTAssertNotNil(manager.chapterAt(index: 0)?.image, "The re-announce may still fill missing artwork")
     }
 
+    func testUnchangedReAnnouncedBoundaryDoesNotNotify() {
+        let manager = ChapterManager()
+        manager.ingestStreamedMetadata(title: "Intro", artworkData: nil, at: 0)
+        let update = expectation(forNotification: PodcastChaptersDidUpdate.name, object: nil)
+        update.isInverted = true
+
+        manager.ingestStreamedMetadata(title: "Intro", artworkData: nil, at: 0.2)
+
+        wait(for: [update], timeout: 0.05)
+        XCTAssertEqual(manager.visibleChapterCount(), 1)
+    }
+
     func testMetadataFillsGapsInTheChapterAtThatTime() {
         let manager = ChapterManager()
         manager.ingestStreamedMetadata(title: "", artworkData: nil, at: 0)

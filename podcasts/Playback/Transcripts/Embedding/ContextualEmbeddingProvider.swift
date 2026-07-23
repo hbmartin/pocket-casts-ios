@@ -17,17 +17,61 @@ enum TextEmbeddingError: Error {
     case embeddingFailed
 }
 
+/// Coordinates a single asset request without moving `NLContextualEmbedding`
+/// (which is not `Sendable`) out of its owning provider actor.
+actor ContextualEmbeddingAssetRequestGate {
+    enum Admission: Sendable {
+        case leader(UUID)
+        case result(Bool)
+    }
+
+    private var cachedResult: Bool?
+    private var requestID: UUID?
+    private var waiters: [CheckedContinuation<Bool, Never>] = []
+
+    func admission() async -> Admission {
+        if let cachedResult {
+            return .result(cachedResult)
+        }
+
+        if requestID != nil {
+            let result = await withCheckedContinuation { continuation in
+                waiters.append(continuation)
+            }
+            return .result(result)
+        }
+
+        let requestID = UUID()
+        self.requestID = requestID
+        return .leader(requestID)
+    }
+
+    func complete(requestID: UUID, assetsAvailable: Bool) {
+        guard self.requestID == requestID else { return }
+
+        self.requestID = nil
+        cachedResult = assetsAvailable
+        let waiters = self.waiters
+        self.waiters.removeAll()
+        waiters.forEach { $0.resume(returning: assetsAvailable) }
+    }
+
+    var waitingCallerCount: Int {
+        waiters.count
+    }
+}
+
 /// Wraps `NLContextualEmbedding`: one model per launch (chosen from the first
 /// caller's language hint, defaulting to English's script), asset download
-/// requested at most once per launch, load and inference serialized by the
-/// actor. When assets are unavailable the provider stays dormant — semantic
-/// features silently degrade to FTS-only and retry next launch.
+/// requests deduplicated while in flight, and load and inference serialized by
+/// the actor. The first completed asset outcome is remembered for the launch;
+/// when assets are unavailable semantic features silently degrade to FTS-only
+/// and retry next launch.
 actor ContextualEmbeddingProvider: TextEmbeddingProviding {
     static let shared = ContextualEmbeddingProvider()
 
     private var embedding: NLContextualEmbedding?
-    /// nil = not asked yet; true/false = the remembered once-per-launch outcome.
-    private var assetsAvailable: Bool?
+    private let assetRequestGate = ContextualEmbeddingAssetRequestGate()
     private var loaded = false
 
     func modelInfo() async -> TranscriptEmbeddingModelInfo? {
@@ -77,17 +121,7 @@ actor ContextualEmbeddingProvider: TextEmbeddingProviding {
         }
         guard let embedding else { return nil }
 
-        if assetsAvailable == nil {
-            if embedding.hasAvailableAssets {
-                assetsAvailable = true
-            } else {
-                assetsAvailable = await requestAssets(for: embedding)
-                if assetsAvailable == false {
-                    Analytics.track(.transcriptEmbeddingAssetsUnavailable)
-                }
-            }
-        }
-        guard assetsAvailable == true else { return nil }
+        guard await assetsAreAvailable(for: embedding) else { return nil }
 
         if !loaded {
             do {
@@ -99,6 +133,25 @@ actor ContextualEmbeddingProvider: TextEmbeddingProviding {
             }
         }
         return embedding
+    }
+
+    private func assetsAreAvailable(for embedding: NLContextualEmbedding) async -> Bool {
+        switch await assetRequestGate.admission() {
+        case .result(let assetsAvailable):
+            return assetsAvailable
+        case .leader(let requestID):
+            let assetsAvailable: Bool
+            if embedding.hasAvailableAssets {
+                assetsAvailable = true
+            } else {
+                assetsAvailable = await requestAssets(for: embedding)
+            }
+            await assetRequestGate.complete(requestID: requestID, assetsAvailable: assetsAvailable)
+            if !assetsAvailable {
+                Analytics.track(.transcriptEmbeddingAssetsUnavailable)
+            }
+            return assetsAvailable
+        }
     }
 
     private func requestAssets(for embedding: NLContextualEmbedding) async -> Bool {

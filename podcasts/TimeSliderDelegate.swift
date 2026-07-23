@@ -11,5 +11,6 @@ protocol TimeSliderDelegate: AnyObject {
 }
 
 extension TimeSliderDelegate {
-    func sliderDidTapMoment(id: Int64) {}
+    /// Delegates that do not present Moment comments may omit this callback.
+    func sliderDidTapMoment(id _: Int64) {}
 }

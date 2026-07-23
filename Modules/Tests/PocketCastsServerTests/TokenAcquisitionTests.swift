@@ -72,4 +72,16 @@ final class TokenAcquisitionTests: XCTestCase {
         XCTAssertEqual(longBody.prefix(3), Data([0x0A, 0xC8, 0x01]))
         XCTAssertEqual(longBody.count, 3 + 200)
     }
+
+    func testTokenRevokeRequestIsAuthenticatedByRefreshTokenNotBearerToken() {
+        let request = SyncManager.tokenRevokeRequest(refreshToken: "refresh-credential")
+
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.url?.path, "/user/token/revoke")
+        XCTAssertNil(
+            request.value(forHTTPHeaderField: ServerConstants.HttpHeaders.authorization),
+            "An expired or invalid access token must not prevent refresh-token revocation"
+        )
+        XCTAssertEqual(request.httpBody, SyncManager.tokenRevokeRequestBody(refreshToken: "refresh-credential"))
+    }
 }

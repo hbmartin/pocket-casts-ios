@@ -433,6 +433,8 @@ public class DataManager {
         podcastManager.savePushSetting(podcastUuid: podcastUuid, pushEnabled: pushEnabled, dbQueue: dbQueue)
     }
 
+    /// Atomically updates only the podcast's auto-add fields and sync status, so callers holding
+    /// an older `Podcast` value cannot overwrite unrelated changes made after it was loaded.
     public func saveAutoAddToUpNext(podcastUuid: String, autoAddToUpNext: Int32) {
         podcastManager.saveAutoAddToUpNext(podcastUuid: podcastUuid, autoAddToUpNext: autoAddToUpNext, dbQueue: dbQueue)
     }

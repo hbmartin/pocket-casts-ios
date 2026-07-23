@@ -68,6 +68,10 @@ nonisolated internal enum L10n {
   internal static func accessibilityPlayerEffectsPlaybackSpeed(_ p1: Any) -> String {
     return L10n.tr("Localizable", "accessibility_player_effects_playback_speed", String(describing: p1), fallback: "Playback speed %1$@ times")
   }
+  /// VoiceOver action for opening a timestamped comment from the player scrubber. %1$d = Moment position in the action list; %2$@ = episode timestamp.
+  internal static func accessibilityPlayerOpenMoment(_ p1: Int, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "accessibility_player_open_moment", p1, String(describing: p2), fallback: "Open Moment %1$d at %2$@")
+  }
   /// An accessibility label used for the add episode action for the Add Episodes search view
   internal static var accessibilityPlaylistAddEpisode: String { return L10n.tr("Localizable", "accessibility_playlist_add_episode", fallback: "Add Episode") }
   /// Accessibility hint to inform the user which filter color flag is being used. '%1$@' is a placeholder for the filter color number.
@@ -224,6 +228,8 @@ nonisolated internal enum L10n {
   internal static var advancedAudioBoostTruePeakFooter: String { return L10n.tr("Localizable", "advanced_audio_boost_true_peak_footer", fallback: "True-peak detection catches inter-sample peaks with 4x oversampling at a small CPU cost.") }
   /// Advanced Audio - warning footer explaining these are expert DSP settings
   internal static var advancedAudioFooterWarning: String { return L10n.tr("Localizable", "advanced_audio_footer_warning", fallback: "These settings tune the audio engine directly. Defaults match standard playback; reset if something sounds wrong.") }
+  /// Unit shown beside advanced-audio loudness targets; LUFS means Loudness Units relative to Full Scale.
+  internal static var advancedAudioLoudnessUnitLufs: String { return L10n.tr("Localizable", "advanced_audio_loudness_unit_lufs", fallback: "LUFS") }
   /// Advanced Audio - label for the current normalization gain meter
   internal static var advancedAudioMetersGain: String { return L10n.tr("Localizable", "advanced_audio_meters_gain", fallback: "Applied gain") }
   /// Advanced Audio - header of the live meters section
@@ -472,6 +478,10 @@ nonisolated internal enum L10n {
   internal static var autoRestartSleepTimerDescription: String { return L10n.tr("Localizable", "auto_restart_sleep_timer_description", fallback: "If on, the sleep timer will restart automatically if you play an episode within 5 minutes after the last pause.") }
   /// A common string used throughout the app. Title for the back button. Used with the accessibility settings.
   internal static var back: String { return L10n.tr("Localizable", "back", fallback: "Back") }
+  /// Section title for diagnostic tools in the beta menu.
+  internal static var betaMenuDiagnosticsTitle: String { return L10n.tr("Localizable", "beta_menu_diagnostics_title", fallback: "Diagnostics") }
+  /// Button and screen title for viewing collected MetricKit payload files.
+  internal static var betaMenuMetricKitPayloadsTitle: String { return L10n.tr("Localizable", "beta_menu_metric_kit_payloads_title", fallback: "MetricKit Payloads") }
   /// Message of an alert that informs the user purchasing is disabled in the beta. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app. %1$@ is the name of the tier (Plus or Patron)
   internal static func betaPurchaseDisabled(_ p1: Any) -> String {
     return L10n.tr("Localizable", "beta_purchase_disabled", String(describing: p1), fallback: "Please download Pocket Casts from the App Store to purchase %1$@.")
@@ -3657,6 +3667,10 @@ nonisolated internal enum L10n {
   internal static func searchTranscriptsResultAtTime(_ p1: Any) -> String {
     return L10n.tr("Localizable", "search_transcripts_result_at_time", String(describing: p1), fallback: "At %1$@")
   }
+  /// Speaker suffix on a transcript search result. '%1$@' is the speaker name; translators may change punctuation and spacing for their locale.
+  internal static func searchTranscriptsSpeakerFormat(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "search_transcripts_speaker_format", String(describing: p1), fallback: "· %1$@")
+  }
   /// Header for the shelf of the user's own podcasts shown on the empty search screen.
   internal static var searchYourPodcasts: String { return L10n.tr("Localizable", "search_your_podcasts", fallback: "Your Podcasts") }
   /// A common string used throughout the app. Refers to the season a podcast episode is in.
@@ -4527,11 +4541,11 @@ nonisolated internal enum L10n {
   }
   /// Error when a comment fails to post
   internal static var socialCommentSubmitFailed: String { return L10n.tr("Localizable", "social_comment_submit_failed", fallback: "Couldn't post that comment.") }
-  /// Button revealing a comment's replies. %1$d = reply count
-  internal static func socialCommentViewReplies(_ p1: Int) -> String {
-    return L10n.tr("Localizable", "social_comment_view_replies", p1, fallback: "View %1$d replies")
+  /// Button revealing multiple replies to a comment. %1$d = reply count.
+  internal static func socialCommentViewRepliesPlural(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_comment_view_replies_plural", p1, fallback: "View %1$d replies")
   }
-  /// Singular of social_comment_view_replies
+  /// Button revealing exactly one reply to a comment.
   internal static var socialCommentViewRepliesSingular: String { return L10n.tr("Localizable", "social_comment_view_replies_singular", fallback: "View 1 reply") }
   /// Empty state for an episode with no comments yet
   internal static var socialCommentsEmpty: String { return L10n.tr("Localizable", "social_comments_empty", fallback: "No comments yet. Be the first!") }
@@ -4629,11 +4643,13 @@ nonisolated internal enum L10n {
   internal static var socialFindFromContacts: String { return L10n.tr("Localizable", "social_find_from_contacts", fallback: "Find from contacts") }
   /// Row sharing the owner's Profile Link to invite a friend
   internal static var socialFindInvite: String { return L10n.tr("Localizable", "social_find_invite", fallback: "Invite a friend") }
-  /// Mutual-connections count on a suggestion row. %1$d = count
-  internal static func socialFindMutualCount(_ p1: Int) -> String {
-    return L10n.tr("Localizable", "social_find_mutual_count", p1, fallback: "%1$d mutual connections")
+  /// Error shown when a Find People search, suggestion, or contact match request fails.
+  internal static var socialFindLoadFailed: String { return L10n.tr("Localizable", "social_find_load_failed", fallback: "Couldn't load people. Try again.") }
+  /// Multiple mutual-connections count on a suggestion row. %1$d = count.
+  internal static func socialFindMutualCountPlural(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "social_find_mutual_count_plural", p1, fallback: "%1$d mutual connections")
   }
-  /// Singular of social_find_mutual_count
+  /// Exactly one mutual connection on a suggestion row.
   internal static var socialFindMutualCountSingular: String { return L10n.tr("Localizable", "social_find_mutual_count_singular", fallback: "1 mutual connection") }
   /// Button that asks for a friend's @handle to open their profile
   internal static var socialFindPeople: String { return L10n.tr("Localizable", "social_find_people", fallback: "Find People") }
@@ -4813,6 +4829,10 @@ nonisolated internal enum L10n {
   internal static var socialListInvitesTitle: String { return L10n.tr("Localizable", "social_list_invites_title", fallback: "List Invites") }
   /// Title of the shared-list members sheet and its toolbar button
   internal static var socialListMembers: String { return L10n.tr("Localizable", "social_list_members", fallback: "Members") }
+  /// Local mirror playlist name for a shared list. %1$@ = list title, %2$@ = owner handle without the @ prefix
+  internal static func socialListMirrorName(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "social_list_mirror_name", String(describing: p1), String(describing: p2), fallback: "%1$@ · @%2$@")
+  }
   /// Confirm button of the publish-list sheet
   internal static var socialListPublishCta: String { return L10n.tr("Localizable", "social_list_publish_cta", fallback: "Publish") }
   /// Error when publishing a list fails
@@ -5757,10 +5777,18 @@ nonisolated internal enum L10n {
   internal static var whatsNewPageTwo720: String { return L10n.tr("Localizable", "whats_new_page_two_7_20", fallback: "We now sync your Home Screen (including your sort options) across devices! And you can drag and drop in the Web Player now as well.\n\nThis means you can rest easier, knowing the hard work you put in to arranging your podcasts page is being synced to your account.") }
   /// Title for page two of the 7.20 what's new dialog.
   internal static var whatsNewPageTwoTitle720: String { return L10n.tr("Localizable", "whats_new_page_two_title_7_20", fallback: "Home Grid Syncing") }
+  /// Description for the WidgetKit Control Center next chapter control.
+  internal static var widgetPlaybackControlNextChapterDescription: String { return L10n.tr("Localizable", "widget_playback_control_next_chapter_description", fallback: "Skip to the next chapter of the current episode.") }
+  /// Display name for the WidgetKit Control Center next chapter control.
+  internal static var widgetPlaybackControlNextChapterDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_next_chapter_display_name", fallback: "Next Chapter") }
   /// Description for the WidgetKit Control Center play/pause control.
   internal static var widgetPlaybackControlPlayPauseDescription: String { return L10n.tr("Localizable", "widget_playback_control_play_pause_description", fallback: "Play or pause the current episode.") }
   /// Display name for the WidgetKit Control Center play/pause control.
   internal static var widgetPlaybackControlPlayPauseDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_play_pause_display_name", fallback: "Play / Pause") }
+  /// Description for the WidgetKit Control Center play Up Next control.
+  internal static var widgetPlaybackControlPlayUpNextDescription: String { return L10n.tr("Localizable", "widget_playback_control_play_up_next_description", fallback: "Skip to the next episode in Up Next.") }
+  /// Display name for the WidgetKit Control Center play Up Next control.
+  internal static var widgetPlaybackControlPlayUpNextDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_play_up_next_display_name", fallback: "Play Next Episode") }
   /// Description for the WidgetKit Control Center skip back control.
   internal static var widgetPlaybackControlSkipBackDescription: String { return L10n.tr("Localizable", "widget_playback_control_skip_back_description", fallback: "Skip back in the current episode.") }
   /// Display name for the WidgetKit Control Center skip back control.
@@ -5769,6 +5797,10 @@ nonisolated internal enum L10n {
   internal static var widgetPlaybackControlSkipForwardDescription: String { return L10n.tr("Localizable", "widget_playback_control_skip_forward_description", fallback: "Skip forward in the current episode.") }
   /// Display name for the WidgetKit Control Center skip forward control.
   internal static var widgetPlaybackControlSkipForwardDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_skip_forward_display_name", fallback: "Skip Forward") }
+  /// Description for the WidgetKit Control Center sleep timer control.
+  internal static var widgetPlaybackControlSleepTimerDescription: String { return L10n.tr("Localizable", "widget_playback_control_sleep_timer_description", fallback: "Start a 15 minute sleep timer, or extend the running one.") }
+  /// Display name for the WidgetKit Control Center sleep timer control.
+  internal static var widgetPlaybackControlSleepTimerDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_sleep_timer_display_name", fallback: "Sleep Timer") }
   /// Description of a widget to launch the app
   internal static var widgetsAppIconDescription: String { return L10n.tr("Localizable", "widgets_app_icon_description", fallback: "Quickly Launch Pocket Casts") }
   /// Title of a widget that displays the app icon
@@ -5803,4 +5835,3 @@ nonisolated extension L10n {
     return String(format: format, locale: Locale.current, arguments: args)
   }
 }
-

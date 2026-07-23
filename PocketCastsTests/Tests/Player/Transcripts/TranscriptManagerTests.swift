@@ -114,10 +114,8 @@ final class TranscriptManagerTests: XCTestCase {
     }
 
     /// A completed record whose artifact file exists but cannot be parsed must
-    /// self-heal exactly like a missing artifact: `hasArtifact` is a plain
-    /// fileExists check, so a corrupt file would otherwise pin the dead record
-    /// forever — the Generate affordance stays hidden while every load falls
-    /// through to the podcast-provided flow.
+    /// self-heal exactly like a missing artifact so corrupt content cannot hide
+    /// the Generate affordance forever.
     func testCompletedRecordWithCorruptArtifactSelfHeals() async throws {
         let store = FeatureFlagOverrideStore()
         defer { store.resetOverrides() }
@@ -146,7 +144,176 @@ final class TranscriptManagerTests: XCTestCase {
         XCTAssertFalse(manager.isDisplayingLocalTranscription)
         XCTAssertNil(DataManager.sharedManager.transcriptions.find(episodeUuid: episodeUuid),
                      "The corrupt-artifact record should have been deleted")
-        XCTAssertFalse(artifactStore.hasArtifact(episodeUuid: episodeUuid),
+        XCTAssertFalse(artifactStore.hasUsableArtifact(episodeUuid: episodeUuid),
                        "The corrupt artifact file should have been deleted so a fresh Generate starts clean")
+    }
+
+    func testArtifactUsabilityRejectsMissingEmptyCorruptAndDirectoryPaths() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("transcript-artifact-tests-\(UUID().uuidString)", isDirectory: true)
+        let store = TranscriptionArtifactStore(directoryURL: directory)
+        let episodeUuid = "episode"
+        let artifactURL = store.fileURL(forEpisodeUuid: episodeUuid)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        XCTAssertFalse(store.hasUsableArtifact(episodeUuid: episodeUuid))
+
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try Data().write(to: artifactURL)
+        XCTAssertFalse(store.hasUsableArtifact(episodeUuid: episodeUuid))
+
+        try "not WebVTT".write(to: artifactURL, atomically: true, encoding: .utf8)
+        XCTAssertFalse(store.hasUsableArtifact(episodeUuid: episodeUuid))
+
+        try FileManager.default.removeItem(at: artifactURL)
+        try FileManager.default.createDirectory(at: artifactURL, withIntermediateDirectories: false)
+        XCTAssertFalse(store.hasUsableArtifact(episodeUuid: episodeUuid))
+
+        try FileManager.default.removeItem(at: artifactURL)
+        try "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nUsable\n"
+            .write(to: artifactURL, atomically: true, encoding: .utf8)
+        XCTAssertTrue(store.hasUsableArtifact(episodeUuid: episodeUuid))
+    }
+}
+
+@MainActor
+final class TranscriptLoadTaskTests: XCTestCase {
+    func testSupersededLoadCannotPublishAfterNewerLoad() async {
+        let loadTask = TranscriptLoadTask()
+        let recorder = TranscriptLoadPublicationRecorder()
+        let firstGate = TranscriptLoadGate()
+        let firstStarted = TranscriptLoadSignal()
+        let firstAttemptedPublication = TranscriptLoadSignal()
+        let secondPublished = TranscriptLoadSignal()
+
+        loadTask.start { [weak loadTask] generation in
+            await firstStarted.signal()
+            await firstGate.wait()
+            await MainActor.run {
+                loadTask?.finishIfCurrent(generation) {
+                    recorder.values.append("first")
+                }
+            }
+            await firstAttemptedPublication.signal()
+        }
+        await firstStarted.wait()
+
+        loadTask.start { [weak loadTask] generation in
+            await MainActor.run {
+                loadTask?.finishIfCurrent(generation) {
+                    recorder.values.append("second")
+                }
+            }
+            await secondPublished.signal()
+        }
+        await secondPublished.wait()
+
+        await firstGate.open()
+        await firstAttemptedPublication.wait()
+
+        XCTAssertEqual(recorder.values, ["second"])
+    }
+
+    func testCancellationSuppressesLoadThatIgnoresCancellation() async {
+        let loadTask = TranscriptLoadTask()
+        let recorder = TranscriptLoadPublicationRecorder()
+        let gate = TranscriptLoadGate()
+        let started = TranscriptLoadSignal()
+        let attemptedPublication = TranscriptLoadSignal()
+
+        loadTask.start { [weak loadTask] generation in
+            await started.signal()
+            await gate.wait()
+            let wasCancelled = Task.isCancelled
+            await MainActor.run {
+                recorder.observedCancellation = wasCancelled
+                loadTask?.finishIfCurrent(generation) {
+                    recorder.values.append("cancelled")
+                }
+            }
+            await attemptedPublication.signal()
+        }
+        await started.wait()
+
+        loadTask.cancel()
+        await gate.open()
+        await attemptedPublication.wait()
+
+        XCTAssertTrue(recorder.observedCancellation)
+        XCTAssertTrue(recorder.values.isEmpty)
+    }
+
+    func testTaskOwnerDeallocatesWhileLoadIsSuspended() async {
+        var loadTask: TranscriptLoadTask? = TranscriptLoadTask()
+        weak let weakLoadTask = loadTask
+        let recorder = TranscriptLoadPublicationRecorder()
+        let gate = TranscriptLoadGate()
+        let started = TranscriptLoadSignal()
+        let operationFinished = TranscriptLoadSignal()
+
+        loadTask?.start { [weak loadTask] generation in
+            await started.signal()
+            await gate.wait()
+            let wasCancelled = Task.isCancelled
+            await MainActor.run {
+                recorder.observedCancellation = wasCancelled
+                loadTask?.finishIfCurrent(generation) {
+                    recorder.values.append("deallocated")
+                }
+            }
+            await operationFinished.signal()
+        }
+        await started.wait()
+
+        loadTask = nil
+        XCTAssertNil(weakLoadTask, "The task closure must not retain its owner")
+
+        await gate.open()
+        await operationFinished.wait()
+
+        XCTAssertTrue(recorder.observedCancellation)
+        XCTAssertTrue(recorder.values.isEmpty)
+    }
+}
+
+@MainActor
+private final class TranscriptLoadPublicationRecorder {
+    var values: [String] = []
+    var observedCancellation = false
+}
+
+/// A deliberately non-cooperative suspension point used to prove that generation
+/// invalidation suppresses publication even when cancellation cannot stop work.
+private actor TranscriptLoadGate {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var isOpen = false
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { continuation = $0 }
+    }
+
+    func open() {
+        isOpen = true
+        continuation?.resume()
+        continuation = nil
+    }
+}
+
+/// A sticky one-shot signal: signaling before the waiter arrives is supported,
+/// which keeps scheduling order from making these concurrency tests flaky.
+private actor TranscriptLoadSignal {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var isSignaled = false
+
+    func wait() async {
+        if isSignaled { return }
+        await withCheckedContinuation { continuation = $0 }
+    }
+
+    func signal() {
+        isSignaled = true
+        continuation?.resume()
+        continuation = nil
     }
 }

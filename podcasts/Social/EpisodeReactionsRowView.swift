@@ -65,16 +65,28 @@ struct EpisodeReactionsRowView: View {
 
 @MainActor
 final class EpisodeReactionsViewModel: ObservableObject {
+    typealias FetchReactions = @MainActor (String) async -> EpisodeReactions?
+    typealias SetReaction = @MainActor (String, ReactionKind?) async -> Bool
+
     let episodeUuid: String
     let canReact: Bool
 
     @Published private(set) var reactions = EpisodeReactions(counts: [:], yourReaction: nil)
     private var loaded = false
+    private var isUpdating = false
+    private let fetchReactions: FetchReactions
+    private let setReaction: SetReaction
 
     /// `fixture` preloads state for snapshots/previews; load() then no-ops.
-    init(episodeUuid: String, canReact: Bool, fixture: EpisodeReactions? = nil) {
+    init(episodeUuid: String,
+         canReact: Bool,
+         fixture: EpisodeReactions? = nil,
+         fetchReactions: @escaping FetchReactions = { await ApiServerHandler.shared.fetchReactions(episodeUuid: $0) },
+         setReaction: @escaping SetReaction = { await ApiServerHandler.shared.setReaction(episodeUuid: $0, kind: $1) }) {
         self.episodeUuid = episodeUuid
         self.canReact = canReact
+        self.fetchReactions = fetchReactions
+        self.setReaction = setReaction
         if let fixture {
             reactions = fixture
             loaded = true
@@ -83,7 +95,7 @@ final class EpisodeReactionsViewModel: ObservableObject {
 
     func load() async {
         guard !loaded else { return }
-        if let fetched = await ApiServerHandler.shared.fetchReactions(episodeUuid: episodeUuid) {
+        if let fetched = await fetchReactions(episodeUuid) {
             reactions = fetched
         }
         loaded = true
@@ -91,7 +103,11 @@ final class EpisodeReactionsViewModel: ObservableObject {
 
     /// Tap semantics: same emoji again clears; a different one switches.
     func tap(_ kind: ReactionKind) async {
-        guard canReact else { return }
+        guard canReact, !isUpdating else { return }
+        isUpdating = true
+        defer { isUpdating = false }
+
+        let previousReactions = reactions
         let newKind: ReactionKind? = reactions.yourReaction == kind ? nil : kind
 
         // Optimistic local update; the server row is the source of truth.
@@ -106,9 +122,9 @@ final class EpisodeReactionsViewModel: ObservableObject {
         reactions = EpisodeReactions(counts: counts, yourReaction: newKind)
 
         Analytics.track(.socialReactionSet)
-        let ok = await ApiServerHandler.shared.setReaction(episodeUuid: episodeUuid, kind: newKind)
-        if !ok, let fetched = await ApiServerHandler.shared.fetchReactions(episodeUuid: episodeUuid) {
-            reactions = fetched // roll back to server truth on failure
+        let ok = await setReaction(episodeUuid, newKind)
+        if !ok {
+            reactions = await fetchReactions(episodeUuid) ?? previousReactions
         }
     }
 }

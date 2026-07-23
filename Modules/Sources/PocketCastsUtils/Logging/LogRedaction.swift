@@ -16,8 +16,8 @@ public enum LogRedaction {
     private static var urlPattern: Regex<Substring> { /[A-Za-z][A-Za-z0-9+.\-]*:\/\/[^\s"'<>`]+/ }
 
     /// Redacts every URL-shaped substring in `text`, leaving all other text
-    /// untouched. Substrings that look like URLs but fail to parse are left
-    /// alone rather than mangled.
+    /// untouched. Substrings that look like URLs but fail to parse are replaced
+    /// with a safe placeholder so malformed credentials cannot escape.
     public static func redactURLs(in text: String) -> String {
         text.replacing(urlPattern) { match in
             redact(String(match.output))
@@ -35,7 +35,7 @@ public enum LogRedaction {
         }
 
         guard var components = URLComponents(string: String(url)) else {
-            return candidate
+            return "<unparseable-url>" + trailer
         }
 
         components.user = nil
@@ -48,7 +48,7 @@ public enum LogRedaction {
         }
 
         guard let redacted = components.string else {
-            return candidate
+            return "<unparseable-url>" + trailer
         }
         return redacted + trailer
     }

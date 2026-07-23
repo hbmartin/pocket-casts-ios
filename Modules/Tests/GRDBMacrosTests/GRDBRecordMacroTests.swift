@@ -328,7 +328,7 @@ final class GRDBRecordNSObjectTests: GRDBMacroTestCase {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     id = try container.decodeIfPresent(Int64.self, forKey: .id) ?? 0
                         uuid = try container.decodeIfPresent(String.self, forKey: .uuid) ?? ""
-                        cachedUnreadCount = try container.decodeIfPresent(Any.self, forKey: .cachedUnreadCount) ?? 0
+                        cachedUnreadCount = try container.decodeIfPresent(Int.self, forKey: .cachedUnreadCount) ?? 0
                         forceRefreshEpisodeFrom = try container.decodeIfPresent(String.self, forKey: .forceRefreshEpisodeFrom)
                 }
 
@@ -973,12 +973,130 @@ final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
+
+    func testStructBareIntegerUsesSwiftInferredType() throws {
+        #if canImport(GRDBMacrosPlugin)
+        assertMacro {
+            """
+            @GRDBRecord(table: "TestTable")
+            public struct TestModel {
+                public var count = 0
+            }
+            """
+        } expansion: {
+            """
+            public struct TestModel {
+                public var count = 0
+
+                public static let databaseTableName = "TestTable"
+
+                enum CodingKeys: String, CodingKey {
+                    case count
+                }
+
+                public enum Columns {
+                    public static let count = Column(CodingKeys.count)
+                }
+            }
+
+            extension TestModel: Codable, FetchableRecord, PersistableRecord, TableRecord {
+                public init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    count = try container.decodeIfPresent(Int.self, forKey: .count) ?? 0
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["count"] = count
+                }
+            }
+            """
+        }
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 }
 
 // MARK: - Edge Cases and Property Type Tests
 
 /// Tests for various edge cases and property type handling.
 final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
+
+    // MARK: - Inferred Swift literal types
+
+    func testInferredSwiftLiteralTypes() throws {
+        #if canImport(GRDBMacrosPlugin)
+        assertMacro {
+            """
+            @GRDBRecord(table: "TestTable")
+            public class TestModel: NSObject {
+                @objc public var inferredInteger = 0
+                @objc public var inferredNegativeInteger = -1
+                @objc public var inferredDouble = 1.5
+                @objc public var inferredBool = false
+                @objc public var explicitInteger: Int64 = 2
+                @objc public var castInteger = 3 as Int32
+            }
+            """
+        } expansion: {
+            """
+            public class TestModel: NSObject {
+                @objc public var inferredInteger = 0
+                @objc public var inferredNegativeInteger = -1
+                @objc public var inferredDouble = 1.5
+                @objc public var inferredBool = false
+                @objc public var explicitInteger: Int64 = 2
+                @objc public var castInteger = 3 as Int32
+
+                public static let databaseTableName = "TestTable"
+
+                enum CodingKeys: String, CodingKey {
+                    case inferredInteger
+                        case inferredNegativeInteger
+                        case inferredDouble
+                        case inferredBool
+                        case explicitInteger
+                        case castInteger
+                }
+
+                public required init(from decoder: Decoder) throws {
+                    super.init()
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    inferredInteger = try container.decodeIfPresent(Int.self, forKey: .inferredInteger) ?? 0
+                        inferredNegativeInteger = try container.decodeIfPresent(Int.self, forKey: .inferredNegativeInteger) ?? -1
+                        inferredDouble = try container.decodeIfPresent(Double.self, forKey: .inferredDouble) ?? 1.5
+                        inferredBool = try container.decodeIfPresent(Bool.self, forKey: .inferredBool) ?? false
+                        explicitInteger = try container.decodeIfPresent(Int64.self, forKey: .explicitInteger) ?? 2
+                        castInteger = try container.decodeIfPresent(Int32.self, forKey: .castInteger) ?? 3
+                }
+
+                public func encode(to container: inout PersistenceContainer) {
+                    container["inferredInteger"] = inferredInteger
+                        container["inferredNegativeInteger"] = inferredNegativeInteger
+                        container["inferredDouble"] = inferredDouble
+                        container["inferredBool"] = inferredBool
+                        container["explicitInteger"] = explicitInteger
+                        container["castInteger"] = castInteger
+                }
+
+                public enum Columns {
+                    public static let inferredInteger = Column(CodingKeys.inferredInteger)
+                        public static let inferredNegativeInteger = Column(CodingKeys.inferredNegativeInteger)
+                        public static let inferredDouble = Column(CodingKeys.inferredDouble)
+                        public static let inferredBool = Column(CodingKeys.inferredBool)
+                        public static let explicitInteger = Column(CodingKeys.explicitInteger)
+                        public static let castInteger = Column(CodingKeys.castInteger)
+                }
+            }
+
+            extension TestModel: FetchableRecord, PersistableRecord, TableRecord, Decodable {
+            }
+            """
+        }
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 
     // MARK: - Inferred types from type cast (as Int64 pattern)
 
