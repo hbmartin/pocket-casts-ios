@@ -16,6 +16,7 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     /// the text fields may have been edited since and would no longer identify the
     /// already-created account.
     private var registeredCredentialsAwaitingSignIn: (username: String, password: String)?
+    private(set) var isBusy = false
 
     @IBOutlet var scrollView: UIScrollView!
 
@@ -163,6 +164,8 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     @IBAction func nextTapped(_ sender: Any) {
+        guard !isBusy else { return }
+
         if let credentials = registeredCredentialsAwaitingSignIn {
             retryPostRegistrationSignIn(credentials.username, password: credentials.password)
             return
@@ -182,20 +185,16 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func startRegister(_ username: String, password: String) {
+        guard !isBusy else { return }
+        setBusy(true)
         Analytics.track(.createAccountNextButtonTapped)
 
         passwordBorderView.layer.borderColor = ThemeColor.primaryUi05().cgColor
-        contentView.alpha = 0.3
-        activityIndicator.startAnimating()
-        activityIndicator.isHidden = false
-        nextButton.setTitle("", for: .normal)
 
         ApiServerHandler.shared.registerAccount(username: username, password: password) { success, userId, error in
             DispatchQueue.main.async {
-                self.contentView.alpha = 1
-                self.activityIndicator.stopAnimating()
-
                 if !success {
+                    self.setBusy(false)
                     Analytics.track(.userAccountCreationFailed, properties: ["error_code": (error ?? .UNKNOWN).rawValue])
 
                     FileLog.shared.addMessage("Failed to register new account")
@@ -242,9 +241,8 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func retryPostRegistrationSignIn(_ username: String, password: String) {
-        contentView.alpha = 0.3
-        activityIndicator.startAnimating()
-        nextButton.setTitle("", for: .normal)
+        guard !isBusy else { return }
+        setBusy(true)
 
         Task { @MainActor in
             do {
@@ -260,15 +258,14 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
 
     private func showPostRegistrationSignInFailure(username: String, password: String) {
         registeredCredentialsAwaitingSignIn = (username, password)
-        contentView.alpha = 1
-        activityIndicator.stopAnimating()
-        // The account exists — say so — but the sign-in it needs did not complete.
-        showErrorMessage("\(L10n.accountCreated). \(L10n.serverErrorUnknown)")
+        setBusy(false)
+        showErrorMessage(L10n.accountCreatedSignInFailed)
         nextButton.setTitle(L10n.signIn, for: .normal)
     }
 
     private func finishAccountCreation() {
         registeredCredentialsAwaitingSignIn = nil
+        setBusy(false)
         SyncManager.syncReason = .accountCreated
 
         // Let a delegate decide what to do next
@@ -276,6 +273,25 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     // MARK: - Private helpers
+
+    /// Busy covers registration and the required follow-up sign-in as one
+    /// non-reentrant operation. Kept internal so the invariant is regression-testable.
+    func setBusy(_ busy: Bool) {
+        isBusy = busy
+        contentView.alpha = busy ? 0.3 : 1
+        contentView.isUserInteractionEnabled = !busy
+        if busy {
+            activityIndicator.isHidden = false
+            activityIndicator.startAnimating()
+            nextButton.setTitle("", for: .normal)
+            nextButton.isEnabled = false
+            nextButton.buttonStyle = .primaryInteractive01Disabled
+        } else {
+            activityIndicator.stopAnimating()
+            activityIndicator.isHidden = true
+            updateButtonState()
+        }
+    }
 
     private func showErrorMessage(_ message: String) {
         infoLabel.text = message
@@ -311,6 +327,8 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     // MARK: - UITextField Methods
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        guard !isBusy else { return false }
+
         if textField == emailField {
             passwordField.becomeFirstResponder()
         } else {
@@ -352,6 +370,12 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func updateButtonState() {
+        guard !isBusy else {
+            nextButton.isEnabled = false
+            nextButton.buttonStyle = .primaryInteractive01Disabled
+            return
+        }
+
         if registeredCredentialsAwaitingSignIn != nil {
             // Sign-in retry mode uses the captured credentials, so the button stays
             // enabled no matter what the fields now contain.

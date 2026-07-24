@@ -9,6 +9,7 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     /// While set, the main button retries the re-authentication with this new password —
     /// re-running the change with the stale current-password field would always fail.
     private var pendingReauthenticationPassword: String?
+    private(set) var isBusy = false
 
     @IBOutlet var scrollView: UIScrollView!
 
@@ -195,6 +196,8 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     }
 
     @IBAction func confirmTapped(_ sender: UIButton) {
+        guard !isBusy else { return }
+
         currentField.resignFirstResponder()
         newField.resignFirstResponder()
         confirmField.resignFirstResponder()
@@ -206,6 +209,7 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     }
 
     @objc func changePassword() {
+        guard !isBusy else { return }
         guard let currentPassword = currentField.text, let newPassword = newField.text else {
             errorView.isHidden = false
             return
@@ -243,6 +247,7 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func retryReauthentication(newPassword: String) {
+        guard !isBusy else { return }
         setBusy(true)
         reauthenticate(newPassword: newPassword)
     }
@@ -284,7 +289,10 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
 
     /// Busy = spinner up, content dimmed, main button blank and untappable — held for
     /// the whole change+re-auth sequence so a second submit can't be triggered.
-    private func setBusy(_ busy: Bool) {
+    /// Kept internal so text-field re-entrancy is regression-testable.
+    func setBusy(_ busy: Bool) {
+        isBusy = busy
+        contentView.isUserInteractionEnabled = !busy
         if busy {
             activityIndicatorView.isHidden = false
             activityIndicatorView.startAnimating()
@@ -355,6 +363,12 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
     }
 
     private func updateButtonState() {
+        guard !isBusy else {
+            mainButton.isEnabled = false
+            mainButton.buttonStyle = .primaryInteractive01Disabled
+            return
+        }
+
         if pendingReauthenticationPassword != nil {
             // Retry mode: the action re-runs the re-authentication with the captured
             // new password, so it no longer depends on the fields' contents.

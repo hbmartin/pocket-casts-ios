@@ -64,11 +64,14 @@ extension AppDelegate {
             Analytics.track(.userSignedOut, properties: ["user_initiated": message.userInitiated])
         }
 
-        NotificationCenter.default.addObserver(forName: UIApplication.protectedDataDidBecomeAvailableNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.setupAnalytics()
+        let protectedDataObserver = ProtectedDataMigrationRetryObserver { [weak self] in
+            self?.setupAnalytics()
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                self?.checkDefaults()
             }
         }
+        protectedDataObserver.start()
+        defaultsMigrationRetryObserver = protectedDataObserver
     }
 
     /// Checks if we're missing the userId saved in the defaults, and retrieves it from the server if needed
