@@ -30,16 +30,30 @@ final class ProtectedDataMigrationRetryObserver {
             }
         }
     }
+
+    deinit {
+        // Block-based observations persist until removed, so dropping the token
+        // without this would leave the handler registered in the center forever.
+        if let token {
+            notificationCenter.removeObserver(token)
+        }
+    }
 }
 
 extension AppDelegate {
     nonisolated func checkDefaults() {
+        // The v7_19_1Run migration bridges to the main thread from inside the serial
+        // queue below, so a main-queue caller racing a background pass would deadlock:
+        // main blocked in defaultsMigrationQueue.sync while the queue's current block
+        // waits in DispatchQueue.main.sync. Every call site must stay off the main queue.
+        dispatchPrecondition(condition: .notOnQueue(.main))
+
         // Check if protected data is available before running any migrations. Before the
         // device is first unlocked after a reboot the keychain is unreadable and the
         // UserDefaults completion markers can read false, so a background launch could
         // clear tokens (v5Run) or re-run completed migrations and reset user settings.
-        // This runs off-main during launch; bridge the UIKit read before entering the
-        // serial queue so a future main-thread caller cannot deadlock on main.sync.
+        // The thread check stays for the edge case of a caller that reaches here on the
+        // main thread via another queue's sync, where main.sync would deadlock.
         let protectedDataAvailable = if Thread.isMainThread {
             MainActor.assumeIsolated { UIApplication.shared.isProtectedDataAvailable }
         } else {

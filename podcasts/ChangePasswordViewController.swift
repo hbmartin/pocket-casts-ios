@@ -298,6 +298,7 @@ class ChangePasswordViewController: PCViewController, UITextFieldDelegate {
             activityIndicatorView.startAnimating()
             mainButton.setTitle("", for: .normal)
             mainButton.isEnabled = false
+            mainButton.buttonStyle = .primaryInteractive01Disabled
             contentView.alpha = 0.3
         } else {
             activityIndicatorView.stopAnimating()
