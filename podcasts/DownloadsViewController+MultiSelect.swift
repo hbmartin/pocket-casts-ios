@@ -78,8 +78,6 @@ extension DownloadsViewController: MultiSelectActionDelegate {
     }
 
     func episodeCount() -> Int {
-        var count = 0
-        episodes.forEach { count = count + $0.elements.count }
-        return count
+        dataSource.snapshot().numberOfItems
     }
 }
