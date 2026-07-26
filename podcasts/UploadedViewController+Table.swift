@@ -1,7 +1,7 @@
 import PocketCastsDataModel
 import UIKit
 
-extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
+extension UploadedViewController: UITableViewDelegate {
     func registerCells() {
         uploadsTable.register(UINib(nibName: "EpisodeCell", bundle: nil), forCellReuseIdentifier: "EpisodeCell")
     }
@@ -13,37 +13,40 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
 
     // MARK: TableView Datasource
 
-    func numberOfSections(in tableView: UITableView) -> Int {
-        max(uploadedGroups.count, 1)
-    }
-
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        uploadedGroups[safe: section]?.episodes.count ?? 0
-    }
-
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if section == 0 {
-            return headerView
+    func makeDataSource() -> EditableDiffableDataSource<UploadedFilesSection, String> {
+        let dataSource = EditableDiffableDataSource<UploadedFilesSection, String>(tableView: uploadsTable) { [weak self] tableView, indexPath, uuid in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "EpisodeCell", for: indexPath) as! EpisodeCell
+            self?.populate(cell: cell, uuid: uuid)
+            return cell
         }
-        guard let group = uploadedGroups[safe: section], !group.group.isEmpty else { return nil }
-        let sectionHeader = DateHeadingView(frame: CGRect(x: 0, y: 0, width: tableView.frame.size.width, height: 45))
-        sectionHeader.title = group.group
-        return sectionHeader
+        dataSource.defaultRowAnimation = .fade
+        return dataSource
     }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "EpisodeCell", for: indexPath) as! EpisodeCell
+    private func populate(cell: EpisodeCell, uuid: String) {
         cell.hidesArtwork = false
         cell.playlist = .files
         cell.delegate = self
-        guard let userEpisode = episodeAt(indexPath) else { return cell }
+        guard let userEpisode = episodesByUuid[uuid] else { return }
         let episode: BaseEpisode = userEpisode as BaseEpisode
         cell.populateFrom(episode: episode, tintColor: ThemeColor.primaryIcon01(), podcastUuid: episode.parentIdentifier())
         cell.shouldShowSelect = isMultiSelectEnabled
         if isMultiSelectEnabled {
-            cell.showTick = selectedEpisodesContains(uuid: episode.uuid)
+            cell.showTick = selectedEpisodesContains(uuid: uuid)
         }
-        return cell
+    }
+
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard let sectionIdentifier = dataSource.sectionIdentifier(for: section) else { return nil }
+
+        switch sectionIdentifier {
+        case .root:
+            return headerView
+        case .group(let name):
+            let sectionHeader = DateHeadingView(frame: CGRect(x: 0, y: 0, width: tableView.frame.size.width, height: 45))
+            sectionHeader.title = name
+            return sectionHeader
+        }
     }
 
     // MARK: - Selection
