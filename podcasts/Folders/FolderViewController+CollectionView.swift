@@ -2,7 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
-extension FolderViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+extension FolderViewController: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     private static let podcastCellId = "PodcastGridCell"
     private static let podcastListCellId = "PodcastListCell"
 
@@ -11,36 +11,33 @@ extension FolderViewController: UICollectionViewDelegate, UICollectionViewDataSo
         mainGrid.register(UINib(nibName: "PodcastListCell", bundle: nil), forCellWithReuseIdentifier: FolderViewController.podcastListCellId)
     }
 
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        1
-    }
+    func makeDataSource() -> UICollectionViewDiffableDataSource<FolderGridSection, String> {
+        UICollectionViewDiffableDataSource<FolderGridSection, String>(collectionView: mainGrid) { [weak self] collectionView, indexPath, uuid in
+            let libraryType = Settings.libraryType()
+            let badgeType = Settings.podcastBadgeType()
 
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        podcasts.count
-    }
+            if libraryType == .list {
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FolderViewController.podcastListCellId, for: indexPath) as! PodcastListCell
+                if let podcast = self?.podcastsByUuid[uuid] {
+                    cell.populateFrom(podcast, badgeType: badgeType)
+                }
+                return cell
+            }
 
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if Settings.libraryType() == .list {
-            return collectionView.dequeueReusableCell(withReuseIdentifier: FolderViewController.podcastListCellId, for: indexPath)
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FolderViewController.podcastCellId, for: indexPath) as! PodcastGridCell
+            if let podcast = self?.podcastsByUuid[uuid] {
+                cell.populateFrom(podcast: podcast, badgeType: badgeType, libraryType: libraryType)
+            }
+            return cell
         }
+    }
 
-        return collectionView.dequeueReusableCell(withReuseIdentifier: FolderViewController.podcastCellId, for: indexPath)
+    func podcastAt(_ indexPath: IndexPath) -> Podcast? {
+        guard let uuid = dataSource.itemIdentifier(for: indexPath) else { return nil }
+        return podcastsByUuid[uuid]
     }
 
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let podcast = podcasts[safe: indexPath.row] else { return }
-
-        let libraryType = Settings.libraryType()
-        let badgeType = Settings.podcastBadgeType()
-
-        if libraryType == .list {
-            let castCell = cell as! PodcastListCell
-            castCell.populateFrom(podcast, badgeType: badgeType)
-        } else {
-            let castCell = cell as! PodcastGridCell
-            castCell.populateFrom(podcast: podcast, badgeType: badgeType, libraryType: libraryType)
-        }
-
         // Keep the reorder-edit treatment in sync so reused/recycled cells stay correct.
         if isEditingOrder {
             applyEditingTreatment(to: cell)
@@ -52,7 +49,7 @@ extension FolderViewController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
 
-        guard let podcast = podcasts[safe: indexPath.row] else { return }
+        guard let podcast = podcastAt(indexPath) else { return }
 
         NavigationManager.sharedManager.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
     }

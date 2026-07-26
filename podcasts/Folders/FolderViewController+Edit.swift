@@ -60,6 +60,11 @@ extension FolderViewController {
         for cell in mainGrid.visibleCells {
             removeEditingTreatment(from: cell)
         }
+
+        if needsReloadAfterEditing {
+            needsReloadAfterEditing = false
+            reloadPodcasts()
+        }
     }
 
     // MARK: Save
@@ -93,7 +98,7 @@ extension FolderViewController: UICollectionViewDragDelegate, UICollectionViewDr
     // MARK: - UICollectionViewDragDelegate
 
     func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        guard isEditingOrder, let podcast = podcasts[safe: indexPath.item] else {
+        guard isEditingOrder, let podcast = podcastAt(indexPath) else {
             return []
         }
         let provider = NSItemProvider(object: podcast.uuid as NSString)
@@ -129,11 +134,21 @@ extension FolderViewController: UICollectionViewDragDelegate, UICollectionViewDr
         let clampedDestination = min(max(0, rawDestination), podcasts.count - 1)
         let destinationIndexPath = IndexPath(item: clampedDestination, section: 0)
 
-        collectionView.performBatchUpdates {
-            let moved = podcasts.remove(at: sourceIndexPath.item)
-            podcasts.insert(moved, at: destinationIndexPath.item)
-            collectionView.moveItem(at: sourceIndexPath, to: destinationIndexPath)
+        let moved = podcasts.remove(at: sourceIndexPath.item)
+        podcasts.insert(moved, at: clampedDestination)
+
+        // moveItem is illegal on a collection view driven by a diffable data
+        // source; express the reorder as a snapshot change instead. The cells
+        // already sit in their final spots (.immediate reorder cadence), so
+        // the apply is not animated.
+        var snapshot = dataSource.snapshot()
+        snapshot.deleteItems([moved.uuid])
+        if clampedDestination >= podcasts.count - 1 {
+            snapshot.appendItems([moved.uuid], toSection: .podcasts)
+        } else {
+            snapshot.insertItems([moved.uuid], beforeItem: podcasts[clampedDestination + 1].uuid)
         }
+        dataSource.apply(snapshot, animatingDifferences: false)
         coordinator.drop(dropItem.dragItem, toItemAt: destinationIndexPath)
     }
 }
