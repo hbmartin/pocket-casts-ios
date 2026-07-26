@@ -1443,8 +1443,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, SyncSigni
             return
         }
 
-        // Analytics for this path tracked in hbmartin/pocket-casts-ios#284
-
         Task { @MainActor [weak self] in
             let podcastNeedsReload = await self?.podcastFeedViewModel?.checkIfNewEpisodesAreAvailable(from: source) ?? false
             if podcastNeedsReload {

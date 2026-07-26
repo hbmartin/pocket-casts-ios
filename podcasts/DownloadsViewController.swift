@@ -1,4 +1,3 @@
-import DifferenceKit
 import SwiftUI
 import Dependencies
 import PocketCastsDataModel
@@ -9,11 +8,16 @@ import UIKit
 class DownloadsViewController: PCViewController {
     @Dependency(\.downloadManager) var downloadManager: any DownloadManaging
 
-    var episodes = [ArraySection<String, ListEpisode>]() {
+    var episodes = [(title: String, episodes: [ListEpisode])]() {
         didSet {
             refreshContentUnavailable()
         }
     }
+
+    var dataSource: EditableDiffableDataSource<String, String>!
+    private(set) var episodesByUuid = [String: ListEpisode]()
+    private var fingerprintsByUuid = [String: Int]()
+    private var hasAppliedSnapshot = false
 
     private let episodesDataManager = EpisodesDataManager()
 
@@ -82,6 +86,7 @@ class DownloadsViewController: PCViewController {
         super.viewDidLoad()
         registerForPreferredContentSizeCategoryChanges { $0.updateSize() }
 
+        dataSource = makeDataSource()
         downloadsTable.tableFooterView = UIView(frame: CGRect.zero)
         downloadsTable.sectionFooterHeight = 0.0
 
@@ -140,7 +145,7 @@ class DownloadsViewController: PCViewController {
             Analytics.track(.freeUpSpaceMaybeLaterTapped, properties: ["source": "downloads"])
             Settings.manageDownloadsLastCheckDate = Date.now
             self?.showManageDownloadsBanner()
-            self?.downloadsTable.reloadData()
+            self?.reapplySnapshotReloadingData()
         })
         let banner = ManageDownloadsBannerView(dataModel: model).themedUIView
         banner.translatesAutoresizingMaskIntoConstraints = false
@@ -192,9 +197,16 @@ class DownloadsViewController: PCViewController {
     }
 
     override func handleThemeChanged() {
-        downloadsTable.reloadData()
+        reapplySnapshotReloadingData()
         view.backgroundColor = ThemeColor.primaryUi02()
         refreshContentUnavailable()
+    }
+
+    /// Re-populates every visible cell (new theme colours, banner changes)
+    /// without diffing.
+    private func reapplySnapshotReloadingData() {
+        guard let dataSource else { return }
+        dataSource.applySnapshotUsingReloadData(dataSource.snapshot())
     }
 
     private func addEventObservers() {
@@ -230,16 +242,68 @@ class DownloadsViewController: PCViewController {
 
     func reloadEpisodes() {
         let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
-        operationQueue.addOperation { [weak self] in
-            let newDataBox = PocketCastsUtils.UncheckedSendable(dataManager.value.downloadedEpisodes())
+        // latest-wins: a burst of change notifications collapses into one fetch+apply
+        operationQueue.cancelAllOperations()
+        let operation = BlockOperation()
+        operation.addExecutionBlock { [weak self, weak operation] in
+            guard operation?.isCancelled != true else { return }
+            let newDataBox = PocketCastsUtils.UncheckedSendable(dataManager.value.downloadedEpisodeSections())
 
             Task { @MainActor in
-                guard let self else { return }
+                self?.applyDownloads(newDataBox.value)
+            }
+        }
+        operationQueue.addOperation(operation)
+    }
 
-                let newData = newDataBox.value
-                self.downloadsTable.isHidden = (newData.isEmpty)
-                self.episodes = newData
-                self.downloadsTable.reloadData()
+    private func applyDownloads(_ newData: [(title: String, episodes: [ListEpisode])]) {
+        downloadsTable.isHidden = newData.isEmpty
+        episodes = newData
+
+        var itemsByUuid = [String: ListEpisode]()
+        var fingerprints = [String: Int]()
+        for section in newData {
+            for listEpisode in section.episodes {
+                itemsByUuid[listEpisode.episode.uuid] = listEpisode
+                fingerprints[listEpisode.episode.uuid] = listEpisode.renderFingerprint
+            }
+        }
+        let changedUuids = DiffableHelpers.changedIDs(old: fingerprintsByUuid, new: fingerprints)
+        episodesByUuid = itemsByUuid
+        fingerprintsByUuid = fingerprints
+
+        var snapshot = DiffableHelpers.snapshot(sections: newData.map { (section: $0.title, items: $0.episodes.map(\.episode.uuid)) })
+        snapshot.reconfigureItems(changedUuids)
+        apply(snapshot)
+        syncSelectionAfterApply()
+    }
+
+    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<String, String>) {
+        guard hasAppliedSnapshot, view.window != nil else {
+            hasAppliedSnapshot = true
+            dataSource.applySnapshotUsingReloadData(snapshot)
+            return
+        }
+        do {
+            // animated applies can throw ObjC exceptions if UIKit state is mid-flight
+            // (e.g. an open SwipeCellKit swipe); fall back to a plain reload
+            try SJCommonUtils.catchException { [dataSource] in
+                dataSource?.apply(snapshot, animatingDifferences: true)
+            }
+        } catch {
+            FileLog.shared.addMessage("DownloadsViewController: diffable apply failed, falling back to reload: \(error)")
+            dataSource.applySnapshotUsingReloadData(snapshot)
+        }
+    }
+
+    /// Re-selects the still-present selected rows after an animated apply and
+    /// prunes selections whose episodes left the list.
+    private func syncSelectionAfterApply() {
+        guard isMultiSelectEnabled else { return }
+        selectedEpisodes.removeAll { episodesByUuid[$0.episode.uuid] == nil }
+        for listEpisode in selectedEpisodes {
+            if let indexPath = dataSource.indexPath(for: listEpisode.episode.uuid) {
+                downloadsTable.selectRow(at: indexPath, animated: false, scrollPosition: .none)
             }
         }
     }
@@ -330,31 +394,11 @@ class DownloadsViewController: PCViewController {
     }
 
     private func failedEpisodes() -> [Episode] {
-        var failedList = [Episode]()
-
-        for section in episodes {
-            for listEpisode in section.elements {
-                if listEpisode.episode.downloadFailed() {
-                    failedList.append(listEpisode.episode)
-                }
-            }
-        }
-
-        return failedList
+        episodes.flatMap { $0.episodes.map(\.episode).filter { $0.downloadFailed() } }
     }
 
     private func downloadingEpisodes() -> [Episode] {
-        var downloadingList = [Episode]()
-
-        for section in episodes {
-            for listEpisode in section.elements {
-                if listEpisode.episode.downloading() || listEpisode.episode.queued() {
-                    downloadingList.append(listEpisode.episode)
-                }
-            }
-        }
-
-        return downloadingList
+        episodes.flatMap { $0.episodes.map(\.episode).filter { $0.downloading() || $0.queued() } }
     }
 
     private func updateSize() {

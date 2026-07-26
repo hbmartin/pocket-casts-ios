@@ -389,7 +389,6 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             return playbackItem
         }
         var newItem: AVPlayerItem = playbackItem
-        #if !APPCLIP && !os(tvOS)
         if let customDelegate = downloadAndStreamEpisodes[episode.uuid] {
             // We are already downloading this episode for streaming
             fileLog.addMessage("DownloadManager stream and download: skipping because we are already exporting: \(episode.uuid)")
@@ -488,7 +487,6 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
                 NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
             }
         }
-        #endif
         return newItem
     }
 

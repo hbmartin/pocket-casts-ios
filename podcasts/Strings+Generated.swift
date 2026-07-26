@@ -352,10 +352,6 @@ nonisolated internal enum L10n {
   internal static var announcementSlumberTitle: String { return L10n.tr("Localizable", "announcement_slumber_title", fallback: "Dream big") }
   /// A common string used throughout the app. References to Badge settings for the app.
   internal static var appBadge: String { return L10n.tr("Localizable", "app_badge", fallback: "App Badge") }
-  /// App Clip Placeholder view message for when the episode link parsing fails
-  internal static var appClipPlacholderMessage: String { return L10n.tr("Localizable", "app_clip_placholder_message", fallback: "It may have been removed or the link is broken.\nBut there's plenty more on Pocket Casts.\nDownload the app for the full experience!") }
-  /// App Clip Placeholder view title for when the episode link parsing fails
-  internal static var appClipPlacholderTitle: String { return L10n.tr("Localizable", "app_clip_placholder_title", fallback: "Sorry, we couldn't find that episode") }
   /// The name for the Classic App Icon
   internal static var appIconClassic: String { return L10n.tr("Localizable", "app_icon_classic", fallback: "Classic") }
   /// The name for the Dark App Icon
@@ -2078,10 +2074,6 @@ nonisolated internal enum L10n {
   internal static var `none`: String { return L10n.tr("Localizable", "none", fallback: "None") }
   /// A common string used throughout the app. Informs the user that they are not on WiFi and the action they're about to take will use data. Used for downloads and uploads.
   internal static var notOnWifi: String { return L10n.tr("Localizable", "not_on_wifi", fallback: "You're not on WiFi") }
-  /// Notification body for App Clip reminder
-  internal static var notificationsAppClipBody: String { return L10n.tr("Localizable", "notifications_app_clip_body", fallback: "Install Pocket Casts to get the full experience with powerful playback and customization tools.") }
-  /// Notification title for App Clip reminder
-  internal static var notificationsAppClipTitle: String { return L10n.tr("Localizable", "notifications_app_clip_title", fallback: "Ready for more podcasts?") }
   /// Settings to control sending of daily reminders notifications
   internal static var notificationsDailyReminders: String { return L10n.tr("Localizable", "notifications_daily_reminders", fallback: "Daily Reminders") }
   /// Notification body for new feature Suggested folders

@@ -6,13 +6,7 @@ class SleepTimerViewController: SimpleNotificationsViewController {
     /// deregisters it on dealloc (this class cannot declare the deinit itself).
     private let tokenBox = ObservationTokenBox()
 
-    @IBOutlet var settingsBtn: UIButton! {
-        didSet {
-#if APPCLIP
-            settingsBtn.isHidden = true
-#endif
-        }
-    }
+    @IBOutlet var settingsBtn: UIButton!
 
     @IBOutlet var plusFiveBtn: UIButton! {
         didSet {
@@ -318,9 +312,7 @@ class SleepTimerViewController: SimpleNotificationsViewController {
 
     @IBAction func settingsTapped(_ sender: Any) {
         Analytics.track(.playerSleepTimerSettingsTapped)
-#if !APPCLIP
         NavigationManager.sharedManager.navigateTo(NavigationManager.settingsGeneralKey, data: [NavigationManager.settingsGeneralRowKey: GeneralSettingsViewController.TableRow.autoRestartSleepTimer])
-#endif
     }
 
     @IBAction func fiveMinutesTapped(_ sender: Any) {

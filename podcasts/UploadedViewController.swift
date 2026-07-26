@@ -5,9 +5,22 @@ import PocketCastsFileSync
 import PocketCastsUtils
 import UIKit
 
+/// Section identity for the Files table: the root group hosts the storage
+/// header and is always present; named sync subfolders follow A-Z.
+enum UploadedFilesSection: Hashable {
+    case root
+    case group(String)
+}
+
 class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private let episodesDataManager = EpisodesDataManager()
     private var cancellables = Set<AnyCancellable>()
+
+    private lazy var reloadQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+        return queue
+    }()
 
     @IBOutlet var uploadsTable: ThemeableTable! {
         didSet {
@@ -22,16 +35,15 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         }
     }
 
-    var uploadedEpisodes = [UserEpisode]() {
-        didSet {
-            refreshContentUnavailable()
-        }
-    }
-
-    var uploadedGroups: [(group: String, episodes: [UserEpisode])] = []
+    var dataSource: EditableDiffableDataSource<UploadedFilesSection, String>!
+    private(set) var episodesByUuid = [String: UserEpisode]()
+    private var fingerprintsByUuid = [String: Int]()
+    private var hasAppliedSnapshot = false
+    private var hasLoadedOnce = false
 
     func episodeAt(_ indexPath: IndexPath) -> UserEpisode? {
-        uploadedGroups[safe: indexPath.section]?.episodes[safe: indexPath.row]
+        guard let uuid = dataSource.itemIdentifier(for: indexPath) else { return nil }
+        return episodesByUuid[uuid]
     }
 
     let headerView = UploadedStorageHeaderView()
@@ -42,7 +54,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private func refreshContentUnavailable() {
         var config: UIContentConfiguration?
 
-        if uploadedEpisodes.isEmpty {
+        // hasLoadedOnce keeps the async first fetch from flashing the empty state
+        if hasLoadedOnce, episodesByUuid.isEmpty {
             let title = L10n.fileUploadNoFilesTitle
             let message = L10n.fileSyncFilesEmptyMessage
             config = ContentUnavailableConfiguration.emptyState(title: title, message: message, icon: { Image("profile_files") }, actions: [
@@ -114,6 +127,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         super.viewDidLoad()
 
         registerCells()
+        dataSource = makeDataSource()
         title = L10n.files
 
         let controller = UploadedFilesRefreshController(source: .files)
@@ -238,12 +252,77 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     func reloadLocalFiles() {
-        uploadedEpisodes = episodesDataManager.uploadedEpisodes()
-        uploadedGroups = episodesDataManager.uploadedEpisodeGroups()
-        uploadsTable.isHidden = (uploadedEpisodes.isEmpty)
+        let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
+        // latest-wins: the many change notifications collapse into one fetch+apply
+        reloadQueue.cancelAllOperations()
+        let operation = BlockOperation()
+        operation.addExecutionBlock { [weak self, weak operation] in
+            guard operation?.isCancelled != true else { return }
+            let groupsBox = PocketCastsUtils.UncheckedSendable(dataManager.value.uploadedEpisodeGroups())
 
-        uploadsTable.reloadData()
+            Task { @MainActor in
+                self?.applyUploadedGroups(groupsBox.value)
+            }
+        }
+        reloadQueue.addOperation(operation)
+    }
+
+    private func applyUploadedGroups(_ groups: [(group: String, episodes: [UserEpisode])]) {
+        hasLoadedOnce = true
+
+        var itemsByUuid = [String: UserEpisode]()
+        var fingerprints = [String: Int]()
+        for group in groups {
+            for episode in group.episodes {
+                itemsByUuid[episode.uuid] = episode
+                fingerprints[episode.uuid] = episode.renderFingerprint
+            }
+        }
+        let changedUuids = DiffableHelpers.changedIDs(old: fingerprintsByUuid, new: fingerprints)
+        episodesByUuid = itemsByUuid
+        fingerprintsByUuid = fingerprints
+
+        uploadsTable.isHidden = itemsByUuid.isEmpty
+        refreshContentUnavailable()
+
+        var snapshot = DiffableHelpers.snapshot(sections: groups.map { group in
+            (section: group.group.isEmpty ? UploadedFilesSection.root : .group(group.group),
+             items: group.episodes.map(\.uuid))
+        })
+        snapshot.reconfigureItems(changedUuids)
+        apply(snapshot)
+        syncSelectionAfterApply()
         updateHeaderView()
+    }
+
+    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<UploadedFilesSection, String>) {
+        guard hasAppliedSnapshot, view.window != nil else {
+            hasAppliedSnapshot = true
+            dataSource.applySnapshotUsingReloadData(snapshot)
+            return
+        }
+        do {
+            // animated applies can throw ObjC exceptions if UIKit state is mid-flight
+            // (e.g. an open SwipeCellKit swipe); fall back to a plain reload
+            try SJCommonUtils.catchException { [dataSource] in
+                dataSource?.apply(snapshot, animatingDifferences: true)
+            }
+        } catch {
+            FileLog.shared.addMessage("UploadedViewController: diffable apply failed, falling back to reload: \(error)")
+            dataSource.applySnapshotUsingReloadData(snapshot)
+        }
+    }
+
+    /// Re-selects the still-present selected rows after an animated apply and
+    /// prunes selections whose episodes left the list.
+    private func syncSelectionAfterApply() {
+        guard isMultiSelectEnabled else { return }
+        selectedEpisodes.removeAll { episodesByUuid[$0.uuid] == nil }
+        for episode in selectedEpisodes {
+            if let indexPath = dataSource.indexPath(for: episode.uuid) {
+                uploadsTable.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+            }
+        }
     }
 
     private func reloadAllFiles() {
@@ -337,7 +416,9 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     override func handleThemeChanged() {
-        uploadsTable.reloadData()
+        guard let dataSource else { return }
+        // re-populate every visible cell with the new theme colours
+        dataSource.applySnapshotUsingReloadData(dataSource.snapshot())
     }
 }
 

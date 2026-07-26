@@ -992,9 +992,7 @@ extension MainTabBarController {
             return
         }
         AnalyticsPlaybackHelper.shared.playbackErrorTapped(playerSource: .miniPlayer)
-        #if !APPCLIP
         URLHelper.open(url, context: .trustedDocumentation, options: .init(presenter: self, modalPresentationStyle: .formSheet))
-        #endif
     }
 
     private func updateErrorColor() {

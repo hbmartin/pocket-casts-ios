@@ -75,18 +75,12 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
         cleanupNetworkDataUsageIfNeeded()
         PodcastManager.shared.checkForExpiredPodcastsAndCleanup()
         PodcastManager.shared.checkForPendingAndAutoDownloads()
-        #if !APPCLIP
         PlaylistManager.checkForAutoDownloads()
-        #endif
         DispatchQueue.main.async {
             Analytics.shared.refreshRegistered()
             PlaybackManager.shared.effectsChangedExternally()
-            #if !os(tvOS)
             Theme.sharedTheme.toggleTheme()
-            #endif
-            #if !APPCLIP && !os(tvOS)
             NotificationsHelper.shared.register(checkToken: true)
-            #endif
         }
     }
 
@@ -115,11 +109,7 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
     // MARK: - Settings
 
     func isPushEnabled() -> Bool {
-        #if APPCLIP || os(tvOS)
-        false
-        #else
         NotificationsHelper.shared.pushEnabled()
-        #endif
     }
 
     func defaultPodcastGrouping() -> Int32 {

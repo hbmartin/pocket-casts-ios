@@ -216,11 +216,9 @@ final class PlaybackManager {
 
     private let analyticsPlaybackHelper = AnalyticsPlaybackHelper.shared
 
-    #if !APPCLIP
     lazy var bookmarkManager: BookmarkManager = {
         BookmarkManager(playbackManager: self)
     }()
-    #endif
 
     private lazy var sleepTimerManager = SleepTimerManager()
 
@@ -875,17 +873,11 @@ final class PlaybackManager {
     /// Pure DB query; static + nonisolated so background callers (episode cleanup,
     /// formatting helpers) can check Up Next membership without hopping to main.
     nonisolated static func episodeIsInUpNext(uuid: String) -> Bool {
-        #if APPCLIP
-        return false
-        #else
         return DataManager.sharedManager.upNextPlayListContains(episodeUuid: uuid)
-        #endif
     }
 
     func addToUpNext(episode: BaseEpisode, ignoringQueueLimit: Bool, toTop: Bool) {
-        #if !APPCLIP
         addToUpNext(episode: episode, ignoringQueueLimit: ignoringQueueLimit, toTop: toTop, userInitiated: false)
-        #endif
     }
 
     func addToUpNext(episode: BaseEpisode, ignoringQueueLimit: Bool = false, toTop: Bool = false, userInitiated: Bool) {
@@ -1280,15 +1272,9 @@ final class PlaybackManager {
     }
 
     func silenceRemovalAvailable() -> Bool {
-        #if APPCLIP
-        if let episode = currentEpisode() {
-            return !episode.videoPodcast()
-        }
-        #elseif !os(tvOS)
             if let episode = currentEpisode() {
                 return !episode.videoPodcast()
             }
-        #endif
 
         return false
     }
@@ -1542,12 +1528,9 @@ final class PlaybackManager {
                 if let episode = episode as? Episode {
                     EpisodeManager.archiveEpisode(episode: episode, fireNotification: true, removeFromPlayer: false, userInitiated: false)
                 } else if let episode = episode as? UserEpisode {
-                    // No App Clip episodes should be user episodes
-                    #if !APPCLIP
                     if Settings.userEpisodeRemoveFileAfterPlaying() {
                         UserEpisodeManager.deleteFromDevice(userEpisode: episode, removeFromPlaybackQueue: false)
                     }
-                    #endif
                 }
             } else {
                 EpisodeManager.cleanupUnusedBuffers(episode: episode)
@@ -1649,10 +1632,6 @@ final class PlaybackManager {
         }
 
         let playersSupported = supportedPlayers()
-        #if os(tvOS)
-            FileLog.shared.addMessage("Using DefaultPlayer")
-            player = DefaultPlayer()
-        #elseif APPCLIP
             if playersSupported.first == EffectsPlayer.self {
                 FileLog.shared.addMessage("Using EffectsPlayer")
                 player = EffectsPlayer()
@@ -1660,15 +1639,6 @@ final class PlaybackManager {
                 FileLog.shared.addMessage("Using DefaultPlayer")
                 player = DefaultPlayer()
             }
-        #else
-            if playersSupported.first == EffectsPlayer.self {
-                FileLog.shared.addMessage("Using EffectsPlayer")
-                player = EffectsPlayer()
-            } else {
-                FileLog.shared.addMessage("Using DefaultPlayer")
-                player = DefaultPlayer()
-            }
-        #endif
     }
 
     private func supportedPlayers() -> [PlaybackProtocol.Type] {
@@ -1676,17 +1646,13 @@ final class PlaybackManager {
 
         guard let currEpisode = currentEpisode() else { return possiblePlayers }
 
-        #if !APPCLIP && !os(tvOS)
             if let fallbackToPlayer {
                 return [fallbackToPlayer]
             }
-        #endif
 
-        #if !os(tvOS)
         if !playingOverAirplay(), !currEpisode.videoPodcast(), (currEpisode.downloaded(pathFinder: DownloadManager.shared) && effects().trimSilence != .off) || currEpisode.bufferedForStreaming() {
             possiblePlayers.append(EffectsPlayer.self)
         }
-        #endif
 
         possiblePlayers.append(DefaultPlayer.self)
 
@@ -2012,9 +1978,7 @@ final class PlaybackManager {
             return
         }
 
-        #if !APPCLIP && !os(tvOS)
         Toast.show(L10n.deviceShakeSleepTimer)
-        #endif
         sleepTimerManager.restartSleepTimer()
     }
 
@@ -2187,9 +2151,7 @@ final class PlaybackManager {
         let starCommand = MPRemoteCommandCenter.shared().likeCommand
 
         if actionsEnabled {
-            #if !APPCLIP && !os(tvOS)
                 markPlayedCommand.setTitle(title: L10n.markPlayedShort)
-            #endif
             markPlayedCommand.removeTarget(nil)
             markPlayedCommand.addTarget { [weak self] _ -> MPRemoteCommandHandlerStatus in
                 guard let strongSelf = self, let episode = strongSelf.currentEpisode() else { return .noActionableNowPlayingItem }
@@ -2200,9 +2162,7 @@ final class PlaybackManager {
             }
             markPlayedCommand.isEnabled = true
 
-            #if !APPCLIP && !os(tvOS)
                 starCommand.setTitle(title: L10n.starEpisodeShort)
-            #endif
             starCommand.removeTarget(nil)
             starCommand.addTarget { [weak self] _ -> MPRemoteCommandHandlerStatus in
                 guard let strongSelf = self, let episode = strongSelf.currentEpisode() as? Episode else { return .noActionableNowPlayingItem }
@@ -2573,7 +2533,6 @@ final class PlaybackManager {
 
     /// Autoplay the next episode
     private func autoplayIfNeeded() {
-        #if !APPCLIP
         // If Autoplay is enabled we check if there's another episode to play
         if Settings.autoplay,
            queue.upNextCount() == 0,
@@ -2591,7 +2550,6 @@ final class PlaybackManager {
 
         // Nothing to autoplay or Up Next has items, reset the latest played from
         AutoplayHelper.shared.playedFrom(playlist: nil)
-        #endif
     }
 
     // MARK: - Episode Update (Playback Failure)
@@ -2647,9 +2605,7 @@ private extension PlaybackManager {
     func handleRemoteAction(_ action: HeadphoneControlAction) {
         switch action {
         case .addBookmark:
-            #if !APPCLIP
             bookmark(source: .headphones)
-            #endif
 
         case .previousChapter:
             guard let chapter = chapterManager.previousVisibleChapter() else { fallthrough }
@@ -2720,7 +2676,6 @@ extension PlaybackManager {
 
 // MARK: - Bookmarks
 
-#if !APPCLIP
 
 extension PlaybackManager {
     private var bookmarksEnabled: Bool {
@@ -2839,7 +2794,6 @@ extension PlaybackManager {
         PlaybackActionHelper.play(episode: episode)
     }
 }
-#endif
 
 // MARK: - Up Next queue forwarding
 

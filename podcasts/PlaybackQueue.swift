@@ -294,11 +294,9 @@ class PlaybackQueue: NSObject {
         cacheTopEpisode()
         updateUpNextInfo()
 
-        #if !APPCLIP
         if checkForAutoDownload {
             checkAllForAutoDownload()
         }
-        #endif
     }
 
     func nowPlayingEpisodeChanged() {
@@ -389,12 +387,9 @@ class PlaybackQueue: NSObject {
     // MARK: - Private Helpers
 
     func updateUpNextInfo() {
-        #if !APPCLIP && !os(tvOS)
             WidgetHelper.shared.updateSharedUpNext()
-        #endif
     }
 
-    #if !APPCLIP
     private func checkAllForAutoDownload() {
         if !Settings.downloadUpNextEpisodes() { return }
 
@@ -415,7 +410,6 @@ class PlaybackQueue: NSObject {
             DownloadManager.shared.queueForLaterDownload(episodeUuid: episode.uuid, fireNotification: true, autoDownloadStatus: .autoDownloaded)
         }
     }
-    #endif
 
     private func cacheTopEpisode() {
         topEpisode = episodeAt(index: -1)

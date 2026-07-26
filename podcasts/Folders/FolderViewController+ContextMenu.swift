@@ -8,32 +8,35 @@ extension FolderViewController {
                         contextMenuConfigurationForItemAt indexPath: IndexPath,
                         point: CGPoint) -> UIContextMenuConfiguration? {
         // While editing the order, taps and gestures are reserved for drag-to-reorder.
-        guard !isEditingOrder, let podcast = podcasts[safe: indexPath.item] else {
+        guard !isEditingOrder, let podcast = podcastAt(indexPath) else {
             return nil
         }
-        return makePodcastContextMenu(for: podcast, at: indexPath)
+        return makePodcastContextMenu(for: podcast)
     }
 
     // MARK: Configuration builders
 
-    private func makePodcastContextMenu(for podcast: Podcast, at indexPath: IndexPath) -> UIContextMenuConfiguration {
+    private func makePodcastContextMenu(for podcast: Podcast) -> UIContextMenuConfiguration {
         UIContextMenuConfiguration(
-            identifier: indexPath as NSCopying,
+            identifier: podcast.uuid as NSString,
             previewProvider: {
                 PodcastPreviewViewController(podcastUUID: podcast.uuid)
             },
             actionProvider: { [weak self] _ in
-                self?.makePodcastMenu(for: podcast, at: indexPath)
+                self?.makePodcastMenu(for: podcast)
             }
         )
     }
 
     // MARK: Menus
 
-    private func makePodcastMenu(for podcast: Podcast, at indexPath: IndexPath) -> UIMenu {
+    private func makePodcastMenu(for podcast: Podcast) -> UIMenu {
         let shareAction = UIAction(title: L10n.share, image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
             guard let self else { return }
-            let cell = self.mainGrid.cellForItem(at: indexPath)
+            // resolve the index path at execution time; rows may have moved
+            // since the menu was configured
+            let indexPath = self.dataSource.indexPath(for: podcast.uuid)
+            let cell = indexPath.flatMap { self.mainGrid.cellForItem(at: $0) }
             let sourceRect = cell.map { self.mainGrid.convert($0.frame, to: self.view) } ?? .zero
             SharingHelper.shared.shareLinkTo(podcast: podcast,
                                              fromController: self,

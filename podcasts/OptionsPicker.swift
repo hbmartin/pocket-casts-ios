@@ -48,9 +48,7 @@ class OptionsPicker {
 
     func show(statusBarStyle: UIStatusBarStyle? = nil) {
         guard let rootController = optionsController else { return }
-        #if !APPCLIP
         window = SceneHelper.newMainScreenWindow()
-        #endif
         window?.rootViewController = rootController
         window?.windowLevel = UIWindow.Level.alert
         window?.makeKeyAndVisible()
@@ -81,14 +79,12 @@ class OptionsPicker {
     /// controller. Use this when there's no obvious presenting controller at
     /// the call site.
     func present() {
-        #if !APPCLIP
         guard let presenter = SceneHelper.rootViewController() else {
             // This should never happen
             assertionFailure("Unable to find a view controller to present the options picker from")
             return
         }
         present(from: presenter)
-        #endif
     }
 
     func controllerDidAnimateOut(optionChosen: Bool) {

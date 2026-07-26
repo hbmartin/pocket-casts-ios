@@ -8,8 +8,6 @@ enum AnalyticsEvent: String {
     case applicationUpdated
     case applicationClosed
 
-    case appClipOpened
-
     // MARK: - User Lifecycle
 
     case userSignedIn
@@ -379,6 +377,8 @@ enum AnalyticsEvent: String {
     case addToPlaylistsRemoveTapped
     case addToPlaylistsNewPlaylistTapped
     case addToPlaylistsCreateNewPlaylistTapped
+    case addToPlaylistsSearchPerformed
+    case addToPlaylistsSearchCleared
 
     // MARK: - Podcast screen
 

@@ -183,6 +183,12 @@ nonisolated class EpisodesDataManager {
         return newData
     }
 
+    /// Downloads screen data without DifferenceKit types: the same date-grouped
+    /// sections `downloadedEpisodes()` produces, as plain tuples.
+    func downloadedEpisodeSections() -> [(title: String, episodes: [ListEpisode])] {
+        downloadedEpisodes().map { (title: $0.model, episodes: $0.elements) }
+    }
+
     // MARK: - Listening History
 
     func listeningHistoryEpisodes() -> [ArraySection<String, ListEpisode>] {
@@ -215,18 +221,10 @@ nonisolated class EpisodesDataManager {
     }
 
     /// Uploaded episodes partitioned by their sync-folder subfolder.
-    /// Root uploads come first, then named groups A-Z. The user's chosen
-    /// file sort is preserved inside each group.
+    /// The root group always comes first (and is always present, even when
+    /// empty), then named groups A-Z. The user's chosen file sort is
+    /// preserved inside each group.
     func uploadedEpisodeGroups() -> [(group: String, episodes: [UserEpisode])] {
-        let episodes = uploadedEpisodes()
-        let grouped = Dictionary(grouping: episodes) { $0.groupName ?? "" }
-        let sections = grouped
-            .sorted { lhs, rhs in
-                if lhs.key.isEmpty != rhs.key.isEmpty { return lhs.key.isEmpty }
-                return lhs.key.localizedCaseInsensitiveCompare(rhs.key) == .orderedAscending
-            }
-            .map { (group: $0.key, episodes: $0.value) }
-        guard sections.first?.group.isEmpty == false else { return sections }
-        return [(group: "", episodes: [])] + sections
+        UploadedGroupsBuilder.groups(from: uploadedEpisodes())
     }
 }

@@ -5083,7 +5083,6 @@ rules:
       include:
         - "**/podcasts/**/*.swift"
         - "**/WidgetExtension/**/*.swift"
-        - "**/AppClip/**/*.swift"
         - "**/semgrep/tests/swift-custom-query-validator.swift"
       exclude:
         - "**/PocketCastsTests/**"
@@ -5555,3 +5554,24 @@ rules:
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
       - pattern: BuildEnvironment.current != .appStore
+
+  - id: pocketcasts.closedrange-upper-bound-minus-one
+    severity: ERROR
+    metadata:
+      category: correctness
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      `low ... high - 1` traps at runtime when high is 0 (ClosedRange requires
+      lowerBound <= upperBound), which is exactly what happens for an empty
+      collection or a zero-row table section. Use the half-open `low ..< high`
+      instead - it is equivalent for non-empty inputs and simply empty
+      otherwise - or clamp with max() when a ClosedRange is required.
+    languages: [swift]
+    paths:
+      include:
+        - "**/*.swift"
+    patterns:
+      - pattern: $LOW ... $HIGH - 1

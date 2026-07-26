@@ -1401,7 +1401,6 @@ nonisolated class Settings: NSObject {
     }
 
     // MARK: - Informational Banner
-#if !APPCLIP && !os(tvOS)
     static func dismissBanner(for type: InformationalBannerType) {
         UserDefaults.standard.set(true, forKey: "kInformational\(type.rawValue.capitalized)Banner")
     }
@@ -1409,7 +1408,6 @@ nonisolated class Settings: NSObject {
     static func shouldShowBanner(for type: InformationalBannerType) -> Bool {
         return !UserDefaults.standard.bool(forKey: "kInformational\(type.rawValue.capitalized)Banner")
     }
-#endif
 
     // MARK: - Notifications
     static var notificationsNewEpisodes: Bool {

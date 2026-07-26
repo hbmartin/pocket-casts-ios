@@ -10,9 +10,7 @@ nonisolated final class Analytics: AnalyticsTracking, Sendable {
     private struct State {
         var adapters: [AnalyticsAdapter]?
         var adaptersRegistered = false
-#if !APPCLIP && !os(tvOS)
         var analyticsAppThemeProvider: (any AnalyticsAppThemeProviding)?
-#endif
     }
 
     private let state = Mutex(State())
@@ -46,7 +44,6 @@ nonisolated final class Analytics: AnalyticsTracking, Sendable {
     static func unregister() {
         Self.shared.unregister()
     }
-#if !APPCLIP && !os(tvOS)
     var analyticsAppThemeProvider: (any AnalyticsAppThemeProviding)? {
         get { state.withLock { $0.analyticsAppThemeProvider } }
         set { state.withLock { $0.analyticsAppThemeProvider = newValue } }
@@ -55,7 +52,6 @@ nonisolated final class Analytics: AnalyticsTracking, Sendable {
     static func add(analyticsAppThemeProvider: AnalyticsAppThemeProviding) {
         Self.shared.analyticsAppThemeProvider = analyticsAppThemeProvider
     }
-#endif
 
     /// Convenience method to call Analytics.track*
     static func track(_ event: AnalyticsEvent, properties: [String: Sendable]? = nil) {
@@ -82,7 +78,6 @@ nonisolated final class Analytics: AnalyticsTracking, Sendable {
             }
             return value
         }
-#if !APPCLIP && !os(tvOS)
         // One snapshot for both; appThemeProperties can sync-hop to the main
         // thread, so it must never be called while holding the lock.
         let (adapters, themeProvider) = state.withLock { ($0.adapters, $0.analyticsAppThemeProvider) }
@@ -91,9 +86,6 @@ nonisolated final class Analytics: AnalyticsTracking, Sendable {
                 properties[key] = value
             }
         }
-#else
-        let adapters = state.withLock { $0.adapters }
-#endif
         Task { [properties] in
             for adapter in adapters ?? [] {
                 await adapter.track(name: eventName, properties: properties)
@@ -135,23 +127,19 @@ nonisolated extension Analytics {
     }
 
     @MainActor func optInOfAnalytics() {
-#if !APPCLIP && !os(tvOS)
         Settings.setAnalytics(optOut: false)
         setAdaptersRegisteredStatus(false)
         let appDelegate = UIApplication.shared.delegate as? AppDelegate
         appDelegate?.configureTelemetryDeck()
         appDelegate?.setupAnalytics()
         Analytics.track(.analyticsOptIn)
-#endif
     }
 
     @MainActor func refreshRegistered() {
         if Settings.analyticsOptOut() {
             Analytics.unregister()
         }
-#if !APPCLIP && !os(tvOS)
         (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
-#endif
         FileLog.shared.addMessage("Analytics: Refreshed Registered Adapters")
         logCurrentAdapters()
     }

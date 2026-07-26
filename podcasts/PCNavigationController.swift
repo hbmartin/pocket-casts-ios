@@ -61,9 +61,6 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
-        #if APPCLIP
-        return .lightContent
-        #else
         // it's a little dodgy, but if the full screen player is open, always use a light tab bar
         if appDelegate()?.miniPlayer()?.playerOpenState == .open {
             return .lightContent
@@ -74,7 +71,6 @@ class PCNavigationController: UINavigationController, UIGestureRecognizerDelegat
         } else {
             return topViewController?.preferredStatusBarStyle ?? AppTheme.defaultStatusBarStyle()
         }
-        #endif
     }
 
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {

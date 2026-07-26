@@ -3,8 +3,6 @@ import UIKit
 #endif
 import Foundation
 import PocketCastsDataModel
-#if !APPCLIP && !os(tvOS)
-#endif
 
 nonisolated extension EpisodeFilter {
     func iconImage() -> UIImage? {
@@ -31,7 +29,6 @@ nonisolated extension EpisodeFilter {
         return EpisodeFilter.imageName(forPlaylistIcon: icon)
     }
 
-    #if !APPCLIP && !os(tvOS)
     @MainActor func grid() -> UIImage {
         let episodes = DataManager.sharedManager.playlistEpisodes(for: self)
 
@@ -42,7 +39,6 @@ nonisolated extension EpisodeFilter {
             .environmentObject(Theme(previewTheme: Theme.sharedTheme.activeTheme))
             .snapshot()
     }
-    #endif
 
     static func imageForPlaylistIcon(icon: PlaylistIcon) -> UIImage? {
         guard let name = imageName(forPlaylistIcon: icon) else { return nil }

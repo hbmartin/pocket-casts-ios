@@ -113,11 +113,9 @@ nonisolated class AnalyticsPlaybackHelper: AnalyticsCoordinator, @unchecked Send
     }
 
     func playerString(player: PlaybackProtocol?) -> String {
-        #if !os(tvOS)
         if player is EffectsPlayer {
             return "effects"
         }
-        #endif
 
         if player is DefaultPlayer {
             return "default"

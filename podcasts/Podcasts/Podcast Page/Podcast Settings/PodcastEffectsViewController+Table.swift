@@ -174,11 +174,7 @@ extension PodcastEffectsViewController: UITableViewDataSource, UITableViewDelega
     // MARK: - Settings changes
 
     private var isCustomPlaybackSettingsEnabled: Bool {
-        #if APPCLIP
-        false
-        #else
         true
-        #endif
     }
 
     private func playbackSpeedChanged(_ speed: TimeInterval) {

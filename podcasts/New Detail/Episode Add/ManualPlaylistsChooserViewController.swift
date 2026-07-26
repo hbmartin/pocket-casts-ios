@@ -14,6 +14,7 @@ class ManualPlaylistsChooserViewController: PCViewController {
     private var initialSelectedPlaylists: Set<String> = []
     private var newSelectedPlaylists: Set<String> = []
     private var searchController: PCSearchBarController?
+    private var isSearching = false
     private let episodes: [Episode]
     private let analyticsSource: String
     private let dataManager = DataManager.sharedManager
@@ -319,13 +320,15 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
     }
 
     func searchDidEnd() {
+        isSearching = false
         manualPlaylists = tempManualPlaylists
         tempManualPlaylists.removeAll()
         tableView.reload(section: .playlists, with: .automatic)
     }
 
     func searchWasCleared() {
-        // Analytics tracked in hbmartin/pocket-casts-ios#284
+        isSearching = false
+        Analytics.track(.addToPlaylistsSearchCleared, properties: ["source": analyticsSource])
 
         manualPlaylists = tempManualPlaylists
         tableView.reload(section: .playlists, with: .automatic)
@@ -334,7 +337,10 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
     func searchTermChanged(_ searchTerm: String) { }
 
     func performSearch(searchTerm: String, triggeredByTimer: Bool, completion: @escaping (() -> Void)) {
-        // Analytics tracked in hbmartin/pocket-casts-ios#284
+        if !isSearching {
+            isSearching = true
+            Analytics.track(.addToPlaylistsSearchPerformed, properties: ["source": analyticsSource])
+        }
 
         manualPlaylists = tempManualPlaylists.filter {
             $0.playlistName.localizedCaseInsensitiveContains(searchTerm)

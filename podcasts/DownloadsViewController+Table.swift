@@ -2,11 +2,35 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import UIKit
 
-extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
+extension DownloadsViewController: UITableViewDelegate {
     private static let cellId = "EpisodeCell"
 
     func registerTableCells() {
         downloadsTable.register(UINib(nibName: "EpisodeCell", bundle: nil), forCellReuseIdentifier: DownloadsViewController.cellId)
+    }
+
+    func makeDataSource() -> EditableDiffableDataSource<String, String> {
+        let dataSource = EditableDiffableDataSource<String, String>(tableView: downloadsTable) { [weak self] tableView, indexPath, uuid in
+            let cell = tableView.dequeueReusableCell(withIdentifier: DownloadsViewController.cellId, for: indexPath) as! EpisodeCell
+            self?.populate(cell: cell, at: indexPath, uuid: uuid)
+            return cell
+        }
+        dataSource.defaultRowAnimation = .fade
+        return dataSource
+    }
+
+    private func populate(cell: EpisodeCell, at indexPath: IndexPath, uuid: String) {
+        cell.delegate = self
+        cell.playlist = .downloads
+        if let listEpisode = episodesByUuid[uuid] {
+            cell.populateFrom(episode: listEpisode.episode, tintColor: ThemeColor.primaryIcon01())
+            cell.shouldShowSelect = isMultiSelectEnabled
+            if isMultiSelectEnabled {
+                cell.showTick = selectedEpisodesContains(uuid: uuid)
+            }
+        }
+
+        cell.showsTopDivider = indexPath.row == 0
     }
 
     func registerLongPress() {
@@ -23,7 +47,7 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
                     for: indexPath,
                     in: downloadsTable,
                     firstSection: 0,
-                    lastSection: episodes.count - 1,
+                    lastSection: dataSource.snapshot().numberOfSections - 1,
                     statusBarStyle: preferredStatusBarStyle
                 )
             } else {
@@ -33,54 +57,25 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-    func numberOfSections(in tableView: UITableView) -> Int {
-        episodes.count
-    }
-
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        episodes[section].elements.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: DownloadsViewController.cellId, for: indexPath) as! EpisodeCell
-
-        cell.delegate = self
-        cell.playlist = .downloads
-        if let episode = episodeAtIndexPath(indexPath) {
-            cell.populateFrom(episode: episode, tintColor: ThemeColor.primaryIcon01())
-            cell.shouldShowSelect = isMultiSelectEnabled
-            if isMultiSelectEnabled {
-                cell.showTick = selectedEpisodesContains(uuid: episode.uuid)
-            }
-        }
-
-        cell.showsTopDivider = indexPath.row == 0
-
-        return cell
-    }
-
     // MARK: - Selection
 
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        guard episodeAtIndexPath(indexPath) != nil else { return nil }
+        guard let listEpisode = listEpisodeAt(indexPath) else { return nil }
 
         guard downloadsTable.isEditing, !multiSelectGestureInProgress else { return indexPath }
 
-        if let selectedEpisode = episodes[indexPath.section].elements[safe: indexPath.row] {
-            if selectedEpisodes.contains(selectedEpisode) {
-                downloadsTable.delegate?.tableView?(downloadsTable, didDeselectRowAt: indexPath)
-                return nil
-            }
-            return indexPath
+        if selectedEpisodesContains(uuid: listEpisode.episode.uuid) {
+            downloadsTable.delegate?.tableView?(downloadsTable, didDeselectRowAt: indexPath)
+            return nil
         }
-        return nil
+        return indexPath
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let episode = episodeAtIndexPath(indexPath) else { return }
+        guard let listEpisode = listEpisodeAt(indexPath) else { return }
+        let episode = listEpisode.episode
 
         if isMultiSelectEnabled {
-            let listEpisode = episodes[indexPath.section].elements[indexPath.row]
             if !multiSelectGestureInProgress {
                 // If the episode is already selected move to the end of the array
                 selectedEpisodesRemove(uuid: listEpisode.episode.uuid)
@@ -135,9 +130,8 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        guard isMultiSelectEnabled else { return }
-        let listEpisode = episodes[indexPath.section].elements[indexPath.row]
-        if let index = selectedEpisodes.firstIndex(of: listEpisode) {
+        guard isMultiSelectEnabled, let listEpisode = listEpisodeAt(indexPath) else { return }
+        if let index = selectedEpisodes.firstIndex(where: { $0.episode.uuid == listEpisode.episode.uuid }) {
             selectedEpisodes.remove(at: index)
             if let cell = tableView.cellForRow(at: indexPath) as? EpisodeCell {
                 cell.showTick = false
@@ -162,7 +156,7 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let sectionHeader = DateHeadingView(frame: CGRect(x: 0, y: 0, width: tableView.frame.size.width, height: 45))
-        sectionHeader.title = titleTextForSection(section)
+        sectionHeader.title = dataSource.sectionIdentifier(for: section) ?? ""
 
         return sectionHeader
     }
@@ -182,12 +176,11 @@ extension DownloadsViewController: UITableViewDelegate, UITableViewDataSource {
     // MARK: - Misc
 
     func episodeAtIndexPath(_ indexPath: IndexPath) -> Episode? {
-        episodes[indexPath.section].elements[indexPath.row].episode
+        listEpisodeAt(indexPath)?.episode
     }
 
-    private func titleTextForSection(_ section: Int) -> String {
-        if section >= episodes.count { return "" } // we don't have that many sections
-
-        return episodes[section].model
+    func listEpisodeAt(_ indexPath: IndexPath) -> ListEpisode? {
+        guard let uuid = dataSource.itemIdentifier(for: indexPath) else { return nil }
+        return episodesByUuid[uuid]
     }
 }

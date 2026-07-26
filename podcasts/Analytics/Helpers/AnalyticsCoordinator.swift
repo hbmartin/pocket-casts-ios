@@ -102,7 +102,6 @@ nonisolated class AnalyticsCoordinator: @unchecked Sendable {
             return takenSource
         }
 
-        #if !APPCLIP
         // Walking the view-controller hierarchy is main-actor work; analytics
         // events can originate off-main, so bridge synchronously when needed
         if Thread.isMainThread {
@@ -112,12 +111,8 @@ nonisolated class AnalyticsCoordinator: @unchecked Sendable {
                 MainActor.assumeIsolated { topAnalyticsSourceProvider()?.analyticsSource } ?? .unknown
             }
         }
-        #else
-        return .unknown
-        #endif
     }
 
-    #if !APPCLIP
     func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
         // Only dispatch async on the main thread if needed
         guard Thread.isMainThread else {
@@ -174,8 +169,4 @@ nonisolated class AnalyticsCoordinator: @unchecked Sendable {
 
         return nil
     }
-    #else
-    /// NOOP track event to preventing needing to wrap all the events in #if checks
-    func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {}
-    #endif
 }

@@ -1,6 +1,4 @@
-#if !APPCLIP
 import Agrume
-#endif
 import AVKit
 import SafariServices
 import UIKit
@@ -66,9 +64,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     @IBOutlet var episodeName: ThemeableLabel! {
         didSet {
-#if APPCLIP
-            episodeName.text = ""
-#endif
             episodeName.style = .playerContrast01
             episodeName.adjustsFontForContentSizeCategory = true
             episodeName.font = .font(ofSize: 18, weight: .semibold, scalingWith: .largeTitle)
@@ -77,9 +72,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     @IBOutlet var podcastName: ThemeableLabel! {
         didSet {
-#if APPCLIP
-            podcastName.text = ""
-#endif
             podcastName.style = .playerContrast02
             podcastName.adjustsFontForContentSizeCategory = true
             podcastName.font = .font(ofSize: 14, weight: .medium, scalingWith: .largeTitle)
@@ -94,9 +86,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     @IBOutlet var chapterName: ThemeableLabel! {
         didSet {
-#if APPCLIP
-            chapterName.text = ""
-#endif
             chapterName.style = .playerContrast01
             chapterName.adjustsFontForContentSizeCategory = true
             chapterName.font = .font(ofSize: 18, weight: .semibold, scalingWith: .largeTitle)
@@ -230,18 +219,14 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
     let routePicker = PCRoutePickerView(frame: CGRect.zero)
     var isPresentingOverflowRoutePicker = false
 
-    #if !APPCLIP
     private lazy var upNextController = UpNextViewController(source: .nowPlaying)
-    #endif
 
-    #if !APPCLIP
     lazy var upNextViewController: UIViewController = {
         let controller = SJUIUtils.navController(for: upNextController, iconStyle: .secondaryText01, themeOverride: upNextController.themeOverride)
         controller.modalPresentationStyle = .pageSheet
 
         return controller
     }()
-    #endif
 
     var lastShelfLoadState = ShelfLoadState()
 
@@ -253,14 +238,12 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
             controller.preferredContentSizeCategoryDidChange()
         }
 
-        #if !APPCLIP
         let upNextPan = UIPanGestureRecognizer(target: self, action: #selector(panGestureRecognizerHandler(_:)))
         upNextPan.delegate = self
         view.addGestureRecognizer(upNextPan)
 
         routePicker.delegate = self
 
-        #endif
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -284,9 +267,7 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
 
     var displayTranscript = false {
         didSet {
-#if !APPCLIP
             toggleTranscript()
-#endif
         }
     }
 
@@ -400,9 +381,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         let chapters = PlaybackManager.shared.currentChapters()
         guard let urlString = chapters.url, let url = URL(string: urlString) else { return }
 
-        #if APPCLIP
-        // App Clip install prompt: decision tracked in hbmartin/pocket-casts-ios#282
-        #else
             URLHelper.open(
                 url,
                 context: .externalContent,
@@ -411,16 +389,13 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
                     prefersExternalBrowser: Settings.openLinks
                 )
             )
-        #endif
     }
 
     @objc private func imageTapped() {
-#if !APPCLIP
         guard let artwork = episodeImage.image else { return }
 
         let agrume = Agrume(image: artwork, background: .blurred(.regular))
         agrume.show(from: self)
-#endif
     }
 
     @objc private func videoTapped() {
@@ -473,7 +448,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         options.present(from: self)
     }
 
-    #if !APPCLIP
     private func toggleTranscript() {
         let isShowing = displayTranscript
 
@@ -534,5 +508,4 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
             skipFwdBtn.finishedTransition()
         })
     }
-    #endif
 }

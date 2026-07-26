@@ -92,7 +92,7 @@ The codebase uses Swift Package Manager modules under `Modules/`:
 The main iOS app lives in `podcasts/` with:
 - UIKit + SwiftUI hybrid (123+ ViewControllers, XIBs/Storyboards)
 - Feature-based organization (Analytics, Bookmarks, Folders, IAP, Player, etc.)
-- Multi-platform targets: iOS, widgets, App Clip
+- Multi-platform targets: iOS, widgets
 
 ### Key Directories
 

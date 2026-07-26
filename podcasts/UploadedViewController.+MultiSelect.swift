@@ -53,7 +53,7 @@ extension UploadedViewController: MultiSelectActionDelegate {
     }
 
     @IBAction func selectAllTapped() {
-        let shouldSelectAll = MultiSelectHelper.shouldSelectAll(onCount: selectedEpisodes.count, totalCount: uploadedEpisodes.count)
+        let shouldSelectAll = MultiSelectHelper.shouldSelectAll(onCount: selectedEpisodes.count, totalCount: dataSource.snapshot().numberOfItems)
 
         Analytics.track(.uploadedFilesSelectAllButtonTapped, properties: ["select_all": shouldSelectAll])
 
@@ -71,7 +71,7 @@ extension UploadedViewController: MultiSelectActionDelegate {
 
     func updateSelectAllBtn() {
         guard isMultiSelectEnabled else { return }
-        let leftButtonTitle = MultiSelectHelper.shouldSelectAll(onCount: selectedEpisodes.count, totalCount: uploadedEpisodes.count) ? L10n.selectAll : L10n.deselectAll
+        let leftButtonTitle = MultiSelectHelper.shouldSelectAll(onCount: selectedEpisodes.count, totalCount: dataSource.snapshot().numberOfItems) ? L10n.selectAll : L10n.deselectAll
         if navigationItem.leftBarButtonItem?.title != leftButtonTitle {
             navigationItem.leftBarButtonItem = UIBarButtonItem(title: leftButtonTitle, style: .plain, target: self, action: #selector(selectAllTapped))
         }

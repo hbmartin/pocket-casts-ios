@@ -20,7 +20,6 @@ extension PlayerContainerViewController {
     }
 
     private func updateAvailableTabs() {
-        #if !APPCLIP
         guard let playingEpisode = PlaybackManager.shared.currentEpisode() else { return }
 
         // Update the colors when the episode changes
@@ -75,7 +74,6 @@ extension PlayerContainerViewController {
 
             addTab(bookmarksItem, previousTab: &previousTab)
         }
-        #endif
     }
 
     private func addTab(_ tab: PlayerItemViewController, previousTab: inout PlayerItemViewController) {

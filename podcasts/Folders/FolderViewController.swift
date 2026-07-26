@@ -3,6 +3,12 @@ import PocketCastsUtils
 import UIKit
 import SwiftUI
 
+/// The folder grid has a single section; the enum still gives the diffable
+/// snapshot a stable section identity.
+enum FolderGridSection: Hashable {
+    case podcasts
+}
+
 class FolderViewController: PCViewController {
     @IBOutlet var mainGrid: UICollectionView! {
         didSet {
@@ -12,6 +18,20 @@ class FolderViewController: PCViewController {
 
     var folder: Folder
     var podcasts: [Podcast] = []
+
+    var dataSource: UICollectionViewDiffableDataSource<FolderGridSection, String>!
+    private(set) var podcastsByUuid = [String: Podcast]()
+    private var fingerprintsByUuid = [String: Int]()
+    private var hasAppliedSnapshot = false
+    private var lastAppliedLibraryType: LibraryType?
+    /// Set when a reload arrives mid-reorder; flushed by exitEditMode().
+    var needsReloadAfterEditing = false
+
+    private lazy var refreshQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+        return queue
+    }()
 
     let gridHelper = GridHelper()
 
@@ -45,6 +65,7 @@ class FolderViewController: PCViewController {
         miniPlayerStatusDidChange()
 
         gridHelper.configureLayout(collectionView: mainGrid)
+        dataSource = makeDataSource()
 
         updateNavTintColor()
         reloadPodcasts()
@@ -256,37 +277,95 @@ class FolderViewController: PCViewController {
         mainGrid.contentInset = UIEdgeInsets(top: mainGrid.contentInset.top, left: horizontalMargin, bottom: bottomMargin, right: horizontalMargin)
     }
 
-    // Diffable data source adoption tracked in hbmartin/pocket-casts-ios#283
-    private func reloadPodcasts() {
-        podcasts = DataManager.sharedManager.allPodcastsInFolder(folder: folder)
-
-        let badgeType = Settings.podcastBadgeType()
-        // load the required badge information if the supplied badge type needs it
-        // Podcast is a value type; mutate the badge count in place on the VC-owned array so the cells
-        // (which read podcast.cachedUnreadCount) render the right value.
-        if badgeType == .allUnplayed {
-            let podcastCounts = DataManager.sharedManager.podcastUnfinishedCounts()
-            for index in podcasts.indices {
-                podcasts[index].cachedUnreadCount = Int(podcastCounts[podcasts[index].uuid] ?? 0)
-            }
-        } else if badgeType == .latestEpisode {
-            for index in podcasts.indices {
-                if let latestEpisode = DataManager.sharedManager.findLatestEpisode(podcast: podcasts[index]) {
-                    podcasts[index].cachedUnreadCount = latestEpisode.unplayed() && !latestEpisode.archived ? 1 : 0
-                } else {
-                    podcasts[index].cachedUnreadCount = 0
-                }
-            }
+    func reloadPodcasts() {
+        guard !isEditingOrder else {
+            // reloading mid-reorder would fight the drag/drop animation
+            // (saveSortOrder posts FolderChanged, which this VC observes)
+            needsReloadAfterEditing = true
+            return
         }
 
-        mainGrid.reloadData()
+        let folderBox = PocketCastsUtils.UncheckedSendable(folder)
+        // latest-wins so notification bursts collapse into one fetch+apply
+        refreshQueue.cancelAllOperations()
+        let operation = BlockOperation()
+        operation.addExecutionBlock { [weak self, weak operation] in
+            guard operation?.isCancelled != true else { return }
 
-        let shouldShowEmpty = podcasts.isEmpty
-        refreshContentUnavailable(shouldShow: shouldShowEmpty)
+            var podcasts = DataManager.sharedManager.allPodcastsInFolder(folder: folderBox.value)
+
+            let badgeType = Settings.podcastBadgeType()
+            // load the required badge information if the supplied badge type needs it
+            // Podcast is a value type; mutate the badge count in place so the cells
+            // (which read podcast.cachedUnreadCount) render the right value.
+            if badgeType == .allUnplayed {
+                let podcastCounts = DataManager.sharedManager.podcastUnfinishedCounts()
+                for index in podcasts.indices {
+                    podcasts[index].cachedUnreadCount = Int(podcastCounts[podcasts[index].uuid] ?? 0)
+                }
+            } else if badgeType == .latestEpisode {
+                for index in podcasts.indices {
+                    if let latestEpisode = DataManager.sharedManager.findLatestEpisode(podcast: podcasts[index]) {
+                        podcasts[index].cachedUnreadCount = latestEpisode.unplayed() && !latestEpisode.archived ? 1 : 0
+                    } else {
+                        podcasts[index].cachedUnreadCount = 0
+                    }
+                }
+            }
+
+            let podcastsBox = PocketCastsUtils.UncheckedSendable(podcasts)
+            Task { @MainActor in
+                self?.applyPodcasts(podcastsBox.value)
+            }
+        }
+        refreshQueue.addOperation(operation)
+    }
+
+    private func applyPodcasts(_ newPodcasts: [Podcast]) {
+        podcasts = newPodcasts
+
+        var itemsByUuid = [String: Podcast]()
+        var fingerprints = [String: Int]()
+        for podcast in newPodcasts {
+            itemsByUuid[podcast.uuid] = podcast
+            fingerprints[podcast.uuid] = podcast.renderFingerprint
+        }
+        let changedUuids = DiffableHelpers.changedIDs(old: fingerprintsByUuid, new: fingerprints)
+        podcastsByUuid = itemsByUuid
+        fingerprintsByUuid = fingerprints
+
+        var snapshot = DiffableHelpers.snapshot(sections: [(section: FolderGridSection.podcasts, items: newPodcasts.map(\.uuid))])
+        snapshot.reconfigureItems(changedUuids)
+        apply(snapshot)
+
+        refreshContentUnavailable(shouldShow: newPodcasts.isEmpty)
+    }
+
+    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<FolderGridSection, String>) {
+        let libraryType = Settings.libraryType()
+        // the cell class changes with the library type, so diffing across a
+        // grid<->list toggle would reuse the wrong cells; reload wholesale
+        guard hasAppliedSnapshot, lastAppliedLibraryType == libraryType, view.window != nil else {
+            hasAppliedSnapshot = true
+            lastAppliedLibraryType = libraryType
+            dataSource.applySnapshotUsingReloadData(snapshot)
+            return
+        }
+        do {
+            try SJCommonUtils.catchException { [dataSource] in
+                dataSource?.apply(snapshot, animatingDifferences: true)
+            }
+        } catch {
+            FileLog.shared.addMessage("FolderViewController: diffable apply failed, falling back to reload: \(error)")
+            dataSource.applySnapshotUsingReloadData(snapshot)
+        }
     }
 
     override func handleThemeChanged() {
-        mainGrid.reloadData()
+        if let dataSource {
+            // re-populate every visible cell with the new theme colours
+            dataSource.applySnapshotUsingReloadData(dataSource.snapshot())
+        }
         view.backgroundColor = ThemeColor.primaryUi02()
         refreshContentUnavailable(shouldShow: podcasts.isEmpty)
         updateNavTintColor()

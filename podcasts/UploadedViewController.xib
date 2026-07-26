@@ -28,7 +28,6 @@
                     <color key="separatorColor" red="0.90196078430000004" green="0.90196078430000004" blue="0.90196078430000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <inset key="separatorInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                     <connections>
-                        <outlet property="dataSource" destination="-1" id="cgs-hR-IUk"/>
                         <outlet property="delegate" destination="-1" id="beF-Ns-N3F"/>
                     </connections>
                 </tableView>

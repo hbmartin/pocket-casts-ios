@@ -37,6 +37,7 @@ for fixture in \
   semgrep/tests/swift-security-auth-tokens.swift \
   semgrep/tests/swift-playlist-typed-requests.swift \
   semgrep/tests/swift-custom-query-validator.swift \
+  semgrep/tests/swift-closedrange-empty-trap.swift \
   semgrep/tests/Modules/Sources/PocketCastsServer/ServerPostOnMainFixture.swift \
   semgrep/tests/Modules/Sources/PocketCastsServer/SharingStaticSecretSigningFixture.swift \
   semgrep/tests/podcasts/IsolatedDeinitFixture.swift \

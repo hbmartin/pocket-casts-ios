@@ -186,11 +186,7 @@ class EffectsViewController: SimpleNotificationsViewController {
     private var playbackSpeedDebouncer: Debounce = .init(delay: 1)
 
     private var isCustomPlaybackSettingsEnabled: Bool {
-        #if APPCLIP
-        false
-        #else
         true
-        #endif
     }
 
     override func viewDidLoad() {
