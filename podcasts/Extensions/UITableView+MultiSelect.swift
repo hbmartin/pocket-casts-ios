@@ -68,11 +68,24 @@ extension UITableView {
         delegate?.tableView?(self, didDeselectRowAt: indexPath)
     }
 
-    func selectAll() {
-        guard numberOfSections > 0 else { return }
-        let lastSection = numberOfSections - 1
+    /// The last index path in the table that actually has a row, walking back
+    /// over trailing empty sections. nil when the table has no rows at all.
+    func lastPopulatedIndexPath() -> IndexPath? {
+        var section = numberOfSections - 1
+        while section >= 0 {
+            let rows = numberOfRows(inSection: section)
+            if rows > 0 {
+                return IndexPath(row: rows - 1, section: section)
+            }
+            section -= 1
+        }
+        return nil
+    }
 
-        selectAllFrom(fromIndexPath: IndexPath(row: 0, section: 0), toIndexPath: IndexPath(row: numberOfRows(inSection: lastSection) - 1, section: lastSection))
+    func selectAll() {
+        guard let lastIndexPath = lastPopulatedIndexPath() else { return }
+
+        selectAllFrom(fromIndexPath: IndexPath(row: 0, section: 0), toIndexPath: lastIndexPath)
     }
 
     func deselectAll() {
@@ -87,15 +100,17 @@ extension UITableView {
     }
 
     func selectAllBelow(fromIndexPath: IndexPath) {
-        guard numberOfSections > 0 else { return }
-        let lastSection = numberOfSections - 1
-        selectAllFrom(fromIndexPath: fromIndexPath, toIndexPath: IndexPath(row: numberOfRows(inSection: lastSection) - 1, section: lastSection))
+        guard let lastIndexPath = lastPopulatedIndexPath() else { return }
+        selectAllFrom(fromIndexPath: fromIndexPath, toIndexPath: lastIndexPath)
     }
 
     func selectAllFrom(fromIndexPath: IndexPath, toIndexPath: IndexPath) {
+        guard fromIndexPath.section <= toIndexPath.section else { return }
         for section in fromIndexPath.section ... toIndexPath.section {
             let startingRow = fromIndexPath.section == section ? fromIndexPath.row : 0
             let endingRow = toIndexPath.section == section ? toIndexPath.row : numberOfRows(inSection: section) - 1
+            // empty sections (endingRow == -1) have nothing to select
+            guard startingRow <= endingRow else { continue }
             for row in startingRow ... endingRow {
                 let thisPath = IndexPath(row: row, section: section)
                 selectIndexPath(thisPath)
@@ -108,16 +123,17 @@ extension UITableView {
     }
 
     func deselectAllBelow(indexPath: IndexPath) {
-        guard numberOfSections > 0 else { return }
-        let lastSection = numberOfSections - 1
-        let lastRow = numberOfRows(inSection: lastSection) - 1
-        deselectAllFrom(fromIndexPath: indexPath, toIndexPath: IndexPath(row: lastRow, section: lastSection))
+        guard let lastIndexPath = lastPopulatedIndexPath() else { return }
+        deselectAllFrom(fromIndexPath: indexPath, toIndexPath: lastIndexPath)
     }
 
     func deselectAllFrom(fromIndexPath: IndexPath, toIndexPath: IndexPath) {
+        guard fromIndexPath.section <= toIndexPath.section else { return }
         for section in fromIndexPath.section ... toIndexPath.section {
             let startingRow = fromIndexPath.section == section ? fromIndexPath.row : 0
             let endingRow = toIndexPath.section == section ? toIndexPath.row : numberOfRows(inSection: section) - 1
+            // empty sections (endingRow == -1) have nothing to deselect
+            guard startingRow <= endingRow else { continue }
             for row in startingRow ... endingRow {
                 let thisPath = IndexPath(row: row, section: section)
                 deselectIndexPath(thisPath)
@@ -130,18 +146,20 @@ extension UITableView {
     }
 
     func allBelowAreSelected(indexPath: IndexPath) -> Bool {
-        guard numberOfSections > 0 else { return false }
-        let lastSection = numberOfSections - 1
-        return areSelected(fromIndexPath: indexPath, toIndexPath: IndexPath(row: numberOfRows(inSection: lastSection) - 1, section: lastSection))
+        guard let lastIndexPath = lastPopulatedIndexPath() else { return false }
+        return areSelected(fromIndexPath: indexPath, toIndexPath: lastIndexPath)
     }
 
     func areSelected(
         fromIndexPath: IndexPath,
         toIndexPath: IndexPath
     ) -> Bool {
+        guard fromIndexPath.section <= toIndexPath.section else { return true }
         for section in fromIndexPath.section ... toIndexPath.section {
             let startingRow = fromIndexPath.section == section ? fromIndexPath.row : 0
             let endingRow = toIndexPath.section == section ? toIndexPath.row : numberOfRows(inSection: section) - 1
+            // empty sections (endingRow == -1) are vacuously selected
+            guard startingRow <= endingRow else { continue }
             for row in startingRow ... endingRow {
                 let thisPath = IndexPath(row: row, section: section)
                 if indexPathsForSelectedRows?.contains(thisPath) != true {
