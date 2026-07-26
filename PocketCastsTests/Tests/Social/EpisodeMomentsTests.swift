@@ -195,7 +195,7 @@ final class EpisodeMomentsTests: XCTestCase {
     func testTimestampedTopLevelMutationInvalidatesEpisodeMoments() {
         var invalidatedEpisodeUuid: String?
 
-        invalidateMomentPinsIfNeeded(
+        EpisodeCommentsViewModel.invalidateMomentPinsIfNeeded(
             afterMutating: SocialComment(id: 1, timestampSeconds: 30),
             episodeUuid: "episode",
             invalidator: { invalidatedEpisodeUuid = $0 }
@@ -207,12 +207,12 @@ final class EpisodeMomentsTests: XCTestCase {
     func testPlainCommentAndTimestampedReplyDoNotInvalidateEpisodeMoments() {
         var invalidatedEpisodeUuids: [String] = []
 
-        invalidateMomentPinsIfNeeded(
+        EpisodeCommentsViewModel.invalidateMomentPinsIfNeeded(
             afterMutating: SocialComment(id: 1),
             episodeUuid: "plain-comment",
             invalidator: { invalidatedEpisodeUuids.append($0) }
         )
-        invalidateMomentPinsIfNeeded(
+        EpisodeCommentsViewModel.invalidateMomentPinsIfNeeded(
             afterMutating: SocialComment(id: 2, parentId: 1, timestampSeconds: 30),
             episodeUuid: "reply",
             invalidator: { invalidatedEpisodeUuids.append($0) }

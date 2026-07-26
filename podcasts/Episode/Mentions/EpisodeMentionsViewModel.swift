@@ -11,15 +11,15 @@ class EpisodeMentionsViewModel: ObservableObject {
     let mentions: [EntityMention]
     let episodeUuid: String
     let podcastUuid: String?
-    let usedModel: Bool
+    let method: EntityMentionGenerationMethod
 
     private var hasTrackedShown = false
 
-    init(mentions: [EntityMention], episodeUuid: String, podcastUuid: String?, usedModel: Bool) {
+    init(mentions: [EntityMention], episodeUuid: String, podcastUuid: String?, method: EntityMentionGenerationMethod) {
         self.mentions = mentions
         self.episodeUuid = episodeUuid
         self.podcastUuid = podcastUuid
-        self.usedModel = usedModel
+        self.method = method
     }
 
     func cardAppeared() {
@@ -28,7 +28,7 @@ class EpisodeMentionsViewModel: ObservableObject {
         Analytics.track(.episodeDetailMentionsShown, properties: [
             "episode_uuid": episodeUuid,
             "count": mentions.count,
-            "method": usedModel ? "ai" : "fallback"
+            "method": method.rawValue
         ])
     }
 

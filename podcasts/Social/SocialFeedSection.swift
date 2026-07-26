@@ -345,7 +345,17 @@ final class SocialFeedViewModel: ObservableObject {
         seen.formUnion(fresh.map(\.id))
         UserDefaults.standard.set(Array(seen), forKey: Self.seenMilestonesKey)
         if stored != nil, !fresh.isEmpty {
-            celebration = fresh.first
+            celebration = Self.newestMilestone(in: fresh)
+        }
+    }
+
+    static func newestMilestone(in milestones: [SocialMilestone]) -> SocialMilestone? {
+        milestones.max { lhs, rhs in
+            let lhsDate = lhs.crossedAt ?? .distantPast
+            let rhsDate = rhs.crossedAt ?? .distantPast
+            if lhsDate != rhsDate { return lhsDate < rhsDate }
+            if lhs.kind != rhs.kind { return lhs.kind.rawValue < rhs.kind.rawValue }
+            return lhs.tier < rhs.tier
         }
     }
 

@@ -35,6 +35,19 @@ nonisolated struct EntityMention: Codable, Hashable, Sendable {
     let startTime: TimeInterval
 }
 
+/// Records which extractor produced an entity result. This travels with cached
+/// data so presentation and analytics never infer provenance from today's
+/// model availability.
+nonisolated enum EntityMentionGenerationMethod: String, Codable, Equatable, Sendable {
+    case foundationModel = "foundation_model"
+    case naturalLanguageTagger = "natural_language_tagger"
+}
+
+nonisolated struct EntityMentionResult: Codable, Equatable, Sendable {
+    let mentions: [EntityMention]
+    let method: EntityMentionGenerationMethod
+}
+
 // MARK: - Generator
 
 /// Extracts people/books/products/websites/places/organizations from an
@@ -62,34 +75,45 @@ nonisolated struct EntityMentionGenerator: Sendable {
 
     /// Entity mentions for the episode's segments: cached when the fingerprint
     /// matches, model-generated when Apple Intelligence is available, NLTagger
-    /// otherwise. Empty when the transcript is too thin or everything failed —
-    /// the card simply doesn't appear.
-    func mentions(episodeUuid: String, fingerprint: String, segments: [TranscriptSearchSegment]) async -> [EntityMention] {
-        guard !Task.isCancelled else { return [] }
+    /// otherwise. Nil when the transcript is too thin or everything failed —
+    /// the card simply doesn't appear. Transient fallbacks are returned for the
+    /// current presentation without being cached, so the model retries later.
+    func mentions(episodeUuid: String, fingerprint: String, segments: [TranscriptSearchSegment]) async -> EntityMentionResult? {
+        guard !Task.isCancelled else { return nil }
         if let cached = store.load(episodeUuid: episodeUuid, fingerprint: fingerprint) {
             return cached
         }
-        guard segments.count >= 10 else { return [] }
+        guard segments.count >= 10 else { return nil }
 
-        let mentions: [EntityMention]
-        if case .available = intelligence.availability() {
+        let result: EntityMentionResult
+        let shouldCache: Bool
+        let availability = intelligence.availability()
+        if case .available = availability {
             do {
-                mentions = try await modelMentions(segments: segments)
+                result = try await modelMentions(segments: segments)
+                shouldCache = true
             } catch is CancellationError {
-                return []
+                return nil
+            } catch let error as IntelligenceError where error.isTransient {
+                result = Self.taggerResult(from: segments)
+                shouldCache = false
             } catch {
-                return []
+                result = Self.taggerResult(from: segments)
+                shouldCache = true
             }
         } else {
-            mentions = Self.taggerMentions(from: segments)
+            result = Self.taggerResult(from: segments)
+            shouldCache = !availability.isTransientlyUnavailable
         }
-        guard !mentions.isEmpty, !Task.isCancelled else { return [] }
+        guard !result.mentions.isEmpty, !Task.isCancelled else { return nil }
 
-        store.save(mentions, episodeUuid: episodeUuid, fingerprint: fingerprint)
-        return mentions
+        if shouldCache {
+            store.save(result, episodeUuid: episodeUuid, fingerprint: fingerprint)
+        }
+        return result
     }
 
-    private func modelMentions(segments: [TranscriptSearchSegment]) async throws -> [EntityMention] {
+    private func modelMentions(segments: [TranscriptSearchSegment]) async throws -> EntityMentionResult {
         let chunks = Self.chunks(from: segments)
         // OnDeviceIntelligence admits one underlying Foundation Models request
         // at a time, including while timed-out work is still exiting. Keep the
@@ -106,9 +130,9 @@ nonisolated struct EntityMentionGenerator: Sendable {
 
         let validated = Self.merged(raw, segmentStartTimes: segments.map(\.startTime))
         if validated.isEmpty {
-            return Self.taggerMentions(from: segments)
+            return Self.taggerResult(from: segments)
         }
-        return validated
+        return EntityMentionResult(mentions: validated, method: .foundationModel)
     }
 
     /// Runs model chunks in transcript order. The shared Foundation Models
@@ -126,6 +150,8 @@ nonisolated struct EntityMentionGenerator: Sendable {
                 raw.append(contentsOf: try await respond(chunk))
             } catch is CancellationError {
                 throw CancellationError()
+            } catch let error as IntelligenceError where error.isTransient {
+                throw error
             } catch {
                 FileLog.shared.addMessage("EntityMentionGenerator: chunk failed: \(error)")
                 // One failed chunk doesn't void the others.
@@ -285,20 +311,25 @@ nonisolated struct EntityMentionGenerator: Sendable {
 
         return merged(raw, segmentStartTimes: segments.map(\.startTime))
     }
+
+    private static func taggerResult(from segments: [TranscriptSearchSegment]) -> EntityMentionResult {
+        EntityMentionResult(mentions: taggerMentions(from: segments), method: .naturalLanguageTagger)
+    }
 }
 
 // MARK: - Cache
 
-/// Device-local cache of entity mentions, one JSON file per episode in Caches
-/// (regenerable — safe for the system to purge). The stored fingerprint ties
-/// the payload to the exact indexed transcript; a mismatch reads as a miss.
+/// Device-local cache of entity mentions and their generation method, one JSON
+/// file per episode in Caches (regenerable — safe for the system to purge).
+/// The stored fingerprint ties the payload to the exact indexed transcript; a
+/// mismatch reads as a miss. Schema v2 adds generation provenance.
 nonisolated struct OnDeviceEntityStore: Sendable {
-    static let schemaVersion = 1
+    static let schemaVersion = 2
 
     private struct StoredPayload: Codable {
         let schemaVersion: Int
         let fingerprint: String
-        let mentions: [EntityMention]
+        let result: EntityMentionResult
     }
 
     private let directoryURL: URL
@@ -309,17 +340,17 @@ nonisolated struct OnDeviceEntityStore: Sendable {
         self.directoryURL = directoryURL ?? cachesDirectory.appendingPathComponent("mentioned_entities", isDirectory: true)
     }
 
-    func load(episodeUuid: String, fingerprint: String) -> [EntityMention]? {
+    func load(episodeUuid: String, fingerprint: String) -> EntityMentionResult? {
         guard let data = try? Data(contentsOf: fileURL(episodeUuid: episodeUuid)),
               let payload = try? JSONDecoder().decode(StoredPayload.self, from: data),
               payload.schemaVersion == Self.schemaVersion,
               payload.fingerprint == fingerprint,
-              !payload.mentions.isEmpty else { return nil }
-        return payload.mentions
+              !payload.result.mentions.isEmpty else { return nil }
+        return payload.result
     }
 
-    func save(_ mentions: [EntityMention], episodeUuid: String, fingerprint: String) {
-        let payload = StoredPayload(schemaVersion: Self.schemaVersion, fingerprint: fingerprint, mentions: mentions)
+    func save(_ result: EntityMentionResult, episodeUuid: String, fingerprint: String) {
+        let payload = StoredPayload(schemaVersion: Self.schemaVersion, fingerprint: fingerprint, result: result)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         try? data.write(to: fileURL(episodeUuid: episodeUuid), options: .atomic)

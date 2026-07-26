@@ -204,7 +204,6 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
                     } else {
                         self.showErrorMessage(L10n.accountRegistrationFailed)
                     }
-                    self.nextButton.setTitle(L10n.next, for: .normal)
                     return
                 }
 
@@ -256,11 +255,12 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    private func showPostRegistrationSignInFailure(username: String, password: String) {
+    /// Internal so the retry-state button contract can be exercised without a
+    /// live registration request.
+    func showPostRegistrationSignInFailure(username: String, password: String) {
         registeredCredentialsAwaitingSignIn = (username, password)
         setBusy(false)
         showErrorMessage(L10n.accountCreatedSignInFailed)
-        nextButton.setTitle(L10n.signIn, for: .normal)
     }
 
     private func finishAccountCreation() {
@@ -289,8 +289,16 @@ class NewEmailViewController: PCViewController, UITextFieldDelegate {
         } else {
             activityIndicator.stopAnimating()
             activityIndicator.isHidden = true
+            nextButton.setTitle(primaryButtonTitle, for: .normal)
             updateButtonState()
         }
+    }
+
+    private var primaryButtonTitle: String {
+        if registeredCredentialsAwaitingSignIn != nil {
+            return L10n.signIn
+        }
+        return FeatureFlag.newOnboardingAccountCreation.enabled ? L10n.createAccount : L10n.next
     }
 
     private func showErrorMessage(_ message: String) {

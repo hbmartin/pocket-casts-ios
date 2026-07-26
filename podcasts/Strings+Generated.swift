@@ -4675,6 +4675,8 @@ nonisolated internal enum L10n {
   internal static var socialFollowing: String { return L10n.tr("Localizable", "social_following", fallback: "Following") }
   /// Header/label for the list of accounts a profile follows
   internal static var socialFollowingTitle: String { return L10n.tr("Localizable", "social_following_title", fallback: "Following") }
+  /// Generic alert shown when a group action such as join, leave, moderation, or notification changes fails
+  internal static var socialGroupActionFailed: String { return L10n.tr("Localizable", "social_group_action_failed", fallback: "That action couldn’t be completed. Try again.") }
   /// Accessibility label for the per-group new-post notification toggle
   internal static var socialGroupAlertToggle: String { return L10n.tr("Localizable", "social_group_alert_toggle", fallback: "New post alerts") }
   /// Accessibility label for attaching the currently playing episode to a group post
@@ -4707,6 +4709,8 @@ nonisolated internal enum L10n {
   internal static var socialGroupMembersTitle: String { return L10n.tr("Localizable", "social_group_members_title", fallback: "Members") }
   /// Placeholder for the group post composer
   internal static var socialGroupPostPlaceholder: String { return L10n.tr("Localizable", "social_group_post_placeholder", fallback: "Post to the group") }
+  /// Inline error shown when sending a group post fails
+  internal static var socialGroupPostFailed: String { return L10n.tr("Localizable", "social_group_post_failed", fallback: "Couldn’t post to this group. Try again.") }
   /// Empty state of a group's post feed
   internal static var socialGroupPostsEmpty: String { return L10n.tr("Localizable", "social_group_posts_empty", fallback: "No posts yet. Share an episode or start a conversation.") }
   /// Footer explaining a private group's lifecycle. Shown in the create sheet

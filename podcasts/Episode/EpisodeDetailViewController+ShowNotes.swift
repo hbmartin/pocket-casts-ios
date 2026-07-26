@@ -7,7 +7,7 @@ import WebKit
 
 nonisolated private struct EpisodeMentionsCardPayload: Sendable {
     let mentions: [EntityMention]
-    let usedModel: Bool
+    let method: EntityMentionGenerationMethod
 }
 
 /// The transcript index and entity cache are synchronous database/disk APIs.
@@ -30,18 +30,12 @@ private func episodeMentionsCardPayload(episodeUuid: String) async -> EpisodeMen
     let tailStartBitPattern = (segments.last?.startTime ?? 0).bitPattern
     let fingerprint = "\(source.rawValue)-\(segments.count)-\(tailStartBitPattern)"
 
-    let intelligence = OnDeviceIntelligence.shared
-    let usedModel: Bool = {
-        if case .available = intelligence.availability() { return true }
-        return false
-    }()
-    let mentions = await EntityMentionGenerator().mentions(
+    guard let result = await EntityMentionGenerator().mentions(
         episodeUuid: episodeUuid,
         fingerprint: fingerprint,
         segments: segments
-    )
-    guard !mentions.isEmpty, !Task.isCancelled else { return nil }
-    return EpisodeMentionsCardPayload(mentions: mentions, usedModel: usedModel)
+    ), !result.mentions.isEmpty, !Task.isCancelled else { return nil }
+    return EpisodeMentionsCardPayload(mentions: result.mentions, method: result.method)
 }
 
 extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFSafariViewControllerDelegate { // NOSONAR - WebView navigation is restricted in decidePolicyFor.
@@ -267,13 +261,13 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
     /// entities means no card.
     private func loadMentionsCard(episodeUuid: String) async {
         guard let payload = await episodeMentionsCardPayload(episodeUuid: episodeUuid) else { return }
-        attachMentionsCardIfNeeded(mentions: payload.mentions, usedModel: payload.usedModel)
+        attachMentionsCardIfNeeded(mentions: payload.mentions, method: payload.method)
     }
 
     /// Hosts the mentions card after the credits card (or whatever card is last
     /// in the excerpt stack); same idempotent container pattern as
     /// `attachCreditsCardIfNeeded`.
-    private func attachMentionsCardIfNeeded(mentions: [EntityMention], usedModel: Bool) {
+    private func attachMentionsCardIfNeeded(mentions: [EntityMention], method: EntityMentionGenerationMethod) {
         guard episodeMentionsContainer == nil,
               let excerptView = transcriptExcerpt,
               let stack = excerptView.superview as? UIStackView else {
@@ -284,7 +278,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             mentions: mentions,
             episodeUuid: episode.uuid,
             podcastUuid: episode.parentIdentifier(),
-            usedModel: usedModel
+            method: method
         )
 
         let container = UIView()

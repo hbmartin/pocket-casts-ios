@@ -286,16 +286,6 @@ struct PendingTranscriptQuote: Equatable {
 }
 
 @MainActor
-func invalidateMomentPinsIfNeeded(
-    afterMutating comment: SocialComment,
-    episodeUuid: String,
-    invalidator: (String) -> Void
-) {
-    guard comment.parentId == 0, comment.timestampSeconds != nil else { return }
-    invalidator(episodeUuid)
-}
-
-@MainActor
 final class EpisodeCommentsViewModel: ObservableObject {
     let episodeUuid: String
     let podcastUuid: String
@@ -530,7 +520,7 @@ final class EpisodeCommentsViewModel: ObservableObject {
             quoteSource: quote?.source ?? 0, quoteSegment: quote?.segment ?? 0)
         if let submitted {
             Analytics.track(.socialCommentSubmitted)
-            invalidateMomentPinsIfNeeded(
+            Self.invalidateMomentPinsIfNeeded(
                 afterMutating: submitted,
                 episodeUuid: episodeUuid,
                 invalidator: NowPlayingPlayerItemViewController.invalidateMomentPins
@@ -563,7 +553,7 @@ final class EpisodeCommentsViewModel: ObservableObject {
 
     func delete(_ comment: SocialComment) async {
         guard await ApiServerHandler.shared.deleteComment(id: comment.id) else { return }
-        invalidateMomentPinsIfNeeded(
+        Self.invalidateMomentPinsIfNeeded(
             afterMutating: comment,
             episodeUuid: episodeUuid,
             invalidator: NowPlayingPlayerItemViewController.invalidateMomentPins
@@ -587,6 +577,15 @@ final class EpisodeCommentsViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    static func invalidateMomentPinsIfNeeded(
+        afterMutating comment: SocialComment,
+        episodeUuid: String,
+        invalidator: (String) -> Void
+    ) {
+        guard comment.parentId == 0, comment.timestampSeconds != nil else { return }
+        invalidator(episodeUuid)
+    }
 
     private func bumpReplyCount(of id: Int64) {
         if let index = topLevel.firstIndex(where: { $0.id == id }) {
