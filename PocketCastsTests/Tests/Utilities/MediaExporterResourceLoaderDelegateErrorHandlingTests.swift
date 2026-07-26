@@ -108,6 +108,46 @@ final class MediaExporterResourceLoaderDelegateErrorHandlingTests: XCTestCase {
             return
         }
     }
+
+    func testResponseCompletionCanReenterDelegateWithoutDeadlock() {
+        let expectation = expectation(description: "Response completion reenters delegate")
+        let delegate = MediaExporterResourceLoaderDelegate(saveFilePath: tempFilePath) { _, _, _, _ in }
+        let response = URLResponse(
+            url: URLSessionTaskFixture.url,
+            mimeType: "audio/mpeg",
+            expectedContentLength: 0,
+            textEncodingName: nil
+        )
+
+        delegate.urlSession(
+            .shared,
+            dataTask: URLSession.shared.dataTask(with: URLSessionTaskFixture.url),
+            didReceive: response
+        ) { disposition in
+            XCTAssertEqual(disposition, .allow)
+            delegate.response = response
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func testTerminalCallbackUsesFirstSettlement() {
+        let callback = expectation(description: "Only the first terminal callback is delivered")
+        callback.assertForOverFulfill = true
+        let delegate = MediaExporterResourceLoaderDelegate(saveFilePath: tempFilePath) { status, _, _, _ in
+            if case .failed = status {
+                callback.fulfill()
+            }
+        }
+        let first = NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet)
+        let second = NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut)
+
+        delegate.urlSession(.shared, task: makeURLSessionTask(), didCompleteWithError: first)
+        delegate.urlSession(.shared, task: makeURLSessionTask(), didCompleteWithError: second)
+
+        wait(for: [callback], timeout: 1)
+    }
 }
 
 // MARK: - Helpers

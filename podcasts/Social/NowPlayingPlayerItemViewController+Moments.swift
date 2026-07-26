@@ -71,15 +71,43 @@ func fetchAllEpisodeComments(
     pageSize: Int = 50,
     fetchPage: (_ limit: Int, _ offset: Int) async -> SocialCommentPage?
 ) async -> [SocialComment]? {
+    let maximumPageCount = 20
+    let maximumCommentCount = 1_000
+    guard pageSize > 0, !Task.isCancelled else { return nil }
     guard let firstPage = await fetchPage(pageSize, 0) else { return nil }
+    guard !Task.isCancelled,
+          firstPage.total >= 0,
+          firstPage.total <= maximumCommentCount,
+          firstPage.comments.count <= firstPage.total else { return nil }
+
     var comments = firstPage.comments
     let expectedTotal = firstPage.total
+    var seenIds = Set(comments.map(\.id))
+    guard seenIds.count == comments.count else { return nil }
+    var pageCount = 1
+    var nextOffset = comments.count
 
     while comments.count < expectedTotal {
-        guard let page = await fetchPage(pageSize, comments.count) else { return nil }
-        guard !page.comments.isEmpty else { return nil }
+        guard !Task.isCancelled, pageCount < maximumPageCount else { return nil }
+        guard let page = await fetchPage(pageSize, nextOffset) else { return nil }
+        guard !Task.isCancelled,
+              page.total == expectedTotal,
+              !page.comments.isEmpty,
+              comments.count + page.comments.count <= expectedTotal,
+              comments.count + page.comments.count <= maximumCommentCount else { return nil }
+        let pageIds = page.comments.map(\.id)
+        let uniquePageIds = Set(pageIds)
+        guard uniquePageIds.count == pageIds.count,
+              seenIds.isDisjoint(with: uniquePageIds) else { return nil }
+
         comments.append(contentsOf: page.comments)
+        seenIds.formUnion(uniquePageIds)
+        pageCount += 1
+        let advancedOffset = comments.count
+        guard advancedOffset > nextOffset else { return nil }
+        nextOffset = advancedOffset
     }
+    guard !Task.isCancelled, comments.count == expectedTotal else { return nil }
     return comments
 }
 

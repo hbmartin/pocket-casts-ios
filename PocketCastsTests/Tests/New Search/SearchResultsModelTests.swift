@@ -192,11 +192,13 @@ private actor TranscriptSearchGate {
         suspendedContinuation?.resume()
         suspendedContinuation = nil
         guard !isReleased else { return }
+        precondition(releaseContinuation == nil, "TranscriptSearchGate supports one suspended waiter")
         await withCheckedContinuation { releaseContinuation = $0 }
     }
 
     func waitUntilSuspended() async {
         guard !isSuspended else { return }
+        precondition(suspendedContinuation == nil, "TranscriptSearchGate supports one suspension observer")
         await withCheckedContinuation { suspendedContinuation = $0 }
     }
 

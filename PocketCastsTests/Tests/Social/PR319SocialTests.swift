@@ -136,6 +136,32 @@ final class SocialNotificationSettingsViewModelTests: XCTestCase {
 
 @MainActor
 final class SocialCoordinatorCommentsTests: DBTestCase {
+    func testRefreshCallbackCompletesOnFirstCallback() async {
+        let result = await SocialCoordinator.waitForRefreshCallback(timeout: .seconds(1)) { completion in
+            completion()
+            completion()
+        }
+
+        XCTAssertEqual(result, .completed)
+    }
+
+    func testRefreshCallbackTimesOutWhenCallbackNeverArrives() async {
+        let result = await SocialCoordinator.waitForRefreshCallback(timeout: .milliseconds(10)) { _ in }
+
+        XCTAssertEqual(result, .timedOut)
+    }
+
+    func testRefreshCallbackCooperatesWithCancellation() async {
+        let task = Task {
+            await SocialCoordinator.waitForRefreshCallback(timeout: .seconds(10)) { _ in }
+        }
+
+        task.cancel()
+
+        let result = await task.value
+        XCTAssertEqual(result, .cancelled)
+    }
+
     func testCommentsViewModelRefreshesMissingEpisodeAndPopulatesTitles() async {
         let episodeUuid = "push-episode-\(UUID().uuidString)"
         let podcastUuid = "push-podcast-\(UUID().uuidString)"

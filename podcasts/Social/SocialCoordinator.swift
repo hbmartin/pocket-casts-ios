@@ -10,6 +10,12 @@ import UIKit
 /// All entry points are gated by FeatureFlag.socialProfiles.
 @MainActor
 enum SocialCoordinator {
+    enum RefreshWaitResult: Equatable, Sendable {
+        case completed
+        case timedOut
+        case cancelled
+    }
+
     /// Presents the one-time Join flow. On success, pushes the new profile.
     static func presentJoinFlow(from presenter: UIViewController, navigationController: UINavigationController?) {
         guard SyncManager.isUserLoggedIn() else {
@@ -127,10 +133,45 @@ enum SocialCoordinator {
     }
 
     private static func refreshPodcasts() async {
-        await withCheckedContinuation { continuation in
-            RefreshManager.shared.refreshPodcasts { _ in
-                continuation.resume()
+        let result = await waitForRefreshCallback(timeout: .seconds(30)) { completion in
+            RefreshManager.shared.refreshPodcasts { _ in completion() }
+        }
+        if result == .timedOut {
+            FileLog.shared.addMessage("SocialCoordinator: podcast refresh timed out while opening comments; continuing with available metadata")
+        }
+    }
+
+    /// Waits for a callback without allowing a missing callback to strand the task.
+    /// The stream is single-consumer and the task group takes the first completion,
+    /// timeout, or cancellation result.
+    static func waitForRefreshCallback(
+        timeout: Duration,
+        start: (@escaping () -> Void) -> Void
+    ) async -> RefreshWaitResult {
+        let pair = AsyncStream<Void>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        start {
+            pair.continuation.yield()
+            pair.continuation.finish()
+        }
+
+        return await withTaskGroup(of: RefreshWaitResult.self) { group in
+            group.addTask {
+                for await _ in pair.stream {
+                    return .completed
+                }
+                return .cancelled
             }
+            group.addTask {
+                do {
+                    try await Task.sleep(for: timeout)
+                    return .timedOut
+                } catch {
+                    return .cancelled
+                }
+            }
+            let first = await group.next() ?? .cancelled
+            group.cancelAll()
+            return first
         }
     }
 

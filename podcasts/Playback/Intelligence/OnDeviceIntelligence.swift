@@ -97,14 +97,22 @@ actor OnDeviceIntelligence: IntelligenceProviding {
     /// request that runs this long has effectively hung and the feature's
     /// fallback is a better experience than a spinner.
     private let timeout: Duration
+    private let watchdogReporter: @Sendable () -> Void
 
     /// Set before generation suspends and cleared only by that generation's
     /// work task after the underlying provider actually exits. The identifier
     /// prevents a stale completion from ever clearing newer admitted work.
     private var inFlightGenerationID: UUID?
+    private var generationWatchdog: Task<Void, Never>?
 
-    init(timeout: Duration = .seconds(30)) {
+    init(
+        timeout: Duration = .seconds(30),
+        watchdogReporter: @escaping @Sendable () -> Void = {
+            FileLog.shared.addMessage("OnDeviceIntelligence: underlying generation exceeded twice its configured timeout")
+        }
+    ) {
         self.timeout = timeout
+        self.watchdogReporter = watchdogReporter
     }
 
     nonisolated func availability() -> IntelligenceAvailability {
@@ -163,6 +171,7 @@ actor OnDeviceIntelligence: IntelligenceProviding {
 
         let generationID = UUID()
         inFlightGenerationID = generationID
+        startGenerationWatchdog(id: generationID)
         let timeout = timeout
 
         return try await Self.raceAgainstTimeout(timeout: timeout) { [weak self] in
@@ -182,7 +191,29 @@ actor OnDeviceIntelligence: IntelligenceProviding {
 
     private func generationDidFinish(id: UUID) {
         guard inFlightGenerationID == id else { return }
+        generationWatchdog?.cancel()
+        generationWatchdog = nil
         inFlightGenerationID = nil
+    }
+
+    /// The caller-facing timeout deliberately abandons non-cooperative work.
+    /// Keep observing that work so a provider hang is visible in diagnostics,
+    /// and retain the completed watchdog until the generation itself exits.
+    private func startGenerationWatchdog(id: UUID) {
+        let threshold = timeout + timeout
+        generationWatchdog = Task { [weak self] in
+            do {
+                try await Task.sleep(for: threshold)
+            } catch {
+                return
+            }
+            await self?.reportGenerationWatchdogIfNeeded(id: id)
+        }
+    }
+
+    private func reportGenerationWatchdogIfNeeded(id: UUID) {
+        guard inFlightGenerationID == id else { return }
+        watchdogReporter()
     }
 
     /// Races `work` against the timeout without awaiting a hung child on the

@@ -360,7 +360,7 @@ final class SocialFeedViewModel: ObservableObject {
     /// Re-loads when the joined state changed since the last load (e.g. the
     /// user joined from the card and navigated back to Explore).
     func refreshIfStale() async {
-        guard !fixtureLoaded else { return }
+        guard !fixtureLoaded, !isLoadInFlight else { return }
         let joinedNow = FeatureFlag.socialProfiles.enabled && SocialIdentityStore.isJoined
         if joinedNow != lastLoadedJoined {
             isLoading = true

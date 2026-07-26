@@ -1,3 +1,4 @@
+import Synchronization
 import XCTest
 
 @testable import podcasts
@@ -318,6 +319,43 @@ final class OnDeviceIntelligenceRaceTests: XCTestCase {
         let snapshot = await provider.snapshot()
         XCTAssertEqual(snapshot.startCount, 2)
         XCTAssertEqual(snapshot.maximumActiveCount, 1)
+    }
+
+    func testWatchdogOutlivesCallerTimeoutAndReportsOnce() async {
+        let reportCount = Mutex(0)
+        let intelligence = OnDeviceIntelligence(
+            timeout: .milliseconds(50),
+            watchdogReporter: { reportCount.withLock { $0 += 1 } }
+        )
+        let provider = ControlledGenerationProvider()
+        let generation = Self.startGeneration(intelligence: intelligence, provider: provider)
+        await provider.waitUntilStarted(1)
+
+        await assertTimedOut(generation)
+        try? await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(reportCount.withLock { $0 }, 1)
+        try? await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(reportCount.withLock { $0 }, 1)
+
+        await provider.release(1)
+        await provider.waitUntilFinished(1)
+    }
+
+    func testWatchdogIsCancelledWhenGenerationFinishes() async throws {
+        let reportCount = Mutex(0)
+        let intelligence = OnDeviceIntelligence(
+            timeout: .milliseconds(100),
+            watchdogReporter: { reportCount.withLock { $0 += 1 } }
+        )
+        let provider = ControlledGenerationProvider(blockedInvocations: [])
+
+        let value = try await intelligence.performGeneration {
+            await provider.generate()
+        }
+        try? await Task.sleep(for: .milliseconds(250))
+
+        XCTAssertEqual(value, 1)
+        XCTAssertEqual(reportCount.withLock { $0 }, 0)
     }
 
     func testCallerCancellationReturnsWithoutAdmittingAReplacement() async {

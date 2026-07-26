@@ -29,9 +29,9 @@ nonisolated fileprivate extension Int {
 /// AVAssetResourceLoader queues by design, with mutable state guarded by `lock`.
 /// @unchecked Sendable: mutable state is guarded by `lock`; Sendable is required by the URLSession delegate contract.
 nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate, @unchecked Sendable {
-    // Delegate methods can call stateful helpers recursively (for example a write
-    // failure tears down the session), so use a recursive lock for one coherent state domain.
-    private let lock = NSRecursiveLock()
+    /// State transitions happen under this non-recursive lock. Calls into AVFoundation,
+    /// URLSession, NotificationCenter, and client callbacks always happen after unlocking.
+    private let lock = NSLock()
 
     private let readDataLimit = MediaExporterItemConfiguration.readDataLimit
 
@@ -41,46 +41,24 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     private var storedResponse: URLResponse?
     private var pendingRequests = Set<AVAssetResourceLoadingRequest>()
     private var isDownloadComplete = false
+    private var terminalStatusReported = false
+    private var terminalError: (any Error)?
     private var storedDeleteFileOnRelease = false
     private var storedHasRetriedWithoutUserAgent = false
 
     var response: URLResponse? {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-            return storedResponse
-        }
-        set {
-            lock.lock()
-            defer { lock.unlock() }
-            storedResponse = newValue
-        }
+        get { lock.withLock { storedResponse } }
+        set { lock.withLock { storedResponse = newValue } }
     }
 
     var deleteFileOnRelease: Bool {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-            return storedDeleteFileOnRelease
-        }
-        set {
-            lock.lock()
-            defer { lock.unlock() }
-            storedDeleteFileOnRelease = newValue
-        }
+        get { lock.withLock { storedDeleteFileOnRelease } }
+        set { lock.withLock { storedDeleteFileOnRelease = newValue } }
     }
 
     var hasRetriedWithoutUserAgent: Bool {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-            return storedHasRetriedWithoutUserAgent
-        }
-        set {
-            lock.lock()
-            defer { lock.unlock() }
-            storedHasRetriedWithoutUserAgent = newValue
-        }
+        get { lock.withLock { storedHasRetriedWithoutUserAgent } }
+        set { lock.withLock { storedHasRetriedWithoutUserAgent = newValue } }
     }
 
     private let saveFilePath: String
@@ -100,6 +78,22 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
 
     typealias FileExporterProgressReport = (_ status: FileExportStatus, _ contentType: String?, _ downloaded: Int64, _ total: Int64) -> ()
 
+    private struct RequestEffect {
+        let request: AVAssetResourceLoadingRequest
+        let response: URLResponse
+        let data: [Data]
+        let shouldFinish: Bool
+    }
+
+    private struct FailureEffect {
+        let session: URLSession?
+        let requests: Set<AVAssetResourceLoadingRequest>
+        let error: any Error
+        let contentType: String?
+        let notify: Bool
+        let reportsTerminalStatus: Bool
+    }
+
     // MARK: Init
     init(saveFilePath: String, episodeUuid: String? = nil, podcastUuid: String? = nil, callback: FileExporterProgressReport?) {
         self.saveFilePath = saveFilePath
@@ -113,11 +107,8 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     deinit {
-        lock.lock()
-        defer { lock.unlock() }
         FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Releasing loader for \(saveFilePath)")
         session?.invalidateAndCancel()
-        session = nil
         if storedDeleteFileOnRelease {
             fileHandle.deleteFile()
         }
@@ -147,59 +138,92 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     // MARK: AVAssetResourceLoaderDelegate
 
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader, shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
         guard let url = loadingRequest.request.url,
               let originalURL = Self.resolveOriginalURL(from: url)
         else {
             return false
         }
 
-        if session == nil {
-            // If we're playing from an url, we need to download the file.
-            // We start loading the file on first request only.
-            startDataRequest(with: originalURL)
+        let state = lock.withLock { () -> (shouldStart: Bool, terminalError: (any Error)?) in
+            if let terminalError {
+                return (false, terminalError)
+            }
+            pendingRequests.insert(loadingRequest)
+            return (session == nil && !isDownloadComplete && !terminalStatusReported, nil)
         }
         debugLogRequestInfo(loadingRequest, state: "Add")
-        pendingRequests.insert(loadingRequest)
+        if let terminalError = state.terminalError {
+            loadingRequest.finishLoading(with: terminalError)
+            return true
+        }
+        if state.shouldStart {
+            // If we're playing from a URL, start downloading on the first request.
+            startDataRequest(with: originalURL)
+        }
         processPendingRequests()
         return true
     }
 
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader, didCancel loadingRequest: AVAssetResourceLoadingRequest) {
         debugLogRequestInfo(loadingRequest, state: "Cancel")
-        lock.lock()
-        pendingRequests.remove(loadingRequest)
-        lock.unlock()
+        _ = lock.withLock { pendingRequests.remove(loadingRequest) }
     }
 
     // MARK: URLSessionDelegate
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        lock.lock()
-        defer { lock.unlock() }
-        writeDataToFile(data)
-        processPendingRequests()
-        let contentType = storedResponse?.mimeType
-        let downloaded = Int64(fileHandle.safeFileSize)
-        let total = dataTask.countOfBytesExpectedToReceive
-        callbackQueue.async { [weak self] in
-            guard let self else { return }
-            self.callback?(.downloading, contentType, downloaded, total)
+        let transition = lock.withLock { () -> (effects: [RequestEffect], failure: FailureEffect?, progress: (String?, Int64)?) in
+            guard !terminalStatusReported else { return ([], nil, nil) }
+            do {
+                try fileHandle.append(data: data)
+                let effects = try pendingRequestEffectsLocked()
+                return (effects, nil, (storedResponse?.mimeType, Int64(fileHandle.safeFileSize)))
+            } catch {
+                FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: failed to write data to file: \(error)")
+                return ([], transitionToFailureLocked(error: error, notify: true), nil)
+            }
+        }
+        performRequestEffects(transition.effects)
+        if let failure = transition.failure {
+            performFailureEffect(failure)
+        } else if let progress = transition.progress {
+            let total = dataTask.countOfBytesExpectedToReceive
+            callbackQueue.async { [weak self] in
+                self?.callback?(.downloading, progress.0, progress.1, total)
+            }
         }
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        lock.lock()
-        defer { lock.unlock() }
-        storedResponse = response
-        processPendingRequests()
+        let transition = lock.withLock { () -> (effects: [RequestEffect], failure: FailureEffect?) in
+            guard !terminalStatusReported else { return ([], nil) }
+            storedResponse = response
+            do {
+                return (try pendingRequestEffectsLocked(), nil)
+            } catch {
+                if let failure = transitionToFailureLocked(error: error, notify: true) {
+                    return ([], failure)
+                }
+                let requests = pendingRequests
+                pendingRequests.removeAll()
+                return ([], FailureEffect(
+                    session: nil,
+                    requests: requests,
+                    error: error,
+                    contentType: storedResponse?.mimeType,
+                    notify: true,
+                    reportsTerminalStatus: false
+                ))
+            }
+        }
+        performRequestEffects(transition.effects)
+        if let failure = transition.failure {
+            performFailureEffect(failure)
+        }
         completionHandler(.allow)
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        lock.lock()
-        defer { lock.unlock() }
         if let error {
             downloadFailed(with: error)
             return
@@ -243,10 +267,7 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     @objc func startDataRequest(with url: URL, retryWithoutUserAgent: Bool) {
-        lock.lock()
-        defer { lock.unlock() }
         FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Start data request for \(url)")
-        guard session == nil else { return }
 
         let configuration = URLSessionConfiguration.default
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
@@ -262,157 +283,199 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
             urlRequest.setValue(ServerConstants.Values.appUserAgent, forHTTPHeaderField: ServerConstants.HttpHeaders.userAgent)
         }
 
-        if retryWithoutUserAgent {
-            storedHasRetriedWithoutUserAgent = true
-            FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Starting request without User-Agent header")
+        let candidateSession = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+        let task = candidateSession.dataTask(with: urlRequest)
+        task.priority = URLSessionTask.highPriority
+        let installed = lock.withLock {
+            guard session == nil, !terminalStatusReported else { return false }
+            session = candidateSession
+            if retryWithoutUserAgent {
+                storedHasRetriedWithoutUserAgent = true
+            }
+            return true
         }
-
-        session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
-        if let task = session?.dataTask(with: urlRequest) {
-            task.priority = URLSessionTask.highPriority
+        if installed {
+            if retryWithoutUserAgent {
+                FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Starting request without User-Agent header")
+            }
             task.resume()
+        } else {
+            candidateSession.invalidateAndCancel()
         }
     }
 
     func invalidateAndCancelSession(shouldResetData: Bool = true, error: Error? = nil) {
-        lock.lock()
-        defer { lock.unlock() }
-        session?.invalidateAndCancel()
-        session = nil
-
-        if shouldResetData {
-            pendingRequests.forEach { request in
-                request.finishLoading(with: error)
+        let detached = lock.withLock { () -> (URLSession?, Set<AVAssetResourceLoadingRequest>) in
+            let detachedSession = session
+            session = nil
+            let detachedRequests: Set<AVAssetResourceLoadingRequest>
+            if shouldResetData {
+                detachedRequests = pendingRequests
+                pendingRequests.removeAll()
+            } else {
+                detachedRequests = []
             }
-            pendingRequests.removeAll()
+
+            // We need to only remove the file if it hasn't been fully downloaded.
+            if !isDownloadComplete {
+                fileHandle.deleteFile()
+            }
+            return (detachedSession, detachedRequests)
         }
 
-        // We need to only remove the file if it hasn't been fully downloaded
-        guard isDownloadComplete == false else { return }
-
-        fileHandle.deleteFile()
+        detached.0?.invalidateAndCancel()
+        detached.1.forEach { $0.finishLoading(with: error) }
     }
 
     // MARK: Private methods
 
     private func processPendingRequests() {
-        lock.lock()
-        defer { lock.unlock() }
-        var requestsFulfilled: Set<AVAssetResourceLoadingRequest> = []
-        do {
-            guard response != nil else {
-                return
-            }
-            for loadingRequest in pendingRequests {
-                fillInContentInformationRequest(loadingRequest.contentInformationRequest)
-                if let dataRequest = loadingRequest.dataRequest {
-                    if try haveEnoughDataToFulfillRequest(dataRequest) {
-                        debugLogRequestInfo(loadingRequest, state: "Finish")
-                        loadingRequest.finishLoading()
-                        requestsFulfilled.insert(loadingRequest)
-                    } else {
-                        debugLogRequestInfo(loadingRequest, state: "Partial")
-                    }
-                } else if loadingRequest.dataRequest == nil {
-                    loadingRequest.finishLoading()
-                    requestsFulfilled.insert(loadingRequest)
+        let transition = lock.withLock { () -> (effects: [RequestEffect], failure: FailureEffect?) in
+            guard terminalError == nil else { return ([], nil) }
+            do {
+                return (try pendingRequestEffectsLocked(), nil)
+            } catch {
+                if let failure = transitionToFailureLocked(error: error, notify: true) {
+                    return ([], failure)
                 }
+                let requests = pendingRequests
+                pendingRequests.removeAll()
+                return ([], FailureEffect(
+                    session: nil,
+                    requests: requests,
+                    error: error,
+                    contentType: storedResponse?.mimeType,
+                    notify: true,
+                    reportsTerminalStatus: false
+                ))
             }
-            removeFulfilledRequests(requestsFulfilled)
-        } catch {
-            removeFulfilledRequests(requestsFulfilled)
-            downloadFailed(with: error, notify: true)
+        }
+        performRequestEffects(transition.effects)
+        if let failure = transition.failure {
+            performFailureEffect(failure)
         }
     }
 
-    private func removeFulfilledRequests(_ requestsFulfilled: Set<AVAssetResourceLoadingRequest>) {
-        var updatedPendingRequests = pendingRequests
-        updatedPendingRequests.subtract(requestsFulfilled)
-        pendingRequests = updatedPendingRequests
-    }
+    /// Prepares reads and detaches fulfilled requests. Caller must hold `lock`.
+    private func pendingRequestEffectsLocked() throws -> [RequestEffect] {
+        guard let response = storedResponse else { return [] }
 
-    private func fillInContentInformationRequest(_ contentInformationRequest: AVAssetResourceLoadingContentInformationRequest?) {
-        // Do we have response from the server?
-        guard let response = storedResponse,
-              let contentInformationRequest
-        else {
-            return
+        var effects: [RequestEffect] = []
+        var fulfilled = Set<AVAssetResourceLoadingRequest>()
+        for request in pendingRequests {
+            let prepared: (data: [Data], fulfilled: Bool)
+            if let dataRequest = request.dataRequest {
+                prepared = try dataForRequestLocked(dataRequest)
+            } else {
+                prepared = ([], true)
+            }
+            effects.append(RequestEffect(
+                request: request,
+                response: response,
+                data: prepared.data,
+                shouldFinish: prepared.fulfilled
+            ))
+            if prepared.fulfilled {
+                fulfilled.insert(request)
+            }
         }
-        contentInformationRequest.contentType = response.mimeType
-        contentInformationRequest.contentLength = response.expectedContentLength
-        contentInformationRequest.isByteRangeAccessSupported = true
-
-        FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Content Information Request filled: \(contentInformationRequest.contentLength)")
+        pendingRequests.subtract(fulfilled)
+        return effects
     }
 
-    private func haveEnoughDataToFulfillRequest(_ dataRequest: AVAssetResourceLoadingDataRequest) throws -> Bool {
+    private func performRequestEffects(_ effects: [RequestEffect]) {
+        for effect in effects {
+            if let contentInformationRequest = effect.request.contentInformationRequest {
+                contentInformationRequest.contentType = effect.response.mimeType
+                contentInformationRequest.contentLength = effect.response.expectedContentLength
+                contentInformationRequest.isByteRangeAccessSupported = true
+                FileLog.shared.addMessage(
+                    "MediaExporterResourceLoaderDelegate: Content Information Request filled: \(contentInformationRequest.contentLength)"
+                )
+            }
+            if let dataRequest = effect.request.dataRequest {
+                effect.data.forEach { dataRequest.respond(with: $0) }
+            }
+            if effect.shouldFinish {
+                debugLogRequestInfo(effect.request, state: "Finish")
+                effect.request.finishLoading()
+            } else {
+                debugLogRequestInfo(effect.request, state: "Partial")
+            }
+        }
+    }
+
+    /// Reads response chunks while the file handle is protected. Caller must hold `lock`.
+    private func dataForRequestLocked(_ dataRequest: AVAssetResourceLoadingDataRequest) throws -> (data: [Data], fulfilled: Bool) {
         let requestedOffset = Int(dataRequest.requestedOffset)
         let requestedLength = dataRequest.requestedLength
         var currentOffset = Int(dataRequest.currentOffset)
         let bytesCached = try fileHandle.fileSize()
 
-        try validateCurrentOffset(currentOffset, bytesCached: bytesCached)
+        try validateCurrentOffsetLocked(currentOffset, bytesCached: bytesCached)
 
-        // Is there enough data cached to fulfill the request?
         guard bytesCached > currentOffset else {
-            return false
+            return ([], false)
         }
 
+        var chunks: [Data] = []
         while currentOffset < min(requestedOffset + requestedLength, bytesCached) {
-            // Data length to be loaded into memory with maximum size of readDataLimit.
             let bytesToRespond = min(bytesCached - currentOffset, requestedLength - (currentOffset - requestedOffset), readDataLimit)
-            // Read data from disk and pass it to the dataRequest
+            guard bytesToRespond > 0 else { break }
             guard let data = try fileHandle.readData(withOffset: currentOffset, forLength: bytesToRespond) else {
                 throw MediaFileHandleError.readAfterEndOfFile
             }
-            dataRequest.respond(with: data)
-            let newOffset = Int(dataRequest.currentOffset)
-            guard bytesToRespond != 0, newOffset != currentOffset else {
-                break
-            }
-            currentOffset = newOffset
+            chunks.append(data)
+            currentOffset += data.count
         }
 
-        return currentOffset >= requestedLength + requestedOffset
+        return (chunks, currentOffset >= requestedLength + requestedOffset)
     }
 
-    private func validateCurrentOffset(_ currentOffset: Int, bytesCached: Int) throws {
+    /// Validates a read position against locked completion/file state.
+    private func validateCurrentOffsetLocked(_ currentOffset: Int, bytesCached: Int) throws {
         if isDownloadComplete, currentOffset >= bytesCached {
             FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: try to read a position after the end of a file")
             throw MediaFileHandleError.readAfterEndOfFile
         }
     }
 
-    private func writeDataToFile(_ data: Data) {
-        lock.lock()
-        defer { lock.unlock() }
-
-        do {
-            try fileHandle.append(data: data)
-        } catch {
-            FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: failed to write data to file: \(error)")
-            downloadFailed(with: error, notify: true)
-        }
-    }
-
     func releaseIfDownloadComplete() {
-        lock.lock()
-        defer { lock.unlock() }
-        if isDownloadComplete {
-            invalidateAndCancelSession(shouldResetData: false)
+        let detachedSession = lock.withLock { () -> URLSession? in
+            guard isDownloadComplete else { return nil }
+            defer { session = nil }
+            return session
         }
+        detachedSession?.invalidateAndCancel()
     }
 
     private func downloadComplete() {
-        lock.lock()
-        defer { lock.unlock() }
-        FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Download completed. File Size:\(fileHandle.safeFileSize) ExpectedSize:\(storedResponse?.expectedContentLength ?? 0)")
-        isDownloadComplete = true
-        processPendingRequests()
-        let contentType = storedResponse?.mimeType
-        let fileSize = self.fileHandle.safeFileSize
+        let transition = lock.withLock { () -> (effects: [RequestEffect], contentType: String?, fileSize: Int, expectedSize: Int64, failure: FailureEffect?)? in
+            guard !terminalStatusReported else { return nil }
+            isDownloadComplete = true
+            let fileSize = fileHandle.safeFileSize
+            let expectedSize = storedResponse?.expectedContentLength ?? 0
+            do {
+                let effects = try pendingRequestEffectsLocked()
+                terminalStatusReported = true
+                terminalError = nil
+                return (effects, storedResponse?.mimeType, fileSize, expectedSize, nil)
+            } catch {
+                isDownloadComplete = false
+                return ([], storedResponse?.mimeType, fileSize, expectedSize, transitionToFailureLocked(error: error, notify: true))
+            }
+        }
+        guard let transition else { return }
+        if let failure = transition.failure {
+            performFailureEffect(failure)
+            return
+        }
+        FileLog.shared.addMessage(
+            "MediaExporterResourceLoaderDelegate: Download completed. File Size:\(transition.fileSize) ExpectedSize:\(transition.expectedSize)"
+        )
+        performRequestEffects(transition.effects)
         callbackQueue.async { [weak self] in
-            self?.callback?(.completed, contentType, Int64(fileSize), Int64(fileSize))
+            self?.callback?(.completed, transition.contentType, Int64(transition.fileSize), Int64(transition.fileSize))
         }
     }
 
@@ -450,16 +513,14 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     func shouldRetryWithoutUserAgent() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        guard let response = storedResponse as? HTTPURLResponse else { return false }
-        // Only retry if we haven't already retried without User-Agent and the response status code is >= 400
-        return !storedHasRetriedWithoutUserAgent && (response.statusCode >= 400)
+        lock.withLock {
+            guard let response = storedResponse as? HTTPURLResponse else { return false }
+            // Only retry if we haven't already retried without User-Agent and the response status code is >= 400
+            return !storedHasRetriedWithoutUserAgent && (response.statusCode >= 400)
+        }
     }
 
     private func retryWithoutUserAgent(originalURL: URL?) {
-        lock.lock()
-        defer { lock.unlock() }
         guard let originalURL else {
             FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Cannot retry without User-Agent - no original URL")
             return
@@ -467,29 +528,76 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
 
         FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Retrying without User-Agent header for URL: \(originalURL)")
 
-        fileHandle.close()
+        let detachedSession = lock.withLock { () -> URLSession? in
+            fileHandle.close()
+            let detached = session
+            session = nil
+            storedResponse = nil
+            if !isDownloadComplete {
+                fileHandle.deleteFile()
+            }
+            fileHandle = MediaFileHandle(filePath: saveFilePath)
+            return detached
+        }
 
-        invalidateAndCancelSession(shouldResetData: false)
-
-        storedResponse = nil
-
-        fileHandle = MediaFileHandle(filePath: saveFilePath)
-
+        detachedSession?.invalidateAndCancel()
         startDataRequest(with: originalURL, retryWithoutUserAgent: true)
     }
 
     private func downloadFailed(with error: Error, notify: Bool = false) {
-        lock.lock()
-        defer { lock.unlock() }
         FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Download failed with error: \(error)")
-        if notify {
-            NotificationCenter.default.post(name: AVPlayerItem.failedToPlayToEndTimeNotification, object: nil, userInfo: [AVPlayerItemFailedToPlayToEndTimeErrorKey: error])
+        let effect = lock.withLock {
+            transitionToFailureLocked(error: error, notify: notify)
         }
-        invalidateAndCancelSession(error: error)
+        if let effect {
+            performFailureEffect(effect)
+        }
+    }
+
+    /// Cancels the export and settles it as a failure exactly once.
+    func cancel(with error: any Error) {
+        downloadFailed(with: error)
+    }
+
+    /// Detaches failure effects and updates terminal state. Caller must hold `lock`.
+    private func transitionToFailureLocked(error: any Error, notify: Bool) -> FailureEffect? {
+        guard !terminalStatusReported else { return nil }
+        terminalStatusReported = true
+        terminalError = error
+        let detachedSession = session
+        session = nil
+        let requests = pendingRequests
+        pendingRequests.removeAll()
         let contentType = storedResponse?.mimeType
-        callbackQueue.async { [weak self] in
-            guard let self else { return }
-            self.callback?(.failed(error), contentType, 0, 0)
+        if !isDownloadComplete {
+            fileHandle.deleteFile()
+        }
+        return FailureEffect(
+            session: detachedSession,
+            requests: requests,
+            error: error,
+            contentType: contentType,
+            notify: notify,
+            reportsTerminalStatus: true
+        )
+    }
+
+    private func performFailureEffect(_ effect: FailureEffect) {
+        effect.session?.invalidateAndCancel()
+        effect.requests.forEach { $0.finishLoading(with: effect.error) }
+        if effect.notify {
+            NotificationCenter.default.post(
+                name: AVPlayerItem.failedToPlayToEndTimeNotification,
+                object: nil,
+                userInfo: [AVPlayerItemFailedToPlayToEndTimeErrorKey: effect.error]
+            )
+        }
+        if effect.reportsTerminalStatus {
+            let error = PocketCastsUtils.UncheckedSendable(effect.error)
+            let contentType = effect.contentType
+            callbackQueue.async { [weak self, error] in
+                self?.callback?(.failed(error.value), contentType, 0, 0)
+            }
         }
     }
 

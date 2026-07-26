@@ -25,6 +25,79 @@ nonisolated protocol DownloadManagerStreamAndDownloadCache {
 nonisolated extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCache where ThreadSafeDictionary == ThreadSafeDictionary<String, AVAssetResourceLoaderDelegate> {
 }
 
+/// First-settlement signal for stream-and-download exporters.
+final class ExportCompletionSignal: Sendable {
+    enum Settlement: Equatable, Sendable {
+        case success
+        case failure(String)
+    }
+
+    enum WaitResult: Equatable, Sendable {
+        case settled(Settlement)
+        case timedOut
+        case cancelled
+    }
+
+    private let stream: AsyncStream<Settlement>
+    private let continuation: AsyncStream<Settlement>.Continuation
+    private let didSettle = Mutex(false)
+
+    init() {
+        let pair = AsyncStream<Settlement>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        stream = pair.stream
+        continuation = pair.continuation
+    }
+
+    @discardableResult
+    func settle(_ settlement: Settlement) -> Bool {
+        let isFirst = didSettle.withLock { didSettle in
+            guard !didSettle else { return false }
+            didSettle = true
+            return true
+        }
+        guard isFirst else { return false }
+        continuation.yield(settlement)
+        continuation.finish()
+        return true
+    }
+
+    func wait(timeout: Duration) async -> WaitResult {
+        await withTaskGroup(of: WaitResult.self) { group in
+            group.addTask { [stream] in
+                for await settlement in stream {
+                    return .settled(settlement)
+                }
+                return .cancelled
+            }
+            group.addTask {
+                do {
+                    try await Task.sleep(for: timeout)
+                    return .timedOut
+                } catch {
+                    return .cancelled
+                }
+            }
+            let first = await group.next() ?? .cancelled
+            group.cancelAll()
+            return first
+        }
+    }
+}
+
+private enum StreamingExportMonitorError: LocalizedError, Sendable {
+    case timedOut
+    case cancelled
+
+    var errorDescription: String? {
+        switch self {
+        case .timedOut:
+            "The streaming download timed out."
+        case .cancelled:
+            "The streaming download was cancelled."
+        }
+    }
+}
+
 // `DownloadManager.shared` is a process-wide singleton already shared across
 // threads by design — its `URLSessionDelegate`/`URLSessionDownloadDelegate` callbacks run on the
 // session's background delegate queue, and the compiler can't verify the ad-hoc
@@ -331,29 +404,6 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         return
     }
 
-    private final class ExportStatus: Sendable {
-        struct Snapshot: Sendable {
-            var completed = false
-            var error: (any Error)?
-        }
-
-        private let state = Mutex(Snapshot())
-
-        func complete(error: (any Error)? = nil) {
-            state.withLock {
-                // a nil error marks success only; it must not clear a previously recorded failure
-                if let error {
-                    $0.error = error
-                }
-                $0.completed = true
-            }
-        }
-
-        func snapshot() -> Snapshot {
-            state.withLock { $0 }
-        }
-    }
-
     private let activeLoaderLock = NSLock()
     private var _activeLoaderDelegate: AVAssetResourceLoaderDelegate?
     private var activeLoaderDelegate: AVAssetResourceLoaderDelegate? {
@@ -430,20 +480,18 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         let outputURL = URL(fileURLWithPath: tempPathForEpisode(episode), isDirectory: false)
         fileLog.addMessage("DownloadManager stream and download: start downloading \(episode.uuid)")
         let exportPath = outputURL.pathComponents.joined(separator: "/")
-        let exportStatus =  ExportStatus()
+        let completionSignal = ExportCompletionSignal()
         let originalSizeInBytes = episode.sizeInBytes
-        let customLoaderDelegate = MediaExporterResourceLoaderDelegate(saveFilePath: exportPath, episodeUuid: episode.uuid, podcastUuid: episode.parentIdentifier()) { [weak self, exportStatus] status, _, bytesDownloaded, bytesExpected in
-            guard let self else {
-                return
-            }
-            let size = max(100, max(bytesExpected, originalSizeInBytes))
+        let customLoaderDelegate = MediaExporterResourceLoaderDelegate(saveFilePath: exportPath, episodeUuid: episode.uuid, podcastUuid: episode.parentIdentifier()) { [weak self, completionSignal] status, _, bytesDownloaded, bytesExpected in
             switch status {
             case .downloading:
+                guard let self else { return }
+                let size = max(100, max(bytesExpected, originalSizeInBytes))
                 self.reportProgress(episodeUUID: downloadTaskUUID, totalBytesWritten: bytesDownloaded, totalBytesExpectedToWrite: size)
             case .failed(let error):
-                exportStatus.complete(error: error)
+                completionSignal.settle(.failure(error.localizedDescription))
             case .completed:
-                exportStatus.complete()
+                completionSignal.settle(.success)
             }
         }
         guard let customURL = MediaExporterResourceLoaderDelegate.makeCustomURL(urlAsset.url) else {
@@ -459,10 +507,22 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
         activeLoaderDelegate = customLoaderDelegate
         let boxedEpisode = PocketCastsUtils.UncheckedSendable(episode)
         Task {
-            while !exportStatus.snapshot().completed {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            let waitResult = await completionSignal.wait(timeout: .seconds(7_230))
+            let settlement: ExportCompletionSignal.Settlement
+            switch waitResult {
+            case .settled(let result):
+                settlement = result
+            case .timedOut:
+                let error = StreamingExportMonitorError.timedOut
+                customLoaderDelegate.cancel(with: error)
+                settlement = .failure(error.localizedDescription)
+            case .cancelled:
+                let error = StreamingExportMonitorError.cancelled
+                customLoaderDelegate.cancel(with: error)
+                settlement = .failure(error.localizedDescription)
             }
-            let exportResult = exportStatus.snapshot()
+
+            // Every terminal path converges here so cache/status cleanup runs once.
             downloadingEpisodesCache[downloadTaskUUID] = nil
             removeEpisodeFromCache(boxedEpisode.value)
             if let mediaExporterDelegate = downloadAndStreamEpisodes[downloadTaskUUID] as? MediaExporterResourceLoaderDelegate,
@@ -473,15 +533,16 @@ nonisolated final class DownloadManager: NSObject, FilePathProtocol, @unchecked 
             guard let episode = dataManager.findBaseEpisode(uuid: downloadTaskUUID) else {
                 return
             }
-            if exportResult.error == nil {
+            switch settlement {
+            case .success:
                 fileLog.addMessage("DownloadManager stream and download: end downloading \(episode.uuid) successfully")
                 processEpisode(episode, downloadedFile: outputURL, copyFile: true)
-            } else {
-                fileLog.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(exportResult.error?.localizedDescription ?? "")")
-                wasDownloadingBefore = episode.downloading()
-                DataManager.sharedManager.saveEpisode(downloadStatus: .notDownloaded, downloadError: exportResult.error?.localizedDescription, downloadTaskId: nil, episode: episode)
+            case .failure(let message):
+                fileLog.addMessage("DownloadManager stream and download: failed downloading \(episode.uuid) -> \(message)")
+                let shouldRequeue = episode.downloading()
+                DataManager.sharedManager.saveEpisode(downloadStatus: .notDownloaded, downloadError: message, downloadTaskId: nil, episode: episode)
                 DataManager.sharedManager.saveEpisode(autoDownloadStatus: .notSpecified, episode: episode)
-                if wasDownloadingBefore {
+                if shouldRequeue {
                     DownloadManager.shared.addToQueue(episodeUuid: episode.uuid, autoDownloadStatus: .autoDownloaded)
                 }
                 NotificationCenter.postOnMainThread(EpisodeDownloadStatusChanged(uuid: episode.uuid))
