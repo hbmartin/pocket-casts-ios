@@ -10,7 +10,7 @@ import PocketCastsUtils
 /// bound arguments via `SQL` interpolation instead of `[Any]` argument arrays and
 /// string splices, and the legacy `removeEmptyFilterGroups` regex pass is replaced
 /// by structural composition: empty rule groups are never emitted in the first
-/// place (`combinedRuleFragment`).
+/// place (`combinedWhereFragment`).
 ///
 /// The legacy `query(clause:...)`/`queryFor(filter:...)` string builders remain as
 /// the golden reference: `PlaylistQueryBuilderParityTests` asserts row-set parity
@@ -105,7 +105,7 @@ public extension PlaylistQueryBuilder {
         var query: SQL = "SELECT * FROM \(sql: DataManager.episodeTableName) WHERE archived = 0"
 
         let rules = smartRuleFragments(for: filter, prefix: "")
-        query = query + combinedRuleFragment(rules: rules, episodeUuidToAdd: episodeUuidToAdd, prefix: "")
+        query = query + combinedWhereFragment(rules: rules, episodeUuidToAdd: episodeUuidToAdd, prefix: "")
 
         // The legacy builder only sorts on the four explicit sort types here (no
         // drag-and-drop mapping for the fragment API).
@@ -203,7 +203,7 @@ extension PlaylistQueryBuilder {
             } else {
                 rules = smartRuleFragments(for: playlist, prefix: "episode.")
             }
-            let whereFragment = combinedRuleFragment(rules: rules, episodeUuidToAdd: episodeUuidToAdd, prefix: "episode.")
+            let whereFragment = combinedWhereFragment(rules: rules, episodeUuidToAdd: episodeUuidToAdd, prefix: "episode.")
 
             switch clause {
             case .firstDistinctEpisodes:
@@ -727,10 +727,24 @@ extension PlaylistQueryBuilder {
                   !PlaylistQueryValidator.containsPlaceholders(fragment) else {
                 return "(0)"
             }
-            // The newline terminates a trailing `--` comment so it cannot swallow
-            // the closing paren (mirrors the validator's save-time wrap).
-            return "(\(sql: fragment)\n)"
+            return sqlModeRuleFragment(fragment)
         }
+    }
+
+    /// Wraps a validated SQL-mode expression exactly as runtime rule execution does.
+    static func sqlModeRuleFragment(_ fragment: String) -> SQL {
+        // The newline terminates a trailing `--` comment so it cannot swallow
+        // either closing parenthesis supplied by the rule and WHERE wrappers.
+        "(\(sql: fragment)\n)"
+    }
+
+    /// Produces the exact nested WHERE shape shared by validation and runtime execution.
+    static func sqlModeWhereFragment(_ fragment: String) -> SQL {
+        combinedWhereFragment(
+            rules: [sqlModeRuleFragment(fragment)],
+            episodeUuidToAdd: nil,
+            prefix: "episode."
+        )
     }
 
     // MARK: Smart rules
@@ -825,7 +839,7 @@ extension PlaylistQueryBuilder {
     /// rewrote `OR ()` to `OR (1)` with a regex. Building from the rule list makes
     /// those rewrites unnecessary: no rules means no fragment (or a literal `1` in
     /// the OR arm, which keeps the "playing episode stays visible" semantics).
-    private static func combinedRuleFragment(rules: [SQL], episodeUuidToAdd: String?, prefix: String) -> SQL {
+    static func combinedWhereFragment(rules: [SQL], episodeUuidToAdd: String?, prefix: String) -> SQL {
         let joined = rules.joined(separator: " AND ")
         if let episodeUuidToAdd {
             let ruleArm: SQL = rules.isEmpty ? "1" : joined

@@ -13,7 +13,6 @@ enum UploadedFilesSection: Hashable {
 }
 
 class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
-    private let episodesDataManager = EpisodesDataManager()
     private var cancellables = Set<AnyCancellable>()
 
     private lazy var reloadQueue: OperationQueue = {

@@ -19,7 +19,7 @@ final class PlaybackQueueTests: XCTestCase {
         let mockDataManager = MockDataManager()
         DataManager.sharedManager = mockDataManager
 
-        let staleEpisode = PlaylistEpisode()
+        var staleEpisode = PlaylistEpisode()
         staleEpisode.episodeUuid = "stale-uuid"
         staleEpisode.title = "Stale Episode"
         mockDataManager.upNextEpisodes = [staleEpisode]
@@ -88,7 +88,7 @@ final class PlaybackQueueTests: XCTestCase {
     }
 
     private func playlistEpisode(uuid: String, position: Int32) -> PlaylistEpisode {
-        let playlistEpisode = PlaylistEpisode()
+        var playlistEpisode = PlaylistEpisode()
         playlistEpisode.episodeUuid = uuid
         playlistEpisode.episodePosition = position
         return playlistEpisode

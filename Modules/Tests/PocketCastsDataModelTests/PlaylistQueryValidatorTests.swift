@@ -197,6 +197,48 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
         XCTAssertEqual(try dataManager.validateCustomQueryFragment("1 = 1").get(), 2)
     }
 
+    func testDoubleCloseStatementSmugglingIsRejected() {
+        let result = dataManager.validateCustomQueryFragment("1=1)); SELECT randomblob(1);--")
+        switch result {
+        case .failure(.syntax), .failure(.multipleStatements):
+            break
+        default:
+            XCTFail("Expected double-close smuggling to fail, got \(result)")
+        }
+    }
+
+    func testValidatorCountShapeExactlyMatchesRuntimeSqlModeCountShape() throws {
+        let featureFlags = FeatureFlagOverrideStore()
+        defer { featureFlags.resetOverrides() }
+        try featureFlags.override(FeatureFlag.customPlaylists, withValue: true)
+        let fragment = "episode.duration > 1800"
+        var playlist = EpisodeFilter()
+        playlist.manual = false
+        playlist.customQuery = try CustomPlaylistQuery(sql: fragment).envelopeJSON()
+
+        let runtime = PlaylistQueryBuilder.fragment(
+            clause: .episodeCount,
+            for: playlist,
+            episodeUuidToAdd: nil,
+            searchTerm: nil,
+            limit: 0,
+            shouldShowArchived: false,
+            sortType: nil
+        )
+        let validator = PlaylistQueryBuilder.smartCountFragment(
+            shouldShowArchived: false,
+            allEpisodesCount: false,
+            whereFragment: PlaylistQueryBuilder.sqlModeWhereFragment(fragment)
+        )
+
+        try dataManager.dbQueue.dbPool.read { db in
+            let runtimeBuilt = try runtime.build(db)
+            let validatorBuilt = try validator.build(db)
+            XCTAssertEqual(runtimeBuilt.sql, validatorBuilt.sql)
+            XCTAssertEqual(String(describing: runtimeBuilt.arguments), String(describing: validatorBuilt.arguments))
+        }
+    }
+
     func testNonReadOnlyStatementIsRejected() throws {
         // The expression-position wrap makes a non-SELECT unreachable from a fragment
         // (any DELETE in there is a syntax error), so exercise the read-only guard

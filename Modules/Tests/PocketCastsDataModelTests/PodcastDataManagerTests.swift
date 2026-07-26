@@ -823,6 +823,39 @@ final class PodcastDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testUpdateAutoAddToUpNextWritesTypedPayloadForEveryValueAndPreservesUnknownFields() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        for setting in [AutoAddToUpNextSetting.off, .addLast, .addFirst] {
+            try runWithBothImplementations { dataManager, impl in
+                let uuid = "selected-\(setting.rawValue)"
+                let podcast = self.createTestPodcast(
+                    uuid: uuid,
+                    syncStatus: SyncStatus.synced.rawValue,
+                    dataManager: dataManager
+                )
+                try dataManager.setPodcastSettingsForTest(
+                    podcastUuid: uuid,
+                    settings: #"{"futureField":{"value":"keep"}}"#
+                )
+
+                dataManager.updateAutoAddToUpNext(to: setting, for: [podcast])
+
+                let found = try XCTUnwrap(dataManager.findPodcast(uuid: uuid), "\(impl)")
+                XCTAssertEqual(found.autoAddToUpNext, setting.rawValue, "\(impl)")
+                XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl)")
+                try self.assertAutoAddPayload(
+                    dataManager: dataManager,
+                    podcastUuid: uuid,
+                    setting: setting,
+                    context: impl
+                )
+            }
+        }
+    }
+
     // MARK: - saveAutoAddToUpNextForAllPodcasts Tests
 
     func testSaveAutoAddToUpNextForAllPodcastsUpdatesAll() throws {
@@ -835,6 +868,64 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             let podcasts = dataManager.allPodcasts(includeUnsubscribed: false)
             XCTAssertTrue(podcasts.allSatisfy { $0.autoAddToUpNext == AutoAddToUpNextSetting.addLast.rawValue }, "\(impl): All podcasts should have auto add to up next set")
         }
+    }
+
+    func testSaveAutoAddToUpNextForAllPodcastsWritesMatchingTypedSettings() throws {
+        let store = FeatureFlagOverrideStore()
+        defer { store.resetOverrides() }
+        try store.override(FeatureFlag.newSettingsStorage, withValue: true)
+
+        for setting in [AutoAddToUpNextSetting.off, .addLast, .addFirst] {
+            try runWithBothImplementations { dataManager, impl in
+                let uuid = "all-\(setting.rawValue)"
+                _ = self.createTestPodcast(
+                    uuid: uuid,
+                    syncStatus: SyncStatus.synced.rawValue,
+                    dataManager: dataManager
+                )
+                try dataManager.setPodcastSettingsForTest(
+                    podcastUuid: uuid,
+                    settings: #"{"futureField":{"value":"keep"}}"#
+                )
+
+                dataManager.saveAutoAddToUpNextForAllPodcasts(autoAddToUpNext: setting.rawValue)
+
+                let found = try XCTUnwrap(dataManager.findPodcast(uuid: uuid), "\(impl)")
+                XCTAssertEqual(found.autoAddToUpNext, setting.rawValue, "\(impl)")
+                XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl)")
+                try self.assertAutoAddPayload(
+                    dataManager: dataManager,
+                    podcastUuid: uuid,
+                    setting: setting,
+                    context: impl
+                )
+            }
+        }
+    }
+
+    private func assertAutoAddPayload(
+        dataManager: DataManager,
+        podcastUuid: String,
+        setting: AutoAddToUpNextSetting,
+        context: String
+    ) throws {
+        let json = try XCTUnwrap(dataManager.podcastSettingsForTest(podcastUuid: podcastUuid), context)
+        let object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
+            context
+        )
+        let enabled = try XCTUnwrap(object["addToUpNext"] as? [String: Any], context)
+        let position = try XCTUnwrap(object["addToUpNextPosition"] as? [String: Any], context)
+
+        XCTAssertTrue(enabled["value"] is Bool, "\(context): addToUpNext must be JSON Bool")
+        XCTAssertEqual(enabled["value"] as? Bool, setting != .off, context)
+        XCTAssertEqual(
+            position["value"] as? Int,
+            setting == .addFirst ? Int(UpNextPosition.top.rawValue) : Int(UpNextPosition.bottom.rawValue),
+            context
+        )
+        XCTAssertEqual(enabled["modifiedAt"] as? Double, position["modifiedAt"] as? Double, context)
+        XCTAssertEqual((object["futureField"] as? [String: Any])?["value"] as? String, "keep", context)
     }
 
     // MARK: - setDownloadSettingForAllPodcasts Tests

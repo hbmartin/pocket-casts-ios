@@ -384,7 +384,7 @@ enum UITestScenarioLauncher {
         episode.playingStatus = PlayingStatus.notPlayed.rawValue
         episode.duration = 1_800
 
-        let playlistEpisode = PlaylistEpisode()
+        var playlistEpisode = PlaylistEpisode()
         playlistEpisode.episodePosition = position
         playlistEpisode.episodeUuid = uuid
         playlistEpisode.title = title

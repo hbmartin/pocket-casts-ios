@@ -50,7 +50,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupAnalytics()
 
         DataManager.logger = BitdriftErrorLogger(category: "grdb")
-        ServerConfig.shared.errorLogger = BitdriftErrorLogger(category: "sync")
+        ServerConfig.shared.configure(
+            syncDelegate: ServerSyncManager.shared,
+            playbackDelegate: PlaybackServerAdapter(),
+            errorLogger: BitdriftErrorLogger(category: "sync")
+        )
         ServerConfig.shared.warmProtectedDataAvailabilityCache()
 
         configureTipKit()
@@ -116,8 +120,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 return
             }
 
-            ServerConfig.shared.syncDelegate = ServerSyncManager.shared
-            ServerConfig.shared.playbackDelegate = PlaybackServerAdapter()
             checkDefaults()
 
             logActiveDownloadTasks()

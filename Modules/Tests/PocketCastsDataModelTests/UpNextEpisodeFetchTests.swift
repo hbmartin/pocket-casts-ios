@@ -98,7 +98,7 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
             saveUpNextEpisode(dataManager: dataManager, episodeUuid: "existing-1", title: "Existing 1", podcastUuid: "pod", position: 1)
 
             let incomingEpisodes = (0..<2).map { index -> PlaylistEpisode in
-                let episode = PlaylistEpisode()
+                var episode = PlaylistEpisode()
                 episode.episodeUuid = "incoming-\(index)"
                 episode.title = "Incoming \(index)"
                 episode.podcastUuid = "pod"
@@ -182,7 +182,7 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
             )
 
             let bulkEpisodes = (0..<3).map { index -> PlaylistEpisode in
-                let episode = PlaylistEpisode()
+                var episode = PlaylistEpisode()
                 episode.episodeUuid = "upnext-bulk-\(index)"
                 episode.title = "Up Next Bulk \(index)"
                 episode.podcastUuid = "upnext-podcast"
@@ -228,11 +228,12 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
     // MARK: - Helpers
 
     private func saveUpNextEpisode(dataManager: DataManager, episodeUuid: String, title: String, podcastUuid: String, position: Int32) {
-        let playlistEpisode = PlaylistEpisode()
-        playlistEpisode.episodeUuid = episodeUuid
-        playlistEpisode.title = title
-        playlistEpisode.podcastUuid = podcastUuid
-        playlistEpisode.episodePosition = position
+        let playlistEpisode = PlaylistEpisode(
+            episodePosition: position,
+            episodeUuid: episodeUuid,
+            title: title,
+            podcastUuid: podcastUuid
+        )
         dataManager.save(playlistEpisode: playlistEpisode)
     }
 

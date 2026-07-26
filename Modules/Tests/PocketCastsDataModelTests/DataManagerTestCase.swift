@@ -166,11 +166,12 @@ class DataManagerTestCase: XCTestCase {
         podcastUuid: String = "",
         dataManager: DataManager
     ) {
-        let playlistEpisode = PlaylistEpisode()
-        playlistEpisode.episodeUuid = episodeUuid
-        playlistEpisode.title = title
-        playlistEpisode.podcastUuid = podcastUuid
-        playlistEpisode.episodePosition = dataManager.positionForPlaylistEpisode(bottomOfList: true)
+        let playlistEpisode = PlaylistEpisode(
+            episodePosition: dataManager.positionForPlaylistEpisode(bottomOfList: true),
+            episodeUuid: episodeUuid,
+            title: title,
+            podcastUuid: podcastUuid
+        )
         dataManager.save(playlistEpisode: playlistEpisode)
     }
 
@@ -181,11 +182,12 @@ class DataManagerTestCase: XCTestCase {
         podcastUuid: String = "",
         dataManager: DataManager
     ) {
-        let playlistEpisode = PlaylistEpisode()
-        playlistEpisode.episodeUuid = episodeUuid
-        playlistEpisode.title = title
-        playlistEpisode.podcastUuid = podcastUuid
-        playlistEpisode.episodePosition = dataManager.positionForPlaylistEpisode(bottomOfList: false)
+        let playlistEpisode = PlaylistEpisode(
+            episodePosition: dataManager.positionForPlaylistEpisode(bottomOfList: false),
+            episodeUuid: episodeUuid,
+            title: title,
+            podcastUuid: podcastUuid
+        )
         dataManager.save(playlistEpisode: playlistEpisode)
     }
 }

@@ -33,11 +33,14 @@ final class AuthenticationHelperTests: XCTestCase {
         super.setUp()
         previousKeychainStore = KeychainHelper.store
         KeychainHelper.store = InMemoryKeychainStore()
+        ServerSettings.userId = nil
         ServerSettings.setTokenExpiryDate(nil)
         ServerSettings.accountAuthMethod = nil
     }
 
     override func tearDown() {
+        SyncManager.clearTokensFromKeyChain()
+        ServerSettings.userId = nil
         ServerSettings.setTokenExpiryDate(nil)
         ServerSettings.accountAuthMethod = nil
         flagMock.reset()
@@ -108,6 +111,32 @@ final class AuthenticationHelperTests: XCTestCase {
 
         XCTAssertFalse(AuthenticationHelper.persistSignInCredentials(from: response))
         XCTAssertNil(try ServerSettings.refreshToken())
+    }
+
+    func testRequiredRefreshTokenPersistenceFailureClearsEntireIdentityState() throws {
+        KeychainHelper.store = RejectingRefreshTokenKeychainStore()
+        let response = AuthenticationResponse(
+            token: "access",
+            uuid: "user-id",
+            email: "test@example.com",
+            refreshToken: "refresh",
+            isNewAccount: false,
+            expiresIn: 3600,
+            tokenType: "Bearer"
+        )
+
+        XCTAssertThrowsError(
+            try AuthenticationHelper.handleSuccessfulSignIn(
+                response,
+                requireRefreshTokenPersistence: true
+            )
+        ) { error in
+            XCTAssertEqual(error as? APIError, .TOKEN_DEAUTH)
+        }
+        XCTAssertNil(ServerSettings.syncingV2Token)
+        XCTAssertNil(try ServerSettings.refreshToken())
+        XCTAssertNil(ServerSettings.userId)
+        XCTAssertNil(ServerSettings.tokenExpiryDate())
     }
 
     func testEmptyRefreshTokenIsNotPersisted() throws {

@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 
-public protocol ServerSyncDelegate {
+public protocol ServerSyncDelegate: Sendable {
     // functions called by Server module during sync
     func podcastUpdated(podcastUuid: String)
     func podcastAdded(podcastUuid: String)

@@ -72,11 +72,11 @@ class PlaybackQueue: NSObject {
     }
 
     func add(episode: BaseEpisode, fireNotification: Bool, partOfBulkAdd: Bool = false, toTop: Bool = false) {
-        if let existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episode.uuid) {
+        if var existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episode.uuid) {
             existingEpisode.episodePosition = DataManager.sharedManager.positionForPlaylistEpisode(bottomOfList: !toTop)
             DataManager.sharedManager.save(playlistEpisode: existingEpisode)
         } else {
-            let newEpisode = PlaylistEpisode()
+            var newEpisode = PlaylistEpisode()
             newEpisode.episodeUuid = episode.uuid
             newEpisode.episodePosition = DataManager.sharedManager.positionForPlaylistEpisode(bottomOfList: !toTop)
             newEpisode.title = episode.displayableTitle()
@@ -122,11 +122,11 @@ class PlaybackQueue: NSObject {
         let topPosition = DataManager.sharedManager.positionForPlaylistEpisode(bottomOfList: !toTop)
         var playlistEpisodes = [PlaylistEpisode]()
         for (index, episode) in episodes.enumerated() {
-            if let existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episode.uuid) {
+            if var existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episode.uuid) {
                 existingEpisode.episodePosition = topPosition + Int32(index)
                 playlistEpisodes.append(existingEpisode)
             } else {
-                let newEpisode = PlaylistEpisode()
+                var newEpisode = PlaylistEpisode()
                 newEpisode.episodeUuid = episode.uuid
                 newEpisode.episodePosition = topPosition + Int32(index)
                 newEpisode.title = episode.displayableTitle()
@@ -141,8 +141,9 @@ class PlaybackQueue: NSObject {
 
     func bulkMove(_ playlistEpisodes: [PlaylistEpisode], toTop: Bool) {
         let firstIndex = DataManager.sharedManager.positionForPlaylistEpisode(bottomOfList: !toTop)
-        for (index, playlistEpisode) in playlistEpisodes.enumerated() {
-            playlistEpisode.episodePosition = Int32(index) + firstIndex
+        var playlistEpisodes = playlistEpisodes
+        for index in playlistEpisodes.indices {
+            playlistEpisodes[index].episodePosition = Int32(index) + firstIndex
         }
 
         DataManager.sharedManager.save(playlistEpisodes: playlistEpisodes)
@@ -159,7 +160,7 @@ class PlaybackQueue: NSObject {
         if let existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episode.uuid) {
             DataManager.sharedManager.movePlaylistEpisode(from: Int(existingEpisode.episodePosition), to: 0)
         } else {
-            let newEpisode = PlaylistEpisode()
+            var newEpisode = PlaylistEpisode()
             newEpisode.episodeUuid = episode.uuid
             newEpisode.episodePosition = -1
             newEpisode.title = episode.displayableTitle()
@@ -203,9 +204,9 @@ class PlaybackQueue: NSObject {
         // ...and keep any entries without metadata (e.g. not-yet-synced episodes) at the bottom.
         ordered.append(contentsOf: remaining)
 
-        for (index, playlistEpisode) in ordered.enumerated() {
+        for index in ordered.indices {
             // position 0 is the now playing episode, so the queue starts at 1
-            playlistEpisode.episodePosition = Int32(index + 1)
+            ordered[index].episodePosition = Int32(index + 1)
         }
         DataManager.sharedManager.save(playlistEpisodes: ordered)
 
@@ -220,7 +221,7 @@ class PlaybackQueue: NSObject {
         if existingEpisode {
             move(episode: episode, to: position)
         } else {
-            let newEpisode = PlaylistEpisode()
+            var newEpisode = PlaylistEpisode()
             newEpisode.episodeUuid = episode.uuid
             newEpisode.episodePosition = Int32(position + 1)
             newEpisode.title = episode.displayableTitle()

@@ -7,6 +7,50 @@ import GRDB
 /// These tests run with both SQL and GRDB implementations.
 final class UpNextDataManagerTests: DataManagerTestCase {
 
+    func testPlaylistEpisodeHasValueSemanticsAndUuidIdentity() {
+        let original = PlaylistEpisode(
+            id: 1,
+            episodePosition: 2,
+            episodeUuid: "episode",
+            title: "Original",
+            podcastUuid: "podcast"
+        )
+        var copy = original
+
+        copy.title = "Changed"
+        copy.episodePosition = 9
+
+        XCTAssertEqual(original.title, "Original")
+        XCTAssertEqual(original.episodePosition, 2)
+        XCTAssertEqual(original, copy, "Equality intentionally remains UUID-only")
+        XCTAssertEqual(Set([original, copy]).count, 1)
+    }
+
+    func testSaveGeneratesDatabaseIdWithoutMutatingCallerSnapshot() throws {
+        try runWithBothImplementations { dataManager, impl in
+            let input = PlaylistEpisode(episodeUuid: "generated-id", title: "Generated ID")
+
+            dataManager.save(playlistEpisode: input)
+
+            XCTAssertEqual(input.id, 0, "\(impl): persistence must not mutate the caller's value")
+            XCTAssertNotEqual(dataManager.findPlaylistEpisode(uuid: input.episodeUuid)?.id, 0)
+        }
+    }
+
+    func testMovePersistsDeterministicOrdering() throws {
+        try runWithBothImplementations { dataManager, impl in
+            for uuid in ["first", "second", "third"] {
+                self.addToUpNextBottom(episodeUuid: uuid, dataManager: dataManager)
+            }
+
+            dataManager.movePlaylistEpisode(from: 0, to: 2)
+
+            let moved = dataManager.allUpNextPlaylistEpisodes()
+            XCTAssertEqual(moved.map(\.episodeUuid), ["second", "third", "first"], "\(impl)")
+            XCTAssertEqual(moved.map(\.episodePosition), [0, 1, 2], "\(impl)")
+        }
+    }
+
     // MARK: - allUpNextPlaylistEpisodes Tests
 
     func testAllUpNextPlaylistEpisodesReturnsEpisodes() throws {
