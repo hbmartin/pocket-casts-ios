@@ -377,6 +377,8 @@ enum AnalyticsEvent: String {
     case addToPlaylistsRemoveTapped
     case addToPlaylistsNewPlaylistTapped
     case addToPlaylistsCreateNewPlaylistTapped
+    case addToPlaylistsSearchPerformed
+    case addToPlaylistsSearchCleared
 
     // MARK: - Podcast screen
 
