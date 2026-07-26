@@ -308,8 +308,7 @@ class CustomSegmentedControl: UIControl {
             return
         }
 
-        let validRange = 0...(actions.count - 1)
-        let clampedValue = (selectedIndex...selectedIndex).clamped(to: validRange).lowerBound
+        let clampedValue = min(max(selectedIndex, 0), actions.count - 1)
         if clampedValue != selectedIndex {
             selectedIndex = clampedValue
         }

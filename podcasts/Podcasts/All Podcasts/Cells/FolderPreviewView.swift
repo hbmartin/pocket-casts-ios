@@ -92,7 +92,7 @@ class FolderPreviewView: UIView {
 
         if folderName.isEmpty { showFolderName = false }
 
-        for i in 0 ... (previewCount - 1) {
+        for i in 0 ..< previewCount {
             let imageView: PodcastImageView
             if i < images.count {
                 imageView = images[i]
