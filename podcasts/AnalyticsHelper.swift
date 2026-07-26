@@ -4,11 +4,7 @@ import PocketCastsUtils
 nonisolated class AnalyticsHelper {
     /// Whether the user has opted out of analytics or not.
     static var optedOut: Bool {
-        #if APPCLIP
-            return true
-        #else
             return Settings.analyticsOptOut()
-        #endif
     }
 
     class func openedCategory(categoryId: Int, region: String) {
@@ -265,9 +261,7 @@ nonisolated private extension AnalyticsHelper {
     class func logEvent(_ name: String, parameters: [String: Any]? = nil) {
         guard optedOut == false else { return }
 
-        #if !os(tvOS)
             let properties = parameters?.mapValues { String(describing: $0) }
             Analytics.track(name: name, properties: properties)
-        #endif
     }
 }

@@ -26,11 +26,7 @@ nonisolated class ChapterInfo: Equatable, @unchecked Sendable {
     var shouldPlay = true
 
     func isPlayable() -> Bool {
-        #if APPCLIP
-        return false
-        #else
         shouldPlay
-        #endif
     }
 
     static func == (lhs: ChapterInfo, rhs: ChapterInfo) -> Bool {

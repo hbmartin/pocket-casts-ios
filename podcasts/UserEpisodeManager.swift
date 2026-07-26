@@ -5,7 +5,6 @@ import PocketCastsUtils
 import UIKit
 
 nonisolated struct UserEpisodeManager {
-    #if !os(tvOS)
         static func addUserEpisode(
             uuid: String,
             title: String,
@@ -59,7 +58,6 @@ nonisolated struct UserEpisodeManager {
 
             return episode
         }
-    #endif
 
     static func renameUserEpisode(title: String, userEpisode: UserEpisode) {
         var userEpisode = userEpisode
@@ -151,7 +149,6 @@ nonisolated struct UserEpisodeManager {
         }
     }
 
-    #if !os(tvOS)
         @MainActor static func updateUserEpisodeImage(
             uuid: String,
             artwork: UIImage?,
@@ -190,9 +187,7 @@ nonisolated struct UserEpisodeManager {
                 completion()
             }
         }
-    #endif
 
-    #if !os(tvOS)
         @MainActor
         static func presentDeleteOptions(
             episode: UserEpisode,
@@ -235,5 +230,4 @@ nonisolated struct UserEpisodeManager {
 
             presenter.present(alert, animated: true)
         }
-    #endif
 }

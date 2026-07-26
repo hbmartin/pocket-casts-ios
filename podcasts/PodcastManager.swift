@@ -45,7 +45,6 @@ nonisolated final class PodcastManager: NSObject, @unchecked Sendable {
 
     // MARK: - Notifications
 
-    #if !APPCLIP && !os(tvOS)
         @discardableResult
         func setNotificationsEnabled(podcast: Podcast, enabled: Bool) -> Podcast {
             var podcast = podcast
@@ -79,7 +78,6 @@ nonisolated final class PodcastManager: NSObject, @unchecked Sendable {
             }
             return podcast
         }
-    #endif
 
     func allPodcastsSorted(in sortOrder: LibrarySort, reloadFromDatabase: Bool = false) -> [Podcast] {
         if sortOrder == .titleAtoZ {
@@ -182,23 +180,19 @@ nonisolated final class PodcastManager: NSObject, @unchecked Sendable {
 
     // MARK: - Import
 
-    #if !os(tvOS)
         func importSharedItemFromUrl(_ strippedUrl: String, completion: @escaping (IncomingShareItem?) -> Void) {
             importerQueue.cancelAllOperations()
 
             let importer = SharedItemImporter(strippedUrl: strippedUrl, completion: completion)
             importerQueue.addOperation(importer)
         }
-    #endif
 
-    #if !APPCLIP && !os(tvOS)
         func importPodcastsFromOpml(_ opmlFile: URL, progressWindow: ShiftyLoadingAlert? = nil) {
             importerQueue.cancelAllOperations()
 
             let importer = OpmlImporter(opmlFile: opmlFile, progressWindow: progressWindow)
             importerQueue.addOperation(importer)
         }
-    #endif
 
     class func episodeCountForPodcast(_ podcast: Podcast, excludeArchive: Bool) -> Int {
         let archivedFilter = excludeArchive ? " AND archived = 0" : ""

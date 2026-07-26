@@ -68,10 +68,8 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
         // Note: In the real app, this would call (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
         // which would re-register NotificationsCoordinator
         // We can't test this directly without mocking UIApplication, but we can verify the flow
-        #if !APPCLIP
         // The method completed without error, indicating setupAnalytics would be called
         XCTAssertTrue(true, "refreshRegistered completed successfully for opted-in user")
-        #endif
     }
 
     @MainActor
@@ -115,9 +113,7 @@ class AnalyticsAdapterPersistenceTests: XCTestCase {
 
         // The method should have attempted to call setupAnalytics
         // In the real app, this would re-register NotificationsCoordinator
-        #if !APPCLIP
         XCTAssertTrue(true, "optInOfAnalytics completed successfully")
-        #endif
     }
 
 #if canImport(TelemetryDeck)

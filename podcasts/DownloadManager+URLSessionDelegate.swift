@@ -13,17 +13,12 @@ nonisolated extension DownloadManager: URLSessionDelegate, URLSessionDownloadDel
 
     // make sure to call the completion handler on the main queue, otherwise it will crash
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
-#if APPCLIP || os(tvOS)
-        // App Clips and tvOS never schedule background URL sessions, so there is
-        // no stored completion handler to call here.
-#else
         DispatchQueue.main.async { [weak self] in
             guard let self, let appDelegate = appDelegate(), let backgroundHandler = appDelegate.backgroundSessionCompletionHandler else { return }
 
             appDelegate.backgroundSessionCompletionHandler = nil
             backgroundHandler()
         }
-#endif
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {

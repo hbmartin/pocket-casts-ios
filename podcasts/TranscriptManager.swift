@@ -1,9 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
-#if !os(tvOS)
 import Capture
-#endif
 
 /// Which transcript to prefer when both a podcast-provided transcript and a
 /// locally generated (on-device) transcript exist for an episode.
@@ -176,7 +174,6 @@ nonisolated class TranscriptManager {
             throw TranscriptError.failedToLoad
         }
 
-        #if !os(tvOS)
         await MainActor.run {
             // Direct Bitdrift call site: honor the analytics opt-out (a
             // mid-session opt-out can't stop the already-started logger, so
@@ -193,7 +190,6 @@ nonisolated class TranscriptManager {
                 fields: fields
             )
         }
-        #endif
         guard let model = TranscriptModel.makeModel(from: transcriptText, format: transcriptFormat) else {
             throw TranscriptError.failedToParse
         }

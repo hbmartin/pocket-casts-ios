@@ -11,9 +11,7 @@ class AppLifecycleAnalytics {
     /// The date the app was last opened, used for calculating time in app
     private var applicationOpenedTime: Date?
 
-#if !os(tvOS)
     private lazy var widgetAnalytics = WidgetAnalytics()
-#endif
 
     init(userDefaults: UserDefaults = .standard, analytics: any AnalyticsTracking = Analytics.shared) {
         self.userDefaults = userDefaults
@@ -58,9 +56,7 @@ extension AppLifecycleAnalytics {
 
         analytics.track(.applicationOpened)
 
-#if !os(tvOS)
         widgetAnalytics.track()
-#endif
     }
 
     func didEnterBackground() {

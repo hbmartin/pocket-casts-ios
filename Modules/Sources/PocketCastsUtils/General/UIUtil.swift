@@ -1,4 +1,3 @@
-#if !os(tvOS)
     import UIKit
 
     public enum UIUtil {
@@ -7,4 +6,3 @@
             window.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
         }
     }
-#endif

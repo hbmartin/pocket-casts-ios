@@ -5083,7 +5083,6 @@ rules:
       include:
         - "**/podcasts/**/*.swift"
         - "**/WidgetExtension/**/*.swift"
-        - "**/AppClip/**/*.swift"
         - "**/semgrep/tests/swift-custom-query-validator.swift"
       exclude:
         - "**/PocketCastsTests/**"

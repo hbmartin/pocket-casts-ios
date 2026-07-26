@@ -52,14 +52,12 @@ extension NowPlayingPlayerItemViewController {
         addCustomObserver(PlayerActionsUpdated.self) { [weak self] _ in
             self?.reloadShelfActions()
         }
-        #if !APPCLIP
         addCustomObserver(EpisodeStarredChanged.self) { [weak self] _ in
             self?.reloadShelfActions()
         }
         addCustomObserver(EpisodeDownloadStatusChanged.self) { [weak self] _ in
             self?.reloadShelfActions()
         }
-        #endif
     }
 
     private func playbackTrackChanged() {
@@ -304,9 +302,7 @@ extension NowPlayingPlayerItemViewController {
             return
         }
         AnalyticsPlaybackHelper.shared.playbackErrorTapped(playerSource: .fullPlayer)
-        #if !APPCLIP
         URLHelper.open(url, context: .trustedDocumentation, options: .init(presenter: self, modalPresentationStyle: .formSheet))
-        #endif
     }
 
     func updateProvisionalChapterInfoForTime(time: TimeInterval) {

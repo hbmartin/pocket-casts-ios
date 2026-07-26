@@ -12,13 +12,11 @@ final class BackgroundShakeObserver {
     private var sleepTimerToken: NotificationCenter.ObservationToken?
 
     init() {
-        #if !APPCLIP
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         sleepTimerToken = NotificationCenter.default.addObserver(for: SleepTimerChanged.self) { [weak self] _ in
             self?.sleepTimerChanged()
         }
-        #endif
     }
 
     // isolated deinit: reads the isolated token storage to deregister the

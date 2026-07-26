@@ -49,9 +49,7 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
     private var podcastUuid: String?
 
 
-#if !APPCLIP && !os(tvOS)
     private var cellularTracker: StreamingCellularTracker?
-#endif
 
     @MainActor
     private lazy var episodeArtwork = EpisodeArtwork()
@@ -155,7 +153,6 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         // Start cellular tracking for remote streaming
         // MediaExporterResourceLoaderDelegate handles its own tracking for cache+stream,
         // but for direct AVPlayer streaming we use StreamingCellularTracker
-        #if !APPCLIP && !os(tvOS)
         // AVPlayerItem.asset is main-actor in current SDKs; bridge the read
         let boxedAsset: PocketCastsUtils.UncheckedSendable<AVURLAsset?> = if Thread.isMainThread {
             MainActor.assumeIsolated { PocketCastsUtils.UncheckedSendable(playerItem.asset as? AVURLAsset) }
@@ -172,7 +169,6 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
                 podcastUuid: episode.parentIdentifier()
             )
         }
-        #endif
 
         configurePlayer(videoPodcast: episode.videoPodcast())
     }
@@ -283,10 +279,8 @@ nonisolated final class DefaultPlayer: PlaybackProtocol, Hashable, @unchecked Se
         }
         cleanupPlayer()
 
-        #if !APPCLIP && !os(tvOS)
         cellularTracker?.stopTracking()
         cellularTracker = nil
-        #endif
 
         audioMix = nil
         assetTrack = nil

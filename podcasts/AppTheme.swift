@@ -97,7 +97,6 @@ class AppTheme {
         UIColor(hex: "#1E1F1E")
     }
 
-    #if !os(tvOS)
     class func podcastSearchBarStyle() -> UIBarStyle {
         switch Theme.sharedTheme.activeTheme {
         case .dark, .extraDark, .electric, .contrastDark:
@@ -106,7 +105,6 @@ class AppTheme {
             return UIBarStyle.default
         }
     }
-    #endif
 
     // MARK: - Paid podcast colours
 
@@ -366,7 +364,6 @@ class AppTheme {
         ThemeColor.primaryUi01(for: theme)
     }
 
-    #if !os(tvOS)
     class func defaultStatusBarStyle() -> UIStatusBarStyle {
         switch Theme.sharedTheme.activeTheme {
         case .dark, .extraDark, .electric, .contrastDark:
@@ -386,7 +383,6 @@ class AppTheme {
             return UIStatusBarStyle.darkContent
         }
     }
-    #endif
 
     class func loadingActivityColor() -> UIColor {
         ThemeColor.primaryIcon01()
