@@ -45,7 +45,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         configureBitdrift()
         configureTelemetryDeck()
         configureMetricKit()
-        setupSecrets()
         addAnalyticsObservers()
         setupAnalytics()
 
@@ -491,10 +490,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         TelemetryDeck.initialize(config: TelemetryDeck.Config(appID: telemetryDeckAppID))
         return true
-    }
-
-    private func setupSecrets() {
-        ServerCredentials.configureSharing(ApiCredentials.sharingServerSecret)
     }
 
     private func setupSignOutListener() {

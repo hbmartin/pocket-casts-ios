@@ -37,7 +37,7 @@ public extension ApiServerHandler {
             return nil
         }
 
-        await withCheckedContinuation { continuation in
+        return await withCheckedContinuation { continuation in
             let operation = SocialInboxListTask(limit: validatedLimit, offset: validatedOffset)
             operation.completion = { continuation.resume(returning: $0) }
             apiQueue.addOperation(operation)

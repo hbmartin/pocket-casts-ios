@@ -1,20 +1,31 @@
-import SwiftUI
+import PocketCastsServer
 import PocketCastsUtils
+import SwiftUI
 
+@MainActor
 class StatusPageViewModel: ObservableObject {
     @Published var running = false
 
     @Published var hasRun = false
+    @Published var serverDetails: String?
+
+    var originDescription: String {
+        switch ServerOriginPolicy.shared.state {
+        case let .ready(origin): "Server origin: \(origin)"
+        case .invalidBuildOrigin: ServerOriginPolicy.shared.blockingMessage ?? "Invalid server origin"
+        case .reinstallRequired: ServerOriginPolicy.shared.blockingMessage ?? "Reinstall required"
+        }
+    }
 
     class Service: Identifiable {
         let title: String
         let description: String
         let failureMessage: String
         let urls: [String]
-        let customTest: (() -> Bool)?
+        let customTest: (() async -> Bool)?
         var status: Result = .idle
 
-        init(title: String, description: String, failureMessage: String, urls: [String] = [], customTest: (() -> Bool)? = nil) {
+        init(title: String, description: String, failureMessage: String, urls: [String] = [], customTest: (() async -> Bool)? = nil) {
             self.title = title
             self.description = description
             self.failureMessage = failureMessage
@@ -27,44 +38,51 @@ class StatusPageViewModel: ObservableObject {
         }
     }
 
-    var checks = [
+    lazy var checks = [
         Service(
             title: L10n.settingsStatusInternet,
             description: L10n.settingsStatusInternetDescription,
-            failureMessage: L10n.settingsStatusInternetFailureMessage
+            failureMessage: L10n.settingsStatusInternetFailureMessage,
+            urls: [],
+            customTest: nil
         ),
         Service(
             title: L10n.settingsStatusExpensiveNetwork,
             description: L10n.settingsStatusExpensiveNetworkDescription,
             failureMessage: L10n.settingsStatusExpensiveNetworkFailureMessage,
+            urls: [],
             customTest: {
                 NetworkUtils.shared.isConnectedToUnexpensiveConnection()
             }
         ),
         Service(
+            title: "Podcast server origin",
+            description: "The build origin is pinned on first launch and cannot change across app updates.",
+            failureMessage: "Reinstall is required before this build can use its configured server.",
+            urls: [],
+            customTest: { ServerOriginPolicy.shared.isNetworkAllowed }
+        ),
+        Service(
             title: L10n.settingsStatusRefreshService,
             description: L10n.settingsStatusRefreshServiceDescription,
-            failureMessage: L10n.settingsStatusServiceAdBlockerHelpSingular("refresh.pocketcasts.com"),
-            urls: ["https://refresh.pocketcasts.com/health.html"]
+            failureMessage: "The configured podcast backend did not answer its liveness check.",
+            urls: [ServerConstants.Urls.main() + "livez"],
+            customTest: nil
         ),
         Service(
             title: L10n.settingsStatusAccountService,
             description: L10n.settingsStatusAccountServiceDescription,
-            failureMessage: L10n.settingsStatusServiceAdBlockerHelpSingular("api.pocketcasts.com"),
-            urls: ["https://api.pocketcasts.com/health"]
+            failureMessage: "The attested capability manifest is unavailable.",
+            urls: [],
+            customTest: { await ServerCapabilitiesClient.shared.load(force: true) != nil }
         ),
         Service(
             title: L10n.settingsStatusDiscover,
             description: L10n.settingsStatusDiscoverDescription,
-            failureMessage: L10n.settingsStatusServiceAdBlockerHelpSingular("static.pocketcasts.com, cache.pocketcasts.com and podcasts.pocketcasts.com"),
-            urls: ["https://static.pocketcasts.com/discover/ios/content.json",
-                   "https://cache.pocketcasts.com/mobile/podcast/full/e7a6f7d0-02f2-0133-1c51-059c869cc4eb"]
-        ),
-        Service(
-            title: L10n.settingsStatusHost,
-            description: L10n.settingsStatusHostDescription,
-            failureMessage: L10n.settingsStatusHostFailureMessage,
-            urls: ["https://dts.podtrac.com/redirect.mp3/static.pocketcasts.com/assets/feeds/status/episode1.mp3"]
+            failureMessage: "Representative discover or generated-artwork routes failed.",
+            urls: [ServerConstants.Urls.discover() + "ios/content_v3.json",
+                   ServerConstants.Urls.discover() + "images/artwork/light/280/1.png"],
+            customTest: nil
         )
     ]
 
@@ -90,13 +108,16 @@ class StatusPageViewModel: ObservableObject {
 
             running = false
             hasRun = true
+            if let capabilities = await ServerCapabilitiesClient.shared.load() {
+                serverDetails = "Version \(capabilities.serverVersion) · App Attest \(capabilities.appAttestMode) · Avatar \(capabilities.features.avatar ? "on" : "off") · Folders \(capabilities.features.folderSuggestions ? "on" : "off") · Corpus \(capabilities.features.corpus ? "on" : "off")"
+            }
         }
     }
 
     @MainActor
     private func test(service: Service) async {
         if let customTest = service.customTest {
-            service.status = customTest() ? .success : .failure
+            service.status = await customTest() ? .success : .failure
         } else if service.urls.isEmpty {
             service.status = .success
         } else {
@@ -117,7 +138,11 @@ class StatusPageViewModel: ObservableObject {
 
 private extension URL {
     func requestHTTPStatus() async -> Int? {
-        let response = try? await URLSession.shared.data(from: self).1 as? HTTPURLResponse
-        return response?.statusCode
+        do {
+            let (_, response) = try await URLConnection(handler: URLSession.shared).send(request: URLRequest(url: self))
+            return (response as? HTTPURLResponse)?.statusCode
+        } catch {
+            return nil
+        }
     }
 }

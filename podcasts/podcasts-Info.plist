@@ -1088,6 +1088,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>PCPodcastBackendOrigin</key>
+	<string>$(PODCAST_BACKEND_ORIGIN)</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

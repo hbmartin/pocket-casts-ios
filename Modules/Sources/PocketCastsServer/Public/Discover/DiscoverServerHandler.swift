@@ -18,6 +18,7 @@ public final class DiscoverServerHandler: DiscoverServerHandling, Sendable {
         let connection = URLConnection(handler: URLSession.shared)
         return TokenHelper(urlConnection: connection)
     }()
+    private let urlConnection = URLConnection(handler: URLSession.shared)
 
     public let discoveryCache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 5 * 1024 * 1024, diskPath: "discovery")
 
@@ -172,9 +173,9 @@ public final class DiscoverServerHandler: DiscoverServerHandling, Sendable {
                 completion(data, response, error, false)
             }
         } else {
-            URLSession.shared.dataTask(with: request, completionHandler: { data, response, error in
+            urlConnection.send(request: request, completion: { data, response, error in
                 completion(data, response, error, false)
-            }).resume()
+            })
         }
     }
 

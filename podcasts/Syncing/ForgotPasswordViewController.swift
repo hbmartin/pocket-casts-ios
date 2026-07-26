@@ -98,16 +98,46 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
     @IBAction func performResetPassword(_ sender: Any) {
         guard let email = emailField.text else { return }
 
-        progressAlert = ShiftyLoadingAlert(title: L10n.profileSendingResetEmail)
-        progressAlert?.showAlert(self, hasProgress: false, completion: {
-            self.startPasswordReset(email)
+        let prompt = UIAlertController(
+            title: L10n.profileResetPassword,
+            message: "Enter the one-time reset code from your administrator and a new password of at least 12 characters.",
+            preferredStyle: .alert
+        )
+        prompt.addTextField { field in
+            field.placeholder = "Reset code"
+            field.autocapitalizationType = .none
+            field.autocorrectionType = .no
+            field.textContentType = .oneTimeCode
+        }
+        prompt.addTextField { field in
+            field.placeholder = "New password"
+            field.isSecureTextEntry = true
+            field.textContentType = .newPassword
+        }
+        prompt.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
+        prompt.addAction(UIAlertAction(title: L10n.profileResetPassword, style: .default) { [weak self, weak prompt] _ in
+            guard let self,
+                  let code = prompt?.textFields?[0].text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  let password = prompt?.textFields?[1].text,
+                  !code.isEmpty,
+                  password.utf8.count >= 12,
+                  password.utf8.count <= 72
+            else {
+                self?.showErrorMessage("Enter a valid reset code and a password between 12 and 72 bytes.")
+                return
+            }
+            self.progressAlert = ShiftyLoadingAlert(title: L10n.profileResetPassword)
+            self.progressAlert?.showAlert(self, hasProgress: false) {
+                self.startPasswordReset(email: email, code: code, password: password)
+            }
         })
+        present(prompt, animated: true)
     }
 
-    private func startPasswordReset(_ email: String) {
+    private func startPasswordReset(email: String, code: String, password: String) {
         emailField.resignFirstResponder()
 
-        ApiServerHandler.shared.forgotPassword(email: email) { success, error in
+        ApiServerHandler.shared.resetPassword(email: email, code: code, newPassword: password) { success, error in
             DispatchQueue.main.async {
                 self.progressAlert?.hideAlert(false)
                 self.progressAlert = nil
@@ -116,7 +146,7 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
                     if error != .UNKNOWN, let message = error?.localizedDescription, !message.isEmpty {
                         self.showErrorMessage(message)
                     } else {
-                        self.showErrorMessage(L10n.profileSendingResetEmailFailed)
+                        self.showErrorMessage("Unable to reset the password. Check the email address and reset code, then try again.")
                     }
 
                     return
@@ -126,7 +156,7 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
 
                 guard let delegate = self.delegate else {
                     self.navigationController?.popViewController(animated: true)
-                    SJUIUtils.showAlert(title: L10n.profileSendingResetEmailConfTitle, message: L10n.profileSendingResetEmailConfMsg, from: self)
+                    SJUIUtils.showAlert(title: L10n.profileResetPassword, message: "Your password has been reset. Sign in with your new password.", from: self)
                     return
                 }
 

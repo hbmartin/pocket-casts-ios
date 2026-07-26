@@ -12,6 +12,18 @@ struct StatusPageView: View {
                     .foregroundColor(theme.primaryText01)
                     .padding(.top, 16)
 
+                Text(viewModel.originDescription)
+                    .font(style: .callout)
+                    .foregroundColor(theme.primaryText02)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if let serverDetails = viewModel.serverDetails {
+                    Text(serverDetails)
+                        .font(style: .caption)
+                        .foregroundColor(theme.primaryText02)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 if !viewModel.running && !viewModel.hasRun {
                     Button() {
                         viewModel.run()

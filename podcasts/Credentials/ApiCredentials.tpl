@@ -6,10 +6,6 @@ struct ApiCredentials {
     ///
     static let loggingEncryptionKey = "%{encrypted_log_key}"
 
-    /// Sharing Server Secret
-    ///
-    static let sharingServerSecret = "%{sharing_server_secret}"
-
     /// Bitdrift SDK Key
     ///
     static let bitdriftSDKKey = "%{bitdrift_sdk_key}"

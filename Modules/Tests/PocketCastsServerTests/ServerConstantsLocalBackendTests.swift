@@ -18,27 +18,25 @@ final class ServerConstantsLocalBackendTests: XCTestCase {
         XCTAssertEqual(endpoints.search, "http://127.0.0.1:8000/")
     }
 
-    func testLocalBackendPreservesHostedUnsupportedServices() {
+    func testLocalBackendRoutesAllSupportedServicesThroughOneOrigin() {
         let endpoints = ServerConstants.Urls.resolvedEndpoints(
             production: false,
             localBaseURL: "http://127.0.0.1:8000/"
         )
 
-        XCTAssertEqual(endpoints.share, "https://pcast.pocketcasts.net/")
-        XCTAssertEqual(endpoints.lists, "https://lists.pocketcasts.net/")
-        XCTAssertEqual(endpoints.generatedTranscripts, "https://shownotes.pocketcasts.net/generated_transcripts/")
+        XCTAssertEqual(endpoints.share, "http://127.0.0.1:8000/")
+        XCTAssertEqual(endpoints.lists, "http://127.0.0.1:8000/")
+        XCTAssertEqual(endpoints.generatedTranscripts, "http://127.0.0.1:8000/generated_transcripts/")
         XCTAssertEqual(endpoints.tvPair, "https://pocketcasts.net/pair")
         XCTAssertEqual(endpoints.tvCreate, "https://pocketcasts.net/create")
     }
 
-    func testLocalBackendPreservesPathAndNormalizesTrailingSlash() {
-        XCTAssertEqual(
+    func testLocalBackendRejectsNonRootOrigins() {
+        XCTAssertNil(
             ServerConstants.Urls.normalizedLocalBaseURL("https://localhost:8443/backend"),
-            "https://localhost:8443/backend/"
         )
-        XCTAssertEqual(
+        XCTAssertNil(
             ServerConstants.Urls.normalizedLocalBaseURL("https://localhost:8443/backend/"),
-            "https://localhost:8443/backend/"
         )
     }
 

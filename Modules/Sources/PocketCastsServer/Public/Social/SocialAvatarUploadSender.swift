@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsUtils
 
-/// Uploads a user's avatar image and maps the mandatory CSAM/nudity scan verdict
+/// Uploads a user's avatar image and maps the mandatory nudity/racy scan verdict
 /// (docs/SocialModeration.md, ADR-0007). Modeled on `TranscriptUploadSender`:
 /// raw image bytes as `application/octet-stream`, Bearer auth (required — an
 /// avatar upload needs a joined, signed-in account), and App Attest assertion
@@ -37,11 +37,6 @@ public struct SocialAvatarUploadSender: Sendable {
         request.addValue("application/octet-stream", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
         request.setValue(ServerConfig.shared.syncDelegate?.privateUserAgent() ?? "", forHTTPHeaderField: ServerConstants.HttpHeaders.userAgent)
         request.setValue("Bearer \(token)", forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
-        // Assertion headers sign the exact body bytes on the wire.
-        for (field, value) in await AppAttestService.shared.assertionHeaders(forBody: imageData) {
-            request.setValue(value, forHTTPHeaderField: field)
-        }
-
         do {
             let (data, response) = try await urlConnection.send(request: request)
             guard let data, let http = response as? HTTPURLResponse, http.statusCode == ServerConstants.HttpConstants.ok else {
@@ -55,6 +50,29 @@ public struct SocialAvatarUploadSender: Sendable {
         } catch {
             FileLog.shared.addMessage("SocialAvatarUploadSender: POST failed: \(error)")
             return .failed
+        }
+    }
+
+    /// Removes the current avatar. The backend invalidates the previous
+    /// capability URL and cleans the private object through its outbox worker.
+    public func remove() async -> Bool {
+        guard SyncManager.isUserLoggedIn(), let token = await Self.bearerToken(),
+              let url = URL(string: "\(ServerConstants.Urls.api())social/avatar")
+        else {
+            return false
+        }
+
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: ServerConstants.Timeouts.general)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
+        request.setValue(ServerConfig.shared.syncDelegate?.privateUserAgent() ?? "", forHTTPHeaderField: ServerConstants.HttpHeaders.userAgent)
+
+        do {
+            let (_, response) = try await urlConnection.send(request: request)
+            return (response as? HTTPURLResponse)?.statusCode == 204
+        } catch {
+            FileLog.shared.addMessage("SocialAvatarUploadSender: DELETE failed: \(error)")
+            return false
         }
     }
 

@@ -8,7 +8,6 @@ import PocketCastsUtils
 final class TranscriptUploadSender: Sendable {
     typealias TokenProvider = @Sendable () async -> String?
     typealias TokenInvalidator = @Sendable () -> Void
-    typealias AssertionHeadersProvider = @Sendable (Data) async -> [String: String]
 
     /// Backoff for the single pending item when a 429 arrives without a parseable Retry-After.
     static let defaultRateLimitDelay: TimeInterval = 60
@@ -25,16 +24,14 @@ final class TranscriptUploadSender: Sendable {
     private let urlConnection: URLConnection
     private let tokenProvider: TokenProvider
     private let tokenInvalidator: TokenInvalidator
-    private let assertionHeaders: AssertionHeadersProvider
 
     init(urlConnection: URLConnection,
          tokenProvider: @escaping TokenProvider = TranscriptUploadSender.defaultTokenProvider,
          tokenInvalidator: @escaping TokenInvalidator = TranscriptUploadSender.defaultTokenInvalidator,
-         assertionHeaders: @escaping AssertionHeadersProvider = TranscriptUploadSender.defaultAssertionHeadersProvider) {
+         assertionHeaders _: @escaping @Sendable (Data) async -> [String: String] = { _ in [:] }) {
         self.urlConnection = urlConnection
         self.tokenProvider = tokenProvider
         self.tokenInvalidator = tokenInvalidator
-        self.assertionHeaders = assertionHeaders
     }
 
     /// Bearer auth is optional on these endpoints (attribution only): attach a token
@@ -56,13 +53,6 @@ final class TranscriptUploadSender: Sendable {
     static let defaultTokenInvalidator: TokenInvalidator = {
         KeychainHelper.removeKey(ServerConstants.Values.syncingV2TokenKey)
         ServerSettings.setTokenExpiryDate(nil)
-    }
-
-    /// Assertion headers sign the exact body bytes on the wire (docs/AppAttest.md §1.3),
-    /// i.e. the gzipped payload. Returns [:] when attestation is unavailable
-    /// (Simulator, unsupported devices) — the request is then sent unattested.
-    static let defaultAssertionHeadersProvider: AssertionHeadersProvider = { body in
-        await AppAttestService.shared.assertionHeaders(forBody: body)
     }
 
     /// Serializes nothing itself: callers pass the already-serialized protobuf
@@ -116,10 +106,6 @@ final class TranscriptUploadSender: Sendable {
         if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
         }
-        for (field, value) in await assertionHeaders(body) {
-            request.setValue(value, forHTTPHeaderField: field)
-        }
-
         do {
             let (data, response) = try await urlConnection.send(request: request)
             return (data, response as? HTTPURLResponse)
@@ -133,6 +119,16 @@ final class TranscriptUploadSender: Sendable {
     static func result(for response: HTTPURLResponse, body: Data?) -> ContributionSendResult {
         switch response.statusCode {
         case ServerConstants.HttpConstants.ok, ServerConstants.HttpConstants.accepted:
+            if let body,
+               let receipt = try? Api_TranscriptContributionResponse(serializedBytes: body),
+               !receipt.candidateID.isEmpty,
+               !receipt.attachmentToken.isEmpty {
+                return .acceptedContribution(TranscriptContributionReceipt(
+                    candidateID: receipt.candidateID,
+                    sha256: receipt.sha256,
+                    attachmentToken: receipt.attachmentToken
+                ))
+            }
             return .accepted
         case ServerConstants.HttpConstants.tooManyRequests:
             return .retryAfter(response.retryAfterInterval(maximum: maximumRateLimitDelay) ?? defaultRateLimitDelay)

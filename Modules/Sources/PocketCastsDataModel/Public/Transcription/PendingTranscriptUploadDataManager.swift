@@ -10,6 +10,9 @@ public enum PendingTranscriptUploadKind: Int32, Sendable, CaseIterable {
     case contribution = 0
     /// A report that a publisher-Provided transcript exists at a URL.
     case sighting = 1
+    /// A transcript accepted by the corpus but still waiting for on-device
+    /// summary/chapter generation and one-time token attachment.
+    case metadata = 2
 }
 
 /// Row record for the `PendingTranscriptUpload` table: one pending
@@ -145,6 +148,26 @@ public struct PendingTranscriptUploadDataManager: Sendable {
         return success
     }
 
+    /// Atomically advances an accepted transcript contribution into its compact
+    /// blocked metadata-generation job without exposing the attachment token to
+    /// logs or a second table.
+    @discardableResult
+    public func transitionToMetadata(id: Int64, payloadJson: String) -> Bool {
+        let success = dbQueue.write { db in
+            _ = try PendingTranscriptUploadRecord
+                .filter(PendingTranscriptUploadRecord.Columns.id == id)
+                .updateAll(
+                    db,
+                    PendingTranscriptUploadRecord.Columns.kind.set(to: PendingTranscriptUploadKind.metadata.rawValue),
+                    PendingTranscriptUploadRecord.Columns.payloadJson.set(to: payloadJson),
+                    PendingTranscriptUploadRecord.Columns.attempts.set(to: 0),
+                    PendingTranscriptUploadRecord.Columns.nextAttemptAt.set(to: nil)
+                )
+        }
+        if !success { FileLog.shared.addMessage("PendingTranscriptUploadDataManager.transitionToMetadata failed") }
+        return success
+    }
+
     // MARK: - Deletes
 
     /// Removes a single row (sent successfully, or its tombstone check failed).
@@ -159,16 +182,19 @@ public struct PendingTranscriptUploadDataManager: Sendable {
         return success
     }
 
-    /// Removes every pending contribution row for the episode — deleting a
-    /// transcription locally cancels its pending uploads (it cannot retract
-    /// delivered ones). Sighting rows are untouched: the Provided transcript
-    /// still exists at the publisher.
+    /// Removes every pending contribution or metadata row for the episode —
+    /// deleting a local transcription cancels both its unsent artifact and any
+    /// on-device generation that still needs that artifact. Sighting rows are
+    /// untouched because the publisher transcript still exists remotely.
     @discardableResult
     public func deleteContributions(episodeUuid: String) -> Bool {
         let success = dbQueue.write { db in
             _ = try PendingTranscriptUploadRecord
                 .filter(PendingTranscriptUploadRecord.Columns.episodeUuid == episodeUuid)
-                .filter(PendingTranscriptUploadRecord.Columns.kind == PendingTranscriptUploadKind.contribution.rawValue)
+                .filter([
+                    PendingTranscriptUploadKind.contribution.rawValue,
+                    PendingTranscriptUploadKind.metadata.rawValue,
+                ].contains(PendingTranscriptUploadRecord.Columns.kind))
                 .deleteAll(db)
         }
         if !success { FileLog.shared.addMessage("PendingTranscriptUploadDataManager.deleteContributions failed") }

@@ -78,11 +78,11 @@ public class SyncManager {
 
         let request = tokenRevokeRequest(refreshToken: refreshToken)
 
-        URLSession.shared.dataTask(with: request) { _, response, _ in
+        URLConnection(handler: URLSession.shared).send(request: request) { _, response, _ in
             // Status marker only — never log token material.
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
             FileLog.shared.addMessage("SyncManager.signout token revoke request finished, status: \(statusCode)")
-        }.resume()
+        }
     }
 
     /// Builds an RFC 7009-shaped public-client request. Possession of the refresh token

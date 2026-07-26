@@ -11,8 +11,10 @@ public final class CacheServerHandler: Sendable {
     private let colorsUrlsCache: URLCache
 
     private let tokenHelper = TokenHelper.shared
+    private let urlConnection: URLConnection
 
-    public init() {
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+        self.urlConnection = urlConnection
         colorsUrlsCache = URLCache(memoryCapacity: 400.kilobytes, diskCapacity: 5.megabytes, diskPath: "colors")
     }
 
@@ -35,7 +37,7 @@ public final class CacheServerHandler: Sendable {
         }
 
         // even after returning a cached response, we still go and check if there's a newer version available and if so put that in our cache for next time
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, _ in
+        urlConnection.send(request: request) { [weak self] data, response, _ in
             guard let strongSelf = self else { return }
 
             if let data, let response {
@@ -46,7 +48,7 @@ public final class CacheServerHandler: Sendable {
                     strongSelf.extractCachedColors(responseData: data, completion: completion)
                 }
             }
-        }.resume()
+        }
     }
 
     private func extractCachedColors(responseData: Data, completion: (String?, String?, String?) -> Void) {

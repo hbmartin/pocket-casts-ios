@@ -71,6 +71,12 @@ public actor AppAttestService {
     private var keyWasDiscarded = false
     private var reEnrollmentsRemaining = 1
 
+    /// A FIFO gate held across assertion generation, request send, response
+    /// classification and completion. This prevents a later assertion counter
+    /// from reaching the backend before an earlier request.
+    private var requestInFlight = false
+    private var requestWaiters: [CheckedContinuation<Void, Never>] = []
+
     init(attester: AppAttestKeyService = DeviceCheckAppAttestAdapter(),
          urlConnection: URLConnection = URLConnection(handler: URLSession.shared),
          keychain: KeychainStoring = KeychainHelper.store) {
@@ -106,6 +112,48 @@ public actor AppAttestService {
         }
     }
 
+    /// Sends one canonical request through the serialized App Attest lane.
+    /// A stale counter is retried once with a new assertion. An invalid key is
+    /// discarded, re-enrolled and retried once. Persistent attestation errors
+    /// are surfaced as transport failures so token handlers never interpret
+    /// them as account-auth failures or sign the user out.
+    public func send(request: URLRequest, using connection: URLConnection) async throws -> (Data?, URLResponse?) {
+        await acquireRequestSlot()
+        defer { releaseRequestSlot() }
+
+        var retriedStaleCounter = false
+        var retriedInvalidAssertion = false
+
+        while true {
+            var signedRequest = request
+            let canonicalData = try AppAttestCanonicalRequest.data(for: request)
+            for (field, value) in await assertionHeaders(forCanonicalData: canonicalData) {
+                signedRequest.setValue(value, forHTTPHeaderField: field)
+            }
+
+            let (data, response) = try await connection.sendRaw(request: signedRequest)
+            guard let http = response as? HTTPURLResponse else { return (data, response) }
+            let errorID = Self.errorMessageID(from: data)
+
+            if http.statusCode == ServerConstants.HttpConstants.conflict,
+               errorID == Self.staleAttestationErrorId {
+                guard !retriedStaleCounter else { throw AppAttestTransportError.staleCounter }
+                retriedStaleCounter = true
+                continue
+            }
+
+            if http.statusCode == ServerConstants.HttpConstants.unauthorized,
+               errorID == Self.invalidAttestationErrorId {
+                guard !retriedInvalidAssertion else { throw AppAttestTransportError.invalidAssertion }
+                retriedInvalidAssertion = true
+                discardKey()
+                continue
+            }
+
+            return (data, response)
+        }
+    }
+
     /// Call when the server answers `401 invalid_attestation` (see
     /// `invalidAttestationErrorId`): discards the local key so the next
     /// `assertionHeaders(forBody:)` re-enrolls from scratch — bounded to one
@@ -114,6 +162,47 @@ public actor AppAttestService {
     public func handleAttestationRejection() {
         FileLog.shared.addMessage("AppAttestService: server rejected an assertion; discarding key for re-enrollment")
         discardKey()
+    }
+
+    private func assertionHeaders(forCanonicalData data: Data) async -> [String: String] {
+        guard attester.isSupported else { return [:] }
+        guard let keyId = await enrolledKeyId() else { return [:] }
+
+        do {
+            let assertion = try await attester.generateAssertion(keyId, clientDataHash: Data(SHA256.hash(data: data)))
+            return [
+                HeaderNames.keyId: keyId,
+                HeaderNames.assertion: assertion.base64EncodedString(),
+            ]
+        } catch {
+            FileLog.shared.addMessage("AppAttestService: canonical assertion generation failed: \(error)")
+            return [:]
+        }
+    }
+
+    private func acquireRequestSlot() async {
+        if !requestInFlight {
+            requestInFlight = true
+            return
+        }
+        await withCheckedContinuation { continuation in
+            requestWaiters.append(continuation)
+        }
+    }
+
+    private func releaseRequestSlot() {
+        guard !requestWaiters.isEmpty else {
+            requestInFlight = false
+            return
+        }
+        requestWaiters.removeFirst().resume()
+    }
+
+    private static func errorMessageID(from data: Data?) -> String? {
+        guard let data,
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return object["errorMessageId"] as? String
     }
 
     // MARK: - Key lifecycle
@@ -240,7 +329,7 @@ public actor AppAttestService {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
 
-        let (data, response) = try await urlConnection.send(request: request)
+        let (data, response) = try await urlConnection.sendRaw(request: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == ServerConstants.HttpConstants.ok, let data else {
             FileLog.shared.addMessage("AppAttestService: challenge fetch failed (status \((response as? HTTPURLResponse)?.statusCode ?? -1))")
             return nil
@@ -275,8 +364,20 @@ public actor AppAttestService {
         request.setValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
         request.httpBody = try JSONEncoder().encode(EnrollmentRequestBody(keyId: keyId, attestation: attestation.base64EncodedString(), challenge: challengeBase64))
 
-        let (_, response) = try await urlConnection.send(request: request)
+        let (_, response) = try await urlConnection.sendRaw(request: request)
         guard let httpResponse = response as? HTTPURLResponse else { return ServerConstants.HttpConstants.serverError }
         return httpResponse.statusCode
+    }
+}
+
+public enum AppAttestTransportError: LocalizedError, Sendable {
+    case staleCounter
+    case invalidAssertion
+
+    public var errorDescription: String? {
+        switch self {
+        case .staleCounter: "App Attest counter remained stale after one retry."
+        case .invalidAssertion: "App Attest assertion remained invalid after key re-enrollment."
+        }
     }
 }
