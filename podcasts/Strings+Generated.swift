@@ -4626,7 +4626,7 @@ nonisolated internal enum L10n {
     return L10n.tr("Localizable", "social_feed_item_reviewed", String(describing: p1), String(describing: p2), fallback: "%1$@ reviewed %2$@")
   }
   /// Body of the contacts consent alert — honest about the mechanics
-  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once — nothing is stored, and no one is notified. Only members who allow discovery can match.") }
+  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.") }
   /// Confirm button of the contacts consent alert
   internal static var socialFindContactsConsentCta: String { return L10n.tr("Localizable", "social_find_contacts_consent_cta", fallback: "Match my contacts") }
   /// Header over contact-match results
@@ -5792,7 +5792,7 @@ nonisolated internal enum L10n {
   /// Display name for the WidgetKit Control Center skip forward control.
   internal static var widgetPlaybackControlSkipForwardDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_skip_forward_display_name", fallback: "Skip Forward") }
   /// Description for the WidgetKit Control Center sleep timer control.
-  internal static var widgetPlaybackControlSleepTimerDescription: String { return L10n.tr("Localizable", "widget_playback_control_sleep_timer_description", fallback: "Start a 15 minute sleep timer, or extend the running one.") }
+  internal static var widgetPlaybackControlSleepTimerDescription: String { return L10n.tr("Localizable", "widget_playback_control_sleep_timer_description", fallback: "Start a 15-minute sleep timer, or extend the running one.") }
   /// Display name for the WidgetKit Control Center sleep timer control.
   internal static var widgetPlaybackControlSleepTimerDisplayName: String { return L10n.tr("Localizable", "widget_playback_control_sleep_timer_display_name", fallback: "Sleep Timer") }
   /// Description of a widget to launch the app

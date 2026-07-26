@@ -144,6 +144,7 @@ not silently inherit consent.
 `SchemaMigration(toVersion: 87)` in
 `Modules/Sources/PocketCastsDataModel/Private/Managers/Util/DatabaseHelper.swift`
 (current latest is `toVersion: 86`, line 352), mirroring migration 76's style:
+
 ```swift
 SchemaMigration(toVersion: 87) { db in
     try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN podpingRegistered INTEGER DEFAULT 0;", values: nil)

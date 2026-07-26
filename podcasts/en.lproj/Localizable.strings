@@ -3614,7 +3614,7 @@
 "widget_playback_control_sleep_timer_display_name" = "Sleep Timer";
 
 /* Description for the WidgetKit Control Center sleep timer control. */
-"widget_playback_control_sleep_timer_description" = "Start a 15 minute sleep timer, or extend the running one.";
+"widget_playback_control_sleep_timer_description" = "Start a 15-minute sleep timer, or extend the running one.";
 
 /* Display name for the WidgetKit Control Center skip back control. */
 "widget_playback_control_skip_back_display_name" = "Skip Back";
@@ -7699,7 +7699,7 @@
 "social_find_contacts_consent_cta" = "Match my contacts";
 
 /* Body of the contacts consent alert — honest about the mechanics */
-"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once — nothing is stored, and no one is notified. Only members who allow discovery can match.";
+"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.";
 
 /* Row sharing the owner's Profile Link to invite a friend */
 "social_find_invite" = "Invite a friend";

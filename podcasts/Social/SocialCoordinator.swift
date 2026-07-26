@@ -63,7 +63,7 @@ enum SocialCoordinator {
         push(ThemedHostingController(rootView: FindPeopleView(viewModel: FindPeopleViewModel())))
     }
 
-    /// Pushes the Shared Lists hub (social push landing for list invites).
+    /// Pushes the curator directory (Find People hosts it today).
     static func openCurators() {
         // The directory lives atop Find People; one surface, two doors.
         openFindPeople()
@@ -79,6 +79,7 @@ enum SocialCoordinator {
         push(ThemedHostingController(rootView: GroupDetailView(viewModel: GroupDetailViewModel(groupId: id))))
     }
 
+    /// Pushes the Shared Lists hub (social push landing for list invites).
     static func openSharedLists() {
         guard FeatureFlag.socialProfiles.enabled else { return }
         push(ThemedHostingController(rootView: SharedListsView(viewModel: SharedListsViewModel())))

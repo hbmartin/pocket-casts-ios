@@ -30,11 +30,18 @@ longest-tenured remaining member.
 
 ## Consequences
 
-- The erase path must pick a successor (earliest active member row) inside the
-  same transaction that wipes the owner, and delete the hub when none exists.
+- Inside the same transaction that erases the owner, the erase path must select
+  the earliest-tenured active member other than the erased owner, ordered by
+  `joined_at ASC, user_id ASC`. It transfers ownership before deleting the
+  owner's membership; when no eligible member exists, it deletes the hub.
 - Quiet-by-default noise model: invites push (directed, type 7, on by
   default); ordinary posts push only to members who opted in per-group
   (type 8, per-member flag, off by default); public joins emit a feed kind;
   private groups emit nothing anywhere.
 - Deferred without schema risk: moderator tier, request-to-join approval mode,
   group avatars (CSAM-scan gate), per-group mute.
+
+The succession transaction is a backend handoff requirement: backend tests
+must cover an owner who is still an active member, equal `joined_at` values,
+and the no-successor delete path. No backend mutation is made by this iOS
+repository.

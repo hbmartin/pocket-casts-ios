@@ -378,7 +378,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         let (invStatus, _) = try await post("social/share/send", token: tokenA, message: invalid)
         XCTAssertEqual(invStatus, 400)
 
-        var inboxCheck = Api_InboxRequest()
+        let inboxCheck = Api_InboxRequest()
         let (recInboxStatus, recBody) = try await post("social/inbox", token: tokenB, message: inboxCheck)
         XCTAssertEqual(recInboxStatus, 200)
         let recInbox = try Api_InboxResponse(serializedBytes: recBody)

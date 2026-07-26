@@ -43,7 +43,7 @@ Duration budgets — **300ms is the default maximum for UI animations; modal and
 | Modals, drawers | 200–500ms |
 | Marketing / explanatory | Can be longer |
 
-Hunt for: `ease-in` anywhere, bare `ease`/`linear` on entrances, durations > 300ms on UI elements, tooltip delay + animation on every tooltip in a toolbar (after the first, they should be instant).
+Hunt for: `ease-in` anywhere, bare `ease`/`linear` on entrances, durations > 300ms on non-modal/non-drawer UI elements, modal or drawer durations > 500ms, tooltip delay + animation on every tooltip in a toolbar (after the first, they should be instant).
 
 ## 3. Physicality & origin
 

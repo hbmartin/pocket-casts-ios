@@ -68,8 +68,9 @@ enum AnalyticsSource: String, AnalyticsDescribable {
 }
 
 /// Events fire from any thread; the one-shot source hint is lock-guarded.
-// This type is non-final (production and test subclasses), so a checked
-// @unchecked Sendable: non-final subclasses restate conformance; own state is guarded by Mutex.
+// This non-final type uses unchecked Sendable because subclasses cannot inherit a checked
+// conformance. Production and test subclasses restate the conformance, and all mutable state
+// owned here is guarded by Mutex.
 nonisolated class AnalyticsCoordinator: @unchecked Sendable {
     /// Sometimes the playback source can't be inferred, just inform it here
     var currentSource: AnalyticsSource? {
