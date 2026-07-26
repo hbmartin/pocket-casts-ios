@@ -289,7 +289,7 @@ colors_file.sub!(/\n+\z/, "\n") # no blank lines before the closing brace
 colors_file << "}\n"
 File.write(file_path_colors, colors_file)
 
-styles_file = +"// ************ WARNING AUTO GENERATED, DO NOT EDIT ************\nnonisolated enum ThemeStyle {\n"
+styles_file = +"// ************ WARNING AUTO GENERATED, DO NOT EDIT ************\nnonisolated enum ThemeStyle: CaseIterable {\n"
 all_token_names.each_with_index do |token, index|
   styles_file << if index.zero?
                    "    case #{token},\n"
@@ -298,6 +298,25 @@ all_token_names.each_with_index do |token, index|
                  end
 end
 styles_file.sub!(/,\n\z/, "\n") # remove the trailing comma
+styles_file << "}\n"
+
+# Map each simple style to its ThemeColorTable token so lookups (AppTheme.colorForStyle)
+# can resolve through the table instead of a hand-maintained switch. The parameterized
+# podcast*/playerBackground*/playerHighlight*/filter* families have no table entry.
+styles_file << "\nnonisolated extension ThemeStyle {\n"
+styles_file << "    /// ThemeColorTable token for styles resolvable without extra parameters.\n"
+styles_file << "    static let simpleTokens: [ThemeStyle: String] = [\n"
+all_token_names.reject { |token| special_token?(token) }.each do |token|
+  styles_file << "        .#{token}: \"#{token}\",\n"
+end
+styles_file.sub!(/,\n\z/, "\n") # remove the trailing comma
+styles_file << "    ]\n"
+styles_file << "\n"
+styles_file << "    /// The ThemeColorTable token backing this style, or nil for the\n"
+styles_file << "    /// parameterized families that need a podcast/filter colour at runtime.\n"
+styles_file << "    var simpleToken: String? {\n"
+styles_file << "        Self.simpleTokens[self]\n"
+styles_file << "    }\n"
 styles_file << "}\n"
 File.write(file_path_styles, styles_file)
 
