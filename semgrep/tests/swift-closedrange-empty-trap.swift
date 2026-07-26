@@ -17,6 +17,14 @@ func closedRangeTraps(items: [String], table: UITableView, section: Int) {
     // ruleid: pocketcasts.closedrange-upper-bound-minus-one
     let rows = 0 ... table.numberOfRows(inSection: section) - 1
     _ = rows
+
+    // ruleid: pocketcasts.closedrange-upper-bound-minus-one
+    let bounded = 0 ... min(4, items.count - 1)
+    _ = bounded
+
+    // ruleid: pocketcasts.closedrange-upper-bound-minus-one
+    let reverseBounded = 0 ... min(items.count - 1, 4)
+    _ = reverseBounded
 }
 
 func safeAlternatives(items: [String], startingRow: Int) {
@@ -30,6 +38,6 @@ func safeAlternatives(items: [String], startingRow: Int) {
     _ = clamped
 
     // ok: pocketcasts.closedrange-upper-bound-minus-one
-    let bounded = startingRow ... min(4, items.count - 1)
+    let bounded = 0 ..< min(5, items.count)
     _ = bounded
 }

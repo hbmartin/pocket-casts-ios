@@ -57,7 +57,7 @@ struct LargeUpNextWidgetView: View {
 
                             VStack(alignment: .leading, spacing: 10) {
                                 if episodes.count > 1 {
-                                    ForEach(episodes[1 ... min(4, episodes.count - 1)], id: \.episodeUuid) { episode in
+                                    ForEach(episodes[1 ..< min(5, episodes.count)], id: \.episodeUuid) { episode in
 
                                         EpisodeView(episode: episode, topText: Text(CommonWidgetHelper.durationString(duration: episode.duration)))
                                             .frame(height: geometry.size.height * 50 / 345)
@@ -124,7 +124,7 @@ struct LargeFilterView: View {
                     .frame(height: 32)
 
                     VStack(alignment: .leading, spacing: 10) {
-                        ForEach(episodes[0 ... min(4, episodes.count - 1)], id: \.self) { episode in
+                        ForEach(episodes[0 ..< min(5, episodes.count)], id: \.self) { episode in
                             HStack {
                                 EpisodeView.createCompactWhenNecessaryView(episode: episode)
                                     .frame(minHeight: 42, maxHeight: 56)

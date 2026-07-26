@@ -40,6 +40,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private var fingerprintsByUuid = [String: Int]()
     private var hasAppliedSnapshot = false
     private var hasLoadedOnce = false
+    private var refreshGate = LatestRefreshGate()
 
     func episodeAt(_ indexPath: IndexPath) -> UserEpisode? {
         guard let uuid = dataSource.itemIdentifier(for: indexPath) else { return nil }
@@ -254,28 +255,40 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     func reloadLocalFiles() {
         let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
         // latest-wins: the many change notifications collapse into one fetch+apply
+        let generation = refreshGate.begin()
         reloadQueue.cancelAllOperations()
         let operation = BlockOperation()
         operation.addExecutionBlock { [weak self, weak operation] in
             guard operation?.isCancelled != true else { return }
-            let groupsBox = PocketCastsUtils.UncheckedSendable(dataManager.value.uploadedEpisodeGroups())
+            let groups = dataManager.value.uploadedEpisodeGroups()
+            var fingerprints = [String: Int]()
+            for group in groups {
+                for episode in group.episodes {
+                    fingerprints[episode.uuid] = episode.renderFingerprint(hasBookmarks: episode.hasBookmarks)
+                }
+            }
+            let refreshBox = PocketCastsUtils.UncheckedSendable((groups: groups, fingerprints: fingerprints))
+            guard operation?.isCancelled != true else { return }
 
             Task { @MainActor in
-                self?.applyUploadedGroups(groupsBox.value)
+                guard let self, refreshGate.isCurrent(generation) else { return }
+                applyUploadedGroups(refreshBox.value.groups, fingerprints: refreshBox.value.fingerprints, generation: generation)
             }
         }
         reloadQueue.addOperation(operation)
     }
 
-    private func applyUploadedGroups(_ groups: [(group: String, episodes: [UserEpisode])]) {
+    private func applyUploadedGroups(
+        _ groups: [(group: String, episodes: [UserEpisode])],
+        fingerprints: [String: Int],
+        generation: Int
+    ) {
         hasLoadedOnce = true
 
         var itemsByUuid = [String: UserEpisode]()
-        var fingerprints = [String: Int]()
         for group in groups {
             for episode in group.episodes {
                 itemsByUuid[episode.uuid] = episode
-                fingerprints[episode.uuid] = episode.renderFingerprint
             }
         }
         let changedUuids = DiffableHelpers.changedIDs(old: fingerprintsByUuid, new: fingerprints)
@@ -290,34 +303,34 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
              items: group.episodes.map(\.uuid))
         })
         snapshot.reconfigureItems(changedUuids)
-        apply(snapshot)
-        syncSelectionAfterApply()
+        apply(snapshot) { [weak self] in
+            guard let self, refreshGate.isCurrent(generation) else { return }
+            syncSelectionAfterApply()
+        }
         updateHeaderView()
     }
 
-    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<UploadedFilesSection, String>) {
-        guard hasAppliedSnapshot, view.window != nil else {
-            hasAppliedSnapshot = true
-            dataSource.applySnapshotUsingReloadData(snapshot)
-            return
-        }
-        do {
-            // animated applies can throw ObjC exceptions if UIKit state is mid-flight
-            // (e.g. an open SwipeCellKit swipe); fall back to a plain reload
-            try SJCommonUtils.catchException { [dataSource] in
-                dataSource?.apply(snapshot, animatingDifferences: true)
-            }
-        } catch {
-            FileLog.shared.addMessage("UploadedViewController: diffable apply failed, falling back to reload: \(error)")
-            dataSource.applySnapshotUsingReloadData(snapshot)
-        }
+    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<UploadedFilesSection, String>, completion: (() -> Void)? = nil) {
+        let shouldAnimate = hasAppliedSnapshot && view.window != nil
+        hasAppliedSnapshot = true
+        DiffableHelpers.apply(
+            snapshot,
+            to: dataSource,
+            animatingDifferences: shouldAnimate,
+            context: "UploadedViewController",
+            completion: completion
+        )
     }
 
     /// Re-selects the still-present selected rows after an animated apply and
     /// prunes selections whose episodes left the list.
     private func syncSelectionAfterApply() {
         guard isMultiSelectEnabled else { return }
-        selectedEpisodes.removeAll { episodesByUuid[$0.uuid] == nil }
+        selectedEpisodes = DiffableHelpers.refreshedSelection(
+            selectedEpisodes,
+            id: \.uuid,
+            modelsByID: episodesByUuid
+        )
         for episode in selectedEpisodes {
             if let indexPath = dataSource.indexPath(for: episode.uuid) {
                 uploadsTable.selectRow(at: indexPath, animated: false, scrollPosition: .none)

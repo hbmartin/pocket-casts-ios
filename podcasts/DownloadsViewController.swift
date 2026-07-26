@@ -18,6 +18,7 @@ class DownloadsViewController: PCViewController {
     private(set) var episodesByUuid = [String: ListEpisode]()
     private var fingerprintsByUuid = [String: Int]()
     private var hasAppliedSnapshot = false
+    private var refreshGate = LatestRefreshGate()
 
     private let episodesDataManager = EpisodesDataManager()
 
@@ -243,20 +244,23 @@ class DownloadsViewController: PCViewController {
     func reloadEpisodes() {
         let dataManager = PocketCastsUtils.UncheckedSendable(episodesDataManager)
         // latest-wins: a burst of change notifications collapses into one fetch+apply
+        let generation = refreshGate.begin()
         operationQueue.cancelAllOperations()
         let operation = BlockOperation()
         operation.addExecutionBlock { [weak self, weak operation] in
             guard operation?.isCancelled != true else { return }
             let newDataBox = PocketCastsUtils.UncheckedSendable(dataManager.value.downloadedEpisodeSections())
+            guard operation?.isCancelled != true else { return }
 
             Task { @MainActor in
-                self?.applyDownloads(newDataBox.value)
+                guard let self, refreshGate.isCurrent(generation) else { return }
+                applyDownloads(newDataBox.value, generation: generation)
             }
         }
         operationQueue.addOperation(operation)
     }
 
-    private func applyDownloads(_ newData: [(title: String, episodes: [ListEpisode])]) {
+    private func applyDownloads(_ newData: [(title: String, episodes: [ListEpisode])], generation: Int) {
         downloadsTable.isHidden = newData.isEmpty
         episodes = newData
 
@@ -274,33 +278,33 @@ class DownloadsViewController: PCViewController {
 
         var snapshot = DiffableHelpers.snapshot(sections: newData.map { (section: $0.title, items: $0.episodes.map(\.episode.uuid)) })
         snapshot.reconfigureItems(changedUuids)
-        apply(snapshot)
-        syncSelectionAfterApply()
+        apply(snapshot) { [weak self] in
+            guard let self, refreshGate.isCurrent(generation) else { return }
+            syncSelectionAfterApply()
+        }
     }
 
-    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<String, String>) {
-        guard hasAppliedSnapshot, view.window != nil else {
-            hasAppliedSnapshot = true
-            dataSource.applySnapshotUsingReloadData(snapshot)
-            return
-        }
-        do {
-            // animated applies can throw ObjC exceptions if UIKit state is mid-flight
-            // (e.g. an open SwipeCellKit swipe); fall back to a plain reload
-            try SJCommonUtils.catchException { [dataSource] in
-                dataSource?.apply(snapshot, animatingDifferences: true)
-            }
-        } catch {
-            FileLog.shared.addMessage("DownloadsViewController: diffable apply failed, falling back to reload: \(error)")
-            dataSource.applySnapshotUsingReloadData(snapshot)
-        }
+    private func apply(_ snapshot: NSDiffableDataSourceSnapshot<String, String>, completion: (() -> Void)? = nil) {
+        let shouldAnimate = hasAppliedSnapshot && view.window != nil
+        hasAppliedSnapshot = true
+        DiffableHelpers.apply(
+            snapshot,
+            to: dataSource,
+            animatingDifferences: shouldAnimate,
+            context: "DownloadsViewController",
+            completion: completion
+        )
     }
 
     /// Re-selects the still-present selected rows after an animated apply and
     /// prunes selections whose episodes left the list.
     private func syncSelectionAfterApply() {
         guard isMultiSelectEnabled else { return }
-        selectedEpisodes.removeAll { episodesByUuid[$0.episode.uuid] == nil }
+        selectedEpisodes = DiffableHelpers.refreshedSelection(
+            selectedEpisodes,
+            id: { $0.episode.uuid },
+            modelsByID: episodesByUuid
+        )
         for listEpisode in selectedEpisodes {
             if let indexPath = dataSource.indexPath(for: listEpisode.episode.uuid) {
                 downloadsTable.selectRow(at: indexPath, animated: false, scrollPosition: .none)

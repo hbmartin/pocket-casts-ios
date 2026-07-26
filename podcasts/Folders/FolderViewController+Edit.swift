@@ -35,6 +35,7 @@ extension FolderViewController {
     // MARK: Mode transitions
 
     private func enterEditMode() {
+        pausePodcastRefreshesForEditing()
         savedRightBarButtonItem = customRightBtn
 
         let saveButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(saveEditingTapped))

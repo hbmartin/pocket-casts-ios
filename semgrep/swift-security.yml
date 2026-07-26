@@ -5573,5 +5573,7 @@ rules:
     paths:
       include:
         - "**/*.swift"
-    patterns:
+    pattern-either:
       - pattern: $LOW ... $HIGH - 1
+      - pattern: $LOW ... min(..., $HIGH - 1)
+      - pattern: $LOW ... min($HIGH - 1, ...)

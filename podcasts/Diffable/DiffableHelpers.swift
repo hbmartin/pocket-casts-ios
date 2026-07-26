@@ -42,4 +42,100 @@ nonisolated enum DiffableHelpers {
             return id
         }
     }
+
+    /// Replaces selected value-type models with their latest fetched values
+    /// and drops identifiers that are no longer present.
+    static func refreshedSelection<Model, ID: Hashable>(
+        _ selectedModels: [Model],
+        id: (Model) -> ID,
+        modelsByID: [ID: Model]
+    ) -> [Model] {
+        selectedModels.compactMap { modelsByID[id($0)] }
+    }
+
+    /// Applies a table snapshot and guarantees that `completion` runs after
+    /// either the animated update or its reload-data fallback has finished.
+    @MainActor
+    static func apply<Section: Hashable & Sendable, Item: Hashable & Sendable>(
+        _ snapshot: NSDiffableDataSourceSnapshot<Section, Item>,
+        to dataSource: UITableViewDiffableDataSource<Section, Item>,
+        animatingDifferences: Bool,
+        context: String,
+        completion: (() -> Void)? = nil
+    ) {
+        performApply(
+            animatingDifferences: animatingDifferences,
+            context: context,
+            animatedApply: {
+                dataSource.apply(snapshot, animatingDifferences: true, completion: completion)
+            },
+            reloadApply: {
+                dataSource.applySnapshotUsingReloadData(snapshot, completion: completion)
+            }
+        )
+    }
+
+    /// Collection-view counterpart to the table helper above.
+    @MainActor
+    static func apply<Section: Hashable & Sendable, Item: Hashable & Sendable>(
+        _ snapshot: NSDiffableDataSourceSnapshot<Section, Item>,
+        to dataSource: UICollectionViewDiffableDataSource<Section, Item>,
+        animatingDifferences: Bool,
+        context: String,
+        completion: (() -> Void)? = nil
+    ) {
+        performApply(
+            animatingDifferences: animatingDifferences,
+            context: context,
+            animatedApply: {
+                dataSource.apply(snapshot, animatingDifferences: true, completion: completion)
+            },
+            reloadApply: {
+                dataSource.applySnapshotUsingReloadData(snapshot, completion: completion)
+            }
+        )
+    }
+
+    @MainActor
+    private static func performApply(
+        animatingDifferences: Bool,
+        context: String,
+        animatedApply: () -> Void,
+        reloadApply: () -> Void
+    ) {
+        guard animatingDifferences else {
+            reloadApply()
+            return
+        }
+
+        do {
+            // UIKit can raise an Objective-C exception if its state is
+            // mid-flight (for example, while SwipeCellKit has a row open).
+            try SJCommonUtils.catchException(animatedApply)
+        } catch {
+            FileLog.shared.addMessage("\(context): diffable apply failed, falling back to reload: \(error)")
+            reloadApply()
+        }
+    }
+}
+
+/// Main-actor-owned generation gate for cancel-and-replace refresh pipelines.
+/// Operation cancellation is cooperative, so controllers also compare the
+/// captured generation immediately before mutating their UI.
+@MainActor
+struct LatestRefreshGate {
+    private var generation = 0
+
+    mutating func begin() -> Int {
+        generation &+= 1
+        return generation
+    }
+
+    mutating func invalidate() {
+        generation &+= 1
+    }
+
+    func isCurrent(_ candidate: Int) -> Bool {
+        candidate == generation
+    }
 }

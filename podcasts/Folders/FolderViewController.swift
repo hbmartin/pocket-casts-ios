@@ -24,6 +24,7 @@ class FolderViewController: PCViewController {
     private var fingerprintsByUuid = [String: Int]()
     private var hasAppliedSnapshot = false
     private var lastAppliedLibraryType: LibraryType?
+    private var refreshGate = LatestRefreshGate()
     /// Set when a reload arrives mid-reorder; flushed by exitEditMode().
     var needsReloadAfterEditing = false
 
@@ -287,6 +288,7 @@ class FolderViewController: PCViewController {
 
         let folderBox = PocketCastsUtils.UncheckedSendable(folder)
         // latest-wins so notification bursts collapse into one fetch+apply
+        let generation = refreshGate.begin()
         refreshQueue.cancelAllOperations()
         let operation = BlockOperation()
         operation.addExecutionBlock { [weak self, weak operation] in
@@ -314,14 +316,21 @@ class FolderViewController: PCViewController {
             }
 
             let podcastsBox = PocketCastsUtils.UncheckedSendable(podcasts)
+            guard operation?.isCancelled != true else { return }
             Task { @MainActor in
-                self?.applyPodcasts(podcastsBox.value)
+                guard let self, refreshGate.isCurrent(generation) else { return }
+                applyPodcasts(podcastsBox.value)
             }
         }
         refreshQueue.addOperation(operation)
     }
 
     private func applyPodcasts(_ newPodcasts: [Podcast]) {
+        guard !isEditingOrder else {
+            needsReloadAfterEditing = true
+            return
+        }
+
         podcasts = newPodcasts
 
         var itemsByUuid = [String: Podcast]()
@@ -345,20 +354,24 @@ class FolderViewController: PCViewController {
         let libraryType = Settings.libraryType()
         // the cell class changes with the library type, so diffing across a
         // grid<->list toggle would reuse the wrong cells; reload wholesale
-        guard hasAppliedSnapshot, lastAppliedLibraryType == libraryType, view.window != nil else {
-            hasAppliedSnapshot = true
-            lastAppliedLibraryType = libraryType
-            dataSource.applySnapshotUsingReloadData(snapshot)
-            return
-        }
-        do {
-            try SJCommonUtils.catchException { [dataSource] in
-                dataSource?.apply(snapshot, animatingDifferences: true)
-            }
-        } catch {
-            FileLog.shared.addMessage("FolderViewController: diffable apply failed, falling back to reload: \(error)")
-            dataSource.applySnapshotUsingReloadData(snapshot)
-        }
+        let shouldAnimate = hasAppliedSnapshot && lastAppliedLibraryType == libraryType && view.window != nil
+        hasAppliedSnapshot = true
+        lastAppliedLibraryType = libraryType
+        DiffableHelpers.apply(
+            snapshot,
+            to: dataSource,
+            animatingDifferences: shouldAnimate,
+            context: "FolderViewController"
+        )
+    }
+
+    /// Stops any refresh that began before reorder mode and invalidates an
+    /// already-enqueued MainActor apply. The deferred reload is flushed when
+    /// edit mode exits.
+    func pausePodcastRefreshesForEditing() {
+        refreshQueue.cancelAllOperations()
+        refreshGate.invalidate()
+        needsReloadAfterEditing = true
     }
 
     override func handleThemeChanged() {
