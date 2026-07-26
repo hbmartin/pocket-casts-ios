@@ -8,11 +8,13 @@ import GRDB
 /// non-read-only) maps to its `CustomQueryValidationError` case.
 final class PlaylistQueryValidatorTests: DataManagerTestCase {
 
-    private var dataManager: DataManager!
+    private var dataManager: DataManager { DataManager.sharedManager }
+    private var originalSharedManager: DataManager!
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        dataManager = DataManager.newTestDataManager()
+        originalSharedManager = DataManager.sharedManager
+        DataManager.sharedManager = DataManager.newTestDataManager()
 
         let podcast = createTestPodcast(uuid: "podcast-v", title: "Validator Show", dataManager: dataManager)
         var long = createTestEpisode(uuid: "ep-long", podcast: podcast, title: "Long History Special", dataManager: dataManager)
@@ -24,7 +26,8 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
     }
 
     override func tearDown() {
-        dataManager = nil
+        DataManager.sharedManager = originalSharedManager
+        originalSharedManager = nil
         super.tearDown()
     }
 

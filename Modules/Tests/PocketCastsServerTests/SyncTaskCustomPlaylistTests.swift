@@ -11,18 +11,23 @@ import SwiftProtobuf
 /// local query when the server response cannot represent one.
 final class SyncTaskCustomPlaylistTests: XCTestCase {
     private var dataManager: DataManager!
+    private var originalSharedManager: DataManager!
     private var syncTask: SyncTask!
 
     private let customEnvelope = #"{"version":1,"mode":"sql","sql":"episode.duration > 1800"}"#
 
     override func setUp() {
         super.setUp()
+        originalSharedManager = DataManager.sharedManager
         dataManager = DataManager(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite"))))
         syncTask = SyncTask(dataManager: dataManager)
         DataManager.sharedManager = dataManager
     }
 
     override func tearDown() {
+        DataManager.sharedManager = originalSharedManager
+        originalSharedManager = nil
+        dataManager = nil
         FeatureFlagMock().reset()
         super.tearDown()
     }
@@ -35,7 +40,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         playlist.manual = false
         playlist.syncStatus = syncStatus
         playlist.customQuery = customEnvelope
-        return dataManager.save(playlist: playlist)
+        return DataManager.sharedManager.save(playlist: playlist)
     }
 
     @discardableResult
@@ -45,7 +50,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         playlist.playlistName = name
         playlist.manual = false
         playlist.syncStatus = syncStatus
-        return dataManager.save(playlist: playlist)
+        return DataManager.sharedManager.save(playlist: playlist)
     }
 
     // MARK: - Account-sync upload
@@ -54,7 +59,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         saveCustomPlaylist(uuid: "custom-1")
         saveSmartPlaylist(uuid: "smart-1")
 
-        let unsynced = dataManager.allUnsyncedPlaylists()
+        let unsynced = DataManager.sharedManager.allUnsyncedPlaylists()
 
         XCTAssertEqual(Set(unsynced.map(\.uuid)), ["custom-1", "smart-1"])
     }
@@ -78,11 +83,11 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         saveCustomPlaylist(uuid: "custom-1", syncStatus: SyncStatus.synced.rawValue)
         saveSmartPlaylist(uuid: "smart-1", syncStatus: SyncStatus.synced.rawValue)
 
-        dataManager.markAllPlaylistsUnsynced()
+        DataManager.sharedManager.markAllPlaylistsUnsynced()
 
-        XCTAssertEqual(dataManager.findPlaylist(uuid: "custom-1")?.syncStatus, SyncStatus.notSynced.rawValue)
-        XCTAssertEqual(dataManager.findPlaylist(uuid: "smart-1")?.syncStatus, SyncStatus.notSynced.rawValue)
-        XCTAssertEqual(Set(dataManager.allUnsyncedPlaylists().map(\.uuid)), ["custom-1", "smart-1"])
+        XCTAssertEqual(DataManager.sharedManager.findPlaylist(uuid: "custom-1")?.syncStatus, SyncStatus.notSynced.rawValue)
+        XCTAssertEqual(DataManager.sharedManager.findPlaylist(uuid: "smart-1")?.syncStatus, SyncStatus.notSynced.rawValue)
+        XCTAssertEqual(Set(DataManager.sharedManager.allUnsyncedPlaylists().map(\.uuid)), ["custom-1", "smart-1"])
     }
 
     // MARK: - Incremental import skip
@@ -103,7 +108,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
 
         syncTask.processServerData(response: response)
 
-        let local = dataManager.findPlaylist(uuid: "custom-1")
+        let local = DataManager.sharedManager.findPlaylist(uuid: "custom-1")
         XCTAssertEqual(local?.playlistName, "Custom Local", "server record must not touch the local custom playlist")
         XCTAssertEqual(local?.customQuery, customEnvelope)
         XCTAssertEqual(local?.filterStarred, false)
@@ -124,7 +129,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
 
         syncTask.processServerData(response: response)
 
-        XCTAssertNil(dataManager.findPlaylist(uuid: "custom-1"), "a server tombstone must delete the matching local custom playlist")
+        XCTAssertNil(DataManager.sharedManager.findPlaylist(uuid: "custom-1"), "a server tombstone must delete the matching local custom playlist")
     }
 
     func testImportPlaylistStillAppliesToNonCustomPlaylists() {
@@ -142,7 +147,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
 
         syncTask.processServerData(response: response)
 
-        XCTAssertEqual(dataManager.findPlaylist(uuid: "smart-1")?.playlistName, "New Name")
+        XCTAssertEqual(DataManager.sharedManager.findPlaylist(uuid: "smart-1")?.playlistName, "New Name")
     }
 
     // MARK: - Full sync preservation
@@ -156,7 +161,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
 
         syncTask.processServerPlaylists([(serverPlaylist, [])])
 
-        let local = dataManager.findPlaylist(uuid: "custom-1")
+        let local = DataManager.sharedManager.findPlaylist(uuid: "custom-1")
         XCTAssertEqual(local?.playlistName, "Custom Local", "full sync must not delete-rewrite a custom playlist")
         XCTAssertEqual(local?.customQuery, customEnvelope, "the customQuery envelope must survive a full sync")
         XCTAssertEqual(local?.syncStatus, SyncStatus.synced.rawValue, "markAllPlaylistsUnsynced skips custom playlists")
@@ -171,7 +176,7 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
 
         syncTask.processServerPlaylists([(serverPlaylist, [])])
 
-        let local = dataManager.findPlaylist(uuid: "smart-1")
+        let local = DataManager.sharedManager.findPlaylist(uuid: "smart-1")
         XCTAssertEqual(local?.playlistName, "Server Version")
         XCTAssertEqual(local?.syncStatus, SyncStatus.synced.rawValue)
     }

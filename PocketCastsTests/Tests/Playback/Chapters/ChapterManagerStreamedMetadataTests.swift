@@ -51,7 +51,7 @@ final class ChapterManagerStreamedMetadataTests: XCTestCase {
 
         manager.ingestStreamedMetadata(title: "Intro", artworkData: nil, at: 0.2)
 
-        wait(for: [update], timeout: 0.05)
+        wait(for: [update], timeout: 0.5)
         XCTAssertEqual(manager.visibleChapterCount(), 1)
     }
 

@@ -3,7 +3,9 @@ import XCTest
 
 final class SocialInboxValidationTests: XCTestCase {
     func testSendSharedItemRejectsInvalidTimestampWithoutEnqueuingRequest() async {
-        let handler = ApiServerHandler.shared
+        let handler = ApiServerHandler()
+        handler.apiQueue.isSuspended = true
+        defer { handler.apiQueue.cancelAllOperations() }
 
         let negativeResult = await handler.sendSharedItem(
             recipientHandle: "recipient",
@@ -26,10 +28,13 @@ final class SocialInboxValidationTests: XCTestCase {
             timestampSeconds: Int.max
         )
         XCTAssertFalse(overflowingResult)
+        XCTAssertEqual(handler.apiQueue.operationCount, 0)
     }
 
     func testFetchInboxRejectsInvalidPaginationWithoutEnqueuingRequest() async {
-        let handler = ApiServerHandler.shared
+        let handler = ApiServerHandler()
+        handler.apiQueue.isSuspended = true
+        defer { handler.apiQueue.cancelAllOperations() }
 
         let negativeLimit = await handler.fetchInbox(limit: -1, offset: 0)
         XCTAssertNil(negativeLimit)
@@ -42,5 +47,6 @@ final class SocialInboxValidationTests: XCTestCase {
 
         let overflowingOffset = await handler.fetchInbox(limit: 50, offset: Int.max)
         XCTAssertNil(overflowingOffset)
+        XCTAssertEqual(handler.apiQueue.operationCount, 0)
     }
 }

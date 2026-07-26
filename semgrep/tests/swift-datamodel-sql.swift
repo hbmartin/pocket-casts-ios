@@ -89,6 +89,42 @@ final class MixedDBFamiliesExample {
         }
     }
 
+    func mixedWriteLegacyPlusOptionalQueryInterface(uuid: String, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            // ruleid: pocketcasts.no-mixed-db-api-families-in-db-closure, pocketcasts.no-new-raw-sql-in-data-managers
+            try db.executeUpdate("UPDATE SJPodcast SET syncStatus = 1 WHERE uuid = ?", values: [uuid])
+            try? Podcast
+                .filter(Podcast.Columns.uuid == uuid)
+                .updateAll(db, Podcast.Columns.syncStatus.set(to: 1))
+        }
+    }
+
+    func mixedWriteLegacyPlusForcedExecute(uuid: String, dbQueue: GRDBQueue) {
+        dbQueue.write { db in
+            // ruleid: pocketcasts.no-mixed-db-api-families-in-db-closure, pocketcasts.no-new-raw-sql-in-data-managers
+            try db.executeQuery("SELECT 1", values: nil)
+            // ruleid: pocketcasts.no-new-raw-sql-in-data-managers
+            try! db.execute(sql: "UPDATE SJPodcast SET syncStatus = 1", arguments: [uuid])
+        }
+    }
+
+    func mixedReadLegacyPlusForcedFetch(uuid: String, dbQueue: GRDBQueue) {
+        dbQueue.read { db in
+            // ruleid: pocketcasts.no-mixed-db-api-families-in-db-closure, pocketcasts.no-new-raw-sql-in-data-managers
+            try db.executeQuery("SELECT * FROM SJEpisode WHERE uuid = ?", values: [uuid])
+            _ = try! Episode.fetchOne(db, key: uuid)
+        }
+    }
+
+    func mixedReadLegacyPlusOptionalExecute(uuid: String, dbQueue: GRDBQueue) {
+        dbQueue.read { db in
+            // ruleid: pocketcasts.no-mixed-db-api-families-in-db-closure, pocketcasts.no-new-raw-sql-in-data-managers
+            try db.executeQuery("SELECT 1", values: nil)
+            // ruleid: pocketcasts.no-new-raw-sql-in-data-managers
+            try? db.execute(sql: "SELECT 1")
+        }
+    }
+
     func pureLegacyWriteIsNotMixed(uuid: String, dbQueue: GRDBQueue) {
         dbQueue.write { db in
             // ok: pocketcasts.no-mixed-db-api-families-in-db-closure

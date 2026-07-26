@@ -10,16 +10,21 @@ import SwiftProtobuf
 /// (`createSyncUserPlaylist` on push, `processServerPlaylist` on pull), which was previously untested.
 final class SyncTaskPlaylistFilterFieldTests: XCTestCase {
     private var dataManager: DataManager!
+    private var originalSharedManager: DataManager!
     private var syncTask: SyncTask!
 
     override func setUp() {
         super.setUp()
+        originalSharedManager = DataManager.sharedManager
         dataManager = DataManager(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite"))))
         syncTask = SyncTask(dataManager: dataManager)
         DataManager.sharedManager = dataManager
     }
 
     override func tearDown() {
+        DataManager.sharedManager = originalSharedManager
+        originalSharedManager = nil
+        dataManager = nil
         FeatureFlagMock().reset()
         super.tearDown()
     }

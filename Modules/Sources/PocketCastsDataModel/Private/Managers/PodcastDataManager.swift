@@ -748,11 +748,15 @@ class PodcastDataManager {
                         syncStatus = \(SyncStatus.notSynced.rawValue)
                     WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """
+                    var arguments: [(any DatabaseValueConvertible)?] = [
+                        value.rawValue,
+                        Self.defaultSettingsJsonString,
+                        enabledJson,
+                        positionJson,
+                    ]
+                    arguments.append(contentsOf: uuids.map { $0 as (any DatabaseValueConvertible)? })
                     // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer preserves unmodeled payload fields
-                    try db.executeUpdate(
-                        query,
-                        values: [value.rawValue, Self.defaultSettingsJsonString, enabledJson, positionJson] + uuids
-                    )
+                    try db.execute(sql: query, arguments: StatementArguments(arguments))
                 } else {
                     try Podcast
                         .filter(uuids.contains(Podcast.Columns.uuid))
